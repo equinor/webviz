@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceMeta_api } from "@api";
+import { SurfaceAttributeType_api, SurfaceMetaSet_api, SurfaceMeta_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
@@ -20,9 +20,11 @@ import {
     SurfacesUncertaintyLayer,
     SurfacesUncertaintyLayerSettings,
 } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
+import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import { cloneDeep, isEqual } from "lodash";
+import { s } from "vitest/dist/reporters-qc5Smpt5";
 
 import { fixupSetting } from "./utils";
 
@@ -73,17 +75,17 @@ export function SurfacesUncertaintyLayerSettingsComponent(
 
     const availableAttributes: string[] = [];
     const availableSurfaceNames: string[] = [];
+    const surfaceDirectory = surfaceDirectoryQuery.data
+        ? new SurfaceDirectory({
+              useObservedSurfaces: false,
+              realizationMetaSet: surfaceDirectoryQuery.data,
+              timeType: SurfaceTimeType.None,
+              includeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
+          })
+        : null;
 
-    if (surfaceDirectoryQuery.data) {
-        availableAttributes.push(
-            ...Array.from(
-                new Set(
-                    surfaceDirectoryQuery.data
-                        .filter((el) => el.attribute_type === SurfaceAttributeType_api.DEPTH)
-                        .map((el) => el.attribute_name)
-                )
-            )
-        );
+    if (surfaceDirectory) {
+        availableAttributes.push(...surfaceDirectory.getAttributeNames(null));
 
         const fixupAttribute = fixupSetting("attribute", availableAttributes, newSettings);
         if (!isEqual(fixupAttribute, newSettings.attribute)) {
@@ -91,16 +93,8 @@ export function SurfacesUncertaintyLayerSettingsComponent(
         }
     }
 
-    if (surfaceDirectoryQuery.data && newSettings.attribute) {
-        availableSurfaceNames.push(
-            ...Array.from(
-                new Set(
-                    surfaceDirectoryQuery.data
-                        .filter((el) => el.attribute_name === newSettings.attribute)
-                        .map((el) => el.name)
-                )
-            )
-        );
+    if (surfaceDirectory && newSettings.attribute) {
+        availableSurfaceNames.push(...surfaceDirectory.getSurfaceNames(newSettings.attribute));
 
         const fixupSurfaceNames = fixupSurfaceNamesSetting(newSettings.surfaceNames, availableSurfaceNames);
         if (!isEqual(fixupSurfaceNames, newSettings.surfaceNames)) {
@@ -263,10 +257,10 @@ const CACHE_TIME = 60 * 1000;
 export function useSurfaceDirectoryQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
-): UseQueryResult<SurfaceMeta_api[]> {
+): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
         queryKey: ["getSurfaceDirectory", caseUuid, ensembleName],
-        queryFn: () => apiService.surface.getSurfaceDirectory(caseUuid ?? "", ensembleName ?? ""),
+        queryFn: () => apiService.surface.getRealizationSurfacesMetadata(caseUuid ?? "", ensembleName ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: Boolean(caseUuid && ensembleName),
