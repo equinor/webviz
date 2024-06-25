@@ -1,11 +1,19 @@
 import React from "react";
 
-import { DrawerContent, GuiEvent, GuiMessageBroker, GuiState } from "@framework/GuiMessageBroker";
+import {
+    GuiEvent,
+    GuiMessageBroker,
+    GuiState,
+    LeftDrawerContent,
+    RightDrawerContent,
+    useGuiState,
+} from "@framework/GuiMessageBroker";
 import { ModuleInstance, ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { Badge } from "@lib/components/Badge";
+import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
@@ -25,7 +33,19 @@ export type HeaderProps = {
 export const Header: React.FC<HeaderProps> = (props) => {
     const dataChannelOriginRef = React.useRef<HTMLDivElement>(null);
     const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
-    const statusMessages = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "messages");
+    const hotStatusMessages = useStatusControllerStateValue(
+        props.moduleInstance.getStatusController(),
+        "hotMessageCache"
+    );
+    const coldStatusMessages = useStatusControllerStateValue(
+        props.moduleInstance.getStatusController(),
+        "coldMessageCache"
+    );
+    const [, setRightDrawerContent] = useGuiState(props.guiMessageBroker, GuiState.RightDrawerContent);
+    const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
+        props.guiMessageBroker,
+        GuiState.RightSettingsPanelWidthInPercent
+    );
     const [statusMessagesVisible, setStatusMessagesVisible] = React.useState<boolean>(false);
 
     const ref = React.useRef<HTMLDivElement>(null);
@@ -41,7 +61,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     function handleDoubleClick(e: React.PointerEvent<HTMLDivElement>) {
         setStatusMessagesVisible(false);
-        props.guiMessageBroker.setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
+        props.guiMessageBroker.setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
         e.preventDefault();
         e.stopPropagation();
     }
@@ -75,6 +95,17 @@ export const Header: React.FC<HeaderProps> = (props) => {
         e.stopPropagation();
     }
 
+    function handleColdStatusMessagesClick(e: React.MouseEvent<HTMLButtonElement>) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (rightSettingsPanelWidth <= 5) {
+            setRightSettingsPanelWidth(15);
+        }
+
+        setRightDrawerContent(RightDrawerContent.ModuleInstanceLog);
+    }
+
     function makeStatusIndicator(): React.ReactNode {
         const stateIndicators: React.ReactNode[] = [];
 
@@ -89,8 +120,8 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 </div>
             );
         }
-        const numErrors = statusMessages.filter((message) => message.type === StatusMessageType.Error).length;
-        const numWarnings = statusMessages.filter((message) => message.type === StatusMessageType.Warning).length;
+        const numErrors = hotStatusMessages.filter((message) => message.type === StatusMessageType.Error).length;
+        const numWarnings = hotStatusMessages.filter((message) => message.type === StatusMessageType.Warning).length;
 
         if (numErrors > 0 || numWarnings > 0) {
             stateIndicators.push(
@@ -133,10 +164,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
         );
     }
 
-    function makeStatusMessages(): React.ReactNode {
+    function makeHotStatusMessages(): React.ReactNode {
         return (
             <div className="flex flex-col p-2 gap-2">
-                {statusMessages.map((entry, i) => (
+                {hotStatusMessages.map((entry, i) => (
                     <div key={`${entry.message}-${i}`} className="flex items-center gap-2">
                         {entry.type === StatusMessageType.Error && <Error fontSize="small" color="error" />}
                         {entry.type === StatusMessageType.Warning && <Warning fontSize="small" color="warning" />}
@@ -152,7 +183,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
         );
     }
 
-    const hasErrors = statusMessages.some((entry) => entry.type === StatusMessageType.Error);
+    const hasErrors = hotStatusMessages.some((entry) => entry.type === StatusMessageType.Error);
 
     return (
         <div
@@ -242,7 +273,15 @@ export const Header: React.FC<HeaderProps> = (props) => {
                             maxWidth: boundingRect.width,
                         }}
                     >
-                        {makeStatusMessages()}
+                        {makeHotStatusMessages()}
+                        {coldStatusMessages.length > 0 && (
+                            <>
+                                <div className="bg-gray-300 h-0.5 w-full my-2" />
+                                <Button variant="text" onPointerDown={handleColdStatusMessagesClick} className="w-full">
+                                    Show {coldStatusMessages.length} older message{coldStatusMessages.length > 1 && "s"}
+                                </Button>
+                            </>
+                        )}
                     </div>
                 )}
         </div>

@@ -12,10 +12,12 @@ type StatusMessage = {
     source: StatusSource;
     message: string;
     type: StatusMessageType;
+    datetimeMs: number;
 };
 
 type StatusControllerState = {
-    messages: StatusMessage[];
+    hotMessageCache: StatusMessage[];
+    coldMessageCache: StatusMessage[];
     loading: boolean;
     viewDebugMessage: string;
     settingsDebugMessage: string;
@@ -26,7 +28,8 @@ type StatusControllerState = {
 export class ModuleInstanceStatusControllerInternal implements ModuleInstanceStatusController {
     protected _stateCandidates: StatusControllerState;
     protected _state: StatusControllerState = {
-        messages: [],
+        hotMessageCache: [],
+        coldMessageCache: [],
         loading: false,
         viewDebugMessage: "",
         settingsDebugMessage: "",
@@ -40,15 +43,21 @@ export class ModuleInstanceStatusControllerInternal implements ModuleInstanceSta
     }
 
     addMessage(source: StatusSource, message: string, type: StatusMessageType): void {
-        this._stateCandidates.messages.push({
+        this._stateCandidates.hotMessageCache.push({
             source,
             message,
             type,
+            datetimeMs: Date.now(),
         });
     }
 
-    clearMessages(source: StatusSource): void {
-        this._stateCandidates.messages = this._stateCandidates.messages.filter((msg) => msg.source !== source);
+    clearHotMessageCache(source: StatusSource): void {
+        this._stateCandidates.coldMessageCache.push(
+            ...this._stateCandidates.hotMessageCache.filter((msg) => msg.source === source)
+        );
+        this._stateCandidates.hotMessageCache = this._stateCandidates.hotMessageCache.filter(
+            (msg) => msg.source !== source
+        );
     }
 
     setLoading(isLoading: boolean): void {

@@ -7,7 +7,7 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { ApiErrorHelper, makeErrorMessage } from "@framework/utils/ApiErrorHelper";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -86,8 +86,8 @@ export const Settings = ({
 
     const apiErrorHelper = new ApiErrorHelper(wellCompletionsQuery);
 
-    if (apiErrorHelper.isError()) {
-        statusWriter.addError(makeErrorMessage(apiErrorHelper));
+    if (apiErrorHelper.hasError()) {
+        statusWriter.addError(apiErrorHelper.makeErrorMessage());
     }
 
     /*

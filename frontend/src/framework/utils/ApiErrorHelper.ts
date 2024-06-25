@@ -41,7 +41,7 @@ export class ApiErrorHelper {
         this._message = apiError.body.error.message;
     }
 
-    isError(): boolean {
+    hasError(): boolean {
         return this._error !== null;
     }
 
@@ -60,23 +60,23 @@ export class ApiErrorHelper {
     getStatusCode(): number | null {
         return this._statusCode;
     }
-}
 
-export function makeErrorMessage(apiErrorHelper: ApiErrorHelper): string {
-    let errorMessage = "";
-    if (apiErrorHelper.isError()) {
-        const additionalInformation: string[] = [];
-        if (apiErrorHelper.getStatusCode()) {
-            additionalInformation.push(`${apiErrorHelper.getStatusCode()}`);
+    makeErrorMessage(): string {
+        let errorMessage = "";
+        if (this.hasError()) {
+            const additionalInformation: string[] = [];
+            if (this.getService()) {
+                additionalInformation.push(`${this.getService()?.toUpperCase()}`);
+            }
+            if (this.getType()) {
+                additionalInformation.push(`${this.getType()}`);
+            }
+            if (this.getStatusCode()) {
+                additionalInformation.push(`${this.getStatusCode()}`);
+            }
+            errorMessage = `${this.getMessage()} (${additionalInformation.join(", ")})`;
         }
-        if (apiErrorHelper.getService()) {
-            additionalInformation.push(`${apiErrorHelper.getService()?.toUpperCase()}`);
-        }
-        if (apiErrorHelper.getType()) {
-            additionalInformation.push(`${apiErrorHelper.getType()}`);
-        }
-        errorMessage = `${apiErrorHelper.getMessage()} (${additionalInformation.join(", ")})`;
+
+        return errorMessage;
     }
-
-    return errorMessage;
 }

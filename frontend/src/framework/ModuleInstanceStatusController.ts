@@ -10,7 +10,7 @@ export enum StatusSource {
 
 export interface ModuleInstanceStatusController {
     addMessage(source: StatusSource, message: string, type: StatusMessageType): void;
-    clearMessages(source: StatusSource): void;
+    clearHotMessageCache(source: StatusSource): void;
     setLoading(isLoading: boolean): void;
 
     setDebugMessage(source: StatusSource, message: string): void;

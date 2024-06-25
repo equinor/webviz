@@ -52,7 +52,7 @@ export function useViewStatusWriter(viewContext: ViewContext<any, any, any, any>
 
     const statusWriter = React.useRef<ViewStatusWriter>(new ViewStatusWriter(statusController));
 
-    statusController.clearMessages(StatusSource.View);
+    statusController.clearHotMessageCache(StatusSource.View);
     statusController.incrementReportedComponentRenderCount(StatusSource.View);
 
     React.useEffect(function handleRender() {
@@ -67,7 +67,7 @@ export function useSettingsStatusWriter(settingsContext: SettingsContext<any, an
 
     const statusWriter = React.useRef<SettingsStatusWriter>(new SettingsStatusWriter(statusController));
 
-    statusController.clearMessages(StatusSource.Settings);
+    statusController.clearHotMessageCache(StatusSource.Settings);
     statusController.incrementReportedComponentRenderCount(StatusSource.Settings);
 
     React.useEffect(function handleRender() {
