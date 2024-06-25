@@ -93,7 +93,10 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         userSelectedCustomIntersectionPolylineIdAtom
     );
 
-    const fieldWellboreTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(ensembleIdent?.getCaseUuid() ?? undefined);
+    const fieldIdentifier = ensembleIdent
+        ? ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null
+        : null;
+    const fieldWellboreTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(fieldIdentifier ?? undefined);
 
     if (fieldWellboreTrajectoriesQuery.isError) {
         statusWriter.addError(fieldWellboreTrajectoriesQuery.error.message);

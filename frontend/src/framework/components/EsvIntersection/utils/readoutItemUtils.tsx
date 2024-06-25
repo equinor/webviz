@@ -12,7 +12,7 @@ import {
     isWellborepathLayer,
 } from "./layers";
 
-import { AdditionalInformation, AdditionalInformationKey, ReadoutItem } from "../types/types";
+import { AdditionalInformationItem, AdditionalInformationType, ReadoutItem } from "../types/types";
 
 export function getLabelFromLayerData(readoutItem: ReadoutItem): string {
     const layer = readoutItem.layer;
@@ -114,8 +114,8 @@ export function makeSchematicInfo<T extends keyof Omit<SchematicData, "symbols">
     return arr;
 }
 
-export function getAdditionalInformationFromReadoutItem(readoutItem: ReadoutItem): AdditionalInformation {
-    const infoObject: AdditionalInformation = {};
+export function getAdditionalInformationItemsFromReadoutItem(readoutItem: ReadoutItem): AdditionalInformationItem[] {
+    const items: AdditionalInformationItem[] = [];
     const layer = readoutItem.layer;
 
     if (isPolylineIntersectionLayer(layer) && layer.data) {
@@ -123,76 +123,121 @@ export function getAdditionalInformationFromReadoutItem(readoutItem: ReadoutItem
             const cellIndexOffset = layer.data.fenceMeshSections
                 .slice(0, readoutItem.index)
                 .reduce((acc, section) => acc + section.polySourceCellIndicesArr.length, 0);
-            infoObject[AdditionalInformationKey.GLOBAL_POLYGON_INDEX] = cellIndexOffset + readoutItem.polygonIndex;
+
+            items.push({
+                label: "Global polygon index",
+                type: AdditionalInformationType.GLOBAL_POLYGON_INDEX,
+                value: cellIndexOffset + readoutItem.polygonIndex,
+            });
+
             const cellIndex =
                 layer.data.fenceMeshSections[readoutItem.index].polySourceCellIndicesArr[readoutItem.polygonIndex];
 
-            infoObject[AdditionalInformationKey.IJK] = ijkFromCellIndex(
-                cellIndex,
-                layer.data.gridDimensions.cellCountI,
-                layer.data.gridDimensions.cellCountJ
-            );
+            items.push({
+                label: "IJK",
+                type: AdditionalInformationType.IJK,
+                value: ijkFromCellIndex(
+                    cellIndex,
+                    layer.data.gridDimensions.cellCountI,
+                    layer.data.gridDimensions.cellCountJ
+                ),
+            });
 
             const propValue = layer.data.fenceMeshSections[readoutItem.index].polyPropsArr[readoutItem.polygonIndex];
-            infoObject[AdditionalInformationKey.PROP_VALUE] = {
-                name: layer.data.propertyName,
-                unit: layer.data.propertyUnit,
+            items.push({
+                label: layer.data.propertyName,
+                type: AdditionalInformationType.PROP_VALUE,
                 value: propValue,
-            };
+                unit: layer.data.propertyUnit,
+            });
         }
     }
 
     if (isWellborepathLayer(layer)) {
-        infoObject[AdditionalInformationKey.MD] = readoutItem.md ?? undefined;
+        if (readoutItem.md) {
+            items.push({
+                label: "MD",
+                type: AdditionalInformationType.MD,
+                value: readoutItem.md,
+                unit: "m",
+            });
+        }
     }
 
     if (isStatisticalFanchartsCanvasLayer(layer) && layer.data) {
         const fanchart = layer.data.fancharts[readoutItem.index];
         if (fanchart && readoutItem.points) {
-            const keys = Object.keys(fanchart.data).filter((el) => {
-                if (el === "mean") {
-                    return fanchart.visibility?.mean ?? true;
-                }
-                if (el === "min") {
-                    return fanchart.visibility?.minMax ?? true;
-                }
-                if (el === "max") {
-                    return fanchart.visibility?.minMax ?? true;
-                }
-                if (el === "p10") {
-                    return fanchart.visibility?.p10p90 ?? true;
-                }
-                if (el === "p90") {
-                    return fanchart.visibility?.p10p90 ?? true;
-                }
-                if (el === "p50") {
-                    return fanchart.visibility?.p50 ?? true;
-                }
-                return false;
-            });
+            if (fanchart.visibility?.mean ?? true) {
+                items.push({
+                    label: "Mean",
+                    type: AdditionalInformationType.MEAN,
+                    value: readoutItem.points[0][1],
+                    unit: "m",
+                    lineStyle: {
+                        color: fanchart.color ?? "black",
+                    },
+                });
+            }
 
-            for (const [index, point] of readoutItem.points.entries()) {
-                const key = keys[index] as keyof AdditionalInformation;
-                switch (key) {
-                    case "mean":
-                        infoObject[AdditionalInformationKey.MEAN] = point[1];
-                        break;
-                    case "min":
-                        infoObject[AdditionalInformationKey.MIN] = point[1];
-                        break;
-                    case "max":
-                        infoObject[AdditionalInformationKey.MAX] = point[1];
-                        break;
-                    case "p10":
-                        infoObject[AdditionalInformationKey.P10] = point[1];
-                        break;
-                    case "p90":
-                        infoObject[AdditionalInformationKey.P90] = point[1];
-                        break;
-                    case "p50":
-                        infoObject[AdditionalInformationKey.P50] = point[1];
-                        break;
-                }
+            if (fanchart.visibility?.p50 ?? true) {
+                items.push({
+                    label: "P50",
+                    type: AdditionalInformationType.P50,
+                    value: readoutItem.points[1][1],
+                    unit: "m",
+                    lineStyle: {
+                        color: fanchart.color ?? "black",
+                        dashSegments: [1, 1, 5, 1],
+                    },
+                });
+            }
+
+            if (fanchart.visibility?.minMax ?? true) {
+                items.push({
+                    label: "Min",
+                    type: AdditionalInformationType.MIN,
+                    value: readoutItem.points[2][1],
+                    unit: "m",
+                    areaStyle: {
+                        fillColor: fanchart.color ?? "black",
+                        alpha: 0.2,
+                    },
+                });
+
+                items.push({
+                    label: "Max",
+                    type: AdditionalInformationType.MAX,
+                    value: readoutItem.points[3][1],
+                    unit: "m",
+                    areaStyle: {
+                        fillColor: fanchart.color ?? "black",
+                        alpha: 0.2,
+                    },
+                });
+            }
+
+            if (fanchart.visibility?.p10p90 ?? true) {
+                items.push({
+                    label: "P10",
+                    type: AdditionalInformationType.P10,
+                    value: readoutItem.points[4][1],
+                    unit: "m",
+                    areaStyle: {
+                        fillColor: fanchart.color ?? "black",
+                        alpha: 0.6,
+                    },
+                });
+
+                items.push({
+                    label: "P90",
+                    type: AdditionalInformationType.P90,
+                    value: readoutItem.points[5][1],
+                    unit: "m",
+                    areaStyle: {
+                        fillColor: fanchart.color ?? "black",
+                        alpha: 0.6,
+                    },
+                });
             }
         }
     }
@@ -200,8 +245,16 @@ export function getAdditionalInformationFromReadoutItem(readoutItem: ReadoutItem
     if (isCalloutCanvasLayer(layer) && layer.data) {
         const md = layer.data[readoutItem.index].md;
         if (md) {
-            infoObject[AdditionalInformationKey.LABEL] = layer.data[readoutItem.index].label;
-            infoObject[AdditionalInformationKey.MD] = md;
+            items.push({
+                label: "MD",
+                type: AdditionalInformationType.MD,
+                value: md,
+            });
+            items.push({
+                label: "Wellpick",
+                type: AdditionalInformationType.POI,
+                value: layer.data[readoutItem.index].label,
+            });
         }
     }
 
@@ -209,15 +262,125 @@ export function getAdditionalInformationFromReadoutItem(readoutItem: ReadoutItem
         if (layer.data) {
             const schematicType = readoutItem.schematicType;
             if (schematicType && layer.data[schematicType] && schematicType !== "symbols") {
-                infoObject[AdditionalInformationKey.SCHEMATIC_INFO] = makeSchematicInfo(
-                    schematicType,
-                    layer.data[schematicType][readoutItem.index]
-                );
+                const item = layer.data[schematicType][readoutItem.index];
+                if (schematicType === "casings") {
+                    const casing = item as Casing;
+                    items.push({ label: "ID", type: AdditionalInformationType.SCHEMATIC_INFO, value: casing.id });
+                    items.push({
+                        label: "Diameter",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: casing.diameter,
+                        unit: "m",
+                    });
+                    items.push({
+                        label: "Inner diameter",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: casing.innerDiameter,
+                        unit: "m",
+                    });
+                    items.push({
+                        label: "Has shoe",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: casing.hasShoe,
+                    });
+                    items.push({
+                        label: "MD range",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: [casing.start, casing.end],
+                        unit: "m",
+                    });
+                } else if (schematicType === "cements") {
+                    const cement = item as Cement;
+                    items.push({ label: "ID", type: AdditionalInformationType.SCHEMATIC_INFO, value: cement.id });
+                    items.push({ label: "TOC", type: AdditionalInformationType.SCHEMATIC_INFO, value: cement.toc }); // Unit?
+                } else if (schematicType === "completion") {
+                    const completion = item as Completion;
+                    items.push({ label: "ID", type: AdditionalInformationType.SCHEMATIC_INFO, value: completion.id });
+                    items.push({
+                        label: "Kind",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: completion.kind,
+                    });
+                    items.push({
+                        label: "Diameter",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: completion.diameter,
+                        unit: "m",
+                    });
+                    items.push({
+                        label: "MD range",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: [completion.start, completion.end],
+                        unit: "m",
+                    });
+                } else if (schematicType === "holeSizes") {
+                    const holeSize = item as HoleSize;
+                    items.push({ label: "ID", type: AdditionalInformationType.SCHEMATIC_INFO, value: holeSize.id });
+                    items.push({
+                        label: "Diameter",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: holeSize.diameter,
+                        unit: "m",
+                    });
+                    items.push({
+                        label: "MD range",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: [holeSize.start, holeSize.end],
+                        unit: "m",
+                    });
+                } else if (schematicType === "pAndA") {
+                    const pAndA = item as PAndA;
+                    items.push({ label: "ID", type: AdditionalInformationType.SCHEMATIC_INFO, value: pAndA.id });
+                    items.push({ label: "Kind", type: AdditionalInformationType.SCHEMATIC_INFO, value: pAndA.kind });
+                    if (pAndA.kind === "pAndASymbol") {
+                        items.push({
+                            label: "Diameter",
+                            type: AdditionalInformationType.SCHEMATIC_INFO,
+                            value: pAndA.diameter,
+                            unit: "m",
+                        });
+                    }
+                    items.push({
+                        label: "MD range",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: [pAndA.start, pAndA.end],
+                        unit: "m",
+                    });
+                } else if (schematicType === "perforations") {
+                    const perforation = item as Perforation;
+                    items.push({ label: "ID", type: AdditionalInformationType.SCHEMATIC_INFO, value: perforation.id });
+                    items.push({
+                        label: "Open",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: perforation.isOpen,
+                    });
+                    items.push({
+                        label: "Subkind",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: perforation.subKind,
+                    });
+                    items.push({
+                        label: "MD range",
+                        type: AdditionalInformationType.SCHEMATIC_INFO,
+                        value: [perforation.start, perforation.end],
+                        unit: "m",
+                    });
+                }
             }
         }
     } else {
-        infoObject[AdditionalInformationKey.X] = readoutItem.point[0];
-        infoObject[AdditionalInformationKey.Y] = readoutItem.point[1];
+        items.push({
+            label: "X",
+            type: AdditionalInformationType.X,
+            value: readoutItem.point[0],
+            unit: "m",
+        });
+        items.push({
+            label: "Y",
+            type: AdditionalInformationType.Y,
+            value: readoutItem.point[1],
+            unit: "m",
+        });
     }
 
     if (isSeismicCanvasLayer(layer)) {
@@ -233,9 +396,23 @@ export function getAdditionalInformationFromReadoutItem(readoutItem: ReadoutItem
                 const imageY = transformedPoint.y;
                 const imageData = ctx.getImageData(imageX, imageY, 1, 1);
 
-                infoObject[AdditionalInformationKey.R] = imageData.data[0];
-                infoObject[AdditionalInformationKey.G] = imageData.data[1];
-                infoObject[AdditionalInformationKey.B] = imageData.data[2];
+                items.push({
+                    label: "R",
+                    type: AdditionalInformationType.R,
+                    value: imageData.data[0],
+                });
+
+                items.push({
+                    label: "G",
+                    type: AdditionalInformationType.G,
+                    value: imageData.data[1],
+                });
+
+                items.push({
+                    label: "B",
+                    type: AdditionalInformationType.B,
+                    value: imageData.data[2],
+                });
             }
         }
     }
@@ -257,13 +434,14 @@ export function getAdditionalInformationFromReadoutItem(readoutItem: ReadoutItem
             const index = traceNum * seismicData.numSamplesPerTrace + sampleNum;
             const value = seismicData.fenceTracesFloat32Array[index];
 
-            infoObject[AdditionalInformationKey.PROP_VALUE] = {
-                name: seismicData.propertyName,
+            items.push({
+                label: seismicData.propertyName,
+                type: AdditionalInformationType.PROP_VALUE,
+                value: value,
                 unit: seismicData.propertyUnit,
-                value,
-            };
+            });
         }
     }
 
-    return infoObject;
+    return items;
 }

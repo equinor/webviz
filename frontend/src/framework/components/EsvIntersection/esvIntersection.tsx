@@ -213,7 +213,6 @@ function isPixiLayer(layer: Layer<unknown>): boolean {
 }
 
 export function EsvIntersection(props: EsvIntersectionProps): React.ReactNode {
-    console.debug("esv intersection render");
     const { onReadout, onViewportChange } = props;
 
     const [prevAxesOptions, setPrevAxesOptions] = React.useState<AxisOptions | undefined>(undefined);

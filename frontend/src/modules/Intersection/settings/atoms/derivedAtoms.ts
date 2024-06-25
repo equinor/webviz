@@ -1,12 +1,41 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
-import { selectedEnsembleIdentAtom } from "@modules/Intersection/sharedAtoms/sharedAtoms";
 
 import { atom } from "jotai";
+import { queryClientAtom } from "jotai-tanstack-query";
 
-import { userSelectedCustomIntersectionPolylineIdAtom, userSelectedWellboreUuidAtom } from "./baseAtoms";
+import {
+    layerManagerBaseAtom,
+    userSelectedCustomIntersectionPolylineIdAtom,
+    userSelectedEnsembleIdentAtom,
+    userSelectedFieldIdentifierAtom,
+    userSelectedWellboreUuidAtom,
+} from "./baseAtoms";
 import { drilledWellboreHeadersQueryAtom } from "./queryAtoms";
+
+export const filteredEnsembleSetAtom = atom((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const fieldIdentifier = get(userSelectedFieldIdentifierAtom);
+
+    if (fieldIdentifier === null) {
+        return ensembleSet;
+    }
+
+    return new EnsembleSet(ensembleSet.getEnsembleArr().filter((el) => el.getFieldIdentifier() === fieldIdentifier));
+});
+
+export const selectedFieldIdentifierAtom = atom((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const selectedFieldIdentifier = get(userSelectedFieldIdentifierAtom);
+
+    if (selectedFieldIdentifier === null) {
+        return ensembleSet.getEnsembleArr()[0]?.getFieldIdentifier() || null;
+    }
+
+    return selectedFieldIdentifier;
+});
 
 export const availableRealizationsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);
@@ -50,6 +79,17 @@ export const selectedCustomIntersectionPolylineIdAtom = atom((get) => {
     return userSelectedCustomIntersectionPolylineId;
 });
 
+export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
+
+    if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
+        return ensembleSet.getEnsembleArr()[0]?.getIdent() || null;
+    }
+
+    return userSelectedEnsembleIdent;
+});
+
 export const selectedWellboreAtom = atom((get) => {
     const userSelectedWellboreUuid = get(userSelectedWellboreUuidAtom);
     const wellboreHeaders = get(drilledWellboreHeadersQueryAtom);
@@ -67,11 +107,23 @@ export const selectedWellboreAtom = atom((get) => {
         return {
             uuid: wellboreHeaders.data[0].wellboreUuid,
             identifier: wellboreHeaders.data[0].uniqueWellboreIdentifier,
+            depthReferencePoint: wellboreHeaders.data[0].depthReferencePoint,
+            depthReferenceElevation: wellboreHeaders.data[0].depthReferenceElevation,
         };
     }
 
     return {
         uuid: userSelectedWellboreUuid,
         identifier: userSelectedWellboreHeader.uniqueWellboreIdentifier,
+        depthReferencePoint: userSelectedWellboreHeader.depthReferencePoint,
+        depthReferenceElevation: userSelectedWellboreHeader.depthReferenceElevation,
     };
+});
+
+export const layerManagerAtom = atom((get) => {
+    const queryClient = get(queryClientAtom);
+    const layerManager = get(layerManagerBaseAtom);
+    layerManager.setQueryClient(queryClient);
+
+    return layerManager;
 });
