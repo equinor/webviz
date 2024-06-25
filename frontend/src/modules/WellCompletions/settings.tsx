@@ -7,6 +7,7 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
+import { ApiErrorHelper, makeErrorMessage } from "@framework/utils/ApiErrorHelper";
 import { maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -83,13 +84,23 @@ export const Settings = ({
         realizationSelection === RealizationSelection.Single ? selectedRealizationNumber : undefined
     );
 
+    const apiErrorHelper = new ApiErrorHelper(wellCompletionsQuery);
+
+    if (apiErrorHelper.isError()) {
+        statusWriter.addError(makeErrorMessage(apiErrorHelper));
+    }
+
+    /*
     if (wellCompletionsQuery.isError) {
+        const err = wellCompletionsQuery.error as ApiError;
+        console.debug(err.body);
         let message = "Error loading well completions data for ensemble";
         if (realizationSelection === RealizationSelection.Single) {
             message += ` and realization ${selectedRealizationNumber}`;
         }
         statusWriter.addError(message);
     }
+        */
 
     // Use ref to prevent new every render
     const wellCompletionsDataAccessor = React.useRef<WellCompletionsDataAccessor>(new WellCompletionsDataAccessor());

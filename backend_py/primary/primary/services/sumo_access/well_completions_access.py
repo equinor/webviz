@@ -15,6 +15,8 @@ from .well_completions_types import (
     WellCompletionsUnits,
 )
 
+from primary.services.service_exceptions import InvalidDataError, NoDataError, Service
+
 
 class WellCompletionsAccess:
     """
@@ -35,7 +37,7 @@ class WellCompletionsAccess:
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return WellCompletionsAccess(case=case, iteration_name=iteration_name)
 
-    def get_well_completions_data(self, realization: Optional[int]) -> Optional[WellCompletionsData]:
+    def get_well_completions_data(self, realization: Optional[int]) -> WellCompletionsData:
         """Get well completions data for case and iteration"""
 
         # With single realization, filter on realization
@@ -45,7 +47,9 @@ class WellCompletionsAccess:
             )
             well_completions_df = well_completions_tables[0].to_pandas() if len(well_completions_tables) > 0 else None
             if well_completions_df is None:
-                return None
+                raise NoDataError(
+                    f"No well completions data found for realization '{realization}'", service=Service.SUMO
+                )
 
             return WellCompletionDataConverter(well_completions_df).create_data()
 
@@ -56,7 +60,9 @@ class WellCompletionsAccess:
 
         # As of now, two tables are expected - one with OP/SH and one with KH
         if len(well_completions_tables) < 2:
-            return None
+            raise InvalidDataError(
+                f"Expected 2 tables (OP/SH and KH) but got only {len(well_completions_tables)}", service=Service.SUMO
+            )
 
         expected_common_columns = set(["WELL", "DATE", "ZONE", "REAL"])
         first_df = well_completions_tables[0].to_pandas()
@@ -135,9 +141,9 @@ class WellCompletionDataConverter:
 
         # NOTE:
         # - How to handle well attributes? Should be provided by Sumo?
-        self._well_attributes: Dict[
-            str, Dict[str, WellCompletionsAttributeType]
-        ] = {}  # Each well has dict of attributes
+        self._well_attributes: Dict[str, Dict[str, WellCompletionsAttributeType]] = (
+            {}
+        )  # Each well has dict of attributes
 
     def create_data(self) -> WellCompletionsData:
         """Creates well completions dataset for front-end"""

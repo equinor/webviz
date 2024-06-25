@@ -25,7 +25,4 @@ async def get_well_completions_data(
     )
     well_completions_data = access.get_well_completions_data(realization=realization)
 
-    if not well_completions_data:
-        raise HTTPException(status_code=404, detail="Well completions data not found")
-
     return well_completions_data
