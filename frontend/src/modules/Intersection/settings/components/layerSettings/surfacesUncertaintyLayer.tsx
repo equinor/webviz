@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceMetaSet_api, SurfaceMeta_api } from "@api";
+import { SurfaceAttributeType_api, SurfaceMetaSet_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
@@ -24,7 +24,6 @@ import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import { cloneDeep, isEqual } from "lodash";
-import { s } from "vitest/dist/reporters-qc5Smpt5";
 
 import { fixupSetting } from "./utils";
 
