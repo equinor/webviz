@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
         e.stopPropagation();
     }
 
-    function handleColdStatusMessagesClick(e: React.MouseEvent<HTMLButtonElement>) {
+    function handleShowLogClick(e: React.PointerEvent<HTMLDivElement> | React.PointerEvent<HTMLButtonElement>) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             stateIndicators.push(
                 <div
                     key="header-loading"
-                    className="flex items-center justify-center h-full p-1 cursor-help"
+                    className="flex items-center justify-center h-full px-1 cursor-help"
                     title="This module is currently loading new content."
                 >
                     <CircularProgress size="medium-small" />
@@ -129,20 +129,20 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 <div
                     key="header-status-messages"
                     className={resolveClassNames(
-                        "flex items-center justify-center cursor-pointer h-full p-1 hover:bg-blue-100",
+                        "flex items-center justify-center cursor-pointer h-full px-1 hover:bg-blue-100",
                         { "bg-blue-300 hover:bg-blue-400": statusMessagesVisible }
                     )}
                     onPointerDown={handleStatusPointerDown}
                 >
-                    <Badge badgeContent={numErrors + numWarnings} className="flex">
+                    <Badge badgeContent={numErrors + numWarnings} className="flex p-0.5">
                         <Error
-                            fontSize="medium"
+                            fontSize="inherit"
                             color="error"
                             style={{ display: numErrors === 0 ? "none" : "block" }}
                         />
                         <div className="overflow-hidden h-full">
                             <Warning
-                                fontSize="medium"
+                                fontSize="inherit"
                                 color="warning"
                                 style={{ display: numWarnings === 0 ? "none" : "block" }}
                                 className={resolveClassNames({
@@ -155,11 +155,21 @@ export const Header: React.FC<HeaderProps> = (props) => {
             );
         }
 
-        if (stateIndicators.length === 0) return null;
+        if (stateIndicators.length === 0) {
+            stateIndicators.push(
+                <div
+                    key="header-module-log"
+                    className="cursor-pointer h-full px-1 hover:text-slate-500"
+                    onPointerDown={handleShowLogClick}
+                >
+                    <History fontSize="inherit" />
+                </div>
+            );
+        }
 
         return (
             <div className="h-full flex items-center justify-center">
-                <span className="bg-slate-300 w-[1px] h-3/4 mx-2" />
+                <span className="bg-slate-300 w-[1px] h-1/2 mx-0.5" />
                 {stateIndicators}
             </div>
         );
@@ -188,7 +198,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames("flex items-center select-none shadow relative touch-none", {
+            className={resolveClassNames("flex items-center select-none shadow relative touch-none text-lg", {
                 "cursor-grabbing": props.isDragged,
                 "cursor-move": !props.isDragged,
                 "bg-red-100": hasErrors,
@@ -205,14 +215,14 @@ export const Header: React.FC<HeaderProps> = (props) => {
             >
                 <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded" />
             </div>
-            <div className="flex-grow flex items-center text-sm font-bold min-w-0 p-2">
+            <div className="flex-grow flex items-center text-sm font-bold min-w-0 p-1.5">
                 <span title={title} className="flex-grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0">
                     {title}
                 </span>
                 {isDevMode() && (
                     <span
                         title={props.moduleInstance.getId()}
-                        className="font-light ml-4 mr-4 text-ellipsis whitespace-nowrap overflow-hidden min-w-0"
+                        className="font-light ml-2 mr-1 text-ellipsis whitespace-nowrap overflow-hidden min-w-0"
                     >
                         {props.moduleInstance.getId()}
                     </span>
@@ -221,7 +231,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     {syncedSettings.map((setting) => (
                         <span
                             key={setting}
-                            className="flex items-center justify-center rounded p-1 leading-none bg-indigo-700 text-white ml-2 text-xs mr-2 cursor-help"
+                            className="flex items-center justify-center rounded p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help"
                             title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
                         >
                             {SyncSettingsMeta[setting].abbreviation}
@@ -232,42 +242,42 @@ export const Header: React.FC<HeaderProps> = (props) => {
             {makeStatusIndicator()}
             {(props.moduleInstance.getChannelManager().getReceivers().length > 0 ||
                 props.moduleInstance.getChannelManager().getChannels().length > 0) && (
-                <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
+                <span className="bg-slate-300 w-[1px] h-1/2 ml-1" />
             )}
             {props.moduleInstance.getChannelManager().getChannels().length > 0 && (
                 <div
                     id={`moduleinstance-${props.moduleInstance.getId()}-data-channel-origin`}
                     ref={dataChannelOriginRef}
-                    className="hover:text-slate-500 cursor-grab ml-2 touch-none"
+                    className="hover:text-slate-500 cursor-grab ml-1 touch-none"
                     title="Connect data channels to other module instances"
                     onPointerDown={handleDataChannelOriginPointerDown}
                 >
-                    <Output fontSize="small" />
+                    <Output fontSize="inherit" />
                 </div>
             )}
             {props.moduleInstance.getChannelManager().getReceivers().length > 0 && (
                 <div
-                    className="hover:text-slate-500 cursor-pointer ml-2"
+                    className="hover:text-slate-500 cursor-pointer ml-1"
                     title="Edit input data channels"
                     onPointerUp={handleReceiversPointerUp}
                     onPointerDown={handleReceiverPointerDown}
                 >
-                    <Input fontSize="small" />
+                    <Input fontSize="inherit" />
                 </div>
             )}
-            <span className="bg-slate-300 w-[1px] h-3/4 ml-2" />
+            <span className="bg-slate-300 w-[1px] h-1/2 ml-1" />
             <div
-                className="hover:text-slate-500 cursor-pointer p-1"
+                className="hover:text-slate-500 cursor-pointer px-1"
                 onPointerDown={props.onRemoveClick}
                 onPointerUp={handlePointerUp}
                 title="Remove this module"
             >
-                <Close className="w-4 h-4" />
+                <Close fontSize="inherit" />
             </div>
             {statusMessagesVisible &&
                 createPortal(
                     <div
-                        className={"absolute shadow min-w-[200px] z-40 bg-white overflow-hidden"}
+                        className={"absolute shadow min-w-[200px] z-40 bg-white overflow-hidden text-sm"}
                         style={{
                             top: boundingRect.bottom,
                             right: window.innerWidth - boundingRect.right,
@@ -278,7 +288,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                         {log.length > 0 && (
                             <>
                                 <div className="bg-gray-300 h-0.5 w-full my-1" />
-                                <Button variant="text" onPointerDown={handleColdStatusMessagesClick} className="w-full">
+                                <Button variant="text" onPointerDown={handleShowLogClick} className="w-full">
                                     <>
                                         <History fontSize="inherit" /> Show complete log
                                     </>

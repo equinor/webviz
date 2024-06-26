@@ -15,7 +15,7 @@ from .well_completions_types import (
     WellCompletionsUnits,
 )
 
-from primary.services.service_exceptions import InvalidDataError, NoDataError, Service
+from primary.services.service_exceptions import InvalidDataError, Service
 
 
 class WellCompletionsAccess:

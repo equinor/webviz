@@ -99,13 +99,9 @@ export function View(
     );
 
     // Status messages
-    for (const status of layersStatuses) {
-        if (status.status === LayerStatus.ERROR) {
-            statusWriter.addError(
-                `Layer "${layers
-                    .find((el) => el.getId() === status.id)
-                    ?.getName()}" encountered an error while loading its data.`
-            );
+    for (const layer of layers) {
+        if (layer.getStatus() === LayerStatus.ERROR) {
+            statusWriter.addError(`Layer "${layer.getName()}": ${layer.getError() ?? "Unknown error"}`);
         }
     }
 

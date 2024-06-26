@@ -8,15 +8,31 @@ export class ApiErrorHelper {
     private _type: string | null = null;
     private _message: string | null = null;
 
-    constructor(readonly queryResult: UseQueryResult<any>) {
-        if (queryResult.error && queryResult.error instanceof ApiError) {
-            this._error = queryResult.error;
-            this._statusCode = queryResult.error.status;
-            this.extractInfoFromError(queryResult.error);
+    private constructor(readonly error: ApiError) {
+        this._error = error;
+        this._statusCode = error.status;
+        this.extractInfoFromError(error);
+    }
+
+    static fromQueryResult(queryResult: UseQueryResult<any>): ApiErrorHelper | null {
+        if (!queryResult.error || !(queryResult.error instanceof ApiError)) {
+            return null;
         }
+        return new ApiErrorHelper(queryResult.error);
+    }
+
+    static fromError(error: Error): ApiErrorHelper | null {
+        if (!(error instanceof ApiError)) {
+            return null;
+        }
+        return new ApiErrorHelper(error);
     }
 
     private extractInfoFromError(apiError: ApiError): void {
+        if (!apiError.body || typeof apiError.body !== "object") {
+            return;
+        }
+
         if (!("error" in apiError.body)) {
             return;
         }
@@ -61,7 +77,7 @@ export class ApiErrorHelper {
         return this._statusCode;
     }
 
-    makeErrorMessage(): string {
+    makeFullErrorMessage(): string {
         let errorMessage = "";
         if (this.hasError()) {
             const additionalInformation: string[] = [];

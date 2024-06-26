@@ -91,11 +91,27 @@ function LogList(props: LogListProps): React.ReactNode {
         );
     }
 
+    let lastDatetimeMs = 0;
+
     return (
         <>
-            {log.map((entry) => (
-                <LogEntryComponent key={entry.id} logEntry={entry} />
-            ))}
+            {log.map((entry) => {
+                let showDatetime = false;
+                if (new Date(entry.datetimeMs).getMinutes() !== new Date(lastDatetimeMs).getMinutes()) {
+                    showDatetime = true;
+                }
+                lastDatetimeMs = entry.datetimeMs;
+                return (
+                    <>
+                        {showDatetime && (
+                            <div className="text-sm p-2 sticky text-gray-600 text-right border-b border-b-slate-200">
+                                {convertDatetimeMsToHumanReadableString(entry.datetimeMs)}
+                            </div>
+                        )}
+                        <LogEntryComponent key={entry.id} logEntry={entry} />
+                    </>
+                );
+            })}
         </>
     );
 }
@@ -116,33 +132,79 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
         message = props.logEntry.message?.message ?? "";
     } else if (props.logEntry.type === LogEntryType.SUCCESS) {
         icon = <CheckCircle fontSize="inherit" className="text-green-600" />;
-        message = "Loading successful";
+        message = "Data successfully loaded";
     } else if (props.logEntry.type === LogEntryType.LOADING_DONE) {
         icon = <CloudDone fontSize="inherit" className="text-blue-600" />;
         message = "Loading done";
     }
 
     return (
-        <div className="py-1 flex gap-3 items-center hover:bg-blue-100 p-2">
+        <div className="text-transparent py-1 flex gap-3 items-center hover:bg-blue-100 p-2 hover:text-gray-500">
             {icon}
-            <div className="flex flex-col gap-0.5">
-                <span className="text-sm text-gray-500">
-                    {convertDatetimeMsToHumanReadableString(props.logEntry.datetimeMs)}
-                </span>
-                <span title={message}>{message}</span>
-            </div>
+            <span title={message} className="flex-grow text-black">
+                {message}
+            </span>
+            <span className="text-xs">{convertDatetimeMsToHumanReadableString(props.logEntry.datetimeMs, true)}</span>
         </div>
     );
 }
 
-function convertDatetimeMsToHumanReadableString(datetimeMs: number): string {
-    const date = new Date(datetimeMs);
-    const day = date.getDate();
-    const month = date.getMonth() + 1;
-    const year = date.getFullYear();
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const seconds = date.getSeconds();
+function convertDatetimeMsToHumanReadableString(datetimeMs: number, showSeconds?: boolean): string {
+    const dateNow = new Date();
+    const dateThen = new Date(datetimeMs);
+
+    const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const weekDay = weekDays[dateThen.getDay()];
+    const day = pad(dateThen.getDate(), 2);
+    const month = pad(dateThen.getMonth() + 1, 2);
+    const year = dateThen.getFullYear();
+    const hours = pad(dateThen.getHours(), 2);
+    const minutes = pad(dateThen.getMinutes(), 2);
+    const seconds = pad(dateThen.getSeconds(), 2);
+
+    if (
+        dateNow.getFullYear() === dateThen.getFullYear() &&
+        dateNow.getMonth() === dateThen.getMonth() &&
+        dateNow.getDate() === dateThen.getDate()
+    ) {
+        if (!showSeconds) {
+            return `${hours}:${minutes}`;
+        }
+
+        return `${hours}:${minutes}:${seconds}`;
+    }
+
+    if (
+        dateNow.getFullYear() === dateThen.getFullYear() &&
+        dateNow.getMonth() === dateThen.getMonth() &&
+        dateNow.getDate() - dateThen.getDate() === 1
+    ) {
+        if (!showSeconds) {
+            return `Yesterday ${hours}:${minutes}`;
+        }
+
+        return `Yesterday ${hours}:${minutes}:${seconds}`;
+    }
+
+    if (dateNow.getTime() - dateThen.getTime() < 7 * 24 * 60 * 60 * 1000) {
+        if (!showSeconds) {
+            return `${weekDay} ${hours}:${minutes}`;
+        }
+
+        return `${weekDay} ${hours}:${minutes}:${seconds}`;
+    }
+
+    if (!showSeconds) {
+        return `${day}.${month}.${year} ${hours}:${minutes}`;
+    }
 
     return `${day}.${month}.${year} ${hours}:${minutes}:${seconds}`;
+}
+
+function pad(num: number, size: number): string {
+    let s = num + "";
+    while (s.length < size) {
+        s = "0" + s;
+    }
+    return s;
 }

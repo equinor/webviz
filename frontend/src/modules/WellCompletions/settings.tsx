@@ -84,10 +84,10 @@ export const Settings = ({
         realizationSelection === RealizationSelection.Single ? selectedRealizationNumber : undefined
     );
 
-    const apiErrorHelper = new ApiErrorHelper(wellCompletionsQuery);
+    const apiErrorHelper = ApiErrorHelper.fromQueryResult(wellCompletionsQuery);
 
-    if (apiErrorHelper.hasError()) {
-        statusWriter.addError(apiErrorHelper.makeErrorMessage());
+    if (apiErrorHelper && apiErrorHelper.hasError()) {
+        statusWriter.addError(apiErrorHelper.makeFullErrorMessage());
     }
 
     /*

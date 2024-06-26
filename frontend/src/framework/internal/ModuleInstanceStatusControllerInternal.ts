@@ -141,6 +141,7 @@ export class ModuleInstanceStatusControllerInternal implements ModuleInstanceSta
 
     clearLog(): void {
         this._state.log = [];
+        this._stateCandidates.log = [];
         this.notifySubscribers("log");
     }
 

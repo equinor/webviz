@@ -87,10 +87,10 @@ export function Settings(
         }
     }
 
-    const apiErrorHelper = new ApiErrorHelper(wellHeaders);
+    const apiErrorHelper = ApiErrorHelper.fromQueryResult(wellHeaders);
 
     let wellHeadersErrorMessage = "";
-    if (apiErrorHelper.hasError()) {
+    if (apiErrorHelper?.hasError()) {
         wellHeadersErrorMessage = apiErrorHelper.getMessage() ?? "";
         statusWriter.addError(wellHeadersErrorMessage);
     }

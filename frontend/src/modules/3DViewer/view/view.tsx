@@ -9,6 +9,7 @@ import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Intersection, IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
@@ -176,14 +177,18 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         polylineUtmXy,
         showIntersection
     );
-    if (polylineIntersectionQuery.isError) {
-        statusWriter.addError(polylineIntersectionQuery.error.message);
+
+    const polylineIntersectionQueryErrorHelper = ApiErrorHelper.fromQueryResult(polylineIntersectionQuery);
+    if (polylineIntersectionQueryErrorHelper?.hasError()) {
+        statusWriter.addError(polylineIntersectionQueryErrorHelper.makeFullErrorMessage());
     }
 
     // Wellbore casing query
     const wellboreCasingQuery = useWellboreCasingsQuery(highlightedWellboreUuid ?? undefined);
-    if (wellboreCasingQuery.isError) {
-        statusWriter.addError(wellboreCasingQuery.error.message);
+
+    const wellboreCasingQueryErrorHelper = ApiErrorHelper.fromQueryResult(wellboreCasingQuery);
+    if (wellboreCasingQueryErrorHelper?.hasError()) {
+        statusWriter.addError(wellboreCasingQueryErrorHelper.makeFullErrorMessage());
     }
 
     // Grid surface query
@@ -199,8 +204,10 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         gridCellIndexRanges.k[0],
         gridCellIndexRanges.k[1]
     );
-    if (gridSurfaceQuery.isError) {
-        statusWriter.addError(gridSurfaceQuery.error.message);
+
+    const gridSurfaceQueryErrorHelper = ApiErrorHelper.fromQueryResult(gridSurfaceQuery);
+    if (gridSurfaceQueryErrorHelper?.hasError()) {
+        statusWriter.addError(gridSurfaceQueryErrorHelper.makeFullErrorMessage());
     }
 
     // Grid parameter query
@@ -218,8 +225,10 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         gridCellIndexRanges.k[0],
         gridCellIndexRanges.k[1]
     );
-    if (gridParameterQuery.isError) {
-        statusWriter.addError(gridParameterQuery.error.message);
+
+    const gridParameterQueryErrorHelper = ApiErrorHelper.fromQueryResult(gridParameterQuery);
+    if (gridParameterQueryErrorHelper?.hasError()) {
+        statusWriter.addError(gridParameterQueryErrorHelper.makeFullErrorMessage());
     }
 
     // Set loading status
