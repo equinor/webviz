@@ -39,21 +39,21 @@ class InplaceVolumetricsAccess:
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return InplaceVolumetricsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_inplace_volumetrics_table_async(
+    async def get_inplace_volumetrics_table_no_throw_async(
         self, table_name: str, column_names: Optional[set[str]] = None
-    ) -> pa.Table:
+    ) -> Optional[pa.Table]:
         """
         Get inplace volumetrics data for list of columns for given case and iteration as a pyarrow table.
 
         The volumes are fetched from collection in Sumo and put together in a single table, i.e. a column per response.
+
+        Note: This method does not throw an exception if requested column names are not found.
+
+        Returns:
+        pa.Table with columns: ZONE, REGION, FACIES, REAL, and the available requested column names.
         """
-        timer = PerfTimer()
 
-        # NOTE: "REAL" is not an index in metadata, but is an expected column in the table
-        expected_table_index_columns = set(["ZONE", "REGION", "FACIES", "REAL"])
-        all_expected_columns = expected_table_index_columns + column_names
-
-        # Get collection of tables per response
+        # Get collection of tables per requested column
         requested_columns = column_names if column_names is None else list(column_names)
         vol_table_collection = self._case.tables.filter(
             aggregation="collection",
@@ -63,12 +63,41 @@ class InplaceVolumetricsAccess:
             column=requested_columns,
         )
 
-        num_tables_in_collection = await vol_table_collection.length_async()
-        if num_tables_in_collection == 0:
-            raise NoDataError(
-                f"No inplace volumetrics tables found in case={self._case_uuid}, iteration={self._iteration_name}, table_name={table_name}, column_names={column_names}",
-                Service.SUMO,
-            )
+        # Assemble tables into a single table
+        vol_table: pa.Table = await self._assemble_volumetrics_table_collection_into_single_table_async(
+            vol_table_collection=vol_table_collection,
+            table_name=table_name,
+            column_names=column_names,
+        )
+
+        return vol_table
+
+    async def get_inplace_volumetrics_table_async(
+        self, table_name: str, column_names: Optional[set[str]] = None
+    ) -> pa.Table:
+        """
+        Get inplace volumetrics data for list of columns for given case and iteration as a pyarrow table.
+
+        The volumes are fetched from collection in Sumo and put together in a single table, i.e. a column per response.
+
+        Returns:
+        pa.Table with columns: ZONE, REGION, FACIES, REAL, and the requested column names.
+        """
+
+        # Get collection of tables per requested column
+        requested_columns = column_names if column_names is None else list(column_names)
+        vol_table_collection = self._case.tables.filter(
+            aggregation="collection",
+            name=table_name,
+            tagname=["vol", "volumes", "inplace"],
+            iteration=self._iteration_name,
+            column=requested_columns,
+        )
+
+        # Expected columns
+        # NOTE: "REAL" is not an index in metadata, but is an expected column in the tables from collection
+        expected_table_index_columns = set(["ZONE", "REGION", "FACIES", "REAL"])
+        all_expected_columns = expected_table_index_columns + column_names
 
         # Find column names not among collection columns
         collection_columns = await vol_table_collection.columns_async
@@ -76,6 +105,45 @@ class InplaceVolumetricsAccess:
             missing_result_names = all_expected_columns - set(collection_columns)
             raise InvalidDataError(
                 f"Missing results: {missing_result_names}, in the volumetric table {self._case_uuid}, {table_name}",
+                Service.SUMO,
+            )
+
+        # Assemble tables into a single table
+        vol_table: pa.Table = await self._assemble_volumetrics_table_collection_into_single_table_async(
+            vol_table_collection=vol_table_collection,
+            table_name=table_name,
+            column_names=column_names,
+        )
+
+        # Validate the table columns
+        if set(vol_table.column_names) != all_expected_columns:
+            missing_columns = all_expected_columns - set(vol_table.column_names)
+            raise InvalidDataError(
+                f"Missing columns: {missing_columns}, in the volumetric table {self._case_uuid}, {table_name}",
+                Service.SUMO,
+            )
+
+        return vol_table
+
+    async def _assemble_volumetrics_table_collection_into_single_table_async(
+        self,
+        vol_table_collection: TableCollection,
+        table_name: str,
+        column_names: set[str],
+    ) -> pa.Table:
+        """
+        Retrieve the inplace volumetrics tables from Sumo and assemble them into a single table.
+
+        Index columns: ZONE, REGION, FACIES, REAL
+        Response columns: column_names
+
+        """
+        expected_table_index_columns = set(["ZONE", "REGION", "FACIES", "REAL"])
+
+        num_tables_in_collection = await vol_table_collection.length_async()
+        if num_tables_in_collection == 0:
+            raise NoDataError(
+                f"No inplace volumetrics tables found in case={self._case_uuid}, iteration={self._iteration_name}, table_name={table_name}, column_names={column_names}",
                 Service.SUMO,
             )
 
@@ -114,13 +182,5 @@ class InplaceVolumetricsAccess:
             # Add response column to table
             response_column = response_table[response_name]
             vol_table = vol_table.append_column(response_name, response_column)
-
-        # Validate the table columns
-        if set(vol_table.column_names) != all_expected_columns:
-            missing_columns = all_expected_columns - set(vol_table.column_names)
-            raise InvalidDataError(
-                f"Missing columns: {missing_columns}, in the volumetric table {self._case_uuid}, {table_name}",
-                Service.SUMO,
-            )
 
         return vol_table
