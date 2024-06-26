@@ -7,6 +7,7 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Intersection, IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
@@ -72,10 +73,12 @@ export function Settings(
         }
     }
 
+    const apiErrorHelper = new ApiErrorHelper(wellHeaders);
+
     let wellHeadersErrorMessage = "";
-    if (wellHeaders.isError) {
-        statusWriter.addError("Failed to load well headers");
-        wellHeadersErrorMessage = "Failed to load well headers";
+    if (apiErrorHelper.hasError()) {
+        wellHeadersErrorMessage = apiErrorHelper.getMessage() ?? "";
+        statusWriter.addError(wellHeadersErrorMessage);
     }
 
     function handleWellHeaderSelectionChange(wellHeader: string[]) {

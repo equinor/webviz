@@ -19,7 +19,7 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close, Error, Input, Output, Warning } from "@mui/icons-material";
+import { Close, Error, History, Input, Output, Warning } from "@mui/icons-material";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any, any, any, any>;
@@ -37,11 +37,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
         props.moduleInstance.getStatusController(),
         "hotMessageCache"
     );
-    const coldStatusMessages = useStatusControllerStateValue(
-        props.moduleInstance.getStatusController(),
-        "coldMessageCache"
-    );
+    const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
     const [, setRightDrawerContent] = useGuiState(props.guiMessageBroker, GuiState.RightDrawerContent);
+    const [, setActiveModuleInstanceId] = useGuiState(props.guiMessageBroker, GuiState.ActiveModuleInstanceId);
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         props.guiMessageBroker,
         GuiState.RightSettingsPanelWidthInPercent
@@ -103,7 +101,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
             setRightSettingsPanelWidth(15);
         }
 
+        setActiveModuleInstanceId(props.moduleInstance.getId());
         setRightDrawerContent(RightDrawerContent.ModuleInstanceLog);
+
+        setStatusMessagesVisible(false);
     }
 
     function makeStatusIndicator(): React.ReactNode {
@@ -274,11 +275,13 @@ export const Header: React.FC<HeaderProps> = (props) => {
                         }}
                     >
                         {makeHotStatusMessages()}
-                        {coldStatusMessages.length > 0 && (
+                        {log.length > 0 && (
                             <>
-                                <div className="bg-gray-300 h-0.5 w-full my-2" />
+                                <div className="bg-gray-300 h-0.5 w-full my-1" />
                                 <Button variant="text" onPointerDown={handleColdStatusMessagesClick} className="w-full">
-                                    Show {coldStatusMessages.length} older message{coldStatusMessages.length > 1 && "s"}
+                                    <>
+                                        <History fontSize="inherit" /> Show complete log
+                                    </>
                                 </Button>
                             </>
                         )}

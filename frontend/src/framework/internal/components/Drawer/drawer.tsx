@@ -11,6 +11,7 @@ export type DrawerProps = {
     filterPlaceholder?: string;
     onFilterChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onClose?: () => void;
+    actions?: React.ReactNode;
     headerChildren?: React.ReactNode;
     children: React.ReactNode;
 };
@@ -21,12 +22,11 @@ export const Drawer: React.FC<DrawerProps> = (props) => {
             <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
                 {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
                 <span className="font-bold flex-grow p-0 text-sm">{props.title}</span>
+                {props.actions}
                 {props.onClose && (
-                    <Close
-                        fontSize="small"
-                        className="hover:text-slate-500 cursor-pointer mr-2"
-                        onClick={props.onClose}
-                    />
+                    <div className="hover:text-slate-500 cursor-pointer mr-2" onClick={props.onClose}>
+                        <Close fontSize="inherit" />
+                    </div>
                 )}
             </div>
             <div className="flex-grow flex flex-col">
