@@ -3,10 +3,13 @@ import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToView
 import { IntersectionType } from "@framework/types/intersection";
 import { ColorScale } from "@lib/utils/ColorScale";
 
-import { selectedCustomIntersectionPolylineIdAtom, selectedWellboreAtom } from "./settings/atoms/derivedAtoms";
-import { layersAtom } from "./settings/atoms/layersAtoms";
-import { selectedEnsembleIdentAtom } from "./sharedAtoms/sharedAtoms";
-import { BaseLayer } from "./utils/layers/BaseLayer";
+import {
+    layerManagerAtom,
+    selectedCustomIntersectionPolylineIdAtom,
+    selectedEnsembleIdentAtom,
+    selectedWellboreAtom,
+} from "./settings/atoms/derivedAtoms";
+import { LayerManager } from "./utils/layers/LayerManager";
 
 export type SettingsToViewInterface = {
     baseStates: {
@@ -21,8 +24,13 @@ export type SettingsToViewInterface = {
     derivedStates: {
         ensembleIdent: EnsembleIdent | null;
         selectedCustomIntersectionPolylineId: string | null;
-        layers: BaseLayer<any, any>[];
-        wellboreHeader: { uuid: string; identifier: string } | null;
+        layerManager: LayerManager;
+        wellboreHeader: {
+            uuid: string;
+            identifier: string;
+            depthReferencePoint: string;
+            depthReferenceElevation: number;
+        } | null;
     };
 };
 
@@ -43,8 +51,8 @@ export const interfaceInitialization: InterfaceInitialization<SettingsToViewInte
         selectedCustomIntersectionPolylineId: (get) => {
             return get(selectedCustomIntersectionPolylineIdAtom);
         },
-        layers: (get) => {
-            return get(layersAtom);
+        layerManager: (get) => {
+            return get(layerManagerAtom);
         },
         wellboreHeader: (get) => {
             return get(selectedWellboreAtom);

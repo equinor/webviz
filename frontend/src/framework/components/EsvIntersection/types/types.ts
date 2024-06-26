@@ -130,7 +130,7 @@ export type LayerDataItem = {
     intersectionItem: IntersectionItem;
 };
 
-export enum AdditionalInformationKey {
+export enum AdditionalInformationType {
     GLOBAL_POLYGON_INDEX = "polygon-index",
     IJK = "ijk",
     PROP_VALUE = "prop-value",
@@ -147,36 +147,26 @@ export enum AdditionalInformationKey {
     R = "r",
     G = "g",
     B = "b",
-    LABEL = "label",
+    POI = "poi",
 }
 
-export type PropValue = {
-    name: string;
-    unit: string;
-    value: number;
+export type LineStyle = {
+    color: string;
+    alpha?: number;
+    dashSegments?: number[];
 };
 
-export type SchematicInfo = {
-    label: string;
-    value: string | number;
-}[];
+export type AreaStyle = {
+    fillColor: string;
+    alpha?: number;
+    strokeStyle?: LineStyle;
+};
 
-export type AdditionalInformation = {
-    [AdditionalInformationKey.B]?: number;
-    [AdditionalInformationKey.G]?: number;
-    [AdditionalInformationKey.R]?: number;
-    [AdditionalInformationKey.X]?: number;
-    [AdditionalInformationKey.Y]?: number;
-    [AdditionalInformationKey.MEAN]?: number;
-    [AdditionalInformationKey.MIN]?: number;
-    [AdditionalInformationKey.MAX]?: number;
-    [AdditionalInformationKey.P10]?: number;
-    [AdditionalInformationKey.P90]?: number;
-    [AdditionalInformationKey.P50]?: number;
-    [AdditionalInformationKey.GLOBAL_POLYGON_INDEX]?: number;
-    [AdditionalInformationKey.IJK]?: [number, number, number];
-    [AdditionalInformationKey.PROP_VALUE]?: PropValue;
-    [AdditionalInformationKey.MD]?: number;
-    [AdditionalInformationKey.LABEL]?: string;
-    [AdditionalInformationKey.SCHEMATIC_INFO]?: SchematicInfo;
+export type AdditionalInformationItem = {
+    type: AdditionalInformationType;
+    label: string;
+    value: number | string | [number, number] | [number, number, number] | boolean;
+    lineStyle?: LineStyle;
+    areaStyle?: AreaStyle;
+    unit?: string;
 };

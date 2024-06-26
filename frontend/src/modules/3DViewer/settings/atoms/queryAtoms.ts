@@ -1,4 +1,5 @@
 import { apiService } from "@framework/ApiService";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { selectedEnsembleIdentAtom } from "@modules/3DViewer/sharedAtoms/sharedAtoms";
 
 import { atomWithQuery } from "jotai-tanstack-query";
@@ -26,14 +27,21 @@ export const gridModelInfosQueryAtom = atomWithQuery((get) => {
 
 export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
     const ensembleIdent = get(selectedEnsembleIdentAtom);
+    const ensembleSet = get(EnsembleSetAtom);
 
-    const caseUuid = ensembleIdent?.getCaseUuid() ?? "";
+    let fieldIdentifier: string | null = null;
+    if (ensembleIdent) {
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (ensemble) {
+            fieldIdentifier = ensemble.getFieldIdentifier();
+        }
+    }
 
     return {
-        queryKey: ["getDrilledWellboreHeaders", caseUuid],
-        queryFn: () => apiService.well.getDrilledWellboreHeaders(caseUuid),
+        queryKey: ["getDrilledWellboreHeaders", fieldIdentifier],
+        queryFn: () => apiService.well.getDrilledWellboreHeaders(fieldIdentifier ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
-        enabled: Boolean(caseUuid),
+        enabled: Boolean(fieldIdentifier),
     };
 });

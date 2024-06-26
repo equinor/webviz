@@ -34,7 +34,7 @@ export type LayerSettings = {
 
 export class BaseLayer<TSettings extends LayerSettings, TData> {
     private _subscribers: Map<LayerTopic, Set<() => void>> = new Map();
-    protected _queryClient: QueryClient;
+    protected _queryClient: QueryClient | null = null;
     protected _status: LayerStatus = LayerStatus.IDLE;
     private _id: string;
     private _name: string;
@@ -45,13 +45,15 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
     protected _settings: TSettings = {} as TSettings;
     private _lastDataFetchSettings: TSettings;
     private _queryKeys: unknown[][] = [];
+    private _error: string | null = null;
+    private _refetchingRequested: boolean = false;
+    private _cancellingPending: boolean = false;
 
-    constructor(name: string, settings: TSettings, queryClient: QueryClient) {
+    constructor(name: string, settings: TSettings) {
         this._id = v4();
         this._name = name;
         this._settings = settings;
         this._lastDataFetchSettings = cloneDeep(settings);
-        this._queryClient = queryClient;
     }
 
     getId(): string {
@@ -76,6 +78,10 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
     setName(name: string): void {
         this._name = name;
         this.notifySubscribers(LayerTopic.NAME);
+    }
+
+    setQueryClient(queryClient: QueryClient): void {
+        this._queryClient = queryClient;
     }
 
     getBoundingBox(): BoundingBox | null {
@@ -109,6 +115,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
     }
 
     maybeUpdateSettings(updatedSettings: Partial<TSettings>): void {
+        this._cancellingPending = true;
         const patchesToApply: Partial<TSettings> = {};
         for (const setting in updatedSettings) {
             if (!(setting in this._settings)) {
@@ -120,23 +127,45 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
             }
         }
         if (Object.keys(patchesToApply).length > 0) {
-            this._settings = { ...this._settings, ...patchesToApply };
-            this.maybeCancelQuery();
+            this.maybeCancelQuery().then(() => {
+                this._settings = { ...this._settings, ...patchesToApply };
+                this.notifySubscribers(LayerTopic.SETTINGS);
+                if (this._refetchingRequested) {
+                    this.maybeRefetchData();
+                }
+            });
+        } else {
+            this._cancellingPending = false;
         }
-
-        this.notifySubscribers(LayerTopic.SETTINGS);
     }
 
     protected registerQueryKey(queryKey: unknown[]): void {
         this._queryKeys.push(queryKey);
     }
 
-    private maybeCancelQuery(): void {
-        if (this._queryKeys) {
-            for (const queryKey of this._queryKeys) {
-                this._queryClient.cancelQueries({ queryKey });
-            }
+    private async maybeCancelQuery(): Promise<void> {
+        if (!this._queryClient) {
+            return;
         }
+
+        if (this._queryKeys.length > 0) {
+            for (const queryKey of this._queryKeys) {
+                await this._queryClient.cancelQueries(
+                    { queryKey, exact: true, fetchStatus: "fetching", type: "active" },
+                    {
+                        silent: true,
+                        revert: true,
+                    }
+                );
+                await this._queryClient?.invalidateQueries({ queryKey });
+                this._queryClient?.removeQueries({ queryKey });
+            }
+            this._queryKeys = [];
+            this._status = LayerStatus.IDLE;
+            this.notifySubscribers(LayerTopic.STATUS);
+        }
+
+        this._cancellingPending = false;
     }
 
     subscribe(topic: LayerTopic, callback: () => void): () => void {
@@ -154,6 +183,10 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
         this._subscribers.get(topic)?.delete(callback);
     }
 
+    getError(): string | null {
+        return this._error;
+    }
+
     protected notifySubscribers(topic: LayerTopic): void {
         for (const callback of this._subscribers.get(topic) ?? []) {
             callback();
@@ -169,7 +202,16 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
     }
 
     async maybeRefetchData(): Promise<void> {
+        if (!this._queryClient) {
+            return;
+        }
+
         if (this._isSuspended) {
+            return;
+        }
+
+        if (this._cancellingPending) {
+            this._refetchingRequested = true;
             return;
         }
 
@@ -187,7 +229,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
         this._status = LayerStatus.LOADING;
         this.notifySubscribers(LayerTopic.STATUS);
         try {
-            this._data = await this.fetchData();
+            this._data = await this.fetchData(this._queryClient);
             if (this._queryKeys.length === null && isDevMode()) {
                 console.warn(
                     "Did you forget to use 'setQueryKeys' in your layer implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour."
@@ -196,14 +238,18 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
             this._queryKeys = [];
             this.notifySubscribers(LayerTopic.DATA);
             this._status = LayerStatus.SUCCESS;
-        } catch (error) {
-            console.error("Error fetching data", error);
+        } catch (error: any) {
+            if (error.constructor?.name === "CancelledError") {
+                return;
+            }
+            this._error = `${error.message}`;
             this._status = LayerStatus.ERROR;
         }
         this.notifySubscribers(LayerTopic.STATUS);
     }
 
-    protected async fetchData(): Promise<TData> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    protected async fetchData(queryClient: QueryClient): Promise<TData> {
         throw new Error("Not implemented");
     }
 }

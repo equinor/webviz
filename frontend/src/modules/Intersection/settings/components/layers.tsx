@@ -11,12 +11,6 @@ import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, Point2D, pointDistance, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import {
-    LAYER_TYPE_TO_STRING_MAPPING,
-    LayerActionType,
-    LayerActions,
-    LayerType,
-} from "@modules/Intersection/typesAndEnums";
-import {
     BaseLayer,
     LayerStatus,
     useIsLayerVisible,
@@ -24,9 +18,17 @@ import {
     useLayerStatus,
 } from "@modules/Intersection/utils/layers/BaseLayer";
 import { isGridLayer } from "@modules/Intersection/utils/layers/GridLayer";
+import { LayerFactory } from "@modules/Intersection/utils/layers/LayerFactory";
+import {
+    LayerManager,
+    LayerManagerTopic,
+    useLayerManagerTopicValue,
+} from "@modules/Intersection/utils/layers/LayerManager";
 import { isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer";
+import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
+import { LAYER_TYPE_TO_STRING_MAPPING, LayerType } from "@modules/Intersection/utils/layers/types";
 import { Dropdown, MenuButton } from "@mui/base";
 import {
     Add,
@@ -42,24 +44,23 @@ import {
     VisibilityOff,
 } from "@mui/icons-material";
 
-import { useAtom } from "jotai";
 import { isEqual } from "lodash";
 
 import { GridLayerSettingsComponent } from "./layerSettings/gridLayer";
 import { SeismicLayerSettingsComponent } from "./layerSettings/seismicLayer";
 import { SurfaceLayerSettingsComponent } from "./layerSettings/surfaceLayer";
+import { SurfacesUncertaintyLayerSettingsComponent } from "./layerSettings/surfacesUncertaintyLayer";
 import { WellpicksLayerSettingsComponent } from "./layerSettings/wellpicksLayer";
-
-import { layersAtom } from "../atoms/layersAtoms";
 
 export type LayersProps = {
     ensembleSet: EnsembleSet;
+    layerManager: LayerManager;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
 };
 
 export function Layers(props: LayersProps): React.ReactNode {
-    const [layers, dispatch] = useAtom(layersAtom);
+    const layers = useLayerManagerTopicValue(props.layerManager, LayerManagerTopic.LAYERS_CHANGED);
 
     const [draggingLayerId, setDraggingLayerId] = React.useState<string | null>(null);
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
@@ -82,11 +83,11 @@ export function Layers(props: LayersProps): React.ReactNode {
     }
 
     function handleAddLayer(type: LayerType) {
-        dispatch({ type: LayerActionType.ADD_LAYER, payload: { type } });
+        props.layerManager.addLayer(LayerFactory.makeLayer(type));
     }
 
     function handleRemoveLayer(id: string) {
-        dispatch({ type: LayerActionType.REMOVE_LAYER, payload: { id } });
+        props.layerManager.removeLayer(id);
     }
 
     React.useEffect(
@@ -274,7 +275,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 setDraggingLayerId(null);
                 document.removeEventListener("pointermove", handlePointerMove);
                 document.removeEventListener("pointerup", handlePointerUp);
-                dispatch({ type: LayerActionType.CHANGE_ORDER, payload: { orderedIds: newLayerOrder } });
+                props.layerManager.changeOrder(newLayerOrder);
             }
 
             currentParentDivRef.addEventListener("pointerdown", handlePointerDown);
@@ -287,7 +288,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 setDraggingLayerId(null);
             };
         },
-        [dispatch, layers]
+        [layers, props.layerManager]
     );
 
     function handleScroll(e: React.UIEvent<HTMLDivElement>) {
@@ -354,7 +355,6 @@ export function Layers(props: LayersProps): React.ReactNode {
                                         workbenchSession={props.workbenchSession}
                                         workbenchSettings={props.workbenchSettings}
                                         onRemoveLayer={handleRemoveLayer}
-                                        dispatch={dispatch}
                                         isDragging={draggingLayerId === layer.getId()}
                                         dragPosition={dragPosition}
                                     />
@@ -380,7 +380,6 @@ type LayerItemProps = {
     isDragging: boolean;
     dragPosition: Point2D;
     onRemoveLayer: (id: string) => void;
-    dispatch: (action: LayerActions) => void;
 };
 
 function LayerItem(props: LayerItemProps): React.ReactNode {
@@ -447,6 +446,16 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                 />
             );
         }
+        if (isSurfacesUncertaintyLayer(layer)) {
+            return (
+                <SurfacesUncertaintyLayerSettingsComponent
+                    ensembleSet={props.ensembleSet}
+                    workbenchSession={props.workbenchSession}
+                    workbenchSettings={props.workbenchSettings}
+                    layer={layer}
+                />
+            );
+        }
         return null;
     }
 
@@ -460,7 +469,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
         }
         if (status === LayerStatus.ERROR) {
             return (
-                <div title="Error while loading">
+                <div title={props.layer.getError() ?? "Error while loading"}>
                     <Error fontSize="inherit" className="text-red-700" />
                 </div>
             );
