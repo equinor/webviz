@@ -26,9 +26,9 @@ import {
 
 import { Interface } from "../settingsToViewInterface";
 import { State } from "../state";
+import { MAX_PARAMETERS } from "../typesAndEnums";
 import { ParameterDistributionPlotType, ParameterDistributionPlotTypeEnumToStringMapping } from "../typesAndEnums";
 
-const MAX_PARAMETERS = 50;
 export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 

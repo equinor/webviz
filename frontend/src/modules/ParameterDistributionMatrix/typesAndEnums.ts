@@ -19,3 +19,4 @@ export const ParameterDistributionPlotTypeEnumToStringMapping = {
     [ParameterDistributionPlotType.DISTRIBUTION_PLOT]: "Distribution Plot",
     [ParameterDistributionPlotType.BOX_PLOT]: "Box Plot",
 };
+export const MAX_PARAMETERS = 56;
