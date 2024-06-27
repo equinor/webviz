@@ -2,12 +2,12 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
+import { LayerManager } from "@modules/Intersection/utils/layers/LayerManager";
 
 import { atom } from "jotai";
 import { queryClientAtom } from "jotai-tanstack-query";
 
 import {
-    layerManagerBaseAtom,
     userSelectedCustomIntersectionPolylineIdAtom,
     userSelectedEnsembleIdentAtom,
     userSelectedFieldIdentifierAtom,
@@ -121,8 +121,8 @@ export const selectedWellboreAtom = atom((get) => {
 });
 
 export const layerManagerAtom = atom((get) => {
+    const layerManager = new LayerManager();
     const queryClient = get(queryClientAtom);
-    const layerManager = get(layerManagerBaseAtom);
     layerManager.setQueryClient(queryClient);
 
     return layerManager;
