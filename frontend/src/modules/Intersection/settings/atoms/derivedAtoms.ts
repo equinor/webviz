@@ -121,7 +121,6 @@ export const selectedWellboreAtom = atom((get) => {
 });
 
 export const layerManagerAtom = atom((get) => {
-    console.debug("Creating LayerManager");
     const layerManager = new LayerManager();
     const queryClient = get(queryClientAtom);
     layerManager.setQueryClient(queryClient);

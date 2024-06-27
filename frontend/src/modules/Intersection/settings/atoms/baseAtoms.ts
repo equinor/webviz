@@ -1,5 +1,4 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { LayerManager } from "@modules/Intersection/utils/layers/LayerManager";
 
 import { atom } from "jotai";
 
