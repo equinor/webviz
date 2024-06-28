@@ -21,6 +21,7 @@ import { ColorSet } from "@lib/utils/ColorSet";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { SurfaceDirectory, SurfaceTimeType, useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { isEqual } from "lodash";
 
@@ -83,12 +84,9 @@ export function Settings({
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
-    if (wellHeadersQuery.isError) {
-        statusWriter.addError("Error loading well headers");
-    }
-    if (surfaceMetaQuery.isError) {
-        statusWriter.addError("Error loading metadata for surfaces");
-    }
+
+    usePropagateApiErrorToStatusWriter(wellHeadersQuery, statusWriter);
+    usePropagateApiErrorToStatusWriter(surfaceMetaQuery, statusWriter);
 
     // Handling well headers query
     const syncedWellBore = syncHelper.useValue(SyncSettingKey.WELLBORE, "global.syncValue.wellBore");

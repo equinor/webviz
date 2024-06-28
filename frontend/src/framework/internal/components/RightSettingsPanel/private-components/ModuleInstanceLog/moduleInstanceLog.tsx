@@ -10,6 +10,10 @@ import {
     useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { Drawer } from "@framework/internal/components/Drawer";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { createPortal } from "@lib/utils/createPortal";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { CheckCircle, ClearAll, CloudDone, CloudDownload, Error, History, Warning } from "@mui/icons-material";
 
 export type ModuleInstanceLogProps = {
@@ -18,8 +22,15 @@ export type ModuleInstanceLogProps = {
 };
 
 export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNode {
+    const [details, setDetails] = React.useState<Record<string, string> | null>(null);
+    const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
+    const [pointerOverDetails, setPointerOverDetails] = React.useState<boolean>(false);
+
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
     const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
+
+    const ref = React.useRef<HTMLDivElement>(null);
+    const boundingClientRect = useElementBoundingRect(ref);
 
     const moduleInstance = props.workbench.getModuleInstance(activeModuleInstanceId);
 
@@ -57,28 +68,84 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
         );
     }
 
+    const handleShowDetails = React.useCallback(function handleShowDetails(
+        details: Record<string, string>,
+        posY: number
+    ) {
+        console.debug("handleShowDetails");
+        setDetails(details);
+        setDetailsPosY(posY);
+    },
+    []);
+
+    const handleHideDetails = React.useCallback(
+        function handleHideDetails() {
+            console.debug("handleHideDetails");
+            console.debug("pointerOverDetails", pointerOverDetails);
+            if (pointerOverDetails) {
+                return;
+            }
+            setDetails(null);
+        },
+        [pointerOverDetails]
+    );
+
+    const handleDetailsPointerEnter = React.useCallback(function handleDetailsPointerEnter() {
+        console.debug("handleDetailsPointerEnter");
+        setPointerOverDetails(true);
+    }, []);
+
+    const handleDetailsPointerLeave = React.useCallback(function handleDetailsPointerLeave() {
+        console.debug("handleDetailsPointerLeave");
+        setPointerOverDetails(false);
+        setDetails(null);
+    }, []);
+
+    let right = 0;
+    if (boundingClientRect) {
+        right = window.innerWidth - boundingClientRect.left + 10;
+    }
+
     return (
-        <Drawer
-            title={makeTitle()}
-            icon={<History />}
-            visible={drawerContent === RightDrawerContent.ModuleInstanceLog}
-            onClose={handleClose}
-            actions={makeActions()}
-        >
-            <div className="h-full flex flex-col p-2 gap-1 overflow-y-auto">
-                {moduleInstance ? (
-                    <LogList moduleInstance={moduleInstance} />
-                ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                        No module selected
-                    </div>
+        <div ref={ref} className="w-full h-full">
+            <Drawer
+                title={makeTitle()}
+                icon={<History />}
+                visible={drawerContent === RightDrawerContent.ModuleInstanceLog}
+                onClose={handleClose}
+                actions={makeActions()}
+            >
+                <div className="h-full flex flex-col p-2 gap-1 overflow-y-auto text-sm">
+                    {moduleInstance ? (
+                        <LogList
+                            moduleInstance={moduleInstance}
+                            onShowDetails={handleShowDetails}
+                            onHideDetails={handleHideDetails}
+                        />
+                    ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                            No module selected
+                        </div>
+                    )}
+                </div>
+            </Drawer>
+            {details &&
+                createPortal(
+                    <DetailsPopup
+                        details={details}
+                        right={right}
+                        top={detailsPosY}
+                        onPointerEnter={handleDetailsPointerEnter}
+                        onPointerLeave={handleDetailsPointerLeave}
+                    />
                 )}
-            </div>
-        </Drawer>
+        </div>
     );
 }
 
 type LogListProps = {
+    onShowDetails: (details: Record<string, string>, yPos: number) => void;
+    onHideDetails: () => void;
     moduleInstance: ModuleInstance<any, any, any, any>;
 };
 
@@ -106,12 +173,17 @@ function LogList(props: LogListProps): React.ReactNode {
                         {showDatetime && (
                             <div
                                 key={entry.datetimeMs}
-                                className="text-sm p-2 sticky text-gray-600 text-right border-b border-b-slate-200"
+                                className="text-xs p-2 sticky text-gray-600 text-right border-b border-b-slate-200"
                             >
                                 {convertDatetimeMsToHumanReadableString(entry.datetimeMs)}
                             </div>
                         )}
-                        <LogEntryComponent key={entry.id} logEntry={entry} />
+                        <LogEntryComponent
+                            key={entry.id}
+                            logEntry={entry}
+                            onShowDetails={props.onShowDetails}
+                            onHideDetails={props.onHideDetails}
+                        />
                     </>
                 );
             })}
@@ -121,11 +193,51 @@ function LogList(props: LogListProps): React.ReactNode {
 
 type LogEntryProps = {
     logEntry: LogEntry;
+    onShowDetails: (details: Record<string, string>, yPos: number) => void;
+    onHideDetails: () => void;
 };
 
 function LogEntryComponent(props: LogEntryProps): React.ReactNode {
+    const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    React.useEffect(function handleMount() {
+        return function handleUnmount() {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
+    function handleShowDetails(e: React.MouseEvent<HTMLDivElement>) {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        const target = e.currentTarget;
+        timeoutRef.current = setTimeout(() => {
+            if (props.logEntry.type === LogEntryType.MESSAGE) {
+                if (props.logEntry.message?.request?.query) {
+                    if (!(target instanceof HTMLElement)) {
+                        return;
+                    }
+                    props.onShowDetails(props.logEntry.message.request.query, target.getBoundingClientRect().top);
+                }
+            }
+        }, 1000);
+    }
+
+    function handleHideDetails() {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+            props.onHideDetails();
+        }, 1000);
+    }
+
     let icon = <CloudDownload fontSize="inherit" className="text-gray-600" />;
     let message = "Loading...";
+    let detailsString: React.ReactNode = null;
+    let detailsObject: Record<string, string> | null = null;
     if (props.logEntry.type === LogEntryType.MESSAGE) {
         if (props.logEntry.message?.type === StatusMessageType.Error) {
             icon = <Error fontSize="inherit" className="text-red-600" />;
@@ -133,6 +245,15 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
             icon = <Warning fontSize="inherit" className="text-orange-600" />;
         }
         message = props.logEntry.message?.message ?? "";
+        if (props.logEntry.message.request?.query) {
+            const text = `${props.logEntry.message.request.method} ${props.logEntry.message.request.url}`;
+            detailsString = (
+                <div className="overflow-hidden w-full" title={text}>
+                    <span className="text-xs text-gray-500 text-ellipsis whitespace-nowrap block max-w-0">{text}</span>
+                </div>
+            );
+            detailsObject = props.logEntry.message.request.query;
+        }
     } else if (props.logEntry.type === LogEntryType.SUCCESS) {
         icon = <CheckCircle fontSize="inherit" className="text-green-600" />;
         message = "Data successfully loaded";
@@ -142,12 +263,59 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
     }
 
     return (
-        <div className="text-transparent py-1 flex gap-3 items-center hover:bg-blue-100 p-2 hover:text-gray-500">
+        <div
+            className={resolveClassNames(
+                "text-transparent py-1 flex gap-3 items-center p-2 hover:text-gray-400 hover:bg-blue-100",
+                {
+                    "cursor-help": Boolean(detailsObject),
+                }
+            )}
+            onMouseEnter={handleShowDetails}
+            onMouseLeave={handleHideDetails}
+        >
             {icon}
             <span title={message} className="flex-grow text-black">
                 {message}
+                {detailsString}
             </span>
             <span className="text-xs">{convertDatetimeMsToHumanReadableString(props.logEntry.datetimeMs, true)}</span>
+        </div>
+    );
+}
+
+type DetailsPopupProps = {
+    details: Record<string, string>;
+    right: number;
+    top: number;
+    onPointerEnter: () => void;
+    onPointerLeave: () => void;
+};
+
+function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
+    const style: React.CSSProperties = { right: props.right };
+    if (props.top > window.innerHeight / 2) {
+        style.bottom = window.innerHeight - props.top - convertRemToPixels(3);
+    } else {
+        style.top = props.top;
+    }
+
+    return (
+        <div
+            className="absolute bg-white border border-gray-300 shadow-lg p-1 z-50 w-96 text-sm"
+            style={style}
+            onPointerEnter={props.onPointerEnter}
+            onPointerLeave={props.onPointerLeave}
+        >
+            <table className="text-xs w-full border-separate border-spacing-2">
+                <tbody>
+                    {Object.entries(props.details).map(([key, value]) => (
+                        <tr key={key}>
+                            <td className="text-gray-600 font-bold">{key}</td>
+                            <td>{value}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 }

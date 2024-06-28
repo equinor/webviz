@@ -1,9 +1,14 @@
 import { ApiError } from "@api";
+import { Origin, StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { UseQueryResult } from "@tanstack/react-query";
 
+import { ApiRequestOptions } from "src/api/core/ApiRequestOptions";
+
 export class ApiErrorHelper {
-    private _error: ApiError | null = null;
-    private _statusCode: number | null = null;
+    private _error: ApiError;
+    private _statusCode: number;
+    private _endpoint: string;
+    private _request: ApiRequestOptions;
     private _service: string | null = null;
     private _type: string | null = null;
     private _message: string | null = null;
@@ -11,7 +16,9 @@ export class ApiErrorHelper {
     private constructor(readonly error: ApiError) {
         this._error = error;
         this._statusCode = error.status;
-        this.extractInfoFromError(error);
+        this._endpoint = error.url;
+        this._request = error.request;
+        this.extractInfoFromErrorBody(error);
     }
 
     static fromQueryResult(queryResult: UseQueryResult<any>): ApiErrorHelper | null {
@@ -28,13 +35,17 @@ export class ApiErrorHelper {
         return new ApiErrorHelper(error);
     }
 
-    private extractInfoFromError(apiError: ApiError): void {
+    private extractInfoFromErrorBody(apiError: ApiError): void {
         if (!apiError.body || typeof apiError.body !== "object") {
             return;
         }
 
         if (!("error" in apiError.body)) {
             return;
+        }
+
+        if ("url" in apiError) {
+            this._endpoint = apiError.url;
         }
 
         if ("type" in apiError.body.error) {
@@ -77,6 +88,14 @@ export class ApiErrorHelper {
         return this._statusCode;
     }
 
+    getEndPoint(): string {
+        return this._endpoint;
+    }
+
+    getRequest(): ApiRequestOptions {
+        return this._request;
+    }
+
     makeFullErrorMessage(): string {
         let errorMessage = "";
         if (this.hasError()) {
@@ -94,5 +113,14 @@ export class ApiErrorHelper {
         }
 
         return errorMessage;
+    }
+
+    makeStatusMessage(): StatusMessage {
+        return {
+            message: this.makeFullErrorMessage(),
+            origin: Origin.API,
+            endpoint: this.getEndPoint(),
+            request: this.getRequest(),
+        };
     }
 }

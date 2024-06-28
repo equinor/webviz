@@ -11,7 +11,8 @@ export function usePropagateApiErrorToStatusWriter(
     let errorMessage = "";
     if (helper?.hasError()) {
         errorMessage = helper.makeFullErrorMessage();
-        statusWriter.addError(errorMessage);
+        const statusMessage = helper.makeStatusMessage();
+        statusWriter.addError(statusMessage);
     }
 
     return errorMessage;

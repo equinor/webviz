@@ -19,6 +19,7 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
 import { useValidState } from "@lib/hooks/useValidState";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { isEqual } from "lodash";
 
@@ -84,23 +85,7 @@ export const Settings = ({
         realizationSelection === RealizationSelection.Single ? selectedRealizationNumber : undefined
     );
 
-    const apiErrorHelper = ApiErrorHelper.fromQueryResult(wellCompletionsQuery);
-
-    if (apiErrorHelper && apiErrorHelper.hasError()) {
-        statusWriter.addError(apiErrorHelper.makeFullErrorMessage());
-    }
-
-    /*
-    if (wellCompletionsQuery.isError) {
-        const err = wellCompletionsQuery.error as ApiError;
-        console.debug(err.body);
-        let message = "Error loading well completions data for ensemble";
-        if (realizationSelection === RealizationSelection.Single) {
-            message += ` and realization ${selectedRealizationNumber}`;
-        }
-        statusWriter.addError(message);
-    }
-        */
+    usePropagateApiErrorToStatusWriter(wellCompletionsQuery, statusWriter);
 
     // Use ref to prevent new every render
     const wellCompletionsDataAccessor = React.useRef<WellCompletionsDataAccessor>(new WellCompletionsDataAccessor());

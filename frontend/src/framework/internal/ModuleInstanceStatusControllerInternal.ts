@@ -2,17 +2,23 @@ import React from "react";
 
 import {
     ModuleInstanceStatusController,
+    Origin,
     StatusMessageType,
+    StatusMessageWithType,
     StatusSource,
 } from "@framework/ModuleInstanceStatusController";
 
 import { cloneDeep, filter, isEqual, keys } from "lodash";
+import { ApiRequestOptions } from "src/api/core/ApiRequestOptions";
 import { v4 } from "uuid";
 
 type StatusMessage = {
     source: StatusSource;
     message: string;
     type: StatusMessageType;
+    origin: Origin;
+    endpoint?: string;
+    request?: ApiRequestOptions;
     datetimeMs: number;
 };
 
@@ -70,11 +76,10 @@ export class ModuleInstanceStatusControllerInternal implements ModuleInstanceSta
         this._stateCandidates = cloneDeep(this._state);
     }
 
-    addMessage(source: StatusSource, message: string, type: StatusMessageType): void {
+    addMessage(source: StatusSource, message: StatusMessageWithType): void {
         this._stateCandidates.hotMessageCache.push({
+            ...message,
             source,
-            message,
-            type,
             datetimeMs: Date.now(),
         });
     }

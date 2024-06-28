@@ -16,6 +16,7 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
@@ -87,13 +88,7 @@ export function Settings(
         }
     }
 
-    const apiErrorHelper = ApiErrorHelper.fromQueryResult(wellHeaders);
-
-    let wellHeadersErrorMessage = "";
-    if (apiErrorHelper?.hasError()) {
-        wellHeadersErrorMessage = apiErrorHelper.getMessage() ?? "";
-        statusWriter.addError(wellHeadersErrorMessage);
-    }
+    const wellHeadersErrorMessage = usePropagateApiErrorToStatusWriter(wellHeaders, statusWriter) ?? "";
 
     function handleFieldIdentifierChange(fieldIdentifier: string | null) {
         setSelectedField(fieldIdentifier);

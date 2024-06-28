@@ -3,6 +3,7 @@ import React from "react";
 import { Frequency_api, NodeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -12,6 +13,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
@@ -40,8 +42,9 @@ import {
 import { Interface, State } from "../settingsToViewInterface";
 import { FrequencyEnumToStringMapping, NodeTypeEnumToStringMapping } from "../types";
 
-export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interface>) {
+export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<State, Interface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
+    const statusWriter = useSettingsStatusWriter(settingsContext);
 
     const availableDateTimes = useAtomValue(availableDateTimesAtom);
     const availableEdgeKeys = useAtomValue(availableEdgeKeysAtom);
@@ -66,6 +69,8 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
     const setUserSelectedDateTime = useSetAtom(userSelectedDateTimeAtom);
 
     const groupTreeQueryResult = useAtomValue(groupTreeQueryResultAtom);
+
+    usePropagateApiErrorToStatusWriter(groupTreeQueryResult, statusWriter);
 
     const setValidRealizationNumbersAtom = useSetAtom(validRealizationNumbersAtom);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);

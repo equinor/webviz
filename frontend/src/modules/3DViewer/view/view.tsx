@@ -100,9 +100,8 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         : null;
     const fieldWellboreTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(fieldIdentifier ?? undefined);
 
-    if (fieldWellboreTrajectoriesQuery.isError) {
-        statusWriter.addError(fieldWellboreTrajectoriesQuery.error.message);
-    }
+    usePropagateApiErrorToStatusWriter(fieldWellboreTrajectoriesQuery, statusWriter);
+
     const displayedWellboreUuid = [...wellboreUuids];
     if (highlightedWellboreUuid && !displayedWellboreUuid.includes(highlightedWellboreUuid)) {
         displayedWellboreUuid.push(highlightedWellboreUuid);

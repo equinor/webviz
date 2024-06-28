@@ -102,6 +102,7 @@ const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,
     GuiState.DevToolsVisible,
     GuiState.RightSettingsPanelWidthInPercent,
+    GuiState.RightDrawerContent,
 ];
 
 export class GuiMessageBroker {
