@@ -208,6 +208,15 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
         };
     }, []);
 
+    React.useEffect(
+        function handleOnHideFunctionChange() {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        },
+        [props.onHideDetails]
+    );
+
     function handleShowDetails(e: React.MouseEvent<HTMLDivElement>) {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
