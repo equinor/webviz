@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Sequence
-
+import asyncio
+from pydantic import BaseModel
 import pyarrow as pa
 import pyarrow.compute as pc
 
@@ -23,6 +24,15 @@ from ._conversion._conversion import (
 # - InplaceVolumetricsConstructor
 # - InplaceVolumetricsFabricator
 # - InplaceVolumetricsDataManufacturer
+
+class InplaceVolumetricsTableDefinition(BaseModel):
+    """Definition of a volumetric table"""
+
+    table_name: str
+    fluid_zones: List[FluidZone]
+    result_names: List[str]
+    indexes: List[InplaceVolumetricsIndex]
+    
 class InplaceVolumetricsProvider:
     """
     This class provides an interface for interacting with definitions used in front-end for assembling and providing
@@ -47,24 +57,48 @@ class InplaceVolumetricsProvider:
     # TODO: When having metadata, provide all column names, and the get the possible properties from the response names
     # Provide the available properties from metadata, without suffix and provide possible FluidZones
     async def get_volumetric_table_metadata(self) -> Any:
-        raw_volumetric_column_names = await self._inplace_volumetrics_access.get_volumetric_column_names_async()
+        vol_table_names = await self._inplace_volumetrics_access.get_inplace_volumetrics_table_names_async()
 
-        fluid_zones = get_fluid_zones(raw_volumetric_column_names)
-        volume_names = get_volume_names_from_raw_volumetric_column_names(raw_volumetric_column_names)
-        available_property_names = get_available_properties_from_volume_names(volume_names) 
-        responses = list(set([volume_names+available_property_names]))
+        async def get_named_inplace_volumetrics_table_async(table_name:str) -> Dict[str, pa.Table]:
+            return {table_name: await self._inplace_volumetrics_access.get_inplace_volumetrics_table_async(table_name)}
+            
+        tasks = [asyncio.create_task(get_named_inplace_volumetrics_table_async(vol_table_name)) for vol_table_name in vol_table_names]
+        tables = await asyncio.gather(*tasks)
+        print(tables, len(tables))
+        
+        
+        tables_info: List[InplaceVolumetricsTableDefinition] = []
+        for table_result in tables:
+            table_name, table = list(table_result.items())[0]
+            
+            # Get raw volume names without index columns
+            raw_volumetric_column_names = [column_name for column_name in table.column_names if column_name not in self._inplace_volumetrics_access._expected_index_columns+ ["REAL"]]
+            
+            
+            fluid_zones = get_fluid_zones(raw_volumetric_column_names)
+            volume_names = get_volume_names_from_raw_volumetric_column_names(raw_volumetric_column_names)
+            
+            available_property_names = get_available_properties_from_volume_names(volume_names)
+            result_names = volume_names + available_property_names
+            indexes = []
+            for index_name in self._inplace_volumetrics_access._expected_index_columns:
+                if index_name in table.column_names:
+                    indexes.append(InplaceVolumetricsIndex(index_name=index_name, values=table[index_name].unique().to_pylist()))
+            tables_info.append(InplaceVolumetricsTableDefinition(table_name=table_name, fluid_zones=fluid_zones, result_names=result_names, indexes=indexes))
+        return tables_info
 
         # TODO: Consider 
         # responses_info: Dict[str, List[FluidZone]] = {}
         # I.e.: responses_info["STOIIP"] = [FluidZone.OIL], etc.
 
-        return {
-            "name": "INSERT TABLE NAME",
-            "fluid_zones": fluid_zones,
-            "responses": responses,
-        }
+        return [{
+            "name": "Geogrid",
+            "fluid_zones": ["OIL","GAS","WATER"],
+            "responses": ["BULK","NET","STOIIP","SW","BO"],
+            "index": [{"ZONE":["A","B"],"REGION":["NORTH","SOUTH"],"FACIES":["SAND","SHALE"],"LICENSE":["LIC1","LIC2"]}],
+        }]
    
-
+    
     async def get_aggregated_volumetric_table_data_async(
         self,
         table_name: str,

@@ -1,7 +1,7 @@
 import logging
 from enum import Enum
 from io import BytesIO
-from typing import Dict, List, Optional, Sequence, Union, Tuple
+from typing import Dict, List, Optional, Sequence, Union
 
 import asyncio
 import pyarrow as pa
@@ -18,8 +18,11 @@ from ..service_exceptions import (
     MultipleDataMatchesError,
 )
 
-from ._helpers import SumoEnsemble
 
+from fmu.sumo.explorer.objects import Case
+
+
+from ._helpers import create_sumo_client, create_sumo_case_async
 
 # Allowed categories (index column names) for the volumetric tables
 ALLOWED_INDEX_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
@@ -109,7 +112,17 @@ class InplaceVolumetricData(BaseModel):
 LOGGER = logging.getLogger(__name__)
 
 
-class InplaceVolumetricsAccess(SumoEnsemble):
+class InplaceVolumetricsAccess:
+    def __init__(self, case: Case, case_uuid: str):
+        self._case: Case = case
+        self._case_uuid: str = case_uuid
+
+    @classmethod
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str) -> "InplaceVolumetricsAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        return cls(case=case, case_uuid=case_uuid)
+
     async def get_inplace_volumetrics_table_definitions_async(self) -> List[InplaceVolumetricsTableDefinition]:
         """Retrieve the table definitions for the volumetric tables"""
 

@@ -1,5 +1,5 @@
 from typing import List, Union, Optional
-from enum import Enum
+from enum import Enum,StrEnum
 
 from pydantic import BaseModel
 
@@ -18,14 +18,19 @@ class InplaceVolumetricsIndex(BaseModel):
     index_name: InplaceVolumetricsIndexNames
     values: List[Union[str, int]]
 
+class FluidZone(StrEnum):
+    OIL = "Oil"
+    GAS = "Gas"
+    Water = "Water"  # TODO: Remove or keep?
 
 class InplaceVolumetricsTableDefinition(BaseModel):
     """Definition of a volumetric table"""
 
-    name: str
-    indexes: List[InplaceVolumetricsIndex]
+    table_name: str
+    fluid_zones: List[FluidZone]
     result_names: List[str]
-
+    indexes: List[InplaceVolumetricsIndex]
+    
 
 class InplaceVolumetricDataEntry(BaseModel):
     result_values: List[float]

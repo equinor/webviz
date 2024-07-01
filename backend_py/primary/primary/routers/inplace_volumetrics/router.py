@@ -1,9 +1,9 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, Query, Body
-from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
-
-
+# from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
+from primary.services.inplace_volumetrics_provider.inplace_volumetrics_provider import InplaceVolumetricsProvider
+from primary.services.sumo_access.inplace_volumetrics_acces_NEW import InplaceVolumetricsAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 
@@ -21,11 +21,11 @@ async def get_table_definitions(
     ensemble_name: str = Query(description="Ensemble name"),
 ) -> List[schemas.InplaceVolumetricsTableDefinition]:
     """Get the volumetric tables definitions for a given ensemble."""
-
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    table_names = await access.get_inplace_volumetrics_table_definitions_async()
+    provider = InplaceVolumetricsProvider(access)
+    table_names = await provider.get_volumetric_table_metadata()
     return table_names
 
 
