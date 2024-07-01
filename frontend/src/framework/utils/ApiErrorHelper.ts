@@ -109,7 +109,7 @@ export class ApiErrorHelper {
             if (this.getStatusCode()) {
                 additionalInformation.push(`${this.getStatusCode()}`);
             }
-            errorMessage = `${this.getMessage()} (${additionalInformation.join(", ")})`;
+            errorMessage = `${this.getMessage() ?? "Unknown error"} (${additionalInformation.join(", ")})`;
         }
 
         return errorMessage;

@@ -72,7 +72,6 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
         details: Record<string, string>,
         posY: number
     ) {
-        console.debug("handleShowDetails");
         setDetails(details);
         setDetailsPosY(posY);
     },
@@ -80,8 +79,6 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
 
     const handleHideDetails = React.useCallback(
         function handleHideDetails() {
-            console.debug("handleHideDetails");
-            console.debug("pointerOverDetails", pointerOverDetails);
             if (pointerOverDetails) {
                 return;
             }
@@ -91,12 +88,10 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
     );
 
     const handleDetailsPointerEnter = React.useCallback(function handleDetailsPointerEnter() {
-        console.debug("handleDetailsPointerEnter");
         setPointerOverDetails(true);
     }, []);
 
     const handleDetailsPointerLeave = React.useCallback(function handleDetailsPointerLeave() {
-        console.debug("handleDetailsPointerLeave");
         setPointerOverDetails(false);
         setDetails(null);
     }, []);
