@@ -4,7 +4,8 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { Point2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+import { Mark, Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
@@ -24,6 +25,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
         orientation,
         track,
         debounceTimeMs,
+        marks,
         ...rest
     } = props;
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -42,6 +44,14 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
     if (propsValue !== undefined && propsValue !== prevValue) {
         setValue(propsValue);
         setPrevValue(propsValue);
+    }
+
+    let adjustedMarks: boolean | Mark[] | undefined = undefined;
+    if (
+        marks === true ||
+        (Array.isArray(marks) && marks.length > 0 && marks.length < sliderRect.width / 3 - convertRemToPixels(6 / 4))
+    ) {
+        adjustedMarks = marks;
     }
 
     React.useEffect(function handleMount() {
@@ -155,8 +165,9 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
             x:
                 (orientation === "vertical"
                     ? sliderRect.width / 2
-                    : ((activeThumbValue - (min ?? 0)) / range) * sliderRect.width) +
+                    : ((activeThumbValue - (min ?? 0)) / range) * (sliderRect.width - convertRemToPixels(6 / 4))) +
                 sliderRect.left +
+                convertRemToPixels(3 / 4) +
                 3,
             y:
                 (orientation === "vertical"
@@ -215,6 +226,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                     onChange={handleValueChanged}
                     value={value}
                     ref={ref}
+                    marks={adjustedMarks}
                     slotProps={{
                         root: {
                             className: resolveClassNames(
@@ -261,7 +273,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                                 "h-5",
                                 "block",
                                 "bg-blue-600",
-                                "z-30",
+                                "z-5",
                                 "shadow-sm",
                                 "rounded-full",
                                 "transform",
@@ -312,7 +324,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                                 "border-white",
                                 "transform",
                                 orientation === "vertical" ? "-translate-y-0" : "",
-                                "z-20"
+                                "z-4"
                             ),
                         },
                     }}
