@@ -239,6 +239,7 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
                         bounds={viewportBounds}
                         layers={newLayers}
                         colorTables={colorTables}
+                        getTooltip={undefined}
                         views={{
                             layout: [1, 1],
                             showLabel: false,

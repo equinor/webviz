@@ -4,7 +4,7 @@ import { MODULE_NAME } from "./registerModule";
 import { Settings } from "./settings/settings";
 import { Interface, interfaceInitialization } from "./settingsToViewInterface";
 import { State } from "./state";
-import { View } from "./view/view";
+import { View } from "./view";
 
 const defaultState: State = {};
 
