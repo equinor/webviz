@@ -31,8 +31,18 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
 
     const ref = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(ref);
+    const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const moduleInstance = props.workbench.getModuleInstance(activeModuleInstanceId);
+
+    React.useEffect(function handleMount() {
+        const currentTimeoutRef = timeoutRef.current;
+        return function handleUnmount() {
+            if (currentTimeoutRef) {
+                clearTimeout(currentTimeoutRef);
+            }
+        };
+    }, []);
 
     function handleClose() {
         props.onClose();
@@ -72,6 +82,9 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
         details: Record<string, string>,
         posY: number
     ) {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
         setDetails(details);
         setDetailsPosY(posY);
     },
@@ -88,12 +101,20 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
     );
 
     const handleDetailsPointerEnter = React.useCallback(function handleDetailsPointerEnter() {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
         setPointerOverDetails(true);
     }, []);
 
     const handleDetailsPointerLeave = React.useCallback(function handleDetailsPointerLeave() {
-        setPointerOverDetails(false);
-        setDetails(null);
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+            setPointerOverDetails(false);
+            setDetails(null);
+        }, 500);
     }, []);
 
     let right = 0;
@@ -196,9 +217,10 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
     const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     React.useEffect(function handleMount() {
+        const currentTimeoutRef = timeoutRef.current;
         return function handleUnmount() {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
+            if (currentTimeoutRef) {
+                clearTimeout(currentTimeoutRef);
             }
         };
     }, []);
@@ -226,7 +248,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
                     props.onShowDetails(props.logEntry.message.request.query, target.getBoundingClientRect().top);
                 }
             }
-        }, 1000);
+        }, 500);
     }
 
     function handleHideDetails() {
@@ -235,7 +257,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
         }
         timeoutRef.current = setTimeout(() => {
             props.onHideDetails();
-        }, 1000);
+        }, 500);
     }
 
     let icon = <CloudDownload fontSize="inherit" className="text-gray-600" />;

@@ -53,8 +53,11 @@ export const Header: React.FC<HeaderProps> = (props) => {
     const title = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.TITLE);
 
     function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+        if (statusMessagesVisible) {
+            setStatusMessagesVisible(false);
+            return;
+        }
         props.onPointerDown(e);
-        setStatusMessagesVisible(false);
     }
 
     function handleDoubleClick(e: React.PointerEvent<HTMLDivElement>) {
@@ -114,7 +117,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             stateIndicators.push(
                 <div
                     key="header-loading"
-                    className="flex items-center justify-center h-full px-1 cursor-help"
+                    className="flex items-center justify-center px-1 cursor-help"
                     title="This module is currently loading new content."
                 >
                     <CircularProgress size="medium-small" />
@@ -124,23 +127,32 @@ export const Header: React.FC<HeaderProps> = (props) => {
         const numErrors = hotStatusMessages.filter((message) => message.type === StatusMessageType.Error).length;
         const numWarnings = hotStatusMessages.filter((message) => message.type === StatusMessageType.Warning).length;
 
+        let badgeTitle = "";
+        if (numErrors > 0) {
+            badgeTitle += `${numErrors} error${numErrors > 1 ? "s" : ""}`;
+        }
+
+        if (numWarnings > 0) {
+            badgeTitle += `${badgeTitle.length > 0 ? ", " : ""}${numWarnings} warning${numWarnings > 1 ? "s" : ""}`;
+        }
+
         if (numErrors > 0 || numWarnings > 0) {
             stateIndicators.push(
                 <div
                     key="header-status-messages"
                     className={resolveClassNames(
-                        "flex items-center justify-center cursor-pointer h-full px-1 hover:bg-blue-100",
+                        "flex items-center justify-center cursor-pointer px-1 hover:bg-blue-100",
                         { "bg-blue-300 hover:bg-blue-400": statusMessagesVisible }
                     )}
                     onPointerDown={handleStatusPointerDown}
                 >
-                    <Badge badgeContent={numErrors + numWarnings} className="flex p-0.5">
+                    <Badge badgeContent={numErrors + numWarnings} className="flex p-0.5" title={badgeTitle}>
                         <Error
                             fontSize="inherit"
                             color="error"
                             style={{ display: numErrors === 0 ? "none" : "block" }}
                         />
-                        <div className="overflow-hidden h-full">
+                        <div className="overflow-hidden">
                             <Warning
                                 fontSize="inherit"
                                 color="warning"
@@ -159,8 +171,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
             stateIndicators.push(
                 <div
                     key="header-module-log"
-                    className="cursor-pointer h-full px-1 hover:text-slate-500"
+                    className="cursor-pointer px-1 hover:text-slate-500"
                     onPointerDown={handleShowLogClick}
+                    title="Show complete log for this module"
                 >
                     <History fontSize="inherit" />
                 </div>

@@ -10,7 +10,6 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { Intersection, IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
-import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";

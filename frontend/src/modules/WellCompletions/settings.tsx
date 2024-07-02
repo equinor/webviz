@@ -7,7 +7,6 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";

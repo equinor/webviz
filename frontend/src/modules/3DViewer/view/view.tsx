@@ -9,7 +9,6 @@ import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Intersection, IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
-import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
