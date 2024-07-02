@@ -1,0 +1,75 @@
+from enum import Enum
+from typing import List
+from pydantic import BaseModel
+import numpy as np
+
+# Type of VFP curve
+class VfpType(Enum):
+    VFPPROD = "VFPPROD"
+    VFPINJ = "VFPINJ"
+
+# Flow rate types
+class FlowRateType(Enum):
+    OIL = "OIL"
+    LIQ = "LIQ"
+    GAS = "GAS"
+    WG = "WG"
+    TM = "TM"
+
+# Water fraction types
+class WFR(Enum):
+    WOR = "WOR"
+    WCT = "WCT"
+    WGR = "WGR"
+    WWR = "WWR"
+    WTF = "WTF"
+
+# Gas fraction types
+class GFR(Enum):
+    GOR = "GOR"
+    GLR = "GLR"
+    OGR = "OGR"
+    MMW = "MMW"
+
+# Artificial lift types
+class ALQ(Enum):
+    GRAT = "GRAT"
+    IGLR = "IGLR"
+    TGLR = "TGLR"
+    PUMP = "PUMP"
+    COMP = "COMP"
+    DENO = "DENO"
+    DENG = "DENG"
+    BEAN = "BEAN"
+    UNDEFINED = "''"
+
+# Unit types
+class UnitType(Enum):
+    METRIC = "METRIC"
+    FIELD = "FIELD"
+    LAB = "LAB"
+    PVTM = "PVT-M"
+    DEFAULT = "DEFAULT"
+
+# Tabulated values type
+class TabType(Enum):
+    BHP = "BHP"
+    THT = "TEMP"
+
+class VfpTable(BaseModel):
+    vfp_type: VfpType
+    table_number: int
+    datum: float
+    flow_rate_type: FlowRateType
+    wfr_type: WFR
+    gfr_type: GFR
+    alq_type: ALQ
+    unit_type: UnitType
+    tab_type: TabType
+    flow_rate_values: List[float]
+    thp_values: List[float]
+    wfr_values: List[float]
+    gfr_values: List[float]
+    alq_values: List[float]
+    bhp_table: List[List[List[List[float]]]]
+
