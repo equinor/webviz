@@ -3,6 +3,8 @@ from typing import Any, Dict, Tuple, Optional
 from sumo.wrapper import SumoClient
 from fmu.sumo.explorer import TimeFilter, TimeType
 
+from primary.services.service_exceptions import InvalidDataError, Service
+
 
 def get_time_filter(time_or_interval_str: Optional[str]) -> TimeFilter:
     if time_or_interval_str is None:
@@ -118,7 +120,7 @@ async def get_grid_geometry_and_property_blob_ids_async(
     hits = result["hits"]["hits"]
 
     if len(hits) != 2:
-        raise ValueError(f"Expected 2 hits, got {len(hits)}")
+        raise InvalidDataError(f"Expected 2 hits, got {len(hits)}", service=Service.SUMO)
 
     grid_geometry_id = None
     grid_property_id = None
@@ -129,6 +131,6 @@ async def get_grid_geometry_and_property_blob_ids_async(
             grid_property_id = hit["_id"]
 
     if not grid_geometry_id or not grid_property_id:
-        raise ValueError("Did not find expected document types")
+        raise InvalidDataError("Did not find expected document types", service=Service.SUMO)
 
     return grid_geometry_id, grid_property_id

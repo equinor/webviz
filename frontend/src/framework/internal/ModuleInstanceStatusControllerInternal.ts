@@ -2,20 +2,56 @@ import React from "react";
 
 import {
     ModuleInstanceStatusController,
+    Origin,
     StatusMessageType,
+    StatusMessageWithType,
     StatusSource,
 } from "@framework/ModuleInstanceStatusController";
 
 import { cloneDeep, filter, isEqual, keys } from "lodash";
+import { ApiRequestOptions } from "src/api/core/ApiRequestOptions";
+import { v4 } from "uuid";
 
 type StatusMessage = {
     source: StatusSource;
     message: string;
     type: StatusMessageType;
+    origin: Origin;
+    endpoint?: string;
+    request?: ApiRequestOptions;
+    datetimeMs: number;
 };
 
+export enum LogEntryType {
+    LOADING_DONE = "loading_done",
+    LOADING = "loading",
+    SUCCESS = "success",
+    MESSAGE = "message",
+}
+
+export type LogEntry = {
+    id: string;
+    datetimeMs: number;
+} & (
+    | {
+          type: LogEntryType.LOADING;
+      }
+    | {
+          type: LogEntryType.LOADING_DONE;
+      }
+    | {
+          type: LogEntryType.SUCCESS;
+      }
+    | {
+          type: LogEntryType.MESSAGE;
+          message: StatusMessage;
+          repetitions?: number;
+      }
+);
+
 type StatusControllerState = {
-    messages: StatusMessage[];
+    hotMessageCache: StatusMessage[];
+    log: LogEntry[];
     loading: boolean;
     viewDebugMessage: string;
     settingsDebugMessage: string;
@@ -26,7 +62,8 @@ type StatusControllerState = {
 export class ModuleInstanceStatusControllerInternal implements ModuleInstanceStatusController {
     protected _stateCandidates: StatusControllerState;
     protected _state: StatusControllerState = {
-        messages: [],
+        hotMessageCache: [],
+        log: [],
         loading: false,
         viewDebugMessage: "",
         settingsDebugMessage: "",
@@ -39,20 +76,105 @@ export class ModuleInstanceStatusControllerInternal implements ModuleInstanceSta
         this._stateCandidates = cloneDeep(this._state);
     }
 
-    addMessage(source: StatusSource, message: string, type: StatusMessageType): void {
-        this._stateCandidates.messages.push({
+    addMessage(source: StatusSource, message: StatusMessageWithType): void {
+        this._stateCandidates.hotMessageCache.push({
+            ...message,
             source,
-            message,
-            type,
+            datetimeMs: Date.now(),
         });
     }
 
-    clearMessages(source: StatusSource): void {
-        this._stateCandidates.messages = this._stateCandidates.messages.filter((msg) => msg.source !== source);
+    clearHotMessageCache(source: StatusSource): void {
+        this._stateCandidates.hotMessageCache = this._stateCandidates.hotMessageCache.filter(
+            (msg) => msg.source !== source
+        );
+    }
+
+    private areMessagesEqual(msg1: StatusMessage, msg2: StatusMessage): boolean {
+        if (msg1.message !== msg2.message || msg1.type !== msg2.type) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private transferHotMessagesToLog(): void {
+        const messagesToBeTransferred = this._stateCandidates.hotMessageCache;
+
+        if (this._stateCandidates.loading) {
+            return;
+        }
+        for (const [index, message] of messagesToBeTransferred.entries()) {
+            const potentialDuplicateMessage = this._stateCandidates.log[index];
+            if (
+                potentialDuplicateMessage &&
+                potentialDuplicateMessage.type === LogEntryType.MESSAGE &&
+                this.areMessagesEqual(potentialDuplicateMessage.message, message)
+            ) {
+                potentialDuplicateMessage.repetitions = (potentialDuplicateMessage.repetitions || 1) + 1;
+                continue;
+            }
+            this._stateCandidates.log.unshift(
+                ...messagesToBeTransferred.map((message) => ({
+                    type: LogEntryType.MESSAGE,
+                    message: message,
+                    datetimeMs: Date.now(),
+                    id: v4(),
+                }))
+            );
+            break;
+        }
+    }
+
+    private maybeLogSuccess() {
+        let storeSuccess = false;
+
+        if (this._stateCandidates.log.length > 0 && this._stateCandidates.log[0].type === LogEntryType.LOADING_DONE) {
+            storeSuccess = true;
+        }
+
+        if (!storeSuccess) {
+            return;
+        }
+
+        this._stateCandidates.log.unshift({
+            type: LogEntryType.SUCCESS,
+            datetimeMs: Date.now(),
+            id: v4(),
+        });
+    }
+
+    clearLog(): void {
+        this._state.log = [];
+        this._stateCandidates.log = [];
+        this.notifySubscribers("log");
     }
 
     setLoading(isLoading: boolean): void {
         this._stateCandidates.loading = isLoading;
+        if (isLoading) {
+            if (this._stateCandidates.log.length === 0 || this._stateCandidates.log[0].type !== LogEntryType.LOADING) {
+                this._stateCandidates.log.unshift({
+                    type: LogEntryType.LOADING,
+                    datetimeMs: Date.now(),
+                    id: v4(),
+                });
+            }
+        } else {
+            for (const [index, logEntry] of this._stateCandidates.log.entries()) {
+                if (logEntry.type === LogEntryType.LOADING_DONE) {
+                    break;
+                }
+                if (logEntry.type === LogEntryType.LOADING) {
+                    this._stateCandidates.log.splice(index, 0, {
+                        type: LogEntryType.LOADING_DONE,
+                        datetimeMs: Date.now(),
+                        id: v4(),
+                    });
+                    break;
+                }
+            }
+        }
     }
 
     setDebugMessage(source: StatusSource, message: string): void {
@@ -80,6 +202,9 @@ export class ModuleInstanceStatusControllerInternal implements ModuleInstanceSta
     }
 
     reviseAndPublishState(): void {
+        this.transferHotMessagesToLog();
+        this.maybeLogSuccess();
+
         const differentStateKeys = filter(keys(this._stateCandidates), (key: keyof StatusControllerState) => {
             return !isEqual(this._state[key], this._stateCandidates[key]);
         }) as (keyof StatusControllerState)[];

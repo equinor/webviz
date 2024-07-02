@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DrawerContent, GuiEvent, GuiMessageBroker, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiMessageBroker, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Module, ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
@@ -460,7 +460,7 @@ if (isDevMode()) {
 }
 
 export const ModulesList: React.FC<ModulesListProps> = (props) => {
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
     const moduleInstances = useModuleInstances(props.workbench);
 
     const ref = React.useRef<HTMLDivElement>(null);
@@ -503,7 +503,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
     }
 
     function handleNotificationClick() {
-        props.workbench.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
+        props.workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
     }
 
     const handleDraggingStart = React.useCallback(function handleDraggingStart() {
@@ -519,7 +519,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
         left = boundingClientRect.left + boundingClientRect.width + 10;
     }
 
-    const visible = drawerContent === DrawerContent.ModulesList;
+    const visible = drawerContent === LeftDrawerContent.ModulesList;
 
     return (
         <div ref={ref} className={resolveClassNames("w-full h-full", { hidden: !visible })}>

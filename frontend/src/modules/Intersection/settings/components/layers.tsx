@@ -536,7 +536,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
             ></div>
             <div
                 className={resolveClassNames(
-                    "flex h-10 py-2 px-1 hover:bg-blue-100 text-sm items-center gap-1 border-b border-b-gray-300 relative",
+                    "flex h-8 py-1 px-1 hover:bg-blue-100 text-sm items-center gap-1 border-b border-b-gray-300 relative",
                     {
                         "bg-red-100": props.layer.getStatus() === LayerStatus.ERROR,
                         "bg-white": props.layer.getStatus() !== LayerStatus.ERROR,

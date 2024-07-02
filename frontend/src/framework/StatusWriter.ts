@@ -1,7 +1,13 @@
 import React from "react";
 
 import { SettingsContext, ViewContext } from "./ModuleContext";
-import { ModuleInstanceStatusController, StatusMessageType, StatusSource } from "./ModuleInstanceStatusController";
+import {
+    ModuleInstanceStatusController,
+    Origin,
+    StatusMessage,
+    StatusMessageType,
+    StatusSource,
+} from "./ModuleInstanceStatusController";
 
 export class ViewStatusWriter {
     private _statusController: ModuleInstanceStatusController;
@@ -14,12 +20,18 @@ export class ViewStatusWriter {
         this._statusController.setLoading(isLoading);
     }
 
-    addError(message: string): void {
-        this._statusController.addMessage(StatusSource.View, message, StatusMessageType.Error);
+    addError(error: StatusMessage | string): void {
+        if (typeof error === "string") {
+            error = { message: error, origin: Origin.MODULE };
+        }
+        this._statusController.addMessage(StatusSource.View, { type: StatusMessageType.Error, ...error });
     }
 
-    addWarning(message: string): void {
-        this._statusController.addMessage(StatusSource.View, message, StatusMessageType.Warning);
+    addWarning(warning: StatusMessage | string): void {
+        if (typeof warning === "string") {
+            warning = { message: warning, origin: Origin.MODULE };
+        }
+        this._statusController.addMessage(StatusSource.View, { type: StatusMessageType.Warning, ...warning });
     }
 
     setDebugMessage(message: string): void {
@@ -34,12 +46,18 @@ export class SettingsStatusWriter {
         this._statusController = statusController;
     }
 
-    addError(message: string): void {
-        this._statusController.addMessage(StatusSource.Settings, message, StatusMessageType.Error);
+    addError(error: StatusMessage | string): void {
+        if (typeof error === "string") {
+            error = { message: error, origin: Origin.MODULE };
+        }
+        this._statusController.addMessage(StatusSource.Settings, { type: StatusMessageType.Error, ...error });
     }
 
-    addWarning(message: string): void {
-        this._statusController.addMessage(StatusSource.Settings, message, StatusMessageType.Warning);
+    addWarning(warning: StatusMessage | string): void {
+        if (typeof warning === "string") {
+            warning = { message: warning, origin: Origin.MODULE };
+        }
+        this._statusController.addMessage(StatusSource.Settings, { type: StatusMessageType.Warning, ...warning });
     }
 
     setDebugMessage(message: string): void {
@@ -52,7 +70,7 @@ export function useViewStatusWriter(viewContext: ViewContext<any, any, any, any>
 
     const statusWriter = React.useRef<ViewStatusWriter>(new ViewStatusWriter(statusController));
 
-    statusController.clearMessages(StatusSource.View);
+    statusController.clearHotMessageCache(StatusSource.View);
     statusController.incrementReportedComponentRenderCount(StatusSource.View);
 
     React.useEffect(function handleRender() {
@@ -67,7 +85,7 @@ export function useSettingsStatusWriter(settingsContext: SettingsContext<any, an
 
     const statusWriter = React.useRef<SettingsStatusWriter>(new SettingsStatusWriter(statusController));
 
-    statusController.clearMessages(StatusSource.Settings);
+    statusController.clearHotMessageCache(StatusSource.Settings);
     statusController.incrementReportedComponentRenderCount(StatusSource.Settings);
 
     React.useEffect(function handleRender() {

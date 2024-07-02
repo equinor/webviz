@@ -5,6 +5,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
@@ -32,9 +33,20 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
     statusWriter.setLoading(pvtDataQueries.isFetching);
 
     if (pvtDataQueries.allQueriesFailed) {
-        statusWriter.addError("Failed to load data.");
+        for (const error of pvtDataQueries.errors) {
+            const helper = ApiErrorHelper.fromError(error);
+            if (helper?.hasError()) {
+                statusWriter.addError(helper.makeStatusMessage());
+            }
+        }
     } else if (pvtDataQueries.someQueriesFailed) {
         statusWriter.addWarning("Could not load PVT data for some realizations.");
+        for (const error of pvtDataQueries.errors) {
+            const helper = ApiErrorHelper.fromError(error);
+            if (helper?.hasError()) {
+                statusWriter.addError(helper.makeFullErrorMessage());
+            }
+        }
     }
 
     function makeContent() {

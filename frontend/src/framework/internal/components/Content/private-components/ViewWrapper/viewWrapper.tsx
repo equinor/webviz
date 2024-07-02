@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DrawerContent, GuiEvent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { Point2D, pointRelativeToDomRect, pointSubtraction, pointerEventToPoint } from "@lib/utils/geometry";
@@ -34,7 +34,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.DrawerContent
+        GuiState.LeftDrawerContent
     );
     const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -103,8 +103,8 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
         if (leftSettingsPanelWidth <= 5) {
             setLeftSettingsPanelWidth(20);
         }
-        if (drawerContent !== DrawerContent.SyncSettings) {
-            setDrawerContent(DrawerContent.ModuleSettings);
+        if (drawerContent !== LeftDrawerContent.SyncSettings) {
+            setDrawerContent(LeftDrawerContent.ModuleSettings);
         }
         if (props.isActive) return;
         props.workbench.getGuiMessageBroker().setState(GuiState.ActiveModuleInstanceId, props.moduleInstance.getId());
@@ -120,7 +120,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             return;
         }
         pointerDown.current = false;
-        if (drawerContent === DrawerContent.ModulesList) {
+        if (drawerContent === LeftDrawerContent.ModulesList) {
             if (!timeRef.current || Date.now() - timeRef.current < 800) {
                 handleModuleClick();
             }
@@ -138,7 +138,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     }
 
     const showAsActive =
-        props.isActive && [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent);
+        props.isActive && [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent);
 
     return (
         <>

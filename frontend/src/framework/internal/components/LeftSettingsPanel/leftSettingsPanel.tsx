@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DrawerContent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -20,7 +20,7 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
     const moduleInstances = useModuleInstances(props.workbench);
     const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
 
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
 
     const mainRef = React.useRef<HTMLDivElement>(null);
 
@@ -36,7 +36,7 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
             <ColorPaletteSettings workbench={props.workbench} />
             <div
                 className={resolveClassNames(
-                    drawerContent === DrawerContent.ModuleSettings ? "block" : "hidden",
+                    drawerContent === LeftDrawerContent.ModuleSettings ? "block" : "hidden",
                     "h-full",
                     "w-full"
                 )}

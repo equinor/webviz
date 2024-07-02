@@ -1,7 +1,7 @@
 import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
-import { DrawerContent, GuiState } from "@framework/GuiMessageBroker";
+import { GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
 import { LayoutElement, Workbench } from "@framework/Workbench";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
@@ -59,9 +59,9 @@ function App() {
         }
 
         if (WORKBENCH.getLayout().length === 0) {
-            WORKBENCH.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModulesList);
+            WORKBENCH.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModulesList);
         } else {
-            WORKBENCH.getGuiMessageBroker().setState(GuiState.DrawerContent, DrawerContent.ModuleSettings);
+            WORKBENCH.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
         }
         setInitAppState(InitAppState.InitCompleted);
         WORKBENCH.getGuiMessageBroker().setState(GuiState.AppInitialized, true);

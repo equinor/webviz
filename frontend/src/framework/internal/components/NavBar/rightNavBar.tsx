@@ -1,23 +1,24 @@
 import React from "react";
 
-import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { FilterAlt } from "@mui/icons-material";
+import { FilterAlt, History } from "@mui/icons-material";
 
 type RightNavBarProps = {
     workbench: Workbench;
 };
 
 export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
+    const [drawerContent, setDrawerContent] = useGuiState(
+        props.workbench.getGuiMessageBroker(),
+        GuiState.RightDrawerContent
+    );
+
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
         GuiState.RightSettingsPanelWidthInPercent
-    );
-    const [rightSettingsPanelExpanded, setRightSettingsPanelExpanded] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.RightSettingsPanelExpanded
     );
 
     function ensureSettingsPanelIsVisible() {
@@ -26,14 +27,18 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         }
     }
 
-    function handleSettingsPanelCollapseOrExpand() {
-        const newExpanded = !rightSettingsPanelExpanded;
-        setRightSettingsPanelExpanded(newExpanded);
-        if (newExpanded) {
-            ensureSettingsPanelIsVisible();
+    function handleRealizationFilterClick() {
+        if (rightSettingsPanelWidth > 0 && drawerContent === RightDrawerContent.RealizationFilterSettings) {
+            setRightSettingsPanelWidth(0);
             return;
         }
-        setRightSettingsPanelWidth(0);
+        ensureSettingsPanelIsVisible();
+        setDrawerContent(RightDrawerContent.RealizationFilterSettings);
+    }
+
+    function handleModuleInstanceLogClick() {
+        ensureSettingsPanelIsVisible();
+        setDrawerContent(RightDrawerContent.ModuleInstanceLog);
     }
 
     return (
@@ -44,14 +49,28 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
         >
             <div className="flex flex-col gap-2 flex-grow">
                 <Button
-                    title="Open Filter Panel"
-                    onClick={handleSettingsPanelCollapseOrExpand}
+                    title="Open realization filter panel"
+                    onClick={handleRealizationFilterClick}
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        rightSettingsPanelExpanded ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === RightDrawerContent.RealizationFilterSettings && rightSettingsPanelWidth > 0
+                            ? "text-cyan-600"
+                            : "!text-slate-800"
                     )}
                     startIcon={<FilterAlt fontSize="small" className="w-5 h-5 mr-2" />}
+                />
+                <Button
+                    title="Open realization filter panel"
+                    onClick={handleModuleInstanceLogClick}
+                    className={resolveClassNames(
+                        "w-full",
+                        "h-10",
+                        drawerContent === RightDrawerContent.ModuleInstanceLog && rightSettingsPanelWidth > 0
+                            ? "text-cyan-600"
+                            : "!text-slate-800"
+                    )}
+                    startIcon={<History fontSize="small" className="w-5 h-5 mr-2" />}
                 />
             </div>
         </div>

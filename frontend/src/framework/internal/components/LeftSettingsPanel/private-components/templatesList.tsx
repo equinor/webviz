@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DrawerContent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
 import { Workbench } from "@framework/Workbench";
@@ -95,7 +95,7 @@ type TemplatesListProps = {
 export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.DrawerContent
+        GuiState.LeftDrawerContent
     );
     const [searchQuery, setSearchQuery] = React.useState("");
 
@@ -109,7 +109,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
             return;
         }
         props.workbench.applyTemplate(template);
-        setDrawerContent(DrawerContent.ModuleSettings);
+        setDrawerContent(LeftDrawerContent.ModuleSettings);
     };
 
     return (
@@ -119,7 +119,7 @@ export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
             filterPlaceholder="Filter templates..."
             title="Select a template"
             icon={<GridView />}
-            visible={drawerContent === DrawerContent.TemplatesList}
+            visible={drawerContent === LeftDrawerContent.TemplatesList}
         >
             {Object.keys(TemplateRegistry.getRegisteredTemplates())
                 .filter((templName) => templName.toLowerCase().includes(searchQuery.toLowerCase()))

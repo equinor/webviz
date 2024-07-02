@@ -22,6 +22,7 @@ import { useValidState } from "@lib/hooks/useValidState";
 import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { isEqual } from "lodash";
 
@@ -112,15 +113,9 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
     );
-    if (wellHeadersQuery.isError) {
-        statusWriter.addError("Error loading well headers");
-    }
-    if (seismicCubeMetaListQuery.isError) {
-        statusWriter.addError("Error loading seismic cube meta list");
-    }
-    if (surfaceMetadataQuery.isError) {
-        statusWriter.addError("Error loading metadata for surfaces");
-    }
+    usePropagateApiErrorToStatusWriter(wellHeadersQuery, statusWriter);
+    usePropagateApiErrorToStatusWriter(seismicCubeMetaListQuery, statusWriter);
+    usePropagateApiErrorToStatusWriter(surfaceMetadataQuery, statusWriter);
 
     if (seismicCubeMetaListQuery.data && seismicCubeMetaListQuery.data.length === 0) {
         statusWriter.addWarning("No seismic cubes found for ensemble");
