@@ -6,6 +6,7 @@ import { isEqual } from "lodash";
 
 import { EnsembleIdent } from "./EnsembleIdent";
 import { Workbench } from "./Workbench";
+import { InplaceVolumetricsFilter } from "./types/inplaceVolumetricsFilter";
 import { Intersection } from "./types/intersection";
 import { Wellbore } from "./types/wellbore";
 
@@ -33,6 +34,7 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.intersection": Intersection;
     "global.syncValue.cameraPositionIntersection": Viewport;
     "global.syncValue.verticalScale": number;
+    "global.syncValue.inplaceVolumetricsFilter": InplaceVolumetricsFilter;
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;
