@@ -1,12 +1,15 @@
 from enum import Enum
 from typing import List
-from pydantic import BaseModel
+
 import numpy as np
+from pydantic import BaseModel
+
 
 # Type of VFP curve
 class VfpType(Enum):
     VFPPROD = "VFPPROD"
     VFPINJ = "VFPINJ"
+
 
 # Flow rate types
 class FlowRateType(Enum):
@@ -16,6 +19,7 @@ class FlowRateType(Enum):
     WG = "WG"
     TM = "TM"
 
+
 # Water fraction types
 class WFR(Enum):
     WOR = "WOR"
@@ -24,12 +28,14 @@ class WFR(Enum):
     WWR = "WWR"
     WTF = "WTF"
 
+
 # Gas fraction types
 class GFR(Enum):
     GOR = "GOR"
     GLR = "GLR"
     OGR = "OGR"
     MMW = "MMW"
+
 
 # Artificial lift types
 class ALQ(Enum):
@@ -43,6 +49,7 @@ class ALQ(Enum):
     BEAN = "BEAN"
     UNDEFINED = "''"
 
+
 # Unit types
 class UnitType(Enum):
     METRIC = "METRIC"
@@ -51,25 +58,26 @@ class UnitType(Enum):
     PVTM = "PVT-M"
     DEFAULT = "DEFAULT"
 
+
 # Tabulated values type
 class TabType(Enum):
     BHP = "BHP"
     THT = "TEMP"
 
+
 class VfpTable(BaseModel):
     vfp_type: VfpType
     table_number: int
     datum: float
-    flow_rate_type: FlowRateType
     wfr_type: WFR
     gfr_type: GFR
     alq_type: ALQ
+    flow_rate_type: FlowRateType
     unit_type: UnitType
     tab_type: TabType
-    flow_rate_values: List[float]
     thp_values: List[float]
     wfr_values: List[float]
     gfr_values: List[float]
     alq_values: List[float]
-    bhp_table: List[List[List[List[float]]]]
-
+    flow_rate_values: List[float]
+    bhp_table: List[List[List[List[List[float]]]]]
