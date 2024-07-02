@@ -5,7 +5,7 @@ import { createPortal } from "@lib/utils/createPortal";
 import { Point2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Mark, Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
+import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
@@ -25,7 +25,6 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
         orientation,
         track,
         debounceTimeMs,
-        marks,
         ...rest
     } = props;
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,14 +43,6 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
     if (propsValue !== undefined && propsValue !== prevValue) {
         setValue(propsValue);
         setPrevValue(propsValue);
-    }
-
-    let adjustedMarks: boolean | Mark[] | undefined = undefined;
-    if (
-        marks === true ||
-        (Array.isArray(marks) && marks.length > 0 && marks.length < sliderRect.width / 3 - convertRemToPixels(6 / 4))
-    ) {
-        adjustedMarks = marks;
     }
 
     React.useEffect(function handleMount() {
@@ -226,7 +217,6 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                     onChange={handleValueChanged}
                     value={value}
                     ref={ref}
-                    marks={adjustedMarks}
                     slotProps={{
                         root: {
                             className: resolveClassNames(
@@ -318,13 +308,18 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                                 "h-2",
                                 "-ml-0.5",
                                 "-mt-0.5",
-                                "bg-blue-600",
-                                "border-2",
                                 "opacity-80",
-                                "border-white",
                                 "transform",
                                 orientation === "vertical" ? "-translate-y-0" : "",
-                                "z-4"
+                                "z-4",
+                                {
+                                    "border-2 bg-blue-600 border-white":
+                                        Array.isArray(props.marks) &&
+                                        props.marks.length <
+                                            ((orientation === "vertical" ? sliderRect.height : sliderRect.width) -
+                                                convertRemToPixels(6 / 4)) /
+                                                8,
+                                }
                             ),
                         },
                     }}
