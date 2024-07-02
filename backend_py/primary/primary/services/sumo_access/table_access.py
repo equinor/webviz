@@ -23,7 +23,7 @@ class TableAccess:
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return TableAccess(case=case, iteration_name=iteration_name)
 
-    async def get_table_schemas_single_realization(self, realization: int = 0) -> List[SumoTableSchema]:
+    async def get_table_schemas_single_realization_async(self, realization: int = 0) -> List[SumoTableSchema]:
         """Get all table descriptions for a given realization"""
 
         table_collection = self._case.tables.filter(
@@ -40,7 +40,7 @@ class TableAccess:
             async for table in table_collection
         ]
 
-    async def get_realization_table(
+    async def get_realization_table_async(
         self,
         table_schema: SumoTableSchema,
         realization: int = 0,
@@ -59,7 +59,7 @@ class TableAccess:
             raise ValueError(f"Multiple tables found for {table_schema=}")
 
         sumo_table = await table_collection.getitem_async(0)
-        return sumo_table.arrowtable
+        return await sumo_table.to_arrow_async()
 
     def realizations_tables_are_equal(self, table_schema: SumoTableSchema) -> bool:
         """Check if a given table has the same data for all realizations"""
