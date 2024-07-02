@@ -1,10 +1,9 @@
-import { InplaceVolumetricsIndex_api } from "@api";
+import { FluidZone_api, InplaceVolumetricsIndex_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
+import { FluidZoneTypeEnum } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
-
-import { availableInplaceResponsesAtom } from "./derivedAtoms";
 
 import { PlotGroupingEnum, PlotTypeEnum } from "../../typesAndEnums";
 
@@ -25,5 +24,6 @@ export const plotTypeAtom = atom<PlotTypeEnum>(PlotTypeEnum.HISTOGRAM);
 export const groupByAtom = atomWithCompare<PlotGroupingEnum>(PlotGroupingEnum.ENSEMBLE, (a, b) => a === b);
 export const colorByAtom = atomWithCompare<PlotGroupingEnum>(PlotGroupingEnum.ENSEMBLE, (a, b) => a === b);
 export const userSelectedInplaceTableNameAtom = atom<string | null>(null);
+export const userSelectedInplaceFluidZonesAtom = atom<FluidZone_api[]>([]);
 export const userSelectedInplaceResponseAtom = atom<string | null>(null);
-export const userSelectedInplaceCategoriesAtom = atom<InplaceVolumetricsIndex_api[]>([]);
+export const userSelectedInplaceIndexesAtom = atom<InplaceVolumetricsIndex_api[]>([]);

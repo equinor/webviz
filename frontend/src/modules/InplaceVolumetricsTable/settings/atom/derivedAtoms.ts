@@ -63,7 +63,7 @@ export const availableTableSourceAtom = atom<string[]>((get) => {
             continue;
         }
 
-        query.data.forEach((tableDefinition) => availableTableSource.add(tableDefinition.name));
+        query.data.forEach((tableDefinition) => availableTableSource.add(tableDefinition.table_name));
     }
 
     return Array.from(availableTableSource);
@@ -96,7 +96,7 @@ export const availableResponsesAtom = atom<string[]>((get) => {
         }
 
         query.data.forEach((tableDefinition) => {
-            if (!selectedTableSources.includes(tableDefinition.name)) {
+            if (!selectedTableSources.includes(tableDefinition.table_name)) {
                 return;
             }
 
@@ -136,7 +136,7 @@ export const availableInplaceVolumetricsIndicesAtom = atom<AvailableInplaceVolum
         }
 
         query.data.forEach((tableDefinition) => {
-            if (!selectedTableSources.includes(tableDefinition.name)) {
+            if (!selectedTableSources.includes(tableDefinition.table_name)) {
                 return;
             }
 

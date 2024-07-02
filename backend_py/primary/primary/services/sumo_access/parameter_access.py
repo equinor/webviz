@@ -138,6 +138,9 @@ def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[En
         else:
             group_name = parameter_name_components[0]
             parameter_name = parameter_name_components[1]
+            "GLOBVAR:PORO"
+            
+            
         ensemble_parameters.append(
             EnsembleParameter(
                 name=parameter_name,
@@ -151,3 +154,4 @@ def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[En
             )
         )
     return ensemble_parameters
+

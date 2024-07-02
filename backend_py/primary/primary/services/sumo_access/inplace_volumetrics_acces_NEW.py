@@ -48,6 +48,8 @@ class InplaceVolumetricsAccess:
         )
         table_names = await vol_table_collection.names_async
         return table_names
+    
+    
     async def get_inplace_volumetrics_table_no_throw_async(
         self, table_name: str, column_names: Optional[set[str]] = None
     ) -> Optional[pa.Table]:

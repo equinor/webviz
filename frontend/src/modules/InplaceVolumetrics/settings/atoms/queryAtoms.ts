@@ -1,16 +1,22 @@
 import { InplaceVolumetricsTableDefinition_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { InplaceVolumetricsInfoWithEnsembleIdent } from "@modules/_shared/InplaceVolumetrics/types";
 import { UseQueryResult } from "@tanstack/react-query";
 
 import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
 
-import { CombinedInplaceVolTableInfoResults } from "../../typesAndEnums";
+export type CombinedInplaceVolTableInfoResults = {
+    tableInfos: InplaceVolumetricsInfoWithEnsembleIdent[];
+    isFetching: boolean;
+    someQueriesFailed: boolean;
+    allQueriesFailed: boolean;
+};
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export const inplaceTableInfosQueryAtom = atomWithQueries((get) => {
+export const inplaceTableDefinitionsQueriesAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
     const queries = selectedEnsembleIdents
@@ -32,13 +38,17 @@ export const inplaceTableInfosQueryAtom = atomWithQueries((get) => {
     function combine(
         results: UseQueryResult<InplaceVolumetricsTableDefinition_api[], Error>[]
     ): CombinedInplaceVolTableInfoResults {
-        return {
-            tableInfoCollections: selectedEnsembleIdents.map((ensembleIdent, idx) => {
+        const tableInfos = selectedEnsembleIdents.flatMap((ensembleIdent, idx) => {
+            const ensembleTableInfos = results[idx]?.data ?? [];
+            return ensembleTableInfos.map((tableInfo) => {
                 return {
+                    ...tableInfo,
                     ensembleIdent: ensembleIdent,
-                    tableInfos: results[idx]?.data ?? [],
                 };
-            }),
+            });
+        });
+        return {
+            tableInfos,
             isFetching: results.some((result) => result.isFetching),
             someQueriesFailed: results.some((result) => result.isError),
             allQueriesFailed: results.every((result) => result.isError),

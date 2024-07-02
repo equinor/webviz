@@ -1,11 +1,13 @@
-import { InplaceVolumetricsIndex_api } from "@api";
+import { FluidZone_api, InplaceVolumetricsIndex_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
+import { FluidZoneTypeEnum } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { colorByAtom, groupByAtom, plotTypeAtom } from "./settings/atoms/baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
-    selectedInplaceCategoriesAtom,
+    selectedInplaceFluidZonesAtom,
+    selectedInplaceIndexesAtom,
     selectedInplaceResponseAtom,
     selectedInplaceTableNameAtom,
 } from "./settings/atoms/derivedAtoms";
@@ -19,8 +21,12 @@ export type Interface = {
         groupBy: PlotGroupingEnum;
         selectedEnsembleIdents: EnsembleIdent[];
         selectedInplaceTableName: string | null;
+        selectedInplaceFluidZones: FluidZone_api[];
         selectedInplaceResponseName: string | null;
-        selectedInplaceCategories: InplaceVolumetricsIndex_api[];
+        selectedInplaceIndexes: {
+            index_name: string;
+            values: (string | number)[];
+        }[];
     };
 };
 
@@ -42,11 +48,14 @@ export const interfaceInitialization: InterfaceInitialization<Interface> = {
         selectedInplaceTableName: (get) => {
             return get(selectedInplaceTableNameAtom);
         },
+        selectedInplaceFluidZones: (get) => {
+            return get(selectedInplaceFluidZonesAtom);
+        },
         selectedInplaceResponseName: (get) => {
             return get(selectedInplaceResponseAtom);
         },
-        selectedInplaceCategories: (get) => {
-            return get(selectedInplaceCategoriesAtom);
+        selectedInplaceIndexes: (get) => {
+            return get(selectedInplaceIndexesAtom);
         },
     },
 };

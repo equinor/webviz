@@ -1,4 +1,8 @@
+import { InplaceVolumetricsTableDefinition_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import InplaceVolumetricsTable from "@modules/InplaceVolumetricsTable/components/InplaceVolumetricsTable";
+import { QueriesStatus } from "@modules/InplaceVolumetricsTable/types";
+import { InplaceVolumesTablesInfoAccessor } from "@modules/_shared/InplaceVolumetrics/InplaceVolumetricsTablesInfoAccessor";
 
 import { atom } from "jotai";
 
@@ -6,13 +10,12 @@ import {
     colorByAtom,
     groupByAtom,
     userSelectedEnsembleIdentsAtom,
-    userSelectedInplaceCategoriesAtom,
+    userSelectedInplaceFluidZonesAtom,
+    userSelectedInplaceIndexesAtom,
     userSelectedInplaceResponseAtom,
     userSelectedInplaceTableNameAtom,
 } from "./baseAtoms";
-import { inplaceTableInfosQueryAtom } from "./queryAtoms";
-
-import { findCommonTablesAcrossCollections } from "../../utils/intersectTableInfos";
+import { inplaceTableDefinitionsQueriesAtom } from "./queryAtoms";
 
 export const selectedEnsembleIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);
@@ -30,68 +33,86 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     return computedEnsembleIdents;
 });
 
-export const intersectedTablesAtom = atom((get) => {
-    const inplaceTableInfosQuery = get(inplaceTableInfosQueryAtom);
-    return findCommonTablesAcrossCollections(inplaceTableInfosQuery.tableInfoCollections);
+export const isInplaceTableDefinitionsQueriesFetchingAtom = atom<boolean>((get) => {
+    const inplaceTableDefinitionsQueries = get(inplaceTableDefinitionsQueriesAtom);
+
+    return inplaceTableDefinitionsQueries.isFetching;
 });
 
-export const availableInplaceTableNamesAtom = atom((get) => {
-    const intersectedTables = get(intersectedTablesAtom);
-    return intersectedTables.map((table) => table.name);
+export const inplaceVolumetricsTableInfosAccessorAtom = atom((get) => {
+    const inplaceTableDefinitionsQueries = get(inplaceTableDefinitionsQueriesAtom);
+    const isFetching = get(isInplaceTableDefinitionsQueriesFetchingAtom);
+    if (isFetching) {
+        return new InplaceVolumesTablesInfoAccessor([]);
+    }
+
+    const accessor = new InplaceVolumesTablesInfoAccessor(inplaceTableDefinitionsQueries.tableInfos);
+    return accessor;
 });
 
 export const selectedInplaceTableNameAtom = atom((get) => {
+    const accessor = get(inplaceVolumetricsTableInfosAccessorAtom);
+    const availableInplaceTableNames = accessor.getTableNames();
+
     const userSelectedInplaceTableName = get(userSelectedInplaceTableNameAtom);
-    const availableInplaceTableNames = get(availableInplaceTableNamesAtom);
     if (userSelectedInplaceTableName && availableInplaceTableNames.includes(userSelectedInplaceTableName)) {
         return userSelectedInplaceTableName;
     }
     return availableInplaceTableNames.length ? availableInplaceTableNames[0] : null;
 });
 
-export const availableInplaceResponsesAtom = atom((get) => {
-    const intersectedTables = get(intersectedTablesAtom);
-    const selectedInplaceTableName = get(selectedInplaceTableNameAtom);
-    const selectedTable = intersectedTables.find((table) => table.name === selectedInplaceTableName);
-    return selectedTable?.result_names || [];
+export const selectedInplaceFluidZonesAtom = atom((get) => {
+    const accessor = get(inplaceVolumetricsTableInfosAccessorAtom);
+    const availableInplaceFluidZones = accessor.getFluidZones();
+
+    const userSelectedInplaceFluidZones = get(userSelectedInplaceFluidZonesAtom);
+
+    if (userSelectedInplaceFluidZones.length === 0) {
+        return availableInplaceFluidZones;
+    }
+
+    const intersection = availableInplaceFluidZones.filter((zone) => userSelectedInplaceFluidZones.includes(zone));
+
+    return intersection;
 });
+
 export const selectedInplaceResponseAtom = atom((get) => {
-    const availableInplaceResponses = get(availableInplaceResponsesAtom);
+    const accessor = get(inplaceVolumetricsTableInfosAccessorAtom);
+    const availableInplaceResponses = accessor.getResponseNames();
+
     const userSelectedInplaceResponse = get(userSelectedInplaceResponseAtom);
     if (userSelectedInplaceResponse && availableInplaceResponses.includes(userSelectedInplaceResponse)) {
         return userSelectedInplaceResponse;
     }
     if (availableInplaceResponses.length) {
-        if (availableInplaceResponses.includes("STOIIP_OIL")) {
-            return "STOIIP_OIL";
+        if (availableInplaceResponses.includes("STOIIP")) {
+            return "STOIIP";
+        }
+        if (availableInplaceResponses.includes("GIIP")) {
+            return "GIIP";
         }
         return availableInplaceResponses[0];
     }
     return null;
 });
-export const availableInplaceCategoriesAtom = atom((get) => {
-    const intersectedTables = get(intersectedTablesAtom);
-    const selectedInplaceTableName = get(selectedInplaceTableNameAtom);
-    const selectedTable = intersectedTables.find((table) => table.name === selectedInplaceTableName);
-    return selectedTable?.indexes ?? [];
-});
 
-export const selectedInplaceCategoriesAtom = atom((get) => {
-    const availableInplaceCategories = get(availableInplaceCategoriesAtom);
+export const selectedInplaceIndexesAtom = atom((get) => {
+    const accessor = get(inplaceVolumetricsTableInfosAccessorAtom);
+    const availableInplaceIndexes = accessor.getIndexes();
 
-    const userSelectedInplaceCategories = get(userSelectedInplaceCategoriesAtom);
+    const userSelectedInplaceIndexes = get(userSelectedInplaceIndexesAtom);
 
-    if (userSelectedInplaceCategories.length) {
-        return availableInplaceCategories.map((category) => {
-            const userSelectedCategory = userSelectedInplaceCategories.find(
-                (selectedCategory) => selectedCategory.index_name === category.index_name
+    if (userSelectedInplaceIndexes.length) {
+        return availableInplaceIndexes.map((category) => {
+            const userSelectedIndex = userSelectedInplaceIndexes.find(
+                (selectedIndex) => selectedIndex.index_name === category.index_name
             );
-            if (userSelectedCategory && userSelectedCategory.values.length) {
-                return userSelectedCategory;
+            if (userSelectedIndex && userSelectedIndex.values.length) {
+                return userSelectedIndex;
             }
             return category;
         });
     }
 
-    return availableInplaceCategories;
+    return availableInplaceIndexes;
 });

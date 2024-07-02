@@ -2,13 +2,15 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { FluidZone } from './FluidZone';
 import type { InplaceVolumetricsIndex } from './InplaceVolumetricsIndex';
 /**
  * Definition of a volumetric table
  */
 export type InplaceVolumetricsTableDefinition = {
-    name: string;
-    indexes: Array<InplaceVolumetricsIndex>;
+    table_name: string;
+    fluid_zones: Array<FluidZone>;
     result_names: Array<string>;
+    indexes: Array<InplaceVolumetricsIndex>;
 };
 

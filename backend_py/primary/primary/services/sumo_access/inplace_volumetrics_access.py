@@ -113,15 +113,16 @@ LOGGER = logging.getLogger(__name__)
 
 
 class InplaceVolumetricsAccess:
-    def __init__(self, case: Case, case_uuid: str):
+    def __init__(self, case: Case,case_uuid:str, iteration_name: str):
         self._case: Case = case
         self._case_uuid: str = case_uuid
+        self._iteration_name: str = iteration_name
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str) -> "InplaceVolumetricsAccess":
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "InplaceVolumetricsAccess":
         sumo_client = create_sumo_client(access_token)
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
-        return cls(case=case, case_uuid=case_uuid)
+        return cls(case=case,case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_inplace_volumetrics_table_definitions_async(self) -> List[InplaceVolumetricsTableDefinition]:
         """Retrieve the table definitions for the volumetric tables"""

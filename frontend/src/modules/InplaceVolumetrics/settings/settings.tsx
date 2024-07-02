@@ -1,6 +1,6 @@
 import React from "react";
 
-import { InplaceVolumetricsIndexNames_api } from "@api";
+import { FluidZone_api, InplaceVolumetricsIndexNames_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -10,6 +10,7 @@ import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
+import { FluidZoneTypeEnum } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { max } from "lodash";
@@ -19,21 +20,20 @@ import {
     groupByAtom,
     plotTypeAtom,
     userSelectedEnsembleIdentsAtom,
-    userSelectedInplaceCategoriesAtom,
+    userSelectedInplaceFluidZonesAtom,
+    userSelectedInplaceIndexesAtom,
     userSelectedInplaceResponseAtom,
     userSelectedInplaceTableNameAtom,
 } from "./atoms/baseAtoms";
 import {
-    availableInplaceCategoriesAtom,
-    availableInplaceResponsesAtom,
-    availableInplaceTableNamesAtom,
+    inplaceVolumetricsTableInfosAccessorAtom,
     selectedEnsembleIdentsAtom,
-    selectedInplaceCategoriesAtom,
+    selectedInplaceFluidZonesAtom,
+    selectedInplaceIndexesAtom,
     selectedInplaceResponseAtom,
     selectedInplaceTableNameAtom,
 } from "./atoms/derivedAtoms";
-import { inplaceTableInfosQueryAtom } from "./atoms/queryAtoms";
-import FilterSelect from "./components/filterSelect";
+import { inplaceTableDefinitionsQueriesAtom } from "./atoms/queryAtoms";
 
 import { Interface } from "../settingsToViewInterface";
 import { State } from "../state";
@@ -49,21 +49,24 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
     const [groupBy, setGroupBy] = useAtom(groupByAtom);
     const [colorBy, setColorBy] = useAtom(colorByAtom);
 
-    const inplaceTableInfosQuery = useAtomValue(inplaceTableInfosQueryAtom);
+    const inplaceTableInfosQuery = useAtomValue(inplaceTableDefinitionsQueriesAtom);
+    const inplaceInfoAccessor = useAtomValue(inplaceVolumetricsTableInfosAccessorAtom);
+    const availableInplaceTableNames = inplaceInfoAccessor.getTableNames();
+    const availableFluidZones = inplaceInfoAccessor.getFluidZones();
+    const availableInplaceResponses = inplaceInfoAccessor.getResponseNames();
+    const availableInplaceIndexes = inplaceInfoAccessor.getIndexes();
 
-    const availableInplaceTableNames = useAtomValue(availableInplaceTableNamesAtom);
     const setSelectedInplaceTableName = useSetAtom(userSelectedInplaceTableNameAtom);
     const selectedInplaceTableName = useAtomValue(selectedInplaceTableNameAtom);
 
-    const availableInplaceResponses = useAtomValue(availableInplaceResponsesAtom);
+    const setSelectedInplaceFluidZones = useSetAtom(userSelectedInplaceFluidZonesAtom);
+    const selectedInplaceFluidZones = useAtomValue(selectedInplaceFluidZonesAtom);
+
     const setSelectedInplaceResponse = useSetAtom(userSelectedInplaceResponseAtom);
     const selectedInplaceResponse = useAtomValue(selectedInplaceResponseAtom);
 
-    const availableInplaceCategories = useAtomValue(availableInplaceCategoriesAtom);
-    const setSelectedInplaceCategories = useSetAtom(userSelectedInplaceCategoriesAtom);
-    const selectedInplaceCategories = useAtomValue(selectedInplaceCategoriesAtom);
-
-    console.log("selectedInplaceCategories settings", selectedInplaceCategories);
+    const setSelectedInplaceIndexes = useSetAtom(userSelectedInplaceIndexesAtom);
+    const selectedInplaceIndexes = useAtomValue(selectedInplaceIndexesAtom);
 
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
@@ -80,21 +83,32 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
     function handleInplaceTableSelectionChange(name: string) {
         setSelectedInplaceTableName(name);
     }
+    function handleInplaceFluidZonesSelectionChange(zones: string[]) {
+        setSelectedInplaceFluidZones(zones as FluidZone_api[]);
+    }
     function handleInplaceResponseChange(name: string) {
         setSelectedInplaceResponse(name);
     }
 
-    function handleInplaceCategoriesChange(categoryName: string, values: string[]) {
-        const categoryIndex = selectedInplaceCategories.findIndex((category) => category.index_name === categoryName);
+    function handleInplaceIndexesChange(categoryName: string, values: string[]) {
+        const categoryIndex = selectedInplaceIndexes.findIndex((category) => category.index_name === categoryName);
 
         if (categoryIndex !== -1) {
-            const newCategories = selectedInplaceCategories.map((category, index) =>
+            const newCategories = selectedInplaceIndexes.map((category, index) =>
                 index === categoryIndex ? { ...category, values } : category
             );
-            setSelectedInplaceCategories(newCategories);
+            setSelectedInplaceIndexes(
+                newCategories.map((category) => ({
+                    index_name: category.index_name as InplaceVolumetricsIndexNames_api,
+                    values: category.values,
+                }))
+            );
         } else {
-            setSelectedInplaceCategories([
-                ...selectedInplaceCategories,
+            setSelectedInplaceIndexes([
+                ...selectedInplaceIndexes.map((category) => ({
+                    index_name: category.index_name as InplaceVolumetricsIndexNames_api,
+                    values: category.values,
+                })),
                 { index_name: categoryName as InplaceVolumetricsIndexNames_api, values: values },
             ]);
         }
@@ -105,7 +119,7 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
         tableInfosErrorMessage =
             "Failed to fetch inplace volumetrics info. Make sure the selected ensembles has inplace volumetrics data.";
     }
-    console.log("availableInplaceCategories settings", availableInplaceCategories);
+    console.log("availableInplaceIndexes settings", availableInplaceIndexes);
     return (
         <div className="flex flex-col gap-2">
             <CollapsibleGroup title="Ensembles" expanded>
@@ -155,19 +169,28 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
                         onChange={handleInplaceResponseChange}
                     />
                 </CollapsibleGroup>
+                <CollapsibleGroup title="Fluid zones" expanded>
+                    <Select
+                        options={availableFluidZones.map((name) => ({ value: name, label: name }))}
+                        value={selectedInplaceFluidZones || []}
+                        onChange={handleInplaceFluidZonesSelectionChange}
+                        size={3}
+                        multiple
+                    />
+                </CollapsibleGroup>
                 <CollapsibleGroup title="Index filters" expanded>
-                    {availableInplaceCategories.map((categoryData) => (
+                    {availableInplaceIndexes.map((categoryData) => (
                         <CollapsibleGroup key={categoryData.index_name} title={categoryData.index_name}>
                             <Select
                                 key={categoryData.index_name}
                                 options={categoryValuesToOptions(categoryData.values)}
                                 size={max([categoryData.values.length, 5])}
                                 value={
-                                    (selectedInplaceCategories.find(
+                                    (selectedInplaceIndexes.find(
                                         (category) => category.index_name === categoryData.index_name
                                     )?.values as string[]) || []
                                 }
-                                onChange={(values) => handleInplaceCategoriesChange(categoryData.index_name, values)}
+                                onChange={(values) => handleInplaceIndexesChange(categoryData.index_name, values)}
                                 multiple
                             />
                         </CollapsibleGroup>
