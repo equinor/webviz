@@ -8,6 +8,7 @@ export type EnsembleParameterRealizationsAndValues = {
 export type ParameterDataArr = {
     parameterIdent: ParameterIdent;
     ensembleParameterRealizationAndValues: EnsembleParameterRealizationsAndValues[];
+    isLogarithmic?: boolean;
 };
 
 export enum ParameterDistributionPlotType {

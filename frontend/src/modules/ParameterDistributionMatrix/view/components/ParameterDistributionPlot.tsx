@@ -3,6 +3,7 @@ import Plot from "react-plotly.js";
 
 import { computeQuantile } from "@modules_shared/statistics";
 
+import { log } from "console";
 import { PlotType } from "plotly.js";
 
 import { ParameterDataArr, ParameterDistributionPlotType } from "../../typesAndEnums";
@@ -237,6 +238,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                 zeroline: false,
                 linewidth: 1,
                 linecolor: "black",
+                type: props.dataArr[i - 1].isLogarithmic ? "log" : "linear",
             };
 
             layout[`yaxis${i}`] = {
@@ -252,6 +254,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
             layout.annotations.push({
                 text: props.dataArr[i - 1].parameterIdent.name,
                 showarrow: false,
+
                 x: 0,
                 xref: `x${i} domain`,
                 y: 1.1,

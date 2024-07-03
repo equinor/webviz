@@ -39,7 +39,6 @@ export const intersectedParameterIdentsAtom = atom((get) => {
         const parameters = ensemble
             .getParameters()
             .getParameterArr()
-            .filter((parameter) => !parameter.groupName?.startsWith("LOG10"))
             .filter(
                 (parameter) =>
                     (showConstantParameters || !parameter.isConstant) && parameter.type === ParameterType.CONTINUOUS
