@@ -64,7 +64,7 @@ async def realizations_tables_are_equal(
     )
 
     # Get all table schemas for a given realization and find the pvt table
-    table_schemas = await access.get_table_schemas_single_realization(realization=0)
+    table_schemas = await access.get_table_schemas_single_realization_async(realization=0)
     for schema in table_schemas:
         if schema.tagname == "pvt":
             # Check if all realizations of this table are equal
