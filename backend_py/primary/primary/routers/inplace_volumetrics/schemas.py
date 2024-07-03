@@ -1,5 +1,5 @@
 from typing import List, Union, Optional
-from enum import Enum,StrEnum
+from enum import Enum, StrEnum
 
 from pydantic import BaseModel
 
@@ -18,31 +18,11 @@ class InplaceVolumetricsIndex(BaseModel):
     index_name: InplaceVolumetricsIndexNames
     values: List[Union[str, int]]
 
+
 class FluidZone(StrEnum):
     OIL = "Oil"
     GAS = "Gas"
     Water = "Water"  # TODO: Remove or keep?
-
-class InplaceVolumetricsTableDefinition(BaseModel):
-    """Definition of a volumetric table"""
-
-    table_name: str
-    fluid_zones: List[FluidZone]
-    result_names: List[str]
-    indexes: List[InplaceVolumetricsIndex]
-    
-
-class InplaceVolumetricDataEntry(BaseModel):
-    result_values: List[float]
-    index_values: List[Union[str, int]]
-
-
-class InplaceVolumetricData(BaseModel):
-    vol_table_name: str
-    result_name: str
-    realizations: List[int]
-    index_names: List[str]
-    entries: List[InplaceVolumetricDataEntry]
 
 
 class InplaceVolumetricResponseNames(str, Enum):
@@ -63,3 +43,25 @@ class InplaceVolumetricResponseNames(str, Enum):
     GIIP_GAS = "GIIP_GAS"
     ASSOCIATEDGAS_OIL = "ASSOCIATEDGAS_OIL"
     ASSOCIATEDOIL_GAS = "ASSOCIATEDOIL_GAS"
+
+
+class InplaceVolumetricsTableDefinition(BaseModel):
+    """Definition of a volumetric table"""
+
+    table_name: str
+    fluid_zones: List[FluidZone]
+    result_names: List[InplaceVolumetricResponseNames]
+    indexes: List[InplaceVolumetricsIndex]
+
+
+class InplaceVolumetricDataEntry(BaseModel):
+    result_values: List[float]
+    index_values: List[Union[str, int]]
+
+
+class InplaceVolumetricData(BaseModel):
+    vol_table_name: str
+    result_name: str
+    realizations: List[int]
+    index_names: List[str]
+    entries: List[InplaceVolumetricDataEntry]

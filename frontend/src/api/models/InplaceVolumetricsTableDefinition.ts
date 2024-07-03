@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { FluidZone } from './FluidZone';
+import type { InplaceVolumetricResponseNames } from './InplaceVolumetricResponseNames';
 import type { InplaceVolumetricsIndex } from './InplaceVolumetricsIndex';
 /**
  * Definition of a volumetric table
@@ -10,7 +11,7 @@ import type { InplaceVolumetricsIndex } from './InplaceVolumetricsIndex';
 export type InplaceVolumetricsTableDefinition = {
     table_name: string;
     fluid_zones: Array<FluidZone>;
-    result_names: Array<string>;
+    result_names: Array<InplaceVolumetricResponseNames>;
     indexes: Array<InplaceVolumetricsIndex>;
 };
 

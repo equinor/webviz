@@ -124,7 +124,7 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
 
     function handleFilterChange(filter: InplaceVolumetricsFilter) {
         setSelectedEnsembleIdents(filter.ensembleIdents);
-        setSelectedInplaceTableName(filter.tableSources[0]);
+        setSelectedInplaceTableName(filter.tableNames[0]);
         setSelectedInplaceFluidZones(filter.fluidZones as FluidZone_api[]);
         setSelectedInplaceIndexes(
             Object.entries(filter.indexFilters).map(([index, values]) => ({
@@ -150,11 +150,11 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
                 workbenchServices={props.workbenchServices}
                 settingsContext={props.settingsContext}
                 ensembleSet={ensembleSet}
-                availableTableSources={availableInplaceTableNames}
+                availableTableNames={availableInplaceTableNames}
                 availableFluidZones={availableFluidZones}
                 availableIndexFilters={availableIndexFilters}
                 selectedEnsembleIdents={selectedEnsembleIdents}
-                selectedTableSources={selectedInplaceTableName ? [selectedInplaceTableName] : []}
+                selectedTableNames={selectedInplaceTableName ? [selectedInplaceTableName] : []}
                 selectedFluidZones={selectedInplaceFluidZones}
                 selectedIndexFilters={selectedIndexFilters}
                 onChange={handleFilterChange}

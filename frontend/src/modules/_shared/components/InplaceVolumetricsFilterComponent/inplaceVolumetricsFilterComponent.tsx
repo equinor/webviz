@@ -1,5 +1,6 @@
 import React from "react";
 
+import { FluidZone_api, InplaceVolumetricsIndexNames_api, InplaceVolumetricsIndex_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { SettingsContext } from "@framework/ModuleContext";
@@ -13,45 +14,45 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select, SelectOption, SelectProps } from "@lib/components/Select";
 import { Deselect, SelectAll } from "@mui/icons-material";
 
-import { isEqual } from "lodash";
+import { cloneDeep, isEqual } from "lodash";
 
-export type InplaceVolumetricsFilterComponentProps<TIndexFilters> = {
+export type InplaceVolumetricsFilterComponentProps = {
     ensembleSet: EnsembleSet;
     settingsContext: SettingsContext<any, any, any, any>;
     workbenchServices: WorkbenchServices;
-    availableTableSources: string[];
-    availableFluidZones: string[];
-    availableIndexFilters: TIndexFilters;
+    availableTableNames: string[];
+    availableFluidZones: FluidZone_api[];
+    availableIndexFilters: InplaceVolumetricsIndex_api[];
     selectedEnsembleIdents: EnsembleIdent[];
-    selectedTableSources: string[];
-    selectedFluidZones: string[];
-    selectedIndexFilters: TIndexFilters;
+    selectedTableNames: string[];
+    selectedFluidZones: FluidZone_api[];
+    selectedIndexFilters: InplaceVolumetricsIndex_api[];
     onChange: (filter: InplaceVolumetricsFilter) => void;
     isPending?: boolean;
     errorMessage?: string;
 };
 
-export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<string, string[]>>(
-    props: InplaceVolumetricsFilterComponentProps<TIndexFilters>
-): React.ReactNode {
+export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilterComponentProps): React.ReactNode {
     const [ensembleIdents, setEnsembleIdents] = React.useState<EnsembleIdent[]>(props.selectedEnsembleIdents);
-    const [tableSources, setTableSources] = React.useState<string[]>(props.selectedTableSources);
-    const [fluidZones, setFluidZones] = React.useState<string[]>(props.selectedFluidZones);
-    const [indexFilters, setIndexFilters] = React.useState<TIndexFilters>(props.selectedIndexFilters);
+    const [tableNames, setTableNames] = React.useState<string[]>(props.selectedTableNames);
+    const [fluidZones, setFluidZones] = React.useState<FluidZone_api[]>(props.selectedFluidZones);
+    const [indexFilters, setIndexFilters] = React.useState<InplaceVolumetricsIndex_api[]>(props.selectedIndexFilters);
 
     const [prevEnsembleIdents, setPrevEnsembleIdents] = React.useState<EnsembleIdent[]>(props.selectedEnsembleIdents);
-    const [prevTableSources, setPrevTableSources] = React.useState<string[]>(props.selectedTableSources);
+    const [prevTableNames, setPrevTableNames] = React.useState<string[]>(props.selectedTableNames);
     const [prevFluidZones, setPrevFluidZones] = React.useState<string[]>(props.selectedFluidZones);
-    const [prevIndexFilters, setPrevIndexFilters] = React.useState<TIndexFilters>(props.selectedIndexFilters);
+    const [prevIndexFilters, setPrevIndexFilters] = React.useState<InplaceVolumetricsIndex_api[]>(
+        props.selectedIndexFilters
+    );
 
     if (!isEqual(props.selectedEnsembleIdents, prevEnsembleIdents)) {
         setEnsembleIdents(props.selectedEnsembleIdents);
         setPrevEnsembleIdents(props.selectedEnsembleIdents);
     }
 
-    if (!isEqual(props.selectedTableSources, prevTableSources)) {
-        setTableSources(props.selectedTableSources);
-        setPrevTableSources(props.selectedTableSources);
+    if (!isEqual(props.selectedTableNames, prevTableNames)) {
+        setTableNames(props.selectedTableNames);
+        setPrevTableNames(props.selectedTableNames);
     }
 
     if (!isEqual(props.selectedFluidZones, prevFluidZones)) {
@@ -77,8 +78,8 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
             handleEnsembleIdentsChange(syncedFilter.ensembleIdents);
         }
 
-        if (!isEqual(syncedFilter.tableSources, tableSources)) {
-            handleTableSourcesChange(syncedFilter.tableSources);
+        if (!isEqual(syncedFilter.tableNames, tableNames)) {
+            handleTableNamesChange(syncedFilter.tableNames);
         }
 
         if (!isEqual(syncedFilter.fluidZones, fluidZones)) {
@@ -86,19 +87,16 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
         }
 
         if (!isEqual(syncedFilter.indexFilters, indexFilters)) {
-            for (const [index, values] of Object.entries(syncedFilter.indexFilters).filter(
-                ([index]) => index in props.availableIndexFilters
-            )) {
-                if (!isEqual(values, indexFilters[index])) {
-                    handleIndexFilterChange(index, values as TIndexFilters[keyof TIndexFilters]);
-                }
+            setIndexFilters(syncedFilter.indexFilters);
+            for (const indexFilter of syncedFilter.indexFilters) {
+                handleIndexFilterChange(indexFilter.index_name, indexFilter.values);
             }
         }
     }
 
     function handleEnsembleIdentsChange(newEnsembleIdents: EnsembleIdent[]): void {
         setEnsembleIdents(newEnsembleIdents);
-        const filter = { ensembleIdents: newEnsembleIdents, tableSources, fluidZones, indexFilters };
+        const filter = { ensembleIdents: newEnsembleIdents, tableNames: tableNames, fluidZones, indexFilters };
         props.onChange(filter);
         syncHelper.publishValue(
             SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
@@ -107,9 +105,9 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
         );
     }
 
-    function handleTableSourcesChange(newTableSources: string[]): void {
-        setTableSources(newTableSources);
-        const filter = { ensembleIdents, tableSources: newTableSources, fluidZones, indexFilters };
+    function handleTableNamesChange(newTableNames: string[]): void {
+        setTableNames(newTableNames);
+        const filter = { ensembleIdents, tableNames: newTableNames, fluidZones, indexFilters };
         props.onChange(filter);
         syncHelper.publishValue(
             SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
@@ -118,9 +116,9 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
         );
     }
 
-    function handleFluidZoneChange(newFluidZones: string[]): void {
+    function handleFluidZoneChange(newFluidZones: FluidZone_api[]): void {
         setFluidZones(newFluidZones);
-        const filter = { ensembleIdents, tableSources, fluidZones: newFluidZones, indexFilters };
+        const filter = { ensembleIdents, tableNames: tableNames, fluidZones: newFluidZones, indexFilters };
         props.onChange(filter);
         syncHelper.publishValue(
             SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
@@ -129,10 +127,15 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
         );
     }
 
-    function handleIndexFilterChange<TKey extends keyof TIndexFilters>(index: TKey, value: TIndexFilters[TKey]): void {
-        const newIndexFilters = { ...indexFilters, [index]: value };
+    function handleIndexFilterChange(indexName: InplaceVolumetricsIndexNames_api, values: (string | number)[]): void {
+        const newIndexFilters = cloneDeep(indexFilters);
+        const indexFilter = newIndexFilters.find((filter) => filter.index_name === indexName);
+        if (!indexFilter) {
+            return;
+        }
+        indexFilter.values = values;
         setIndexFilters(newIndexFilters);
-        const filter = { ensembleIdents, tableSources, fluidZones, indexFilters: newIndexFilters };
+        const filter = { ensembleIdents, tableNames: tableNames, fluidZones, indexFilters: newIndexFilters };
         props.onChange(filter);
         syncHelper.publishValue(
             SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
@@ -141,7 +144,7 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
         );
     }
 
-    const tableSourceOptions = props.availableTableSources.map((source) => ({ value: source, label: source }));
+    const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));
     const fluidZoneOptions = props.availableFluidZones.map((zone) => ({ value: zone, label: zone }));
 
     return (
@@ -156,11 +159,11 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
             </CollapsibleGroup>
             <PendingWrapper isPending={props.isPending ?? false} errorMessage={props.errorMessage}>
                 <div className="flex flex-col gap-2">
-                    <CollapsibleGroup title="Volumetric table sources" expanded>
+                    <CollapsibleGroup title="Volumetric table names" expanded>
                         <Select
                             options={tableSourceOptions}
-                            value={tableSources}
-                            onChange={handleTableSourcesChange}
+                            value={tableNames}
+                            onChange={handleTableNamesChange}
                             multiple
                             size={3}
                         />
@@ -176,16 +179,20 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
                     </CollapsibleGroup>
                     <CollapsibleGroup title="Index filters" expanded>
                         <div className="flex flex-col gap-2">
-                            {Object.entries(props.availableIndexFilters).map(([index, values]) => (
-                                <CollapsibleGroup key={index} title={index} expanded>
+                            {props.availableIndexFilters.map((indexFilter) => (
+                                <CollapsibleGroup key={indexFilter.index_name} title={indexFilter.index_name} expanded>
                                     <SelectWithQuickSelectButtons
-                                        options={values.map((value) => ({ value: value, label: value }))}
-                                        value={indexFilters[index]}
-                                        onChange={(value) =>
-                                            handleIndexFilterChange(index, value as TIndexFilters[keyof TIndexFilters])
+                                        options={indexFilter.values.map((value) => ({
+                                            value: value,
+                                            label: value.toString(),
+                                        }))}
+                                        value={
+                                            indexFilters.find((el) => el.index_name === indexFilter.index_name)
+                                                ?.values ?? []
                                         }
+                                        onChange={(value) => handleIndexFilterChange(indexFilter.index_name, value)}
                                         multiple
-                                        size={Math.max(Math.min(values.length, 10), 3)}
+                                        size={Math.max(Math.min(indexFilter.values.length, 10), 3)}
                                     />
                                 </CollapsibleGroup>
                             ))}
@@ -197,12 +204,12 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
     );
 }
 
-function SelectWithQuickSelectButtons(props: SelectProps): React.ReactNode {
+function SelectWithQuickSelectButtons<TValue>(props: SelectProps<TValue>): React.ReactNode {
     function handleSelectAll() {
         if (!props.onChange) {
             return;
         }
-        props.onChange(props.options.map((option: SelectOption) => option.value));
+        props.onChange(props.options.map((option: SelectOption<TValue>) => option.value));
     }
 
     function handleUnselectAll() {
