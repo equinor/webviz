@@ -7,9 +7,11 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
+import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { Select } from "@lib/components/Select";
+import { Select, SelectOption, SelectProps } from "@lib/components/Select";
+import { Deselect, SelectAll } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
@@ -176,7 +178,7 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
                         <div className="flex flex-col gap-2">
                             {Object.entries(props.availableIndexFilters).map(([index, values]) => (
                                 <CollapsibleGroup key={index} title={index} expanded>
-                                    <Select
+                                    <SelectWithQuickSelectButtons
                                         options={values.map((value) => ({ value: value, label: value }))}
                                         value={indexFilters[index]}
                                         onChange={(value) =>
@@ -192,5 +194,47 @@ export function InplaceVolumetricsFilterComponent<TIndexFilters extends Record<s
                 </div>
             </PendingWrapper>
         </>
+    );
+}
+
+function SelectWithQuickSelectButtons(props: SelectProps): React.ReactNode {
+    function handleSelectAll() {
+        if (!props.onChange) {
+            return;
+        }
+        props.onChange(props.options.map((option: SelectOption) => option.value));
+    }
+
+    function handleUnselectAll() {
+        if (!props.onChange) {
+            return;
+        }
+        props.onChange([]);
+    }
+
+    return (
+        <div className="flex flex-col gap-2 text-sm">
+            <div className="flex gap-2 items-center">
+                <Button
+                    onClick={handleSelectAll}
+                    startIcon={<SelectAll fontSize="inherit" />}
+                    variant="text"
+                    title="Select all"
+                    size="small"
+                >
+                    Select all
+                </Button>
+                <Button
+                    onClick={handleUnselectAll}
+                    startIcon={<Deselect fontSize="inherit" />}
+                    variant="text"
+                    title="Unselect all"
+                    size="small"
+                >
+                    Unselect all
+                </Button>
+            </div>
+            <Select {...props} />
+        </div>
     );
 }
