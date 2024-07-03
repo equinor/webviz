@@ -8,7 +8,7 @@ export function usePropagateApiErrorToStatusWriter(
 ): string | null {
     const helper = ApiErrorHelper.fromQueryResult(queryResult);
 
-    let errorMessage = "";
+    let errorMessage: string | null = null;
     if (helper?.hasError()) {
         errorMessage = helper.makeFullErrorMessage();
         const statusMessage = helper.makeStatusMessage();
