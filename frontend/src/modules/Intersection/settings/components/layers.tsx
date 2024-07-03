@@ -1,6 +1,7 @@
 import React from "react";
 
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -468,11 +469,21 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
             );
         }
         if (status === LayerStatus.ERROR) {
-            return (
-                <div title={props.layer.getError() ?? "Error while loading"}>
-                    <Error fontSize="inherit" className="text-red-700" />
-                </div>
-            );
+            const error = props.layer.getError();
+            if (typeof error === "string") {
+                return (
+                    <div title={error}>
+                        <Error fontSize="inherit" className="text-red-700" />
+                    </div>
+                );
+            } else {
+                const statusMessage = error as StatusMessage;
+                return (
+                    <div title={statusMessage.message}>
+                        <Error fontSize="inherit" className="text-red-700" />
+                    </div>
+                );
+            }
         }
         if (status === LayerStatus.SUCCESS) {
             return (

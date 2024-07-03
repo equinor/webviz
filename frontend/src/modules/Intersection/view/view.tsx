@@ -101,7 +101,9 @@ export function View(
     // Status messages
     for (const layer of layers) {
         if (layer.getStatus() === LayerStatus.ERROR) {
-            statusWriter.addError(`Layer "${layer.getName()}": ${layer.getError() ?? "Unknown error"}`);
+            statusWriter.addError(
+                layer.getError() ?? `Layer "${layer.getName()}": ${layer.getError() ?? "Unknown error"}`
+            );
         }
     }
 

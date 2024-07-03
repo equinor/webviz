@@ -1,5 +1,6 @@
 import React from "react";
 
+import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import { QueryClient } from "@tanstack/query-core";
@@ -46,7 +47,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
     protected _settings: TSettings = {} as TSettings;
     private _lastDataFetchSettings: TSettings;
     private _queryKeys: unknown[][] = [];
-    private _error: string | null = null;
+    private _error: StatusMessage | string | null = null;
     private _refetchRequested: boolean = false;
     private _cancellationPending: boolean = false;
 
@@ -184,8 +185,19 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
         this._subscribers.get(topic)?.delete(callback);
     }
 
-    getError(): string | null {
-        return this._error;
+    getError(): StatusMessage | string | null {
+        if (!this._error) {
+            return null;
+        }
+
+        if (typeof this._error === "string") {
+            return `${this._name}: ${this._error}`;
+        }
+
+        return {
+            ...this._error,
+            message: `${this._name}: ${this._error.message}`,
+        };
     }
 
     protected notifySubscribers(topic: LayerTopic): void {
@@ -245,7 +257,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
             }
             const apiError = ApiErrorHelper.fromError(error);
             if (apiError) {
-                this._error = apiError.makeFullErrorMessage() ?? "An error occurred";
+                this._error = apiError.makeStatusMessage();
             } else {
                 this._error = "An error occurred";
             }
