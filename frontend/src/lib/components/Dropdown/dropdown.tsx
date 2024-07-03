@@ -175,7 +175,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     };
 
                     if (inputClientBoundingRect.y + inputBoundingRect.height + height > window.innerHeight) {
-                        newDropdownRect.top = inputClientBoundingRect.y - minHeight;
+                        newDropdownRect.top = inputClientBoundingRect.y - height;
                         newDropdownRect.height = Math.min(height, inputClientBoundingRect.y);
                     } else {
                         newDropdownRect.top = inputClientBoundingRect.y + inputBoundingRect.height;
