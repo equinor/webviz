@@ -5,6 +5,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
+import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -206,6 +207,23 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
     );
     */
 
+    function handleFilterChange(filter: InplaceVolumetricsFilter) {
+        setSelectedEnsembleIdents(filter.ensembleIdents);
+        setSelectedInplaceTableName(filter.tableSources[0]);
+        setSelectedInplaceFluidZones(filter.fluidZones as FluidZone_api[]);
+        setSelectedInplaceIndexes(
+            Object.entries(filter.indexFilters).map(([index, values]) => ({
+                index_name: index as InplaceVolumetricsIndexNames_api,
+                values,
+            }))
+        );
+    }
+
+    const selectedIndexFilters: Record<string, string[]> = {};
+    for (const inplaceIndex of selectedInplaceIndexes) {
+        selectedIndexFilters[inplaceIndex.index_name] = inplaceIndex.values.map((el) => el.toString());
+    }
+
     const availableIndexFilters: Record<string, string[]> = {};
     for (const inplaceIndex of availableInplaceIndexes) {
         availableIndexFilters[inplaceIndex.index_name] = inplaceIndex.values.map((el) => el.toString());
@@ -218,36 +236,42 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
                 settingsContext={props.settingsContext}
                 ensembleSet={ensembleSet}
                 availableTableSources={availableInplaceTableNames}
+                availableFluidZones={availableFluidZones}
                 availableIndexFilters={availableIndexFilters}
                 selectedEnsembleIdents={selectedEnsembleIdents}
-                selectedTableSources={[]}
-                selectedIndexFilters={{}}
-                onChange={() => {}}
+                selectedTableSources={selectedInplaceTableName ? [selectedInplaceTableName] : []}
+                selectedFluidZones={selectedInplaceFluidZones}
+                selectedIndexFilters={selectedIndexFilters}
+                onChange={handleFilterChange}
+                isPending={inplaceTableInfosQuery.isFetching}
+                errorMessage={tableInfosErrorMessage}
             />
             <PendingWrapper isPending={inplaceTableInfosQuery.isFetching} errorMessage={tableInfosErrorMessage}>
-                <CollapsibleGroup title="Plotting" expanded>
-                    <div className="flex gap-4">
-                        <Label position="above" text="Plot type">
-                            <Dropdown value={plotType} onChange={onPlotTypeChange} options={plotTypeToOptions()} />
-                        </Label>
-                    </div>
-                    <div className="flex gap-4">
-                        <Label position="above" text="Subplot category">
-                            <Dropdown
-                                value={groupBy}
-                                onChange={onGroupByChange}
-                                options={plotGroupingEnumToOptions()}
-                            />
-                        </Label>{" "}
-                        <Label position="above" text="Color category">
-                            <Dropdown
-                                value={colorBy}
-                                onChange={onColorByChange}
-                                options={plotGroupingEnumToOptions()}
-                            />
-                        </Label>
-                    </div>
-                </CollapsibleGroup>
+                <div className="flex flex-col gap-2">
+                    <CollapsibleGroup title="Plotting" expanded>
+                        <div className="flex gap-4">
+                            <Label position="above" text="Plot type">
+                                <Dropdown value={plotType} onChange={onPlotTypeChange} options={plotTypeToOptions()} />
+                            </Label>
+                        </div>
+                        <div className="flex gap-4">
+                            <Label position="above" text="Subplot category">
+                                <Dropdown
+                                    value={groupBy}
+                                    onChange={onGroupByChange}
+                                    options={plotGroupingEnumToOptions()}
+                                />
+                            </Label>{" "}
+                            <Label position="above" text="Color category">
+                                <Dropdown
+                                    value={colorBy}
+                                    onChange={onColorByChange}
+                                    options={plotGroupingEnumToOptions()}
+                                />
+                            </Label>
+                        </div>
+                    </CollapsibleGroup>
+                </div>
                 <CollapsibleGroup title="Volumetric response" expanded>
                     <Dropdown
                         options={availableInplaceResponses.map((name) => ({ value: name, label: name }))}
@@ -255,46 +279,12 @@ export function Settings(props: ModuleSettingsProps<State, Interface>) {
                         onChange={handleInplaceResponseChange}
                     />
                 </CollapsibleGroup>
-                <CollapsibleGroup title="Fluid zones" expanded>
-                    <Select
-                        options={availableFluidZones.map((name) => ({ value: name, label: name }))}
-                        value={selectedInplaceFluidZones || []}
-                        onChange={handleInplaceFluidZonesSelectionChange}
-                        size={3}
-                        multiple
-                    />
-                </CollapsibleGroup>
-                <CollapsibleGroup title="Index filters" expanded>
-                    {availableInplaceIndexes.map((categoryData) => (
-                        <CollapsibleGroup key={categoryData.index_name} title={categoryData.index_name}>
-                            <Select
-                                key={categoryData.index_name}
-                                options={categoryValuesToOptions(categoryData.values)}
-                                size={max([categoryData.values.length, 5])}
-                                value={
-                                    (selectedInplaceIndexes.find(
-                                        (category) => category.index_name === categoryData.index_name
-                                    )?.values as string[]) || []
-                                }
-                                onChange={(values) => handleInplaceIndexesChange(categoryData.index_name, values)}
-                                multiple
-                            />
-                        </CollapsibleGroup>
-                    ))}
-                </CollapsibleGroup>
             </PendingWrapper>
         </div>
     );
 }
 function plotGroupingEnumToOptions(): DropdownOption[] {
     return Object.values(PlotGroupingEnum).map((value) => ({ value, label: value }));
-}
-
-function categoryValuesToOptions(values: (string | number)[]): DropdownOption[] {
-    return values.map((value) => ({
-        value: value.toString(),
-        label: value.toString(),
-    }));
 }
 
 function plotTypeToOptions(): DropdownOption[] {
