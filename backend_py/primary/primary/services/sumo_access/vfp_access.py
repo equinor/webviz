@@ -1,14 +1,12 @@
 import logging
 from io import BytesIO
-from typing import List, Optional
+from typing import List
 
 import numpy as np
-import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import Case
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
-from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from ._helpers import create_sumo_case_async, create_sumo_client
 from .vfp_types import ALQ, GFR, WFR, FlowRateType, TabType, UnitType, VfpTable, VfpType
@@ -55,7 +53,6 @@ class VfpAccess:
                 f"No VFP table found with tagname: {tagname} and realization: {realization}", Service.SUMO
             )
         if table_count > 1:
-            table_names = await table_collection.names_async
             raise MultipleDataMatchesError(
                 f"Multiple VFP tables found with tagname: {tagname} and realization: {realization}", Service.SUMO
             )
