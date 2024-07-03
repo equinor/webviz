@@ -18,10 +18,16 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Interface, State } from "../state";
 import {
     userSelectedEnsembleIdentAtom,
+    userSelectedRealizationNumberAtom,
+    validRealizationNumbersAtom,
+    userSelectedVfpTableNameAtom,
+    validVfpTableNamesAtom,
 } from "./atoms/baseAtoms";
 import {
     selectedEnsembleIdentAtom,
     selectedRealizationNumberAtom,
+    selectedVfpTableNameAtom,
+    availableVfpTableNamesAtom,
 } from "./atoms/derivedAtoms";
 
 
@@ -31,8 +37,33 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
     const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
     const setUserSelectedEnsembleIdent = useSetAtom(userSelectedEnsembleIdentAtom);
 
+    const selectedRealizationNumber = useAtomValue(selectedRealizationNumberAtom);
+    const setUserSelectedRealizationNumber = useSetAtom(userSelectedRealizationNumberAtom);
+
+    const selectedVfpTableName = useAtomValue(selectedVfpTableNameAtom)
+    const setUserSelectedVfpName = useSetAtom(userSelectedVfpTableNameAtom)
+
+    const setValidRealizationNumbersAtom = useSetAtom(validRealizationNumbersAtom);
+    const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
+    const validRealizations = selectedEnsembleIdent ? [...filterEnsembleRealizationsFunc(selectedEnsembleIdent)] : null;
+    setValidRealizationNumbersAtom(validRealizations);
+
+    const setValidVfpTableNamesAtom = useSetAtom(validVfpTableNamesAtom)
+    const validVfpTableNames = useAtomValue(availableVfpTableNamesAtom);
+    setValidVfpTableNamesAtom(validVfpTableNames)
+
     function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
         setUserSelectedEnsembleIdent(ensembleIdent);
+    }
+
+    function handleRealizationNumberChange(value: string) {
+        const realizationNumber = parseInt(value);
+        setUserSelectedRealizationNumber(realizationNumber);
+    }
+
+    function handleVfpNameSelectionChange(value: string) {
+        const vfpName = value
+        setUserSelectedVfpName(vfpName)
     }
 
     return (
@@ -44,6 +75,28 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>
-        </div>
+            <CollapsibleGroup expanded={true} title="Realization">
+                <Dropdown
+                    options={
+                        validRealizations?.map((real) => {
+                            return { value: real.toString(), label: real.toString() };
+                        }) ?? []
+                    }
+                    value={selectedRealizationNumber?.toString() ?? undefined}
+                    onChange={handleRealizationNumberChange}
+                />
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="VFP Name">
+                <Dropdown
+                    options={
+                        validVfpTableNames?.map((name) => {
+                            return { value: name, label: name };
+                        }) ?? []
+                    }
+                    value={selectedVfpTableName?.toString() ?? undefined}
+                    onChange={handleVfpNameSelectionChange}
+                />
+            </CollapsibleGroup>
+    </div>
     );
 }

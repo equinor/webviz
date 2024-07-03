@@ -16,3 +16,7 @@ export const userSelectedRealizationNumberAtom = atom<number | null>(null);
 export const validRealizationNumbersAtom = atom<number[] | null>(null);
 
 export const userSelectedEnsembleIdentAtom = atomWithCompare<EnsembleIdent | null>(null, areEnsembleIdentsEqual);
+
+export const userSelectedVfpTableNameAtom = atom<string | null>(null);
+
+export const validVfpTableNamesAtom = atom<string[] | null>(null);
