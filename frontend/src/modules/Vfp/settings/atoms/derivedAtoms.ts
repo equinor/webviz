@@ -8,9 +8,22 @@ import {
     userSelectedEnsembleIdentAtom,
     userSelectedRealizationNumberAtom,
     validRealizationNumbersAtom,
+    userSelectedVfpTableNameAtom,
+    validVfpTableNamesAtom,
 } from "./baseAtoms";
 
+import { vfpTableNamesQueryAtom } from "./queryAtoms";
+
 import { QueryStatus } from "../../types";
+
+export const vfpTableNamesQueryResultAtom = atom((get) => {
+    return get(vfpTableNamesQueryAtom);
+});
+
+export const availableVfpTableNamesAtom = atom<string[]>((get) => {
+    const vfpTableNamesQueryResult = get(vfpTableNamesQueryAtom)
+    return vfpTableNamesQueryResult.data?.map((item) => item) ?? [];
+});
 
 export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
@@ -37,4 +50,23 @@ export const selectedRealizationNumberAtom = atom<number | null>((get) => {
         ? userSelectedRealizationNumber
         : null;
     return validRealizationNumber;
+});
+
+export const selectedVfpTableNameAtom = atom<string | null> ((get) => {
+    const userSelectedVfpTableName = get(userSelectedVfpTableNameAtom)
+    const validVfpTableNames = get(validVfpTableNamesAtom)
+
+    if(!validVfpTableNames) {
+        return null;
+    }
+
+    if (userSelectedVfpTableName === null) {
+        const firstVfpTableName = validVfpTableNames.length > 0 ? validVfpTableNames[0] : null
+        return firstVfpTableName
+    }
+
+    const validVfpTableName = validVfpTableNames.includes(userSelectedVfpTableName)
+        ? userSelectedVfpTableName
+        : null;
+    return validVfpTableName
 });
