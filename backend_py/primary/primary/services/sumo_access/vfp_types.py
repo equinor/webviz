@@ -64,7 +64,7 @@ class TabType(Enum):
     THT = "TEMP"
 
 
-class VfpTable(BaseModel):
+class VfpProdTable(BaseModel):
     vfp_type: VfpType
     table_number: int
     datum: float
@@ -79,4 +79,4 @@ class VfpTable(BaseModel):
     gfr_values: List[float]
     alq_values: List[float]
     flow_rate_values: List[float]
-    bhp_table: List[List[List[List[List[float]]]]]
+    bhp_table: List[float]  # value=bhp_table[thp_idx*wfr_idx*gfr_idx*alq_idx*flow_rate_idx]

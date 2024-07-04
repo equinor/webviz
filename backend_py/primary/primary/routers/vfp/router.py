@@ -4,7 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends, Query
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.vfp_access import VfpAccess
-from primary.services.sumo_access.vfp_types import VfpTable
+from primary.services.sumo_access.vfp_types import VfpProdTable
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
@@ -46,14 +46,16 @@ async def get_vfp_table(
     realization: int = Query(description="Realization"),
     vfp_table_name: str = Query(description="VFP table name")
     # fmt:on
-) -> VfpTable:
+) -> VfpProdTable:
     timer = PerfTimer()
 
     vfp_access = await VfpAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     timer.lap_ms()
-    vfp_table: VfpTable = await vfp_access.get_vfp_table_from_tagname(tagname=vfp_table_name, realization=realization)
+    vfp_table: VfpProdTable = await vfp_access.get_vfp_table_from_tagname(
+        tagname=vfp_table_name, realization=realization
+    )
 
     LOGGER.info(f"VFP table loaded in: {timer.elapsed_ms()}ms ")
 
