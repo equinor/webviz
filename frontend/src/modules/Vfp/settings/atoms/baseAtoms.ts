@@ -1,4 +1,3 @@
-import { Frequency_api, NodeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 

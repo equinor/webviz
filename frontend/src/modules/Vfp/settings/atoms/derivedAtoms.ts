@@ -1,6 +1,7 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
+import { VfpTable } from "src/api/models/VfpTable";
 
 import { atom } from "jotai";
 
@@ -12,12 +13,21 @@ import {
     validVfpTableNamesAtom,
 } from "./baseAtoms";
 
-import { vfpTableNamesQueryAtom } from "./queryAtoms";
+import { vfpTableQueryAtom, vfpTableNamesQueryAtom } from "./queryAtoms";
 
 import { QueryStatus } from "../../types";
 
+export const vfpTableQueryResultAtom = atom((get) => {
+    return get(vfpTableQueryAtom)
+});
+
 export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);
+});
+
+export const vfpTableDataAtom = atom<VfpTable | undefined>((get) => {
+    const vfpTableQueryResult = get(vfpTableQueryResultAtom)
+    return vfpTableQueryResult.data
 });
 
 export const availableVfpTableNamesAtom = atom<string[]>((get) => {
