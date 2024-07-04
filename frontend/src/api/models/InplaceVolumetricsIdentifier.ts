@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export enum InplaceVolumetricsIndexNames {
+export enum InplaceVolumetricsIdentifier {
     ZONE = 'ZONE',
     REGION = 'REGION',
     FACIES = 'FACIES',

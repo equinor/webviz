@@ -18,6 +18,8 @@ from ..service_exceptions import (
     MultipleDataMatchesError,
 )
 
+from .inplace_volumetrics_types import AggregateByEach, InplaceVolumetricsIdentifier, InplaceVolumetricsTableDefinition
+
 
 from fmu.sumo.explorer.objects import Case
 
@@ -29,22 +31,6 @@ ALLOWED_INDEX_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
 
 # Index column values to ignore, i.e. remove from the volumetric tables
 IGNORED_INDEX_COLUMN_VALUES = ["Totals"]
-
-
-class AggregateByEach(str, Enum):
-    # FLUID_ZONE = "FLUID_ZONE"
-    ZONE = "ZONE"
-    REGION = "REGION"
-    FACIES = "FACIES"
-    # LICENSE = "LICENSE"
-    REAL = "REAL"
-
-
-class InplaceVolumetricsIndexNames(str, Enum):
-    ZONE = "ZONE"
-    REGION = "REGION"
-    FACIES = "FACIES"
-    LICENSE = "LICENSE"
 
 
 # Allowed result names for the volumetric tables
@@ -80,22 +66,6 @@ IGNORED_COLUMN_NAMES = [
 ]
 
 
-class InplaceVolumetricsIndex(BaseModel):
-    """Unique values for an index column in a volumetric table
-    All values should ideally be strings, but it is common to see integers, especially for REGION"""
-
-    index_name: InplaceVolumetricsIndexNames
-    values: List[Union[str, int]]
-
-
-class InplaceVolumetricsTableDefinition(BaseModel):
-    """Definition of a volumetric table"""
-
-    name: str
-    indexes: List[InplaceVolumetricsIndex]
-    result_names: List[str]
-
-
 class InplaceVolumetricDataEntry(BaseModel):
     result_values: List[float]
     index_values: List[Union[str, int]]
@@ -113,16 +83,18 @@ LOGGER = logging.getLogger(__name__)
 
 
 class InplaceVolumetricsAccess:
-    def __init__(self, case: Case,case_uuid:str, iteration_name: str):
+    def __init__(self, case: Case, case_uuid: str, iteration_name: str):
         self._case: Case = case
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "InplaceVolumetricsAccess":
+    async def from_case_uuid_async(
+        cls, access_token: str, case_uuid: str, iteration_name: str
+    ) -> "InplaceVolumetricsAccess":
         sumo_client = create_sumo_client(access_token)
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
-        return cls(case=case,case_uuid=case_uuid, iteration_name=iteration_name)
+        return cls(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_inplace_volumetrics_table_definitions_async(self) -> List[InplaceVolumetricsTableDefinition]:
         """Retrieve the table definitions for the volumetric tables"""
@@ -185,9 +157,9 @@ class InplaceVolumetricsAccess:
             #     f"Invalid column names found in the volumetric table case={self._case_uuid}, iteration={self._iteration_name}, {invalid_column_names}",
             #     Service.SUMO,
             # )
-        index_names = [col for col in vol_table_column_names if col in ALLOWED_INDEX_COLUMN_NAMES]
+        identifier_names = [col for col in vol_table_column_names if col in ALLOWED_INDEX_COLUMN_NAMES]
 
-        if len(index_names) == 0:
+        if len(identifier_names) == 0:
             raise InvalidDataError(
                 f"No index columns found in the volumetric table {self._case_uuid}, {vol_table_name}",
                 Service.SUMO,
@@ -200,24 +172,24 @@ class InplaceVolumetricsAccess:
                 Service.SUMO,
             )
 
-        indexes = []
+        identifiers = []
 
         # Need to download the table to get the unique index values
         # Picking a random result column to get the table
         sumo_table_obj = await self._get_sumo_table_async(vol_table_name, result_column_names[0])
         arrow_table = await _fetch_arrow_table_async(sumo_table_obj)
 
-        for index_column_name in index_names:
-            unique_values = arrow_table[index_column_name].unique().to_pylist()
+        for identifier_column_name in identifier_names:
+            unique_values = arrow_table[identifier_column_name].unique().to_pylist()
             # Check for invalid data
             if any([val in IGNORED_INDEX_COLUMN_VALUES for val in unique_values]):
                 LOGGER.warning(
-                    f"Invalid index values found in the volumetric table case={self._case_uuid}, iteration={self._iteration_name}, table_name={vol_table_name}, index_name={index_column_name}, {unique_values}"
+                    f"Invalid index values found in the volumetric table case={self._case_uuid}, iteration={self._iteration_name}, table_name={vol_table_name}, index_name={identifier_column_name}, {unique_values}"
                 )
-            indexes.append(InplaceVolumetricsIndex(index_name=index_column_name, values=unique_values))
+            identifiers.append(InplaceVolumetricsIdentifier(identifier=identifier_column_name, values=unique_values))
         return InplaceVolumetricsTableDefinition(
             name=vol_table_name,
-            indexes=indexes,
+            indexes=identifiers,
             result_names=result_column_names,
         )
 
@@ -226,7 +198,7 @@ class InplaceVolumetricsAccess:
         table_name: str,
         response_names: List[str],
         realizations: Sequence[int] = None,
-        index_filter: List[InplaceVolumetricsIndex] = None,
+        index_filter: List[InplaceVolumetricsIdentifier] = None,
         aggregate_by_each_list: Sequence[AggregateByEach] = None,
     ) -> Dict[str, List[str | int | float]]:
         """Retrieve the aggregated volumetric data for a single table, optionally filtered by realizations and index values.
@@ -357,7 +329,7 @@ class InplaceVolumetricsAccess:
         table_name: str,
         result_name: str,
         realizations: Sequence[int],
-        index_filter: List[InplaceVolumetricsIndex],
+        index_filter: List[InplaceVolumetricsIdentifier],
     ) -> InplaceVolumetricData:
         """Retrieve the volumetric data for a single result (e.g. STOIIP_OIL), optionally filtered by realizations and index values."""
         timer = PerfTimer()

@@ -5,7 +5,7 @@
 import type { Body_get_result_data_per_realization } from '../models/Body_get_result_data_per_realization';
 import type { Body_post_get_aggregated_table_data } from '../models/Body_post_get_aggregated_table_data';
 import type { InplaceVolumetricData } from '../models/InplaceVolumetricData';
-import type { InplaceVolumetricResponseNames } from '../models/InplaceVolumetricResponseNames';
+import type { InplaceVolumetricResultName } from '../models/InplaceVolumetricResultName';
 import type { InplaceVolumetricsTableDefinition } from '../models/InplaceVolumetricsTableDefinition';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -51,7 +51,7 @@ export class InplaceVolumetricsService {
         caseUuid: string,
         ensembleName: string,
         tableName: string,
-        resultName: InplaceVolumetricResponseNames,
+        resultName: InplaceVolumetricResultName,
         realizations: Array<number>,
         requestBody: Body_get_result_data_per_realization,
     ): CancelablePromise<InplaceVolumetricData> {
@@ -89,7 +89,7 @@ export class InplaceVolumetricsService {
         caseUuid: string,
         ensembleName: string,
         tableName: string,
-        responseNames: Array<InplaceVolumetricResponseNames>,
+        responseNames: Array<InplaceVolumetricResultName>,
         aggregateBy: Array<string>,
         realizations: Array<number>,
         requestBody: Body_post_get_aggregated_table_data,

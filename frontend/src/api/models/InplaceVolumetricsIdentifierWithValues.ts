@@ -2,13 +2,13 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { InplaceVolumetricsIndexNames } from './InplaceVolumetricsIndexNames';
+import type { InplaceVolumetricsIdentifier } from './InplaceVolumetricsIdentifier';
 /**
  * Unique values for an index column in a volumetric table
  * All values should ideally be strings, but it is commmon to see integers, especially for REGION
  */
-export type InplaceVolumetricsIndex = {
-    index_name: InplaceVolumetricsIndexNames;
+export type InplaceVolumetricsIdentifierWithValues = {
+    identifier: InplaceVolumetricsIdentifier;
     values: Array<(string | number)>;
 };
 

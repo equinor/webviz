@@ -48,9 +48,9 @@ export type { GroupTreeMetadata as GroupTreeMetadata_api } from './models/GroupT
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
 export type { InplaceVolumetricData as InplaceVolumetricData_api } from './models/InplaceVolumetricData';
 export type { InplaceVolumetricDataEntry as InplaceVolumetricDataEntry_api } from './models/InplaceVolumetricDataEntry';
-export { InplaceVolumetricResponseNames as InplaceVolumetricResponseNames_api } from './models/InplaceVolumetricResponseNames';
-export type { InplaceVolumetricsIndex as InplaceVolumetricsIndex_api } from './models/InplaceVolumetricsIndex';
-export { InplaceVolumetricsIndexNames as InplaceVolumetricsIndexNames_api } from './models/InplaceVolumetricsIndexNames';
+export { InplaceVolumetricResultName as InplaceVolumetricResultName_api } from './models/InplaceVolumetricResultName';
+export { InplaceVolumetricsIdentifier as InplaceVolumetricsIdentifier_api } from './models/InplaceVolumetricsIdentifier';
+export type { InplaceVolumetricsIdentifierWithValues as InplaceVolumetricsIdentifierWithValues_api } from './models/InplaceVolumetricsIdentifierWithValues';
 export type { InplaceVolumetricsTableDefinition as InplaceVolumetricsTableDefinition_api } from './models/InplaceVolumetricsTableDefinition';
 export { NodeType as NodeType_api } from './models/NodeType';
 export type { Observations as Observations_api } from './models/Observations';

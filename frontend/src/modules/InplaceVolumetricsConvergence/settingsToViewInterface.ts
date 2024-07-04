@@ -4,7 +4,7 @@ import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFil
 import {
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
-    selectedIndexFilterValuesAtom,
+    selectedIdentifiersValuesAtom,
     selectedResultNameAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/derivedAtoms";
@@ -25,7 +25,7 @@ export const interfaceInitialization: InterfaceInitialization<SettingsToViewInte
                 ensembleIdents: get(selectedEnsembleIdentsAtom),
                 tableNames: get(selectedTableNamesAtom),
                 fluidZones: get(selectedFluidZonesAtom),
-                indexFilters: get(selectedIndexFilterValuesAtom),
+                identifiersValues: get(selectedIdentifiersValuesAtom),
             };
         },
         resultName: (get) => get(selectedResultNameAtom),

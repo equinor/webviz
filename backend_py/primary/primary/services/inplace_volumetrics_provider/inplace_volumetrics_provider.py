@@ -8,7 +8,9 @@ from primary.services.sumo_access.inplace_volumetrics_acces_NEW import InplaceVo
 from primary.services.sumo_access.inplace_volumetrics_types import (
     AggregateByEach,
     FluidZone,
-    InplaceVolumetricsIndex,
+    InplaceVolumetricsIdentifier,
+    InplaceVolumetricsIdentifierWithValues,
+    InplaceVolumetricsTableDefinition,
 )
 
 from ._conversion._conversion import (
@@ -25,14 +27,7 @@ from ._conversion._conversion import (
 # - InplaceVolumetricsFabricator
 # - InplaceVolumetricsDataManufacturer
 
-class InplaceVolumetricsTableDefinition(BaseModel):
-    """Definition of a volumetric table"""
 
-    table_name: str
-    fluid_zones: List[FluidZone]
-    result_names: List[str]
-    indexes: List[InplaceVolumetricsIndex]
-    
 class InplaceVolumetricsProvider:
     """
     This class provides an interface for interacting with definitions used in front-end for assembling and providing
@@ -56,56 +51,80 @@ class InplaceVolumetricsProvider:
 
     # TODO: When having metadata, provide all column names, and the get the possible properties from the response names
     # Provide the available properties from metadata, without suffix and provide possible FluidZones
-    async def get_volumetric_table_metadata(self) -> Any:
+    async def get_volumetric_table_metadata(self) -> List[InplaceVolumetricsTableDefinition]:
         vol_table_names = await self._inplace_volumetrics_access.get_inplace_volumetrics_table_names_async()
 
-        async def get_named_inplace_volumetrics_table_async(table_name:str) -> Dict[str, pa.Table]:
+        async def get_named_inplace_volumetrics_table_async(table_name: str) -> Dict[str, pa.Table]:
             return {table_name: await self._inplace_volumetrics_access.get_inplace_volumetrics_table_async(table_name)}
-            
-        tasks = [asyncio.create_task(get_named_inplace_volumetrics_table_async(vol_table_name)) for vol_table_name in vol_table_names]
+
+        tasks = [
+            asyncio.create_task(get_named_inplace_volumetrics_table_async(vol_table_name))
+            for vol_table_name in vol_table_names
+        ]
         tables = await asyncio.gather(*tasks)
         print(tables, len(tables))
-        
-        
+
         tables_info: List[InplaceVolumetricsTableDefinition] = []
         for table_result in tables:
             table_name, table = list(table_result.items())[0]
-            
+
             # Get raw volume names without index columns
-            raw_volumetric_column_names = [column_name for column_name in table.column_names if column_name not in self._inplace_volumetrics_access._expected_index_columns+ ["REAL"]]
-            
-            
+            raw_volumetric_column_names = [
+                column_name
+                for column_name in table.column_names
+                if column_name not in self._inplace_volumetrics_access.get_expected_identifier_columns() + ["REAL"]
+            ]
+
             fluid_zones = get_fluid_zones(raw_volumetric_column_names)
             volume_names = get_volume_names_from_raw_volumetric_column_names(raw_volumetric_column_names)
-            
+
             available_property_names = get_available_properties_from_volume_names(volume_names)
             result_names = volume_names + available_property_names
-            indexes = []
-            for index_name in self._inplace_volumetrics_access._expected_index_columns:
-                if index_name in table.column_names:
-                    indexes.append(InplaceVolumetricsIndex(index_name=index_name, values=table[index_name].unique().to_pylist()))
-            tables_info.append(InplaceVolumetricsTableDefinition(table_name=table_name, fluid_zones=fluid_zones, result_names=result_names, indexes=indexes))
+            identifiers = []
+            for identifier in self._inplace_volumetrics_access.get_expected_identifier_columns():
+                if identifier in table.column_names:
+                    identifiers.append(
+                        InplaceVolumetricsIdentifierWithValues(
+                            identifier=identifier, values=table[identifier].unique().to_pylist()
+                        )
+                    )
+            tables_info.append(
+                InplaceVolumetricsTableDefinition(
+                    table_name=table_name,
+                    fluid_zones=fluid_zones,
+                    result_names=result_names,
+                    identifiers_with_values=identifiers,
+                )
+            )
         return tables_info
 
-        # TODO: Consider 
+        # TODO: Consider
         # responses_info: Dict[str, List[FluidZone]] = {}
         # I.e.: responses_info["STOIIP"] = [FluidZone.OIL], etc.
 
-        return [{
-            "name": "Geogrid",
-            "fluid_zones": ["OIL","GAS","WATER"],
-            "responses": ["BULK","NET","STOIIP","SW","BO"],
-            "index": [{"ZONE":["A","B"],"REGION":["NORTH","SOUTH"],"FACIES":["SAND","SHALE"],"LICENSE":["LIC1","LIC2"]}],
-        }]
-   
-    
+        return [
+            {
+                "name": "Geogrid",
+                "fluid_zones": ["OIL", "GAS", "WATER"],
+                "responses": ["BULK", "NET", "STOIIP", "SW", "BO"],
+                "index": [
+                    {
+                        "ZONE": ["A", "B"],
+                        "REGION": ["NORTH", "SOUTH"],
+                        "FACIES": ["SAND", "SHALE"],
+                        "LICENSE": ["LIC1", "LIC2"],
+                    }
+                ],
+            }
+        ]
+
     async def get_aggregated_volumetric_table_data_async(
         self,
         table_name: str,
         response_names: set[str],
         fluid_zones: List[FluidZone],
         realizations: Sequence[int] = None,
-        index_filter: List[InplaceVolumetricsIndex] = None,
+        index_filter: List[InplaceVolumetricsIdentifier] = None,
         aggregate_by_each_list: Sequence[AggregateByEach] = None,
     ) -> Dict[str, List[str | int | float]]:
 
@@ -170,13 +189,12 @@ class InplaceVolumetricsProvider:
 
         return aggregated_vol_table_dict
 
-
     async def _create_filtered_volumetric_table_data_async(
         self,
         table_name: str,
         volumetric_columns: set[str],
         realizations: Sequence[int] = None,
-        index_filter: List[InplaceVolumetricsIndex] = None,
+        index_filter: List[InplaceVolumetricsIdentifier] = None,
     ) -> pa.Table:
         """
         Create table filtered on index values and realizations

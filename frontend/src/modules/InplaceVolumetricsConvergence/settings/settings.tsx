@@ -10,14 +10,14 @@ import { useAtomValue, useSetAtom } from "jotai";
 import {
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
-    userSelectedIndexFilterValuesAtom,
+    userSelectedIdentifiersValuesAtom,
     userSelectedResultNameAtom,
     userSelectedTableNamesAtom,
 } from "./atoms/baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
-    selectedIndexFilterValuesAtom,
+    selectedIdentifiersValuesAtom,
     selectedResultNameAtom,
     selectedTableNamesAtom,
     tableDefinitionsAccessorAtom,
@@ -40,8 +40,8 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     const selectedFluidZones = useAtomValue(selectedFluidZonesAtom);
     const setSelectedFluidZones = useSetAtom(userSelectedFluidZonesAtom);
 
-    const selectedIndexFilters = useAtomValue(selectedIndexFilterValuesAtom);
-    const setSelectedInplaceIndexes = useSetAtom(userSelectedIndexFilterValuesAtom);
+    const selectedIdentifiersValues = useAtomValue(selectedIdentifiersValuesAtom);
+    const setSelectedIdentifiersValues = useSetAtom(userSelectedIdentifiersValuesAtom);
 
     const selectedResultName = useAtomValue(selectedResultNameAtom);
     const setSelectedResultName = useSetAtom(userSelectedResultNameAtom);
@@ -50,12 +50,7 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedFluidZones(newFilter.fluidZones);
-        setSelectedInplaceIndexes(newFilter.indexFilters);
-    }
-
-    const availableIndexFilters: Record<string, string[]> = {};
-    for (const [indexFilter, values] of Object.entries(tableDefinitionsAccessor.getUniqueIndexFilterValues())) {
-        availableIndexFilters[indexFilter] = values.map((value) => value.toString());
+        setSelectedIdentifiersValues(newFilter.identifiersValues);
     }
 
     const resultNameOptions = tableDefinitionsAccessor
@@ -71,10 +66,10 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                 isPending={tableDefinitionsQueryResult.isLoading}
                 availableFluidZones={tableDefinitionsAccessor.getUniqueFluidZones()}
                 availableTableNames={tableDefinitionsAccessor.getUniqueTableNames()}
-                availableIndexFilters={availableIndexFilters}
+                availableIdentifiersWithValues={tableDefinitionsAccessor.getUniqueIndexFilterValues()}
                 selectedEnsembleIdents={selectedEnsembleIdents}
                 selectedFluidZones={selectedFluidZones}
-                selectedIndexFilters={selectedIndexFilters}
+                selectedIdentifiersValues={selectedIdentifiersValues}
                 selectedTableNames={selectedTableNames}
                 onChange={handleFilterChange}
             />

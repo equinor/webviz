@@ -17,19 +17,22 @@ from ..service_exceptions import (
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 # Allowed categories (index column names) for the volumetric tables
-ALLOWED_INDEX_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
+ALLOWED_IDENTIFIER_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
 
 # Index column values to ignore, i.e. remove from the volumetric tables
-IGNORED_INDEX_COLUMN_VALUES = ["Totals"]
+IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
 
 
 class InplaceVolumetricsAccess:
-    _expected_index_columns = ["ZONE", "REGION", "FACIES", "LICENSE"]
+    _expected_identifier_columns = ["ZONE", "REGION", "FACIES", "LICENSE"]
 
     def __init__(self, case: Case, case_uuid: str, iteration_name: str):
         self._case: Case = case
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
+
+    def get_expected_identifier_columns(self) -> List[str]:
+        return self._expected_identifier_columns
 
     @classmethod
     async def from_case_uuid_async(
@@ -39,8 +42,7 @@ class InplaceVolumetricsAccess:
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return InplaceVolumetricsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_inplace_volumetrics_table_names_async(
-        self) -> List[str]:
+    async def get_inplace_volumetrics_table_names_async(self) -> List[str]:
         vol_table_collection = self._case.tables.filter(
             aggregation="collection",
             tagname=["vol", "volumes", "inplace"],
@@ -48,8 +50,7 @@ class InplaceVolumetricsAccess:
         )
         table_names = await vol_table_collection.names_async
         return table_names
-    
-    
+
     async def get_inplace_volumetrics_table_no_throw_async(
         self, table_name: str, column_names: Optional[set[str]] = None
     ) -> Optional[pa.Table]:
@@ -110,7 +111,7 @@ class InplaceVolumetricsAccess:
         expected_table_index_columns = set(["ZONE", "REGION", "FACIES", "REAL"])
         all_expected_columns = expected_table_index_columns
         if column_names is not None:
-            all_expected_columns+column_names
+            all_expected_columns + column_names
 
         # Find column names not among collection columns
         collection_columns = await vol_table_collection.columns_async
@@ -127,7 +128,7 @@ class InplaceVolumetricsAccess:
             table_name=table_name,
             column_names=column_names,
         )
-        
+
         # Validate the table columns
         # if set(vol_table.column_names) != all_expected_columns:
         #     missing_columns = all_expected_columns - set(vol_table.column_names)
@@ -186,7 +187,7 @@ class InplaceVolumetricsAccess:
                 )
 
             response_name = list(response_name_set)[0]
-            if column_names and  response_name not in column_names:
+            if column_names and response_name not in column_names:
                 raise InvalidDataError(
                     f"Table {response_table.name} returns response {response_name}, which is not among columns of interest: {column_names}",
                     Service.SUMO,

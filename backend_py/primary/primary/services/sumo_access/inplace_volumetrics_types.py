@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List, Union
 
 
-class InplaceVolumetricsIndexNames(StrEnum):
+class InplaceVolumetricsIdentifier(StrEnum):
     """
     Definition of valid index names for an inplace volumetrics table
     """
@@ -12,6 +12,7 @@ class InplaceVolumetricsIndexNames(StrEnum):
     REGION = "REGION"
     FACIES = "FACIES"
     LICENSE = "LICENSE"
+
 
 class AggregateByEach(StrEnum):
     # FLUID_ZONE = "FLUID_ZONE"
@@ -38,14 +39,14 @@ class Property(StrEnum):
 
 
 @dataclass
-class InplaceVolumetricsIndex:
+class InplaceVolumetricsIdentifierWithValues:
     """
-    Unique values for an index column in an inplace volumetrics table
+    Unique values for an identifier column in an inplace volumetrics table
 
     NOTE: Ideally all values should be strings, but it is possible that some values are integers - especially for REGION
     """
 
-    index_name: InplaceVolumetricsIndexNames
+    identifier: InplaceVolumetricsIdentifier
     values: List[Union[str, int]]  # List of values: str or int
 
 
@@ -53,7 +54,7 @@ class InplaceVolumetricsIndex:
 class InplaceVolumetricsTableDefinition:
     """Definition of a volumetric table"""
 
-    name: str
-    indexes: List[InplaceVolumetricsIndex]
+    table_name: str
+    identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues]
     result_names: List[str]
-    # fluid_zones: List[FluidZone]
+    fluid_zones: List[FluidZone]

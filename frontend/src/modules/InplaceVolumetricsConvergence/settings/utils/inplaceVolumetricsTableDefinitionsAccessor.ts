@@ -1,31 +1,31 @@
 import {
     FluidZone_api,
-    InplaceVolumetricResponseNames_api,
-    InplaceVolumetricsIndex_api,
+    InplaceVolumetricResultName_api,
+    InplaceVolumetricsIdentifierWithValues_api,
     InplaceVolumetricsTableDefinition_api,
 } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
-type TableDefinitionForEnsembleIdent = {
+type TableDefinitionsForEnsembleIdent = {
     ensembleIdent: EnsembleIdent;
     tableDefinitions: InplaceVolumetricsTableDefinition_api[];
 };
 
 export function makeUniqueTableNamesIntersection(
-    tableDefinitionsPerEnsembleIdent: TableDefinitionForEnsembleIdent[]
+    tableDefinitionsPerEnsembleIdent: TableDefinitionsForEnsembleIdent[]
 ): string[] {
     const tableNames: Set<string> = new Set();
     for (const tableDefinitionForEnsembleIdent of tableDefinitionsPerEnsembleIdent) {
         if (tableNames.size === 0) {
             for (const tableDefinition of tableDefinitionForEnsembleIdent.tableDefinitions) {
-                tableNames.add(tableDefinition.table_name);
+                tableNames.add(tableDefinition.tableName);
             }
             continue;
         }
 
         for (const tableDefinition of tableDefinitionForEnsembleIdent.tableDefinitions) {
-            if (!tableNames.has(tableDefinition.table_name)) {
-                tableNames.delete(tableDefinition.table_name);
+            if (!tableNames.has(tableDefinition.tableName)) {
+                tableNames.delete(tableDefinition.tableName);
             }
         }
     }
@@ -38,10 +38,10 @@ export class InplaceVolumetricsTableDefinitionsAccessor {
     private _tableNamesFilter: string[];
     private _uniqueTableNames: string[];
     private _uniqueFluidZones: FluidZone_api[] = [];
-    private _uniqueResponses: InplaceVolumetricResponseNames_api[] = [];
-    private _uniqueIndexFilterValues: InplaceVolumetricsIndex_api[] = [];
+    private _uniqueResults: InplaceVolumetricResultName_api[] = [];
+    private _uniqueIndexFilterValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
 
-    constructor(tableDefinitionsPerEnsembleIdent: TableDefinitionForEnsembleIdent[], tableNamesFilter?: string[]) {
+    constructor(tableDefinitionsPerEnsembleIdent: TableDefinitionsForEnsembleIdent[], tableNamesFilter?: string[]) {
         this._tableDefinitions = tableDefinitionsPerEnsembleIdent.flatMap((data) => data.tableDefinitions);
         this._tableNamesFilter = tableNamesFilter ?? [];
         this._uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsPerEnsembleIdent);
@@ -50,81 +50,79 @@ export class InplaceVolumetricsTableDefinitionsAccessor {
 
     private makeIntersections(): void {
         const fluidZones: Set<FluidZone_api> = new Set();
-        const resultNames: Set<InplaceVolumetricResponseNames_api> = new Set();
-        let indexFilterValues: InplaceVolumetricsIndex_api[] = [];
+        const resultNames: Set<InplaceVolumetricResultName_api> = new Set();
+        let identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
 
         for (const tableDefinition of this._tableDefinitions) {
-            if (this._tableNamesFilter && !this._tableNamesFilter.includes(tableDefinition.table_name)) {
+            if (this._tableNamesFilter && !this._tableNamesFilter.includes(tableDefinition.tableName)) {
                 continue;
             }
 
             if (fluidZones.size === 0) {
-                for (const fluidZone of tableDefinition.fluid_zones) {
+                for (const fluidZone of tableDefinition.fluidZones) {
                     fluidZones.add(fluidZone);
                 }
-                for (const resultName of tableDefinition.result_names) {
+                for (const resultName of tableDefinition.resultNames) {
                     resultNames.add(resultName);
                 }
 
-                for (const indexDef of tableDefinition.indexes) {
-                    const index = indexFilterValues.find((index) => index.index_name === indexDef.index_name);
-                    if (!index) {
-                        indexFilterValues.push(indexDef);
-                        continue;
+                for (const identifierWithValues of tableDefinition.identifiersWithValues) {
+                    const existingIdentifierWithValues = identifiersWithValues.find(
+                        (el) => el.identifier === identifierWithValues.identifier
+                    );
+                    if (existingIdentifierWithValues) {
+                        throw new Error(`Duplicate identifier ${identifierWithValues.identifier}`);
                     }
 
-                    index.values = indexDef.values;
+                    identifiersWithValues.push(identifierWithValues);
                 }
                 continue;
             }
 
             for (const fluidZone of fluidZones) {
-                if (!tableDefinition.fluid_zones.includes(fluidZone)) {
+                if (!tableDefinition.fluidZones.includes(fluidZone)) {
                     fluidZones.delete(fluidZone);
                 }
             }
 
             for (const resultName of resultNames) {
-                if (!tableDefinition.result_names.includes(resultName)) {
+                if (!tableDefinition.resultNames.includes(resultName)) {
                     resultNames.delete(resultName);
                 }
             }
 
-            indexFilterValues = indexFilterValues.filter((el) => {
-                const indexDef = tableDefinition.indexes.find((index) => index.index_name === el.index_name);
-                if (!indexDef) {
+            identifiersWithValues = identifiersWithValues.filter((el) => {
+                const existingIdentifierWithValues = tableDefinition.identifiersWithValues.find(
+                    (item) => item.identifier === el.identifier
+                );
+                if (!existingIdentifierWithValues) {
                     return false;
                 }
 
-                el.values = el.values.filter((value) => indexDef.values.includes(value));
+                el.values = el.values.filter((value) => existingIdentifierWithValues.values.includes(value));
 
                 return true;
             });
         }
 
         this._uniqueFluidZones = Array.from(fluidZones).sort();
-        this._uniqueResponses = Array.from(resultNames).sort();
-        this._uniqueIndexFilterValues = indexFilterValues.sort();
-    }
-
-    setTableNamesFilter(tableNamesFilter: string[]): void {
-        this._tableNamesFilter = tableNamesFilter;
-        this.makeIntersections();
+        this._uniqueResults = Array.from(resultNames).sort();
+        this._uniqueIndexFilterValues = identifiersWithValues.sort();
     }
 
     getUniqueTableNames(): string[] {
         return this._uniqueTableNames;
     }
 
-    getUniqueFluidZones(): string[] {
+    getUniqueFluidZones(): FluidZone_api[] {
         return this._uniqueFluidZones;
     }
 
-    getUniqueResultNames(): InplaceVolumetricResponseNames_api[] {
-        return this._uniqueResponses;
+    getUniqueResultNames(): InplaceVolumetricResultName_api[] {
+        return this._uniqueResults;
     }
 
-    getUniqueIndexFilterValues(): InplaceVolumetricsIndex_api[] {
+    getUniqueIndexFilterValues(): InplaceVolumetricsIdentifierWithValues_api[] {
         return this._uniqueIndexFilterValues;
     }
 }

@@ -1,7 +1,11 @@
-import { InplaceVolumetricData_api, InplaceVolumetricResponseNames_api, InplaceVolumetricsIndex_api } from "@api";
+import {
+    InplaceVolumetricData_api,
+    InplaceVolumetricResultName_api,
+    InplaceVolumetricsIdentifierWithValues_api,
+} from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { QueriesOptions, useQueries } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 
 import { EnsembleIdentWithRealizations } from "../typesAndEnums";
 
@@ -11,10 +15,10 @@ const CACHE_TIME = 60 * 1000;
 export function useGetAggregatedTableDataQueries(
     ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[],
     tableNames: string[],
-    resultNames: InplaceVolumetricResponseNames_api[],
+    resultNames: InplaceVolumetricResultName_api[],
     aggregateBy: string[],
     realizations: number[],
-    indexFilter: InplaceVolumetricsIndex_api[]
+    indexFilter: InplaceVolumetricsIdentifierWithValues_api[]
 ): InplaceVolumetricData_api {
     const uniqueSources: { ensembleIdent: EnsembleIdent; realizations: number[]; tableName: string }[] = [];
     for (const el of ensembleIdentsWithRealizations) {

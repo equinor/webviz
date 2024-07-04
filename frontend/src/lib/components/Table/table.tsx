@@ -1,11 +1,11 @@
 import React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { v4 } from "uuid";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
-import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 
@@ -43,8 +43,8 @@ type LayoutError = {
 };
 
 enum SortDirection {
-    Asc = "asc",
-    Desc = "desc",
+    ASC = "asc",
+    DESC = "desc",
 }
 
 function filterData(
@@ -74,10 +74,10 @@ function sortData(
     return [
         ...data.sort((a, b) => {
             if (a.values[col] < b.values[col]) {
-                return dir === SortDirection.Asc ? -1 : 1;
+                return dir === SortDirection.ASC ? -1 : 1;
             }
             if (a.values[col] > b.values[col]) {
-                return dir === SortDirection.Asc ? 1 : -1;
+                return dir === SortDirection.ASC ? 1 : -1;
             }
             return 0;
         }),
@@ -100,7 +100,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
     const [filterValues, setFilterValues] = React.useState<{ [key: string]: string }>({});
     const [sortColumnAndDirection, setSortColumnAndDirection] = React.useState<{ col: string; dir: SortDirection }>({
         col: "",
-        dir: SortDirection.Asc,
+        dir: SortDirection.ASC,
     });
     const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -160,55 +160,64 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                 className="overflow-auto relative"
                 style={{ width: props.width, maxHeight: props.height }}
             >
-                <table className="w-full h-full border-0 border-separate border-spacing-0">
+                <table className="w-full h-full border-0 border-separate border-spacing-0 text-sm">
                     <thead className="border-0 m-0 p-0">
                         <tr className="sticky p-0 border-0">
                             {Object.keys(props.headings).map((col) => (
                                 <th
                                     key={col}
-                                    className="bg-slate-100 border border-gray-400 border-solid p-0 text-left sticky top-0 drop-shadow"
+                                    className="bg-slate-100 p-0 pb-1 text-left sticky top-0 drop-shadow"
                                     style={{ width: `${props.headings[col].sizeInPercent}%` }}
                                 >
-                                    <div className="p-1 flex items-center">
+                                    <div className="px-1 flex items-center">
                                         <span className="flex-grow">{props.headings[col].label}</span>
                                         <div className="flex flex-col">
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleSortDirectionChange(col, SortDirection.Asc)}
-                                                color={
+                                            <div
+                                                className={resolveClassNames(
+                                                    "text-xs hover:text-blue-500 cursor-pointer h-4",
                                                     sortColumnAndDirection.col === col &&
-                                                    sortColumnAndDirection.dir === SortDirection.Asc
-                                                        ? "danger"
-                                                        : undefined
-                                                }
+                                                        sortColumnAndDirection.dir === SortDirection.ASC
+                                                        ? "text-blue-600"
+                                                        : "text-blue-300"
+                                                )}
+                                                onClick={() => handleSortDirectionChange(col, SortDirection.ASC)}
+                                                title="Sort ascending"
                                             >
-                                                <ExpandLess />
-                                            </IconButton>
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleSortDirectionChange(col, SortDirection.Desc)}
-                                                color={
+                                                <ExpandLess fontSize="inherit" />
+                                            </div>
+                                            <div
+                                                className={resolveClassNames(
+                                                    "text-xs hover:text-blue-500 cursor-pointer h-4",
                                                     sortColumnAndDirection.col === col &&
-                                                    sortColumnAndDirection.dir === SortDirection.Desc
-                                                        ? "danger"
-                                                        : undefined
-                                                }
+                                                        sortColumnAndDirection.dir === SortDirection.DESC
+                                                        ? "text-blue-600"
+                                                        : "text-blue-300"
+                                                )}
+                                                onClick={() => handleSortDirectionChange(col, SortDirection.DESC)}
+                                                title="Sort descending"
                                             >
-                                                <ExpandMore />
-                                            </IconButton>
+                                                <ExpandMore fontSize="inherit" />
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="border-gray-400 border-t border-solid p-1">
+                                    <div className="p-0 text-sm">
                                         <Input
                                             type="text"
                                             value={filterValues[col] || ""}
                                             placeholder={`Filter ${props.headings[col].label}...`}
                                             onChange={(e) => handleFilterChange(col, e.target.value)}
                                             endAdornment={
-                                                <IconButton size="small" onClick={() => handleFilterChange(col, "")}>
-                                                    <Close />
-                                                </IconButton>
+                                                <div
+                                                    className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
+                                                    onClick={() => handleFilterChange(col, "")}
+                                                >
+                                                    <Close fontSize="inherit" />
+                                                </div>
                                             }
+                                            wrapperStyle={{
+                                                fontWeight: "normal",
+                                                fontSize: "0.5rem",
+                                            }}
                                         />
                                     </div>
                                 </th>

@@ -14,14 +14,14 @@ import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 
-export type DropdownOption<TValue> = {
+export type DropdownOption<TValue = string> = {
     value: TValue;
     label: string;
     adornment?: React.ReactNode;
     disabled?: boolean;
 };
 
-export type DropdownProps<TValue> = {
+export type DropdownProps<TValue = string> = {
     id?: string;
     wrapperId?: string;
     options: DropdownOption<TValue>[];
@@ -48,8 +48,10 @@ type DropdownRect = {
 const noMatchingOptionsText = "No matching options";
 const noOptionsText = "No options";
 
-export function Dropdown<TValue>(props: DropdownProps<TValue>) {
+export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const { onChange } = props;
+
+    const valueWithDefault = props.value ?? null;
 
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
     const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
@@ -82,10 +84,10 @@ export function Dropdown<TValue>(props: DropdownProps<TValue>) {
         [filteredOptions, selection]
     );
 
-    if (prevValue !== props.value) {
-        setSelection(props.value ?? null);
-        setSelectionIndex(props.options.findIndex((option) => option.value === props.value));
-        setPrevValue(props.value ?? null);
+    if (prevValue !== valueWithDefault) {
+        setSelection(valueWithDefault);
+        setSelectionIndex(props.options.findIndex((option) => option.value === valueWithDefault));
+        setPrevValue(valueWithDefault);
     }
 
     if (!isEqual(prevFilteredOptions, filteredOptions)) {

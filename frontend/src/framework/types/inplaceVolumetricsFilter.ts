@@ -1,9 +1,9 @@
-import { FluidZone_api, InplaceVolumetricsIndex_api } from "@api";
+import { FluidZone_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 export type InplaceVolumetricsFilter = {
     ensembleIdents: EnsembleIdent[];
     tableNames: string[];
     fluidZones: FluidZone_api[];
-    indexFilters: InplaceVolumetricsIndex_api[];
+    identifiersValues: InplaceVolumetricsIdentifierWithValues_api[];
 };

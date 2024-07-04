@@ -1,3 +1,4 @@
+import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 
@@ -6,7 +7,7 @@ import { atom } from "jotai";
 import {
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
-    userSelectedIndexFilterValuesAtom,
+    userSelectedIdentifiersValuesAtom,
     userSelectedResultNameAtom,
     userSelectedTableNamesAtom,
 } from "./baseAtoms";
@@ -38,12 +39,12 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
 });
 
 export const tableDefinitionsAccessorAtom = atom<InplaceVolumetricsTableDefinitionsAccessor>((get) => {
-    const selectedTableSources = get(selectedTableNamesAtom);
+    const selectedTableNames = get(selectedTableNamesAtom);
     const tableDefinitions = get(tableDefinitionsQueryAtom);
 
     return new InplaceVolumetricsTableDefinitionsAccessor(
         tableDefinitions.isLoading ? [] : tableDefinitions.data,
-        selectedTableSources
+        selectedTableNames
     );
 });
 
@@ -60,7 +61,7 @@ export const selectedTableNamesAtom = atom<string[]>((get) => {
     return fixupUserSelection(userSelectedTableNames, uniqueTableNames);
 });
 
-export const selectedFluidZonesAtom = atom<string[]>((get) => {
+export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
     const userSelectedFluidZones = get(userSelectedFluidZonesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
@@ -71,7 +72,7 @@ export const selectedFluidZonesAtom = atom<string[]>((get) => {
     return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getUniqueFluidZones());
 });
 
-export const selectedResultNameAtom = atom<string | null>((get) => {
+export const selectedResultNameAtom = atom<InplaceVolumetricResultName_api | null>((get) => {
     const userSelectedResultName = get(userSelectedResultNameAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
@@ -93,28 +94,37 @@ export const selectedResultNameAtom = atom<string | null>((get) => {
     return fixedSelection[0];
 });
 
-export const selectedIndexFilterValuesAtom = atom<Record<string, string[]>>((get) => {
-    const userSelectedIndexFilterValues = get(userSelectedIndexFilterValuesAtom);
+export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWithValues_api[]>((get) => {
+    const userSelectedIdentifierValues = get(userSelectedIdentifiersValuesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    if (!userSelectedIndexFilterValues) {
-        const uniqueIndexFilterValues = tableDefinitionsAccessor.getUniqueIndexFilterValues();
-        const fixedIndexFilterValues: Record<string, string[]> = {};
-        for (const [indexFilter, values] of Object.entries(uniqueIndexFilterValues)) {
-            fixedIndexFilterValues[indexFilter] = fixupUserSelection(values, values).map((value) => value.toString());
+    const uniqueIdentifierValues = tableDefinitionsAccessor.getUniqueIndexFilterValues();
+    const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
+
+    if (!userSelectedIdentifierValues) {
+        for (const entry of uniqueIdentifierValues) {
+            fixedUpIdentifierValues.push({
+                identifier: entry.identifier,
+                values: fixupUserSelection(
+                    entry.values,
+                    uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? []
+                ),
+            });
         }
-        return fixedIndexFilterValues;
+        return fixedUpIdentifierValues;
     }
 
-    const fixedIndexFilterValues: Record<string, string[]> = {};
-    for (const [indexFilter, values] of Object.entries(userSelectedIndexFilterValues)) {
-        fixedIndexFilterValues[indexFilter] = fixupUserSelection(
-            values,
-            tableDefinitionsAccessor.getUniqueIndexFilterValues()[indexFilter]
-        ).map((value) => value.toString());
+    for (const entry of userSelectedIdentifierValues) {
+        fixedUpIdentifierValues.push({
+            identifier: entry.identifier,
+            values: fixupUserSelection(
+                entry.values,
+                uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? []
+            ),
+        });
     }
 
-    return fixedIndexFilterValues;
+    return fixedUpIdentifierValues;
 });
 
 function fixupUserSelection<TSelection>(userSelection: TSelection[], validOptions: TSelection[]): TSelection[] {

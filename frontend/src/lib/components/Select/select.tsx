@@ -8,14 +8,14 @@ import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 
-export type SelectOption<TValue> = {
+export type SelectOption<TValue = string> = {
     value: TValue;
     adornment?: React.ReactNode;
     label: string;
     disabled?: boolean;
 };
 
-export type SelectProps<TValue> = {
+export type SelectProps<TValue = string> = {
     id?: string;
     wrapperId?: string;
     options: SelectOption<TValue>[];
@@ -46,22 +46,13 @@ function ensureKeyboardSelectionInView(
     return prevViewStartIndex;
 }
 
-export function Select<TValue>(props: SelectProps<TValue>) {
+export function Select<TValue = string>(props: SelectProps<TValue>) {
     const { onChange } = props;
 
-    if (props.value === undefined) {
-        props.value = [];
-    }
-
+    const valueWithDefault = props.value ?? [];
     const sizeWithDefault = props.size ?? 1;
-
-    if (props.multiple === undefined) {
-        props.multiple = false;
-    }
-
-    if (props.filter === undefined) {
-        props.filter = false;
-    }
+    const multipleWithDefault = props.multiple ?? false;
+    const filterWithDefault = props.filter ?? false;
 
     const [filterString, setFilterString] = React.useState<string>("");
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
@@ -86,9 +77,9 @@ export function Select<TValue>(props: SelectProps<TValue>) {
         filterOptions(newOptions, filterString);
     }
 
-    if (props.value && !isEqual(props.value, prevPropsValue)) {
-        setSelectedOptionValues([...props.value]);
-        setPrevPropsValue([...props.value]);
+    if (valueWithDefault && !isEqual(valueWithDefault, prevPropsValue)) {
+        setSelectedOptionValues([...valueWithDefault]);
+        setPrevPropsValue([...valueWithDefault]);
     }
 
     const handleOnChange = React.useCallback(
@@ -132,7 +123,7 @@ export function Select<TValue>(props: SelectProps<TValue>) {
                     return;
                 }
 
-                if (!props.multiple) {
+                if (!multipleWithDefault) {
                     const newSelectedOptions = [filteredOptions[index].value];
                     setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
@@ -167,7 +158,7 @@ export function Select<TValue>(props: SelectProps<TValue>) {
                     return;
                 }
 
-                if (!props.multiple) {
+                if (!multipleWithDefault) {
                     const newSelectedOptions = [filteredOptions[index].value];
                     setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
@@ -285,7 +276,7 @@ export function Select<TValue>(props: SelectProps<TValue>) {
             filteredOptions,
             sizeWithDefault,
             keysPressed,
-            props.multiple,
+            multipleWithDefault,
             handleOnChange,
             selectionAnchor,
             selectedOptionValues,
@@ -300,7 +291,7 @@ export function Select<TValue>(props: SelectProps<TValue>) {
 
         setCurrentFocusIndex(index);
 
-        if (!props.multiple) {
+        if (!multipleWithDefault) {
             setSelectedOptionValues([option.value]);
             handleOnChange([option.value]);
             return;
@@ -376,7 +367,7 @@ export function Select<TValue>(props: SelectProps<TValue>) {
                 })}
                 style={{ width: props.width, minWidth: props.width }}
             >
-                {props.filter && (
+                {filterWithDefault && (
                     <Input
                         id={props.id}
                         type="text"
