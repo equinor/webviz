@@ -90,7 +90,7 @@ export type { VectorHistoricalData as VectorHistoricalData_api } from './models/
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
-export type { VfpTable as VfpTable_api } from './models/VfpTable';
+export type { VfpProdTable as VfpProdTable_api } from './models/VfpProdTable';
 export { VfpType as VfpType_api } from './models/VfpType';
 export type { WellboreCasing as WellboreCasing_api } from './models/WellboreCasing';
 export type { WellboreCompletion as WellboreCompletion_api } from './models/WellboreCompletion';

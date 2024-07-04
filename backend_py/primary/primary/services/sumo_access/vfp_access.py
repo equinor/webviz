@@ -9,7 +9,7 @@ from fmu.sumo.explorer.objects import Case
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
 
 from ._helpers import create_sumo_case_async, create_sumo_client
-from .vfp_types import ALQ, GFR, WFR, FlowRateType, TabType, UnitType, VfpTable, VfpType
+from .vfp_types import ALQ, GFR, WFR, FlowRateType, TabType, UnitType, VfpProdTable, VfpType
 
 LOGGER = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class VfpAccess:
 
         return pa_table
 
-    async def get_vfp_table_from_tagname(self, tagname: str, realization: int) -> VfpTable:
+    async def get_vfp_table_from_tagname(self, tagname: str, realization: int) -> VfpProdTable:
         """Returns a VFP table as a VFP table object for a specific tagname (table name)
         and realization.
         """
@@ -74,13 +74,7 @@ class VfpAccess:
         if pa_table.schema.metadata[b"ALQ_TYPE"].decode("utf-8") != "''":
             alq_type = ALQ[pa_table.schema.metadata[b"ALQ_TYPE"].decode("utf-8")]
 
-        flow_rate_values = np.frombuffer(pa_table.schema.metadata[b"FLOW_VALUES"], dtype=np.float64)
-        thp_values = np.frombuffer(pa_table.schema.metadata[b"THP_VALUES"], dtype=np.float64)
-        wfr_values = np.frombuffer(pa_table.schema.metadata[b"WFR_VALUES"], dtype=np.float64)
-        gfr_values = np.frombuffer(pa_table.schema.metadata[b"GFR_VALUES"], dtype=np.float64)
-        alq_values = np.frombuffer(pa_table.schema.metadata[b"ALQ_VALUES"], dtype=np.float64)
-
-        vfp_table = VfpTable(
+        vfp_table = VfpProdTable(
             vfp_type=VfpType[pa_table.schema.metadata[b"VFP_TYPE"].decode("utf-8")],
             table_number=int(pa_table.schema.metadata[b"TABLE_NUMBER"].decode("utf-8")),
             datum=float(pa_table.schema.metadata[b"DATUM"].decode("utf-8")),
@@ -90,13 +84,11 @@ class VfpAccess:
             flow_rate_type=FlowRateType[pa_table.schema.metadata[b"RATE_TYPE"].decode("utf-8")],
             unit_type=UnitType[pa_table.schema.metadata[b"UNIT_TYPE"].decode("utf-8")],
             tab_type=TabType[pa_table.schema.metadata[b"TAB_TYPE"].decode("utf-8")],
-            thp_values=thp_values,
-            wfr_values=wfr_values,
-            gfr_values=gfr_values,
-            alq_values=alq_values,
-            flow_rate_values=flow_rate_values,
-            bhp_table=np.array(pa_table.columns)
-            .reshape(len(thp_values), len(wfr_values), len(gfr_values), len(alq_values), len(flow_rate_values))
-            .tolist(),
+            thp_values=np.frombuffer(pa_table.schema.metadata[b"THP_VALUES"], dtype=np.float64),
+            wfr_values=np.frombuffer(pa_table.schema.metadata[b"WFR_VALUES"], dtype=np.float64),
+            gfr_values=np.frombuffer(pa_table.schema.metadata[b"GFR_VALUES"], dtype=np.float64),
+            alq_values=np.frombuffer(pa_table.schema.metadata[b"ALQ_VALUES"], dtype=np.float64),
+            flow_rate_values=np.frombuffer(pa_table.schema.metadata[b"FLOW_VALUES"], dtype=np.float64),
+            bhp_table=[val for sublist in np.array(pa_table.columns).tolist() for val in sublist],
         )
         return vfp_table
