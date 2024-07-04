@@ -13,8 +13,14 @@ class InplaceVolumetricsIndexNames(StrEnum):
     FACIES = "FACIES"
     LICENSE = "LICENSE"
 
+class AccumulateByEach(StrEnum):
+    ZONE = "ZONE"
+    REGION = "REGION"
+    FACIES = "FACIES"
+    LICENSE = "LICENSE"
+
 class AggregateByEach(StrEnum):
-    # FLUID_ZONE = "FLUID_ZONE"
+    FLUID_ZONE = "FLUID_ZONE"
     ZONE = "ZONE"
     REGION = "REGION"
     FACIES = "FACIES"
@@ -25,7 +31,7 @@ class AggregateByEach(StrEnum):
 class FluidZone(StrEnum):
     OIL = "Oil"
     GAS = "Gas"
-    Water = "Water"  # TODO: Remove or keep?
+    WATER = "Water"  # TODO: Remove or keep?
 
 
 class Property(StrEnum):
@@ -53,7 +59,41 @@ class InplaceVolumetricsIndex:
 class InplaceVolumetricsTableDefinition:
     """Definition of a volumetric table"""
 
-    name: str
-    indexes: List[InplaceVolumetricsIndex]
+    table_name: str
+    fluid_zones: List[FluidZone]
     result_names: List[str]
-    # fluid_zones: List[FluidZone]
+    indexes: List[InplaceVolumetricsIndex]
+
+
+@dataclass
+class RepeatedTableColumnData:
+    """Definition of a column with repeated column data"""
+
+    column_name: str
+    unique_values: List[str | int]  # ["Valysar", "Therys", "Volon"]
+    indices: List[int]  # [0, 1, 1, 1, 2, 2, 2]. Length = number of rows in the table
+
+
+@dataclass
+class TableColumnData:
+    column_name: str
+    data: List[float]  # Column data Length = number of rows in the table
+
+
+@dataclass
+class InplaceVolumetricTableData:
+    """Volumetric data for a single table
+    
+    Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
+    """
+
+    fluid_selection_name: str # Oil, Gas, Water or "Oil + Gas", etc.
+    index_columns: List[RepeatedTableColumnData]  # Realization among the index columns?
+    response_columns: List[TableColumnData]
+
+
+@dataclass
+class InplaceVolumetricTableDataPerFluidSelection:
+
+    table_name: str
+    table_per_fluid_selection: List[InplaceVolumetricTableData]

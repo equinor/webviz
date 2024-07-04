@@ -1,6 +1,10 @@
-from typing import List
+from typing import Callable, Dict, List
 
 import re
+
+import numpy as np
+import pyarrow as pa
+import pyarrow.compute as pc
 
 from primary.services.sumo_access.inplace_volumetrics_types import (
     FluidZone,
@@ -20,11 +24,16 @@ Based on list of volume names, the available properties are determined. The list
 - A list of responses is converted back to list of volume names and properties. The needed volume names to calculated a property is found,
 and a complete list of volume names can be combined with list of fluid zones to get a list of raw volumetric columns.
 
+NOTE:
+ - response (name of columns in Sumo) = volume_names + properties
+ - properties -> variables?
+
 Terms:
 - Front-end: responses = volume_names + properties (w/o suffixes)
 - Back-end: volumetric_column_names = create_list_of_volume_names(responses) + fluid_zones (with suffixes)
 
 """
+
 
 def get_properties_in_response_names(response_names: List[str]) -> List[str]:
     """
@@ -38,6 +47,7 @@ def get_properties_in_response_names(response_names: List[str]) -> List[str]:
 
     return list(properties)
 
+
 def get_required_volume_names_from_properties(properties: List[str]) -> List[str]:
     """
     Function to convert properties to list of required volume names
@@ -48,6 +58,63 @@ def get_required_volume_names_from_properties(properties: List[str]) -> List[str
         volume_names.update(get_required_volume_names_from_property(property))
 
     return list(volume_names)
+
+
+# Get volume names and equation for each property
+def get_volume_names_and_equation_from_properties(
+    property: str,
+) -> tuple[tuple[str, str], Callable[[np.ndarray, np.ndarray], np.ndarray]]:
+    """
+    Function provides list of necessary volumes and an equation to calculate a requested property
+
+    The user has to provide np.ndarray of the necessary volumes to calculate the property. These
+    should be of equal length to ensure equal length of the resulting property array
+    """
+    if property == Property.NTG.value:
+        return (("NET", "BULK"), lambda net_array, bulk_array: np.divide(net_array, bulk_array))
+    if property == Property.PORO.value:
+        return (("PORV", "BULK"), lambda porv_array, bulk_array: np.divide(porv_array, bulk_array))
+    if property == Property.PORO_NET.value:
+        return (("PORV", "NET"), lambda porv_array, net_array: np.divide(porv_array, net_array))
+    if property == Property.SW.value:
+        return (("HCPV", "PORV"), lambda hcpv_array, porv_array: np.subtract(1, np.divide(hcpv_array, porv_array)))
+    if property == Property.BO.value:
+        return (("HCPV", "STOIIP"), lambda hcpv_array, stoiip_array: np.divide(hcpv_array, stoiip_array))
+    if property == Property.BG.value:
+        return (("HCPV", "GIIP"), lambda hcpv_array, giip_array: np.divide(hcpv_array, giip_array))
+    raise ValueError(f"Unhandled property: {property}")
+
+def _create_safe_denominator_array(denominator_array: pa.array) -> pa.array:
+        """
+        Create denominator array for safe division, i.e. replace 0 with np.nan
+        """
+        zero_mask = pc.equal(denominator_array, 0)
+        safe_denominator_array = pc.if_else(zero_mask, pa.scalar(float("nan")), denominator_array)
+        return safe_denominator_array
+
+def calculate_property_from_volume_arrays(property: str, nominator: pa.array, denominator: pa.array) -> pa.array:
+    """
+    Calculate property from two arrays of volumes
+    
+    Assume equal length and dimension of arrays
+
+    """        
+    safe_denominator = _create_safe_denominator_array(denominator)
+
+    if property == Property.NTG.value:
+        return pc.divide(nominator, safe_denominator)
+    if property == Property.PORO.value:
+        return pc.divide(nominator, safe_denominator)
+    if property == Property.PORO_NET.value:
+        return pc.divide(nominator, safe_denominator)
+    if property == Property.SW.value:
+        return pc.subtract(1, pc.divide(nominator, safe_denominator))
+    if property == Property.BO.value:
+        return pc.divide(nominator, safe_denominator)
+    if property == Property.BG.value:
+        return pc.divide(nominator, safe_denominator)
+    raise ValueError(f"Unhandled property: {property}")
+
 
 def get_required_volume_names_from_property(property: str) -> List[str]:
     """
@@ -119,7 +186,7 @@ def get_fluid_zones(raw_volumetric_column_names: set[str]) -> List[FluidZone]:
     """
     Function to get fluid zones from raw volumetric column names
     """
-    full_set = {FluidZone.OIL, FluidZone.GAS, FluidZone.Water}
+    full_set = {FluidZone.OIL, FluidZone.GAS, FluidZone.WATER}
     fluid_zones: set[FluidZone] = set()
     for column_name in raw_volumetric_column_names:
         if "_OIL" in column_name:
@@ -127,7 +194,7 @@ def get_fluid_zones(raw_volumetric_column_names: set[str]) -> List[FluidZone]:
         elif "_GAS" in column_name:
             fluid_zones.add(FluidZone.GAS)
         elif "_WATER" in column_name:
-            fluid_zones.add(FluidZone.Water)
+            fluid_zones.add(FluidZone.WATER)
 
         if fluid_zones == full_set:
             break
@@ -144,9 +211,23 @@ def create_raw_volumetric_columns_from_volume_names_and_fluid_zones(
 
     volumetric_columns = []
 
-    for fluid_zone in fluid_zones:
-        for volume_name in volume_names:
+    for volume_name in volume_names:
+        columns = create_raw_volumetric_columns_from_volume_name_and_fluid_zones(volume_name, fluid_zones)
+        volumetric_columns.extend(columns)
 
-            volumetric_columns.append(f"{volume_name}_{fluid_zone.value}")
+    return volumetric_columns
+
+
+def create_raw_volumetric_columns_from_volume_name_and_fluid_zones(
+    volume_name: str, fluid_zones: List[FluidZone]
+) -> list[str]:
+    """
+    Function to create raw volumetric columns from volume name and fluid zones
+    """
+
+    volumetric_columns = []
+
+    for fluid_zone in fluid_zones:
+        volumetric_columns.append(f"{volume_name}_{fluid_zone.value.upper()}")
 
     return volumetric_columns
