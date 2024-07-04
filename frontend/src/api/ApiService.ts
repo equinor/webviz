@@ -68,7 +68,7 @@ export class ApiService {
         this.seismic = new SeismicService(this.request);
         this.surface = new SurfaceService(this.request);
         this.timeseries = new TimeseriesService(this.request);
-        this.vfp = new VfpService(this.request)
+        this.vfp = new VfpService(this.request);
         this.well = new WellService(this.request);
         this.wellCompletions = new WellCompletionsService(this.request);
     }

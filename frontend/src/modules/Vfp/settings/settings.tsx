@@ -1,6 +1,5 @@
 import React from "react";
 
-import { Frequency_api, NodeType_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
@@ -28,6 +27,7 @@ import {
     selectedRealizationNumberAtom,
     selectedVfpTableNameAtom,
     availableVfpTableNamesAtom,
+    vfpTableDataAtom,
 } from "./atoms/derivedAtoms";
 
 

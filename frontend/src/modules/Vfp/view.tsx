@@ -11,11 +11,11 @@ import { ContentMessage, ContentMessageType } from "@modules/_shared/components/
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { Interface, State } from "./state";
-// import { PvtDataAccessor } from "./utils/PvtDataAccessor";
-// import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
 export function View({ viewContext }: ModuleViewProps<State, Interface>) {
+
+    const vfpTableName = viewContext.useSettingsToViewInterfaceValue("vfpTableName");
     return (
-        <div className="w-full h-full">VFP </div>
+        <div className="w-full h-full">VFP table name: {vfpTableName} </div>
     );
 }

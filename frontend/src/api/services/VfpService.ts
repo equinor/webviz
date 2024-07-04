@@ -2,16 +2,17 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { VfpTable } from '../models/VfpTable';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class VfpService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
-     * Get Vfp names
+     * Get Vfp Table Names
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param realization Realization
-     * @returns a list of VFP names for an ensemble and realization
+     * @returns string Successful Response
      * @throws ApiError
      */
     public getVfpTableNames(
@@ -26,6 +27,35 @@ export class VfpService {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'realization': realization,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Vfp Table
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param realization Realization
+     * @param vfpTableName VFP table name
+     * @returns VfpTable Successful Response
+     * @throws ApiError
+     */
+    public getVfpTable(
+        caseUuid: string,
+        ensembleName: string,
+        realization: number,
+        vfpTableName: string,
+    ): CancelablePromise<VfpTable> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/vfp/vfp_table/',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'realization': realization,
+                'vfp_table_name': vfpTableName,
             },
             errors: {
                 422: `Validation Error`,
