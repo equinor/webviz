@@ -1,7 +1,7 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
-import { VfpTable } from "src/api/models/VfpTable";
+import { VfpProdTable } from "src/api/models/VfpProdTable";
 
 import { atom } from "jotai";
 
@@ -11,6 +11,10 @@ import {
     validRealizationNumbersAtom,
     userSelectedVfpTableNameAtom,
     validVfpTableNamesAtom,
+    userSelectedThpIndicesAtom,
+    userSelectedWfrIndicesAtom,
+    userSelectedGfrIndicesAtom,
+    userSelectedAlqIndicesAtom,
 } from "./baseAtoms";
 
 import { vfpTableQueryAtom, vfpTableNamesQueryAtom } from "./queryAtoms";
@@ -25,7 +29,7 @@ export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);
 });
 
-export const vfpTableDataAtom = atom<VfpTable | undefined>((get) => {
+export const vfpTableDataAtom = atom<VfpProdTable | undefined>((get) => {
     const vfpTableQueryResult = get(vfpTableQueryResultAtom)
     return vfpTableQueryResult.data
 });
@@ -79,4 +83,65 @@ export const selectedVfpTableNameAtom = atom<string | null> ((get) => {
         ? userSelectedVfpTableName
         : null;
     return validVfpTableName
+});
+
+
+export const selectedThpIndicesAtom = atom<number[] | null>((get) => {
+    const vfpTable = get(vfpTableDataAtom)
+    const thp_values = vfpTable?.thp_values ?? [];
+    const userSelectedThpIndicies = get(userSelectedThpIndicesAtom);
+
+    if (thp_values.length === 0) {
+        return null;
+    }
+    if (!userSelectedThpIndicies) {
+        return [0];
+    }
+
+    return userSelectedThpIndicies;
+});
+
+export const selectedWfrIndicesAtom = atom<number[] | null>((get) => {
+    const vfpTable = get(vfpTableDataAtom)
+    const wfr_values = vfpTable?.wfr_values ?? [];
+    const userSelectedWfrIndicies = get(userSelectedWfrIndicesAtom);
+
+    if (wfr_values.length === 0) {
+        return null;
+    }
+    if (!userSelectedWfrIndicies) {
+        return [0];
+    }
+
+    return userSelectedWfrIndicies;
+});
+
+export const selectedGfrIndicesAtom = atom<number[] | null>((get) => {
+    const vfpTable = get(vfpTableDataAtom)
+    const wfr_values = vfpTable?.gfr_values ?? [];
+    const userSelectedGfrIndicies = get(userSelectedGfrIndicesAtom);
+
+    if (wfr_values.length === 0) {
+        return null;
+    }
+    if (!userSelectedGfrIndicies) {
+        return [0];
+    }
+
+    return userSelectedGfrIndicies;
+});
+
+export const selectedAlqIndicesAtom = atom<number[] | null>((get) => {
+    const vfpTable = get(vfpTableDataAtom)
+    const wfr_values = vfpTable?.alq_values ?? [];
+    const userSelectedAlqIndicies = get(userSelectedAlqIndicesAtom);
+
+    if (wfr_values.length === 0) {
+        return null;
+    }
+    if (!userSelectedAlqIndicies) {
+        return [0];
+    }
+
+    return userSelectedAlqIndicies;
 });

@@ -11,11 +11,25 @@ import { ContentMessage, ContentMessageType } from "@modules/_shared/components/
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { Interface, State } from "./state";
+import { VfpProdTable_api } from "@api";
+import { VfpPlotBuilder } from "./utils/VfpPlotBuilder";
 
 export function View({ viewContext }: ModuleViewProps<State, Interface>) {
 
     const vfpTableName = viewContext.useSettingsToViewInterfaceValue("vfpTableName");
-    return (
-        <div className="w-full h-full">VFP table name: {vfpTableName} </div>
-    );
+    const vfpTable: VfpProdTable_api = viewContext.useSettingsToViewInterfaceValue("vfpTable")
+    const selectedThpIndices = viewContext.useSettingsToViewInterfaceValue("selectedThpIndices")
+    const selectedWfrIndices = viewContext.useSettingsToViewInterfaceValue("selectedWfrIndices")
+    const selectedGfrIndices = viewContext.useSettingsToViewInterfaceValue("selectedGfrIndices")
+    const selectedAlqIndices = viewContext.useSettingsToViewInterfaceValue("selectedAlqIndices")
+
+    const wrapperDivRef = React.useRef<HTMLDivElement>(null);
+    const wrapperDivSize = useElementSize(wrapperDivRef);
+
+    const vfpPlotBuilder = new VfpPlotBuilder(vfpTable);
+
+    vfpPlotBuilder.makeLayout(wrapperDivSize)
+    //vfpPlotBuilder.makeTraces(selectedThpIndices, selectedWfrIndices, selectedGfrIndices, selectedAlqIndices)
+
+    return vfpPlotBuilder.makePlot()
 }

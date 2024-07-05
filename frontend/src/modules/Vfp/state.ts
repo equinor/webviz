@@ -1,8 +1,15 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
 
-import { vfpTableDataAtom, selectedVfpTableNameAtom } from "./settings/atoms/derivedAtoms";
-import { VfpTable } from "src/api/models/VfpTable";
+import { 
+    vfpTableDataAtom, 
+    selectedVfpTableNameAtom,
+    selectedThpIndicesAtom,
+    selectedWfrIndicesAtom,
+    selectedGfrIndicesAtom,
+    selectedAlqIndicesAtom,
+} from "./settings/atoms/derivedAtoms";
+import { VfpProdTable } from "src/api/models/VfpProdTable";
 
 export type State = Record<string, never>;
 
@@ -10,7 +17,11 @@ export type Interface = {
     baseStates: Record<string, never>;
     derivedStates: {
         vfpTableName: string | null;
-        vfpTable: VfpTable | undefined;
+        vfpTable: VfpProdTable | undefined;
+        selectedThpIndices: number[] | null;
+        selectedWfrIndices: number[] | null;
+        selectedGfrIndices: number[] | null;
+        selectedAlqIndices: number[] | null;
     };
 };
 
@@ -23,5 +34,18 @@ export const interfaceInitialization: InterfaceInitialization<Interface> = {
         vfpTable: (get) => {
             return get(vfpTableDataAtom);
         },
+        selectedThpIndices: (get) => {
+            return get(selectedThpIndicesAtom)
+        },
+        selectedWfrIndices: (get) => {
+            return get(selectedWfrIndicesAtom)
+        },
+        selectedGfrIndices: (get) => {
+            return get(selectedGfrIndicesAtom)
+        },
+        selectedAlqIndices: (get) => {
+            return get(selectedAlqIndicesAtom)
+        },
+
     },
 };
