@@ -1,11 +1,11 @@
-from typing import List
+from typing import Callable, Dict, List
 
 import re
 
-from primary.services.sumo_access.inplace_volumetrics_types import (
-    FluidZone,
-    Property,
-)
+import pyarrow as pa
+import pyarrow.compute as pc
+
+from primary.services.sumo_access.inplace_volumetrics_types import FluidZone, Property, RepeatedTableColumnData
 
 """
 This file contains helper functions for conversion between different data types used in the Inplace Volumetrics provider
@@ -20,11 +20,16 @@ Based on list of volume names, the available properties are determined. The list
 - A list of responses is converted back to list of volume names and properties. The needed volume names to calculated a property is found,
 and a complete list of volume names can be combined with list of fluid zones to get a list of raw volumetric columns.
 
+NOTE:
+ - response (name of columns in Sumo) = volume_names + properties
+ - properties -> variables?
+
 Terms:
 - Front-end: responses = volume_names + properties (w/o suffixes)
 - Back-end: volumetric_column_names = create_list_of_volume_names(responses) + fluid_zones (with suffixes)
 
 """
+
 
 def get_properties_in_response_names(response_names: List[str]) -> List[str]:
     """
@@ -38,6 +43,7 @@ def get_properties_in_response_names(response_names: List[str]) -> List[str]:
 
     return list(properties)
 
+
 def get_required_volume_names_from_properties(properties: List[str]) -> List[str]:
     """
     Function to convert properties to list of required volume names
@@ -48,6 +54,40 @@ def get_required_volume_names_from_properties(properties: List[str]) -> List[str
         volume_names.update(get_required_volume_names_from_property(property))
 
     return list(volume_names)
+
+
+def _create_safe_denominator_array(denominator_array: pa.array) -> pa.array:
+    """
+    Create denominator array for safe division, i.e. replace 0 with np.nan
+    """
+    zero_mask = pc.equal(denominator_array, 0)
+    safe_denominator_array = pc.if_else(zero_mask, pa.scalar(float("nan")), denominator_array)
+    return safe_denominator_array
+
+
+def calculate_property_from_volume_arrays(property: str, nominator: pa.array, denominator: pa.array) -> pa.array:
+    """
+    Calculate property from two arrays of volumes
+
+    Assume equal length and dimension of arrays
+
+    """
+    safe_denominator = _create_safe_denominator_array(denominator)
+
+    if property == Property.NTG.value:
+        return pc.divide(nominator, safe_denominator)
+    if property == Property.PORO.value:
+        return pc.divide(nominator, safe_denominator)
+    if property == Property.PORO_NET.value:
+        return pc.divide(nominator, safe_denominator)
+    if property == Property.SW.value:
+        return pc.subtract(1, pc.divide(nominator, safe_denominator))
+    if property == Property.BO.value:
+        return pc.divide(nominator, safe_denominator)
+    if property == Property.BG.value:
+        return pc.divide(nominator, safe_denominator)
+    raise ValueError(f"Unhandled property: {property}")
+
 
 def get_required_volume_names_from_property(property: str) -> List[str]:
     """
@@ -119,7 +159,7 @@ def get_fluid_zones(raw_volumetric_column_names: set[str]) -> List[FluidZone]:
     """
     Function to get fluid zones from raw volumetric column names
     """
-    full_set = {FluidZone.OIL, FluidZone.GAS, FluidZone.Water}
+    full_set = {FluidZone.OIL, FluidZone.GAS, FluidZone.WATER}
     fluid_zones: set[FluidZone] = set()
     for column_name in raw_volumetric_column_names:
         if "_OIL" in column_name:
@@ -127,7 +167,7 @@ def get_fluid_zones(raw_volumetric_column_names: set[str]) -> List[FluidZone]:
         elif "_GAS" in column_name:
             fluid_zones.add(FluidZone.GAS)
         elif "_WATER" in column_name:
-            fluid_zones.add(FluidZone.Water)
+            fluid_zones.add(FluidZone.WATER)
 
         if fluid_zones == full_set:
             break
@@ -144,9 +184,34 @@ def create_raw_volumetric_columns_from_volume_names_and_fluid_zones(
 
     volumetric_columns = []
 
-    for fluid_zone in fluid_zones:
-        for volume_name in volume_names:
-
-            volumetric_columns.append(f"{volume_name}_{fluid_zone.value}")
+    for volume_name in volume_names:
+        columns = create_raw_volumetric_columns_from_volume_name_and_fluid_zones(volume_name, fluid_zones)
+        volumetric_columns.extend(columns)
 
     return volumetric_columns
+
+
+def create_raw_volumetric_columns_from_volume_name_and_fluid_zones(
+    volume_name: str, fluid_zones: List[FluidZone]
+) -> list[str]:
+    """
+    Function to create raw volumetric columns from volume name and fluid zones
+    """
+
+    volumetric_columns = []
+
+    for fluid_zone in fluid_zones:
+        volumetric_columns.append(f"{volume_name}_{fluid_zone.value.upper()}")
+
+    return volumetric_columns
+
+
+def create_repeated_table_column_data_from_column(column_name: str, column_values: pa.array) -> RepeatedTableColumnData:
+    """
+    Create repeated table column data from column name and values array
+    """
+    unique_values: List[str | int] = list(pa.compute.unique(column_values).to_pylist())
+    value_to_index_map = {value: index for index, value in enumerate(unique_values)}
+    indices: List[int] = [value_to_index_map[value] for value in column_values.to_pylist()]
+
+    return RepeatedTableColumnData(column_name=column_name, unique_values=unique_values, indices=indices)
