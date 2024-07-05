@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 import asyncio
 
 import numpy as np
@@ -27,7 +27,7 @@ from ._conversion._conversion import (
     get_volume_names_from_raw_volumetric_column_names,
 )
 
-from ._utils import create_accumulated_result_table, create_inplace_volumetric_table_data_from_result_table
+from ._utils import create_accumulated_result_table, create_volumetric_table_accumulated_across_fluid_zones, create_inplace_volumetric_table_data_from_result_table
 
 # Identifier column values to ignore, i.e. remove from the volumetric tables
 IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
@@ -186,49 +186,61 @@ class InplaceVolumetricsProvider:
         # TODO: SHOULD PROPERTIES BE CALCULATED AFTER ACCUMULATION OF FLUID ZONES if accumulate_fluid_zones is True?
         # i.e. sw = 1 - hcpv/porv. Must be calculated after summing hcpv and porv per fluid zone?
         # YES: Should have: sw = 1 - (hcpv_oil + hcpv_gas + hcpv_water) / (porv_oil + porv_gas + porv_water) etc
-        volumetric_table_per_fluid_zone_selection: Dict[FluidZoneSelection, pa.Table] = volumetric_table_per_fluid_zone
-        if False or accumulate_fluid_zones:
-            # TODO: Accumulate/sum columns per fluid zone
-            # - BO/BG are neglected
-            # - If a column is not present for one fluid zone, it is set to zero
+        
+        response_table_per_fluid_selection: Dict[str, pa.Table] = {} # TODO: Replace str key to FluidZoneSelection or array of FluidZone?
+        if accumulate_fluid_zones:
+            # Build response table - accumulated across fluid zones
+            # - Sum each volume column across fluid zones
+            # - Calculate properties
+            volumetric_table_accumulated_across_fluid_zones = create_volumetric_table_accumulated_across_fluid_zones(
+                volumetric_table_per_fluid_zone, valid_selector_columns
+            )
 
-            # NOTE: _calculate_property_column_arrays() handles per fluid zone, but not FluidZoneSelection
+            # Create fluid selection name
+            fluid_selection_name = " + ".join([fluid_zone.value for fluid_zone in fluid_zones])
 
-            # Find union of column names across all fluid zones
-            all_column_names = set()
-            for response_table in response_table_per_fluid_zone.values():
-                all_column_names.update(response_table.column_names)
+            # Drop BO/BG properties
+            valid_properties = [prop for prop in properties if prop not in ["BO", "BG"]]
 
-            pass
-
-        # Build response table - per fluid zone
-        # - Requested volumes
-        # - Calculated properties
-        response_table_per_fluid_zone: Dict[FluidZone, pa.Table] = {}
-        for fluid_zone, volumetric_table in volumetric_table_per_fluid_zone.items():
-            property_columns = self._calculate_property_column_arrays(volumetric_table, fluid_zone, properties)
+            property_columns = self._calculate_property_column_arrays(
+                volumetric_table_accumulated_across_fluid_zones, valid_properties, fluid_zone=None
+            )
 
             # Build response table (volumns and calculated properties)
-            available_volume_names = [name for name in volume_names if name in volumetric_table.column_names]
-            response_table = volumetric_table.select(valid_selector_columns + available_volume_names)
+            available_volume_names = [name for name in volume_names if name in volumetric_table_accumulated_across_fluid_zones.column_names]
+            response_table = volumetric_table_accumulated_across_fluid_zones.select(valid_selector_columns + available_volume_names)
             for property_name, property_column in property_columns.items():
                 response_table = response_table.append_column(property_name, property_column)
+            response_table_per_fluid_selection[fluid_selection_name] = response_table
 
-            response_table_per_fluid_zone[fluid_zone] = response_table
+        else:
+            # Build response table - per fluid zone
+            # - Requested volumes
+            # - Calculated properties
+            for fluid_zone, volumetric_table in volumetric_table_per_fluid_zone.items():
+                property_columns = self._calculate_property_column_arrays(volumetric_table, properties, fluid_zone)
+
+                # Build response table (volumns and calculated properties)
+                available_volume_names = [name for name in volume_names if name in volumetric_table.column_names]
+                response_table = volumetric_table.select(valid_selector_columns + available_volume_names)
+                for property_name, property_column in property_columns.items():
+                    response_table = response_table.append_column(property_name, property_column)
+
+                response_table_per_fluid_selection[fluid_zone.value] = response_table
 
         # Perform aggregation per response table
-        aggregated_response_table_per_fluid_zone: Dict[FluidZone, pa.Table] = {}
-        for fluid_zone, response_table in response_table_per_fluid_zone.items():
+        aggregated_response_table_per_fluid_selection: Dict[str, pa.Table] = {}
+        for fluid_selection_name, response_table in response_table_per_fluid_selection.items():
             accumulated_result_table = create_accumulated_result_table(
                 response_table, valid_selector_columns, accumulate_by_identifiers, calculate_mean_across_realizations
             )
-            aggregated_response_table_per_fluid_zone[fluid_zone] = accumulated_result_table
+            aggregated_response_table_per_fluid_selection[fluid_selection_name] = accumulated_result_table
 
         # Convert tables into InplaceVolumetricTableDataPerFluidSelection
         table_data_per_fluid_selection: List[InplaceVolumetricTableData] = []
-        for fluid_zone, response_table in aggregated_response_table_per_fluid_zone.items():
+        for fluid_selection_name, response_table in aggregated_response_table_per_fluid_selection.items():
             table_data = create_inplace_volumetric_table_data_from_result_table(
-                response_table, fluid_zone.value, valid_selector_columns
+                response_table, fluid_selection_name, valid_selector_columns
             )
             table_data_per_fluid_selection.append(table_data)
 
@@ -355,7 +367,7 @@ class InplaceVolumetricsProvider:
         return fluid_zone_to_table_map
 
     def _calculate_property_column_arrays(
-        self, volumetric_table: pa.Table, fluid_zone: FluidZone, properties: List[str]
+        self, volumetric_table: pa.Table, properties: List[str], fluid_zone: Optional[FluidZone] = None
     ) -> Dict[str, pa.array]:
         """
         Calculate property arrays as pa.array based on the volume columns in table.
@@ -370,11 +382,6 @@ class InplaceVolumetricsProvider:
         """
 
         existing_volume_columns: List[str] = volumetric_table.column_names
-        num_rows: int = volumetric_table.num_rows
-
-        zero_array = pa.array(np.zeros(num_rows), type=pa.float64())
-        nan_array = pa.array(np.full(num_rows, np.nan), type=pa.float64())
-
         property_arrays: Dict[str, pa.array] = {}
 
         # NOTE: If one of the volume names needed for a property is not found, the property array is not calculated

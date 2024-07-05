@@ -1,9 +1,10 @@
-from typing import List
+from typing import Dict, List
 
 import pyarrow as pa
 import pyarrow.compute as pc
 
 from primary.services.sumo_access.inplace_volumetrics_types import (
+    FluidZone,
     InplaceVolumetricTableData,
     InplaceVolumetricsIdentifier,
     RepeatedTableColumnData,
@@ -88,3 +89,38 @@ def create_inplace_volumetric_table_data_from_result_table(
         selector_columns=selector_column_data_list,
         result_columns=result_column_data_list,
     )
+
+
+def create_volumetric_table_accumulated_across_fluid_zones(
+        volumetric_table_per_fluid_zone: Dict[FluidZone, pa.Table],
+        selector_columns: List[str]
+)-> pa.Table:
+    """
+    Create a table that is the sum of all tables in table_per_fluid_zone
+
+    NOTE: Expect all tables to have the same selector columns and order, i.e. row wise compare is possible
+    """
+    if len(volumetric_table_per_fluid_zone) == 0:
+        raise ValueError("No tables found in table_per_fluid_zone")
+
+    # Find union of column names across all fluid zones
+    all_column_names = set()
+    for response_table in volumetric_table_per_fluid_zone.values():
+        all_column_names.update(response_table.column_names)
+    
+    selector_columns = set(selector_columns)
+    remaining_column_names = all_column_names - set(selector_columns)
+
+    
+    first_table = next(iter(volumetric_table_per_fluid_zone.values()))
+    accumulated_table = first_table.select(selector_columns)
+    zero_array = pa.array([0.0] * accumulated_table.num_rows, type=pa.float64())
+    for column_name in remaining_column_names:
+        accumulated_column_array: List[pa.array] = zero_array
+        for response_table in volumetric_table_per_fluid_zone.values():
+            if column_name in response_table.column_names:
+                accumulated_column_array = pc.add(accumulated_column_array, response_table[column_name])
+        accumulated_table = accumulated_table.append_column(column_name, accumulated_column_array)
+    
+    return accumulated_table
+
