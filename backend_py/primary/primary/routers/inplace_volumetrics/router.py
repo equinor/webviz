@@ -50,7 +50,7 @@ async def get_result_data_per_realization(
     )
 
     data = await access.get_volumetric_data_async(
-        table_name=table_name, result_name=result_name.value, realizations=realizations, index_filter=index_filter
+        table_name=table_name, result_name=result_name.value, realizations=realizations, identifiers_with_values=index_filter
     )
     return data
 
