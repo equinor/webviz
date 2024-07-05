@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fmu.sumo.explorer.objects import Case, TableCollection, Table
+from fmu.sumo.explorer.objects import Case, TableCollection
 
 import asyncio
 import pyarrow as pa
@@ -10,14 +10,9 @@ from ..service_exceptions import (
     Service,
     NoDataError,
     InvalidDataError,
-    MultipleDataMatchesError,
 )
 
-
 from webviz_pkg.core_utils.perf_timer import PerfTimer
-
-# Allowed categories (index column names) for the volumetric tables
-ALLOWED_INDEX_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
 
 
 class InplaceVolumetricsAccess:
@@ -28,6 +23,14 @@ class InplaceVolumetricsAccess:
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
 
+    @classmethod
+    async def from_case_uuid_async(
+        cls, access_token: str, case_uuid: str, iteration_name: str
+    ) -> "InplaceVolumetricsAccess":
+        sumo_client = create_sumo_client(access_token)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        return InplaceVolumetricsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
+
     def expected_index_columns(self) -> List[str]:
         return self._expected_index_columns
 
@@ -36,14 +39,6 @@ class InplaceVolumetricsAccess:
         The index columns and REAL column represent the selector columns of the volumetric table.
         """
         return self.expected_index_columns() + ["REAL"]
-
-    @classmethod
-    async def from_case_uuid_async(
-        cls, access_token: str, case_uuid: str, iteration_name: str
-    ) -> "InplaceVolumetricsAccess":
-        sumo_client = create_sumo_client(access_token)
-        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
-        return InplaceVolumetricsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_inplace_volumetrics_table_names_async(self) -> List[str]:
         vol_table_collection = self._case.tables.filter(
@@ -131,6 +126,17 @@ class InplaceVolumetricsAccess:
             column_names=column_names,
         )
 
+        # Validate the table columns
+        expected_table_columns = expected_repeated_collection_columns
+        if column_names:
+            expected_table_columns.update(column_names)
+            if not expected_table_columns.issubset(set(vol_table.column_names)):
+                missing_columns = expected_table_columns - set(vol_table.column_names)
+                raise InvalidDataError(
+                    f"Missing columns: {missing_columns}, in the assembled volumetric table {self._case_uuid}, {table_name}",
+                    Service.SUMO,
+                )
+
         return vol_table
 
     async def _assemble_volumetrics_table_collection_into_single_table_async(
@@ -178,9 +184,14 @@ class InplaceVolumetricsAccess:
 
             # Expect only one column in addition to the index columns, i.e. the volume
             volume_names_set = set(volume_table.column_names) - expected_repeated_collection_columns
+            if len(volume_names_set) == 0:
+                raise InvalidDataError(
+                    f"Table {table_name} has collection without detected volume column. Collection has column names {volume_table.column_names}",
+                    Service.SUMO,
+                )
             if len(volume_names_set) != 1:
                 raise InvalidDataError(
-                    f"Table {volume_table.name} has more than one column for volume: {volume_names_set}",
+                    f"Table {table_name} has collection with more than one column for volume: {volume_names_set}",
                     Service.SUMO,
                 )
 
@@ -188,17 +199,5 @@ class InplaceVolumetricsAccess:
             volume_name = list(volume_names_set)[0]
             volume_column = volume_table[volume_name]
             volumes_table = volumes_table.append_column(volume_name, volume_column)
-
-        # Validate the table columns
-        expected_table_columns = expected_repeated_collection_columns
-        if column_names:
-            expected_table_columns.update(column_names)
-
-        # if not expected_table_columns.issubset(set(volumes_table.column_names)):
-        #     missing_columns = expected_table_columns - set(volumes_table.column_names)
-        #     raise InvalidDataError(
-        #         f"Missing columns: {missing_columns}, in the assembled volumetric table {self._case_uuid}, {table_name}",
-        #         Service.SUMO,
-        #     )
 
         return volumes_table
