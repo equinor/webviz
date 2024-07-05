@@ -3,6 +3,9 @@ from typing import Dict, List, Optional, Set, Tuple
 import pandas as pd
 from fmu.sumo.explorer.objects import Case
 
+
+from primary.services.service_exceptions import InvalidDataError, Service
+
 from ._helpers import create_sumo_client, create_sumo_case_async
 
 from .well_completions_types import (
@@ -14,8 +17,6 @@ from .well_completions_types import (
     WellCompletionsUnitInfo,
     WellCompletionsUnits,
 )
-
-from primary.services.service_exceptions import InvalidDataError, Service
 
 
 class WellCompletionsAccess:
