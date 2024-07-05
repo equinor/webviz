@@ -125,7 +125,7 @@ class InplaceVolumetricTableData(BaseModel):
 
     fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
     selector_columns: List[RepeatedTableColumnData]  # Index columns and realizations
-    response_columns: List[TableColumnData]
+    result_columns: List[TableColumnData]
 
 
 class InplaceVolumetricTableDataPerFluidSelection(BaseModel):

@@ -1,11 +1,11 @@
-from typing import Callable, Dict, List
+from typing import List
 
 import re
 
 import pyarrow as pa
 import pyarrow.compute as pc
 
-from primary.services.sumo_access.inplace_volumetrics_types import FluidZone, Property, RepeatedTableColumnData
+from primary.services.sumo_access.inplace_volumetrics_types import FluidZone, Property
 
 """
 This file contains helper functions for conversion between different data types used in the Inplace Volumetrics provider
@@ -204,14 +204,3 @@ def create_raw_volumetric_columns_from_volume_name_and_fluid_zones(
         volumetric_columns.append(f"{volume_name}_{fluid_zone.value.upper()}")
 
     return volumetric_columns
-
-
-def create_repeated_table_column_data_from_column(column_name: str, column_values: pa.array) -> RepeatedTableColumnData:
-    """
-    Create repeated table column data from column name and values array
-    """
-    unique_values: List[str | int] = list(pa.compute.unique(column_values).to_pylist())
-    value_to_index_map = {value: index for index, value in enumerate(unique_values)}
-    indices: List[int] = [value_to_index_map[value] for value in column_values.to_pylist()]
-
-    return RepeatedTableColumnData(column_name=column_name, unique_values=unique_values, indices=indices)

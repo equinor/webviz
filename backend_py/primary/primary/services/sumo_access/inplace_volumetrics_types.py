@@ -21,22 +21,6 @@ class InplaceVolumetricsIdentifier(StrEnum):
     LICENSE = "LICENSE"
 
 
-class AccumulateByEach(StrEnum):
-    ZONE = "ZONE"
-    REGION = "REGION"
-    FACIES = "FACIES"
-    LICENSE = "LICENSE"
-
-
-class AggregateByEach(StrEnum):
-    FLUID_ZONE = "FLUID_ZONE"
-    ZONE = "ZONE"
-    REGION = "REGION"
-    FACIES = "FACIES"
-    # LICENSE = "LICENSE"
-    REAL = "REAL"
-
-
 class FluidZone(StrEnum):
     OIL = "Oil"
     GAS = "Gas"
@@ -107,7 +91,7 @@ class InplaceVolumetricTableData:
     # fluid_zones: List[FluidZone]  # Oil, Gas, Water or "Oil + Gas", etc.
     fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
     selector_columns: List[RepeatedTableColumnData]  # Index columns and realizations
-    response_columns: List[TableColumnData]
+    result_columns: List[TableColumnData]
 
 
 @dataclass
