@@ -3,6 +3,13 @@ from dataclasses import dataclass
 from typing import List, Union
 
 
+# NOTE:
+# - AccumulateByEach -> InplaceVolumetricsIndexNames
+# - Later on: InplaceVolumetricsIndexNames -> InplaceVolumetricsIdentifier
+# - response -> result(s)
+# - results = volume (directly from SUMO columns w/o suffix) + property (calculated from volumes)
+
+
 class InplaceVolumetricsIndexNames(StrEnum):
     """
     Definition of valid index names for an inplace volumetrics table
@@ -97,6 +104,7 @@ class InplaceVolumetricTableData:
     Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
     """
 
+    # fluid_zones: List[FluidZone]  # Oil, Gas, Water or "Oil + Gas", etc.
     fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
     selector_columns: List[RepeatedTableColumnData]  # Index columns and realizations
     response_columns: List[TableColumnData]

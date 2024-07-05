@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query, Body
 
@@ -63,10 +63,13 @@ async def post_get_aggregated_table_data(
     table_name: str = Query(description="Table name"),
     response_names: List[str] = Query(description="The name of the volumetric result/response"),
     fluid_zones: List[schemas.FluidZone] = Query(description="The fluid zones to aggregate by"),
-    # aggregate_by: List[str] = Query(description="The index types to aggregate by"),
-    # realizations: List[int] = Query(description="Realizations"),
-    # realization: Optional[int] = Query(None, description="Optional realization to include. If not specified, all realizations will be returned."),
-    # index_filter: List[schemas.InplaceVolumetricsIndex] = Body(embed=True, description="Categorical filter"),
+    realizations: Optional[List[int]] = Query(
+        None, description="Optional realization to include. If not specified, all realizations will be returned."
+    ),
+    accumulate_by_indices: List[schemas.InplaceVolumetricsIndex] = Query(description="The index types to aggregate by"),
+    index_filter: List[schemas.InplaceVolumetricsIndex] = Body(embed=True, description="Categorical filter"),
+    accumulate_fluid_zones: bool = Query(description="Whether to accumulate fluid zones"),
+    calculate_mean_across_realizations: bool = Query(description="Whether to calculate mean across realizations"),
 ) -> schemas.InplaceVolumetricTableDataPerFluidSelection:
     """Get aggregated volumetric data for a given table, result and categories/index filter."""
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
@@ -79,9 +82,11 @@ async def post_get_aggregated_table_data(
         table_name=table_name,
         response_names=response_names,
         fluid_zones=fluid_zones,
-        # aggregate_by=aggregate_by,
-        # realizations=realizations,
-        # index_filter=index_filter,
+        accumulate_by_indices=accumulate_by_indices,
+        realizations=realizations,
+        index_filter=index_filter,
+        accumulate_fluid_zones=accumulate_fluid_zones,
+        calculate_mean_across_realizations=calculate_mean_across_realizations,
     )
 
     return converters.convert_table_data_per_fluid_selection_to_schema(data)

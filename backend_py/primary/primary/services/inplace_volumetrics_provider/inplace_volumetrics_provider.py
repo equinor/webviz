@@ -35,9 +35,9 @@ from ._conversion._conversion import (
 IGNORED_INDEX_COLUMN_VALUES = ["Totals"]
 
 
+# - InplaceVolumetricsConverter
 # - InplaceVolumetricsConstructor
-# - InplaceVolumetricsFabricator
-# - InplaceVolumetricsDataManufacturer
+# - InplaceVolumetricsAssembler
 class InplaceVolumetricsProvider:
     """
     TODO: Find better name?
@@ -131,7 +131,7 @@ class InplaceVolumetricsProvider:
         fluid_zones: List[FluidZone],
         realizations: Sequence[int] = None,
         index_filter: List[InplaceVolumetricsIndex] = [],
-        accumulate_by_each: Sequence[AccumulateByEach] = [AccumulateByEach.ZONE],
+        accumulate_by_indices: Sequence[InplaceVolumetricsIndexNames] = [InplaceVolumetricsIndexNames.ZONE],
         calculate_mean_across_realizations: bool = True,
         accumulate_fluid_zones: bool = False,
     ) -> InplaceVolumetricTableDataPerFluidSelection:
@@ -223,7 +223,7 @@ class InplaceVolumetricsProvider:
         aggregated_response_table_per_fluid_zone: Dict[FluidZone, pa.Table] = {}
         for fluid_zone, response_table in response_table_per_fluid_zone.items():
             # Group by each of the index columns (always accumulate by realization - i.e. max one value per realization)
-            accumulate_by_each_set = set([elm.value for elm in accumulate_by_each])
+            accumulate_by_each_set = set([elm.value for elm in accumulate_by_indices])
             columns_to_group_by_for_sum = set(list(accumulate_by_each_set) + ["REAL"])
 
             valid_response_names = [elm for elm in response_table.column_names if elm not in valid_selector_columns]
