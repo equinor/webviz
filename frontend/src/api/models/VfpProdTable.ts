@@ -24,6 +24,6 @@ export type VfpProdTable = {
     gfr_values: Array<number>;
     alq_values: Array<number>;
     flow_rate_values: Array<number>;
-    bhp_table: Array<number>;
+    bhp_values: Array<number>;
 };
 
