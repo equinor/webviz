@@ -89,6 +89,6 @@ class VfpAccess:
             gfr_values=np.frombuffer(pa_table.schema.metadata[b"GFR_VALUES"], dtype=np.float64),
             alq_values=np.frombuffer(pa_table.schema.metadata[b"ALQ_VALUES"], dtype=np.float64),
             flow_rate_values=np.frombuffer(pa_table.schema.metadata[b"FLOW_VALUES"], dtype=np.float64),
-            bhp_table=[val for sublist in np.array(pa_table.columns).tolist() for val in sublist],
+            bhp_values=[val for sublist in np.array(pa_table.columns).tolist() for val in sublist],
         )
         return vfp_table

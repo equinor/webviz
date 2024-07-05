@@ -19,3 +19,11 @@ export const userSelectedEnsembleIdentAtom = atomWithCompare<EnsembleIdent | nul
 export const userSelectedVfpTableNameAtom = atom<string | null>(null);
 
 export const validVfpTableNamesAtom = atom<string[] | null>(null);
+
+export const userSelectedThpIndicesAtom = atom<number[] | null>(null);
+
+export const userSelectedWfrIndicesAtom = atom<number[] | null>(null);
+
+export const userSelectedGfrIndicesAtom = atom<number[] | null>(null);
+
+export const userSelectedAlqIndicesAtom = atom<number[] | null>(null);
