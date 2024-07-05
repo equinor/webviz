@@ -2,14 +2,10 @@ from typing import Callable, Dict, List
 
 import re
 
-import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 
-from primary.services.sumo_access.inplace_volumetrics_types import (
-    FluidZone,
-    Property,
-)
+from primary.services.sumo_access.inplace_volumetrics_types import FluidZone, Property, RepeatedTableColumnData
 
 """
 This file contains helper functions for conversion between different data types used in the Inplace Volumetrics provider
@@ -60,45 +56,22 @@ def get_required_volume_names_from_properties(properties: List[str]) -> List[str
     return list(volume_names)
 
 
-# Get volume names and equation for each property
-def get_volume_names_and_equation_from_properties(
-    property: str,
-) -> tuple[tuple[str, str], Callable[[np.ndarray, np.ndarray], np.ndarray]]:
-    """
-    Function provides list of necessary volumes and an equation to calculate a requested property
-
-    The user has to provide np.ndarray of the necessary volumes to calculate the property. These
-    should be of equal length to ensure equal length of the resulting property array
-    """
-    if property == Property.NTG.value:
-        return (("NET", "BULK"), lambda net_array, bulk_array: np.divide(net_array, bulk_array))
-    if property == Property.PORO.value:
-        return (("PORV", "BULK"), lambda porv_array, bulk_array: np.divide(porv_array, bulk_array))
-    if property == Property.PORO_NET.value:
-        return (("PORV", "NET"), lambda porv_array, net_array: np.divide(porv_array, net_array))
-    if property == Property.SW.value:
-        return (("HCPV", "PORV"), lambda hcpv_array, porv_array: np.subtract(1, np.divide(hcpv_array, porv_array)))
-    if property == Property.BO.value:
-        return (("HCPV", "STOIIP"), lambda hcpv_array, stoiip_array: np.divide(hcpv_array, stoiip_array))
-    if property == Property.BG.value:
-        return (("HCPV", "GIIP"), lambda hcpv_array, giip_array: np.divide(hcpv_array, giip_array))
-    raise ValueError(f"Unhandled property: {property}")
-
 def _create_safe_denominator_array(denominator_array: pa.array) -> pa.array:
-        """
-        Create denominator array for safe division, i.e. replace 0 with np.nan
-        """
-        zero_mask = pc.equal(denominator_array, 0)
-        safe_denominator_array = pc.if_else(zero_mask, pa.scalar(float("nan")), denominator_array)
-        return safe_denominator_array
+    """
+    Create denominator array for safe division, i.e. replace 0 with np.nan
+    """
+    zero_mask = pc.equal(denominator_array, 0)
+    safe_denominator_array = pc.if_else(zero_mask, pa.scalar(float("nan")), denominator_array)
+    return safe_denominator_array
+
 
 def calculate_property_from_volume_arrays(property: str, nominator: pa.array, denominator: pa.array) -> pa.array:
     """
     Calculate property from two arrays of volumes
-    
+
     Assume equal length and dimension of arrays
 
-    """        
+    """
     safe_denominator = _create_safe_denominator_array(denominator)
 
     if property == Property.NTG.value:
@@ -231,3 +204,14 @@ def create_raw_volumetric_columns_from_volume_name_and_fluid_zones(
         volumetric_columns.append(f"{volume_name}_{fluid_zone.value.upper()}")
 
     return volumetric_columns
+
+
+def create_repeated_table_column_data_from_column(column_name: str, column_values: pa.array) -> RepeatedTableColumnData:
+    """
+    Create repeated table column data from column name and values array
+    """
+    unique_values: List[str | int] = list(pa.compute.unique(column_values).to_pylist())
+    value_to_index_map = {value: index for index, value in enumerate(unique_values)}
+    indices: List[int] = [value_to_index_map[value] for value in column_values.to_pylist()]
+
+    return RepeatedTableColumnData(column_name=column_name, unique_values=unique_values, indices=indices)

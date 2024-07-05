@@ -21,15 +21,14 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
 )
 
 from ._conversion._conversion import (
+    calculate_property_from_volume_arrays,
+    create_raw_volumetric_columns_from_volume_names_and_fluid_zones,
+    create_repeated_table_column_data_from_column,
     get_available_properties_from_volume_names,
     get_fluid_zones,
     get_properties_in_response_names,
     get_required_volume_names_from_properties,
-    get_volume_names_and_equation_from_properties,
     get_volume_names_from_raw_volumetric_column_names,
-    calculate_property_from_volume_arrays,
-    create_raw_volumetric_columns_from_volume_name_and_fluid_zones,
-    create_raw_volumetric_columns_from_volume_names_and_fluid_zones,
 )
 
 # Index column values to ignore, i.e. remove from the volumetric tables
@@ -132,7 +131,7 @@ class InplaceVolumetricsProvider:
         fluid_zones: List[FluidZone],
         realizations: Sequence[int] = None,
         index_filter: List[InplaceVolumetricsIndex] = [],
-        accumulate_by_each: Sequence[AccumulateByEach] = [AccumulateByEach.REGION],
+        accumulate_by_each: Sequence[AccumulateByEach] = [AccumulateByEach.ZONE],
         calculate_mean_across_realizations: bool = True,
         accumulate_fluid_zones: bool = False,
     ) -> InplaceVolumetricTableDataPerFluidSelection:
@@ -256,7 +255,7 @@ class InplaceVolumetricsProvider:
             selector_columns: List[RepeatedTableColumnData] = []
             for column_name in selector_column_names:
                 column_array = response_table[column_name]
-                selector_columns.append(_create_repeated_table_column_data_from_column(column_name, column_array))
+                selector_columns.append(create_repeated_table_column_data_from_column(column_name, column_array))
 
             response_column_names = [name for name in response_table.column_names if name not in valid_selector_columns]
             response_columns: List[TableColumnData] = []
@@ -392,48 +391,6 @@ class InplaceVolumetricsProvider:
             fluid_zone_to_table_map[fluid_zone] = fluid_zone_table
         return fluid_zone_to_table_map
 
-    def _calculate_property_ndarrays(
-        self, volumetric_table: pa.Table, fluid_zone: FluidZone, properties: List[str]
-    ) -> Dict[str, np.ndarray]:
-        """
-        Calculate property arrays as np.ndarray based on the volume columns in table.
-
-        Args:
-        - volumetric_table (pa.Table): Table with volumetric data
-        - properties (List[str]): Name of the properties to calculate
-
-        Returns:
-        - Dict[str, np.ndarray]: Property as key, and array with calculated property values as value
-
-        """
-        existing_volume_columns: List[str] = volumetric_table.column_names
-        num_rows: int = volumetric_table.num_rows
-
-        zero_ndarray = np.zeros(num_rows)
-        nan_ndarray = np.full(num_rows, np.nan)
-
-        property_ndarrays: Dict[str, np.ndarray] = {}
-
-        # Calculate properties
-        for property in properties:
-            property_ndarray = zero_ndarray
-            if (property == "BO" and fluid_zone != FluidZone.OIL) or (property == "BG" and fluid_zone != FluidZone.GAS):
-                property_ndarray = nan_ndarray
-            else:
-                (volume_names, property_equation) = get_volume_names_and_equation_from_properties(property)
-                if volume_names[0] in existing_volume_columns or volume_names[1] in existing_volume_columns:
-                    first_volume_ndarray = volumetric_table[volume_names[0]].to_numpy()
-                    second_volume_ndarray = volumetric_table[volume_names[1]].to_numpy()
-                    property_ndarray = property_equation(first_volume_ndarray, second_volume_ndarray)
-                    property_ndarray[property_ndarray == np.inf] = np.nan
-                else:
-                    # TODO: Return nan or zero column?
-                    property_ndarray = nan_ndarray
-
-            property_ndarrays[property] = property_ndarray
-
-        return property_ndarrays
-
     def _calculate_property_column_arrays(
         self, volumetric_table: pa.Table, fluid_zone: FluidZone, properties: List[str]
     ) -> Dict[str, pa.array]:
@@ -492,16 +449,3 @@ class InplaceVolumetricsProvider:
             property_arrays["SW"] = sw_array
 
         return property_arrays
-
-
-def _create_repeated_table_column_data_from_column(
-    column_name: str, column_values: pa.array
-) -> RepeatedTableColumnData:
-    """
-    Create repeated table column data from column
-    """
-    unique_values: List[str | int] = list(pa.compute.unique(column_values).to_pylist())
-    value_to_index_map = {value: index for index, value in enumerate(unique_values)}
-    indices: List[int] = [value_to_index_map[value] for value in column_values.to_pylist()]
-
-    return RepeatedTableColumnData(column_name=column_name, unique_values=unique_values, indices=indices)
