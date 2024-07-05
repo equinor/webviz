@@ -12,7 +12,8 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 
 export { B64FloatArray as B64FloatArray_api } from './models/B64FloatArray';
 export { B64UintArray as B64UintArray_api } from './models/B64UintArray';
-export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
+export type { Body_get_result_data_per_realization as Body_get_result_data_per_realization_api } from './models/Body_get_result_data_per_realization';
+export type { Body_post_get_aggregated_table_data as Body_post_get_aggregated_table_data_api } from './models/Body_post_get_aggregated_table_data';
 export type { Body_post_get_polyline_intersection as Body_post_get_polyline_intersection_api } from './models/Body_post_get_polyline_intersection';
 export type { Body_post_get_seismic_fence as Body_post_get_seismic_fence_api } from './models/Body_post_get_seismic_fence';
 export type { Body_post_get_surface_intersection as Body_post_get_surface_intersection_api } from './models/Body_post_get_surface_intersection';
@@ -30,6 +31,7 @@ export type { EnsembleSensitivity as EnsembleSensitivity_api } from './models/En
 export type { EnsembleSensitivityCase as EnsembleSensitivityCase_api } from './models/EnsembleSensitivityCase';
 export type { FenceMeshSection as FenceMeshSection_api } from './models/FenceMeshSection';
 export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
+export { FluidZone as FluidZone_api } from './models/FluidZone';
 export { Frequency as Frequency_api } from './models/Frequency';
 export type { GraphUserPhoto as GraphUserPhoto_api } from './models/GraphUserPhoto';
 export type { Grid3dDimensions as Grid3dDimensions_api } from './models/Grid3dDimensions';
@@ -44,8 +46,12 @@ export type { GridSurfaceVtk as GridSurfaceVtk_api } from './models/GridSurfaceV
 export type { GroupTreeData as GroupTreeData_api } from './models/GroupTreeData';
 export type { GroupTreeMetadata as GroupTreeMetadata_api } from './models/GroupTreeMetadata';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
-export type { InplaceVolumetricsCategoricalMetaData as InplaceVolumetricsCategoricalMetaData_api } from './models/InplaceVolumetricsCategoricalMetaData';
-export type { InplaceVolumetricsTableMetaData as InplaceVolumetricsTableMetaData_api } from './models/InplaceVolumetricsTableMetaData';
+export type { InplaceVolumetricData as InplaceVolumetricData_api } from './models/InplaceVolumetricData';
+export type { InplaceVolumetricDataEntry as InplaceVolumetricDataEntry_api } from './models/InplaceVolumetricDataEntry';
+export { InplaceVolumetricResultName as InplaceVolumetricResultName_api } from './models/InplaceVolumetricResultName';
+export { InplaceVolumetricsIdentifier as InplaceVolumetricsIdentifier_api } from './models/InplaceVolumetricsIdentifier';
+export type { InplaceVolumetricsIdentifierWithValues as InplaceVolumetricsIdentifierWithValues_api } from './models/InplaceVolumetricsIdentifierWithValues';
+export type { InplaceVolumetricsTableDefinition as InplaceVolumetricsTableDefinition_api } from './models/InplaceVolumetricsTableDefinition';
 export { NodeType as NodeType_api } from './models/NodeType';
 export type { Observations as Observations_api } from './models/Observations';
 export type { PointSetXY as PointSetXY_api } from './models/PointSetXY';

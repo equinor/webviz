@@ -1,70 +1,84 @@
 import logging
-from enum import Enum
 from io import BytesIO
 from typing import List, Optional, Sequence, Union
 
-from concurrent.futures import ThreadPoolExecutor
-import pandas as pd
-
+import asyncio
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.parquet as pq
-from fmu.sumo.explorer.objects import Case, TableCollection
-from pydantic import ConfigDict, BaseModel
+from fmu.sumo.explorer.objects import TableCollection, Table
+from pydantic import BaseModel
+
+from webviz_pkg.core_utils.perf_timer import PerfTimer
+from ..service_exceptions import (
+    Service,
+    NoDataError,
+    InvalidDataError,
+    MultipleDataMatchesError,
+)
+
+from .inplace_volumetrics_types import InplaceVolumetricsIdentifier, InplaceVolumetricsTableDefinition
+
+
+from fmu.sumo.explorer.objects import Case
+
 
 from ._helpers import create_sumo_client, create_sumo_case_async
-from .generic_types import EnsembleScalarResponse
 
-# from fmu.sumo.explorer.objects.table import AggregatedTable
+# Allowed categories (index column names) for the volumetric tables
+ALLOWED_INDEX_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
+
+# Index column values to ignore, i.e. remove from the volumetric tables
+IGNORED_INDEX_COLUMN_VALUES = ["Totals"]
+
+
+# Allowed result names for the volumetric tables
+ALLOWED_RESULT_COLUMN_NAMES = [
+    "BULK_OIL",
+    "BULK_WATER",
+    "BULK_GAS",
+    "NET_OIL",
+    "NET_WATER",
+    "NET_GAS",
+    "PORV_OIL",
+    "PORV_WATER",
+    "PORV_GAS",
+    "HCPV_OIL",
+    "HCPV_GAS",
+    "STOIIP_OIL",
+    "GIIP_GAS",
+    "ASSOCIATEDGAS_OIL",
+    "ASSOCIATEDOIL_GAS",
+]
+
+# Columns to ignore in the volumetric tables
+IGNORED_COLUMN_NAMES = [
+    "REAL",
+    "BULK_TOTAL",
+    "NET_TOTAL",
+    "PORV_TOTAL",
+    "HCPV_TOTAL",
+    "STOIIP_TOTAL",
+    "GIIP_TOTAL",
+    "ASSOCIATEDGAS_TOTAL",
+    "ASSOCIATEDOIL_TOTAL",
+]
+
+
+class InplaceVolumetricDataEntry(BaseModel):
+    result_values: List[float]
+    index_values: List[Union[str, int]]
+
+
+class InplaceVolumetricData(BaseModel):
+    vol_table_name: str
+    result_name: str
+    realizations: List[int]
+    index_names: List[str]
+    entries: List[InplaceVolumetricDataEntry]
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-class PossibleInplaceVolumetricsCategoricalColumnNames(str, Enum):
-    ZONE = "ZONE"
-    REGION = "REGION"
-    FACIES = "FACIES"
-    LICENSE = "LICENSE"
-
-    @classmethod
-    def has_value(cls, value: str) -> bool:
-        return value in cls._value2member_map_
-
-
-class PossibleInplaceVolumetricsNumericalColumnNames(str, Enum):
-    BULK_OIL = "BULK_OIL"
-    BULK_WATER = "BULK_WATER"
-    BULK_GAS = "BULK_GAS"
-    NET_OIL = "NET_OIL"
-    NET_WATER = "NET_WATER"
-    NET_GAS = "NET_GAS"
-    PORV_OIL = "PORV_OIL"
-    PORV_WATER = "PORV_WATER"
-    PORV_GAS = "PORV_GAS"
-    HCPV_OIL = "HCPV_OIL"
-    HCPV_GAS = "HCPV_GAS"
-    STOIIP_OIL = "STOIIP_OIL"
-    GIIP_GAS = "GIIP_GAS"
-    ASSOCIATEDGAS_OIL = "ASSOCIATEDGAS_OIL"
-    ASSOCIATEDOIL_GAS = "ASSOCIATEDOIL_GAS"
-
-    @classmethod
-    def has_value(cls, value: str) -> bool:
-        return value in cls._value2member_map_
-
-
-class InplaceVolumetricsCategoricalMetaData(BaseModel):
-    name: str
-    unique_values: List[Union[str, int, float]]
-    model_config = ConfigDict(from_attributes=True)
-
-
-class InplaceVolumetricsTableMetaData(BaseModel):
-    name: str
-    categorical_column_metadata: List[InplaceVolumetricsCategoricalMetaData]
-    numerical_column_names: List[str]
-    model_config = ConfigDict(from_attributes=True)
 
 
 class InplaceVolumetricsAccess:
@@ -79,119 +93,263 @@ class InplaceVolumetricsAccess:
     ) -> "InplaceVolumetricsAccess":
         sumo_client = create_sumo_client(access_token)
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
-        return InplaceVolumetricsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
+        return cls(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_table_names_and_metadata(self) -> List[InplaceVolumetricsTableMetaData]:
-        """Retrieve the available volumetric tables names and corresponding metadata for the case"""
+    async def get_inplace_volumetrics_table_definitions_async(self) -> List[InplaceVolumetricsTableDefinition]:
+        """Retrieve the table definitions for the volumetric tables"""
+
+        timer = PerfTimer()
         vol_table_collections: TableCollection = self._case.tables.filter(
-            aggregation="collection", tagname="vol", iteration=self._iteration_name
+            aggregation="collection", tagname=["vol", "volumes", "inplace"], iteration=self._iteration_name
+        )
+        et_get_all_collections_ms = timer.lap_ms()
+
+        vol_table_names = await vol_table_collections.names_async
+        et_get_all_names_ms = timer.lap_ms()
+
+        if len(vol_table_names) == 0:
+            raise NoDataError(
+                f"No inplace volumetrics tables found in case={self._case_uuid}, iteration={self._iteration_name}",
+                Service.SUMO,
+            )
+
+        tasks = [asyncio.create_task(self.get_table_definition(vol_table_name)) for vol_table_name in vol_table_names]
+        table_definitions = await asyncio.gather(*tasks)
+        et_get_all_table_definitions_ms = timer.lap_ms()
+
+        LOGGER.debug(
+            f"get_inplace_volumetrics_table_definitions_async: case_uuid={self._case_uuid}"
+            f"iteration_name={self._iteration_name}"
+            f"et_get_all_collections_ms={et_get_all_collections_ms}"
+            f"et_get_all_names_ms={et_get_all_names_ms}"
+            f"et_get_all_table_definitions_ms={et_get_all_table_definitions_ms}"
         )
 
-        vol_tables_metadata = []
-        table_names = await vol_table_collections.names_async
-        for vol_table_name in table_names:
-            vol_table_collection: TableCollection = self._case.tables.filter(
-                aggregation="collection",
-                name=vol_table_name,
-                tagname="vol",
-                iteration=self._iteration_name,
-            )
-            numerical_column_names = [
-                col
-                for col in vol_table_collection.columns
-                if PossibleInplaceVolumetricsNumericalColumnNames.has_value(col)
-            ]
-            first_numerical_column_table = self.get_table(vol_table_name, numerical_column_names[0])
-            categorical_column_metadata = [
-                InplaceVolumetricsCategoricalMetaData(
-                    name=col,
-                    unique_values=pc.unique(first_numerical_column_table[col]).to_pylist(),
-                )
-                for col in vol_table_collection.columns
-                if PossibleInplaceVolumetricsCategoricalColumnNames.has_value(col)
-            ]
-            vol_table_metadata = InplaceVolumetricsTableMetaData(
-                name=vol_table_name,
-                categorical_column_metadata=categorical_column_metadata,
-                numerical_column_names=numerical_column_names,
-            )
+        return table_definitions
 
-            vol_tables_metadata.append(vol_table_metadata)
-
-        return vol_tables_metadata
-
-    def get_table(self, table_name: str, column_name: str) -> pa.Table:
-        vol_table_collection: TableCollection = self._case.tables.filter(
+    async def get_table_definition(self, vol_table_name: str) -> InplaceVolumetricsTableDefinition:
+        vol_table_as_collection: TableCollection = self._case.tables.filter(
             aggregation="collection",
-            name=table_name,
-            tagname="vol",
-            iteration=self._iteration_name,
-            column=column_name,
-        )
-        if not vol_table_collection:
-            print(f"No aggregated volumetric tables found {self._case_uuid}, {table_name}, {column_name}")
-            print("Aggregating manually from realization tables...")
-            full_table = self.temporary_aggregate_from_realization_tables(table_name)
-            return full_table.select([column_name, "REAL", "FACIES", "ZONE", "REGION"])
-
-        if len(vol_table_collection) > 1:
-            raise ValueError(f"None or multiple volumetric tables found {self._case_uuid}, {table_name}, {column_name}")
-        vol_table = vol_table_collection[0]
-        byte_stream: BytesIO = vol_table.blob
-        table: pa.Table = pq.read_table(byte_stream)
-        return table
-
-    def temporary_aggregate_from_realization_tables(self, table_name: str) -> pa.Table:
-        """Temporary function to aggregate from realization tables when no aggregated table is available
-        Assume Sumo will handle this in the future"""
-        vol_table_collection: TableCollection = self._case.tables.filter(
-            stage="realization",
-            name=table_name,
-            tagname="vol",
+            name=vol_table_name,
+            tagname=["vol", "volumes", "inplace"],
             iteration=self._iteration_name,
         )
-        if not vol_table_collection:
-            raise ValueError(f"No volumetric realization tables found {self._case_uuid}, {table_name}")
+        vol_table_name_as_arr = await vol_table_as_collection.names_async
+        if len(vol_table_name_as_arr) > 1:
+            raise MultipleDataMatchesError(
+                f"Multiple inplace volumetrics tables found in case={self._case_uuid}, iteration={self._iteration_name}, table_name={vol_table_name}",
+                Service.SUMO,
+            )
+        vol_table_column_names = await vol_table_as_collection.columns_async
 
-        ### Using ThreadPoolExecutor to parallelize the download of the tables
+        invalid_column_names = []
+        for col in vol_table_column_names:
+            if col in IGNORED_COLUMN_NAMES:
+                continue
+            if col not in ALLOWED_INDEX_COLUMN_NAMES + ALLOWED_RESULT_COLUMN_NAMES:
+                invalid_column_names.append(col)
+        if invalid_column_names:
+            LOGGER.warning(
+                f"Invalid column names found in the volumetric table case={self._case_uuid}, iteration={self._iteration_name}, {invalid_column_names}"
+            )
+            # raise InvalidDataError(
+            #     f"Invalid column names found in the volumetric table case={self._case_uuid}, iteration={self._iteration_name}, {invalid_column_names}",
+            #     Service.SUMO,
+            # )
+        identifier_names = [col for col in vol_table_column_names if col in ALLOWED_INDEX_COLUMN_NAMES]
 
-        def worker(idx: int) -> pd.DataFrame:
-            vol_table = vol_table_collection[idx]
-            print(f"Downloading table: {table_name} for realization {vol_table.realization}")
-            byte_stream: BytesIO = vol_table.blob
+        if len(identifier_names) == 0:
+            raise InvalidDataError(
+                f"No index columns found in the volumetric table {self._case_uuid}, {vol_table_name}",
+                Service.SUMO,
+            )
 
-            table: pd.DataFrame = pd.read_csv(byte_stream)
-            table["REAL"] = vol_table.realization
-            return table
+        result_column_names = [col for col in vol_table_column_names if col in ALLOWED_RESULT_COLUMN_NAMES]
+        if len(result_column_names) == 0:
+            raise InvalidDataError(
+                f"No result columns found in the volumetric table {self._case_uuid}, {vol_table_name}",
+                Service.SUMO,
+            )
 
-        with ThreadPoolExecutor() as executor:
-            tables = list(executor.map(worker, list(range(len(vol_table_collection)))))
-            tables = pd.concat(tables)
-            tables = pa.Table.from_pandas(tables)
+        identifiers = []
 
-            return tables
+        # Need to download the table to get the unique index values
+        # Picking a random result column to get the table
+        sumo_table_obj = await self._get_sumo_table_async(vol_table_name, result_column_names[0])
+        arrow_table = await _fetch_arrow_table_async(sumo_table_obj)
 
-    def get_response(
+        for identifier_column_name in identifier_names:
+            unique_values = arrow_table[identifier_column_name].unique().to_pylist()
+            # Check for invalid data
+            if any([val in IGNORED_INDEX_COLUMN_VALUES for val in unique_values]):
+                LOGGER.warning(
+                    f"Invalid index values found in the volumetric table case={self._case_uuid}, iteration={self._iteration_name}, table_name={vol_table_name}, index_name={identifier_column_name}, {unique_values}"
+                )
+            identifiers.append(InplaceVolumetricsIdentifier(identifier=identifier_column_name, values=unique_values))
+        return InplaceVolumetricsTableDefinition(
+            name=vol_table_name,
+            indexes=identifiers,
+            result_names=result_column_names,
+        )
+
+    async def get_volumetric_data_async(
         self,
         table_name: str,
-        column_name: str,
-        categorical_filters: Optional[List[InplaceVolumetricsCategoricalMetaData]] = None,
-        realizations: Optional[Sequence[int]] = None,
-    ) -> EnsembleScalarResponse:
-        """Retrieve the volumetric response for the given table name and column name"""
-        table = self.get_table(table_name, column_name)
+        result_name: str,
+        realizations: Sequence[int],
+        index_filter: List[InplaceVolumetricsIdentifier],
+    ) -> InplaceVolumetricData:
+        """Retrieve the volumetric data for a single result (e.g. STOIIP_OIL), optionally filtered by realizations and index values."""
+        timer = PerfTimer()
+        if result_name not in ALLOWED_RESULT_COLUMN_NAMES:
+            raise InvalidDataError(
+                f"Invalid result name {result_name} for the volumetric table {self._case_uuid}, {table_name}",
+                Service.SUMO,
+            )
+
+        sumo_table_obj = await self._get_sumo_table_async(table_name, result_name)
+        et_get_table_metadata_ms = timer.lap_ms()
+
+        arrow_table = await _fetch_arrow_table_async(sumo_table_obj)
+        et_fetch_arrow_table_ms = timer.lap_ms()
+
         if realizations is not None:
-            mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
-            table = table.filter(mask)
-        if categorical_filters is not None:
-            for category in categorical_filters:
-                mask = pc.is_in(table[category.name], value_set=pa.array(category.unique_values))
-                table = table.filter(mask)
-                print(table)
+            arrow_table = _filter_arrow_table_by_inclusion(arrow_table, "REAL", realizations)
 
-        summed_on_real_table = table.group_by("REAL").aggregate([(column_name, "sum")]).sort_by("REAL")
+        # Get the index columns
+        index_columns = [col for col in arrow_table.column_names if col in ALLOWED_INDEX_COLUMN_NAMES]
 
-        return EnsembleScalarResponse(
-            realizations=summed_on_real_table["REAL"].to_pylist(),
-            values=summed_on_real_table[f"{column_name}_sum"].to_pylist(),
+        # Filter invalid data. Hopefully TMP
+        for index_column in index_columns:
+            arrow_table = _filter_arrow_table_by_exclusion(arrow_table, index_column, IGNORED_INDEX_COLUMN_VALUES)
+
+        # Filter on selected index
+        for index in index_filter:
+            arrow_table = _filter_arrow_table_by_inclusion(arrow_table, index.index_name, index.values)
+
+        grouped_table = arrow_table.group_by(index_columns + ["REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
+
+        arrow_table = grouped_table.group_by(index_columns).aggregate(
+            [(result_name + "_sum", "list"), ("REAL", "list")]
         )
+
+        # Rename columns'
+        arrow_table = arrow_table.rename_columns([*index_columns, "result_values", "realizations"])
+        data_dict = arrow_table.to_pydict()
+        num_entries = len(data_dict[next(iter(data_dict))])
+        if num_entries == 0:
+            raise NoDataError(
+                f"No data found in the volumetric table {self._case_uuid}, {table_name}, {result_name}",
+                Service.SUMO,
+            )
+        realizations_sequence = data_dict["realizations"][0]
+        entries: List[InplaceVolumetricDataEntry] = []
+        for i in range(num_entries):
+            entry = InplaceVolumetricDataEntry(
+                result_values=data_dict.get("result_values")[i],
+                index_values=[data_dict.get(index_name)[i] for index_name in index_columns],
+            )
+            entries.append(entry)
+
+        volumetric_data = InplaceVolumetricData(
+            vol_table_name=table_name,
+            result_name=result_name,
+            entries=entries,
+            index_names=index_columns,
+            realizations=realizations_sequence,
+        )
+        et_group_and_aggregate_ms = timer.lap_ms()
+        LOGGER.debug(
+            f"get_volumetric_data_async: case_uuid={self._case_uuid}, iteration_name={self._iteration_name}, et_get_table_metadata_ms={et_get_table_metadata_ms}, et_fetch_arrow_table_ms={et_fetch_arrow_table_ms}, et_group_and_aggregate_ms={et_group_and_aggregate_ms}"
+        )
+        return volumetric_data
+
+    async def _get_sumo_table_async(self, table_name: str, result_name: Optional[str] = None) -> Table:
+        """Get a sumo table object. Expecting only one table to be found.
+        A result_name(column) is optional. If provided, the table will be filtered based on the result_name.
+        If not provided apparently a table with a random (first found?) column will be returned"""
+
+        vol_table_as_collection: TableCollection = self._case.tables.filter(
+            aggregation="collection",
+            name=table_name,
+            tagname=["vol", "volumes", "inplace"],
+            iteration=self._iteration_name,
+            column=result_name,
+        )
+        vol_table_name_as_arr = await vol_table_as_collection.names_async
+        if len(vol_table_name_as_arr) == 0:
+            raise NoDataError(
+                f"No inplace volumetrics tables found in case={self._case_uuid}, iteration={self._iteration_name},, table_name={vol_table_name_as_arr}",
+                Service.SUMO,
+            )
+        if len(vol_table_name_as_arr) > 1:
+            raise MultipleDataMatchesError(
+                f"Multiple inplace volumetrics tables found in case={self._case_uuid}, iteration={self._iteration_name}, table_name={vol_table_name_as_arr}",
+                Service.SUMO,
+            )
+        sumo_table_obj = await vol_table_as_collection.getitem_async(0)
+        return sumo_table_obj
+
+
+async def _fetch_arrow_table_async(sumo_table_obj: Table) -> pa.Table:
+    """Fetch arrow table from sumo blob store."""
+    byte_stream: BytesIO = await sumo_table_obj.blob_async
+    arrow_table: pa.Table = pq.read_table(byte_stream)
+    return arrow_table
+
+
+def _filter_arrow_table_by_inclusion(
+    arrow_table: pa.Table, column_name: str, column_values: List[Union[str, float]]
+) -> pa.Table:
+    """Filter arrow table to only include specific values."""
+    mask = pc.is_in(arrow_table[column_name], value_set=pa.array(column_values))
+    arrow_table = arrow_table.filter(mask)
+    return arrow_table
+
+
+def _filter_arrow_table_by_exclusion(
+    arrow_table: pa.Table, column_name: str, column_values: List[Union[str, float]]
+) -> pa.Table:
+    """Filter arrow table to exclude specific values."""
+    mask = pc.is_in(arrow_table[column_name], value_set=pa.array(column_values))
+    mask = pc.invert(mask)
+    arrow_table = arrow_table.filter(mask)
+    return arrow_table
+
+
+def group_and_aggregate(
+    arrow_table: pa.Table,
+    result_name: str,
+    primary_group_by: Optional[str] = None,
+    secondary_group_by: Optional[str] = None,
+) -> List[InplaceVolumetricDataEntry]:
+    entries = []
+    group_columns = []  # "INDEX"-columns
+    if primary_group_by:
+        group_columns.append(primary_group_by)
+    if secondary_group_by:
+        group_columns.append(secondary_group_by)
+    if group_columns:
+        # Group by provided columns and REAL, then sum the results
+        grouped_table = arrow_table.group_by(group_columns + ["REAL"]).aggregate([(result_name, "sum")]).sort_by("REAL")
+
+        # Remove REAL from the grouping and collect sums and realizations into lists
+        arrow_table = grouped_table.group_by(group_columns).aggregate(
+            [(result_name + "_sum", "list"), ("REAL", "list")]
+        )
+        # Rename columns'
+        arrow_table = arrow_table.rename_columns([*group_columns, "result_values", "realizations"])
+        data_dict = arrow_table.to_pydict()
+        num_entries = len(data_dict[next(iter(data_dict))])
+
+        for i in range(num_entries):
+            # Build each entry by accessing elements by index
+            entry = InplaceVolumetricDataEntry(
+                result_values=data_dict.get("result_values")[i],
+                realizations=data_dict["realizations"][i],
+                primary_group_value=data_dict.get(primary_group_by)[i] if primary_group_by else None,
+                secondary_group_value=data_dict.get(secondary_group_by)[i] if secondary_group_by else None,
+            )
+            entries.append(entry)
+
+    return entries

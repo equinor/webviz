@@ -1,97 +1,96 @@
-from typing import List, Optional, Sequence
-from fastapi import APIRouter, Depends, Query, HTTPException
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, Query, Body
 
 from primary.services.sumo_access.inplace_volumetrics_access import (
-    InplaceVolumetricsAccess,
-    InplaceVolumetricsTableMetaData,
-    InplaceVolumetricsCategoricalMetaData,
+    InplaceVolumetricsAccess as InplaceVolumetricsAccessOld,
 )
-
-from primary.services.sumo_access.generic_types import EnsembleScalarResponse
+from primary.services.inplace_volumetrics_provider.inplace_volumetrics_provider import InplaceVolumetricsProvider
+from primary.services.sumo_access.inplace_volumetrics_acces_NEW import InplaceVolumetricsAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
-
 from primary.auth.auth_helper import AuthHelper
 
+
+from . import schemas
+from . import converters
 
 router = APIRouter()
 
 
-@router.get("/table_names_and_descriptions/", tags=["inplace_volumetrics"])
-async def get_table_names_and_descriptions(
-    # fmt:off
+@router.get("/table_definitions/", tags=["inplace_volumetrics"])
+async def get_table_definitions(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-    # fmt:on
-) -> List[InplaceVolumetricsTableMetaData]:
-    """Get all volumetric tables for a given ensemble."""
-
+) -> List[schemas.InplaceVolumetricsTableDefinition]:
+    """Get the volumetric tables definitions for a given ensemble."""
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    table_names = await access.get_table_names_and_metadata()
-    if len(table_names) == 0:
-        raise HTTPException(status_code=404, detail="No volumetric tables found")
-
-    return table_names
+    provider = InplaceVolumetricsProvider(access)
+    tables = await provider.get_volumetric_table_metadata()
+    return converters.to_api_table_definitions(tables)
 
 
-@router.post("/realizations_response/", tags=["inplace_volumetrics"])
-async def get_realizations_response(
-    # fmt:off
+@router.post("/result_data_per_realization/", tags=["inplace_volumetrics"])
+async def get_result_data_per_realization(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     table_name: str = Query(description="Table name"),
-    response_name:str = Query(description="Response name"),
-    categorical_filter:Optional[List[InplaceVolumetricsCategoricalMetaData]] = None,
-    realizations: Optional[Sequence[int]] = None,
-    # fmt:on
-) -> EnsembleScalarResponse:
-    """Get response for a given table and index filter."""
+    result_name: schemas.InplaceVolumetricResultName = Query(description="The name of the volumetric result/response"),
+    realizations: List[int] = Query(description="Realizations"),
+    index_filter: List[schemas.InplaceVolumetricsIdentifierWithValues] = Body(
+        embed=True, description="Categorical filter"
+    ),
+) -> schemas.InplaceVolumetricData:
+    """Get volumetric data summed per realization for a given table, result and categories/index filter."""
+    access: InplaceVolumetricsAccessOld = await InplaceVolumetricsAccessOld.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+
+    data = await access.get_volumetric_data_async(
+        table_name=table_name, result_name=result_name.value, realizations=realizations, index_filter=index_filter
+    )
+    return data
+
+
+@router.post("/get_aggregated_table_data/", tags=["inplace_volumetrics"])
+async def post_get_aggregated_table_data(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    table_name: str = Query(description="Table name"),
+    response_names: List[str] = Query(description="The name of the volumetric result/response"),
+    fluid_zones: List[schemas.FluidZone] = Query(description="The fluid zones to aggregate by"),
+    realizations: Optional[List[int]] = Query(
+        None, description="Optional realization to include. If not specified, all realizations will be returned."
+    ),
+    accumulate_by_identifiers: List[schemas.InplaceVolumetricsIdentifier] = Body(
+        embed=True, description="The identifiers to aggregate by"
+    ),
+    identifiers_with_values: List[schemas.InplaceVolumetricsIdentifierWithValues] = Body(
+        embed=True, description="Selected identifiers and wanted values"
+    ),
+    accumulate_fluid_zones: bool = Query(description="Whether to accumulate fluid zones"),
+    calculate_mean_across_realizations: bool = Query(description="Whether to calculate mean across realizations"),
+) -> schemas.InplaceVolumetricTableDataPerFluidSelection:
+    """Get aggregated volumetric data for a given table, result and categories/index filter."""
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    response = access.get_response(table_name, response_name, categorical_filter, realizations)
-    return response
 
+    provider = InplaceVolumetricsProvider(access)
 
-# class StatisticFunction(str, Enum):
-#     MEAN = "MEAN"
-#     MIN = "MIN"
-#     MAX = "MAX"
-#     P10 = "P10"
-#     P90 = "P90"
-#     P50 = "P50"
+    data = await provider.get_accumulated_by_selection_volumetric_table_data_async(
+        table_name=table_name,
+        response_names=response_names,
+        fluid_zones=fluid_zones,
+        accumulate_by_identifiers=accumulate_by_identifiers,
+        realizations=realizations,
+        identifiers_with_values=identifiers_with_values,
+        accumulate_fluid_zones=accumulate_fluid_zones,
+        calculate_mean_across_realizations=calculate_mean_across_realizations,
+    )
 
-
-# class StatisticValueObject(BaseModel):
-#     statistic_function: StatisticFunction
-#     values: List[float]
-
-
-# class InplaceVolumetricsStatisticResponse(BaseModel):
-#     realizations: List[int]
-#     value_objects: List[StatisticValueObject]
-#     # unit: str
-#     # is_rate: bool
-
-
-# @router.get("/statistic_response/", tags=["inplace_volumetrics"])
-# def get_statistic_response(
-#     # fmt:off
-#     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-#     case_uuid: str = Query(description="Sumo case uuid"),
-#     ensemble_name: str = Query(description="Ensemble name"),
-#     table_name: str = Query(description="Table name"),
-#     response_name:str = Query(description="Response name"),
-#     statistic_functions: Optional[Sequence[StatisticFunction]] = Query(None, description="Optional list of statistics to calculate. If not specified, all statistics will be calculated."),
-#     realizations: Optional[Sequence[int]] = Query(None,description="Realizations"),
-#     # fmt:on
-# ) -> List[InplaceVolumetricsStatisticResponse]:
-#     """Get statistical response for a given table and index filter."""
-#     access = InplaceVolumetricsAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-#     response = access.get_response(table_name, realizations, response_name)  # , index_filter)
-#     # service_stat_funcs_to_compute = _to_service_statistic_functions(statistic_functions)
-#     # statistics = compute_inplace_statistics(response, response_name, service_stat_funcs_to_compute)
-#     return response
+    return converters.convert_table_data_per_fluid_selection_to_schema(data)
