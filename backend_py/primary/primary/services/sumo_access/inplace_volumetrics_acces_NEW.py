@@ -3,7 +3,6 @@ from fmu.sumo.explorer.objects import Case, TableCollection
 
 import asyncio
 import pyarrow as pa
-import pyarrow.compute as pc
 
 from ._helpers import create_sumo_client, create_sumo_case_async
 from ..service_exceptions import (
@@ -29,9 +28,6 @@ class InplaceVolumetricsAccess:
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
 
-    def get_expected_identifier_columns(self) -> List[str]:
-        return self._expected_identifier_columns
-
     @classmethod
     async def from_case_uuid_async(
         cls, access_token: str, case_uuid: str, iteration_name: str
@@ -40,14 +36,14 @@ class InplaceVolumetricsAccess:
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return InplaceVolumetricsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    def expected_index_columns(self) -> List[str]:
-        return self._expected_index_columns
+    def get_expected_identifier_columns(self) -> List[str]:
+        return self._expected_identifier_columns
 
     def possible_selector_columns(self) -> List[str]:
         """
-        The index columns and REAL column represent the selector columns of the volumetric table.
+        The identifier columns and REAL column represent the selector columns of the volumetric table.
         """
-        return self.expected_index_columns() + ["REAL"]
+        return self.get_expected_identifier_columns() + ["REAL"]
 
     async def get_inplace_volumetrics_table_names_async(self) -> List[str]:
         vol_table_collection = self._case.tables.filter(
@@ -180,9 +176,9 @@ class InplaceVolumetricsAccess:
                 Service.SUMO,
             )
 
-        # Expected columns
-        possible_repeated_collection_columns = set(self.possible_selector_columns())
-        expected_repeated_collection_columns = possible_repeated_collection_columns.intersection(vol_table_columns)
+        # Expected selector columns
+        possible_selector_columns = set(self.possible_selector_columns())
+        expected_selector_columns = possible_selector_columns.intersection(vol_table_columns)
 
         # Initialize volumetric table
         volumes_table: pa.Table = arrow_tables[0]
@@ -192,7 +188,7 @@ class InplaceVolumetricsAccess:
             volume_table: pa.Table = arrow_tables[i]
 
             # Expect only one column in addition to the index columns, i.e. the volume
-            volume_names_set = set(volume_table.column_names) - expected_repeated_collection_columns
+            volume_names_set = set(volume_table.column_names) - expected_selector_columns
             if len(volume_names_set) == 0:
                 raise InvalidDataError(
                     f"Table {table_name} has collection without detected volume column. Collection has column names {volume_table.column_names}",

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 import asyncio
 
 import numpy as np
@@ -7,26 +7,19 @@ import pyarrow.compute as pc
 
 from primary.services.sumo_access.inplace_volumetrics_acces_NEW import InplaceVolumetricsAccess
 from primary.services.sumo_access.inplace_volumetrics_types import (
-    AccumulateByEach,
-    AggregateByEach,
     FluidZone,
     InplaceVolumetricsIdentifier,
     InplaceVolumetricsIdentifierWithValues,
     InplaceVolumetricsTableDefinition,
     FluidZoneSelection,
-    InplaceVolumetricsIndex,
-    InplaceVolumetricsIndexNames,
     InplaceVolumetricsTableDefinition,
     InplaceVolumetricTableData,
     InplaceVolumetricTableDataPerFluidSelection,
-    RepeatedTableColumnData,
-    TableColumnData,
 )
 
 from ._conversion._conversion import (
     calculate_property_from_volume_arrays,
     create_raw_volumetric_columns_from_volume_names_and_fluid_zones,
-    create_repeated_table_column_data_from_column,
     get_available_properties_from_volume_names,
     get_fluid_zones,
     get_properties_in_response_names,
@@ -34,8 +27,10 @@ from ._conversion._conversion import (
     get_volume_names_from_raw_volumetric_column_names,
 )
 
-# Index column values to ignore, i.e. remove from the volumetric tables
-IGNORED_INDEX_COLUMN_VALUES = ["Totals"]
+from ._utils import create_accumulated_result_table, create_volumetric_table_accumulated_across_fluid_zones, create_inplace_volumetric_table_data_from_result_table
+
+# Identifier column values to ignore, i.e. remove from the volumetric tables
+IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
 
 
 # - InplaceVolumetricsConverter
@@ -92,17 +87,24 @@ class InplaceVolumetricsProvider:
             volume_names = get_volume_names_from_raw_volumetric_column_names(raw_volumetric_column_names)
             available_property_names = get_available_properties_from_volume_names(volume_names)
             result_names = volume_names + available_property_names
-            indexes = []
-            for index_name in self._inplace_volumetrics_access._expected_index_columns:
-                if index_name in table.column_names:
-                    index_values = table[index_name].unique().to_pylist()
-                    filtered_index_values = [
-                        value for value in index_values if value not in IGNORED_INDEX_COLUMN_VALUES
+            identifiers_with_values = []
+            for identifier_name in self._inplace_volumetrics_access.get_expected_identifier_columns():
+                if identifier_name in table.column_names:
+                    identifier_values = table[identifier_name].unique().to_pylist()
+                    filtered_identifier_values = [
+                        value for value in identifier_values if value not in IGNORED_IDENTIFIER_COLUMN_VALUES
                     ]
-                    indexes.append(InplaceVolumetricsIndex(index_name=index_name, values=filtered_index_values))
+                    identifiers_with_values.append(
+                        InplaceVolumetricsIdentifierWithValues(
+                            identifier=identifier_name, values=filtered_identifier_values
+                        )
+                    )
             tables_info.append(
                 InplaceVolumetricsTableDefinition(
-                    table_name=table_name, fluid_zones=fluid_zones, result_names=result_names, indexes=indexes
+                    table_name=table_name,
+                    fluid_zones=fluid_zones,
+                    result_names=result_names,
+                    identifiers_with_values=identifiers_with_values,
                 )
             )
         return tables_info
@@ -133,8 +135,8 @@ class InplaceVolumetricsProvider:
         response_names: set[str],
         fluid_zones: List[FluidZone],
         realizations: Sequence[int] = None,
-        index_filter: List[InplaceVolumetricsIndex] = [],
-        accumulate_by_indices: Sequence[InplaceVolumetricsIndexNames] = [InplaceVolumetricsIndexNames.ZONE],
+        identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
+        accumulate_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
         calculate_mean_across_realizations: bool = True,
         accumulate_fluid_zones: bool = False,
     ) -> InplaceVolumetricTableDataPerFluidSelection:
@@ -161,16 +163,8 @@ class InplaceVolumetricsProvider:
             table_name=table_name,
             volumetric_columns=raw_volumetric_column_names,
             realizations=realizations,
-            index_filter=index_filter,
+            identifiers_with_values=identifiers_with_values,
         )
-
-        # ***********************************************************************************
-        # ***********************************************************************************
-        #
-        # Convert filtered table to table with index columns and realizations, volume names, properties and fluid zones as columns
-        #
-        # ***********************************************************************************
-        # ***********************************************************************************
 
         # Build a new table with one merged column per result/response and additional fluid zone column is created.
         # I.e. where result/response column has values per fluid zone appended after each other. Num rows is then original num rows * num fluid zones
@@ -192,88 +186,63 @@ class InplaceVolumetricsProvider:
         # TODO: SHOULD PROPERTIES BE CALCULATED AFTER ACCUMULATION OF FLUID ZONES if accumulate_fluid_zones is True?
         # i.e. sw = 1 - hcpv/porv. Must be calculated after summing hcpv and porv per fluid zone?
         # YES: Should have: sw = 1 - (hcpv_oil + hcpv_gas + hcpv_water) / (porv_oil + porv_gas + porv_water) etc
-        volumetric_table_per_fluid_zone_selection: Dict[FluidZoneSelection, pa.Table] = volumetric_table_per_fluid_zone
-        if False or accumulate_fluid_zones:
-            # TODO: Accumulate/sum columns per fluid zone
-            # - BO/BG are neglected
-            # - If a column is not present for one fluid zone, it is set to zero
+        
+        response_table_per_fluid_selection: Dict[str, pa.Table] = {} # TODO: Replace str key to FluidZoneSelection or array of FluidZone?
+        if accumulate_fluid_zones:
+            # Build response table - accumulated across fluid zones
+            # - Sum each volume column across fluid zones
+            # - Calculate properties
+            volumetric_table_accumulated_across_fluid_zones = create_volumetric_table_accumulated_across_fluid_zones(
+                volumetric_table_per_fluid_zone, valid_selector_columns
+            )
 
-            # NOTE: _calculate_property_column_arrays() handles per fluid zone, but not FluidZoneSelection
+            # Create fluid selection name
+            fluid_selection_name = " + ".join([fluid_zone.value for fluid_zone in fluid_zones])
 
-            # Find union of column names across all fluid zones
-            all_column_names = set()
-            for response_table in response_table_per_fluid_zone.values():
-                all_column_names.update(response_table.column_names)
+            # Drop BO/BG properties
+            valid_properties = [prop for prop in properties if prop not in ["BO", "BG"]]
 
-            pass
-
-        # Build response table - per fluid zone
-        # - Requested volumes
-        # - Calculated properties
-        response_table_per_fluid_zone: Dict[FluidZone, pa.Table] = {}
-        for fluid_zone, volumetric_table in volumetric_table_per_fluid_zone.items():
-            property_columns = self._calculate_property_column_arrays(volumetric_table, fluid_zone, properties)
+            property_columns = self._calculate_property_column_arrays(
+                volumetric_table_accumulated_across_fluid_zones, valid_properties, fluid_zone=None
+            )
 
             # Build response table (volumns and calculated properties)
-            available_volume_names = [name for name in volume_names if name in volumetric_table.column_names]
-            response_table = volumetric_table.select(valid_selector_columns + available_volume_names)
+            available_volume_names = [name for name in volume_names if name in volumetric_table_accumulated_across_fluid_zones.column_names]
+            response_table = volumetric_table_accumulated_across_fluid_zones.select(valid_selector_columns + available_volume_names)
             for property_name, property_column in property_columns.items():
                 response_table = response_table.append_column(property_name, property_column)
+            response_table_per_fluid_selection[fluid_selection_name] = response_table
 
-            response_table_per_fluid_zone[fluid_zone] = response_table
+        else:
+            # Build response table - per fluid zone
+            # - Requested volumes
+            # - Calculated properties
+            for fluid_zone, volumetric_table in volumetric_table_per_fluid_zone.items():
+                property_columns = self._calculate_property_column_arrays(volumetric_table, properties, fluid_zone)
+
+                # Build response table (volumns and calculated properties)
+                available_volume_names = [name for name in volume_names if name in volumetric_table.column_names]
+                response_table = volumetric_table.select(valid_selector_columns + available_volume_names)
+                for property_name, property_column in property_columns.items():
+                    response_table = response_table.append_column(property_name, property_column)
+
+                response_table_per_fluid_selection[fluid_zone.value] = response_table
 
         # Perform aggregation per response table
-        aggregated_response_table_per_fluid_zone: Dict[FluidZone, pa.Table] = {}
-        for fluid_zone, response_table in response_table_per_fluid_zone.items():
-            # Group by each of the index columns (always accumulate by realization - i.e. max one value per realization)
-            accumulate_by_each_set = set([elm.value for elm in accumulate_by_indices])
-            columns_to_group_by_for_sum = set(list(accumulate_by_each_set) + ["REAL"])
-
-            valid_response_names = [elm for elm in response_table.column_names if elm not in valid_selector_columns]
-
-            # Aggregate sum for each response name after grouping
-            accumulated_vol_table = response_table.group_by(columns_to_group_by_for_sum).aggregate(
-                [(response_name, "sum") for response_name in valid_response_names]
+        aggregated_response_table_per_fluid_selection: Dict[str, pa.Table] = {}
+        for fluid_selection_name, response_table in response_table_per_fluid_selection.items():
+            accumulated_result_table = create_accumulated_result_table(
+                response_table, valid_selector_columns, accumulate_by_identifiers, calculate_mean_across_realizations
             )
-            suffix_to_remove = "_sum"
-
-            # Calculate mean across realizations
-            if calculate_mean_across_realizations:
-                accumulated_vol_table = accumulated_vol_table.group_by(accumulate_by_each_set).aggregate(
-                    [(f"{response_name}_sum", "mean") for response_name in valid_response_names]
-                )
-                suffix_to_remove = "_sum_mean"
-
-            # Remove suffix from column names
-            column_names_with_suffix = accumulated_vol_table.column_names
-            new_column_names = [column_name.replace(suffix_to_remove, "") for column_name in column_names_with_suffix]
-            accumulated_vol_table = accumulated_vol_table.rename_columns(new_column_names)
-
-            aggregated_response_table_per_fluid_zone[fluid_zone] = accumulated_vol_table
+            aggregated_response_table_per_fluid_selection[fluid_selection_name] = accumulated_result_table
 
         # Convert tables into InplaceVolumetricTableDataPerFluidSelection
         table_data_per_fluid_selection: List[InplaceVolumetricTableData] = []
-        for fluid_zone, response_table in aggregated_response_table_per_fluid_zone.items():
-            selector_column_names = [name for name in response_table.column_names if name in valid_selector_columns]
-            selector_columns: List[RepeatedTableColumnData] = []
-            for column_name in selector_column_names:
-                column_array = response_table[column_name]
-                selector_columns.append(create_repeated_table_column_data_from_column(column_name, column_array))
-
-            response_column_names = [name for name in response_table.column_names if name not in valid_selector_columns]
-            response_columns: List[TableColumnData] = []
-            for column_name in response_column_names:
-                response_columns.append(
-                    TableColumnData(column_name=column_name, values=response_table[column_name].to_numpy())
-                )
-
-            table_data_per_fluid_selection.append(
-                InplaceVolumetricTableData(
-                    fluid_selection_name=fluid_zone.value,
-                    selector_columns=selector_columns,
-                    response_columns=response_columns,
-                )
+        for fluid_selection_name, response_table in aggregated_response_table_per_fluid_selection.items():
+            table_data = create_inplace_volumetric_table_data_from_result_table(
+                response_table, fluid_selection_name, valid_selector_columns
             )
+            table_data_per_fluid_selection.append(table_data)
 
         return InplaceVolumetricTableDataPerFluidSelection(table_per_fluid_selection=table_data_per_fluid_selection)
 
@@ -282,10 +251,10 @@ class InplaceVolumetricsProvider:
         table_name: str,
         volumetric_columns: set[str],
         realizations: Sequence[int] = None,
-        index_filter: List[InplaceVolumetricsIndex] = [],
+        identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
     ) -> pa.Table:
         """
-        Create table filtered on index values and realizations
+        Create table filtered on identifier values and realizations
         """
         if realizations is not None and len(realizations) == 0:
             return {}
@@ -307,13 +276,14 @@ class InplaceVolumetricsProvider:
         # Build mask for rows - default all rows
         mask = pa.array([True] * inplace_volumetrics_table.num_rows)
 
-        # Mask/filter out rows with ignored index values
-        for index_name in InplaceVolumetricsIndexNames:
-            if index_name.value in table_column_names:
-                ignored_indices_mask = pc.is_in(
-                    inplace_volumetrics_table[index_name.value], value_set=pa.array(IGNORED_INDEX_COLUMN_VALUES)
+        # Mask/filter out rows with ignored identifier values
+        for identifier_name in InplaceVolumetricsIdentifier:
+            if identifier_name.value in table_column_names:
+                ignored_identifier_values_mask = pc.is_in(
+                    inplace_volumetrics_table[identifier_name.value],
+                    value_set=pa.array(IGNORED_IDENTIFIER_COLUMN_VALUES),
                 )
-                mask = pc.and_(mask, pc.invert(ignored_indices_mask))
+                mask = pc.and_(mask, pc.invert(ignored_identifier_values_mask))
 
         # Add mask for realizations
         if realizations is not None:
@@ -329,14 +299,16 @@ class InplaceVolumetricsProvider:
             realization_mask = pc.is_in(inplace_volumetrics_table["REAL"], value_set=pa.array(realizations))
             mask = pc.and_(mask, realization_mask)
 
-        # Add mask for each index filter
-        for index in index_filter:
-            index_column_name = index.index_name.value
-            if index_column_name not in table_column_names:
-                raise ValueError(f"Index column name {index_column_name} not found in table {table_name}")
+        # Add mask for each identifier filter
+        for identifier_with_values in identifiers_with_values:
+            identifier_column_name = identifier_with_values.identifier.value
+            if identifier_column_name not in table_column_names:
+                raise ValueError(f"Identifier column name {identifier_column_name} not found in table {table_name}")
 
-            index_mask = pc.is_in(inplace_volumetrics_table[index_column_name], value_set=pa.array(index.values))
-            mask = pc.and_(mask, index_mask)
+            identifier_mask = pc.is_in(
+                inplace_volumetrics_table[identifier_column_name], value_set=pa.array(identifier_with_values.values)
+            )
+            mask = pc.and_(mask, identifier_mask)
 
         filtered_table = inplace_volumetrics_table.filter(mask)
         return filtered_table
@@ -350,7 +322,7 @@ class InplaceVolumetricsProvider:
         Create a volumetric table per fluid zone
 
         Extracts the columns for each fluid zone and creates a new table for each fluid zone, with
-        the same index columns and REAL column as the original table.
+        the same identifier columns and REAL column as the original table.
 
         The fluid columns are stripped of the fluid zone suffix.
 
@@ -395,7 +367,7 @@ class InplaceVolumetricsProvider:
         return fluid_zone_to_table_map
 
     def _calculate_property_column_arrays(
-        self, volumetric_table: pa.Table, fluid_zone: FluidZone, properties: List[str]
+        self, volumetric_table: pa.Table, properties: List[str], fluid_zone: Optional[FluidZone] = None
     ) -> Dict[str, pa.array]:
         """
         Calculate property arrays as pa.array based on the volume columns in table.
@@ -410,11 +382,6 @@ class InplaceVolumetricsProvider:
         """
 
         existing_volume_columns: List[str] = volumetric_table.column_names
-        num_rows: int = volumetric_table.num_rows
-
-        zero_array = pa.array(np.zeros(num_rows), type=pa.float64())
-        nan_array = pa.array(np.full(num_rows, np.nan), type=pa.float64())
-
         property_arrays: Dict[str, pa.array] = {}
 
         # NOTE: If one of the volume names needed for a property is not found, the property array is not calculated

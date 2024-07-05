@@ -66,8 +66,12 @@ async def post_get_aggregated_table_data(
     realizations: Optional[List[int]] = Query(
         None, description="Optional realization to include. If not specified, all realizations will be returned."
     ),
-    accumulate_by_indices: List[schemas.InplaceVolumetricsIndex] = Query(description="The index types to aggregate by"),
-    index_filter: List[schemas.InplaceVolumetricsIndex] = Body(embed=True, description="Categorical filter"),
+    accumulate_by_identifiers: List[schemas.InplaceVolumetricsIdentifier] = Body(
+        embed=True, description="The identifiers to aggregate by"
+    ),
+    identifiers_with_values: List[schemas.InplaceVolumetricsIdentifierWithValues] = Body(
+        embed=True, description="Selected identifiers and wanted values"
+    ),
     accumulate_fluid_zones: bool = Query(description="Whether to accumulate fluid zones"),
     calculate_mean_across_realizations: bool = Query(description="Whether to calculate mean across realizations"),
 ) -> schemas.InplaceVolumetricTableDataPerFluidSelection:
@@ -82,9 +86,9 @@ async def post_get_aggregated_table_data(
         table_name=table_name,
         response_names=response_names,
         fluid_zones=fluid_zones,
-        accumulate_by_indices=accumulate_by_indices,
+        accumulate_by_identifiers=accumulate_by_identifiers,
         realizations=realizations,
-        index_filter=index_filter,
+        identifiers_with_values=identifiers_with_values,
         accumulate_fluid_zones=accumulate_fluid_zones,
         calculate_mean_across_realizations=calculate_mean_across_realizations,
     )

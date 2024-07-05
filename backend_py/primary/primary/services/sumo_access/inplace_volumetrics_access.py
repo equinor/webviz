@@ -1,7 +1,6 @@
 import logging
-from enum import Enum
 from io import BytesIO
-from typing import Dict, List, Optional, Sequence, Union
+from typing import List, Optional, Sequence, Union
 
 import asyncio
 import pyarrow as pa
@@ -18,7 +17,7 @@ from ..service_exceptions import (
     MultipleDataMatchesError,
 )
 
-from .inplace_volumetrics_types import AggregateByEach, InplaceVolumetricsIdentifier, InplaceVolumetricsTableDefinition
+from .inplace_volumetrics_types import InplaceVolumetricsIdentifier, InplaceVolumetricsTableDefinition
 
 
 from fmu.sumo.explorer.objects import Case
@@ -192,137 +191,6 @@ class InplaceVolumetricsAccess:
             indexes=identifiers,
             result_names=result_column_names,
         )
-
-    async def get_aggregated_volumetric_table_data_async(
-        self,
-        table_name: str,
-        response_names: List[str],
-        realizations: Sequence[int] = None,
-        index_filter: List[InplaceVolumetricsIdentifier] = None,
-        aggregate_by_each_list: Sequence[AggregateByEach] = None,
-    ) -> Dict[str, List[str | int | float]]:
-        """Retrieve the aggregated volumetric data for a single table, optionally filtered by realizations and index values.
-
-        Returns a dictionary with column name as key, and column array as value.
-
-        Column array: List[str|int|float]
-
-        NOTE: "FLUID_ZONE" response name not handled yet
-
-        NOTE: Name response or result_name?
-        """
-        timer = PerfTimer()
-
-        response_names_set = set(response_names)
-
-        expected_index_columns = set(["ZONE", "REGION", "FACIES"])
-        all_expected_columns = set(expected_index_columns + response_names_set + set(["REAL"]))
-
-        # Get collection of tables
-        vol_table_collection = self._case.tables.filter(
-            aggregation="collection",
-            name=table_name,
-            tagname=["vol", "volumes", "inplace"],
-            iteration=self._iteration_name,
-            column=response_names,
-        )
-
-        num_tables_in_collection = await vol_table_collection.length_async()
-        if num_tables_in_collection == 0:
-            raise NoDataError(
-                f"No inplace volumetrics tables found in case={self._case_uuid}, iteration={self._iteration_name}, table_name={table_name}, result_names={result_names}",
-                Service.SUMO,
-            )
-
-        # Find column names not among collection columns
-        collection_columns = await vol_table_collection.columns_async
-        if set(collection_columns) != all_expected_columns:
-            missing_result_names = all_expected_columns - set(collection_columns)
-            raise InvalidDataError(
-                f"Missing results: {missing_result_names}, in the volumetric table {self._case_uuid}, {table_name}",
-                Service.SUMO,
-            )
-
-        # Find result names not among collection columns
-        missing_result_names = response_names_set - set(collection_columns)
-        if missing_result_names:
-            raise InvalidDataError(
-                f"Missing results: {missing_result_names}, in the volumetric table {self._case_uuid}, {table_name}",
-                Service.SUMO,
-            )
-
-        # Initialize volumetric table
-        vol_table: pa.Table = await vol_table_collection[0].to_arrow_async()  # TODO: Optimize download? E.g. parallel
-
-        # Build mask for rows - default all rows
-        mask = pa.array([True] * vol_table.num_rows)
-
-        # Add mask for each index column
-        for index in index_filter:
-            index_column_name = index.index_name.value
-            index_mask = pc.is_in(vol_table[index_column_name], value_set=pa.array(index.values))
-            mask = pc.and_(mask, index_mask)
-
-        # Add mask for realizations
-        if len(realizations) > 0:
-            realization_mask = pc.is_in(vol_table["REAL"], value_set=pa.array(realizations))
-            mask = pc.and_(mask, realization_mask)
-
-        # TODO: Add mask to remove IGNORED_INDEX_COLUMN_VALUES? Probably handled by existing index column filter
-
-        filtered_vol_table = vol_table.filter(mask)
-        table_index_columns = ["FACIES", "REGION", "ZONE", "REAL"]
-        for i in range(1, len(vol_table_collection)):
-            response_table = await vol_table_collection[i].to_arrow_async()  # TODO: Optimize download? E.g. parallel
-            response_name_set = set(response_table.column_names) - set(table_index_columns)
-            if len(response_name_set) != 1:
-                print(f"Table {response_table.name} has more than one column for response")
-                continue
-
-            response_name = list(response_name_set)[0]
-            if response_name not in response_names_set:
-                print(
-                    f"Table {response_table.name} returns response {response_name}, which is not among columns of interest: {response_names_set}"
-                )
-                continue
-
-            # Add response column, filtered by mask, to table
-            filtered_response_column = pc.filter(response_table[response_name], mask)
-            filtered_vol_table = filtered_vol_table.append_column(response_name, filtered_response_column)
-
-        # Aggregate the filtered pyarrow Table
-        if len(aggregate_by_each_list) == 0:
-            return filtered_vol_table
-
-        # Group by each of the index columns (always aggregate by realization)
-        aggregate_by_each = set([col.value for col in aggregate_by_each_list])
-
-        columns_to_group_by_for_sum = aggregate_by_each.copy()
-        if "REAL" not in columns_to_group_by_for_sum:
-            columns_to_group_by_for_sum.add("REAL")
-
-        # Aggregate sum for each response name after grouping
-        aggregated_vol_table = filtered_vol_table.group_by(columns_to_group_by_for_sum).aggregate(
-            [(response_name, "sum") for response_name in response_names_set]
-        )
-        suffix_to_remove = "_sum"
-
-        # If aggregate_by_each does not contain "REAL", then aggregate mean across realizations
-        if "REAL" not in aggregate_by_each:
-            aggregated_vol_table = aggregated_vol_table.group_by(aggregate_by_each).aggregate(
-                [(f"{response_name}_sum", "mean") for response_name in response_names_set]
-            )
-            suffix_to_remove = "_sum_mean"
-
-        # Remove suffix from column names
-        column_names = aggregated_vol_table.column_names
-        new_column_names = [column_name.replace(suffix_to_remove, "") for column_name in column_names]
-        aggregated_vol_table = aggregated_vol_table.rename_columns(new_column_names)
-
-        # Convert to dict with column name as key, and column array as value
-        aggregated_vol_table_dict = aggregated_vol_table.to_pydict()
-
-        return aggregated_vol_table_dict
 
     async def get_volumetric_data_async(
         self,

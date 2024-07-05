@@ -1,6 +1,5 @@
 from typing import List
 
-from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsIndex
 from primary.services.sumo_access.inplace_volumetrics_types import InplaceVolumetricTableDataPerFluidSelection
 from primary.services.sumo_access.inplace_volumetrics_types import InplaceVolumetricsTableDefinition
 
@@ -45,16 +44,16 @@ def convert_table_data_per_fluid_selection_to_schema(
             for column in table.selector_columns
         ]
 
-        response_columns = [
+        result_columns = [
             schemas.TableColumnData(column_name=column.column_name, column_values=column.values)
-            for column in table.response_columns
+            for column in table.result_columns
         ]
 
         tables.append(
             schemas.InplaceVolumetricTableData(
                 fluid_selection_name=table.fluid_selection_name,
                 selector_columns=selector_columns,
-                response_columns=response_columns,
+                result_columns=result_columns,
             )
         )
 
