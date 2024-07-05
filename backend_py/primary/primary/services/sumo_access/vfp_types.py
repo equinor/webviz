@@ -64,6 +64,9 @@ class TabType(Enum):
     THT = "TEMP"
 
 
+# The length of bhp_values is len(thp_values)*len(wfr_values)*len(gfr_values)*len(alq_values)*len(flow_rate_values)
+# The values are ordered so that the index of flow_rate_values moves fastest, and the index of thp_values moves
+# slowest. The order is: THP, WFR, GFR, ALQ, Flow rates.
 class VfpProdTable(BaseModel):
     vfp_type: VfpType
     table_number: int
@@ -79,4 +82,4 @@ class VfpProdTable(BaseModel):
     gfr_values: List[float]
     alq_values: List[float]
     flow_rate_values: List[float]
-    bhp_table: List[float]  # value=bhp_table[thp_idx*wfr_idx*gfr_idx*alq_idx*flow_rate_idx]
+    bhp_values: List[float]
