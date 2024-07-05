@@ -67,7 +67,7 @@ async def post_get_aggregated_table_data(
     # realizations: List[int] = Query(description="Realizations"),
     # realization: Optional[int] = Query(None, description="Optional realization to include. If not specified, all realizations will be returned."),
     # index_filter: List[schemas.InplaceVolumetricsIndex] = Body(embed=True, description="Categorical filter"),
-) -> schemas.InplaceVolumetricData:
+) -> schemas.InplaceVolumetricTableDataPerFluidSelection:
     """Get aggregated volumetric data for a given table, result and categories/index filter."""
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
@@ -84,4 +84,4 @@ async def post_get_aggregated_table_data(
         # index_filter=index_filter,
     )
 
-    return data
+    return converters.convert_table_data_per_fluid_selection_to_schema(data)
