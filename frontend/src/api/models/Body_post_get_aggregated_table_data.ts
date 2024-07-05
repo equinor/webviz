@@ -2,11 +2,16 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { InplaceVolumetricsIdentifier } from './InplaceVolumetricsIdentifier';
 import type { InplaceVolumetricsIdentifierWithValues } from './InplaceVolumetricsIdentifierWithValues';
 export type Body_post_get_aggregated_table_data = {
     /**
-     * Categorical filter
+     * The identifiers to aggregate by
      */
-    index_filter: Array<InplaceVolumetricsIdentifierWithValues>;
+    accumulate_by_identifiers: Array<InplaceVolumetricsIdentifier>;
+    /**
+     * Selected identifiers and wanted values
+     */
+    identifiers_with_values: Array<InplaceVolumetricsIdentifierWithValues>;
 };
 

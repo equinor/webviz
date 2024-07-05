@@ -52,6 +52,8 @@ export { InplaceVolumetricResultName as InplaceVolumetricResultName_api } from '
 export { InplaceVolumetricsIdentifier as InplaceVolumetricsIdentifier_api } from './models/InplaceVolumetricsIdentifier';
 export type { InplaceVolumetricsIdentifierWithValues as InplaceVolumetricsIdentifierWithValues_api } from './models/InplaceVolumetricsIdentifierWithValues';
 export type { InplaceVolumetricsTableDefinition as InplaceVolumetricsTableDefinition_api } from './models/InplaceVolumetricsTableDefinition';
+export type { InplaceVolumetricTableData as InplaceVolumetricTableData_api } from './models/InplaceVolumetricTableData';
+export type { InplaceVolumetricTableDataPerFluidSelection as InplaceVolumetricTableDataPerFluidSelection_api } from './models/InplaceVolumetricTableDataPerFluidSelection';
 export { NodeType as NodeType_api } from './models/NodeType';
 export type { Observations as Observations_api } from './models/Observations';
 export type { PointSetXY as PointSetXY_api } from './models/PointSetXY';
@@ -60,6 +62,7 @@ export { PolygonsAttributeType as PolygonsAttributeType_api } from './models/Pol
 export type { PolygonsMeta as PolygonsMeta_api } from './models/PolygonsMeta';
 export type { PolylineIntersection as PolylineIntersection_api } from './models/PolylineIntersection';
 export type { PvtData as PvtData_api } from './models/PvtData';
+export type { RepeatedTableColumnData as RepeatedTableColumnData_api } from './models/RepeatedTableColumnData';
 export type { RftInfo as RftInfo_api } from './models/RftInfo';
 export type { RftObservation as RftObservation_api } from './models/RftObservation';
 export type { RftObservations as RftObservations_api } from './models/RftObservations';
@@ -82,6 +85,7 @@ export type { SurfaceMetaSet as SurfaceMetaSet_api } from './models/SurfaceMetaS
 export type { SurfaceRealizationSampleValues as SurfaceRealizationSampleValues_api } from './models/SurfaceRealizationSampleValues';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
 export { SurfaceTimeType as SurfaceTimeType_api } from './models/SurfaceTimeType';
+export type { TableColumnData as TableColumnData_api } from './models/TableColumnData';
 export { TreeNode as TreeNode_api } from './models/TreeNode';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';
 export type { ValidationError as ValidationError_api } from './models/ValidationError';

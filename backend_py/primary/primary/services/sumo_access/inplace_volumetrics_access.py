@@ -1,6 +1,6 @@
 import logging
 from io import BytesIO
-from typing import List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 import asyncio
 import pyarrow as pa

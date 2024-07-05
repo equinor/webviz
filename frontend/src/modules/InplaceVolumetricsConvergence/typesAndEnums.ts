@@ -12,5 +12,5 @@ export type SubplotByInfo = {
 
 export type EnsembleIdentWithRealizations = {
     ensembleIdent: EnsembleIdent;
-    realizations: number[];
+    realizations: readonly number[];
 };

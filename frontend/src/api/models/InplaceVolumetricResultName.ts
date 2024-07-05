@@ -14,6 +14,7 @@ export enum InplaceVolumetricResultName {
     HCPV = 'HCPV',
     STOIIP = 'STOIIP',
     GIIP = 'GIIP',
+    NTG = 'NTG',
     ASSOCIATEDGAS = 'ASSOCIATEDGAS',
     ASSOCIATEDOIL = 'ASSOCIATEDOIL',
     BO = 'BO',

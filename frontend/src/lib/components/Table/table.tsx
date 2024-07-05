@@ -18,7 +18,7 @@ export type TableHeading = {
     };
 };
 
-type TableRow<T extends TableHeading> = {
+export type TableRow<T extends TableHeading> = {
     [key in keyof T]: string | number;
 };
 

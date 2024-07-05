@@ -1,3 +1,4 @@
+import { InplaceVolumetricResultName_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 
@@ -13,7 +14,7 @@ import { SubplotBy, SubplotByInfo } from "./typesAndEnums";
 export type SettingsToViewInterface = {
     derivedStates: {
         filter: InplaceVolumetricsFilter;
-        resultName: string | null;
+        resultName: InplaceVolumetricResultName_api | null;
         subplotBy: SubplotByInfo;
     };
 };
