@@ -10,7 +10,7 @@ from typing import List, Union
 # - results = volume (directly from SUMO columns w/o suffix) + property (calculated from volumes)
 
 
-class InplaceVolumetricsIndexNames(StrEnum):
+class InplaceVolumetricsIdentifier(StrEnum):
     """
     Definition of valid index names for an inplace volumetrics table
     """
@@ -61,14 +61,14 @@ class Property(StrEnum):
 
 
 @dataclass
-class InplaceVolumetricsIndex:
+class InplaceVolumetricsIdentifierWithValues:
     """
-    Unique values for an index column in an inplace volumetrics table
+    Unique values for an identifier column in an inplace volumetrics table
 
     NOTE: Ideally all values should be strings, but it is possible that some values are integers - especially for REGION
     """
 
-    index_name: InplaceVolumetricsIndexNames
+    identifier: InplaceVolumetricsIdentifier
     values: List[Union[str, int]]  # List of values: str or int
 
 
@@ -77,9 +77,9 @@ class InplaceVolumetricsTableDefinition:
     """Definition of a volumetric table"""
 
     table_name: str
-    fluid_zones: List[FluidZone]
+    identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues]
     result_names: List[str]
-    indexes: List[InplaceVolumetricsIndex]
+    fluid_zones: List[FluidZone]
 
 
 @dataclass

@@ -13,31 +13,25 @@ import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
-import { withDefaults } from "../_component-utils/components";
 
-export type DropdownOption = {
-    value: string;
+export type DropdownOption<TValue = string> = {
+    value: TValue;
     label: string;
     adornment?: React.ReactNode;
     disabled?: boolean;
 };
 
-export type DropdownProps = {
+export type DropdownProps<TValue = string> = {
     id?: string;
     wrapperId?: string;
-    options: DropdownOption[];
-    value?: string;
-    onChange?: (value: string) => void;
+    options: DropdownOption<TValue>[];
+    value?: TValue;
+    onChange?: (value: TValue) => void;
     filter?: boolean;
     width?: string | number;
     showArrows?: boolean;
     debounceTimeMs?: number;
 } & BaseComponentProps;
-
-const defaultProps = {
-    value: "",
-    filter: false,
-};
 
 const minHeight = 200;
 const optionHeight = 32;
@@ -54,8 +48,10 @@ type DropdownRect = {
 const noMatchingOptionsText = "No matching options";
 const noOptionsText = "No options";
 
-export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
+export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const { onChange } = props;
+
+    const valueWithDefault = props.value ?? null;
 
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
     const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
@@ -64,11 +60,11 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         height: 0,
     });
     const [filter, setFilter] = React.useState<string | null>(null);
-    const [selection, setSelection] = React.useState<string | number>(props.value);
-    const [prevValue, setPrevValue] = React.useState<string | number>(props.value);
-    const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<DropdownOption[]>(props.options);
+    const [selection, setSelection] = React.useState<TValue | null>(props.value ?? null);
+    const [prevValue, setPrevValue] = React.useState<TValue | null>(props.value ?? null);
+    const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<DropdownOption<TValue>[]>(props.options);
     const [selectionIndex, setSelectionIndex] = React.useState<number>(-1);
-    const [filteredOptions, setFilteredOptions] = React.useState<DropdownOption[]>(props.options);
+    const [filteredOptions, setFilteredOptions] = React.useState<DropdownOption<TValue>[]>(props.options);
     const [optionIndexWithFocus, setOptionIndexWithFocus] = React.useState<number>(-1);
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [keyboardFocus, setKeyboardFocus] = React.useState<boolean>(false);
@@ -88,10 +84,10 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         [filteredOptions, selection]
     );
 
-    if (prevValue !== props.value) {
-        setSelection(props.value);
-        setSelectionIndex(props.options.findIndex((option) => option.value === props.value));
-        setPrevValue(props.value);
+    if (prevValue !== valueWithDefault) {
+        setSelection(valueWithDefault);
+        setSelectionIndex(props.options.findIndex((option) => option.value === valueWithDefault));
+        setPrevValue(valueWithDefault);
     }
 
     if (!isEqual(prevFilteredOptions, filteredOptions)) {
@@ -175,7 +171,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     };
 
                     if (inputClientBoundingRect.y + inputBoundingRect.height + height > window.innerHeight) {
-                        newDropdownRect.top = inputClientBoundingRect.y - minHeight;
+                        newDropdownRect.top = inputClientBoundingRect.y - height;
                         newDropdownRect.height = Math.min(height, inputClientBoundingRect.y);
                     } else {
                         newDropdownRect.top = inputClientBoundingRect.y + inputBoundingRect.height;
@@ -218,7 +214,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     );
 
     const handleOnChange = React.useCallback(
-        function handleOnChange(value: string) {
+        function handleOnChange(value: TValue) {
             if (!onChange) {
                 return;
             }
@@ -240,7 +236,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     );
 
     const handleOptionClick = React.useCallback(
-        function handleOptionClick(value: string) {
+        function handleOptionClick(value: TValue) {
             setSelection(value);
             setSelectionIndex(props.options.findIndex((option) => option.value === value));
             setDropdownVisible(false);
@@ -494,6 +490,6 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             </div>
         </BaseComponent>
     );
-});
+}
 
 Dropdown.displayName = "Dropdown";

@@ -10,6 +10,9 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     AccumulateByEach,
     AggregateByEach,
     FluidZone,
+    InplaceVolumetricsIdentifier,
+    InplaceVolumetricsIdentifierWithValues,
+    InplaceVolumetricsTableDefinition,
     FluidZoneSelection,
     InplaceVolumetricsIndex,
     InplaceVolumetricsIndexNames,
@@ -63,7 +66,7 @@ class InplaceVolumetricsProvider:
 
     # TODO: When having metadata, provide all column names, and the get the possible properties from the response names
     # Provide the available properties from metadata, without suffix and provide possible FluidZones
-    async def get_volumetric_table_metadata(self) -> Any:
+    async def get_volumetric_table_metadata(self) -> List[InplaceVolumetricsTableDefinition]:
         vol_table_names = await self._inplace_volumetrics_access.get_inplace_volumetrics_table_names_async()
 
         async def get_named_inplace_volumetrics_table_async(table_name: str) -> Dict[str, pa.Table]:

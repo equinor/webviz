@@ -2,15 +2,30 @@ from typing import List
 
 from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsIndex
 from primary.services.sumo_access.inplace_volumetrics_types import InplaceVolumetricTableDataPerFluidSelection
+from primary.services.sumo_access.inplace_volumetrics_types import InplaceVolumetricsTableDefinition
 
 from . import schemas
 
 
-def api_category_filter_to_sumo_category_filter(
-    categories: List[schemas.InplaceVolumetricsIndex],
-) -> List[InplaceVolumetricsIndex]:
-    """Converts the category filter from the API to the format expected by the sumo service"""
-    return [InplaceVolumetricsIndex(**category.model_dump()) for category in categories]
+def to_api_table_definitions(
+    table_definitions: List[InplaceVolumetricsTableDefinition],
+) -> List[schemas.InplaceVolumetricsTableDefinition]:
+    """Converts the table definitions from the sumo service to the API format"""
+    return [
+        schemas.InplaceVolumetricsTableDefinition(
+            tableName=table_definition.table_name,
+            fluidZones=table_definition.fluid_zones,
+            resultNames=table_definition.result_names,
+            identifiersWithValues=[
+                schemas.InplaceVolumetricsIdentifierWithValues(
+                    identifier=identifier_with_values.identifier,
+                    values=identifier_with_values.values,
+                )
+                for identifier_with_values in table_definition.identifiers_with_values
+            ],
+        )
+        for table_definition in table_definitions
+    ]
 
 
 def convert_table_data_per_fluid_selection_to_schema(

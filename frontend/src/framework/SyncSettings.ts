@@ -26,6 +26,7 @@ export enum SyncSettingKey {
     WELLBORE = "WELLBORE",
     INTERSECTION = "INTERSECTION",
     VERTICAL_SCALE = "VERTICAL_SCALE",
+    INPLACE_VOLUMETRICS_FILTER = "INPLACE_VOLUMETRICS_FILTER",
 }
 
 export const SyncSettingsMeta = {
@@ -41,6 +42,7 @@ export const SyncSettingsMeta = {
         abbreviation: "CAM",
     },
     [SyncSettingKey.VERTICAL_SCALE]: { name: "Vertical Scale", abbreviation: "VSCAL" },
+    [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER]: { name: "Inplace Volumetrics Filter", abbreviation: "IVF" },
 };
 
 export class SyncSettingsHelper {

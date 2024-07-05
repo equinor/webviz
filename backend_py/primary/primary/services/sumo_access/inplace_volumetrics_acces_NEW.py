@@ -14,14 +14,23 @@ from ..service_exceptions import (
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
+# Allowed categories (index column names) for the volumetric tables
+ALLOWED_IDENTIFIER_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
+
+# Index column values to ignore, i.e. remove from the volumetric tables
+IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
+
 
 class InplaceVolumetricsAccess:
-    _expected_index_columns = ["ZONE", "REGION", "FACIES", "LICENSE"]
+    _expected_identifier_columns = ["ZONE", "REGION", "FACIES", "LICENSE"]
 
     def __init__(self, case: Case, case_uuid: str, iteration_name: str):
         self._case: Case = case
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
+
+    def get_expected_identifier_columns(self) -> List[str]:
+        return self._expected_identifier_columns
 
     @classmethod
     async def from_case_uuid_async(
