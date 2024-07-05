@@ -1,6 +1,7 @@
 import React from "react";
 
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -468,11 +469,21 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
             );
         }
         if (status === LayerStatus.ERROR) {
-            return (
-                <div title={props.layer.getError() ?? "Error while loading"}>
-                    <Error fontSize="inherit" className="text-red-700" />
-                </div>
-            );
+            const error = props.layer.getError();
+            if (typeof error === "string") {
+                return (
+                    <div title={error}>
+                        <Error fontSize="inherit" className="text-red-700" />
+                    </div>
+                );
+            } else {
+                const statusMessage = error as StatusMessage;
+                return (
+                    <div title={statusMessage.message}>
+                        <Error fontSize="inherit" className="text-red-700" />
+                    </div>
+                );
+            }
         }
         if (status === LayerStatus.SUCCESS) {
             return (
@@ -536,7 +547,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
             ></div>
             <div
                 className={resolveClassNames(
-                    "flex h-10 py-2 px-1 hover:bg-blue-100 text-sm items-center gap-1 border-b border-b-gray-300 relative",
+                    "flex h-8 py-1 px-1 hover:bg-blue-100 text-sm items-center gap-1 border-b border-b-gray-300 relative",
                     {
                         "bg-red-100": props.layer.getStatus() === LayerStatus.ERROR,
                         "bg-white": props.layer.getStatus() !== LayerStatus.ERROR,

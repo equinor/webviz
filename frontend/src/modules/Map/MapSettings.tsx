@@ -17,6 +17,7 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { SurfaceAddress, SurfaceAddressFactory, SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { useObservedSurfacesMetadataQuery, useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { MapState } from "./MapState";
 import { AggregationDropdown } from "./UiComponents";
@@ -54,12 +55,8 @@ export function MapSettings(props: ModuleSettingsProps<MapState>) {
     );
     const observedSurfacesMetaQuery = useObservedSurfacesMetadataQuery(computedEnsembleIdent?.getCaseUuid());
 
-    if (realizationSurfacesMetaQuery.isError) {
-        statusWriter.addError("Error loading metadata for realization surfaces");
-    }
-    if (observedSurfacesMetaQuery.isError) {
-        statusWriter.addError("Error loading metadata for observed surfaces");
-    }
+    usePropagateApiErrorToStatusWriter(realizationSurfacesMetaQuery, statusWriter);
+    usePropagateApiErrorToStatusWriter(observedSurfacesMetaQuery, statusWriter);
 
     const surfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: realizationSurfacesMetaQuery.data,

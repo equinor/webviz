@@ -3,6 +3,9 @@ from typing import Dict, List, Optional, Set, Tuple
 import pandas as pd
 from fmu.sumo.explorer.objects import Case
 
+
+from primary.services.service_exceptions import InvalidDataError, Service
+
 from ._helpers import create_sumo_client, create_sumo_case_async
 
 from .well_completions_types import (
@@ -54,9 +57,14 @@ class WellCompletionsAccess:
             tagname=WellCompletionsAccess.TAGNAME, aggregation="collection", iteration=self._iteration_name
         )
 
+        if len(well_completions_tables) == 0:
+            return None
+
         # As of now, two tables are expected - one with OP/SH and one with KH
         if len(well_completions_tables) < 2:
-            return None
+            raise InvalidDataError(
+                f"Expected 2 tables (OP/SH and KH) but got {len(well_completions_tables)}", service=Service.SUMO
+            )
 
         expected_common_columns = set(["WELL", "DATE", "ZONE", "REAL"])
         first_df = well_completions_tables[0].to_pandas()

@@ -15,6 +15,7 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
@@ -86,11 +87,7 @@ export function Settings(
         }
     }
 
-    let wellHeadersErrorMessage = "";
-    if (wellHeaders.isError) {
-        statusWriter.addError("Failed to load well headers");
-        wellHeadersErrorMessage = "Failed to load well headers";
-    }
+    const wellHeadersErrorMessage = usePropagateApiErrorToStatusWriter(wellHeaders, statusWriter) ?? "";
 
     function handleFieldIdentifierChange(fieldIdentifier: string | null) {
         setSelectedField(fieldIdentifier);

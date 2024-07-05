@@ -16,6 +16,7 @@ import {
     useWellboreTrajectoriesQuery,
 } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { isEqual } from "lodash";
 
@@ -106,9 +107,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<State>)
 
     // Get well trajectories query
     const wellTrajectoriesQuery = useWellboreTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
-    if (wellTrajectoriesQuery.isError) {
-        statusWriter.addError("Error loading well trajectories");
-    }
+    usePropagateApiErrorToStatusWriter(wellTrajectoriesQuery, statusWriter);
 
     // Use first trajectory and create polyline for seismic fence query, and extended wellbore trajectory for generating seismic fence image
     let candidateSeismicFencePolyline = seismicFencePolyline;
@@ -163,9 +162,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<State>)
         candidateSeismicFencePolyline,
         seismicAddress !== null
     );
-    if (seismicFenceDataQuery.isError) {
-        statusWriter.addError("Error loading seismic fence data");
-    }
+
+    usePropagateApiErrorToStatusWriter(seismicFenceDataQuery, statusWriter);
 
     // Get surface intersection data from polyline
     const surfaceIntersectionDataQueries = useSurfaceIntersectionQueries(
@@ -192,9 +190,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<State>)
         wellboreAddress ? wellboreAddress.uuid : undefined,
         wellborePickSelection !== WellborePickSelectionType.NONE
     );
-    if (wellborePicksAndStratigraphicUnitsQuery.isError) {
-        statusWriter.addError("Error loading wellbore picks and stratigraphic units");
-    }
+    usePropagateApiErrorToStatusWriter(wellborePicksAndStratigraphicUnitsQuery, statusWriter);
 
     // Filter wellbore picks and stratigraphic units based on selected surface names
     const selectedWellborePicksAndStratigraphicUnits: WellborePicksAndStratigraphicUnits_api | null =

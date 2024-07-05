@@ -1,5 +1,7 @@
 import React from "react";
 
+import { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import { QueryClient } from "@tanstack/query-core";
 
@@ -45,9 +47,9 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
     protected _settings: TSettings = {} as TSettings;
     private _lastDataFetchSettings: TSettings;
     private _queryKeys: unknown[][] = [];
-    private _error: string | null = null;
-    private _refetchingRequested: boolean = false;
-    private _cancellingPending: boolean = false;
+    private _error: StatusMessage | string | null = null;
+    private _refetchRequested: boolean = false;
+    private _cancellationPending: boolean = false;
 
     constructor(name: string, settings: TSettings) {
         this._id = v4();
@@ -115,7 +117,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
     }
 
     maybeUpdateSettings(updatedSettings: Partial<TSettings>): void {
-        this._cancellingPending = true;
+        this._cancellationPending = true;
         const patchesToApply: Partial<TSettings> = {};
         for (const setting in updatedSettings) {
             if (!(setting in this._settings)) {
@@ -130,12 +132,12 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
             this.maybeCancelQuery().then(() => {
                 this._settings = { ...this._settings, ...patchesToApply };
                 this.notifySubscribers(LayerTopic.SETTINGS);
-                if (this._refetchingRequested) {
+                if (this._refetchRequested) {
                     this.maybeRefetchData();
                 }
             });
         } else {
-            this._cancellingPending = false;
+            this._cancellationPending = false;
         }
     }
 
@@ -165,7 +167,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
             this.notifySubscribers(LayerTopic.STATUS);
         }
 
-        this._cancellingPending = false;
+        this._cancellationPending = false;
     }
 
     subscribe(topic: LayerTopic, callback: () => void): () => void {
@@ -183,8 +185,19 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
         this._subscribers.get(topic)?.delete(callback);
     }
 
-    getError(): string | null {
-        return this._error;
+    getError(): StatusMessage | string | null {
+        if (!this._error) {
+            return null;
+        }
+
+        if (typeof this._error === "string") {
+            return `${this._name}: ${this._error}`;
+        }
+
+        return {
+            ...this._error,
+            message: `${this._name}: ${this._error.message}`,
+        };
     }
 
     protected notifySubscribers(topic: LayerTopic): void {
@@ -210,8 +223,8 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
             return;
         }
 
-        if (this._cancellingPending) {
-            this._refetchingRequested = true;
+        if (this._cancellationPending) {
+            this._refetchRequested = true;
             return;
         }
 
@@ -242,7 +255,12 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
             if (error.constructor?.name === "CancelledError") {
                 return;
             }
-            this._error = `${error.message}`;
+            const apiError = ApiErrorHelper.fromError(error);
+            if (apiError) {
+                this._error = apiError.makeStatusMessage();
+            } else {
+                this._error = "An error occurred";
+            }
             this._status = LayerStatus.ERROR;
         }
         this.notifySubscribers(LayerTopic.STATUS);
