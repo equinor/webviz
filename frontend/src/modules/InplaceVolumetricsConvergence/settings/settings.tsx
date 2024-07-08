@@ -3,11 +3,14 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
+import { Label } from "@lib/components/Label";
+import { TagOption, TagPicker } from "@lib/components/TagPicker";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
 import { useAtomValue, useSetAtom } from "jotai";
 
 import {
+    userSelectedAccumulationOptionsAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
     userSelectedIdentifiersValuesAtom,
@@ -15,6 +18,7 @@ import {
     userSelectedTableNamesAtom,
 } from "./atoms/baseAtoms";
 import {
+    selectedAccumulationOptionsAtom,
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
     selectedIdentifiersValuesAtom,
@@ -46,6 +50,9 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     const selectedResultName = useAtomValue(selectedResultNameAtom);
     const setSelectedResultName = useSetAtom(userSelectedResultNameAtom);
 
+    const selectedAccumulationOptions = useAtomValue(selectedAccumulationOptionsAtom);
+    const setSelectedAccumulationOptions = useSetAtom(userSelectedAccumulationOptionsAtom);
+
     function handleFilterChange(newFilter: InplaceVolumetricsFilter) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
@@ -53,9 +60,18 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         setSelectedIdentifiersValues(newFilter.identifiersValues);
     }
 
+    function handleAccumulationChange(newAccumulation: string[]) {
+        setSelectedAccumulationOptions(newAccumulation);
+    }
+
     const resultNameOptions = tableDefinitionsAccessor
         .getUniqueResultNames()
         .map((name) => ({ label: name, value: name }));
+
+    const accumulateOptions: TagOption<string>[] = [{ label: "Fluid zone", value: "fluidZone" }];
+    for (const identifier of tableDefinitionsAccessor.getUniqueIdentifierValues()) {
+        accumulateOptions.push({ label: identifier.identifier, value: identifier.identifier });
+    }
 
     return (
         <div className="flex flex-col gap-2">
@@ -66,19 +82,30 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                 isPending={tableDefinitionsQueryResult.isLoading}
                 availableFluidZones={tableDefinitionsAccessor.getUniqueFluidZones()}
                 availableTableNames={tableDefinitionsAccessor.getUniqueTableNames()}
-                availableIdentifiersWithValues={tableDefinitionsAccessor.getUniqueIndexFilterValues()}
+                availableIdentifiersWithValues={tableDefinitionsAccessor.getUniqueIdentifierValues()}
                 selectedEnsembleIdents={selectedEnsembleIdents}
                 selectedFluidZones={selectedFluidZones}
                 selectedIdentifiersValues={selectedIdentifiersValues}
                 selectedTableNames={selectedTableNames}
                 onChange={handleFilterChange}
             />
-            <CollapsibleGroup title="Result name" expanded>
-                <Dropdown
-                    value={selectedResultName ?? undefined}
-                    options={resultNameOptions}
-                    onChange={setSelectedResultName}
-                />
+            <CollapsibleGroup title="Result and grouping" expanded>
+                <div className="flex flex-col gap-2">
+                    <Label text="Result">
+                        <Dropdown
+                            value={selectedResultName ?? undefined}
+                            options={resultNameOptions}
+                            onChange={setSelectedResultName}
+                        />
+                    </Label>
+                    <Label text="Accumulate by">
+                        <TagPicker
+                            value={selectedAccumulationOptions}
+                            tags={accumulateOptions}
+                            onChange={handleAccumulationChange}
+                        />
+                    </Label>
+                </div>
             </CollapsibleGroup>
         </div>
     );

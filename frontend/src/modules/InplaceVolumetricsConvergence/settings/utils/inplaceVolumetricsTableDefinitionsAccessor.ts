@@ -39,7 +39,7 @@ export class InplaceVolumetricsTableDefinitionsAccessor {
     private _uniqueTableNames: string[];
     private _uniqueFluidZones: FluidZone_api[] = [];
     private _uniqueResults: InplaceVolumetricResultName_api[] = [];
-    private _uniqueIndexFilterValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
+    private _uniqueIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
 
     constructor(tableDefinitionsPerEnsembleIdent: TableDefinitionsForEnsembleIdent[], tableNamesFilter?: string[]) {
         this._tableDefinitions = tableDefinitionsPerEnsembleIdent.flatMap((data) => data.tableDefinitions);
@@ -107,7 +107,7 @@ export class InplaceVolumetricsTableDefinitionsAccessor {
 
         this._uniqueFluidZones = Array.from(fluidZones).sort();
         this._uniqueResults = Array.from(resultNames).sort();
-        this._uniqueIndexFilterValues = identifiersWithValues.sort();
+        this._uniqueIdentifierValues = identifiersWithValues.sort();
     }
 
     getUniqueTableNames(): string[] {
@@ -122,7 +122,7 @@ export class InplaceVolumetricsTableDefinitionsAccessor {
         return this._uniqueResults;
     }
 
-    getUniqueIndexFilterValues(): InplaceVolumetricsIdentifierWithValues_api[] {
-        return this._uniqueIndexFilterValues;
+    getUniqueIdentifierValues(): InplaceVolumetricsIdentifierWithValues_api[] {
+        return this._uniqueIdentifierValues;
     }
 }

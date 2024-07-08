@@ -11,8 +11,8 @@
  * - indices: List of indices, in unique_values list, for each row in the table
  */
 export type RepeatedTableColumnData = {
-    column_name: string;
-    unique_values: Array<(string | number)>;
+    columnName: string;
+    uniqueValues: Array<(string | number)>;
     indices: Array<number>;
 };
 

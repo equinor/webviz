@@ -6,7 +6,10 @@ import {
 } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { InplaceVolumetricsTableData } from "@modules/_shared/InplaceVolumetrics/types";
 import { UseQueryResult, useQueries } from "@tanstack/react-query";
+
+import { InplaceVolumetricsIdentifier } from "src/api/models/InplaceVolumetricsIdentifier";
 
 import { EnsembleIdentWithRealizations } from "../typesAndEnums";
 
@@ -14,11 +17,7 @@ const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
 export type AggregatedTableDataResults = {
-    tableData: {
-        ensembleIdent: EnsembleIdent;
-        tableName: string;
-        data?: InplaceVolumetricTableDataPerFluidSelection_api;
-    }[];
+    tablesData: InplaceVolumetricsTableData[];
     isFetching: boolean;
     someQueriesFailed: boolean;
     allQueriesFailed: boolean;
@@ -29,9 +28,10 @@ export function useGetAggregatedTableDataQueries(
     tableNames: string[],
     resultNames: InplaceVolumetricResultName_api[],
     fluidZones: FluidZone_api[],
+    accumulateByIdentifiers: InplaceVolumetricsIdentifier[],
     accumulateFluidZones: boolean,
     calculateMeanAcrossRealizations: boolean,
-    identifiers_with_values: InplaceVolumetricsIdentifierWithValues_api[]
+    identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[]
 ): AggregatedTableDataResults {
     const uniqueSources: { ensembleIdent: EnsembleIdent; realizations: readonly number[]; tableName: string }[] = [];
     for (const el of ensembleIdentsWithRealizations) {
@@ -47,10 +47,11 @@ export function useGetAggregatedTableDataQueries(
             source.tableName,
             JSON.stringify(source.realizations),
             JSON.stringify(fluidZones),
+            JSON.stringify(accumulateByIdentifiers),
             accumulateFluidZones,
             calculateMeanAcrossRealizations,
             JSON.stringify(resultNames),
-            JSON.stringify(identifiers_with_values),
+            JSON.stringify(identifiersWithValues),
         ],
         queryFn: () =>
             apiService.inplaceVolumetrics.postGetAggregatedTableData(
@@ -62,15 +63,15 @@ export function useGetAggregatedTableDataQueries(
                 accumulateFluidZones,
                 calculateMeanAcrossRealizations,
                 {
-                    accumulate_by_identifiers: identifiers_with_values.map((el) => el.identifier),
-                    identifiers_with_values,
+                    accumulate_by_identifiers: accumulateByIdentifiers,
+                    identifiers_with_values: identifiersWithValues,
                 },
                 [...source.realizations]
             ),
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: Boolean(
-            source.realizations.length && fluidZones.length && resultNames.length && identifiers_with_values.length
+            source.realizations.length && fluidZones.length && resultNames.length && identifiersWithValues.length
         ),
     }));
 
@@ -79,12 +80,19 @@ export function useGetAggregatedTableDataQueries(
         combine: (
             results: UseQueryResult<InplaceVolumetricTableDataPerFluidSelection_api, Error>[]
         ): AggregatedTableDataResults => {
+            const tablesData: InplaceVolumetricsTableData[] = [];
+            for (const [index, result] of results.entries()) {
+                if (result.data) {
+                    tablesData.push({
+                        ensembleIdent: uniqueSources[index].ensembleIdent,
+                        tableName: uniqueSources[index].tableName,
+                        data: result.data,
+                    });
+                }
+            }
+
             return {
-                tableData: results.map((result, index) => ({
-                    ensembleIdent: uniqueSources[index].ensembleIdent,
-                    tableName: uniqueSources[index].tableName,
-                    data: result.data,
-                })),
+                tablesData: tablesData,
                 isFetching: results.some((result) => result.isFetching),
                 someQueriesFailed: results.some((result) => result.isError),
                 allQueriesFailed: results.every((result) => result.isError),

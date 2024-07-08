@@ -8,7 +8,7 @@
  * Length of column values should be equal to the number of rows in the table
  */
 export type TableColumnData = {
-    column_name: string;
-    column_values: Array<number>;
+    columnName: string;
+    columnValues: Array<number>;
 };
 

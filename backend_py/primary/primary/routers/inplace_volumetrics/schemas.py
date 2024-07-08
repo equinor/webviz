@@ -101,8 +101,8 @@ class RepeatedTableColumnData(BaseModel):
     - indices: List of indices, in unique_values list, for each row in the table
     """
 
-    column_name: str
-    unique_values: List[str | int]
+    columnName: str
+    uniqueValues: List[str | int]
     indices: List[int]
 
 
@@ -113,8 +113,8 @@ class TableColumnData(BaseModel):
     Length of column values should be equal to the number of rows in the table
     """
 
-    column_name: str
-    column_values: List[float]
+    columnName: str
+    columnValues: List[float]
 
 
 class InplaceVolumetricTableData(BaseModel):
@@ -123,9 +123,9 @@ class InplaceVolumetricTableData(BaseModel):
     Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
     """
 
-    fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selector_columns: List[RepeatedTableColumnData]  # Index columns and realizations
-    result_columns: List[TableColumnData]
+    fluidSelectionName: str  # Oil, Gas, Water or "Oil + Gas", etc.
+    selectorColumns: List[RepeatedTableColumnData]  # Index columns and realizations
+    resultColumns: List[TableColumnData]
 
 
 class InplaceVolumetricTableDataPerFluidSelection(BaseModel):
@@ -134,4 +134,4 @@ class InplaceVolumetricTableDataPerFluidSelection(BaseModel):
     Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
     """
 
-    table_per_fluid_selection: List[InplaceVolumetricTableData]
+    tablePerFluidSelection: List[InplaceVolumetricTableData]

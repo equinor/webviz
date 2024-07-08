@@ -9,6 +9,6 @@ import type { InplaceVolumetricTableData } from './InplaceVolumetricTableData';
  * Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
  */
 export type InplaceVolumetricTableDataPerFluidSelection = {
-    table_per_fluid_selection: Array<InplaceVolumetricTableData>;
+    tablePerFluidSelection: Array<InplaceVolumetricTableData>;
 };
 

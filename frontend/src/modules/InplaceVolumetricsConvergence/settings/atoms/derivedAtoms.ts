@@ -5,6 +5,7 @@ import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { atom } from "jotai";
 
 import {
+    userSelectedAccumulationOptionsAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
     userSelectedIdentifiersValuesAtom,
@@ -94,11 +95,27 @@ export const selectedResultNameAtom = atom<InplaceVolumetricResultName_api | nul
     return fixedSelection[0];
 });
 
+export const selectedAccumulationOptionsAtom = atom<string[]>((get) => {
+    const userSelectedAccumulation = get(userSelectedAccumulationOptionsAtom);
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+
+    const availableUniqueAccumulationOptions: string[] = ["fluidZones"];
+    for (const identifier of tableDefinitionsAccessor.getUniqueIdentifierValues()) {
+        availableUniqueAccumulationOptions.push(identifier.identifier);
+    }
+
+    if (!userSelectedAccumulation) {
+        return [];
+    }
+
+    return fixupUserSelection(userSelectedAccumulation, availableUniqueAccumulationOptions);
+});
+
 export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWithValues_api[]>((get) => {
     const userSelectedIdentifierValues = get(userSelectedIdentifiersValuesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const uniqueIdentifierValues = tableDefinitionsAccessor.getUniqueIndexFilterValues();
+    const uniqueIdentifierValues = tableDefinitionsAccessor.getUniqueIdentifierValues();
     const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
 
     if (!userSelectedIdentifierValues) {

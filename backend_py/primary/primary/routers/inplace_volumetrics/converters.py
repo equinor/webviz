@@ -37,24 +37,24 @@ def convert_table_data_per_fluid_selection_to_schema(
     for table in table_per_fluid_selection.table_per_fluid_selection:
         selector_columns = [
             schemas.RepeatedTableColumnData(
-                column_name=column.column_name,
-                unique_values=column.unique_values,
+                columnName=column.column_name,
+                uniqueValues=column.unique_values,
                 indices=column.indices,
             )
             for column in table.selector_columns
         ]
 
         result_columns = [
-            schemas.TableColumnData(column_name=column.column_name, column_values=column.values)
+            schemas.TableColumnData(columnName=column.column_name, columnValues=column.values)
             for column in table.result_columns
         ]
 
         tables.append(
             schemas.InplaceVolumetricTableData(
-                fluid_selection_name=table.fluid_selection_name,
-                selector_columns=selector_columns,
-                result_columns=result_columns,
+                fluidSelectionName=table.fluid_selection_name,
+                selectorColumns=selector_columns,
+                resultColumns=result_columns,
             )
         )
 
-    return schemas.InplaceVolumetricTableDataPerFluidSelection(table_per_fluid_selection=tables)
+    return schemas.InplaceVolumetricTableDataPerFluidSelection(tablePerFluidSelection=tables)

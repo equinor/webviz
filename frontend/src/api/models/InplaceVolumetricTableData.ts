@@ -10,8 +10,8 @@ import type { TableColumnData } from './TableColumnData';
  * Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
  */
 export type InplaceVolumetricTableData = {
-    fluid_selection_name: string;
-    selector_columns: Array<RepeatedTableColumnData>;
-    result_columns: Array<TableColumnData>;
+    fluidSelectionName: string;
+    selectorColumns: Array<RepeatedTableColumnData>;
+    resultColumns: Array<TableColumnData>;
 };
 

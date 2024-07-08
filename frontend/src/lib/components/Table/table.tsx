@@ -14,7 +14,8 @@ export type TableHeading = {
         label: string;
         sortable?: boolean;
         sizeInPercent: number;
-        format?: (value: string | number) => string | number;
+        formatValue?: (value: string | number) => string;
+        formatStyle?: (value: string | number) => React.CSSProperties;
     };
 };
 
@@ -54,7 +55,7 @@ function filterData(
 ): IdentifiedTableRow<TableHeading>[] {
     return data.filter((series) => {
         for (const col in filterValues) {
-            const format = headings[col].format || ((value: string | number) => value);
+            const format = headings[col].formatValue || ((value: string | number) => value);
             if (
                 filterValues[col] !== "" &&
                 format(series.values[col]).toString().toLowerCase().indexOf(filterValues[col].toLowerCase()) === -1
@@ -157,17 +158,18 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         <BaseComponent disabled={props.disabled}>
             <div
                 ref={containerRef}
-                className="overflow-auto relative"
+                className="relative overflow-visible"
                 style={{ width: props.width, maxHeight: props.height }}
             >
                 <table className="w-full h-full border-0 border-separate border-spacing-0 text-sm">
-                    <thead className="border-0 m-0 p-0">
-                        <tr className="sticky p-0 border-0">
+                    <thead className="border-0 m-0 p-0 sticky">
+                        <tr className="p-0 border-0">
                             {Object.keys(props.headings).map((col) => (
                                 <th
                                     key={col}
-                                    className="bg-slate-100 p-0 pb-1 text-left sticky top-0 drop-shadow"
+                                    className="bg-slate-100 p-0 pb-1 text-left drop-shadow sticky top-0"
                                     style={{ width: `${props.headings[col].sizeInPercent}%` }}
+                                    scope="col"
                                 >
                                     <div className="px-1 flex items-center">
                                         <span className="flex-grow">{props.headings[col].label}</span>
@@ -245,9 +247,14 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                         style={{ height: 30 }}
                                     >
                                         {Object.keys(item.values).map((col) => {
-                                            const format = props.headings[col].format;
+                                            const format = props.headings[col].formatValue;
+                                            const formatStyle = props.headings[col].formatStyle;
                                             return (
-                                                <td key={`${item.id}-${col}`} className="border p-1">
+                                                <td
+                                                    key={`${item.id}-${col}`}
+                                                    className="border p-1"
+                                                    style={formatStyle ? formatStyle(item.values[col]) : undefined}
+                                                >
                                                     {format ? format(item.values[col]) : item.values[col]}
                                                 </td>
                                             );

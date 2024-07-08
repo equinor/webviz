@@ -2,7 +2,10 @@ import { InplaceVolumetricResultName_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 
+import { InplaceVolumetricsIdentifier } from "src/api/models/InplaceVolumetricsIdentifier";
+
 import {
+    selectedAccumulationOptionsAtom,
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
     selectedIdentifiersValuesAtom,
@@ -16,6 +19,7 @@ export type SettingsToViewInterface = {
         filter: InplaceVolumetricsFilter;
         resultName: InplaceVolumetricResultName_api | null;
         subplotBy: SubplotByInfo;
+        accumulationOptions: string[];
     };
 };
 
@@ -35,5 +39,6 @@ export const interfaceInitialization: InterfaceInitialization<SettingsToViewInte
                 subplotBy: SubplotBy.SOURCE,
             };
         },
+        accumulationOptions: (get) => get(selectedAccumulationOptionsAtom),
     },
 };
