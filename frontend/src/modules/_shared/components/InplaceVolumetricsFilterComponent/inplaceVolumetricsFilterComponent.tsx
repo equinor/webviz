@@ -140,15 +140,16 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     }
 
     function handleIdentifierValuesChange(
-        indexName: InplaceVolumetricsIdentifier_api,
+        identifier: InplaceVolumetricsIdentifier_api,
         values: (string | number)[]
     ): void {
         const newIdentifiersValues = cloneDeep(identifiersValues);
-        const identifierValues = newIdentifiersValues.find((filter) => filter.identifier === indexName);
+        const identifierValues = newIdentifiersValues.find((filter) => filter.identifier === identifier);
         if (!identifierValues) {
-            return;
+            newIdentifiersValues.push({ identifier: identifier, values });
+        } else {
+            identifierValues.values = values;
         }
-        identifierValues.values = values;
         setIdentifiersValues(newIdentifiersValues);
         const filter = { ensembleIdents, tableNames: tableNames, fluidZones, identifiersValues: newIdentifiersValues };
         props.onChange(filter);

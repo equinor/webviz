@@ -27,7 +27,11 @@ from ._conversion._conversion import (
     get_volume_names_from_raw_volumetric_column_names,
 )
 
-from ._utils import create_accumulated_result_table, create_volumetric_table_accumulated_across_fluid_zones, create_inplace_volumetric_table_data_from_result_table
+from ._utils import (
+    create_accumulated_result_table,
+    create_volumetric_table_accumulated_across_fluid_zones,
+    create_inplace_volumetric_table_data_from_result_table,
+)
 
 # Identifier column values to ignore, i.e. remove from the volumetric tables
 IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
@@ -78,7 +82,7 @@ class InplaceVolumetricsProvider:
         for table_result in tables:
             table_name, table = list(table_result.items())[0]
 
-            non_volume_columns = self._inplace_volumetrics_access.possible_selector_columns()
+            non_volume_columns = self._inplace_volumetrics_access.get_possible_selector_columns()
 
             # Get raw volume names
             raw_volumetric_column_names = [name for name in table.column_names if name not in non_volume_columns]
@@ -178,7 +182,7 @@ class InplaceVolumetricsProvider:
             fluid_zones, row_filtered_raw_table
         )
 
-        possible_selector_columns = self._inplace_volumetrics_access.possible_selector_columns()
+        possible_selector_columns = self._inplace_volumetrics_access.get_possible_selector_columns()
         valid_selector_columns = [
             col for col in possible_selector_columns if col in row_filtered_raw_table.column_names
         ]
@@ -186,8 +190,10 @@ class InplaceVolumetricsProvider:
         # TODO: SHOULD PROPERTIES BE CALCULATED AFTER ACCUMULATION OF FLUID ZONES if accumulate_fluid_zones is True?
         # i.e. sw = 1 - hcpv/porv. Must be calculated after summing hcpv and porv per fluid zone?
         # YES: Should have: sw = 1 - (hcpv_oil + hcpv_gas + hcpv_water) / (porv_oil + porv_gas + porv_water) etc
-        
-        response_table_per_fluid_selection: Dict[str, pa.Table] = {} # TODO: Replace str key to FluidZoneSelection or array of FluidZone?
+
+        response_table_per_fluid_selection: Dict[str, pa.Table] = (
+            {}
+        )  # TODO: Replace str key to FluidZoneSelection or array of FluidZone?
         if accumulate_fluid_zones:
             # Build response table - accumulated across fluid zones
             # - Sum each volume column across fluid zones
@@ -207,8 +213,12 @@ class InplaceVolumetricsProvider:
             )
 
             # Build response table (volumns and calculated properties)
-            available_volume_names = [name for name in volume_names if name in volumetric_table_accumulated_across_fluid_zones.column_names]
-            response_table = volumetric_table_accumulated_across_fluid_zones.select(valid_selector_columns + available_volume_names)
+            available_volume_names = [
+                name for name in volume_names if name in volumetric_table_accumulated_across_fluid_zones.column_names
+            ]
+            response_table = volumetric_table_accumulated_across_fluid_zones.select(
+                valid_selector_columns + available_volume_names
+            )
             for property_name, property_column in property_columns.items():
                 response_table = response_table.append_column(property_name, property_column)
             response_table_per_fluid_selection[fluid_selection_name] = response_table
@@ -232,7 +242,10 @@ class InplaceVolumetricsProvider:
         aggregated_response_table_per_fluid_selection: Dict[str, pa.Table] = {}
         for fluid_selection_name, response_table in response_table_per_fluid_selection.items():
             accumulated_result_table = create_accumulated_result_table(
-                response_table, valid_selector_columns, accumulate_by_identifiers, calculate_mean_across_realizations
+                response_table,
+                valid_selector_columns,
+                accumulate_by_identifiers,
+                calculate_mean_across_realizations,
             )
             aggregated_response_table_per_fluid_selection[fluid_selection_name] = accumulated_result_table
 
@@ -346,7 +359,7 @@ class InplaceVolumetricsProvider:
         """
         column_names: List[str] = volumetric_table.column_names
 
-        possible_selector_columns = self._inplace_volumetrics_access.possible_selector_columns()
+        possible_selector_columns = self._inplace_volumetrics_access.get_possible_selector_columns()
         selector_columns = [col for col in possible_selector_columns if col in column_names]
 
         fluid_zone_to_table_map: Dict[FluidZone, pa.Table] = {}

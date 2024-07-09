@@ -1,15 +1,19 @@
+import React from "react";
+
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { Switch } from "@lib/components/Switch";
 import { TagOption, TagPicker } from "@lib/components/TagPicker";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
+    calcMeanAcrossAllRealizationsAtom,
     userSelectedAccumulationOptionsAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
@@ -53,6 +57,10 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     const selectedAccumulationOptions = useAtomValue(selectedAccumulationOptionsAtom);
     const setSelectedAccumulationOptions = useSetAtom(userSelectedAccumulationOptionsAtom);
 
+    const [calcMeanAcrossAllRealizations, setCalcMeanAcrossAllRealizations] = useAtom(
+        calcMeanAcrossAllRealizationsAtom
+    );
+
     function handleFilterChange(newFilter: InplaceVolumetricsFilter) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
@@ -60,8 +68,12 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         setSelectedIdentifiersValues(newFilter.identifiersValues);
     }
 
-    function handleAccumulationChange(newAccumulation: string[]) {
-        setSelectedAccumulationOptions(newAccumulation);
+    function handleAccumulationOptionsChange(newAccumulationOptions: string[]) {
+        setSelectedAccumulationOptions(newAccumulationOptions);
+    }
+
+    function handleCalcMeanAcrossAllRealizationsToggle(e: React.ChangeEvent<HTMLInputElement>) {
+        setCalcMeanAcrossAllRealizations(e.target.checked);
     }
 
     const resultNameOptions = tableDefinitionsAccessor
@@ -75,6 +87,30 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
 
     return (
         <div className="flex flex-col gap-2">
+            <CollapsibleGroup title="Result and grouping" expanded>
+                <div className="flex flex-col gap-2">
+                    <Label text="Result">
+                        <Dropdown
+                            value={selectedResultName ?? undefined}
+                            options={resultNameOptions}
+                            onChange={setSelectedResultName}
+                        />
+                    </Label>
+                    <Label text="Group by">
+                        <TagPicker
+                            value={selectedAccumulationOptions}
+                            tags={accumulateOptions}
+                            onChange={handleAccumulationOptionsChange}
+                        />
+                    </Label>
+                    <Label text="Calculate mean across all realizations">
+                        <Switch
+                            checked={calcMeanAcrossAllRealizations}
+                            onChange={handleCalcMeanAcrossAllRealizationsToggle}
+                        />
+                    </Label>
+                </div>
+            </CollapsibleGroup>
             <InplaceVolumetricsFilterComponent
                 ensembleSet={ensembleSet}
                 settingsContext={props.settingsContext}
@@ -89,24 +125,6 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                 selectedTableNames={selectedTableNames}
                 onChange={handleFilterChange}
             />
-            <CollapsibleGroup title="Result and grouping" expanded>
-                <div className="flex flex-col gap-2">
-                    <Label text="Result">
-                        <Dropdown
-                            value={selectedResultName ?? undefined}
-                            options={resultNameOptions}
-                            onChange={setSelectedResultName}
-                        />
-                    </Label>
-                    <Label text="Accumulate by">
-                        <TagPicker
-                            value={selectedAccumulationOptions}
-                            tags={accumulateOptions}
-                            onChange={handleAccumulationChange}
-                        />
-                    </Label>
-                </div>
-            </CollapsibleGroup>
         </div>
     );
 }

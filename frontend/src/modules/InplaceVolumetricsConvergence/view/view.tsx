@@ -2,7 +2,10 @@ import { FluidZone_api, InplaceVolumetricsIdentifier_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleViewProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { Table } from "@lib/components/Table";
 import { TableHeading, TableRow } from "@lib/components/Table/table";
 import {
@@ -11,6 +14,7 @@ import {
     InplaceVolumetricsTablesDataAccessor,
 } from "@modules/_shared/InplaceVolumetrics/InplaceVolumetricsDataAccessor";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useGetAggregatedTableDataQueries } from "./queryHooks";
 
@@ -19,11 +23,15 @@ import { EnsembleIdentWithRealizations } from "../typesAndEnums";
 
 export function View(props: ModuleViewProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleRealizationFilter = useEnsembleRealizationFilterFunc(props.workbenchSession);
 
     const filter = props.viewContext.useSettingsToViewInterfaceValue("filter");
     const resultName = props.viewContext.useSettingsToViewInterfaceValue("resultName");
     const accumulationOptions = props.viewContext.useSettingsToViewInterfaceValue("accumulationOptions");
+    const calcMeanAcrossAllRealizations = props.viewContext.useSettingsToViewInterfaceValue(
+        "calcMeanAcrossAllRealizations"
+    );
 
     const ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[] = [];
     for (const ensembleIdent of filter.ensembleIdents) {
@@ -40,12 +48,28 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         filter.fluidZones,
         accumulationOptions.filter((el) => el !== "fluidZones") as InplaceVolumetricsIdentifier_api[],
         accumulationOptions.includes("fluidZones"),
-        true,
+        calcMeanAcrossAllRealizations,
         filter.identifiersValues
     );
 
+    statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
+
+    if (aggregatedTableDataQueries.someQueriesFailed) {
+        for (const error of aggregatedTableDataQueries.errors) {
+            const helper = ApiErrorHelper.fromError(error);
+            if (helper) {
+                statusWriter.addError(helper.makeStatusMessage());
+            }
+        }
+    }
+
     if (aggregatedTableDataQueries.isFetching) {
-        return <div>Loading...</div>;
+        statusWriter.setLoading(true);
+        return (
+            <div className="w-full h-full flex items-center justify-center">
+                <CircularProgress size="medium" />{" "}
+            </div>
+        );
     }
 
     if (aggregatedTableDataQueries.allQueriesFailed) {
@@ -65,45 +89,6 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         };
     }
 
-    /*
-    const headings: TableHeading = {
-        ensemble: {
-            label: "Ensemble",
-            sizeInPercent: 10,
-            formatValue: (value: string | number) => {
-                const ensemble = ensembleSet.findEnsembleByIdentString(value.toString());
-                if (ensemble) {
-                    return makeDistinguishableEnsembleDisplayName(
-                        EnsembleIdent.fromString(value.toString()),
-                        ensembleSet.getEnsembleArr()
-                    );
-                }
-                return value.toString();
-            },
-        },
-        table: {
-            label: "Table",
-            sizeInPercent: 10,
-        },
-        region: {
-            label: "Region",
-            sizeInPercent: 10,
-        },
-        zone: {
-            label: "Zone",
-            sizeInPercent: 10,
-        },
-        [resultName?.toString().toLocaleLowerCase() || ""]: {
-            label: resultName?.toString() || "",
-            sizeInPercent: 10,
-        },
-        fluidZone: {
-            label: "Fluid Zone",
-            sizeInPercent: 50,
-        },
-    };
-    */
-
     const tableRows: TableRow<any>[] = [];
 
     for (const subTable of tablesDataAccesor.getTables()) {
@@ -111,34 +96,6 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
             tableRows.push(row);
         }
     }
-    /*
-
-    if (!aggregatedTableDataQueries.isFetching && !aggregatedTableDataQueries.allQueriesFailed) {
-        for (const [index, table] of aggregatedTableDataQueries.tableData.entries()) {
-            if (index === 0 && table.data) {
-                for (const fluidZoneTable of table.data.tablePerFluidSelection) {
-                    for (const [iColumn, column] of fluidZoneTable.selectorColumns.entries()) {
-                        for (const [i, indexValue] of column.indices.entries()) {
-                            if (iColumn === 0) {
-                                tableRows.push({
-                                    ensemble: table.ensembleIdent.toString(),
-                                    table: table.tableName,
-                                    fluidZone: fluidZoneTable.fluidSelectionName,
-                                });
-                            }
-                            const value = column.uniqueValues[indexValue];
-                            tableRows[i][column.columnName.toLowerCase()] = value;
-                        }
-                    }
-                    const resultName = fluidZoneTable.resultColumns[0].columnName;
-                    for (const [i, value] of fluidZoneTable.resultColumns[0].columnValues.entries()) {
-                        tableRows[i][resultName.toLowerCase()] = value;
-                    }
-                }
-            }
-        }
-    }
-    */
 
     return <Table headings={headings} data={tableRows} />;
 }
@@ -193,6 +150,12 @@ function formatEnsembleIdent(value: string | number, ensembleSet: EnsembleSet): 
 }
 
 function formatResultValue(value: string | number): string {
+    // If properties cannot be calculated,
+    // e.g. due to a 0 denominator, the value returned from backend will be null
+    if (value === null) {
+        return "-";
+    }
+
     if (typeof value === "string") {
         return value;
     }

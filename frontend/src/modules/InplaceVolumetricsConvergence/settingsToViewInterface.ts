@@ -2,8 +2,7 @@ import { InplaceVolumetricResultName_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 
-import { InplaceVolumetricsIdentifier } from "src/api/models/InplaceVolumetricsIdentifier";
-
+import { calcMeanAcrossAllRealizationsAtom } from "./settings/atoms/baseAtoms";
 import {
     selectedAccumulationOptionsAtom,
     selectedEnsembleIdentsAtom,
@@ -20,6 +19,7 @@ export type SettingsToViewInterface = {
         resultName: InplaceVolumetricResultName_api | null;
         subplotBy: SubplotByInfo;
         accumulationOptions: string[];
+        calcMeanAcrossAllRealizations: boolean;
     };
 };
 
@@ -40,5 +40,6 @@ export const interfaceInitialization: InterfaceInitialization<SettingsToViewInte
             };
         },
         accumulationOptions: (get) => get(selectedAccumulationOptionsAtom),
+        calcMeanAcrossAllRealizations: (get) => get(calcMeanAcrossAllRealizationsAtom),
     },
 };

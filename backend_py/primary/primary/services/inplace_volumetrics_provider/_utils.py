@@ -82,7 +82,9 @@ def create_inplace_volumetric_table_data_from_result_table(
     present_result_column_names = [name for name in result_table.column_names if name not in present_selector_columns]
     result_column_data_list: List[TableColumnData] = []
     for column_name in present_result_column_names:
-        result_column_data_list.append(TableColumnData(column_name=column_name, values=result_table[column_name].to_numpy()))
+        result_column_data_list.append(
+            TableColumnData(column_name=column_name, values=result_table[column_name].to_numpy())
+        )
 
     return InplaceVolumetricTableData(
         fluid_selection_name=selection_name,
@@ -92,9 +94,8 @@ def create_inplace_volumetric_table_data_from_result_table(
 
 
 def create_volumetric_table_accumulated_across_fluid_zones(
-        volumetric_table_per_fluid_zone: Dict[FluidZone, pa.Table],
-        selector_columns: List[str]
-)-> pa.Table:
+    volumetric_table_per_fluid_zone: Dict[FluidZone, pa.Table], selector_columns: List[str]
+) -> pa.Table:
     """
     Create a table that is the sum of all tables in table_per_fluid_zone
 
@@ -107,11 +108,10 @@ def create_volumetric_table_accumulated_across_fluid_zones(
     all_column_names = set()
     for response_table in volumetric_table_per_fluid_zone.values():
         all_column_names.update(response_table.column_names)
-    
+
     selector_columns = set(selector_columns)
     remaining_column_names = all_column_names - set(selector_columns)
 
-    
     first_table = next(iter(volumetric_table_per_fluid_zone.values()))
     accumulated_table = first_table.select(selector_columns)
     zero_array = pa.array([0.0] * accumulated_table.num_rows, type=pa.float64())
@@ -121,6 +121,5 @@ def create_volumetric_table_accumulated_across_fluid_zones(
             if column_name in response_table.column_names:
                 accumulated_column_array = pc.add(accumulated_column_array, response_table[column_name])
         accumulated_table = accumulated_table.append_column(column_name, accumulated_column_array)
-    
-    return accumulated_table
 
+    return accumulated_table

@@ -108,15 +108,15 @@ export class InplaceVolumetricDataTable {
         if (!this._meanAcrossRealizations) {
             row["REAL"] = this._data.selectorColumns[this._realColumnIndex].uniqueValues[rowIndex];
         }
-        for (let i = 0; i < this._identifierColumns.length; i++) {
-            const columnName = this._identifierColumns[i];
+        for (let i = 0; i < this._data.selectorColumns.length; i++) {
             const column = this._data.selectorColumns[i];
+            const columnName = column.columnName;
             const indexValue = column.indices[rowIndex];
             row[columnName] = column.uniqueValues[indexValue];
         }
-        for (let i = 0; i < this._resultColumns.length; i++) {
-            const columnName = this._resultColumns[i];
+        for (let i = 0; i < this._data.resultColumns.length; i++) {
             const column = this._data.resultColumns[i];
+            const columnName = column.columnName;
             row[columnName] = column.columnValues[rowIndex];
         }
         return row;

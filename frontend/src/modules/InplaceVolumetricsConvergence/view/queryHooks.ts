@@ -21,6 +21,7 @@ export type AggregatedTableDataResults = {
     isFetching: boolean;
     someQueriesFailed: boolean;
     allQueriesFailed: boolean;
+    errors: Error[];
 };
 
 export function useGetAggregatedTableDataQueries(
@@ -81,6 +82,7 @@ export function useGetAggregatedTableDataQueries(
             results: UseQueryResult<InplaceVolumetricTableDataPerFluidSelection_api, Error>[]
         ): AggregatedTableDataResults => {
             const tablesData: InplaceVolumetricsTableData[] = [];
+            const errors: Error[] = [];
             for (const [index, result] of results.entries()) {
                 if (result.data) {
                     tablesData.push({
@@ -89,6 +91,9 @@ export function useGetAggregatedTableDataQueries(
                         data: result.data,
                     });
                 }
+                if (result.error) {
+                    errors.push(result.error);
+                }
             }
 
             return {
@@ -96,6 +101,7 @@ export function useGetAggregatedTableDataQueries(
                 isFetching: results.some((result) => result.isFetching),
                 someQueriesFailed: results.some((result) => result.isError),
                 allQueriesFailed: results.every((result) => result.isError),
+                errors: errors,
             };
         },
     });

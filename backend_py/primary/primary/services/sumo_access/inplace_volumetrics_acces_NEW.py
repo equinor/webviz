@@ -39,7 +39,7 @@ class InplaceVolumetricsAccess:
     def get_expected_identifier_columns(self) -> List[str]:
         return self._expected_identifier_columns
 
-    def possible_selector_columns(self) -> List[str]:
+    def get_possible_selector_columns(self) -> List[str]:
         """
         The identifier columns and REAL column represent the selector columns of the volumetric table.
         """
@@ -111,7 +111,7 @@ class InplaceVolumetricsAccess:
 
         # Expected columns
         # - "REAL" is not an index in metadata, but is an expected column in the tables from collection
-        expected_repeated_collection_columns = set(self.possible_selector_columns())
+        expected_repeated_collection_columns = set(self.get_possible_selector_columns())
 
         # Find column names not among collection columns
         collection_columns = await vol_table_collection.columns_async
@@ -177,7 +177,7 @@ class InplaceVolumetricsAccess:
             )
 
         # Expected selector columns
-        possible_selector_columns = set(self.possible_selector_columns())
+        possible_selector_columns = set(self.get_possible_selector_columns())
         expected_selector_columns = possible_selector_columns.intersection(vol_table_columns)
 
         # Initialize volumetric table
