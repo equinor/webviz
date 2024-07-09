@@ -1,4 +1,4 @@
-import React, { Key } from "react";
+import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
