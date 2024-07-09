@@ -17,18 +17,18 @@ export class WellService {
     /**
      * Get Drilled Wellbore Headers
      * Get wellbore headers for all wells in the field
-     * @param caseUuid Sumo case uuid
+     * @param fieldIdentifier Sumo field identifier
      * @returns WellboreHeader Successful Response
      * @throws ApiError
      */
     public getDrilledWellboreHeaders(
-        caseUuid: string,
+        fieldIdentifier: string,
     ): CancelablePromise<Array<WellboreHeader>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/well/drilled_wellbore_headers/',
             query: {
-                'case_uuid': caseUuid,
+                'field_identifier': fieldIdentifier,
             },
             errors: {
                 422: `Validation Error`,
@@ -38,20 +38,20 @@ export class WellService {
     /**
      * Get Field Well Trajectories
      * Get well trajectories for field
-     * @param caseUuid Sumo case uuid
+     * @param fieldIdentifier Sumo field identifier
      * @param uniqueWellboreIdentifiers Optional subset of well names
      * @returns WellboreTrajectory Successful Response
      * @throws ApiError
      */
     public getFieldWellTrajectories(
-        caseUuid: string,
+        fieldIdentifier: string,
         uniqueWellboreIdentifiers?: Array<string>,
     ): CancelablePromise<Array<WellboreTrajectory>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/well/field_well_trajectories/',
             query: {
-                'case_uuid': caseUuid,
+                'field_identifier': fieldIdentifier,
                 'unique_wellbore_identifiers': uniqueWellboreIdentifiers,
             },
             errors: {

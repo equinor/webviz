@@ -11,6 +11,7 @@ import { Intersection, IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
 import { NorthArrow3DLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -93,11 +94,13 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         userSelectedCustomIntersectionPolylineIdAtom
     );
 
-    const fieldWellboreTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(ensembleIdent?.getCaseUuid() ?? undefined);
+    const fieldIdentifier = ensembleIdent
+        ? ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null
+        : null;
+    const fieldWellboreTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(fieldIdentifier ?? undefined);
 
-    if (fieldWellboreTrajectoriesQuery.isError) {
-        statusWriter.addError(fieldWellboreTrajectoriesQuery.error.message);
-    }
+    usePropagateApiErrorToStatusWriter(fieldWellboreTrajectoriesQuery, statusWriter);
+
     const displayedWellboreUuid = [...wellboreUuids];
     if (highlightedWellboreUuid && !displayedWellboreUuid.includes(highlightedWellboreUuid)) {
         displayedWellboreUuid.push(highlightedWellboreUuid);
@@ -173,15 +176,9 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         polylineUtmXy,
         showIntersection
     );
-    if (polylineIntersectionQuery.isError) {
-        statusWriter.addError(polylineIntersectionQuery.error.message);
-    }
 
     // Wellbore casing query
     const wellboreCasingQuery = useWellboreCasingsQuery(highlightedWellboreUuid ?? undefined);
-    if (wellboreCasingQuery.isError) {
-        statusWriter.addError(wellboreCasingQuery.error.message);
-    }
 
     // Grid surface query
     const gridSurfaceQuery = useGridSurfaceQuery(
@@ -196,9 +193,6 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         gridCellIndexRanges.k[0],
         gridCellIndexRanges.k[1]
     );
-    if (gridSurfaceQuery.isError) {
-        statusWriter.addError(gridSurfaceQuery.error.message);
-    }
 
     // Grid parameter query
     const gridParameterQuery = useGridParameterQuery(
@@ -215,9 +209,11 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
         gridCellIndexRanges.k[0],
         gridCellIndexRanges.k[1]
     );
-    if (gridParameterQuery.isError) {
-        statusWriter.addError(gridParameterQuery.error.message);
-    }
+
+    usePropagateApiErrorToStatusWriter(polylineIntersectionQuery, statusWriter);
+    usePropagateApiErrorToStatusWriter(wellboreCasingQuery, statusWriter);
+    usePropagateApiErrorToStatusWriter(gridSurfaceQuery, statusWriter);
+    usePropagateApiErrorToStatusWriter(gridParameterQuery, statusWriter);
 
     // Set loading status
     statusWriter.setLoading(

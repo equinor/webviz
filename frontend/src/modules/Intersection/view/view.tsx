@@ -7,17 +7,19 @@ import { IntersectionType } from "@framework/types/intersection";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { useAtomValue } from "jotai";
-
 import { ViewAtoms } from "./atoms/atomDefinitions";
-import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { LayersWrapper } from "./components/layersWrapper";
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { selectedWellboreAtom } from "../sharedAtoms/sharedAtoms";
 import { State } from "../state";
 import { LayerStatus, useLayersStatuses } from "../utils/layers/BaseLayer";
+import { isGridLayer } from "../utils/layers/GridLayer";
+import { LayerManagerTopic, useLayerManagerTopicValue } from "../utils/layers/LayerManager";
+import { isSeismicLayer } from "../utils/layers/SeismicLayer";
+import { isSurfaceLayer } from "../utils/layers/SurfaceLayer";
+import { isSurfacesUncertaintyLayer } from "../utils/layers/SurfacesUncertaintyLayer";
+import { isWellpicksLayer } from "../utils/layers/WellpicksLayer";
 
 export function View(
     props: ModuleViewProps<State, SettingsToViewInterface, Record<string, never>, ViewAtoms>
@@ -27,15 +29,58 @@ export function View(
 
     const ensembleIdent = props.viewContext.useSettingsToViewInterfaceValue("ensembleIdent");
     const intersectionReferenceSystem = props.viewContext.useViewAtomValue("intersectionReferenceSystemAtom");
-    const wellboreHeader = useAtomValue(selectedWellboreAtom);
-    const wellboreTrajectoryQuery = useAtomValue(wellboreTrajectoryQueryAtom);
+    const wellboreHeader = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
+    const wellboreTrajectoryQuery = props.viewContext.useViewAtomValue("wellboreTrajectoryQueryAtom");
+    const polyline = props.viewContext.useViewAtomValue("polylineAtom");
+    const extensionLength = props.viewContext.useSettingsToViewInterfaceValue("intersectionExtensionLength");
+    const wellbore = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
 
-    const layers = props.viewContext.useViewAtomValue("layers");
+    const layerManager = props.viewContext.useSettingsToViewInterfaceValue("layerManager");
+    const layers = useLayerManagerTopicValue(layerManager, LayerManagerTopic.LAYERS_CHANGED);
     const layersStatuses = useLayersStatuses(layers);
 
     const intersectionExtensionLength =
         props.viewContext.useSettingsToViewInterfaceValue("intersectionExtensionLength");
     const intersectionType = props.viewContext.useSettingsToViewInterfaceValue("intersectionType");
+
+    React.useEffect(
+        function handleLayerSettingsChange() {
+            for (const layer of layers) {
+                if (isGridLayer(layer)) {
+                    layer.maybeUpdateSettings({ polyline, extensionLength });
+                    layer.maybeRefetchData();
+                }
+                if (isSeismicLayer(layer)) {
+                    layer.maybeUpdateSettings({ polyline, extensionLength });
+                    layer.maybeRefetchData();
+                }
+                if (isSurfaceLayer(layer)) {
+                    layer.maybeUpdateSettings({ polyline, extensionLength });
+                    layer.maybeRefetchData();
+                }
+                if (isSurfacesUncertaintyLayer(layer)) {
+                    layer.maybeUpdateSettings({ polyline, extensionLength });
+                    layer.maybeRefetchData();
+                }
+            }
+        },
+        [polyline, extensionLength, layers]
+    );
+
+    React.useEffect(
+        function handleWellpicksLayerSettingsChange() {
+            for (const layer of layers) {
+                if (isWellpicksLayer(layer)) {
+                    layer.maybeUpdateSettings({
+                        ensembleIdent,
+                        wellboreUuid: intersectionType === IntersectionType.WELLBORE ? wellbore?.uuid : null,
+                    });
+                    layer.maybeRefetchData();
+                }
+            }
+        },
+        [layers, wellbore, ensembleIdent, intersectionType]
+    );
 
     React.useEffect(
         function handleTitleChange() {
@@ -54,12 +99,10 @@ export function View(
     );
 
     // Status messages
-    for (const status of layersStatuses) {
-        if (status.status === LayerStatus.ERROR) {
+    for (const layer of layers) {
+        if (layer.getStatus() === LayerStatus.ERROR) {
             statusWriter.addError(
-                `Layer "${layers
-                    .find((el) => el.getId() === status.id)
-                    ?.getName()}" encountered an error while loading its data.`
+                layer.getError() ?? `Layer "${layer.getName()}": ${layer.getError() ?? "Unknown error"}`
             );
         }
     }

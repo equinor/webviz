@@ -1,6 +1,7 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import {
     IncludeExcludeFilter,
     IncludeExcludeFilterEnumToStringMapping,
@@ -26,11 +27,13 @@ import {
     makeRealizationPickerTagsFromRealizationIndexSelections,
 } from "./utils/dataTypeConversion";
 
-import { Drawer } from "../Drawer";
+import { Drawer } from "../../../Drawer";
 
 type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
+
     const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
     const [candidateEnsembleIdent, setCandidateEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
@@ -139,7 +142,12 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     }
 
     return (
-        <Drawer title="Realization Filter" icon={<FilterIcon />} visible={true} onClose={handleFilterSettingsClose}>
+        <Drawer
+            title="Realization Filter"
+            icon={<FilterIcon />}
+            visible={drawerContent === RightDrawerContent.RealizationFilterSettings}
+            onClose={handleFilterSettingsClose}
+        >
             <div className="flex flex-col p-2 gap-4 overflow-y-auto">
                 <Label text="Ensemble">
                     <Dropdown

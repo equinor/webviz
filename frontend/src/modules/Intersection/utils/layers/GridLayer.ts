@@ -36,7 +36,7 @@ export class GridLayer extends BaseLayer<GridLayerSettings, AdjustedPolylineInte
     private _useCustomColorScaleBoundariesParameterMap = new Map<string, boolean>();
     private _defaultColorScale: ColorScale;
 
-    constructor(name: string, queryClient: QueryClient) {
+    constructor(name: string) {
         const defaultSettings = {
             ensembleIdent: null,
             gridModelName: null,
@@ -50,7 +50,7 @@ export class GridLayer extends BaseLayer<GridLayerSettings, AdjustedPolylineInte
             showMesh: false,
             extensionLength: null,
         };
-        super(name, defaultSettings, queryClient);
+        super(name, defaultSettings);
 
         this._defaultColorScale = new ColorScale({
             colorPalette: defaultContinuousSequentialColorPalettes[0],
@@ -151,13 +151,13 @@ export class GridLayer extends BaseLayer<GridLayerSettings, AdjustedPolylineInte
         );
     }
 
-    protected async fetchData(): Promise<AdjustedPolylineIntersection> {
+    protected async fetchData(queryClient: QueryClient): Promise<AdjustedPolylineIntersection> {
         super.setBoundingBox(null);
 
         const queryKey = ["getGridPolylineIntersection", ...Object.entries(this._settings)];
         this.registerQueryKey(queryKey);
 
-        return this._queryClient
+        return queryClient
             .fetchQuery({
                 queryKey,
                 queryFn: () =>

@@ -31,7 +31,7 @@ async def table_data(
     )
 
     # Get all table schemas for a given realization and find the pvt table
-    table_schemas = await access.get_table_schemas_single_realization(realization=realization)
+    table_schemas = await access.get_table_schemas_single_realization_async(realization=realization)
 
     table_schema = None
     for schema in table_schemas:
@@ -41,7 +41,7 @@ async def table_data(
     if table_schema is None:
         raise HTTPException(status_code=404, detail="PVT table not found")
 
-    sumo_table_data = await access.get_realization_table(table_schema, realization=realization)
+    sumo_table_data = await access.get_realization_table_async(table_schema, realization=realization)
 
     pvt_data = pvt_dataframe_to_api_data(sumo_table_data.to_pandas())
 
@@ -64,7 +64,7 @@ async def realizations_tables_are_equal(
     )
 
     # Get all table schemas for a given realization and find the pvt table
-    table_schemas = await access.get_table_schemas_single_realization(realization=0)
+    table_schemas = await access.get_table_schemas_single_realization_async(realization=0)
     for schema in table_schemas:
         if schema.tagname == "pvt":
             # Check if all realizations of this table are equal

@@ -1,4 +1,6 @@
+import { WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { apiService } from "@framework/ApiService";
 import { ModuleAtoms } from "@framework/Module";
 import { UniDirectionalSettingsToViewInterface } from "@framework/UniDirectionalSettingsToViewInterface";
 import { IntersectionType } from "@framework/types/intersection";
@@ -6,24 +8,22 @@ import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/Intersect
 import { arrayPointToPoint2D, pointDistance } from "@lib/utils/geometry";
 import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
 import { CURVE_FITTING_EPSILON } from "@modules/Intersection/typesAndEnums";
-import { BaseLayer } from "@modules/Intersection/utils/layers/BaseLayer";
-import { isGridLayer } from "@modules/Intersection/utils/layers/GridLayer";
-import { isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer";
-import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer";
-import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
+import { QueryObserverResult } from "@tanstack/react-query";
 
 import { atom } from "jotai";
+import { atomWithQuery } from "jotai-tanstack-query";
 
-import { wellboreTrajectoryQueryAtom } from "./queryAtoms";
+const STALE_TIME = 60 * 1000;
+const CACHE_TIME = 60 * 1000;
 
 export type ViewAtoms = {
-    layers: BaseLayer<any, any>[];
     intersectionReferenceSystemAtom: IntersectionReferenceSystem | null;
     polylineAtom: {
         polylineUtmXy: number[];
         actualSectionLengths: number[];
     };
+    wellboreTrajectoryQueryAtom: QueryObserverResult<WellboreTrajectory_api, Error>;
 };
 
 export function viewAtomsInitialization(
@@ -118,39 +118,22 @@ export function viewAtomsInitialization(
         };
     });
 
-    const layers = atom((get) => {
-        const layers = get(settingsToViewInterface.getAtom("layers"));
-        const ensembleIdent = get(settingsToViewInterface.getAtom("ensembleIdent"));
+    const wellboreTrajectoryQueryAtom = atomWithQuery((get) => {
         const wellbore = get(settingsToViewInterface.getAtom("wellboreHeader"));
-        const polyline = get(polylineAtom);
-        const extensionLength = get(settingsToViewInterface.getAtom("intersectionExtensionLength"));
-        const intersectionType = get(settingsToViewInterface.getAtom("intersectionType"));
 
-        for (const layer of layers) {
-            if (isGridLayer(layer)) {
-                layer.maybeUpdateSettings({ polyline, extensionLength });
-            }
-            if (isSeismicLayer(layer)) {
-                layer.maybeUpdateSettings({ polylineUtmXy: polyline.polylineUtmXy, extensionLength });
-            }
-            if (isSurfaceLayer(layer)) {
-                layer.maybeUpdateSettings({ polylineUtmXy: polyline.polylineUtmXy, extensionLength });
-            }
-            if (isWellpicksLayer(layer)) {
-                layer.maybeUpdateSettings({
-                    ensembleIdent,
-                    wellboreUuid: intersectionType === IntersectionType.WELLBORE ? wellbore?.uuid : null,
-                });
-            }
-            layer.maybeRefetchData();
-        }
-
-        return layers;
+        return {
+            queryKey: ["getWellboreTrajectory", wellbore?.uuid ?? ""],
+            queryFn: () => apiService.well.getWellTrajectories(wellbore?.uuid ? [wellbore.uuid] : []),
+            staleTime: STALE_TIME,
+            gcTime: CACHE_TIME,
+            select: (data: WellboreTrajectory_api[]) => data[0],
+            enabled: wellbore?.uuid ? true : false,
+        };
     });
 
     return {
-        layers,
         intersectionReferenceSystemAtom,
         polylineAtom,
+        wellboreTrajectoryQueryAtom,
     };
 }

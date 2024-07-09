@@ -5,6 +5,7 @@ import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { Intersection, IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -14,14 +15,22 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
-import { userSelectedCustomIntersectionPolylineIdAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
+import {
+    userSelectedCustomIntersectionPolylineIdAtom,
+    userSelectedFieldIdentifierAtom,
+    userSelectedWellboreUuidAtom,
+} from "./atoms/baseAtoms";
 import {
     availableUserCreatedIntersectionPolylinesAtom,
+    filteredEnsembleSetAtom,
+    layerManagerAtom,
     selectedCustomIntersectionPolylineIdAtom,
+    selectedFieldIdentifierAtom,
     selectedWellboreAtom,
 } from "./atoms/derivedAtoms";
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
@@ -35,7 +44,13 @@ export function Settings(
     props: ModuleSettingsProps<State, SettingsToViewInterface, Record<string, never>, ViewAtoms>
 ): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const filteredEnsembleSet = useAtomValue(filteredEnsembleSetAtom);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
+
+    const layerManager = useAtomValue(layerManagerAtom);
+
+    const selectedField = useAtomValue(selectedFieldIdentifierAtom);
+    const setSelectedField = useSetAtom(userSelectedFieldIdentifierAtom);
 
     const [intersectionExtensionLength, setIntersectionExtensionLength] =
         props.settingsContext.useSettingsToViewInterfaceState("intersectionExtensionLength");
@@ -72,10 +87,10 @@ export function Settings(
         }
     }
 
-    let wellHeadersErrorMessage = "";
-    if (wellHeaders.isError) {
-        statusWriter.addError("Failed to load well headers");
-        wellHeadersErrorMessage = "Failed to load well headers";
+    const wellHeadersErrorMessage = usePropagateApiErrorToStatusWriter(wellHeaders, statusWriter) ?? "";
+
+    function handleFieldIdentifierChange(fieldIdentifier: string | null) {
+        setSelectedField(fieldIdentifier);
     }
 
     function handleWellHeaderSelectionChange(wellHeader: string[]) {
@@ -117,6 +132,13 @@ export function Settings(
         <div className="h-full flex flex-col gap-1">
             <CollapsibleGroup title="Intersection" expanded>
                 <div className="flex flex-col gap-4 text-sm mb-4">
+                    <Label text="Field">
+                        <FieldDropdown
+                            ensembleSet={ensembleSet}
+                            value={selectedField}
+                            onChange={handleFieldIdentifierChange}
+                        />
+                    </Label>
                     <RadioGroup
                         options={[
                             { label: "Wellbore", value: IntersectionType.WELLBORE },
@@ -172,9 +194,10 @@ export function Settings(
             </CollapsibleGroup>
             <div className="flex-grow flex flex-col min-h-0">
                 <Layers
-                    ensembleSet={ensembleSet}
+                    ensembleSet={filteredEnsembleSet}
                     workbenchSession={props.workbenchSession}
                     workbenchSettings={props.workbenchSettings}
+                    layerManager={layerManager}
                 />
             </div>
         </div>

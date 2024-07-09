@@ -1,4 +1,4 @@
-import { PvtData_api } from "@api";
+import { ApiError, PvtData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
@@ -48,6 +48,7 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
                     tables: results[idx]?.data ?? [],
                 };
             }),
+            errors: results.map((result) => result.error).filter((err) => err !== null) as ApiError[],
             isFetching: results.some((result) => result.isFetching),
             someQueriesFailed: results.some((result) => result.isError),
             allQueriesFailed: results.every((result) => result.isError),

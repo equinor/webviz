@@ -350,7 +350,15 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         [show3D, settingsContext]
     );
 
-    const wellHeadersQuery = useDrilledWellboreHeadersQuery(computedEnsembleIdent?.getCaseUuid());
+    let fieldIdentifier: null | string = null;
+    if (computedEnsembleIdent) {
+        const ensembleIdent = new EnsembleIdent(
+            computedEnsembleIdent.getCaseUuid(),
+            computedEnsembleIdent.getEnsembleName()
+        );
+        fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null;
+    }
+    const wellHeadersQuery = useDrilledWellboreHeadersQuery(fieldIdentifier ?? "");
     let wellHeaderOptions: SelectOption[] = [];
 
     if (wellHeadersQuery.data) {

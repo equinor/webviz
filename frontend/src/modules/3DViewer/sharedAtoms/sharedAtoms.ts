@@ -1,3 +1,8 @@
+/*
+Note that shared atoms is just a temporary solution to a use case that does not have a clear solution yet.
+This is not how it should be done properly, communication between settings and view components should be done 
+through the use of interfaces.
+*/
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { IntersectionType } from "@framework/types/intersection";
@@ -35,7 +40,7 @@ export const selectedHighlightedWellboreUuidAtom = atom((get) => {
         !userSelectedHighlightedWellboreUuid ||
         !wellboreHeaders.data.some((el) => el.wellboreUuid === userSelectedHighlightedWellboreUuid)
     ) {
-        return wellboreHeaders.data[0].wellboreUuid ?? null;
+        return wellboreHeaders.data[0]?.wellboreUuid ?? null;
     }
 
     return userSelectedHighlightedWellboreUuid;
