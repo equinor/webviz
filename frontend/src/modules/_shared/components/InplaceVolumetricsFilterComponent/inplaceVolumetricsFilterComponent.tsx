@@ -46,6 +46,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     const [prevIdentifiersValues, setPrevIdentifiersValues] = React.useState<
         InplaceVolumetricsIdentifierWithValues_api[]
     >(props.selectedIdentifiersValues);
+    const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumetricsFilter | null>(null);
 
     if (!isEqual(props.selectedEnsembleIdents, prevEnsembleIdents)) {
         setEnsembleIdents(props.selectedEnsembleIdents);
@@ -75,28 +76,46 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
         "global.syncValue.inplaceVolumetricsFilter"
     );
 
-    if (syncedFilter) {
-        if (!isEqual(syncedFilter.ensembleIdents, ensembleIdents)) {
-            handleEnsembleIdentsChange(syncedFilter.ensembleIdents);
-        }
+    if (!isEqual(syncedFilter, prevSyncedFilter)) {
+        if (syncedFilter) {
+            const filter = { ensembleIdents, tableNames, fluidZones, identifiersValues };
 
-        if (!isEqual(syncedFilter.tableNames, tableNames)) {
-            handleTableNamesChange(syncedFilter.tableNames);
-        }
-
-        if (!isEqual(syncedFilter.fluidZones, fluidZones)) {
-            handleFluidZoneChange(syncedFilter.fluidZones);
-        }
-
-        if (!isEqual(syncedFilter.identifiersValues, identifiersValues)) {
-            setIdentifiersValues(syncedFilter.identifiersValues);
-            for (const identifier of syncedFilter.identifiersValues) {
-                handleIdentifierValuesChange(identifier.identifier, identifier.values);
+            if (!isEqual(syncedFilter.ensembleIdents, ensembleIdents)) {
+                filter.ensembleIdents = [...syncedFilter.ensembleIdents];
             }
+
+            if (!isEqual(syncedFilter.tableNames, tableNames)) {
+                filter.tableNames = [...syncedFilter.tableNames];
+            }
+
+            if (!isEqual(syncedFilter.fluidZones, fluidZones)) {
+                filter.fluidZones = [...syncedFilter.fluidZones];
+            }
+
+            if (!isEqual(syncedFilter.identifiersValues, identifiersValues)) {
+                const newIdentifiersValues = cloneDeep(identifiersValues);
+
+                for (const identifier of syncedFilter.identifiersValues) {
+                    const identifierValues = newIdentifiersValues.find(
+                        (filter) => filter.identifier === identifier.identifier
+                    );
+                    if (!identifierValues) {
+                        newIdentifiersValues.push({ ...identifier });
+                    } else {
+                        identifierValues.values = [...identifier.values];
+                    }
+                }
+                setIdentifiersValues(newIdentifiersValues);
+                filter.identifiersValues = newIdentifiersValues;
+            }
+
+            props.onChange(filter);
         }
+
+        setPrevSyncedFilter(syncedFilter);
     }
 
-    function handleEnsembleIdentsChange(newEnsembleIdents: EnsembleIdent[]): void {
+    function handleEnsembleIdentsChange(newEnsembleIdents: EnsembleIdent[], publish = true): void {
         setEnsembleIdents(newEnsembleIdents);
         const filter = {
             ensembleIdents: newEnsembleIdents,
@@ -105,25 +124,29 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             identifiersValues: identifiersValues,
         };
         props.onChange(filter);
-        syncHelper.publishValue(
-            SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
-            "global.syncValue.inplaceVolumetricsFilter",
-            filter
-        );
+        if (publish) {
+            syncHelper.publishValue(
+                SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
+                "global.syncValue.inplaceVolumetricsFilter",
+                filter
+            );
+        }
     }
 
-    function handleTableNamesChange(newTableNames: string[]): void {
+    function handleTableNamesChange(newTableNames: string[], publish = true): void {
         setTableNames(newTableNames);
         const filter = { ensembleIdents, tableNames: newTableNames, fluidZones, identifiersValues: identifiersValues };
         props.onChange(filter);
-        syncHelper.publishValue(
-            SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
-            "global.syncValue.inplaceVolumetricsFilter",
-            filter
-        );
+        if (publish) {
+            syncHelper.publishValue(
+                SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
+                "global.syncValue.inplaceVolumetricsFilter",
+                filter
+            );
+        }
     }
 
-    function handleFluidZoneChange(newFluidZones: FluidZone_api[]): void {
+    function handleFluidZoneChange(newFluidZones: FluidZone_api[], publish = true): void {
         setFluidZones(newFluidZones);
         const filter = {
             ensembleIdents,
@@ -132,32 +155,37 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             identifiersValues: identifiersValues,
         };
         props.onChange(filter);
-        syncHelper.publishValue(
-            SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
-            "global.syncValue.inplaceVolumetricsFilter",
-            filter
-        );
+        if (publish) {
+            syncHelper.publishValue(
+                SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
+                "global.syncValue.inplaceVolumetricsFilter",
+                filter
+            );
+        }
     }
 
     function handleIdentifierValuesChange(
         identifier: InplaceVolumetricsIdentifier_api,
-        values: (string | number)[]
+        values: (string | number)[],
+        publish = true
     ): void {
         const newIdentifiersValues = cloneDeep(identifiersValues);
         const identifierValues = newIdentifiersValues.find((filter) => filter.identifier === identifier);
         if (!identifierValues) {
             newIdentifiersValues.push({ identifier: identifier, values });
         } else {
-            identifierValues.values = values;
+            identifierValues.values = [...values];
         }
         setIdentifiersValues(newIdentifiersValues);
         const filter = { ensembleIdents, tableNames: tableNames, fluidZones, identifiersValues: newIdentifiersValues };
         props.onChange(filter);
-        syncHelper.publishValue(
-            SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
-            "global.syncValue.inplaceVolumetricsFilter",
-            filter
-        );
+        if (publish) {
+            syncHelper.publishValue(
+                SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
+                "global.syncValue.inplaceVolumetricsFilter",
+                filter
+            );
+        }
     }
 
     const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));

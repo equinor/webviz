@@ -4,14 +4,13 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
-import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
+import { Close, ExpandMore } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { Checkbox } from "../Checkbox";
 import { IconButton } from "../IconButton";
-import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 
 export type TagOption<T> = {
@@ -55,8 +54,6 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
     });
     const [filter, setFilter] = React.useState<string | null>(null);
     const [filteredTags, setFilteredTags] = React.useState<TagOption<T>[]>(props.tags);
-    const [selectionIndex, setSelectionIndex] = React.useState<number>(-1);
-    const [tagIndexWithFocus, setTagIndexWithFocus] = React.useState<number>(-1);
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [focused, setFocused] = React.useState<boolean>(false);
 
@@ -66,15 +63,6 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const divBoundingRect = useElementBoundingRect(divRef);
-
-    const setTagIndexWithFocusToCurrentSelection = React.useCallback(
-        function handleFilteredOptionsChange() {
-            const index = filteredTags.findIndex((tag) => tag.value === selectedTags[selectedTags.length - 1]);
-            setSelectionIndex(index);
-            setTagIndexWithFocus(index);
-        },
-        [filteredTags, selectedTags]
-    );
 
     if (!isEqual(props.value, prevSelectedTags)) {
         setSelectedTags(props.value);
@@ -183,19 +171,10 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
                             )
                         )
                     );
-                    setTagIndexWithFocusToCurrentSelection();
                 }
             }
         },
-        [
-            divBoundingRect,
-            dropdownVisible,
-            filteredTags,
-            selectedTags,
-            dropdownRect.width,
-            props.tags,
-            setTagIndexWithFocusToCurrentSelection,
-        ]
+        [divBoundingRect, dropdownVisible, filteredTags, selectedTags, dropdownRect.width, props.tags]
     );
 
     function handleInputClick() {
@@ -224,20 +203,21 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
         }
     }
 
-    const handleInputChange = React.useCallback(
-        function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-            const newFilter = event.target.value.toLowerCase();
-            setFilter(newFilter);
-            const newFilteredOptions = props.tags.filter((option) =>
-                option.label.toLowerCase().includes(newFilter.toLowerCase())
-            );
-            setFilteredTags(newFilteredOptions);
-            setSelectionIndex(
-                newFilteredOptions.findIndex((option) => option.value === selectedTags[selectedTags.length - 1])
-            );
-        },
-        [props.tags, selectedTags]
-    );
+    function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+        const newFilter = event.target.value.toLowerCase();
+        setFilter(newFilter);
+        const newFilteredOptions = props.tags.filter((option) =>
+            option.label.toLowerCase().includes(newFilter.toLowerCase())
+        );
+        setFilteredTags(newFilteredOptions);
+    }
+
+    function handleClick() {
+        setDropdownVisible(true);
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
+    }
 
     function removeTag(value: T) {
         setSelectedTags(selectedTags.filter((tag) => tag !== value));
@@ -263,9 +243,13 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
                 style={{ width: props.width }}
                 id={props.wrapperId}
                 ref={divRef}
-                className={resolveClassNames("flex w-full border p-1 px-2 rounded text-sm shadow-sm", {
-                    "outline outline-blue-500": focused,
-                })}
+                className={resolveClassNames(
+                    "flex w-full border p-1 px-2 rounded text-sm shadow-sm hover:border-blue-300",
+                    {
+                        "outline outline-blue-500": focused,
+                    }
+                )}
+                onClick={handleClick}
             >
                 <div className="min-h-6 flex-grow flex gap-2 justify-start flex-wrap">
                     {selectedTags.map((tag) => {

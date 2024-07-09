@@ -1,37 +1,33 @@
-import { FluidZone_api, InplaceVolumetricsIdentifier_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet } from "@framework/EnsembleSet";
+import React from "react";
+import Plot from "react-plotly.js";
+
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { CircularProgress } from "@lib/components/CircularProgress";
-import { Table } from "@lib/components/Table";
-import { TableHeading, TableRow } from "@lib/components/Table/table";
+import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { InplaceVolumetricsTablesDataAccessor } from "@modules/_shared/InplaceVolumetrics/InplaceVolumetricsDataAccessor";
 import {
-    Column,
-    ColumnType,
-    InplaceVolumetricsTablesDataAccessor,
-} from "@modules/_shared/InplaceVolumetrics/InplaceVolumetricsDataAccessor";
-import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+    EnsembleIdentWithRealizations,
+    useGetAggregatedTableDataQueries,
+} from "@modules/_shared/InplaceVolumetrics/queryHooks";
 
-import { useGetAggregatedTableDataQueries } from "./queryHooks";
+import { Layout, PlotData } from "plotly.js";
 
+import { RealizationAndResult, calcConvergenceArray } from "../settings/utils/convergenceCalculation";
 import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { EnsembleIdentWithRealizations } from "../typesAndEnums";
 
 export function View(props: ModuleViewProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleRealizationFilter = useEnsembleRealizationFilterFunc(props.workbenchSession);
 
     const filter = props.viewContext.useSettingsToViewInterfaceValue("filter");
     const resultName = props.viewContext.useSettingsToViewInterfaceValue("resultName");
-    const accumulationOptions = props.viewContext.useSettingsToViewInterfaceValue("accumulationOptions");
-    const calcMeanAcrossAllRealizations = props.viewContext.useSettingsToViewInterfaceValue(
-        "calcMeanAcrossAllRealizations"
-    );
+
+    const divRef = React.useRef<HTMLDivElement>(null);
+    const divBoundingRect = useElementBoundingRect(divRef);
 
     const ensembleIdentsWithRealizations: EnsembleIdentWithRealizations[] = [];
     for (const ensembleIdent of filter.ensembleIdents) {
@@ -46,9 +42,9 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         filter.tableNames,
         resultName ? [resultName] : [],
         filter.fluidZones,
-        accumulationOptions.filter((el) => el !== "fluidZones") as InplaceVolumetricsIdentifier_api[],
-        accumulationOptions.includes("fluidZones"),
-        calcMeanAcrossAllRealizations,
+        [],
+        true,
+        false,
         filter.identifiersValues
     );
 
@@ -63,112 +59,80 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         }
     }
 
-    if (aggregatedTableDataQueries.isFetching) {
-        statusWriter.setLoading(true);
-        return (
-            <div className="w-full h-full flex items-center justify-center">
-                <CircularProgress size="medium" />{" "}
-            </div>
-        );
-    }
+    const tablesDataAccessor = new InplaceVolumetricsTablesDataAccessor(aggregatedTableDataQueries.tablesData);
 
-    if (aggregatedTableDataQueries.allQueriesFailed) {
-        return <div>Failed to load data</div>;
-    }
-
-    const headings: TableHeading = {};
-
-    const tablesDataAccesor = new InplaceVolumetricsTablesDataAccessor(aggregatedTableDataQueries.tablesData);
-
-    for (const column of tablesDataAccesor.getColumnsUnion()) {
-        headings[column.name] = {
-            label: column.name,
-            sizeInPercent: 100 / tablesDataAccesor.getColumnsUnionCount(),
-            formatValue: makeValueFormattingFunc(column, ensembleSet),
-            formatStyle: makeStyleFormattingFunc(column),
+    let plotComponent: React.ReactNode = null;
+    if (tablesDataAccessor.getTables().length >= 1) {
+        const layout: Partial<Layout> = {
+            title: `Convergence plot of mean/p10/p90 for ${resultName}`,
+            xaxis: {
+                title: "REAL",
+            },
+            yaxis: {
+                title: resultName ?? "",
+            },
+            height: divBoundingRect.height,
         };
-    }
 
-    const tableRows: TableRow<any>[] = [];
-
-    for (const subTable of tablesDataAccesor.getTables()) {
-        for (const row of subTable.getRows()) {
-            tableRows.push(row);
+        const realizationAndResultArray: RealizationAndResult[] = [];
+        for (const row of tablesDataAccessor.getTables()[0].getRows()) {
+            realizationAndResultArray.push({
+                realization: row["REAL"] as number,
+                result: row[resultName ?? ""] as number,
+            });
         }
+
+        const convergenceArr = calcConvergenceArray(realizationAndResultArray);
+
+        const data: Partial<PlotData>[] = [
+            {
+                x: convergenceArr.map((el) => el.realization),
+                y: convergenceArr.map((el) => el.mean),
+                name: "Mean",
+                type: "scatter",
+                line: {
+                    color: "black",
+                    width: 1,
+                },
+            },
+            {
+                x: convergenceArr.map((el) => el.realization),
+                y: convergenceArr.map((el) => el.p10),
+                name: "P10",
+                type: "scatter",
+                line: {
+                    color: "red",
+                    width: 1,
+                    dash: "dash",
+                },
+            },
+            {
+                x: convergenceArr.map((el) => el.realization),
+                y: convergenceArr.map((el) => el.p90),
+                name: "P90",
+                type: "scatter",
+                line: {
+                    color: "blue",
+                    width: 1,
+                    dash: "dash",
+                },
+            },
+        ];
+
+        plotComponent = <Plot data={data} layout={layout} className="w-full" />;
     }
 
-    return <Table headings={headings} data={tableRows} />;
-}
-
-function makeStyleFormattingFunc(column: Column): ((value: number | string) => React.CSSProperties) | undefined {
-    if (column.type === ColumnType.FLUID_ZONE) {
-        return (value: number | string) => {
-            if (typeof value === "number") {
-                return {};
-            }
-
-            if (value === FluidZone_api.OIL) {
-                return { color: "#ab110c" };
-            }
-            if (value === FluidZone_api.WATER) {
-                return { color: "#0c24ab" };
-            }
-            if (value === FluidZone_api.GAS) {
-                return { color: "#0b8511" };
-            }
-
-            return {};
-        };
-    }
-
-    return undefined;
-}
-
-function makeValueFormattingFunc(
-    column: Column,
-    ensembleSet: EnsembleSet
-): ((value: number | string) => string) | undefined {
-    if (column.type === ColumnType.ENSEMBLE) {
-        return (value: number | string) => formatEnsembleIdent(value, ensembleSet);
-    }
-    if (column.type === ColumnType.RESULT) {
-        return formatResultValue;
-    }
-
-    return undefined;
-}
-
-function formatEnsembleIdent(value: string | number, ensembleSet: EnsembleSet): string {
-    const ensemble = ensembleSet.findEnsembleByIdentString(value.toString());
-    if (ensemble) {
-        return makeDistinguishableEnsembleDisplayName(
-            EnsembleIdent.fromString(value.toString()),
-            ensembleSet.getEnsembleArr()
-        );
-    }
-    return value.toString();
-}
-
-function formatResultValue(value: string | number): string {
-    // If properties cannot be calculated,
-    // e.g. due to a 0 denominator, the value returned from backend will be null
-    if (value === null) {
-        return "-";
-    }
-
-    if (typeof value === "string") {
-        return value;
-    }
-
-    let suffix = "";
-    const log = Math.log10(Math.abs(value));
-    if (log >= 6) {
-        value /= 1e6;
-        suffix = "M";
-    } else if (log >= 3) {
-        value /= 1e3;
-        suffix = "k";
-    }
-
-    return `${value.toFixed(2)} ${suffix}`;
+    return (
+        <div ref={divRef} className="w-full h-full relative">
+            <div
+                className={resolveClassNames(
+                    "absolute top-0 left-0 w-full h-full bg-white bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-10",
+                    { hidden: plotComponent !== null }
+                )}
+            >
+                {aggregatedTableDataQueries.isFetching ? <CircularProgress size="medium" /> : "Failed to load data."}
+            </div>
+            {plotComponent}
+        </div>
+    );
 }

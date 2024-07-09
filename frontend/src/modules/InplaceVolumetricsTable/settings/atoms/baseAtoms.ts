@@ -7,4 +7,6 @@ export const userSelectedEnsembleIdentsAtom = atom<EnsembleIdent[] | null>(null)
 export const userSelectedTableNamesAtom = atom<string[] | null>(null);
 export const userSelectedFluidZonesAtom = atom<FluidZone_api[] | null>(null);
 export const userSelectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWithValues_api[] | null>(null);
-export const userSelectedResultNameAtom = atom<InplaceVolumetricResultName_api | null>(null);
+export const userSelectedResultNamesAtom = atom<InplaceVolumetricResultName_api[]>([]);
+export const userSelectedAccumulationOptionsAtom = atom<string[] | null>(null);
+export const calcMeanAcrossAllRealizationsAtom = atom<boolean>(true);

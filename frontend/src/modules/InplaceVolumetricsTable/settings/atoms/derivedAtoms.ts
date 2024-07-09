@@ -5,10 +5,11 @@ import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { atom } from "jotai";
 
 import {
+    userSelectedAccumulationOptionsAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
     userSelectedIdentifiersValuesAtom,
-    userSelectedResultNameAtom,
+    userSelectedResultNamesAtom,
     userSelectedTableNamesAtom,
 } from "./baseAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
@@ -72,26 +73,29 @@ export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
     return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getUniqueFluidZones());
 });
 
-export const selectedResultNameAtom = atom<InplaceVolumetricResultName_api | null>((get) => {
-    const userSelectedResultName = get(userSelectedResultNameAtom);
+export const selectedResultNamesAtom = atom<InplaceVolumetricResultName_api[]>((get) => {
+    const userSelectedResultNames = get(userSelectedResultNamesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    if (!userSelectedResultName) {
-        if (tableDefinitionsAccessor.getUniqueResultNames().length === 0) {
-            return null;
-        }
-        return tableDefinitionsAccessor.getUniqueResultNames()[0];
+    const fixedSelection = fixupUserSelection(userSelectedResultNames, tableDefinitionsAccessor.getUniqueResultNames());
+
+    return fixedSelection;
+});
+
+export const selectedAccumulationOptionsAtom = atom<string[]>((get) => {
+    const userSelectedAccumulation = get(userSelectedAccumulationOptionsAtom);
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+
+    const availableUniqueAccumulationOptions: string[] = ["fluidZone"];
+    for (const identifier of tableDefinitionsAccessor.getUniqueIdentifierValues()) {
+        availableUniqueAccumulationOptions.push(identifier.identifier);
     }
 
-    const fixedSelection = fixupUserSelection(
-        [userSelectedResultName],
-        tableDefinitionsAccessor.getUniqueResultNames()
-    );
-    if (fixedSelection.length === 0) {
-        return null;
+    if (!userSelectedAccumulation || userSelectedAccumulation.length === 0) {
+        return [];
     }
 
-    return fixedSelection[0];
+    return fixupUserSelection(userSelectedAccumulation, availableUniqueAccumulationOptions);
 });
 
 export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWithValues_api[]>((get) => {

@@ -35,6 +35,7 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.cameraPositionIntersection": Viewport;
     "global.syncValue.verticalScale": number;
     "global.syncValue.inplaceVolumetricsFilter": InplaceVolumetricsFilter;
+    "global.syncValue.inplaceVolumetricsResultName": string;
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;

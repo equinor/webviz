@@ -11,7 +11,10 @@ import { UseQueryResult, useQueries } from "@tanstack/react-query";
 
 import { InplaceVolumetricsIdentifier } from "src/api/models/InplaceVolumetricsIdentifier";
 
-import { EnsembleIdentWithRealizations } from "../typesAndEnums";
+export type EnsembleIdentWithRealizations = {
+    ensembleIdent: EnsembleIdent;
+    realizations: readonly number[];
+};
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;

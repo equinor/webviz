@@ -4,25 +4,30 @@ import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { Select } from "@lib/components/Select";
+import { Switch } from "@lib/components/Switch";
+import { TagOption, TagPicker } from "@lib/components/TagPicker";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
+    calcMeanAcrossAllRealizationsAtom,
+    userSelectedAccumulationOptionsAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
     userSelectedIdentifiersValuesAtom,
-    userSelectedResultNameAtom,
+    userSelectedResultNamesAtom,
     userSelectedTableNamesAtom,
 } from "./atoms/baseAtoms";
 import {
+    selectedAccumulationOptionsAtom,
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
     selectedIdentifiersValuesAtom,
-    selectedResultNameAtom,
+    selectedResultNamesAtom,
     selectedTableNamesAtom,
     tableDefinitionsAccessorAtom,
 } from "./atoms/derivedAtoms";
@@ -47,8 +52,15 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     const selectedIdentifiersValues = useAtomValue(selectedIdentifiersValuesAtom);
     const setSelectedIdentifiersValues = useSetAtom(userSelectedIdentifiersValuesAtom);
 
-    const selectedResultName = useAtomValue(selectedResultNameAtom);
-    const setSelectedResultName = useSetAtom(userSelectedResultNameAtom);
+    const selectedResultNames = useAtomValue(selectedResultNamesAtom);
+    const setSelectedResultNames = useSetAtom(userSelectedResultNamesAtom);
+
+    const selectedAccumulationOptions = useAtomValue(selectedAccumulationOptionsAtom);
+    const setSelectedAccumulationOptions = useSetAtom(userSelectedAccumulationOptionsAtom);
+
+    const [calcMeanAcrossAllRealizations, setCalcMeanAcrossAllRealizations] = useAtom(
+        calcMeanAcrossAllRealizationsAtom
+    );
 
     function handleFilterChange(newFilter: InplaceVolumetricsFilter) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
@@ -57,9 +69,22 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         setSelectedIdentifiersValues(newFilter.identifiersValues);
     }
 
+    function handleAccumulationOptionsChange(newAccumulationOptions: string[]) {
+        setSelectedAccumulationOptions(newAccumulationOptions);
+    }
+
+    function handleCalcMeanAcrossAllRealizationsToggle(e: React.ChangeEvent<HTMLInputElement>) {
+        setCalcMeanAcrossAllRealizations(e.target.checked);
+    }
+
     const resultNameOptions = tableDefinitionsAccessor
         .getUniqueResultNames()
         .map((name) => ({ label: name, value: name }));
+
+    const accumulateOptions: TagOption<string>[] = [{ label: "Fluid zone", value: "fluidZone" }];
+    for (const identifier of tableDefinitionsAccessor.getUniqueIdentifierValues()) {
+        accumulateOptions.push({ label: identifier.identifier, value: identifier.identifier });
+    }
 
     return (
         <div className="flex flex-col gap-2">
@@ -67,10 +92,25 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                 <CollapsibleGroup title="Result and grouping" expanded>
                     <div className="flex flex-col gap-2">
                         <Label text="Result">
-                            <Dropdown
-                                value={selectedResultName ?? undefined}
+                            <Select
+                                value={selectedResultNames}
                                 options={resultNameOptions}
-                                onChange={setSelectedResultName}
+                                onChange={setSelectedResultNames}
+                                multiple
+                                size={5}
+                            />
+                        </Label>
+                        <Label text="Group by">
+                            <TagPicker
+                                value={selectedAccumulationOptions}
+                                tags={accumulateOptions}
+                                onChange={handleAccumulationOptionsChange}
+                            />
+                        </Label>
+                        <Label text="Calculate mean across all realizations">
+                            <Switch
+                                checked={calcMeanAcrossAllRealizations}
+                                onChange={handleCalcMeanAcrossAllRealizationsToggle}
                             />
                         </Label>
                     </div>

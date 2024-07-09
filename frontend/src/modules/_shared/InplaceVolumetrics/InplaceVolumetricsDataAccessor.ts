@@ -1,4 +1,4 @@
-import { InplaceVolumetricTableDataPerFluidSelection_api, InplaceVolumetricTableData_api } from "@api";
+import { InplaceVolumetricTableData_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
 import { InplaceVolumetricsTableData } from "./types";
@@ -40,7 +40,7 @@ export class InplaceVolumetricDataTable {
     private extractData(): void {
         const identifierColumns: Set<string> = new Set();
         const resultColumns: Set<string> = new Set();
-        let rowCount = Number.MAX_SAFE_INTEGER;
+        let rowCount = -1;
 
         for (const [index, selectorColumn] of this._data.selectorColumns.entries()) {
             if (selectorColumn.columnName === "REAL") {
@@ -49,11 +49,19 @@ export class InplaceVolumetricDataTable {
                 continue;
             }
             identifierColumns.add(selectorColumn.columnName);
-            rowCount = Math.min(rowCount, selectorColumn.indices.length);
+            if (rowCount === -1) {
+                rowCount = selectorColumn.indices.length;
+            } else {
+                rowCount = Math.min(rowCount, selectorColumn.indices.length);
+            }
         }
         for (const resultColumn of this._data.resultColumns) {
             resultColumns.add(resultColumn.columnName);
-            rowCount = Math.min(rowCount, resultColumn.columnValues.length);
+            if (rowCount === -1) {
+                rowCount = resultColumn.columnValues.length;
+            } else {
+                rowCount = Math.min(rowCount, resultColumn.columnValues.length);
+            }
         }
 
         this._identifierColumns = Array.from(identifierColumns);
@@ -128,6 +136,14 @@ export class InplaceVolumetricDataTable {
             rows.push(this.getRow(i));
         }
         return rows;
+    }
+
+    getColumnValues(columnName: string): (string | number)[] {
+        const values: (string | number)[] = [];
+        for (let i = 0; i < this._rowCount; i++) {
+            values.push(this.getRow(i)[columnName]);
+        }
+        return values;
     }
 }
 

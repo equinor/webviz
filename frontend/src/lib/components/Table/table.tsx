@@ -158,7 +158,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         <BaseComponent disabled={props.disabled}>
             <div
                 ref={containerRef}
-                className="relative overflow-visible"
+                className="relative overflow-auto"
                 style={{ width: props.width, maxHeight: props.height }}
             >
                 <table className="w-full h-full border-0 border-separate border-spacing-0 text-sm">
@@ -247,6 +247,9 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                         style={{ height: 30 }}
                                     >
                                         {Object.keys(item.values).map((col) => {
+                                            if (!props.headings[col]) {
+                                                return null;
+                                            }
                                             const format = props.headings[col].formatValue;
                                             const formatStyle = props.headings[col].formatStyle;
                                             return (
