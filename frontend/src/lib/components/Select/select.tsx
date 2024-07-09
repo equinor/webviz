@@ -9,6 +9,11 @@ import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 import { withDefaults } from "../_component-utils/components";
 
+enum KeyModifier {
+    SHIFT = "shift",
+    CONTROL = "control",
+}
+
 export type SelectOption = {
     value: string;
     adornment?: React.ReactNode;
@@ -67,7 +72,6 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [currentFocusIndex, setCurrentFocusIndex] = React.useState<number>(0);
     const [virtualizationStartIndex, setVirtualizationStartIndex] = React.useState<number>(0);
     const [reportedVirtualizationStartIndex, setReportedVirtualizationStartIndex] = React.useState<number>(0);
-    const [keysPressed, setKeysPressed] = React.useState<Key[]>([]);
 
     const ref = React.useRef<HTMLDivElement>(null);
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -119,9 +123,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         function addKeyboardEventListeners() {
             const refCurrent = ref.current;
 
-            let localKeysPressed: Key[] = keysPressed;
-
-            function makeKeyboardSelection(index: number) {
+            function makeKeyboardSelection(index: number, modifiers: KeyModifier[]) {
                 if (filteredOptions[index].disabled) {
                     return;
                 }
@@ -133,21 +135,19 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     handleOnChange(newSelectedOptions);
                 }
 
-                if (!(!localKeysPressed.includes("Control") || localKeysPressed.includes("Shift"))) {
+                let newSelectedOptions: string[] = [filteredOptions[index].value];
+
+                if (modifiers.includes(KeyModifier.CONTROL) && !modifiers.includes(KeyModifier.SHIFT)) {
                     return;
                 }
 
-                let newSelectedOptions: string[] = [];
-
-                if (localKeysPressed.includes("Shift") && selectionAnchor !== null) {
+                if (modifiers.includes(KeyModifier.SHIFT) && selectionAnchor !== null) {
                     const start = Math.min(index, selectionAnchor);
                     const end = Math.max(index, selectionAnchor);
                     newSelectedOptions = filteredOptions.slice(start, end + 1).map((option) => option.value);
-                } else {
-                    newSelectedOptions = [filteredOptions[index].value];
                 }
 
-                if (!localKeysPressed.includes("Shift") && !localKeysPressed.includes("Control")) {
+                if (!modifiers.includes(KeyModifier.CONTROL) && !modifiers.includes(KeyModifier.SHIFT)) {
                     setSelectionAnchor(index);
                 }
 
@@ -189,9 +189,13 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             }
 
             function handleKeyDown(e: KeyboardEvent) {
-                localKeysPressed = [...localKeysPressed, e.key];
-                setKeysPressed(localKeysPressed);
-
+                const modifiers: KeyModifier[] = [];
+                if (e.shiftKey) {
+                    modifiers.push(KeyModifier.SHIFT);
+                }
+                if (e.ctrlKey) {
+                    modifiers.push(KeyModifier.CONTROL);
+                }
                 if (e.key === "ArrowUp") {
                     e.preventDefault();
                     const newIndex = Math.max(0, currentFocusIndex - 1);
@@ -199,7 +203,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
                     );
-                    makeKeyboardSelection(newIndex);
+                    makeKeyboardSelection(newIndex, modifiers);
                 }
 
                 if (e.key === "ArrowDown") {
@@ -209,10 +213,10 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
                     );
-                    makeKeyboardSelection(newIndex);
+                    makeKeyboardSelection(newIndex, modifiers);
                 }
 
-                if (e.key === " " && keysPressed.includes("Control")) {
+                if (e.key === " " && e.ctrlKey) {
                     e.preventDefault();
                     addKeyboardSelection(currentFocusIndex);
                 }
@@ -224,7 +228,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
                     );
-                    makeKeyboardSelection(newIndex);
+                    makeKeyboardSelection(newIndex, modifiers);
                 }
 
                 if (e.key === "PageUp") {
@@ -234,14 +238,14 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     setVirtualizationStartIndex((prev) =>
                         ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
                     );
-                    makeKeyboardSelection(newIndex);
+                    makeKeyboardSelection(newIndex, modifiers);
                 }
 
                 if (e.key === "Home") {
                     e.preventDefault();
                     setCurrentFocusIndex(0);
                     setVirtualizationStartIndex(0);
-                    makeKeyboardSelection(0);
+                    makeKeyboardSelection(0, modifiers);
                 }
 
                 if (e.key === "End") {
@@ -249,20 +253,14 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     const newIndex = filteredOptions.length - 1;
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex(Math.max(0, newIndex - props.size + 1));
-                    makeKeyboardSelection(newIndex);
+                    makeKeyboardSelection(newIndex, modifiers);
                 }
             }
-
-            const handleKeyUp = (e: KeyboardEvent) => {
-                localKeysPressed = localKeysPressed.filter((key) => key !== e.key);
-                setKeysPressed(localKeysPressed);
-            };
 
             if (ref.current) {
                 ref.current.addEventListener("focus", handleFocus);
                 ref.current.addEventListener("blur", handleBlur);
                 ref.current.addEventListener("keydown", handleKeyDown);
-                ref.current.addEventListener("keyup", handleKeyUp);
             }
 
             return function removeKeyboardEventListeners() {
@@ -270,7 +268,6 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     refCurrent.removeEventListener("focus", handleFocus);
                     refCurrent.removeEventListener("blur", handleBlur);
                     refCurrent.removeEventListener("keydown", handleKeyDown);
-                    refCurrent.removeEventListener("keyup", handleKeyUp);
                 }
             };
         },
@@ -278,7 +275,6 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             currentFocusIndex,
             filteredOptions,
             props.size,
-            keysPressed,
             props.multiple,
             handleOnChange,
             selectionAnchor,
@@ -287,7 +283,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         ]
     );
 
-    function handleOptionClick(option: SelectOption, index: number) {
+    function handleOptionClick(e: React.MouseEvent<HTMLDivElement>, option: SelectOption, index: number) {
         if (option.disabled) {
             return;
         }
@@ -301,11 +297,11 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         }
 
         let newSelectedOptions: string[] = [];
-        if (keysPressed.includes("Shift") && selectionAnchor !== null) {
+        if (e.shiftKey && selectionAnchor !== null) {
             const start = Math.min(index, selectionAnchor);
             const end = Math.max(index, selectionAnchor);
             newSelectedOptions = filteredOptions.slice(start, end + 1).map((option) => option.value);
-        } else if (keysPressed.includes("Control")) {
+        } else if (e.ctrlKey) {
             newSelectedOptions = selectedOptionValues.includes(option.value)
                 ? selectedOptionValues.filter((value) => value !== option.value)
                 : [...selectedOptionValues, option.value];
@@ -313,7 +309,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
             newSelectedOptions = [option.value];
         }
 
-        if (!keysPressed.includes("Shift")) {
+        if (!e.shiftKey) {
             setSelectionAnchor(index);
         }
 
@@ -416,7 +412,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                                             outline: index === currentFocusIndex && hasFocus,
                                         }
                                     )}
-                                    onClick={() => handleOptionClick(option, index)}
+                                    onClick={(e) => handleOptionClick(e, option, index)}
                                     style={{ height: 24 }}
                                 >
                                     {option.adornment}
