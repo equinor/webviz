@@ -91,7 +91,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
         if (!isEqual(syncedFilter.identifiersValues, identifiersValues)) {
             setIdentifiersValues(syncedFilter.identifiersValues);
             for (const identifier of syncedFilter.identifiersValues) {
-                handleIndexFilterChange(identifier.identifier, identifier.values);
+                handleIdentifierValuesChange(identifier.identifier, identifier.values);
             }
         }
     }
@@ -139,7 +139,10 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
         );
     }
 
-    function handleIndexFilterChange(indexName: InplaceVolumetricsIdentifier_api, values: (string | number)[]): void {
+    function handleIdentifierValuesChange(
+        indexName: InplaceVolumetricsIdentifier_api,
+        values: (string | number)[]
+    ): void {
         const newIdentifiersValues = cloneDeep(identifiersValues);
         const identifierValues = newIdentifiersValues.find((filter) => filter.identifier === indexName);
         if (!identifierValues) {
@@ -189,7 +192,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                             size={3}
                         />
                     </CollapsibleGroup>
-                    <CollapsibleGroup title="Index filters" expanded>
+                    <CollapsibleGroup title="Identifier filters" expanded>
                         <div className="flex flex-col gap-2">
                             {props.availableIdentifiersWithValues.map((identifier) => (
                                 <CollapsibleGroup key={identifier.identifier} title={identifier.identifier} expanded>
@@ -202,7 +205,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                                             identifiersValues.find((el) => el.identifier === identifier.identifier)
                                                 ?.values ?? []
                                         }
-                                        onChange={(value) => handleIndexFilterChange(identifier.identifier, value)}
+                                        onChange={(value) => handleIdentifierValuesChange(identifier.identifier, value)}
                                         multiple
                                         size={Math.max(Math.min(identifier.values.length, 10), 3)}
                                     />

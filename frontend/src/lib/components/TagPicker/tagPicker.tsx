@@ -95,30 +95,24 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
         };
     }, []);
 
-    React.useEffect(
-        function handleTagsChange() {
-            function handleMouseDown(event: MouseEvent) {
-                if (
-                    dropdownRef.current &&
-                    !dropdownRef.current.contains(event.target as Node) &&
-                    divRef.current &&
-                    !divRef.current.contains(event.target as Node)
-                ) {
-                    setDropdownVisible(false);
-                    setFilter(null);
-                    setFilteredTags(props.tags);
-                    setTagIndexWithFocus(-1);
-                }
+    React.useEffect(function handleTagsChange() {
+        function handleMouseDown(event: MouseEvent) {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node) &&
+                divRef.current &&
+                !divRef.current.contains(event.target as Node)
+            ) {
+                setDropdownVisible(false);
             }
+        }
 
-            document.addEventListener("mousedown", handleMouseDown);
+        document.addEventListener("mousedown", handleMouseDown);
 
-            return () => {
-                document.removeEventListener("mousedown", handleMouseDown);
-            };
-        },
-        [props.tags]
-    );
+        return () => {
+            document.removeEventListener("mousedown", handleMouseDown);
+        };
+    }, []);
 
     React.useEffect(
         function updateDropdownRectWidth() {
@@ -209,12 +203,14 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
     }
 
     function handleTagToggle(value: T) {
-        const newSelectedTags = [...selectedTags];
+        let newSelectedTags = [...selectedTags];
         if (selectedTags.includes(value)) {
-            setSelectedTags(newSelectedTags.filter((v) => v !== value));
+            newSelectedTags = newSelectedTags.filter((v) => v !== value);
         } else {
-            setSelectedTags([...newSelectedTags, value]);
+            newSelectedTags.push(value);
         }
+
+        setSelectedTags(newSelectedTags);
 
         if (props.debounceTimeMs) {
             if (debounceTimerRef.current) {
@@ -316,8 +312,9 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
                             itemSize={TAG_HEIGHT}
                             containerRef={dropdownRef}
                             startIndex={startIndex}
-                            renderItem={(option, index) => (
+                            renderItem={(option) => (
                                 <Checkbox
+                                    key={option.value}
                                     checked={selectedTags.includes(option.value)}
                                     onChange={() => handleTagToggle(option.value)}
                                     label={option.label}
