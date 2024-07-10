@@ -132,13 +132,11 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
                     handleOnChange(newSelectedOptions);
                 }
 
-                let newSelectedOptions: string[] = [filteredOptions[index].value];
+                let newSelectedOptions: TValue[] = [filteredOptions[index].value];
 
                 if (modifiers.includes(KeyModifier.CONTROL) && !modifiers.includes(KeyModifier.SHIFT)) {
                     return;
                 }
-
-                let newSelectedOptions: TValue[] = [];
 
                 if (modifiers.includes(KeyModifier.SHIFT) && selectionAnchor !== null) {
                     const start = Math.min(index, selectionAnchor);
@@ -251,7 +249,7 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
                     e.preventDefault();
                     const newIndex = filteredOptions.length - 1;
                     setCurrentFocusIndex(newIndex);
-                    setVirtualizationStartIndex(Math.max(0, newIndex - props.size + 1));
+                    setVirtualizationStartIndex(Math.max(0, newIndex - sizeWithDefault + 1));
                     makeKeyboardSelection(newIndex, modifiers);
                 }
             }
@@ -282,8 +280,7 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
         ]
     );
 
-    function handleOptionClick(e: React.MouseEvent<HTMLDivElement>, option: SelectOption, index: number) {
-    function handleOptionClick(option: SelectOption<TValue>, index: number) {
+    function handleOptionClick(e: React.MouseEvent<HTMLDivElement>, option: SelectOption<TValue>, index: number) {
         if (option.disabled) {
             return;
         }

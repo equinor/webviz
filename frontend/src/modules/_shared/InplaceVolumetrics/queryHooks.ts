@@ -49,13 +49,13 @@ export function useGetAggregatedTableDataQueries(
             "getAggregatedTableData",
             source.ensembleIdent.toString(),
             source.tableName,
-            JSON.stringify(source.realizations),
-            JSON.stringify(fluidZones),
-            JSON.stringify(accumulateByIdentifiers),
+            source.realizations,
+            fluidZones,
+            accumulateByIdentifiers,
             accumulateFluidZones,
             calculateMeanAcrossRealizations,
-            JSON.stringify(resultNames),
-            JSON.stringify(identifiersWithValues),
+            resultNames,
+            identifiersWithValues,
         ],
         queryFn: () =>
             apiService.inplaceVolumetrics.postGetAggregatedTableData(

@@ -1,6 +1,10 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import {
+    InplaceVolumetricsTableDefinitionsAccessor,
+    makeUniqueTableNamesIntersection,
+} from "@modules_shared/InplaceVolumetrics/InplaceVolumetricsTableDefinitionsAccessor";
 
 import { atom } from "jotai";
 
@@ -12,11 +16,6 @@ import {
     userSelectedTableNamesAtom,
 } from "./baseAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
-
-import {
-    InplaceVolumetricsTableDefinitionsAccessor,
-    makeUniqueTableNamesIntersection,
-} from "../utils/inplaceVolumetricsTableDefinitionsAccessor";
 
 export const selectedEnsembleIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);

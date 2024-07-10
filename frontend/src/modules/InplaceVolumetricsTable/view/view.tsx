@@ -85,10 +85,8 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
 
     const tableRows: TableRow<any>[] = [];
 
-    for (const subTable of tablesDataAccessor.getTables()) {
-        for (const row of subTable.getRows()) {
-            tableRows.push(row);
-        }
+    for (const row of tablesDataAccessor.getRowsUnion()) {
+        tableRows.push(row);
     }
 
     return (
@@ -101,41 +99,43 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
             >
                 {aggregatedTableDataQueries.isFetching ? <CircularProgress size="medium" /> : "Failed to load data."}
             </div>
-            <Table headings={headings} data={tableRows} height={divBoundingRect.height / 2} />
+            <Table headings={headings} data={tableRows} height={divBoundingRect.height} />
         </div>
     );
 }
 
-function makeStyleFormattingFunc(column: Column): ((value: number | string) => React.CSSProperties) | undefined {
+function makeStyleFormattingFunc(column: Column): ((value: number | string | null) => React.CSSProperties) | undefined {
     if (column.type === ColumnType.FLUID_ZONE) {
-        return (value: number | string) => {
-            if (typeof value === "number") {
-                return {};
-            }
+        return (value: number | string | null) => {
+            const style: React.CSSProperties = { textAlign: "right", fontWeight: "bold" };
 
             if (value === FluidZone_api.OIL) {
-                return { color: "#ab110c" };
+                style.color = "#ab110c";
             }
             if (value === FluidZone_api.WATER) {
-                return { color: "#0c24ab" };
+                style.color = "#0c24ab";
             }
             if (value === FluidZone_api.GAS) {
-                return { color: "#0b8511" };
+                style.color = "#0b8511";
             }
 
-            return {};
+            return style;
         };
     }
 
-    return undefined;
+    if (column.type === ColumnType.ENSEMBLE) {
+        return undefined;
+    }
+
+    return () => ({ textAlign: "right" });
 }
 
 function makeValueFormattingFunc(
     column: Column,
     ensembleSet: EnsembleSet
-): ((value: number | string) => string) | undefined {
+): ((value: number | string | null) => string) | undefined {
     if (column.type === ColumnType.ENSEMBLE) {
-        return (value: number | string) => formatEnsembleIdent(value, ensembleSet);
+        return (value: number | string | null) => formatEnsembleIdent(value, ensembleSet);
     }
     if (column.type === ColumnType.RESULT) {
         return formatResultValue;
@@ -144,7 +144,10 @@ function makeValueFormattingFunc(
     return undefined;
 }
 
-function formatEnsembleIdent(value: string | number, ensembleSet: EnsembleSet): string {
+function formatEnsembleIdent(value: string | number | null, ensembleSet: EnsembleSet): string {
+    if (value === null) {
+        return "-";
+    }
     const ensemble = ensembleSet.findEnsembleByIdentString(value.toString());
     if (ensemble) {
         return makeDistinguishableEnsembleDisplayName(
@@ -155,7 +158,7 @@ function formatEnsembleIdent(value: string | number, ensembleSet: EnsembleSet): 
     return value.toString();
 }
 
-function formatResultValue(value: string | number): string {
+function formatResultValue(value: string | number | null): string {
     // If properties cannot be calculated,
     // e.g. due to a 0 denominator, the value returned from backend will be null
     if (value === null) {

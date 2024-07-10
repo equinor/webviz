@@ -69,6 +69,18 @@ export class InplaceVolumetricDataTable {
         this._rowCount = rowCount;
     }
 
+    getEnsembleIdent(): EnsembleIdent {
+        return this._ensembleIdent;
+    }
+
+    getTableName(): string {
+        return this._tableName;
+    }
+
+    getFluidZone(): string {
+        return this._fluidZone;
+    }
+
     getIdentifierColumns(): string[] {
         return this._identifierColumns;
     }
@@ -138,12 +150,27 @@ export class InplaceVolumetricDataTable {
         return rows;
     }
 
+    getRowsWithFilter(filterColumn: string, filterValue: string | number): Record<string, string | number>[] {
+        const rows: Record<string, string | number>[] = [];
+        for (let i = 0; i < this._rowCount; i++) {
+            const row = this.getRow(i);
+            if (row[filterColumn] === filterValue) {
+                rows.push(row);
+            }
+        }
+        return rows;
+    }
+
     getColumnValues(columnName: string): (string | number)[] {
         const values: (string | number)[] = [];
         for (let i = 0; i < this._rowCount; i++) {
             values.push(this.getRow(i)[columnName]);
         }
         return values;
+    }
+
+    getUniqueColumnValues(columnName: string): (string | number)[] {
+        return Array.from(new Set(this.getColumnValues(columnName)));
     }
 }
 
@@ -187,5 +214,46 @@ export class InplaceVolumetricsTablesDataAccessor {
 
     getTables(): InplaceVolumetricDataTable[] {
         return this._tables;
+    }
+
+    getTotalRowCount(): number {
+        return this._tables.reduce((acc, table) => acc + table.getRowCount(), 0);
+    }
+
+    getTableAndTableRowIndexForGlobalRowIndex(rowIndex: number): [number, InplaceVolumetricDataTable] {
+        let currentRowIndex = 0;
+        for (const table of this._tables) {
+            const tableRowCount = table.getRowCount();
+            if (currentRowIndex + tableRowCount > rowIndex) {
+                return [rowIndex - currentRowIndex, table];
+            }
+            currentRowIndex += tableRowCount;
+        }
+        throw new Error("Invalid row index");
+    }
+
+    getRowUnion(rowIndex: number): Record<string, string | number | null> {
+        const [tableRowIndex, table] = this.getTableAndTableRowIndexForGlobalRowIndex(rowIndex);
+        const tableRow = table.getRow(tableRowIndex);
+        const row: Record<string, string | number | null> = {};
+        for (const [key, value] of Object.entries(tableRow)) {
+            row[key] = value;
+        }
+
+        for (const column of this.getColumnsUnion()) {
+            if (row[column.name] === undefined) {
+                row[column.name] = null;
+            }
+        }
+
+        return row;
+    }
+
+    getRowsUnion(): Record<string, string | number | null>[] {
+        const rows: Record<string, string | number | null>[] = [];
+        for (let i = 0; i < this.getTotalRowCount(); i++) {
+            rows.push(this.getRowUnion(i));
+        }
+        return rows;
     }
 }

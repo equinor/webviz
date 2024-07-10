@@ -1,9 +1,16 @@
+import { InplaceVolumetricsIdentifier_api } from "@api";
+
 export enum SubplotBy {
     SOURCE = "source",
-    INDEX = "index",
+    FLUID_ZONE = "fluidZone",
+    IDENTIFIER = "identifier",
 }
 
-export type SubplotByInfo = {
-    subplotBy: SubplotBy;
-    indexName?: string;
-};
+export type SubplotByInfo =
+    | {
+          subplotBy: Exclude<SubplotBy, SubplotBy.IDENTIFIER>;
+      }
+    | {
+          subplotBy: SubplotBy.IDENTIFIER;
+          identifier: InplaceVolumetricsIdentifier_api;
+      };

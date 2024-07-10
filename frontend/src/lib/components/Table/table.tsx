@@ -14,18 +14,18 @@ export type TableHeading = {
         label: string;
         sortable?: boolean;
         sizeInPercent: number;
-        formatValue?: (value: string | number) => string;
-        formatStyle?: (value: string | number) => React.CSSProperties;
+        formatValue?: (value: string | number | null) => string;
+        formatStyle?: (value: string | number | null) => React.CSSProperties;
     };
 };
 
 export type TableRow<T extends TableHeading> = {
-    [key in keyof T]: string | number;
+    [key in keyof T]: string | number | null;
 };
 
 type IdentifiedTableRow<T extends TableHeading> = {
     id: string;
-    values: { [key in keyof T]: string | number };
+    values: { [key in keyof T]: string | number | null };
 };
 
 export type TableProps<T extends TableHeading> = {
@@ -56,9 +56,11 @@ function filterData(
     return data.filter((series) => {
         for (const col in filterValues) {
             const format = headings[col].formatValue || ((value: string | number) => value);
+            const seriesValue = series.values[col];
             if (
                 filterValues[col] !== "" &&
-                format(series.values[col]).toString().toLowerCase().indexOf(filterValues[col].toLowerCase()) === -1
+                (seriesValue === null ||
+                    format(seriesValue).toString().toLowerCase().indexOf(filterValues[col].toLowerCase()) === -1)
             ) {
                 return false;
             }
@@ -74,10 +76,21 @@ function sortData(
 ): IdentifiedTableRow<TableHeading>[] {
     return [
         ...data.sort((a, b) => {
-            if (a.values[col] < b.values[col]) {
+            const aValue = a.values[col];
+            const bValue = b.values[col];
+            if (aValue === null && bValue === null) {
+                return 0;
+            }
+            if (aValue === null) {
+                return dir === SortDirection.ASC ? 1 : -1;
+            }
+            if (bValue === null) {
                 return dir === SortDirection.ASC ? -1 : 1;
             }
-            if (a.values[col] > b.values[col]) {
+            if (aValue < bValue) {
+                return dir === SortDirection.ASC ? -1 : 1;
+            }
+            if (aValue > bValue) {
                 return dir === SortDirection.ASC ? 1 : -1;
             }
             return 0;
@@ -246,8 +259,8 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                         onPointerDown={() => handlePointerDown(item.values)}
                                         style={{ height: 30 }}
                                     >
-                                        {Object.keys(item.values).map((col) => {
-                                            if (!props.headings[col]) {
+                                        {Object.keys(props.headings).map((col) => {
+                                            if (item.values[col] === undefined) {
                                                 return null;
                                             }
                                             const format = props.headings[col].formatValue;

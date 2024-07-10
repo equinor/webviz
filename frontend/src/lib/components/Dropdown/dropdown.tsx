@@ -77,16 +77,16 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
 
     const setOptionIndexWithFocusToCurrentSelection = React.useCallback(
         function handleFilteredOptionsChange() {
-            const index = filteredOptions.findIndex((option) => option.value === selection);
+            const index = filteredOptions.findIndex((option) => isEqual(option.value, selection));
             setSelectionIndex(index);
             setOptionIndexWithFocus(index);
         },
         [filteredOptions, selection]
     );
 
-    if (prevValue !== valueWithDefault) {
+    if (!isEqual(prevValue, valueWithDefault)) {
         setSelection(valueWithDefault);
-        setSelectionIndex(props.options.findIndex((option) => option.value === valueWithDefault));
+        setSelectionIndex(props.options.findIndex((option) => isEqual(option.value, valueWithDefault)));
         setPrevValue(valueWithDefault);
     }
 
@@ -238,7 +238,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const handleOptionClick = React.useCallback(
         function handleOptionClick(value: TValue) {
             setSelection(value);
-            setSelectionIndex(props.options.findIndex((option) => option.value === value));
+            setSelectionIndex(props.options.findIndex((option) => isEqual(option.value, value)));
             setDropdownVisible(false);
             setFilter(null);
             setFilteredOptions(props.options);
@@ -324,7 +324,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             setFilter(event.target.value);
             const newFilteredOptions = props.options.filter((option) => option.label.includes(event.target.value));
             setFilteredOptions(newFilteredOptions);
-            setSelectionIndex(newFilteredOptions.findIndex((option) => option.value === selection));
+            setSelectionIndex(newFilteredOptions.findIndex((option) => isEqual(option.value, selection)));
         },
         [props.options, selection]
     );
@@ -338,7 +338,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         if (dropdownVisible && filter !== null) {
             return filter;
         }
-        return props.options.find((el) => el.value === selection)?.label || "";
+        return props.options.find((el) => isEqual(el.value, selection))?.label || "";
     }
 
     function makeInputAdornment() {
@@ -376,7 +376,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                         id={props.id}
                         error={
                             selection !== "" &&
-                            props.options.find((option) => option.value === selection) === undefined &&
+                            props.options.find((option) => isEqual(option.value, selection)) === undefined &&
                             props.options.length > 0
                         }
                         onClick={() => handleInputClick()}
@@ -454,12 +454,14 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                                             "pl-1",
                                             "pr-1",
                                             {
-                                                "bg-blue-600 text-white box-border hover:bg-blue-700":
-                                                    selection === option.value,
+                                                "bg-blue-600 text-white box-border hover:bg-blue-700": isEqual(
+                                                    selection,
+                                                    option.value
+                                                ),
                                                 "bg-blue-100":
-                                                    selection !== option.value && optionIndexWithFocus === index,
-                                                "bg-blue-700":
-                                                    selection === option.value && optionIndexWithFocus === index,
+                                                    !isEqual(selection, option.value) && optionIndexWithFocus === index,
+                                                "bg-blue-700 text-white":
+                                                    !isEqual(selection, option.value) && optionIndexWithFocus === index,
                                                 "pointer-events-none": option.disabled,
                                                 "text-gray-400": option.disabled,
                                             }
