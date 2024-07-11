@@ -75,7 +75,12 @@ export function useGetAggregatedTableDataQueries(
         staleTime: STALE_TIME,
         cacheTime: CACHE_TIME,
         enabled: Boolean(
-            source.realizations.length && fluidZones.length && resultNames.length && identifiersWithValues.length
+            source.ensembleIdent &&
+                source.tableName &&
+                source.realizations.length &&
+                fluidZones.length &&
+                resultNames.length &&
+                identifiersWithValues.length
         ),
     }));
 

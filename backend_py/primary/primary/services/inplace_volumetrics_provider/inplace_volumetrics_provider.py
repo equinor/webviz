@@ -1,6 +1,8 @@
 from typing import Dict, List, Optional, Sequence
 import asyncio
 
+import time
+
 import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
@@ -271,6 +273,8 @@ class InplaceVolumetricsProvider:
         """
         if realizations is not None and len(realizations) == 0:
             return {}
+        
+        t1 = time.perf_counter(), time.process_time()
 
         # Get the inplace volumetrics table from collection in Sumo
         #
@@ -283,6 +287,10 @@ class InplaceVolumetricsProvider:
                 table_name=table_name, column_names=volumetric_columns
             )
         )
+
+        t2 = time.perf_counter(), time.process_time()
+        print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
+        print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
 
         table_column_names = inplace_volumetrics_table.column_names
 

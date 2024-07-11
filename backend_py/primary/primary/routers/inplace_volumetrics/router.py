@@ -1,3 +1,5 @@
+from cProfile import Profile
+from pstats import SortKey, Stats
 import logging
 from typing import List, Optional
 
@@ -107,5 +109,7 @@ async def post_get_aggregated_table_data(
     perf_metrics.record_lap("calculate-accumulated-data")
 
     LOGGER.info(f"Got aggregated volumetric data in: {perf_metrics.to_string()}")
+
+
 
     return converters.convert_table_data_per_fluid_selection_to_schema(data)

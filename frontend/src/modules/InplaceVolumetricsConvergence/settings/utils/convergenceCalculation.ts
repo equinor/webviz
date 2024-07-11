@@ -1,6 +1,6 @@
 export type RealizationAndResult = {
     realization: number;
-    result: number;
+    resultValue: number;
 };
 
 export type ConvergenceResult = {
@@ -17,8 +17,8 @@ export function calcConvergenceArray(realizationAndResultArray: RealizationAndRe
     let sum = 0;
     let sumOfSquares = 0;
     for (const [index, realizationAndResult] of sortedArray.entries()) {
-        sum += realizationAndResult.result;
-        sumOfSquares += realizationAndResult.result * realizationAndResult.result;
+        sum += realizationAndResult.resultValue;
+        sumOfSquares += realizationAndResult.resultValue * realizationAndResult.resultValue;
         const mean = sum / (index + 1);
         const variance = sumOfSquares / (index + 1) - mean ** 2;
         const stdDev = Math.sqrt(variance);
