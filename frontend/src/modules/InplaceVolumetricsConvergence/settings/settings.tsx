@@ -9,7 +9,7 @@ import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 
 import {
     userSelectedEnsembleIdentsAtom,
@@ -24,6 +24,7 @@ import {
     selectedFluidZonesAtom,
     selectedIdentifiersValuesAtom,
     selectedResultNameAtom,
+    selectedSubplotByAtom,
     selectedTableNamesAtom,
     tableDefinitionsAccessorAtom,
 } from "./atoms/derivedAtoms";
@@ -52,7 +53,8 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     const selectedResultName = useAtomValue(selectedResultNameAtom);
     const setSelectedResultName = useSetAtom(userSelectedResultNameAtom);
 
-    const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(userSelectedSubplotByAtom);
+    const selectedSubplotBy = useAtomValue(selectedSubplotByAtom);
+    const setSelectedSubplotBy = useSetAtom(userSelectedSubplotByAtom);
 
     function handleFilterChange(newFilter: InplaceVolumetricsFilter) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
@@ -66,6 +68,12 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         .map((name) => ({ label: name, value: name }));
 
     const subplotOptions: DropdownOption<SubplotByInfo>[] = [
+        {
+            value: {
+                subplotBy: SubplotBy.NONE,
+            },
+            label: "None",
+        },
         {
             value: {
                 subplotBy: SubplotBy.SOURCE,
@@ -89,10 +97,13 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         });
     }
 
+    // Subplot automatically set to "Source" if multiple ensembles or tables selected
+    const subplotOptionDisabled = selectedEnsembleIdents.length > 1 || selectedTableNames.length > 1;
+
     return (
         <div className="flex flex-col gap-2">
             <PendingWrapper isPending={tableDefinitionsQueryResult.isLoading}>
-                <CollapsibleGroup title="Result and grouping" expanded>
+                <CollapsibleGroup title="Result and subplots" expanded>
                     <div className="flex flex-col gap-2">
                         <Label text="Result">
                             <Dropdown
@@ -101,11 +112,19 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                                 onChange={setSelectedResultName}
                             />
                         </Label>
-                        <Label text="Subplot by">
+                        <Label
+                            text="Subplot by"
+                            title={
+                                subplotOptionDisabled
+                                    ? "When having selecting multiple sources (ensembles/tables), the subplot option is automatically set to source and cannot be changed."
+                                    : undefined
+                            }
+                        >
                             <Dropdown
                                 value={selectedSubplotBy ?? undefined}
                                 options={subplotOptions}
                                 onChange={setSelectedSubplotBy}
+                                disabled={subplotOptionDisabled}
                             />
                         </Label>
                     </div>

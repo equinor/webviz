@@ -1,6 +1,7 @@
+import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query, Body
+from fastapi import APIRouter, Depends, Query, Body, Response
 
 from primary.services.sumo_access.inplace_volumetrics_access import (
     InplaceVolumetricsAccess as InplaceVolumetricsAccessOld,
@@ -9,10 +10,12 @@ from primary.services.inplace_volumetrics_provider.inplace_volumetrics_provider 
 from primary.services.sumo_access.inplace_volumetrics_acces_NEW import InplaceVolumetricsAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
-
+from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 from . import schemas
 from . import converters
+
+LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -60,6 +63,7 @@ async def get_result_data_per_realization(
 
 @router.post("/get_aggregated_table_data/", tags=["inplace_volumetrics"])
 async def post_get_aggregated_table_data(
+    response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
@@ -79,9 +83,13 @@ async def post_get_aggregated_table_data(
     calculate_mean_across_realizations: bool = Query(description="Whether to calculate mean across realizations"),
 ) -> schemas.InplaceVolumetricTableDataPerFluidSelection:
     """Get aggregated volumetric data for a given table, result and categories/index filter."""
+    perf_metrics = ResponsePerfMetrics(response)
+
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
+
+    perf_metrics.record_lap("get-access")
 
     provider = InplaceVolumetricsProvider(access)
 
@@ -95,5 +103,9 @@ async def post_get_aggregated_table_data(
         accumulate_fluid_zones=accumulate_fluid_zones,
         calculate_mean_across_realizations=calculate_mean_across_realizations,
     )
+
+    perf_metrics.record_lap("calculate-accumulated-data")
+
+    LOGGER.info(f"Got aggregated volumetric data in: {perf_metrics.to_string()}")
 
     return converters.convert_table_data_per_fluid_selection_to_schema(data)

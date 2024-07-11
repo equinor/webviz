@@ -1,6 +1,6 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { SubplotByInfo } from "@modules/InplaceVolumetricsConvergence/typesAndEnums";
+import { SubplotBy, SubplotByInfo } from "@modules/InplaceVolumetricsConvergence/typesAndEnums";
 
 import { atom } from "jotai";
 
@@ -9,4 +9,4 @@ export const userSelectedTableNamesAtom = atom<string[] | null>(null);
 export const userSelectedFluidZonesAtom = atom<FluidZone_api[] | null>(null);
 export const userSelectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWithValues_api[] | null>(null);
 export const userSelectedResultNameAtom = atom<InplaceVolumetricResultName_api | null>(null);
-export const userSelectedSubplotByAtom = atom<SubplotByInfo | null>(null);
+export const userSelectedSubplotByAtom = atom<SubplotByInfo>({ subplotBy: SubplotBy.NONE });
