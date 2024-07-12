@@ -1,7 +1,9 @@
 import React from "react";
 
+import { SurfaceDef_api } from "@api";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { Vector2, rotatePointAround } from "@lib/utils/Vector2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
@@ -13,7 +15,8 @@ export function MapView(props: ModuleViewProps<MapState>) {
     const surfaceAddress = props.viewContext.useStoreValue("surfaceAddress");
 
     const statusWriter = useViewStatusWriter(props.viewContext);
-    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress);
+
+    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
 
     const isLoading = surfDataQuery.isFetching;
     statusWriter.setLoading(isLoading);
@@ -36,23 +39,33 @@ export function MapView(props: ModuleViewProps<MapState>) {
                 <SubsurfaceViewer
                     id="deckgl"
                     layers={[
-                        {
-                            "@@type": "MapLayer",
-                            id: "mesh-layer",
-                            // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
-                            meshData: Array.from(surfData.valuesFloat32Arr),
-                            frame: {
-                                origin: [surfData.x_ori, surfData.y_ori],
-                                count: [surfData.x_count, surfData.y_count],
-                                increment: [surfData.x_inc, surfData.y_inc],
-                                rotDeg: surfData.rot_deg,
-                            },
+                        // {
+                        //     "@@type": "MapLayer",
+                        //     "@@typedArraySupport": true,
+                        //     id: "mesh-layer",
+                        //     meshData: surfData.valuesFloat32Arr,
+                        //     frame: {
+                        //         origin: [surfData.surface_def.origin_utm_x, surfData.surface_def.origin_utm_y],
+                        //         count: [surfData.surface_def.npoints_x, surfData.surface_def.npoints_y],
+                        //         increment: [surfData.surface_def.inc_x, surfData.surface_def.inc_y],
+                        //         rotDeg: surfData.surface_def.rot_deg,
+                        //     },
 
-                            contours: [0, 100],
-                            isContoursDepth: true,
-                            gridLines: false,
-                            material: true,
-                            smoothShading: true,
+                        //     contours: [0, 100],
+                        //     isContoursDepth: true,
+                        //     gridLines: false,
+                        //     material: true,
+                        //     smoothShading: true,
+                        //     colorMapName: "Physics",
+                        // },
+                        {
+                            // Experiment with showing PNG image in a ColormapLayer
+                            "@@type": "ColormapLayer",
+                            id: "image-layer",
+                            image: `data:image/png;base64,${surfData.png_image_base64}`,
+                            bounds: _calcBoundsForRotationAroundUpperLeftCorner(surfData.surface_def),
+                            rotDeg: surfData.surface_def.rot_deg,
+                            valueRange: [surfData.value_min, surfData.value_max],
                             colorMapName: "Physics",
                         },
                     ]}
@@ -60,4 +73,25 @@ export function MapView(props: ModuleViewProps<MapState>) {
             )}
         </div>
     );
+}
+
+// Calculate Deck.gl style bounds that are suitable for usage with a rotated image in the ColormapLayer,
+// which expects rotation to be specified around the upper left corner of the image.
+//
+// The ColormapLayer derives from deck.gl's BitmapLayer, which expects bounds in the form [left, bottom, right, top]
+function _calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): number[] {
+    const width = (surfDef.npoints_x - 1) * surfDef.inc_x;
+    const height = (surfDef.npoints_y - 1) * surfDef.inc_y;
+    const orgRotPoint: Vector2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y };
+    const orgTopLeft: Vector2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y + height };
+
+    const transTopLeft: Vector2 = rotatePointAround(orgTopLeft, orgRotPoint, (surfDef.rot_deg * Math.PI) / 180);
+    const tLeft = transTopLeft.x;
+    const tBottom = transTopLeft.y - height;
+    const tRight = transTopLeft.x + width;
+    const tTop = transTopLeft.y;
+
+    const bounds = [tLeft, tBottom, tRight, tTop];
+
+    return bounds;
 }

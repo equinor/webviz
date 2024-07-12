@@ -1,42 +1,50 @@
-from typing import Optional
+from typing import Optional, Literal, Any, ClassVar, LiteralString, TypeGuard
 from dataclasses import dataclass
+
+from ...utils.query_string_utils import encode_as_uint_list_str, decode_uint_list_str
+
+_DELIMITER = "~~"
 
 
 @dataclass(frozen=True)
 class RealSurfAddr:
+    address_type: ClassVar[Literal["REAL"]] = "REAL"
     case_uuid: str
-    iteration_name: str
-    surface_name: str
-    attribute_name: str
+    ensemble_name: str
+    name: str
+    attribute: str
     realization: int
-    iso_date_or_interval: str | None
+    iso_time_or_interval: str | None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.case_uuid:
-            raise ValueError("case_uuid must be a non-empty string")
-        if not self.iteration_name:
-            raise ValueError("iteration_name must be a non-empty string")
-        if not self.surface_name:
-            raise ValueError("surface_name must be a non-empty string")
-        if not self.attribute_name:
-            raise ValueError("attribute_name must be a non-empty string")
+            raise ValueError("RealSurfAddr.case_uuid must be a non-empty string")
+        if not self.ensemble_name:
+            raise ValueError("RealSurfAddr.ensemble_name must be a non-empty string")
+        if not self.name:
+            raise ValueError("RealSurfAddr.name must be a non-empty string")
+        if not self.attribute:
+            raise ValueError("RealSurfAddr.attribute must be a non-empty string")
         if type(self.realization) != int:
-            raise ValueError("realization must be an integer")
-        if self.iso_date_or_interval and len(self.iso_date_or_interval) == 0:
-            raise ValueError("iso_date_or_interval cannot be empty")
+            raise ValueError("RealSurfAddr.realization must be an integer")
+        if self.iso_time_or_interval and len(self.iso_time_or_interval) == 0:
+            raise ValueError("RealSurfAddr.iso_time_or_interval must be None or a non-empty string")
 
     @classmethod
     def from_addr_str(cls, addr_str: str) -> "RealSurfAddr":
-        component_arr = addr_str.split("~")
-        if len(component_arr) < 6:
-            raise ValueError("Too few components in address string")
+        component_arr = addr_str.split(_DELIMITER)
+        if len(component_arr) == 1:
+            raise ValueError("Could not parse string as a surface address")
 
-        addr_type = component_arr[0]
-        if addr_type != "REAL":
-            raise ValueError("Wrong address type")
+        addr_type_str = component_arr[0]
+        if addr_type_str != "REAL":
+            raise ValueError("Wrong surface address type")
+
+        if len(component_arr) < 6:
+            raise ValueError("Too few components in realization address string")
 
         case_uuid = component_arr[1]
-        iteration_name = component_arr[2]
+        ensemble_name = component_arr[2]
         surface_name = component_arr[3]
         attribute_name = component_arr[4]
         realization = int(component_arr[5])
@@ -45,55 +53,90 @@ class RealSurfAddr:
         if len(component_arr) > 6 and len(component_arr[6]) > 0:
             iso_date_or_interval = component_arr[6]
 
-        return cls(case_uuid, iteration_name, surface_name, attribute_name, realization, iso_date_or_interval)
+        return cls(case_uuid, ensemble_name, surface_name, attribute_name, realization, iso_date_or_interval)
 
     def to_addr_str(self) -> str:
-        component_arr = ["REAL", self.case_uuid, self.iteration_name, self.surface_name, self.attribute_name, str(self.realization)]
-        if self.iso_date_or_interval:
-            component_arr.append(self.iso_date_or_interval)
-        return "~".join(component_arr)
+        component_arr = ["REAL", self.case_uuid, self.ensemble_name, self.name, self.attribute, str(self.realization)]
+        if self.iso_time_or_interval:
+            component_arr.append(self.iso_time_or_interval)
+        return _DELIMITER.join(component_arr)
 
 
 @dataclass(frozen=True)
 class ObsSurfAddr:
+    address_type: ClassVar[Literal["OBS"]] = "OBS"
     case_uuid: str
-    surface_name: str
-    attribute_name: str
-    iso_date_or_interval: str
+    name: str
+    attribute: str
+    iso_time_or_interval: str
+
+    def __post_init__(self) -> None:
+        if not self.case_uuid:
+            raise ValueError("ObsSurfAddr.case_uuid must be a non-empty string")
+        if not self.name:
+            raise ValueError("ObsSurfAddr.name must be a non-empty string")
+        if not self.attribute:
+            raise ValueError("ObsSurfAddr.attribute must be a non-empty string")
+        if not self.iso_time_or_interval:
+            raise ValueError("ObsSurfAddr.iso_time_or_interval must non-empty string")
+
+    @classmethod
+    def from_addr_str(cls, addr_str: str) -> "ObsSurfAddr":
+        component_arr = addr_str.split(_DELIMITER)
+        if len(component_arr) == 1:
+            raise ValueError("Could not parse string as a surface address")
+
+        addr_type_str = component_arr[0]
+        if addr_type_str != "OBS":
+            raise ValueError("Wrong surface address type")
+
+        if len(component_arr) < 5:
+            raise ValueError("Too few components in observed address string")
+
+        case_uuid = component_arr[1]
+        surface_name = component_arr[2]
+        attribute_name = component_arr[3]
+        iso_date_or_interval = component_arr[4]
+
+        return cls(case_uuid, surface_name, attribute_name, iso_date_or_interval)
 
 
 @dataclass(frozen=True)
 class PartialSurfAddr:
+    address_type: ClassVar[Literal["PARTIAL"]] = "PARTIAL"
     case_uuid: str
-    iteration_name: str
-    surface_name: str
-    attribute_name: str
-    iso_date_or_interval: str | None
+    ensemble_name: str
+    name: str
+    attribute: str
+    iso_time_or_interval: str | None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.case_uuid:
-            raise ValueError("case_uuid must be a non-empty string")
-        if not self.iteration_name:
-            raise ValueError("iteration_name must be a non-empty string")
-        if not self.surface_name:
-            raise ValueError("surface_name must be a non-empty string")
-        if not self.attribute_name:
-            raise ValueError("attribute_name must be a non-empty string")
-        if self.iso_date_or_interval and len(self.iso_date_or_interval) == 0:
-            raise ValueError("iso_date_or_interval cannot be empty")
+            raise ValueError("PartialSurfAddr.case_uuid must be a non-empty string")
+        if not self.ensemble_name:
+            raise ValueError("PartialSurfAddr.ensemble_name must be a non-empty string")
+        if not self.name:
+            raise ValueError("PartialSurfAddr.name must be a non-empty string")
+        if not self.attribute:
+            raise ValueError("PartialSurfAddr.attribute must be a non-empty string")
+        if self.iso_time_or_interval and len(self.iso_time_or_interval) == 0:
+            raise ValueError("PartialSurfAddr.iso_time_or_interval must be None or a non-empty string")
 
     @classmethod
-    def from_addr_str(cls, addr_str: str) -> Optional["PartialSurfAddr"]:
-        component_arr = addr_str.split("~")
-        if len(component_arr) < 5:
-            raise ValueError("Too few components in address string")
+    def from_addr_str(cls, addr_str: str) -> "PartialSurfAddr":
+        component_arr = addr_str.split(_DELIMITER)
+        if len(component_arr) == 1:
+            raise ValueError("Could not parse string as a surface address")
 
-        addr_type = component_arr[0]
-        if addr_type != "PARTIAL":
-            raise ValueError("Wrong address type")
+        addr_type_str = component_arr[0]
+        if addr_type_str != "PARTIAL":
+            raise ValueError("Wrong surface address type")
+
+        if len(component_arr) < 5:
+            raise ValueError("Too few components in partial address string")
 
         case_uuid = component_arr[1]
-        iteration_name = component_arr[2]
+        ensemble_name = component_arr[2]
         surface_name = component_arr[3]
         attribute_name = component_arr[4]
 
@@ -101,123 +144,171 @@ class PartialSurfAddr:
         if len(component_arr) > 5 and len(component_arr[5]) > 0:
             iso_date_or_interval = component_arr[5]
 
-        return cls(case_uuid, iteration_name, surface_name, attribute_name, iso_date_or_interval)
+        return cls(case_uuid, ensemble_name, surface_name, attribute_name, iso_date_or_interval)
 
     def to_addr_str(self) -> str:
-        component_arr = ["PARTIAL", self.case_uuid, self.iteration_name, self.surface_name, self.attribute_name]
-        if self.iso_date_or_interval:
-            component_arr.append(self.iso_date_or_interval)
-        return "~".join(component_arr)
+        component_arr = ["PARTIAL", self.case_uuid, self.ensemble_name, self.name, self.attribute]
+        if self.iso_time_or_interval:
+            component_arr.append(self.iso_time_or_interval)
+        return _DELIMITER.join(component_arr)
+
+
+def is_int_list(my_list: list[object]) -> TypeGuard[list[int]]:
+    '''Determines whether all objects in the list are ints'''
+    return all(isinstance(i, int) for i in my_list)
+
+
+def is_valid_statistic_function(stat_func_str: str) -> TypeGuard[Literal["MEAN", "STD", "MIN", "MAX", "P10", "P90", "P50"]]:
+    return stat_func_str in ["MEAN", "STD", "MIN", "MAX", "P10", "P90", "P50"]
 
 
 
+@dataclass(frozen=True)
+class StatSurfAddr:
+    address_type: ClassVar[Literal["STAT"]] = "STAT"
+    case_uuid: str
+    ensemble_name: str
+    name: str
+    attribute: str
+    stat_function: Literal["MEAN", "STD", "MIN", "MAX", "P10", "P90", "P50"]
+    stat_realizations: list[int] | None
+    iso_time_or_interval: str | None
 
-def parse_int_list_string(int_arr_str: str) -> list[int]:
-    """
-    Parse a string containing an array of comma separated integers and integer ranges.
-    """
-    elements = int_arr_str.split(',')
-    int_arr: list[int] = []
-    for element in elements:
-        if '-' in element:
-            start, end = element.split('-')
-            start, end = int(start), int(end)
-            int_arr.extend(range(start, end + 1))
-        else:
-            int_arr.append(int(element))
+    def __post_init__(self) -> None:
+        if not self.case_uuid:
+            raise ValueError("StatSurfAddr.case_uuid must be a non-empty string")
+        if not self.ensemble_name:
+            raise ValueError("StatSurfAddr.ensemble_name must be a non-empty string")
+        if not self.name:
+            raise ValueError("StatSurfAddr.name must be a non-empty string")
+        if not self.attribute:
+            raise ValueError("StatSurfAddr.attribute must be a non-empty string")
+        if not self.stat_function:
+            raise ValueError("StatSurfAddr.statistic_function must be a non-empty string")
+        if self.stat_realizations and not isinstance(self.stat_realizations, list):
+            raise ValueError("StatSurfAddr.realizations must be None or a list of integers")
+        if self.iso_time_or_interval and len(self.iso_time_or_interval) == 0:
+            raise ValueError("StatSurfAddr.iso_time_or_interval must be None or a non-empty string")
+
+    @classmethod
+    def from_addr_str(cls, addr_str: str) -> "StatSurfAddr":
+        component_arr = addr_str.split(_DELIMITER)
+        if len(component_arr) == 1:
+            raise ValueError("Could not parse string as a surface address")
+
+        addr_type_str = component_arr[0]
+        if addr_type_str != "STAT":
+            raise ValueError("Wrong surface address type")
+
+        if len(component_arr) < 7:
+            raise ValueError("Too few components in statistical address string")
+
+        case_uuid = component_arr[1]
+        ensemble_name = component_arr[2]
+        surface_name = component_arr[3]
+        attribute_name = component_arr[4]
+        statistic_function = component_arr[5]
+        realizations_str = component_arr[6]
+
+        iso_date_or_interval: str | None = None
+        if len(component_arr) > 7 and len(component_arr[7]) > 0:
+            iso_date_or_interval = component_arr[7]
+
+        realizations: list[int] | None = None
+        if realizations_str != "*":
+            realizations = decode_uint_list_str(realizations_str)
+
+        if not is_valid_statistic_function(statistic_function):
+            raise ValueError("Invalid statistic function")
+
+        return cls(case_uuid, ensemble_name, surface_name, attribute_name, statistic_function, realizations, iso_date_or_interval)
+
+    def to_addr_str(self) -> str:
+        realizations_str = "*"
+        if self.stat_realizations is not None:
+            realizations_str = encode_as_uint_list_str(self.stat_realizations)
+
+        component_arr = ["STAT", self.case_uuid, self.ensemble_name, self.name, self.attribute, self.stat_function, realizations_str]
+        if self.iso_time_or_interval:
+            component_arr.append(self.iso_time_or_interval)
+
+        return _DELIMITER.join(component_arr)
+
+
+
+def peek_surf_addr_type(addr_str: str) -> Literal["REAL", "OBS", "STAT", "PARTIAL"] | None:
+    component_arr = addr_str.split(_DELIMITER)
+    if len(component_arr) < 1:
+        return None
     
-    ret_arr = sorted(set(int_arr))
+    addr_type_str = component_arr[0]
+    if addr_type_str == "REAL":
+        return "REAL"
+    if addr_type_str == "OBS":
+        return "OBS"
+    if addr_type_str == "STAT":
+        return "STAT"
+    if addr_type_str == "PARTIAL":
+        return "PARTIAL"
 
-    return ret_arr
+    return None
 
 
-def encode_int_list_to_string(int_list: list[int]) -> str:
-    """
-    Encode a list of integers into a string, utilizing ranges to make it more compact
-    """
-    if not int_list:
-        return ""
-    
-    # Remove duplicates and sort
-    int_list = sorted(set(int_list))  
+def decode_surf_addr_str(addr_str: str) -> RealSurfAddr | ObsSurfAddr | StatSurfAddr | PartialSurfAddr:
+    addr_type = peek_surf_addr_type(addr_str)
+    if addr_type is None:
+        raise ValueError("Unknown or missing surface address type")
 
-    encoded_parts = []
-    start_val = int_list[0]
-    end_val = start_val
-    
-    for val in int_list[1:]:
-        if val == end_val + 1:
-            end_val = val
-        else:
-            if start_val == end_val:
-                encoded_parts.append(f"{start_val}")
-            else:
-                encoded_parts.append(f"{start_val}-{end_val}")
-            start_val = val
-            end_val = val
-    
-    # Add the last one
-    if start_val == end_val:
-        encoded_parts.append(f"{start_val}")
-    else:
-        encoded_parts.append(f"{start_val}-{end_val}")
-    
-    return ','.join(encoded_parts)
+    if addr_type == "REAL":
+        return RealSurfAddr.from_addr_str(addr_str)
+    if addr_type == "OBS":
+        return ObsSurfAddr.from_addr_str(addr_str)
+    if addr_type == "STAT":
+        return StatSurfAddr.from_addr_str(addr_str)
+    if addr_type == "PARTIAL":
+        return PartialSurfAddr.from_addr_str(addr_str)
+
+    raise ValueError(f"Unsupported surface address type {addr_type=}")
 
 
 
 
-# // Parse page ranges into array of numbers
-# function parseRealizationRangeString(realRangeStr: string, maxLegalReal: number): number[] {
-#     const realArr: number[] = [];
-
-#     const rangeArr = realRangeStr.split(",");
-#     for (const aRange of rangeArr) {
-#         const rangeParts = aRange.split("-");
-#         if (rangeParts.length === 1) {
-#             const real = parseInt(rangeParts[0], 10);
-#             if (real >= 0 && real <= maxLegalReal) {
-#                 realArr.push(real);
-#             }
-#         } else if (rangeParts.length === 2) {
-#             const startReal = parseInt(rangeParts[0], 10);
-#             const endReal = parseInt(rangeParts[1], 10);
-#             if (startReal >= 0 && startReal <= maxLegalReal && endReal >= startReal) {
-#                 for (let i = startReal; i <= Math.min(endReal, maxLegalReal); i++) {
-#                     realArr.push(i);
-#                 }
-#             }
-#         }
-#     }
-
-#     // Sort and remove duplicates
-#     return sortedUniq(sortBy(realArr));
-# }
-
-
+# Running:
+#   python -m primary.routers.surface.surface_address
 if __name__ == "__main__":
     print("Testing SurfAddr\n")
+
+    a0 : PartialSurfAddr | RealSurfAddr | StatSurfAddr
+    a1 : PartialSurfAddr | RealSurfAddr | StatSurfAddr
 
     # a0 = PartialSurfAddr("88f940d4-e57b-44ce-8e62-b3e30cf2c1ec", "iter-0", "some.surface.name", "my_attr_name", None)
     # a1 = PartialSurfAddr.from_addr_str(a0.to_addr_str())
     # print(f"{type(a0)=}  {a0.to_addr_str()=}")
     # print(f"{type(a1)=}  {a1=}")
 
-    # a0 = PartialSurfAddr("88f940d4-e57b-44ce-8e62-b3e30cf2c1ec", "", "some.surface.name", "my_attr_name", "1997-07-02T00:00:00/2006-07-02T00:00:00")
-    # a1 = PartialSurfAddr.from_addr_str(a0.to_addr_str())
-    # print(f"{type(a0)=}  {a0.to_addr_str()=}")
-    # print(f"{type(a1)=}  {a1=}")
-
-    # a0 = RealSurfAddr("88f940d4-e57b-44ce-8e62-b3e30cf2c1ec", "iter-0", "some.surface.name", "my_attr_name", realization=1, iso_date_or_interval=None)
+    # a0 = RealSurfAddr("88f940d4-e57b-44ce-8e62-b3e30cf2c1ec", "iter-0", "some.surface.name", "my_attr_name", realization=1, iso_time_or_interval=None)
     # a1 = RealSurfAddr.from_addr_str(a0.to_addr_str())
     # print(f"{type(a0)=}  {a0.to_addr_str()=}")
     # print(f"{type(a1)=}  {a1=}")
 
-    print(parse_int_list_string("1,2,3-6,1,6-8"))
+    # a0 = PartialSurfAddr("88f940d4-e57b-44ce-8e62-b3e30cf2c1ec", "iter-0", "some.surface.name", "my_attr_name", "1997-07-02T00:00:00/2006-07-02T00:00:00")
+    # a1 = PartialSurfAddr.from_addr_str(a0.to_addr_str())
+    # print(f"{type(a0)=}  {a0.to_addr_str()=}")
+    # print(f"{type(a1)=}  {a1=}")
 
-    int_list = [1,2,3,10,5,7,8,1,-2,-3]
-    as_str = encode_int_list_to_string(int_list)
-    back_to_list = parse_int_list_string(as_str)
-    print(f"{int_list=}")
-    print(f"{as_str=}")
-    print(f"{back_to_list=}")
+    a0 = StatSurfAddr("88f940d4-e57b-44ce-8e62-b3e30cf2c1ec", "iter-0", "some.surface.name", "my_attr_name", "MEAN", None, "1997-07-02T00:00:00/2006-07-02T00:00:00")
+    a1 = StatSurfAddr.from_addr_str(a0.to_addr_str())
+    print(f"{type(a0)=}  {a0.to_addr_str()=}")
+    print(f"{type(a1)=}  {a1=}")
+
+    a0 = StatSurfAddr("88f940d4-e57b-44ce-8e62-b3e30cf2c1ec", "iter-0", "some.surface.name", "my_attr_name", "MEAN", [1,3,4,6,7,9], "1997-07-02T00:00:00/2006-07-02T00:00:00")
+    a1 = StatSurfAddr.from_addr_str(a0.to_addr_str())
+    print(f"{type(a0)=}  {a0.to_addr_str()=}")
+    print(f"{type(a1)=}  {a1=}")
+
+    a0 = StatSurfAddr("88f940d4-e57b-44ce-8e62-b3e30cf2c1ec", "iter-0", "some.surface.name", "my_attr_name", "MEAN", [], "1997-07-02T00:00:00/2006-07-02T00:00:00")
+    print(f"{type(a0)=}  {a0.to_addr_str()=}")
+    a1 = StatSurfAddr.from_addr_str(a0.to_addr_str())
+    print(f"{type(a1)=}  {a1=}")
+
+    # b = decode_surf_addr_str(a1.to_addr_str())

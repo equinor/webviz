@@ -17,14 +17,24 @@ from .schemas import SurfaceAttributeType
 # obsTimePointAddr      caseUuid.surfaceName.attributeName.timePoint
 # obsTimeIntervalAddr   caseUuid.surfaceName.attributeName.timeInterval
 #
+# statStaticAddr        caseUuid.ensembleName.surfaceName.attributeName.statFunction.realizationsList
+# statTimePointAddr     caseUuid.ensembleName.surfaceName.attributeName.statFunction.realizationsList.timePoint
+# statTimeIntervalAddr  caseUuid.ensembleName.surfaceName.attributeName.statFunction.realizationsList.timeInterval
+#
 # partialStaticAddr         caseUuid.ensembleName.surfaceName.attributeName
 # partialTimePointAddr      caseUuid.ensembleName.surfaceName.attributeName.timePoint
 # partialTimeIntervalAddr   caseUuid.ensembleName.surfaceName.attributeName.timeInterval
 #
 
+# statAddr  caseUuid.ensembleName.surfaceName.attributeName.statFunction.1!2!3-6!9.timeInterval
+# statAddr  caseUuid.ensembleName.surfaceName.attributeName.statFunction.*.timeInterval
+
+
+
 # Possible new routes using the address scheme
 #
 # getSurfaceData(surfAddr: string): SurfaceData
+
 # getStatisticalSurfaceData(partialSurfAddr: string, realizations: list[int], statistical_functions: list[int]): list[SurfaceData]
 #
 # getDeltaSurfaceData(surfAddr1: string, surfAddr2: string): SurfaceData

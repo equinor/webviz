@@ -15,7 +15,9 @@ import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
-import { SurfaceAddress, SurfaceAddressFactory, SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
+import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
+import { FullSurfAddr } from "@modules/_shared/Surface/surfaceAddress";
+import { SurfAddrBuilder } from "@modules/_shared/Surface/SurfaceAddressBuilder";
 import { useObservedSurfacesMetadataQuery, useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
 
 import { MapState } from "./MapState";
@@ -99,24 +101,36 @@ export function MapSettings(props: ModuleSettingsProps<MapState>) {
     }
 
     React.useEffect(function propagateSurfaceSelectionToView() {
-        let surfaceAddress: SurfaceAddress | null = null;
+        let surfaceAddress: FullSurfAddr | null = null;
         if (computedEnsembleIdent && computedSurfaceName && computedSurfaceAttribute) {
-            const addrFactory = new SurfaceAddressFactory(
-                computedEnsembleIdent.getCaseUuid(),
-                computedEnsembleIdent.getEnsembleName(),
-                computedSurfaceName,
-                computedSurfaceAttribute,
-                computedTimeOrInterval
-            );
-            if (aggregation === null) {
-                if (useObserved) {
-                    surfaceAddress = addrFactory.createObservedAddress();
-                } else {
-                    surfaceAddress = addrFactory.createRealizationAddress(realizationNum);
-                }
-            } else {
-                surfaceAddress = addrFactory.createStatisticalAddress(aggregation);
+            const addrBuilder = new SurfAddrBuilder();
+            addrBuilder.withEnsembleIdent(computedEnsembleIdent);
+            addrBuilder.withName(computedSurfaceName);
+            addrBuilder.withAttribute(computedSurfaceAttribute);
+            if (computedTimeOrInterval) {
+                addrBuilder.withTimeOrInterval(computedTimeOrInterval);
             }
+
+            if (aggregation) {
+                addrBuilder.withType("STAT");
+                addrBuilder.withStatisticFunction(aggregation);
+            }
+            else {
+                if (useObserved) {
+                    addrBuilder.withType("OBS");
+                }
+                else {
+                    addrBuilder.withType("REAL");
+                    addrBuilder.withRealization(realizationNum);
+                }
+            }
+
+            const builtAddr = addrBuilder.buildAddr();
+            if (builtAddr.addressType !== "PARTIAL") {
+                surfaceAddress = builtAddr;
+            }
+            const addrStr = addrBuilder.buildAddrStringNoThrow();
+            console.log(`addrStr: ${addrStr}`);
         }
 
         console.debug(`propagateSurfaceSelectionToView() => ${surfaceAddress ? "valid surfAddr" : "NULL surfAddr"}`);

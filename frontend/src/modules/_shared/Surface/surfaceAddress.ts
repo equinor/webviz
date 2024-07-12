@@ -1,89 +1,129 @@
 import { SurfaceStatisticFunction_api } from "@api";
+import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 
-export interface RealizationSurfaceAddress {
-    addressType: "realization";
+
+export interface RealSurfAddr {
+    addressType: "REAL";
     caseUuid: string;
     ensemble: string;
     name: string;
     attribute: string;
     realizationNum: number;
-    isoDateOrInterval: string | null;
+    isoTimeOrInterval: string | null;
 }
 
-export interface ObservedSurfaceAddress {
-    addressType: "observed";
+export interface ObsSurfAddr {
+    addressType: "OBS";
+    caseUuid: string;
+    name: string;
+    attribute: string;
+    isoTimeOrInterval: string;
+}
+
+export interface StatSurfAddr {
+    addressType: "STAT";
     caseUuid: string;
     ensemble: string;
     name: string;
     attribute: string;
-    isoDateOrInterval: string | null;
+    statFunction: SurfaceStatisticFunction_api;
+    statRealizations: number[] | null;
+    isoTimeOrInterval: string | null;
 }
 
-export interface StatisticalSurfaceAddress {
-    addressType: "statistical";
+export interface PartialSurfAddr {
+    addressType: "PARTIAL";
     caseUuid: string;
     ensemble: string;
     name: string;
     attribute: string;
-    isoDateOrInterval: string | null;
-    statisticFunction: SurfaceStatisticFunction_api;
+    isoTimeOrInterval: string | null;
 }
 
-export type SurfaceAddress = RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress;
+export type FullSurfAddr = RealSurfAddr | ObsSurfAddr | StatSurfAddr;
 
-export function makeSurfaceAddressString(addr: SurfaceAddress): string {
-    const valueArr = Object.values(addr);
-    const str = valueArr.join("--");
-    return str;
+export type AnySurfAddr = RealSurfAddr | ObsSurfAddr | PartialSurfAddr | StatSurfAddr;
+
+
+//export type AddrTypes = "REAL" | "OBS" | "STAT" | "PARTIAL";
+
+const AddrTypeValues = ["REAL", "OBS", "STAT", "PARTIAL"] as const; 
+export type AddrTypes = typeof AddrTypeValues[number]; 
+
+
+
+const DELIMITER = "~~";
+
+export function encodeRealSurfAddrStr(addr: Omit<RealSurfAddr, "addressType">): string {
+    const componentArr = ["REAL", addr.caseUuid, addr.ensemble, addr.name, addr.attribute, addr.realizationNum]
+    if (addr.isoTimeOrInterval !== null) {
+        componentArr.push(addr.isoTimeOrInterval);
+    }
+
+    const addrStr = componentArr.join(DELIMITER);
+    return addrStr;
 }
 
-export class SurfaceAddressFactory {
-    private _caseUuid: string;
-    private _ensemble: string;
-    private _name: string;
-    private _attribute: string;
-    private _isoDateOrInterval: string | null;
-
-    constructor(caseUuid: string, ensemble: string, name: string, attribute: string, isoDateOrInterval: string | null) {
-        this._caseUuid = caseUuid;
-        this._ensemble = ensemble;
-        this._name = name;
-        this._attribute = attribute;
-        this._isoDateOrInterval = isoDateOrInterval;
+export function encodeObsSurfAddrStr(addr: Omit<ObsSurfAddr, "addressType">): string {
+    const componentArr = ["OBS", addr.caseUuid, addr.name, addr.attribute]
+    if (addr.isoTimeOrInterval !== null) {
+        componentArr.push(addr.isoTimeOrInterval);
     }
 
-    createRealizationAddress(realizationNum: number): RealizationSurfaceAddress {
-        return {
-            addressType: "realization",
-            caseUuid: this._caseUuid,
-            ensemble: this._ensemble,
-            name: this._name,
-            attribute: this._attribute,
-            realizationNum: realizationNum,
-            isoDateOrInterval: this._isoDateOrInterval,
-        };
+    const addrStr = componentArr.join(DELIMITER);
+    return addrStr;
+}
+
+export function encodeStatSurfAddrStr(addr: Omit<StatSurfAddr, "addressType">): string {
+    let realizationsStr = "*";
+    if (addr.statRealizations != null) {
+        realizationsStr = encodeAsUintListStr(addr.statRealizations);
     }
 
-    createObservedAddress(): ObservedSurfaceAddress {
-        return {
-            addressType: "observed",
-            caseUuid: this._caseUuid,
-            ensemble: this._ensemble,
-            name: this._name,
-            attribute: this._attribute,
-            isoDateOrInterval: this._isoDateOrInterval,
-        };
+    const componentArr = ["STAT", addr.caseUuid, addr.ensemble, addr.name, addr.attribute, addr.statFunction, realizationsStr]
+    if (addr.isoTimeOrInterval !== null) {
+        componentArr.push(addr.isoTimeOrInterval);
     }
 
-    createStatisticalAddress(statFunction: SurfaceStatisticFunction_api): StatisticalSurfaceAddress {
-        return {
-            addressType: "statistical",
-            caseUuid: this._caseUuid,
-            ensemble: this._ensemble,
-            name: this._name,
-            attribute: this._attribute,
-            isoDateOrInterval: this._isoDateOrInterval,
-            statisticFunction: statFunction,
-        };
+    const addrStr = componentArr.join(DELIMITER);
+    return addrStr;
+}
+
+export function encodePartialSurfAddrStr(addr: Omit<PartialSurfAddr, "addressType">): string {
+    const componentArr = ["PARTIAL", addr.caseUuid, addr.ensemble, addr.name, addr.attribute]
+    if (addr.isoTimeOrInterval !== null) {
+        componentArr.push(addr.isoTimeOrInterval);
+    }
+
+    const addrStr = componentArr.join(DELIMITER);
+    return addrStr;
+}
+
+export function encodeSurfAddrStr(addr: AnySurfAddr): string {
+    switch (addr.addressType) {
+        case "REAL":
+            return encodeRealSurfAddrStr(addr);
+        case "OBS":
+            return encodeObsSurfAddrStr(addr);
+        case "STAT":
+            return encodeStatSurfAddrStr(addr);
+        case "PARTIAL":
+            return encodePartialSurfAddrStr(addr);
+        default:
+            throw new Error("Invalid address type");
     }
 }
+
+
+export function peekSurfAddrType(surfAddrStr: string): AddrTypes {
+    const addrTypeStr = surfAddrStr.split(DELIMITER)[0];
+
+    const foundAddrType = AddrTypeValues.find((val) => val === addrTypeStr);
+    if (!foundAddrType) {
+        throw new Error(`Invalid surface address type in : ${surfAddrStr}`);
+    }
+
+    return foundAddrType;
+}
+
+

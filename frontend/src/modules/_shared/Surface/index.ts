@@ -1,5 +1,6 @@
 export { SurfaceDirectory, SurfaceTimeType } from "./surfaceDirectory";
-export { useRealizationSurfacesMetadataQuery, useObservedSurfacesMetadataQuery, useSurfaceDataQueryByAddress } from "./queryHooks";
 export type { SurfaceDirectoryOptions } from "./surfaceDirectory";
-export type { SurfaceAddress } from "./surfaceAddress";
-export { SurfaceAddressFactory } from "./surfaceAddress";
+export type { RealSurfAddr, ObsSurfAddr, StatSurfAddr, PartialSurfAddr } from "./surfaceAddress";
+export { SurfAddrBuilder } from "./SurfaceAddressBuilder";
+export { useRealizationSurfacesMetadataQuery, useObservedSurfacesMetadataQuery } from "./queryHooks";
+export { useSurfaceDataQuery, useSurfaceDataQueryByAddress } from "./queryHooks";
