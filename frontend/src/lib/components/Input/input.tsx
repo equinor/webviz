@@ -11,10 +11,19 @@ export type InputProps = InputUnstyledProps & {
     max?: number;
     rounded?: "all" | "left" | "right" | "none";
     debounceTimeMs?: number;
+    onValueChange?: (value: string) => void;
 };
 
 export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRef<HTMLInputElement>) => {
-    const { startAdornment, endAdornment, wrapperStyle, value: propsValue, onChange, debounceTimeMs, ...other } = props;
+    const {
+        startAdornment,
+        endAdornment,
+        wrapperStyle,
+        value: propsValue,
+        onValueChange,
+        debounceTimeMs,
+        ...other
+    } = props;
 
     const [value, setValue] = React.useState<unknown>(propsValue);
     const [prevValue, setPrevValue] = React.useState<unknown>(propsValue);
@@ -49,50 +58,57 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
         event.stopPropagation();
     }, []);
 
-    const handleInputChange = React.useCallback(
-        function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-            if (props.type === "number") {
-                let newValue = 0;
-                if (!isNaN(parseFloat(event.target.value))) {
-                    newValue = parseFloat(event.target.value || "0");
-                    if (props.min !== undefined) {
-                        newValue = Math.max(props.min, newValue);
-                    }
+    function handleKeyUp(event: React.KeyboardEvent<HTMLInputElement>) {
+        if (event.key === "Enter") {
+            handleInputEditingDone();
+        }
+    }
 
-                    if (props.max !== undefined) {
-                        newValue = Math.min(props.max, newValue);
-                    }
-                } else {
-                    setValue(event.target.value);
-                    return;
+    function handleInputEditingDone() {
+        let adjustedValue: unknown = value;
+        if (props.type === "number") {
+            let newValue = 0;
+
+            if (!isNaN(parseFloat(value as string))) {
+                newValue = parseFloat((value as string) || "0");
+                if (props.min !== undefined) {
+                    newValue = Math.max(props.min, newValue);
                 }
 
-                setValue(newValue);
-
-                event.target.value = newValue.toString();
-            } else {
-                setValue(event.target.value);
+                if (props.max !== undefined) {
+                    newValue = Math.min(props.max, newValue);
+                }
             }
 
-            if (!onChange) {
-                return;
-            }
+            adjustedValue = newValue.toString();
+            setValue(adjustedValue);
+        }
 
-            if (debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current);
-            }
+        if (!onValueChange) {
+            return;
+        }
 
-            if (!debounceTimeMs) {
-                onChange(event);
-                return;
-            }
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
 
-            debounceTimerRef.current = setTimeout(() => {
-                onChange(event);
-            }, debounceTimeMs);
-        },
-        [props.min, props.max, onChange, props.type, debounceTimeMs]
-    );
+        if (!debounceTimeMs) {
+            onValueChange(`${adjustedValue}`);
+            return;
+        }
+
+        debounceTimerRef.current = setTimeout(() => {
+            onValueChange(`${adjustedValue}`);
+        }, debounceTimeMs);
+    }
+
+    function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+        setValue(event.target.value);
+
+        if (props.onChange) {
+            props.onChange(event);
+        }
+    }
 
     return (
         <BaseComponent disabled={props.disabled}>
@@ -133,6 +149,8 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                     {...other}
                     value={value}
                     onChange={handleInputChange}
+                    onBlur={handleInputEditingDone}
+                    onKeyUp={handleKeyUp}
                     ref={internalRef}
                     slotProps={{
                         root: {

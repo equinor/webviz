@@ -16,7 +16,10 @@ const CACHE_TIME = 60 * 1000;
 export type SurfaceLayerSettings = {
     ensembleIdent: EnsembleIdent | null;
     realizationNum: number | null;
-    polylineUtmXy: number[];
+    polyline: {
+        polylineUtmXy: number[];
+        actualSectionLengths: number[];
+    };
     surfaceNames: string[];
     attribute: string | null;
     extensionLength: number;
@@ -26,17 +29,20 @@ export type SurfaceLayerSettings = {
 export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceIntersectionData_api[]> {
     private _colorSet: ColorSet;
 
-    constructor(name: string, queryClient: QueryClient) {
+    constructor(name: string) {
         const defaultSettings = {
             ensembleIdent: null,
             realizationNum: null,
-            polylineUtmXy: [],
+            polyline: {
+                polylineUtmXy: [],
+                actualSectionLengths: [],
+            },
             surfaceNames: [],
             attribute: null,
             extensionLength: 0,
             resolution: 1,
         };
-        super(name, defaultSettings, queryClient);
+        super(name, defaultSettings);
 
         this._colorSet = new ColorSet(defaultColorPalettes[0]);
     }
@@ -92,7 +98,9 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             this._settings.attribute !== null &&
             this._settings.surfaceNames.length > 0 &&
             this._settings.realizationNum !== null &&
-            this._settings.polylineUtmXy.length > 0 &&
+            this._settings.polyline.polylineUtmXy.length > 0 &&
+            this._settings.polyline.actualSectionLengths.length ===
+                this._settings.polyline.polylineUtmXy.length / 2 - 1 &&
             this._settings.resolution > 0
         );
     }
@@ -107,17 +115,17 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             prevSettings.realizationNum !== newSettings.realizationNum ||
             !isEqual(prevSettings.ensembleIdent, newSettings.ensembleIdent) ||
             prevSettings.extensionLength !== newSettings.extensionLength ||
-            !isEqual(prevSettings.polylineUtmXy, newSettings.polylineUtmXy) ||
+            !isEqual(prevSettings.polyline.polylineUtmXy, newSettings.polyline.polylineUtmXy) ||
             prevSettings.resolution !== newSettings.resolution
         );
     }
 
-    protected async fetchData(): Promise<SurfaceIntersectionData_api[]> {
+    protected async fetchData(queryClient: QueryClient): Promise<SurfaceIntersectionData_api[]> {
         const promises: Promise<SurfaceIntersectionData_api>[] = [];
 
         super.setBoundingBox(null);
 
-        const polyline = this._settings.polylineUtmXy;
+        const polyline = this._settings.polyline.polylineUtmXy;
 
         const xPoints: number[] = [];
         const yPoints: number[] = [];
@@ -129,7 +137,9 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
                     { x: polyline[i], y: polyline[i + 1] },
                     { x: polyline[i - 2], y: polyline[i - 1] }
                 );
+                const actualDistance = this._settings.polyline.actualSectionLengths[i / 2 - 1];
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
+                const scale = actualDistance / distance;
 
                 for (let p = 1; p <= numPoints; p++) {
                     const vector: Vector2D = {
@@ -139,7 +149,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
                     const normalizedVector = vectorNormalize(vector);
                     xPoints.push(polyline[i - 2] + normalizedVector.x * this._settings.resolution * p);
                     yPoints.push(polyline[i - 1] + normalizedVector.y * this._settings.resolution * p);
-                    cumulatedHorizontalPolylineLength += this._settings.resolution;
+                    cumulatedHorizontalPolylineLength += this._settings.resolution * scale;
                     cumulatedHorizontalPolylineLengthArr.push(cumulatedHorizontalPolylineLength);
                 }
             }
@@ -175,13 +185,13 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
                 this._settings.realizationNum ?? 0,
                 surfaceName,
                 this._settings.attribute ?? "",
-                this._settings.polylineUtmXy,
+                this._settings.polyline.polylineUtmXy,
                 this._settings.extensionLength,
                 this._settings.resolution,
             ];
             this.registerQueryKey(queryKey);
 
-            const promise = this._queryClient.fetchQuery({
+            const promise = queryClient.fetchQuery({
                 queryKey,
                 queryFn: () =>
                     apiService.surface.postGetSurfaceIntersection(

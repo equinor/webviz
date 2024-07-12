@@ -2,8 +2,10 @@ import React from "react";
 
 import { BoundingBox2d_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Wellbore } from "@framework/types/wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -55,7 +57,7 @@ const updateViewPortBounds = (
 };
 
 //-----------------------------------------------------------------------------------------------------------
-export function View({ viewContext, workbenchSettings, workbenchServices }: ModuleViewProps<state>) {
+export function View({ viewContext, workbenchSettings, workbenchServices, workbenchSession }: ModuleViewProps<state>) {
     const myInstanceIdStr = viewContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap view`);
     const viewIds = {
@@ -64,6 +66,8 @@ export function View({ viewContext, workbenchSettings, workbenchServices }: Modu
         annotation2D: `${myInstanceIdStr} -- annotation2D`,
         annotation3D: `${myInstanceIdStr} -- annotation3D`,
     };
+
+    const ensembleSet = useEnsembleSet(workbenchSession);
 
     const meshSurfAddr = viewContext.useStoreValue("meshSurfaceAddress");
     const propertySurfAddr = viewContext.useStoreValue("propertySurfaceAddress");
@@ -92,7 +96,12 @@ export function View({ viewContext, workbenchSettings, workbenchServices }: Modu
     }
     const propertySurfDataQuery = useSurfaceDataQueryByAddress(propertySurfAddr, "float", resampleTo, hasMeshSurfData);
 
-    const wellTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(meshSurfAddr?.caseUuid);
+    let fieldIdentifier: null | string = null;
+    if (meshSurfAddr) {
+        const ensembleIdent = new EnsembleIdent(meshSurfAddr.caseUuid, meshSurfAddr.ensemble);
+        fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null;
+    }
+    const wellTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(fieldIdentifier ?? undefined);
     const polygonsQuery = usePolygonsDataQueryByAddress(polygonsAddr);
 
     const newLayers: Record<string, unknown>[] = [createNorthArrowLayer()];

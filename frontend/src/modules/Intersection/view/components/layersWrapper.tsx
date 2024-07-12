@@ -6,6 +6,7 @@ import {
     IntersectionReferenceSystem,
     ReferenceLine,
     SurfaceData,
+    SurfaceLine,
     getPicksData,
     getSeismicOptions,
 } from "@equinor/esv-intersection";
@@ -13,6 +14,8 @@ import { ViewContext } from "@framework/ModuleContext";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
 import { LayerItem, LayerType } from "@framework/components/EsvIntersection";
 import { Viewport } from "@framework/components/EsvIntersection/esvIntersection";
+import { SurfaceStatisticalFanchart } from "@framework/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
+import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@framework/components/EsvIntersection/utils/surfaceStatisticalFancharts";
 import { IntersectionType } from "@framework/types/intersection";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
@@ -21,6 +24,7 @@ import { BaseLayer, LayerStatus, useLayers } from "@modules/Intersection/utils/l
 import { GridLayer, isGridLayer } from "@modules/Intersection/utils/layers/GridLayer";
 import { SeismicLayer, isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer";
+import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import { ColorLegendsContainer } from "@modules_shared/components/ColorLegendsContainer";
 
@@ -150,7 +154,10 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     };
     let boundsSetByLayer: boolean = false;
 
-    for (const [index, layer] of layers.toReversed().entries()) {
+    for (let i = layers.length - 1; i >= 0; i--) {
+        const layer = layers[i];
+        const order = layers.length - i;
+
         if (!layer.getIsVisible() || layer.getStatus() !== LayerStatus.SUCCESS) {
             continue;
         }
@@ -211,7 +218,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                         propertyName: layer.getSettings().parameterName ?? "",
                         propertyUnit: "",
                     },
-                    order: index,
+                    order,
                 },
             });
 
@@ -256,7 +263,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                         numTraces: data.seismicFenceData.num_traces,
                         fenceTracesFloat32Array: data.seismicFenceData.fenceTracesFloat32Arr,
                     },
-                    order: index,
+                    order,
                     layerOpacity: 1,
                 },
                 hoverable: true,
@@ -294,7 +301,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 hoverable: true,
                 options: {
                     data: surfaceData,
-                    order: index,
+                    order,
                     referenceSystem: props.referenceSystem ?? undefined,
                 },
             });
@@ -304,7 +311,63 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 type: LayerType.GEOMODEL_LABELS,
                 options: {
                     data: surfaceData,
-                    order: index,
+                    order,
+                    referenceSystem: props.referenceSystem ?? undefined,
+                },
+            });
+        }
+
+        if (isSurfacesUncertaintyLayer(layer)) {
+            const surfaceLayer = layer;
+            const data = surfaceLayer.getData();
+
+            if (!data) {
+                continue;
+            }
+
+            const colorSet = surfaceLayer.getColorSet();
+
+            let currentColor = colorSet.getFirstColor();
+            const labelData: SurfaceLine[] = [];
+            const fancharts: SurfaceStatisticalFanchart[] = [];
+
+            for (const surface of data) {
+                const fanchart = makeSurfaceStatisticalFanchartFromRealizationSurface(
+                    surface.sampledValues,
+                    surface.cumulatedLengths,
+                    surface.surfaceName,
+                    currentColor
+                );
+                labelData.push({
+                    data: fanchart.data.mean,
+                    color: currentColor,
+                    label: surface.surfaceName,
+                });
+                currentColor = colorSet.getNextColor();
+                fancharts.push(fanchart);
+            }
+
+            esvLayers.push({
+                id: `${layer.getId()}-surfaces-uncertainty`,
+                type: LayerType.SURFACE_STATISTICAL_FANCHARTS_CANVAS,
+                hoverable: true,
+                options: {
+                    data: {
+                        fancharts,
+                    },
+                    order,
+                    referenceSystem: props.referenceSystem ?? undefined,
+                },
+            });
+
+            esvLayers.push({
+                id: `${layer.getId()}-surfaces-uncertainty-labels`,
+                type: LayerType.GEOMODEL_LABELS,
+                options: {
+                    data: {
+                        areas: [],
+                        lines: labelData,
+                    },
                     referenceSystem: props.referenceSystem ?? undefined,
                 },
             });
@@ -324,7 +387,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 hoverable: false,
                 options: {
                     data: getPicksData(data),
-                    order: index,
+                    order,
                     referenceSystem: props.referenceSystem ?? undefined,
                 },
             });

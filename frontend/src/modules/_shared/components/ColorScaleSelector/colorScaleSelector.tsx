@@ -445,8 +445,8 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
         [onChange, onChangePreview, min, max]
     );
 
-    function handleMinChange(e: React.ChangeEvent<HTMLInputElement>) {
-        let newMin = parseFloat(e.target.value);
+    function handleMinChange(value: string) {
+        let newMin = parseFloat(value);
         let newDivMidPoint = divMidPoint;
         if (newMin >= max) {
             newMin = max - 0.000001;
@@ -458,8 +458,8 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
         props.onChange(newMin, max, newDivMidPoint);
     }
 
-    function handleMaxChange(e: React.ChangeEvent<HTMLInputElement>) {
-        let newMax = parseFloat(e.target.value);
+    function handleMaxChange(value: string) {
+        let newMax = parseFloat(value);
         let newDivMidPoint = divMidPoint;
         if (newMax <= min) {
             newMax = min + 0.000001;
@@ -471,8 +471,8 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
         props.onChange(min, newMax, newDivMidPoint);
     }
 
-    function handleDivMidPointChange(e: React.ChangeEvent<HTMLInputElement>) {
-        let newDivMidPoint = parseFloat(e.target.value);
+    function handleDivMidPointChange(value: string) {
+        let newDivMidPoint = parseFloat(value);
         if (newDivMidPoint <= min) {
             newDivMidPoint = min;
         }
@@ -492,7 +492,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
         <>
             {isDragging &&
                 createPortal(<div className="absolute z-40 transparent w-full h-full inset-0 cursor-ew-resize"></div>)}
-            <div className="relative w-full h-5 border-l border-r border-gray-500" ref={containerDivRef}>
+            <div className="relative w-full h-3 border-l border-r border-gray-500" ref={containerDivRef}>
                 <div
                     title="Drag to adjust mid point"
                     className={resolveClassNames(
@@ -503,15 +503,15 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                                 props.gradientType === ColorScaleGradientType.Sequential || !areBoundariesUserDefined,
                         }
                     )}
-                    style={{ left: `${(divMidPoint / (max - min)) * 100}%` }}
+                    style={{ left: `${(Math.abs(divMidPoint - min) / Math.abs(max - min)) * 100}%` }}
                     ref={divMidPointRef}
                 />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-between">
                 <Input
                     type="number"
                     value={min}
-                    onChange={handleMinChange}
+                    onValueChange={handleMinChange}
                     title="Min"
                     max={max - 0.000001}
                     disabled={!areBoundariesUserDefined}
@@ -520,7 +520,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                     <Input
                         type="number"
                         value={divMidPoint}
-                        onChange={handleDivMidPointChange}
+                        onValueChange={handleDivMidPointChange}
                         min={min + 0.000001}
                         max={max}
                         title="Mid point"
@@ -530,7 +530,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                 <Input
                     type="number"
                     value={max}
-                    onChange={handleMaxChange}
+                    onValueChange={handleMaxChange}
                     title="Max"
                     min={min}
                     disabled={!areBoundariesUserDefined}

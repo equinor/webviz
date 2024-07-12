@@ -5,6 +5,7 @@ import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Vector2, rotatePointAround } from "@lib/utils/Vector2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
@@ -22,9 +23,7 @@ export function MapView(props: ModuleViewProps<MapState>) {
     statusWriter.setLoading(isLoading);
 
     const hasError = surfDataQuery.isError;
-    if (hasError) {
-        statusWriter.addError("Error fetching surface data");
-    }
+    usePropagateApiErrorToStatusWriter(surfDataQuery, statusWriter);
 
     const surfData = surfDataQuery.data;
     return (

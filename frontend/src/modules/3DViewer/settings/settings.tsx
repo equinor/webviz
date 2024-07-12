@@ -22,6 +22,7 @@ import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
 import { ColorScale } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 import { Delete, Edit } from "@mui/icons-material";
 
@@ -150,17 +151,8 @@ export function Settings(props: ModuleSettingsProps<State, SettingsToViewInterfa
         }
     }
 
-    let gridModelErrorMessage = "";
-    if (gridModelInfos.isError) {
-        statusWriter.addError("Failed to load grid model infos");
-        gridModelErrorMessage = "Failed to load grid model infos";
-    }
-
-    let wellHeadersErrorMessage = "";
-    if (wellHeaders.isError) {
-        statusWriter.addError("Failed to load well headers");
-        wellHeadersErrorMessage = "Failed to load well headers";
-    }
+    const gridModelErrorMessage = usePropagateApiErrorToStatusWriter(gridModelInfos, statusWriter) ?? "";
+    const wellHeadersErrorMessage = usePropagateApiErrorToStatusWriter(wellHeaders, statusWriter) ?? "";
 
     function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
         setSelectedEnsembleIdent(ensembleIdent);

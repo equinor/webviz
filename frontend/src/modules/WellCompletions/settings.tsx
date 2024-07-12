@@ -8,14 +8,17 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { DiscreteSlider } from "@lib/components/DiscreteSlider";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
+import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
 import { useValidState } from "@lib/hooks/useValidState";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { isEqual } from "lodash";
 
@@ -81,13 +84,7 @@ export const Settings = ({
         realizationSelection === RealizationSelection.Single ? selectedRealizationNumber : undefined
     );
 
-    if (wellCompletionsQuery.isError) {
-        let message = "Error loading well completions data for ensemble";
-        if (realizationSelection === RealizationSelection.Single) {
-            message += ` and realization ${selectedRealizationNumber}`;
-        }
-        statusWriter.addError(message);
-    }
+    usePropagateApiErrorToStatusWriter(wellCompletionsQuery, statusWriter);
 
     // Use ref to prevent new every render
     const wellCompletionsDataAccessor = React.useRef<WellCompletionsDataAccessor>(new WellCompletionsDataAccessor());
@@ -302,21 +299,19 @@ export const Settings = ({
     );
 
     const computedEnsemble = computedEnsembleIdent ? ensembleSet.findEnsemble(computedEnsembleIdent) : null;
+    const isSingleRealizationSelection = realizationSelection === RealizationSelection.Single;
 
     return (
-        <>
-            <Label
-                text="Ensemble:"
-                labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
-            >
+        <div className="flex flex-col gap-2 overflow-y-auto">
+            <CollapsibleGroup expanded={true} title="Ensemble">
                 <EnsembleDropdown
                     ensembleSet={ensembleSet}
                     value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />
-            </Label>
-            <div className={resolveClassNames({ "pointer-events-none opacity-40": wellCompletionsQuery.isError })}>
-                <Label text="Realization selection">
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Realization selection">
+                <div className="flex flex-col gap-2 overflow-y-auto">
                     <RadioGroup
                         options={[
                             { label: RealizationSelection.Aggregated, value: RealizationSelection.Aggregated },
@@ -325,61 +320,72 @@ export const Settings = ({
                         value={realizationSelection}
                         onChange={handleRealizationSelectionChange}
                     />
-                </Label>
-                {realizationSelection === RealizationSelection.Single && (
-                    <Label text="Realization">
-                        <Dropdown
-                            options={computedEnsemble === null ? [] : makeRealizationOptionItems(computedEnsemble)}
-                            value={selectedRealizationNumber?.toString() ?? undefined}
-                            onChange={handleSelectedRealizationNumberChange}
-                        />
-                    </Label>
-                )}
-                <Label text="Time Aggregation">
-                    <RadioGroup
-                        options={timeAggregationOptions}
-                        direction={"horizontal"}
-                        value={selectedTimeStepOptions.timeAggregationType}
-                        onChange={handleTimeAggregationChange}
-                    />
-                </Label>
-                <Label
-                    text={
-                        selectedTimeStepOptions.timeStepIndex === null || !availableTimeSteps
-                            ? "Time Step"
-                            : typeof selectedTimeStepOptions.timeStepIndex === "number"
-                            ? `Time Step: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex]})`
-                            : `Time Steps: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex[0]]}, ${
-                                  availableTimeSteps[selectedTimeStepOptions.timeStepIndex[1]]
-                              })`
-                    }
+                    <div className={isSingleRealizationSelection ? "" : "pointer-events-none"}>
+                        <Label text={isSingleRealizationSelection ? "Realization" : "Realization (disabled)"}>
+                            <Dropdown
+                                disabled={!isSingleRealizationSelection}
+                                options={computedEnsemble === null ? [] : makeRealizationOptionItems(computedEnsemble)}
+                                value={selectedRealizationNumber?.toString() ?? undefined}
+                                onChange={handleSelectedRealizationNumberChange}
+                            />
+                        </Label>
+                    </div>
+                </div>
+            </CollapsibleGroup>
+            <CollapsibleGroup expanded={true} title="Completions selections">
+                <QueryStateWrapper
+                    queryResult={wellCompletionsQuery}
+                    loadingComponent={<CircularProgress />}
+                    errorComponent={"Could not find well completions data"}
                 >
-                    <DiscreteSlider
-                        valueLabelDisplay="auto"
-                        value={
-                            selectedTimeStepOptions.timeStepIndex !== null
-                                ? selectedTimeStepOptions.timeStepIndex
-                                : undefined
-                        }
-                        values={
-                            availableTimeSteps
-                                ? availableTimeSteps.map((t, index) => {
-                                      return index;
-                                  })
-                                : []
-                        }
-                        valueLabelFormat={createValueLabelFormat}
-                        onChange={handleSelectedTimeStepIndexChange}
-                    />
-                </Label>
-                <Label text="Search well names">
-                    <Input onChange={handleSearchWellChange} placeholder={"..."} />
-                </Label>
-                <Label text="Filter by completions">
-                    <Switch defaultChecked={false} onChange={handleHideZeroCompletionsChange} />
-                </Label>
-            </div>
-        </>
+                    <div className="flex flex-col gap-2 overflow-y-auto">
+                        <Label text="Time Aggregation">
+                            <RadioGroup
+                                options={timeAggregationOptions}
+                                direction={"horizontal"}
+                                value={selectedTimeStepOptions.timeAggregationType}
+                                onChange={handleTimeAggregationChange}
+                            />
+                        </Label>
+                        <Label
+                            text={
+                                selectedTimeStepOptions.timeStepIndex === null || !availableTimeSteps
+                                    ? "Time Step"
+                                    : typeof selectedTimeStepOptions.timeStepIndex === "number"
+                                    ? `Time Step: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex]})`
+                                    : `Time Steps: (${availableTimeSteps[selectedTimeStepOptions.timeStepIndex[0]]}, ${
+                                          availableTimeSteps[selectedTimeStepOptions.timeStepIndex[1]]
+                                      })`
+                            }
+                        >
+                            <DiscreteSlider
+                                valueLabelDisplay="auto"
+                                value={
+                                    selectedTimeStepOptions.timeStepIndex !== null
+                                        ? selectedTimeStepOptions.timeStepIndex
+                                        : undefined
+                                }
+                                values={
+                                    availableTimeSteps
+                                        ? availableTimeSteps.map((t, index) => {
+                                              return index;
+                                          })
+                                        : []
+                                }
+                                valueLabelFormat={createValueLabelFormat}
+                                onChange={handleSelectedTimeStepIndexChange}
+                            />
+                        </Label>
+                        <Label text="Search well names">
+                            <Input onChange={handleSearchWellChange} placeholder={"..."} />
+                        </Label>
+                        <Label text="Filter by completions">
+                            <Switch defaultChecked={false} onChange={handleHideZeroCompletionsChange} />
+                        </Label>
+                    </div>
+                </QueryStateWrapper>
+            </CollapsibleGroup>
+        </div>
     );
 };
 

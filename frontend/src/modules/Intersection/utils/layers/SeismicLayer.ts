@@ -53,7 +53,10 @@ const CACHE_TIME = 60 * 1000;
 export type SeismicLayerSettings = {
     ensembleIdent: EnsembleIdent | null;
     realizationNum: number | null;
-    polylineUtmXy: number[];
+    polyline: {
+        polylineUtmXy: number[];
+        actualSectionLengths: number[];
+    };
     extensionLength: number;
     surveyType: SeismicSurveyType;
     dataType: SeismicDataType;
@@ -74,11 +77,14 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
     private _colorScalesParameterMap: Map<string, ColorScale> = new Map();
     private _useCustomColorScaleBoundariesParameterMap = new Map<string, boolean>();
 
-    constructor(name: string, queryClient: QueryClient) {
+    constructor(name: string) {
         const defaultSettings = {
             ensembleIdent: null,
             realizationNum: null,
-            polylineUtmXy: [],
+            polyline: {
+                polylineUtmXy: [],
+                actualSectionLengths: [],
+            },
             extensionLength: 0,
             surveyType: SeismicSurveyType.THREE_D,
             dataType: SeismicDataType.SIMULATED,
@@ -86,7 +92,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             dateOrInterval: null,
             resolution: 1,
         };
-        super(name, defaultSettings, queryClient);
+        super(name, defaultSettings);
 
         this._defaultColorScale = new ColorScale({
             colorPalette: defaultContinuousDivergingColorPalettes[0],
@@ -191,7 +197,9 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
         return (
             this._settings.ensembleIdent !== null &&
             this._settings.realizationNum !== null &&
-            this._settings.polylineUtmXy.length > 0 &&
+            this._settings.polyline.polylineUtmXy.length > 0 &&
+            this._settings.polyline.actualSectionLengths.length ===
+                this._settings.polyline.polylineUtmXy.length / 2 - 1 &&
             this._settings.attribute !== null &&
             this._settings.dateOrInterval !== null &&
             this._settings.extensionLength > 0 &&
@@ -206,7 +214,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
         return (
             !isEqual(prevSettings.ensembleIdent, newSettings.ensembleIdent) ||
             prevSettings.realizationNum !== newSettings.realizationNum ||
-            !isEqual(prevSettings.polylineUtmXy, newSettings.polylineUtmXy) ||
+            !isEqual(prevSettings.polyline, newSettings.polyline) ||
             prevSettings.surveyType !== newSettings.surveyType ||
             prevSettings.dataType !== newSettings.dataType ||
             prevSettings.attribute !== newSettings.attribute ||
@@ -219,32 +227,29 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
         const datapoints = createSeismicSliceImageDatapointsArrayFromFenceData(data);
         const yAxisValues = createSeismicSliceImageYAxisValuesArrayFromFenceData(data);
 
-        if (this._settings.polylineUtmXy.length === 0) {
+        if (this._settings.polyline.polylineUtmXy.length === 0) {
             throw new Error("No polyline data available for seismic fence.");
         }
 
         // Calculate uz projection of the trajectory
-        const sampledPolyline = this.samplePolyline();
         const trajectoryFenceProjection: number[][] = [];
+        const polyline = this._settings.polyline.polylineUtmXy;
 
         let u = -this._settings.extensionLength;
-        for (const [index, point] of sampledPolyline.entries()) {
-            if (index > 0) {
-                const prevPoint = sampledPolyline[index - 1];
-                u += pointDistance(
-                    {
-                        x: point[0],
-                        y: point[1],
-                    },
-                    {
-                        x: prevPoint[0],
-                        y: prevPoint[1],
-                    }
-                );
-            }
+        trajectoryFenceProjection.push([u, 0]);
+        for (let i = 2; i < polyline.length; i += 2) {
+            const distance = pointDistance(
+                { x: polyline[i], y: polyline[i + 1] },
+                { x: polyline[i - 2], y: polyline[i - 1] }
+            );
+            const actualDistance = this._settings.polyline.actualSectionLengths[i / 2 - 1];
+            const numPoints = Math.floor(distance / this._settings.resolution) - 1;
+            const scale = actualDistance / distance;
 
-            // We don't care about depth/z when generatic the seismic image
-            trajectoryFenceProjection.push([u, 0]);
+            for (let p = 1; p <= numPoints; p++) {
+                u += this._settings.resolution * scale;
+                trajectoryFenceProjection.push([u, 0]);
+            }
         }
 
         const options: SeismicSliceImageOptions = {
@@ -284,7 +289,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
 
     private samplePolyline(): number[][] {
         const trajectory: number[][] = [];
-        const polyline = this._settings.polylineUtmXy;
+        const polyline = this._settings.polyline.polylineUtmXy;
 
         for (let i = 0; i < polyline.length; i += 2) {
             if (i > 0) {
@@ -293,13 +298,13 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
                     { x: polyline[i - 2], y: polyline[i - 1] }
                 );
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
+                const vector: Vector2D = {
+                    x: polyline[i] - polyline[i - 2],
+                    y: polyline[i + 1] - polyline[i - 1],
+                };
+                const normalizedVector = vectorNormalize(vector);
 
                 for (let p = 1; p <= numPoints; p++) {
-                    const vector: Vector2D = {
-                        x: polyline[i] - polyline[i - 2],
-                        y: polyline[i + 1] - polyline[i - 1],
-                    };
-                    const normalizedVector = vectorNormalize(vector);
                     trajectory.push([
                         polyline[i - 2] + normalizedVector.x * this._settings.resolution * p,
                         polyline[i - 1] + normalizedVector.y * this._settings.resolution * p,
@@ -313,7 +318,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
         return trajectory;
     }
 
-    protected async fetchData(): Promise<SeismicLayerData> {
+    protected async fetchData(queryClient: QueryClient): Promise<SeismicLayerData> {
         super.setBoundingBox(null);
 
         const sampledPolyline = this.samplePolyline();
@@ -332,7 +337,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             this._settings.realizationNum ?? 0,
             this._settings.attribute ?? "",
             this._settings.dateOrInterval ?? "",
-            this._settings.polylineUtmXy,
+            this._settings.polyline.polylineUtmXy,
             this._settings.extensionLength,
             this._settings.surveyType,
             this._settings.dataType,
@@ -340,7 +345,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
         ];
         this.registerQueryKey(queryKey);
 
-        return this._queryClient
+        return queryClient
             .fetchQuery({
                 queryKey,
                 queryFn: () =>

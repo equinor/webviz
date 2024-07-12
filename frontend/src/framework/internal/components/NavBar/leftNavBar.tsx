@@ -2,7 +2,7 @@ import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { DrawerContent, GuiState, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { UserEnsembleSetting, Workbench, WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
@@ -36,7 +36,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const loadingEnsembleSet = useIsEnsembleSetLoading(props.workbench.getWorkbenchSession());
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.DrawerContent
+        GuiState.LeftDrawerContent
     );
     const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -57,9 +57,9 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             function listener() {
                 if (
                     props.workbench.getLayout().length === 0 &&
-                    [DrawerContent.ModuleSettings, DrawerContent.SyncSettings].includes(drawerContent)
+                    [LeftDrawerContent.ModuleSettings, LeftDrawerContent.SyncSettings].includes(drawerContent)
                 ) {
-                    setDrawerContent(DrawerContent.ModulesList);
+                    setDrawerContent(LeftDrawerContent.ModulesList);
                 }
                 setLayoutEmpty(props.workbench.getLayout().length === 0);
             }
@@ -85,27 +85,27 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
 
     function handleModuleSettingsClick() {
         ensureSettingsPanelIsVisible();
-        setDrawerContent(DrawerContent.ModuleSettings);
+        setDrawerContent(LeftDrawerContent.ModuleSettings);
     }
 
     function handleModulesListClick() {
         ensureSettingsPanelIsVisible();
-        setDrawerContent(DrawerContent.ModulesList);
+        setDrawerContent(LeftDrawerContent.ModulesList);
     }
 
     function handleTemplatesListClick() {
         ensureSettingsPanelIsVisible();
-        setDrawerContent(DrawerContent.TemplatesList);
+        setDrawerContent(LeftDrawerContent.TemplatesList);
     }
 
     function handleSyncSettingsClick() {
         ensureSettingsPanelIsVisible();
-        setDrawerContent(DrawerContent.SyncSettings);
+        setDrawerContent(LeftDrawerContent.SyncSettings);
     }
 
     function handleColorPaletteSettingsClick() {
         ensureSettingsPanelIsVisible();
-        setDrawerContent(DrawerContent.ColorPaletteSettings);
+        setDrawerContent(LeftDrawerContent.ColorPaletteSettings);
     }
 
     function handleEnsembleDialogClose() {
@@ -201,7 +201,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === DrawerContent.ModuleSettings ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.ModuleSettings ? "text-cyan-600" : "!text-slate-800"
                     )}
                     disabled={layoutEmpty}
                 >
@@ -214,7 +214,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === DrawerContent.SyncSettings ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.SyncSettings ? "text-cyan-600" : "!text-slate-800"
                     )}
                     disabled={layoutEmpty}
                 >
@@ -228,7 +228,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === DrawerContent.ModulesList ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.ModulesList ? "text-cyan-600" : "!text-slate-800"
                     )}
                 >
                     {!collapsed ? "Add modules" : ""}
@@ -240,7 +240,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === DrawerContent.TemplatesList ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.TemplatesList ? "text-cyan-600" : "!text-slate-800"
                     )}
                 >
                     {!collapsed ? "Use templates" : ""}
@@ -253,7 +253,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === DrawerContent.ColorPaletteSettings ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.ColorPaletteSettings ? "text-cyan-600" : "!text-slate-800"
                     )}
                 >
                     {!collapsed ? "Color settings" : ""}

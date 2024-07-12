@@ -10,6 +10,7 @@ import {
 } from "@modules/SeismicIntersection/utils/esvIntersectionDataConversion";
 import { useWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { isEqual } from "lodash";
 
@@ -42,9 +43,7 @@ export const View = ({ viewContext }: ModuleViewProps<State>) => {
 
     // Get well trajectories query
     const getWellTrajectoriesQuery = useWellboreTrajectoriesQuery(wellboreAddress ? [wellboreAddress.uuid] : undefined);
-    if (getWellTrajectoriesQuery.isError) {
-        statusWriter.addError("Error loading well trajectories");
-    }
+    usePropagateApiErrorToStatusWriter(getWellTrajectoriesQuery, statusWriter);
 
     // Use first trajectory and create polyline for seismic fence query, and extended wellbore trajectory for generating seismic fence image
 

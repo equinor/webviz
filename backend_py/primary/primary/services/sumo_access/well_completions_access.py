@@ -3,6 +3,9 @@ from typing import Dict, List, Optional, Set, Tuple
 import pandas as pd
 from fmu.sumo.explorer.objects import Case
 
+
+from primary.services.service_exceptions import InvalidDataError, Service
+
 from ._helpers import create_sumo_client, create_sumo_case_async
 
 from .well_completions_types import (
@@ -43,7 +46,7 @@ class WellCompletionsAccess:
             well_completions_tables = self._case.tables.filter(
                 tagname=WellCompletionsAccess.TAGNAME, realization=realization, iteration=self._iteration_name
             )
-            well_completions_df = well_completions_tables[0].to_pandas if len(well_completions_tables) > 0 else None
+            well_completions_df = well_completions_tables[0].to_pandas() if len(well_completions_tables) > 0 else None
             if well_completions_df is None:
                 return None
 
@@ -54,13 +57,18 @@ class WellCompletionsAccess:
             tagname=WellCompletionsAccess.TAGNAME, aggregation="collection", iteration=self._iteration_name
         )
 
-        # As of now, two tables are expected - one with OP/SH and one with KH
-        if len(well_completions_tables) < 2:
+        if len(well_completions_tables) == 0:
             return None
 
+        # As of now, two tables are expected - one with OP/SH and one with KH
+        if len(well_completions_tables) < 2:
+            raise InvalidDataError(
+                f"Expected 2 tables (OP/SH and KH) but got {len(well_completions_tables)}", service=Service.SUMO
+            )
+
         expected_common_columns = set(["WELL", "DATE", "ZONE", "REAL"])
-        first_df = well_completions_tables[0].to_pandas
-        second_df = well_completions_tables[1].to_pandas
+        first_df = well_completions_tables[0].to_pandas()
+        second_df = well_completions_tables[1].to_pandas()
 
         # Validate columns and ensure equal column content in both tables
         self._validate_common_dataframe_columns(expected_common_columns, first_df, second_df)

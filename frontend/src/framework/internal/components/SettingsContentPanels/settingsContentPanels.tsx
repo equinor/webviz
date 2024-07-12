@@ -21,18 +21,13 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
         props.workbench.getGuiMessageBroker(),
         GuiState.RightSettingsPanelWidthInPercent
     );
-    const [, setRightSettingsPanelExpanded] = useGuiState(
-        props.workbench.getGuiMessageBroker(),
-        GuiState.RightSettingsPanelExpanded
-    );
 
     const handleResizablePanelsChange = React.useCallback(
         function handleResizablePanelsChange(sizes: number[]) {
             setLeftSettingsPanelWidth(sizes[0]);
             setRightSettingsPanelWidth(sizes[2]);
-            setRightSettingsPanelExpanded(sizes[2] > 0.0);
         },
-        [setLeftSettingsPanelWidth, setRightSettingsPanelWidth, setRightSettingsPanelExpanded]
+        [setLeftSettingsPanelWidth, setRightSettingsPanelWidth]
     );
 
     return (

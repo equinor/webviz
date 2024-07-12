@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DrawerContent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { SyncSettingKey, SyncSettingsMeta } from "@framework/SyncSettings";
 import { Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
@@ -13,7 +13,7 @@ type ModulesListProps = {
 
 export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     const forceRerender = React.useReducer((x) => x + 1, 0)[1];
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
     const activeModuleInstanceId = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.ActiveModuleInstanceId);
 
     const activeModuleInstance = props.workbench.getModuleInstance(activeModuleInstanceId);
@@ -119,7 +119,7 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
     }
 
     return (
-        <Drawer title="Sync settings" icon={<Link />} visible={drawerContent === DrawerContent.SyncSettings}>
+        <Drawer title="Sync settings" icon={<Link />} visible={drawerContent === LeftDrawerContent.SyncSettings}>
             {makeContent()}
         </Drawer>
     );

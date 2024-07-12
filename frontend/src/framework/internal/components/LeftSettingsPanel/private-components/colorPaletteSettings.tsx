@@ -1,6 +1,6 @@
 import React from "react";
 
-import { DrawerContent, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
 import { Drawer } from "@framework/internal/components/Drawer";
@@ -17,7 +17,7 @@ export type ColorPaletteSettingsProps = {
 
 export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props) => {
     const colorPalettes = props.workbench.getWorkbenchSettings().getColorPalettes();
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.DrawerContent);
+    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
     const [selectedColorPaletteIds, setSelectedColorPaletteIds] = React.useState<Record<ColorPaletteType, string>>(
         props.workbench.getWorkbenchSettings().getSelectedColorPaletteIds()
     );
@@ -45,7 +45,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
         <Drawer
             title="Color palette settings"
             icon={<Palette />}
-            visible={drawerContent === DrawerContent.ColorPaletteSettings}
+            visible={drawerContent === LeftDrawerContent.ColorPaletteSettings}
         >
             <div className="flex flex-col gap-2 m-2">
                 <Label text="Categorical colors">
