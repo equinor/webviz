@@ -19,9 +19,10 @@ import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembl
 
 import { Layout, PlotData } from "plotly.js";
 
+import { InplaceVolumetricsPlotBuilder, SubplotBy, TableData } from "./plotBuilder";
+
 import { RealizationAndResult, calcConvergenceArray } from "../settings/utils/convergenceCalculation";
 import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { SubplotBy } from "../typesAndEnums";
 
 export function View(props: ModuleViewProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -67,8 +68,11 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
 
     const tablesDataAccessor = new InplaceVolumetricsTablesDataAccessor(aggregatedTableDataQueries.tablesData);
 
-    let title = `Convergence plot of mean/p10/p90 for ${resultName}`;
-    if (subplotBy.subplotBy !== SubplotBy.SOURCE && tablesDataAccessor.getTables().length === 1) {
+    let title = `Convergence plot of mean/p10/p90`;
+    if (resultName) {
+        title += ` for ${resultName}`;
+    }
+    if (subplotBy.subplotBy !== SubplotBy.ENSEMBLE && tablesDataAccessor.getTables().length === 1) {
         const subTable = tablesDataAccessor.getTables()[0];
         title += ` - ${makeDistinguishableEnsembleDisplayName(
             subTable.getEnsembleIdent(),
@@ -77,6 +81,15 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     }
     props.viewContext.setInstanceTitle(title);
 
+    const plotbuilder = new InplaceVolumetricsPlotBuilder(tablesDataAccessor);
+
+    plotbuilder.setSubplotBy(subplotBy);
+    plotbuilder.setPlottingFunction(makePlotData(resultName ?? ""));
+    const figure = plotbuilder.build(divBoundingRect.height, divBoundingRect.width);
+
+    const plotComponent = figure?.makePlot();
+
+    /*
     const subplots: { title?: string; plotData: Partial<PlotData>[] }[] = [];
     let plotComponent: React.ReactNode = null;
 
@@ -195,6 +208,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
 
         plotComponent = figure.makePlot();
     }
+    */
 
     function makeMessage(): React.ReactNode {
         if (aggregatedTableDataQueries.isFetching) {
@@ -213,7 +227,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
             <div
                 className={resolveClassNames(
                     "absolute top-0 left-0 w-full h-full bg-white bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-10",
-                    { hidden: subplots.length !== 0 }
+                    { hidden: plotComponent !== undefined }
                 )}
             >
                 {makeMessage()}
@@ -223,43 +237,59 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     );
 }
 
-function makePlotData(realizationAndResultArray: RealizationAndResult[]): Partial<PlotData>[] {
-    const convergenceArr = calcConvergenceArray(realizationAndResultArray);
+function makePlotData(resultName: string): (tableData: TableData[]) => Partial<PlotData>[] {
+    return (tableData: TableData[]): Partial<PlotData>[] => {
+        const data: Partial<PlotData>[] = [];
 
-    const data: Partial<PlotData>[] = [
-        {
-            x: convergenceArr.map((el) => el.realization),
-            y: convergenceArr.map((el) => el.mean),
-            name: "Mean",
-            type: "scatter",
-            line: {
-                color: "black",
-                width: 1,
-            },
-        },
-        {
-            x: convergenceArr.map((el) => el.realization),
-            y: convergenceArr.map((el) => el.p10),
-            name: "P10",
-            type: "scatter",
-            line: {
-                color: "red",
-                width: 1,
-                dash: "dash",
-            },
-        },
-        {
-            x: convergenceArr.map((el) => el.realization),
-            y: convergenceArr.map((el) => el.p90),
-            name: "P90",
-            type: "scatter",
-            line: {
-                color: "blue",
-                width: 1,
-                dash: "dash",
-            },
-        },
-    ];
+        for (const table of tableData) {
+            const realizationAndResultArray: RealizationAndResult[] = [];
+            const reals = table.columns["REAL"];
+            const results = table.columns[resultName];
+            for (let i = 0; i < reals.length; i++) {
+                realizationAndResultArray.push({
+                    realization: reals[i] as number,
+                    resultValue: results[i] as number,
+                });
+            }
 
-    return data;
+            const convergenceArr = calcConvergenceArray(realizationAndResultArray);
+
+            data.push(
+                {
+                    x: convergenceArr.map((el) => el.realization),
+                    y: convergenceArr.map((el) => el.mean),
+                    name: "Mean",
+                    type: "scatter",
+                    line: {
+                        color: "black",
+                        width: 1,
+                    },
+                },
+                {
+                    x: convergenceArr.map((el) => el.realization),
+                    y: convergenceArr.map((el) => el.p10),
+                    name: "P10",
+                    type: "scatter",
+                    line: {
+                        color: "red",
+                        width: 1,
+                        dash: "dash",
+                    },
+                },
+                {
+                    x: convergenceArr.map((el) => el.realization),
+                    y: convergenceArr.map((el) => el.p90),
+                    name: "P90",
+                    type: "scatter",
+                    line: {
+                        color: "blue",
+                        width: 1,
+                        dash: "dashdot",
+                    },
+                }
+            );
+        }
+
+        return data;
+    };
 }

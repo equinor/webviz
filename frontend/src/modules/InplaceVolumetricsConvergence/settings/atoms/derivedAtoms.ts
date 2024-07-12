@@ -1,7 +1,7 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-import { SubplotBy, SubplotByInfo } from "@modules/InplaceVolumetricsConvergence/typesAndEnums";
+import { SubplotBy, SubplotByInfo } from "@modules/InplaceVolumetricsConvergence/view/plotBuilder";
 import {
     InplaceVolumetricsTableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,
@@ -135,7 +135,7 @@ export const selectedSubplotByAtom = atom<SubplotByInfo>((get) => {
 
     if (selectedEnsembleIdents.length > 1 || selectedTableNames.length > 1) {
         return {
-            subplotBy: SubplotBy.SOURCE,
+            subplotBy: SubplotBy.ENSEMBLE,
         };
     }
 

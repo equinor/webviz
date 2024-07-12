@@ -31,7 +31,7 @@ import {
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { SubplotBy, SubplotByInfo } from "../typesAndEnums";
+import { SubplotBy, SubplotByInfo } from "../view/plotBuilder";
 
 export function Settings(props: ModuleSettingsProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -70,15 +70,15 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     const subplotOptions: DropdownOption<SubplotByInfo>[] = [
         {
             value: {
-                subplotBy: SubplotBy.NONE,
+                subplotBy: SubplotBy.ENSEMBLE,
             },
-            label: "None",
+            label: "Ensemble",
         },
         {
             value: {
-                subplotBy: SubplotBy.SOURCE,
+                subplotBy: SubplotBy.TABLE_NAME,
             },
-            label: "Source",
+            label: "Table name",
         },
         {
             value: {

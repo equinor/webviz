@@ -97,6 +97,14 @@ export class InplaceVolumetricDataTable {
         return this._identifierColumns.length + this._resultColumns.length + 2;
     }
 
+    getRealizationColumnValues(): number[] {
+        if (this._meanAcrossRealizations) {
+            return [];
+        }
+
+        return this._data.selectorColumns[this._realColumnIndex].uniqueValues.map((el) => parseInt(el.toString()));
+    }
+
     getColumns(): Column[] {
         const columns: Column[] = [
             { name: "Ensemble", type: ColumnType.ENSEMBLE },
@@ -249,11 +257,67 @@ export class InplaceVolumetricsTablesDataAccessor {
         return row;
     }
 
+    getFluidZones(): string[] {
+        const fluidZones: string[] = [];
+        for (const table of this._tables) {
+            if (!fluidZones.includes(table.getFluidZone())) {
+                fluidZones.push(table.getFluidZone());
+            }
+        }
+        return fluidZones;
+    }
+
+    getEnsembleIdents(): EnsembleIdent[] {
+        const ensembleIdents: EnsembleIdent[] = [];
+        for (const table of this._tables) {
+            if (!ensembleIdents.some((el) => el.toString() === table.getEnsembleIdent().toString())) {
+                ensembleIdents.push(table.getEnsembleIdent());
+            }
+        }
+        return ensembleIdents;
+    }
+
+    getTableNames(): string[] {
+        const tableNames: string[] = [];
+        for (const table of this._tables) {
+            if (!tableNames.includes(table.getTableName())) {
+                tableNames.push(table.getTableName());
+            }
+        }
+        return tableNames;
+    }
+
     getRowsUnion(): Record<string, string | number | null>[] {
         const rows: Record<string, string | number | null>[] = [];
         for (let i = 0; i < this.getTotalRowCount(); i++) {
             rows.push(this.getRowUnion(i));
         }
         return rows;
+    }
+
+    getTablesForEnsembleIdent(ensembleIdent: EnsembleIdent): InplaceVolumetricDataTable[] {
+        return this._tables.filter((table) => table.getEnsembleIdent().toString() === ensembleIdent.toString());
+    }
+
+    getTablesForFluidZone(fluidZone: string): InplaceVolumetricDataTable[] {
+        return this._tables.filter((table) => table.getFluidZone() === fluidZone);
+    }
+
+    getTablesForTableName(tableName: string): InplaceVolumetricDataTable[] {
+        return this._tables.filter((table) => table.getTableName() === tableName);
+    }
+
+    getColumnValuesIntersection(columnName: string): (string | number)[] {
+        const values: Set<string | number> = new Set();
+        for (const [index, table] of this._tables.entries()) {
+            for (const value of table.getUniqueColumnValues(columnName)) {
+                if (index === 0) {
+                    values.add(value);
+                } else if (!values.has(value)) {
+                    values.delete(value);
+                }
+            }
+        }
+        return Array.from(values);
     }
 }

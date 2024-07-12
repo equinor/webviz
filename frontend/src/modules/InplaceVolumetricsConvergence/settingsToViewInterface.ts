@@ -10,7 +10,7 @@ import {
     selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/derivedAtoms";
-import { SubplotByInfo } from "./typesAndEnums";
+import { SubplotByInfo } from "./view/plotBuilder";
 
 export type SettingsToViewInterface = {
     derivedStates: {
