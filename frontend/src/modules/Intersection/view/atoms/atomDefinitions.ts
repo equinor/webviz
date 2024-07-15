@@ -5,7 +5,7 @@ import { ModuleAtoms } from "@framework/Module";
 import { UniDirectionalSettingsToViewInterface } from "@framework/UniDirectionalSettingsToViewInterface";
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
-import { arrayPointToPoint2D, pointDistance } from "@lib/utils/geometry";
+import { vector2FromArray, pointDistance } from "@lib/utils/vector2";
 import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
 import { CURVE_FITTING_EPSILON } from "@modules/Intersection/typesAndEnums";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
@@ -105,7 +105,7 @@ export function viewAtomsInitialization(
                     if (index > 0) {
                         const previousPoint = selectedCustomIntersectionPolyline.points[index - 1];
                         actualSectionLengths.push(
-                            pointDistance(arrayPointToPoint2D(point), arrayPointToPoint2D(previousPoint))
+                            pointDistance(vector2FromArray(point), vector2FromArray(previousPoint))
                         );
                     }
                 }

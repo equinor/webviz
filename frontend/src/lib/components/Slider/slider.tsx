@@ -2,8 +2,8 @@ import React from "react";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
-import { Point2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Vector2 } from "@lib/utils/vector2";
 import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
@@ -32,7 +32,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
     const [currentlyActiveThumb, setCurrentlyActiveThumb] = React.useState<number>(0);
     const [prevValue, setPrevValue] = React.useState<number | number[]>(propsValue ?? 0);
     const [valueLabelVisible, setValueLabelVisible] = React.useState<boolean>(false);
-    const [valueLabelPosition, setValueLabelPosition] = React.useState<Point2D>({ x: 0, y: 0 });
+    const [valueLabelPosition, setValueLabelPosition] = React.useState<Vector2>({ x: 0, y: 0 });
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const valueLabelRef = React.useRef<HTMLDivElement>(null);

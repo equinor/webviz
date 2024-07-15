@@ -3,7 +3,7 @@ import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { Vector2D, pointDistance, vectorNormalize } from "@lib/utils/geometry";
+import { Vector2, pointDistance, normalizeVector } from "@lib/utils/vector2";
 import { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
@@ -142,11 +142,11 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
                 const scale = actualDistance / distance;
 
                 for (let p = 1; p <= numPoints; p++) {
-                    const vector: Vector2D = {
+                    const vector: Vector2 = {
                         x: polyline[i] - polyline[i - 2],
                         y: polyline[i + 1] - polyline[i - 1],
                     };
-                    const normalizedVector = vectorNormalize(vector);
+                    const normalizedVector = normalizeVector(vector);
                     xPoints.push(polyline[i - 2] + normalizedVector.x * this._settings.resolution * p);
                     yPoints.push(polyline[i - 1] + normalizedVector.y * this._settings.resolution * p);
                     cumulatedHorizontalPolylineLength += this._settings.resolution * scale;

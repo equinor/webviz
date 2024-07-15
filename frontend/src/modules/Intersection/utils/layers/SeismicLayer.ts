@@ -4,7 +4,7 @@ import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { Vector2D, pointDistance, vectorNormalize } from "@lib/utils/geometry";
+import { Vector2, pointDistance, normalizeVector } from "@lib/utils/vector2";
 import { b64DecodeFloatArrayToFloat32 } from "@modules/_shared/base64";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { QueryClient } from "@tanstack/query-core";
@@ -298,11 +298,11 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
                     { x: polyline[i - 2], y: polyline[i - 1] }
                 );
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
-                const vector: Vector2D = {
+                const vector: Vector2 = {
                     x: polyline[i] - polyline[i - 2],
                     y: polyline[i + 1] - polyline[i - 1],
                 };
-                const normalizedVector = vectorNormalize(vector);
+                const normalizedVector = normalizeVector(vector);
 
                 for (let p = 1; p <= numPoints; p++) {
                     trajectory.push([

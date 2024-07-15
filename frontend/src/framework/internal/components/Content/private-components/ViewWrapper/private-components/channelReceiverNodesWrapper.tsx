@@ -6,8 +6,8 @@ import { Workbench } from "@framework/Workbench";
 import { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
-import { Point2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Vector2 } from "@lib/utils/vector2";
 
 import { ChannelSelector, SelectableChannel, SelectedContents } from "./channelContentSelector";
 import { ChannelReceiverNode } from "./channelReceiverNode";
@@ -22,7 +22,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
     const [visible, setVisible] = React.useState<boolean>(false);
     const [currentReceiver, setCurrentReceiver] = React.useState<ChannelReceiver | null>(null);
     const [currentOriginModuleInstanceId, setCurrentOriginModuleInstanceId] = React.useState<string | null>(null);
-    const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Point2D | null>(null);
+    const [channelSelectorCenterPoint, setChannelSelectorCenterPoint] = React.useState<Vector2 | null>(null);
     const [selectableChannels, setSelectableChannels] = React.useState<SelectableChannel[]>([]);
     const [prevSelectedChannelIdString, setPrevSelectedChannelIdString] = React.useState<string | null>(null);
     const [prevSelectedContents, setPrevSelectedContents] = React.useState<SelectedContents | null>(null);
@@ -106,7 +106,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
     ]);
 
     const handleChannelConnect = React.useCallback(
-        function handleChannelConnect(receiverIdString: string, moduleInstanceId: string, destinationPoint: Point2D) {
+        function handleChannelConnect(receiverIdString: string, moduleInstanceId: string, destinationPoint: Vector2) {
             const originModuleInstance = props.workbench.getModuleInstance(moduleInstanceId);
 
             if (!originModuleInstance) {

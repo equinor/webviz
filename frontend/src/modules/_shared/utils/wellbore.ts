@@ -1,5 +1,5 @@
 import { FenceMeshSection_api, PolylineIntersection_api } from "@api";
-import { arrayPointToPoint2D, pointDistance } from "@lib/utils/geometry";
+import { vector2FromArray, pointDistance } from "@lib/utils/vector2";
 
 import simplify from "simplify-js";
 
@@ -43,8 +43,8 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
         let sectionLength = 0;
         for (let i = lastWellboreTrajectoryIndex + 1; i < wellboreTrajectory.length; i++) {
             sectionLength += pointDistance(
-                arrayPointToPoint2D(wellboreTrajectory[i]),
-                arrayPointToPoint2D(wellboreTrajectory[i - 1])
+                vector2FromArray(wellboreTrajectory[i]),
+                vector2FromArray(wellboreTrajectory[i - 1])
             );
 
             if (wellboreTrajectory[i][0] === point[0] && wellboreTrajectory[i][1] === point[1]) {
@@ -86,12 +86,12 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
         simplifiedTrajectoryXy.push(extendedLastPoint);
 
         actualSectionLengths.unshift(
-            pointDistance(arrayPointToPoint2D(extendedFirstPoint), arrayPointToPoint2D(simplifiedCurve[0]))
+            pointDistance(vector2FromArray(extendedFirstPoint), vector2FromArray(simplifiedCurve[0]))
         );
         actualSectionLengths.push(
             pointDistance(
-                arrayPointToPoint2D(extendedLastPoint),
-                arrayPointToPoint2D(simplifiedCurve[simplifiedCurve.length - 1])
+                vector2FromArray(extendedLastPoint),
+                vector2FromArray(simplifiedCurve[simplifiedCurve.length - 1])
             )
         );
     }

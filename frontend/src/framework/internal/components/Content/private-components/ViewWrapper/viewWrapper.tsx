@@ -3,8 +3,9 @@ import React from "react";
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
-import { Point2D, pointRelativeToDomRect, pointSubtraction, pointerEventToPoint } from "@lib/utils/geometry";
+import { pointRelativeToDomRect } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Vector2, subtractVectors, vector2FromPointerEvent } from "@lib/utils/vector2";
 
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
@@ -21,7 +22,7 @@ type ViewWrapperProps = {
     x: number;
     y: number;
     isDragged: boolean;
-    dragPosition: Point2D;
+    dragPosition: Vector2;
     changingLayout: boolean;
 };
 
@@ -72,11 +73,11 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const handleHeaderPointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
             if (ref.current) {
-                const point = pointerEventToPoint(e.nativeEvent);
+                const point = vector2FromPointerEvent(e.nativeEvent);
                 const rect = ref.current.getBoundingClientRect();
                 guiMessageBroker.publishEvent(GuiEvent.ModuleHeaderPointerDown, {
                     moduleInstanceId: props.moduleInstance.getId(),
-                    elementPosition: pointSubtraction(point, pointRelativeToDomRect(point, rect)),
+                    elementPosition: subtractVectors(point, pointRelativeToDomRect(point, rect)),
                     elementSize: { width: rect.width, height: rect.height },
                     pointerPosition: point,
                 });
