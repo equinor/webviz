@@ -19,7 +19,8 @@ import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembl
 
 import { Layout, PlotData } from "plotly.js";
 
-import { InplaceVolumetricsPlotBuilder, SubplotBy, TableData } from "./plotBuilder";
+import { InplaceVolumetricsPlotBuilder, TableData } from "./plotBuilder";
+import { SubplotBy } from "./types";
 
 import { RealizationAndResult, calcConvergenceArray } from "../settings/utils/convergenceCalculation";
 import { SettingsToViewInterface } from "../settingsToViewInterface";
@@ -28,10 +29,12 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleRealizationFilter = useEnsembleRealizationFilterFunc(props.workbenchSession);
+    const colorSet = props.workbenchSettings.useColorSet();
 
     const filter = props.viewContext.useSettingsToViewInterfaceValue("filter");
     const resultName = props.viewContext.useSettingsToViewInterfaceValue("resultName");
     const subplotBy = props.viewContext.useSettingsToViewInterfaceValue("subplotBy");
+    const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const divBoundingRect = useElementBoundingRect(divRef);
@@ -81,7 +84,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     }
     props.viewContext.setInstanceTitle(title);
 
-    const plotbuilder = new InplaceVolumetricsPlotBuilder(tablesDataAccessor);
+    const plotbuilder = new InplaceVolumetricsPlotBuilder(tablesDataAccessor, ensembleSet, colorSet);
 
     plotbuilder.setSubplotBy(subplotBy);
     plotbuilder.setPlottingFunction(makePlotData(resultName ?? ""));
@@ -243,7 +246,7 @@ function makePlotData(resultName: string): (tableData: TableData[]) => Partial<P
 
         for (const table of tableData) {
             const realizationAndResultArray: RealizationAndResult[] = [];
-            const reals = table.columns["REAL"];
+            const reals = table.columns["realization"];
             const results = table.columns[resultName];
             for (let i = 0; i < reals.length; i++) {
                 realizationAndResultArray.push({

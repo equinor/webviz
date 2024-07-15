@@ -1,7 +1,6 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-import { SubplotBy, SubplotByInfo } from "@modules/InplaceVolumetricsConvergence/view/plotBuilder";
 import {
     InplaceVolumetricsTableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,
@@ -126,20 +125,6 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
     }
 
     return fixedUpIdentifierValues;
-});
-
-export const selectedSubplotByAtom = atom<SubplotByInfo>((get) => {
-    const userSelectedSubplotBy = get(userSelectedSubplotByAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
-    const selectedTableNames = get(selectedTableNamesAtom);
-
-    if (selectedEnsembleIdents.length > 1 || selectedTableNames.length > 1) {
-        return {
-            subplotBy: SubplotBy.ENSEMBLE,
-        };
-    }
-
-    return userSelectedSubplotBy;
 });
 
 function fixupUserSelection<TSelection>(userSelection: TSelection[], validOptions: TSelection[]): TSelection[] {

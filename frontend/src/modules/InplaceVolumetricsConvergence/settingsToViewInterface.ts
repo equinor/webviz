@@ -2,21 +2,22 @@ import { InplaceVolumetricResultName_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 
+import { userSelectedColorByAtom, userSelectedSubplotByAtom } from "./settings/atoms/baseAtoms";
 import {
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
     selectedIdentifiersValuesAtom,
     selectedResultNameAtom,
-    selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/derivedAtoms";
-import { SubplotByInfo } from "./view/plotBuilder";
+import { SubplotByInfo } from "./view/types";
 
 export type SettingsToViewInterface = {
     derivedStates: {
         filter: InplaceVolumetricsFilter;
         resultName: InplaceVolumetricResultName_api | null;
         subplotBy: SubplotByInfo;
+        colorBy: SubplotByInfo;
     };
 };
 
@@ -31,6 +32,7 @@ export const interfaceInitialization: InterfaceInitialization<SettingsToViewInte
             };
         },
         resultName: (get) => get(selectedResultNameAtom),
-        subplotBy: (get) => get(selectedSubplotByAtom),
+        subplotBy: (get) => get(userSelectedSubplotByAtom),
+        colorBy: (get) => get(userSelectedColorByAtom),
     },
 };

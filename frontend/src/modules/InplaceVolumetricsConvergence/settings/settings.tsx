@@ -9,9 +9,10 @@ import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
+    userSelectedColorByAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
     userSelectedIdentifiersValuesAtom,
@@ -24,14 +25,13 @@ import {
     selectedFluidZonesAtom,
     selectedIdentifiersValuesAtom,
     selectedResultNameAtom,
-    selectedSubplotByAtom,
     selectedTableNamesAtom,
     tableDefinitionsAccessorAtom,
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { SubplotBy, SubplotByInfo } from "../view/plotBuilder";
+import { SubplotBy, SubplotByInfo } from "../view/types";
 
 export function Settings(props: ModuleSettingsProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -53,8 +53,8 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     const selectedResultName = useAtomValue(selectedResultNameAtom);
     const setSelectedResultName = useSetAtom(userSelectedResultNameAtom);
 
-    const selectedSubplotBy = useAtomValue(selectedSubplotByAtom);
-    const setSelectedSubplotBy = useSetAtom(userSelectedSubplotByAtom);
+    const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(userSelectedSubplotByAtom);
+    const [selectedColorBy, setSelectedColorBy] = useAtom(userSelectedColorByAtom);
 
     function handleFilterChange(newFilter: InplaceVolumetricsFilter) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
@@ -98,7 +98,7 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     }
 
     // Subplot automatically set to "Source" if multiple ensembles or tables selected
-    const subplotOptionDisabled = selectedEnsembleIdents.length > 1 || selectedTableNames.length > 1;
+    const subplotOptionDisabled = false; //selectedEnsembleIdents.length > 1 || selectedTableNames.length > 1;
 
     return (
         <div className="flex flex-col gap-2">
@@ -124,6 +124,21 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                                 value={selectedSubplotBy ?? undefined}
                                 options={subplotOptions}
                                 onChange={setSelectedSubplotBy}
+                                disabled={subplotOptionDisabled}
+                            />
+                        </Label>
+                        <Label
+                            text="Color by"
+                            title={
+                                subplotOptionDisabled
+                                    ? "When having selecting multiple sources (ensembles/tables), the subplot option is automatically set to source and cannot be changed."
+                                    : undefined
+                            }
+                        >
+                            <Dropdown
+                                value={selectedColorBy ?? undefined}
+                                options={subplotOptions}
+                                onChange={setSelectedColorBy}
                                 disabled={subplotOptionDisabled}
                             />
                         </Label>

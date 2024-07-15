@@ -1,26 +1,13 @@
-import { InplaceVolumetricsIdentifier_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { EnsembleSet } from "@framework/EnsembleSet";
+import { ColorSet } from "@lib/utils/ColorSet";
 import { Figure, makeSubplots } from "@modules/_shared/Figure";
 import { InplaceVolumetricsTablesDataAccessor } from "@modules/_shared/InplaceVolumetrics/InplaceVolumetricsDataAccessor";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { PlotData } from "plotly.js";
 
-export enum SubplotBy {
-    ENSEMBLE = "ensemble",
-    TABLE_NAME = "table-name",
-    FLUID_ZONE = "fluidZone",
-    IDENTIFIER = "identifier",
-}
-
-export type SubplotByInfo =
-    | {
-          subplotBy: Exclude<SubplotBy, SubplotBy.IDENTIFIER>;
-      }
-    | {
-          subplotBy: SubplotBy.IDENTIFIER;
-          identifier: InplaceVolumetricsIdentifier_api;
-      };
+import { SubplotBy, SubplotByInfo } from "./types";
 
 type TablesData = {
     label: string;
@@ -28,24 +15,33 @@ type TablesData = {
 };
 
 export type TableData = {
+    color: string;
     columns: Record<string, number[]>;
 };
 
 export class InplaceVolumetricsPlotBuilder {
     private _dataAccessor: InplaceVolumetricsTablesDataAccessor;
-    private _plottingFunction: ((data: TableData[]) => Partial<PlotData>[]) | null = null;
+    private _plottingFunction: ((data: TableData) => Partial<PlotData>[]) | null = null;
     private _subplotByInfo: SubplotByInfo = { subplotBy: SubplotBy.TABLE_NAME };
-    private _colorBy: SubplotBy = SubplotBy.ENSEMBLE;
+    private _colorBy: SubplotByInfo = { subplotBy: SubplotBy.ENSEMBLE };
+    private _ensembleSet: EnsembleSet;
+    private _colorSet: ColorSet;
 
-    constructor(dataAccessor: InplaceVolumetricsTablesDataAccessor) {
+    constructor(dataAccessor: InplaceVolumetricsTablesDataAccessor, ensembleSet: EnsembleSet, colorSet: ColorSet) {
         this._dataAccessor = dataAccessor;
+        this._ensembleSet = ensembleSet;
+        this._colorSet = colorSet;
     }
 
     setSubplotBy(subplotByInfo: SubplotByInfo) {
         this._subplotByInfo = subplotByInfo;
     }
 
-    setPlottingFunction(plottingFunction: (data: TableData[]) => Partial<PlotData>[]) {
+    setColorBy(colorBy: SubplotByInfo) {
+        this._colorBy = colorBy;
+    }
+
+    setPlottingFunction(plottingFunction: (data: TableData) => Partial<PlotData>[]) {
         this._plottingFunction = plottingFunction;
     }
 
@@ -63,18 +59,17 @@ export class InplaceVolumetricsPlotBuilder {
 
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
-                const index = (row - 1) * numCols + (col - 1);
-
-                const adjustedIndex = (numRows - 1 - (row - 1)) * numCols + (col - 1);
-                subplotTitles.push(tablesData[adjustedIndex]?.label ?? "");
-
-                if (index >= tablesData.length) {
+                const index = (numRows - 1 - (row - 1)) * numCols + (col - 1);
+                if (!tablesData[index]) {
                     continue;
                 }
+                const { label, tables } = tablesData[index];
 
-                const plotDataArr = this._plottingFunction(tablesData[index].tables);
-                for (const plotData of plotDataArr) {
-                    traces.push({ row, col, trace: plotData });
+                for (const table of tables) {
+                    const plotDataArr = this._plottingFunction(table);
+                    for (const plotData of plotDataArr) {
+                        traces.push({ row, col, trace: plotData });
+                    }
                 }
             }
         }
@@ -98,10 +93,12 @@ export class InplaceVolumetricsPlotBuilder {
         return figure;
     }
 
-    makeSubplotTables(): TablesData[] {
+    private makeColor();
+
+    private makeSubplotTables(): TablesData[] {
         const tablesData: TablesData[] = [];
         if (this._subplotByInfo.subplotBy === SubplotBy.ENSEMBLE) {
-            if (this._dataAccessor.getTableNames().length > 1 && this._colorBy !== SubplotBy.TABLE_NAME) {
+            if (this._dataAccessor.getTableNames().length > 1 && this._colorBy.subplotBy !== SubplotBy.TABLE_NAME) {
                 throw new Error(
                     "Must color by table name when subplotting by ensemble and there is more than one table name"
                 );
@@ -125,18 +122,20 @@ export class InplaceVolumetricsPlotBuilder {
                     tables.push(tableData);
                 }
                 tablesData.push({
-                    label: ensembleIdent.toString(),
+                    label: makeDistinguishableEnsembleDisplayName(ensembleIdent, this._ensembleSet.getEnsembleArr()),
+                    color: this._ensembleSet.findEnsemble(ensembleIdent)?.getColor() ?? "black",
                     tables,
                 });
             }
         } else if (this._subplotByInfo.subplotBy === SubplotBy.TABLE_NAME) {
-            if (this._dataAccessor.getEnsembleIdents().length > 1 && this._colorBy !== SubplotBy.ENSEMBLE) {
+            if (this._dataAccessor.getEnsembleIdents().length > 1 && this._colorBy.subplotBy !== SubplotBy.ENSEMBLE) {
                 throw new Error(
                     "Must color by ensemble when subplotting by table name and there is more than one ensemble"
                 );
             }
 
             const tableNames = this._dataAccessor.getTableNames();
+            let color = this._colorSet.getFirstColor();
             for (const tableName of tableNames) {
                 const tables: TableData[] = [];
                 for (const subTable of this._dataAccessor.getTablesForTableName(tableName)) {
@@ -155,20 +154,23 @@ export class InplaceVolumetricsPlotBuilder {
                 }
                 tablesData.push({
                     label: tableName,
+                    color,
                     tables,
                 });
+                color = this._colorSet.getNextColor();
             }
         } else if (this._subplotByInfo.subplotBy === SubplotBy.FLUID_ZONE) {
             if (this._dataAccessor.getEnsembleIdents().length > 1 && this._dataAccessor.getTableNames().length > 1) {
                 throw new Error("Cannot subplot by fluid zone when there is more than one ensemble and table name");
             }
-            if (this._dataAccessor.getEnsembleIdents().length > 1 && this._colorBy !== SubplotBy.ENSEMBLE) {
+            if (this._dataAccessor.getEnsembleIdents().length > 1 && this._colorBy.subplotBy !== SubplotBy.ENSEMBLE) {
                 throw new Error(
                     "Must color by ensemble when subplotting by fluid zone and there is more than one ensemble"
                 );
             }
 
             const fluidZones = this._dataAccessor.getFluidZones();
+            let color = this._colorSet.getFirstColor();
             for (const fluidZone of fluidZones) {
                 const tables: TableData[] = [];
                 for (const subTable of this._dataAccessor.getTablesForFluidZone(fluidZone)) {
@@ -187,11 +189,13 @@ export class InplaceVolumetricsPlotBuilder {
                 }
                 tablesData.push({
                     label: fluidZone,
+                    color,
                     tables,
                 });
+                color = this._colorSet.getNextColor();
             }
         } else if (this._subplotByInfo.subplotBy === SubplotBy.IDENTIFIER) {
-            if (this._dataAccessor.getEnsembleIdents().length > 1 && this._colorBy !== SubplotBy.ENSEMBLE) {
+            if (this._dataAccessor.getEnsembleIdents().length > 1 && this._colorBy.subplotBy !== SubplotBy.ENSEMBLE) {
                 throw new Error(
                     "Must color by ensemble when subplotting by identifier and there is more than one ensemble"
                 );
@@ -210,12 +214,20 @@ export class InplaceVolumetricsPlotBuilder {
             const identifiers = this._dataAccessor.getColumnValuesIntersection(identifierName);
             for (const identifier of identifiers) {
                 const tables: TableData[] = [];
+                let color = this._colorSet.getFirstColor();
                 for (const subTable of this._dataAccessor.getTables()) {
                     const matchingRows = subTable.getRowsWithFilter(identifierName, identifier);
-                    const columns: Record<string, number[]> = {};
+                    const realizations = subTable.getRealizationColumnValues();
+                    const columns: Record<string, number[]> = {
+                        realization: realizations,
+                    };
+                    const subTableResultColumns = subTable.getResultColumns();
                     for (const row of matchingRows) {
                         for (const [column, value] of Object.entries(row)) {
-                            if (column in subTable.getResultColumns()) {
+                            if (subTableResultColumns.includes(column)) {
+                                if (!columns[column]) {
+                                    columns[column] = [];
+                                }
                                 columns[column] = [...columns[column], parseFloat(value.toString())];
                             }
                         }
@@ -226,9 +238,11 @@ export class InplaceVolumetricsPlotBuilder {
                     tables.push(tableData);
                 }
                 tablesData.push({
-                    label: identifierName,
+                    label: identifier.toString(),
+                    color,
                     tables,
                 });
+                color = this._colorSet.getNextColor();
             }
         }
 
