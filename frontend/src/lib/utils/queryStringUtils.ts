@@ -5,18 +5,24 @@
 // - The key and value are separated by "~" (think of it as assignment)
 // - String values are enclosed in single quotes
 //
-// Only primitive value types are supported: string, number, boolean, null
+// Only primitive value types are supported: string, number, boolean, null. Non-primitive value types will be ignored
 // Only encodes the top level properties of the object and ignores nested objects.
+// For maps, only string keys are supported
 //
 // Example:
 // encodedKeyValString = "key1~123.5~~key2~'someString'~~key3~false"
 //
-export function encodePropertiesAsKeyValStr(obj: Object | Map<string, string | number | boolean>): string {
+export function encodePropertiesAsKeyValStr(objOrMap: Object | Map<string, string | number | boolean>): string {
     const KEYVAL_ASSIGN_SEP = "~";
     const KEYVAL_ELEMENT_SEP = "~~";
 
+    const srcKeyValArr = objOrMap instanceof Map ? Array.from(objOrMap.entries()) : Object.entries(objOrMap);
+
     const elementArr: string[] = [];
-    for (const [key, value] of Object.entries(obj)) {
+    for (const [key, value] of srcKeyValArr) {
+        if (typeof key !== "string") {
+            throw new Error(`Only string keys are supported, offending key: ${key}`);
+        }
         // We only support primitive types
         const valueType = typeof value;
         if (value === null || valueType === "number" || valueType === "boolean") {
@@ -26,6 +32,9 @@ export function encodePropertiesAsKeyValStr(obj: Object | Map<string, string | n
             elementArr.push(`${key}${KEYVAL_ASSIGN_SEP}'${value}'`);
         }
     }
+
+    // Sort the array to get a deterministic ordering of the elements
+    elementArr.sort();
 
     const keyValStr = elementArr.join(KEYVAL_ELEMENT_SEP);
     return keyValStr;
