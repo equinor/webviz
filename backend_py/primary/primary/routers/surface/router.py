@@ -123,11 +123,13 @@ async def get_observed_surfaces_metadata(
 
 @router.get("/surface_data", description="Get surface data for the specified surface." + GENERAL_SURF_ADDR_DOC_STR)
 async def get_surface_data(
+    # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     surf_addr_str: Annotated[str, Query(description="Surface address string, supported address types are *REAL*, *OBS* and *STAT*")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
+    # fmt:on
 ) -> schemas.SurfaceDataFloat | schemas.SurfaceDataPng:
     perf_metrics = ResponsePerfMetrics(response)
 
@@ -178,14 +180,14 @@ async def get_surface_data(
             raise HTTPException(status_code=404, detail="Could not get observed surface")
 
     if resample_to is not None:
-        xtgeo_surf = converters.resample_surface_to_surface_def(xtgeo_surf, resample_to)
+        xtgeo_surf = converters.resample_to_surface_def(xtgeo_surf, resample_to)
         perf_metrics.record_lap("resample")
 
     surf_data_response: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
     if data_format == "float":
-        surf_data_response = converters.to_api_surface_data_as_float32(xtgeo_surf)
+        surf_data_response = converters.to_api_surface_data_float(xtgeo_surf)
     elif data_format == "png":
-        surf_data_response = converters.to_api_surface_data_as_png(xtgeo_surf)
+        surf_data_response = converters.to_api_surface_data_png(xtgeo_surf)
 
     perf_metrics.record_lap("convert")
 
@@ -265,21 +267,23 @@ async def post_sample_surface_in_points(
     return intersections
 
 
-
 @router.get("/delta_surface_data")
 async def get_delta_surface_data(
+    # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     surf_a_addr_str: Annotated[str, Query(description="Address string of surface A, supported types: *REAL*, *OBS* and *STAT*")],
     surf_b_addr_str: Annotated[str, Query(description="Address string of surface B, supported types: *REAL*, *OBS* and *STAT*")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
+    # fmt:on
 ) -> list[schemas.SurfaceDataFloat]:
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
 @router.get("/misfit_surface_data")
 async def get_misfit_surface_data(
+    # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     obs_surf_addr_str: Annotated[str, Query(description="Address of observed surface, only supported address type is *OBS*")],
@@ -288,9 +292,9 @@ async def get_misfit_surface_data(
     realizations: Annotated[list[int], Query(description="Realization numbers")],
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
+    # fmt:on
 ) -> list[schemas.SurfaceDataFloat]:
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
-
 
 
 async def _get_stratigraphic_units_for_case_async(

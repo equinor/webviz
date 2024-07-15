@@ -1,7 +1,7 @@
 import json
 
-KEYVAL_ASSIGN_SEP = "~"
-KEYVAL_ELEMENT_SEP = "~~"
+_KEYVAL_ASSIGN_SEP = "~"
+_KEYVAL_ELEMENT_SEP = "~~"
 
 
 def decode_key_val_str(key_val_str: str) -> dict[str, str | int | float | bool | None]:
@@ -9,13 +9,19 @@ def decode_key_val_str(key_val_str: str) -> dict[str, str | int | float | bool |
     Decodes a KeyValStr into a dictionary of key-value pairs.
 
     A KeyValStr encodes a non-hierarchical set of key-value pairs as a single string.
+    Only primitive value types are supported: string, number, boolean, null
+
     The key-value string is encoded as follows:
      - Each key-value pair is separated by "~~"
      - The key and value are separated by "~" (think of it as assignment)
      - String values are enclosed in single quotes
+
+    Example encoded string:
+        encodedKeyValString = "key1~123.5~~key2~'someString'~~key3~false"
+
     """
     key_val_str = key_val_str.strip()
-    pairs_arr = key_val_str.split(KEYVAL_ELEMENT_SEP)
+    pairs_arr = key_val_str.split(_KEYVAL_ELEMENT_SEP)
 
     prop_dict: dict[str, str | int | float | bool | None] = {}
     for pair_str in pairs_arr:
@@ -23,7 +29,7 @@ def decode_key_val_str(key_val_str: str) -> dict[str, str | int | float | bool |
         if len(pair_str) == 0:
             continue
 
-        key, value_str = pair_str.split(KEYVAL_ASSIGN_SEP, 1)
+        key, value_str = pair_str.split(_KEYVAL_ASSIGN_SEP, 1)
         if len(value_str) >= 2 and value_str.startswith("'") and value_str.endswith("'"):
             # It's a string - strip the quotes
             value_str = value_str[1:-1]

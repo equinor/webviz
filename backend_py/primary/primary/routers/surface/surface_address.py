@@ -1,7 +1,7 @@
-from typing import Optional, Literal, Any, ClassVar, LiteralString, TypeGuard
+from typing import Literal, ClassVar, TypeGuard
 from dataclasses import dataclass
 
-from ...utils.query_string_utils import encode_as_uint_list_str, decode_uint_list_str
+from primary.utils.query_string_utils import encode_as_uint_list_str, decode_uint_list_str
 
 _DELIMITER = "~~"
 
@@ -25,7 +25,7 @@ class RealSurfAddr:
             raise ValueError("RealSurfAddr.name must be a non-empty string")
         if not self.attribute:
             raise ValueError("RealSurfAddr.attribute must be a non-empty string")
-        if type(self.realization) != int:
+        if not isinstance(self.realization, int):
             raise ValueError("RealSurfAddr.realization must be an integer")
         if self.iso_time_or_interval and len(self.iso_time_or_interval) == 0:
             raise ValueError("RealSurfAddr.iso_time_or_interval must be None or a non-empty string")
@@ -240,7 +240,7 @@ def peek_surf_addr_type(addr_str: str) -> Literal["REAL", "OBS", "STAT", "PARTIA
     component_arr = addr_str.split(_DELIMITER)
     if len(component_arr) < 1:
         return None
-    
+
     addr_type_str = component_arr[0]
     if addr_type_str == "REAL":
         return "REAL"

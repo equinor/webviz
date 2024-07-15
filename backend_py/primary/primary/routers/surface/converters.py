@@ -1,8 +1,9 @@
-import numpy as np
 import base64
+
+import numpy as np
 import xtgeo
 from numpy.typing import NDArray
-from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32, B64UintArray
+from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
 
 from primary.services.smda_access.types import StratigraphicSurface
 from primary.services.sumo_access.surface_types import SurfaceMetaSet
@@ -14,7 +15,7 @@ from primary.services.utils.surface_to_png import surface_to_png_bytes_optimized
 from . import schemas
 
 
-def resample_surface_to_surface_def(
+def resample_to_surface_def(
     source_surface: xtgeo.RegularSurface, target_surface_def: schemas.SurfaceDef
 ) -> xtgeo.RegularSurface:
     """
@@ -38,9 +39,9 @@ def resample_surface_to_surface_def(
     return target_surface
 
 
-def to_api_surface_data_as_float32(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceDataFloat:
+def to_api_surface_data_float(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceDataFloat:
     """
-    Create API SurfaceData from xtgeo regular surface
+    Create API SurfaceDataFloat from xtgeo regular surface
     """
 
     float32_np_arr: NDArray[np.float32] = surface_to_float32_numpy_array(xtgeo_surf)
@@ -70,17 +71,13 @@ def to_api_surface_data_as_float32(xtgeo_surf: xtgeo.RegularSurface) -> schemas.
     )
 
 
-def to_api_surface_data_as_png(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceDataPng:
+def to_api_surface_data_png(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceDataPng:
     """
-    Create API SurfaceData from xtgeo regular surface
+    Create API SurfaceDataPng from xtgeo regular surface
     """
-
-    float32_np_arr: NDArray[np.float32] = surface_to_float32_numpy_array(xtgeo_surf)
-    values_b64arr = b64_encode_float_array_as_float32(float32_np_arr)
 
     png_bytes: bytes = surface_to_png_bytes_optimized(xtgeo_surf)
-    base64_data = base64.b64encode(png_bytes).decode("ascii")
-    png_bytes_b64arr = B64UintArray(element_type="uint8", data_b64str=base64_data)
+    png_bytes_base64 = base64.b64encode(png_bytes).decode("ascii")
 
     surface_def = schemas.SurfaceDef(
         npoints_x=xtgeo_surf.ncol,
@@ -102,26 +99,10 @@ def to_api_surface_data_as_png(xtgeo_surf: xtgeo.RegularSurface) -> schemas.Surf
         transformed_bbox_utm=trans_bb_utm,
         value_min=xtgeo_surf.values.min(),
         value_max=xtgeo_surf.values.max(),
-        #values_b64arr=values_b64arr,
-        png_image_base64=base64_data,
+        # values_b64arr=values_b64arr,
+        png_image_base64=png_bytes_base64,
     )
 
-    # surf_orient = calc_surface_orientation_for_colormap_layer(xtgeo_surf)
-
-    # return schemas.SurfaceDataPng(
-    #     x_min_surf_orient=surf_orient.x_min,
-    #     x_max_surf_orient=surf_orient.x_max,
-    #     y_min_surf_orient=surf_orient.y_min,
-    #     y_max_surf_orient=surf_orient.y_max,
-    #     x_min=xtgeo_surf.xmin,
-    #     x_max=xtgeo_surf.xmax,
-    #     y_min=xtgeo_surf.ymin,
-    #     y_max=xtgeo_surf.ymax,
-    #     val_min=xtgeo_surf.values.min(),
-    #     val_max=xtgeo_surf.values.max(),
-    #     rot_deg=surf_orient.rot_around_xmin_ymax_deg,
-    #     base64_encoded_image=f"{base64_data}",
-    # )
 
 def to_api_surface_meta_set(
     sumo_surf_meta_set: SurfaceMetaSet, ordered_stratigraphic_surfaces: list[StratigraphicSurface]
