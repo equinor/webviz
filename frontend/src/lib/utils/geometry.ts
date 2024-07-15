@@ -1,4 +1,4 @@
-import type { Vector2 } from "./vector2";
+import type { Vec2 } from "./vec2";
 
 export type Size2D = {
     width: number;
@@ -15,13 +15,10 @@ export type Rect2D = {
 export const ORIGIN = Object.freeze({ x: 0, y: 0 });
 export const MANHATTAN_LENGTH = 13.11;
 
-
-
-
 export function isPartlyContained(
-    centerPoint1: Vector2,
+    centerPoint1: Vec2,
     dimensions1: Size2D,
-    centerPoint2: Vector2,
+    centerPoint2: Vec2,
     dimensions2: Size2D
 ): boolean {
     return !(
@@ -32,7 +29,7 @@ export function isPartlyContained(
     );
 }
 
-export function pointIsContained(point: Vector2, dimensions: Size2D, centerPoint: Vector2): boolean {
+export function pointIsContained(point: Vec2, dimensions: Size2D, centerPoint: Vec2): boolean {
     return (
         point.x >= centerPoint.x - dimensions.width / 2 &&
         point.x <= centerPoint.x + dimensions.width / 2 &&
@@ -59,7 +56,7 @@ export function scaleRectIndividually(rect: Rect2D, factorX: number, factorY: nu
     };
 }
 
-export function rectContainsPoint(rect: Rect2D, point: Vector2): boolean {
+export function rectContainsPoint(rect: Rect2D, point: Vec2): boolean {
     return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
 }
 
@@ -90,7 +87,7 @@ export function outerRectContainsInnerRect(outerRect: Rect2D, innerRect: Rect2D)
     );
 }
 
-export function pointRelativeToDomRect(point: Vector2, domRect: DOMRect): Vector2 {
+export function pointRelativeToDomRect(point: Vec2, domRect: DOMRect): Vec2 {
     return { x: point.x - domRect.x, y: point.y - domRect.y };
 }
 

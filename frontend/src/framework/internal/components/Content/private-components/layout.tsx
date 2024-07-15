@@ -14,13 +14,13 @@ import {
     rectContainsPoint,
 } from "@lib/utils/geometry";
 import {
-    Vector2,
-    multiplyVectors,
-    pointDistance,
-    scaleVectorNonUniform,
-    subtractVectors,
-    vector2FromPointerEvent,
-} from "@lib/utils/vector2";
+    Vec2,
+    multiplyVec2,
+    point2Distance,
+    scaleVec2NonUniform,
+    subtractVec2,
+    vec2FromPointerEvent,
+} from "@lib/utils/vec2";
 
 import { v4 } from "uuid";
 
@@ -43,8 +43,8 @@ function convertLayoutRectToRealRect(element: LayoutElement, size: Size2D): Rect
 
 export const Layout: React.FC<LayoutProps> = (props) => {
     const [draggedModuleInstanceId, setDraggedModuleInstanceId] = React.useState<string | null>(null);
-    const [position, setPosition] = React.useState<Vector2>({ x: 0, y: 0 });
-    const [pointer, setPointer] = React.useState<Vector2>({ x: -1, y: -1 });
+    const [position, setPosition] = React.useState<Vec2>({ x: 0, y: 0 });
+    const [pointer, setPointer] = React.useState<Vec2>({ x: -1, y: -1 });
     const [layout, setLayout] = React.useState<LayoutElement[]>([]);
     const [tempLayoutBoxId, setTempLayoutBoxId] = React.useState<string | null>(null);
     const ref = React.useRef<HTMLDivElement>(null);
@@ -55,12 +55,12 @@ export const Layout: React.FC<LayoutProps> = (props) => {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     React.useEffect(() => {
-        let pointerDownPoint: Vector2 | null = null;
-        let pointerDownElementPosition: Vector2 | null = null;
+        let pointerDownPoint: Vec2 | null = null;
+        let pointerDownElementPosition: Vec2 | null = null;
         let pointerDownElementId: string | null = null;
         let pointerDownElementSize: Size2D | null = null;
-        let relativePointerPosition: Vector2 = { x: 0, y: 0 };
-        let relativePointerToElementDiff: Vector2 = { x: 0, y: 0 };
+        let relativePointerPosition: Vec2 = { x: 0, y: 0 };
+        let relativePointerToElementDiff: Vec2 = { x: 0, y: 0 };
         let dragging = false;
         let moduleInstanceId: string | null = null;
         let moduleName: string | null = null;
@@ -71,7 +71,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
         let currentLayoutBox = originalLayoutBox;
         layoutBoxRef.current = currentLayoutBox;
         let lastTimeStamp = 0;
-        let lastMovePosition: Vector2 = { x: 0, y: 0 };
+        let lastMovePosition: Vec2 = { x: 0, y: 0 };
         let delayTimer: ReturnType<typeof setTimeout> | null = null;
         let isNewModule = false;
 
@@ -93,9 +93,9 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 const draggedElementSize = calcSizeOfDraggedElement();
 
                 setPosition(
-                    subtractVectors(
+                    subtractVec2(
                         relativePointerPosition,
-                        multiplyVectors(relativePointerToElementDiff, {
+                        multiplyVec2(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
                         })
@@ -171,7 +171,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             e.stopPropagation();
 
             if (!dragging) {
-                if (pointDistance(vector2FromPointerEvent(e), pointerDownPoint) > MANHATTAN_LENGTH) {
+                if (point2Distance(vec2FromPointerEvent(e), pointerDownPoint) > MANHATTAN_LENGTH) {
                     setDraggedModuleInstanceId(pointerDownElementId);
                     moduleInstanceId = pointerDownElementId;
                     const rect = ref.current.getBoundingClientRect();
@@ -179,13 +179,13 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     relativePointerPosition = pointRelativeToDomRect(pointerDownPoint, rect);
                     dragging = true;
                     const factorX = pointerDownElementSize.width === 0 ? 1 : 1 / pointerDownElementSize.width;
-                    relativePointerToElementDiff = scaleVectorNonUniform(
-                        subtractVectors(pointerDownPoint, pointerDownElementPosition),
+                    relativePointerToElementDiff = scaleVec2NonUniform(
+                        subtractVec2(pointerDownPoint, pointerDownElementPosition),
                         factorX,
                         1
                     );
                     lastTimeStamp = e.timeStamp;
-                    lastMovePosition = vector2FromPointerEvent(e);
+                    lastMovePosition = vec2FromPointerEvent(e);
                 }
             } else {
                 if (!pointerDownElementId || !pointerDownPoint) {
@@ -193,23 +193,22 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 }
                 const rect = ref.current.getBoundingClientRect();
                 const draggedElementSize = calcSizeOfDraggedElement();
-                relativePointerPosition = subtractVectors(vector2FromPointerEvent(e), rect);
+                relativePointerPosition = subtractVec2(vec2FromPointerEvent(e), rect);
                 setPosition(
-                    subtractVectors(
+                    subtractVec2(
                         relativePointerPosition,
-                        multiplyVectors(relativePointerToElementDiff, {
+                        multiplyVec2(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
                         })
                     )
                 );
-                setPointer(subtractVectors(vector2FromPointerEvent(e), rect));
-                const speed =
-                    pointDistance(vector2FromPointerEvent(e), lastMovePosition) / (e.timeStamp - lastTimeStamp);
+                setPointer(subtractVec2(vec2FromPointerEvent(e), rect));
+                const speed = point2Distance(vec2FromPointerEvent(e), lastMovePosition) / (e.timeStamp - lastTimeStamp);
                 lastTimeStamp = e.timeStamp;
-                lastMovePosition = vector2FromPointerEvent(e);
+                lastMovePosition = vec2FromPointerEvent(e);
 
-                if (!rectContainsPoint(addMarginToRect(rect, 25), vector2FromPointerEvent(e))) {
+                if (!rectContainsPoint(addMarginToRect(rect, 25), vec2FromPointerEvent(e))) {
                     currentLayout = originalLayout;
                     currentLayoutBox = originalLayoutBox;
                     setLayout(currentLayout);

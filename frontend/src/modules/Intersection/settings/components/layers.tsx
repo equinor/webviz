@@ -11,7 +11,7 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vector2, pointDistance } from "@lib/utils/vector2";
+import { Vec2, point2Distance } from "@lib/utils/vec2";
 import {
     BaseLayer,
     LayerStatus,
@@ -66,7 +66,7 @@ export function Layers(props: LayersProps): React.ReactNode {
 
     const [draggingLayerId, setDraggingLayerId] = React.useState<string | null>(null);
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
-    const [dragPosition, setDragPosition] = React.useState<Vector2>({ x: 0, y: 0 });
+    const [dragPosition, setDragPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [prevLayers, setPrevLayers] = React.useState<BaseLayer<any, any>[]>(layers);
     const [currentScrollPosition, setCurrentScrollPosition] = React.useState<number>(0);
     const [layerOrder, setLayerOrder] = React.useState<string[]>(layers.map((layer) => layer.getId()));
@@ -100,8 +100,8 @@ export function Layers(props: LayersProps): React.ReactNode {
 
             const currentParentDivRef = parentDivRef.current;
 
-            let pointerDownPosition: Vector2 | null = null;
-            let pointerDownPositionRelativeToElement: Vector2 = { x: 0, y: 0 };
+            let pointerDownPosition: Vec2 | null = null;
+            let pointerDownPositionRelativeToElement: Vec2 = { x: 0, y: 0 };
             let draggingActive: boolean = false;
             let layerId: string | null = null;
             let newLayerOrder: string[] = layers.map((layer) => layer.getId());
@@ -160,7 +160,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 setLayerOrder(newLayerOrder);
             }
 
-            function handleElementDrag(id: string, position: Vector2) {
+            function handleElementDrag(id: string, position: Vec2) {
                 if (parentDivRef.current === null) {
                     return;
                 }
@@ -193,7 +193,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 }
             }
 
-            function maybeScroll(position: Vector2) {
+            function maybeScroll(position: Vec2) {
                 if (
                     upperScrollDivRef.current === null ||
                     lowerScrollDivRef.current === null ||
@@ -248,7 +248,7 @@ export function Layers(props: LayersProps): React.ReactNode {
 
                 if (
                     !draggingActive &&
-                    pointDistance(pointerDownPosition, { x: e.clientX, y: e.clientY }) > MANHATTAN_LENGTH
+                    point2Distance(pointerDownPosition, { x: e.clientX, y: e.clientY }) > MANHATTAN_LENGTH
                 ) {
                     draggingActive = true;
                     setDraggingLayerId(layerId);
@@ -262,7 +262,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 const dy = e.clientY - pointerDownPositionRelativeToElement.y;
                 setDragPosition({ x: dx, y: dy });
 
-                const point: Vector2 = { x: e.clientX, y: e.clientY };
+                const point: Vec2 = { x: e.clientX, y: e.clientY };
 
                 handleElementDrag(layerId, point);
 
@@ -380,7 +380,7 @@ type LayerItemProps = {
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     isDragging: boolean;
-    dragPosition: Vector2;
+    dragPosition: Vec2;
     onRemoveLayer: (id: string) => void;
 };
 

@@ -5,7 +5,7 @@ import { ModuleInstance } from "@framework/ModuleInstance";
 import { Workbench } from "@framework/Workbench";
 import { pointRelativeToDomRect } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vector2, subtractVectors, vector2FromPointerEvent } from "@lib/utils/vector2";
+import { Vec2, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";
@@ -22,7 +22,7 @@ type ViewWrapperProps = {
     x: number;
     y: number;
     isDragged: boolean;
-    dragPosition: Vector2;
+    dragPosition: Vec2;
     changingLayout: boolean;
 };
 
@@ -73,11 +73,11 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const handleHeaderPointerDown = React.useCallback(
         function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
             if (ref.current) {
-                const point = vector2FromPointerEvent(e.nativeEvent);
+                const point = vec2FromPointerEvent(e.nativeEvent);
                 const rect = ref.current.getBoundingClientRect();
                 guiMessageBroker.publishEvent(GuiEvent.ModuleHeaderPointerDown, {
                     moduleInstanceId: props.moduleInstance.getId(),
-                    elementPosition: subtractVectors(point, pointRelativeToDomRect(point, rect)),
+                    elementPosition: subtractVec2(point, pointRelativeToDomRect(point, rect)),
                     elementSize: { width: rect.width, height: rect.height },
                     pointerPosition: point,
                 });

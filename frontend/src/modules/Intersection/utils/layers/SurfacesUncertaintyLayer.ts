@@ -3,7 +3,7 @@ import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { Vector2, pointDistance, normalizeVector } from "@lib/utils/vector2";
+import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
 import { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
@@ -88,7 +88,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
         for (const surface of this._data) {
             let totalLength = 0;
             for (let i = 2; i < this._settings.polyline.polylineUtmXy.length; i += 2) {
-                totalLength += pointDistance(
+                totalLength += point2Distance(
                     {
                         x: this._settings.polyline.polylineUtmXy[i],
                         y: this._settings.polyline.polylineUtmXy[i + 1],
@@ -167,7 +167,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
         const cumulatedHorizontalPolylineLengthArr: number[] = [];
         for (let i = 0; i < polyline.length; i += 2) {
             if (i > 0) {
-                const distance = pointDistance(
+                const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
                     { x: polyline[i - 2], y: polyline[i - 1] }
                 );
@@ -176,11 +176,11 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
                 const scale = actualDistance / distance;
 
                 for (let p = 1; p <= numPoints; p++) {
-                    const vector: Vector2 = {
+                    const vector: Vec2 = {
                         x: polyline[i] - polyline[i - 2],
                         y: polyline[i + 1] - polyline[i - 1],
                     };
-                    const normalizedVector = normalizeVector(vector);
+                    const normalizedVector = normalizeVec2(vector);
                     xPoints.push(polyline[i - 2] + normalizedVector.x * this._settings.resolution * p);
                     yPoints.push(polyline[i - 1] + normalizedVector.y * this._settings.resolution * p);
                     cumulatedHorizontalPolylineLength += this._settings.resolution * scale;
@@ -192,7 +192,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
             yPoints.push(polyline[i + 1]);
 
             if (i > 0) {
-                const distance = pointDistance(
+                const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
                     { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] }
                 );

@@ -4,7 +4,7 @@ import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { Vector2, pointDistance, normalizeVector } from "@lib/utils/vector2";
+import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
 import { b64DecodeFloatArrayToFloat32 } from "@modules/_shared/base64";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { QueryClient } from "@tanstack/query-core";
@@ -238,7 +238,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
         let u = -this._settings.extensionLength;
         trajectoryFenceProjection.push([u, 0]);
         for (let i = 2; i < polyline.length; i += 2) {
-            const distance = pointDistance(
+            const distance = point2Distance(
                 { x: polyline[i], y: polyline[i + 1] },
                 { x: polyline[i - 2], y: polyline[i - 1] }
             );
@@ -293,16 +293,16 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
 
         for (let i = 0; i < polyline.length; i += 2) {
             if (i > 0) {
-                const distance = pointDistance(
+                const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
                     { x: polyline[i - 2], y: polyline[i - 1] }
                 );
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
-                const vector: Vector2 = {
+                const vector: Vec2 = {
                     x: polyline[i] - polyline[i - 2],
                     y: polyline[i + 1] - polyline[i - 1],
                 };
-                const normalizedVector = normalizeVector(vector);
+                const normalizedVector = normalizeVec2(vector);
 
                 for (let p = 1; p <= numPoints; p++) {
                     trajectory.push([

@@ -4,8 +4,8 @@ import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/Gu
 import { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
-import { Vector2 } from "@lib/utils/vector2";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Vec2 } from "@lib/utils/vec2";
 
 export type DataChannelVisualizationProps = {
     workbench: Workbench;
@@ -13,20 +13,20 @@ export type DataChannelVisualizationProps = {
 
 type DataChannelPath = {
     key: string;
-    origin: Vector2;
-    midPoint1: Vector2;
-    midPoint2: Vector2;
-    destination: Vector2;
+    origin: Vec2;
+    midPoint1: Vec2;
+    midPoint2: Vec2;
+    destination: Vec2;
     description: string;
-    descriptionCenterPoint: Vector2;
+    descriptionCenterPoint: Vec2;
     highlighted: boolean;
 };
 
 export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationProps> = (props) => {
     const ref = React.useRef<SVGSVGElement>(null);
     const [visible, setVisible] = React.useState<boolean>(false);
-    const [originPoint, setOriginPoint] = React.useState<Vector2>({ x: 0, y: 0 });
-    const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Vector2>({ x: 0, y: 0 });
+    const [originPoint, setOriginPoint] = React.useState<Vec2>({ x: 0, y: 0 });
+    const [currentPointerPosition, setCurrentPointerPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [currentChannelName, setCurrentChannelName] = React.useState<string | null>(null);
     const [showDataChannelConnections, setShowDataChannelConnections] = useGuiState(
         props.workbench.getGuiMessageBroker(),
@@ -50,7 +50,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
     React.useEffect(() => {
         let localMousePressed = false;
-        let localCurrentOriginPoint: Vector2 = { x: 0, y: 0 };
+        let localCurrentOriginPoint: Vec2 = { x: 0, y: 0 };
         let localEditDataChannelConnections = false;
         let resizeObserver: ResizeObserver | null = null;
 
@@ -250,12 +250,12 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         midPointY = currentPointerPosition.y / 2;
     }
 
-    const midPoint1: Vector2 = {
+    const midPoint1: Vec2 = {
         x: originPoint.x,
         y: midPointY,
     };
 
-    const midPoint2: Vector2 = {
+    const midPoint2: Vec2 = {
         x: currentPointerPosition.x,
         y: midPointY,
     };
@@ -299,12 +299,12 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 const originRect = originElement.getBoundingClientRect();
                 const destinationRect = destinationElement.getBoundingClientRect();
 
-                const originPoint: Vector2 = {
+                const originPoint: Vec2 = {
                     x: originRect.left + originRect.width / 2,
                     y: originRect.top + originRect.height / 2,
                 };
 
-                const destinationPoint: Vector2 = {
+                const destinationPoint: Vec2 = {
                     x: destinationRect.left + destinationRect.width / 2,
                     // y: destinationRect.top < originPoint.y ? destinationRect.bottom + 20 : destinationRect.top - 20,
                     y: destinationRect.top - 20,
@@ -316,17 +316,17 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     midPointY = destinationPoint.y / 2;
                 }
 
-                const midPoint1: Vector2 = {
+                const midPoint1: Vec2 = {
                     x: originPoint.x,
                     y: midPointY,
                 };
 
-                const midPoint2: Vector2 = {
+                const midPoint2: Vec2 = {
                     x: destinationPoint.x,
                     y: midPointY,
                 };
 
-                const descriptionCenterPoint: Vector2 = {
+                const descriptionCenterPoint: Vec2 = {
                     x: (originPoint.x + destinationPoint.x) / 2,
                     y: (originPoint.y + destinationPoint.y) / 2,
                 };

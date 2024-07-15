@@ -3,7 +3,7 @@ import React from "react";
 import { LayoutElement } from "@framework/Workbench";
 import { Rect2D, Size2D, outerRectContainsInnerRect, rectContainsPoint, rectsAreEqual } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vector2 } from "@lib/utils/vector2";
+import { Vec2 } from "@lib/utils/vec2";
 
 function layoutElementToRect(layoutElement: LayoutElement): Rect2D {
     return {
@@ -371,7 +371,7 @@ export class LayoutBox {
         return this._children;
     }
 
-    findBoxContainingPoint(point: Vector2, realSize: Size2D): LayoutBox | null {
+    findBoxContainingPoint(point: Vec2, realSize: Size2D): LayoutBox | null {
         if (!rectContainsPoint(this.getRectWithMargin(realSize), point)) {
             return null;
         }
@@ -521,7 +521,7 @@ export class LayoutBox {
         return edges;
     }
 
-    findEdgeContainingPoint(point: Vector2, realSize: Size2D, draggedModuleInstanceId: string): LayoutBoxEdge | null {
+    findEdgeContainingPoint(point: Vec2, realSize: Size2D, draggedModuleInstanceId: string): LayoutBoxEdge | null {
         const edgeRects = this.getEdgeRects(realSize);
         const edge = edgeRects.find((edgeRect) => rectContainsPoint(edgeRect.rect, point));
         if (!edge) {
@@ -587,7 +587,7 @@ export class LayoutBox {
     }
 
     previewLayout(
-        pointerPoint: Vector2,
+        pointerPoint: Vec2,
         realSize: Size2D,
         draggedModuleInstanceId: string,
         isNewModule: boolean
@@ -836,7 +836,7 @@ export const LayoutBoxComponents: React.FC<{
     active: string | null;
     realSize: Size2D;
     zIndex: number;
-    pointer: Vector2;
+    pointer: Vec2;
 }> = (props) => {
     const flatBoxes = flattenLayoutBoxes(props.layoutBox);
     const activeBox = props.layoutBox.findBoxContainingPoint(props.pointer, props.realSize);

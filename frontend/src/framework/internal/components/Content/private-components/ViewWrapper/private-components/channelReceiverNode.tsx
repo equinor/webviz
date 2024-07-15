@@ -7,7 +7,7 @@ import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChanne
 import { IconButton } from "@lib/components/IconButton";
 import { rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vector2, vector2FromPointerEvent, } from "@lib/utils/vector2";
+import { Vec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 import { Edit, Remove } from "@mui/icons-material";
 
 export type ChannelReceiverNodeProps = {
@@ -15,7 +15,7 @@ export type ChannelReceiverNodeProps = {
     displayName: string;
     supportedKindsOfKeys?: readonly KeyKind[];
     moduleInstanceId: string;
-    onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Vector2) => void;
+    onChannelConnect: (inputName: string, moduleInstanceId: string, destinationPoint: Vec2) => void;
     onChannelConnectionDisconnect: (inputName: string) => void;
     workbench: Workbench;
     hoverable: boolean;
@@ -87,7 +87,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
                 setHovered(false);
                 setHasConnection(false);
             } else if (localConnectable) {
-                onChannelConnect(props.idString, localModuleInstanceId, vector2FromPointerEvent(e));
+                onChannelConnect(props.idString, localModuleInstanceId, vec2FromPointerEvent(e));
                 setHovered(false);
             } else if (!localConnectable && !editDataChannelConnections) {
                 setHovered(false);
@@ -109,7 +109,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
                 return;
             }
             const boundingRect = ref.current?.getBoundingClientRect();
-            if (boundingRect && rectContainsPoint(boundingRect, vector2FromPointerEvent(e))) {
+            if (boundingRect && rectContainsPoint(boundingRect, vec2FromPointerEvent(e))) {
                 setHovered(true);
                 return;
             }
@@ -196,7 +196,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         props.onChannelConnect(
             props.idString,
             channel.getManager().getModuleInstanceId(),
-            vector2FromPointerEvent(e.nativeEvent)
+            vec2FromPointerEvent(e.nativeEvent)
         );
     }
 
