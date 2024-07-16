@@ -3,7 +3,7 @@ import React from "react";
 import { SurfaceDef_api } from "@api";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { Vector2, rotatePointAround } from "@lib/utils/Vector2";
+import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
@@ -81,10 +81,10 @@ export function MapView(props: ModuleViewProps<MapState>) {
 function _calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): number[] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;
     const height = (surfDef.npoints_y - 1) * surfDef.inc_y;
-    const orgRotPoint: Vector2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y };
-    const orgTopLeft: Vector2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y + height };
+    const orgRotPoint: Vec2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y };
+    const orgTopLeft: Vec2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y + height };
 
-    const transTopLeft: Vector2 = rotatePointAround(orgTopLeft, orgRotPoint, (surfDef.rot_deg * Math.PI) / 180);
+    const transTopLeft: Vec2 = rotatePoint2Around(orgTopLeft, orgRotPoint, (surfDef.rot_deg * Math.PI) / 180);
     const tLeft = transTopLeft.x;
     const tBottom = transTopLeft.y - height;
     const tRight = transTopLeft.x + width;

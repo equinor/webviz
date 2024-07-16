@@ -1,6 +1,5 @@
 import { SurfaceDef_api, SurfaceMetaSet_api } from "@api";
 import { SurfaceDataPng_api } from "@api";
-import { SurfaceDataFloat_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
