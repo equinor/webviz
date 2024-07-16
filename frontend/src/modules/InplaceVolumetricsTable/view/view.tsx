@@ -12,15 +12,12 @@ import { Table } from "@lib/components/Table";
 import { TableHeading, TableRow } from "@lib/components/Table/table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import {
-    Column,
-    ColumnType,
-    InplaceVolumetricsTablesDataAccessor,
-} from "@modules/_shared/InplaceVolumetrics/InplaceVolumetricsDataAccessor";
+import { Column, ColumnType } from "@modules/_shared/InplaceVolumetrics/Table";
 import {
     EnsembleIdentWithRealizations,
     useGetAggregatedTableDataQueries,
 } from "@modules/_shared/InplaceVolumetrics/queryHooks";
+import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableUtils";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
@@ -72,20 +69,19 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
 
     const headings: TableHeading = {};
 
-    const tablesDataAccessor = new InplaceVolumetricsTablesDataAccessor(aggregatedTableDataQueries.tablesData);
+    const dataTable = makeTableFromApiData(aggregatedTableDataQueries.tablesData);
 
-    for (const column of tablesDataAccessor.getColumnsUnion()) {
-        headings[column.name] = {
-            label: column.name,
-            sizeInPercent: 100 / tablesDataAccessor.getColumnsUnionCount(),
+    for (const column of dataTable.getColumns()) {
+        headings[column.getName()] = {
+            label: column.getName(),
+            sizeInPercent: 100 / dataTable.getNumColumns(),
             formatValue: makeValueFormattingFunc(column, ensembleSet),
             formatStyle: makeStyleFormattingFunc(column),
         };
     }
 
     const tableRows: TableRow<any>[] = [];
-
-    for (const row of tablesDataAccessor.getRowsUnion()) {
+    for (const row of dataTable.getRows()) {
         tableRows.push(row);
     }
 
@@ -105,7 +101,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
 }
 
 function makeStyleFormattingFunc(column: Column): ((value: number | string | null) => React.CSSProperties) | undefined {
-    if (column.type === ColumnType.FLUID_ZONE) {
+    if (column.getType() === ColumnType.FLUID_ZONE) {
         return (value: number | string | null) => {
             const style: React.CSSProperties = { textAlign: "right", fontWeight: "bold" };
 
@@ -123,7 +119,7 @@ function makeStyleFormattingFunc(column: Column): ((value: number | string | nul
         };
     }
 
-    if (column.type === ColumnType.ENSEMBLE) {
+    if (column.getType() === ColumnType.ENSEMBLE) {
         return undefined;
     }
 
@@ -134,10 +130,10 @@ function makeValueFormattingFunc(
     column: Column,
     ensembleSet: EnsembleSet
 ): ((value: number | string | null) => string) | undefined {
-    if (column.type === ColumnType.ENSEMBLE) {
+    if (column.getType() === ColumnType.ENSEMBLE) {
         return (value: number | string | null) => formatEnsembleIdent(value, ensembleSet);
     }
-    if (column.type === ColumnType.RESULT) {
+    if (column.getType() === ColumnType.RESULT) {
         return formatResultValue;
     }
 

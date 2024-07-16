@@ -3,6 +3,7 @@ import { EnsembleSet } from "@framework/EnsembleSet";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { Figure, makeSubplots } from "@modules/_shared/Figure";
 import { InplaceVolumetricsTablesDataAccessor } from "@modules/_shared/InplaceVolumetrics/InplaceVolumetricsDataAccessor";
+import { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { PlotData } from "plotly.js";
@@ -21,7 +22,7 @@ export type TableData = {
 
 export class InplaceVolumetricsPlotBuilder {
     private _dataAccessor: InplaceVolumetricsTablesDataAccessor;
-    private _plottingFunction: ((data: TableData) => Partial<PlotData>[]) | null = null;
+    private _plottingFunction: ((table: Table) => Partial<PlotData>[]) | null = null;
     private _subplotByInfo: SubplotByInfo = { subplotBy: SubplotBy.TABLE_NAME };
     private _colorBy: SubplotByInfo = { subplotBy: SubplotBy.ENSEMBLE };
     private _ensembleSet: EnsembleSet;
@@ -41,7 +42,7 @@ export class InplaceVolumetricsPlotBuilder {
         this._colorBy = colorBy;
     }
 
-    setPlottingFunction(plottingFunction: (data: TableData) => Partial<PlotData>[]) {
+    setPlottingFunction(plottingFunction: (data: Table) => Partial<PlotData>[]) {
         this._plottingFunction = plottingFunction;
     }
 
@@ -92,8 +93,6 @@ export class InplaceVolumetricsPlotBuilder {
 
         return figure;
     }
-
-    private makeColor();
 
     private makeSubplotTables(): TablesData[] {
         const tablesData: TablesData[] = [];

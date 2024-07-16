@@ -11,10 +11,13 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { makeSubplots } from "@modules/_shared/Figure";
 import { InplaceVolumetricsTablesDataAccessor } from "@modules/_shared/InplaceVolumetrics/InplaceVolumetricsDataAccessor";
+import { PlotBuilder } from "@modules/_shared/InplaceVolumetrics/PlotBuilder";
+import { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import {
     EnsembleIdentWithRealizations,
     useGetAggregatedTableDataQueries,
 } from "@modules/_shared/InplaceVolumetrics/queryHooks";
+import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableUtils";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { Layout, PlotData } from "plotly.js";
@@ -52,7 +55,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         filter.tableNames,
         resultName ? [resultName] : [],
         filter.fluidZones,
-        subplotBy?.subplotBy === SubplotBy.IDENTIFIER ? [subplotBy.identifier] : [],
+        [InplaceVolumetricsIdentifier_api.ZONE], //subplotBy?.subplotBy === SubplotBy.IDENTIFIER ? [subplotBy.identifier] : [],
         subplotBy?.subplotBy !== SubplotBy.FLUID_ZONE,
         false,
         filter.identifiersValues
@@ -69,28 +72,27 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         }
     }
 
-    const tablesDataAccessor = new InplaceVolumetricsTablesDataAccessor(aggregatedTableDataQueries.tablesData);
+    let plots: React.ReactNode | null = null;
 
-    let title = `Convergence plot of mean/p10/p90`;
-    if (resultName) {
-        title += ` for ${resultName}`;
+    if (aggregatedTableDataQueries.tablesData.length > 0) {
+        const table = makeTableFromApiData(aggregatedTableDataQueries.tablesData);
+
+        let title = `Convergence plot of mean/p10/p90`;
+        if (resultName) {
+            title += ` for ${resultName}`;
+        }
+        props.viewContext.setInstanceTitle(title);
+
+        const plotbuilder = new PlotBuilder(table, makePlotData(resultName ?? ""));
+
+        plotbuilder.setSubplotByColumn("ZONE");
+        plots = plotbuilder.build(divBoundingRect.height, divBoundingRect.width, {
+            horizontalSpacing: 0.075,
+            verticalSpacing: 0.075,
+            showGrid: true,
+            margin: { t: 50, b: 20, l: 50, r: 20 },
+        });
     }
-    if (subplotBy.subplotBy !== SubplotBy.ENSEMBLE && tablesDataAccessor.getTables().length === 1) {
-        const subTable = tablesDataAccessor.getTables()[0];
-        title += ` - ${makeDistinguishableEnsembleDisplayName(
-            subTable.getEnsembleIdent(),
-            ensembleSet.getEnsembleArr()
-        )} - ${subTable.getTableName()}`;
-    }
-    props.viewContext.setInstanceTitle(title);
-
-    const plotbuilder = new InplaceVolumetricsPlotBuilder(tablesDataAccessor, ensembleSet, colorSet);
-
-    plotbuilder.setSubplotBy(subplotBy);
-    plotbuilder.setPlottingFunction(makePlotData(resultName ?? ""));
-    const figure = plotbuilder.build(divBoundingRect.height, divBoundingRect.width);
-
-    const plotComponent = figure?.makePlot();
 
     /*
     const subplots: { title?: string; plotData: Partial<PlotData>[] }[] = [];
@@ -230,68 +232,72 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
             <div
                 className={resolveClassNames(
                     "absolute top-0 left-0 w-full h-full bg-white bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-10",
-                    { hidden: plotComponent !== undefined }
+                    { hidden: plots !== undefined }
                 )}
             >
                 {makeMessage()}
             </div>
-            {plotComponent}
+            {plots}
         </div>
     );
 }
 
-function makePlotData(resultName: string): (tableData: TableData[]) => Partial<PlotData>[] {
-    return (tableData: TableData[]): Partial<PlotData>[] => {
+function makePlotData(resultName: string): (table: Table) => Partial<PlotData>[] {
+    return (table: Table): Partial<PlotData>[] => {
         const data: Partial<PlotData>[] = [];
 
-        for (const table of tableData) {
-            const realizationAndResultArray: RealizationAndResult[] = [];
-            const reals = table.columns["realization"];
-            const results = table.columns[resultName];
-            for (let i = 0; i < reals.length; i++) {
-                realizationAndResultArray.push({
-                    realization: reals[i] as number,
-                    resultValue: results[i] as number,
-                });
-            }
-
-            const convergenceArr = calcConvergenceArray(realizationAndResultArray);
-
-            data.push(
-                {
-                    x: convergenceArr.map((el) => el.realization),
-                    y: convergenceArr.map((el) => el.mean),
-                    name: "Mean",
-                    type: "scatter",
-                    line: {
-                        color: "black",
-                        width: 1,
-                    },
-                },
-                {
-                    x: convergenceArr.map((el) => el.realization),
-                    y: convergenceArr.map((el) => el.p10),
-                    name: "P10",
-                    type: "scatter",
-                    line: {
-                        color: "red",
-                        width: 1,
-                        dash: "dash",
-                    },
-                },
-                {
-                    x: convergenceArr.map((el) => el.realization),
-                    y: convergenceArr.map((el) => el.p90),
-                    name: "P90",
-                    type: "scatter",
-                    line: {
-                        color: "blue",
-                        width: 1,
-                        dash: "dashdot",
-                    },
-                }
-            );
+        const realizationAndResultArray: RealizationAndResult[] = [];
+        const reals = table.getColumn("REAL");
+        const results = table.getColumn(resultName);
+        if (!reals) {
+            throw new Error("REAL column not found");
         }
+        if (!results) {
+            throw new Error(`Column not found: ${resultName}`);
+        }
+        for (let i = 0; i < reals.getNumRows(); i++) {
+            realizationAndResultArray.push({
+                realization: reals.getRowValue(i) as number,
+                resultValue: results.getRowValue(i) as number,
+            });
+        }
+
+        const convergenceArr = calcConvergenceArray(realizationAndResultArray);
+
+        data.push(
+            {
+                x: convergenceArr.map((el) => el.realization),
+                y: convergenceArr.map((el) => el.mean),
+                name: "Mean",
+                type: "scatter",
+                line: {
+                    color: "black",
+                    width: 1,
+                },
+            },
+            {
+                x: convergenceArr.map((el) => el.realization),
+                y: convergenceArr.map((el) => el.p10),
+                name: "P10",
+                type: "scatter",
+                line: {
+                    color: "red",
+                    width: 1,
+                    dash: "dash",
+                },
+            },
+            {
+                x: convergenceArr.map((el) => el.realization),
+                y: convergenceArr.map((el) => el.p90),
+                name: "P90",
+                type: "scatter",
+                line: {
+                    color: "blue",
+                    width: 1,
+                    dash: "dashdot",
+                },
+            }
+        );
 
         return data;
     };
