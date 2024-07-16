@@ -1,12 +1,4 @@
-export type Point2D = {
-    x: number;
-    y: number;
-};
-
-export type Vector2D = {
-    x: number;
-    y: number;
-};
+import type { Vec2 } from "./vec2";
 
 export type Size2D = {
     width: number;
@@ -23,59 +15,10 @@ export type Rect2D = {
 export const ORIGIN = Object.freeze({ x: 0, y: 0 });
 export const MANHATTAN_LENGTH = 13.11;
 
-export function arrayPointToPoint2D(arrayPoint: number[] | [number, number]): Point2D {
-    return { x: arrayPoint[0], y: arrayPoint[1] };
-}
-
-export function pointerEventToPoint(event: PointerEvent): Point2D {
-    return { x: event.pageX, y: event.pageY };
-}
-
-export function vectorLength(vector: Vector2D): number {
-    return Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2));
-}
-
-export function pointDistance(point1: Point2D, point2: Point2D): number {
-    return Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
-}
-
-export function pointSubtraction(minuend: Point2D, subtrahend: Point2D): Vector2D {
-    return { x: minuend.x - subtrahend.x, y: minuend.y - subtrahend.y };
-}
-
-export function vectorSum(vector1: Vector2D, vector2: Vector2D): Vector2D {
-    return { x: vector1.x + vector2.x, y: vector1.y + vector2.y };
-}
-
-export function vectorAddScalarToComponents(vector: Vector2D, scalar: number): Vector2D {
-    return { x: vector.x + scalar, y: vector.y + scalar };
-}
-
-export function vectorNormalize(vector: Vector2D): Vector2D {
-    const length = vectorLength(vector);
-    return { x: vector.x / length, y: vector.y / length };
-}
-
-export function pointMultiplyComponentsWithIndividualScalars(
-    point: Point2D,
-    scalarX: number,
-    scalarY: number
-): Point2D {
-    return { x: point.x * scalarX, y: point.y * scalarY };
-}
-
-export function vectorMultiplyWithScalar(vector: Vector2D, scalar: number): Vector2D {
-    return { x: vector.x * scalar, y: vector.y * scalar };
-}
-
-export function pointIndividuallyMultiplyComponentsWithVector(point: Point2D, vector: Vector2D): Point2D {
-    return { x: point.x * vector.x, y: point.y * vector.y };
-}
-
 export function isPartlyContained(
-    centerPoint1: Point2D,
+    centerPoint1: Vec2,
     dimensions1: Size2D,
-    centerPoint2: Point2D,
+    centerPoint2: Vec2,
     dimensions2: Size2D
 ): boolean {
     return !(
@@ -86,7 +29,7 @@ export function isPartlyContained(
     );
 }
 
-export function pointIsContained(point: Point2D, dimensions: Size2D, centerPoint: Point2D): boolean {
+export function pointIsContained(point: Vec2, dimensions: Size2D, centerPoint: Vec2): boolean {
     return (
         point.x >= centerPoint.x - dimensions.width / 2 &&
         point.x <= centerPoint.x + dimensions.width / 2 &&
@@ -113,7 +56,7 @@ export function scaleRectIndividually(rect: Rect2D, factorX: number, factorY: nu
     };
 }
 
-export function rectContainsPoint(rect: Rect2D, point: Point2D): boolean {
+export function rectContainsPoint(rect: Rect2D, point: Vec2): boolean {
     return point.x >= rect.x && point.x <= rect.x + rect.width && point.y >= rect.y && point.y <= rect.y + rect.height;
 }
 
@@ -144,7 +87,7 @@ export function outerRectContainsInnerRect(outerRect: Rect2D, innerRect: Rect2D)
     );
 }
 
-export function pointRelativeToDomRect(point: Point2D, domRect: DOMRect): Point2D {
+export function pointRelativeToDomRect(point: Vec2, domRect: DOMRect): Vec2 {
     return { x: point.x - domRect.x, y: point.y - domRect.y };
 }
 
@@ -164,14 +107,6 @@ export function sizeDifference(size1: Size2D, size2: Size2D): Size2D {
 
 export function sizeMultiplyWithScalar(size1: Size2D, scalar: number): Size2D {
     return { width: size1.width * scalar, height: size1.width * scalar };
-}
-
-export function pointsAreEqual(point1: Point2D, point2: Point2D): boolean {
-    return point1.x === point2.x && point1.y === point2.y;
-}
-
-export function vectorsAreEqual(vector1: Vector2D, vector2: Vector2D): boolean {
-    return vector1.x === vector2.x && vector1.y === vector2.y;
 }
 
 export function sizesAreEqual(size1: Size2D, size2: Size2D): boolean {

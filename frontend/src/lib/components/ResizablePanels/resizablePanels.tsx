@@ -1,8 +1,8 @@
 import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Point2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Vec2 } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
 
@@ -139,7 +139,7 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
             const secondElementBoundingRect = individualPanelRefs.current[index + 1]?.getBoundingClientRect();
 
             if (containerBoundingRect && firstElementBoundingRect && secondElementBoundingRect) {
-                const cursorWithinBounds: Point2D = {
+                const cursorWithinBounds: Vec2 = {
                     x: Math.max(
                         containerBoundingRect.left,
                         Math.min(e.clientX, containerBoundingRect.left + containerBoundingRect.width)
