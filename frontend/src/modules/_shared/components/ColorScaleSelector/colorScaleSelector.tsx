@@ -10,9 +10,10 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { createPortal } from "@lib/utils/createPortal";
-import { MANHATTAN_LENGTH, Point2D, pointDistance } from "@lib/utils/geometry";
+import { MANHATTAN_LENGTH } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+import { Vec2, point2Distance } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
 
@@ -372,8 +373,8 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
             }
 
             let dragging = false;
-            let pointerDownPosition: Point2D | null = null;
-            let pointerDownPositionRelativeToElement: Point2D = { x: 0, y: 0 };
+            let pointerDownPosition: Vec2 | null = null;
+            let pointerDownPositionRelativeToElement: Vec2 = { x: 0, y: 0 };
             let newDivMidPoint = 0;
 
             function handlePointerDown(e: PointerEvent) {
@@ -398,7 +399,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
 
                 if (
                     !dragging &&
-                    pointDistance(pointerDownPosition, { x: e.clientX, y: e.clientY }) > MANHATTAN_LENGTH
+                    point2Distance(pointerDownPosition, { x: e.clientX, y: e.clientY }) > MANHATTAN_LENGTH
                 ) {
                     dragging = true;
                 }

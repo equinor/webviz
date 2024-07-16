@@ -12,17 +12,10 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
-import {
-    MANHATTAN_LENGTH,
-    Point2D,
-    Size2D,
-    pointDistance,
-    pointRelativeToDomRect,
-    pointSubtraction,
-    pointerEventToPoint,
-} from "@lib/utils/geometry";
+import { MANHATTAN_LENGTH, Size2D, pointRelativeToDomRect } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+import { Vec2, point2Distance, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 import {
     Attribution,
     Close,
@@ -34,7 +27,7 @@ import {
     WebAsset,
 } from "@mui/icons-material";
 
-const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Point2D): React.CSSProperties => {
+const makeStyle = (isDragged: boolean, dragSize: Size2D, dragPosition: Vec2): React.CSSProperties => {
     if (isDragged) {
         return {
             width: dragSize.width,
@@ -69,25 +62,25 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
     const { onDraggingStart } = props;
     const ref = React.useRef<HTMLDivElement>(null);
     const [isDragged, setIsDragged] = React.useState<boolean>(false);
-    const [dragPosition, setDragPosition] = React.useState<Point2D>({ x: 0, y: 0 });
+    const [dragPosition, setDragPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [dragSize, setDragSize] = React.useState<Size2D>({ width: 0, height: 0 });
 
     React.useEffect(() => {
         const refCurrent = ref.current;
-        let pointerDownPoint: Point2D | null = null;
+        let pointerDownPoint: Vec2 | null = null;
         let dragging = false;
-        let pointerDownElementPosition: Point2D | null = null;
-        let pointerToElementDiff: Point2D = { x: 0, y: 0 };
+        let pointerDownElementPosition: Vec2 | null = null;
+        let pointerToElementDiff: Vec2 = { x: 0, y: 0 };
 
         const handlePointerDown = (e: PointerEvent) => {
             if (ref.current) {
                 document.body.classList.add("touch-none");
-                const point = pointerEventToPoint(e);
+                const point = vec2FromPointerEvent(e);
                 const rect = ref.current.getBoundingClientRect();
-                pointerDownElementPosition = pointSubtraction(point, pointRelativeToDomRect(point, rect));
+                pointerDownElementPosition = subtractVec2(point, pointRelativeToDomRect(point, rect));
                 props.guiMessageBroker.publishEvent(GuiEvent.NewModulePointerDown, {
                     moduleName: props.name,
-                    elementPosition: pointSubtraction(point, pointRelativeToDomRect(point, rect)),
+                    elementPosition: subtractVec2(point, pointRelativeToDomRect(point, rect)),
                     elementSize: { width: rect.width, height: rect.height },
                     pointerPosition: point,
                 });
@@ -116,7 +109,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
 
             if (
                 !dragging &&
-                pointDistance(pointerEventToPoint(e), pointerDownPoint) > MANHATTAN_LENGTH &&
+                point2Distance(vec2FromPointerEvent(e), pointerDownPoint) > MANHATTAN_LENGTH &&
                 pointerDownElementPosition
             ) {
                 dragging = true;
@@ -126,16 +119,14 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     const rect = ref.current.getBoundingClientRect();
                     setDragSize({ width: rect.width, height: rect.height });
                 }
-                pointerToElementDiff = pointSubtraction(pointerDownPoint, pointerDownElementPosition);
+                pointerToElementDiff = subtractVec2(pointerDownPoint, pointerDownElementPosition);
                 return;
             }
 
             if (dragging) {
                 const rect = props.relContainer?.getBoundingClientRect();
                 if (rect) {
-                    setDragPosition(
-                        pointSubtraction(pointSubtraction(pointerEventToPoint(e), rect), pointerToElementDiff)
-                    );
+                    setDragPosition(subtractVec2(subtractVec2(vec2FromPointerEvent(e), rect), pointerToElementDiff));
                 }
             }
         };

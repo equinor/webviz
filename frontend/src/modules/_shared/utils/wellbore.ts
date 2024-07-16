@@ -1,5 +1,5 @@
 import { FenceMeshSection_api, PolylineIntersection_api } from "@api";
-import { arrayPointToPoint2D, pointDistance } from "@lib/utils/geometry";
+import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 
 import simplify from "simplify-js";
 
@@ -42,9 +42,9 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
 
         let sectionLength = 0;
         for (let i = lastWellboreTrajectoryIndex + 1; i < wellboreTrajectory.length; i++) {
-            sectionLength += pointDistance(
-                arrayPointToPoint2D(wellboreTrajectory[i]),
-                arrayPointToPoint2D(wellboreTrajectory[i - 1])
+            sectionLength += point2Distance(
+                vec2FromArray(wellboreTrajectory[i]),
+                vec2FromArray(wellboreTrajectory[i - 1])
             );
 
             if (wellboreTrajectory[i][0] === point[0] && wellboreTrajectory[i][1] === point[1]) {
@@ -86,13 +86,10 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
         simplifiedTrajectoryXy.push(extendedLastPoint);
 
         actualSectionLengths.unshift(
-            pointDistance(arrayPointToPoint2D(extendedFirstPoint), arrayPointToPoint2D(simplifiedCurve[0]))
+            point2Distance(vec2FromArray(extendedFirstPoint), vec2FromArray(simplifiedCurve[0]))
         );
         actualSectionLengths.push(
-            pointDistance(
-                arrayPointToPoint2D(extendedLastPoint),
-                arrayPointToPoint2D(simplifiedCurve[simplifiedCurve.length - 1])
-            )
+            point2Distance(vec2FromArray(extendedLastPoint), vec2FromArray(simplifiedCurve[simplifiedCurve.length - 1]))
         );
     }
 
@@ -184,7 +181,7 @@ export function transformPolylineIntersectionResult(
 
     for (const [index, section] of polylineIntersection.fenceMeshSections.entries()) {
         const actualSectionLength = adjustedActualSectionLengths[index];
-        const simplifiedSectionLength = pointDistance(
+        const simplifiedSectionLength = point2Distance(
             {
                 x: section.start_utm_x,
                 y: section.start_utm_y,

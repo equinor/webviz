@@ -3,7 +3,7 @@ import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { Vector2D, pointDistance, vectorNormalize } from "@lib/utils/geometry";
+import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
 import { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
@@ -133,7 +133,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
         const cumulatedHorizontalPolylineLengthArr: number[] = [];
         for (let i = 0; i < polyline.length; i += 2) {
             if (i > 0) {
-                const distance = pointDistance(
+                const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
                     { x: polyline[i - 2], y: polyline[i - 1] }
                 );
@@ -142,11 +142,11 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
                 const scale = actualDistance / distance;
 
                 for (let p = 1; p <= numPoints; p++) {
-                    const vector: Vector2D = {
+                    const vector: Vec2 = {
                         x: polyline[i] - polyline[i - 2],
                         y: polyline[i + 1] - polyline[i - 1],
                     };
-                    const normalizedVector = vectorNormalize(vector);
+                    const normalizedVector = normalizeVec2(vector);
                     xPoints.push(polyline[i - 2] + normalizedVector.x * this._settings.resolution * p);
                     yPoints.push(polyline[i - 1] + normalizedVector.y * this._settings.resolution * p);
                     cumulatedHorizontalPolylineLength += this._settings.resolution * scale;
@@ -158,7 +158,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             yPoints.push(polyline[i + 1]);
 
             if (i > 0) {
-                const distance = pointDistance(
+                const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
                     { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] }
                 );
