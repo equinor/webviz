@@ -1,12 +1,13 @@
 import { SurfaceStatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
-import { AddrTypes } from "./surfaceAddress";
+import { SurfaceAddressType } from "./surfaceAddress";
+import { ObservedSurfaceAddress, RealizationSurfaceAddress, StatisticalSurfaceAddress } from "./surfaceAddress";
+import { AnySurfaceAddress, PartialSurfaceAddress } from "./surfaceAddress";
 import { encodeSurfAddrStr } from "./surfaceAddress";
-import { ObsSurfAddr, PartialSurfAddr, RealSurfAddr, StatSurfAddr } from "./surfaceAddress";
 
-export class SurfAddrBuilder {
-    private _addrType: AddrTypes | null = null;
+export class SurfaceAddressBuilder {
+    private _addrType: SurfaceAddressType | null = null;
     private _caseUuid: string | null = null;
     private _ensemble: string | null = null;
     private _name: string | null = null;
@@ -15,7 +16,7 @@ export class SurfAddrBuilder {
     private _isoTimeOrInterval: string | null = null;
     private _statisticFunction: SurfaceStatisticFunction_api | null = null;
 
-    withType(addrType: AddrTypes): this {
+    withType(addrType: SurfaceAddressType): this {
         this._addrType = addrType;
         return this;
     }
@@ -51,7 +52,7 @@ export class SurfAddrBuilder {
         return this;
     }
 
-    buildRealizationAddress(): RealSurfAddr {
+    buildRealizationAddress(): RealizationSurfaceAddress {
         if (this._addrType && this._addrType !== "REAL") {
             throw new Error("Address type is already set to another type than REAL");
         }
@@ -62,7 +63,7 @@ export class SurfAddrBuilder {
 
         this.assertCommonPropertiesAreSet(true);
 
-        const retObj: RealSurfAddr = {
+        const retObj: RealizationSurfaceAddress = {
             addressType: "REAL",
             caseUuid: this._caseUuid!,
             ensemble: this._ensemble!,
@@ -74,7 +75,7 @@ export class SurfAddrBuilder {
         return retObj;
     }
 
-    buildObservedAddress(): ObsSurfAddr {
+    buildObservedAddress(): ObservedSurfaceAddress {
         if (this._addrType && this._addrType !== "OBS") {
             throw new Error("Address type is already set to another type than OBS");
         }
@@ -85,7 +86,7 @@ export class SurfAddrBuilder {
 
         this.assertCommonPropertiesAreSet(false);
 
-        const retObj: ObsSurfAddr = {
+        const retObj: ObservedSurfaceAddress = {
             addressType: "OBS",
             caseUuid: this._caseUuid!,
             name: this._name!,
@@ -95,7 +96,7 @@ export class SurfAddrBuilder {
         return retObj;
     }
 
-    buildStatisticalAddress(): StatSurfAddr {
+    buildStatisticalAddress(): StatisticalSurfaceAddress {
         if (this._addrType && this._addrType !== "STAT") {
             throw new Error("Address type is already set to another type than STAT");
         }
@@ -106,7 +107,7 @@ export class SurfAddrBuilder {
 
         this.assertCommonPropertiesAreSet(true);
 
-        const retObj: StatSurfAddr = {
+        const retObj: StatisticalSurfaceAddress = {
             addressType: "STAT",
             caseUuid: this._caseUuid!,
             ensemble: this._ensemble!,
@@ -119,14 +120,14 @@ export class SurfAddrBuilder {
         return retObj;
     }
 
-    buildPartialAddress(): PartialSurfAddr {
+    buildPartialAddress(): PartialSurfaceAddress {
         if (this._addrType && this._addrType !== "PARTIAL") {
             throw new Error("Address type is already set to another type than PARTIAL");
         }
 
         this.assertCommonPropertiesAreSet(true);
 
-        const retObj: PartialSurfAddr = {
+        const retObj: PartialSurfaceAddress = {
             addressType: "PARTIAL",
             caseUuid: this._caseUuid!,
             ensemble: this._ensemble!,
@@ -137,24 +138,7 @@ export class SurfAddrBuilder {
         return retObj;
     }
 
-    buildAddrString(): string {
-        const addr = this.buildAddr();
-        if (addr.addressType === "STAT") {
-            throw new Error("Cannot build address string for STAT type");
-        }
-
-        return encodeSurfAddrStr(addr);
-    }
-
-    buildAddrStringNoThrow(): string | null {
-        try {
-            return this.buildAddrString();
-        } catch (e) {
-            return null;
-        }
-    }
-
-    buildAddr(): RealSurfAddr | ObsSurfAddr | StatSurfAddr | PartialSurfAddr {
+    buildAddress(): AnySurfaceAddress {
         if (!this._addrType) {
             throw new Error("Address type not set");
         }
@@ -173,9 +157,23 @@ export class SurfAddrBuilder {
         }
     }
 
-    buildAddrNoThrow(): RealSurfAddr | ObsSurfAddr | StatSurfAddr | PartialSurfAddr | null {
+    buildAddressNoThrow(): AnySurfaceAddress | null {
         try {
-            return this.buildAddr();
+            return this.buildAddress();
+        } catch (e) {
+            return null;
+        }
+    }
+
+    buildAddrStr(): string {
+        const addr = this.buildAddress();
+        return encodeSurfAddrStr(addr);
+    }
+
+    buildAddrStrNoThrow(): string | null {
+        try {
+            const addr = this.buildAddress();
+            return encodeSurfAddrStr(addr);
         } catch (e) {
             return null;
         }

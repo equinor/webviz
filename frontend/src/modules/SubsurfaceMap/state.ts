@@ -1,11 +1,11 @@
 import { PolygonsAddress } from "@modules/_shared/Polygons/polygonsAddress";
-import { RealSurfAddr, StatSurfAddr } from "@modules/_shared/Surface";
+import { RealizationSurfaceAddress, StatisticalSurfaceAddress } from "@modules/_shared/Surface";
 
 import { SurfaceMeshLayerSettings, ViewSettings } from "./_utils";
 
 export interface state {
-    meshSurfaceAddress: RealSurfAddr | StatSurfAddr | null;
-    propertySurfaceAddress: RealSurfAddr | StatSurfAddr | null;
+    meshSurfaceAddress: RealizationSurfaceAddress | StatisticalSurfaceAddress | null;
+    propertySurfaceAddress: RealizationSurfaceAddress | StatisticalSurfaceAddress | null;
     polygonsAddress: PolygonsAddress | null;
     selectedWellUuids: string[];
     surfaceSettings: SurfaceMeshLayerSettings | null;

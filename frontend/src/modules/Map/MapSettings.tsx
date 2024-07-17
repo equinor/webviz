@@ -15,9 +15,7 @@ import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
-import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
-import { FullSurfAddr } from "@modules/_shared/Surface/surfaceAddress";
-import { SurfAddrBuilder } from "@modules/_shared/Surface/SurfaceAddressBuilder";
+import { FullSurfaceAddress, SurfaceAddressBuilder, SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { useObservedSurfacesMetadataQuery, useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -98,9 +96,9 @@ export function MapSettings(props: ModuleSettingsProps<MapState>) {
     }
 
     React.useEffect(function propagateSurfaceSelectionToView() {
-        let surfaceAddress: FullSurfAddr | null = null;
+        let surfaceAddress: FullSurfaceAddress | null = null;
         if (computedEnsembleIdent && computedSurfaceName && computedSurfaceAttribute) {
-            const addrBuilder = new SurfAddrBuilder();
+            const addrBuilder = new SurfaceAddressBuilder();
             addrBuilder.withEnsembleIdent(computedEnsembleIdent);
             addrBuilder.withName(computedSurfaceName);
             addrBuilder.withAttribute(computedSurfaceAttribute);
@@ -109,25 +107,16 @@ export function MapSettings(props: ModuleSettingsProps<MapState>) {
             }
 
             if (aggregation) {
-                addrBuilder.withType("STAT");
                 addrBuilder.withStatisticFunction(aggregation);
-            }
-            else {
+                surfaceAddress = addrBuilder.buildStatisticalAddress();
+            } else {
                 if (useObserved) {
-                    addrBuilder.withType("OBS");
-                }
-                else {
-                    addrBuilder.withType("REAL");
+                    surfaceAddress = addrBuilder.buildObservedAddress();
+                } else {
                     addrBuilder.withRealization(realizationNum);
+                    surfaceAddress = addrBuilder.buildRealizationAddress();
                 }
             }
-
-            const builtAddr = addrBuilder.buildAddr();
-            if (builtAddr.addressType !== "PARTIAL") {
-                surfaceAddress = builtAddr;
-            }
-            const addrStr = addrBuilder.buildAddrStringNoThrow();
-            console.log(`addrStr: ${addrStr}`);
         }
 
         console.debug(`propagateSurfaceSelectionToView() => ${surfaceAddress ? "valid surfAddr" : "NULL surfAddr"}`);

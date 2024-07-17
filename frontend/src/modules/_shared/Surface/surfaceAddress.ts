@@ -1,8 +1,7 @@
 import { SurfaceStatisticFunction_api } from "@api";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 
-
-export interface RealSurfAddr {
+export interface RealizationSurfaceAddress {
     addressType: "REAL";
     caseUuid: string;
     ensemble: string;
@@ -12,7 +11,7 @@ export interface RealSurfAddr {
     isoTimeOrInterval: string | null;
 }
 
-export interface ObsSurfAddr {
+export interface ObservedSurfaceAddress {
     addressType: "OBS";
     caseUuid: string;
     name: string;
@@ -20,7 +19,7 @@ export interface ObsSurfAddr {
     isoTimeOrInterval: string;
 }
 
-export interface StatSurfAddr {
+export interface StatisticalSurfaceAddress {
     addressType: "STAT";
     caseUuid: string;
     ensemble: string;
@@ -31,7 +30,7 @@ export interface StatSurfAddr {
     isoTimeOrInterval: string | null;
 }
 
-export interface PartialSurfAddr {
+export interface PartialSurfaceAddress {
     addressType: "PARTIAL";
     caseUuid: string;
     ensemble: string;
@@ -40,73 +39,72 @@ export interface PartialSurfAddr {
     isoTimeOrInterval: string | null;
 }
 
-export type FullSurfAddr = RealSurfAddr | ObsSurfAddr | StatSurfAddr;
+export type FullSurfaceAddress = RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress;
 
-export type AnySurfAddr = RealSurfAddr | ObsSurfAddr | PartialSurfAddr | StatSurfAddr;
+export type AnySurfaceAddress =
+    | RealizationSurfaceAddress
+    | ObservedSurfaceAddress
+    | StatisticalSurfaceAddress
+    | PartialSurfaceAddress;
 
+const SurfaceAddressTypeValues = ["REAL", "OBS", "STAT", "PARTIAL"] as const;
+export type SurfaceAddressType = (typeof SurfaceAddressTypeValues)[number];
 
-//export type AddrTypes = "REAL" | "OBS" | "STAT" | "PARTIAL";
+const ADDR_COMP_DELIMITER = "~~";
 
-const AddrTypeValues = ["REAL", "OBS", "STAT", "PARTIAL"] as const; 
-export type AddrTypes = typeof AddrTypeValues[number]; 
-
-
-
-const DELIMITER = "~~";
-
-export function encodeRealSurfAddrStr(addr: Omit<RealSurfAddr, "addressType">): string {
-    const componentArr = ["REAL", addr.caseUuid, addr.ensemble, addr.name, addr.attribute, addr.realizationNum]
+export function encodeRealizationSurfAddrStr(addr: Omit<RealizationSurfaceAddress, "addressType">): string {
+    const componentArr = ["REAL", addr.caseUuid, addr.ensemble, addr.name, addr.attribute, addr.realizationNum];
     if (addr.isoTimeOrInterval !== null) {
         componentArr.push(addr.isoTimeOrInterval);
     }
 
-    const addrStr = componentArr.join(DELIMITER);
+    const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
     return addrStr;
 }
 
-export function encodeObsSurfAddrStr(addr: Omit<ObsSurfAddr, "addressType">): string {
-    const componentArr = ["OBS", addr.caseUuid, addr.name, addr.attribute]
+export function encodeObservedSurfAddrStr(addr: Omit<ObservedSurfaceAddress, "addressType">): string {
+    const componentArr = ["OBS", addr.caseUuid, addr.name, addr.attribute];
     if (addr.isoTimeOrInterval !== null) {
         componentArr.push(addr.isoTimeOrInterval);
     }
 
-    const addrStr = componentArr.join(DELIMITER);
+    const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
     return addrStr;
 }
 
-export function encodeStatSurfAddrStr(addr: Omit<StatSurfAddr, "addressType">): string {
-    let realizationsStr = "*";
+export function encodeStatisticalSurfAddrStr(addr: Omit<StatisticalSurfaceAddress, "addressType">): string {
+    let realStr = "*";
     if (addr.statRealizations != null) {
-        realizationsStr = encodeAsUintListStr(addr.statRealizations);
+        realStr = encodeAsUintListStr(addr.statRealizations);
     }
 
-    const componentArr = ["STAT", addr.caseUuid, addr.ensemble, addr.name, addr.attribute, addr.statFunction, realizationsStr]
+    const componentArr = ["STAT", addr.caseUuid, addr.ensemble, addr.name, addr.attribute, addr.statFunction, realStr];
     if (addr.isoTimeOrInterval !== null) {
         componentArr.push(addr.isoTimeOrInterval);
     }
 
-    const addrStr = componentArr.join(DELIMITER);
+    const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
     return addrStr;
 }
 
-export function encodePartialSurfAddrStr(addr: Omit<PartialSurfAddr, "addressType">): string {
-    const componentArr = ["PARTIAL", addr.caseUuid, addr.ensemble, addr.name, addr.attribute]
+export function encodePartialSurfAddrStr(addr: Omit<PartialSurfaceAddress, "addressType">): string {
+    const componentArr = ["PARTIAL", addr.caseUuid, addr.ensemble, addr.name, addr.attribute];
     if (addr.isoTimeOrInterval !== null) {
         componentArr.push(addr.isoTimeOrInterval);
     }
 
-    const addrStr = componentArr.join(DELIMITER);
+    const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
     return addrStr;
 }
 
-export function encodeSurfAddrStr(addr: AnySurfAddr): string {
+export function encodeSurfAddrStr(addr: AnySurfaceAddress): string {
     switch (addr.addressType) {
         case "REAL":
-            return encodeRealSurfAddrStr(addr);
+            return encodeRealizationSurfAddrStr(addr);
         case "OBS":
-            return encodeObsSurfAddrStr(addr);
+            return encodeObservedSurfAddrStr(addr);
         case "STAT":
-            return encodeStatSurfAddrStr(addr);
+            return encodeStatisticalSurfAddrStr(addr);
         case "PARTIAL":
             return encodePartialSurfAddrStr(addr);
         default:
@@ -114,16 +112,13 @@ export function encodeSurfAddrStr(addr: AnySurfAddr): string {
     }
 }
 
+export function peekSurfaceAddressType(surfAddrStr: string): SurfaceAddressType | null {
+    const addrTypeStr = surfAddrStr.split(ADDR_COMP_DELIMITER)[0];
 
-export function peekSurfAddrType(surfAddrStr: string): AddrTypes {
-    const addrTypeStr = surfAddrStr.split(DELIMITER)[0];
-
-    const foundAddrType = AddrTypeValues.find((val) => val === addrTypeStr);
+    const foundAddrType = SurfaceAddressTypeValues.find((val) => val === addrTypeStr);
     if (!foundAddrType) {
-        throw new Error(`Invalid surface address type in : ${surfAddrStr}`);
+        return null;
     }
 
     return foundAddrType;
 }
-
-
