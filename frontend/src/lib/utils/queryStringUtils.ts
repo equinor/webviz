@@ -12,7 +12,7 @@
 // Example:
 // encodedKeyValString = "key1~123.5~~key2~'someString'~~key3~false"
 //
-export function encodePropertiesAsKeyValStr(objOrMap: object | Map<string, string | number | boolean>): string {
+export function encodePropertiesAsKeyValStr(objOrMap: Record<string, string | number | boolean | null> | Map<string, string | number | boolean | null>): string {
     const KEYVAL_ASSIGN_SEP = "~";
     const KEYVAL_ELEMENT_SEP = "~~";
 
