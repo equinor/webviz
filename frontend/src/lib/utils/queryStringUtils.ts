@@ -5,8 +5,8 @@
 // - The key and value are separated by "~" (think of it as assignment)
 // - String values are enclosed in single quotes
 //
-// Only primitive value types are supported: string, number, boolean, null. Non-primitive value types will be ignored
-// Only encodes the top level properties of the object and ignores nested objects.
+// Only primitive value types are supported: string, number, boolean, null.
+// Only supports encoding of top level properties of the object, nested objects will throw an exception.
 // For maps, only string keys are supported
 //
 // Example:
@@ -23,13 +23,20 @@ export function encodePropertiesAsKeyValStr(objOrMap: Record<string, string | nu
         if (typeof key !== "string") {
             throw new Error(`Only string keys are supported, offending key: ${key}`);
         }
-        // We only support primitive types
-        const valueType = typeof value;
-        if (value === null || valueType === "number" || valueType === "boolean") {
+
+        // We only support primitive types as values
+        if (value === null || typeof value === "number" || typeof value === "boolean") {
             elementArr.push(`${key}${KEYVAL_ASSIGN_SEP}${value}`);
-        } else if (valueType === "string") {
+        } else if (typeof value === "string") {
+            // Ensure that the string value does not contain the element separator
+            if (value.includes(KEYVAL_ELEMENT_SEP)) {
+                throw new Error(`String value cannot contain the element separator, offending value: ${value}`);
+            }
             // Add quotes around string values
             elementArr.push(`${key}${KEYVAL_ASSIGN_SEP}'${value}'`);
+        }
+        else {
+            throw new Error(`Only primitive value types are supported, offending value: ${value}`);
         }
     }
 
