@@ -26,6 +26,19 @@ export function MapView(props: ModuleViewProps<MapState>) {
     usePropagateApiErrorToStatusWriter(surfDataQuery, statusWriter);
 
     const surfData = surfDataQuery.data;
+
+    // Testing!!!!!!!!!!!!!
+    // Testing!!!!!!!!!!!!!
+    // Testing!!!!!!!!!!!!!
+    let imgUrl: string = "";
+    if (surfData) {
+        const myblob = b64toBlob(surfData.png_image_base64, "image/png", 512);
+        const blobUrl = URL.createObjectURL(myblob);
+        console.log(blobUrl);
+        imgUrl = blobUrl;
+        //imgUrl = `data:image/png;base64,${surfData.png_image_base64}`;
+    }
+
     return (
         <div className="relative w-full h-full flex flex-col">
             {hasError ? (
@@ -61,7 +74,7 @@ export function MapView(props: ModuleViewProps<MapState>) {
                             // Experiment with showing PNG image in a ColormapLayer
                             "@@type": "ColormapLayer",
                             id: "image-layer",
-                            image: `data:image/png;base64,${surfData.png_image_base64}`,
+                            image: imgUrl,
                             bounds: _calcBoundsForRotationAroundUpperLeftCorner(surfData.surface_def),
                             rotDeg: surfData.surface_def.rot_deg,
                             valueRange: [surfData.value_min, surfData.value_max],
@@ -94,3 +107,31 @@ function _calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): n
 
     return bounds;
 }
+
+
+// Testing!!!!!!!!!!!!!
+// Testing!!!!!!!!!!!!!
+// Testing!!!!!!!!!!!!!
+function b64toBlob(b64Data: string, contentType: string, sliceSize: number): Blob {
+    contentType = contentType || '';
+    sliceSize = sliceSize || 512;
+  
+    var byteCharacters = atob(b64Data);
+    var byteArrays = [];
+  
+    for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+      var slice = byteCharacters.slice(offset, offset + sliceSize);
+  
+      var byteNumbers = new Array(slice.length);
+      for (var i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+  
+      var byteArray = new Uint8Array(byteNumbers);
+  
+      byteArrays.push(byteArray);
+    }
+      
+    var blob = new Blob(byteArrays, {type: contentType});
+    return blob;
+  }
