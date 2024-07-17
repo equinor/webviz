@@ -50,10 +50,10 @@ export function encodePropertiesAsKeyValStr(objOrMap: object | Map<string, strin
 // Example:
 // [1, 2, 3, 5, 6, 7, 10] -> "1-3!5-7!10"
 //
-export function encodeAsUintListStr(unsignedIts: Iterable<number>): string {
+export function encodeAsUintListStr(unsignedInts: Iterable<number>): string {
     // Check that all input values are unsigned integers and store them in a Set to remove duplicates
     const uniqueInts = new Set<number>();
-    for (const i of unsignedIts) {
+    for (const i of unsignedInts) {
         if (!Number.isInteger(i) || i < 0) {
             throw new Error(`All input values must be unsigned integers, offending input: ${i}`);
         }
