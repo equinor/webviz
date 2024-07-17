@@ -1,5 +1,6 @@
 import React from "react";
 
+import { InplaceVolumetricResultName_api } from "@api";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
@@ -16,22 +17,26 @@ import {
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
     userSelectedIdentifiersValuesAtom,
+    userSelectedPlotTypeAtom,
     userSelectedResultNameAtom,
     userSelectedSubplotByAtom,
     userSelectedTableNamesAtom,
 } from "./atoms/baseAtoms";
 import {
+    selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
     selectedIdentifiersValuesAtom,
     selectedResultNameAtom,
+    selectedSubplotByAtom,
     selectedTableNamesAtom,
     tableDefinitionsAccessorAtom,
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
+import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { SubplotBy, SubplotByInfo } from "../view/types";
+import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
 
 export function Settings(props: ModuleSettingsProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -53,8 +58,13 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     const selectedResultName = useAtomValue(selectedResultNameAtom);
     const setSelectedResultName = useSetAtom(userSelectedResultNameAtom);
 
-    const [selectedSubplotBy, setSelectedSubplotBy] = useAtom(userSelectedSubplotByAtom);
-    const [selectedColorBy, setSelectedColorBy] = useAtom(userSelectedColorByAtom);
+    const selectedSubplotBy = useAtomValue(selectedSubplotByAtom);
+    const setSelectedSubplotBy = useSetAtom(userSelectedSubplotByAtom);
+
+    const selectedColorBy = useAtomValue(selectedColorByAtom);
+    const setSelectedColorBy = useSetAtom(userSelectedColorByAtom);
+
+    const [selectedPlotType, setSelectedPlotType] = useAtom(userSelectedPlotTypeAtom);
 
     function handleFilterChange(newFilter: InplaceVolumetricsFilter) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
@@ -63,48 +73,29 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         setSelectedIdentifiersValues(newFilter.identifiersValues);
     }
 
-    const resultNameOptions = tableDefinitionsAccessor
+    const resultNameOptions: DropdownOption<InplaceVolumetricResultName_api>[] = tableDefinitionsAccessor
         .getUniqueResultNames()
         .map((name) => ({ label: name, value: name }));
 
-    const subplotOptions: DropdownOption<SubplotByInfo>[] = [
-        {
-            value: {
-                subplotBy: SubplotBy.ENSEMBLE,
-            },
-            label: "Ensemble",
-        },
-        {
-            value: {
-                subplotBy: SubplotBy.TABLE_NAME,
-            },
-            label: "Table name",
-        },
-        {
-            value: {
-                subplotBy: SubplotBy.FLUID_ZONE,
-            },
-            label: "Fluid zone",
-        },
-    ];
-    for (const identifier of tableDefinitionsAccessor.getUniqueIdentifierValues()) {
-        subplotOptions.push({
-            value: {
-                subplotBy: SubplotBy.IDENTIFIER,
-                identifier: identifier.identifier,
-            },
-            label: identifier.identifier,
-        });
+    const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames);
+    const colorByOptions = makeColorByOptions(tableDefinitionsAccessor, selectedSubplotBy, selectedTableNames);
+    const plotTypeOptions: DropdownOption<PlotType>[] = [];
+    for (const [type, label] of Object.entries(plotTypeToStringMapping)) {
+        plotTypeOptions.push({ label, value: type as PlotType });
     }
-
-    // Subplot automatically set to "Source" if multiple ensembles or tables selected
-    const subplotOptionDisabled = false; //selectedEnsembleIdents.length > 1 || selectedTableNames.length > 1;
 
     return (
         <div className="flex flex-col gap-2">
             <PendingWrapper isPending={tableDefinitionsQueryResult.isLoading}>
-                <CollapsibleGroup title="Result and subplots" expanded>
+                <CollapsibleGroup title="Plot settings" expanded>
                     <div className="flex flex-col gap-2">
+                        <Label text="Plot type">
+                            <Dropdown
+                                value={selectedPlotType}
+                                options={plotTypeOptions}
+                                onChange={setSelectedPlotType}
+                            />
+                        </Label>
                         <Label text="Result">
                             <Dropdown
                                 value={selectedResultName ?? undefined}
@@ -112,34 +103,18 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                                 onChange={setSelectedResultName}
                             />
                         </Label>
-                        <Label
-                            text="Subplot by"
-                            title={
-                                subplotOptionDisabled
-                                    ? "When having selecting multiple sources (ensembles/tables), the subplot option is automatically set to source and cannot be changed."
-                                    : undefined
-                            }
-                        >
+                        <Label text="Subplot by">
                             <Dropdown
                                 value={selectedSubplotBy ?? undefined}
                                 options={subplotOptions}
                                 onChange={setSelectedSubplotBy}
-                                disabled={subplotOptionDisabled}
                             />
                         </Label>
-                        <Label
-                            text="Color by"
-                            title={
-                                subplotOptionDisabled
-                                    ? "When having selecting multiple sources (ensembles/tables), the subplot option is automatically set to source and cannot be changed."
-                                    : undefined
-                            }
-                        >
+                        <Label text="Color by">
                             <Dropdown
                                 value={selectedColorBy ?? undefined}
-                                options={subplotOptions}
+                                options={colorByOptions}
                                 onChange={setSelectedColorBy}
-                                disabled={subplotOptionDisabled}
                             />
                         </Label>
                     </div>

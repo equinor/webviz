@@ -1,11 +1,11 @@
 import { Column, ColumnType, Table } from "./Table";
-import { InplaceVolumetricsTableData } from "./types";
+import { InplaceVolumetricsTableData, SourceIdentifier } from "./types";
 
 export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table {
     const columns: Map<string, Column<any>> = new Map();
-    columns.set("ensemble", new Column<string>("Ensemble", ColumnType.ENSEMBLE));
-    columns.set("table", new Column<string>("Table", ColumnType.TABLE));
-    columns.set("fluid-zone", new Column<string>("Fluid Zone", ColumnType.FLUID_ZONE));
+    columns.set("ensemble", new Column<string>(SourceIdentifier.ENSEMBLE, ColumnType.ENSEMBLE));
+    columns.set("table", new Column<string>(SourceIdentifier.TABLE_NAME, ColumnType.TABLE));
+    columns.set("fluid-zone", new Column<string>(SourceIdentifier.FLUID_ZONE, ColumnType.FLUID_ZONE));
 
     for (const tableSet of data) {
         for (const fluidZoneTable of tableSet.data.tablePerFluidSelection) {
@@ -16,20 +16,21 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
                     if (selectorColumn.columnName === "REAL") {
                         type = ColumnType.REAL;
                     }
-                    columns.set(
-                        selectorColumn.columnName,
-                        new Column(selectorColumn.columnName, type, selectorColumn.uniqueValues, selectorColumn.indices)
-                    );
+                    columns.set(selectorColumn.columnName, new Column(selectorColumn.columnName, type));
+                }
+
+                for (let i = 0; i < selectorColumn.indices.length; i++) {
+                    columns
+                        .get(selectorColumn.columnName)
+                        ?.addRowValue(selectorColumn.uniqueValues[selectorColumn.indices[i]]);
 
                     if (!mainColumnsAdded) {
-                        mainColumnsAdded = true;
-                        for (let i = 0; i < selectorColumn.indices.length; i++) {
-                            columns.get("ensemble")?.addRowValue(tableSet.ensembleIdent);
-                            columns.get("table")?.addRowValue(tableSet.tableName);
-                            columns.get("fluid-zone")?.addRowValue(fluidZoneTable.fluidSelectionName);
-                        }
+                        columns.get("ensemble")?.addRowValue(tableSet.ensembleIdent);
+                        columns.get("table")?.addRowValue(tableSet.tableName);
+                        columns.get("fluid-zone")?.addRowValue(fluidZoneTable.fluidSelectionName);
                     }
                 }
+                mainColumnsAdded = true;
             }
             for (const resultColumn of fluidZoneTable.resultColumns) {
                 if (!columns.has(resultColumn.columnName)) {
@@ -37,15 +38,14 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
                 }
                 for (const value of resultColumn.columnValues) {
                     columns.get(resultColumn.columnName)?.addRowValue(value);
-                }
-                if (!mainColumnsAdded) {
-                    mainColumnsAdded = true;
-                    for (let i = 0; i < resultColumn.columnValues.length; i++) {
+
+                    if (!mainColumnsAdded) {
                         columns.get("ensemble")?.addRowValue(tableSet.ensembleIdent);
                         columns.get("table")?.addRowValue(tableSet.tableName);
                         columns.get("fluid-zone")?.addRowValue(fluidZoneTable.fluidSelectionName);
                     }
                 }
+                mainColumnsAdded = true;
             }
         }
     }

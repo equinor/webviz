@@ -1,10 +1,11 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import {
-    InplaceVolumetricsTableDefinitionsAccessor,
+    TableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,
-} from "@modules_shared/InplaceVolumetrics/InplaceVolumetricsTableDefinitionsAccessor";
+} from "@modules_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 
 import { atom } from "jotai";
 
@@ -38,14 +39,11 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     return validatedEnsembleIdents ?? [];
 });
 
-export const tableDefinitionsAccessorAtom = atom<InplaceVolumetricsTableDefinitionsAccessor>((get) => {
+export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get) => {
     const selectedTableNames = get(selectedTableNamesAtom);
     const tableDefinitions = get(tableDefinitionsQueryAtom);
 
-    return new InplaceVolumetricsTableDefinitionsAccessor(
-        tableDefinitions.isLoading ? [] : tableDefinitions.data,
-        selectedTableNames
-    );
+    return new TableDefinitionsAccessor(tableDefinitions.isLoading ? [] : tableDefinitions.data, selectedTableNames);
 });
 
 export const selectedTableNamesAtom = atom<string[]>((get) => {
@@ -81,11 +79,16 @@ export const selectedResultNamesAtom = atom<InplaceVolumetricResultName_api[]>((
     return fixedSelection;
 });
 
-export const selectedAccumulationOptionsAtom = atom<string[]>((get) => {
+export const selectedAccumulationOptionsAtom = atom<
+    Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>[]
+>((get) => {
     const userSelectedAccumulation = get(userSelectedAccumulationOptionsAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const availableUniqueAccumulationOptions: string[] = ["fluidZone"];
+    const availableUniqueAccumulationOptions: Omit<
+        SourceAndTableIdentifierUnion,
+        SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME
+    >[] = [SourceIdentifier.FLUID_ZONE];
     for (const identifier of tableDefinitionsAccessor.getUniqueIdentifierValues()) {
         availableUniqueAccumulationOptions.push(identifier.identifier);
     }

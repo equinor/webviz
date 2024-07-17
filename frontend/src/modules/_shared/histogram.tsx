@@ -20,15 +20,29 @@ function nFormatter(num: number, digits: number): string {
     return item ? (num / item.value).toFixed(digits).replace(rx, "$1") + item.symbol : "0";
 }
 
-export function makeHistogramBins({
+export type HistogramBinRange = { from: number; to: number };
+
+export function makeHistogramBinRangesFromValuesArray({
     xValuesArray,
     numBins,
 }: {
     xValuesArray: number[][];
     numBins: number;
-}): { from: number; to: number }[] {
+}): HistogramBinRange[] {
     const xMin = Math.min(...xValuesArray.map((el) => Math.min(...el)));
     const xMax = Math.max(...xValuesArray.map((el) => Math.max(...el)));
+    return makeHistogramBinRangesFromMinAndMaxValues({ xMin, xMax, numBins });
+}
+
+export function makeHistogramBinRangesFromMinAndMaxValues({
+    xMin,
+    xMax,
+    numBins,
+}: {
+    xMin: number;
+    xMax: number;
+    numBins: number;
+}): HistogramBinRange[] {
     const binSize = (xMax - xMin) / numBins;
     const bins: { from: number; to: number }[] = Array.from({ length: numBins }, (_, i) => ({
         from: xMin + i * binSize,
@@ -45,12 +59,15 @@ export function makeHistogramTrace({
     color,
 }: {
     xValues: number[];
-    numBins: number;
+    numBins?: number;
     bins?: { from: number; to: number }[];
     color: string;
 }): Partial<PlotData> {
     if (!bins) {
-        bins = makeHistogramBins({ xValuesArray: [xValues], numBins });
+        if (!numBins) {
+            throw new Error("Either bins or numBins must be provided");
+        }
+        bins = makeHistogramBinRangesFromValuesArray({ xValuesArray: [xValues], numBins });
     }
     const binValues: number[] = bins.map((range) => xValues.filter((el) => el >= range.from && el < range.to).length);
     const binStrings = bins.map((range) => `${nFormatter(range.from, 2)}-${nFormatter(range.to, 2)}`);

@@ -1,16 +1,16 @@
 import React from "react";
-import Plot from "react-plotly.js";
 
 import { InplaceVolumetricsIdentifier_api } from "@api";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
+import { ColorSet } from "@lib/utils/ColorSet";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { makeSubplots } from "@modules/_shared/Figure";
-import { InplaceVolumetricsTablesDataAccessor } from "@modules/_shared/InplaceVolumetrics/InplaceVolumetricsDataAccessor";
 import { PlotBuilder } from "@modules/_shared/InplaceVolumetrics/PlotBuilder";
 import { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import {
@@ -18,15 +18,19 @@ import {
     useGetAggregatedTableDataQueries,
 } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableUtils";
+import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
+import {
+    HistogramBinRange,
+    makeHistogramBinRangesFromMinAndMaxValues,
+    makeHistogramTrace,
+} from "@modules/_shared/histogram";
 
-import { Layout, PlotData } from "plotly.js";
-
-import { InplaceVolumetricsPlotBuilder, TableData } from "./plotBuilder";
-import { SubplotBy } from "./types";
+import { PlotData } from "plotly.js";
 
 import { RealizationAndResult, calcConvergenceArray } from "../settings/utils/convergenceCalculation";
 import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { PlotType } from "../typesAndEnums";
 
 export function View(props: ModuleViewProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -38,6 +42,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     const resultName = props.viewContext.useSettingsToViewInterfaceValue("resultName");
     const subplotBy = props.viewContext.useSettingsToViewInterfaceValue("subplotBy");
     const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
+    const plotType = props.viewContext.useSettingsToViewInterfaceValue("plotType");
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const divBoundingRect = useElementBoundingRect(divRef);
@@ -50,13 +55,21 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         });
     }
 
+    const accByIdentifiers: InplaceVolumetricsIdentifier_api[] = [];
+    if (Object.values(InplaceVolumetricsIdentifier_api).includes(subplotBy as any)) {
+        accByIdentifiers.push(subplotBy as InplaceVolumetricsIdentifier_api);
+    }
+    if (Object.values(InplaceVolumetricsIdentifier_api).includes(colorBy as any)) {
+        accByIdentifiers.push(colorBy as InplaceVolumetricsIdentifier_api);
+    }
+
     const aggregatedTableDataQueries = useGetAggregatedTableDataQueries(
         ensembleIdentsWithRealizations,
         filter.tableNames,
         resultName ? [resultName] : [],
         filter.fluidZones,
-        [InplaceVolumetricsIdentifier_api.ZONE], //subplotBy?.subplotBy === SubplotBy.IDENTIFIER ? [subplotBy.identifier] : [],
-        subplotBy?.subplotBy !== SubplotBy.FLUID_ZONE,
+        accByIdentifiers,
+        subplotBy !== SourceIdentifier.FLUID_ZONE && colorBy !== SourceIdentifier.FLUID_ZONE,
         false,
         filter.identifiersValues
     );
@@ -83,137 +96,20 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         }
         props.viewContext.setInstanceTitle(title);
 
-        const plotbuilder = new PlotBuilder(table, makePlotData(resultName ?? ""));
+        const plotbuilder = new PlotBuilder(
+            table,
+            makePlotData(plotType, resultName ?? "", colorBy, ensembleSet, colorSet)
+        );
 
-        plotbuilder.setSubplotByColumn("ZONE");
+        plotbuilder.setSubplotByColumn(subplotBy);
+        plotbuilder.setFormatLabelFunction(makeFormatLabelFunction(ensembleSet));
         plots = plotbuilder.build(divBoundingRect.height, divBoundingRect.width, {
             horizontalSpacing: 0.075,
-            verticalSpacing: 0.075,
+            verticalSpacing: plotType === PlotType.HISTOGRAM ? 0.12 : 0.075,
             showGrid: true,
-            margin: { t: 50, b: 20, l: 50, r: 20 },
+            margin: plotType === PlotType.HISTOGRAM ? { t: 50, b: 100, l: 50, r: 20 } : { t: 50, b: 20, l: 50, r: 20 },
         });
     }
-
-    /*
-    const subplots: { title?: string; plotData: Partial<PlotData>[] }[] = [];
-    let plotComponent: React.ReactNode = null;
-
-    if (tablesDataAccessor.getTables().length > 0) {
-        if (subplotBy.subplotBy === SubplotBy.NONE) {
-            // Expecting 1 table
-            if (tablesDataAccessor.getTables().length !== 1) {
-                throw new Error("Expected exactly 1 table when subplotBy is NONE");
-            }
-            const realizationAndResultArray: RealizationAndResult[] = [];
-            for (const row of tablesDataAccessor.getTables()[0].getRows()) {
-                realizationAndResultArray.push({
-                    realization: row["REAL"] as number,
-                    resultValue: row[resultName ?? ""] as number,
-                });
-            }
-
-            const data = makePlotData(realizationAndResultArray);
-            subplots.push({ plotData: data });
-        } else if (subplotBy.subplotBy === SubplotBy.IDENTIFIER) {
-            // Expecting 1 table
-            if (tablesDataAccessor.getTables().length !== 1) {
-                throw new Error("Expected exactly 1 table when subplotBy is any identifier");
-            }
-            const subTable = tablesDataAccessor.getTables()[0];
-            const uniqueColumnValues = subTable.getUniqueColumnValues(subplotBy.identifier);
-
-            for (let i = 0; i < uniqueColumnValues.length; i++) {
-                const realizationAndResultArray: RealizationAndResult[] = [];
-                for (const row of subTable.getRowsWithFilter(subplotBy.identifier, uniqueColumnValues[i])) {
-                    realizationAndResultArray.push({
-                        realization: row["REAL"] as number,
-                        resultValue: row[resultName ?? ""] as number,
-                    });
-                }
-
-                const data = makePlotData(realizationAndResultArray);
-                subplots.push({ title: uniqueColumnValues[i].toString(), plotData: data });
-            }
-        } else if (subplotBy.subplotBy === SubplotBy.FLUID_ZONE) {
-            for (const subTable of tablesDataAccessor.getTables()) {
-                const realizationAndResultArray: RealizationAndResult[] = [];
-                for (const row of subTable.getRows()) {
-                    realizationAndResultArray.push({
-                        realization: row["REAL"] as number,
-                        resultValue: row[resultName ?? ""] as number,
-                    });
-                }
-
-                const data = makePlotData(realizationAndResultArray);
-                subplots.push({ title: subTable.getFluidZone(), plotData: data });
-            }
-        } else if (subplotBy.subplotBy === SubplotBy.SOURCE) {
-            for (const subTable of tablesDataAccessor.getTables()) {
-                const realizationAndResultArray: RealizationAndResult[] = [];
-                for (const row of subTable.getRows()) {
-                    realizationAndResultArray.push({
-                        realization: row["REAL"] as number,
-                        resultValue: row[resultName ?? ""] as number,
-                    });
-                }
-
-                const data = makePlotData(realizationAndResultArray);
-                subplots.push({
-                    title: `${makeDistinguishableEnsembleDisplayName(
-                        subTable.getEnsembleIdent(),
-                        ensembleSet.getEnsembleArr()
-                    )} - ${subTable.getTableName()}`,
-                    plotData: data,
-                });
-            }
-        }
-    }
-
-    if (subplots.length > 0) {
-        const numRows = Math.ceil(Math.sqrt(subplots.length));
-        const numCols = Math.ceil(subplots.length / numRows);
-
-        const traces: { row: number; col: number; trace: Partial<PlotData> }[] = [];
-        const subplotTitles: string[] = [];
-        for (let row = 1; row <= numRows; row++) {
-            for (let col = 1; col <= numCols; col++) {
-                const index = (row - 1) * numCols + (col - 1);
-
-                const adjustedIndex = (numRows - 1 - (row - 1)) * numCols + (col - 1);
-                subplotTitles.push(subplots[adjustedIndex]?.title ?? "");
-
-                if (index >= subplots.length) {
-                    continue;
-                }
-
-                for (const trace of subplots[index].plotData) {
-                    if (row !== 1 || col !== 1) {
-                        trace.showlegend = false;
-                    }
-                    traces.push({ trace, row: numRows - (row - 1), col });
-                }
-            }
-        }
-
-        const figure = makeSubplots({
-            height: divBoundingRect.height,
-            width: divBoundingRect.width,
-            numRows,
-            numCols,
-            horizontalSpacing: 0.075,
-            verticalSpacing: 0.075,
-            showGrid: true,
-            margin: { t: 50, b: 20, l: 50, r: 20 },
-            subplotTitles,
-        });
-
-        for (const { trace, row, col } of traces) {
-            figure.addTrace(trace, row, col);
-        }
-
-        plotComponent = figure.makePlot();
-    }
-    */
 
     function makeMessage(): React.ReactNode {
         if (aggregatedTableDataQueries.isFetching) {
@@ -242,63 +138,241 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     );
 }
 
-function makePlotData(resultName: string): (table: Table) => Partial<PlotData>[] {
-    return (table: Table): Partial<PlotData>[] => {
-        const data: Partial<PlotData>[] = [];
+function makeFormatLabelFunction(ensembleSet: EnsembleSet): (columnName: string, value: string | number) => string {
+    return function formatLabel(columnName: string, value: string | number): string {
+        if (columnName === SourceIdentifier.ENSEMBLE) {
+            const ensembleIdent = EnsembleIdent.fromString(value.toString());
+            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+            if (ensemble) {
+                return makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArr());
+            }
+        }
+        return value.toString();
+    };
+}
 
-        const realizationAndResultArray: RealizationAndResult[] = [];
-        const reals = table.getColumn("REAL");
-        const results = table.getColumn(resultName);
-        if (!reals) {
-            throw new Error("REAL column not found");
-        }
-        if (!results) {
-            throw new Error(`Column not found: ${resultName}`);
-        }
-        for (let i = 0; i < reals.getNumRows(); i++) {
-            realizationAndResultArray.push({
-                realization: reals.getRowValue(i) as number,
-                resultValue: results.getRowValue(i) as number,
+function makePlotData(
+    plotType: PlotType,
+    resultName: string,
+    colorBy: SourceAndTableIdentifierUnion,
+    ensembleSet: EnsembleSet,
+    colorSet: ColorSet
+): (table: Table) => Partial<PlotData>[] {
+    return (table: Table): Partial<PlotData>[] => {
+        let binRanges: HistogramBinRange[] = [];
+        if (plotType === PlotType.HISTOGRAM || plotType === PlotType.DENSITY) {
+            const column = table.getColumn(resultName);
+            if (!column) {
+                return [];
+            }
+            const resultMinAndMax = column.reduce(
+                (acc: { min: number; max: number }, value: string | number) => {
+                    if (typeof value !== "number") {
+                        return acc;
+                    }
+                    return {
+                        min: Math.min(acc.min, value),
+                        max: Math.max(acc.max, value),
+                    };
+                },
+                { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY }
+            );
+            binRanges = makeHistogramBinRangesFromMinAndMaxValues({
+                xMin: resultMinAndMax.min,
+                xMax: resultMinAndMax.max,
+                numBins: plotType === PlotType.DENSITY ? 5 : 20,
             });
         }
 
-        const convergenceArr = calcConvergenceArray(realizationAndResultArray);
+        const data: Partial<PlotData>[] = [];
+        const collection = table.splitByColumn(colorBy);
 
-        data.push(
-            {
-                x: convergenceArr.map((el) => el.realization),
-                y: convergenceArr.map((el) => el.mean),
-                name: "Mean",
-                type: "scatter",
-                line: {
-                    color: "black",
-                    width: 1,
-                },
-            },
-            {
-                x: convergenceArr.map((el) => el.realization),
-                y: convergenceArr.map((el) => el.p10),
-                name: "P10",
-                type: "scatter",
-                line: {
-                    color: "red",
-                    width: 1,
-                    dash: "dash",
-                },
-            },
-            {
-                x: convergenceArr.map((el) => el.realization),
-                y: convergenceArr.map((el) => el.p90),
-                name: "P90",
-                type: "scatter",
-                line: {
-                    color: "blue",
-                    width: 1,
-                    dash: "dashdot",
-                },
+        let color = colorSet.getFirstColor();
+        for (const [key, table] of collection.getCollectionMap()) {
+            let title = key.toString();
+            if (colorBy === SourceIdentifier.ENSEMBLE) {
+                const ensembleIdent = EnsembleIdent.fromString(key.toString());
+                const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+                if (ensemble) {
+                    color = ensemble.getColor();
+                    title = makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArr());
+                }
             }
-        );
+
+            if (plotType === PlotType.HISTOGRAM) {
+                data.push(...makeHistogram(title, table, resultName, color, binRanges));
+            } else if (plotType === PlotType.CONVERGENCE) {
+                data.push(...makeConvergencePlot(title, table, resultName, color));
+            } else if (plotType === PlotType.DENSITY) {
+                data.push(...makeDensityPlot(title, table, resultName, color, binRanges));
+            }
+
+            color = colorSet.getNextColor();
+        }
 
         return data;
     };
+}
+
+function makeConvergencePlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
+    const data: Partial<PlotData>[] = [];
+
+    const realizationAndResultArray: RealizationAndResult[] = [];
+    const reals = table.getColumn("REAL");
+    const results = table.getColumn(resultName);
+    if (!reals) {
+        throw new Error("REAL column not found");
+    }
+    if (!results) {
+        return [];
+    }
+    for (let i = 0; i < reals.getNumRows(); i++) {
+        realizationAndResultArray.push({
+            realization: reals.getRowValue(i) as number,
+            resultValue: results.getRowValue(i) as number,
+        });
+    }
+
+    const convergenceArr = calcConvergenceArray(realizationAndResultArray);
+
+    data.push(
+        {
+            x: convergenceArr.map((el) => el.realization),
+            y: convergenceArr.map((el) => el.mean),
+            name: "Mean",
+            legendgroup: title,
+            legendgrouptitle: {
+                text: title,
+            },
+            type: "scatter",
+            line: {
+                color,
+                width: 1,
+            },
+            mode: "lines",
+        },
+        {
+            x: convergenceArr.map((el) => el.realization),
+            y: convergenceArr.map((el) => el.p10),
+            name: "P10",
+            type: "scatter",
+            legendgroup: title,
+            legendgrouptitle: {
+                text: title,
+            },
+            line: {
+                color,
+                width: 1,
+                dash: "dash",
+            },
+            mode: "lines",
+        },
+        {
+            x: convergenceArr.map((el) => el.realization),
+            y: convergenceArr.map((el) => el.p90),
+            name: "P90",
+            type: "scatter",
+            legendgroup: title,
+            legendgrouptitle: {
+                text: title,
+            },
+            line: {
+                color,
+                width: 1,
+                dash: "dashdot",
+            },
+            mode: "lines",
+        }
+    );
+
+    return data;
+}
+
+function makeHistogram(
+    title: string,
+    table: Table,
+    resultName: string,
+    color: string,
+    binRanges: HistogramBinRange[]
+): Partial<PlotData>[] {
+    const data: Partial<PlotData>[] = [];
+
+    const resultColumn = table.getColumn(resultName);
+    if (!resultColumn) {
+        return [];
+    }
+
+    const histogram = makeHistogramTrace({
+        xValues: resultColumn.getAllRowValues() as number[],
+        bins: binRanges,
+        color,
+    });
+
+    histogram.name = title;
+    histogram.showlegend = true;
+
+    data.push(histogram);
+
+    return data;
+}
+
+function makeDensityPlot(
+    title: string,
+    table: Table,
+    resultName: string,
+    color: string,
+    binRanges: HistogramBinRange[]
+): Partial<PlotData>[] {
+    const data: Partial<PlotData>[] = [];
+
+    const resultColumn = table.getColumn(resultName);
+    if (!resultColumn) {
+        return [];
+    }
+
+    const yValues = resultColumn.getAllRowValues()
+
+    const xValues = binRanges.map((range) => (range.from + range.to) / 2);
+    const yValues = binRanges.map(
+        (range) =>
+            resultColumn
+                .getAllRowValues()
+                .map((el) => parseFloat(el.toString()))
+                .filter((el) => el >= range.from && el < range.to).length
+    );
+
+    data.push({
+        x: xValues,
+        y: yValues,
+        name: title,
+        type: "scatter",
+        marker: {
+            color,
+        },
+    });
+
+    return data;
+}
+
+function makeScatterPlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
+    const data: Partial<PlotData>[] = [];
+
+    const resultColumn = table.getColumn(resultName);
+    if (!resultColumn) {
+        return [];
+    }
+
+    data.push({
+        x: resultColumn.getAllRowValues(),
+        y: resultColumn.getAllRowValues(),
+        name: title,
+        mode: "markers",
+        marker: {
+            color,
+            size: 5,
+        },
+        type: "scatter",
+    });
+
+    return data;
 }

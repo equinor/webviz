@@ -69,33 +69,43 @@ function filterData(
     });
 }
 
-function sortData(
+type SortColumnAndDirectionElement = {
+    col: string;
+    dir: SortDirection;
+};
+
+function sortDataByColumns(
     data: IdentifiedTableRow<TableHeading>[],
-    col: string,
-    dir: SortDirection
+    sortColumnAndDirectionArray: SortColumnAndDirectionElement[]
 ): IdentifiedTableRow<TableHeading>[] {
-    return [
-        ...data.sort((a, b) => {
-            const aValue = a.values[col];
-            const bValue = b.values[col];
-            if (aValue === null && bValue === null) {
-                return 0;
-            }
-            if (aValue === null) {
-                return dir === SortDirection.ASC ? 1 : -1;
-            }
-            if (bValue === null) {
-                return dir === SortDirection.ASC ? -1 : 1;
-            }
-            if (aValue < bValue) {
-                return dir === SortDirection.ASC ? -1 : 1;
-            }
-            if (aValue > bValue) {
-                return dir === SortDirection.ASC ? 1 : -1;
-            }
-            return 0;
-        }),
-    ];
+    return [...data.sort((a, b) => compareDataByColumns(a, b, sortColumnAndDirectionArray))];
+}
+
+function compareDataByColumns(
+    a: IdentifiedTableRow<TableHeading>,
+    b: IdentifiedTableRow<TableHeading>,
+    sortColumnAndDirectionArray: SortColumnAndDirectionElement[]
+): number {
+    for (const { col, dir } of sortColumnAndDirectionArray) {
+        const aValue = a.values[col];
+        const bValue = b.values[col];
+        if (aValue === null && bValue === null) {
+            continue;
+        }
+        if (aValue === null) {
+            return dir === SortDirection.ASC ? 1 : -1;
+        }
+        if (bValue === null) {
+            return dir === SortDirection.ASC ? -1 : 1;
+        }
+        if (aValue < bValue) {
+            return dir === SortDirection.ASC ? -1 : 1;
+        }
+        if (aValue > bValue) {
+            return dir === SortDirection.ASC ? 1 : -1;
+        }
+    }
+    return 0;
 }
 
 function preprocessData(data: TableRow<TableHeading>[]): IdentifiedTableRow<TableHeading>[] {
@@ -112,23 +122,25 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
     const [preprocessedData, setPreprocessedData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
     const [filteredData, setFilteredData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
     const [filterValues, setFilterValues] = React.useState<{ [key: string]: string }>({});
-    const [sortColumnAndDirection, setSortColumnAndDirection] = React.useState<{ col: string; dir: SortDirection }>({
-        col: "",
-        dir: SortDirection.ASC,
-    });
+    const [sortColumnAndDirectionArray, setSortColumnAndDirectionArray] = React.useState<
+        SortColumnAndDirectionElement[]
+    >([]);
+
+    const [prevData, setPrevData] = React.useState<TableRow<TableHeading>[]>([]);
+
     const containerRef = React.useRef<HTMLDivElement>(null);
 
-    React.useEffect(() => {
-        setPreprocessedData(preprocessData(props.data));
-    }, [props.data]);
-
-    React.useEffect(() => {
-        setFilteredData(filterData(preprocessedData, filterValues, props.headings));
-    }, [preprocessedData, filterValues, props.headings]);
-
-    React.useEffect(() => {
-        setFilteredData((prev) => sortData(prev, sortColumnAndDirection.col, sortColumnAndDirection.dir));
-    }, [sortColumnAndDirection]);
+    if (prevData !== props.data) {
+        setPrevData(props.data);
+        const newPreprocessedData = preprocessData(props.data);
+        setPreprocessedData(newPreprocessedData);
+        setFilteredData(
+            sortDataByColumns(
+                filterData(newPreprocessedData, filterValues, props.headings),
+                sortColumnAndDirectionArray
+            )
+        );
+    }
 
     React.useEffect(() => {
         const maxNumberOfSubheadings = Object.keys(props.headings).length;
@@ -157,14 +169,97 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
 
     function handleFilterChange(col: string, value: string) {
         setFilterValues({ ...filterValues, [col]: value });
+        setFilteredData(
+            sortDataByColumns(filterData(preprocessedData, filterValues, props.headings), sortColumnAndDirectionArray)
+        );
     }
 
-    function handleSortDirectionChange(col: string, dir: SortDirection) {
-        setSortColumnAndDirection({ col, dir });
+    function handleSortDirectionChange(event: React.MouseEvent<HTMLDivElement>, col: string, dir: SortDirection) {
+        const sortColumnAndDirectionElement: SortColumnAndDirectionElement = {
+            col,
+            dir,
+        };
+
+        let newSortColumnAndDirectionArray: SortColumnAndDirectionElement[] = [];
+
+        if (event.shiftKey) {
+            const element = sortColumnAndDirectionArray.find((el) => el.col === col);
+            if (element && element.dir === dir) {
+                newSortColumnAndDirectionArray = sortColumnAndDirectionArray.filter((el) => el.col !== col);
+            } else if (element) {
+                newSortColumnAndDirectionArray = sortColumnAndDirectionArray.filter((el) => el.col !== col);
+                newSortColumnAndDirectionArray = [...newSortColumnAndDirectionArray, sortColumnAndDirectionElement];
+            } else {
+                newSortColumnAndDirectionArray = [...sortColumnAndDirectionArray, sortColumnAndDirectionElement];
+            }
+        } else {
+            newSortColumnAndDirectionArray = [sortColumnAndDirectionElement];
+        }
+
+        setSortColumnAndDirectionArray(newSortColumnAndDirectionArray);
+        sortDataByColumns(filteredData, newSortColumnAndDirectionArray);
     }
 
     if (layoutError.error) {
         return <div>{layoutError.message}</div>;
+    }
+
+    function makeSortButtons(col: string): React.ReactNode {
+        let sortDirection: SortDirection | null = null;
+        let numSortColumn = 0;
+        if (sortColumnAndDirectionArray.length > 0) {
+            const index = sortColumnAndDirectionArray.findIndex((el) => el.col === col);
+            if (index !== -1) {
+                numSortColumn = index + 1;
+                sortDirection = sortColumnAndDirectionArray[index].dir;
+            }
+        }
+
+        const component = (
+            <div className="flex flex-col h-8">
+                <div
+                    className={resolveClassNames(
+                        "text-sm hover:text-blue-500 cursor-pointer h-4",
+                        sortDirection === SortDirection.ASC
+                            ? "text-white bg-blue-800 hover:text-blue-100"
+                            : "text-blue-300 hover:text-white hover:bg-blue-300"
+                    )}
+                    onClick={(e) => handleSortDirectionChange(e, col, SortDirection.ASC)}
+                    title="Sort ascending"
+                >
+                    <div className="-mt-0.5">
+                        <ExpandLess fontSize="inherit" />
+                    </div>
+                </div>
+                <div
+                    className={resolveClassNames(
+                        "text-sm hover:text-blue-500 cursor-pointer h-4",
+                        sortDirection === SortDirection.DESC
+                            ? "text-white bg-blue-800 hover:text-blue-100"
+                            : "text-blue-300 hover:text-white hover:bg-blue-300"
+                    )}
+                    onClick={(e) => handleSortDirectionChange(e, col, SortDirection.DESC)}
+                    title="Sort descending"
+                >
+                    <div className="-mt-1">
+                        <ExpandMore fontSize="inherit" />
+                    </div>
+                </div>
+            </div>
+        );
+
+        if (sortColumnAndDirectionArray.length <= 1 || numSortColumn === 0) {
+            return component;
+        }
+
+        return (
+            <div className="flex gap-1 items-center">
+                <div className="rounded-full bg-blue-800 text-white h-4 w-4 flex items-center justify-center text-xs pt-0.5">
+                    {numSortColumn}
+                </div>
+                {component}
+            </div>
+        );
     }
 
     return (
@@ -186,34 +281,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                 >
                                     <div className="px-1 flex items-center">
                                         <span className="flex-grow">{props.headings[col].label}</span>
-                                        <div className="flex flex-col">
-                                            <div
-                                                className={resolveClassNames(
-                                                    "text-xs hover:text-blue-500 cursor-pointer h-4",
-                                                    sortColumnAndDirection.col === col &&
-                                                        sortColumnAndDirection.dir === SortDirection.ASC
-                                                        ? "text-blue-600"
-                                                        : "text-blue-300"
-                                                )}
-                                                onClick={() => handleSortDirectionChange(col, SortDirection.ASC)}
-                                                title="Sort ascending"
-                                            >
-                                                <ExpandLess fontSize="inherit" />
-                                            </div>
-                                            <div
-                                                className={resolveClassNames(
-                                                    "text-xs hover:text-blue-500 cursor-pointer h-4",
-                                                    sortColumnAndDirection.col === col &&
-                                                        sortColumnAndDirection.dir === SortDirection.DESC
-                                                        ? "text-blue-600"
-                                                        : "text-blue-300"
-                                                )}
-                                                onClick={() => handleSortDirectionChange(col, SortDirection.DESC)}
-                                                title="Sort descending"
-                                            >
-                                                <ExpandMore fontSize="inherit" />
-                                            </div>
-                                        </div>
+                                        {makeSortButtons(col)}
                                     </div>
                                     <div className="p-0 text-sm">
                                         <Input
@@ -252,9 +320,9 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                         key={item.id}
                                         className={`${
                                             props.highlightFilter && props.highlightFilter(item.values)
-                                                ? "bg-blue-50 "
+                                                ? "bg-blue-100 "
                                                 : ""
-                                        } hover:bg-blue-100`}
+                                        } hover:bg-blue-50`}
                                         onPointerOver={() => handlePointerOver(item.values)}
                                         onPointerDown={() => handlePointerDown(item.values)}
                                         style={{ height: 30 }}

@@ -71,8 +71,16 @@ export class Column<TValue = string | number> {
         return this._uniqueValues[this._indices[rowIndex]];
     }
 
+    getAllRowValues(): TValue[] {
+        return this._indices.map((i) => this._uniqueValues[i]);
+    }
+
     cloneEmpty(): Column<TValue> {
         return new Column(this._name, this._type);
+    }
+
+    reduce<TAcc>(reduceFunc: (acc: TAcc, value: TValue) => TAcc, initialValue: TAcc): TAcc {
+        return this.getAllRowValues().reduce(reduceFunc, initialValue);
     }
 }
 

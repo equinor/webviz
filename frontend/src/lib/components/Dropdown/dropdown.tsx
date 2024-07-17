@@ -261,6 +261,12 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     React.useEffect(
         function addKeyDownEventHandler() {
             function handleKeyDown(e: KeyboardEvent) {
+                if (e.key === "Escape") {
+                    setDropdownVisible(false);
+                    setOptionIndexWithFocus(-1);
+                    setKeyboardFocus(false);
+                    inputRef.current?.blur();
+                }
                 if (dropdownRef.current) {
                     const currentStartIndex = Math.round(dropdownRef.current?.scrollTop / optionHeight);
                     if (dropdownVisible) {
@@ -369,7 +375,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
 
     return (
         <BaseComponent disabled={props.disabled}>
-            <div style={{ width: props.width }} id={props.wrapperId} className="flex">
+            <div style={{ width: props.width }} id={props.wrapperId} className="flex hover input-comp rounded">
                 <div className="flex-grow">
                     <Input
                         ref={inputRef}

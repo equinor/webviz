@@ -1,6 +1,7 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { SubplotBy, SubplotByInfo } from "@modules/InplaceVolumetricsConvergence/view/types";
+import { PlotType } from "@modules/InplaceVolumetricsConvergence/typesAndEnums";
+import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
 
@@ -9,5 +10,6 @@ export const userSelectedTableNamesAtom = atom<string[] | null>(null);
 export const userSelectedFluidZonesAtom = atom<FluidZone_api[] | null>(null);
 export const userSelectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWithValues_api[] | null>(null);
 export const userSelectedResultNameAtom = atom<InplaceVolumetricResultName_api | null>(null);
-export const userSelectedSubplotByAtom = atom<SubplotByInfo>({ subplotBy: SubplotBy.TABLE_NAME });
-export const userSelectedColorByAtom = atom<SubplotByInfo>({ subplotBy: SubplotBy.ENSEMBLE });
+export const userSelectedSubplotByAtom = atom<SourceAndTableIdentifierUnion>(SourceIdentifier.ENSEMBLE);
+export const userSelectedPlotTypeAtom = atom<PlotType>(PlotType.HISTOGRAM);
+export const userSelectedColorByAtom = atom<SourceAndTableIdentifierUnion>(SourceIdentifier.TABLE_NAME);

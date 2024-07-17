@@ -18,6 +18,7 @@ import {
     useGetAggregatedTableDataQueries,
 } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableUtils";
+import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
@@ -50,8 +51,8 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         filter.tableNames,
         resultNames,
         filter.fluidZones,
-        accumulationOptions.filter((el) => el !== "fluidZone") as InplaceVolumetricsIdentifier_api[],
-        !accumulationOptions.includes("fluidZone"),
+        accumulationOptions.filter((el) => el !== SourceIdentifier.FLUID_ZONE) as InplaceVolumetricsIdentifier_api[],
+        !accumulationOptions.includes(SourceIdentifier.FLUID_ZONE),
         calcMeanAcrossAllRealizations,
         filter.identifiersValues
     );

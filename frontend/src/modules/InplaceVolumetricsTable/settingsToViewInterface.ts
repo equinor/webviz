@@ -1,6 +1,7 @@
 import { InplaceVolumetricResultName_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
+import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { calcMeanAcrossAllRealizationsAtom } from "./settings/atoms/baseAtoms";
 import {
@@ -16,7 +17,10 @@ export type SettingsToViewInterface = {
     derivedStates: {
         filter: InplaceVolumetricsFilter;
         resultNames: InplaceVolumetricResultName_api[];
-        accumulationOptions: string[];
+        accumulationOptions: Omit<
+            SourceAndTableIdentifierUnion,
+            SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME
+        >[];
         calcMeanAcrossAllRealizations: boolean;
     };
 };

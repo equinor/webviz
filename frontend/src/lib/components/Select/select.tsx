@@ -373,7 +373,7 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
                     />
                 )}
                 <div
-                    className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white"
+                    className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white input-comp"
                     style={{ height: sizeWithDefault * 24 + 2 }}
                     ref={ref}
                     tabIndex={0}

@@ -43,7 +43,7 @@ type DropdownRect = {
 const NO_MATCHING_TAGS_TEXT = "No matching tags";
 const NO_TAGS_TEXT = "No tags";
 
-export function TagPicker<T extends string>(props: TagPickerProps<T>): React.ReactElement {
+export function TagPicker<T>(props: TagPickerProps<T>): React.ReactElement {
     const [selectedTags, setSelectedTags] = React.useState<T[]>(props.value);
     const [prevSelectedTags, setPrevSelectedTags] = React.useState<T[]>(props.value);
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
@@ -95,7 +95,17 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
             }
         }
 
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape") {
+                setDropdownVisible(false);
+                inputRef.current?.blur();
+                setFocused(false);
+                return;
+            }
+        }
+
         document.addEventListener("mousedown", handleMouseDown);
+        document.addEventListener("keydown", handleKeyDown);
 
         return () => {
             document.removeEventListener("mousedown", handleMouseDown);
@@ -189,6 +199,8 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
             newSelectedTags.push(value);
         }
 
+        setFilter(null);
+        inputRef.current?.focus();
         setSelectedTags(newSelectedTags);
 
         if (props.debounceTimeMs) {
@@ -243,12 +255,9 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
                 style={{ width: props.width }}
                 id={props.wrapperId}
                 ref={divRef}
-                className={resolveClassNames(
-                    "flex w-full border p-1 px-2 rounded text-sm shadow-sm hover:border-blue-300",
-                    {
-                        "outline outline-blue-500": focused,
-                    }
-                )}
+                className={resolveClassNames("flex w-full border p-1 px-2 rounded text-sm shadow-sm input-comp", {
+                    "outline outline-blue-500": focused,
+                })}
                 onClick={handleClick}
             >
                 <div className="min-h-6 flex-grow flex gap-2 justify-start flex-wrap">
@@ -257,22 +266,23 @@ export function TagPicker<T extends string>(props: TagPickerProps<T>): React.Rea
                         if (!tagOption) {
                             return null;
                         }
-                        return <Tag key={tag.toString()} tag={tagOption} onRemove={() => removeTag(tag)} />;
+                        return <Tag key={`${tag}`} tag={tagOption} onRemove={() => removeTag(tag)} />;
                     })}
                     <input
                         ref={inputRef}
-                        className="flex-grow outline-none min-w-0 h-8"
+                        className="flex-grow outline-none min-w-0 h-8 w-0"
                         onClick={handleInputClick}
                         onChange={handleInputChange}
                         onFocus={handleFocus}
                         onBlur={handleBlur}
+                        value={filter ?? ""}
                     />
                 </div>
-                <div className="h-8 flex flex-col justify-center">
+                <div className="h-8 flex flex-col justify-center cursor-pointer">
                     {selectedTags.length === 0 ? (
                         <ExpandMore fontSize="inherit" />
                     ) : (
-                        <IconButton onClick={handleClearAll}>
+                        <IconButton onClick={handleClearAll} title="Clear selection">
                             <Close fontSize="inherit" />
                         </IconButton>
                     )}
@@ -318,10 +328,10 @@ type TagProps<T> = {
 
 function Tag<T>(props: TagProps<T>): React.ReactNode {
     return (
-        <div className="bg-blue-200 p-1 rounded flex gap-1 items-center">
+        <div className="bg-blue-200 p-1 pl-2 rounded flex gap-1 items-center input-comp">
             <span>{props.tag.label}</span>
             {
-                <IconButton onClick={props.onRemove}>
+                <IconButton onClick={props.onRemove} title="Remove tag">
                     <Close fontSize="inherit" />
                 </IconButton>
             }

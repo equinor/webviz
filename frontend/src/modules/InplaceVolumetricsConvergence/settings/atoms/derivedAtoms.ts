@@ -1,14 +1,16 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 import {
-    InplaceVolumetricsTableDefinitionsAccessor,
+    TableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,
-} from "@modules_shared/InplaceVolumetrics/InplaceVolumetricsTableDefinitionsAccessor";
+} from "@modules_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 
 import { atom } from "jotai";
 
 import {
+    userSelectedColorByAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
     userSelectedIdentifiersValuesAtom,
@@ -17,6 +19,8 @@ import {
     userSelectedTableNamesAtom,
 } from "./baseAtoms";
 import { tableDefinitionsQueryAtom } from "./queryAtoms";
+
+import { makeColorByOptions, makeSubplotByOptions } from "../utils/plotDimensionUtils";
 
 export const selectedEnsembleIdentsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);
@@ -38,14 +42,11 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     return validatedEnsembleIdents ?? [];
 });
 
-export const tableDefinitionsAccessorAtom = atom<InplaceVolumetricsTableDefinitionsAccessor>((get) => {
+export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get) => {
     const selectedTableNames = get(selectedTableNamesAtom);
     const tableDefinitions = get(tableDefinitionsQueryAtom);
 
-    return new InplaceVolumetricsTableDefinitionsAccessor(
-        tableDefinitions.isLoading ? [] : tableDefinitions.data,
-        selectedTableNames
-    );
+    return new TableDefinitionsAccessor(tableDefinitions.isLoading ? [] : tableDefinitions.data, selectedTableNames);
 });
 
 export const selectedTableNamesAtom = atom<string[]>((get) => {
@@ -125,6 +126,31 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
     }
 
     return fixedUpIdentifierValues;
+});
+
+export const selectedSubplotByAtom = atom<SourceAndTableIdentifierUnion>((get) => {
+    const userSelectedSubplotBy = get(userSelectedSubplotByAtom);
+    const selectedTableNames = get(selectedTableNamesAtom);
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+
+    const validOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames).map((el) => el.value);
+    const fixedSelection = fixupUserSelection([userSelectedSubplotBy], validOptions);
+
+    return fixedSelection[0];
+});
+
+export const selectedColorByAtom = atom<SourceAndTableIdentifierUnion>((get) => {
+    const userSelectedColorBy = get(userSelectedColorByAtom);
+    const userSelectedSubplotBy = get(userSelectedSubplotByAtom);
+    const selectedTableNames = get(selectedTableNamesAtom);
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+
+    const validOptions = makeColorByOptions(tableDefinitionsAccessor, userSelectedSubplotBy, selectedTableNames).map(
+        (el) => el.value
+    );
+    const fixedSelection = fixupUserSelection([userSelectedColorBy], validOptions);
+
+    return fixedSelection[0];
 });
 
 function fixupUserSelection<TSelection>(userSelection: TSelection[], validOptions: TSelection[]): TSelection[] {

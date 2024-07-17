@@ -9,6 +9,7 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import { TagOption, TagPicker } from "@lib/components/TagPicker";
+import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -69,7 +70,12 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         setSelectedIdentifiersValues(newFilter.identifiersValues);
     }
 
-    function handleAccumulationOptionsChange(newAccumulationOptions: string[]) {
+    function handleAccumulationOptionsChange(
+        newAccumulationOptions: Omit<
+            SourceAndTableIdentifierUnion,
+            SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME
+        >[]
+    ) {
         setSelectedAccumulationOptions(newAccumulationOptions);
     }
 
@@ -81,7 +87,9 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         .getUniqueResultNames()
         .map((name) => ({ label: name, value: name }));
 
-    const accumulateOptions: TagOption<string>[] = [{ label: "Fluid zone", value: "fluidZone" }];
+    const accumulateOptions: TagOption<
+        Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>
+    >[] = [{ label: "FLUID ZONE", value: SourceIdentifier.FLUID_ZONE }];
     for (const identifier of tableDefinitionsAccessor.getUniqueIdentifierValues()) {
         accumulateOptions.push({ label: identifier.identifier, value: identifier.identifier });
     }

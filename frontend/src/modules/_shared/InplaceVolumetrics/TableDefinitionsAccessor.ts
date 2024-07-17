@@ -33,9 +33,10 @@ export function makeUniqueTableNamesIntersection(
     return Array.from(tableNames);
 }
 
-export class InplaceVolumetricsTableDefinitionsAccessor {
+export class TableDefinitionsAccessor {
     private _tableDefinitions: InplaceVolumetricsTableDefinition_api[];
     private _tableNamesFilter: string[];
+    private _uniqueEnsembleIdents: EnsembleIdent[];
     private _uniqueTableNames: string[];
     private _uniqueFluidZones: FluidZone_api[] = [];
     private _uniqueResults: InplaceVolumetricResultName_api[] = [];
@@ -44,6 +45,7 @@ export class InplaceVolumetricsTableDefinitionsAccessor {
     constructor(tableDefinitionsPerEnsembleIdent: TableDefinitionsForEnsembleIdent[], tableNamesFilter?: string[]) {
         this._tableDefinitions = tableDefinitionsPerEnsembleIdent.flatMap((data) => data.tableDefinitions);
         this._tableNamesFilter = tableNamesFilter ?? [];
+        this._uniqueEnsembleIdents = tableDefinitionsPerEnsembleIdent.map((data) => data.ensembleIdent);
         this._uniqueTableNames = makeUniqueTableNamesIntersection(tableDefinitionsPerEnsembleIdent);
         this.makeIntersections();
     }
@@ -108,6 +110,10 @@ export class InplaceVolumetricsTableDefinitionsAccessor {
         this._uniqueFluidZones = Array.from(fluidZones).sort();
         this._uniqueResults = Array.from(resultNames).sort();
         this._uniqueIdentifierValues = identifiersWithValues.sort();
+    }
+
+    getUniqueEnsembleIdents(): EnsembleIdent[] {
+        return this._uniqueEnsembleIdents;
     }
 
     getUniqueTableNames(): string[] {

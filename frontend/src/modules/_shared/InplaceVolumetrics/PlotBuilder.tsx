@@ -8,13 +8,15 @@ import { Figure, MakeSubplotOptions, makeSubplots } from "../Figure";
 
 export class PlotBuilder {
     private _table: Table;
-    private _plottingFunction: (table: Table) => Partial<PlotData>[];
+    private _plotFunction: (table: Table) => Partial<PlotData>[];
+    private _formatLabelFunction: (columnName: string, label: string | number) => string = (_, value) =>
+        value.toString();
     private _groupByColumn: string | null = null;
     private _subplotByColumn: string | null = null;
 
-    constructor(table: Table, plottingFunction: (table: Table) => Partial<PlotData>[]) {
+    constructor(table: Table, plotFunction: (table: Table) => Partial<PlotData>[]) {
         this._table = table;
-        this._plottingFunction = plottingFunction;
+        this._plotFunction = plotFunction;
     }
 
     setGroupByColumn(columnName: string): void {
@@ -29,6 +31,10 @@ export class PlotBuilder {
             throw new Error(`Column not found: ${columnName}`);
         }
         this._subplotByColumn = columnName;
+    }
+
+    setFormatLabelFunction(func: (columnName: string, label: string | number) => string): void {
+        this._formatLabelFunction = func;
     }
 
     build(
@@ -48,7 +54,8 @@ export class PlotBuilder {
 
         for (const [key, table] of collectionMap) {
             const figure = this.buildSubplots(table, height / numTables, width, options ?? {});
-            components.push(<h3 key={key}>{key}</h3>);
+            const label = this._formatLabelFunction(tableCollection.getCollectedBy(), key);
+            components.push(<h3 key={key}>{label}</h3>);
             components.push(figure.makePlot());
         }
 
@@ -70,7 +77,7 @@ export class PlotBuilder {
                 ...options,
             });
 
-            const traces = this._plottingFunction(table);
+            const traces = this._plotFunction(table);
             for (const trace of traces) {
                 figure.addTrace(trace);
             }
@@ -88,21 +95,26 @@ export class PlotBuilder {
         const traces: { row: number; col: number; trace: Partial<PlotData> }[] = [];
         const subplotTitles: string[] = Array(numRows * numCols).fill("");
 
+        let legendAdded = false;
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
                 const index = (numRows - 1 - (row - 1)) * numCols + (col - 1);
                 if (!keys[index]) {
                     continue;
                 }
-                const label = keys[index].toString();
+                const label = this._formatLabelFunction(tableCollection.getCollectedBy(), keys[index]);
                 subplotTitles[(row - 1) * numCols + col - 1] = label;
 
                 const table = tables[index];
 
-                const plotDataArr = this._plottingFunction(table);
+                const plotDataArr = this._plotFunction(table);
                 for (const plotData of plotDataArr) {
+                    if (legendAdded) {
+                        plotData.showlegend = false;
+                    }
                     traces.push({ row, col, trace: plotData });
                 }
+                legendAdded = true;
             }
         }
 
