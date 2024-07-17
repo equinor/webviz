@@ -45,6 +45,12 @@ def decode_key_val_str(key_val_str: str) -> dict[str, str | int | float | bool |
 def decode_uint_list_str(int_arr_str: str) -> list[int]:
     """
     Decode a UintListStr formatted string representing a list of unsigned integers.
+    Single integers are represented as themselves, while consecutive integers are represented as a <start>-<end> range.
+    All entries are separated by "!".
+
+    Note that this encoding does not maintained ordering and does not support duplicates.
+
+    Example: "1-3!5-7!10" -> [1, 2, 3, 5, 6, 7, 10]
     """
     if len(int_arr_str) == 0:
         return []
@@ -69,6 +75,8 @@ def encode_as_uint_list_str(int_list: list[int]) -> str:
     Encode a list of unsigned integers into a UintListStr formatted string.
     Single integers are represented as themselves, while consecutive integers are represented as a <start>-<end> range.
     All entries are separated by "!".
+
+    Note that this encoding does not maintained ordering and does not support duplicates.
 
     Example: [1, 2, 3, 5, 6, 7, 10] -> "1-3!5-7!10"
     """
