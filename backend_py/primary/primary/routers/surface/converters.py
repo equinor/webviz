@@ -99,7 +99,6 @@ def to_api_surface_data_png(xtgeo_surf: xtgeo.RegularSurface) -> schemas.Surface
         transformed_bbox_utm=trans_bb_utm,
         value_min=xtgeo_surf.values.min(),
         value_max=xtgeo_surf.values.max(),
-        # values_b64arr=values_b64arr,
         png_image_base64=png_bytes_base64,
     )
 

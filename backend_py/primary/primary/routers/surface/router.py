@@ -22,8 +22,8 @@ from . import converters
 from . import schemas
 from . import dependencies
 
-from .surface_address import RealSurfAddr, ObsSurfAddr, PartialSurfAddr, StatSurfAddr
-from .surface_address import peek_surf_addr_type, decode_surf_addr_str
+from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
+from .surface_address import decode_surf_addr_str
 
 
 LOGGER = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ async def get_surface_data(
     access_token = authenticated_user.get_sumo_access_token()
 
     addr = decode_surf_addr_str(surf_addr_str)
-    if not isinstance(addr, RealSurfAddr | ObsSurfAddr | StatSurfAddr):
+    if not isinstance(addr, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
         raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
     if addr.address_type == "REAL":
