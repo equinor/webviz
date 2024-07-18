@@ -22,7 +22,7 @@ export class Figure {
         this._gridAxesMapping = gridAxesMapping ?? [[1, 1]];
     }
 
-    private getAxisIndex(row: number, column: number): number {
+    getAxisIndex(row: number, column: number): number {
         if (row > this._gridAxesMapping.length || column > this._gridAxesMapping[row - 1].length) {
             throw new Error(`Invalid row/column index: ${row}/${column}`);
         }
@@ -51,6 +51,18 @@ export class Figure {
         };
 
         this._plotData.push(adjustedTrace);
+    }
+
+    getLayout(): Partial<Layout> {
+        return this._plotLayout;
+    }
+
+    getNumRows(): number {
+        return this._gridAxesMapping.length;
+    }
+
+    getNumColumns(): number {
+        return this._gridAxesMapping[0].length;
     }
 
     updateLayout(patch: Partial<Layout>): void {

@@ -13,6 +13,7 @@ export class PlotBuilder {
         value.toString();
     private _groupByColumn: string | null = null;
     private _subplotByColumn: string | null = null;
+    private _axesLabels: { x: string | null; y: string | null } = { x: null, y: null };
 
     constructor(table: Table, plotFunction: (table: Table) => Partial<PlotData>[]) {
         this._table = table;
@@ -33,8 +34,44 @@ export class PlotBuilder {
         this._subplotByColumn = columnName;
     }
 
+    setXAxisLabel(label: string): void {
+        this._axesLabels.x = label;
+    }
+
+    setYAxisLabel(label: string): void {
+        this._axesLabels.y = label;
+    }
+
     setFormatLabelFunction(func: (columnName: string, label: string | number) => string): void {
         this._formatLabelFunction = func;
+    }
+
+    private calcNumRowsAndCols(numTables: number): { numRows: number; numCols: number } {
+        const numRows = Math.ceil(Math.sqrt(numTables));
+        const numCols = Math.ceil(numTables / numRows);
+        return { numRows, numCols };
+    }
+
+    private updateLayout(figure: Figure) {
+        const numRows = figure.getNumRows();
+        const numCols = figure.getNumColumns();
+
+        for (let row = 1; row <= numRows; row++) {
+            for (let col = 1; col <= numCols; col++) {
+                const axisIndex = figure.getAxisIndex(row, col);
+                const yAxisKey = `yaxis${axisIndex}`;
+                const xAxisKey = `xaxis${axisIndex}`;
+
+                figure.updateLayout({
+                    [xAxisKey]: {
+                        title: this._axesLabels.x,
+                    },
+                    [yAxisKey]: {
+                        title: this._axesLabels.y,
+                    },
+                });
+            }
+        }
     }
 
     build(
@@ -44,6 +81,7 @@ export class PlotBuilder {
     ): React.ReactNode {
         if (!this._groupByColumn) {
             const figure = this.buildSubplots(this._table, height, width, options ?? {});
+            this.updateLayout(figure);
             return figure.makePlot();
         }
 
@@ -54,6 +92,7 @@ export class PlotBuilder {
 
         for (const [key, table] of collectionMap) {
             const figure = this.buildSubplots(table, height / numTables, width, options ?? {});
+            this.updateLayout(figure);
             const label = this._formatLabelFunction(tableCollection.getCollectedBy(), key);
             components.push(<h3 key={key}>{label}</h3>);
             components.push(figure.makePlot());
@@ -86,8 +125,7 @@ export class PlotBuilder {
 
         const tableCollection = table.splitByColumn(this._subplotByColumn);
         const numTables = tableCollection.getNumTables();
-        const numRows = Math.ceil(Math.sqrt(numTables));
-        const numCols = Math.ceil(numTables / numRows);
+        const { numRows, numCols } = this.calcNumRowsAndCols(numTables);
 
         const tables = tableCollection.getTables();
         const keys = tableCollection.getKeys();

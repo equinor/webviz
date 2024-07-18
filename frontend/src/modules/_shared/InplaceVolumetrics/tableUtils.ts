@@ -7,9 +7,9 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
     columns.set("table", new Column<string>(SourceIdentifier.TABLE_NAME, ColumnType.TABLE));
     columns.set("fluid-zone", new Column<string>(SourceIdentifier.FLUID_ZONE, ColumnType.FLUID_ZONE));
 
+    // First, collect all columns
     for (const tableSet of data) {
         for (const fluidZoneTable of tableSet.data.tablePerFluidSelection) {
-            let mainColumnsAdded = false;
             for (const selectorColumn of fluidZoneTable.selectorColumns) {
                 if (!columns.has(selectorColumn.columnName)) {
                     let type = ColumnType.IDENTIFIER;
@@ -18,7 +18,20 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
                     }
                     columns.set(selectorColumn.columnName, new Column(selectorColumn.columnName, type));
                 }
+            }
+            for (const resultColumn of fluidZoneTable.resultColumns) {
+                if (!columns.has(resultColumn.columnName)) {
+                    columns.set(resultColumn.columnName, new Column(resultColumn.columnName, ColumnType.RESULT));
+                }
+            }
+        }
+    }
 
+    // Then, add the values to the columns
+    for (const tableSet of data) {
+        for (const fluidZoneTable of tableSet.data.tablePerFluidSelection) {
+            let mainColumnsAdded = false;
+            for (const selectorColumn of fluidZoneTable.selectorColumns) {
                 for (let i = 0; i < selectorColumn.indices.length; i++) {
                     columns
                         .get(selectorColumn.columnName)
@@ -32,10 +45,8 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
                 }
                 mainColumnsAdded = true;
             }
+
             for (const resultColumn of fluidZoneTable.resultColumns) {
-                if (!columns.has(resultColumn.columnName)) {
-                    columns.set(resultColumn.columnName, new Column(resultColumn.columnName, ColumnType.RESULT));
-                }
                 for (const value of resultColumn.columnValues) {
                     columns.get(resultColumn.columnName)?.addRowValue(value);
 
@@ -46,6 +57,23 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
                     }
                 }
                 mainColumnsAdded = true;
+            }
+            const untouchedColumns = Array.from(columns.values()).filter(
+                (column) =>
+                    !fluidZoneTable.selectorColumns.some(
+                        (selectorColumn) => selectorColumn.columnName === column.getName()
+                    ) &&
+                    !fluidZoneTable.resultColumns.some(
+                        (resultColumn) => resultColumn.columnName === column.getName()
+                    ) &&
+                    column.getType() !== ColumnType.ENSEMBLE &&
+                    column.getType() !== ColumnType.TABLE &&
+                    column.getType() !== ColumnType.FLUID_ZONE
+            );
+            for (const column of untouchedColumns) {
+                for (let i = 0; i < fluidZoneTable.selectorColumns[0].indices.length; i++) {
+                    column.addRowValue(null);
+                }
             }
         }
     }

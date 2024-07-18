@@ -28,6 +28,8 @@ import {
 
 import { PlotData } from "plotly.js";
 
+import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
+
 import { RealizationAndResult, calcConvergenceArray } from "../settings/utils/convergenceCalculation";
 import { SettingsToViewInterface } from "../settingsToViewInterface";
 import { PlotType } from "../typesAndEnums";
@@ -95,9 +97,9 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     }
 
     let plots: React.ReactNode | null = null;
-
+    let table: Table | undefined = undefined;
     if (aggregatedTableDataQueries.tablesData.length > 0) {
-        const table = makeTableFromApiData(aggregatedTableDataQueries.tablesData);
+        table = makeTableFromApiData(aggregatedTableDataQueries.tablesData);
 
         let title = `Convergence plot of mean/p10/p90`;
         if (resultName) {
@@ -112,13 +114,24 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
 
         plotbuilder.setSubplotByColumn(subplotBy);
         plotbuilder.setFormatLabelFunction(makeFormatLabelFunction(ensembleSet));
+        if (plotType === PlotType.SCATTER) {
+            plotbuilder.setXAxisLabel(resultName ?? "");
+            plotbuilder.setYAxisLabel(resultName2 ?? "");
+        } else if (plotType === PlotType.CONVERGENCE) {
+            plotbuilder.setXAxisLabel("Realizations");
+            plotbuilder.setYAxisLabel(resultName ?? "");
+        } else {
+            plotbuilder.setXAxisLabel(resultName ?? "");
+        }
         plots = plotbuilder.build(divBoundingRect.height, divBoundingRect.width, {
             horizontalSpacing: 0.075,
             verticalSpacing: plotType === PlotType.HISTOGRAM ? 0.12 : 0.075,
             showGrid: true,
-            margin: plotType === PlotType.HISTOGRAM ? { t: 50, b: 100, l: 50, r: 20 } : { t: 50, b: 20, l: 50, r: 20 },
+            margin: plotType === PlotType.HISTOGRAM ? { t: 30, b: 100, l: 50, r: 20 } : { t: 50, b: 50, l: 80, r: 20 },
         });
     }
+
+    usePublishToDataChannels(props.viewContext, ensembleSet, table, resultName ?? undefined);
 
     function makeMessage(): React.ReactNode {
         if (aggregatedTableDataQueries.isFetching) {
