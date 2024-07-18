@@ -61,7 +61,7 @@ export class SurfaceAddressBuilder {
             throw new Error("Realization number not set");
         }
 
-        this.assertCommonPropertiesAreSet(true);
+        this.assertThatCommonPropertiesAreSet(true);
 
         const retObj: RealizationSurfaceAddress = {
             addressType: "REAL",
@@ -84,7 +84,7 @@ export class SurfaceAddressBuilder {
             throw new Error("Time or interval not set");
         }
 
-        this.assertCommonPropertiesAreSet(false);
+        this.assertThatCommonPropertiesAreSet(false);
 
         const retObj: ObservedSurfaceAddress = {
             addressType: "OBS",
@@ -105,7 +105,7 @@ export class SurfaceAddressBuilder {
             throw new Error("Statistic function not set");
         }
 
-        this.assertCommonPropertiesAreSet(true);
+        this.assertThatCommonPropertiesAreSet(true);
 
         const retObj: StatisticalSurfaceAddress = {
             addressType: "STAT",
@@ -125,7 +125,7 @@ export class SurfaceAddressBuilder {
             throw new Error("Address type is already set to another type than PARTIAL");
         }
 
-        this.assertCommonPropertiesAreSet(true);
+        this.assertThatCommonPropertiesAreSet(true);
 
         const retObj: PartialSurfaceAddress = {
             addressType: "PARTIAL",
@@ -179,7 +179,7 @@ export class SurfaceAddressBuilder {
         }
     }
 
-    private assertCommonPropertiesAreSet(requireEnsemble: boolean): void {
+    private assertThatCommonPropertiesAreSet(requireEnsemble: boolean): void {
         if (!this._caseUuid) {
             throw new Error("Case UUID not set");
         }
