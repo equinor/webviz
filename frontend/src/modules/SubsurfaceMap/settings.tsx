@@ -135,10 +135,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const propertySurfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: propertySurfMetaQuery.data,
         timeType: timeType,
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        //excludeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
+        excludeAttributeTypes: [SurfaceAttributeType_api.DEPTH],
     });
 
     const fixedPropertySurfSpec = fixupSurface(

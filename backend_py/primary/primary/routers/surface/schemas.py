@@ -89,13 +89,13 @@ class BoundingBox2d(BaseModel):
 class SurfaceDef(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    npoints_x: int      # number of grid points in the x direction
-    npoints_y: int      # number of grid points in the y direction
-    inc_x: float        # increment/spacing between points in x direction
-    inc_y: float        # increment/spacing between points in y direction
-    origin_utm_x: float # x-coordinate of the origin of the surface grid in UTM
-    origin_utm_y: float # y-coordinate of the origin of the surface grid in UTM
-    rot_deg: float      # rotation of surface in degrees around origin, rotation is counter-clockwise from the x-axis
+    npoints_x: int  # number of grid points in the x direction
+    npoints_y: int  # number of grid points in the y direction
+    inc_x: float  # increment/spacing between points in x direction
+    inc_y: float  # increment/spacing between points in y direction
+    origin_utm_x: float  # x-coordinate of the origin of the surface grid in UTM
+    origin_utm_y: float  # y-coordinate of the origin of the surface grid in UTM
+    rot_deg: float  # rotation of surface in degrees around origin, rotation is counter-clockwise from the x-axis
 
 
 class SurfaceDataBase(BaseModel):

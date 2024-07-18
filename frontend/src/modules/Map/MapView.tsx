@@ -17,7 +17,8 @@ export function MapView(props: ModuleViewProps<MapState>) {
 
     const statusWriter = useViewStatusWriter(props.viewContext);
 
-    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
+    //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
+    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
 
     const isLoading = surfDataQuery.isFetching;
     statusWriter.setLoading(isLoading);
@@ -39,35 +40,35 @@ export function MapView(props: ModuleViewProps<MapState>) {
                 <SubsurfaceViewer
                     id="deckgl"
                     layers={[
-                        // {
-                        //     "@@type": "MapLayer",
-                        //     "@@typedArraySupport": true,
-                        //     id: "mesh-layer",
-                        //     meshData: surfData.valuesFloat32Arr,
-                        //     frame: {
-                        //         origin: [surfData.surface_def.origin_utm_x, surfData.surface_def.origin_utm_y],
-                        //         count: [surfData.surface_def.npoints_x, surfData.surface_def.npoints_y],
-                        //         increment: [surfData.surface_def.inc_x, surfData.surface_def.inc_y],
-                        //         rotDeg: surfData.surface_def.rot_deg,
-                        //     },
-
-                        //     contours: [0, 100],
-                        //     isContoursDepth: true,
-                        //     gridLines: false,
-                        //     material: true,
-                        //     smoothShading: true,
-                        //     colorMapName: "Physics",
-                        // },
                         {
-                            // Experiment with showing PNG image in a ColormapLayer
-                            "@@type": "ColormapLayer",
-                            id: "image-layer",
-                            image: `data:image/png;base64,${surfData.png_image_base64}`,
-                            bounds: _calcBoundsForRotationAroundUpperLeftCorner(surfData.surface_def),
-                            rotDeg: surfData.surface_def.rot_deg,
-                            valueRange: [surfData.value_min, surfData.value_max],
+                            "@@type": "MapLayer",
+                            "@@typedArraySupport": true,
+                            id: "mesh-layer",
+                            meshData: surfData.valuesFloat32Arr,
+                            frame: {
+                                origin: [surfData.surface_def.origin_utm_x, surfData.surface_def.origin_utm_y],
+                                count: [surfData.surface_def.npoints_x, surfData.surface_def.npoints_y],
+                                increment: [surfData.surface_def.inc_x, surfData.surface_def.inc_y],
+                                rotDeg: surfData.surface_def.rot_deg,
+                            },
+
+                            contours: [0, 100],
+                            isContoursDepth: true,
+                            gridLines: false,
+                            material: true,
+                            smoothShading: true,
                             colorMapName: "Physics",
                         },
+                        // {
+                        //     // Experiment with showing PNG image in a ColormapLayer
+                        //     "@@type": "ColormapLayer",
+                        //     id: "image-layer",
+                        //     image: `data:image/png;base64,${surfData.png_image_base64}`,
+                        //     bounds: _calcBoundsForRotationAroundUpperLeftCorner(surfData.surface_def),
+                        //     rotDeg: surfData.surface_def.rot_deg,
+                        //     valueRange: [surfData.value_min, surfData.value_max],
+                        //     colorMapName: "Physics",
+                        // },
                     ]}
                 />
             )}
@@ -79,6 +80,8 @@ export function MapView(props: ModuleViewProps<MapState>) {
 // which expects rotation to be specified around the upper left corner of the image.
 //
 // The ColormapLayer derives from deck.gl's BitmapLayer, which expects bounds in the form [left, bottom, right, top]
+//
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function _calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): number[] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;
     const height = (surfDef.npoints_y - 1) * surfDef.inc_y;
