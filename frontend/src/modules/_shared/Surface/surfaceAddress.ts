@@ -58,6 +58,8 @@ export function encodeRealizationSurfAddrStr(addr: Omit<RealizationSurfaceAddres
         componentArr.push(addr.isoTimeOrInterval);
     }
 
+    assertThatNoComponentsContainDelimiter(componentArr);
+
     const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
     return addrStr;
 }
@@ -67,6 +69,8 @@ export function encodeObservedSurfAddrStr(addr: Omit<ObservedSurfaceAddress, "ad
     if (addr.isoTimeOrInterval !== null) {
         componentArr.push(addr.isoTimeOrInterval);
     }
+
+    assertThatNoComponentsContainDelimiter(componentArr);
 
     const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
     return addrStr;
@@ -83,6 +87,8 @@ export function encodeStatisticalSurfAddrStr(addr: Omit<StatisticalSurfaceAddres
         componentArr.push(addr.isoTimeOrInterval);
     }
 
+    assertThatNoComponentsContainDelimiter(componentArr);
+
     const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
     return addrStr;
 }
@@ -92,6 +98,8 @@ export function encodePartialSurfAddrStr(addr: Omit<PartialSurfaceAddress, "addr
     if (addr.isoTimeOrInterval !== null) {
         componentArr.push(addr.isoTimeOrInterval);
     }
+
+    assertThatNoComponentsContainDelimiter(componentArr);
 
     const addrStr = componentArr.join(ADDR_COMP_DELIMITER);
     return addrStr;
@@ -121,4 +129,13 @@ export function peekSurfaceAddressType(surfAddrStr: string): SurfaceAddressType 
     }
 
     return foundAddrType;
+}
+
+
+function assertThatNoComponentsContainDelimiter(componentArr: Array<string | number>): void {
+    for (const comp of componentArr) {
+        if (typeof comp === "string" && comp.includes(ADDR_COMP_DELIMITER)) {
+            throw new Error(`Address component contains delimiter, offending component: ${comp}`);
+        }
+    }
 }
