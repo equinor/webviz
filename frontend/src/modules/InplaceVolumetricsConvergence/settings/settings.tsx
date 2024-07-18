@@ -18,6 +18,7 @@ import {
     userSelectedFluidZonesAtom,
     userSelectedIdentifiersValuesAtom,
     userSelectedPlotTypeAtom,
+    userSelectedResultName2Atom,
     userSelectedResultNameAtom,
     userSelectedSubplotByAtom,
     userSelectedTableNamesAtom,
@@ -27,6 +28,7 @@ import {
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
     selectedIdentifiersValuesAtom,
+    selectedResultName2Atom,
     selectedResultNameAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
@@ -57,6 +59,9 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
 
     const selectedResultName = useAtomValue(selectedResultNameAtom);
     const setSelectedResultName = useSetAtom(userSelectedResultNameAtom);
+
+    const selectedResultName2 = useAtomValue(selectedResultName2Atom);
+    const setSelectedResultName2 = useSetAtom(userSelectedResultName2Atom);
 
     const selectedSubplotBy = useAtomValue(selectedSubplotByAtom);
     const setSelectedSubplotBy = useSetAtom(userSelectedSubplotByAtom);
@@ -96,11 +101,19 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                                 onChange={setSelectedPlotType}
                             />
                         </Label>
-                        <Label text="Result">
+                        <Label text="Result 1">
                             <Dropdown
                                 value={selectedResultName ?? undefined}
                                 options={resultNameOptions}
                                 onChange={setSelectedResultName}
+                            />
+                        </Label>
+                        <Label text="Result 2">
+                            <Dropdown
+                                value={selectedResultName2 ?? undefined}
+                                options={resultNameOptions}
+                                onChange={setSelectedResultName2}
+                                disabled={selectedPlotType !== PlotType.SCATTER}
                             />
                         </Label>
                         <Label text="Subplot by">

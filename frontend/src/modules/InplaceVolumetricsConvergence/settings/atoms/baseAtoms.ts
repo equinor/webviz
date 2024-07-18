@@ -10,6 +10,7 @@ export const userSelectedTableNamesAtom = atom<string[] | null>(null);
 export const userSelectedFluidZonesAtom = atom<FluidZone_api[] | null>(null);
 export const userSelectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWithValues_api[] | null>(null);
 export const userSelectedResultNameAtom = atom<InplaceVolumetricResultName_api | null>(null);
+export const userSelectedResultName2Atom = atom<InplaceVolumetricResultName_api | null>(null);
 export const userSelectedSubplotByAtom = atom<SourceAndTableIdentifierUnion>(SourceIdentifier.ENSEMBLE);
 export const userSelectedPlotTypeAtom = atom<PlotType>(PlotType.HISTOGRAM);
 export const userSelectedColorByAtom = atom<SourceAndTableIdentifierUnion>(SourceIdentifier.TABLE_NAME);

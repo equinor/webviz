@@ -9,6 +9,7 @@ import {
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
     selectedIdentifiersValuesAtom,
+    selectedResultName2Atom,
     selectedResultNameAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
@@ -19,6 +20,7 @@ export type SettingsToViewInterface = {
     derivedStates: {
         filter: InplaceVolumetricsFilter;
         resultName: InplaceVolumetricResultName_api | null;
+        resultName2: InplaceVolumetricResultName_api | null;
         subplotBy: SourceAndTableIdentifierUnion;
         colorBy: SourceAndTableIdentifierUnion;
         plotType: PlotType;
@@ -36,6 +38,7 @@ export const interfaceInitialization: InterfaceInitialization<SettingsToViewInte
             };
         },
         resultName: (get) => get(selectedResultNameAtom),
+        resultName2: (get) => get(selectedResultName2Atom),
         subplotBy: (get) => get(selectedSubplotByAtom),
         colorBy: (get) => get(selectedColorByAtom),
         plotType: (get) => get(userSelectedPlotTypeAtom),

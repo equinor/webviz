@@ -1,6 +1,6 @@
 import React from "react";
 
-import { InplaceVolumetricsIdentifier_api } from "@api";
+import { InplaceVolumetricResultName_api, InplaceVolumetricsIdentifier_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleViewProps } from "@framework/Module";
@@ -40,6 +40,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
 
     const filter = props.viewContext.useSettingsToViewInterfaceValue("filter");
     const resultName = props.viewContext.useSettingsToViewInterfaceValue("resultName");
+    const resultName2 = props.viewContext.useSettingsToViewInterfaceValue("resultName2");
     const subplotBy = props.viewContext.useSettingsToViewInterfaceValue("subplotBy");
     const colorBy = props.viewContext.useSettingsToViewInterfaceValue("colorBy");
     const plotType = props.viewContext.useSettingsToViewInterfaceValue("plotType");
@@ -63,10 +64,18 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         accByIdentifiers.push(colorBy as InplaceVolumetricsIdentifier_api);
     }
 
+    const resultNames: InplaceVolumetricResultName_api[] = [];
+    if (resultName) {
+        resultNames.push(resultName);
+    }
+    if (resultName2) {
+        resultNames.push(resultName2);
+    }
+
     const aggregatedTableDataQueries = useGetAggregatedTableDataQueries(
         ensembleIdentsWithRealizations,
         filter.tableNames,
-        resultName ? [resultName] : [],
+        resultNames,
         filter.fluidZones,
         accByIdentifiers,
         subplotBy !== SourceIdentifier.FLUID_ZONE && colorBy !== SourceIdentifier.FLUID_ZONE,
@@ -98,7 +107,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
 
         const plotbuilder = new PlotBuilder(
             table,
-            makePlotData(plotType, resultName ?? "", colorBy, ensembleSet, colorSet)
+            makePlotData(plotType, resultName ?? "", resultName2 ?? "", colorBy, ensembleSet, colorSet)
         );
 
         plotbuilder.setSubplotByColumn(subplotBy);
@@ -154,13 +163,14 @@ function makeFormatLabelFunction(ensembleSet: EnsembleSet): (columnName: string,
 function makePlotData(
     plotType: PlotType,
     resultName: string,
+    resultName2: string,
     colorBy: SourceAndTableIdentifierUnion,
     ensembleSet: EnsembleSet,
     colorSet: ColorSet
 ): (table: Table) => Partial<PlotData>[] {
     return (table: Table): Partial<PlotData>[] => {
         let binRanges: HistogramBinRange[] = [];
-        if (plotType === PlotType.HISTOGRAM || plotType === PlotType.DENSITY) {
+        if (plotType === PlotType.HISTOGRAM) {
             const column = table.getColumn(resultName);
             if (!column) {
                 return [];
@@ -180,7 +190,7 @@ function makePlotData(
             binRanges = makeHistogramBinRangesFromMinAndMaxValues({
                 xMin: resultMinAndMax.min,
                 xMax: resultMinAndMax.max,
-                numBins: plotType === PlotType.DENSITY ? 5 : 20,
+                numBins: 20,
             });
         }
 
@@ -203,8 +213,12 @@ function makePlotData(
                 data.push(...makeHistogram(title, table, resultName, color, binRanges));
             } else if (plotType === PlotType.CONVERGENCE) {
                 data.push(...makeConvergencePlot(title, table, resultName, color));
-            } else if (plotType === PlotType.DENSITY) {
-                data.push(...makeDensityPlot(title, table, resultName, color, binRanges));
+            } else if (plotType === PlotType.DISTRIBUTION) {
+                data.push(...makeDensityPlot(title, table, resultName, color));
+            } else if (plotType === PlotType.BOX) {
+                data.push(...makeBoxPlot(title, table, resultName, color));
+            } else if (plotType === PlotType.SCATTER) {
+                data.push(...makeScatterPlot(title, table, resultName, resultName2, color));
             }
 
             color = colorSet.getNextColor();
@@ -316,13 +330,7 @@ function makeHistogram(
     return data;
 }
 
-function makeDensityPlot(
-    title: string,
-    table: Table,
-    resultName: string,
-    color: string,
-    binRanges: HistogramBinRange[]
-): Partial<PlotData>[] {
+function makeDensityPlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
     const resultColumn = table.getColumn(resultName);
@@ -330,31 +338,29 @@ function makeDensityPlot(
         return [];
     }
 
-    const yValues = resultColumn.getAllRowValues()
-
-    const xValues = binRanges.map((range) => (range.from + range.to) / 2);
-    const yValues = binRanges.map(
-        (range) =>
-            resultColumn
-                .getAllRowValues()
-                .map((el) => parseFloat(el.toString()))
-                .filter((el) => el >= range.from && el < range.to).length
-    );
+    const xValues = resultColumn.getAllRowValues().map((el) => parseFloat(el.toString()));
 
     data.push({
         x: xValues,
-        y: yValues,
         name: title,
-        type: "scatter",
+        type: "violin",
         marker: {
             color,
         },
+        // @ts-ignore
+        side: "positive",
+        y0: 0,
+        orientation: "h",
+        spanmode: "hard",
+        meanline: { visible: true },
+        points: false,
+        hoverinfo: "none",
     });
 
     return data;
 }
 
-function makeScatterPlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
+function makeBoxPlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
     const resultColumn = table.getColumn(resultName);
@@ -364,7 +370,40 @@ function makeScatterPlot(title: string, table: Table, resultName: string, color:
 
     data.push({
         x: resultColumn.getAllRowValues(),
-        y: resultColumn.getAllRowValues(),
+        name: title,
+        type: "box",
+        marker: {
+            color,
+        },
+        // @ts-ignore
+        y0: 0,
+    });
+
+    return data;
+}
+
+function makeScatterPlot(
+    title: string,
+    table: Table,
+    resultName: string,
+    resultName2: string,
+    color: string
+): Partial<PlotData>[] {
+    const data: Partial<PlotData>[] = [];
+
+    const resultColumn = table.getColumn(resultName);
+    if (!resultColumn) {
+        return [];
+    }
+
+    const resultColumn2 = table.getColumn(resultName2);
+    if (!resultColumn2) {
+        return [];
+    }
+
+    data.push({
+        x: resultColumn.getAllRowValues(),
+        y: resultColumn2.getAllRowValues(),
         name: title,
         mode: "markers",
         marker: {

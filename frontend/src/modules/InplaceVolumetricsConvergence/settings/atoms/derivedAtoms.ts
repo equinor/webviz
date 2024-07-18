@@ -14,6 +14,7 @@ import {
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
     userSelectedIdentifiersValuesAtom,
+    userSelectedResultName2Atom,
     userSelectedResultNameAtom,
     userSelectedSubplotByAtom,
     userSelectedTableNamesAtom,
@@ -75,6 +76,28 @@ export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
 
 export const selectedResultNameAtom = atom<InplaceVolumetricResultName_api | null>((get) => {
     const userSelectedResultName = get(userSelectedResultNameAtom);
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+
+    if (!userSelectedResultName) {
+        if (tableDefinitionsAccessor.getUniqueResultNames().length === 0) {
+            return null;
+        }
+        return tableDefinitionsAccessor.getUniqueResultNames()[0];
+    }
+
+    const fixedSelection = fixupUserSelection(
+        [userSelectedResultName],
+        tableDefinitionsAccessor.getUniqueResultNames()
+    );
+    if (fixedSelection.length === 0) {
+        return null;
+    }
+
+    return fixedSelection[0];
+});
+
+export const selectedResultName2Atom = atom<InplaceVolumetricResultName_api | null>((get) => {
+    const userSelectedResultName = get(userSelectedResultName2Atom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     if (!userSelectedResultName) {
