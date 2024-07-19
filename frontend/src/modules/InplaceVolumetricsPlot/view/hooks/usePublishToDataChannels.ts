@@ -3,8 +3,8 @@ import { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } from 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ViewContext } from "@framework/ModuleContext";
-import { ChannelIds } from "@modules/InplaceVolumetricsConvergence/channelDefs";
-import { SettingsToViewInterface } from "@modules/InplaceVolumetricsConvergence/settingsToViewInterface";
+import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
+import { SettingsToViewInterface } from "@modules/InplaceVolumetricsPlot/settingsToViewInterface";
 import { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";

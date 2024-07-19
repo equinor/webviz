@@ -5,6 +5,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -26,19 +27,24 @@ import {
     makeHistogramTrace,
 } from "@modules/_shared/histogram";
 
+import { formatRgb, parse } from "culori";
 import { PlotData } from "plotly.js";
 
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 
 import { RealizationAndResult, calcConvergenceArray } from "../settings/utils/convergenceCalculation";
 import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { PlotType } from "../typesAndEnums";
+import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
 
 export function View(props: ModuleViewProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleRealizationFilter = useEnsembleRealizationFilterFunc(props.workbenchSession);
     const colorSet = props.workbenchSettings.useColorSet();
+
+    const hoveredRegion = useSubscribedValue("global.hoverRegion", props.workbenchServices);
+    const hoveredZone = useSubscribedValue("global.hoverZone", props.workbenchServices);
+    const hoveredFacies = useSubscribedValue("global.hoverFacies", props.workbenchServices);
 
     const filter = props.viewContext.useSettingsToViewInterfaceValue("filter");
     const resultName = props.viewContext.useSettingsToViewInterfaceValue("resultName");
@@ -101,7 +107,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     if (aggregatedTableDataQueries.tablesData.length > 0) {
         table = makeTableFromApiData(aggregatedTableDataQueries.tablesData);
 
-        let title = `Convergence plot of mean/p10/p90`;
+        let title = `${plotTypeToStringMapping[plotType]} plot of mean/p10/p90`;
         if (resultName) {
             title += ` for ${resultName}`;
         }
@@ -114,20 +120,33 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
 
         plotbuilder.setSubplotByColumn(subplotBy);
         plotbuilder.setFormatLabelFunction(makeFormatLabelFunction(ensembleSet));
-        if (plotType === PlotType.SCATTER) {
-            plotbuilder.setXAxisLabel(resultName ?? "");
-            plotbuilder.setYAxisLabel(resultName2 ?? "");
-        } else if (plotType === PlotType.CONVERGENCE) {
-            plotbuilder.setXAxisLabel("Realizations");
-            plotbuilder.setYAxisLabel(resultName ?? "");
-        } else {
-            plotbuilder.setXAxisLabel(resultName ?? "");
+
+        if (hoveredRegion) {
+            plotbuilder.setHighlightedSubPlots([hoveredRegion.regionName]);
         }
+        if (hoveredZone) {
+            plotbuilder.setHighlightedSubPlots([hoveredZone.zoneName]);
+        }
+        if (hoveredFacies) {
+            plotbuilder.setHighlightedSubPlots([hoveredFacies.faciesName]);
+        }
+
+        if (plotType === PlotType.SCATTER) {
+            plotbuilder.setXAxisOptions({ title: { text: resultName ?? "", standoff: 20 } });
+            plotbuilder.setYAxisOptions({ title: { text: resultName ?? "", standoff: 20 } });
+        } else if (plotType === PlotType.CONVERGENCE) {
+            plotbuilder.setXAxisOptions({ title: { text: "Realizations", standoff: 5 } });
+            plotbuilder.setYAxisOptions({ title: { text: resultName ?? "", standoff: 5 } });
+        }
+
+        const horizontalSpacing = 80 / divBoundingRect.width;
+        const verticalSpacing = 60 / divBoundingRect.height;
+
         plots = plotbuilder.build(divBoundingRect.height, divBoundingRect.width, {
-            horizontalSpacing: 0.075,
-            verticalSpacing: plotType === PlotType.HISTOGRAM ? 0.12 : 0.075,
+            horizontalSpacing,
+            verticalSpacing,
             showGrid: true,
-            margin: plotType === PlotType.HISTOGRAM ? { t: 30, b: 100, l: 50, r: 20 } : { t: 50, b: 50, l: 80, r: 20 },
+            margin: plotType === PlotType.HISTOGRAM ? { t: 20, b: 50, l: 50, r: 20 } : { t: 20, b: 50, l: 50, r: 20 },
         });
     }
 
@@ -262,7 +281,30 @@ function makeConvergencePlot(title: string, table: Table, resultName: string, co
 
     const convergenceArr = calcConvergenceArray(realizationAndResultArray);
 
+    let lightColor = color;
+    const rgbColor = parse(color);
+    if (rgbColor) {
+        rgbColor.alpha = 0.3;
+        lightColor = formatRgb(rgbColor);
+    }
+
     data.push(
+        {
+            x: convergenceArr.map((el) => el.realization),
+            y: convergenceArr.map((el) => el.p90),
+            name: "P90",
+            type: "scatter",
+            legendgroup: title,
+            legendgrouptitle: {
+                text: title,
+            },
+            line: {
+                color,
+                width: 1,
+                dash: "dashdot",
+            },
+            mode: "lines",
+        },
         {
             x: convergenceArr.map((el) => el.realization),
             y: convergenceArr.map((el) => el.mean),
@@ -277,6 +319,8 @@ function makeConvergencePlot(title: string, table: Table, resultName: string, co
                 width: 1,
             },
             mode: "lines",
+            fill: "tonexty",
+            fillcolor: lightColor,
         },
         {
             x: convergenceArr.map((el) => el.realization),
@@ -293,22 +337,8 @@ function makeConvergencePlot(title: string, table: Table, resultName: string, co
                 dash: "dash",
             },
             mode: "lines",
-        },
-        {
-            x: convergenceArr.map((el) => el.realization),
-            y: convergenceArr.map((el) => el.p90),
-            name: "P90",
-            type: "scatter",
-            legendgroup: title,
-            legendgrouptitle: {
-                text: title,
-            },
-            line: {
-                color,
-                width: 1,
-                dash: "dashdot",
-            },
-            mode: "lines",
+            fill: "tonexty",
+            fillcolor: lightColor,
         }
     );
 

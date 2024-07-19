@@ -1,6 +1,7 @@
 import React from "react";
 
 import { PlotData } from "plotly.js";
+import { Axis } from "plotly.js";
 
 import { Table } from "./Table";
 
@@ -13,7 +14,8 @@ export class PlotBuilder {
         value.toString();
     private _groupByColumn: string | null = null;
     private _subplotByColumn: string | null = null;
-    private _axesLabels: { x: string | null; y: string | null } = { x: null, y: null };
+    private _axesOptions: { x: Partial<Axis> | null; y: Partial<Axis> | null } = { x: null, y: null };
+    private _highlightedSubPlotNames: string[] = [];
 
     constructor(table: Table, plotFunction: (table: Table) => Partial<PlotData>[]) {
         this._table = table;
@@ -34,16 +36,20 @@ export class PlotBuilder {
         this._subplotByColumn = columnName;
     }
 
-    setXAxisLabel(label: string): void {
-        this._axesLabels.x = label;
+    setXAxisOptions(options: Partial<Axis>): void {
+        this._axesOptions.x = options;
     }
 
-    setYAxisLabel(label: string): void {
-        this._axesLabels.y = label;
+    setYAxisOptions(options: Partial<Axis>): void {
+        this._axesOptions.y = options;
     }
 
     setFormatLabelFunction(func: (columnName: string, label: string | number) => string): void {
         this._formatLabelFunction = func;
+    }
+
+    setHighlightedSubPlots(subPlotNames: string[]): void {
+        this._highlightedSubPlotNames = subPlotNames;
     }
 
     private calcNumRowsAndCols(numTables: number): { numRows: number; numCols: number } {
@@ -62,13 +68,13 @@ export class PlotBuilder {
                 const yAxisKey = `yaxis${axisIndex}`;
                 const xAxisKey = `xaxis${axisIndex}`;
 
+                const oldLayout = figure.getLayout();
+
                 figure.updateLayout({
-                    [xAxisKey]: {
-                        title: this._axesLabels.x,
-                    },
-                    [yAxisKey]: {
-                        title: this._axesLabels.y,
-                    },
+                    // @ts-ignore
+                    [xAxisKey]: { ...oldLayout[xAxisKey], ...this._axesOptions.x },
+                    // @ts-ignore
+                    [yAxisKey]: { ...oldLayout[yAxisKey], ...this._axesOptions.y },
                 });
             }
         }
@@ -77,7 +83,10 @@ export class PlotBuilder {
     build(
         height: number,
         width: number,
-        options?: Pick<MakeSubplotOptions, "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin">
+        options?: Pick<
+            MakeSubplotOptions,
+            "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin" | "sharedXAxes" | "sharedYAxes"
+        >
     ): React.ReactNode {
         if (!this._groupByColumn) {
             const figure = this.buildSubplots(this._table, height, width, options ?? {});
@@ -133,6 +142,8 @@ export class PlotBuilder {
         const traces: { row: number; col: number; trace: Partial<PlotData> }[] = [];
         const subplotTitles: string[] = Array(numRows * numCols).fill("");
 
+        const highlightedSubplots: { row: number; col: number }[] = [];
+
         let legendAdded = false;
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
@@ -142,6 +153,10 @@ export class PlotBuilder {
                 }
                 const label = this._formatLabelFunction(tableCollection.getCollectedBy(), keys[index]);
                 subplotTitles[(row - 1) * numCols + col - 1] = label;
+
+                if (this._highlightedSubPlotNames.includes(keys[index].toString())) {
+                    highlightedSubplots.push({ row, col });
+                }
 
                 const table = tables[index];
 
@@ -167,6 +182,24 @@ export class PlotBuilder {
 
         for (const { row, col, trace } of traces) {
             figure.addTrace(trace, row, col);
+        }
+
+        for (const { row, col } of highlightedSubplots) {
+            figure.addShape(
+                {
+                    type: "rect",
+                    line: {
+                        color: "blue",
+                        width: 1,
+                    },
+                    x0: 0,
+                    x1: 1,
+                    y0: 0,
+                    y1: 1,
+                },
+                row,
+                col
+            );
         }
 
         return figure;

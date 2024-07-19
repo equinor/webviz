@@ -5,12 +5,12 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import { channelDefs } from "./channelDefs";
 import { SettingsToViewInterface } from "./settingsToViewInterface";
 
-export const MODULE_NAME = "InplaceVolumetricsConvergence";
-const description = "Inplace Volumetrics Convergence";
+export const MODULE_NAME = "InplaceVolumetricsPlot";
+const description = "Inplace Volumetrics Plot";
 
 ModuleRegistry.registerModule<Record<string, any>, SettingsToViewInterface>({
     moduleName: MODULE_NAME,
-    defaultTitle: "Inplace Volumetrics Convergence",
+    defaultTitle: "Inplace Volumetrics Plot",
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
     description,

@@ -5,7 +5,7 @@ import "./DistributionPlot/registerModule";
 import "./FlowNetwork/registerModule";
 // import "./Grid3DVTK/registerModule";
 // import "./InplaceVolumetrics/registerModule";
-import "./InplaceVolumetricsConvergence/registerModule";
+import "./InplaceVolumetricsPlot/registerModule";
 import "./InplaceVolumetricsTable/registerModule";
 import "./Intersection/registerModule";
 import "./Map/registerModule";

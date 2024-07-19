@@ -279,7 +279,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                     style={{ width: `${props.headings[col].sizeInPercent}%` }}
                                     scope="col"
                                 >
-                                    <div className="px-1 flex items-center">
+                                    <div className="px-1 flex items-center gap-1">
                                         <span className="flex-grow">{props.headings[col].label}</span>
                                         {makeSortButtons(col)}
                                     </div>

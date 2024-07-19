@@ -1,6 +1,6 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { PlotType } from "@modules/InplaceVolumetricsConvergence/typesAndEnums";
+import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";

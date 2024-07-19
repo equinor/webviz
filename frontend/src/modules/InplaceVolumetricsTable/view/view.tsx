@@ -86,6 +86,32 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         tableRows.push(row);
     }
 
+    const handleTableHover = React.useCallback(
+        function handleTableHover(row: TableRow<TableHeading>) {
+            if (Object.keys(row).includes(InplaceVolumetricsIdentifier_api.REGION)) {
+                const regionName = row[InplaceVolumetricsIdentifier_api.REGION]?.toString();
+                if (regionName) {
+                    props.workbenchServices.publishGlobalData("global.hoverRegion", { regionName });
+                }
+            }
+
+            if (Object.keys(row).includes(InplaceVolumetricsIdentifier_api.ZONE)) {
+                const zoneName = row[InplaceVolumetricsIdentifier_api.ZONE]?.toString();
+                if (zoneName) {
+                    props.workbenchServices.publishGlobalData("global.hoverZone", { zoneName });
+                }
+            }
+
+            if (Object.keys(row).includes(InplaceVolumetricsIdentifier_api.FACIES)) {
+                const faciesName = row[InplaceVolumetricsIdentifier_api.FACIES]?.toString();
+                if (faciesName) {
+                    props.workbenchServices.publishGlobalData("global.hoverFacies", { faciesName });
+                }
+            }
+        },
+        [props.workbenchServices]
+    );
+
     return (
         <div ref={divRef} className="w-full h-full relative">
             <div
@@ -96,7 +122,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
             >
                 {aggregatedTableDataQueries.isFetching ? <CircularProgress size="medium" /> : "Failed to load data."}
             </div>
-            <Table headings={headings} data={tableRows} height={divBoundingRect.height} />
+            <Table headings={headings} data={tableRows} height={divBoundingRect.height} onHover={handleTableHover} />
         </div>
     );
 }

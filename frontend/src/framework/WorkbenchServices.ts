@@ -19,6 +19,9 @@ export type GlobalTopicDefinitions = {
     "global.hoverRealization": { realization: number } | null;
     "global.hoverTimestamp": { timestampUtcMs: number } | null;
     "global.hoverMd": { wellboreUuid: string; md: number } | null;
+    "global.hoverZone": { zoneName: string } | null;
+    "global.hoverRegion": { regionName: string } | null;
+    "global.hoverFacies": { faciesName: string } | null;
 
     "global.syncValue.ensembles": EnsembleIdent[];
     "global.syncValue.date": { timeOrInterval: string };
