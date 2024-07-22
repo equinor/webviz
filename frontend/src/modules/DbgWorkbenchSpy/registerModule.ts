@@ -1,9 +1,9 @@
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { SharedState } from "./implementation";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 
-ModuleRegistry.registerModule<SharedState>({
+ModuleRegistry.registerModule<SettingsToViewInterface>({
     moduleName: "DbgWorkbenchSpy",
     defaultTitle: "Debug Workbench Spy",
     category: ModuleCategory.DEBUG,

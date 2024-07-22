@@ -39,11 +39,10 @@ import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { Layers } from "./components/layers";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { State } from "../state";
 import { ViewAtoms } from "../view/atoms/atomDefinitions";
 
 export function Settings(
-    props: ModuleSettingsProps<State, SettingsToViewInterface, Record<string, never>, ViewAtoms>
+    props: ModuleSettingsProps<SettingsToViewInterface, Record<string, never>, ViewAtoms>
 ): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const filteredEnsembleSet = useAtomValue(filteredEnsembleSetAtom);

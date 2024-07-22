@@ -7,7 +7,6 @@ import { WorkbenchServices } from "@framework/WorkbenchServices";
 import { LayerItem, Viewport } from "@framework/components/EsvIntersection";
 import { Toolbar } from "@framework/components/EsvIntersection/utilityComponents/Toolbar";
 import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
-import { State } from "@modules/Intersection/state";
 
 import { cloneDeep, isEqual } from "lodash";
 
@@ -26,7 +25,7 @@ export type ViewportWrapperProps = {
     };
     viewport: Viewport | null;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<State, SettingsToViewInterface, Record<string, never>, ViewAtoms>;
+    viewContext: ViewContext<SettingsToViewInterface, Record<string, never>, ViewAtoms>;
 };
 
 export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {

@@ -8,7 +8,11 @@ import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Slider } from "@lib/components/Slider";
 
-import { PlotType, State } from "./state";
+import { useAtom } from "jotai";
+
+import { numBinsAtom, orientationAtom, plotTypeAtom } from "./settings/atoms/baseAtoms";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
+import { PlotType } from "./typesAndEnums";
 
 const plotTypes = [
     {
@@ -30,10 +34,10 @@ const plotTypes = [
 ];
 
 //-----------------------------------------------------------------------------------------------------------
-export function Settings({ settingsContext, initialSettings }: ModuleSettingsProps<State>) {
-    const [plotType, setPlotType] = settingsContext.useStoreState("plotType");
-    const [numBins, setNumBins] = settingsContext.useStoreState("numBins");
-    const [orientation, setOrientation] = settingsContext.useStoreState("orientation");
+export function Settings({ initialSettings }: ModuleSettingsProps<SettingsToViewInterface>) {
+    const [plotType, setPlotType] = useAtom(plotTypeAtom);
+    const [numBins, setNumBins] = useAtom(numBinsAtom);
+    const [orientation, setOrientation] = useAtom(orientationAtom);
 
     useApplyInitialSettingsToState(initialSettings, "plotType", "string", setPlotType);
     useApplyInitialSettingsToState(initialSettings, "numBins", "number", setNumBins);

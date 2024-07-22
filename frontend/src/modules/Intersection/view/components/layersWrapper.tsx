@@ -19,7 +19,6 @@ import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@framework
 import { IntersectionType } from "@framework/types/intersection";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
-import { State } from "@modules/Intersection/state";
 import { BaseLayer, LayerStatus, useLayers } from "@modules/Intersection/utils/layers/BaseLayer";
 import { GridLayer, isGridLayer } from "@modules/Intersection/utils/layers/GridLayer";
 import { SeismicLayer, isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer";
@@ -42,7 +41,7 @@ export type LayersWrapperProps = {
     intersectionExtensionLength: number;
     intersectionType: IntersectionType;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<State, SettingsToViewInterface, Record<string, never>, ViewAtoms>;
+    viewContext: ViewContext<SettingsToViewInterface, Record<string, never>, ViewAtoms>;
     wellboreHeaderUuid: string | null;
     wellboreHeaderDepthReferencePoint: string | null;
     wellboreHeaderDepthReferenceElevation: number | null;

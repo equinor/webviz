@@ -4,14 +4,13 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { preview } from "./preview";
 import { SettingsToViewInterface } from "./settingsToViewInterface";
-import { State } from "./state";
 
 export const MODULE_NAME = "Pvt";
 
 const description =
     "Visualizes formation volume factor and viscosity data for oil, gas, and water from Eclipse init and include files.";
 
-ModuleRegistry.registerModule<State, SettingsToViewInterface>({
+ModuleRegistry.registerModule<SettingsToViewInterface>({
     moduleName: MODULE_NAME,
     defaultTitle: "PVT",
     category: ModuleCategory.MAIN,

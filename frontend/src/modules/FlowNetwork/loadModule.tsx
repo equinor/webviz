@@ -5,9 +5,7 @@ import { Settings } from "./settings/settings";
 import { Interface, State, interfaceInitialization } from "./settingsToViewInterface";
 import { View } from "./view";
 
-const defaultState: State = {};
-
-const module = ModuleRegistry.initModule<State, Interface>(MODULE_NAME, defaultState, {}, interfaceInitialization);
+const module = ModuleRegistry.initModule<Interface>(MODULE_NAME, interfaceInitialization);
 
 module.viewFC = View;
 module.settingsFC = Settings;

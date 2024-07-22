@@ -2,11 +2,11 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import State from "./state";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 
 const description = "Plotting of simulated RFT results.";
 
-ModuleRegistry.registerModule<State>({
+ModuleRegistry.registerModule<SettingsToViewInterface>({
     moduleName: "Rft",
     defaultTitle: "RFT",
     category: ModuleCategory.MAIN,

@@ -4,14 +4,13 @@ import { ViewContext } from "@framework/ModuleContext";
 import { ViewStatusWriter } from "@framework/StatusWriter";
 import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
 import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
-import { State } from "@modules/SimulationTimeSeries/state";
 
 import { useAtomValue } from "jotai";
 
 import { ViewAtoms } from "../atoms/atomDefinitions";
 
 export function useMakeViewStatusWriterMessages(
-    viewContext: ViewContext<State, SettingsToViewInterface, SettingsAtoms, ViewAtoms>,
+    viewContext: ViewContext<SettingsToViewInterface, SettingsAtoms, ViewAtoms>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
     ensemblesWithoutParameter: Ensemble[]

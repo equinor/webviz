@@ -1,12 +1,9 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { SharedState, WorkbenchSpySettings, WorkbenchSpyView } from "./implementation";
+import { WorkbenchSpySettings, WorkbenchSpyView } from "./implementation";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 
-const defaultState: SharedState = {
-    triggeredRefreshCounter: 0,
-};
-
-const module = ModuleRegistry.initModule<SharedState>("DbgWorkbenchSpy", defaultState);
+const module = ModuleRegistry.initModule<SettingsToViewInterface>("DbgWorkbenchSpy");
 
 module.viewFC = WorkbenchSpyView;
 module.settingsFC = WorkbenchSpySettings;

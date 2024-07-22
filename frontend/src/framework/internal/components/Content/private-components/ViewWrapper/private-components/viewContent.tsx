@@ -19,7 +19,7 @@ import { Provider } from "jotai";
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
-    moduleInstance: ModuleInstance<any, any, any, any>;
+    moduleInstance: ModuleInstance<any, any, any>;
     workbench: Workbench;
 };
 

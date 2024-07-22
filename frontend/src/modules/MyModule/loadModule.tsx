@@ -1,19 +1,10 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
-import { settings } from "./settings";
-import { State } from "./state";
+import { settings } from "./settings/settings";
+import { SettingsToViewInterface, interfaceInitialization } from "./settingsToViewInterface";
 import { View } from "./view";
 
-const defaultState: State = {
-    type: ColorScaleType.Discrete,
-    gradientType: ColorScaleGradientType.Sequential,
-    min: 0,
-    max: 18,
-    divMidPoint: 9,
-};
-
-const module = ModuleRegistry.initModule<State>("MyModule", defaultState);
+const module = ModuleRegistry.initModule<SettingsToViewInterface>("MyModule", interfaceInitialization);
 
 module.viewFC = View;
 module.settingsFC = settings;

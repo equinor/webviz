@@ -34,7 +34,7 @@ import {
 } from "../sharedAtoms/sharedAtoms";
 import { State } from "../state";
 
-export function View(props: ModuleViewProps<State, SettingsToViewInterface>): React.ReactNode {
+export function View(props: ModuleViewProps<SettingsToViewInterface>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const syncedSettingKeys = props.viewContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);

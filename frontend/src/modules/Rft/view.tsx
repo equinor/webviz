@@ -9,12 +9,12 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { PlotData } from "plotly.js";
 
 import { useRftRealizationData } from "./queryHooks";
-import State from "./state";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 
-export const View = ({ viewContext }: ModuleViewProps<State>) => {
+export const View = ({ viewContext }: ModuleViewProps<SettingsToViewInterface>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const rftWellAddress = viewContext.useStoreValue("rftWellAddress");
+    const rftWellAddress = viewContext.useSettingsToViewInterfaceValue("rftWellAddress");
     const rftRealizationDataQuery = useRftRealizationData(
         rftWellAddress?.caseUuid,
         rftWellAddress?.ensembleName,

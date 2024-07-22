@@ -7,13 +7,15 @@ import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
 import { Button } from "@lib/components/Button";
 
-export type SharedState = {
-    triggeredRefreshCounter: number;
-};
+import { atom, useSetAtom } from "jotai";
+
+import { SettingsToViewInterface } from "./settingsToViewInterface";
+
+export const triggeredRefreshCounterAtom = atom<number>(0);
 
 //-----------------------------------------------------------------------------------------------------------
-export function WorkbenchSpySettings(props: ModuleSettingsProps<SharedState>) {
-    const setRefreshCounter = props.settingsContext.useSetStoreValue("triggeredRefreshCounter");
+export function WorkbenchSpySettings(props: ModuleSettingsProps<SettingsToViewInterface>) {
+    const setRefreshCounter = useSetAtom(triggeredRefreshCounterAtom);
     return (
         <div>
             <Button onClick={() => setRefreshCounter((prev: number) => prev + 1)}>Trigger Refresh</Button>
@@ -22,14 +24,14 @@ export function WorkbenchSpySettings(props: ModuleSettingsProps<SharedState>) {
 }
 
 //-----------------------------------------------------------------------------------------------------------
-export function WorkbenchSpyView(props: ModuleViewProps<SharedState>) {
+export function WorkbenchSpyView(props: ModuleViewProps<SettingsToViewInterface>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS(
         "global.hoverRealization",
         props.workbenchServices
     );
     const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", props.workbenchServices);
-    const triggeredRefreshCounter = props.viewContext.useStoreValue("triggeredRefreshCounter");
+    const triggeredRefreshCounter = props.viewContext.useSettingsToViewInterfaceValue("triggeredRefreshCounter");
 
     const componentRenderCount = React.useRef(0);
     React.useEffect(function incrementComponentRenderCount() {

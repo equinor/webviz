@@ -4,7 +4,6 @@ import { ColorSet } from "@lib/utils/ColorSet";
 import { Size2D } from "@lib/utils/geometry";
 import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
 import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
-import { State } from "@modules/SimulationTimeSeries/state";
 
 import { Layout } from "plotly.js";
 
@@ -21,7 +20,7 @@ import {
 } from "../utils/vectorSpecificationsAndQueriesUtils";
 
 export function useSubplotBuilder(
-    viewContext: ViewContext<State, SettingsToViewInterface, SettingsAtoms, ViewAtoms>,
+    viewContext: ViewContext<SettingsToViewInterface, SettingsAtoms, ViewAtoms>,
     wrapperDivSize: Size2D,
     colorSet: ColorSet,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null

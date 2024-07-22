@@ -12,7 +12,6 @@ import { LayersWrapper } from "./components/layersWrapper";
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { State } from "../state";
 import { LayerStatus, useLayersStatuses } from "../utils/layers/BaseLayer";
 import { isGridLayer } from "../utils/layers/GridLayer";
 import { LayerManagerTopic, useLayerManagerTopicValue } from "../utils/layers/LayerManager";
@@ -21,9 +20,7 @@ import { isSurfaceLayer } from "../utils/layers/SurfaceLayer";
 import { isSurfacesUncertaintyLayer } from "../utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "../utils/layers/WellpicksLayer";
 
-export function View(
-    props: ModuleViewProps<State, SettingsToViewInterface, Record<string, never>, ViewAtoms>
-): JSX.Element {
+export function View(props: ModuleViewProps<SettingsToViewInterface, Record<string, never>, ViewAtoms>): JSX.Element {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 

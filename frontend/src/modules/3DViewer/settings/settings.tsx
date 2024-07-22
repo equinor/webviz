@@ -70,7 +70,7 @@ import {
 import { State } from "../state";
 import { GridCellIndexRanges } from "../typesAndEnums";
 
-export function Settings(props: ModuleSettingsProps<State, SettingsToViewInterface>): JSX.Element {
+export function Settings(props: ModuleSettingsProps<SettingsToViewInterface>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 

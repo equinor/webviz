@@ -22,7 +22,7 @@ import { SettingsToViewInterface } from "../settingsToViewInterface";
 export const View = ({
     viewContext,
     workbenchSettings,
-}: ModuleViewProps<Record<string, never>, SettingsToViewInterface, SettingsAtoms, ViewAtoms>) => {
+}: ModuleViewProps<SettingsToViewInterface, SettingsAtoms, ViewAtoms>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 

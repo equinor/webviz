@@ -1,14 +1,10 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { Settings } from "./settings";
-import State from "./state";
+import { SettingsToViewInterface, interfaceInitialization } from "./settingsToViewInterface";
 import { View } from "./view";
 
-const defaultState: State = {
-    rftWellAddress: null,
-};
-
-const module = ModuleRegistry.initModule<State>("Rft", defaultState, {});
+const module = ModuleRegistry.initModule<SettingsToViewInterface>("Rft", interfaceInitialization);
 
 module.viewFC = View;
 module.settingsFC = Settings;

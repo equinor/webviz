@@ -20,51 +20,24 @@ import {
     useModuleInstanceTopicValue,
 } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
-import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
 import { InterfaceBaseType, useSettingsToViewInterfaceValue } from "./UniDirectionalModuleComponentsInterface";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
 export class ModuleContext<
-    TStateType extends StateBaseType,
     TInterfaceType extends InterfaceBaseType,
     TSettingsAtomsType extends Record<string, unknown>,
     TViewAtomsType extends Record<string, unknown>
 > {
-    protected _moduleInstance: ModuleInstance<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
-    private _stateStore: StateStore<TStateType>;
+    protected _moduleInstance: ModuleInstance<TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
 
-    constructor(
-        moduleInstance: ModuleInstance<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
-        stateStore: StateStore<TStateType>
-    ) {
+    constructor(moduleInstance: ModuleInstance<TInterfaceType, TSettingsAtomsType, TViewAtomsType>) {
         this._moduleInstance = moduleInstance;
-        this._stateStore = stateStore;
     }
 
     getInstanceIdString(): string {
         return this._moduleInstance.getId();
-    }
-
-    getStateStore(): StateStore<TStateType> {
-        return this._stateStore;
-    }
-
-    useStoreState<K extends keyof TStateType>(
-        key: K
-    ): [TStateType[K], (value: TStateType[K] | ((prev: TStateType[K]) => TStateType[K])) => void] {
-        return useStoreState(this._stateStore, key);
-    }
-
-    useStoreValue<K extends keyof TStateType>(key: K): TStateType[K] {
-        return useStoreValue(this._stateStore, key);
-    }
-
-    useSetStoreValue<K extends keyof TStateType>(
-        key: K
-    ): (newValue: TStateType[K] | ((prev: TStateType[K]) => TStateType[K])) => void {
-        return useSetStoreValue(this._stateStore, key);
     }
 
     useModuleInstanceTopic<T extends ModuleInstanceTopic>(topic: T): ModuleInstanceTopicValueTypes[T] {
@@ -175,12 +148,11 @@ export class ModuleContext<
 }
 
 export type ViewContext<
-    StateType extends StateBaseType,
     TInterfaceType extends InterfaceBaseType,
     TSettingsAtomsType extends Record<string, unknown>,
     TViewAtomsType extends Record<string, unknown>
 > = Omit<
-    ModuleContext<StateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
+    ModuleContext<TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
     | "useSettingsToViewInterfaceState"
     | "useSetSettingsToViewInterfaceValue"
     | "useSettingsAtom"
@@ -189,11 +161,10 @@ export type ViewContext<
 >;
 
 export type SettingsContext<
-    StateType extends StateBaseType,
     TInterfaceType extends InterfaceBaseType,
     TSettingsAtomsType extends Record<string, unknown>,
     TViewAtomsType extends Record<string, unknown>
 > = Omit<
-    ModuleContext<StateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
+    ModuleContext<TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
     "useViewAtom" | "useViewAtomValue" | "useSetViewAtom"
 >;

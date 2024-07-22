@@ -61,10 +61,7 @@ import {
     VisualizationModeEnumToStringMapping,
 } from "../typesAndEnums";
 
-export function Settings({
-    settingsContext,
-    workbenchSession,
-}: ModuleSettingsProps<Record<string, never>, SettingsToViewInterface>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<SettingsToViewInterface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 

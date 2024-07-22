@@ -30,7 +30,6 @@ import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { State } from "../state";
 import {
     ColorBy,
     PHASE_TO_DISPLAY_NAME,
@@ -40,7 +39,7 @@ import {
 } from "../typesAndEnums";
 import { computeRealizationsIntersection } from "../utils/realizationsIntersection";
 
-export function Settings({ workbenchSession }: ModuleSettingsProps<State, SettingsToViewInterface>) {
+export function Settings({ workbenchSession }: ModuleSettingsProps<SettingsToViewInterface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 

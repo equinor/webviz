@@ -3,11 +3,11 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
-import { State } from "./state";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 
 const description = "Visualization of intersection data with a wellbore and seismic fence.";
 
-ModuleRegistry.registerModule<State>({
+ModuleRegistry.registerModule<SettingsToViewInterface>({
     moduleName: "SeismicIntersection",
     defaultTitle: "Seismic Intersection",
     category: ModuleCategory.MAIN,

@@ -39,10 +39,10 @@ import {
     selectedRealizationNumberAtom,
 } from "./atoms/derivedAtoms";
 
-import { Interface, State } from "../settingsToViewInterface";
+import { Interface } from "../settingsToViewInterface";
 import { FrequencyEnumToStringMapping, NodeTypeEnumToStringMapping } from "../types";
 
-export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<State, Interface>) {
+export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 

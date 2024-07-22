@@ -13,7 +13,6 @@ import { HighlightItem, HighlightItemShape, ReadoutItem } from "@framework/compo
 import { ReadoutBox } from "@framework/components/EsvIntersection/utilityComponents/ReadoutBox";
 import { isWellborepathLayer } from "@framework/components/EsvIntersection/utils/layers";
 import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
-import { State } from "@modules/Intersection/state";
 
 import { isEqual } from "lodash";
 
@@ -33,7 +32,7 @@ export type ReadoutWrapperProps = {
     };
     verticalScale: number;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<State, SettingsToViewInterface, Record<string, never>, ViewAtoms>;
+    viewContext: ViewContext<SettingsToViewInterface, Record<string, never>, ViewAtoms>;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {

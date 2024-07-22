@@ -6,7 +6,7 @@ import { SettingsToViewInterface, interfaceInitialization } from "./settingsToVi
 import { State } from "./state";
 import { View } from "./view/view";
 
-const module = ModuleRegistry.initModule<State, SettingsToViewInterface>(MODULE_NAME, {}, {}, interfaceInitialization);
+const module = ModuleRegistry.initModule<SettingsToViewInterface>(MODULE_NAME, interfaceInitialization);
 
 module.viewFC = View;
 module.settingsFC = Settings;

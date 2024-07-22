@@ -12,15 +12,10 @@ import { ContentMessage, ContentMessageType } from "@modules/_shared/components/
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { SettingsToViewInterface } from "./settingsToViewInterface";
-import { State } from "./state";
 import { PvtDataAccessor } from "./utils/PvtDataAccessor";
 import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
-export function View({
-    viewContext,
-    workbenchSettings,
-    workbenchSession,
-}: ModuleViewProps<State, SettingsToViewInterface>) {
+export function View({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<SettingsToViewInterface>) {
     const colorSet = workbenchSettings.useColorSet();
     const statusWriter = useViewStatusWriter(viewContext);
     const ensembleSet = useEnsembleSet(workbenchSession);

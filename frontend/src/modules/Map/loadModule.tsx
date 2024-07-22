@@ -1,16 +1,10 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { MapSettings } from "./MapSettings";
-import { MapState } from "./MapState";
-import { MapView } from "./MapView";
+import { MapSettings } from "./settings/settings";
+import { SettingsToViewInterface, interfaceInitialization } from "./settingsToViewInterface";
+import { MapView } from "./view";
 
-const defaultState: MapState = {
-    surfaceAddress: null,
-};
-
-const module = ModuleRegistry.initModule<MapState>("Map", defaultState, {
-    surfaceAddress: { deepCompare: true },
-});
+const module = ModuleRegistry.initModule<SettingsToViewInterface>("Map", interfaceInitialization);
 
 module.viewFC = MapView;
 module.settingsFC = MapSettings;

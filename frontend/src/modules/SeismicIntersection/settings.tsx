@@ -24,11 +24,26 @@ import { useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
+import { useAtom, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
 import { useSeismicCubeMetaListQuery } from "./queryHooks";
-import { State, WellborePickSelectionType, WellborePickSelectionTypeEnumToStringMapping } from "./state";
-import { SeismicAddress, SurfaceAddress } from "./types";
+import {
+    extensionAtom,
+    seismicAddressAtom,
+    surfaceAddressAtom,
+    wellboreAddressAtom,
+    wellborePickCaseUuidAtom,
+    wellborePickSelectionAtom,
+    zScaleAtom,
+} from "./settings/atoms/baseAtoms";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
+import {
+    SeismicAddress,
+    SurfaceAddress,
+    WellborePickSelectionType,
+    WellborePickSelectionTypeEnumToStringMapping,
+} from "./typesAndEnums";
 import { SeismicCubeMetaDirectory, SeismicTimeType } from "./utils/seismicCubeDirectory";
 
 const SeismicTimeTypeEnumToSurveyTypeStringMapping = {
@@ -60,20 +75,24 @@ const Z_SCALE_LIMITS = { min: 1, max: 100 }; // Minimum z-scale factor
 // Hardcoded surface time type - no surface as function of time
 const SURFACE_TIME_TYPE = SurfaceTimeType.None;
 
-export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<State>) {
+export function Settings({
+    settingsContext,
+    workbenchSession,
+    workbenchServices,
+}: ModuleSettingsProps<SettingsToViewInterface>) {
     const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
-    const setSeismicAddress = settingsContext.useSetStoreValue("seismicAddress");
-    const setSurfaceAddress = settingsContext.useSetStoreValue("surfaceAddress");
-    const setWellboreAddress = settingsContext.useSetStoreValue("wellboreAddress");
-    const setWellborePickCaseUuid = settingsContext.useSetStoreValue("wellborePickCaseUuid");
-    const setWellborePickSelection = settingsContext.useSetStoreValue("wellborePickSelection");
-    const [extension, setExtension] = settingsContext.useStoreState("extension");
-    const [zScale, setZScale] = settingsContext.useStoreState("zScale");
+    const setSeismicAddress = useSetAtom(seismicAddressAtom);
+    const setSurfaceAddress = useSetAtom(surfaceAddressAtom);
+    const [wellboreAddress, setWellboreAddress] = useAtom(wellboreAddressAtom);
+    const setWellborePickCaseUuid = useSetAtom(wellborePickCaseUuidAtom);
+    const [wellborePickSelection, setWellborePickSelection] = useAtom(wellborePickSelectionAtom);
+    const [extension, setExtension] = useAtom(extensionAtom);
+    const [zScale, setZScale] = useAtom(zScaleAtom);
 
     const [fetchedSurfaceNames, setFetchedSurfaceNames] = React.useState<string[]>([]);
     const [fetchedSurfaceAttributes, setFetchedSurfaceAttributes] = React.useState<string[]>([]);
@@ -83,12 +102,9 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const [isObserved, setIsObserved] = React.useState<boolean>(false);
 
     const [seismicTimeType, setSeismicTimeType] = React.useState<SeismicTimeType>(SeismicTimeType.TimePoint);
-    const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(
-        settingsContext.useStoreValue("wellboreAddress")
-    );
-    const [selectedWellborePickSelection, setSelectedWellborePickSelection] = React.useState<WellborePickSelectionType>(
-        settingsContext.useStoreValue("wellborePickSelection")
-    );
+    const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(wellboreAddress);
+    const [selectedWellborePickSelection, setSelectedWellborePickSelection] =
+        React.useState<WellborePickSelectionType>(wellborePickSelection);
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
     const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);

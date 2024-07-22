@@ -2,15 +2,10 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import "./atoms";
 import { Settings } from "./settings";
-import { SettingsToViewInterface, State, defaultState, interfaceDefinition } from "./state";
+import { SettingsToViewInterface, interfaceInitialization } from "./settingsToViewInterface";
 import { View } from "./view";
 
-const module = ModuleRegistry.initModule<State, SettingsToViewInterface>(
-    "MyModule2",
-    defaultState,
-    undefined,
-    interfaceDefinition
-);
+const module = ModuleRegistry.initModule<SettingsToViewInterface>("MyModule2", interfaceInitialization);
 
 module.viewFC = View;
 module.settingsFC = Settings;

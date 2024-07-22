@@ -5,7 +5,6 @@ import { Tag } from "@lib/components/Tag";
 import { BugReport, Forum, WebAssetOff } from "@mui/icons-material";
 
 export class ModuleNotFoundPlaceholder extends Module<
-    Record<string, never>,
     {
         baseStates: Record<string, never>;
         derivedStates: Record<string, never>;
@@ -24,7 +23,6 @@ export class ModuleNotFoundPlaceholder extends Module<
     }
 
     makeInstance(instanceNumber: number): ModuleInstance<
-        Record<string, never>,
         {
             baseStates: Record<string, never>;
             derivedStates: Record<string, never>;
@@ -33,7 +31,6 @@ export class ModuleNotFoundPlaceholder extends Module<
         Record<string, never>
     > {
         const instance = super.makeInstance(instanceNumber);
-        instance.setDefaultState({});
         return instance;
     }
 
