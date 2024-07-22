@@ -40,7 +40,7 @@ import {
 } from "../typesAndEnums";
 import { computeRealizationsIntersection } from "../utils/realizationsIntersection";
 
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State, SettingsToViewInterface>) {
+export function Settings({ workbenchSession }: ModuleSettingsProps<State, SettingsToViewInterface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 

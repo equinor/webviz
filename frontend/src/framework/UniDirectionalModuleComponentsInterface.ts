@@ -1,4 +1,4 @@
-import { Atom, Getter, PrimitiveAtom, atom, useAtom, useAtomValue } from "jotai";
+import { Atom, Getter, atom, useAtomValue } from "jotai";
 
 export type InterfaceBaseType = Record<string, unknown>;
 export type InterfaceInitialization<T extends InterfaceBaseType> = {
