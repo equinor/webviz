@@ -87,7 +87,13 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     }
 
     const handleTableHover = React.useCallback(
-        function handleTableHover(row: TableRow<TableHeading>) {
+        function handleTableHover(row: TableRow<TableHeading> | null) {
+            if (!row) {
+                props.workbenchServices.publishGlobalData("global.hoverRegion", null);
+                props.workbenchServices.publishGlobalData("global.hoverZone", null);
+                props.workbenchServices.publishGlobalData("global.hoverFacies", null);
+                return;
+            }
             if (Object.keys(row).includes(InplaceVolumetricsIdentifier_api.REGION)) {
                 const regionName = row[InplaceVolumetricsIdentifier_api.REGION]?.toString();
                 if (regionName) {
@@ -112,15 +118,27 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         [props.workbenchServices]
     );
 
+    function makeMessage(): React.ReactNode {
+        if (aggregatedTableDataQueries.isFetching) {
+            return <CircularProgress size="medium" />;
+        }
+
+        if (aggregatedTableDataQueries.allQueriesFailed) {
+            return "Failed to load data.";
+        }
+
+        return "No data to display.";
+    }
+
     return (
         <div ref={divRef} className="w-full h-full relative">
             <div
                 className={resolveClassNames(
                     "absolute top-0 left-0 w-full h-full bg-white bg-opacity-50 backdrop-blur-sm flex items-center justify-center",
-                    { hidden: !aggregatedTableDataQueries.isFetching && !aggregatedTableDataQueries.allQueriesFailed }
+                    { hidden: tableRows.length > 0 }
                 )}
             >
-                {aggregatedTableDataQueries.isFetching ? <CircularProgress size="medium" /> : "Failed to load data."}
+                {makeMessage()}
             </div>
             <Table headings={headings} data={tableRows} height={divBoundingRect.height} onHover={handleTableHover} />
         </div>

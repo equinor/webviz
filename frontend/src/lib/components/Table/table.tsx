@@ -3,6 +3,7 @@ import React from "react";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
 
+import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
@@ -33,7 +34,7 @@ export type TableProps<T extends TableHeading> = {
     data: TableRow<T>[];
     width?: number | string;
     height?: number | string;
-    onHover?: (row: TableRow<T>) => void;
+    onHover?: (row: TableRow<T> | null) => void;
     onClick?: (row: TableRow<T>) => void;
     highlightFilter?: (row: TableRow<T>) => boolean;
 } & BaseComponentProps;
@@ -127,10 +128,11 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
     >([]);
 
     const [prevData, setPrevData] = React.useState<TableRow<TableHeading>[]>([]);
+    const [prevHeadings, setPrevHeadings] = React.useState<TableHeading>({});
 
     const containerRef = React.useRef<HTMLDivElement>(null);
 
-    if (prevData !== props.data) {
+    if (!isEqual(prevData, props.data)) {
         setPrevData(props.data);
         const newPreprocessedData = preprocessData(props.data);
         setPreprocessedData(newPreprocessedData);
@@ -142,7 +144,8 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         );
     }
 
-    React.useEffect(() => {
+    if (!isEqual(prevHeadings, props.headings) || !isEqual(prevHeadings, props.headings)) {
+        setPrevHeadings(props.headings);
         const maxNumberOfSubheadings = Object.keys(props.headings).length;
         for (const row of props.data) {
             if (Object.keys(row).length !== maxNumberOfSubheadings) {
@@ -153,9 +156,9 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                 break;
             }
         }
-    }, [props.headings, props.data]);
+    }
 
-    function handlePointerOver(row: TableRow<any>) {
+    function handlePointerOver(row: TableRow<any> | null) {
         if (props.onHover) {
             props.onHover(row);
         }
@@ -287,7 +290,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                         <Input
                                             type="text"
                                             value={filterValues[col] || ""}
-                                            placeholder={`Filter ${props.headings[col].label}...`}
+                                            placeholder="Filter ..."
                                             onChange={(e) => handleFilterChange(col, e.target.value)}
                                             endAdornment={
                                                 <div
@@ -324,6 +327,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                                 : ""
                                         } hover:bg-blue-50`}
                                         onPointerOver={() => handlePointerOver(item.values)}
+                                        onPointerLeave={() => handlePointerOver(null)}
                                         onPointerDown={() => handlePointerDown(item.values)}
                                         style={{ height: 30 }}
                                     >

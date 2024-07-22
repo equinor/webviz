@@ -108,7 +108,7 @@ export function useGetAggregatedTableDataQueries(
                 tablesData: tablesData,
                 isFetching: results.some((result) => result.isFetching),
                 someQueriesFailed: results.some((result) => result.isError),
-                allQueriesFailed: results.every((result) => result.isError),
+                allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
                 errors: errors,
             };
         },
