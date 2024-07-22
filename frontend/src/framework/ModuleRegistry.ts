@@ -4,7 +4,7 @@ import { ModuleDataTagId } from "./ModuleDataTags";
 import { DrawPreviewFunc } from "./Preview";
 import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
-import { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalSettingsToViewInterface";
+import { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder";
 
 export type RegisterModuleOptions = {

@@ -14,8 +14,8 @@ import { SyncSettingKey } from "./SyncSettings";
 import {
     InterfaceBaseType,
     InterfaceInitialization,
-    UniDirectionalSettingsToViewInterface,
-} from "./UniDirectionalSettingsToViewInterface";
+    UniDirectionalModuleComponentsInterface,
+} from "./UniDirectionalModuleComponentsInterface";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
@@ -70,7 +70,7 @@ export type ModuleAtoms<TAtoms extends Record<string, unknown>> = {
 };
 
 export type AtomsInitialization<TAtoms extends Record<string, unknown>, TInterfaceType extends InterfaceBaseType> = (
-    settingsToViewInterface: UniDirectionalSettingsToViewInterface<TInterfaceType>
+    settingsToViewInterface: UniDirectionalModuleComponentsInterface<TInterfaceType>
 ) => ModuleAtoms<TAtoms>;
 
 export type ModuleSettings<

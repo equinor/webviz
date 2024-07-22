@@ -10,9 +10,12 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
+    selectedColorByAtom,
+    selectedDependentVariablesAtom,
+    selectedPhaseAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedPvtNumsAtom,
     userSelectedRealizationsAtom,
@@ -26,7 +29,8 @@ import {
 import { pvtDataQueriesAtom } from "./atoms/queryAtoms";
 import { DependentVariableSelector } from "./components/DependentVariableSelector/dependentVariableSelector";
 
-import { Interface, State } from "../state";
+import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { State } from "../state";
 import {
     ColorBy,
     PHASE_TO_DISPLAY_NAME,
@@ -36,7 +40,7 @@ import {
 } from "../typesAndEnums";
 import { computeRealizationsIntersection } from "../utils/realizationsIntersection";
 
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State, Interface>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State, SettingsToViewInterface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
 
@@ -49,10 +53,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const setSelectedRealizations = useSetAtom(userSelectedRealizationsAtom);
     const setSelectedPvtNums = useSetAtom(userSelectedPvtNumsAtom);
 
-    const [selectedPhase, setSelectedPhase] = settingsContext.useSettingsToViewInterfaceState("selectedPhase");
-    const [selectedColorBy, setSelectedColorBy] = settingsContext.useSettingsToViewInterfaceState("selectedColorBy");
-    const [selectedDependentVariables, setSelectedPlots] =
-        settingsContext.useSettingsToViewInterfaceState("selectedDependentVariables");
+    const [selectedPhase, setSelectedPhase] = useAtom(selectedPhaseAtom);
+    const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
+    const [selectedDependentVariables, setSelectedPlots] = useAtom(selectedDependentVariablesAtom);
 
     const [selectedMultiEnsembleIdents, setSelectedMultiEnsembleIdents] =
         React.useState<EnsembleIdent[]>(selectedEnsembleIdents);

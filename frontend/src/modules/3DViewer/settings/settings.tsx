@@ -30,6 +30,11 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
 import {
+    colorScaleAtom,
+    intersectionExtensionLengthAtom,
+    showGridlinesAtom,
+    showIntersectionAtom,
+    useCustomBoundsAtom,
     userSelectedCustomIntersectionPolylineIdAtom,
     userSelectedEnsembleIdentAtom,
     userSelectedGridCellIndexRangesAtom,
@@ -69,11 +74,9 @@ export function Settings(props: ModuleSettingsProps<State, SettingsToViewInterfa
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
-    const [showGridLines, setShowGridLines] = props.settingsContext.useSettingsToViewInterfaceState("showGridlines");
-    const [showIntersection, setShowIntersection] =
-        props.settingsContext.useSettingsToViewInterfaceState("showIntersection");
-    const [intersectionExtensionLength, setIntersectionExtensionLength] =
-        props.settingsContext.useSettingsToViewInterfaceState("intersectionExtensionLength");
+    const [showGridLines, setShowGridLines] = useAtom(showGridlinesAtom);
+    const [showIntersection, setShowIntersection] = useAtom(showIntersectionAtom);
+    const [intersectionExtensionLength, setIntersectionExtensionLength] = useAtom(intersectionExtensionLengthAtom);
     const setPolylineEditModeActive = useSetAtom(editCustomIntersectionPolylineEditModeActiveAtom);
 
     const [prevSyncedIntersection, setPrevSyncedIntersection] = React.useState<Intersection | null>(null);
@@ -127,9 +130,8 @@ export function Settings(props: ModuleSettingsProps<State, SettingsToViewInterfa
     const selectedGridCellIndexRanges = useAtomValue(selectedGridCellIndexRangesAtom);
     const setSelectedGridCellIndexRanges = useSetAtom(userSelectedGridCellIndexRangesAtom);
 
-    const [colorScale, setColorScale] = props.settingsContext.useSettingsToViewInterfaceState("colorScale");
-    const [useCustomBounds, setUseCustomBounds] =
-        props.settingsContext.useSettingsToViewInterfaceState("useCustomBounds");
+    const [colorScale, setColorScale] = useAtom(colorScaleAtom);
+    const [useCustomBounds, setUseCustomBounds] = useAtom(useCustomBoundsAtom);
 
     if (!isEqual(syncedIntersection, prevSyncedIntersection)) {
         setPrevSyncedIntersection(syncedIntersection);

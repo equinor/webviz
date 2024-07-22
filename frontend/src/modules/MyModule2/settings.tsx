@@ -7,15 +7,10 @@ import { Label } from "@lib/components/Label";
 import { useAtom } from "jotai";
 
 import { textAtom } from "./atoms";
-import { Interface, State } from "./state";
+import { SettingsToViewInterface, State } from "./state";
 
-export const Settings = (props: ModuleSettingsProps<State, Interface>) => {
+export const Settings = (props: ModuleSettingsProps<State, SettingsToViewInterface>) => {
     const [atomText, setAtomText] = useAtom(textAtom);
-    const [stateText, setStateText] = props.settingsContext.useSettingsToViewInterfaceState("text");
-
-    function handleStateTextChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setStateText(event.target.value);
-    }
 
     function handleAtomTextChange(event: React.ChangeEvent<HTMLInputElement>) {
         setAtomText(event.target.value);
@@ -25,9 +20,6 @@ export const Settings = (props: ModuleSettingsProps<State, Interface>) => {
         <>
             <Label text="Atom text">
                 <Input value={atomText} onChange={handleAtomTextChange} />
-            </Label>
-            <Label text="State text">
-                <Input value={stateText} onChange={handleStateTextChange} />
             </Label>
         </>
     );
