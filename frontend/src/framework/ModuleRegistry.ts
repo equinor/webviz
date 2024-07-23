@@ -39,10 +39,7 @@ export class ModuleRegistry {
 
     static registerModule<
         TStateType extends StateBaseType,
-        TInterfaceType extends InterfaceBaseType = {
-            baseStates: Record<string, never>;
-            derivedStates: Record<string, never>;
-        },
+        TInterfaceType extends InterfaceBaseType = Record<string, never>,
         TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
         TViewAtomsType extends Record<string, unknown> = Record<string, never>
     >(options: RegisterModuleOptions): Module<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
@@ -64,10 +61,7 @@ export class ModuleRegistry {
 
     static initModule<
         TStateType extends StateBaseType,
-        TInterfaceType extends InterfaceBaseType = {
-            baseStates: Record<string, never>;
-            derivedStates: Record<string, never>;
-        },
+        TInterfaceType extends InterfaceBaseType = Record<string, never>,
         TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
         TViewAtomsType extends Record<string, unknown> = Record<string, never>
     >(

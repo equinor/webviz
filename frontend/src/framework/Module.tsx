@@ -35,10 +35,7 @@ export enum ModuleDevState {
 
 export type ModuleSettingsProps<
     TTStateType extends StateBaseType,
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = {
@@ -51,10 +48,7 @@ export type ModuleSettingsProps<
 
 export type ModuleViewProps<
     TTStateType extends StateBaseType,
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = {
@@ -75,20 +69,14 @@ export type AtomsInitialization<TAtoms extends Record<string, unknown>, TInterfa
 
 export type ModuleSettings<
     TTStateType extends StateBaseType,
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = React.FC<ModuleSettingsProps<TTStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>>;
 
 export type ModuleView<
     TTStateType extends StateBaseType,
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = React.FC<ModuleViewProps<TTStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>>;
