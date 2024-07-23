@@ -7,7 +7,6 @@ import { BugReport, Forum, WebAssetOff } from "@mui/icons-material";
 export class ModuleNotFoundPlaceholder extends Module<
     Record<string, never>,
     Record<string, never>,
-    Record<string, never>,
     Record<string, never>
 > {
     constructor(moduleName: string) {
@@ -22,7 +21,7 @@ export class ModuleNotFoundPlaceholder extends Module<
 
     makeInstance(
         instanceNumber: number
-    ): ModuleInstance<Record<string, never>, Record<string, never>, Record<string, never>, Record<string, never>> {
+    ): ModuleInstance<Record<string, never>, Record<string, never>, Record<string, never>> {
         const instance = super.makeInstance(instanceNumber);
         return instance;
     }

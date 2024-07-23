@@ -1,7 +1,6 @@
 import React from "react";
 
 import { Atom, PrimitiveAtom, WritableAtom } from "jotai";
-import { cloneDeep } from "lodash";
 
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
