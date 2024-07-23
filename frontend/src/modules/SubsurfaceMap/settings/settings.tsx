@@ -21,8 +21,19 @@ import { SurfaceAddress, SurfaceAddressFactory, SurfaceDirectory, SurfaceTimeTyp
 import { useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
-import { AggregationSelector } from "./components/AggregationSelector";
-import { state } from "./state";
+import { useAtom, useSetAtom } from "jotai";
+
+import {
+    meshSurfaceAddressAtom,
+    polygonsAddressAtom,
+    propertySurfaceAddressAtom,
+    selectedWellUuidsAtom,
+    surfaceSettingsAtom,
+    viewSettingsAtom,
+} from "./atoms/baseAtoms";
+import { AggregationSelector } from "./components/aggregationSelector";
+
+import { SettingsToViewInterface } from "../settingsToViewInterface";
 
 //-----------------------------------------------------------------------------------------------------------
 type LabelledCheckboxProps = {
@@ -48,7 +59,11 @@ const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.TimePoint]: "Time point",
     [SurfaceTimeType.Interval]: "Time interval",
 };
-export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<state>) {
+export function Settings({
+    settingsContext,
+    workbenchSession,
+    workbenchServices,
+}: ModuleSettingsProps<SettingsToViewInterface>) {
     const myInstanceIdStr = settingsContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap settings`);
 
@@ -64,7 +79,6 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const [selectedPolygonName, setSelectedPolygonName] = React.useState<string | null>(null);
     const [selectedPolygonAttribute, setSelectedPolygonAttribute] = React.useState<string | null>(null);
     const [linkPolygonNameToSurfaceName, setLinkPolygonNameToSurfaceName] = React.useState<boolean>(true);
-    const [selectedWellUuids, setSelectedWellUuids] = settingsContext.useStoreState("selectedWellUuids");
     const [showPolygon, setShowPolygon] = React.useState<boolean>(true);
     const [realizationNum, setRealizationNum] = React.useState<number>(0);
     const [aggregation, setAggregation] = React.useState<SurfaceStatisticFunction_api | null>(null);
@@ -75,6 +89,13 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const [showSmoothShading, setShowSmoothShading] = React.useState(false);
     const [showMaterial, setShowMaterial] = React.useState(false);
     const [show3D, setShow3D] = React.useState(true);
+
+    const [selectedWellUuids, setSelectedWellUuids] = useAtom(selectedWellUuidsAtom);
+    const setMeshSurfaceAddress = useSetAtom(meshSurfaceAddressAtom);
+    const setPropertySurfaceAddress = useSetAtom(propertySurfaceAddressAtom);
+    const setPolygonsAddress = useSetAtom(polygonsAddressAtom);
+    const setSurfaceSettings = useSetAtom(surfaceSettingsAtom);
+    const setViewSettings = useSetAtom(viewSettingsAtom);
 
     const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
@@ -244,7 +265,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             }
 
             console.debug(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
-            settingsContext.getStateStore().setValue("meshSurfaceAddress", surfAddr);
+            setMeshSurfaceAddress(surfAddr);
         },
         [
             selectedEnsembleIdent,
@@ -256,13 +277,14 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedMeshSurfaceName,
             computedMeshSurfaceAttribute,
             settingsContext,
+            setMeshSurfaceAddress,
         ]
     );
     React.useEffect(
         function propagatePropertySurfaceSelectionToView() {
             let surfAddr: SurfaceAddress | null = null;
             if (!usePropertySurface) {
-                settingsContext.getStateStore().setValue("propertySurfaceAddress", surfAddr);
+                setPropertySurfaceAddress(surfAddr);
                 return;
             }
             if (computedEnsembleIdent && computedPropertySurfaceName && computedPropertySurfaceAttribute) {
@@ -282,7 +304,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             }
 
             console.debug(`propagateSurfaceSelectionToView() => ${surfAddr ? "valid surfAddr" : "NULL surfAddr"}`);
-            settingsContext.getStateStore().setValue("propertySurfaceAddress", surfAddr);
+            setPropertySurfaceAddress(surfAddr);
         },
         [
             selectedEnsembleIdent,
@@ -297,6 +319,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedPropertySurfaceAttribute,
             computedPropertyTimeOrInterval,
             settingsContext,
+            setPropertySurfaceAddress,
         ]
     );
     React.useEffect(
@@ -312,7 +335,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                 };
             }
 
-            settingsContext.getStateStore().setValue("polygonsAddress", polygonAddr);
+            setPolygonsAddress(polygonAddr);
         },
         [
             selectedEnsembleIdent,
@@ -328,26 +351,36 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedPolygonsName,
             computedPolygonsAttribute,
             settingsContext,
+            setPolygonsAddress,
         ]
     );
     React.useEffect(
         function propogateSurfaceSettingsToView() {
-            settingsContext.getStateStore().setValue("surfaceSettings", {
+            setSurfaceSettings({
                 contours: showContour ? [contourStartValue, contourIncValue] : false,
                 gridLines: showGrid,
                 smoothShading: showSmoothShading,
                 material: showMaterial,
             });
         },
-        [showContour, contourStartValue, contourIncValue, showGrid, showSmoothShading, showMaterial, settingsContext]
+        [
+            showContour,
+            contourStartValue,
+            contourIncValue,
+            showGrid,
+            showSmoothShading,
+            showMaterial,
+            settingsContext,
+            setSurfaceSettings,
+        ]
     );
     React.useEffect(
         function propogateSubsurfaceMapViewSettingsToView() {
-            settingsContext.getStateStore().setValue("viewSettings", {
+            setViewSettings({
                 show3d: show3D,
             });
         },
-        [show3D, settingsContext]
+        [show3D, settingsContext, setViewSettings]
     );
 
     let fieldIdentifier: null | string = null;

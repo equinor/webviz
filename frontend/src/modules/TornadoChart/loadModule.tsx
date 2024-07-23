@@ -1,21 +1,10 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { Settings } from "./settings";
-import { DisplayComponentType, State } from "./state";
+import { SettingsToViewInterface, interfaceInitialization } from "./settingsToViewInterface";
 import { View } from "./view";
 
-const defaultState: State = {
-    displayComponentType: DisplayComponentType.TornadoChart,
-    referenceSensitivityName: null,
-    sensitivityNames: [],
-    selectedSensitivity: null,
-    responseChannelName: null,
-    hideZeroY: false,
-    showLabels: true,
-    showRealizationPoints: false,
-};
-
-const module = ModuleRegistry.initModule<State>("TornadoChart", defaultState);
+const module = ModuleRegistry.initModule<SettingsToViewInterface>("TornadoChart", interfaceInitialization);
 
 module.viewFC = View;
 module.settingsFC = Settings;

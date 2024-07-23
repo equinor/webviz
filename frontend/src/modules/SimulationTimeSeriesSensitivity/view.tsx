@@ -14,31 +14,25 @@ import {
     useStatisticalVectorSensitivityDataQuery,
     useVectorDataQuery,
 } from "./queryHooks";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 import { HoverInfo, TimeSeriesChart } from "./simulationTimeSeriesChart/chart";
 import { TimeSeriesPlotlyTrace, createStatisticalLineTraces } from "./simulationTimeSeriesChart/traces";
 import { createLineTrace, createRealizationLineTraces } from "./simulationTimeSeriesChart/traces";
-import { State } from "./state";
 
 export const View = ({
     viewContext,
     workbenchSession,
     workbenchSettings,
     workbenchServices,
-}: ModuleViewProps<State>) => {
-    // Leave this in until we get a feeling for React18/Plotly
-    const renderCount = React.useRef(0);
-    React.useEffect(function incrementRenderCount() {
-        renderCount.current = renderCount.current + 1;
-    });
-
+}: ModuleViewProps<SettingsToViewInterface>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const vectorSpec = viewContext.useStoreValue("vectorSpec");
-    const resampleFrequency = viewContext.useStoreValue("resamplingFrequency");
-    const showStatistics = viewContext.useStoreValue("showStatistics");
-    const showRealizations = viewContext.useStoreValue("showRealizations");
-    const selectedSensitivities = viewContext.useStoreValue("selectedSensitivities");
-    const showHistorical = viewContext.useStoreValue("showHistorical");
+    const vectorSpec = viewContext.useSettingsToViewInterfaceValue("vectorSpec");
+    const resampleFrequency = viewContext.useSettingsToViewInterfaceValue("resamplingFrequency");
+    const showStatistics = viewContext.useSettingsToViewInterfaceValue("showStatistics");
+    const showRealizations = viewContext.useSettingsToViewInterfaceValue("showRealizations");
+    const selectedSensitivities = viewContext.useSettingsToViewInterfaceValue("selectedSensitivities");
+    const showHistorical = viewContext.useSettingsToViewInterfaceValue("showHistorical");
     const [activeTimestampUtcMs, setActiveTimestampUtcMs] = React.useState<number | null>(null);
     const subscribedHoverTimestampUtcMs = useSubscribedValue("global.hoverTimestamp", workbenchServices);
 
@@ -189,7 +183,6 @@ export const View = ({
                 height={wrapperDivSize.height}
                 width={wrapperDivSize.width}
             />
-            <div className="absolute top-10 left-5 italic text-pink-400">(rc={renderCount.current})</div>
         </div>
     );
 };

@@ -1,7 +1,5 @@
 import React, { ErrorInfo } from "react";
 
-import { cloneDeep } from "lodash";
-
 import { AtomStore } from "./AtomStoreMaster";
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";

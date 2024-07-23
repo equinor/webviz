@@ -3,11 +3,11 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
-import { state } from "./state";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 
 const description = "Visualizes surfaces in a 3D view.";
 
-ModuleRegistry.registerModule<state>({
+ModuleRegistry.registerModule<SettingsToViewInterface>({
     moduleName: "SubsurfaceMap",
     defaultTitle: "Subsurface Map",
     category: ModuleCategory.MAIN,

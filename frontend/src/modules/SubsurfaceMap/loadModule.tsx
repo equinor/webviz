@@ -1,24 +1,10 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Settings } from "./settings";
-import { state } from "./state";
+import { Settings } from "./settings/settings";
+import { SettingsToViewInterface, interfaceInitialization } from "./settingsToViewInterface";
 import { View } from "./view";
 
-const defaultState: state = {
-    meshSurfaceAddress: null,
-    propertySurfaceAddress: null,
-    polygonsAddress: null,
-    selectedWellUuids: [],
-    surfaceSettings: null,
-    viewSettings: null,
-};
-
-const module = ModuleRegistry.initModule<state>("SubsurfaceMap", defaultState, {
-    meshSurfaceAddress: { deepCompare: true },
-    propertySurfaceAddress: { deepCompare: true },
-    polygonsAddress: { deepCompare: true },
-    surfaceSettings: { deepCompare: true },
-});
+const module = ModuleRegistry.initModule<SettingsToViewInterface>("SubsurfaceMap", interfaceInitialization);
 
 module.viewFC = View;
 module.settingsFC = Settings;

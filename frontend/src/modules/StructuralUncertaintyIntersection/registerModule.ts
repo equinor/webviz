@@ -3,11 +3,11 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
-import { State } from "./state";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 
 const description = "Visualization of structural uncertainty in an intersection";
 
-ModuleRegistry.registerModule<State>({
+ModuleRegistry.registerModule<SettingsToViewInterface>({
     moduleName: "StructuralUncertaintyIntersection",
     defaultTitle: "Structural Uncertainty Intersection",
     category: ModuleCategory.MAIN,

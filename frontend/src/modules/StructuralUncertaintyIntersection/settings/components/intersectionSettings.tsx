@@ -3,7 +3,7 @@ import React from "react";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 
-import { IntersectionSettings } from "../types";
+import { IntersectionSettings } from "../../typesAndEnums";
 
 type IntersectionSettingsProps = {
     intersectionSettings: IntersectionSettings;

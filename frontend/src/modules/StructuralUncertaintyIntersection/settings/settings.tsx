@@ -23,25 +23,35 @@ import { SurfaceDirectory, SurfaceTimeType, useRealizationSurfacesMetadataQuery 
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
+import { useAtom, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
+import {
+    intersectionSettingsAtom,
+    statisticFunctionsAtom,
+    stratigraphyColorMapAtom,
+    surfaceSetAddressAtom,
+    visualizationModeAtom,
+    wellboreAddressAtom,
+} from "./atoms/baseAtoms";
 import { IntersectionSettingsSelect } from "./components/intersectionSettings";
 import { RealizationsSelect } from "./components/realizationsSelect";
-import { State } from "./state";
+
+import { SettingsToViewInterface } from "../settingsToViewInterface";
 import {
     StatisticFunctionEnumToStringMapping,
     StratigraphyColorMap,
     SurfaceSetAddress,
     VisualizationMode,
     VisualizationModeEnumToStringMapping,
-} from "./types";
+} from "../typesAndEnums";
 
 export function Settings({
     settingsContext,
     workbenchSession,
     workbenchSettings,
     workbenchServices,
-}: ModuleSettingsProps<State>) {
+}: ModuleSettingsProps<SettingsToViewInterface>) {
     const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -51,18 +61,17 @@ export function Settings({
     const colorSet = workbenchSettings.useColorSet();
     const wellboreType = "smda";
 
-    const [statisticFunctions, setStatisticFunctions] = settingsContext.useStoreState("statisticFunctions");
-    const [visualizationMode, setVisualizationMode] = settingsContext.useStoreState("visualizationMode");
+    const [statisticFunctions, setStatisticFunctions] = useAtom(statisticFunctionsAtom);
+    const [visualizationMode, setVisualizationMode] = useAtom(visualizationModeAtom);
 
-    const setWellboreAddress = settingsContext.useSetStoreValue("wellboreAddress");
-    const setSurfaceSetAddress = settingsContext.useSetStoreValue("SurfaceSetAddress");
-    const [intersectionSettings, setIntersectionSettings] = settingsContext.useStoreState("intersectionSettings");
+    const [wellboreAddress, setWellboreAddress] = useAtom(wellboreAddressAtom);
+    const setSurfaceSetAddress = useSetAtom(surfaceSetAddressAtom);
+    const setStratigraphyColorMap = useSetAtom(stratigraphyColorMapAtom);
+    const [intersectionSettings, setIntersectionSettings] = useAtom(intersectionSettingsAtom);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
 
-    const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(
-        settingsContext.useStoreValue("wellboreAddress")
-    );
+    const [selectedWellboreAddress, setSelectedWellboreAddress] = React.useState<Wellbore | null>(wellboreAddress);
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
 
@@ -170,7 +179,7 @@ export function Settings({
     React.useEffect(function propogateColorsToView() {
         if (surfaceDirectory && realizationsSurfaceNames) {
             const surfaceColorMap = createStratigraphyColors(availableSurfaceNames?.sort() ?? [], colorSet);
-            settingsContext.getStateStore().setValue("stratigraphyColorMap", surfaceColorMap);
+            setStratigraphyColorMap(surfaceColorMap);
         }
     });
 

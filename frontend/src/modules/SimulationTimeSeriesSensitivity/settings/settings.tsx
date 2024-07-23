@@ -17,14 +17,28 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 import { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
 
+import { useAtom, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
-import { useVectorListQuery } from "./queryHooks";
-import { State } from "./state";
+import {
+    resamplingFrequencyAtom,
+    selectedSensitivitiesAtom,
+    showHistoricalAtom,
+    showRealizationsAtom,
+    showStatisticsAtom,
+    vectorSpecAtom,
+} from "./atoms/baseAtoms";
+import { useVectorListQuery } from "./hooks/queryHooks";
+
+import { SettingsToViewInterface } from "../settingsToViewInterface";
 
 //-----------------------------------------------------------------------------------------------------------
 
-export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<State>) {
+export function Settings({
+    settingsContext,
+    workbenchSession,
+    workbenchServices,
+}: ModuleSettingsProps<SettingsToViewInterface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
@@ -33,11 +47,12 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
     const [selectInitialVector, setSelectInitialVector] = React.useState<boolean>(true);
 
-    const [selectedSensitivities, setSelectedSensitivities] = settingsContext.useStoreState("selectedSensitivities");
-    const [resampleFrequency, setResamplingFrequency] = settingsContext.useStoreState("resamplingFrequency");
-    const [showStatistics, setShowStatistics] = settingsContext.useStoreState("showStatistics");
-    const [showRealizations, setShowRealizations] = settingsContext.useStoreState("showRealizations");
-    const [showHistorical, setShowHistorical] = settingsContext.useStoreState("showHistorical");
+    const [selectedSensitivities, setSelectedSensitivities] = useAtom(selectedSensitivitiesAtom);
+    const [resampleFrequency, setResamplingFrequency] = useAtom(resamplingFrequencyAtom);
+    const [showStatistics, setShowStatistics] = useAtom(showStatisticsAtom);
+    const [showRealizations, setShowRealizations] = useAtom(showRealizationsAtom);
+    const [showHistorical, setShowHistorical] = useAtom(showHistoricalAtom);
+    const setVectorSpec = useSetAtom(vectorSpecAtom);
     const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
@@ -109,16 +124,16 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     React.useEffect(
         function propagateVectorSpecToView() {
             if (hasComputedVectorName && computedEnsembleIdent && computedVectorName) {
-                settingsContext.getStateStore().setValue("vectorSpec", {
+                setVectorSpec({
                     ensembleIdent: computedEnsembleIdent,
                     vectorName: computedVectorName,
                     hasHistorical: hasHistoricalVector,
                 });
             } else {
-                settingsContext.getStateStore().setValue("vectorSpec", null);
+                setVectorSpec(null);
             }
         },
-        [computedEnsembleIdent, computedVectorName, hasComputedVectorName, hasHistoricalVector, settingsContext]
+        [computedEnsembleIdent, computedVectorName, hasComputedVectorName, hasHistoricalVector, setVectorSpec]
     );
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {

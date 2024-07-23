@@ -18,7 +18,7 @@ import { makeReferenceSystemFromTrajectoryXyzPoints } from "@modules/SeismicInte
 import { isEqual } from "lodash";
 
 import { SurfaceRealizationSampleValuesData } from "../queryHooks";
-import { StratigraphyColorMap, VisualizationMode } from "../types";
+import { StratigraphyColorMap, VisualizationMode } from "../typesAndEnums";
 
 type EsvIntersectionProps = {
     width: number;

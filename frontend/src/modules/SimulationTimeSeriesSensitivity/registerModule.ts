@@ -4,11 +4,11 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { channelDefs } from "./channelDefs";
-import { State } from "./state";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 
 const description = "Plotting of simulation time series data for ensembles with design matrices.";
 
-ModuleRegistry.registerModule<State>({
+ModuleRegistry.registerModule<SettingsToViewInterface>({
     moduleName: "SimulationTimeSeriesSensitivity",
     defaultTitle: "Simulation time series per sensitivity",
     category: ModuleCategory.MAIN,

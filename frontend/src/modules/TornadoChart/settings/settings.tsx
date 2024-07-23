@@ -8,14 +8,25 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
-import { DisplayComponentType, State } from "./state";
+import { useAtom, useSetAtom } from "jotai";
 
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State>) {
-    const [displayComponentType, setDisplayComponentType] = settingsContext.useStoreState("displayComponentType");
-    const [hideZeroY, setHideZeroY] = settingsContext.useStoreState("hideZeroY");
-    const [showLabels, setShowLabels] = settingsContext.useStoreState("showLabels");
-    const [showRealizationPoints, setShowRealizationPoints] = settingsContext.useStoreState("showRealizationPoints");
-    const setModuleReferenceSensitivityName = settingsContext.useSetStoreValue("referenceSensitivityName");
+import {
+    displayComponentTypeAtom,
+    hideZeroYAtom,
+    referenceSensitivityNameAtom,
+    showLabelsAtom,
+    showRealizationPointsAtom,
+} from "./atoms/baseAtoms";
+
+import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { DisplayComponentType } from "../typesAndEnums";
+
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<SettingsToViewInterface>) {
+    const [displayComponentType, setDisplayComponentType] = useAtom(displayComponentTypeAtom);
+    const [hideZeroY, setHideZeroY] = useAtom(hideZeroYAtom);
+    const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
+    const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
+    const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
 
     const ensembleSet = workbenchSession.getEnsembleSet();

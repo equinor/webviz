@@ -27,7 +27,7 @@ import {
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
 import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
-import { state } from "./state";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 
 type Bounds = [number, number, number, number];
 
@@ -58,7 +58,12 @@ const updateViewPortBounds = (
     return existingViewPortBounds;
 };
 //-----------------------------------------------------------------------------------------------------------
-export function View({ viewContext, workbenchSettings, workbenchServices, workbenchSession }: ModuleViewProps<state>) {
+export function View({
+    viewContext,
+    workbenchSettings,
+    workbenchServices,
+    workbenchSession,
+}: ModuleViewProps<SettingsToViewInterface>) {
     const myInstanceIdStr = viewContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap view`);
     const viewIds = {
@@ -70,12 +75,12 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
 
     const ensembleSet = useEnsembleSet(workbenchSession);
 
-    const meshSurfAddr = viewContext.useStoreValue("meshSurfaceAddress");
-    const propertySurfAddr = viewContext.useStoreValue("propertySurfaceAddress");
-    const polygonsAddr = viewContext.useStoreValue("polygonsAddress");
-    const selectedWellUuids = viewContext.useStoreValue("selectedWellUuids");
-    const surfaceSettings = viewContext.useStoreValue("surfaceSettings");
-    const viewSettings = viewContext.useStoreValue("viewSettings");
+    const meshSurfAddr = viewContext.useSettingsToViewInterfaceValue("meshSurfaceAddress");
+    const propertySurfAddr = viewContext.useSettingsToViewInterfaceValue("propertySurfaceAddress");
+    const polygonsAddr = viewContext.useSettingsToViewInterfaceValue("polygonsAddress");
+    const selectedWellUuids = viewContext.useSettingsToViewInterfaceValue("selectedWellUuids");
+    const surfaceSettings = viewContext.useSettingsToViewInterfaceValue("surfaceSettings");
+    const viewSettings = viewContext.useSettingsToViewInterfaceValue("viewSettings");
     const [resetBounds, toggleResetBounds] = React.useState<boolean>(false);
     const [axesLayer, setAxesLayer] = React.useState<Record<string, unknown> | null>(null);
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);

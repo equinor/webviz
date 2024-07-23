@@ -12,16 +12,20 @@ import { ContentInfo } from "@modules/_shared/components/ContentMessage/contentM
 import { SensitivityChart } from "./sensitivityChart";
 import { SensitivityResponseCalculator, SensitivityResponseDataset } from "./sensitivityResponseCalculator";
 import SensitivityTable from "./sensitivityTable";
-import { DisplayComponentType, State } from "./state";
+import { SettingsToViewInterface } from "./settingsToViewInterface";
 
 import { createSensitivityColorMap } from "../_shared/sensitivityColors";
 
-export const View = ({ viewContext, workbenchSession, workbenchSettings }: ModuleViewProps<State>) => {
-    const showLabels = viewContext.useStoreValue("showLabels");
-    const hideZeroY = viewContext.useStoreValue("hideZeroY");
-    const showRealizationPoints = viewContext.useStoreValue("showRealizationPoints");
-    const displayComponentType = viewContext.useStoreValue("displayComponentType");
-    const referenceSensitivityName = viewContext.useStoreValue("referenceSensitivityName");
+export const View = ({
+    viewContext,
+    workbenchSession,
+    workbenchSettings,
+}: ModuleViewProps<SettingsToViewInterface>) => {
+    const showLabels = viewContext.useSettingsToViewInterfaceValue("showLabels");
+    const hideZeroY = viewContext.useSettingsToViewInterfaceValue("hideZeroY");
+    const showRealizationPoints = viewContext.useSettingsToViewInterfaceValue("showRealizationPoints");
+    const displayComponentType = viewContext.useSettingsToViewInterfaceValue("displayComponentType");
+    const referenceSensitivityName = viewContext.useSettingsToViewInterfaceValue("referenceSensitivityName");
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleSet = useEnsembleSet(workbenchSession);
