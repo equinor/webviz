@@ -33,10 +33,7 @@ export enum ModuleDevState {
 }
 
 export type ModuleSettingsProps<
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = {
@@ -48,10 +45,7 @@ export type ModuleSettingsProps<
 };
 
 export type ModuleViewProps<
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = {
@@ -71,19 +65,13 @@ export type AtomsInitialization<TAtoms extends Record<string, unknown>, TInterfa
 ) => ModuleAtoms<TAtoms>;
 
 export type ModuleSettings<
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = React.FC<ModuleSettingsProps<TInterfaceType, TSettingsAtomsType, TViewAtomsType>>;
 
 export type ModuleView<
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = React.FC<ModuleViewProps<TInterfaceType, TSettingsAtomsType, TViewAtomsType>>;
