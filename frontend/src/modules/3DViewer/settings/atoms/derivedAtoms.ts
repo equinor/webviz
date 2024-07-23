@@ -2,12 +2,12 @@ import { Grid3dDimensions_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
-import { selectedEnsembleIdentAtom } from "@modules/3DViewer/sharedAtoms/sharedAtoms";
 import { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
 
 import { atom } from "jotai";
 
 import {
+    userSelectedEnsembleIdentAtom,
     userSelectedGridCellIndexRangesAtom,
     userSelectedGridModelNameAtom,
     userSelectedGridModelParameterDateOrIntervalAtom,
@@ -16,6 +16,17 @@ import {
     userSelectedWellboreUuidsAtom,
 } from "./baseAtoms";
 import { drilledWellboreHeadersQueryAtom, gridModelInfosQueryAtom } from "./queryAtoms";
+
+export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
+
+    if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
+        return ensembleSet.getEnsembleArr()[0]?.getIdent() || null;
+    }
+
+    return userSelectedEnsembleIdent;
+});
 
 export const availableRealizationsAtom = atom((get) => {
     const ensembleSet = get(EnsembleSetAtom);

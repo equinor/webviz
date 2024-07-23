@@ -3,8 +3,6 @@ Note that shared atoms is just a temporary solution to a use case that does not 
 This is not how it should be done properly, communication between settings and view components should be done 
 through the use of interfaces.
 */
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 
@@ -12,21 +10,9 @@ import { atom } from "jotai";
 
 import {
     userSelectedCustomIntersectionPolylineIdAtom,
-    userSelectedEnsembleIdentAtom,
     userSelectedHighlightedWellboreUuidAtom,
 } from "../settings/atoms/baseAtoms";
 import { drilledWellboreHeadersQueryAtom } from "../settings/atoms/queryAtoms";
-
-export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
-
-    if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
-        return ensembleSet.getEnsembleArr()[0]?.getIdent() || null;
-    }
-
-    return userSelectedEnsembleIdent;
-});
 
 export const selectedHighlightedWellboreUuidAtom = atom((get) => {
     const userSelectedHighlightedWellboreUuid = get(userSelectedHighlightedWellboreUuidAtom);

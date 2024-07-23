@@ -1,4 +1,5 @@
 import { BoundingBox3d_api } from "@api";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { ColorScale } from "@lib/utils/ColorScale";
 
@@ -9,8 +10,10 @@ import {
     showGridlinesAtom,
     showIntersectionAtom,
     useCustomBoundsAtom,
+    userSelectedHighlightedWellboreUuidAtom,
 } from "./settings/atoms/baseAtoms";
 import {
+    selectedEnsembleIdentAtom,
     selectedGridCellIndexRangesAtom,
     selectedGridModelBoundingBox3dAtom,
     selectedGridModelNameAtom,
@@ -21,7 +24,8 @@ import {
 } from "./settings/atoms/derivedAtoms";
 import { GridCellIndexRanges } from "./typesAndEnums";
 
-type SettingsToViewInterface = {
+export type SettingsToViewInterface = {
+    ensembleIdent: EnsembleIdent | null;
     showGridlines: boolean;
     showIntersection: boolean;
     gridLayer: number;
@@ -35,6 +39,7 @@ type SettingsToViewInterface = {
     gridModelParameterName: string | null;
     gridModelParameterDateOrInterval: string | null;
     gridCellIndexRanges: GridCellIndexRanges;
+    userSelectedHighlightedWellboreUuid: string | null;
 };
 
 export type Interfaces = {
@@ -42,6 +47,9 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
+    ensembleIdent: (get) => {
+        return get(selectedEnsembleIdentAtom);
+    },
     showGridlines: (get) => {
         return get(showGridlinesAtom);
     },
@@ -80,5 +88,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     gridCellIndexRanges: (get) => {
         return get(selectedGridCellIndexRangesAtom);
+    },
+    userSelectedHighlightedWellboreUuid: (get) => {
+        return get(userSelectedHighlightedWellboreUuidAtom);
     },
 };

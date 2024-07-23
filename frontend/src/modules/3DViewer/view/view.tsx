@@ -29,7 +29,6 @@ import { userSelectedCustomIntersectionPolylineIdAtom } from "../settings/atoms/
 import {
     editCustomIntersectionPolylineEditModeActiveAtom,
     intersectionTypeAtom,
-    selectedEnsembleIdentAtom,
     selectedHighlightedWellboreUuidAtom,
 } from "../sharedAtoms/sharedAtoms";
 
@@ -50,9 +49,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const highlightedWellboreUuid = useAtomValue(selectedHighlightedWellboreUuidAtom);
 
-    const ensembleIdent = useAtomValue(selectedEnsembleIdentAtom);
     const intersectionPolylines = useIntersectionPolylines(props.workbenchSession);
 
+    const ensembleIdent = props.viewContext.useSettingsToViewInterfaceValue("ensembleIdent");
     const realization = props.viewContext.useSettingsToViewInterfaceValue("realization");
     const wellboreUuids = props.viewContext.useSettingsToViewInterfaceValue("wellboreUuids");
     const gridModelName = props.viewContext.useSettingsToViewInterfaceValue("gridModelName");
