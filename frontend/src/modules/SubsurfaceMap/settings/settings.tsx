@@ -33,7 +33,7 @@ import {
 } from "./atoms/baseAtoms";
 import { AggregationSelector } from "./components/aggregationSelector";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 
 //-----------------------------------------------------------------------------------------------------------
 type LabelledCheckboxProps = {
@@ -59,11 +59,7 @@ const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.TimePoint]: "Time point",
     [SurfaceTimeType.Interval]: "Time interval",
 };
-export function Settings({
-    settingsContext,
-    workbenchSession,
-    workbenchServices,
-}: ModuleSettingsProps<SettingsToViewInterface>) {
+export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
     const myInstanceIdStr = settingsContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap settings`);
 

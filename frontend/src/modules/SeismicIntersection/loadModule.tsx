@@ -1,10 +1,10 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Settings } from "./settings";
-import { SettingsToViewInterface, interfaceInitialization } from "./settingsToViewInterface";
+import { Interfaces, settingsToViewInterfaceInitialization } from "./interfaces";
+import { Settings } from "./settings/settings";
 import { View } from "./view";
 
-const module = ModuleRegistry.initModule<SettingsToViewInterface>("SeismicIntersection", interfaceInitialization);
+const module = ModuleRegistry.initModule<Interfaces>("SeismicIntersection", { settingsToViewInterfaceInitialization });
 
 module.viewFC = View;
 module.settingsFC = Settings;

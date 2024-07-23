@@ -24,7 +24,7 @@ import { useSetAtom } from "jotai";
 import { surfaceAddressAtom } from "./atoms/baseAtoms";
 
 import { AggregationDropdown } from "../UiComponents";
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 
 const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.None]: "Static",
@@ -32,7 +32,7 @@ const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.Interval]: "Time interval",
 };
 //-----------------------------------------------------------------------------------------------------------
-export function MapSettings(props: ModuleSettingsProps<SettingsToViewInterface>) {
+export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [timeType, setTimeType] = React.useState<SurfaceTimeType>(SurfaceTimeType.None);

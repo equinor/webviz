@@ -12,11 +12,11 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
 import { ChannelIds } from "./channelDefs";
+import { Interfaces } from "./interfaces";
 import { useRealizationsResponseQuery } from "./queryHooks";
 import { VolumetricResponseAbbreviations } from "./settings/settings";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
 
-export const View = (props: ModuleViewProps<SettingsToViewInterface>) => {
+export const View = (props: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const ensembleIdent = props.viewContext.useSettingsToViewInterfaceValue("ensembleIdent");

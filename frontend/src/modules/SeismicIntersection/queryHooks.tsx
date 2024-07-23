@@ -1,7 +1,6 @@
 import {
     Body_post_get_seismic_fence_api,
     Body_post_get_surface_intersection_api,
-    SeismicCubeMeta_api,
     SeismicFencePolyline_api,
     SurfaceIntersectionCumulativeLengthPolyline_api,
     SurfaceIntersectionData_api,
@@ -13,19 +12,6 @@ import { SeismicFenceData_trans, transformSeismicFenceData } from "./utils/query
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
-
-export function useSeismicCubeMetaListQuery(
-    caseUuid: string | undefined,
-    ensembleName: string | undefined
-): UseQueryResult<SeismicCubeMeta_api[]> {
-    return useQuery({
-        queryKey: ["getSeismicCubeMetaList", caseUuid, ensembleName],
-        queryFn: () => apiService.seismic.getSeismicCubeMetaList(caseUuid ?? "", ensembleName ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(caseUuid && ensembleName),
-    });
-}
 
 export function useSeismicFenceDataQuery(
     caseUuid: string | null,

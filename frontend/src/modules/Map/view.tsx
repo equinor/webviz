@@ -7,9 +7,9 @@ import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePr
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
-import { SettingsToViewInterface } from "./settingsToViewInterface";
+import { Interfaces } from "./interfaces";
 
-export function MapView(props: ModuleViewProps<SettingsToViewInterface>): React.ReactNode {
+export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const surfaceAddress = props.viewContext.useSettingsToViewInterfaceValue("surfaceAddress");
 
     const statusWriter = useViewStatusWriter(props.viewContext);

@@ -9,12 +9,12 @@ import { createSensitivityColorMap } from "@modules/_shared/sensitivityColors";
 import { indexOf } from "lodash";
 
 import { ChannelIds } from "./channelDefs";
+import { Interfaces } from "./interfaces";
 import {
     useHistoricalVectorDataQuery,
     useStatisticalVectorSensitivityDataQuery,
     useVectorDataQuery,
 } from "./queryHooks";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
 import { HoverInfo, TimeSeriesChart } from "./simulationTimeSeriesChart/chart";
 import { TimeSeriesPlotlyTrace, createStatisticalLineTraces } from "./simulationTimeSeriesChart/traces";
 import { createLineTrace, createRealizationLineTraces } from "./simulationTimeSeriesChart/traces";
@@ -24,7 +24,7 @@ export const View = ({
     workbenchSession,
     workbenchSettings,
     workbenchServices,
-}: ModuleViewProps<SettingsToViewInterface>) => {
+}: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const vectorSpec = viewContext.useSettingsToViewInterfaceValue("vectorSpec");

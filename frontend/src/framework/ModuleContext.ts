@@ -13,6 +13,7 @@
 import { WritableAtom, useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { ChannelContentDefinition, KeyKind } from "./DataChannelTypes";
+import { ModuleInterfaceTypes } from "./Module";
 import {
     ModuleInstance,
     ModuleInstanceTopic,
@@ -26,13 +27,13 @@ import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelRece
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
 export class ModuleContext<
-    TInterfaceType extends InterfaceBaseType,
+    TInterfaceTypes extends ModuleInterfaceTypes,
     TSettingsAtomsType extends Record<string, unknown>,
     TViewAtomsType extends Record<string, unknown>
 > {
-    protected _moduleInstance: ModuleInstance<TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
+    protected _moduleInstance: ModuleInstance<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>;
 
-    constructor(moduleInstance: ModuleInstance<TInterfaceType, TSettingsAtomsType, TViewAtomsType>) {
+    constructor(moduleInstance: ModuleInstance<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>) {
         this._moduleInstance = moduleInstance;
     }
 
@@ -87,9 +88,16 @@ export class ModuleContext<
         });
     }
 
-    useSettingsToViewInterfaceValue<TKey extends keyof TInterfaceType>(key: TKey): TInterfaceType[TKey];
-    useSettingsToViewInterfaceValue<TKey extends keyof TInterfaceType>(key: TKey): TInterfaceType[TKey] {
+    useSettingsToViewInterfaceValue<TKey extends keyof TInterfaceTypes["settingsToView"]>(
+        key: TKey
+    ): TInterfaceTypes["settingsToView"][TKey] {
         return useSettingsToViewInterfaceValue(this._moduleInstance.getUniDirectionalSettingsToViewInterface(), key);
+    }
+
+    useViewToSettingsInterfaceValue<TKey extends keyof TInterfaceTypes["viewToSettings"]>(
+        key: TKey
+    ): TInterfaceTypes["viewToSettings"][TKey] {
+        return useSettingsToViewInterfaceValue(this._moduleInstance.getUniDirectionalViewToSettingsInterface(), key);
     }
 
     useViewAtom<TKey extends keyof TViewAtomsType>(
@@ -153,11 +161,7 @@ export type ViewContext<
     TViewAtomsType extends Record<string, unknown>
 > = Omit<
     ModuleContext<TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
-    | "useSettingsToViewInterfaceState"
-    | "useSetSettingsToViewInterfaceValue"
-    | "useSettingsAtom"
-    | "useSetSettingsAtom"
-    | "useSettingsAtomValue"
+    "useViewToSettingsInterfaceValue" | "useSettingsAtom" | "useSetSettingsAtom" | "useSettingsAtomValue"
 >;
 
 export type SettingsContext<
@@ -166,5 +170,5 @@ export type SettingsContext<
     TViewAtomsType extends Record<string, unknown>
 > = Omit<
     ModuleContext<TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
-    "useViewAtom" | "useViewAtomValue" | "useSetViewAtom"
+    "useSettingsToViewInterfaceValue" | "useViewAtom" | "useViewAtomValue" | "useSetViewAtom"
 >;

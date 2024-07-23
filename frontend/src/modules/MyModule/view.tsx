@@ -7,7 +7,7 @@ import { ColorScaleType } from "@lib/utils/ColorScale";
 
 import { PlotData } from "plotly.js";
 
-import { SettingsToViewInterface } from "./settingsToViewInterface";
+import { Interfaces } from "./interfaces";
 
 const countryData = [
     "Belarus",
@@ -402,7 +402,7 @@ for (let i = 0; i < countryData.length; i += 2) {
     alcConsumption.push(countryData[i + 1] as number);
 }
 
-export const View = (props: ModuleViewProps<SettingsToViewInterface>) => {
+export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const type = props.viewContext.useSettingsToViewInterfaceValue("type");
     const gradientType = props.viewContext.useSettingsToViewInterfaceValue("gradientType");
     const min = props.viewContext.useSettingsToViewInterfaceValue("min");
@@ -444,4 +444,4 @@ export const View = (props: ModuleViewProps<SettingsToViewInterface>) => {
             <Plot data={[data]} layout={layout} />
         </div>
     );
-};
+}

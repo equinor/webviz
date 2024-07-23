@@ -3,11 +3,18 @@ import React, { ErrorInfo } from "react";
 import { AtomStore } from "./AtomStoreMaster";
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
-import { AtomsInitialization, ImportState, Module, ModuleAtoms, ModuleSettings, ModuleView } from "./Module";
+import {
+    AtomsInitialization,
+    ImportState,
+    Module,
+    ModuleAtoms,
+    ModuleInterfaceTypes,
+    ModuleSettings,
+    ModuleView,
+} from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { SyncSettingKey } from "./SyncSettings";
 import {
-    InterfaceBaseType,
     InterfaceInitialization,
     UniDirectionalModuleComponentsInterface,
 } from "./UniDirectionalModuleComponentsInterface";
@@ -37,11 +44,11 @@ export type ModuleInstanceTopicValueTypes = {
 };
 
 export interface ModuleInstanceOptions<
-    TInterfaceType extends InterfaceBaseType,
+    TInterfaceTypes extends ModuleInterfaceTypes,
     TSettingsAtomsType extends Record<string, unknown>,
     TViewAtomsType extends Record<string, unknown>
 > {
-    module: Module<TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
+    module: Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>;
     workbench: Workbench;
     instanceNumber: number;
     channelDefinitions: ChannelDefinition[] | null;
@@ -49,42 +56,37 @@ export interface ModuleInstanceOptions<
 }
 
 export class ModuleInstance<
-    TInterfaceType extends InterfaceBaseType,
+    TInterfaceTypes extends ModuleInterfaceTypes,
     TSettingsAtomsType extends Record<string, unknown>,
     TViewAtomsType extends Record<string, unknown>
 > {
     private _id: string;
     private _title: string;
-    private _initialized: boolean;
-    private _moduleInstanceState: ModuleInstanceState;
-    private _fatalError: { err: Error; errInfo: ErrorInfo } | null;
-    private _syncedSettingKeys: SyncSettingKey[];
-    private _module: Module<TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
-    private _context: ModuleContext<TInterfaceType, TSettingsAtomsType, TViewAtomsType> | null;
+    private _initialized: boolean = false;
+    private _moduleInstanceState: ModuleInstanceState = ModuleInstanceState.INITIALIZING;
+    private _fatalError: { err: Error; errInfo: ErrorInfo } | null = null;
+    private _syncedSettingKeys: SyncSettingKey[] = [];
+    private _module: Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>;
+    private _context: ModuleContext<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> | null = null;
     private _subscribers: Map<keyof ModuleInstanceTopicValueTypes, Set<() => void>> = new Map();
-    private _initialSettings: InitialSettings | null;
-    private _statusController: ModuleInstanceStatusControllerInternal;
+    private _initialSettings: InitialSettings | null = null;
+    private _statusController: ModuleInstanceStatusControllerInternal = new ModuleInstanceStatusControllerInternal();
     private _channelManager: ChannelManager;
     private _workbench: Workbench;
-    private _settingsViewInterface: UniDirectionalModuleComponentsInterface<TInterfaceType> | null;
-    private _settingsAtoms: ModuleAtoms<TSettingsAtomsType> | null;
-    private _viewAtoms: ModuleAtoms<TViewAtomsType> | null;
+    private _settingsToViewInterface: UniDirectionalModuleComponentsInterface<
+        Exclude<TInterfaceTypes["settingsToView"], undefined>
+    > | null = null;
+    private _viewToSettingsInterface: UniDirectionalModuleComponentsInterface<
+        Exclude<TInterfaceTypes["viewToSettings"], undefined>
+    > | null = null;
+    private _settingsAtoms: ModuleAtoms<TSettingsAtomsType> | null = null;
+    private _viewAtoms: ModuleAtoms<TViewAtomsType> | null = null;
 
-    constructor(options: ModuleInstanceOptions<TInterfaceType, TSettingsAtomsType, TViewAtomsType>) {
+    constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
-        this._context = null;
-        this._initialized = false;
-        this._syncedSettingKeys = [];
-        this._moduleInstanceState = ModuleInstanceState.INITIALIZING;
-        this._fatalError = null;
-        this._initialSettings = null;
-        this._statusController = new ModuleInstanceStatusControllerInternal();
         this._workbench = options.workbench;
-        this._settingsViewInterface = null;
-        this._settingsAtoms = null;
-        this._viewAtoms = null;
 
         this._channelManager = new ChannelManager(this._id);
 
@@ -106,11 +108,22 @@ export class ModuleInstance<
         return this._workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(this._id);
     }
 
-    getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<TInterfaceType> {
-        if (!this._settingsViewInterface) {
+    getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
+        Exclude<TInterfaceTypes["settingsToView"], undefined>
+    > {
+        if (!this._settingsToViewInterface) {
             throw `Module instance '${this._title}' does not have an interface yet. Did you forget to init the module?`;
         }
-        return this._settingsViewInterface;
+        return this._settingsToViewInterface;
+    }
+
+    getUniDirectionalViewToSettingsInterface(): UniDirectionalModuleComponentsInterface<
+        Exclude<TInterfaceTypes["viewToSettings"], undefined>
+    > {
+        if (!this._viewToSettingsInterface) {
+            throw `Module instance '${this._title}' does not have an interface yet. Did you forget to init the module?`;
+        }
+        return this._viewToSettingsInterface;
     }
 
     getSettingsAtom<TKey extends keyof TSettingsAtomsType>(key: TKey): ModuleAtoms<TSettingsAtomsType>[TKey] {
@@ -132,27 +145,45 @@ export class ModuleInstance<
     }
 
     initialize(): void {
-        this._context = new ModuleContext<TInterfaceType, TSettingsAtomsType, TViewAtomsType>(this);
+        this._context = new ModuleContext<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>(this);
         this._initialized = true;
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }
 
-    makeSettingsToViewInterface(interfaceInitialization: InterfaceInitialization<TInterfaceType>) {
-        this._settingsViewInterface = new UniDirectionalModuleComponentsInterface(interfaceInitialization);
+    makeSettingsToViewInterface(
+        interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>
+    ) {
+        if (!interfaceInitialization) {
+            return;
+        }
+        this._settingsToViewInterface = new UniDirectionalModuleComponentsInterface(interfaceInitialization);
     }
 
-    makeSettingsAtoms(initFunc: AtomsInitialization<TSettingsAtomsType, TInterfaceType>) {
-        if (!this._settingsViewInterface) {
-            throw `Module instance '${this._title}' does not have an interface yet. Did you forget to init the module?`;
+    makeViewToSettingsInterface(
+        interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>
+    ) {
+        if (!interfaceInitialization) {
+            return;
         }
-        this._settingsAtoms = initFunc(this._settingsViewInterface);
+        this._viewToSettingsInterface = new UniDirectionalModuleComponentsInterface(interfaceInitialization);
     }
 
-    makeViewAtoms(initFunc: AtomsInitialization<TViewAtomsType, TInterfaceType>) {
-        if (!this._settingsViewInterface) {
+    makeSettingsAtoms(
+        initFunc: AtomsInitialization<TSettingsAtomsType, Exclude<TInterfaceTypes["viewToSettings"], undefined>>
+    ) {
+        if (!this._settingsToViewInterface) {
             throw `Module instance '${this._title}' does not have an interface yet. Did you forget to init the module?`;
         }
-        this._viewAtoms = initFunc(this._settingsViewInterface);
+        this._settingsAtoms = initFunc(this._settingsToViewInterface);
+    }
+
+    makeViewAtoms(
+        initFunc: AtomsInitialization<TViewAtomsType, Exclude<TInterfaceTypes["settingsToView"], undefined>>
+    ) {
+        if (!this._settingsToViewInterface) {
+            throw `Module instance '${this._title}' does not have an interface yet. Did you forget to init the module?`;
+        }
+        this._viewAtoms = initFunc(this._settingsToViewInterface);
     }
 
     addSyncedSetting(settingKey: SyncSettingKey): void {
@@ -177,11 +208,11 @@ export class ModuleInstance<
         return this._initialized;
     }
 
-    getViewFC(): ModuleView<TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
+    getViewFC(): ModuleView<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
         return this._module.viewFC;
     }
 
-    getSettingsFC(): ModuleSettings<TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
+    getSettingsFC(): ModuleSettings<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
         return this._module.settingsFC;
     }
 
@@ -189,7 +220,7 @@ export class ModuleInstance<
         return this._module.getImportState();
     }
 
-    getContext(): ModuleContext<TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
+    getContext(): ModuleContext<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
         if (!this._context) {
             throw `Module context is not available yet. Did you forget to init the module '${this._title}.'?`;
         }
@@ -256,7 +287,7 @@ export class ModuleInstance<
         return snapshotGetter;
     }
 
-    getModule(): Module<TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
+    getModule(): Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
         return this._module;
     }
 

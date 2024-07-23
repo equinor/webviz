@@ -2,13 +2,13 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
+import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
 import { ViewAtoms } from "./view/atoms/atomDefinitions";
 
 export const MODULE_NAME = "Intersection";
 
-ModuleRegistry.registerModule<SettingsToViewInterface, Record<string, never>, ViewAtoms>({
+ModuleRegistry.registerModule<Interfaces, Record<string, never>, ViewAtoms>({
     moduleName: MODULE_NAME,
     defaultTitle: "Intersection",
     category: ModuleCategory.MAIN,

@@ -16,13 +16,12 @@ import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useSubplotBuilder } from "./hooks/useSubplotBuilder";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 
-import { SettingsAtoms } from "../settings/atoms/atomDefinitions";
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 
 export const View = ({
     viewContext,
     workbenchSettings,
-}: ModuleViewProps<SettingsToViewInterface, SettingsAtoms, ViewAtoms>) => {
+}: ModuleViewProps<Interfaces, Record<string, never>, ViewAtoms>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 

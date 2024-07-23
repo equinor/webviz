@@ -14,7 +14,7 @@ import { Warning } from "@mui/icons-material";
 
 import { Layout, PlotData } from "plotly.js";
 
-import { SettingsToViewInterface } from "./settingsToViewInterface";
+import { Interfaces } from "./interfaces";
 import { PlotType } from "./typesAndEnums";
 import { makeHistogramTrace } from "./utils/histogram";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
@@ -34,7 +34,7 @@ const MaxNumberPlotsExceededMessage: React.FC = () => {
 
 MaxNumberPlotsExceededMessage.displayName = "MaxNumberPlotsExceededMessage";
 
-export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<SettingsToViewInterface>) => {
+export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberX, setRevNumberX] = React.useState<number>(0);

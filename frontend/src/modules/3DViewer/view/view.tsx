@@ -24,17 +24,16 @@ import { useGridPolylineIntersection as useGridPolylineIntersectionQuery } from 
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 import { makeAxesLayer, makeGrid3DLayer, makeIntersectionLayer, makeWellsLayer } from "./utils/layers";
 
+import { Interfaces } from "../interfaces";
 import { userSelectedCustomIntersectionPolylineIdAtom } from "../settings/atoms/baseAtoms";
-import { SettingsToViewInterface } from "../settingsToViewInterface";
 import {
     editCustomIntersectionPolylineEditModeActiveAtom,
     intersectionTypeAtom,
     selectedEnsembleIdentAtom,
     selectedHighlightedWellboreUuidAtom,
 } from "../sharedAtoms/sharedAtoms";
-import { State } from "../state";
 
-export function View(props: ModuleViewProps<SettingsToViewInterface>): React.ReactNode {
+export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const syncedSettingKeys = props.viewContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);

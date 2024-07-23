@@ -16,10 +16,10 @@ import { isEqual } from "lodash";
 
 import Legend from "./components/Legend";
 import { EsvIntersection } from "./components/esvIntersection";
+import { Interfaces } from "./interfaces";
 import { useSampleSurfaceInPointsQueries } from "./queryHooks";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
 
-export const View = ({ viewContext }: ModuleViewProps<SettingsToViewInterface>) => {
+export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 

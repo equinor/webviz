@@ -20,8 +20,8 @@ import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePr
 
 import { isEqual } from "lodash";
 
+import { Interfaces } from "./interfaces";
 import { useSeismicFenceDataQuery, useSurfaceIntersectionQueries } from "./queryHooks";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
 import { WellborePickSelectionType } from "./typesAndEnums";
 import {
     addMDOverlay,
@@ -45,7 +45,7 @@ import {
     useGenerateSeismicSliceImageData,
 } from "./utils/esvIntersectionHooks";
 
-export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<SettingsToViewInterface>) => {
+export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>): React.ReactNode {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
     const esvIntersectionContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -328,4 +328,4 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Setting
             )}
         </div>
     );
-};
+}

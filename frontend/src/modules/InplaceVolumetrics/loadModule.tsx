@@ -1,10 +1,10 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
+import { Interfaces, settingsToViewInterfaceInitialization } from "./interfaces";
 import { Settings } from "./settings/settings";
-import { SettingsToViewInterface, interfaceInitialization } from "./settingsToViewInterface";
 import { View } from "./view";
 
-const module = ModuleRegistry.initModule<SettingsToViewInterface>("InplaceVolumetrics", interfaceInitialization);
+const module = ModuleRegistry.initModule<Interfaces>("InplaceVolumetrics", { settingsToViewInterfaceInitialization });
 
 module.viewFC = View;
 module.settingsFC = Settings;

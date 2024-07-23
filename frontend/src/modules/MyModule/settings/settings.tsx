@@ -11,9 +11,9 @@ import { useAtom } from "jotai";
 
 import { divMidPointAtom, gradientTypeAtom, maxAtom, minAtom, typeAtom } from "./atoms/baseAtoms";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 
-export const settings = (props: ModuleSettingsProps<SettingsToViewInterface>) => {
+export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [type, setType] = useAtom(typeAtom);
     const [gradientType, setGradientType] = useAtom(gradientTypeAtom);
     const [min, setMin] = useAtom(minAtom);
@@ -111,4 +111,4 @@ export const settings = (props: ModuleSettingsProps<SettingsToViewInterface>) =>
             )}
         </div>
     );
-};
+}

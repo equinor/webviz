@@ -6,7 +6,7 @@ import { UniDirectionalModuleComponentsInterface } from "@framework/UniDirection
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
-import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
+import { SettingsToViewInterface } from "@modules/Intersection/interfaces";
 import { CURVE_FITTING_EPSILON } from "@modules/Intersection/typesAndEnums";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
 import { QueryObserverResult } from "@tanstack/react-query";

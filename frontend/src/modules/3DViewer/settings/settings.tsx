@@ -59,7 +59,7 @@ import { drilledWellboreHeadersQueryAtom, gridModelInfosQueryAtom } from "./atom
 import { GridCellIndexFilter } from "./components/gridCellIndexFilter";
 import { WellboreSelector } from "./components/wellboreSelector";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 import {
     addCustomIntersectionPolylineEditModeActiveAtom,
     editCustomIntersectionPolylineEditModeActiveAtom,
@@ -67,10 +67,9 @@ import {
     selectedEnsembleIdentAtom,
     selectedHighlightedWellboreUuidAtom,
 } from "../sharedAtoms/sharedAtoms";
-import { State } from "../state";
 import { GridCellIndexRanges } from "../typesAndEnums";
 
-export function Settings(props: ModuleSettingsProps<SettingsToViewInterface>): JSX.Element {
+export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 

@@ -1,9 +1,9 @@
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
-import { AtomsInitialization, Module, ModuleCategory, ModuleDevState } from "./Module";
+import { AtomsInitialization, Module, ModuleCategory, ModuleDevState, ModuleInterfaceTypes } from "./Module";
 import { ModuleDataTagId } from "./ModuleDataTags";
 import { DrawPreviewFunc } from "./Preview";
 import { SyncSettingKey } from "./SyncSettings";
-import { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
+import { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder";
 
 export type RegisterModuleOptions = {
@@ -37,11 +37,11 @@ export class ModuleRegistry {
     private constructor() {}
 
     static registerModule<
-        TInterfaceType extends InterfaceBaseType = Record<string, never>,
+        TInterfaceTypes extends ModuleInterfaceTypes,
         TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
         TViewAtomsType extends Record<string, unknown> = Record<string, never>
-    >(options: RegisterModuleOptions): Module<TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
-        const module = new Module<TInterfaceType, TSettingsAtomsType, TViewAtomsType>({
+    >(options: RegisterModuleOptions): Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
+        const module = new Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>({
             name: options.moduleName,
             defaultTitle: options.defaultTitle,
             category: options.category,
@@ -58,27 +58,43 @@ export class ModuleRegistry {
     }
 
     static initModule<
-        TInterfaceType extends InterfaceBaseType = Record<string, never>,
+        TInterfaceTypes extends ModuleInterfaceTypes,
         TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
         TViewAtomsType extends Record<string, unknown> = Record<string, never>
     >(
         moduleName: string,
-        interfaceInitialization?: InterfaceInitialization<TInterfaceType>,
-        settingsAtomsInitialization?: AtomsInitialization<TSettingsAtomsType, TInterfaceType>,
-        viewAtomsInitialization?: AtomsInitialization<TViewAtomsType, TInterfaceType>
-    ): Module<TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
+        options: {
+            settingsToViewInterfaceInitialization?: TInterfaceTypes["settingsToView"] extends undefined
+                ? undefined
+                : InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
+            viewToSettingsInterfaceInitialization?: TInterfaceTypes["viewToSettings"] extends undefined
+                ? undefined
+                : InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
+            settingsAtomsInitialization?: AtomsInitialization<
+                TSettingsAtomsType,
+                Exclude<TInterfaceTypes["viewToSettings"], undefined>
+            >;
+            viewAtomsInitialization?: AtomsInitialization<
+                TViewAtomsType,
+                Exclude<TInterfaceTypes["settingsToView"], undefined>
+            >;
+        }
+    ): Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            if (interfaceInitialization) {
-                module.setSettingsToViewInterfaceInitialization(interfaceInitialization);
+            if (options.settingsToViewInterfaceInitialization) {
+                module.setSettingsToViewInterfaceInitialization(options.settingsToViewInterfaceInitialization);
             }
-            if (settingsAtomsInitialization) {
-                module.setSettingsAtomsInitialization(settingsAtomsInitialization);
+            if (options.viewToSettingsInterfaceInitialization) {
+                module.setViewToSettingsInterfaceInitialization(options.viewToSettingsInterfaceInitialization);
             }
-            if (viewAtomsInitialization) {
-                module.setViewAtomsInitialization(viewAtomsInitialization);
+            if (options.settingsAtomsInitialization) {
+                module.setSettingsAtomsInitialization(options.settingsAtomsInitialization);
             }
-            return module as Module<TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
+            if (options.viewAtomsInitialization) {
+                module.setViewAtomsInitialization(options.viewAtomsInitialization);
+            }
+            return module as Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>;
         }
         throw new ModuleNotFoundError(moduleName);
     }

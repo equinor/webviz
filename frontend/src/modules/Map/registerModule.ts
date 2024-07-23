@@ -2,13 +2,13 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
-import { SettingsToViewInterface } from "@modules/3DViewer/settingsToViewInterface";
 
+import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
 const description = "Plotting of surfaces in a 2D top view.";
 
-ModuleRegistry.registerModule<SettingsToViewInterface>({
+ModuleRegistry.registerModule<Interfaces>({
     moduleName: "Map",
     defaultTitle: "Map",
     category: ModuleCategory.MAIN,

@@ -2,14 +2,14 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
+import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
-import { Interface, State } from "./settingsToViewInterface";
 
 export const MODULE_NAME = "FlowNetwork";
 
 const description = "Visualizes dated group trees over time.";
 
-ModuleRegistry.registerModule<State, Interface>({
+ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     defaultTitle: "Flow Network",
     category: ModuleCategory.MAIN,

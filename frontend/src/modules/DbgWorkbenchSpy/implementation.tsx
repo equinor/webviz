@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleSet } from "@framework/EnsembleSet";
-import { ModuleSettingsProps, ModuleViewProps } from "@framework/Module";
+import { ModuleViewProps } from "@framework/Module";
 import { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
@@ -9,12 +9,12 @@ import { Button } from "@lib/components/Button";
 
 import { atom, useSetAtom } from "jotai";
 
-import { SettingsToViewInterface } from "./settingsToViewInterface";
+import { Interfaces } from "./interfaces";
 
 export const triggeredRefreshCounterAtom = atom<number>(0);
 
 //-----------------------------------------------------------------------------------------------------------
-export function WorkbenchSpySettings(props: ModuleSettingsProps<SettingsToViewInterface>) {
+export function WorkbenchSpySettings() {
     const setRefreshCounter = useSetAtom(triggeredRefreshCounterAtom);
     return (
         <div>
@@ -24,7 +24,7 @@ export function WorkbenchSpySettings(props: ModuleSettingsProps<SettingsToViewIn
 }
 
 //-----------------------------------------------------------------------------------------------------------
-export function WorkbenchSpyView(props: ModuleViewProps<SettingsToViewInterface>) {
+export function WorkbenchSpyView(props: ModuleViewProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS(
         "global.hoverRealization",

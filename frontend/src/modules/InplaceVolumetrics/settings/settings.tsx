@@ -17,8 +17,8 @@ import { useAtom } from "jotai";
 
 import { categoricalFilterAtom, ensembleIdentAtom, responseNameAtom, tableNameAtom } from "./atoms/baseAtoms";
 
+import { Interfaces } from "../interfaces";
 import { useTableDescriptionsQuery } from "../queryHooks";
-import { SettingsToViewInterface } from "../settingsToViewInterface";
 
 //-----------------------------------------------------------------------------------------------------------
 
@@ -100,7 +100,7 @@ function getTableResponseOptions(
     return responsesToSelectOptions(responses);
 }
 
-export function Settings({ workbenchSession }: ModuleSettingsProps<SettingsToViewInterface>) {
+export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [ensembleIdent, setEnsembleIdent] = useAtom(ensembleIdentAtom);
     const [tableName, setTableName] = useAtom(tableNameAtom);

@@ -26,8 +26,8 @@ import {
     createWellboreTrajectoryLayer,
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
+import { Interfaces } from "./interfaces";
 import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
 
 type Bounds = [number, number, number, number];
 
@@ -63,7 +63,7 @@ export function View({
     workbenchSettings,
     workbenchServices,
     workbenchSession,
-}: ModuleViewProps<SettingsToViewInterface>) {
+}: ModuleViewProps<Interfaces>) {
     const myInstanceIdStr = viewContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap view`);
     const viewIds = {

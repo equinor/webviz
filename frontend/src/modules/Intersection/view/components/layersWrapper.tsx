@@ -18,7 +18,7 @@ import { SurfaceStatisticalFanchart } from "@framework/components/EsvIntersectio
 import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@framework/components/EsvIntersection/utils/surfaceStatisticalFancharts";
 import { IntersectionType } from "@framework/types/intersection";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
+import { Interfaces } from "@modules/Intersection/interfaces";
 import { BaseLayer, LayerStatus, useLayers } from "@modules/Intersection/utils/layers/BaseLayer";
 import { GridLayer, isGridLayer } from "@modules/Intersection/utils/layers/GridLayer";
 import { SeismicLayer, isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer";
@@ -41,7 +41,7 @@ export type LayersWrapperProps = {
     intersectionExtensionLength: number;
     intersectionType: IntersectionType;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<SettingsToViewInterface, Record<string, never>, ViewAtoms>;
+    viewContext: ViewContext<Interfaces, Record<string, never>, ViewAtoms>;
     wellboreHeaderUuid: string | null;
     wellboreHeaderDepthReferencePoint: string | null;
     wellboreHeaderDepthReferenceElevation: number | null;

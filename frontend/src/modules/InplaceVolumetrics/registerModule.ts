@@ -3,11 +3,11 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { channelDefs } from "./channelDefs";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
+import { Interfaces } from "./interfaces";
 
 const description = "Plotting of in-place volumetric distributions.";
 
-ModuleRegistry.registerModule<SettingsToViewInterface>({
+ModuleRegistry.registerModule<Interfaces>({
     moduleName: "InplaceVolumetrics",
     defaultTitle: "Inplace volumetrics",
     channelDefinitions: channelDefs,

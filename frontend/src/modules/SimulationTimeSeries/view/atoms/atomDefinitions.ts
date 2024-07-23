@@ -9,7 +9,7 @@ import { apiService } from "@framework/ApiService";
 import { ModuleAtoms } from "@framework/Module";
 import { UniDirectionalModuleComponentsInterface } from "@framework/UniDirectionalModuleComponentsInterface";
 import { atomWithQueries } from "@framework/utils/atomUtils";
-import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/interfaces";
 import {
     EnsembleVectorObservationDataMap,
     VectorSpec,

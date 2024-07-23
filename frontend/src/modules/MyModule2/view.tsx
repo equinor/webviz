@@ -1,11 +1,9 @@
-import React from "react";
-
 import { ModuleViewProps } from "@framework/Module";
 import { Label } from "@lib/components/Label";
 
-import { SettingsToViewInterface } from "./settingsToViewInterface";
+import { Interfaces } from "./interfaces";
 
-export const View = (props: ModuleViewProps<SettingsToViewInterface>) => {
+export const View = (props: ModuleViewProps<Interfaces>) => {
     const text = props.viewContext.useSettingsToViewInterfaceValue("text");
     const derivedText = props.viewContext.useSettingsToViewInterfaceValue("derivedText");
 

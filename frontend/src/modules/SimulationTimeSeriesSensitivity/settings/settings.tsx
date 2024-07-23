@@ -30,15 +30,11 @@ import {
 } from "./atoms/baseAtoms";
 import { useVectorListQuery } from "./hooks/queryHooks";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 
 //-----------------------------------------------------------------------------------------------------------
 
-export function Settings({
-    settingsContext,
-    workbenchSession,
-    workbenchServices,
-}: ModuleSettingsProps<SettingsToViewInterface>) {
+export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);

@@ -7,15 +7,16 @@ import { ContentError } from "@modules/_shared/components/ContentMessage";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { WellCompletionsPlot } from "@webviz/well-completions-plot";
 
-import { DataLoadingStatus, State } from "./state";
+import { Interfaces } from "./interfaces";
+import { DataLoadingStatus } from "./state";
 
-export const View = ({ viewContext }: ModuleViewProps<State>) => {
+export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
     const wellCompletionsPlotId = React.useId();
     const statusWriter = useViewStatusWriter(viewContext);
 
-    const plotData = viewContext.useStoreValue("plotData");
-    const availableTimeSteps = viewContext.useStoreValue("availableTimeSteps");
-    const dataLoadingStatus = viewContext.useStoreValue("dataLoadingStatus");
+    const plotData = viewContext.useSettingsToViewInterfaceValue("plotData");
+    const availableTimeSteps = viewContext.useSettingsToViewInterfaceValue("availableTimeSteps");
+    const dataLoadingStatus = viewContext.useSettingsToViewInterfaceValue("dataLoadingStatus");
 
     statusWriter.setLoading(dataLoadingStatus === DataLoadingStatus.Loading);
 

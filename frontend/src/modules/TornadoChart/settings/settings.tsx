@@ -18,15 +18,16 @@ import {
     showRealizationPointsAtom,
 } from "./atoms/baseAtoms";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 import { DisplayComponentType } from "../typesAndEnums";
 
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<SettingsToViewInterface>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [displayComponentType, setDisplayComponentType] = useAtom(displayComponentTypeAtom);
     const [hideZeroY, setHideZeroY] = useAtom(hideZeroYAtom);
     const [showLabels, setShowLabels] = useAtom(showLabelsAtom);
     const [showRealizationPoints, setShowRealizationPoints] = useAtom(showRealizationPointsAtom);
     const setModuleReferenceSensitivityName = useSetAtom(referenceSensitivityNameAtom);
+    // const selectedSensitivity = settingsContext.useViewToSettingsInterfaceValue("selectedSensitivity");
     const [referenceSensitivityName, setReferenceSensitivityName] = React.useState<string | null>(null);
 
     const ensembleSet = workbenchSession.getEnsembleSet();

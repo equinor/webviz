@@ -1,9 +1,11 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { WorkbenchSpySettings, WorkbenchSpyView } from "./implementation";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
+import { Interfaces, settingsToViewInterfaceInitialization } from "./interfaces";
 
-const module = ModuleRegistry.initModule<SettingsToViewInterface>("DbgWorkbenchSpy");
+const module = ModuleRegistry.initModule<Interfaces>("DbgWorkbenchSpy", {
+    settingsToViewInterfaceInitialization,
+});
 
 module.viewFC = WorkbenchSpyView;
 module.settingsFC = WorkbenchSpySettings;

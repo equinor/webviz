@@ -2,15 +2,14 @@ import { Ensemble } from "@framework/Ensemble";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { ViewContext } from "@framework/ModuleContext";
 import { ViewStatusWriter } from "@framework/StatusWriter";
-import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
-import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { useAtomValue } from "jotai";
 
 import { ViewAtoms } from "../atoms/atomDefinitions";
 
 export function useMakeViewStatusWriterMessages(
-    viewContext: ViewContext<SettingsToViewInterface, SettingsAtoms, ViewAtoms>,
+    viewContext: ViewContext<Interfaces, Record<string, never>, ViewAtoms>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
     ensemblesWithoutParameter: Ensemble[]

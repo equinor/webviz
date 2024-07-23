@@ -3,16 +3,15 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { channelDefs } from "./channelDefs";
+import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
-import { SettingsAtoms } from "./settings/atoms/atomDefinitions";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
 import { ViewAtoms } from "./view/atoms/atomDefinitions";
 
 export const MODULE_NAME = "SimulationTimeSeries";
 
 const description = "Plotting of simulation time series data.";
 
-ModuleRegistry.registerModule<SettingsToViewInterface, SettingsAtoms, ViewAtoms>({
+ModuleRegistry.registerModule<Interfaces, Record<string, never>, ViewAtoms>({
     moduleName: MODULE_NAME,
     defaultTitle: "Simulation Time Series",
     category: ModuleCategory.MAIN,

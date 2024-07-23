@@ -2,8 +2,7 @@ import { SummaryVectorObservations_api } from "@api";
 import { ViewContext } from "@framework/ModuleContext";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { Size2D } from "@lib/utils/geometry";
-import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
-import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { Layout } from "plotly.js";
 
@@ -20,7 +19,7 @@ import {
 } from "../utils/vectorSpecificationsAndQueriesUtils";
 
 export function useSubplotBuilder(
-    viewContext: ViewContext<SettingsToViewInterface, SettingsAtoms, ViewAtoms>,
+    viewContext: ViewContext<Interfaces, Record<string, never>, ViewAtoms>,
     wrapperDivSize: Size2D,
     colorSet: ColorSet,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null

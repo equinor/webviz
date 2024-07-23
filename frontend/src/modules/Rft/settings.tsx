@@ -13,9 +13,9 @@ import { Select, SelectOption } from "@lib/components/Select";
 import { useAtom } from "jotai";
 import { isEqual } from "lodash";
 
+import { Interfaces } from "./interfaces";
 import { useRftWellList } from "./queryHooks";
 import { rftWellAddressAtom } from "./settings/atoms/baseAtoms";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
 import { RftWellAddress } from "./typesAndEnums";
 
 //Helpers to populate dropdowns
@@ -29,11 +29,7 @@ const timepointOptions = (timePoints: number[]): SelectOption[] => {
     }));
 };
 
-export function Settings({
-    settingsContext,
-    workbenchServices,
-    workbenchSession,
-}: ModuleSettingsProps<SettingsToViewInterface>) {
+export function Settings({ settingsContext, workbenchServices, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const [rftWellAddress, setRftWellAddress] = useAtom(rftWellAddressAtom);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);

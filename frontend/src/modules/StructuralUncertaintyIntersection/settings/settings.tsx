@@ -37,7 +37,7 @@ import {
 import { IntersectionSettingsSelect } from "./components/intersectionSettings";
 import { RealizationsSelect } from "./components/realizationsSelect";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 import {
     StatisticFunctionEnumToStringMapping,
     StratigraphyColorMap,
@@ -51,7 +51,7 @@ export function Settings({
     workbenchSession,
     workbenchSettings,
     workbenchServices,
-}: ModuleSettingsProps<SettingsToViewInterface>) {
+}: ModuleSettingsProps<Interfaces>) {
     const syncedSettingKeys = settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");

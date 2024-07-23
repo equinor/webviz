@@ -1,10 +1,12 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Settings } from "./settings";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
+import { Interfaces, settingsToViewInterfaceInitialization } from "./interfaces";
+import { Settings } from "./settings/settings";
 import { View } from "./view";
 
-const module = ModuleRegistry.initModule<SettingsToViewInterface>("DistributionPlot");
+const module = ModuleRegistry.initModule<Interfaces>("DistributionPlot", {
+    settingsToViewInterfaceInitialization,
+});
 
 module.viewFC = View;
 module.settingsFC = Settings;
