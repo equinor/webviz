@@ -22,7 +22,7 @@ import {
 } from "./ModuleInstance";
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { SyncSettingKey } from "./SyncSettings";
-import { InterfaceBaseType, useSettingsToViewInterfaceValue } from "./UniDirectionalModuleComponentsInterface";
+import { InterfaceBaseType, useInterfaceValue } from "./UniDirectionalModuleComponentsInterface";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
@@ -91,13 +91,13 @@ export class ModuleContext<
     useSettingsToViewInterfaceValue<TKey extends keyof TInterfaceTypes["settingsToView"]>(
         key: TKey
     ): TInterfaceTypes["settingsToView"][TKey] {
-        return useSettingsToViewInterfaceValue(this._moduleInstance.getUniDirectionalSettingsToViewInterface(), key);
+        return useInterfaceValue(this._moduleInstance.getUniDirectionalSettingsToViewInterface(), key);
     }
 
     useViewToSettingsInterfaceValue<TKey extends keyof TInterfaceTypes["viewToSettings"]>(
         key: TKey
     ): TInterfaceTypes["viewToSettings"][TKey] {
-        return useSettingsToViewInterfaceValue(this._moduleInstance.getUniDirectionalViewToSettingsInterface(), key);
+        return useInterfaceValue(this._moduleInstance.getUniDirectionalViewToSettingsInterface(), key);
     }
 
     useViewAtom<TKey extends keyof TViewAtomsType>(

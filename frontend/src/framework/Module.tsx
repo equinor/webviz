@@ -304,11 +304,14 @@ export class Module<
                     instance.initialize();
                     if (this._settingsToViewInterfaceInitialization) {
                         instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);
-                        if (this._settingsAtomsInitialization) {
-                            instance.makeSettingsAtoms(this._settingsAtomsInitialization);
-                        }
                         if (this._viewAtomsInitialization) {
                             instance.makeViewAtoms(this._viewAtomsInitialization);
+                        }
+                    }
+                    if (this._viewToSettingsInterfaceInitialization) {
+                        instance.makeViewToSettingsInterface(this._viewToSettingsInterfaceInitialization);
+                        if (this._settingsAtomsInitialization) {
+                            instance.makeSettingsAtoms(this._settingsAtomsInitialization);
                         }
                     }
                 });

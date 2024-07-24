@@ -1,45 +1,33 @@
-import { WellboreTrajectory_api } from "@api";
-import { apiService } from "@framework/ApiService";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { ModuleAtoms } from "@framework/Module";
 import { UniDirectionalModuleComponentsInterface } from "@framework/UniDirectionalModuleComponentsInterface";
-import { SettingsToViewInterface } from "@modules/3DViewer/interfaces";
-import { UseQueryResult } from "@tanstack/react-query";
+import { IntersectionType } from "@framework/types/intersection";
+import { ViewToSettingsInterface } from "@modules/3DViewer/interfaces";
 
-import { atomWithQuery } from "jotai-tanstack-query";
+import { atom } from "jotai";
 
-type ViewAtoms = {
-    fieldWellboreTrajectoriesQueryAtom: UseQueryResult<WellboreTrajectory_api[], Error>;
+import { intersectionTypeAtom as viewIntersectionTypeAtom } from "./baseAtoms";
+
+export type SettingsAtoms = {
+    editCustomIntersectionPolylineEditModeActive: boolean;
+    intersectionType: IntersectionType;
 };
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
+export function settingsAtomsInitialization(
+    viewToSettingsInterface: UniDirectionalModuleComponentsInterface<ViewToSettingsInterface>
+): ModuleAtoms<SettingsAtoms> {
+    const editCustomIntersectionPolylineEditModeActive = atom((get) => {
+        return get(viewToSettingsInterface.getAtom("editCustomIntersectionPolylineEditModeActive"));
+    });
 
-export function viewAtomsInitialization(
-    settingsToViewInterface: UniDirectionalModuleComponentsInterface<SettingsToViewInterface>
-): ModuleAtoms<ViewAtoms> {
-    const fieldWellboreTrajectoriesQueryAtom = atomWithQuery((get) => {
-        const ensembleIdent = get(settingsToViewInterface.getAtom("ensembleIdent"));
-        const ensembleSet = get(EnsembleSetAtom);
+    const intersectionType = atom((get, set) => {
+        const viewIntersectionType = get(viewToSettingsInterface.getAtom("intersectionType"));
+        const settingsIntersectionType = get(viewIntersectionTypeAtom);
 
-        let fieldIdentifier: string | null = null;
-        if (ensembleIdent) {
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-            if (ensemble) {
-                fieldIdentifier = ensemble.getFieldIdentifier();
-            }
-        }
-
-        return {
-            queryKey: ["getFieldWellboreTrajectories", fieldIdentifier ?? ""],
-            queryFn: () => apiService.well.getFieldWellTrajectories(fieldIdentifier ?? ""),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
-            enabled: Boolean(fieldIdentifier),
-        };
+        return settingsIntersectionType; // viewIntersectionType;
     });
 
     return {
-        fieldWellboreTrajectoriesQueryAtom,
+        editCustomIntersectionPolylineEditModeActive,
+        intersectionType,
     };
 }

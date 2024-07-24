@@ -28,7 +28,7 @@ export class UniDirectionalModuleComponentsInterface<TInterfaceType extends Inte
     }
 }
 
-export function useSettingsToViewInterfaceValue<InterfaceType extends InterfaceBaseType, K extends keyof InterfaceType>(
+export function useInterfaceValue<InterfaceType extends InterfaceBaseType, K extends keyof InterfaceType>(
     interfaceInstance: UniDirectionalModuleComponentsInterface<InterfaceType>,
     key: K
 ): InterfaceType[K] {

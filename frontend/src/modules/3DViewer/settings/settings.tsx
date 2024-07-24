@@ -29,9 +29,13 @@ import { Delete, Edit } from "@mui/icons-material";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
+import { SettingsAtoms } from "./atoms/atomDefinitions";
 import {
+    addCustomIntersectionPolylineEditModeActiveAtom,
     colorScaleAtom,
+    editCustomIntersectionPolylineEditModeActiveAtom,
     intersectionExtensionLengthAtom,
+    intersectionTypeAtom,
     showGridlinesAtom,
     showIntersectionAtom,
     useCustomBoundsAtom,
@@ -48,10 +52,12 @@ import {
 import {
     availableRealizationsAtom,
     gridModelDimensionsAtom,
+    selectedEnsembleIdentAtom,
     selectedGridCellIndexRangesAtom,
     selectedGridModelNameAtom,
     selectedGridModelParameterDateOrIntervalAtom,
     selectedGridModelParameterNameAtom,
+    selectedHighlightedWellboreUuidAtom,
     selectedRealizationAtom,
     selectedWellboreUuidsAtom,
 } from "./atoms/derivedAtoms";
@@ -60,16 +66,10 @@ import { GridCellIndexFilter } from "./components/gridCellIndexFilter";
 import { WellboreSelector } from "./components/wellboreSelector";
 
 import { Interfaces } from "../interfaces";
-import {
-    addCustomIntersectionPolylineEditModeActiveAtom,
-    editCustomIntersectionPolylineEditModeActiveAtom,
-    intersectionTypeAtom,
-    selectedEnsembleIdentAtom,
-    selectedHighlightedWellboreUuidAtom,
-} from "../sharedAtoms/sharedAtoms";
 import { GridCellIndexRanges } from "../typesAndEnums";
+import { ViewAtoms } from "../view/atoms/atomDefinitions";
 
-export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
+export function Settings(props: ModuleSettingsProps<Interfaces, SettingsAtoms, ViewAtoms>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 
@@ -93,7 +93,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
 
     const polylineAddModeActive = useAtomValue(addCustomIntersectionPolylineEditModeActiveAtom);
 
-    const [intersectionType, setIntersectionType] = useAtom(intersectionTypeAtom);
+    const intersectionType = props.settingsContext.useSettingsAtomValue("intersectionType");
+    const setIntersectionType = useSetAtom(intersectionTypeAtom);
 
     const gridModelDimensions = useAtomValue(gridModelDimensionsAtom);
 

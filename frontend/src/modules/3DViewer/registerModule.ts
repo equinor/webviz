@@ -5,12 +5,14 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
+import { SettingsAtoms } from "./settings/atoms/atomDefinitions";
+import { ViewAtoms } from "./view/atoms/atomDefinitions";
 
 export const MODULE_NAME = "3DViewer";
 
 const description = "Generic 3D viewer for grid, surfaces, and wells.";
 
-ModuleRegistry.registerModule<Interfaces>({
+ModuleRegistry.registerModule<Interfaces, SettingsAtoms, ViewAtoms>({
     moduleName: MODULE_NAME,
     defaultTitle: "3D Viewer",
     category: ModuleCategory.MAIN,

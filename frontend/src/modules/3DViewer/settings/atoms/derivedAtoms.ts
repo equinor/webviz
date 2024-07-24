@@ -7,11 +7,13 @@ import { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
 import { atom } from "jotai";
 
 import {
+    userSelectedCustomIntersectionPolylineIdAtom,
     userSelectedEnsembleIdentAtom,
     userSelectedGridCellIndexRangesAtom,
     userSelectedGridModelNameAtom,
     userSelectedGridModelParameterDateOrIntervalAtom,
     userSelectedGridModelParameterNameAtom,
+    userSelectedHighlightedWellboreUuidAtom,
     userSelectedRealizationAtom,
     userSelectedWellboreUuidsAtom,
 } from "./baseAtoms";
@@ -26,6 +28,42 @@ export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
     }
 
     return userSelectedEnsembleIdent;
+});
+
+export const selectedHighlightedWellboreUuidAtom = atom((get) => {
+    const userSelectedHighlightedWellboreUuid = get(userSelectedHighlightedWellboreUuidAtom);
+    const wellboreHeaders = get(drilledWellboreHeadersQueryAtom);
+
+    if (!wellboreHeaders.data) {
+        return null;
+    }
+
+    if (
+        !userSelectedHighlightedWellboreUuid ||
+        !wellboreHeaders.data.some((el) => el.wellboreUuid === userSelectedHighlightedWellboreUuid)
+    ) {
+        return wellboreHeaders.data[0]?.wellboreUuid ?? null;
+    }
+
+    return userSelectedHighlightedWellboreUuid;
+});
+
+export const selectedCustomIntersectionPolylineIdAtom = atom((get) => {
+    const userSelectedCustomIntersectionPolylineId = get(userSelectedCustomIntersectionPolylineIdAtom);
+    const customIntersectionPolylines = get(IntersectionPolylinesAtom);
+
+    if (!customIntersectionPolylines.length) {
+        return null;
+    }
+
+    if (
+        !userSelectedCustomIntersectionPolylineId ||
+        !customIntersectionPolylines.some((el) => el.id === userSelectedCustomIntersectionPolylineId)
+    ) {
+        return customIntersectionPolylines[0].id;
+    }
+
+    return userSelectedCustomIntersectionPolylineId;
 });
 
 export const availableRealizationsAtom = atom((get) => {
