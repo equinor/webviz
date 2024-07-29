@@ -50,7 +50,7 @@ interface CaseFilterSettings {
     users: string[];
 }
 
-function readInitialStateFromLocalStorage<T>(stateName: string): string {
+function readInitialStateFromLocalStorage(stateName: string): string {
     const storedState = localStorage.getItem(stateName);
     if (storedState && typeof storedState === "string") {
         return storedState;
