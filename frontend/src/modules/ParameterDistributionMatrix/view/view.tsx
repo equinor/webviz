@@ -36,18 +36,10 @@ export function View(props: ModuleViewProps<State, Interface>) {
         filterEnsembleRealizationsFunc
     );
 
-    const colorSet = props.workbenchSettings.useColorSet();
-    const ensembleColors = new Map<string, string>();
-    ensembleSet.getEnsembleArr().forEach((ensemble, index) => {
-        const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
-        ensembleColors.set(ensemble.getDisplayName(), color);
-    });
-
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             <ParameterDistributionPlot
                 dataArr={parameterDataArr}
-                ensembleColors={ensembleColors}
                 plotType={selectedVisualizationType}
                 showIndividualRealizationValues={showIndividualRealizationValues}
                 showPercentilesAndMeanLines={showPercentilesAndMeanLines}
@@ -93,6 +85,7 @@ function makeParameterDataArr(
 
             const ensembleParameterValues = {
                 ensembleDisplayName: ensemble.getDisplayName(),
+                ensembleColor: ensemble.getColor(),
                 values: parameterValues,
                 realizations: realizationNumbers,
             };
