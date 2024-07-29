@@ -64,7 +64,7 @@ export function viewAtomsInitialization(
 
         const intersectionType = get(settingsToViewInterface.getAtom("intersectionType"));
 
-        if (intersectionType === IntersectionType.WELLBORE) {
+        if (intersectionType.value === IntersectionType.WELLBORE) {
             if (!fieldWellboreTrajectories.data || !wellboreUuid) {
                 return null;
             }
@@ -88,7 +88,7 @@ export function viewAtomsInitialization(
 
                 return referenceSystem;
             }
-        } else if (intersectionType === IntersectionType.CUSTOM_POLYLINE && customIntersectionPolyline) {
+        } else if (intersectionType.value === IntersectionType.CUSTOM_POLYLINE && customIntersectionPolyline) {
             if (customIntersectionPolyline.points.length < 2) {
                 return null;
             }
@@ -114,7 +114,11 @@ export function viewAtomsInitialization(
         const viewIntersectionType = get(viewIntersectionTypeAtom);
         const settingsIntersectionType = get(settingsToViewInterface.getAtom("intersectionType"));
 
-        return viewIntersectionType || settingsIntersectionType;
+        if (viewIntersectionType.timestamp > settingsIntersectionType.timestamp) {
+            return viewIntersectionType.value;
+        }
+
+        return settingsIntersectionType.value;
     });
 
     const editCustomIntersectionPolylineEditModeActiveAtom = atom<boolean>(false);

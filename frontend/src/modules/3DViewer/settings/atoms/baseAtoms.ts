@@ -1,5 +1,6 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { IntersectionType } from "@framework/types/intersection";
+import { atomWithTimestamp } from "@framework/utils/atomUtils";
 import { ColorScale } from "@lib/utils/ColorScale";
 import { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
 
@@ -11,7 +12,7 @@ export const gridLayerAtom = atom<number>(1);
 export const intersectionExtensionLengthAtom = atom<number>(1000);
 export const colorScaleAtom = atom<ColorScale | null>(null);
 export const useCustomBoundsAtom = atom<boolean>(false);
-export const intersectionTypeAtom = atom<IntersectionType>(IntersectionType.WELLBORE);
+export const intersectionTypeAtom = atomWithTimestamp<IntersectionType>(IntersectionType.WELLBORE);
 export const addCustomIntersectionPolylineEditModeActiveAtom = atom<boolean>(false);
 export const editCustomIntersectionPolylineEditModeActiveAtom = atom<boolean>(false);
 export const currentCustomIntersectionPolylineAtom = atom<number[][]>([]);

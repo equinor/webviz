@@ -19,11 +19,15 @@ export function settingsAtomsInitialization(
         return get(viewToSettingsInterface.getAtom("editCustomIntersectionPolylineEditModeActive"));
     });
 
-    const intersectionType = atom((get, set) => {
+    const intersectionType = atom((get) => {
         const viewIntersectionType = get(viewToSettingsInterface.getAtom("intersectionType"));
         const settingsIntersectionType = get(viewIntersectionTypeAtom);
 
-        return settingsIntersectionType; // viewIntersectionType;
+        if (viewIntersectionType.timestamp > settingsIntersectionType.timestamp) {
+            return viewIntersectionType.value;
+        }
+
+        return settingsIntersectionType.value;
     });
 
     return {

@@ -1,6 +1,6 @@
 import { DefaultError, QueryClient, QueryKey, QueryObserverOptions, QueryObserverResult } from "@tanstack/query-core";
 
-import { Atom, Getter, atom } from "jotai";
+import { Atom, Getter, WritableAtom, atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 import { atomWithReducer } from "jotai/utils";
 
@@ -12,6 +12,21 @@ export function atomWithCompare<Value>(initialValue: Value, areEqualFunc: (prev:
 
         return next;
     });
+}
+
+export function atomWithTimestamp<Value>(
+    initialValue: Value
+): WritableAtom<{ value: Value; timestamp: number }, [Value], void> {
+    const stateAtom = atom({ value: initialValue, timestamp: Date.now() });
+    return atom(
+        (get) => {
+            const state = get(stateAtom);
+            return state;
+        },
+        (get, set, newValue: Value) => {
+            set(stateAtom, { value: newValue, timestamp: Date.now() });
+        }
+    );
 }
 
 type QueriesOptions<

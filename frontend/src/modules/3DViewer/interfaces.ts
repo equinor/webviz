@@ -37,7 +37,7 @@ export type SettingsToViewInterface = {
     ensembleIdent: EnsembleIdent | null;
     highlightedWellboreUuid: string | null;
     customIntersectionPolylineId: string | null;
-    intersectionType: IntersectionType;
+    intersectionType: { value: IntersectionType; timestamp: number };
     addCustomIntersectionPolylineEditModeActive: boolean;
     editCustomIntersectionPolylineEditModeActive: boolean;
     showGridlines: boolean;
@@ -57,7 +57,7 @@ export type SettingsToViewInterface = {
 
 export type ViewToSettingsInterface = {
     editCustomIntersectionPolylineEditModeActive: boolean;
-    intersectionType: IntersectionType;
+    intersectionType: { value: IntersectionType; timestamp: number };
 };
 
 export type Interfaces = {
