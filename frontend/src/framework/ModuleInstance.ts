@@ -12,8 +12,8 @@ import { SyncSettingKey } from "./SyncSettings";
 import {
     InterfaceBaseType,
     InterfaceInitialization,
-    UniDirectionalSettingsToViewInterface,
-} from "./UniDirectionalSettingsToViewInterface";
+    UniDirectionalModuleComponentsInterface,
+} from "./UniDirectionalModuleComponentsInterface";
 import { Workbench } from "./Workbench";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
@@ -74,7 +74,7 @@ export class ModuleInstance<
     private _statusController: ModuleInstanceStatusControllerInternal;
     private _channelManager: ChannelManager;
     private _workbench: Workbench;
-    private _settingsViewInterface: UniDirectionalSettingsToViewInterface<TInterfaceType> | null;
+    private _settingsViewInterface: UniDirectionalModuleComponentsInterface<TInterfaceType> | null;
     private _settingsAtoms: ModuleAtoms<TSettingsAtomsType> | null;
     private _viewAtoms: ModuleAtoms<TViewAtomsType> | null;
 
@@ -116,7 +116,7 @@ export class ModuleInstance<
         return this._workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(this._id);
     }
 
-    getUniDirectionalSettingsToViewInterface(): UniDirectionalSettingsToViewInterface<TInterfaceType> {
+    getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<TInterfaceType> {
         if (!this._settingsViewInterface) {
             throw `Module instance '${this._title}' does not have an interface yet. Did you forget to init the module?`;
         }
@@ -157,7 +157,7 @@ export class ModuleInstance<
     }
 
     makeSettingsToViewInterface(interfaceInitialization: InterfaceInitialization<TInterfaceType>) {
-        this._settingsViewInterface = new UniDirectionalSettingsToViewInterface(interfaceInitialization);
+        this._settingsViewInterface = new UniDirectionalModuleComponentsInterface(interfaceInitialization);
     }
 
     makeSettingsAtoms(initFunc: AtomsInitialization<TSettingsAtomsType, TInterfaceType>) {

@@ -7,9 +7,9 @@ import {
 } from "@api";
 import { apiService } from "@framework/ApiService";
 import { ModuleAtoms } from "@framework/Module";
-import { UniDirectionalSettingsToViewInterface } from "@framework/UniDirectionalSettingsToViewInterface";
+import { UniDirectionalModuleComponentsInterface } from "@framework/UniDirectionalModuleComponentsInterface";
 import { atomWithQueries } from "@framework/utils/atomUtils";
-import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
 import {
     EnsembleVectorObservationDataMap,
     VectorSpec,
@@ -55,7 +55,7 @@ const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
 export function viewAtomsInitialization(
-    settingsToViewInterface: UniDirectionalSettingsToViewInterface<Interface>
+    settingsToViewInterface: UniDirectionalModuleComponentsInterface<SettingsToViewInterface>
 ): ModuleAtoms<ViewAtoms> {
     const userSelectedActiveTimestampUtcMsAtom = atom<number | null>(null);
 
