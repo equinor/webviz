@@ -22,12 +22,7 @@ import {
 import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
 import { StateBaseType, StateStore, useSetStoreValue, useStoreState, useStoreValue } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
-import {
-    InterfaceBaseType,
-    useSetSettingsToViewInterfaceValue,
-    useSettingsToViewInterfaceState,
-    useSettingsToViewInterfaceValue,
-} from "./UniDirectionalSettingsToViewInterface";
+import { InterfaceBaseType, useSettingsToViewInterfaceValue } from "./UniDirectionalModuleComponentsInterface";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
@@ -119,28 +114,9 @@ export class ModuleContext<
         });
     }
 
-    useSettingsToViewInterfaceState<TKey extends keyof TInterfaceType["baseStates"]>(
-        key: TKey
-    ): [Awaited<TInterfaceType["baseStates"][TKey]>, (value: TInterfaceType["baseStates"][TKey]) => void] {
-        return useSettingsToViewInterfaceState(this._moduleInstance.getUniDirectionalSettingsToViewInterface(), key);
-    }
-
-    useSettingsToViewInterfaceValue<TKey extends keyof TInterfaceType["baseStates"]>(
-        key: TKey
-    ): TInterfaceType["baseStates"][TKey];
-    useSettingsToViewInterfaceValue<TKey extends keyof TInterfaceType["derivedStates"]>(
-        key: TKey
-    ): TInterfaceType["derivedStates"][TKey];
-    useSettingsToViewInterfaceValue<
-        TKey extends keyof (TInterfaceType["baseStates"] | TInterfaceType["derivedStates"])
-    >(key: TKey): TInterfaceType["baseStates"][TKey] | TInterfaceType["derivedStates"][TKey] {
+    useSettingsToViewInterfaceValue<TKey extends keyof TInterfaceType>(key: TKey): TInterfaceType[TKey];
+    useSettingsToViewInterfaceValue<TKey extends keyof TInterfaceType>(key: TKey): TInterfaceType[TKey] {
         return useSettingsToViewInterfaceValue(this._moduleInstance.getUniDirectionalSettingsToViewInterface(), key);
-    }
-
-    useSetSettingsToViewInterfaceValue<TKey extends keyof TInterfaceType["baseStates"]>(
-        key: TKey
-    ): (value: TInterfaceType["baseStates"][TKey]) => void {
-        return useSetSettingsToViewInterfaceValue(this._moduleInstance.getUniDirectionalSettingsToViewInterface(), key);
     }
 
     useViewAtom<TKey extends keyof TViewAtomsType>(

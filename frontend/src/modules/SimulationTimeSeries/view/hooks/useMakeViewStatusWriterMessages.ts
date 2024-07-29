@@ -3,7 +3,7 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { ViewContext } from "@framework/ModuleContext";
 import { ViewStatusWriter } from "@framework/StatusWriter";
 import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
-import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
 import { State } from "@modules/SimulationTimeSeries/state";
 
 import { useAtomValue } from "jotai";
@@ -11,7 +11,7 @@ import { useAtomValue } from "jotai";
 import { ViewAtoms } from "../atoms/atomDefinitions";
 
 export function useMakeViewStatusWriterMessages(
-    viewContext: ViewContext<State, Interface, SettingsAtoms, ViewAtoms>,
+    viewContext: ViewContext<State, SettingsToViewInterface, SettingsAtoms, ViewAtoms>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
     ensemblesWithoutParameter: Ensemble[]

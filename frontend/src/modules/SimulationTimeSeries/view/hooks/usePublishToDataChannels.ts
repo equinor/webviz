@@ -1,7 +1,7 @@
 import { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import { ViewContext } from "@framework/ModuleContext";
 import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
-import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
 import { State } from "@modules/SimulationTimeSeries/state";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
@@ -10,7 +10,9 @@ import { ChannelIds } from "../../channelDefs";
 import { makeVectorGroupDataGenerator } from "../../dataGenerators";
 import { ViewAtoms } from "../atoms/atomDefinitions";
 
-export function usePublishToDataChannels(viewContext: ViewContext<State, Interface, SettingsAtoms, ViewAtoms>) {
+export function usePublishToDataChannels(
+    viewContext: ViewContext<State, SettingsToViewInterface, SettingsAtoms, ViewAtoms>
+) {
     const loadedVectorSpecificationsAndRealizationData = viewContext.useViewAtomValue(
         "loadedVectorSpecificationsAndRealizationData"
     );
