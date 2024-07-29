@@ -11,7 +11,10 @@ import { Select, SelectOption } from "@lib/components/Select";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
+    selectedVisualizationTypeAtom,
     showConstantParametersAtom,
+    showIndividualRealizationValuesAtom,
+    showPercentilesAndMeanLinesAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedParameterIdentsAtom,
 } from "./atoms/baseAtoms";
@@ -26,7 +29,7 @@ import { State } from "../state";
 import { ParameterDistributionPlotType, ParameterDistributionPlotTypeEnumToStringMapping } from "../typesAndEnums";
 
 const MAX_PARAMETERS = 50;
-export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<State, Interface>) {
+export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interface>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);
@@ -36,12 +39,11 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const selectedParameterIdents = useAtomValue(selectedParameterIdentsAtom);
     const [showConstantParameters, setShowConstantParameters] = useAtom(showConstantParametersAtom);
 
-    const [selectedVisualizationType, setSelectedVisualizationType] =
-        settingsContext.useSettingsToViewInterfaceState("selectedVisualizationType");
-    const [showIndividualRealizationValues, setShowIndividualRealizationValues] =
-        settingsContext.useSettingsToViewInterfaceState("showIndividualRealizationValues");
-    const [showPercentilesAndMeanLines, setShowPercentilesAndMeanLines] =
-        settingsContext.useSettingsToViewInterfaceState("showPercentilesAndMeanLines");
+    const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
+    const [showIndividualRealizationValues, setShowIndividualRealizationValues] = useAtom(
+        showIndividualRealizationValuesAtom
+    );
+    const [showPercentilesAndMeanLines, setShowPercentilesAndMeanLines] = useAtom(showPercentilesAndMeanLinesAtom);
 
     function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
