@@ -171,17 +171,17 @@ export class ModuleInstance<
     makeSettingsAtoms(
         initFunc: AtomsInitialization<TSettingsAtomsType, Exclude<TInterfaceTypes["viewToSettings"], undefined>>
     ) {
-        if (!this._settingsToViewInterface) {
-            throw `Module instance '${this._title}' does not have an interface yet. Did you forget to init the module?`;
+        if (!this._viewToSettingsInterface) {
+            throw `Module instance '${this._title}' does not have an interface from view to settings yet. Did you forget to init the module?`;
         }
-        this._settingsAtoms = initFunc(this._settingsToViewInterface);
+        this._settingsAtoms = initFunc(this._viewToSettingsInterface);
     }
 
     makeViewAtoms(
         initFunc: AtomsInitialization<TViewAtomsType, Exclude<TInterfaceTypes["settingsToView"], undefined>>
     ) {
         if (!this._settingsToViewInterface) {
-            throw `Module instance '${this._title}' does not have an interface yet. Did you forget to init the module?`;
+            throw `Module instance '${this._title}' does not have an interface from settings to view yet. Did you forget to init the module?`;
         }
         this._viewAtoms = initFunc(this._settingsToViewInterface);
     }
