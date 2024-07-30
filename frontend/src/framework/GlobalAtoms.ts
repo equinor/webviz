@@ -21,18 +21,13 @@ export const EnsembleRealizationFilterFunctionAtom = atom<EnsembleRealizationFil
         realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent).getFilteredRealizations();
 });
 
-function areRealizationFilterSetsEqual(a: RealizationFilterSet | null, b: RealizationFilterSet | null): boolean {
-    if (a === null && b === null) {
-        return true;
-    }
-
-    if (a === null || b === null) {
-        return false;
-    }
-
-    return a.isEqual(b);
+function areRealizationFilterSetsEqual(
+    a: { filterSet: RealizationFilterSet } | null,
+    b: { filterSet: RealizationFilterSet } | null
+): boolean {
+    return a === b;
 }
 
 export const RealizationFilterSetAtom = atomWithCompare<{
     filterSet: RealizationFilterSet;
-} | null>(null, (a, b) => areRealizationFilterSetsEqual(a?.filterSet ?? null, b?.filterSet ?? null));
+} | null>(null, (a, b) => areRealizationFilterSetsEqual(a, b));

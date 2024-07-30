@@ -26,7 +26,9 @@ export class WorkbenchSessionPrivate extends WorkbenchSession {
     }
 
     notifyAboutEnsembleRealizationFilterChange(): void {
-        this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, { filterSet: this._realizationFilterSet });
+        this._atomStoreMaster.setAtomValue(RealizationFilterSetAtom, {
+            filterSet: this._realizationFilterSet,
+        });
         this.notifySubscribers(WorkbenchSessionEvent.RealizationFilterSetChanged);
     }
 }
