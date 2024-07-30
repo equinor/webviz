@@ -89,16 +89,22 @@ export const selectedDateTimeAtom = atom<string | null>((get) => {
     return userSelectedDateTime;
 });
 
-export const availableEdgeKeysAtom = atom<string[]>((get) => {
+export const edgeMetadataListAtom = atom<EdgeMetadata[]>((get) => {
     const groupTreeQueryResult = get(groupTreeQueryResultAtom);
-    return groupTreeQueryResult.data?.edge_metadata_list.map((item) => item.key) ?? [];
+
+    return (
+        groupTreeQueryResult.data?.edge_metadata_list.map((elm) => {
+            return { key: elm.key, label: elm.label };
+        }) ?? []
+    );
 });
 
 export const selectedEdgeKeyAtom = atom<string | null>((get) => {
-    const availableEdgeKeys = get(availableEdgeKeysAtom);
+    const availableEdgesMetadataList = get(edgeMetadataListAtom);
+    const availableEdgeKeys = availableEdgesMetadataList.map((item) => item.key);
     const userSelectedEdgeKey = get(userSelectedEdgeKeyAtom);
 
-    if (availableEdgeKeys.length === 0) {
+    if (availableEdgesMetadataList.length === 0) {
         return null;
     }
     if (!userSelectedEdgeKey || !availableEdgeKeys.includes(userSelectedEdgeKey)) {
@@ -108,16 +114,22 @@ export const selectedEdgeKeyAtom = atom<string | null>((get) => {
     return userSelectedEdgeKey;
 });
 
-export const availableNodeKeysAtom = atom<string[]>((get) => {
+export const nodeMetadataListAtom = atom<NodeMetadata[]>((get) => {
     const groupTreeQueryResult = get(groupTreeQueryResultAtom);
-    return groupTreeQueryResult.data?.node_metadata_list.map((item) => item.key) ?? [];
+
+    return (
+        groupTreeQueryResult.data?.node_metadata_list.map((elm) => {
+            return { key: elm.key, label: elm.label };
+        }) ?? []
+    );
 });
 
 export const selectedNodeKeyAtom = atom<string | null>((get) => {
-    const availableNodeKeys = get(availableNodeKeysAtom);
+    const availableNodesMetadataList = get(nodeMetadataListAtom);
+    const availableNodeKeys = availableNodesMetadataList.map((item) => item.key);
     const userSelectedNodeKey = get(userSelectedNodeKeyAtom);
 
-    if (availableNodeKeys.length === 0) {
+    if (availableNodesMetadataList.length === 0) {
         return null;
     }
     if (!userSelectedNodeKey || !availableNodeKeys.includes(userSelectedNodeKey)) {
@@ -125,16 +137,6 @@ export const selectedNodeKeyAtom = atom<string | null>((get) => {
     }
 
     return userSelectedNodeKey;
-});
-
-export const edgeMetadataListAtom = atom<EdgeMetadata[]>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
-    return groupTreeQueryResult.data?.edge_metadata_list ?? [];
-});
-
-export const nodeMetadataListAtom = atom<NodeMetadata[]>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
-    return groupTreeQueryResult.data?.node_metadata_list ?? [];
 });
 
 export const datedTreesAtom = atom<DatedTree[]>((get) => {

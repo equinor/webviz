@@ -1,6 +1,7 @@
 from typing import List
 from enum import Enum
-from primary.services.sumo_access.group_tree_types import GroupTreeMetadata, DatedTree
+from primary.services.sumo_access.group_tree_types import DatedTree, GroupTreeMetadata
+
 from pydantic import BaseModel
 
 

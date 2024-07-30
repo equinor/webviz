@@ -11,6 +11,7 @@ from fastapi import HTTPException
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.group_tree_types import (
     DataType,
+    DataTypeToStringLabelMap,
     DatedTree,
     EdgeOrNode,
     GroupTreeMetadata,
@@ -654,17 +655,7 @@ def _create_leaf_node_classification_map(
 
 def _get_label(datatype: DataType) -> str:
     """Returns a more readable label for the summary datatypes"""
-    labels = {
-        DataType.OILRATE: "Oil Rate",
-        DataType.GASRATE: "Gas Rate",
-        DataType.WATERRATE: "Water Rate",
-        DataType.WATERINJRATE: "Water Inj Rate",
-        DataType.GASINJRATE: "Gas Inj Rate",
-        DataType.PRESSURE: "Pressure",
-        DataType.BHP: "BHP",
-        DataType.WMCTL: "WMCTL",
-    }
-    label = labels.get(datatype)
+    label = DataTypeToStringLabelMap.get(datatype)
     if label is None:
         raise ValueError(f"Label for datatype {datatype.value} not implemented.")
     return label
