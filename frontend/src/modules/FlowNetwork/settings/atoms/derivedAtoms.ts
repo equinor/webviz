@@ -92,11 +92,12 @@ export const selectedDateTimeAtom = atom<string | null>((get) => {
 export const edgeMetadataListAtom = atom<EdgeMetadata[]>((get) => {
     const groupTreeQueryResult = get(groupTreeQueryResultAtom);
 
-    return (
-        groupTreeQueryResult.data?.edge_metadata_list.map((elm) => {
-            return { key: elm.key, label: elm.label };
-        }) ?? []
-    );
+    const data = groupTreeQueryResult.data;
+    if (!data) {
+        return [];
+    }
+
+    return data.edge_metadata_list.map((elm) => ({ key: elm.key, label: elm.label }));
 });
 
 export const selectedEdgeKeyAtom = atom<string | null>((get) => {
@@ -117,11 +118,12 @@ export const selectedEdgeKeyAtom = atom<string | null>((get) => {
 export const nodeMetadataListAtom = atom<NodeMetadata[]>((get) => {
     const groupTreeQueryResult = get(groupTreeQueryResultAtom);
 
-    return (
-        groupTreeQueryResult.data?.node_metadata_list.map((elm) => {
-            return { key: elm.key, label: elm.label };
-        }) ?? []
-    );
+    const data = groupTreeQueryResult.data;
+    if (!data) {
+        return [];
+    }
+
+    return data.node_metadata_list.map((elm) => ({ key: elm.key, label: elm.label }));
 });
 
 export const selectedNodeKeyAtom = atom<string | null>((get) => {
@@ -141,5 +143,11 @@ export const selectedNodeKeyAtom = atom<string | null>((get) => {
 
 export const datedTreesAtom = atom<DatedTree[]>((get) => {
     const groupTreeQueryResult = get(groupTreeQueryResultAtom);
-    return groupTreeQueryResult.data?.dated_trees ?? [];
+
+    const data = groupTreeQueryResult.data;
+    if (!data) {
+        return [];
+    }
+
+    return data.dated_trees;
 });
