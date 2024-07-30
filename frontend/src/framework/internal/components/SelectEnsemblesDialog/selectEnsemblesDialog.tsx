@@ -67,8 +67,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
     const [casesFilteringOptions, setCasesFilteringOptions] = React.useState<CaseFilterSettings>({
-        keep: true,
-        onlyMyCases: false,
+        keep: !(readInitialStateFromLocalStorage("showKeepCases") === "false"),
+        onlyMyCases: readInitialStateFromLocalStorage("showOnlyMyCases") === "true",
         users: [],
     });
 
@@ -218,10 +218,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleKeepCasesSwitchChange(e: React.ChangeEvent<HTMLInputElement>) {
         setCasesFilteringOptions((prev) => ({ ...prev, keep: e.target.checked }));
+        storeStateInLocalStorage("showKeepCases", e.target.checked.toString());
     }
 
     function handleCasesByMeChange(e: React.ChangeEvent<HTMLInputElement>) {
         setCasesFilteringOptions((prev) => ({ ...prev, onlyMyCases: e.target.checked }));
+        storeStateInLocalStorage("showOnlyMyCases", e.target.checked.toString());
     }
 
     function filterCases(cases: CaseInfo_api[] | undefined): CaseInfo_api[] | undefined {
