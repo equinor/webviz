@@ -11,7 +11,7 @@ import { atomWithCompare } from "./utils/atomUtils";
 export const EnsembleSetAtom = atomWithCompare<EnsembleSet>(new EnsembleSet([]), isEqual);
 
 export const EnsembleRealizationFilterFunctionAtom = atom<EnsembleRealizationFilterFunction | null>((get) => {
-    const realizationFilterSet = get(RealizationFilterSetAtom);
+    const realizationFilterSet = get(RealizationFilterSetAtom)?.filterSet;
 
     if (!realizationFilterSet) {
         return null;
@@ -33,7 +33,6 @@ function areRealizationFilterSetsEqual(a: RealizationFilterSet | null, b: Realiz
     return a.isEqual(b);
 }
 
-export const RealizationFilterSetAtom = atomWithCompare<RealizationFilterSet | null>(
-    null,
-    areRealizationFilterSetsEqual
-);
+export const RealizationFilterSetAtom = atomWithCompare<{
+    filterSet: RealizationFilterSet;
+} | null>(null, (a, b) => areRealizationFilterSetsEqual(a?.filterSet ?? null, b?.filterSet ?? null));
