@@ -155,6 +155,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return false;
     }
 
+    function tryToFindUnusedColor(): string {
+        const usedColors = newlySelectedEnsembles.map((e) => e.color);
+        for (let i = 0; i < props.colorSet.getColorArray().length; i++) {
+            if (!usedColors.includes(props.colorSet.getColor(i))) {
+                return props.colorSet.getColor(i);
+            }
+        }
+        return props.colorSet.getColor(newlySelectedEnsembles.length);
+    }
+
     function handleAddEnsemble() {
         if (!checkIfEnsembleAlreadySelected()) {
             const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseId)?.name ?? "UNKNOWN";
@@ -163,7 +173,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     caseUuid: selectedCaseId,
                     caseName: caseName,
                     ensembleName: selectedEnsembleName,
-                    color: props.colorSet.getColor(newlySelectedEnsembles.length),
+                    color: tryToFindUnusedColor(),
                     customName: null,
                 },
             ];
