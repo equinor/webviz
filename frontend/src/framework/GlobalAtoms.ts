@@ -21,18 +21,8 @@ export const EnsembleRealizationFilterFunctionAtom = atom<EnsembleRealizationFil
         realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent).getFilteredRealizations();
 });
 
-function areRealizationFilterSetsEqual(a: RealizationFilterSet | null, b: RealizationFilterSet | null): boolean {
-    if (a === null && b === null) {
-        return true;
-    }
-
-    if (a === null || b === null) {
-        return false;
-    }
-
-    return a.isEqual(b);
-}
-
-export const RealizationFilterSetAtom = atomWithCompare<{
+// RealizationFilterSetAtom needs to be packed into an object such that we can shallow-compare it with its previous value
+// as the class instance of RealizationFilterSet will never change in the lifetime of the application.
+export const RealizationFilterSetAtom = atom<{
     filterSet: RealizationFilterSet;
-} | null>(null, (a, b) => areRealizationFilterSetsEqual(a?.filterSet ?? null, b?.filterSet ?? null));
+} | null>(null);
