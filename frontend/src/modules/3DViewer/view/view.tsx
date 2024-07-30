@@ -16,7 +16,7 @@ import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
 import { NorthArrow3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 
 import { ViewAtoms } from "./atoms/atomDefinitions";
 import { editCustomIntersectionPolylineEditModeActiveAtom, intersectionTypeAtom } from "./atoms/baseAtoms";
@@ -64,7 +64,7 @@ export function View(props: ModuleViewProps<Interfaces, SettingsAtoms, ViewAtoms
     const setEditPolylineModeActive = useSetAtom(editCustomIntersectionPolylineEditModeActiveAtom);
 
     const intersectionType = props.viewContext.useSettingsToViewInterfaceValue("intersectionType");
-    const viewIntersectionType = useAtomValue(intersectionTypeAtom);
+    const viewIntersectionType = useAtom(intersectionTypeAtom);
     const setIntersectionType = useSetAtom(intersectionTypeAtom);
 
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -116,7 +116,7 @@ export function View(props: ModuleViewProps<Interfaces, SettingsAtoms, ViewAtoms
     let intersectionReferenceSystem: IntersectionReferenceSystem | null = null;
     const customIntersectionPolyline = intersectionPolylines.getPolyline(selectedCustomIntersectionPolylineId ?? "");
 
-    if (intersectionType.value === IntersectionType.WELLBORE) {
+    if (intersectionType === IntersectionType.WELLBORE) {
         if (filteredFieldWellBoreTrajectories && highlightedWellboreUuid) {
             const wellboreTrajectory = filteredFieldWellBoreTrajectories.find(
                 (wellbore) => wellbore.wellboreUuid === highlightedWellboreUuid
@@ -151,7 +151,7 @@ export function View(props: ModuleViewProps<Interfaces, SettingsAtoms, ViewAtoms
                 oldPolylineUtmXy.push(...extendedTrajectory.points.flat());
             }
         }
-    } else if (intersectionType.value === IntersectionType.CUSTOM_POLYLINE) {
+    } else if (intersectionType === IntersectionType.CUSTOM_POLYLINE) {
         if (customIntersectionPolyline && customIntersectionPolyline.points.length >= 2) {
             intersectionReferenceSystem = new IntersectionReferenceSystem(
                 customIntersectionPolyline.points.map((point) => [point[0], point[1], 0])
@@ -278,7 +278,7 @@ export function View(props: ModuleViewProps<Interfaces, SettingsAtoms, ViewAtoms
     }
 
     if (filteredFieldWellBoreTrajectories) {
-        const maybeWellboreUuid = intersectionType.value === IntersectionType.WELLBORE ? highlightedWellboreUuid : null;
+        const maybeWellboreUuid = intersectionType === IntersectionType.WELLBORE ? highlightedWellboreUuid : null;
         layers.push(makeWellsLayer(filteredFieldWellBoreTrajectories, maybeWellboreUuid));
     }
 

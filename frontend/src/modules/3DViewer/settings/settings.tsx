@@ -93,8 +93,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces, SettingsAtoms, V
 
     const polylineAddModeActive = useAtomValue(addCustomIntersectionPolylineEditModeActiveAtom);
 
-    const intersectionType = props.settingsContext.useSettingsAtomValue("intersectionType");
-    const setIntersectionType = useSetAtom(intersectionTypeAtom);
+    const [intersectionType, setIntersectionType] = useAtom(intersectionTypeAtom);
 
     const gridModelDimensions = useAtomValue(gridModelDimensionsAtom);
 

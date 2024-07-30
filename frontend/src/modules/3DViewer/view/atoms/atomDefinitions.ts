@@ -12,16 +12,10 @@ import { UseQueryResult } from "@tanstack/react-query";
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 
-import {
-    editCustomIntersectionPolylineEditModeActiveAtom as viewEditCustomIntersectionPolylineEditModeActiveAtom,
-    intersectionTypeAtom as viewIntersectionTypeAtom,
-} from "./baseAtoms";
-
 export type ViewAtoms = {
     fieldWellboreTrajectoriesQueryAtom: UseQueryResult<WellboreTrajectory_api[], Error>;
     intersectionReferenceSystemAtom: IntersectionReferenceSystem | null;
     selectedCustomIntersectionPolylineAtom: IntersectionPolyline | null;
-    intersectionTypeAtom: IntersectionType;
     editCustomIntersectionPolylineEditModeActiveAtom: boolean;
 };
 
@@ -64,7 +58,7 @@ export function viewAtomsInitialization(
 
         const intersectionType = get(settingsToViewInterface.getAtom("intersectionType"));
 
-        if (intersectionType.value === IntersectionType.WELLBORE) {
+        if (intersectionType === IntersectionType.WELLBORE) {
             if (!fieldWellboreTrajectories.data || !wellboreUuid) {
                 return null;
             }
@@ -88,7 +82,7 @@ export function viewAtomsInitialization(
 
                 return referenceSystem;
             }
-        } else if (intersectionType.value === IntersectionType.CUSTOM_POLYLINE && customIntersectionPolyline) {
+        } else if (intersectionType === IntersectionType.CUSTOM_POLYLINE && customIntersectionPolyline) {
             if (customIntersectionPolyline.points.length < 2) {
                 return null;
             }
@@ -110,24 +104,12 @@ export function viewAtomsInitialization(
         return customIntersectionPolylines.find((el) => el.id === customIntersectionPolylineId) ?? null;
     });
 
-    const intersectionTypeAtom = atom<IntersectionType>((get) => {
-        const viewIntersectionType = get(viewIntersectionTypeAtom);
-        const settingsIntersectionType = get(settingsToViewInterface.getAtom("intersectionType"));
-
-        if (viewIntersectionType.timestamp > settingsIntersectionType.timestamp) {
-            return viewIntersectionType.value;
-        }
-
-        return settingsIntersectionType.value;
-    });
-
     const editCustomIntersectionPolylineEditModeActiveAtom = atom<boolean>(false);
 
     return {
         fieldWellboreTrajectoriesQueryAtom,
         intersectionReferenceSystemAtom,
         selectedCustomIntersectionPolylineAtom,
-        intersectionTypeAtom,
         editCustomIntersectionPolylineEditModeActiveAtom,
     };
 }
