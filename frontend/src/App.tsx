@@ -56,26 +56,28 @@ function App() {
     const queryClient = useQueryClient();
     const { authState } = useAuthProvider();
 
-    function initApp() {
-        if (!workbench.loadLayoutFromLocalStorage()) {
-            workbench.makeLayout(layout);
-        }
-
-        if (workbench.getLayout().length === 0) {
-            workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModulesList);
-        } else {
-            workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
-        }
-        setInitAppState(InitAppState.InitCompleted);
-        workbench.getGuiMessageBroker().setState(GuiState.AppInitialized, true);
-    }
-
     function signIn() {
         window.location.href = `/api/login?redirect_url_after_login=${btoa("/")}`;
     }
 
     React.useEffect(
         function handleMountWhenSignedIn() {
+            function initApp() {
+                if (!workbench.loadLayoutFromLocalStorage()) {
+                    workbench.makeLayout(layout);
+                }
+
+                if (workbench.getLayout().length === 0) {
+                    workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModulesList);
+                } else {
+                    workbench
+                        .getGuiMessageBroker()
+                        .setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
+                }
+                setInitAppState(InitAppState.InitCompleted);
+                workbench.getGuiMessageBroker().setState(GuiState.AppInitialized, true);
+            }
+
             if (authState !== AuthState.LoggedIn || isMounted) {
                 return;
             }
@@ -97,7 +99,7 @@ function App() {
                 workbench.resetModuleInstanceNumbers();
             };
         },
-        [authState, isMounted, queryClient]
+        [authState, isMounted, queryClient, workbench]
     );
 
     function makeStateMessages() {
