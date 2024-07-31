@@ -6,11 +6,13 @@ import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 import { receiverDefs } from "./receiverDefs";
 
+export const MODULE_NAME = "TornadoChart";
+
 const description =
     "Sub-module that can be connected to other modules via data channels for visualization of one-by-one sensitivities.";
 
 ModuleRegistry.registerModule<Interfaces>({
-    moduleName: "TornadoChart",
+    moduleName: MODULE_NAME,
     defaultTitle: "Tornado Chart",
     category: ModuleCategory.SUB,
     devState: ModuleDevState.PROD,

@@ -58,7 +58,6 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _initialSettings: InitialSettings | null = null;
     private _statusController: ModuleInstanceStatusControllerInternal = new ModuleInstanceStatusControllerInternal();
     private _channelManager: ChannelManager;
-    private _workbench: Workbench;
     private _settingsToViewInterface: UniDirectionalModuleComponentsInterface<
         Exclude<TInterfaceTypes["settingsToView"], undefined>
     > | null = null;
@@ -72,7 +71,6 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
-        this._workbench = options.workbench;
 
         this._channelManager = new ChannelManager(this._id);
 
@@ -150,7 +148,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
                 ): Exclude<TInterfaceTypes["settingsToView"], undefined>[TKey] {
                     return get(getUniDirectionalSettingsToViewInterface().getAtom(key));
                 }
-                effectFunc(getAtomFromInterface, set);
+                effectFunc(getAtomFromInterface, set, get);
             });
             newEffects.push(effect);
         }
@@ -175,7 +173,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
                 ): Exclude<TInterfaceTypes["viewToSettings"], undefined>[TKey] {
                     return get(getUniDirectionalViewToSettingsInterface().getAtom(key));
                 }
-                effectFunc(getAtomFromInterface, set);
+                effectFunc(getAtomFromInterface, set, get);
             });
             newEffects.push(effect);
         }

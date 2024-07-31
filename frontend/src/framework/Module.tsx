@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Atom, PrimitiveAtom, Setter, WritableAtom } from "jotai";
+import { Getter, Setter } from "jotai";
 
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
@@ -32,7 +32,7 @@ export type ModuleInterfaceTypes = {
     viewToSettings?: InterfaceBaseType;
 };
 
-export type ModuleInterfacesInitialization<TInterfaceTypes extends ModuleInterfaceTypes> = {
+export type ModuleInterfacesInitializations<TInterfaceTypes extends ModuleInterfaceTypes> = {
     settingsToView: TInterfaceTypes["settingsToView"] extends undefined
         ? undefined
         : InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
@@ -67,13 +67,10 @@ export type ModuleViewProps<
     initialSettings?: InitialSettings;
 };
 
-export type ModuleAtoms<TAtoms extends Record<string, unknown>> = {
-    [K in keyof TAtoms]: Atom<TAtoms[K]> | WritableAtom<TAtoms[K], [TAtoms[K]], void> | PrimitiveAtom<TAtoms[K]>;
-};
-
 export type InterfaceEffects<TInterfaceType extends InterfaceBaseType> = ((
     getInterfaceValue: <TKey extends keyof TInterfaceType>(key: TKey) => TInterfaceType[TKey],
-    setAtomValue: Setter
+    setAtomValue: Setter,
+    getAtomValue: Getter
 ) => void)[];
 
 export type ModuleSettings<
@@ -260,12 +257,12 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         instance.initialize();
         if (this._settingsToViewInterfaceInitialization) {
             instance.makeSettingsToViewInterface(this._settingsToViewInterfaceInitialization);
-            instance.makeSettingsToViewInterfaceEffectsAtom();
         }
+        instance.makeSettingsToViewInterfaceEffectsAtom();
         if (this._viewToSettingsInterfaceInitialization) {
             instance.makeViewToSettingsInterface(this._viewToSettingsInterfaceInitialization);
-            instance.makeViewToSettingsInterfaceEffectsAtom();
         }
+        instance.makeViewToSettingsInterfaceEffectsAtom();
     }
 
     private maybeImportSelf(): void {
