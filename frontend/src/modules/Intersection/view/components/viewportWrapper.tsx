@@ -12,8 +12,6 @@ import { cloneDeep, isEqual } from "lodash";
 
 import { ReadoutWrapper } from "./readoutWrapper";
 
-import { ViewAtoms } from "../atoms/atomDefinitions";
-
 export type ViewportWrapperProps = {
     wellboreHeaderUuid: string | null;
     referenceSystem?: IntersectionReferenceSystem;
@@ -25,7 +23,7 @@ export type ViewportWrapperProps = {
     };
     viewport: Viewport | null;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<Interfaces, Record<string, never>, ViewAtoms>;
+    viewContext: ViewContext<Interfaces>;
 };
 
 export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {

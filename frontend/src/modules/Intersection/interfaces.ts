@@ -18,6 +18,7 @@ import {
     selectedEnsembleIdentAtom,
     selectedWellboreAtom,
 } from "./settings/atoms/derivedAtoms";
+import { WellboreHeader } from "./typesAndEnums";
 import { LayerManager } from "./utils/layers/LayerManager";
 
 export type SettingsToViewInterface = {
@@ -31,12 +32,7 @@ export type SettingsToViewInterface = {
     ensembleIdent: EnsembleIdent | null;
     selectedCustomIntersectionPolylineId: string | null;
     layerManager: LayerManager;
-    wellboreHeader: {
-        uuid: string;
-        identifier: string;
-        depthReferencePoint: string;
-        depthReferenceElevation: number;
-    } | null;
+    wellboreHeader: WellboreHeader | null;
 };
 
 export type Interfaces = {

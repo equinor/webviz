@@ -1,5 +1,5 @@
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
-import { AtomsInitialization, Module, ModuleCategory, ModuleDevState, ModuleInterfaceTypes } from "./Module";
+import { InterfaceEffects, Module, ModuleCategory, ModuleDevState, ModuleInterfaceTypes } from "./Module";
 import { ModuleDataTagId } from "./ModuleDataTags";
 import { DrawPreviewFunc } from "./Preview";
 import { SyncSettingKey } from "./SyncSettings";
@@ -30,18 +30,16 @@ export class ModuleNotFoundError extends Error {
 }
 
 export class ModuleRegistry {
-    private static _registeredModules: Record<string, Module<any, any, any>> = {};
-    private static _moduleNotFoundPlaceholders: Record<string, Module<any, any, any>> = {};
+    private static _registeredModules: Record<string, Module<any>> = {};
+    private static _moduleNotFoundPlaceholders: Record<string, Module<any>> = {};
 
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
-    static registerModule<
-        TInterfaceTypes extends ModuleInterfaceTypes,
-        TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
-        TViewAtomsType extends Record<string, unknown> = Record<string, never>
-    >(options: RegisterModuleOptions): Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
-        const module = new Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>({
+    static registerModule<TInterfaceTypes extends ModuleInterfaceTypes>(
+        options: RegisterModuleOptions
+    ): Module<TInterfaceTypes> {
+        const module = new Module<TInterfaceTypes>({
             name: options.moduleName,
             defaultTitle: options.defaultTitle,
             category: options.category,
@@ -57,11 +55,7 @@ export class ModuleRegistry {
         return module;
     }
 
-    static initModule<
-        TInterfaceTypes extends ModuleInterfaceTypes,
-        TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
-        TViewAtomsType extends Record<string, unknown> = Record<string, never>
-    >(
+    static initModule<TInterfaceTypes extends ModuleInterfaceTypes>(
         moduleName: string,
         options: {
             settingsToViewInterfaceInitialization?: TInterfaceTypes["settingsToView"] extends undefined
@@ -70,16 +64,10 @@ export class ModuleRegistry {
             viewToSettingsInterfaceInitialization?: TInterfaceTypes["viewToSettings"] extends undefined
                 ? undefined
                 : InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
-            settingsAtomsInitialization?: AtomsInitialization<
-                TSettingsAtomsType,
-                Exclude<TInterfaceTypes["viewToSettings"], undefined>
-            >;
-            viewAtomsInitialization?: AtomsInitialization<
-                TViewAtomsType,
-                Exclude<TInterfaceTypes["settingsToView"], undefined>
-            >;
+            viewToSettingsInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
+            settingsToViewInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
         }
-    ): Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
+    ): Module<TInterfaceTypes> {
         const module = this._registeredModules[moduleName];
         if (module) {
             if (options.settingsToViewInterfaceInitialization) {
@@ -88,31 +76,31 @@ export class ModuleRegistry {
             if (options.viewToSettingsInterfaceInitialization) {
                 module.setViewToSettingsInterfaceInitialization(options.viewToSettingsInterfaceInitialization);
             }
-            if (options.settingsAtomsInitialization) {
-                module.setSettingsAtomsInitialization(options.settingsAtomsInitialization);
+            if (options.viewToSettingsInterfaceEffects) {
+                module.setViewToSettingsInterfaceEffects(options.viewToSettingsInterfaceEffects);
             }
-            if (options.viewAtomsInitialization) {
-                module.setViewAtomsInitialization(options.viewAtomsInitialization);
+            if (options.settingsToViewInterfaceEffects) {
+                module.setSettingsToViewInterfaceEffects(options.settingsToViewInterfaceEffects);
             }
-            return module as Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>;
+            return module as Module<TInterfaceTypes>;
         }
         throw new ModuleNotFoundError(moduleName);
     }
 
-    static getModule(moduleName: string): Module<any, any, any> {
+    static getModule(moduleName: string): Module<any> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            return module as Module<any, any, any>;
+            return module as Module<any>;
         }
         const placeholder = this._moduleNotFoundPlaceholders[moduleName];
         if (placeholder) {
-            return placeholder as Module<any, any, any>;
+            return placeholder as Module<any>;
         }
         this._moduleNotFoundPlaceholders[moduleName] = new ModuleNotFoundPlaceholder(moduleName);
-        return this._moduleNotFoundPlaceholders[moduleName] as Module<any, any, any>;
+        return this._moduleNotFoundPlaceholders[moduleName] as Module<any>;
     }
 
-    static getRegisteredModules(): Record<string, Module<any, any, any>> {
+    static getRegisteredModules(): Record<string, Module<any>> {
         return this._registeredModules;
     }
 }

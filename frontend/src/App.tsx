@@ -44,9 +44,12 @@ enum InitAppState {
 
 const layout: LayoutElement[] = [];
 
-const WORKBENCH = new Workbench();
-
 function App() {
+    // Workbench must be kept as a state in order to keep it when any framework code is changed in dev mode.
+    // Otherwise, the workbench will be reset on every code change. This would cause it to loose its state and will
+    // cause the app to crash.
+    const [workbench] = React.useState(new Workbench());
+
     const [isMounted, setIsMounted] = React.useState<boolean>(false);
     const [initAppState, setInitAppState] = React.useState<InitAppState>(InitAppState.CheckingIfUserIsSignedIn);
 
@@ -54,17 +57,17 @@ function App() {
     const { authState } = useAuthProvider();
 
     function initApp() {
-        if (!WORKBENCH.loadLayoutFromLocalStorage()) {
-            WORKBENCH.makeLayout(layout);
+        if (!workbench.loadLayoutFromLocalStorage()) {
+            workbench.makeLayout(layout);
         }
 
-        if (WORKBENCH.getLayout().length === 0) {
-            WORKBENCH.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModulesList);
+        if (workbench.getLayout().length === 0) {
+            workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModulesList);
         } else {
-            WORKBENCH.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
+            workbench.getGuiMessageBroker().setState(GuiState.LeftDrawerContent, LeftDrawerContent.ModuleSettings);
         }
         setInitAppState(InitAppState.InitCompleted);
-        WORKBENCH.getGuiMessageBroker().setState(GuiState.AppInitialized, true);
+        workbench.getGuiMessageBroker().setState(GuiState.AppInitialized, true);
     }
 
     function signIn() {
@@ -79,10 +82,10 @@ function App() {
 
             setIsMounted(true);
 
-            const storedEnsembleIdents = WORKBENCH.maybeLoadEnsembleSettingsFromLocalStorage();
+            const storedEnsembleIdents = workbench.maybeLoadEnsembleSettingsFromLocalStorage();
             if (storedEnsembleIdents) {
                 setInitAppState(InitAppState.LoadingEnsembles);
-                WORKBENCH.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).finally(() => {
+                workbench.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).finally(() => {
                     initApp();
                 });
             } else {
@@ -90,8 +93,8 @@ function App() {
             }
 
             return function handleUnmount() {
-                WORKBENCH.clearLayout();
-                WORKBENCH.resetModuleInstanceNumbers();
+                workbench.clearLayout();
+                workbench.resetModuleInstanceNumbers();
             };
         },
         [authState, isMounted, queryClient]
@@ -160,12 +163,12 @@ function App() {
                 })}
             >
                 <>
-                    <LeftNavBar workbench={WORKBENCH} />
-                    <SettingsContentPanels workbench={WORKBENCH} />
-                    <RightNavBar workbench={WORKBENCH} />
+                    <LeftNavBar workbench={workbench} />
+                    <SettingsContentPanels workbench={workbench} />
+                    <RightNavBar workbench={workbench} />
                 </>
             </div>
-            <ToggleDevToolsButton guiMessageBroker={WORKBENCH.getGuiMessageBroker()} />
+            <ToggleDevToolsButton guiMessageBroker={workbench.getGuiMessageBroker()} />
         </>
     );
 }

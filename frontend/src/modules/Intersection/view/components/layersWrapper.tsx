@@ -32,7 +32,6 @@ import { isEqual } from "lodash";
 import { ViewportWrapper } from "./viewportWrapper";
 
 import { ColorScaleWithName } from "../../../_shared/utils/ColorScaleWithName";
-import { ViewAtoms } from "../atoms/atomDefinitions";
 
 export type LayersWrapperProps = {
     referenceSystem: IntersectionReferenceSystem | null;
@@ -41,7 +40,7 @@ export type LayersWrapperProps = {
     intersectionExtensionLength: number;
     intersectionType: IntersectionType;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<Interfaces, Record<string, never>, ViewAtoms>;
+    viewContext: ViewContext<Interfaces>;
     wellboreHeaderUuid: string | null;
     wellboreHeaderDepthReferencePoint: string | null;
     wellboreHeaderDepthReferenceElevation: number | null;

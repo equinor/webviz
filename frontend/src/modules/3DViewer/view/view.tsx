@@ -18,7 +18,6 @@ import { NorthArrow3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { useAtom, useSetAtom } from "jotai";
 
-import { ViewAtoms } from "./atoms/atomDefinitions";
 import { editCustomIntersectionPolylineEditModeActiveAtom, intersectionTypeAtom } from "./atoms/baseAtoms";
 import { SyncedSettingsUpdateWrapper } from "./components/SyncedSettingsUpdateWrapper";
 import { useGridParameterQuery, useGridSurfaceQuery } from "./queries/gridQueries";
@@ -27,10 +26,9 @@ import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 import { makeAxesLayer, makeGrid3DLayer, makeIntersectionLayer, makeWellsLayer } from "./utils/layers";
 
 import { Interfaces } from "../interfaces";
-import { SettingsAtoms } from "../settings/atoms/atomDefinitions";
 import { userSelectedCustomIntersectionPolylineIdAtom } from "../settings/atoms/baseAtoms";
 
-export function View(props: ModuleViewProps<Interfaces, SettingsAtoms, ViewAtoms>): React.ReactNode {
+export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const syncedSettingKeys = props.viewContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
@@ -64,7 +62,6 @@ export function View(props: ModuleViewProps<Interfaces, SettingsAtoms, ViewAtoms
     const setEditPolylineModeActive = useSetAtom(editCustomIntersectionPolylineEditModeActiveAtom);
 
     const intersectionType = props.viewContext.useSettingsToViewInterfaceValue("intersectionType");
-    const viewIntersectionType = useAtom(intersectionTypeAtom);
     const setIntersectionType = useSetAtom(intersectionTypeAtom);
 
     const ensembleSet = useEnsembleSet(props.workbenchSession);

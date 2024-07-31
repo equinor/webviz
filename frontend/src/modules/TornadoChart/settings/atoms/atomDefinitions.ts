@@ -9,7 +9,7 @@ export type SettingsAtoms = {
     selectedSensitivityAtom: SelectedSensitivity | null;
 };
 
-export function settingsAtomsInitialization(
+export function viewToSettingsInterfaceEffects(
     viewToSettingsInterface: UniDirectionalModuleComponentsInterface<ViewToSettingsInterface>
 ): ModuleAtoms<SettingsAtoms> {
     const selectedSensitivityAtom = atom((get) => {

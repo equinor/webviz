@@ -8,9 +8,11 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 
+import { useAtomValue, useSetAtom } from "jotai";
 import { PlotDatum, PlotMouseEvent } from "plotly.js";
 
-import { ViewAtoms } from "./atoms/atomDefinitions";
+import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
+import { realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useSubplotBuilder } from "./hooks/useSubplotBuilder";
@@ -18,10 +20,7 @@ import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuou
 
 import { Interfaces } from "../interfaces";
 
-export const View = ({
-    viewContext,
-    workbenchSettings,
-}: ModuleViewProps<Interfaces, Record<string, never>, ViewAtoms>) => {
+export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
@@ -30,10 +29,10 @@ export const View = ({
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const parameterIdent = viewContext.useSettingsToViewInterfaceValue("parameterIdent");
     const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedEnsembles");
-    const hasRealizationsQueryError = viewContext.useViewAtomValue("realizationsQueryHasError");
-    const hasStatisticsQueryError = viewContext.useViewAtomValue("statisticsQueryHasError");
+    const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
+    const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
 
-    const setActiveTimestampUtcMs = viewContext.useSetViewAtom("userSelectedActiveTimestampUtcMs");
+    const setActiveTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
 
     // Color palettes
     const colorSet = workbenchSettings.useColorSet();

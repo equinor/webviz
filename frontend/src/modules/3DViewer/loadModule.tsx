@@ -2,16 +2,16 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { Interfaces, settingsToViewInterfaceInitialization, viewToSettingsInterfaceInitialization } from "./interfaces";
 import { MODULE_NAME } from "./registerModule";
-import { SettingsAtoms, settingsAtomsInitialization } from "./settings/atoms/atomDefinitions";
+import { viewToSettingsInterfaceEffects } from "./settings/atoms/interfaceEffects";
 import { Settings } from "./settings/settings";
-import { ViewAtoms, viewAtomsInitialization } from "./view/atoms/atomDefinitions";
+import { settingsToViewInterfaceEffects } from "./view/atoms/interfaceEffects";
 import { View } from "./view/view";
 
-const module = ModuleRegistry.initModule<Interfaces, SettingsAtoms, ViewAtoms>(MODULE_NAME, {
+const module = ModuleRegistry.initModule<Interfaces>(MODULE_NAME, {
     settingsToViewInterfaceInitialization,
     viewToSettingsInterfaceInitialization,
-    settingsAtomsInitialization,
-    viewAtomsInitialization,
+    viewToSettingsInterfaceEffects,
+    settingsToViewInterfaceEffects,
 });
 
 module.viewFC = View;

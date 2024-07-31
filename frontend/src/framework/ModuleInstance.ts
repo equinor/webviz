@@ -1,17 +1,11 @@
 import React, { ErrorInfo } from "react";
 
-import { AtomStore } from "./AtomStoreMaster";
+import { Atom, atom } from "jotai";
+import { atomEffect } from "jotai-effect";
+
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
-import {
-    AtomsInitialization,
-    ImportState,
-    Module,
-    ModuleAtoms,
-    ModuleInterfaceTypes,
-    ModuleSettings,
-    ModuleView,
-} from "./Module";
+import { ImportState, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import { SyncSettingKey } from "./SyncSettings";
 import {
@@ -43,31 +37,23 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.IMPORT_STATE]: ImportState;
 };
 
-export interface ModuleInstanceOptions<
-    TInterfaceTypes extends ModuleInterfaceTypes,
-    TSettingsAtomsType extends Record<string, unknown>,
-    TViewAtomsType extends Record<string, unknown>
-> {
-    module: Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>;
+export interface ModuleInstanceOptions<TInterfaceTypes extends ModuleInterfaceTypes> {
+    module: Module<TInterfaceTypes>;
     workbench: Workbench;
     instanceNumber: number;
     channelDefinitions: ChannelDefinition[] | null;
     channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
 }
 
-export class ModuleInstance<
-    TInterfaceTypes extends ModuleInterfaceTypes,
-    TSettingsAtomsType extends Record<string, unknown>,
-    TViewAtomsType extends Record<string, unknown>
-> {
+export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _id: string;
     private _title: string;
     private _initialized: boolean = false;
     private _moduleInstanceState: ModuleInstanceState = ModuleInstanceState.INITIALIZING;
     private _fatalError: { err: Error; errInfo: ErrorInfo } | null = null;
     private _syncedSettingKeys: SyncSettingKey[] = [];
-    private _module: Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>;
-    private _context: ModuleContext<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> | null = null;
+    private _module: Module<TInterfaceTypes>;
+    private _context: ModuleContext<TInterfaceTypes> | null = null;
     private _subscribers: Map<keyof ModuleInstanceTopicValueTypes, Set<() => void>> = new Map();
     private _initialSettings: InitialSettings | null = null;
     private _statusController: ModuleInstanceStatusControllerInternal = new ModuleInstanceStatusControllerInternal();
@@ -79,10 +65,10 @@ export class ModuleInstance<
     private _viewToSettingsInterface: UniDirectionalModuleComponentsInterface<
         Exclude<TInterfaceTypes["viewToSettings"], undefined>
     > | null = null;
-    private _settingsAtoms: ModuleAtoms<TSettingsAtomsType> | null = null;
-    private _viewAtoms: ModuleAtoms<TViewAtomsType> | null = null;
+    private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
+    private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
 
-    constructor(options: ModuleInstanceOptions<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>) {
+    constructor(options: ModuleInstanceOptions<TInterfaceTypes>) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
         this._title = options.module.getDefaultTitle();
         this._module = options.module;
@@ -104,10 +90,6 @@ export class ModuleInstance<
         }
     }
 
-    getAtomStore(): AtomStore {
-        return this._workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(this._id);
-    }
-
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
         Exclude<TInterfaceTypes["settingsToView"], undefined>
     > {
@@ -126,26 +108,12 @@ export class ModuleInstance<
         return this._viewToSettingsInterface;
     }
 
-    getSettingsAtom<TKey extends keyof TSettingsAtomsType>(key: TKey): ModuleAtoms<TSettingsAtomsType>[TKey] {
-        if (!this._settingsAtoms) {
-            throw `Module instance '${this._title}' does not have initialized settings atoms yet. Did you forget to add an atom initialization when registering the module?`;
-        }
-        return this._settingsAtoms[key];
-    }
-
-    getViewAtom<TKey extends keyof TViewAtomsType>(key: TKey): ModuleAtoms<TViewAtomsType>[TKey] {
-        if (!this._viewAtoms) {
-            throw `Module instance '${this._title}' does not have initialized view atoms yet. Did you forget to add an atom initialization when registering the module?`;
-        }
-        return this._viewAtoms[key];
-    }
-
     getChannelManager(): ChannelManager {
         return this._channelManager;
     }
 
     initialize(): void {
-        this._context = new ModuleContext<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>(this);
+        this._context = new ModuleContext<TInterfaceTypes>(this);
         this._initialized = true;
         this.setModuleInstanceState(ModuleInstanceState.OK);
     }
@@ -168,22 +136,68 @@ export class ModuleInstance<
         this._viewToSettingsInterface = new UniDirectionalModuleComponentsInterface(interfaceInitialization);
     }
 
-    makeSettingsAtoms(
-        initFunc: AtomsInitialization<TSettingsAtomsType, Exclude<TInterfaceTypes["viewToSettings"], undefined>>
-    ) {
-        if (!this._viewToSettingsInterface) {
-            throw `Module instance '${this._title}' does not have an interface from view to settings yet. Did you forget to init the module?`;
+    makeSettingsToViewInterfaceEffectsAtom(): void {
+        const effectFuncs = this.getModule().getSettingsToViewInterfaceEffects();
+        const getUniDirectionalSettingsToViewInterface: () => UniDirectionalModuleComponentsInterface<
+            Exclude<TInterfaceTypes["settingsToView"], undefined>
+        > = () => this.getUniDirectionalSettingsToViewInterface();
+
+        const newEffects: Atom<void>[] = [];
+        for (const effectFunc of effectFuncs) {
+            const effect = atomEffect((get, set) => {
+                function getAtomFromInterface<TKey extends keyof Exclude<TInterfaceTypes["settingsToView"], undefined>>(
+                    key: TKey
+                ): Exclude<TInterfaceTypes["settingsToView"], undefined>[TKey] {
+                    return get(getUniDirectionalSettingsToViewInterface().getAtom(key));
+                }
+                effectFunc(getAtomFromInterface, set);
+            });
+            newEffects.push(effect);
         }
-        this._settingsAtoms = initFunc(this._viewToSettingsInterface);
+        this._settingsToViewInterfaceEffectsAtom = atom((get) => {
+            for (const effect of newEffects) {
+                get(effect);
+            }
+        });
     }
 
-    makeViewAtoms(
-        initFunc: AtomsInitialization<TViewAtomsType, Exclude<TInterfaceTypes["settingsToView"], undefined>>
-    ) {
-        if (!this._settingsToViewInterface) {
-            throw `Module instance '${this._title}' does not have an interface from settings to view yet. Did you forget to init the module?`;
+    makeViewToSettingsInterfaceEffectsAtom(): void {
+        const effectFuncs = this.getModule().getViewToSettingsInterfaceEffects();
+        const getUniDirectionalViewToSettingsInterface: () => UniDirectionalModuleComponentsInterface<
+            Exclude<TInterfaceTypes["viewToSettings"], undefined>
+        > = () => this.getUniDirectionalViewToSettingsInterface();
+
+        const newEffects: Atom<void>[] = [];
+        for (const effectFunc of effectFuncs) {
+            const effect = atomEffect((get, set) => {
+                function getAtomFromInterface<TKey extends keyof Exclude<TInterfaceTypes["viewToSettings"], undefined>>(
+                    key: TKey
+                ): Exclude<TInterfaceTypes["viewToSettings"], undefined>[TKey] {
+                    return get(getUniDirectionalViewToSettingsInterface().getAtom(key));
+                }
+                effectFunc(getAtomFromInterface, set);
+            });
+            newEffects.push(effect);
         }
-        this._viewAtoms = initFunc(this._settingsToViewInterface);
+        this._viewToSettingsInterfaceEffectsAtom = atom((get) => {
+            for (const effect of newEffects) {
+                get(effect);
+            }
+        });
+    }
+
+    getSettingsToViewInterfaceEffectsAtom(): Atom<void> {
+        if (!this._settingsToViewInterfaceEffectsAtom) {
+            throw `Module instance '${this._title}' does not have settings to view interface effects yet. Did you forget to init the module?`;
+        }
+        return this._settingsToViewInterfaceEffectsAtom;
+    }
+
+    getViewToSettingsInterfaceEffectsAtom(): Atom<void> {
+        if (!this._viewToSettingsInterfaceEffectsAtom) {
+            throw `Module instance '${this._title}' does not have view to settings interface effects yet. Did you forget to init the module?`;
+        }
+        return this._viewToSettingsInterfaceEffectsAtom;
     }
 
     addSyncedSetting(settingKey: SyncSettingKey): void {
@@ -208,11 +222,11 @@ export class ModuleInstance<
         return this._initialized;
     }
 
-    getViewFC(): ModuleView<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
+    getViewFC(): ModuleView<TInterfaceTypes> {
         return this._module.viewFC;
     }
 
-    getSettingsFC(): ModuleSettings<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
+    getSettingsFC(): ModuleSettings<TInterfaceTypes> {
         return this._module.settingsFC;
     }
 
@@ -220,7 +234,7 @@ export class ModuleInstance<
         return this._module.getImportState();
     }
 
-    getContext(): ModuleContext<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
+    getContext(): ModuleContext<TInterfaceTypes> {
         if (!this._context) {
             throw `Module context is not available yet. Did you forget to init the module '${this._title}.'?`;
         }
@@ -287,7 +301,7 @@ export class ModuleInstance<
         return snapshotGetter;
     }
 
-    getModule(): Module<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType> {
+    getModule(): Module<TInterfaceTypes> {
         return this._module;
     }
 
@@ -338,7 +352,7 @@ export class ModuleInstance<
 }
 
 export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
-    moduleInstance: ModuleInstance<any, any, any>,
+    moduleInstance: ModuleInstance<any>,
     topic: T
 ): ModuleInstanceTopicValueTypes[T] {
     const value = React.useSyncExternalStore<ModuleInstanceTopicValueTypes[T]>(

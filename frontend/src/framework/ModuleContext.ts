@@ -10,8 +10,6 @@
  */
 
 /* eslint-disable react-hooks/rules-of-hooks */
-import { WritableAtom, useAtom, useAtomValue, useSetAtom } from "jotai";
-
 import { ChannelContentDefinition, KeyKind } from "./DataChannelTypes";
 import { ModuleInterfaceTypes } from "./Module";
 import {
@@ -26,14 +24,10 @@ import { InterfaceBaseType, useInterfaceValue } from "./UniDirectionalModuleComp
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
-export class ModuleContext<
-    TInterfaceTypes extends ModuleInterfaceTypes,
-    TSettingsAtomsType extends Record<string, unknown>,
-    TViewAtomsType extends Record<string, unknown>
-> {
-    protected _moduleInstance: ModuleInstance<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>;
+export class ModuleContext<TInterfaceTypes extends ModuleInterfaceTypes> {
+    protected _moduleInstance: ModuleInstance<TInterfaceTypes>;
 
-    constructor(moduleInstance: ModuleInstance<TInterfaceTypes, TSettingsAtomsType, TViewAtomsType>) {
+    constructor(moduleInstance: ModuleInstance<TInterfaceTypes>) {
         this._moduleInstance = moduleInstance;
     }
 
@@ -99,76 +93,14 @@ export class ModuleContext<
     ): TInterfaceTypes["viewToSettings"][TKey] {
         return useInterfaceValue(this._moduleInstance.getUniDirectionalViewToSettingsInterface(), key);
     }
-
-    useViewAtom<TKey extends keyof TViewAtomsType>(
-        key: TKey
-    ): [Awaited<TViewAtomsType[TKey]>, (value: TViewAtomsType[TKey]) => void] {
-        const atom = this._moduleInstance.getViewAtom(key);
-
-        return useAtom(atom);
-    }
-
-    useViewAtomValue<TKey extends keyof TViewAtomsType>(key: TKey): TViewAtomsType[TKey] {
-        const atom = this._moduleInstance.getViewAtom(key);
-
-        return useAtomValue(atom);
-    }
-
-    useSetViewAtom<
-        TKey extends keyof Pick<
-            TViewAtomsType,
-            keyof {
-                [key in keyof TViewAtomsType]: TViewAtomsType[key] extends WritableAtom<any, any[], any> ? key : never;
-            }
-        >
-    >(key: TKey): (...args: [TViewAtomsType[TKey]]) => void {
-        const atom = this._moduleInstance.getViewAtom(key) as WritableAtom<TViewAtomsType[TKey], any[], any>;
-        return useSetAtom(atom);
-    }
-
-    useSettingsAtom<TKey extends keyof TSettingsAtomsType>(
-        key: TKey
-    ): [Awaited<TSettingsAtomsType[TKey]>, (value: TSettingsAtomsType[TKey]) => void] {
-        const atom = this._moduleInstance.getSettingsAtom(key);
-
-        return useAtom(atom);
-    }
-
-    useSettingsAtomValue<TKey extends keyof TSettingsAtomsType>(key: TKey): TSettingsAtomsType[TKey] {
-        const atom = this._moduleInstance.getSettingsAtom(key);
-
-        return useAtomValue(atom);
-    }
-
-    useSetSettingsAtom<
-        TKey extends keyof Pick<
-            TSettingsAtomsType,
-            keyof {
-                [key in keyof TSettingsAtomsType]: TSettingsAtomsType[key] extends WritableAtom<any, any[], any>
-                    ? key
-                    : never;
-            }
-        >
-    >(key: TKey): (...args: [TSettingsAtomsType[TKey]]) => void {
-        const atom = this._moduleInstance.getSettingsAtom(key) as WritableAtom<TSettingsAtomsType[TKey], any[], any>;
-        return useSetAtom(atom);
-    }
 }
 
-export type ViewContext<
-    TInterfaceType extends InterfaceBaseType,
-    TSettingsAtomsType extends Record<string, unknown>,
-    TViewAtomsType extends Record<string, unknown>
-> = Omit<
-    ModuleContext<TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
+export type ViewContext<TInterfaceType extends InterfaceBaseType> = Omit<
+    ModuleContext<TInterfaceType>,
     "useViewToSettingsInterfaceValue" | "useSettingsAtom" | "useSetSettingsAtom" | "useSettingsAtomValue"
 >;
 
-export type SettingsContext<
-    TInterfaceType extends InterfaceBaseType,
-    TSettingsAtomsType extends Record<string, unknown>,
-    TViewAtomsType extends Record<string, unknown>
-> = Omit<
-    ModuleContext<TInterfaceType, TSettingsAtomsType, TViewAtomsType>,
+export type SettingsContext<TInterfaceType extends InterfaceBaseType> = Omit<
+    ModuleContext<TInterfaceType>,
     "useSettingsToViewInterfaceValue" | "useViewAtom" | "useViewAtomValue" | "useSetViewAtom"
 >;

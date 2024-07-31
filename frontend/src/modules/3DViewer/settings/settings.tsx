@@ -29,7 +29,6 @@ import { Delete, Edit } from "@mui/icons-material";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
-import { SettingsAtoms } from "./atoms/atomDefinitions";
 import {
     addCustomIntersectionPolylineEditModeActiveAtom,
     colorScaleAtom,
@@ -67,9 +66,8 @@ import { WellboreSelector } from "./components/wellboreSelector";
 
 import { Interfaces } from "../interfaces";
 import { GridCellIndexRanges } from "../typesAndEnums";
-import { ViewAtoms } from "../view/atoms/atomDefinitions";
 
-export function Settings(props: ModuleSettingsProps<Interfaces, SettingsAtoms, ViewAtoms>): JSX.Element {
+export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 

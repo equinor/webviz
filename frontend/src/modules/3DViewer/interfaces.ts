@@ -57,7 +57,7 @@ export type SettingsToViewInterface = {
 
 export type ViewToSettingsInterface = {
     editCustomIntersectionPolylineEditModeActive: boolean;
-    intersectionType: { value: IntersectionType; timestamp: number };
+    intersectionType: IntersectionType;
 };
 
 export type Interfaces = {

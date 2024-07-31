@@ -6,21 +6,27 @@ import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { useAtomValue } from "jotai";
 
-import { ViewAtoms } from "../atoms/atomDefinitions";
+import {
+    historicalDataQueryHasErrorAtom,
+    queryIsFetchingAtom,
+    realizationsQueryHasErrorAtom,
+    statisticsQueryHasErrorAtom,
+    vectorObservationsQueriesAtom,
+} from "../atoms/derivedAtoms";
 
 export function useMakeViewStatusWriterMessages(
-    viewContext: ViewContext<Interfaces, Record<string, never>, ViewAtoms>,
+    viewContext: ViewContext<Interfaces>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
     ensemblesWithoutParameter: Ensemble[]
 ) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
-    const vectorObservationsQueries = viewContext.useViewAtomValue("vectorObservationsQueries");
-    const isQueryFetching = viewContext.useViewAtomValue("queryIsFetching");
-    const hasHistoricalVectorQueryError = viewContext.useViewAtomValue("historicalDataQueryHasError");
-    const hasRealizationsQueryError = viewContext.useViewAtomValue("realizationsQueryHasError");
-    const hasStatisticsQueryError = viewContext.useViewAtomValue("statisticsQueryHasError");
+    const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
+    const isQueryFetching = useAtomValue(queryIsFetchingAtom);
+    const hasHistoricalVectorQueryError = useAtomValue(historicalDataQueryHasErrorAtom);
+    const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
+    const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
 
     statusWriter.setLoading(isQueryFetching);
     if (hasRealizationsQueryError) {

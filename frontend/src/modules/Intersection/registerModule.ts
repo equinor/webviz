@@ -4,11 +4,10 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
-import { ViewAtoms } from "./view/atoms/atomDefinitions";
 
 export const MODULE_NAME = "Intersection";
 
-ModuleRegistry.registerModule<Interfaces, Record<string, never>, ViewAtoms>({
+ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     defaultTitle: "Intersection",
     category: ModuleCategory.MAIN,

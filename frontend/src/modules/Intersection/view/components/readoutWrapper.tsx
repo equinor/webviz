@@ -16,8 +16,6 @@ import { Interfaces } from "@modules/Intersection/interfaces";
 
 import { isEqual } from "lodash";
 
-import { ViewAtoms } from "../atoms/atomDefinitions";
-
 export type ReadoutWrapperProps = {
     wellboreHeaderUuid: string | null;
     showGrid: boolean;
@@ -32,7 +30,7 @@ export type ReadoutWrapperProps = {
     };
     verticalScale: number;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<Interfaces, Record<string, never>, ViewAtoms>;
+    viewContext: ViewContext<Interfaces>;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
