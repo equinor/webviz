@@ -1,5 +1,5 @@
 import { InplaceVolumetricResultName_api } from "@api";
-import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
+import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 import { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 
@@ -17,30 +17,26 @@ import {
 import { PlotType } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
-    derivedStates: {
-        filter: InplaceVolumetricsFilter;
-        resultName: InplaceVolumetricResultName_api | null;
-        resultName2: InplaceVolumetricResultName_api | null;
-        subplotBy: SourceAndTableIdentifierUnion;
-        colorBy: SourceAndTableIdentifierUnion;
-        plotType: PlotType;
-    };
+    filter: InplaceVolumetricsFilter;
+    resultName: InplaceVolumetricResultName_api | null;
+    resultName2: InplaceVolumetricResultName_api | null;
+    subplotBy: SourceAndTableIdentifierUnion;
+    colorBy: SourceAndTableIdentifierUnion;
+    plotType: PlotType;
 };
 
 export const interfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    derivedStates: {
-        filter: (get) => {
-            return {
-                ensembleIdents: get(selectedEnsembleIdentsAtom),
-                tableNames: get(selectedTableNamesAtom),
-                fluidZones: get(selectedFluidZonesAtom),
-                identifiersValues: get(selectedIdentifiersValuesAtom),
-            };
-        },
-        resultName: (get) => get(selectedResultNameAtom),
-        resultName2: (get) => get(selectedResultName2Atom),
-        subplotBy: (get) => get(selectedSubplotByAtom),
-        colorBy: (get) => get(selectedColorByAtom),
-        plotType: (get) => get(userSelectedPlotTypeAtom),
+    filter: (get) => {
+        return {
+            ensembleIdents: get(selectedEnsembleIdentsAtom),
+            tableNames: get(selectedTableNamesAtom),
+            fluidZones: get(selectedFluidZonesAtom),
+            identifiersValues: get(selectedIdentifiersValuesAtom),
+        };
     },
+    resultName: (get) => get(selectedResultNameAtom),
+    resultName2: (get) => get(selectedResultName2Atom),
+    subplotBy: (get) => get(selectedSubplotByAtom),
+    colorBy: (get) => get(selectedColorByAtom),
+    plotType: (get) => get(userSelectedPlotTypeAtom),
 };

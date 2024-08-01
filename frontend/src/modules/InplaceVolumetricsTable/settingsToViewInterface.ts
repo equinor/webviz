@@ -1,5 +1,5 @@
 import { InplaceVolumetricResultName_api } from "@api";
-import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
+import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
@@ -14,29 +14,22 @@ import {
 } from "./settings/atoms/derivedAtoms";
 
 export type SettingsToViewInterface = {
-    derivedStates: {
-        filter: InplaceVolumetricsFilter;
-        resultNames: InplaceVolumetricResultName_api[];
-        accumulationOptions: Omit<
-            SourceAndTableIdentifierUnion,
-            SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME
-        >[];
-        calcMeanAcrossAllRealizations: boolean;
-    };
+    filter: InplaceVolumetricsFilter;
+    resultNames: InplaceVolumetricResultName_api[];
+    accumulationOptions: Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>[];
+    calcMeanAcrossAllRealizations: boolean;
 };
 
 export const interfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    derivedStates: {
-        filter: (get) => {
-            return {
-                ensembleIdents: get(selectedEnsembleIdentsAtom),
-                tableNames: get(selectedTableNamesAtom),
-                fluidZones: get(selectedFluidZonesAtom),
-                identifiersValues: get(selectedIdentifiersValuesAtom),
-            };
-        },
-        resultNames: (get) => get(selectedResultNamesAtom),
-        accumulationOptions: (get) => get(selectedAccumulationOptionsAtom),
-        calcMeanAcrossAllRealizations: (get) => get(calcMeanAcrossAllRealizationsAtom),
+    filter: (get) => {
+        return {
+            ensembleIdents: get(selectedEnsembleIdentsAtom),
+            tableNames: get(selectedTableNamesAtom),
+            fluidZones: get(selectedFluidZonesAtom),
+            identifiersValues: get(selectedIdentifiersValuesAtom),
+        };
     },
+    resultNames: (get) => get(selectedResultNamesAtom),
+    accumulationOptions: (get) => get(selectedAccumulationOptionsAtom),
+    calcMeanAcrossAllRealizations: (get) => get(calcMeanAcrossAllRealizationsAtom),
 };

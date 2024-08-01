@@ -46,11 +46,13 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
                 mainColumnsAdded = true;
             }
 
+            let numAddedRows = 0;
             for (const resultColumn of fluidZoneTable.resultColumns) {
                 for (const value of resultColumn.columnValues) {
                     columns.get(resultColumn.columnName)?.addRowValue(value);
 
                     if (!mainColumnsAdded) {
+                        numAddedRows++;
                         columns.get("ensemble")?.addRowValue(tableSet.ensembleIdent);
                         columns.get("table")?.addRowValue(tableSet.tableName);
                         columns.get("fluid-zone")?.addRowValue(fluidZoneTable.fluidSelectionName);
@@ -58,21 +60,23 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
                 }
                 mainColumnsAdded = true;
             }
-            const untouchedColumns = Array.from(columns.values()).filter(
-                (column) =>
-                    !fluidZoneTable.selectorColumns.some(
-                        (selectorColumn) => selectorColumn.columnName === column.getName()
-                    ) &&
-                    !fluidZoneTable.resultColumns.some(
-                        (resultColumn) => resultColumn.columnName === column.getName()
-                    ) &&
-                    column.getType() !== ColumnType.ENSEMBLE &&
-                    column.getType() !== ColumnType.TABLE &&
-                    column.getType() !== ColumnType.FLUID_ZONE
-            );
-            for (const column of untouchedColumns) {
-                for (let i = 0; i < fluidZoneTable.selectorColumns[0].indices.length; i++) {
-                    column.addRowValue(null);
+            if (numAddedRows > 0) {
+                const untouchedColumns = Array.from(columns.values()).filter(
+                    (column) =>
+                        !fluidZoneTable.selectorColumns.some(
+                            (selectorColumn) => selectorColumn.columnName === column.getName()
+                        ) &&
+                        !fluidZoneTable.resultColumns.some(
+                            (resultColumn) => resultColumn.columnName === column.getName()
+                        ) &&
+                        column.getType() !== ColumnType.ENSEMBLE &&
+                        column.getType() !== ColumnType.TABLE &&
+                        column.getType() !== ColumnType.FLUID_ZONE
+                );
+                for (const column of untouchedColumns) {
+                    for (let i = 0; i < numAddedRows; i++) {
+                        column.addRowValue(null);
+                    }
                 }
             }
         }
