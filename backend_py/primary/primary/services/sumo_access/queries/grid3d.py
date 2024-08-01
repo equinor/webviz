@@ -61,7 +61,6 @@ async def get_grid_geometry_blob_id_async(
         raise ValueError(f"Expected 1 hit, got {len(hits)}")
     return [hit["_id"] for hit in hits][0]
 
-
 async def get_grid_geometry_and_property_blob_ids_async(
     sumo_client: SumoClient,
     case_id: str,
