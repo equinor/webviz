@@ -17,6 +17,7 @@ export type TableHeading = {
         sizeInPercent: number;
         formatValue?: (value: string | number | null) => string;
         formatStyle?: (value: string | number | null) => React.CSSProperties;
+        subHeading?: TableHeading;
     };
 };
 
@@ -118,6 +119,93 @@ function preprocessData(data: TableRow<TableHeading>[]): IdentifiedTableRow<Tabl
     });
 }
 
+type TableHeadingCellInformation = {
+    id: string;
+    colSpan: number;
+    rowSpan: number;
+};
+
+type TableHeadingInformation = {
+    numColumns: number;
+    dataColumnIds: string[];
+    headerRows: TableHeadingCellInformation[][];
+};
+
+function recursivelyCalcDepth(headings: TableHeading, depth: number = 1): number {
+    let maxDepth = depth;
+    for (const col in headings) {
+        const subHeading = headings[col].subHeading;
+        if (subHeading) {
+            const localDepth = recursivelyCalcDepth(subHeading, depth + 1);
+            maxDepth = Math.max(maxDepth, localDepth);
+        }
+    }
+    return maxDepth;
+}
+
+function extractInformationFromTableHeading(
+    headings: TableHeading,
+    depth: number = 0,
+    headerRows: TableHeadingCellInformation[][] = []
+): TableHeadingInformation {
+    const maxDepth = recursivelyCalcDepth(headings);
+
+    let numColumns = 0;
+    if (!headerRows[depth]) {
+        headerRows[depth] = [];
+    }
+
+    const dataColumnIds: string[] = [];
+
+    for (const col in headings) {
+        const subHeading = headings[col].subHeading;
+        if (subHeading) {
+            const subHeadingInfo = extractInformationFromTableHeading(subHeading, depth + 1, headerRows);
+            headerRows[depth].push({
+                id: col,
+                colSpan: subHeadingInfo.numColumns,
+                rowSpan: 1,
+            });
+            numColumns += subHeadingInfo.numColumns;
+            dataColumnIds.push(...subHeadingInfo.dataColumnIds);
+        } else {
+            numColumns++;
+            headerRows[depth].push({
+                id: col,
+                colSpan: 1,
+                rowSpan: maxDepth - depth,
+            });
+            dataColumnIds.push(col);
+        }
+    }
+
+    return {
+        numColumns,
+        dataColumnIds,
+        headerRows,
+    };
+}
+
+function flattenHeadings(headings: TableHeading): Omit<TableHeading, "subHeading"> {
+    const newHeadings: Omit<TableHeading, "subHeading"> = {};
+    for (const col in headings) {
+        const subHeadings = headings[col].subHeading;
+        if (subHeadings) {
+            const flattenedSubHeadings = flattenHeadings(subHeadings);
+            for (const subCol in flattenedSubHeadings) {
+                newHeadings[`${subCol}`] = flattenedSubHeadings[subCol];
+            }
+        }
+        newHeadings[col] = {
+            label: headings[col].label,
+            sizeInPercent: headings[col].sizeInPercent,
+            formatValue: headings[col].formatValue,
+            formatStyle: headings[col].formatStyle,
+        };
+    }
+    return newHeadings;
+}
+
 export const Table: React.FC<TableProps<TableHeading>> = (props) => {
     const [layoutError, setLayoutError] = React.useState<LayoutError>({ error: false, message: "" });
     const [preprocessedData, setPreprocessedData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
@@ -126,6 +214,8 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
     const [sortColumnAndDirectionArray, setSortColumnAndDirectionArray] = React.useState<
         SortColumnAndDirectionElement[]
     >([]);
+    const [headerRows, setHeaderRows] = React.useState<TableHeadingCellInformation[][]>([]);
+    const [flattenedHeadings, setFlattenedHeadings] = React.useState<Omit<TableHeading, "subHeading">>({});
 
     const [prevData, setPrevData] = React.useState<TableRow<TableHeading>[]>([]);
     const [prevHeadings, setPrevHeadings] = React.useState<TableHeading>({});
@@ -144,18 +234,28 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         );
     }
 
-    if (!isEqual(prevHeadings, props.headings) || !isEqual(prevHeadings, props.headings)) {
+    if (!isEqual(prevHeadings, props.headings) || !isEqual(prevData, props.data)) {
         setPrevHeadings(props.headings);
-        const maxNumberOfSubheadings = Object.keys(props.headings).length;
+        const info = extractInformationFromTableHeading(props.headings);
+        setHeaderRows(info.headerRows);
         for (const row of props.data) {
-            if (Object.keys(row).length !== maxNumberOfSubheadings) {
+            if (Object.keys(row).length !== info.numColumns) {
                 setLayoutError({
                     error: true,
                     message: "The number of headings does not match the number of data series.",
                 });
                 break;
             }
+            if (Object.keys(row).some((col) => !info.dataColumnIds.includes(col))) {
+                setLayoutError({
+                    error: true,
+                    message: "The data series column ids do not match the heading ids.",
+                });
+                break;
+            }
         }
+        const newFlattenedHeadings = flattenHeadings(props.headings);
+        setFlattenedHeadings(newFlattenedHeadings);
     }
 
     function handlePointerOver(row: TableRow<any> | null) {
@@ -265,6 +365,60 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         );
     }
 
+    function makeHeadingRow(row: TableHeadingCellInformation[], depth: number): React.ReactNode {
+        const headingCells: React.ReactNode[] = [];
+
+        for (const cell of row) {
+            headingCells.push(
+                <th
+                    key={cell.id}
+                    className="bg-slate-100 p-0 pb-1 text-left drop-shadow sticky top-0"
+                    style={{ width: `${flattenedHeadings[cell.id].sizeInPercent}%` }}
+                    scope="col"
+                    rowSpan={cell.rowSpan}
+                    colSpan={cell.colSpan}
+                >
+                    <div className="px-1 flex items-center gap-1">
+                        <span className="flex-grow">{flattenedHeadings[cell.id].label}</span>
+                        {cell.colSpan === 1 ? makeSortButtons(cell.id) : null}
+                    </div>
+                    {cell.colSpan === 1 && (
+                        <div className="p-0 text-sm">
+                            <Input
+                                type="text"
+                                value={filterValues[cell.id] || ""}
+                                placeholder="Filter ..."
+                                onChange={(e) => handleFilterChange(cell.id, e.target.value)}
+                                endAdornment={
+                                    <div
+                                        className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
+                                        onClick={() => handleFilterChange(cell.id, "")}
+                                    >
+                                        <Close fontSize="inherit" />
+                                    </div>
+                                }
+                                wrapperStyle={{
+                                    fontWeight: "normal",
+                                    fontSize: "0.5rem",
+                                }}
+                            />
+                        </div>
+                    )}
+                </th>
+            );
+        }
+
+        return <tr key={depth}>{headingCells}</tr>;
+    }
+
+    function makeHeadings(): React.ReactNode {
+        const headingComponents: React.ReactNode[] = [];
+        for (let depth = 0; depth < headerRows.length; depth++) {
+            headingComponents.push(makeHeadingRow(headerRows[depth], depth));
+        }
+        return <>{headingComponents}</>;
+    }
+
     return (
         <BaseComponent disabled={props.disabled}>
             <div
@@ -273,43 +427,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                 style={{ width: props.width, maxHeight: props.height }}
             >
                 <table className="w-full h-full border-0 border-separate border-spacing-0 text-sm">
-                    <thead className="border-0 m-0 p-0 sticky">
-                        <tr className="p-0 border-0">
-                            {Object.keys(props.headings).map((col) => (
-                                <th
-                                    key={col}
-                                    className="bg-slate-100 p-0 pb-1 text-left drop-shadow sticky top-0"
-                                    style={{ width: `${props.headings[col].sizeInPercent}%` }}
-                                    scope="col"
-                                >
-                                    <div className="px-1 flex items-center gap-1">
-                                        <span className="flex-grow">{props.headings[col].label}</span>
-                                        {makeSortButtons(col)}
-                                    </div>
-                                    <div className="p-0 text-sm">
-                                        <Input
-                                            type="text"
-                                            value={filterValues[col] || ""}
-                                            placeholder="Filter ..."
-                                            onChange={(e) => handleFilterChange(col, e.target.value)}
-                                            endAdornment={
-                                                <div
-                                                    className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
-                                                    onClick={() => handleFilterChange(col, "")}
-                                                >
-                                                    <Close fontSize="inherit" />
-                                                </div>
-                                            }
-                                            wrapperStyle={{
-                                                fontWeight: "normal",
-                                                fontSize: "0.5rem",
-                                            }}
-                                        />
-                                    </div>
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
+                    <thead className="border-0 m-0 p-0 sticky">{makeHeadings()}</thead>
                     <tbody style={{ width: props.width, maxHeight: props.height }}>
                         <Virtualization
                             containerRef={containerRef}
