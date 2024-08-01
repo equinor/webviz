@@ -6,10 +6,12 @@ import {
     VectorStatisticData_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { ModuleAtoms } from "@framework/Module";
-import { UniDirectionalSettingsToViewInterface } from "@framework/UniDirectionalSettingsToViewInterface";
+import { UniDirectionalModuleComponentsInterface } from "@framework/UniDirectionalModuleComponentsInterface";
 import { atomWithQueries } from "@framework/utils/atomUtils";
-import { Interface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
+import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
 import {
     EnsembleVectorObservationDataMap,
     VectorSpec,
@@ -55,20 +57,35 @@ const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
 export function viewAtomsInitialization(
-    settingsToViewInterface: UniDirectionalSettingsToViewInterface<Interface>
+    settingsToViewInterface: UniDirectionalModuleComponentsInterface<SettingsToViewInterface>
 ): ModuleAtoms<ViewAtoms> {
     const userSelectedActiveTimestampUtcMsAtom = atom<number | null>(null);
+
+    const validEnsembleRealizationsFunctionAtom = atom((get) => {
+        const ensembleSet = get(EnsembleSetAtom);
+        let validEnsembleRealizationsFunction = get(EnsembleRealizationFilterFunctionAtom);
+
+        if (validEnsembleRealizationsFunction === null) {
+            validEnsembleRealizationsFunction = (ensembleIdent: EnsembleIdent) => {
+                return ensembleSet.findEnsemble(ensembleIdent)?.getRealizations() ?? [];
+            };
+        }
+
+        return validEnsembleRealizationsFunction;
+    });
 
     const vectorDataQueriesAtom = atomWithQueries((get) => {
         const vectorSpecifications = get(settingsToViewInterface.getAtom("vectorSpecifications"));
         const resampleFrequency = get(settingsToViewInterface.getAtom("resampleFrequency"));
         const visualizationMode = get(settingsToViewInterface.getAtom("visualizationMode"));
+        const validEnsembleRealizationsFunction = get(validEnsembleRealizationsFunctionAtom);
 
         const enabled =
             visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
             visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS;
 
         const queries = vectorSpecifications.map((item) => {
+            const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
             return () => ({
                 queryKey: [
                     "getRealizationsVectorData",
@@ -76,13 +93,15 @@ export function viewAtomsInitialization(
                     item.ensembleIdent.getEnsembleName(),
                     item.vectorName,
                     resampleFrequency,
+                    realizations,
                 ],
                 queryFn: () =>
                     apiService.timeseries.getRealizationsVectorData(
                         item.ensembleIdent.getCaseUuid() ?? "",
                         item.ensembleIdent.getEnsembleName() ?? "",
                         item.vectorName ?? "",
-                        resampleFrequency
+                        resampleFrequency,
+                        realizations
                     ),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
@@ -104,6 +123,7 @@ export function viewAtomsInitialization(
         const vectorSpecifications = get(settingsToViewInterface.getAtom("vectorSpecifications"));
         const resampleFrequency = get(settingsToViewInterface.getAtom("resampleFrequency"));
         const visualizationMode = get(settingsToViewInterface.getAtom("visualizationMode"));
+        const validEnsembleRealizationsFunction = get(validEnsembleRealizationsFunctionAtom);
 
         const enabled =
             visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||
@@ -111,6 +131,7 @@ export function viewAtomsInitialization(
             visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS;
 
         const queries = vectorSpecifications.map((item) => {
+            const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
             return () => ({
                 queryKey: [
                     "getStatisticalVectorData",
@@ -118,6 +139,7 @@ export function viewAtomsInitialization(
                     item.ensembleIdent.getEnsembleName(),
                     item.vectorName,
                     resampleFrequency,
+                    realizations,
                 ],
                 queryFn: () =>
                     apiService.timeseries.getStatisticalVectorData(
@@ -126,7 +148,7 @@ export function viewAtomsInitialization(
                         item.vectorName ?? "",
                         resampleFrequency ?? Frequency_api.MONTHLY,
                         undefined,
-                        undefined
+                        realizations
                     ),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,

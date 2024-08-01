@@ -1,7 +1,15 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { ColorScale } from "@lib/utils/ColorScale";
 import { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
 
 import { atom } from "jotai";
+
+export const showGridlinesAtom = atom<boolean>(false);
+export const showIntersectionAtom = atom<boolean>(false);
+export const gridLayerAtom = atom<number>(1);
+export const intersectionExtensionLengthAtom = atom<number>(1000);
+export const colorScaleAtom = atom<ColorScale | null>(null);
+export const useCustomBoundsAtom = atom<boolean>(false);
 
 export const userSelectedEnsembleIdentAtom = atom<EnsembleIdent | null>(null);
 export const userSelectedRealizationAtom = atom<number | null>(null);

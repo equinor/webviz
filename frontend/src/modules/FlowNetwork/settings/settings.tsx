@@ -29,9 +29,9 @@ import {
 } from "./atoms/baseAtoms";
 import {
     availableDateTimesAtom,
-    availableEdgeKeysAtom,
-    availableNodeKeysAtom,
+    edgeMetadataListAtom,
     groupTreeQueryResultAtom,
+    nodeMetadataListAtom,
     selectedDateTimeAtom,
     selectedEdgeKeyAtom,
     selectedEnsembleIdentAtom,
@@ -47,8 +47,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
     const availableDateTimes = useAtomValue(availableDateTimesAtom);
-    const availableEdgeKeys = useAtomValue(availableEdgeKeysAtom);
-    const availableNodeKeys = useAtomValue(availableNodeKeysAtom);
+    const edgeMetadataList = useAtomValue(edgeMetadataListAtom);
+    const nodeMetadataList = useAtomValue(nodeMetadataListAtom);
 
     const [selectedResamplingFrequency, setSelectedResamplingFrequency] = useAtom(selectedResamplingFrequencyAtom);
     const [selectedNodeTypes, setSelectedNodeTypes] = useAtom(selectedNodeTypesAtom);
@@ -191,8 +191,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     <div className="flex flex-col gap-2">
                         <Label text="Edge options">
                             <Dropdown
-                                options={availableEdgeKeys.map((item) => {
-                                    return { label: item, value: item };
+                                options={edgeMetadataList.map((item) => {
+                                    return { label: item.label, value: item.key };
                                 })}
                                 value={selectedEdgeKey ?? ""}
                                 onChange={handleSelectedEdgeKeyChange}
@@ -200,8 +200,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                         </Label>
                         <Label text="Node options">
                             <Dropdown
-                                options={availableNodeKeys.map((item) => {
-                                    return { label: item, value: item };
+                                options={nodeMetadataList.map((item) => {
+                                    return { label: item.label, value: item.key };
                                 })}
                                 value={selectedNodeKey ?? ""}
                                 onChange={handleSelectedNodeKeyChange}

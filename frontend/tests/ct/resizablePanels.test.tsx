@@ -1,6 +1,7 @@
 import { ResizablePanels } from "@lib/components/ResizablePanels";
 import { ResizablePanelsProps } from "@lib/components/ResizablePanels/resizablePanels";
-import { Point2D, Size2D } from "@lib/utils/geometry";
+import { Size2D } from "@lib/utils/geometry";
+import { Vec2 } from "@lib/utils/vec2";
 import { ComponentFixtures, expect, test } from "@playwright/experimental-ct-react";
 import { Locator } from "@playwright/test";
 
@@ -75,7 +76,7 @@ async function makeDragHandleLocatorsAndAssertTheirExistence(resizablePanels: Lo
 
 function assertExpectedPositionAndSize(
     locator: Locator,
-    position: Point2D,
+    position: Vec2,
     size: Size2D,
     tolerance = 1.0
 ): Promise<boolean> {

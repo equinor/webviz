@@ -17,10 +17,12 @@ import { Select, SelectOption } from "@lib/components/Select";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
 import {
+    intersectionExtensionLengthAtom,
+    intersectionTypeAtom,
     userSelectedCustomIntersectionPolylineIdAtom,
     userSelectedFieldIdentifierAtom,
     userSelectedWellboreUuidAtom,
@@ -52,8 +54,7 @@ export function Settings(
     const selectedField = useAtomValue(selectedFieldIdentifierAtom);
     const setSelectedField = useSetAtom(userSelectedFieldIdentifierAtom);
 
-    const [intersectionExtensionLength, setIntersectionExtensionLength] =
-        props.settingsContext.useSettingsToViewInterfaceState("intersectionExtensionLength");
+    const [intersectionExtensionLength, setIntersectionExtensionLength] = useAtom(intersectionExtensionLengthAtom);
 
     const [prevSyncedIntersection, setPrevSyncedIntersection] = React.useState<Intersection | null>(null);
 
@@ -62,8 +63,7 @@ export function Settings(
 
     const syncedIntersection = syncHelper.useValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection");
 
-    const [intersectionType, setIntersectionType] =
-        props.settingsContext.useSettingsToViewInterfaceState("intersectionType");
+    const [intersectionType, setIntersectionType] = useAtom(intersectionTypeAtom);
 
     const wellHeaders = useAtomValue(drilledWellboreHeadersQueryAtom);
 

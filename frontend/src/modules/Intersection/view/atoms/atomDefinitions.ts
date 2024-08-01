@@ -2,10 +2,10 @@ import { WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { apiService } from "@framework/ApiService";
 import { ModuleAtoms } from "@framework/Module";
-import { UniDirectionalSettingsToViewInterface } from "@framework/UniDirectionalSettingsToViewInterface";
+import { UniDirectionalModuleComponentsInterface } from "@framework/UniDirectionalModuleComponentsInterface";
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
-import { arrayPointToPoint2D, pointDistance } from "@lib/utils/geometry";
+import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
 import { CURVE_FITTING_EPSILON } from "@modules/Intersection/typesAndEnums";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
@@ -27,7 +27,7 @@ export type ViewAtoms = {
 };
 
 export function viewAtomsInitialization(
-    settingsToViewInterface: UniDirectionalSettingsToViewInterface<SettingsToViewInterface>
+    settingsToViewInterface: UniDirectionalModuleComponentsInterface<SettingsToViewInterface>
 ): ModuleAtoms<ViewAtoms> {
     const selectedCustomIntersectionPolylineAtom = atom((get) => {
         const customIntersectionPolylineId = get(
@@ -104,9 +104,7 @@ export function viewAtomsInitialization(
                     polylineUtmXy.push(point[0], point[1]);
                     if (index > 0) {
                         const previousPoint = selectedCustomIntersectionPolyline.points[index - 1];
-                        actualSectionLengths.push(
-                            pointDistance(arrayPointToPoint2D(point), arrayPointToPoint2D(previousPoint))
-                        );
+                        actualSectionLengths.push(point2Distance(vec2FromArray(point), vec2FromArray(previousPoint)));
                     }
                 }
             }
