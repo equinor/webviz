@@ -10,21 +10,21 @@ export const View = (props: ModuleViewProps<State, SettingsToViewInterface>) => 
     const heading: TableHeading = {
         col1: {
             label: "Column 1",
-            sizeInPercent: 30,
+            sizeInPercent: 60,
             subHeading: {
                 "col1.1": {
                     label: "Column 1.1",
-                    sizeInPercent: 50,
+                    sizeInPercent: 20,
                 },
                 "col1.2": {
                     label: "Column 1.2",
-                    sizeInPercent: 50,
+                    sizeInPercent: 80,
                 },
             },
         },
         col2: {
             label: "Column 2",
-            sizeInPercent: 70,
+            sizeInPercent: 40,
         },
     };
 

@@ -1,3 +1,5 @@
+import { computeQuantile } from "@modules/_shared/statistics";
+
 export type RealizationAndResult = {
     realization: number;
     resultValue: number;
@@ -12,18 +14,19 @@ export type ConvergenceResult = {
 
 export function calcConvergenceArray(realizationAndResultArray: RealizationAndResult[]): ConvergenceResult[] {
     const sortedArray = realizationAndResultArray.sort((a, b) => a.realization - b.realization);
-
+    const growingDataArray: number[] = [];
     const convergenceArray: ConvergenceResult[] = [];
     let sum = 0;
     let sumOfSquares = 0;
     for (const [index, realizationAndResult] of sortedArray.entries()) {
+        growingDataArray.push(realizationAndResult.resultValue);
         sum += realizationAndResult.resultValue;
         sumOfSquares += realizationAndResult.resultValue * realizationAndResult.resultValue;
         const mean = sum / (index + 1);
-        const variance = sumOfSquares / (index + 1) - mean ** 2;
-        const stdDev = Math.sqrt(variance);
-        const p10 = mean - 1.282 * stdDev;
-        const p90 = mean + 1.282 * stdDev;
+
+        const p10 = computeQuantile(growingDataArray, 0.1);
+        const p90 = computeQuantile(growingDataArray, 0.9);
+
         convergenceArray.push({
             realization: realizationAndResult.realization,
             mean,

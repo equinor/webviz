@@ -186,19 +186,25 @@ function extractInformationFromTableHeading(
     };
 }
 
-function flattenHeadings(headings: TableHeading): Omit<TableHeading, "subHeading"> {
+function flattenHeadings(
+    headings: TableHeading,
+    parentSizeInPercent: number = 100.0
+): Omit<TableHeading, "subHeading"> {
     const newHeadings: Omit<TableHeading, "subHeading"> = {};
     for (const col in headings) {
         const subHeadings = headings[col].subHeading;
         if (subHeadings) {
-            const flattenedSubHeadings = flattenHeadings(subHeadings);
+            const flattenedSubHeadings = flattenHeadings(subHeadings, headings[col].sizeInPercent);
             for (const subCol in flattenedSubHeadings) {
-                newHeadings[`${subCol}`] = flattenedSubHeadings[subCol];
+                newHeadings[`${subCol}`] = {
+                    ...flattenedSubHeadings[subCol],
+                    sizeInPercent: (parentSizeInPercent * flattenedSubHeadings[subCol].sizeInPercent) / 100,
+                };
             }
         }
         newHeadings[col] = {
             label: headings[col].label,
-            sizeInPercent: headings[col].sizeInPercent,
+            sizeInPercent: (parentSizeInPercent * headings[col].sizeInPercent) / 100,
             formatValue: headings[col].formatValue,
             formatStyle: headings[col].formatStyle,
         };
@@ -216,6 +222,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
     >([]);
     const [headerRows, setHeaderRows] = React.useState<TableHeadingCellInformation[][]>([]);
     const [flattenedHeadings, setFlattenedHeadings] = React.useState<Omit<TableHeading, "subHeading">>({});
+    const [dataColumnIds, setDataColumnIds] = React.useState<string[]>([]);
 
     const [prevData, setPrevData] = React.useState<TableRow<TableHeading>[]>([]);
     const [prevHeadings, setPrevHeadings] = React.useState<TableHeading>({});
@@ -228,7 +235,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         setPreprocessedData(newPreprocessedData);
         setFilteredData(
             sortDataByColumns(
-                filterData(newPreprocessedData, filterValues, props.headings),
+                filterData(newPreprocessedData, filterValues, flattenedHeadings),
                 sortColumnAndDirectionArray
             )
         );
@@ -238,6 +245,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         setPrevHeadings(props.headings);
         const info = extractInformationFromTableHeading(props.headings);
         setHeaderRows(info.headerRows);
+        setDataColumnIds(info.dataColumnIds);
         for (const row of props.data) {
             if (Object.keys(row).length !== info.numColumns) {
                 setLayoutError({
@@ -271,9 +279,13 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
     }
 
     function handleFilterChange(col: string, value: string) {
-        setFilterValues({ ...filterValues, [col]: value });
+        const newFilterValues = { ...filterValues, [col]: value };
+        setFilterValues(newFilterValues);
         setFilteredData(
-            sortDataByColumns(filterData(preprocessedData, filterValues, props.headings), sortColumnAndDirectionArray)
+            sortDataByColumns(
+                filterData(preprocessedData, newFilterValues, flattenedHeadings),
+                sortColumnAndDirectionArray
+            )
         );
     }
 
@@ -319,10 +331,10 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         }
 
         const component = (
-            <div className="flex flex-col h-8">
+            <div className="flex flex-col h-full">
                 <div
                     className={resolveClassNames(
-                        "text-sm hover:text-blue-500 cursor-pointer h-4",
+                        "text-sm hover:text-blue-500 cursor-pointer h-1/2 flex flex-col justify-center",
                         sortDirection === SortDirection.ASC
                             ? "text-white bg-blue-800 hover:text-blue-100"
                             : "text-blue-300 hover:text-white hover:bg-blue-300"
@@ -330,13 +342,13 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                     onClick={(e) => handleSortDirectionChange(e, col, SortDirection.ASC)}
                     title="Sort ascending"
                 >
-                    <div className="-mt-0.5">
+                    <div className=" flex flex-col justify-center">
                         <ExpandLess fontSize="inherit" />
                     </div>
                 </div>
                 <div
                     className={resolveClassNames(
-                        "text-sm hover:text-blue-500 cursor-pointer h-4",
+                        "text-sm hover:text-blue-500 cursor-pointer h-1/2 flex flex-col justify-center",
                         sortDirection === SortDirection.DESC
                             ? "text-white bg-blue-800 hover:text-blue-100"
                             : "text-blue-300 hover:text-white hover:bg-blue-300"
@@ -344,7 +356,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                     onClick={(e) => handleSortDirectionChange(e, col, SortDirection.DESC)}
                     title="Sort descending"
                 >
-                    <div className="-mt-1">
+                    <div className=" flex flex-col justify-center">
                         <ExpandMore fontSize="inherit" />
                     </div>
                 </div>
@@ -372,38 +384,42 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
             headingCells.push(
                 <th
                     key={cell.id}
-                    className="bg-slate-100 p-0 pb-1 text-left drop-shadow sticky top-0"
+                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left drop-shadow sticky top-0", {
+                        "text-center": cell.colSpan > 1,
+                    })}
                     style={{ width: `${flattenedHeadings[cell.id].sizeInPercent}%` }}
                     scope="col"
                     rowSpan={cell.rowSpan}
                     colSpan={cell.colSpan}
                 >
-                    <div className="px-1 flex items-center gap-1">
-                        <span className="flex-grow">{flattenedHeadings[cell.id].label}</span>
-                        {cell.colSpan === 1 ? makeSortButtons(cell.id) : null}
-                    </div>
-                    {cell.colSpan === 1 && (
-                        <div className="p-0 text-sm">
-                            <Input
-                                type="text"
-                                value={filterValues[cell.id] || ""}
-                                placeholder="Filter ..."
-                                onChange={(e) => handleFilterChange(cell.id, e.target.value)}
-                                endAdornment={
-                                    <div
-                                        className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
-                                        onClick={() => handleFilterChange(cell.id, "")}
-                                    >
-                                        <Close fontSize="inherit" />
-                                    </div>
-                                }
-                                wrapperStyle={{
-                                    fontWeight: "normal",
-                                    fontSize: "0.5rem",
-                                }}
-                            />
+                    <div className="h-full flex flex-col">
+                        <div className="px-1 flex items-center gap-1 flex-grow">
+                            <span className="flex-grow pt-1">{flattenedHeadings[cell.id].label}</span>
+                            {cell.colSpan === 1 ? makeSortButtons(cell.id) : null}
                         </div>
-                    )}
+                        {cell.colSpan === 1 && (
+                            <div className="p-0 text-sm flex flex-col justify-end">
+                                <Input
+                                    type="text"
+                                    value={filterValues[cell.id] || ""}
+                                    placeholder="Filter ..."
+                                    onChange={(e) => handleFilterChange(cell.id, e.target.value)}
+                                    endAdornment={
+                                        <div
+                                            className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
+                                            onClick={() => handleFilterChange(cell.id, "")}
+                                        >
+                                            <Close fontSize="inherit" />
+                                        </div>
+                                    }
+                                    wrapperStyle={{
+                                        fontWeight: "normal",
+                                        fontSize: "0.5rem",
+                                    }}
+                                />
+                            </div>
+                        )}
+                    </div>
                 </th>
             );
         }
@@ -449,12 +465,12 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                         onPointerDown={() => handlePointerDown(item.values)}
                                         style={{ height: 30 }}
                                     >
-                                        {Object.keys(props.headings).map((col) => {
+                                        {dataColumnIds.map((col) => {
                                             if (item.values[col] === undefined) {
                                                 return null;
                                             }
-                                            const format = props.headings[col].formatValue;
-                                            const formatStyle = props.headings[col].formatStyle;
+                                            const format = flattenedHeadings[col].formatValue;
+                                            const formatStyle = flattenedHeadings[col].formatStyle;
                                             return (
                                                 <td
                                                     key={`${item.id}-${col}`}

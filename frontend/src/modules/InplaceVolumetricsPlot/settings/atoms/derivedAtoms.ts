@@ -71,7 +71,7 @@ export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
         return tableDefinitionsAccessor.getUniqueFluidZones();
     }
 
-    return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getUniqueFluidZones());
+    return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getUniqueFluidZones(), true);
 });
 
 export const selectedResultNameAtom = atom<InplaceVolumetricResultName_api | null>((get) => {
@@ -131,7 +131,8 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
                 identifier: entry.identifier,
                 values: fixupUserSelection(
                     entry.values,
-                    uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? []
+                    uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? [],
+                    true
                 ),
             });
         }
@@ -143,7 +144,8 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
             identifier: entry.identifier,
             values: fixupUserSelection(
                 entry.values,
-                uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? []
+                uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? [],
+                true
             ),
         });
     }
@@ -176,9 +178,16 @@ export const selectedColorByAtom = atom<SourceAndTableIdentifierUnion>((get) => 
     return fixedSelection[0];
 });
 
-function fixupUserSelection<TSelection>(userSelection: TSelection[], validOptions: TSelection[]): TSelection[] {
+function fixupUserSelection<TSelection>(
+    userSelection: TSelection[],
+    validOptions: TSelection[],
+    selectAll: boolean = false
+): TSelection[] {
     const newSelections = userSelection.filter((selection) => validOptions.includes(selection));
     if (newSelections.length === 0 && validOptions.length > 0) {
+        if (selectAll) {
+            return validOptions;
+        }
         newSelections.push(validOptions[0]);
     }
 

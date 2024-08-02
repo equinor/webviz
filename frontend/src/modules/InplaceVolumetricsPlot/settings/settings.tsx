@@ -113,7 +113,7 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                                 value={selectedResultName2 ?? undefined}
                                 options={resultNameOptions}
                                 onChange={setSelectedResultName2}
-                                disabled={selectedPlotType !== PlotType.SCATTER}
+                                disabled={selectedPlotType !== PlotType.SCATTER && selectedPlotType !== PlotType.BAR}
                             />
                         </Label>
                         <Label text="Subplot by">

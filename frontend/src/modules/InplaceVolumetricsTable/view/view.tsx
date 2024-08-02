@@ -151,13 +151,13 @@ function makeStyleFormattingFunc(column: Column): ((value: number | string | nul
             const style: React.CSSProperties = { textAlign: "right", fontWeight: "bold" };
 
             if (value === FluidZone_api.OIL) {
-                style.color = "#ab110c";
+                style.color = "#0b8511";
             }
             if (value === FluidZone_api.WATER) {
                 style.color = "#0c24ab";
             }
             if (value === FluidZone_api.GAS) {
-                style.color = "#0b8511";
+                style.color = "#ab110c";
             }
 
             return style;

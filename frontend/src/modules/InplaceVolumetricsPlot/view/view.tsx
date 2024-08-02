@@ -251,6 +251,8 @@ function makePlotData(
                 data.push(...makeBoxPlot(title, table, resultName, color));
             } else if (plotType === PlotType.SCATTER) {
                 data.push(...makeScatterPlot(title, table, resultName, resultName2, color));
+            } else if (plotType === PlotType.BAR) {
+                data.push(...makeBarPlot(title, table, resultName, resultName2, color));
             }
 
             color = colorSet.getNextColor();
@@ -258,6 +260,37 @@ function makePlotData(
 
         return data;
     };
+}
+
+function makeBarPlot(
+    title: string,
+    table: Table,
+    resultName: string,
+    resultName2: string,
+    color: string
+): Partial<PlotData>[] {
+    const data: Partial<PlotData>[] = [];
+
+    const resultColumn = table.getColumn(resultName);
+    if (!resultColumn) {
+        return [];
+    }
+    const resultColumn2 = table.getColumn(resultName2);
+    if (!resultColumn2) {
+        return [];
+    }
+
+    data.push({
+        x: resultColumn.getAllRowValues(),
+        y: resultColumn2.getAllRowValues(),
+        name: title,
+        type: "bar",
+        marker: {
+            color,
+        },
+    });
+
+    return data;
 }
 
 function makeConvergencePlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
