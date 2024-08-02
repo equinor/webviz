@@ -104,10 +104,7 @@ export function makeWellsLayer(
     fieldWellboreTrajectoriesData: WellboreTrajectory_api[],
     selectedWellboreUuid: string | null
 ): WellsLayer {
-    const tempWorkingWellsData = fieldWellboreTrajectoriesData.filter(
-        (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH"
-    );
-    const wellLayerDataFeatures = tempWorkingWellsData.map((well) =>
+    const wellLayerDataFeatures = fieldWellboreTrajectoriesData.map((well) =>
         wellTrajectoryToGeojson(well, selectedWellboreUuid)
     );
 
