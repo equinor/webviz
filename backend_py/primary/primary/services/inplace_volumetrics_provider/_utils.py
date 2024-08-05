@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import pyarrow as pa
 import pyarrow.compute as pc
@@ -7,8 +7,10 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     FluidZone,
     InplaceVolumetricTableData,
     InplaceVolumetricsIdentifier,
+    InplaceStatisticalVolumetricTableData,
     RepeatedTableColumnData,
     TableColumnData,
+    TableColumnStatisticalData,
 )
 
 """
@@ -18,18 +20,18 @@ The methods can be used to calculate, aggregate and create data for the Inplace 
 """
 
 
-def create_accumulated_result_table(
+def create_per_realization_accumulated_result_table(
     result_table: pa.Table,
     selector_columns: List[str],
-    accumulate_by_identifiers: List[InplaceVolumetricsIdentifier],
-    calculate_mean_across_realizations: bool,
+    group_by_identifiers: List[InplaceVolumetricsIdentifier],
 ) -> pa.Table:
     """
-    Create accumulated result table based on selection
+    Create result table with accumulated sum based on group by identifiers selection. The sum results are grouped per realization,
+    i.e. a column named "REAL" should always be among the output columns
     """
-    # Group by each of the identifier columns (always accumulate by realization - i.e. max one value per realization)
-    accumulate_by_identifier_set = set([elm.value for elm in accumulate_by_identifiers])
-    columns_to_group_by_for_sum = set(list(accumulate_by_identifier_set) + ["REAL"])
+    # Group by each of the identifier (always accumulate by realization - i.e. max one value per realization)
+    group_by_identifier_set = set([elm.value for elm in group_by_identifiers])
+    columns_to_group_by_for_sum = set(list(group_by_identifier_set) + ["REAL"])
 
     valid_result_names = [elm for elm in result_table.column_names if elm not in selector_columns]
 
@@ -39,19 +41,69 @@ def create_accumulated_result_table(
     )
     suffix_to_remove = "_sum"
 
-    # Calculate mean across realizations
-    if calculate_mean_across_realizations:
-        accumulated_table = accumulated_table.group_by(accumulate_by_identifier_set).aggregate(
-            [(f"{result_name}_sum", "mean") for result_name in valid_result_names]
-        )
-        suffix_to_remove = "_sum_mean"
-
     # Remove suffix from column names
     column_names_with_suffix = accumulated_table.column_names
     new_column_names = [column_name.replace(suffix_to_remove, "") for column_name in column_names_with_suffix]
     accumulated_table = accumulated_table.rename_columns(new_column_names)
 
     return accumulated_table
+
+
+def create_statistical_grouped_result_table_data(
+    result_table: pa.Table,
+    selector_columns: List[str],
+    group_by_identifiers: List[InplaceVolumetricsIdentifier],
+) -> Tuple[List[RepeatedTableColumnData], List[TableColumnStatisticalData]]:
+    """
+    Create result table with statistics across realizations based on group by identifiers selection. The
+    statistics are calculated across all realizations per grouping, thus the output will have one row per group.
+
+    Statistics: Mean, stddev, min, max, p10, p90
+
+    TODO: Add p10 and p90 later on (find each "group" (how to?) and filter table to get respective rows. Thereafter pick the column to calc p10 and p90?)
+    """
+    group_by_identifier_set = set([elm.value for elm in group_by_identifiers])
+
+    # Get grouped result table with individual realizations
+    per_realization_grouped_result_table = create_per_realization_accumulated_result_table(
+        result_table, selector_columns, group_by_identifiers
+    )
+    valid_selector_columns = [
+        elm for elm in selector_columns if elm in per_realization_grouped_result_table.column_names
+    ]
+    valid_result_names = [
+        elm for elm in per_realization_grouped_result_table.column_names if elm not in selector_columns
+    ]
+
+    # Pyarrow statistical aggregation
+    statistics_functions = ["mean", "stddev", "min", "max"]
+
+    # Aggregate statistics for each result name after grouping.
+    # The resulting statistics table will a column per statistic for each result name, i.e. "STOIIP_mean", "STOIIP_stddev", etc.
+    statistical_table = per_realization_grouped_result_table.group_by(group_by_identifier_set).aggregate(
+        [(result_name, func) for result_name in valid_result_names for func in statistics_functions]
+    )
+
+    # Build statistical table data object from the pa.Table
+    selector_column_data_list: List[RepeatedTableColumnData] = []
+    for column_name in valid_selector_columns:
+        column_array = statistical_table[column_name]
+        selector_column_data_list.append(_create_repeated_table_column_data_from_column(column_name, column_array))
+
+    result_statistical_data_list: List[TableColumnStatisticalData] = []
+    available_statistic_column_names = statistical_table.column_names
+    for result_name in valid_result_names:
+        result_statistical_data = TableColumnStatisticalData(column_name=result_name, statistic_values={})
+        for func in statistics_functions:
+            statistic_column_name = f"{result_name}_{func}"
+            if statistic_column_name not in available_statistic_column_names:
+                raise ValueError(f"Column {statistic_column_name} not found in statistical table")
+
+            statistic_array = statistical_table[statistic_column_name]
+            result_statistical_data.statistic_values[func] = statistic_array.to_pylist()
+        result_statistical_data_list.append(result_statistical_data)
+
+    return (selector_column_data_list, result_statistical_data_list)
 
 
 def _create_repeated_table_column_data_from_column(
@@ -73,15 +125,15 @@ def create_inplace_volumetric_table_data_from_result_table(
     """
     Create Inplace Volumetric Table Data from result table, selection name and specified selector columns
     """
-    present_selector_columns = [name for name in result_table.column_names if name in selector_columns]
+    existing_selector_columns = [name for name in result_table.column_names if name in selector_columns]
     selector_column_data_list: List[RepeatedTableColumnData] = []
-    for column_name in present_selector_columns:
+    for column_name in existing_selector_columns:
         column_array = result_table[column_name]
         selector_column_data_list.append(_create_repeated_table_column_data_from_column(column_name, column_array))
 
-    present_result_column_names = [name for name in result_table.column_names if name not in present_selector_columns]
+    existing_result_column_names = [name for name in result_table.column_names if name not in existing_selector_columns]
     result_column_data_list: List[TableColumnData] = []
-    for column_name in present_result_column_names:
+    for column_name in existing_result_column_names:
         result_column_data_list.append(
             TableColumnData(column_name=column_name, values=result_table[column_name].to_numpy())
         )

@@ -76,11 +76,11 @@ export class InplaceVolumetricsService {
     }
     /**
      * Post Get Aggregated Table Data
-     * Get aggregated volumetric data for a given table, result and categories/index filter.
+     * Get aggregated volumetric data for a given table, results and categories/index filter.
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param tableName Table name
-     * @param responseNames The name of the volumetric result/response
+     * @param resultNames The name of the volumetric results
      * @param fluidZones The fluid zones to aggregate by
      * @param accumulateFluidZones Whether to accumulate fluid zones
      * @param calculateMeanAcrossRealizations Whether to calculate mean across realizations
@@ -93,7 +93,7 @@ export class InplaceVolumetricsService {
         caseUuid: string,
         ensembleName: string,
         tableName: string,
-        responseNames: Array<string>,
+        resultNames: Array<string>,
         fluidZones: Array<FluidZone>,
         accumulateFluidZones: boolean,
         calculateMeanAcrossRealizations: boolean,
@@ -107,7 +107,7 @@ export class InplaceVolumetricsService {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
                 'table_name': tableName,
-                'response_names': responseNames,
+                'result_names': resultNames,
                 'fluid_zones': fluidZones,
                 'realizations': realizations,
                 'accumulate_fluid_zones': accumulateFluidZones,

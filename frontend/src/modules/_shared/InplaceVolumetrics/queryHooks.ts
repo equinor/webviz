@@ -67,7 +67,7 @@ export function useGetAggregatedTableDataQueries(
                 accumulateFluidZones,
                 calculateMeanAcrossRealizations,
                 {
-                    accumulate_by_identifiers: accumulateByIdentifiers,
+                    group_by_identifiers: accumulateByIdentifiers,
                     identifiers_with_values: identifiersWithValues,
                 },
                 [...source.realizations]

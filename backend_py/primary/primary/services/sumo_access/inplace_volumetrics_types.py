@@ -1,6 +1,6 @@
 from enum import StrEnum
 from dataclasses import dataclass
-from typing import List, Union
+from typing import Dict, List, Union
 
 
 # NOTE:
@@ -44,6 +44,19 @@ class Property(StrEnum):
     BG = "BG"
 
 
+class Statistics(StrEnum):
+    """
+    Definition of possible statistics for a result column in an inplace volumetrics table
+    """
+
+    MEAN = "mean"
+    STD_DEV = "std_dev"
+    MAX = "max"
+    MIN = "min"
+    P10 = "p10"
+    P90 = "p90"
+
+
 @dataclass
 class InplaceVolumetricsIdentifierWithValues:
     """
@@ -82,6 +95,12 @@ class TableColumnData:
 
 
 @dataclass
+class TableColumnStatisticalData:
+    column_name: str
+    statistic_values: Dict[Statistics, List[float]]  # Statistics values Length = number of rows in the table
+
+
+@dataclass
 class InplaceVolumetricTableData:
     """Volumetric data for a single table
 
@@ -99,3 +118,16 @@ class InplaceVolumetricTableDataPerFluidSelection:
     # TODO: Find a better name for this class
     # table_name: str
     table_per_fluid_selection: List[InplaceVolumetricTableData]
+
+
+@dataclass
+class InplaceStatisticalVolumetricTableData:
+    """
+    Statistical volumetric data for single volume table
+
+    Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
+    """
+
+    fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
+    selector_columns: List[RepeatedTableColumnData]  # Index columns and realizations
+    result_column_statistics: List[TableColumnStatisticalData]

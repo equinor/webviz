@@ -15,31 +15,30 @@ The table data from Sumo retrieves raw_volumetric_columns with suffixes for flui
 Conversion is made back and forth:
 
 - Raw volumetric columns converted into volume names, without suffixes and a list of available fluid zones.
-Based on list of volume names, the available properties are determined. The list of volume names and properties equals the responses.
+Based on list of volume names, the available properties are determined. The list of volume names and properties equals the results.
 
-- A list of responses is converted back to list of volume names and properties. The needed volume names to calculated a property is found,
+- A list of results is converted back to list of volume names and properties. The needed volume names to calculated a property is found,
 and a complete list of volume names can be combined with list of fluid zones to get a list of raw volumetric columns.
 
-NOTE:
- - response (name of columns in Sumo) = volume_names + properties
- - properties -> variables?
 
 Terms:
-- Front-end: responses = volume_names + properties (w/o suffixes)
-- Back-end: volumetric_column_names = create_list_of_volume_names(responses) + fluid_zones (with suffixes)
+- Front-end: `results` = volume_names + properties (w/o suffixes)
+- Back-end:
+    - all_volume_names = volume_names + get_required_volume_names_from_properties(properties)
+    - `raw_volumetric_column_names` = create_list_of_raw_volumetric_column_names(all_volume_names, fluid_zones)
 
 """
 
 
-def get_properties_in_response_names(response_names: List[str]) -> List[str]:
+def get_properties_among_result_names(result_names: List[str]) -> List[str]:
     """
-    Function to get properties from response names
+    Function to get properties among result names
     """
 
     properties = set()
-    for response_name in response_names:
-        if response_name in Property.__members__:
-            properties.add(response_name)
+    for result_name in result_names:
+        if result_name in Property.__members__:
+            properties.add(result_name)
 
     return list(properties)
 

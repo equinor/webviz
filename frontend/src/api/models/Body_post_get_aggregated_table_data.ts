@@ -6,9 +6,9 @@ import type { InplaceVolumetricsIdentifier } from './InplaceVolumetricsIdentifie
 import type { InplaceVolumetricsIdentifierWithValues } from './InplaceVolumetricsIdentifierWithValues';
 export type Body_post_get_aggregated_table_data = {
     /**
-     * The identifiers to aggregate by
+     * The identifiers to group table data by
      */
-    accumulate_by_identifiers: Array<InplaceVolumetricsIdentifier>;
+    group_by_identifiers: Array<InplaceVolumetricsIdentifier>;
     /**
      * Selected identifiers and wanted values
      */
