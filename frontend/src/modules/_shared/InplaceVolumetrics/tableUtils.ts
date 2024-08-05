@@ -47,12 +47,15 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
             }
 
             let numAddedRows = 0;
-            for (const resultColumn of fluidZoneTable.resultColumns) {
+            for (const [index, resultColumn] of fluidZoneTable.resultColumns.entries()) {
                 for (const value of resultColumn.columnValues) {
                     columns.get(resultColumn.columnName)?.addRowValue(value);
 
-                    if (!mainColumnsAdded) {
+                    if (index === 0) {
                         numAddedRows++;
+                    }
+
+                    if (!mainColumnsAdded) {
                         columns.get("ensemble")?.addRowValue(tableSet.ensembleIdent);
                         columns.get("table")?.addRowValue(tableSet.tableName);
                         columns.get("fluid-zone")?.addRowValue(fluidZoneTable.fluidSelectionName);

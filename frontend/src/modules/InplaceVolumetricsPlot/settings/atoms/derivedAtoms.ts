@@ -150,6 +150,15 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
         });
     }
 
+    if (userSelectedIdentifierValues.length === 0) {
+        for (const entry of uniqueIdentifierValues) {
+            fixedUpIdentifierValues.push({
+                identifier: entry.identifier,
+                values: uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? [],
+            });
+        }
+    }
+
     return fixedUpIdentifierValues;
 });
 
