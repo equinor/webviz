@@ -70,7 +70,7 @@ def decode_uint_list_str(int_arr_str: str) -> list[int]:
     return ret_arr
 
 
-def encode_as_uint_list_str(int_list: list[int]) -> str:
+def encode_as_uint_list_str(unsigned_int_list: list[int]) -> str:
     """
     Encode a list of unsigned integers into a UintListStr formatted string.
     Single integers are represented as themselves, while consecutive integers are represented as a <start>-<end> range.
@@ -80,17 +80,21 @@ def encode_as_uint_list_str(int_list: list[int]) -> str:
 
     Example: [1, 2, 3, 5, 6, 7, 10] -> "1-3!5-7!10"
     """
-    if not int_list:
+    if not unsigned_int_list:
         return ""
 
     # Remove duplicates and sort
-    int_list = sorted(set(int_list))
+    unsigned_int_list = sorted(set(unsigned_int_list))
+
+    # Verify that all integers are unsigned by checking first element in the now sorted list
+    if unsigned_int_list[0] < 0:
+        raise ValueError("List contains negative integers")
 
     encoded_parts = []
-    start_val = int_list[0]
+    start_val = unsigned_int_list[0]
     end_val = start_val
 
-    for val in int_list[1:]:
+    for val in unsigned_int_list[1:]:
         if val == end_val + 1:
             end_val = val
         else:

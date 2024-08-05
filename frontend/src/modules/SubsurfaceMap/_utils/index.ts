@@ -6,5 +6,5 @@ export {
     createAxesLayer,
     createWellBoreHeaderLayer,
 } from "./subsurfaceMap";
-export type { SurfaceMeta, SurfaceMeshLayerSettings, ViewSettings } from "./subsurfaceMap";
+export type { SurfaceMeshLayerSettings, ViewSettings } from "./subsurfaceMap";
 export { createContinuousColorScaleForMap } from "./color";

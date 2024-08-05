@@ -4,7 +4,8 @@
 /* eslint-disable */
 import type { Body_post_get_surface_intersection } from '../models/Body_post_get_surface_intersection';
 import type { Body_post_sample_surface_in_points } from '../models/Body_post_sample_surface_in_points';
-import type { SurfaceData } from '../models/SurfaceData';
+import type { SurfaceDataFloat } from '../models/SurfaceDataFloat';
+import type { SurfaceDataPng } from '../models/SurfaceDataPng';
 import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
 import type { SurfaceMetaSet } from '../models/SurfaceMetaSet';
 import type { SurfaceRealizationSampleValues } from '../models/SurfaceRealizationSampleValues';
@@ -59,183 +60,46 @@ export class SurfaceService {
         });
     }
     /**
-     * Get Realization Surface Data
-     * @param caseUuid Sumo case uuid
-     * @param ensembleName Ensemble name
-     * @param realizationNum Realization number
-     * @param name Surface name
-     * @param attribute Surface attribute
-     * @param timeOrInterval Time point or time interval string
-     * @returns SurfaceData Successful Response
+     * Get Surface Data
+     * Get surface data for the specified surface.
+     *
+     * ---
+     * *General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+     *
+     * - *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+     * - *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+     * - *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+     * - *PARTIAL* - Partial surface address. Similar to a realization surface address, but does not include a specific realization number.
+     *
+     * Structure of the different types of address strings:
+     *
+     * ```
+     * REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+     * STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+     * OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+     * PARTIAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>[~~<iso_date_or_interval>]
+     * ```
+     *
+     * The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+     * encoded as a `UintListStr` or "*" to include all realizations.
+     * @param surfAddrStr Surface address string, supported address types are *REAL*, *OBS* and *STAT*
+     * @param dataFormat Format of binary data in the response
+     * @param resampleToDefStr Definition of the surface onto which the data should be resampled. *SurfaceDef* object properties encoded as a `KeyValStr` string.
+     * @returns any Successful Response
      * @throws ApiError
      */
-    public getRealizationSurfaceData(
-        caseUuid: string,
-        ensembleName: string,
-        realizationNum: number,
-        name: string,
-        attribute: string,
-        timeOrInterval?: (string | null),
-    ): CancelablePromise<SurfaceData> {
+    public getSurfaceData(
+        surfAddrStr: string,
+        dataFormat: 'float' | 'png' = 'float',
+        resampleToDefStr?: (string | null),
+    ): CancelablePromise<(SurfaceDataFloat | SurfaceDataPng)> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/surface/realization_surface_data/',
+            url: '/surface/surface_data',
             query: {
-                'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
-                'realization_num': realizationNum,
-                'name': name,
-                'attribute': attribute,
-                'time_or_interval': timeOrInterval,
-            },
-            errors: {
-                422: `Validation Error`,
-            },
-        });
-    }
-    /**
-     * Get Observed Surface Data
-     * @param caseUuid Sumo case uuid
-     * @param name Surface name
-     * @param attribute Surface attribute
-     * @param timeOrInterval Time point or time interval string
-     * @returns SurfaceData Successful Response
-     * @throws ApiError
-     */
-    public getObservedSurfaceData(
-        caseUuid: string,
-        name: string,
-        attribute: string,
-        timeOrInterval: string,
-    ): CancelablePromise<SurfaceData> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/surface/observed_surface_data/',
-            query: {
-                'case_uuid': caseUuid,
-                'name': name,
-                'attribute': attribute,
-                'time_or_interval': timeOrInterval,
-            },
-            errors: {
-                422: `Validation Error`,
-            },
-        });
-    }
-    /**
-     * Get Statistical Surface Data
-     * @param caseUuid Sumo case uuid
-     * @param ensembleName Ensemble name
-     * @param statisticFunction Statistics to calculate
-     * @param name Surface name
-     * @param attribute Surface attribute
-     * @param timeOrInterval Time point or time interval string
-     * @returns SurfaceData Successful Response
-     * @throws ApiError
-     */
-    public getStatisticalSurfaceData(
-        caseUuid: string,
-        ensembleName: string,
-        statisticFunction: SurfaceStatisticFunction,
-        name: string,
-        attribute: string,
-        timeOrInterval?: (string | null),
-    ): CancelablePromise<SurfaceData> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/surface/statistical_surface_data/',
-            query: {
-                'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
-                'statistic_function': statisticFunction,
-                'name': name,
-                'attribute': attribute,
-                'time_or_interval': timeOrInterval,
-            },
-            errors: {
-                422: `Validation Error`,
-            },
-        });
-    }
-    /**
-     * Get Property Surface Resampled To Static Surface
-     * @param caseUuid Sumo case uuid
-     * @param ensembleName Ensemble name
-     * @param realizationNumMesh Realization number
-     * @param nameMesh Surface name
-     * @param attributeMesh Surface attribute
-     * @param realizationNumProperty Realization number
-     * @param nameProperty Surface name
-     * @param attributeProperty Surface attribute
-     * @param timeOrIntervalProperty Time point or time interval string
-     * @returns SurfaceData Successful Response
-     * @throws ApiError
-     */
-    public getPropertySurfaceResampledToStaticSurface(
-        caseUuid: string,
-        ensembleName: string,
-        realizationNumMesh: number,
-        nameMesh: string,
-        attributeMesh: string,
-        realizationNumProperty: number,
-        nameProperty: string,
-        attributeProperty: string,
-        timeOrIntervalProperty?: (string | null),
-    ): CancelablePromise<SurfaceData> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/surface/property_surface_resampled_to_static_surface/',
-            query: {
-                'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
-                'realization_num_mesh': realizationNumMesh,
-                'name_mesh': nameMesh,
-                'attribute_mesh': attributeMesh,
-                'realization_num_property': realizationNumProperty,
-                'name_property': nameProperty,
-                'attribute_property': attributeProperty,
-                'time_or_interval_property': timeOrIntervalProperty,
-            },
-            errors: {
-                422: `Validation Error`,
-            },
-        });
-    }
-    /**
-     * Get Property Surface Resampled To Statistical Static Surface
-     * @param caseUuid Sumo case uuid
-     * @param ensembleName Ensemble name
-     * @param statisticFunction Statistics to calculate
-     * @param nameMesh Surface name
-     * @param attributeMesh Surface attribute
-     * @param nameProperty Surface name
-     * @param attributeProperty Surface attribute
-     * @param timeOrIntervalProperty Time point or time interval string
-     * @returns SurfaceData Successful Response
-     * @throws ApiError
-     */
-    public getPropertySurfaceResampledToStatisticalStaticSurface(
-        caseUuid: string,
-        ensembleName: string,
-        statisticFunction: SurfaceStatisticFunction,
-        nameMesh: string,
-        attributeMesh: string,
-        nameProperty: string,
-        attributeProperty: string,
-        timeOrIntervalProperty?: (string | null),
-    ): CancelablePromise<SurfaceData> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/surface/property_surface_resampled_to_statistical_static_surface/',
-            query: {
-                'case_uuid': caseUuid,
-                'ensemble_name': ensembleName,
-                'statistic_function': statisticFunction,
-                'name_mesh': nameMesh,
-                'attribute_mesh': attributeMesh,
-                'name_property': nameProperty,
-                'attribute_property': attributeProperty,
-                'time_or_interval_property': timeOrIntervalProperty,
+                'surf_addr_str': surfAddrStr,
+                'data_format': dataFormat,
+                'resample_to_def_str': resampleToDefStr,
             },
             errors: {
                 422: `Validation Error`,
@@ -316,6 +180,70 @@ export class SurfaceService {
             },
             body: requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Delta Surface Data
+     * @param surfAAddrStr Address string of surface A, supported types: *REAL*, *OBS* and *STAT*
+     * @param surfBAddrStr Address string of surface B, supported types: *REAL*, *OBS* and *STAT*
+     * @param dataFormat Format of binary data in the response
+     * @param resampleToDefStr Definition of the surface onto which the data should be resampled. *SurfaceDef* object properties encoded as a `KeyValStr` string.
+     * @returns SurfaceDataFloat Successful Response
+     * @throws ApiError
+     */
+    public getDeltaSurfaceData(
+        surfAAddrStr: string,
+        surfBAddrStr: string,
+        dataFormat: 'float' | 'png' = 'float',
+        resampleToDefStr?: (string | null),
+    ): CancelablePromise<Array<SurfaceDataFloat>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/delta_surface_data',
+            query: {
+                'surf_a_addr_str': surfAAddrStr,
+                'surf_b_addr_str': surfBAddrStr,
+                'data_format': dataFormat,
+                'resample_to_def_str': resampleToDefStr,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Misfit Surface Data
+     * @param obsSurfAddrStr Address of observed surface, only supported address type is *OBS*
+     * @param simSurfAddrStr Address of simulated surface, supported type is *PARTIAL*
+     * @param statisticFunctions Statistics to calculate
+     * @param realizations Realization numbers
+     * @param dataFormat Format of binary data in the response
+     * @param resampleToDefStr Definition of the surface onto which the data should be resampled. *SurfaceDef* object properties encoded as a `KeyValStr` string.
+     * @returns SurfaceDataFloat Successful Response
+     * @throws ApiError
+     */
+    public getMisfitSurfaceData(
+        obsSurfAddrStr: string,
+        simSurfAddrStr: string,
+        statisticFunctions: Array<SurfaceStatisticFunction>,
+        realizations: Array<number>,
+        dataFormat: 'float' | 'png' = 'float',
+        resampleToDefStr?: (string | null),
+    ): CancelablePromise<Array<SurfaceDataFloat>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/misfit_surface_data',
+            query: {
+                'obs_surf_addr_str': obsSurfAddrStr,
+                'sim_surf_addr_str': simSurfAddrStr,
+                'statistic_functions': statisticFunctions,
+                'realizations': realizations,
+                'data_format': dataFormat,
+                'resample_to_def_str': resampleToDefStr,
+            },
             errors: {
                 422: `Validation Error`,
             },

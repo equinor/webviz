@@ -1,4 +1,4 @@
-import { PolygonData_api, WellboreTrajectory_api } from "@api";
+import { SurfaceDef_api, PolygonData_api, WellboreTrajectory_api } from "@api";
 
 export type SurfaceMeshLayerSettings = {
     contours?: boolean | number[];
@@ -9,21 +9,6 @@ export type SurfaceMeshLayerSettings = {
 
 export type ViewSettings = {
     show3d: boolean;
-};
-export type SurfaceMeta = {
-    x_ori: number;
-    y_ori: number;
-    x_count: number;
-    y_count: number;
-    x_inc: number;
-    y_inc: number;
-    x_min: number;
-    x_max: number;
-    y_min: number;
-    y_max: number;
-    val_min: number;
-    val_max: number;
-    rot_deg: number;
 };
 
 const defaultSurfaceSettings: SurfaceMeshLayerSettings = {
@@ -52,22 +37,23 @@ export function createAxesLayer(
     };
 }
 export function createSurfaceMeshLayer(
-    surfaceMeta: SurfaceMeta,
-    mesh_data: number[],
+    surfaceDef: SurfaceDef_api,
+    mesh_data: Float32Array,
     surfaceSettings?: SurfaceMeshLayerSettings | null,
-    property_data?: number[] | null
+    property_data?: Float32Array | null
 ): Record<string, unknown> {
     surfaceSettings = surfaceSettings || defaultSurfaceSettings;
     return {
         "@@type": "MapLayer",
+        "@@typedArraySupport": true,
         id: "mesh-layer",
         meshData: mesh_data,
         propertiesData: property_data,
         frame: {
-            origin: [surfaceMeta.x_ori, surfaceMeta.y_ori],
-            count: [surfaceMeta.x_count, surfaceMeta.y_count],
-            increment: [surfaceMeta.x_inc, surfaceMeta.y_inc],
-            rotDeg: surfaceMeta.rot_deg,
+            origin: [surfaceDef.origin_utm_x, surfaceDef.origin_utm_y],
+            count: [surfaceDef.npoints_x, surfaceDef.npoints_y],
+            increment: [surfaceDef.inc_x, surfaceDef.inc_y],
+            rotDeg: surfaceDef.rot_deg,
         },
 
         contours: surfaceSettings.contours || false,

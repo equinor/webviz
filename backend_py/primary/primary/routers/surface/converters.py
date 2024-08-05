@@ -1,3 +1,5 @@
+import base64
+
 import numpy as np
 import xtgeo
 from numpy.typing import NDArray
@@ -8,46 +10,96 @@ from primary.services.sumo_access.surface_types import SurfaceMetaSet
 from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionPolyline
 from primary.services.utils.surface_intersect_with_polyline import XtgeoSurfaceIntersectionResult
 from primary.services.utils.surface_to_float32 import surface_to_float32_numpy_array
+from primary.services.utils.surface_to_png import surface_to_png_bytes_optimized
 
 from . import schemas
 
 
-def resample_property_surface_to_mesh_surface(
-    mesh_surface: xtgeo.RegularSurface, property_surface: xtgeo.RegularSurface
+def resample_to_surface_def(
+    source_surface: xtgeo.RegularSurface, target_surface_def: schemas.SurfaceDef
 ) -> xtgeo.RegularSurface:
     """
-    Regrid property surface to mesh surface if topology is different
+    Returns resampled surface if the target surface definition differs from the grid definition of the source surface.
+    If the grid definitions are equal, returns the source surface unmodified.
     """
-    if mesh_surface.compare_topology(property_surface):
-        return property_surface
+    target_surface = xtgeo.RegularSurface(
+        ncol=target_surface_def.npoints_x,
+        nrow=target_surface_def.npoints_y,
+        xinc=target_surface_def.inc_x,
+        yinc=target_surface_def.inc_y,
+        xori=target_surface_def.origin_utm_x,
+        yori=target_surface_def.origin_utm_y,
+        rotation=target_surface_def.rot_deg,
+    )
 
-    mesh_surface.resample(property_surface)
-    return mesh_surface
+    if target_surface.compare_topology(source_surface):
+        return source_surface
+
+    target_surface.resample(source_surface)
+    return target_surface
 
 
-def to_api_surface_data(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceData:
+def to_api_surface_data_float(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceDataFloat:
     """
-    Create API SurfaceData from xtgeo regular surface
+    Create API SurfaceDataFloat from xtgeo regular surface
     """
 
     float32_np_arr: NDArray[np.float32] = surface_to_float32_numpy_array(xtgeo_surf)
     values_b64arr = b64_encode_float_array_as_float32(float32_np_arr)
 
-    return schemas.SurfaceData(
-        x_ori=xtgeo_surf.xori,
-        y_ori=xtgeo_surf.yori,
-        x_count=xtgeo_surf.ncol,
-        y_count=xtgeo_surf.nrow,
-        x_inc=xtgeo_surf.xinc,
-        y_inc=xtgeo_surf.yinc,
-        x_min=xtgeo_surf.xmin,
-        x_max=xtgeo_surf.xmax,
-        y_min=xtgeo_surf.ymin,
-        y_max=xtgeo_surf.ymax,
-        val_min=xtgeo_surf.values.min(),
-        val_max=xtgeo_surf.values.max(),
+    surface_def = schemas.SurfaceDef(
+        npoints_x=xtgeo_surf.ncol,
+        npoints_y=xtgeo_surf.nrow,
+        inc_x=xtgeo_surf.xinc,
+        inc_y=xtgeo_surf.yinc,
+        origin_utm_x=xtgeo_surf.xori,
+        origin_utm_y=xtgeo_surf.yori,
         rot_deg=xtgeo_surf.rotation,
+    )
+
+    trans_bb_utm = schemas.BoundingBox2d(
+        min_x=xtgeo_surf.xmin, min_y=xtgeo_surf.ymin, max_x=xtgeo_surf.xmax, max_y=xtgeo_surf.ymax
+    )
+
+    return schemas.SurfaceDataFloat(
+        format="float",
+        surface_def=surface_def,
+        transformed_bbox_utm=trans_bb_utm,
+        value_min=xtgeo_surf.values.min(),
+        value_max=xtgeo_surf.values.max(),
         values_b64arr=values_b64arr,
+    )
+
+
+def to_api_surface_data_png(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceDataPng:
+    """
+    Create API SurfaceDataPng from xtgeo regular surface
+    """
+
+    png_bytes: bytes = surface_to_png_bytes_optimized(xtgeo_surf)
+    png_bytes_base64 = base64.b64encode(png_bytes).decode("ascii")
+
+    surface_def = schemas.SurfaceDef(
+        npoints_x=xtgeo_surf.ncol,
+        npoints_y=xtgeo_surf.nrow,
+        inc_x=xtgeo_surf.xinc,
+        inc_y=xtgeo_surf.yinc,
+        origin_utm_x=xtgeo_surf.xori,
+        origin_utm_y=xtgeo_surf.yori,
+        rot_deg=xtgeo_surf.rotation,
+    )
+
+    trans_bb_utm = schemas.BoundingBox2d(
+        min_x=xtgeo_surf.xmin, min_y=xtgeo_surf.ymin, max_x=xtgeo_surf.xmax, max_y=xtgeo_surf.ymax
+    )
+
+    return schemas.SurfaceDataPng(
+        format="png",
+        surface_def=surface_def,
+        transformed_bbox_utm=trans_bb_utm,
+        value_min=xtgeo_surf.values.min(),
+        value_max=xtgeo_surf.values.max(),
+        png_image_base64=png_bytes_base64,
     )
 
 

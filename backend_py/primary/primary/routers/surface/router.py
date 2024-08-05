@@ -1,9 +1,8 @@
 import asyncio
 import logging
-from typing import List, Optional
+from typing import Annotated, List, Optional, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body
-from webviz_pkg.core_utils.perf_timer import PerfTimer
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary.services.sumo_access.case_inspector import CaseInspector
@@ -15,17 +14,46 @@ from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
-from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from primary.services.surface_query_service.surface_query_service import RealizationSampleResult
+from primary.utils.response_perf_metrics import ResponsePerfMetrics
 
 from . import converters
 from . import schemas
+from . import dependencies
+
+from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
+from .surface_address import decode_surf_addr_str
 
 
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+GENERAL_SURF_ADDR_DOC_STR = """
+
+---
+*General description of the types of surface addresses that exist. The specific address types supported by this endpoint can be a subset of these.*
+
+- *REAL* - Realization surface address. Addresses a specific realization surface within an ensemble. Always specifies a single realization number
+- *OBS* - Observed surface address. Addresses an observed surface which is not associated with any specific ensemble.
+- *STAT* - Statistical surface address. Fully specifies a statistical surface, including the statistic function and which realizations to include.
+- *PARTIAL* - Partial surface address. Similar to a realization surface address, but does not include a specific realization number.
+
+Structure of the different types of address strings:
+
+```
+REAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<realization>[~~<iso_date_or_interval>]
+STAT~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>~~<stat_function>~~<stat_realizations>[~~<iso_date_or_interval>]
+OBS~~<case_uuid>~~<surface_name>~~<attribute>~~<iso_date_or_interval>
+PARTIAL~~<case_uuid>~~<ensemble>~~<surface_name>~~<attribute>[~~<iso_date_or_interval>]
+```
+
+The `<stat_realizations>` component in a *STAT* address contains the list of realizations to include in the statistics
+encoded as a `UintListStr` or "*" to include all realizations.
+
+"""
 
 
 @router.get("/realization_surfaces_metadata/")
@@ -93,185 +121,77 @@ async def get_observed_surfaces_metadata(
     return api_surf_meta_set
 
 
-@router.get("/realization_surface_data/")
-async def get_realization_surface_data(
+@router.get("/surface_data", description="Get surface data for the specified surface." + GENERAL_SURF_ADDR_DOC_STR)
+async def get_surface_data(
+    # fmt:off
     response: Response,
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    realization_num: int = Query(description="Realization number"),
-    name: str = Query(description="Surface name"),
-    attribute: str = Query(description="Surface attribute"),
-    time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
-) -> schemas.SurfaceData:
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    surf_addr_str: Annotated[str, Query(description="Surface address string, supported address types are *REAL*, *OBS* and *STAT*")],
+    data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
+    resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
+    # fmt:on
+) -> schemas.SurfaceDataFloat | schemas.SurfaceDataPng:
     perf_metrics = ResponsePerfMetrics(response)
 
-    access = SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    xtgeo_surf = await access.get_realization_surface_data_async(
-        real_num=realization_num, name=name, attribute=attribute, time_or_interval_str=time_or_interval
-    )
-    perf_metrics.record_lap("get-surf")
+    access_token = authenticated_user.get_sumo_access_token()
 
-    if not xtgeo_surf:
-        raise HTTPException(status_code=404, detail="Surface not found")
+    addr = decode_surf_addr_str(surf_addr_str)
+    if not isinstance(addr, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
+        raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
-    surf_data_response = converters.to_api_surface_data(xtgeo_surf)
-    perf_metrics.record_lap("convert")
-
-    LOGGER.info(f"Loaded realization surface in: {perf_metrics.to_string()}")
-
-    return surf_data_response
-
-
-@router.get("/observed_surface_data/")
-async def get_observed_surface_data(
-    response: Response,
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    name: str = Query(description="Surface name"),
-    attribute: str = Query(description="Surface attribute"),
-    time_or_interval: str = Query(description="Time point or time interval string"),
-) -> schemas.SurfaceData:
-    perf_metrics = ResponsePerfMetrics(response)
-
-    access = SurfaceAccess.from_case_uuid_no_iteration(authenticated_user.get_sumo_access_token(), case_uuid)
-    xtgeo_surf = await access.get_observed_surface_data_async(
-        name=name, attribute=attribute, time_or_interval_str=time_or_interval
-    )
-    perf_metrics.record_lap("get-surf")
-
-    if not xtgeo_surf:
-        raise HTTPException(status_code=404, detail="Surface not found")
-
-    surf_data_response = converters.to_api_surface_data(xtgeo_surf)
-    perf_metrics.record_lap("convert")
-
-    LOGGER.info(f"Loaded observed surface in: {perf_metrics.to_string()}")
-
-    return surf_data_response
-
-
-@router.get("/statistical_surface_data/")
-async def get_statistical_surface_data(
-    response: Response,
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    statistic_function: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
-    name: str = Query(description="Surface name"),
-    attribute: str = Query(description="Surface attribute"),
-    time_or_interval: Optional[str] = Query(None, description="Time point or time interval string"),
-) -> schemas.SurfaceData:
-    perf_metrics = ResponsePerfMetrics(response)
-
-    access = SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-
-    service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
-    if service_stat_func_to_compute is None:
-        raise HTTPException(status_code=404, detail="Invalid statistic requested")
-
-    xtgeo_surf = await access.get_statistical_surface_data_async(
-        statistic_function=service_stat_func_to_compute,
-        name=name,
-        attribute=attribute,
-        time_or_interval_str=time_or_interval,
-    )
-    perf_metrics.record_lap("sumo-calc")
-
-    if not xtgeo_surf:
-        raise HTTPException(status_code=404, detail="Could not find or compute surface")
-
-    surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(xtgeo_surf)
-    perf_metrics.record_lap("convert")
-
-    LOGGER.info(f"Calculated statistical surface in: {perf_metrics.to_string()}")
-
-    return surf_data_response
-
-
-# pylint: disable=too-many-arguments
-@router.get("/property_surface_resampled_to_static_surface/")
-async def get_property_surface_resampled_to_static_surface(
-    response: Response,
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    realization_num_mesh: int = Query(description="Realization number"),
-    name_mesh: str = Query(description="Surface name"),
-    attribute_mesh: str = Query(description="Surface attribute"),
-    realization_num_property: int = Query(description="Realization number"),
-    name_property: str = Query(description="Surface name"),
-    attribute_property: str = Query(description="Surface attribute"),
-    time_or_interval_property: Optional[str] = Query(None, description="Time point or time interval string"),
-) -> schemas.SurfaceData:
-    perf_metrics = ResponsePerfMetrics(response)
-
-    access = SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    xtgeo_surf_mesh = await access.get_realization_surface_data_async(
-        real_num=realization_num_mesh, name=name_mesh, attribute=attribute_mesh
-    )
-    perf_metrics.record_lap("mesh-surf")
-
-    xtgeo_surf_property = await access.get_realization_surface_data_async(
-        real_num=realization_num_property,
-        name=name_property,
-        attribute=attribute_property,
-        time_or_interval_str=time_or_interval_property,
-    )
-    perf_metrics.record_lap("prop-surf")
-
-    if not xtgeo_surf_mesh or not xtgeo_surf_property:
-        raise HTTPException(status_code=404, detail="Surface not found")
-
-    resampled_surface = converters.resample_property_surface_to_mesh_surface(xtgeo_surf_mesh, xtgeo_surf_property)
-    perf_metrics.record_lap("resample")
-
-    surf_data_response: schemas.SurfaceData = converters.to_api_surface_data(resampled_surface)
-    perf_metrics.record_lap("convert")
-
-    LOGGER.info(f"Loaded property surface in: {perf_metrics.to_string()}")
-
-    return surf_data_response
-
-
-@router.get("/property_surface_resampled_to_statistical_static_surface/")
-async def get_property_surface_resampled_to_statistical_static_surface(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    statistic_function: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
-    name_mesh: str = Query(description="Surface name"),
-    attribute_mesh: str = Query(description="Surface attribute"),
-    # statistic_function_property: schemas.SurfaceStatisticFunction = Query(description="Statistics to calculate"),
-    name_property: str = Query(description="Surface name"),
-    attribute_property: str = Query(description="Surface attribute"),
-    time_or_interval_property: Optional[str] = Query(None, description="Time point or time interval string"),
-) -> schemas.SurfaceData:
-    timer = PerfTimer()
-
-    access = SurfaceAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    service_stat_func_to_compute = StatisticFunction.from_string_value(statistic_function)
-    if service_stat_func_to_compute is not None:
-        xtgeo_surf_mesh = await access.get_statistical_surface_data_async(
-            statistic_function=service_stat_func_to_compute,
-            name=name_mesh,
-            attribute=attribute_mesh,
+    if addr.address_type == "REAL":
+        access = SurfaceAccess.from_case_uuid(access_token, addr.case_uuid, addr.ensemble_name)
+        xtgeo_surf = await access.get_realization_surface_data_async(
+            real_num=addr.realization,
+            name=addr.name,
+            attribute=addr.attribute,
+            time_or_interval_str=addr.iso_time_or_interval,
         )
-        xtgeo_surf_property = await access.get_statistical_surface_data_async(
+        perf_metrics.record_lap("get-surf")
+        if not xtgeo_surf:
+            raise HTTPException(status_code=404, detail="Could not get realization surface")
+
+    elif addr.address_type == "STAT":
+        if addr.stat_realizations is not None:
+            raise HTTPException(status_code=501, detail="Statistics with specific realizations not yet supported")
+
+        service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
+        if service_stat_func_to_compute is None:
+            raise HTTPException(status_code=404, detail="Invalid statistic requested")
+
+        access = SurfaceAccess.from_case_uuid(access_token, addr.case_uuid, addr.ensemble_name)
+        xtgeo_surf = await access.get_statistical_surface_data_async(
             statistic_function=service_stat_func_to_compute,
-            name=name_property,
-            attribute=attribute_property,
-            time_or_interval_str=time_or_interval_property,
+            name=addr.name,
+            attribute=addr.attribute,
+            time_or_interval_str=addr.iso_time_or_interval,
         )
+        perf_metrics.record_lap("sumo-calc")
+        if not xtgeo_surf:
+            raise HTTPException(status_code=404, detail="Could not get or compute statistical surface")
 
-    if not xtgeo_surf_mesh or not xtgeo_surf_property:
-        raise HTTPException(status_code=404, detail="Surface not found")
+    elif addr.address_type == "OBS":
+        access = SurfaceAccess.from_case_uuid_no_iteration(access_token, addr.case_uuid)
+        xtgeo_surf = await access.get_observed_surface_data_async(
+            name=addr.name, attribute=addr.attribute, time_or_interval_str=addr.iso_time_or_interval
+        )
+        perf_metrics.record_lap("get-surf")
+        if not xtgeo_surf:
+            raise HTTPException(status_code=404, detail="Could not get observed surface")
 
-    resampled_surface = converters.resample_property_surface_to_mesh_surface(xtgeo_surf_mesh, xtgeo_surf_property)
+    if resample_to is not None:
+        xtgeo_surf = converters.resample_to_surface_def(xtgeo_surf, resample_to)
+        perf_metrics.record_lap("resample")
 
-    surf_data_response = converters.to_api_surface_data(resampled_surface)
+    surf_data_response: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
+    if data_format == "float":
+        surf_data_response = converters.to_api_surface_data_float(xtgeo_surf)
+    elif data_format == "png":
+        surf_data_response = converters.to_api_surface_data_png(xtgeo_surf)
 
-    LOGGER.info(f"Loaded property surface and created image, total time: {timer.elapsed_ms()}ms")
+    perf_metrics.record_lap("convert")
+
+    LOGGER.info(f"Got {addr.address_type} surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 
@@ -345,6 +265,36 @@ async def post_sample_surface_in_points(
         )
 
     return intersections
+
+
+@router.get("/delta_surface_data")
+async def get_delta_surface_data(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    surf_a_addr_str: Annotated[str, Query(description="Address string of surface A, supported types: *REAL*, *OBS* and *STAT*")],
+    surf_b_addr_str: Annotated[str, Query(description="Address string of surface B, supported types: *REAL*, *OBS* and *STAT*")],
+    data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
+    resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
+    # fmt:on
+) -> list[schemas.SurfaceDataFloat]:
+    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
+
+
+@router.get("/misfit_surface_data")
+async def get_misfit_surface_data(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    obs_surf_addr_str: Annotated[str, Query(description="Address of observed surface, only supported address type is *OBS*")],
+    sim_surf_addr_str: Annotated[str, Query(description="Address of simulated surface, supported type is *PARTIAL*")],
+    statistic_functions: Annotated[list[schemas.SurfaceStatisticFunction], Query(description="Statistics to calculate")],
+    realizations: Annotated[list[int], Query(description="Realization numbers")],
+    data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
+    resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
+    # fmt:on
+) -> list[schemas.SurfaceDataFloat]:
+    raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
 async def _get_stratigraphic_units_for_case_async(

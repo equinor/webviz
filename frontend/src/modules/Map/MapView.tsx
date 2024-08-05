@@ -1,7 +1,9 @@
 import React from "react";
 
+import { SurfaceDef_api } from "@api";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
@@ -14,7 +16,9 @@ export function MapView(props: ModuleViewProps<MapState>) {
     const surfaceAddress = props.viewContext.useStoreValue("surfaceAddress");
 
     const statusWriter = useViewStatusWriter(props.viewContext);
-    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress);
+
+    //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
+    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
 
     const isLoading = surfDataQuery.isFetching;
     statusWriter.setLoading(isLoading);
@@ -23,6 +27,7 @@ export function MapView(props: ModuleViewProps<MapState>) {
     usePropagateApiErrorToStatusWriter(surfDataQuery, statusWriter);
 
     const surfData = surfDataQuery.data;
+
     return (
         <div className="relative w-full h-full flex flex-col">
             {hasError ? (
@@ -37,14 +42,14 @@ export function MapView(props: ModuleViewProps<MapState>) {
                     layers={[
                         {
                             "@@type": "MapLayer",
+                            "@@typedArraySupport": true,
                             id: "mesh-layer",
-                            // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
-                            meshData: Array.from(surfData.valuesFloat32Arr),
+                            meshData: surfData.valuesFloat32Arr,
                             frame: {
-                                origin: [surfData.x_ori, surfData.y_ori],
-                                count: [surfData.x_count, surfData.y_count],
-                                increment: [surfData.x_inc, surfData.y_inc],
-                                rotDeg: surfData.rot_deg,
+                                origin: [surfData.surface_def.origin_utm_x, surfData.surface_def.origin_utm_y],
+                                count: [surfData.surface_def.npoints_x, surfData.surface_def.npoints_y],
+                                increment: [surfData.surface_def.inc_x, surfData.surface_def.inc_y],
+                                rotDeg: surfData.surface_def.rot_deg,
                             },
 
                             contours: [0, 100],
@@ -54,9 +59,42 @@ export function MapView(props: ModuleViewProps<MapState>) {
                             smoothShading: true,
                             colorMapName: "Physics",
                         },
+                        // {
+                        //     // Experiment with showing PNG image in a ColormapLayer
+                        //     "@@type": "ColormapLayer",
+                        //     id: "image-layer",
+                        //     image: `data:image/png;base64,${surfData.png_image_base64}`,
+                        //     bounds: _calcBoundsForRotationAroundUpperLeftCorner(surfData.surface_def),
+                        //     rotDeg: surfData.surface_def.rot_deg,
+                        //     valueRange: [surfData.value_min, surfData.value_max],
+                        //     colorMapName: "Physics",
+                        // },
                     ]}
                 />
             )}
         </div>
     );
+}
+
+// Calculate Deck.gl style bounds that are suitable for usage with a rotated image in the ColormapLayer,
+// which expects rotation to be specified around the upper left corner of the image.
+//
+// The ColormapLayer derives from deck.gl's BitmapLayer, which expects bounds in the form [left, bottom, right, top]
+//
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): number[] {
+    const width = (surfDef.npoints_x - 1) * surfDef.inc_x;
+    const height = (surfDef.npoints_y - 1) * surfDef.inc_y;
+    const orgRotPoint: Vec2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y };
+    const orgTopLeft: Vec2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y + height };
+
+    const transTopLeft: Vec2 = rotatePoint2Around(orgTopLeft, orgRotPoint, (surfDef.rot_deg * Math.PI) / 180);
+    const tLeft = transTopLeft.x;
+    const tBottom = transTopLeft.y - height;
+    const tRight = transTopLeft.x + width;
+    const tTop = transTopLeft.y;
+
+    const bounds = [tLeft, tBottom, tRight, tTop];
+
+    return bounds;
 }
