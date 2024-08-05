@@ -2,6 +2,7 @@ import { ParameterIdent } from "@framework/EnsembleParameters";
 
 export type EnsembleParameterRealizationsAndValues = {
     ensembleDisplayName: string;
+    ensembleColor: string;
     realizations: number[];
     values: number[];
 };
