@@ -1,6 +1,6 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
-import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import { LayerManager } from "@modules/Intersection/utils/layers/LayerManager";
 
@@ -35,25 +35,6 @@ export const selectedFieldIdentifierAtom = atom((get) => {
     }
 
     return selectedFieldIdentifier;
-});
-
-export const availableRealizationsAtom = atom((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-
-    if (selectedEnsembleIdent === null) {
-        return [];
-    }
-
-    let ensembleRealizationFilterFunction = get(EnsembleRealizationFilterFunctionAtom);
-
-    if (ensembleRealizationFilterFunction === null) {
-        ensembleRealizationFilterFunction = (ensembleIdent: EnsembleIdent) => {
-            return ensembleSet.findEnsemble(ensembleIdent)?.getRealizations() ?? [];
-        };
-    }
-
-    return ensembleRealizationFilterFunction(selectedEnsembleIdent);
 });
 
 export const availableUserCreatedIntersectionPolylinesAtom = atom((get) => {

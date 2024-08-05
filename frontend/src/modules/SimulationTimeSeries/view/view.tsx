@@ -17,12 +17,12 @@ import { useSubplotBuilder } from "./hooks/useSubplotBuilder";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 
 import { SettingsAtoms } from "../settings/atoms/atomDefinitions";
-import { Interface } from "../settingsToViewInterface";
+import { SettingsToViewInterface } from "../settingsToViewInterface";
 
 export const View = ({
     viewContext,
     workbenchSettings,
-}: ModuleViewProps<Record<string, never>, Interface, SettingsAtoms, ViewAtoms>) => {
+}: ModuleViewProps<Record<string, never>, SettingsToViewInterface, SettingsAtoms, ViewAtoms>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 

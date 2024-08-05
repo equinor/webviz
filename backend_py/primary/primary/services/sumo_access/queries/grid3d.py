@@ -78,23 +78,23 @@ async def get_grid_geometry_and_property_blob_ids_async(
                 {
                     "bool": {
                         "must": [
-                            {"match": {"_sumo.parent_object.keyword": case_id}},
-                            {"match": {"class": "cpgrid"}},
-                            {"match": {"fmu.iteration.name": iteration}},
-                            {"match": {"fmu.realization.id": realization}},
-                            {"match": {"data.name.keyword": grid_name}},
+                            {"term": {"_sumo.parent_object.keyword": case_id}},
+                            {"term": {"class.keyword": "cpgrid"}},
+                            {"term": {"fmu.iteration.name.keyword": iteration}},
+                            {"term": {"fmu.realization.id": realization}},
+                            {"term": {"data.name.keyword": grid_name}},
                         ]
                     }
                 },
                 {
                     "bool": {
                         "must": [
-                            {"match": {"_sumo.parent_object.keyword": case_id}},
-                            {"match": {"class": "cpgrid_property"}},
-                            {"match": {"fmu.iteration.name": iteration}},
-                            {"match": {"fmu.realization.id": realization}},
-                            {"match": {"data.name.keyword": parameter_name}},
-                            {"match": {"data.tagname.keyword": grid_name}},
+                            {"term": {"_sumo.parent_object.keyword": case_id}},
+                            {"term": {"class.keyword": "cpgrid_property"}},
+                            {"term": {"fmu.iteration.name.keyword": iteration}},
+                            {"term": {"fmu.realization.id": realization}},
+                            {"term": {"data.name.keyword": parameter_name}},
+                            {"term": {"data.tagname.keyword": grid_name}},
                         ]
                     }
                 },
@@ -102,7 +102,6 @@ async def get_grid_geometry_and_property_blob_ids_async(
             "minimum_should_match": 1,
         }
     }
-
     time_filter = get_time_filter(parameter_time_or_interval_str)
 
     if time_filter.time_type != TimeType.NONE:
@@ -118,7 +117,6 @@ async def get_grid_geometry_and_property_blob_ids_async(
 
     result = response.json()
     hits = result["hits"]["hits"]
-
     if len(hits) != 2:
         raise InvalidDataError(f"Expected 2 hits, got {len(hits)}", service=Service.SUMO)
 

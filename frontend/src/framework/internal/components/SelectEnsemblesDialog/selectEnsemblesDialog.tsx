@@ -67,8 +67,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
     const [casesFilteringOptions, setCasesFilteringOptions] = React.useState<CaseFilterSettings>({
-        keep: true,
-        onlyMyCases: false,
+        keep: !(readInitialStateFromLocalStorage("showKeepCases") === "false"),
+        onlyMyCases: readInitialStateFromLocalStorage("showOnlyMyCases") === "true",
         users: [],
     });
 
@@ -155,6 +155,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return false;
     }
 
+    function tryToFindUnusedColor(): string {
+        const usedColors = newlySelectedEnsembles.map((e) => e.color);
+        for (let i = 0; i < props.colorSet.getColorArray().length; i++) {
+            if (!usedColors.includes(props.colorSet.getColor(i))) {
+                return props.colorSet.getColor(i);
+            }
+        }
+        return props.colorSet.getColor(newlySelectedEnsembles.length);
+    }
+
     function handleAddEnsemble() {
         if (!checkIfEnsembleAlreadySelected()) {
             const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseId)?.name ?? "UNKNOWN";
@@ -163,7 +173,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     caseUuid: selectedCaseId,
                     caseName: caseName,
                     ensembleName: selectedEnsembleName,
-                    color: props.colorSet.getColor(newlySelectedEnsembles.length),
+                    color: tryToFindUnusedColor(),
                     customName: null,
                 },
             ];
@@ -208,10 +218,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleKeepCasesSwitchChange(e: React.ChangeEvent<HTMLInputElement>) {
         setCasesFilteringOptions((prev) => ({ ...prev, keep: e.target.checked }));
+        storeStateInLocalStorage("showKeepCases", e.target.checked.toString());
     }
 
     function handleCasesByMeChange(e: React.ChangeEvent<HTMLInputElement>) {
         setCasesFilteringOptions((prev) => ({ ...prev, onlyMyCases: e.target.checked }));
+        storeStateInLocalStorage("showOnlyMyCases", e.target.checked.toString());
     }
 
     function filterCases(cases: CaseInfo_api[] | undefined): CaseInfo_api[] | undefined {
