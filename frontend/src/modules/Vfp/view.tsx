@@ -13,8 +13,10 @@ import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembl
 import { Interface, State } from "./state";
 import { VfpProdTable_api } from "@api";
 import { VfpPlotBuilder } from "./utils/VfpPlotBuilder";
+import { ColorBy } from "./types";
 
-export function View({ viewContext }: ModuleViewProps<State, Interface>) {
+export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, Interface>) {
+    const colorSet = workbenchSettings.useColorSet();
 
     const vfpTableName = viewContext.useSettingsToViewInterfaceValue("vfpTableName");
     const vfpTable: VfpProdTable_api = viewContext.useSettingsToViewInterfaceValue("vfpTable")
@@ -29,7 +31,14 @@ export function View({ viewContext }: ModuleViewProps<State, Interface>) {
     const vfpPlotBuilder = new VfpPlotBuilder(vfpTable);
 
     vfpPlotBuilder.makeLayout(wrapperDivSize)
-    //vfpPlotBuilder.makeTraces(selectedThpIndices, selectedWfrIndices, selectedGfrIndices, selectedAlqIndices)
+    vfpPlotBuilder.makeTraces(
+        selectedThpIndices, 
+        selectedWfrIndices, 
+        selectedGfrIndices, 
+        selectedAlqIndices,
+        ColorBy.THP,
+        colorSet,
+    )
 
     return vfpPlotBuilder.makePlot()
 }
