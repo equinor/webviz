@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple
 
 import pyarrow as pa
 import pyarrow.compute as pc
+import numpy as np
 
 from primary.services.sumo_access.inplace_volumetrics_types import (
     FluidZone,
@@ -9,6 +10,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     InplaceVolumetricsIdentifier,
     InplaceStatisticalVolumetricTableData,
     RepeatedTableColumnData,
+    Statistics,
     TableColumnData,
     TableColumnStatisticalData,
 )
@@ -49,7 +51,7 @@ def create_per_realization_accumulated_result_table(
     return accumulated_table
 
 
-def create_statistical_grouped_result_table_data(
+def create_statistical_grouped_result_table_data_pandas(
     result_table: pa.Table,
     selector_columns: List[str],
     group_by_identifiers: List[InplaceVolumetricsIdentifier],
@@ -75,22 +77,113 @@ def create_statistical_grouped_result_table_data(
         elm for elm in per_realization_grouped_result_table.column_names if elm not in selector_columns
     ]
 
+    # Convert to pandas dataframe for easier statistical aggregation
+    df = per_realization_grouped_result_table.to_pandas()
+
+    group_by_list = list(group_by_identifier_set)
+    grouped = df.groupby(group_by_list)
+
+    default_statistics_values_dict = {
+        Statistics.MEAN: [],
+        Statistics.STD_DEV: [],
+        Statistics.MIN: [],
+        Statistics.MAX: [],
+        Statistics.P10: [],
+        Statistics.P90: [],
+    }
+
+    group_by_columns: Dict[str, List[float]] = {column_name: [] for column_name in group_by_list}
+    result_statistical_data_dict: Dict[str, TableColumnStatisticalData] = {
+        result_name: TableColumnStatisticalData(
+            column_name=result_name,
+            statistic_values=default_statistics_values_dict.copy(),
+        )
+        for result_name in valid_result_names
+    }
+
+    # Iterate over each group and extract group by column values and calculate statistics for each result
+    for keys, group in grouped:
+        if len(keys) != len(group_by_columns.keys()):
+            raise ValueError(
+                f"Number of group by keys {len(keys)} does not match number of group by columns {len(group_by_columns.keys())}"
+            )
+
+        # Get group by column values
+        for index, key in enumerate(keys):
+            column_name = group_by_list[index]
+            group_by_columns[column_name].append(key)
+
+        # Calculate statistics for each result
+        for result_name in valid_result_names:
+            result_data = group[result_name]
+            statistics_data = result_statistical_data_dict[result_name]  # NOTE: This is a reference to the dictionary
+
+            statistics_data.statistic_values[Statistics.MEAN].append(result_data.mean())
+            statistics_data.statistic_values[Statistics.STD_DEV].append(result_data.std())
+            statistics_data.statistic_values[Statistics.MIN].append(result_data.min())
+            statistics_data.statistic_values[Statistics.MAX].append(result_data.max())
+            statistics_data.statistic_values[Statistics.P10].append(np.percentile(result_data, 10))
+            statistics_data.statistic_values[Statistics.P90].append(np.percentile(result_data, 90))
+
+    # Convert group by columns to repeated table column data
+    selector_column_data_list: List[RepeatedTableColumnData] = []
+    for column_name, column_values in group_by_columns.items():
+        selector_column_data_list.append(
+            _create_repeated_table_column_data_from_column(column_name, pa.array(column_values))
+        )
+
+    # Convert result statistical data to list
+    result_statistical_data_list: List[TableColumnStatisticalData] = []
+    for result_name, result_statistical_data in result_statistical_data_dict.items():
+        result_statistical_data_list.append(result_statistical_data)
+
+    # TODO: Verify length of each array in statistical data list?
+    return (selector_column_data_list, result_statistical_data_list)
+
+
+def create_statistical_grouped_result_table_data_pyarrow(
+    result_table: pa.Table,
+    selector_columns: List[str],
+    group_by_identifiers: List[InplaceVolumetricsIdentifier],
+) -> Tuple[List[RepeatedTableColumnData], List[TableColumnStatisticalData]]:
+    """
+    Create result table with statistics across realizations based on group by identifiers selection. The
+    statistics are calculated across all realizations per grouping, thus the output will have one row per group.
+
+    Statistics: Mean, stddev, min, max, p10, p90
+
+    TODO: Add p10 and p90 later on (find each "group" (how to?) and filter table to get respective rows. Thereafter pick the column to calc p10 and p90?)
+    """
+    group_by_identifier_set = set([elm.value for elm in group_by_identifiers])
+
+    # Get grouped result table with individual realizations
+    per_realization_grouped_result_table = create_per_realization_accumulated_result_table(
+        result_table, selector_columns, group_by_identifiers
+    )
+    valid_selector_columns = [
+        elm for elm in selector_columns if elm in per_realization_grouped_result_table.column_names
+    ]
+    valid_result_names = [
+        elm for elm in per_realization_grouped_result_table.column_names if elm not in selector_columns
+    ]
+
+    # Group table by group by identifiers
+    table_grouped_by = per_realization_grouped_result_table.group_by(group_by_identifier_set)
+
     # Pyarrow statistical aggregation
     statistics_functions = ["mean", "stddev", "min", "max"]
-
-    # Aggregate statistics for each result name after grouping.
-    # The resulting statistics table will a column per statistic for each result name, i.e. "STOIIP_mean", "STOIIP_stddev", etc.
-    statistical_table = per_realization_grouped_result_table.group_by(group_by_identifier_set).aggregate(
+    statistical_table = table_grouped_by.aggregate(
         [(result_name, func) for result_name in valid_result_names for func in statistics_functions]
     )
 
-    # Build statistical table data object from the pa.Table
+    # Build selector columns from statistical table
     selector_column_data_list: List[RepeatedTableColumnData] = []
     for column_name in valid_selector_columns:
         column_array = statistical_table[column_name]
         selector_column_data_list.append(_create_repeated_table_column_data_from_column(column_name, column_array))
 
-    result_statistical_data_list: List[TableColumnStatisticalData] = []
+    # Fill statistics for each result
+    results_statistical_data_dict: Dict[str, TableColumnStatisticalData] = {}
     available_statistic_column_names = statistical_table.column_names
     for result_name in valid_result_names:
         result_statistical_data = TableColumnStatisticalData(column_name=result_name, statistic_values={})
@@ -101,9 +194,36 @@ def create_statistical_grouped_result_table_data(
 
             statistic_array = statistical_table[statistic_column_name]
             result_statistical_data.statistic_values[func] = statistic_array.to_pylist()
-        result_statistical_data_list.append(result_statistical_data)
+        results_statistical_data_dict[result_name] = result_statistical_data
 
-    return (selector_column_data_list, result_statistical_data_list)
+    # Percentile calculation w/ TDigest
+    # - Handle per percentile as resulting column name will be equal for each of the percentiles
+    # NOTE: Assume equal order of groups for every .aggregate call
+    tdigest_calculations = {"p90": pc.TDigestOptions([0.9]), "p10": pc.TDigestOptions([0.1])}
+    for percentile_name, percentile_options in tdigest_calculations:
+        percentile_table = table_grouped_by.aggregate(
+            [(result_name, "tdigest", percentile_options) for result_name in valid_result_names]
+        )
+
+        available_percentile_column_names = percentile_table.column_names
+        for result_name in valid_result_names:
+            percentile_column_name = f"{result_name}_tdigest"
+
+            if percentile_column_name not in available_percentile_column_names:
+                raise ValueError(f"Column {percentile_column_name} not found in percentile table for {percentile_name}")
+
+            result_statistical_data = results_statistical_data_dict.get(result_name)
+            if result_statistical_data is None:
+                raise ValueError(f"Expected result statistical data not found for {result_name}")
+
+            percentile_array = percentile_table[percentile_column_name]
+            result_statistical_data.statistic_values[percentile_name] = percentile_array.to_pylist()
+
+    # Create list of results statistical data from dictionary values
+    results_statistical_data_list: List[TableColumnStatisticalData] = list(results_statistical_data_dict.values())
+
+    # TODO: Verify length of each array in statistical data list?
+    return (selector_column_data_list, results_statistical_data_list)
 
 
 def _create_repeated_table_column_data_from_column(

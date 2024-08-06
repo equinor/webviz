@@ -1,7 +1,11 @@
 from typing import List
 
-from primary.services.sumo_access.inplace_volumetrics_types import InplaceVolumetricTableDataPerFluidSelection
-from primary.services.sumo_access.inplace_volumetrics_types import InplaceVolumetricsTableDefinition
+from primary.services.sumo_access.inplace_volumetrics_types import (
+    InplaceVolumetricsTableDefinition,
+    InplaceVolumetricTableDataPerFluidSelection,
+    InplaceStatisticalVolumetricTableData,
+    InplaceStatisticalVolumetricTableDataPerFluidSelection,
+)
 
 from . import schemas
 
@@ -34,7 +38,7 @@ def convert_table_data_per_fluid_selection_to_schema(
 
     tables: List[schemas.InplaceVolumetricTableData] = []
 
-    for table in table_per_fluid_selection.table_per_fluid_selection:
+    for table in table_per_fluid_selection.table_data_per_fluid_selection:
         selector_columns = [
             schemas.RepeatedTableColumnData(
                 columnName=column.column_name,
@@ -58,3 +62,36 @@ def convert_table_data_per_fluid_selection_to_schema(
         )
 
     return schemas.InplaceVolumetricTableDataPerFluidSelection(tablePerFluidSelection=tables)
+
+
+def convert_statistical_table_data_per_fluid_selection_to_schema(
+    table_data_per_fluid_selection: InplaceStatisticalVolumetricTableDataPerFluidSelection,
+) -> schemas.InplaceStatisticalVolumetricTableDataPerFluidSelection:
+    """Converts the table data from the sumo service to the schema format"""
+
+    tables: List[schemas.InplaceVolumetricTableData] = []
+
+    for table in table_data_per_fluid_selection.table_data_per_fluid_selection:
+        selector_columns = [
+            schemas.RepeatedTableColumnData(
+                columnName=column.column_name,
+                uniqueValues=column.unique_values,
+                indices=column.indices,
+            )
+            for column in table.selector_columns
+        ]
+
+        result_columns_statistics = [
+            schemas.TableColumnStatisticalData(columnName=column.column_name, statisticValues=column.statistic_values)
+            for column in table.result_column_statistics
+        ]
+
+        tables.append(
+            schemas.InplaceStatisticalVolumetricTableData(
+                fluidSelectionName=table.fluid_selection_name,
+                selectorColumns=selector_columns,
+                resultColumnStatistics=result_columns_statistics,
+            )
+        )
+
+    return schemas.InplaceStatisticalVolumetricTableDataPerFluidSelection(tableDataPerFluidSelection=tables)

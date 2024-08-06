@@ -114,13 +114,6 @@ class InplaceVolumetricTableData:
 
 
 @dataclass
-class InplaceVolumetricTableDataPerFluidSelection:
-    # TODO: Find a better name for this class
-    # table_name: str
-    table_per_fluid_selection: List[InplaceVolumetricTableData]
-
-
-@dataclass
 class InplaceStatisticalVolumetricTableData:
     """
     Statistical volumetric data for single volume table
@@ -131,3 +124,21 @@ class InplaceStatisticalVolumetricTableData:
     fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
     selector_columns: List[RepeatedTableColumnData]  # Index columns and realizations
     result_column_statistics: List[TableColumnStatisticalData]
+
+
+@dataclass
+class InplaceVolumetricTableDataPerFluidSelection:
+    # TODO: Find a better name for this class
+    # table_name: str
+    table_data_per_fluid_selection: List[InplaceVolumetricTableData]
+
+
+@dataclass
+class InplaceStatisticalVolumetricTableDataPerFluidSelection:
+    """
+    Statistical volumetric data for a single table per fluid selection
+
+    Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
+    """
+
+    table_data_per_fluid_selection: List[InplaceStatisticalVolumetricTableData]

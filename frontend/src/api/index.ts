@@ -13,7 +13,8 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 export { B64FloatArray as B64FloatArray_api } from './models/B64FloatArray';
 export { B64UintArray as B64UintArray_api } from './models/B64UintArray';
 export type { Body_get_result_data_per_realization as Body_get_result_data_per_realization_api } from './models/Body_get_result_data_per_realization';
-export type { Body_post_get_aggregated_table_data as Body_post_get_aggregated_table_data_api } from './models/Body_post_get_aggregated_table_data';
+export type { Body_post_get_aggregated_statistical_table_data as Body_post_get_aggregated_statistical_table_data_api } from './models/Body_post_get_aggregated_statistical_table_data';
+export type { Body_post_get_aggregated_table_data_per_realization as Body_post_get_aggregated_table_data_per_realization_api } from './models/Body_post_get_aggregated_table_data_per_realization';
 export type { Body_post_get_polyline_intersection as Body_post_get_polyline_intersection_api } from './models/Body_post_get_polyline_intersection';
 export type { Body_post_get_seismic_fence as Body_post_get_seismic_fence_api } from './models/Body_post_get_seismic_fence';
 export type { Body_post_get_surface_intersection as Body_post_get_surface_intersection_api } from './models/Body_post_get_surface_intersection';
@@ -46,6 +47,8 @@ export type { GridSurfaceVtk as GridSurfaceVtk_api } from './models/GridSurfaceV
 export type { GroupTreeData as GroupTreeData_api } from './models/GroupTreeData';
 export type { GroupTreeMetadata as GroupTreeMetadata_api } from './models/GroupTreeMetadata';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
+export type { InplaceStatisticalVolumetricTableData as InplaceStatisticalVolumetricTableData_api } from './models/InplaceStatisticalVolumetricTableData';
+export type { InplaceStatisticalVolumetricTableDataPerFluidSelection as InplaceStatisticalVolumetricTableDataPerFluidSelection_api } from './models/InplaceStatisticalVolumetricTableDataPerFluidSelection';
 export type { InplaceVolumetricData as InplaceVolumetricData_api } from './models/InplaceVolumetricData';
 export type { InplaceVolumetricDataEntry as InplaceVolumetricDataEntry_api } from './models/InplaceVolumetricDataEntry';
 export { InplaceVolumetricResultName as InplaceVolumetricResultName_api } from './models/InplaceVolumetricResultName';
@@ -72,6 +75,7 @@ export type { SeismicFenceData as SeismicFenceData_api } from './models/SeismicF
 export type { SeismicFencePolyline as SeismicFencePolyline_api } from './models/SeismicFencePolyline';
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
+export { Statistics as Statistics_api } from './models/Statistics';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
 export type { StratigraphicUnit as StratigraphicUnit_api } from './models/StratigraphicUnit';
 export type { SummaryVectorDateObservation as SummaryVectorDateObservation_api } from './models/SummaryVectorDateObservation';
@@ -86,6 +90,7 @@ export type { SurfaceRealizationSampleValues as SurfaceRealizationSampleValues_a
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
 export { SurfaceTimeType as SurfaceTimeType_api } from './models/SurfaceTimeType';
 export type { TableColumnData as TableColumnData_api } from './models/TableColumnData';
+export type { TableColumnStatisticalData as TableColumnStatisticalData_api } from './models/TableColumnStatisticalData';
 export { TreeNode as TreeNode_api } from './models/TreeNode';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';
 export type { ValidationError as ValidationError_api } from './models/ValidationError';

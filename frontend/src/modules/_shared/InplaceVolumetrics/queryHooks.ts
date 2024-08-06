@@ -58,14 +58,14 @@ export function useGetAggregatedTableDataQueries(
             identifiersWithValues,
         ],
         queryFn: () =>
-            apiService.inplaceVolumetrics.postGetAggregatedTableData(
+            apiService.inplaceVolumetrics.postGetAggregatedTableDataPerRealization(
                 source.ensembleIdent.getCaseUuid(),
                 source.ensembleIdent.getEnsembleName(),
                 source.tableName,
                 resultNames,
                 fluidZones,
                 accumulateFluidZones,
-                calculateMeanAcrossRealizations,
+                // calculateMeanAcrossRealizations,
                 {
                     group_by_identifiers: accumulateByIdentifiers,
                     identifiers_with_values: identifiersWithValues,

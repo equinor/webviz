@@ -9,7 +9,7 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
 
     // First, collect all columns
     for (const tableSet of data) {
-        for (const fluidZoneTable of tableSet.data.tablePerFluidSelection) {
+        for (const fluidZoneTable of tableSet.data.tableDataPerFluidSelection) {
             for (const selectorColumn of fluidZoneTable.selectorColumns) {
                 if (!columns.has(selectorColumn.columnName)) {
                     let type = ColumnType.IDENTIFIER;
@@ -29,7 +29,7 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
 
     // Then, add the values to the columns
     for (const tableSet of data) {
-        for (const fluidZoneTable of tableSet.data.tablePerFluidSelection) {
+        for (const fluidZoneTable of tableSet.data.tableDataPerFluidSelection) {
             let mainColumnsAdded = false;
             for (const selectorColumn of fluidZoneTable.selectorColumns) {
                 for (let i = 0; i < selectorColumn.indices.length; i++) {

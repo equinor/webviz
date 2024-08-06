@@ -14,9 +14,11 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     InplaceVolumetricsIdentifierWithValues,
     InplaceVolumetricsTableDefinition,
     FluidZoneSelection,
+    InplaceStatisticalVolumetricTableData,
     InplaceVolumetricsTableDefinition,
     InplaceVolumetricTableData,
     InplaceVolumetricTableDataPerFluidSelection,
+    InplaceStatisticalVolumetricTableDataPerFluidSelection,
 )
 
 from ._conversion._conversion import (
@@ -30,7 +32,8 @@ from ._conversion._conversion import (
 )
 
 from ._utils import (
-    create_statistical_accumulated_result_table,
+    create_statistical_grouped_result_table_data_pandas,
+    create_statistical_grouped_result_table_data_pyarrow,
     create_per_realization_accumulated_result_table,
     create_volumetric_table_accumulated_across_fluid_zones,
     create_inplace_volumetric_table_data_from_result_table,
@@ -174,7 +177,9 @@ class InplaceVolumetricsProvider:
             )
             table_data_per_fluid_selection.append(table_data)
 
-        return InplaceVolumetricTableDataPerFluidSelection(table_per_fluid_selection=table_data_per_fluid_selection)
+        return InplaceVolumetricTableDataPerFluidSelection(
+            table_data_per_fluid_selection=table_data_per_fluid_selection
+        )
 
     async def get_accumulated_by_selection_statistical_volumetric_table_data_async(
         self,
@@ -185,7 +190,7 @@ class InplaceVolumetricsProvider:
         identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
         group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
         accumulate_fluid_zones: bool = False,
-    ) -> InplaceVolumetricTableDataPerFluidSelection:
+    ) -> InplaceStatisticalVolumetricTableDataPerFluidSelection:
         result_table_per_fluid_selection = self._create_result_table_per_fluid_selection(
             table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
         )
@@ -194,26 +199,26 @@ class InplaceVolumetricsProvider:
 
         # Perform aggregation per result table
         # - Aggregate by each requested group_by_identifier
-        aggregated_result_table_per_fluid_selection: Dict[str, pa.Table] = {}
+        statistical_table_data_per_fluid_selection: List[InplaceStatisticalVolumetricTableData] = []
         for fluid_selection_name, result_table in result_table_per_fluid_selection.items():
             valid_selector_columns = [col for col in possible_selector_columns if col in result_table.column_names]
-            accumulated_result_table = create_statistical_accumulated_result_table(
+            selector_column_data_list, result_column_data_list = create_statistical_grouped_result_table_data_pyarrow(
                 result_table,
                 valid_selector_columns,
                 group_by_identifiers,
             )
-            aggregated_result_table_per_fluid_selection[fluid_selection_name] = accumulated_result_table
 
-        # Convert tables into InplaceVolumetricTableDataPerFluidSelection
-        table_data_per_fluid_selection: List[InplaceVolumetricTableData] = []
-        for fluid_selection_name, result_table in aggregated_result_table_per_fluid_selection.items():
-            valid_selector_columns = [col for col in possible_selector_columns if col in result_table.column_names]
-            table_data = create_inplace_volumetric_table_data_from_result_table(
-                result_table, fluid_selection_name, valid_selector_columns
+            statistical_table_data_per_fluid_selection.append(
+                InplaceStatisticalVolumetricTableData(
+                    fluid_selection_name=fluid_selection_name,
+                    selector_columns=selector_column_data_list,
+                    result_columns=result_column_data_list,
+                )
             )
-            table_data_per_fluid_selection.append(table_data)
 
-        return InplaceVolumetricTableDataPerFluidSelection(table_per_fluid_selection=table_data_per_fluid_selection)
+        return InplaceStatisticalVolumetricTableDataPerFluidSelection(
+            table_data_per_fluid_selection=statistical_table_data_per_fluid_selection
+        )
 
     async def _create_result_table_per_fluid_selection(
         self,

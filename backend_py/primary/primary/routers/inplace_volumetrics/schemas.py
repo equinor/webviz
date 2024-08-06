@@ -1,4 +1,4 @@
-from typing import List, Union, Optional
+from typing import Dict, List, Union
 from enum import Enum, StrEnum
 
 from pydantic import BaseModel
@@ -17,6 +17,19 @@ class InplaceVolumetricsIdentifierWithValues(BaseModel):
 
     identifier: InplaceVolumetricsIdentifier
     values: List[Union[str, int]]
+
+
+class Statistics(StrEnum):
+    """
+    Definition of possible statistics for a result column in an inplace volumetrics table
+    """
+
+    MEAN = "mean"
+    STD_DEV = "stddev"
+    MAX = "max"
+    MIN = "min"
+    P10 = "p10"
+    P90 = "p90"
 
 
 class FluidZone(StrEnum):
@@ -117,6 +130,17 @@ class TableColumnData(BaseModel):
     columnValues: List[float]
 
 
+class TableColumnStatisticalData(BaseModel):
+    """
+    Statistical data for a single result column in a volumetric table
+
+    Length of column values should be equal to the number of rows in the table
+    """
+
+    columnName: str
+    statisticValues: Dict[Statistics, List[float]]
+
+
 class InplaceVolumetricTableData(BaseModel):
     """Volumetric data for a single table
 
@@ -128,10 +152,31 @@ class InplaceVolumetricTableData(BaseModel):
     resultColumns: List[TableColumnData]
 
 
+class InplaceStatisticalVolumetricTableData(BaseModel):
+    """
+    Statistical volumetric data for single volume table
+
+    Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
+    """
+
+    fluidSelectionName: str  # Oil, Gas, Water or "Oil + Gas", etc.
+    selectorColumns: List[RepeatedTableColumnData]  # Index columns and realizations
+    resultColumnStatistics: List[TableColumnStatisticalData]
+
+
 class InplaceVolumetricTableDataPerFluidSelection(BaseModel):
     """Volumetric data for a single table per fluid selection
 
     Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
     """
 
-    tablePerFluidSelection: List[InplaceVolumetricTableData]
+    tableDataPerFluidSelection: List[InplaceVolumetricTableData]
+
+
+class InplaceStatisticalVolumetricTableDataPerFluidSelection(BaseModel):
+    """Statistical volumetric data for a single table per fluid selection
+
+    Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
+    """
+
+    tableDataPerFluidSelection: List[InplaceStatisticalVolumetricTableData]
