@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ParameterIdent } from "@framework/EnsembleParameters";
+import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleViewProps } from "@framework/Module";
 import { EnsembleRealizationFilterFunction, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
@@ -81,6 +81,8 @@ function makeParameterDataArr(
 
             const filteredRealizations = new Set(filterEnsembleRealizations(ensembleIdent));
             const parameter = ensembleParameters.getParameter(parameterIdent);
+            parameterDataArrEntry.isLogarithmic =
+                parameter.type === ParameterType.CONTINUOUS ? parameter.isLogarithmic : false;
 
             const parameterValues: number[] = [];
             const realizationNumbers: number[] = [];

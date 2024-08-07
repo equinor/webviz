@@ -237,6 +237,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                 zeroline: false,
                 linewidth: 1,
                 linecolor: "black",
+                type: props.dataArr[i - 1].isLogarithmic ? "log" : "linear",
             };
 
             layout[`yaxis${i}`] = {
