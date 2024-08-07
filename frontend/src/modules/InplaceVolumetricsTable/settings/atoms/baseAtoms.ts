@@ -1,6 +1,6 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
 
@@ -12,4 +12,4 @@ export const userSelectedResultNamesAtom = atom<InplaceVolumetricResultName_api[
 export const userSelectedAccumulationOptionsAtom = atom<
     Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>[] | null
 >(null);
-export const calcMeanAcrossAllRealizationsAtom = atom<boolean>(true);
+export const selectedTableTypeAtom = atom<TableType>(TableType.STATISTICAL);

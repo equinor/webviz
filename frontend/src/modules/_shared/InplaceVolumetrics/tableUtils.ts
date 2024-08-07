@@ -1,5 +1,5 @@
 import { Column, ColumnType, Table } from "./Table";
-import { InplaceVolumetricsTableData, SourceIdentifier } from "./types";
+import { InplaceVolumetricsStatisticalTableData, InplaceVolumetricsTableData, SourceIdentifier } from "./types";
 
 export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table {
     const columns: Map<string, Column<any>> = new Map();
@@ -87,3 +87,5 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
 
     return new Table(Array.from(columns.values()));
 }
+
+export function makeStatisticalTableFromApiData(data: InplaceVolumetricsStatisticalTableData[]): Table {}

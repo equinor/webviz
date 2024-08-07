@@ -12,13 +12,13 @@ import { Table } from "@lib/components/Table";
 import { TableHeading, TableRow } from "@lib/components/Table/table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Column, ColumnType } from "@modules/_shared/InplaceVolumetrics/Table";
+import { Column, ColumnType, Table as InplaceTable } from "@modules/_shared/InplaceVolumetrics/Table";
 import {
     EnsembleIdentWithRealizations,
-    useGetAggregatedTableDataQueries,
+    useGetAggregatedPerRealizationTableDataQueries,
 } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableUtils";
-import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import { SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 import { SettingsToViewInterface } from "../settingsToViewInterface";
@@ -31,9 +31,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     const filter = props.viewContext.useSettingsToViewInterfaceValue("filter");
     const resultNames = props.viewContext.useSettingsToViewInterfaceValue("resultNames");
     const accumulationOptions = props.viewContext.useSettingsToViewInterfaceValue("accumulationOptions");
-    const calcMeanAcrossAllRealizations = props.viewContext.useSettingsToViewInterfaceValue(
-        "calcMeanAcrossAllRealizations"
-    );
+    const tableType = props.viewContext.useSettingsToViewInterfaceValue("tableType");
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const divBoundingRect = useElementBoundingRect(divRef);
@@ -46,21 +44,32 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         });
     }
 
-    const aggregatedTableDataQueries = useGetAggregatedTableDataQueries(
+    const perRealizationTableDataQueries = useGetAggregatedPerRealizationTableDataQueries(
         ensembleIdentsWithRealizations,
         filter.tableNames,
         resultNames,
         filter.fluidZones,
         accumulationOptions.filter((el) => el !== SourceIdentifier.FLUID_ZONE) as InplaceVolumetricsIdentifier_api[],
         !accumulationOptions.includes(SourceIdentifier.FLUID_ZONE),
-        calcMeanAcrossAllRealizations,
-        filter.identifiersValues
+        filter.identifiersValues,
+        tableType === TableType.PER_REALIZATION
     );
 
-    statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
+    const statisticalRealizationTableDataQueries = useGetAggregatedPerRealizationTableDataQueries(
+        ensembleIdentsWithRealizations,
+        filter.tableNames,
+        resultNames,
+        filter.fluidZones,
+        accumulationOptions.filter((el) => el !== SourceIdentifier.FLUID_ZONE) as InplaceVolumetricsIdentifier_api[],
+        !accumulationOptions.includes(SourceIdentifier.FLUID_ZONE),
+        filter.identifiersValues,
+        tableType === TableType.STATISTICAL
+    );
 
-    if (aggregatedTableDataQueries.someQueriesFailed) {
-        for (const error of aggregatedTableDataQueries.errors) {
+    statusWriter.setLoading(perRealizationTableDataQueries.isFetching);
+
+    if (perRealizationTableDataQueries.someQueriesFailed) {
+        for (const error of perRealizationTableDataQueries.errors) {
             const helper = ApiErrorHelper.fromError(error);
             if (helper) {
                 statusWriter.addError(helper.makeStatusMessage());
@@ -70,7 +79,18 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
 
     const headings: TableHeading = {};
 
-    const dataTable = makeTableFromApiData(aggregatedTableDataQueries.tablesData);
+    // Make data table based on settings
+    let dataTable: InplaceTable | null = null;
+    if (tableType === TableType.PER_REALIZATION) {
+        dataTable = makeTableFromApiData(perRealizationTableDataQueries.tablesData);
+    } else if (tableType === TableType.STATISTICAL) {
+        dataTable = makeTableFromApiData(statisticalRealizationTableDataQueries.tablesData);
+    }
+
+    if (!dataTable) {
+        // Return an error message
+        return <div className="w-full h-full flex items-center justify-center">Failed to load data.</div>;
+    }
 
     for (const column of dataTable.getColumns()) {
         headings[column.getName()] = {
@@ -119,11 +139,11 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     );
 
     function makeMessage(): React.ReactNode {
-        if (aggregatedTableDataQueries.isFetching) {
+        if (perRealizationTableDataQueries.isFetching) {
             return <CircularProgress size="medium" />;
         }
 
-        if (aggregatedTableDataQueries.allQueriesFailed) {
+        if (perRealizationTableDataQueries.allQueriesFailed) {
             return "Failed to load data.";
         }
 

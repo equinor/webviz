@@ -1,9 +1,9 @@
 import { InplaceVolumetricResultName_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
-import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
-import { calcMeanAcrossAllRealizationsAtom } from "./settings/atoms/baseAtoms";
+import { selectedTableTypeAtom } from "./settings/atoms/baseAtoms";
 import {
     selectedAccumulationOptionsAtom,
     selectedEnsembleIdentsAtom,
@@ -17,7 +17,7 @@ export type SettingsToViewInterface = {
     filter: InplaceVolumetricsFilter;
     resultNames: InplaceVolumetricResultName_api[];
     accumulationOptions: Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>[];
-    calcMeanAcrossAllRealizations: boolean;
+    tableType: TableType;
 };
 
 export const interfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
@@ -31,5 +31,5 @@ export const interfaceInitialization: InterfaceInitialization<SettingsToViewInte
     },
     resultNames: (get) => get(selectedResultNamesAtom),
     accumulationOptions: (get) => get(selectedAccumulationOptionsAtom),
-    calcMeanAcrossAllRealizations: (get) => get(calcMeanAcrossAllRealizationsAtom),
+    tableType: (get) => get(selectedTableTypeAtom),
 };

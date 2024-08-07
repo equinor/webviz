@@ -63,8 +63,8 @@ async def get_result_data_per_realization(
     return data
 
 
-@router.post("/get_aggregated_table_data_per_realization/", tags=["inplace_volumetrics"])
-async def post_get_aggregated_table_data_per_realization(
+@router.post("/get_aggregated_per_realization_table_data/", tags=["inplace_volumetrics"])
+async def post_get_aggregated_per_realization_table_data(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -130,7 +130,6 @@ async def post_get_aggregated_statistical_table_data(
         embed=True, description="Selected identifiers and wanted values"
     ),
     accumulate_fluid_zones: bool = Query(description="Whether to accumulate fluid zones"),
-    calculate_mean_across_realizations: bool = Query(description="Whether to calculate mean across realizations"),
 ) -> schemas.InplaceStatisticalVolumetricTableDataPerFluidSelection:
     """Get statistical volumetric data across selected realizations for a given table based on requested results and categories/index filter."""
     perf_metrics = ResponsePerfMetrics(response)
@@ -151,7 +150,6 @@ async def post_get_aggregated_statistical_table_data(
         realizations=realizations,
         identifiers_with_values=identifiers_with_values,
         accumulate_fluid_zones=accumulate_fluid_zones,
-        calculate_mean_across_realizations=calculate_mean_across_realizations,
     )
 
     perf_metrics.record_lap("calculate-accumulated-data")

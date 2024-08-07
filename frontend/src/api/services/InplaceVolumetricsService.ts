@@ -3,8 +3,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Body_get_result_data_per_realization } from '../models/Body_get_result_data_per_realization';
+import type { Body_post_get_aggregated_per_realization_table_data } from '../models/Body_post_get_aggregated_per_realization_table_data';
 import type { Body_post_get_aggregated_statistical_table_data } from '../models/Body_post_get_aggregated_statistical_table_data';
-import type { Body_post_get_aggregated_table_data_per_realization } from '../models/Body_post_get_aggregated_table_data_per_realization';
 import type { FluidZone } from '../models/FluidZone';
 import type { InplaceStatisticalVolumetricTableDataPerFluidSelection } from '../models/InplaceStatisticalVolumetricTableDataPerFluidSelection';
 import type { InplaceVolumetricData } from '../models/InplaceVolumetricData';
@@ -77,7 +77,7 @@ export class InplaceVolumetricsService {
         });
     }
     /**
-     * Post Get Aggregated Table Data Per Realization
+     * Post Get Aggregated Per Realization Table Data
      * Get aggregated volumetric data for a given table with data per realization based on requested results and categories/index filter.
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
@@ -90,19 +90,19 @@ export class InplaceVolumetricsService {
      * @returns InplaceVolumetricTableDataPerFluidSelection Successful Response
      * @throws ApiError
      */
-    public postGetAggregatedTableDataPerRealization(
+    public postGetAggregatedPerRealizationTableData(
         caseUuid: string,
         ensembleName: string,
         tableName: string,
         resultNames: Array<string>,
         fluidZones: Array<FluidZone>,
         accumulateFluidZones: boolean,
-        requestBody: Body_post_get_aggregated_table_data_per_realization,
+        requestBody: Body_post_get_aggregated_per_realization_table_data,
         realizations?: (Array<number> | null),
     ): CancelablePromise<InplaceVolumetricTableDataPerFluidSelection> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/inplace_volumetrics/get_aggregated_table_data_per_realization/',
+            url: '/inplace_volumetrics/get_aggregated_per_realization_table_data/',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
@@ -128,7 +128,6 @@ export class InplaceVolumetricsService {
      * @param resultNames The name of the volumetric results
      * @param fluidZones The fluid zones to aggregate by
      * @param accumulateFluidZones Whether to accumulate fluid zones
-     * @param calculateMeanAcrossRealizations Whether to calculate mean across realizations
      * @param requestBody
      * @param realizations Optional realization to include. If not specified, all realizations will be returned.
      * @returns InplaceStatisticalVolumetricTableDataPerFluidSelection Successful Response
@@ -141,7 +140,6 @@ export class InplaceVolumetricsService {
         resultNames: Array<string>,
         fluidZones: Array<FluidZone>,
         accumulateFluidZones: boolean,
-        calculateMeanAcrossRealizations: boolean,
         requestBody: Body_post_get_aggregated_statistical_table_data,
         realizations?: (Array<number> | null),
     ): CancelablePromise<InplaceStatisticalVolumetricTableDataPerFluidSelection> {
@@ -156,7 +154,6 @@ export class InplaceVolumetricsService {
                 'fluid_zones': fluidZones,
                 'realizations': realizations,
                 'accumulate_fluid_zones': accumulateFluidZones,
-                'calculate_mean_across_realizations': calculateMeanAcrossRealizations,
             },
             body: requestBody,
             mediaType: 'application/json',

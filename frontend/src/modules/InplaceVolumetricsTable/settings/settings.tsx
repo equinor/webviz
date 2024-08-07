@@ -4,18 +4,23 @@ import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
-import { Switch } from "@lib/components/Switch";
 import { TagOption, TagPicker } from "@lib/components/TagPicker";
-import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import {
+    SourceAndTableIdentifierUnion,
+    SourceIdentifier,
+    TableType,
+    TableTypeToStringMapping,
+} from "@modules/_shared/InplaceVolumetrics/types";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
-    calcMeanAcrossAllRealizationsAtom,
+    selectedTableTypeAtom,
     userSelectedAccumulationOptionsAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
@@ -59,9 +64,7 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     const selectedAccumulationOptions = useAtomValue(selectedAccumulationOptionsAtom);
     const setSelectedAccumulationOptions = useSetAtom(userSelectedAccumulationOptionsAtom);
 
-    const [calcMeanAcrossAllRealizations, setCalcMeanAcrossAllRealizations] = useAtom(
-        calcMeanAcrossAllRealizationsAtom
-    );
+    const [selectedTableType, setSelectedTableType] = useAtom(selectedTableTypeAtom);
 
     function handleFilterChange(newFilter: InplaceVolumetricsFilter) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
@@ -79,8 +82,8 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         setSelectedAccumulationOptions(newAccumulationOptions);
     }
 
-    function handleCalcMeanAcrossAllRealizationsToggle(e: React.ChangeEvent<HTMLInputElement>) {
-        setCalcMeanAcrossAllRealizations(e.target.checked);
+    function handleSelectedTableTypeChange(value: string) {
+        setSelectedTableType(value as TableType);
     }
 
     const resultNameOptions = tableDefinitionsAccessor
@@ -99,6 +102,15 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
             <PendingWrapper isPending={tableDefinitionsQueryResult.isLoading}>
                 <CollapsibleGroup title="Result and grouping" expanded>
                     <div className="flex flex-col gap-2">
+                        <Label text="Table type">
+                            <Dropdown
+                                value={selectedTableType}
+                                options={Object.values(TableType).map((val: TableType) => {
+                                    return { value: val, label: TableTypeToStringMapping[val] };
+                                })}
+                                onChange={handleSelectedTableTypeChange}
+                            />
+                        </Label>
                         <Label text="Result">
                             <Select
                                 value={selectedResultNames}
@@ -113,12 +125,6 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                                 value={selectedAccumulationOptions}
                                 tags={accumulateOptions}
                                 onChange={handleAccumulationOptionsChange}
-                            />
-                        </Label>
-                        <Label text="Calculate mean across all realizations">
-                            <Switch
-                                checked={calcMeanAcrossAllRealizations}
-                                onChange={handleCalcMeanAcrossAllRealizationsToggle}
                             />
                         </Label>
                     </div>

@@ -61,7 +61,7 @@ def convert_table_data_per_fluid_selection_to_schema(
             )
         )
 
-    return schemas.InplaceVolumetricTableDataPerFluidSelection(tablePerFluidSelection=tables)
+    return schemas.InplaceVolumetricTableDataPerFluidSelection(tableDataPerFluidSelection=tables)
 
 
 def convert_statistical_table_data_per_fluid_selection_to_schema(

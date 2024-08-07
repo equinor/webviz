@@ -16,7 +16,7 @@ import { PlotBuilder } from "@modules/_shared/InplaceVolumetrics/PlotBuilder";
 import { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import {
     EnsembleIdentWithRealizations,
-    useGetAggregatedTableDataQueries,
+    useGetAggregatedPerRealizationTableDataQueries,
 } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableUtils";
 import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
@@ -80,15 +80,15 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         resultNames.push(resultName2);
     }
 
-    const aggregatedTableDataQueries = useGetAggregatedTableDataQueries(
+    const aggregatedTableDataQueries = useGetAggregatedPerRealizationTableDataQueries(
         ensembleIdentsWithRealizations,
         filter.tableNames,
         resultNames,
         filter.fluidZones,
         accByIdentifiers,
         subplotBy !== SourceIdentifier.FLUID_ZONE && colorBy !== SourceIdentifier.FLUID_ZONE,
-        false,
-        filter.identifiersValues
+        filter.identifiersValues,
+        true
     );
 
     statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
