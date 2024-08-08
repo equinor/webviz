@@ -1,16 +1,13 @@
-import React from "react";
-
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { DiscreteSlider } from "@lib/components/DiscreteSlider";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
+import { RadioGroup } from "@lib/components/RadioGroup";
+import { PressureOption } from "../types";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
@@ -25,6 +22,7 @@ import {
     userSelectedWfrIndicesAtom,
     userSelectedGfrIndicesAtom,
     userSelectedAlqIndicesAtom,
+    userSelectedPressureOptionAtom,
 } from "./atoms/baseAtoms";
 import {
     selectedEnsembleIdentAtom,
@@ -36,6 +34,7 @@ import {
     selectedWfrIndicesAtom,
     selectedGfrIndicesAtom,
     selectedAlqIndicesAtom,
+    selectedPressureOptionAtom,
 } from "./atoms/derivedAtoms";
 
 
@@ -74,6 +73,9 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
     const selectedAlqIndicies = useAtomValue(selectedAlqIndicesAtom);
     const setUserSelectedAlqIndices = useSetAtom(userSelectedAlqIndicesAtom);
 
+    const selectedPressureOption = useAtomValue(selectedPressureOptionAtom);
+    const setUserSelectedPressureOption = useSetAtom(userSelectedPressureOptionAtom)
+
     function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
         setUserSelectedEnsembleIdent(ensembleIdent);
     }
@@ -108,6 +110,20 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
         setUserSelectedAlqIndices(alqIndicesNumbers)
     }
 
+    function handlePressureOptionChange(_: React.ChangeEvent<HTMLInputElement>, pressureOption: PressureOption) {
+        setUserSelectedPressureOption(pressureOption)
+    }
+
+    let thpTitle = "THP"
+    let wfrTitle = "WFR"
+    let gfrTitle = "GFR"
+    let alqTitle = "ALQ"
+    if (vfpTable !== undefined) {
+        wfrTitle = vfpTable.wfr_type
+        gfrTitle = vfpTable.gfr_type
+        alqTitle += ": " + vfpTable.alq_type
+    }
+
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Ensemble">
@@ -135,12 +151,12 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                             return { value: name, label: name };
                         }) ?? []
                     }
-                    value={selectedVfpTableName?.toString() ?? undefined}
+                    value={selectedVfpTableName ?? undefined}
                     onChange={handleVfpNameSelectionChange}
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Filter" expanded={true}>
-                <Label text="THP">
+                <Label text={thpTitle}>
                     <Select
                         options={makeFilterOptions(vfpTable?.thp_values)}
                         value={selectedThpIndicies?.map((value) => value.toString()) ?? []}
@@ -149,7 +165,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                         multiple={true}
                     />
                 </Label>
-                <Label text="WFR">
+                <Label text={wfrTitle} >
                     <Select
                         options={makeFilterOptions(vfpTable?.wfr_values)}
                         value={selectedWfrIndicies?.map((value) => value.toString()) ?? []}
@@ -158,7 +174,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                         multiple={true}
                     />
                 </Label>
-                <Label text="GFR">
+                <Label text={gfrTitle}>
                     <Select
                         options={makeFilterOptions(vfpTable?.gfr_values)}
                         value={selectedGfrIndicies?.map((value) => value.toString()) ?? []}
@@ -167,7 +183,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                         multiple={true}
                     />
                 </Label>
-                <Label text="ALQ">
+                <Label text={alqTitle}>
                     <Select
                         options={makeFilterOptions(vfpTable?.alq_values)}
                         value={selectedAlqIndicies?.map((value) => value.toString()) ?? []}
@@ -176,6 +192,16 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interf
                         multiple={true}
                     />
                 </Label>
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Pressure Option" expanded={true}>
+                <RadioGroup
+                    options={[
+                        { label: "BHP", value: PressureOption.BHP },
+                        { label: "DP (BHP-THP)", value: PressureOption.DP },
+                    ]}
+                    value={selectedPressureOption}
+                    onChange={handlePressureOptionChange}
+                />
             </CollapsibleGroup>
 
     </div>

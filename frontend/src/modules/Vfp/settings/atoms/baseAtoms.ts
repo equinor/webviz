@@ -1,5 +1,6 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
+import { PressureOption } from "@modules/Vfp/types";
 
 import { atom } from "jotai";
 
@@ -27,3 +28,5 @@ export const userSelectedWfrIndicesAtom = atom<number[] | null>(null);
 export const userSelectedGfrIndicesAtom = atom<number[] | null>(null);
 
 export const userSelectedAlqIndicesAtom = atom<number[] | null>(null);
+
+export const userSelectedPressureOptionAtom = atom<PressureOption | null>(null);

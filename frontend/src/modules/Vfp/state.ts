@@ -1,5 +1,5 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
+import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { 
     vfpTableDataAtom, 
@@ -14,38 +14,31 @@ import { VfpProdTable } from "src/api/models/VfpProdTable";
 export type State = Record<string, never>;
 
 export type Interface = {
-    baseStates: Record<string, never>;
-    derivedStates: {
-        vfpTableName: string | null;
-        vfpTable: VfpProdTable | undefined;
-        selectedThpIndices: number[] | null;
-        selectedWfrIndices: number[] | null;
-        selectedGfrIndices: number[] | null;
-        selectedAlqIndices: number[] | null;
-    };
+    vfpTableName: string | null;
+    vfpTable: VfpProdTable | undefined;
+    selectedThpIndices: number[] | null;
+    selectedWfrIndices: number[] | null;
+    selectedGfrIndices: number[] | null;
+    selectedAlqIndices: number[] | null;
 };
 
 export const interfaceInitialization: InterfaceInitialization<Interface> = {
-    baseStates: {},
-    derivedStates: {
-        vfpTableName: (get) => {
-            return get(selectedVfpTableNameAtom);
-        },
-        vfpTable: (get) => {
-            return get(vfpTableDataAtom);
-        },
-        selectedThpIndices: (get) => {
-            return get(selectedThpIndicesAtom)
-        },
-        selectedWfrIndices: (get) => {
-            return get(selectedWfrIndicesAtom)
-        },
-        selectedGfrIndices: (get) => {
-            return get(selectedGfrIndicesAtom)
-        },
-        selectedAlqIndices: (get) => {
-            return get(selectedAlqIndicesAtom)
-        },
-
+    vfpTableName: (get) => {
+        return get(selectedVfpTableNameAtom);
+    },
+    vfpTable: (get) => {
+        return get(vfpTableDataAtom);
+    },
+    selectedThpIndices: (get) => {
+        return get(selectedThpIndicesAtom)
+    },
+    selectedWfrIndices: (get) => {
+        return get(selectedWfrIndicesAtom)
+    },
+    selectedGfrIndices: (get) => {
+        return get(selectedGfrIndicesAtom)
+    },
+    selectedAlqIndices: (get) => {
+        return get(selectedAlqIndicesAtom)
     },
 };
