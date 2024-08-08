@@ -16,11 +16,12 @@ import { Settings as SettingsIcon } from "@mui/icons-material";
 
 import { Provider } from "jotai";
 
+import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
-    moduleInstance: ModuleInstance<any, any, any, any>;
+    moduleInstance: ModuleInstance<any>;
     activeModuleInstanceId: string;
     workbench: Workbench;
 };
@@ -28,7 +29,7 @@ type ModuleSettingsProps = {
 export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATE);
     const moduleInstanceState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.STATE);
-    const atomStore = props.moduleInstance.getAtomStore();
+    const atomStore = props.workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
     if (importState !== ImportState.Imported || !props.moduleInstance.isInitialized()) {
         return null;
@@ -93,13 +94,15 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                         >
                             <Provider store={atomStore}>
                                 <HydrateQueryClientAtom>
-                                    <Settings
-                                        settingsContext={props.moduleInstance.getContext()}
-                                        workbenchSession={props.workbench.getWorkbenchSession()}
-                                        workbenchServices={props.workbench.getWorkbenchServices()}
-                                        workbenchSettings={props.workbench.getWorkbenchSettings()}
-                                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                    />
+                                    <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
+                                        <Settings
+                                            settingsContext={props.moduleInstance.getContext()}
+                                            workbenchSession={props.workbench.getWorkbenchSession()}
+                                            workbenchServices={props.workbench.getWorkbenchServices()}
+                                            workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                            initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                        />
+                                    </ApplyInterfaceEffectsToSettings>
                                 </HydrateQueryClientAtom>
                             </Provider>
                         </DebugProfiler>

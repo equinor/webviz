@@ -1,13 +1,11 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
+import { Interfaces, settingsToViewInterfaceInitialization } from "./interfaces";
 import { MODULE_NAME } from "./registerModule";
 import { Settings } from "./settings/settings";
-import { Interface, State, interfaceInitialization } from "./settingsToViewInterface";
 import { View } from "./view";
 
-const defaultState: State = {};
-
-const module = ModuleRegistry.initModule<State, Interface>(MODULE_NAME, defaultState, {}, interfaceInitialization);
+const module = ModuleRegistry.initModule<Interfaces>(MODULE_NAME, { settingsToViewInterfaceInitialization });
 
 module.viewFC = View;
 module.settingsFC = Settings;

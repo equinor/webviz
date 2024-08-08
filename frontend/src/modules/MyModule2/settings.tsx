@@ -7,7 +7,7 @@ import { useAtom } from "jotai";
 
 import { textAtom } from "./atoms";
 
-export const Settings = () => {
+export function Settings(): React.ReactNode {
     const [atomText, setAtomText] = useAtom(textAtom);
 
     function handleAtomTextChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -21,6 +21,6 @@ export const Settings = () => {
             </Label>
         </>
     );
-};
+}
 
 Settings.displayName = "Settings";

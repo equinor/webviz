@@ -1,28 +1,48 @@
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { apiService } from "@framework/ApiService";
+import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
-import {
-    intersectionTypeAtom,
-    selectedCustomIntersectionPolylineIdAtom,
-    selectedHighlightedWellboreUuidAtom,
-} from "@modules/3DViewer/sharedAtoms/sharedAtoms";
 
 import { atom } from "jotai";
+import { atomWithQuery } from "jotai-tanstack-query";
 
-import { fieldWellboreTrajectoriesQueryAtom } from "./queryAtoms";
+import {
+    customIntersectionPolylineIdAtom,
+    ensembleIdentAtom,
+    highlightedWellboreUuidAtom,
+    intersectionTypeAtom,
+} from "./baseAtoms";
 
-export const selectedCustomIntersectionPolylineAtom = atom((get) => {
-    const customIntersectionPolylineId = get(selectedCustomIntersectionPolylineIdAtom);
-    const customIntersectionPolylines = get(IntersectionPolylinesAtom);
+const STALE_TIME = 60 * 1000;
+const CACHE_TIME = 60 * 1000;
 
-    return customIntersectionPolylines.find((el) => el.id === customIntersectionPolylineId);
+export const fieldWellboreTrajectoriesQueryAtom = atomWithQuery((get) => {
+    const ensembleIdent = get(ensembleIdentAtom);
+    const ensembleSet = get(EnsembleSetAtom);
+
+    let fieldIdentifier: string | null = null;
+    if (ensembleIdent) {
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (ensemble) {
+            fieldIdentifier = ensemble.getFieldIdentifier();
+        }
+    }
+
+    return {
+        queryKey: ["getFieldWellboreTrajectories", fieldIdentifier ?? ""],
+        queryFn: () => apiService.well.getFieldWellTrajectories(fieldIdentifier ?? ""),
+        staleTime: STALE_TIME,
+        gcTime: CACHE_TIME,
+        enabled: Boolean(fieldIdentifier),
+    };
 });
 
 export const intersectionReferenceSystemAtom = atom((get) => {
     const fieldWellboreTrajectories = get(fieldWellboreTrajectoriesQueryAtom);
-    const wellboreUuid = get(selectedHighlightedWellboreUuidAtom);
+    const wellboreUuid = get(highlightedWellboreUuidAtom);
     const customIntersectionPolylines = get(IntersectionPolylinesAtom);
-    const customIntersectionPolylineId = get(selectedCustomIntersectionPolylineIdAtom);
+    const customIntersectionPolylineId = get(customIntersectionPolylineIdAtom);
 
     const customIntersectionPolyline = customIntersectionPolylines.find((el) => el.id === customIntersectionPolylineId);
 
@@ -65,4 +85,11 @@ export const intersectionReferenceSystemAtom = atom((get) => {
     }
 
     return null;
+});
+
+export const selectedCustomIntersectionPolylineAtom = atom((get) => {
+    const customIntersectionPolylineId = get(customIntersectionPolylineIdAtom);
+    const customIntersectionPolylines = get(IntersectionPolylinesAtom);
+
+    return customIntersectionPolylines.find((el) => el.id === customIntersectionPolylineId) ?? null;
 });

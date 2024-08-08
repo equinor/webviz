@@ -4,10 +4,10 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { GroupTreePlot } from "@webviz/group-tree-plot";
 
-import { Interface, State } from "./settingsToViewInterface";
+import { Interfaces } from "./interfaces";
 import { QueryStatus } from "./types";
 
-export function View({ viewContext }: ModuleViewProps<State, Interface>) {
+export function View({ viewContext }: ModuleViewProps<Interfaces>) {
     const edgeMetadataList = viewContext.useSettingsToViewInterfaceValue("edgeMetadataList");
     const nodeMetadataList = viewContext.useSettingsToViewInterfaceValue("nodeMetadataList");
     const datedTrees = viewContext.useSettingsToViewInterfaceValue("datedTrees");

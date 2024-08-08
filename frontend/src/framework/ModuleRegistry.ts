@@ -1,10 +1,9 @@
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
-import { AtomsInitialization, Module, ModuleCategory, ModuleDevState } from "./Module";
+import { InterfaceEffects, Module, ModuleCategory, ModuleDevState, ModuleInterfaceTypes } from "./Module";
 import { ModuleDataTagId } from "./ModuleDataTags";
 import { DrawPreviewFunc } from "./Preview";
-import { StateBaseType, StateOptions } from "./StateStore";
 import { SyncSettingKey } from "./SyncSettings";
-import { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
+import { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder";
 
 export type RegisterModuleOptions = {
@@ -31,19 +30,16 @@ export class ModuleNotFoundError extends Error {
 }
 
 export class ModuleRegistry {
-    private static _registeredModules: Record<string, Module<any, any, any, any>> = {};
-    private static _moduleNotFoundPlaceholders: Record<string, Module<any, any, any, any>> = {};
+    private static _registeredModules: Record<string, Module<any>> = {};
+    private static _moduleNotFoundPlaceholders: Record<string, Module<any>> = {};
 
     /* eslint-disable-next-line @typescript-eslint/no-empty-function */
     private constructor() {}
 
-    static registerModule<
-        TStateType extends StateBaseType,
-        TInterfaceType extends InterfaceBaseType = Record<string, never>,
-        TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
-        TViewAtomsType extends Record<string, unknown> = Record<string, never>
-    >(options: RegisterModuleOptions): Module<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
-        const module = new Module<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>({
+    static registerModule<TInterfaceTypes extends ModuleInterfaceTypes>(
+        options: RegisterModuleOptions
+    ): Module<TInterfaceTypes> {
+        const module = new Module<TInterfaceTypes>({
             name: options.moduleName,
             defaultTitle: options.defaultTitle,
             category: options.category,
@@ -59,50 +55,52 @@ export class ModuleRegistry {
         return module;
     }
 
-    static initModule<
-        TStateType extends StateBaseType,
-        TInterfaceType extends InterfaceBaseType = Record<string, never>,
-        TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
-        TViewAtomsType extends Record<string, unknown> = Record<string, never>
-    >(
+    static initModule<TInterfaceTypes extends ModuleInterfaceTypes>(
         moduleName: string,
-        defaultState: TStateType,
-        options?: StateOptions<TStateType>,
-        interfaceInitialization?: InterfaceInitialization<TInterfaceType>,
-        settingsAtomsInitialization?: AtomsInitialization<TSettingsAtomsType, TInterfaceType>,
-        viewAtomsInitialization?: AtomsInitialization<TViewAtomsType, TInterfaceType>
-    ): Module<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType> {
+        options: {
+            settingsToViewInterfaceInitialization?: TInterfaceTypes["settingsToView"] extends undefined
+                ? undefined
+                : InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
+            viewToSettingsInterfaceInitialization?: TInterfaceTypes["viewToSettings"] extends undefined
+                ? undefined
+                : InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
+            viewToSettingsInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
+            settingsToViewInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
+        }
+    ): Module<TInterfaceTypes> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            module.setDefaultState(defaultState, options);
-            if (interfaceInitialization) {
-                module.setSettingsToViewInterfaceInitialization(interfaceInitialization);
+            if (options.settingsToViewInterfaceInitialization) {
+                module.setSettingsToViewInterfaceInitialization(options.settingsToViewInterfaceInitialization);
             }
-            if (settingsAtomsInitialization) {
-                module.setSettingsAtomsInitialization(settingsAtomsInitialization);
+            if (options.viewToSettingsInterfaceInitialization) {
+                module.setViewToSettingsInterfaceInitialization(options.viewToSettingsInterfaceInitialization);
             }
-            if (viewAtomsInitialization) {
-                module.setViewAtomsInitialization(viewAtomsInitialization);
+            if (options.viewToSettingsInterfaceEffects) {
+                module.setViewToSettingsInterfaceEffects(options.viewToSettingsInterfaceEffects);
             }
-            return module as Module<TStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>;
+            if (options.settingsToViewInterfaceEffects) {
+                module.setSettingsToViewInterfaceEffects(options.settingsToViewInterfaceEffects);
+            }
+            return module as Module<TInterfaceTypes>;
         }
         throw new ModuleNotFoundError(moduleName);
     }
 
-    static getModule(moduleName: string): Module<any, any, any, any> {
+    static getModule(moduleName: string): Module<any> {
         const module = this._registeredModules[moduleName];
         if (module) {
-            return module as Module<any, any, any, any>;
+            return module as Module<any>;
         }
         const placeholder = this._moduleNotFoundPlaceholders[moduleName];
         if (placeholder) {
-            return placeholder as Module<any, any, any, any>;
+            return placeholder as Module<any>;
         }
         this._moduleNotFoundPlaceholders[moduleName] = new ModuleNotFoundPlaceholder(moduleName);
-        return this._moduleNotFoundPlaceholders[moduleName] as Module<any, any, any, any>;
+        return this._moduleNotFoundPlaceholders[moduleName] as Module<any>;
     }
 
-    static getRegisteredModules(): Record<string, Module<any, any, any, any>> {
+    static getRegisteredModules(): Record<string, Module<any>> {
         return this._registeredModules;
     }
 }

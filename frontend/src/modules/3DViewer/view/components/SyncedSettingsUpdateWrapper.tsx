@@ -8,7 +8,7 @@ import { HoverUpdateWrapper, HoverUpdateWrapperProps } from "./HoverUpdateWrappe
 
 export type SyncedSettingsUpdateWrapperProps = {
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<any, any, any, any>;
+    viewContext: ViewContext<any>;
 } & HoverUpdateWrapperProps;
 
 export function SyncedSettingsUpdateWrapper(props: SyncedSettingsUpdateWrapperProps): React.ReactNode {

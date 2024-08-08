@@ -10,10 +10,13 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 
+import { useAtom } from "jotai";
 import { isEqual } from "lodash";
 
+import { Interfaces } from "./interfaces";
 import { useRftWellList } from "./queryHooks";
-import state, { RftWellAddress } from "./state";
+import { rftWellAddressAtom } from "./settings/atoms/baseAtoms";
+import { RftWellAddress } from "./typesAndEnums";
 
 //Helpers to populate dropdowns
 const stringToOptions = (strings: string[]): SelectOption[] => {
@@ -26,9 +29,9 @@ const timepointOptions = (timePoints: number[]): SelectOption[] => {
     }));
 };
 
-export function Settings({ settingsContext, workbenchServices, workbenchSession }: ModuleSettingsProps<state>) {
+export function Settings({ settingsContext, workbenchServices, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const [rftWellAddress, setRftWellAddress] = settingsContext.useStoreState("rftWellAddress");
+    const [rftWellAddress, setRftWellAddress] = useAtom(rftWellAddressAtom);
     const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [selectedWellName, setSelectedWellName] = React.useState<string | null>(null);
     const [selectedTimePoint, setSelectedTimePoint] = React.useState<number | null>(null);

@@ -13,7 +13,7 @@ export type HoverUpdateWrapperProps = {
     wellboreUuid: string | null;
     intersectionReferenceSystem?: IntersectionReferenceSystem;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<any, any, any, any>;
+    viewContext: ViewContext<any>;
 } & SubsurfaceViewerWrapperProps;
 
 export function HoverUpdateWrapper(props: HoverUpdateWrapperProps): React.ReactNode {

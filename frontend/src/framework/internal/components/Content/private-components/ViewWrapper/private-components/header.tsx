@@ -22,7 +22,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Close, Error, History, Input, Output, Warning } from "@mui/icons-material";
 
 export type HeaderProps = {
-    moduleInstance: ModuleInstance<any, any, any, any>;
+    moduleInstance: ModuleInstance<any>;
     isDragged: boolean;
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onRemoveClick: (event: React.PointerEvent<HTMLDivElement>) => void;

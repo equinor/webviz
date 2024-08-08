@@ -3,12 +3,12 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
-import { MapState } from "./MapState";
+import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
 const description = "Plotting of surfaces in a 2D top view.";
 
-ModuleRegistry.registerModule<MapState>({
+ModuleRegistry.registerModule<Interfaces>({
     moduleName: "Map",
     defaultTitle: "Map",
     category: ModuleCategory.MAIN,

@@ -2,27 +2,31 @@ import { Ensemble } from "@framework/Ensemble";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { ViewContext } from "@framework/ModuleContext";
 import { ViewStatusWriter } from "@framework/StatusWriter";
-import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
-import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
-import { State } from "@modules/SimulationTimeSeries/state";
+import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { useAtomValue } from "jotai";
 
-import { ViewAtoms } from "../atoms/atomDefinitions";
+import {
+    historicalDataQueryHasErrorAtom,
+    queryIsFetchingAtom,
+    realizationsQueryHasErrorAtom,
+    statisticsQueryHasErrorAtom,
+} from "../atoms/derivedAtoms";
+import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
 
 export function useMakeViewStatusWriterMessages(
-    viewContext: ViewContext<State, SettingsToViewInterface, SettingsAtoms, ViewAtoms>,
+    viewContext: ViewContext<Interfaces>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
     ensemblesWithoutParameter: Ensemble[]
 ) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
-    const vectorObservationsQueries = viewContext.useViewAtomValue("vectorObservationsQueries");
-    const isQueryFetching = viewContext.useViewAtomValue("queryIsFetching");
-    const hasHistoricalVectorQueryError = viewContext.useViewAtomValue("historicalDataQueryHasError");
-    const hasRealizationsQueryError = viewContext.useViewAtomValue("realizationsQueryHasError");
-    const hasStatisticsQueryError = viewContext.useViewAtomValue("statisticsQueryHasError");
+    const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
+    const isQueryFetching = useAtomValue(queryIsFetchingAtom);
+    const hasHistoricalVectorQueryError = useAtomValue(historicalDataQueryHasErrorAtom);
+    const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
+    const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
 
     statusWriter.setLoading(isQueryFetching);
     if (hasRealizationsQueryError) {

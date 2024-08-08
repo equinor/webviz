@@ -350,7 +350,7 @@ function makeDevStateIcon(devState: ModuleDevState): React.ReactNode {
 }
 
 type DetailsPopupProps = {
-    module: Module<any, any, any, any>;
+    module: Module<any>;
     left: number;
     top: number;
     onClose: () => void;

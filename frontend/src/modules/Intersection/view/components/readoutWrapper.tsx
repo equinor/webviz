@@ -12,12 +12,9 @@ import {
 import { HighlightItem, HighlightItemShape, ReadoutItem } from "@framework/components/EsvIntersection/types";
 import { ReadoutBox } from "@framework/components/EsvIntersection/utilityComponents/ReadoutBox";
 import { isWellborepathLayer } from "@framework/components/EsvIntersection/utils/layers";
-import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
-import { State } from "@modules/Intersection/state";
+import { Interfaces } from "@modules/Intersection/interfaces";
 
 import { isEqual } from "lodash";
-
-import { ViewAtoms } from "../atoms/atomDefinitions";
 
 export type ReadoutWrapperProps = {
     wellboreHeaderUuid: string | null;
@@ -33,7 +30,7 @@ export type ReadoutWrapperProps = {
     };
     verticalScale: number;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<State, SettingsToViewInterface, Record<string, never>, ViewAtoms>;
+    viewContext: ViewContext<Interfaces>;
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {

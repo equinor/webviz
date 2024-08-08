@@ -12,7 +12,6 @@ import "./Pvt/registerModule";
 import "./Rft/registerModule";
 import "./SeismicIntersection/registerModule";
 import "./SimulationTimeSeries/registerModule";
-import "./SimulationTimeSeriesMatrix/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./StructuralUncertaintyIntersection/registerModule";
 import "./SubsurfaceMap/registerModule";

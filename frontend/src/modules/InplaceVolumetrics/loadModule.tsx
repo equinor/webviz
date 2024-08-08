@@ -1,19 +1,10 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Settings } from "./settings";
-import { State } from "./state";
+import { Interfaces, settingsToViewInterfaceInitialization } from "./interfaces";
+import { Settings } from "./settings/settings";
 import { View } from "./view";
 
-const defaultState: State = {
-    ensembleIdent: null,
-    tableName: null,
-    categoricalOptions: null,
-    categoricalFilter: null,
-    responseName: null,
-    realizationsToInclude: null,
-};
-
-const module = ModuleRegistry.initModule<State>("InplaceVolumetrics", defaultState);
+const module = ModuleRegistry.initModule<Interfaces>("InplaceVolumetrics", { settingsToViewInterfaceInitialization });
 
 module.viewFC = View;
 module.settingsFC = Settings;

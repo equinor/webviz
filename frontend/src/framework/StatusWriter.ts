@@ -65,7 +65,7 @@ export class SettingsStatusWriter {
     }
 }
 
-export function useViewStatusWriter(viewContext: ViewContext<any, any, any, any>): ViewStatusWriter {
+export function useViewStatusWriter(viewContext: ViewContext<any>): ViewStatusWriter {
     const statusController = viewContext.getStatusController();
 
     const statusWriter = React.useRef<ViewStatusWriter>(new ViewStatusWriter(statusController));
@@ -80,7 +80,7 @@ export function useViewStatusWriter(viewContext: ViewContext<any, any, any, any>
     return statusWriter.current;
 }
 
-export function useSettingsStatusWriter(settingsContext: SettingsContext<any, any, any, any>): SettingsStatusWriter {
+export function useSettingsStatusWriter(settingsContext: SettingsContext<any>): SettingsStatusWriter {
     const statusController = settingsContext.getStatusController();
 
     const statusWriter = React.useRef<SettingsStatusWriter>(new SettingsStatusWriter(statusController));

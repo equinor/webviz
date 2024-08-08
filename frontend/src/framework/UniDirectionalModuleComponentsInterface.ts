@@ -19,16 +19,16 @@ export class UniDirectionalModuleComponentsInterface<TInterfaceType extends Inte
     }
 
     getAtom<T extends keyof TInterfaceType>(key: T): Atom<TInterfaceType[T]> {
-        const derivedAtom = this._atoms.get(key);
-        if (derivedAtom) {
-            return derivedAtom as Atom<TInterfaceType[T]>;
+        const atom = this._atoms.get(key);
+        if (atom) {
+            return atom as Atom<TInterfaceType[T]>;
         }
 
         throw new Error(`Atom for key '${String(key)}' not found`);
     }
 }
 
-export function useSettingsToViewInterfaceValue<InterfaceType extends InterfaceBaseType, K extends keyof InterfaceType>(
+export function useInterfaceValue<InterfaceType extends InterfaceBaseType, K extends keyof InterfaceType>(
     interfaceInstance: UniDirectionalModuleComponentsInterface<InterfaceType>,
     key: K
 ): InterfaceType[K] {

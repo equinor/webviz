@@ -30,8 +30,11 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
 
 import {
+    addCustomIntersectionPolylineEditModeActiveAtom,
     colorScaleAtom,
+    editCustomIntersectionPolylineEditModeActiveAtom,
     intersectionExtensionLengthAtom,
+    intersectionTypeAtom,
     showGridlinesAtom,
     showIntersectionAtom,
     useCustomBoundsAtom,
@@ -48,10 +51,12 @@ import {
 import {
     availableRealizationsAtom,
     gridModelDimensionsAtom,
+    selectedEnsembleIdentAtom,
     selectedGridCellIndexRangesAtom,
     selectedGridModelNameAtom,
     selectedGridModelParameterDateOrIntervalAtom,
     selectedGridModelParameterNameAtom,
+    selectedHighlightedWellboreUuidAtom,
     selectedRealizationAtom,
     selectedWellboreUuidsAtom,
 } from "./atoms/derivedAtoms";
@@ -59,18 +64,10 @@ import { drilledWellboreHeadersQueryAtom, gridModelInfosQueryAtom } from "./atom
 import { GridCellIndexFilter } from "./components/gridCellIndexFilter";
 import { WellboreSelector } from "./components/wellboreSelector";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
-import {
-    addCustomIntersectionPolylineEditModeActiveAtom,
-    editCustomIntersectionPolylineEditModeActiveAtom,
-    intersectionTypeAtom,
-    selectedEnsembleIdentAtom,
-    selectedHighlightedWellboreUuidAtom,
-} from "../sharedAtoms/sharedAtoms";
-import { State } from "../state";
+import { Interfaces } from "../interfaces";
 import { GridCellIndexRanges } from "../typesAndEnums";
 
-export function Settings(props: ModuleSettingsProps<State, SettingsToViewInterface>): JSX.Element {
+export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
 

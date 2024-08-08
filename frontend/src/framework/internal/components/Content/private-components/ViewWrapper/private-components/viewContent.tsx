@@ -9,6 +9,7 @@ import {
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import { Workbench } from "@framework/Workbench";
+import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { HydrateQueryClientAtom } from "@framework/internal/components/HydrateQueryClientAtom";
@@ -19,7 +20,7 @@ import { Provider } from "jotai";
 import { CrashView } from "./crashView";
 
 type ViewContentProps = {
-    moduleInstance: ModuleInstance<any, any, any, any>;
+    moduleInstance: ModuleInstance<any>;
     workbench: Workbench;
 };
 
@@ -27,7 +28,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
     const importState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.IMPORT_STATE);
     const moduleInstanceState = useModuleInstanceTopicValue(props.moduleInstance, ModuleInstanceTopic.STATE);
 
-    const atomStore = props.moduleInstance.getAtomStore();
+    const atomStore = props.workbench.getAtomStoreMaster().getAtomStoreForModuleInstance(props.moduleInstance.getId());
 
     const handleModuleInstanceReload = React.useCallback(
         function handleModuleInstanceReload() {
@@ -105,13 +106,15 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                 >
                     <Provider store={atomStore}>
                         <HydrateQueryClientAtom>
-                            <View
-                                viewContext={props.moduleInstance.getContext()}
-                                workbenchSession={props.workbench.getWorkbenchSession()}
-                                workbenchServices={props.workbench.getWorkbenchServices()}
-                                workbenchSettings={props.workbench.getWorkbenchSettings()}
-                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                            />
+                            <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
+                                <View
+                                    viewContext={props.moduleInstance.getContext()}
+                                    workbenchSession={props.workbench.getWorkbenchSession()}
+                                    workbenchServices={props.workbench.getWorkbenchServices()}
+                                    workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                />
+                            </ApplyInterfaceEffectsToView>
                         </HydrateQueryClientAtom>
                     </Provider>
                 </DebugProfiler>
