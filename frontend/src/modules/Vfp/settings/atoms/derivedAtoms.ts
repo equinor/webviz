@@ -1,43 +1,30 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
-import { VfpProdTable } from "src/api/models/VfpProdTable";
-import { PressureOption } from "../../types";
 
 import { atom } from "jotai";
 
 import {
-    userSelectedEnsembleIdentAtom,
-    userSelectedRealizationNumberAtom,
-    validRealizationNumbersAtom,
-    userSelectedVfpTableNameAtom,
-    validVfpTableNamesAtom,
-    userSelectedThpIndicesAtom,
-    userSelectedWfrIndicesAtom,
-    userSelectedGfrIndicesAtom,
     userSelectedAlqIndicesAtom,
+    userSelectedEnsembleIdentAtom,
+    userSelectedGfrIndicesAtom,
     userSelectedPressureOptionAtom,
+    userSelectedRealizationNumberAtom,
+    userSelectedThpIndicesAtom,
+    userSelectedVfpTableNameAtom,
+    userSelectedWfrIndicesAtom,
+    validRealizationNumbersAtom,
 } from "./baseAtoms";
+import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
-import { vfpTableQueryAtom, vfpTableNamesQueryAtom } from "./queryAtoms";
-
-import { QueryStatus } from "../../types";
-
-export const vfpTableQueryResultAtom = atom((get) => {
-    return get(vfpTableQueryAtom)
-});
+import { PressureOption } from "../../types";
 
 export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);
 });
 
-export const vfpTableDataAtom = atom<VfpProdTable | undefined>((get) => {
-    const vfpTableQueryResult = get(vfpTableQueryResultAtom)
-    return vfpTableQueryResult.data
-});
-
 export const availableVfpTableNamesAtom = atom<string[]>((get) => {
-    const vfpTableNamesQueryResult = get(vfpTableNamesQueryAtom)
+    const vfpTableNamesQueryResult = get(vfpTableNamesQueryAtom);
     return vfpTableNamesQueryResult.data?.map((item) => item) ?? [];
 });
 
@@ -68,28 +55,25 @@ export const selectedRealizationNumberAtom = atom<number | null>((get) => {
     return validRealizationNumber;
 });
 
-export const selectedVfpTableNameAtom = atom<string | null> ((get) => {
-    const userSelectedVfpTableName = get(userSelectedVfpTableNameAtom)
-    const validVfpTableNames = get(validVfpTableNamesAtom)
+export const selectedVfpTableNameAtom = atom<string | null>((get) => {
+    const userSelectedVfpTableName = get(userSelectedVfpTableNameAtom);
+    const validVfpTableNames = get(availableVfpTableNamesAtom);
 
-    if(!validVfpTableNames) {
+    if (validVfpTableNames.length === 0) {
         return null;
     }
 
     if (userSelectedVfpTableName === null) {
-        const firstVfpTableName = validVfpTableNames.length > 0 ? validVfpTableNames[0] : null
-        return firstVfpTableName
+        const firstVfpTableName = validVfpTableNames.length > 0 ? validVfpTableNames[0] : null;
+        return firstVfpTableName;
     }
 
-    const validVfpTableName = validVfpTableNames.includes(userSelectedVfpTableName)
-        ? userSelectedVfpTableName
-        : null;
-    return validVfpTableName
+    const validVfpTableName = validVfpTableNames.includes(userSelectedVfpTableName) ? userSelectedVfpTableName : null;
+    return validVfpTableName;
 });
 
-
 export const selectedThpIndicesAtom = atom<number[] | null>((get) => {
-    const vfpTable = get(vfpTableDataAtom)
+    const vfpTable = get(vfpTableQueryAtom).data;
     const thp_values = vfpTable?.thp_values ?? [];
     const userSelectedThpIndicies = get(userSelectedThpIndicesAtom);
 
@@ -104,7 +88,7 @@ export const selectedThpIndicesAtom = atom<number[] | null>((get) => {
 });
 
 export const selectedWfrIndicesAtom = atom<number[] | null>((get) => {
-    const vfpTable = get(vfpTableDataAtom)
+    const vfpTable = get(vfpTableQueryAtom).data;
     const wfr_values = vfpTable?.wfr_values ?? [];
     const userSelectedWfrIndicies = get(userSelectedWfrIndicesAtom);
 
@@ -119,7 +103,7 @@ export const selectedWfrIndicesAtom = atom<number[] | null>((get) => {
 });
 
 export const selectedGfrIndicesAtom = atom<number[] | null>((get) => {
-    const vfpTable = get(vfpTableDataAtom)
+    const vfpTable = get(vfpTableQueryAtom).data;
     const wfr_values = vfpTable?.gfr_values ?? [];
     const userSelectedGfrIndicies = get(userSelectedGfrIndicesAtom);
 
@@ -134,7 +118,7 @@ export const selectedGfrIndicesAtom = atom<number[] | null>((get) => {
 });
 
 export const selectedAlqIndicesAtom = atom<number[] | null>((get) => {
-    const vfpTable = get(vfpTableDataAtom)
+    const vfpTable = get(vfpTableQueryAtom).data;
     const wfr_values = vfpTable?.alq_values ?? [];
     const userSelectedAlqIndicies = get(userSelectedAlqIndicesAtom);
 
@@ -149,10 +133,10 @@ export const selectedAlqIndicesAtom = atom<number[] | null>((get) => {
 });
 
 export const selectedPressureOptionAtom = atom<PressureOption>((get) => {
-    const userSelectedPressureOption = get(userSelectedPressureOptionAtom)
+    const userSelectedPressureOption = get(userSelectedPressureOptionAtom);
 
     if (userSelectedPressureOption == null) {
-        return PressureOption.BHP
+        return PressureOption.BHP;
     }
-    return userSelectedPressureOption
+    return userSelectedPressureOption;
 });
