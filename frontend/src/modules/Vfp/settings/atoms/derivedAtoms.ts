@@ -6,6 +6,7 @@ import { atom } from "jotai";
 
 import {
     userSelectedAlqIndicesAtom,
+    userSelectedColorByAtom,
     userSelectedEnsembleIdentAtom,
     userSelectedGfrIndicesAtom,
     userSelectedPressureOptionAtom,
@@ -17,7 +18,7 @@ import {
 } from "./baseAtoms";
 import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
-import { PressureOption } from "../../types";
+import { PressureOption, VfpParam } from "../../types";
 
 export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);
@@ -135,8 +136,17 @@ export const selectedAlqIndicesAtom = atom<number[] | null>((get) => {
 export const selectedPressureOptionAtom = atom<PressureOption>((get) => {
     const userSelectedPressureOption = get(userSelectedPressureOptionAtom);
 
-    if (userSelectedPressureOption == null) {
+    if (userSelectedPressureOption === null) {
         return PressureOption.BHP;
     }
     return userSelectedPressureOption;
+});
+
+export const selectedColorByAtom = atom<VfpParam>((get) => {
+    const userSelectedColorBy = get(userSelectedColorByAtom);
+
+    if (userSelectedColorBy === null) {
+        return VfpParam.THP
+    }
+    return userSelectedColorBy
 });
