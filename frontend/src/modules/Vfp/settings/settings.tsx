@@ -15,6 +15,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 
 import {
     userSelectedAlqIndicesAtom,
+    userSelectedColorByAtom,
     userSelectedEnsembleIdentAtom,
     userSelectedGfrIndicesAtom,
     userSelectedPressureOptionAtom,
@@ -27,6 +28,7 @@ import {
 import {
     availableVfpTableNamesAtom,
     selectedAlqIndicesAtom,
+    selectedColorByAtom,
     selectedEnsembleIdentAtom,
     selectedGfrIndicesAtom,
     selectedPressureOptionAtom,
@@ -38,7 +40,7 @@ import {
 import { vfpTableQueryAtom } from "./atoms/queryAtoms";
 
 import { Interface, State } from "../state";
-import { PressureOption } from "../types";
+import { PressureOption, VfpParam } from "../types";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<State, Interface>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
@@ -76,6 +78,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     const selectedPressureOption = useAtomValue(selectedPressureOptionAtom);
     const setUserSelectedPressureOption = useSetAtom(userSelectedPressureOptionAtom);
+
+    const selectedColorBy = useAtomValue(selectedColorByAtom);
+    const setUserSelectedColorBy = useSetAtom(userSelectedColorByAtom)
 
     usePropagateApiErrorToStatusWriter(vfpTableQuery, statusWriter);
 
@@ -115,6 +120,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     function handlePressureOptionChange(_: React.ChangeEvent<HTMLInputElement>, pressureOption: PressureOption) {
         setUserSelectedPressureOption(pressureOption);
+    }
+
+    function handleColorByChange(vfpParam: string) {
+        setUserSelectedColorBy(vfpParam as VfpParam);
     }
 
     const thpTitle = "THP";
@@ -160,7 +169,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                 />
             </CollapsibleGroup>
             <CollapsibleGroup title="Filter" expanded={true}>
-                <PendingWrapper isPending={vfpTableQuery.isFetching} errorMessage="Failed to load VFP table data">
                     <div className="flex flex-col gap-2">
                         <Label text={thpTitle}>
                             <Select
@@ -199,7 +207,6 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                             />
                         </Label>
                     </div>
-                </PendingWrapper>
             </CollapsibleGroup>
             <CollapsibleGroup title="Pressure Option" expanded={true}>
                 <RadioGroup
@@ -209,6 +216,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     ]}
                     value={selectedPressureOption}
                     onChange={handlePressureOptionChange}
+                />
+            </CollapsibleGroup>
+            <CollapsibleGroup title="Color By" expanded={true}>
+                <Dropdown
+                    options={[
+                        { label: "THP", value: VfpParam.THP },
+                        { label: "WFR", value: VfpParam.WFR },
+                        { label: "GFR", value: VfpParam.GFR },
+                        { label: "ALQ", value: VfpParam.ALQ },
+                    ]}
+                    value={selectedColorBy ?? undefined}
+                    onChange={handleColorByChange}
                 />
             </CollapsibleGroup>
         </div>
