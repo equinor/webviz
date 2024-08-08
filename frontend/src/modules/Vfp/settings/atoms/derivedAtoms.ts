@@ -2,6 +2,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { VfpProdTable } from "src/api/models/VfpProdTable";
+import { PressureOption } from "../../types";
 
 import { atom } from "jotai";
 
@@ -15,6 +16,7 @@ import {
     userSelectedWfrIndicesAtom,
     userSelectedGfrIndicesAtom,
     userSelectedAlqIndicesAtom,
+    userSelectedPressureOptionAtom,
 } from "./baseAtoms";
 
 import { vfpTableQueryAtom, vfpTableNamesQueryAtom } from "./queryAtoms";
@@ -144,4 +146,13 @@ export const selectedAlqIndicesAtom = atom<number[] | null>((get) => {
     }
 
     return userSelectedAlqIndicies;
+});
+
+export const selectedPressureOptionAtom = atom<PressureOption>((get) => {
+    const userSelectedPressureOption = get(userSelectedPressureOptionAtom)
+
+    if (userSelectedPressureOption == null) {
+        return PressureOption.BHP
+    }
+    return userSelectedPressureOption
 });

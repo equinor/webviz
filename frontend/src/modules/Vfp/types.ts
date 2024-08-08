@@ -1,5 +1,4 @@
 import { UnitType_api, FlowRateType_api, VfpType_api, WFR_api, GFR_api, ALQ_api } from "@api"
-import { WFR } from "src/api/models/WFR";
 
 export enum QueryStatus {
     Loading = "Loading",
@@ -7,13 +6,17 @@ export enum QueryStatus {
     Idle = "Idle",
 }
 
-export enum ColorBy {
+export enum VfpParam {
     THP = "THP",
     WFR = "WFR",
-    GFR = "WFR",
+    GFR = "GFR",
     ALQ = "ALQ",
 }
 
+export enum PressureOption {
+    BHP = "BHP",
+    DP = "DP",
+}
 
 export type FLOWRATE_UNITS = {
     OIL: string;
