@@ -15,8 +15,8 @@ import {
     loadedVectorSpecificationsAndHistoricalDataAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     loadedVectorSpecificationsAndStatisticsDataAtom,
-    vectorObservationsQueriesAtom,
 } from "../atoms/derivedAtoms";
+import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
 import { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "../utils/subplotBuilder";
 import { TimeSeriesPlotData } from "../utils/timeSeriesPlotData";

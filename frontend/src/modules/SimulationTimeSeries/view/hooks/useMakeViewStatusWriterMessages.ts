@@ -11,8 +11,8 @@ import {
     queryIsFetchingAtom,
     realizationsQueryHasErrorAtom,
     statisticsQueryHasErrorAtom,
-    vectorObservationsQueriesAtom,
 } from "../atoms/derivedAtoms";
+import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
 
 export function useMakeViewStatusWriterMessages(
     viewContext: ViewContext<Interfaces>,
