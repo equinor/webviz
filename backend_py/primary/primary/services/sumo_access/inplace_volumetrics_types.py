@@ -50,7 +50,7 @@ class Statistics(StrEnum):
     """
 
     MEAN = "mean"
-    STD_DEV = "std_dev"
+    STD_DEV = "stddev"
     MAX = "max"
     MIN = "min"
     P10 = "p10"

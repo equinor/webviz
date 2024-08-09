@@ -83,20 +83,18 @@ def create_statistical_grouped_result_table_data_pandas(
     group_by_list = list(group_by_identifier_set)
     grouped = df.groupby(group_by_list)
 
-    default_statistics_values_dict = {
-        Statistics.MEAN: [],
-        Statistics.STD_DEV: [],
-        Statistics.MIN: [],
-        Statistics.MAX: [],
-        Statistics.P10: [],
-        Statistics.P90: [],
-    }
-
     group_by_columns: Dict[str, List[float]] = {column_name: [] for column_name in group_by_list}
     result_statistical_data_dict: Dict[str, TableColumnStatisticalData] = {
         result_name: TableColumnStatisticalData(
             column_name=result_name,
-            statistic_values=default_statistics_values_dict.copy(),
+            statistic_values={
+                Statistics.MEAN: [],
+                Statistics.STD_DEV: [],
+                Statistics.MIN: [],
+                Statistics.MAX: [],
+                Statistics.P10: [],
+                Statistics.P90: [],
+            },
         )
         for result_name in valid_result_names
     }
@@ -171,14 +169,29 @@ def create_statistical_grouped_result_table_data_pyarrow(
     table_grouped_by = per_realization_grouped_result_table.group_by(group_by_identifier_set)
 
     # Pyarrow statistical aggregation
-    statistics_functions = ["mean", "stddev", "min", "max"]
-    statistical_table = table_grouped_by.aggregate(
-        [(result_name, func) for result_name in valid_result_names for func in statistics_functions]
-    )
+    # - Each statistical aggregation will result in a new column with the result name and function name as suffix
+    # - E.g. "result_name_mean" = [1,2,3,4], with a group by giving 4 groups.
+    basic_statistics_functions = ["mean", "stddev", "min", "max"]
+    basic_statistics_aggregations = [
+        (result_name, func) for result_name in valid_result_names for func in basic_statistics_functions
+    ]
+
+    # Percentile calculation w/ TDigest
+    # - The tdigest aggregation will result in a new column with the result name and "tdigest" as suffix,
+    #   where each element of the column is an array with the requested percentiles in TDigestOptions.
+    # - E.g: "result_name_tdigest" = [[1,2], [1.5, 2.5], [2,3] [2.5,3.5]], with a group by giving 4 groups. First element is p10, second is p90
+    # - Note: If only 1 group, the result will be a single array with 2 elements - e.g. [1,2]
+    tdigest_options = pc.TDigestOptions([0.1, 0.9]) # p10 and p90
+    percentile_aggregations = [(result_name, "tdigest", tdigest_options) for result_name in valid_result_names]
+
+    # Create statistical table aggregation
+    statistical_aggregations = basic_statistics_aggregations + percentile_aggregations
+    statistical_table = table_grouped_by.aggregate(statistical_aggregations)
 
     # Build selector columns from statistical table
     selector_column_data_list: List[RepeatedTableColumnData] = []
-    for column_name in valid_selector_columns:
+    final_selector_columns = [name for name in statistical_table.column_names if name in valid_selector_columns]
+    for column_name in final_selector_columns:
         column_array = statistical_table[column_name]
         selector_column_data_list.append(_create_repeated_table_column_data_from_column(column_name, column_array))
 
@@ -187,37 +200,39 @@ def create_statistical_grouped_result_table_data_pyarrow(
     available_statistic_column_names = statistical_table.column_names
     for result_name in valid_result_names:
         result_statistical_data = TableColumnStatisticalData(column_name=result_name, statistic_values={})
-        for func in statistics_functions:
+
+        # Handle basic statistics
+        for func in basic_statistics_functions:
             statistic_column_name = f"{result_name}_{func}"
             if statistic_column_name not in available_statistic_column_names:
                 raise ValueError(f"Column {statistic_column_name} not found in statistical table")
 
             statistic_array = statistical_table[statistic_column_name]
             result_statistical_data.statistic_values[func] = statistic_array.to_pylist()
+
+        # Handle percentile statistics
+        percentile_column_name = f"{result_name}_tdigest"
+        if percentile_column_name not in available_statistic_column_names:
+            raise ValueError(f"Column {percentile_column_name} not found in statistical table")
+
+        percentile_array = statistical_table[percentile_column_name]
+        p10_array = []
+        p90_array = []
+        if len(group_by_identifier_set) == 0:
+            p10_array = [percentile_array[0].as_py()]
+            p90_array = [percentile_array[1].as_py()]
+        else:    
+            for elm in percentile_array:
+                if len(elm) != 2:
+                    raise ValueError(f"Expected 2 elements in percentile array, found {len(elm)}")
+
+                p10_array.append(elm[0].as_py())
+                p90_array.append(elm[1].as_py())
+        result_statistical_data.statistic_values[Statistics.P10.value] = p10_array
+        result_statistical_data.statistic_values[Statistics.P90.value] = p90_array
+
+        # Add result statistical data to dictionary
         results_statistical_data_dict[result_name] = result_statistical_data
-
-    # Percentile calculation w/ TDigest
-    # - Handle per percentile as resulting column name will be equal for each of the percentiles
-    # NOTE: Assume equal order of groups for every .aggregate call
-    tdigest_calculations = {"p90": pc.TDigestOptions([0.9]), "p10": pc.TDigestOptions([0.1])}
-    for percentile_name, percentile_options in tdigest_calculations:
-        percentile_table = table_grouped_by.aggregate(
-            [(result_name, "tdigest", percentile_options) for result_name in valid_result_names]
-        )
-
-        available_percentile_column_names = percentile_table.column_names
-        for result_name in valid_result_names:
-            percentile_column_name = f"{result_name}_tdigest"
-
-            if percentile_column_name not in available_percentile_column_names:
-                raise ValueError(f"Column {percentile_column_name} not found in percentile table for {percentile_name}")
-
-            result_statistical_data = results_statistical_data_dict.get(result_name)
-            if result_statistical_data is None:
-                raise ValueError(f"Expected result statistical data not found for {result_name}")
-
-            percentile_array = percentile_table[percentile_column_name]
-            result_statistical_data.statistic_values[percentile_name] = percentile_array.to_pylist()
 
     # Create list of results statistical data from dictionary values
     results_statistical_data_list: List[TableColumnStatisticalData] = list(results_statistical_data_dict.values())

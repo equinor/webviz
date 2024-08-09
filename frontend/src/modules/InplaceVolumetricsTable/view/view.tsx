@@ -12,12 +12,13 @@ import { Table } from "@lib/components/Table";
 import { TableHeading, TableRow } from "@lib/components/Table/table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Column, ColumnType, Table as InplaceTable } from "@modules/_shared/InplaceVolumetrics/Table";
+import { Column, ColumnType, Row } from "@modules/_shared/InplaceVolumetrics/Table";
 import {
     EnsembleIdentWithRealizations,
     useGetAggregatedPerRealizationTableDataQueries,
+    useGetAggregatedStatisticalTableDataQueries,
 } from "@modules/_shared/InplaceVolumetrics/queryHooks";
-import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableUtils";
+import { makeStatisticalTablesFromApiData, makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableUtils";
 import { SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
@@ -55,7 +56,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         tableType === TableType.PER_REALIZATION
     );
 
-    const statisticalRealizationTableDataQueries = useGetAggregatedPerRealizationTableDataQueries(
+    const statisticalRealizationTableDataQueries = useGetAggregatedStatisticalTableDataQueries(
         ensembleIdentsWithRealizations,
         filter.tableNames,
         resultNames,
@@ -66,7 +67,9 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         tableType === TableType.STATISTICAL
     );
 
-    statusWriter.setLoading(perRealizationTableDataQueries.isFetching);
+    statusWriter.setLoading(
+        perRealizationTableDataQueries.isFetching || statisticalRealizationTableDataQueries.isFetching
+    );
 
     if (perRealizationTableDataQueries.someQueriesFailed) {
         for (const error of perRealizationTableDataQueries.errors) {
@@ -76,34 +79,102 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
             }
         }
     }
+    if (statisticalRealizationTableDataQueries.someQueriesFailed) {
+        for (const error of statisticalRealizationTableDataQueries.errors) {
+            const helper = ApiErrorHelper.fromError(error);
+            if (helper) {
+                statusWriter.addError(helper.makeStatusMessage());
+            }
+        }
+    }
 
     const headings: TableHeading = {};
+    const tableRows: TableRow<any>[] = [];
 
     // Make data table based on settings
-    let dataTable: InplaceTable | null = null;
     if (tableType === TableType.PER_REALIZATION) {
-        dataTable = makeTableFromApiData(perRealizationTableDataQueries.tablesData);
+        const dataTable = makeTableFromApiData(perRealizationTableDataQueries.tablesData);
+
+        for (const column of dataTable.getColumns()) {
+            headings[column.getName()] = {
+                label: column.getName(),
+                sizeInPercent: 100 / dataTable.getNumColumns(),
+                formatValue: makeValueFormattingFunc(column, ensembleSet),
+                formatStyle: makeStyleFormattingFunc(column),
+            };
+        }
+
+        for (const row of dataTable.getRows()) {
+            tableRows.push(row);
+        }
     } else if (tableType === TableType.STATISTICAL) {
-        dataTable = makeTableFromApiData(statisticalRealizationTableDataQueries.tablesData);
-    }
+        const dataTableResult = makeStatisticalTablesFromApiData(statisticalRealizationTableDataQueries.tablesData);
 
-    if (!dataTable) {
-        // Return an error message
-        return <div className="w-full h-full flex items-center justify-center">Failed to load data.</div>;
-    }
+        const nonStatisticalColumnsTable = dataTableResult.nonStatisticalColumnsTable;
+        const resultStatisticalTables = dataTableResult.resultStatisticalColumnsTables;
 
-    for (const column of dataTable.getColumns()) {
-        headings[column.getName()] = {
-            label: column.getName(),
-            sizeInPercent: 100 / dataTable.getNumColumns(),
-            formatValue: makeValueFormattingFunc(column, ensembleSet),
-            formatStyle: makeStyleFormattingFunc(column),
-        };
-    }
+        const numStatisticalColumns = 6; // Mean, stddev, p10, p90, min, max
+        const totalNumberOfColumns =
+            nonStatisticalColumnsTable.getNumColumns() + resultStatisticalTables.size * numStatisticalColumns;
 
-    const tableRows: TableRow<any>[] = [];
-    for (const row of dataTable.getRows()) {
-        tableRows.push(row);
+        // Headings for non-statistical columns
+        for (const column of nonStatisticalColumnsTable.getColumns()) {
+            headings[column.getName()] = {
+                label: column.getName(),
+                sizeInPercent: 100 / totalNumberOfColumns,
+                formatValue: makeValueFormattingFunc(column, ensembleSet),
+                formatStyle: makeStyleFormattingFunc(column),
+            };
+        }
+
+        // Rows for non-statistical columns
+        const rows: Row[] = [];
+        for (const row of nonStatisticalColumnsTable.getRows()) {
+            rows.push(row);
+        }
+
+        const numberOfRows = rows.length;
+
+        // Headings and row data for result statistical columns
+        for (const [resultName, statisticalTable] of resultStatisticalTables.entries()) {
+            const subHeading: TableHeading = {};
+            statisticalTable.getColumns().forEach((column) => {
+                const columnId = `${resultName}-${column.getName()}`;
+                subHeading[columnId] = {
+                    label: column.getName(),
+                    sizeInPercent: 100 / totalNumberOfColumns,
+                    formatValue: makeValueFormattingFunc(column, ensembleSet),
+                    formatStyle: makeStyleFormattingFunc(column),
+                };
+            });
+
+            headings[resultName] = {
+                label: resultName,
+                sizeInPercent: 100 / totalNumberOfColumns,
+                subHeading: subHeading,
+            };
+
+            if (numberOfRows !== statisticalTable.getNumRows()) {
+                throw new Error(
+                    "Number of rows in statistical table does not match the number of rows in the non-statistical table."
+                );
+            }
+
+            for (let i = 0; i < numberOfRows; i++) {
+                const statisticalRow = statisticalTable.getRow(i);
+
+                // Add resultName as prefix to column names
+                for (const column of statisticalTable.getColumns()) {
+                    const columnId = `${resultName}-${column.getName()}`;
+                    rows[i][columnId] = statisticalRow[column.getName()];
+                }
+            }
+        }
+
+        // Add rows to tableRows
+        for (const row of rows) {
+            tableRows.push(row);
+        }
     }
 
     const handleTableHover = React.useCallback(
@@ -148,6 +219,13 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         }
 
         return "No data to display.";
+    }
+
+    // Empty data
+    // TODO: REMOVE THIS
+    if (Object.keys(headings).length === 0 && tableRows.length === 0) {
+        // Return an error message
+        return <div className="w-full h-full flex items-center justify-center">Failed to load data.</div>;
     }
 
     return (

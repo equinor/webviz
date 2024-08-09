@@ -191,7 +191,7 @@ class InplaceVolumetricsProvider:
         group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
         accumulate_fluid_zones: bool = False,
     ) -> InplaceStatisticalVolumetricTableDataPerFluidSelection:
-        result_table_per_fluid_selection = self._create_result_table_per_fluid_selection(
+        result_table_per_fluid_selection: Dict[str, pa.Table] = await self._create_result_table_per_fluid_selection(
             table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
         )
 
@@ -212,7 +212,7 @@ class InplaceVolumetricsProvider:
                 InplaceStatisticalVolumetricTableData(
                     fluid_selection_name=fluid_selection_name,
                     selector_columns=selector_column_data_list,
-                    result_columns=result_column_data_list,
+                    result_column_statistics=result_column_data_list,
                 )
             )
 

@@ -63,6 +63,12 @@ export class Column<TValue = string | number> {
         this._indices.push(index);
     }
 
+    addRowValues(values: TValue[]): void {
+        for (const value of values) {
+            this.addRowValue(value);
+        }
+    }
+
     getRowValue(rowIndex: number): TValue {
         if (rowIndex < 0 || rowIndex >= this._indices.length) {
             throw new Error(`Invalid index: ${rowIndex}`);
