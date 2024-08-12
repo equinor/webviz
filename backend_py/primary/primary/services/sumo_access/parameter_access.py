@@ -157,7 +157,7 @@ def _parameter_name_and_group_name_to_parameter_str(parameter_name: str, group_n
 
 def _parameter_str_arr_to_parameter_group_dict(parameter_str_arr: List[str]) -> dict:
     """Convert a list of parameter strings to a dictionary of parameter groups"""
-    parameter_group_dict: dict[str, list] = {}
+    parameter_group_dict: dict = {}
     for parameter_str in parameter_str_arr:
         parameter_name_components = parameter_str.split(":")
         if len(parameter_name_components) > 2:
