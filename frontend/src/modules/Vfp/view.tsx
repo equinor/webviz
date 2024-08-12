@@ -3,12 +3,13 @@ import Plot from "react-plotly.js";
 
 import { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { PlotData, PlotMarker } from "plotly.js";
 
 import { Interface, State } from "./state";
-import { VfpParam } from "./types";
 import { VfpDataAccessor } from "./utils/VfpDataAccessor";
 import { VfpPlotBuilder } from "./utils/VfpPlotBuilder";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+
 
 export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, Interface>) {
     const colorScale = workbenchSettings.useContinuousColorScale({gradientType: ColorScaleGradientType.Sequential})
@@ -40,6 +41,7 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, 
             selectedPressureOption,
             selectedColorBy,
         );
+
         content = <Plot layout={layout} data={data} />;
     }
     return (

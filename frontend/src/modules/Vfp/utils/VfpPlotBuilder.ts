@@ -1,5 +1,5 @@
 import { Size2D } from "@lib/utils/geometry";
-import { Layout, PlotData } from "plotly.js";
+import { Layout, PlotData, PlotMarker } from "plotly.js";
 import { PressureOption, VfpParam } from "../types";
 import { VfpDataAccessor } from "./VfpDataAccessor";
 import { ColorScale } from "@lib/utils/ColorScale";
@@ -52,8 +52,6 @@ export class VfpPlotBuilder {
         const midValue = minValue + (maxValue - minValue) / 2;
         this._colorScale.setRangeAndMidPoint(minValue, maxValue, midValue)
 
-
-
         for (let i = 0; i < selectedThpIndices.length; i++) {
             for (let j = 0; j < selectedWfrIndices.length; j++) {
                 for (let k = 0; k < selectedGfrIndices.length; k++) {
@@ -77,6 +75,25 @@ export class VfpPlotBuilder {
                 }
             }
         }
+
+        // Add color scale legend
+        const colorScaleMarker: Partial<PlotMarker> = {
+           ...this._colorScale.getAsPlotlyColorScaleMarkerObject(),
+            colorbar: {
+                title: colorBy.toString(),
+                titleside: "right",
+                ticks: "outside",
+                len: 0.75,
+            },
+        };
+        const parameterColorLegendTrace: Partial<PlotData> = {
+            x: [null],
+            y: [null],
+            marker: colorScaleMarker,
+            showlegend: false,
+        };
+        data.push(parameterColorLegendTrace);
+        
         return data
     }
 
