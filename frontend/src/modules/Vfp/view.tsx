@@ -8,9 +8,10 @@ import { Interface, State } from "./state";
 import { VfpParam } from "./types";
 import { VfpDataAccessor } from "./utils/VfpDataAccessor";
 import { VfpPlotBuilder } from "./utils/VfpPlotBuilder";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, Interface>) {
-    const colorSet = workbenchSettings.useColorSet();
+    const colorScale = workbenchSettings.useContinuousColorScale({gradientType: ColorScaleGradientType.Sequential})
 
     const vfpTableName = viewContext.useSettingsToViewInterfaceValue("vfpTableName");
     const vfpTable = viewContext.useSettingsToViewInterfaceValue("vfpTable");
@@ -18,6 +19,8 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, 
     const selectedWfrIndices = viewContext.useSettingsToViewInterfaceValue("selectedWfrIndices");
     const selectedGfrIndices = viewContext.useSettingsToViewInterfaceValue("selectedGfrIndices");
     const selectedAlqIndices = viewContext.useSettingsToViewInterfaceValue("selectedAlqIndices");
+    const selectedPressureOption = viewContext.useSettingsToViewInterfaceValue("selectedPressureOption")
+    const selectedColorBy = viewContext.useSettingsToViewInterfaceValue("selectedColorBy")
 
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
@@ -26,7 +29,7 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, 
     if (vfpTable === undefined) {
         content = <div className="w-full h-full flex justify-center items-center">VFP table not available.</div>;
     } else {
-        const vfpPlotBuilder = new VfpPlotBuilder(new VfpDataAccessor(vfpTable));
+        const vfpPlotBuilder = new VfpPlotBuilder(new VfpDataAccessor(vfpTable), colorScale);
 
         const layout = vfpPlotBuilder.makeLayout(wrapperDivSize);
         const data = vfpPlotBuilder.makeTraces(
@@ -34,8 +37,8 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, 
             selectedWfrIndices,
             selectedGfrIndices,
             selectedAlqIndices,
-            VfpParam.THP,
-            colorSet
+            selectedPressureOption,
+            selectedColorBy,
         );
         content = <Plot layout={layout} data={data} />;
     }

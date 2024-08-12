@@ -1,15 +1,18 @@
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-
 import { VfpProdTable } from "src/api/models/VfpProdTable";
+import { VfpParam } from "./types";
 
 import {
     selectedAlqIndicesAtom,
     selectedGfrIndicesAtom,
+    selectedPressureOptionAtom,
     selectedThpIndicesAtom,
     selectedVfpTableNameAtom,
     selectedWfrIndicesAtom,
 } from "./settings/atoms/derivedAtoms";
 import { vfpTableQueryAtom } from "./settings/atoms/queryAtoms";
+import { PressureOption } from "./types";
+import { selectedColorByAtom } from "./settings/atoms/derivedAtoms";
 
 export type State = Record<string, never>;
 
@@ -20,6 +23,8 @@ export type Interface = {
     selectedWfrIndices: number[] | null;
     selectedGfrIndices: number[] | null;
     selectedAlqIndices: number[] | null;
+    selectedPressureOption: PressureOption;
+    selectedColorBy: VfpParam;
 };
 
 export const interfaceInitialization: InterfaceInitialization<Interface> = {
@@ -41,4 +46,10 @@ export const interfaceInitialization: InterfaceInitialization<Interface> = {
     selectedAlqIndices: (get) => {
         return get(selectedAlqIndicesAtom);
     },
+    selectedPressureOption: (get) => {
+        return get(selectedPressureOptionAtom);
+    },
+    selectedColorBy: (get) => {
+        return get(selectedColorByAtom);
+    },    
 };
