@@ -179,7 +179,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.THP))}
                                 value={selectedThpIndicies?.map((value) => value.toString()) ?? []}
                                 onChange={handleThpIndicesSelectionChange}
-                                size={5}
+                                size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.THP) ?? 5)}
                                 multiple={true}
                             />
                         </Label>
@@ -188,7 +188,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.WFR))}
                                 value={selectedWfrIndicies?.map((value) => value.toString()) ?? []}
                                 onChange={handleWfrIndicesSelectionChange}
-                                size={5}
+                                size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.WFR) ?? 5)}
                                 multiple={true}
                             />
                         </Label>
@@ -197,7 +197,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.GFR))}
                                 value={selectedGfrIndicies?.map((value) => value.toString()) ?? []}
                                 onChange={handleGfrIndicesSelectionChange}
-                                size={5}
+                                size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.GFR) ?? 5)}
                                 multiple={true}
                             />
                         </Label>
@@ -206,7 +206,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.ALQ))}
                                 value={selectedAlqIndicies?.map((value) => value.toString()) ?? []}
                                 onChange={handleAlqIndicesSelectionChange}
-                                size={5}
+                                size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.ALQ) ?? 5)}
                                 multiple={true}
                             />
                         </Label>

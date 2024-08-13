@@ -151,4 +151,17 @@ export class VfpDataAccessor {
         const startIndex = nbFlowRates*(nbAlqValues*(nbGfrValues*(nbWfrValues*thpIndex+wfrIndex)+gfrIndex)+alqIndex)
         return this._vfpTable.bhp_values.slice(startIndex, startIndex+nbFlowRates)
     }
+
+    getNumberOfValues(vfpParam: VfpParam): number {
+        if (vfpParam == VfpParam.THP) {
+            return this._vfpTable.thp_values.length
+        } else if (vfpParam == VfpParam.WFR) {
+            return this._vfpTable.wfr_values.length
+        } else if (vfpParam == VfpParam.GFR) {
+            return this._vfpTable.gfr_values.length
+        } else if (vfpParam == VfpParam.ALQ) {
+            return this._vfpTable.alq_values.length
+        }
+        return NaN
+    }
 }
