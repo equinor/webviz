@@ -11,16 +11,28 @@ import { SortableListItemProps } from "./sortableListItem";
 
 export type SortableListGroupProps = {
     id: string;
-    icon?: React.ReactNode;
     title: string;
+    initiallyExpanded?: boolean;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     contentWhenEmpty?: React.ReactNode;
     children: React.ReactElement<SortableListItemProps>[];
 };
 
+/**
+ *
+ * @param {SortableListGroupProps} props Object of properties for the SortableListGroup component (see below for details).
+ * @param {string} props.id ID that is unique among all components inside the sortable list.
+ * @param {string} props.title Title of the list item.
+ * @param {boolean} props.initiallyExpanded Whether the group should be expanded by default.
+ * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
+ * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
+ * @param {React.ReactNode} props.children Child components to display as the content of the list item.
+ *
+ * @returns {React.ReactNode} A sortable list group component.
+ */
 export function SortableListGroup(props: SortableListGroupProps): React.ReactNode {
-    const [isExpanded, setIsExpanded] = React.useState<boolean>(true);
+    const [isExpanded, setIsExpanded] = React.useState<boolean>(props.initiallyExpanded ?? true);
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(divRef);
@@ -107,7 +119,7 @@ function Header(props: HeaderProps): React.ReactNode {
                 {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </div>
             <div className="flex items-center gap-2">
-                {props.icon}
+                {props.startAdornment}
                 <div className="flex-grow">{props.title}</div>
                 {props.endAdornment}
             </div>

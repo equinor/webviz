@@ -10,13 +10,23 @@ import { SortableListDropIndicator } from "./sortableListDropIndicator";
 
 export type SortableListItemProps = {
     id: string;
-    icon?: React.ReactNode;
     title: string;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     children: React.ReactNode;
 };
 
+/**
+ *
+ * @param {SortableListItemProps} props Object of properties for the SortableListItem component (see below for details).
+ * @param {string} props.id ID that is unique among all components inside the sortable list.
+ * @param {string} props.title Title of the list item.
+ * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
+ * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
+ * @param {React.ReactNode} props.children Child components to display as the content of the list item.
+ *
+ * @returns {React.ReactNode} A sortable list item component.
+ */
 export function SortableListItem(props: SortableListItemProps): React.ReactNode {
     const divRef = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(divRef);
@@ -78,7 +88,7 @@ function Header(props: HeaderProps): React.ReactNode {
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
             <div className="flex items-center gap-2">
-                {props.icon}
+                {props.startAdornment}
                 <div className="flex-grow">{props.title}</div>
                 {props.endAdornment}
             </div>

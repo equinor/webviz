@@ -31,12 +31,6 @@ export const SortableListContext = React.createContext<SortableListContextType>(
     dragPosition: null,
 });
 
-export type SortableListProps = {
-    contentWhenEmpty?: React.ReactNode;
-    children: React.ReactElement<SortableListItemProps | SortableListGroupProps>[];
-    onItemMove?: (itemId: string, originId: string | null, destinationId: string | null, position: number) => void;
-};
-
 function assertTargetIsSortableListItemAndExtractProps(
     target: EventTarget | null
 ): { element: HTMLElement; id: string; parentId: string | null } | null {
@@ -94,6 +88,21 @@ type HoveredItemIdAndArea = {
 
 const ELEMENT_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT = 50;
 
+export type SortableListProps = {
+    contentWhenEmpty?: React.ReactNode;
+    children: React.ReactElement<SortableListItemProps | SortableListGroupProps>[];
+    onItemMove?: (itemId: string, originId: string | null, destinationId: string | null, position: number) => void;
+};
+
+/**
+ *
+ * @param {SortableListProps} props Object of properties for the SortableList component (see below for details).
+ * @param {function} props.onItemMove Callback that is called when an item is moved. Should be wrapped inside a React.useCallback.
+ * @param {React.ReactNode} props.contentWhenEmpty A React node that is displayed when the list is empty.
+ * @param {React.ReactNode} props.children Child components that must be of either type SortableListItem or SortableListGroup.
+ *
+ * @returns {React.ReactNode} A sortable list component.
+ */
 export function SortableList(props: SortableListProps): React.ReactNode {
     const { onItemMove } = props;
 
