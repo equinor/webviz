@@ -41,6 +41,7 @@ import { vfpTableQueryAtom } from "./atoms/queryAtoms";
 
 import { Interface, State } from "../state";
 import { PressureOption, VfpParam } from "../types";
+import { VfpDataAccessor } from "../utils/VfpDataAccessor";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<State, Interface>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
@@ -126,15 +127,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setUserSelectedColorBy(vfpParam as VfpParam);
     }
 
-    const thpTitle = "THP";
-    let wfrTitle = "WFR";
-    let gfrTitle = "GFR";
-    let alqTitle = "ALQ";
+    let thpLabel = "THP";
+    let wfrLabel = "WFR";
+    let gfrLabel = "GFR";
+    let alqLabel = "ALQ";
     const vfpTableData = vfpTableQuery?.data;
+    let vfpDataAccessor;
     if (vfpTableData) {
-        wfrTitle = vfpTableData.wfr_type;
-        gfrTitle = vfpTableData.gfr_type;
-        alqTitle += ": " + vfpTableData.alq_type;
+        vfpDataAccessor = new VfpDataAccessor(vfpTableData)
+        thpLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.THP)
+        wfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.WFR)
+        gfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.GFR)
+        alqLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.ALQ)
     }
 
     return (
@@ -170,36 +174,36 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             </CollapsibleGroup>
             <CollapsibleGroup title="Filter" expanded={true}>
                     <div className="flex flex-col gap-2">
-                        <Label text={thpTitle}>
+                        <Label text={thpLabel}>
                             <Select
-                                options={makeFilterOptions(vfpTableData?.thp_values)}
+                                options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.THP))}
                                 value={selectedThpIndicies?.map((value) => value.toString()) ?? []}
                                 onChange={handleThpIndicesSelectionChange}
                                 size={5}
                                 multiple={true}
                             />
                         </Label>
-                        <Label text={wfrTitle}>
+                        <Label text={wfrLabel}>
                             <Select
-                                options={makeFilterOptions(vfpTableData?.wfr_values)}
+                                options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.WFR))}
                                 value={selectedWfrIndicies?.map((value) => value.toString()) ?? []}
                                 onChange={handleWfrIndicesSelectionChange}
                                 size={5}
                                 multiple={true}
                             />
                         </Label>
-                        <Label text={gfrTitle}>
+                        <Label text={gfrLabel}>
                             <Select
-                                options={makeFilterOptions(vfpTableData?.gfr_values)}
+                                options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.GFR))}
                                 value={selectedGfrIndicies?.map((value) => value.toString()) ?? []}
                                 onChange={handleGfrIndicesSelectionChange}
                                 size={5}
                                 multiple={true}
                             />
                         </Label>
-                        <Label text={alqTitle}>
+                        <Label text={alqLabel}>
                             <Select
-                                options={makeFilterOptions(vfpTableData?.alq_values)}
+                                options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.ALQ))}
                                 value={selectedAlqIndicies?.map((value) => value.toString()) ?? []}
                                 onChange={handleAlqIndicesSelectionChange}
                                 size={5}
@@ -221,10 +225,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             <CollapsibleGroup title="Color By" expanded={true}>
                 <Dropdown
                     options={[
-                        { label: "THP", value: VfpParam.THP },
-                        { label: "WFR", value: VfpParam.WFR },
-                        { label: "GFR", value: VfpParam.GFR },
-                        { label: "ALQ", value: VfpParam.ALQ },
+                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP) ?? "THP", value: VfpParam.THP },
+                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR) ?? "WFR", value: VfpParam.WFR },
+                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.GFR) ?? "GFR", value: VfpParam.GFR },
+                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.ALQ) ?? "ALQ", value: VfpParam.ALQ },
                     ]}
                     value={selectedColorBy ?? undefined}
                     onChange={handleColorByChange}

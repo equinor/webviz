@@ -38,7 +38,7 @@ export class VfpPlotBuilder {
             return [];
         }
 
-        const colorByValues = this._vfpDataAccessor.getParamValues(colorBy)
+        const colorByValues = this._vfpDataAccessor.getVfpParamValues(colorBy)
         const colorByIndices = {
             [VfpParam.THP]: selectedThpIndices,
             [VfpParam.WFR]: selectedWfrIndices,
@@ -80,7 +80,7 @@ export class VfpPlotBuilder {
         const colorScaleMarker: Partial<PlotMarker> = {
            ...this._colorScale.getAsPlotlyColorScaleMarkerObject(),
             colorbar: {
-                title: colorBy.toString(),
+                title: this._vfpDataAccessor.getVfpParamLabel(colorBy),
                 titleside: "right",
                 ticks: "outside",
                 len: 0.75,
@@ -98,10 +98,10 @@ export class VfpPlotBuilder {
     }
 
     private getSingleVfpTrace(thpIndex: number, wfrIndex: number, gfrIndex: number, alqIndex: number, pressureOption: PressureOption, color: string) : Partial<PlotData> { 
-        const thpValue = this._vfpDataAccessor.getParamValues(VfpParam.THP)[thpIndex]
-        const wfrValue = this._vfpDataAccessor.getParamValues(VfpParam.WFR)[wfrIndex]
-        const gfrValue = this._vfpDataAccessor.getParamValues(VfpParam.GFR)[gfrIndex]
-        const alqValue = this._vfpDataAccessor.getParamValues(VfpParam.ALQ)[alqIndex]
+        const thpValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.THP)[thpIndex]
+        const wfrValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.WFR)[wfrIndex]
+        const gfrValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.GFR)[gfrIndex]
+        const alqValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.ALQ)[alqIndex]
 
         const name = `THP=${thpValue} ${this._vfpDataAccessor.getWfrType()}=${wfrValue} ${this._vfpDataAccessor.getGfrType()}=${gfrValue} ALQ=${alqValue}`
         let bhpValues = this._vfpDataAccessor.getBhpValues(thpIndex, wfrIndex, gfrIndex, alqIndex)

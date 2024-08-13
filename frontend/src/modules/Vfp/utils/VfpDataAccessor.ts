@@ -1,8 +1,5 @@
-import { VfpProdTable_api, UnitType_api, FlowRateType_api, TabType_api } from "@api";
+import { VfpProdTable_api, UnitType_api, FlowRateType_api, TabType_api, ALQ_api, WFR_api, GFR_api } from "@api";
 import { VFPPROD_UNITS, UNITSET, VfpParam } from "../types";
-import { WFR } from "src/api/models/WFR";
-import { GFR } from "src/api/models/GFR";
-import { ALQ } from "src/api/models/ALQ";
 
 export class VfpDataAccessor {
     private _vfpTable: VfpProdTable_api;
@@ -50,28 +47,99 @@ export class VfpDataAccessor {
         return this._vfpTable.flow_rate_values
     }
 
-    getParamValues(param: VfpParam): number [] {
-        if (param == VfpParam.THP) {
+    getVfpParamValues(vfpParam: VfpParam): number [] {
+        if (vfpParam == VfpParam.THP) {
             return this._vfpTable.thp_values
-        } else if (param == VfpParam.WFR) {
+        } else if (vfpParam == VfpParam.WFR) {
             return this._vfpTable.wfr_values
-        } else if (param == VfpParam.GFR) {
+        } else if (vfpParam == VfpParam.GFR) {
             return this._vfpTable.gfr_values
-        } else if (param == VfpParam.ALQ) {
+        } else if (vfpParam == VfpParam.ALQ) {
             return this._vfpTable.alq_values
         }
         return []
     }
 
-    getWfrType(): WFR {
+    getVfpParamUnit(vfpParam: VfpParam): string {
+        if (vfpParam == VfpParam.THP) {
+            return this._unitSet.THP_UNITS.THP
+        } else if (vfpParam == VfpParam.WFR) {
+            const wfrUnits = this._unitSet.WFR_UNITS
+            const wfrType = this.getWfrType()
+            if (wfrType == WFR_api.WCT) {
+                return wfrUnits.WCT
+            } else if (wfrType == WFR_api.WGR) {
+                return wfrUnits.WGR
+            } else if (wfrType == WFR_api.WOR) {
+                return wfrUnits.WOR
+            } else if (wfrType == WFR_api.WTF) {
+                return wfrUnits.WTF
+            } else if (wfrType == WFR_api.WWR) {
+                return wfrUnits.WWR
+            }
+        } else if (vfpParam == VfpParam.GFR) {
+            const gfrUnits = this._unitSet.GFR_UNITS
+            const gfrType = this.getGfrType()
+            if (gfrType == GFR_api.GLR) {
+                return gfrUnits.GLR
+            } else if (gfrType == GFR_api.GOR) {
+                return gfrUnits.GOR
+            } else if (gfrType == GFR_api.MMW) {
+                return gfrUnits.MMW
+            } else if (gfrType == GFR_api.OGR) {
+                return gfrUnits.OGR
+            }
+        } else if (vfpParam == VfpParam.ALQ) {
+            const alqUnits = this._unitSet.ALQ_UNITS
+            const alqType = this.getAlqType()
+            if (alqType == ALQ_api.GRAT) {
+                return alqUnits.GRAT
+            } else if (alqType == ALQ_api.IGLR) {
+                return alqUnits.IGLR
+            } else if (alqType == ALQ_api.TGLR) {
+                return alqUnits.TGLR
+            } else if (alqType == ALQ_api.DENO) {
+                return alqUnits.DENO
+            } else if (alqType == ALQ_api.DENG) {
+                return alqUnits.DENG
+            } else if (alqType == ALQ_api.BEAN) {
+                return alqUnits.BEAN
+            }
+        }
+        return ""
+    }
+
+    getVfpParamLabel(vfpParam: VfpParam): string {
+        let label = ""
+        if (vfpParam == VfpParam.THP) {
+            label = "THP"
+        } else if (vfpParam == VfpParam.WFR) {
+            label = this._vfpTable.wfr_type
+        } else if (vfpParam == VfpParam.GFR) {
+            label = this._vfpTable.gfr_type
+        } else if (vfpParam == VfpParam.ALQ) {
+            if (this._vfpTable.alq_type === ALQ_api._) {
+                label = "ALQ"
+            } else {
+                label = "ALQ: " + this._vfpTable.alq_type
+            }
+        }
+        const unit = this.getVfpParamUnit(vfpParam)
+        if (unit != "") {
+            label += ` (${unit})`
+        }
+        return label
+    }
+
+    getWfrType(): WFR_api {
         return this._vfpTable.wfr_type
     }
 
-    getGfrType(): GFR {
+    getGfrType(): GFR_api {
         return this._vfpTable.gfr_type
     }
 
-    getAlqType(): ALQ {
+    getAlqType(): ALQ_api {
         return this._vfpTable.alq_type
     }
 
