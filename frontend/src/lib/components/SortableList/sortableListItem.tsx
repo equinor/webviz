@@ -5,10 +5,10 @@ import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { DragIndicator } from "@mui/icons-material";
 
-import { DragListContext, HoveredArea } from "./dragList";
-import { DragListDropIndicator } from "./dragListDropIndicator";
+import { HoveredArea, SortableListContext } from "./sortableList";
+import { SortableListDropIndicator } from "./sortableListDropIndicator";
 
-export type DragListItemProps = {
+export type SortableListItemProps = {
     id: string;
     icon?: React.ReactNode;
     title: string;
@@ -17,21 +17,21 @@ export type DragListItemProps = {
     children: React.ReactNode;
 };
 
-export function DragListItem(props: DragListItemProps): React.ReactNode {
+export function SortableListItem(props: SortableListItemProps): React.ReactNode {
     const divRef = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(divRef);
 
-    const dragListContext = React.useContext(DragListContext);
+    const sortableListContext = React.useContext(SortableListContext);
 
-    const isHovered = dragListContext.hoveredElementId === props.id;
-    const isDragging = dragListContext.draggedElementId === props.id;
-    const dragPosition = dragListContext.dragPosition;
+    const isHovered = sortableListContext.hoveredElementId === props.id;
+    const isDragging = sortableListContext.draggedElementId === props.id;
+    const dragPosition = sortableListContext.dragPosition;
 
     return (
         <>
-            {isHovered && dragListContext.hoveredArea === HoveredArea.TOP && <DragListDropIndicator />}
+            {isHovered && sortableListContext.hoveredArea === HoveredArea.TOP && <SortableListDropIndicator />}
             <div
-                className={resolveClassNames("drag-list-element drag-list-item flex flex-col relative")}
+                className={resolveClassNames("sortable-list-element sortable-list-item flex flex-col relative")}
                 data-item-id={props.id}
                 ref={divRef}
             >
@@ -46,7 +46,7 @@ export function DragListItem(props: DragListItemProps): React.ReactNode {
                     createPortal(
                         <div
                             className={resolveClassNames(
-                                "flex h-10 px-1 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50"
+                                "flex h-10 px-1 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50 opacity-75"
                             )}
                             style={{
                                 left: dragPosition.x,
@@ -59,7 +59,7 @@ export function DragListItem(props: DragListItemProps): React.ReactNode {
                     )}
                 <div className="flex flex-col gap-2 bg-white border-b shadow-inner p-2">{props.children}</div>
             </div>
-            {isHovered && dragListContext.hoveredArea === HoveredArea.BOTTOM && <DragListDropIndicator />}
+            {isHovered && sortableListContext.hoveredArea === HoveredArea.BOTTOM && <SortableListDropIndicator />}
         </>
     );
 }
@@ -74,7 +74,7 @@ type HeaderProps = {
 function Header(props: HeaderProps): React.ReactNode {
     return (
         <div className="flex gap-1 h-8 bg-slate-100 hover:bg-blue-100 text-sm items-center border-b border-b-gray-300">
-            <div className={resolveClassNames("drag-list-element-indicator px-0.5 hover:cursor-grab")}>
+            <div className={resolveClassNames("sortable-list-element-indicator px-0.5 hover:cursor-grab")}>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
             <div className="flex items-center gap-2">

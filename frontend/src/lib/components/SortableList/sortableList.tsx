@@ -7,8 +7,8 @@ import { Vec2, point2Distance } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
 
-import { DragListGroupProps } from "./dragListGroup";
-import { DragListItemProps } from "./dragListItem";
+import { SortableListGroupProps } from "./sortableListGroup";
+import { SortableListItemProps } from "./sortableListItem";
 
 export enum HoveredArea {
     TOP = "top",
@@ -17,27 +17,27 @@ export enum HoveredArea {
     CENTER = "center",
 }
 
-export type DragListContextType = {
+export type SortableListContextType = {
     draggedElementId: string | null;
     hoveredElementId: string | null;
     hoveredArea: HoveredArea | null;
     dragPosition: Vec2 | null;
 };
 
-export const DragListContext = React.createContext<DragListContextType>({
+export const SortableListContext = React.createContext<SortableListContextType>({
     draggedElementId: null,
     hoveredElementId: null,
     hoveredArea: null,
     dragPosition: null,
 });
 
-export type DragListProps = {
+export type SortableListProps = {
     contentWhenEmpty?: React.ReactNode;
-    children: React.ReactElement<DragListItemProps | DragListGroupProps>[];
+    children: React.ReactElement<SortableListItemProps | SortableListGroupProps>[];
     onItemMove?: (itemId: string, originId: string | null, destinationId: string | null, position: number) => void;
 };
 
-function assertTargetIsDragListItemAndExtractProps(
+function assertTargetIsSortableListItemAndExtractProps(
     target: EventTarget | null
 ): { element: HTMLElement; id: string; parentId: string | null } | null {
     if (!target) {
@@ -49,37 +49,37 @@ function assertTargetIsDragListItemAndExtractProps(
         return null;
     }
 
-    const dragListItemIndicator = element.closest(".drag-list-element-indicator");
-    if (!dragListItemIndicator) {
+    const sortableListItemIndicator = element.closest(".sortable-list-element-indicator");
+    if (!sortableListItemIndicator) {
         return null;
     }
 
-    const dragListElement = element.closest(".drag-list-element");
-    if (!dragListElement) {
+    const sortableListElement = element.closest(".sortable-list-element");
+    if (!sortableListElement) {
         return null;
     }
 
-    if (!(dragListElement instanceof HTMLElement)) {
+    if (!(sortableListElement instanceof HTMLElement)) {
         return null;
     }
 
-    const id = dragListElement.dataset.itemId;
+    const id = sortableListElement.dataset.itemId;
     if (!id) {
         return null;
     }
 
     if (
-        dragListElement.parentElement &&
-        dragListElement.parentElement instanceof HTMLElement &&
-        dragListElement.parentElement.classList.contains("drag-list-group")
+        sortableListElement.parentElement &&
+        sortableListElement.parentElement instanceof HTMLElement &&
+        sortableListElement.parentElement.classList.contains("sortable-list-group")
     ) {
-        const parentId = dragListElement.parentElement.dataset.itemId;
+        const parentId = sortableListElement.parentElement.dataset.itemId;
         if (parentId) {
-            return { element: dragListElement, id, parentId };
+            return { element: sortableListElement, id, parentId };
         }
     }
 
-    return { element: dragListElement, id, parentId: null };
+    return { element: sortableListElement, id, parentId: null };
 }
 
 enum ItemType {
@@ -92,9 +92,9 @@ type HoveredItemIdAndArea = {
     area: HoveredArea;
 };
 
-const ELEMENT_TOP_AND_CENTER_AREA_SIZE_IN_PX = 10;
+const ELEMENT_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT = 50;
 
-export function DragList(props: DragListProps): React.ReactNode {
+export function SortableList(props: SortableListProps): React.ReactNode {
     const { onItemMove } = props;
 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
@@ -103,7 +103,7 @@ export function DragList(props: DragListProps): React.ReactNode {
     const [dragPosition, setDragPosition] = React.useState<Vec2>({ x: 0, y: 0 });
     const [currentScrollPosition, setCurrentScrollPosition] = React.useState<number>(0);
     const [prevChildren, setPrevChildren] = React.useState<
-        React.ReactElement<DragListItemProps | DragListGroupProps>[]
+        React.ReactElement<SortableListItemProps | SortableListGroupProps>[]
     >(props.children);
 
     const listDivRef = React.useRef<HTMLDivElement>(null);
@@ -150,13 +150,13 @@ export function DragList(props: DragListProps): React.ReactNode {
                     return;
                 }
 
-                const dragListItemProps = assertTargetIsDragListItemAndExtractProps(target);
-                if (!dragListItemProps) {
+                const sortableListItemProps = assertTargetIsSortableListItemAndExtractProps(target);
+                if (!sortableListItemProps) {
                     return;
                 }
 
-                const element = dragListItemProps.element;
-                draggedElement = dragListItemProps;
+                const element = sortableListItemProps.element;
+                draggedElement = sortableListItemProps;
 
                 pointerDownPosition = { x: e.clientX, y: e.clientY };
                 draggingActive = false;
@@ -225,12 +225,12 @@ export function DragList(props: DragListProps): React.ReactNode {
                 const parentElement = parent ?? currentListDivRef;
 
                 for (const child of parentElement.children) {
-                    if (child instanceof HTMLElement && child.classList.contains("drag-list-item")) {
+                    if (child instanceof HTMLElement && child.classList.contains("sortable-list-item")) {
                         items.push(child);
                     }
-                    if (child instanceof HTMLElement && child.classList.contains("drag-list-group")) {
+                    if (child instanceof HTMLElement && child.classList.contains("sortable-list-group")) {
                         items.push(child);
-                        const content = child.querySelector(".drag-list-group-content");
+                        const content = child.querySelector(".sortable-list-group-content");
                         if (content && content instanceof HTMLElement) {
                             items.push(...getDragElementsRecursively(content));
                         }
@@ -245,7 +245,7 @@ export function DragList(props: DragListProps): React.ReactNode {
                     if (rectContainsPoint(item.getBoundingClientRect(), { x: e.clientX, y: e.clientY })) {
                         const type = getItemType(item);
                         if (type === ItemType.CONTAINER) {
-                            const content = item.querySelector(".drag-list-group-content");
+                            const content = item.querySelector(".sortable-list-group-content");
                             if (
                                 content &&
                                 rectContainsPoint(content.getBoundingClientRect(), { x: e.clientX, y: e.clientY })
@@ -262,9 +262,9 @@ export function DragList(props: DragListProps): React.ReactNode {
             }
 
             function getItemType(item: HTMLElement): ItemType | null {
-                if (item.classList.contains("drag-list-item")) {
+                if (item.classList.contains("sortable-list-item")) {
                     return ItemType.ITEM;
-                } else if (item.classList.contains("drag-list-group")) {
+                } else if (item.classList.contains("sortable-list-group")) {
                     return ItemType.CONTAINER;
                 }
                 return null;
@@ -273,20 +273,20 @@ export function DragList(props: DragListProps): React.ReactNode {
             function getHoveredAreaOfItem(item: HTMLElement, e: PointerEvent): HoveredArea {
                 const rect = item.getBoundingClientRect();
                 const topAreaTop = rect.top;
-                const topAreaBottom = rect.top + ELEMENT_TOP_AND_CENTER_AREA_SIZE_IN_PX;
+                const topAreaBottom = rect.top + (ELEMENT_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT / 100) * rect.height;
 
                 if (e.clientY >= topAreaTop && e.clientY <= topAreaBottom) {
                     return HoveredArea.TOP;
                 }
 
-                const bottomAreaTop = rect.bottom - ELEMENT_TOP_AND_CENTER_AREA_SIZE_IN_PX;
+                const bottomAreaTop = rect.bottom - (ELEMENT_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT / 100) * rect.height;
                 const bottomAreaBottom = rect.bottom;
 
                 if (e.clientY >= bottomAreaTop && e.clientY <= bottomAreaBottom) {
                     return HoveredArea.BOTTOM;
                 }
 
-                const headerElement = item.querySelector(".drag-list-item-header");
+                const headerElement = item.querySelector(".sortable-list-item-header");
                 if (!headerElement) {
                     return HoveredArea.CENTER;
                 }
@@ -300,7 +300,7 @@ export function DragList(props: DragListProps): React.ReactNode {
             }
 
             function getItemParentGroupId(item: HTMLElement): string | null {
-                const group = item.parentElement?.closest(".drag-list-group");
+                const group = item.parentElement?.closest(".sortable-list-group");
                 if (!group || !(group instanceof HTMLElement)) {
                     return null;
                 }
@@ -308,7 +308,7 @@ export function DragList(props: DragListProps): React.ReactNode {
             }
 
             function getItemPositionInGroup(item: HTMLElement): number {
-                let group = item.parentElement?.closest(".drag-list-group-content");
+                let group = item.parentElement?.closest(".sortable-list-group-content");
                 if (!group || !(group instanceof HTMLElement)) {
                     group = currentListDivRef;
                 }
@@ -466,7 +466,7 @@ export function DragList(props: DragListProps): React.ReactNode {
             if (typeof child.type === "string") {
                 continue;
             }
-            if (child.type.name === "DragListItem") {
+            if (child.type.name === "SortableListItem") {
                 children.push(
                     React.cloneElement(child, {
                         key: child.props.id,
@@ -485,7 +485,7 @@ export function DragList(props: DragListProps): React.ReactNode {
 
     return (
         <div className="w-full h-full flex flex-col relative">
-            <DragListContext.Provider
+            <SortableListContext.Provider
                 value={{
                     draggedElementId: draggedItemId,
                     hoveredElementId: hoveredItemIdAndArea?.id ?? null,
@@ -519,7 +519,7 @@ export function DragList(props: DragListProps): React.ReactNode {
                             })}
                         ></div>
                     )}
-            </DragListContext.Provider>
+            </SortableListContext.Provider>
         </div>
     );
 }

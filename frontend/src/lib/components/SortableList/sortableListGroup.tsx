@@ -5,31 +5,31 @@ import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import { DragListContext, HoveredArea } from "./dragList";
-import { DragListDropIndicator } from "./dragListDropIndicator";
-import { DragListItemProps } from "./dragListItem";
+import { HoveredArea, SortableListContext } from "./sortableList";
+import { SortableListDropIndicator } from "./sortableListDropIndicator";
+import { SortableListItemProps } from "./sortableListItem";
 
-export type DragListGroupProps = {
+export type SortableListGroupProps = {
     id: string;
     icon?: React.ReactNode;
     title: string;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     contentWhenEmpty?: React.ReactNode;
-    children: React.ReactElement<DragListItemProps>[];
+    children: React.ReactElement<SortableListItemProps>[];
 };
 
-export function DragListGroup(props: DragListGroupProps): React.ReactNode {
+export function SortableListGroup(props: SortableListGroupProps): React.ReactNode {
     const [isExpanded, setIsExpanded] = React.useState<boolean>(true);
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(divRef);
-    const dragListContext = React.useContext(DragListContext);
+    const sortableListContext = React.useContext(SortableListContext);
 
-    const isHovered = dragListContext.hoveredElementId === props.id;
-    const isHeaderHovered = isHovered && dragListContext.hoveredArea === HoveredArea.HEADER;
-    const isDragging = dragListContext.draggedElementId === props.id;
-    const dragPosition = dragListContext.dragPosition;
+    const isHovered = sortableListContext.hoveredElementId === props.id;
+    const isHeaderHovered = isHovered && sortableListContext.hoveredArea === HoveredArea.HEADER;
+    const isDragging = sortableListContext.draggedElementId === props.id;
+    const dragPosition = sortableListContext.dragPosition;
 
     function handleToggleExpanded() {
         setIsExpanded(!isExpanded);
@@ -37,9 +37,9 @@ export function DragListGroup(props: DragListGroupProps): React.ReactNode {
 
     return (
         <>
-            {isHovered && dragListContext.hoveredArea === HoveredArea.TOP && <DragListDropIndicator />}
+            {isHovered && sortableListContext.hoveredArea === HoveredArea.TOP && <SortableListDropIndicator />}
             <div
-                className={resolveClassNames("drag-list-element drag-list-group relative", {
+                className={resolveClassNames("sortable-list-element sortable-list-group relative", {
                     "bg-blue-200": isHeaderHovered,
                     "bg-gray-200": !isHeaderHovered,
                 })}
@@ -57,7 +57,7 @@ export function DragListGroup(props: DragListGroupProps): React.ReactNode {
                     createPortal(
                         <div
                             className={resolveClassNames(
-                                "flex h-8 px-1 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50"
+                                "flex h-8 px-1 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50 opacity-75"
                             )}
                             style={{
                                 left: dragPosition.x,
@@ -70,7 +70,7 @@ export function DragListGroup(props: DragListGroupProps): React.ReactNode {
                     )}
                 <div
                     className={resolveClassNames(
-                        "drag-list-group-content pl-2 bg-white mb-1 shadow-inner border-b border-b-gray-300",
+                        "sortable-list-group-content pl-2 bg-white mb-1 shadow-inner border-b border-b-gray-300",
                         {
                             "overflow-hidden h-[0px]": !isExpanded,
                         }
@@ -79,7 +79,7 @@ export function DragListGroup(props: DragListGroupProps): React.ReactNode {
                     {props.children.length === 0 ? props.contentWhenEmpty : props.children}
                 </div>
             </div>
-            {isHovered && dragListContext.hoveredArea === HoveredArea.BOTTOM && <DragListDropIndicator />}
+            {isHovered && sortableListContext.hoveredArea === HoveredArea.BOTTOM && <SortableListDropIndicator />}
         </>
     );
 }
@@ -95,8 +95,8 @@ type HeaderProps = {
 
 function Header(props: HeaderProps): React.ReactNode {
     return (
-        <div className="drag-list-item-header flex items-center gap-1 h-8 text-sm font-bold border-b border-b-gray-300">
-            <div className={resolveClassNames("drag-list-element-indicator px-0.5 hover:cursor-grab")}>
+        <div className="sortable-list-item-header flex items-center gap-1 h-8 text-sm font-bold border-b border-b-gray-300">
+            <div className={resolveClassNames("sortable-list-element-indicator px-0.5 hover:cursor-grab")}>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
             <div
