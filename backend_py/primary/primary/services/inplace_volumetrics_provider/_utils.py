@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple
 
+import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 import numpy as np
@@ -70,19 +71,15 @@ def create_statistical_grouped_result_table_data_pandas(
     per_realization_grouped_result_table = create_per_realization_accumulated_result_table(
         result_table, selector_columns, group_by_identifiers
     )
-    valid_selector_columns = [
-        elm for elm in selector_columns if elm in per_realization_grouped_result_table.column_names
-    ]
     valid_result_names = [
         elm for elm in per_realization_grouped_result_table.column_names if elm not in selector_columns
     ]
 
     # Convert to pandas dataframe for easier statistical aggregation
-    df = per_realization_grouped_result_table.to_pandas()
+    dataframe = per_realization_grouped_result_table.to_pandas()
 
+    # Internal working data structures
     group_by_list = list(group_by_identifier_set)
-    grouped = df.groupby(group_by_list)
-
     group_by_columns: Dict[str, List[float]] = {column_name: [] for column_name in group_by_list}
     result_statistical_data_dict: Dict[str, TableColumnStatisticalData] = {
         result_name: TableColumnStatisticalData(
@@ -99,44 +96,78 @@ def create_statistical_grouped_result_table_data_pandas(
         for result_name in valid_result_names
     }
 
-    # Iterate over each group and extract group by column values and calculate statistics for each result
-    for keys, group in grouped:
-        if len(keys) != len(group_by_columns.keys()):
-            raise ValueError(
-                f"Number of group by keys {len(keys)} does not match number of group by columns {len(group_by_columns.keys())}"
+    # Output data structures
+    selector_column_data_list: List[RepeatedTableColumnData] = []
+    result_statistical_data_list: List[TableColumnStatisticalData] = []
+
+    def _calculate_and_append_statistics_per_group(group_df: pd.DataFrame):
+        for result_name in valid_result_names:
+            result_column_array = group_df[result_name].to_numpy()
+            statistics_data = result_statistical_data_dict[result_name]  # Get reference to dictionary
+
+            statistics_data.statistic_values[Statistics.MEAN].append(np.mean(result_column_array))
+            statistics_data.statistic_values[Statistics.STD_DEV].append(np.std(result_column_array))
+            statistics_data.statistic_values[Statistics.MIN].append(np.min(result_column_array))
+            statistics_data.statistic_values[Statistics.MAX].append(np.max(result_column_array))
+            statistics_data.statistic_values[Statistics.P10].append(np.percentile(result_column_array, 10))
+            statistics_data.statistic_values[Statistics.P90].append(np.percentile(result_column_array, 90))
+
+    # Handle case where group by identifiers are empty
+    if len(group_by_list) == 0:
+        _calculate_and_append_statistics_per_group(dataframe)
+
+    else:
+
+        # NOTE: If group by identifiers are empty, the groupby will fail with an error
+        grouped = dataframe.groupby(group_by_list)
+
+        # Iterate over each group and extract group by column values and calculate statistics for each result
+        for keys, group in grouped:
+            if len(keys) != len(group_by_columns.keys()):
+                raise ValueError(
+                    f"Number of group by keys {len(keys)} does not match number of group by columns {len(group_by_columns.keys())}"
+                )
+
+            # Get group by column values
+            for index, key in enumerate(keys):
+                column_name = group_by_list[index]
+                group_by_columns[column_name].append(key)
+
+            # Calculate and append statistics for group
+            _calculate_and_append_statistics_per_group(group)
+
+        # Convert group by columns to repeated table column data
+        for column_name, column_values in group_by_columns.items():
+            selector_column_data_list.append(
+                _create_repeated_table_column_data_from_column(column_name, pa.array(column_values))
             )
 
-        # Get group by column values
-        for index, key in enumerate(keys):
-            column_name = group_by_list[index]
-            group_by_columns[column_name].append(key)
-
-        # Calculate statistics for each result
-        for result_name in valid_result_names:
-            result_data = group[result_name]
-            statistics_data = result_statistical_data_dict[result_name]  # NOTE: This is a reference to the dictionary
-
-            statistics_data.statistic_values[Statistics.MEAN].append(result_data.mean())
-            statistics_data.statistic_values[Statistics.STD_DEV].append(result_data.std())
-            statistics_data.statistic_values[Statistics.MIN].append(result_data.min())
-            statistics_data.statistic_values[Statistics.MAX].append(result_data.max())
-            statistics_data.statistic_values[Statistics.P10].append(np.percentile(result_data, 10))
-            statistics_data.statistic_values[Statistics.P90].append(np.percentile(result_data, 90))
-
-    # Convert group by columns to repeated table column data
-    selector_column_data_list: List[RepeatedTableColumnData] = []
-    for column_name, column_values in group_by_columns.items():
-        selector_column_data_list.append(
-            _create_repeated_table_column_data_from_column(column_name, pa.array(column_values))
-        )
-
     # Convert result statistical data to list
-    result_statistical_data_list: List[TableColumnStatisticalData] = []
-    for result_name, result_statistical_data in result_statistical_data_dict.items():
+    for result_statistical_data in result_statistical_data_dict.values():
         result_statistical_data_list.append(result_statistical_data)
 
     # TODO: Verify length of each array in statistical data list?
     return (selector_column_data_list, result_statistical_data_list)
+
+
+def _get_statistic_enum_from_pyarrow_aggregate_func_name(func: str) -> Statistics:
+    """
+    Get statistic enum from pyarrow aggregate function name
+    """
+    if func == "mean":
+        return Statistics.MEAN
+    if func == "stddev":
+        return Statistics.STD_DEV
+    if func == "min":
+        return Statistics.MIN
+    if func == "max":
+        return Statistics.MAX
+    if func == "p10":
+        return Statistics.P10
+    if func == "p90":
+        return Statistics.P90
+
+    raise ValueError(f"Unknown statistic function name: {func}")
 
 
 def create_statistical_grouped_result_table_data_pyarrow(
@@ -148,9 +179,9 @@ def create_statistical_grouped_result_table_data_pyarrow(
     Create result table with statistics across realizations based on group by identifiers selection. The
     statistics are calculated across all realizations per grouping, thus the output will have one row per group.
 
-    Statistics: Mean, stddev, min, max, p10, p90
+    The order of the arrays in the statistical data lists will match the order of the rows in the selector column data list.
 
-    TODO: Add p10 and p90 later on (find each "group" (how to?) and filter table to get respective rows. Thereafter pick the column to calc p10 and p90?)
+    Statistics: Mean, stddev, min, max, p10, p90
     """
     group_by_identifier_set = set([elm.value for elm in group_by_identifiers])
 
@@ -181,7 +212,7 @@ def create_statistical_grouped_result_table_data_pyarrow(
     #   where each element of the column is an array with the requested percentiles in TDigestOptions.
     # - E.g: "result_name_tdigest" = [[1,2], [1.5, 2.5], [2,3] [2.5,3.5]], with a group by giving 4 groups. First element is p10, second is p90
     # - Note: If only 1 group, the result will be a single array with 2 elements - e.g. [1,2]
-    tdigest_options = pc.TDigestOptions([0.1, 0.9]) # p10 and p90
+    tdigest_options = pc.TDigestOptions([0.1, 0.9])  # p10 and p90
     percentile_aggregations = [(result_name, "tdigest", tdigest_options) for result_name in valid_result_names]
 
     # Create statistical table aggregation
@@ -207,29 +238,31 @@ def create_statistical_grouped_result_table_data_pyarrow(
             if statistic_column_name not in available_statistic_column_names:
                 raise ValueError(f"Column {statistic_column_name} not found in statistical table")
 
+            statistic_enum = _get_statistic_enum_from_pyarrow_aggregate_func_name(func)
             statistic_array = statistical_table[statistic_column_name]
-            result_statistical_data.statistic_values[func] = statistic_array.to_pylist()
+            result_statistical_data.statistic_values[statistic_enum] = statistic_array.to_pylist()
 
         # Handle percentile statistics
         percentile_column_name = f"{result_name}_tdigest"
         if percentile_column_name not in available_statistic_column_names:
             raise ValueError(f"Column {percentile_column_name} not found in statistical table")
 
-        percentile_array = statistical_table[percentile_column_name]
         p10_array = []
         p90_array = []
+        percentiles_array = statistical_table[percentile_column_name]
+        get_valid_percentile_value = lambda elm: elm.as_py() if elm.as_py() is not None else np.nan
         if len(group_by_identifier_set) == 0:
-            p10_array = [percentile_array[0].as_py()]
-            p90_array = [percentile_array[1].as_py()]
-        else:    
-            for elm in percentile_array:
-                if len(elm) != 2:
-                    raise ValueError(f"Expected 2 elements in percentile array, found {len(elm)}")
+            p10_array = [get_valid_percentile_value(percentiles_array[0])]
+            p90_array = [get_valid_percentile_value(percentiles_array[1])]
+        else:
+            for group_percentiles in percentiles_array:
+                if len(group_percentiles) != 2:
+                    raise ValueError(f"Expected 2 elements in percentile array, got {len(group_percentiles)}")
 
-                p10_array.append(elm[0].as_py())
-                p90_array.append(elm[1].as_py())
-        result_statistical_data.statistic_values[Statistics.P10.value] = p10_array
-        result_statistical_data.statistic_values[Statistics.P90.value] = p90_array
+                p10_array.append(get_valid_percentile_value(group_percentiles[0]))
+                p90_array.append(get_valid_percentile_value(group_percentiles[1]))
+        result_statistical_data.statistic_values[Statistics.P10] = p10_array
+        result_statistical_data.statistic_values[Statistics.P90] = p90_array
 
         # Add result statistical data to dictionary
         results_statistical_data_dict[result_name] = result_statistical_data
@@ -237,8 +270,41 @@ def create_statistical_grouped_result_table_data_pyarrow(
     # Create list of results statistical data from dictionary values
     results_statistical_data_list: List[TableColumnStatisticalData] = list(results_statistical_data_dict.values())
 
-    # TODO: Verify length of each array in statistical data list?
+    # Validate output
+    _validate_length_of_statistics_data_lists(selector_column_data_list, results_statistical_data_list)
+
     return (selector_column_data_list, results_statistical_data_list)
+
+
+def _validate_length_of_statistics_data_lists(
+    selector_column_data_list: List[RepeatedTableColumnData],
+    result_statistical_data_list: List[TableColumnStatisticalData],
+) -> None:
+    """
+    Verify that the length of the statistical data lists are equal. I.e. equal number of rows in each list.
+    """
+    if len(selector_column_data_list) == 0 and len(result_statistical_data_list) == 0:
+        raise ValueError("No statistical data found")
+
+    expected_num_rows = 0
+    if len(selector_column_data_list) != 0:
+        expected_num_rows = len(selector_column_data_list[0].indices)
+    else:
+        # Get first element in result_statistical_data_list[0].statistic_values without knowing the key
+        expected_num_rows = len(next(iter(result_statistical_data_list[0].statistic_values.values())))
+
+    for selector_column_data in selector_column_data_list:
+        if len(selector_column_data.indices) != expected_num_rows:
+            raise ValueError(
+                f"Length of selector column data list ({len(selector_column_data.indices)}) does not match expected number of rows ({expected_num_rows})"
+            )
+    for result_statistical_data in result_statistical_data_list:
+        for statistic, statistic_values in result_statistical_data.statistic_values.items():
+            if len(statistic_values) != expected_num_rows:
+                result_name = result_statistical_data.column_name
+                raise ValueError(
+                    f"Number of {result_name} statistic {statistic.value} values does not match expected number of rows: {expected_num_rows}. Got: {len(statistic_values)}"
+                )
 
 
 def _create_repeated_table_column_data_from_column(

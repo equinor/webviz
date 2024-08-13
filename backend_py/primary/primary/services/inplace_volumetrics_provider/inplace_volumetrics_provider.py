@@ -39,6 +39,11 @@ from ._utils import (
     create_inplace_volumetric_table_data_from_result_table,
 )
 
+import logging
+from webviz_pkg.core_utils.perf_timer import PerfTimer
+
+LOGGER = logging.getLogger(__name__)
+
 # Identifier column values to ignore, i.e. remove from the volumetric tables
 IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
 
@@ -191,22 +196,36 @@ class InplaceVolumetricsProvider:
         group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
         accumulate_fluid_zones: bool = False,
     ) -> InplaceStatisticalVolumetricTableDataPerFluidSelection:
+        timer = PerfTimer()
         result_table_per_fluid_selection: Dict[str, pa.Table] = await self._create_result_table_per_fluid_selection(
             table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
         )
+        timer_create_table_per_fluid_selection = timer.lap_ms()
 
         possible_selector_columns = self._inplace_volumetrics_access.get_possible_selector_columns()
 
         # Perform aggregation per result table
         # - Aggregate by each requested group_by_identifier
+        timer_pyarrow = 0
+        timer_pandas = 0
         statistical_table_data_per_fluid_selection: List[InplaceStatisticalVolumetricTableData] = []
         for fluid_selection_name, result_table in result_table_per_fluid_selection.items():
             valid_selector_columns = [col for col in possible_selector_columns if col in result_table.column_names]
+
+            timer.lap_ms()
             selector_column_data_list, result_column_data_list = create_statistical_grouped_result_table_data_pyarrow(
                 result_table,
                 valid_selector_columns,
                 group_by_identifiers,
             )
+            timer_pyarrow += timer.lap_ms()
+
+            # __dummy_call = create_statistical_grouped_result_table_data_pandas(
+            #     result_table,
+            #     valid_selector_columns,
+            #     group_by_identifiers,
+            # )
+            timer_pandas += timer.lap_ms()
 
             statistical_table_data_per_fluid_selection.append(
                 InplaceStatisticalVolumetricTableData(
@@ -215,6 +234,11 @@ class InplaceVolumetricsProvider:
                     result_column_statistics=result_column_data_list,
                 )
             )
+        print(
+            f"Time creating table per fluid selection: {timer_create_table_per_fluid_selection}ms, ",
+            f"Time creating result table pyarrow: {timer_pyarrow}ms, ",
+            f"Time creating result table pandas: {timer_pandas}ms",
+        )
 
         return InplaceStatisticalVolumetricTableDataPerFluidSelection(
             table_data_per_fluid_selection=statistical_table_data_per_fluid_selection
@@ -246,6 +270,7 @@ class InplaceVolumetricsProvider:
             all_volume_names, fluid_zones
         )
 
+        timer = PerfTimer()
         # Get the raw volumetric table
         row_filtered_raw_table = await self._create_row_filtered_volumetric_table_data_async(
             table_name=table_name,
@@ -253,6 +278,8 @@ class InplaceVolumetricsProvider:
             realizations=realizations,
             identifiers_with_values=identifiers_with_values,
         )
+        timer_create_raw_table = timer.lap_ms()
+        print(f"Time creating raw table: {timer_create_raw_table}ms")
 
         # Build a new table with one merged column per result and additional fluid zone column is created.
         # I.e. where result column has values per fluid zone appended after each other. Num rows is then original num rows * num fluid zones
@@ -333,8 +360,6 @@ class InplaceVolumetricsProvider:
         if realizations is not None and len(realizations) == 0:
             return {}
 
-        t1 = time.perf_counter(), time.process_time()
-
         # Get the inplace volumetrics table from collection in Sumo
         #
         # NOTE:
@@ -347,10 +372,7 @@ class InplaceVolumetricsProvider:
             )
         )
 
-        t2 = time.perf_counter(), time.process_time()
-        print(f" Real time: {t2[0] - t1[0]:.2f} seconds")
-        print(f" CPU time: {t2[1] - t1[1]:.2f} seconds")
-
+        timer = PerfTimer()
         table_column_names = inplace_volumetrics_table.column_names
 
         # Build mask for rows - default all rows
@@ -391,6 +413,9 @@ class InplaceVolumetricsProvider:
             mask = pc.and_(mask, identifier_mask)
 
         filtered_table = inplace_volumetrics_table.filter(mask)
+        time_row_filtering = timer.lap_ms()
+        print(f"Volumetric table row filtering (based on selectors): {time_row_filtering}ms")
+
         return filtered_table
 
     def _create_volumetric_table_per_fluid_zone(

@@ -67,7 +67,7 @@ class InplaceVolumetricsAccess:
         Returns:
         pa.Table with columns: ZONE, REGION, FACIES, REAL, and the available requested column names.
         """
-
+        timer = PerfTimer()
         # Get collection of tables per requested column
         requested_columns = column_names if column_names is None else list(column_names)
         vol_table_collection = self._case.tables.filter(
@@ -76,7 +76,7 @@ class InplaceVolumetricsAccess:
             tagname=["vol", "volumes", "inplace"],
             iteration=self._iteration_name,
             column=requested_columns,
-        )
+        )        
 
         # Assemble tables into a single table
         vol_table: pa.Table = await self._assemble_volumetrics_table_collection_into_single_table_async(
@@ -84,7 +84,7 @@ class InplaceVolumetricsAccess:
             table_name=table_name,
             column_names=column_names,
         )
-
+        
         return vol_table
 
     async def get_inplace_volumetrics_table_async(
@@ -157,7 +157,8 @@ class InplaceVolumetricsAccess:
         Volume columns: column_names
 
         """
-
+        timer = PerfTimer()
+        timer.lap_ms()
         num_tables_in_collection = await vol_table_collection.length_async()
         vol_table_columns = await vol_table_collection.columns_async
         if num_tables_in_collection == 0:
@@ -165,10 +166,12 @@ class InplaceVolumetricsAccess:
                 f"No inplace volumetrics tables found in case={self._case_uuid}, iteration={self._iteration_name}, table_name={table_name}, column_names={column_names}",
                 Service.SUMO,
             )
-
+        time_num_tables_and_collection_columns = timer.lap_ms()
+        
         # Download tables in parallel
         tasks = [asyncio.create_task(table.to_arrow_async()) for table in vol_table_collection]
         arrow_tables: list[pa.Table] = await asyncio.gather(*tasks)
+        time_async_download_ms = timer.lap_ms()
 
         if len(arrow_tables) == 0:
             raise NoDataError(
@@ -190,8 +193,9 @@ class InplaceVolumetricsAccess:
             # Expect only one column in addition to the index columns, i.e. the volume
             volume_names_set = set(volume_table.column_names) - expected_selector_columns
             if len(volume_names_set) == 0:
+                continue
                 raise InvalidDataError(
-                    f"Table {table_name} has collection without detected volume column. Collection has column names {volume_table.column_names}",
+                    f"Table {table_name} has collection without volume column. Collection only has columns defined as selectors: {volume_table.column_names}",
                     Service.SUMO,
                 )
             if len(volume_names_set) != 1:
@@ -199,10 +203,18 @@ class InplaceVolumetricsAccess:
                     f"Table {table_name} has collection with more than one column for volume: {volume_names_set}",
                     Service.SUMO,
                 )
+            if list(volume_names_set)[0] == "GRID":
+                continue
 
             # Add volume column to table
             volume_name = list(volume_names_set)[0]
             volume_column = volume_table[volume_name]
             volumes_table = volumes_table.append_column(volume_name, volume_column)
+        
+        time_build_single_table_ms = timer.lap_ms()
+        print(f"Access Volumetric collection tables: count tables and column names: {time_num_tables_and_collection_columns}ms, "
+        f"collection download: {time_async_download_ms}ms, "
+        f"assemble into single table: {time_build_single_table_ms}ms, "
+        f"Total time: {timer.elapsed_ms()}ms")
 
         return volumes_table

@@ -156,6 +156,10 @@ export function makeStatisticalTablesFromApiData(
         for (const fluidZoneTableData of tableSet.data.tableDataPerFluidSelection) {
             // Add main columns
             // const firstKey = fluidZoneTableData.resultColumnStatistics[0].statisticValues
+            if (fluidZoneTableData.resultColumnStatistics.length === 0) {
+                continue;
+            }
+
             const numRows = fluidZoneTableData.resultColumnStatistics[0].statisticValues["min"].length; // TODO: Fix correct numRows
             for (let i = 0; i < numRows; i++) {
                 nonStatisticalColumns.get("ensemble")?.addRowValue(tableSet.ensembleIdent);

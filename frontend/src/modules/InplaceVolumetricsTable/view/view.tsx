@@ -8,6 +8,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Table } from "@lib/components/Table";
 import { TableHeading, TableRow } from "@lib/components/Table/table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
@@ -221,24 +222,35 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
         return "No data to display.";
     }
 
-    // Empty data
-    // TODO: REMOVE THIS
-    if (Object.keys(headings).length === 0 && tableRows.length === 0) {
-        // Return an error message
-        return <div className="w-full h-full flex items-center justify-center">Failed to load data.</div>;
-    }
-
     return (
         <div ref={divRef} className="w-full h-full relative">
-            <div
-                className={resolveClassNames(
-                    "absolute top-0 left-0 w-full h-full bg-white bg-opacity-50 backdrop-blur-sm flex items-center justify-center",
-                    { hidden: tableRows.length > 0 }
-                )}
+            <PendingWrapper
+                isPending={
+                    perRealizationTableDataQueries.isFetching || statisticalRealizationTableDataQueries.isFetching
+                }
+                errorMessage={
+                    perRealizationTableDataQueries.allQueriesFailed ||
+                    statisticalRealizationTableDataQueries.allQueriesFailed
+                        ? "Failed to load table data"
+                        : undefined
+                }
             >
-                {makeMessage()}
-            </div>
-            <Table headings={headings} data={tableRows} height={divBoundingRect.height} onHover={handleTableHover} />
+                <div
+                    className={resolveClassNames(
+                        "absolute top-0 left-0 w-full h-full bg-white bg-opacity-50 backdrop-blur-sm flex items-center justify-center",
+                        { hidden: tableRows.length > 0 }
+                    )}
+                >
+                    {makeMessage()}
+                </div>
+
+                <Table
+                    headings={headings}
+                    data={tableRows}
+                    height={divBoundingRect.height}
+                    onHover={handleTableHover}
+                />
+            </PendingWrapper>
         </div>
     );
 }
