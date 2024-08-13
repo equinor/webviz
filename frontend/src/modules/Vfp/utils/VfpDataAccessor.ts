@@ -109,7 +109,7 @@ export class VfpDataAccessor {
         return ""
     }
 
-    getVfpParamLabel(vfpParam: VfpParam): string {
+    getVfpParamLabel(vfpParam: VfpParam, includeUnit: boolean): string {
         let label = ""
         if (vfpParam == VfpParam.THP) {
             label = "THP"
@@ -125,7 +125,7 @@ export class VfpDataAccessor {
             }
         }
         const unit = this.getVfpParamUnit(vfpParam)
-        if (unit != "") {
+        if (includeUnit && unit != "") {
             label += ` (${unit})`
         }
         return label

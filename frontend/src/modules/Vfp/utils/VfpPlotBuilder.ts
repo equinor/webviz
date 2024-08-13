@@ -80,7 +80,7 @@ export class VfpPlotBuilder {
         const colorScaleMarker: Partial<PlotMarker> = {
            ...this._colorScale.getAsPlotlyColorScaleMarkerObject(),
             colorbar: {
-                title: this._vfpDataAccessor.getVfpParamLabel(colorBy),
+                title: this._vfpDataAccessor.getVfpParamLabel(colorBy, true),
                 titleside: "right",
                 ticks: "outside",
                 len: 0.75,

@@ -135,10 +135,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     let vfpDataAccessor;
     if (vfpTableData) {
         vfpDataAccessor = new VfpDataAccessor(vfpTableData)
-        thpLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.THP)
-        wfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.WFR)
-        gfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.GFR)
-        alqLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.ALQ)
+        thpLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true)
+        wfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.WFR, true)
+        gfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.GFR, true)
+        alqLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.ALQ, true)
     }
 
     return (
@@ -225,10 +225,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             <CollapsibleGroup title="Color By" expanded={true}>
                 <Dropdown
                     options={[
-                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP) ?? "THP", value: VfpParam.THP },
-                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR) ?? "WFR", value: VfpParam.WFR },
-                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.GFR) ?? "GFR", value: VfpParam.GFR },
-                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.ALQ) ?? "ALQ", value: VfpParam.ALQ },
+                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP },
+                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR, false) ?? "WFR", value: VfpParam.WFR },
+                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.GFR, false) ?? "GFR", value: VfpParam.GFR },
+                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.ALQ, false) ?? "ALQ", value: VfpParam.ALQ },
                     ]}
                     value={selectedColorBy ?? undefined}
                     onChange={handleColorByChange}
