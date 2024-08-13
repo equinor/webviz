@@ -3,7 +3,6 @@ from typing import List
 from primary.services.sumo_access.inplace_volumetrics_types import (
     InplaceVolumetricsTableDefinition,
     InplaceVolumetricTableDataPerFluidSelection,
-    InplaceStatisticalVolumetricTableData,
     InplaceStatisticalVolumetricTableDataPerFluidSelection,
 )
 

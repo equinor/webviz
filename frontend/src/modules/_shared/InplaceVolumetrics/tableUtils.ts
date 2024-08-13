@@ -1,5 +1,13 @@
+import { Statistics_api } from "@api";
+
 import { Column, ColumnType, Table } from "./Table";
-import { InplaceVolumetricsStatisticalTableData, InplaceVolumetricsTableData, SourceIdentifier } from "./types";
+import {
+    InplaceVolumetricsStatisticalTableData,
+    InplaceVolumetricsTableData,
+    SourceIdentifier,
+    StatisticalColumns,
+    StatisticalTableColumnData,
+} from "./types";
 
 export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table {
     const columns: Map<string, Column<any>> = new Map();
@@ -88,22 +96,11 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
     return new Table(Array.from(columns.values()));
 }
 
-export type StatisticalTablesType = {
-    // Each Table object is intended to have equal number of rows.
-    // - nonStatisticalColumnsTable: Non statistical columns table has columns for e.g.  ensemble, table, fluid-zone, and selector columns.
-    // - resultStatisticalColumnsTables: Map of string and Table for result statistical columns. Key is name of result, value is Table with statistical columns.
-
-    nonStatisticalColumnsTable: Table;
-    resultStatisticalColumnsTables: Map<string, Table>;
-};
-
-// Define a type which has one Table object for selectorColumns and a map of string and Table for resultStatisticalColumns
-
-export function makeStatisticalTablesFromApiData(
+export function makeStatisticalTableColumnDataFromApiData(
     data: InplaceVolumetricsStatisticalTableData[]
-): StatisticalTablesType {
+): StatisticalTableColumnData {
     // Result statistical tables
-    const resultStatisticalColumnsTables: Map<string, Table> = new Map();
+    const resultStatisticalColumns: Map<string, StatisticalColumns> = new Map();
 
     // Non-statistical columns
     const allSelectorColumns: Set<string> = new Set();
@@ -131,22 +128,19 @@ export function makeStatisticalTablesFromApiData(
 
             // Result statistical tables
             for (const resultColumn of fluidZoneTableData.resultColumnStatistics) {
-                if (resultStatisticalColumnsTables.has(resultColumn.columnName)) {
+                if (resultStatisticalColumns.has(resultColumn.columnName)) {
                     continue;
                 }
 
-                const statisticalColumns: Map<string, Column<any>> = new Map();
-                statisticalColumns.set("Mean", new Column<number>("Mean", ColumnType.RESULT));
-                statisticalColumns.set("Stddev", new Column<number>("Stddev", ColumnType.RESULT));
-                statisticalColumns.set("P90", new Column<number>("P90", ColumnType.RESULT));
-                statisticalColumns.set("P10", new Column<number>("P10", ColumnType.RESULT));
-                statisticalColumns.set("Min", new Column<number>("Min", ColumnType.RESULT));
-                statisticalColumns.set("Max", new Column<number>("Max", ColumnType.RESULT));
-
-                resultStatisticalColumnsTables.set(
-                    resultColumn.columnName,
-                    new Table(Array.from(statisticalColumns.values()))
-                );
+                const statisticalColumns: StatisticalColumns = {
+                    mean: new Column<number>("Mean", ColumnType.RESULT),
+                    stddev: new Column<number>("Stddev", ColumnType.RESULT),
+                    p90: new Column<number>("P90", ColumnType.RESULT),
+                    p10: new Column<number>("P10", ColumnType.RESULT),
+                    min: new Column<number>("Min", ColumnType.RESULT),
+                    max: new Column<number>("Max", ColumnType.RESULT),
+                };
+                resultStatisticalColumns.set(resultColumn.columnName, statisticalColumns);
             }
         }
     }
@@ -154,13 +148,15 @@ export function makeStatisticalTablesFromApiData(
     // Add row values to the tables
     for (const tableSet of data) {
         for (const fluidZoneTableData of tableSet.data.tableDataPerFluidSelection) {
-            // Add main columns
-            // const firstKey = fluidZoneTableData.resultColumnStatistics[0].statisticValues
-            if (fluidZoneTableData.resultColumnStatistics.length === 0) {
+            const hasNoResultColumnStatistics =
+                fluidZoneTableData.resultColumnStatistics.length === 0 ||
+                Object.keys(fluidZoneTableData.resultColumnStatistics[0].statisticValues).length === 0;
+            if (hasNoResultColumnStatistics) {
                 continue;
             }
 
-            const numRows = fluidZoneTableData.resultColumnStatistics[0].statisticValues["min"].length; // TODO: Fix correct numRows
+            // Number of rows from the first result statistic column
+            const numRows = Object.values(fluidZoneTableData.resultColumnStatistics[0].statisticValues)[0].length;
             for (let i = 0; i < numRows; i++) {
                 nonStatisticalColumns.get("ensemble")?.addRowValue(tableSet.ensembleIdent);
                 nonStatisticalColumns.get("table")?.addRowValue(tableSet.tableName);
@@ -175,58 +171,66 @@ export function makeStatisticalTablesFromApiData(
                 (elm) => !selectorColumnsInTable.includes(elm)
             );
             for (const selectorColumn of fluidZoneTableData.selectorColumns) {
-                for (let i = 0; i < selectorColumn.indices.length; i++) {
-                    nonStatisticalColumns
-                        .get(selectorColumn.columnName)
-                        ?.addRowValue(selectorColumn.uniqueValues[selectorColumn.indices[i]]);
+                for (const valueIndex of selectorColumn.indices) {
+                    const rowValue = selectorColumn.uniqueValues.at(valueIndex);
+                    if (!rowValue) {
+                        throw new Error(
+                            `Expected value at index ${valueIndex} for ${selectorColumn.columnName} not found`
+                        );
+                    }
+
+                    nonStatisticalColumns.get(selectorColumn.columnName)?.addRowValue(rowValue);
                 }
             }
 
-            // Fill in untouched columns with null
+            // Fill in untouched selector columns with null
             for (const untouchedColumn of untouchedSelectorColumns) {
                 for (let i = 0; i < numRows; i++) {
                     nonStatisticalColumns.get(untouchedColumn)?.addRowValue(null);
                 }
             }
 
-            // Build statistical table per result
+            // Build statistical columns per result across each unique table set
             const resultStatisticsInTableData = fluidZoneTableData.resultColumnStatistics.map(
                 (resultColumn) => resultColumn.columnName
             );
-            const untouchedResultStatistics = Array.from(resultStatisticalColumnsTables.keys()).filter(
+            const untouchedResultStatistics = Array.from(resultStatisticalColumns.keys()).filter(
                 (elm) => !resultStatisticsInTableData.includes(elm)
             );
             for (const resultColumn of fluidZoneTableData.resultColumnStatistics) {
-                const table = resultStatisticalColumnsTables.get(resultColumn.columnName);
+                const statisticalColumns = resultStatisticalColumns.get(resultColumn.columnName);
 
-                if (!table) {
-                    throw new Error(`Expected statistical table for ${resultColumn.columnName} not found`);
+                if (!statisticalColumns) {
+                    throw new Error(`Expected statistical columns for ${resultColumn.columnName} not found`);
                 }
 
-                table?.getColumn("Mean")?.addRowValues(resultColumn.statisticValues["mean"]);
-                table?.getColumn("Stddev")?.addRowValues(resultColumn.statisticValues["stddev"]);
-                table?.getColumn("P90")?.addRowValues(resultColumn.statisticValues["p90"]);
-                table?.getColumn("P10")?.addRowValues(resultColumn.statisticValues["p10"]);
-                table?.getColumn("Min")?.addRowValues(resultColumn.statisticValues["min"]);
-                table?.getColumn("Max")?.addRowValues(resultColumn.statisticValues["max"]);
+                statisticalColumns.mean?.addRowValues(resultColumn.statisticValues["mean"]);
+                statisticalColumns.stddev?.addRowValues(resultColumn.statisticValues["stddev"]);
+                statisticalColumns.p90?.addRowValues(resultColumn.statisticValues["p90"]);
+                statisticalColumns.p10?.addRowValues(resultColumn.statisticValues["p10"]);
+                statisticalColumns.min?.addRowValues(resultColumn.statisticValues["min"]);
+                statisticalColumns.max?.addRowValues(resultColumn.statisticValues["max"]);
             }
 
             // Fill in untouched results with null for statistics
             const nullArray = Array(numRows).fill(null);
             for (const untouchedResult of untouchedResultStatistics) {
-                const table = resultStatisticalColumnsTables.get(untouchedResult);
+                const statisticalColumns = resultStatisticalColumns.get(untouchedResult);
 
-                if (!table) {
-                    throw new Error(`Expected statistical table for ${untouchedResult} not found`);
+                if (!statisticalColumns) {
+                    throw new Error(`Expected statistical columns for ${untouchedResult} not found`);
                 }
 
-                table?.getColumns().forEach((column) => column.addRowValues(nullArray));
+                for (const keyStr of Object.keys(statisticalColumns)) {
+                    const key = keyStr as Statistics_api;
+                    statisticalColumns[key]?.addRowValues(nullArray);
+                }
             }
         }
     }
 
     return {
-        nonStatisticalColumnsTable: new Table(Array.from(nonStatisticalColumns.values())),
-        resultStatisticalColumnsTables: resultStatisticalColumnsTables,
+        nonStatisticalColumns: Array.from(nonStatisticalColumns.values()),
+        resultStatisticalColumns: resultStatisticalColumns,
     };
 }

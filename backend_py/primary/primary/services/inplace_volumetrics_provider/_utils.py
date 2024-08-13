@@ -9,7 +9,6 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     FluidZone,
     InplaceVolumetricTableData,
     InplaceVolumetricsIdentifier,
-    InplaceStatisticalVolumetricTableData,
     RepeatedTableColumnData,
     Statistics,
     TableColumnData,
@@ -270,7 +269,7 @@ def create_statistical_grouped_result_table_data_pyarrow(
     # Create list of results statistical data from dictionary values
     results_statistical_data_list: List[TableColumnStatisticalData] = list(results_statistical_data_dict.values())
 
-    # Validate output
+    # Validate length of columns
     _validate_length_of_statistics_data_lists(selector_column_data_list, results_statistical_data_list)
 
     return (selector_column_data_list, results_statistical_data_list)
@@ -282,21 +281,23 @@ def _validate_length_of_statistics_data_lists(
 ) -> None:
     """
     Verify that the length of the statistical data lists are equal. I.e. equal number of rows in each list.
+
+    NOTE: Allows empty lists
     """
     if len(selector_column_data_list) == 0 and len(result_statistical_data_list) == 0:
-        raise ValueError("No statistical data found")
+        return
 
     expected_num_rows = 0
     if len(selector_column_data_list) != 0:
         expected_num_rows = len(selector_column_data_list[0].indices)
     else:
-        # Get first element in result_statistical_data_list[0].statistic_values without knowing the key
         expected_num_rows = len(next(iter(result_statistical_data_list[0].statistic_values.values())))
 
     for selector_column_data in selector_column_data_list:
-        if len(selector_column_data.indices) != expected_num_rows:
+        num_rows = len(selector_column_data.indices)
+        if num_rows != expected_num_rows:
             raise ValueError(
-                f"Length of selector column data list ({len(selector_column_data.indices)}) does not match expected number of rows ({expected_num_rows})"
+                f"Length of selector column data list ({num_rows}) does not match expected number of rows ({expected_num_rows})"
             )
     for result_statistical_data in result_statistical_data_list:
         for statistic, statistic_values in result_statistical_data.statistic_values.items():

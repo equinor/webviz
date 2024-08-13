@@ -2,8 +2,11 @@ import {
     InplaceStatisticalVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricsIdentifier_api,
+    Statistics_api,
 } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+
+import { Column } from "./Table";
 
 export type InplaceVolumetricsTableData = {
     ensembleIdent: EnsembleIdent;
@@ -36,3 +39,15 @@ export enum SourceIdentifier {
 const sourceAndTableIdentifiersUnion = { ...SourceIdentifier, ...InplaceVolumetricsIdentifier_api };
 export type SourceAndTableIdentifierUnion =
     (typeof sourceAndTableIdentifiersUnion)[keyof typeof sourceAndTableIdentifiersUnion];
+
+export type StatisticalColumns = Partial<{
+    [key in Statistics_api]: Column<number>;
+}>;
+
+export type StatisticalTableColumnData = {
+    // Statistical tables has two types of columns:
+    // - Non statistical columns: Column with name and row values (e.g. ensemble, table, fluid zone, etc.)
+    // - Statistical columns: Map with result name as key, and its statistical columns as value. One column per statistical type (e.g. mean, min, max, etc.)
+    nonStatisticalColumns: Column[];
+    resultStatisticalColumns: Map<string, StatisticalColumns>;
+};
