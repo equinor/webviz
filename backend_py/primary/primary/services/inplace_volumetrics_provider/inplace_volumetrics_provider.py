@@ -4,7 +4,7 @@ import asyncio
 import pyarrow as pa
 import pyarrow.compute as pc
 
-from primary.services.sumo_access.inplace_volumetrics_acces_NEW import InplaceVolumetricsAccess
+from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
 from primary.services.sumo_access.inplace_volumetrics_types import (
     FluidZone,
     InplaceVolumetricsIdentifier,

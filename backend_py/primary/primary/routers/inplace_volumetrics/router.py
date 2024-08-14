@@ -1,15 +1,10 @@
-from cProfile import Profile
-from pstats import SortKey, Stats
 import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query, Body, Response
 
-from primary.services.sumo_access.inplace_volumetrics_access import (
-    InplaceVolumetricsAccess as InplaceVolumetricsAccessOld,
-)
 from primary.services.inplace_volumetrics_provider.inplace_volumetrics_provider import InplaceVolumetricsProvider
-from primary.services.sumo_access.inplace_volumetrics_acces_NEW import InplaceVolumetricsAccess
+from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
@@ -35,32 +30,6 @@ async def get_table_definitions(
     provider = InplaceVolumetricsProvider(access)
     tables = await provider.get_volumetric_table_metadata()
     return converters.to_api_table_definitions(tables)
-
-
-@router.post("/result_data_per_realization/", tags=["inplace_volumetrics"])
-async def get_result_data_per_realization(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    table_name: str = Query(description="Table name"),
-    result_name: schemas.InplaceVolumetricResultName = Query(description="The name of the volumetric result/response"),
-    realizations: List[int] = Query(description="Realizations"),
-    index_filter: List[schemas.InplaceVolumetricsIdentifierWithValues] = Body(
-        embed=True, description="Categorical filter"
-    ),
-) -> schemas.InplaceVolumetricData:
-    """Get volumetric data summed per realization for a given table, result and categories/index filter."""
-    access: InplaceVolumetricsAccessOld = await InplaceVolumetricsAccessOld.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-
-    data = await access.get_volumetric_data_async(
-        table_name=table_name,
-        result_name=result_name.value,
-        realizations=realizations,
-        identifiers_with_values=index_filter,
-    )
-    return data
 
 
 @router.post("/get_aggregated_per_realization_table_data/", tags=["inplace_volumetrics"])

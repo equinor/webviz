@@ -12,7 +12,6 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 
 export { B64FloatArray as B64FloatArray_api } from './models/B64FloatArray';
 export { B64UintArray as B64UintArray_api } from './models/B64UintArray';
-export type { Body_get_result_data_per_realization as Body_get_result_data_per_realization_api } from './models/Body_get_result_data_per_realization';
 export type { Body_post_get_aggregated_per_realization_table_data as Body_post_get_aggregated_per_realization_table_data_api } from './models/Body_post_get_aggregated_per_realization_table_data';
 export type { Body_post_get_aggregated_statistical_table_data as Body_post_get_aggregated_statistical_table_data_api } from './models/Body_post_get_aggregated_statistical_table_data';
 export type { Body_post_get_polyline_intersection as Body_post_get_polyline_intersection_api } from './models/Body_post_get_polyline_intersection';
@@ -49,8 +48,6 @@ export type { GroupTreeMetadata as GroupTreeMetadata_api } from './models/GroupT
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
 export type { InplaceStatisticalVolumetricTableData as InplaceStatisticalVolumetricTableData_api } from './models/InplaceStatisticalVolumetricTableData';
 export type { InplaceStatisticalVolumetricTableDataPerFluidSelection as InplaceStatisticalVolumetricTableDataPerFluidSelection_api } from './models/InplaceStatisticalVolumetricTableDataPerFluidSelection';
-export type { InplaceVolumetricData as InplaceVolumetricData_api } from './models/InplaceVolumetricData';
-export type { InplaceVolumetricDataEntry as InplaceVolumetricDataEntry_api } from './models/InplaceVolumetricDataEntry';
 export { InplaceVolumetricResultName as InplaceVolumetricResultName_api } from './models/InplaceVolumetricResultName';
 export { InplaceVolumetricsIdentifier as InplaceVolumetricsIdentifier_api } from './models/InplaceVolumetricsIdentifier';
 export type { InplaceVolumetricsIdentifierWithValues as InplaceVolumetricsIdentifierWithValues_api } from './models/InplaceVolumetricsIdentifierWithValues';
