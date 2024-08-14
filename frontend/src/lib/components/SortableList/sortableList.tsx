@@ -127,7 +127,8 @@ export type SortableListProps = {
 /**
  *
  * @param {SortableListProps} props Object of properties for the SortableList component (see below for details).
- * @param {function} props.onItemMove Callback that is called when an item is moved. Should be wrapped inside a React.useCallback.
+ * @param {function} props.onItemMoved Callback that is called when an item is moved. Should be wrapped inside a React.useCallback.
+ * @param {function} props.isMoveAllowed Callback that is called to check if an item can be moved. Should be wrapped inside a React.useCallback.
  * @param {React.ReactNode} props.contentWhenEmpty A React node that is displayed when the list is empty.
  * @param {React.ReactNode} props.children Child components that must be of either type SortableListItem or SortableListGroup.
  *
