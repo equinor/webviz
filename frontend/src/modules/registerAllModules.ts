@@ -18,6 +18,7 @@ import "./StructuralUncertaintyIntersection/registerModule";
 import "./SubsurfaceMap/registerModule";
 import "./TornadoChart/registerModule";
 import "./WellCompletions/registerModule";
+import "./WellLogViewer/registerModule";
 
 if (isDevMode()) {
     await import("./MyModule/registerModule");
