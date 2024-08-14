@@ -192,6 +192,7 @@ class InplaceVolumetricsAccess:
             # Expect only one column in addition to the index columns, i.e. the volume
             volume_names_set = set(volume_table.column_names) - expected_selector_columns
             if len(volume_names_set) == 0:
+                continue # NOTE: Temporary fix for tables without volume column (e.g. "LICENSE" provided as a result name)
                 raise InvalidDataError(
                     f"Table {table_name} has collection without volume column. Collection only has columns defined as selectors: {volume_table.column_names}",
                     Service.SUMO,
@@ -201,6 +202,8 @@ class InplaceVolumetricsAccess:
                     f"Table {table_name} has collection with more than one column for volume: {volume_names_set}",
                     Service.SUMO,
                 )
+            if list(volume_names_set)[0] == "GRID":
+                continue
 
             # Add volume column to table
             volume_name = list(volume_names_set)[0]
