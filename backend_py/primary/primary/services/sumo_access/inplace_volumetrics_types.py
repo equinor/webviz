@@ -10,6 +10,29 @@ from typing import Dict, List, Union
 # - results = volume (directly from SUMO columns w/o suffix) + property (calculated from volumes)
 
 
+class InplaceVolumetricResultName(StrEnum):
+    """Allowed volumetric response names"""
+
+    BULK = "BULK"
+    NET = "NET"
+    PORO = "PORO"
+    PORO_NET = "PORO_NET"
+    PORV = "PORV"
+    HCPV = "HCPV"
+    STOIIP = "STOIIP"
+    GIIP = "GIIP"
+    NTG = "NTG"
+    ASSOCIATEDGAS = "ASSOCIATEDGAS"
+    ASSOCIATEDOIL = "ASSOCIATEDOIL"
+    BO = "BO"
+    BG = "BG"
+    SW = "SW"
+    NET_TOTAL = "NET_TOTAL"
+    STOIIP_TOTAL = "STOIIP_TOTAL"
+    GIIP_TOTAL = "GIIP_TOTAL"
+    BULK_TOTAL = "BULK_TOTAL"
+    PORV_TOTAL = "PORV_TOTAL"
+
 class InplaceVolumetricsIdentifier(StrEnum):
     """
     Definition of valid index names for an inplace volumetrics table
@@ -25,15 +48,6 @@ class FluidZone(StrEnum):
     OIL = "Oil"
     GAS = "Gas"
     WATER = "Water"  # TODO: Remove or keep?
-
-
-class FluidZoneSelection(StrEnum):
-    # NOTE: Keep or remove?
-    OIL = "Oil"
-    GAS = "Gas"
-    WATER = "Water"  # TODO: Remove or keep?
-    ACCUMULATED = "Accumulated"
-
 
 class Property(StrEnum):
     NTG = "NTG"

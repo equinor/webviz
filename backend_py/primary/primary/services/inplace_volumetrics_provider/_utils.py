@@ -9,6 +9,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     FluidZone,
     InplaceVolumetricTableData,
     InplaceVolumetricsIdentifier,
+    InplaceVolumetricResultName,
     RepeatedTableColumnData,
     Statistics,
     TableColumnData,
@@ -21,6 +22,15 @@ This file contains general utility functions for the Inplace Volumetrics provide
 The methods can be used to calculate, aggregate and create data for the Inplace Volumetrics provider
 """
 
+def get_valid_result_names_from_list(result_names: List[str]) -> List[str]:
+    """
+    Get valid result names from list of result names
+    """
+    valid_result_names = []
+    for result_name in result_names:
+        if result_name in InplaceVolumetricResultName.__members__:
+            valid_result_names.append(result_name)
+    return valid_result_names
 
 def create_per_realization_accumulated_result_table(
     result_table: pa.Table,

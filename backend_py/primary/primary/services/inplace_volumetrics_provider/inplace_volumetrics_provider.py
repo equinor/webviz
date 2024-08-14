@@ -1,9 +1,6 @@
 from typing import Dict, List, Optional, Sequence
 import asyncio
 
-import time
-
-import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 
@@ -13,7 +10,6 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     InplaceVolumetricsIdentifier,
     InplaceVolumetricsIdentifierWithValues,
     InplaceVolumetricsTableDefinition,
-    FluidZoneSelection,
     InplaceStatisticalVolumetricTableData,
     InplaceVolumetricsTableDefinition,
     InplaceVolumetricTableData,
@@ -37,6 +33,7 @@ from ._utils import (
     create_per_realization_accumulated_result_table,
     create_volumetric_table_accumulated_across_fluid_zones,
     create_inplace_volumetric_table_data_from_result_table,
+    get_valid_result_names_from_list
 )
 
 import logging
@@ -102,6 +99,8 @@ class InplaceVolumetricsProvider:
             volume_names = get_volume_names_from_raw_volumetric_column_names(raw_volumetric_column_names)
             available_property_names = get_available_properties_from_volume_names(volume_names)
             result_names = volume_names + available_property_names
+            valid_result_names = get_valid_result_names_from_list(result_names)
+
             identifiers_with_values = []
             for identifier_name in self._inplace_volumetrics_access.get_expected_identifier_columns():
                 if identifier_name in table.column_names:
@@ -118,31 +117,11 @@ class InplaceVolumetricsProvider:
                 InplaceVolumetricsTableDefinition(
                     table_name=table_name,
                     fluid_zones=fluid_zones,
-                    result_names=result_names,
+                    result_names=valid_result_names,
                     identifiers_with_values=identifiers_with_values,
                 )
             )
         return tables_info
-
-        # TODO: Consider
-        # results_info: Dict[str, List[FluidZone]] = {}
-        # I.e.: results_info["STOIIP"] = [FluidZone.OIL], etc.
-
-        return [
-            {
-                "name": "Geogrid",
-                "fluid_zones": ["OIL", "GAS", "WATER"],
-                "results": ["BULK", "NET", "STOIIP", "SW", "BO"],
-                "index": [
-                    {
-                        "ZONE": ["A", "B"],
-                        "REGION": ["NORTH", "SOUTH"],
-                        "FACIES": ["SAND", "SHALE"],
-                        "LICENSE": ["LIC1", "LIC2"],
-                    }
-                ],
-            }
-        ]
 
     async def get_accumulated_by_selection_per_realization_volumetric_table_data_async(
         self,
@@ -301,7 +280,7 @@ class InplaceVolumetricsProvider:
         result_table_per_fluid_selection: Dict[str, pa.Table] = (
             {}
         )  # TODO: Replace str key to FluidZoneSelection or array of FluidZone?
-        if accumulate_fluid_zones:
+        if accumulate_fluid_zones and len(fluid_zones) > 1:
             # Build result table - accumulated across fluid zones
             # - Sum each volume column across fluid zones
             # - Calculate properties after accumulated fluid zone volumes are created
