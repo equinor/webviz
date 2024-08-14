@@ -169,7 +169,7 @@ export const Settings = () => {
                 <Input value={atomText} onChange={handleAtomTextChange} />
             </Label>
             <div className="h-96">
-                <SortableList contentWhenEmpty="No items" onItemMove={handleItemMove}>
+                <SortableList contentWhenEmpty="No items" onItemMoved={handleItemMove}>
                     {makeChildren(items)}
                 </SortableList>
             </div>

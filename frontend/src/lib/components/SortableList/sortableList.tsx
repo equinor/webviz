@@ -92,7 +92,7 @@ const GROUP_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT = 30;
 export type SortableListProps = {
     contentWhenEmpty?: React.ReactNode;
     children: React.ReactElement<SortableListItemProps | SortableListGroupProps>[];
-    onItemMove?: (itemId: string, originId: string | null, destinationId: string | null, position: number) => void;
+    onItemMoved?: (itemId: string, originId: string | null, destinationId: string | null, position: number) => void;
 };
 
 /**
@@ -105,7 +105,7 @@ export type SortableListProps = {
  * @returns {React.ReactNode} A sortable list component.
  */
 export function SortableList(props: SortableListProps): React.ReactNode {
-    const { onItemMove } = props;
+    const { onItemMoved } = props;
 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
     const [draggedItemId, setDraggedItemId] = React.useState<string | null>(null);
@@ -397,7 +397,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             }
 
             function maybeCallItemMoveCallback() {
-                if (!onItemMove) {
+                if (!onItemMoved) {
                     return;
                 }
 
@@ -413,7 +413,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     const originId = getItemParentGroupId(draggedElement.element);
                     const destinationId = currentlyHoveredElement.id;
                     const position = 0;
-                    onItemMove(draggedElement.id, originId, destinationId, position);
+                    onItemMoved(draggedElement.id, originId, destinationId, position);
                     return;
                 }
 
@@ -422,7 +422,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 const positionDelta = currentlyHoveredElement.area === HoveredArea.TOP ? 0 : 1;
                 const position = getItemPositionInGroup(currentlyHoveredElement.element) + positionDelta;
 
-                onItemMove(draggedElement.id, originId, destinationId, position);
+                onItemMoved(draggedElement.id, originId, destinationId, position);
             }
 
             function handlePointerUp() {
@@ -467,7 +467,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 setDraggedItemId(null);
             };
         },
-        [onItemMove, props.children]
+        [onItemMoved, props.children]
     );
 
     function handleScroll(e: React.UIEvent<HTMLDivElement>) {
