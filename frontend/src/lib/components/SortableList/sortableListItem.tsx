@@ -3,14 +3,15 @@ import React from "react";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { DragIndicator } from "@mui/icons-material";
+import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { HoveredArea, SortableListContext } from "./sortableList";
 import { SortableListDropIndicator } from "./sortableListDropIndicator";
 
 export type SortableListItemProps = {
     id: string;
-    title: string;
+    title: React.ReactNode;
+    initiallyExpanded?: boolean;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     children: React.ReactNode;
@@ -20,7 +21,7 @@ export type SortableListItemProps = {
  *
  * @param {SortableListItemProps} props Object of properties for the SortableListItem component (see below for details).
  * @param {string} props.id ID that is unique among all components inside the sortable list.
- * @param {string} props.title Title of the list item.
+ * @param {React.ReactNode} props.title Title component of the list item.
  * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
  * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
  * @param {React.ReactNode} props.children Child components to display as the content of the list item.
@@ -28,6 +29,8 @@ export type SortableListItemProps = {
  * @returns {React.ReactNode} A sortable list item component.
  */
 export function SortableListItem(props: SortableListItemProps): React.ReactNode {
+    const [isExpanded, setIsExpanded] = React.useState<boolean>(props.initiallyExpanded ?? true);
+
     const divRef = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(divRef);
 
@@ -36,6 +39,10 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
     const isHovered = sortableListContext.hoveredElementId === props.id;
     const isDragging = sortableListContext.draggedElementId === props.id;
     const dragPosition = sortableListContext.dragPosition;
+
+    function handleToggleExpanded() {
+        setIsExpanded(!isExpanded);
+    }
 
     return (
         <>
@@ -50,7 +57,7 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
                         hidden: !isDragging,
                     })}
                 ></div>
-                <Header {...props} />
+                <Header expanded={isExpanded} onToggleExpanded={handleToggleExpanded} {...props} />
                 {isDragging &&
                     dragPosition &&
                     createPortal(
@@ -64,10 +71,12 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
                                 width: isDragging ? boundingClientRect.width : undefined,
                             }}
                         >
-                            <Header {...props} />
+                            <Header expanded={isExpanded} {...props} />
                         </div>
                     )}
-                <div className="flex flex-col gap-2 bg-white border-b shadow-inner p-2">{props.children}</div>
+                <div className={resolveClassNames("bg-white border-b shadow-inner", { hidden: !isExpanded })}>
+                    {props.children}
+                </div>
             </div>
             {isHovered && sortableListContext.hoveredArea === HoveredArea.BOTTOM && <SortableListDropIndicator />}
         </>
@@ -75,22 +84,30 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
 }
 
 type HeaderProps = {
-    icon?: React.ReactNode;
-    title: string;
+    title: React.ReactNode;
+    expanded: boolean;
+    onToggleExpanded?: () => void;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
 };
 
 function Header(props: HeaderProps): React.ReactNode {
     return (
-        <div className="flex gap-1 h-8 bg-slate-100 hover:bg-blue-100 text-sm items-center border-b border-b-gray-300">
+        <div className="flex gap-1 h-8 bg-slate-100 hover:bg-blue-100 text-sm items-center border-b border-b-gray-300 pr-2">
             <div className={resolveClassNames("sortable-list-element-indicator px-0.5 hover:cursor-grab")}>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-grow">
                 {props.startAdornment}
                 <div className="flex-grow">{props.title}</div>
                 {props.endAdornment}
+            </div>
+            <div
+                className="hover:cursor-pointer hover:text-blue-800 p-0.5 rounded"
+                onClick={props.onToggleExpanded}
+                title={props.expanded ? "Hide children" : "Show children"}
+            >
+                {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </div>
         </div>
     );

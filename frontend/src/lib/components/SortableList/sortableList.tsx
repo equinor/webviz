@@ -86,7 +86,8 @@ type HoveredItemIdAndArea = {
     area: HoveredArea;
 };
 
-const ELEMENT_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT = 50;
+const ITEM_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT = 50;
+const GROUP_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT = 30;
 
 export type SortableListProps = {
     contentWhenEmpty?: React.ReactNode;
@@ -280,15 +281,19 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             }
 
             function getHoveredAreaOfItem(item: HTMLElement, e: PointerEvent): HoveredArea {
+                let factor = ITEM_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT / 100;
+                if (getItemType(item) === ItemType.CONTAINER) {
+                    factor = GROUP_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT / 100;
+                }
                 const rect = item.getBoundingClientRect();
                 const topAreaTop = rect.top;
-                const topAreaBottom = rect.top + (ELEMENT_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT / 100) * rect.height;
+                const topAreaBottom = rect.top + factor * rect.height;
 
                 if (e.clientY >= topAreaTop && e.clientY <= topAreaBottom) {
                     return HoveredArea.TOP;
                 }
 
-                const bottomAreaTop = rect.bottom - (ELEMENT_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT / 100) * rect.height;
+                const bottomAreaTop = rect.bottom - factor * rect.height;
                 const bottomAreaBottom = rect.bottom;
 
                 if (e.clientY >= bottomAreaTop && e.clientY <= bottomAreaBottom) {

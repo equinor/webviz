@@ -11,19 +11,19 @@ import { SortableListItemProps } from "./sortableListItem";
 
 export type SortableListGroupProps = {
     id: string;
-    title: string;
+    title: React.ReactNode;
     initiallyExpanded?: boolean;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     contentWhenEmpty?: React.ReactNode;
-    children: React.ReactElement<SortableListItemProps>[];
+    children?: React.ReactElement<SortableListItemProps>[];
 };
 
 /**
  *
  * @param {SortableListGroupProps} props Object of properties for the SortableListGroup component (see below for details).
  * @param {string} props.id ID that is unique among all components inside the sortable list.
- * @param {string} props.title Title of the list item.
+ * @param {React.ReactNode} props.title Title of the list item.
  * @param {boolean} props.initiallyExpanded Whether the group should be expanded by default.
  * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
  * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
@@ -88,7 +88,9 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
                         }
                     )}
                 >
-                    {props.children.length === 0 ? props.contentWhenEmpty : props.children}
+                    {props.children === undefined || props.children.length === 0
+                        ? props.contentWhenEmpty
+                        : props.children}
                 </div>
             </div>
             {isHovered && sortableListContext.hoveredArea === HoveredArea.BOTTOM && <SortableListDropIndicator />}
@@ -97,7 +99,7 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
 }
 
 type HeaderProps = {
-    title: string;
+    title: React.ReactNode;
     expanded: boolean;
     onToggleExpanded?: () => void;
     icon?: React.ReactNode;
@@ -118,7 +120,7 @@ function Header(props: HeaderProps): React.ReactNode {
             >
                 {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-grow">
                 {props.startAdornment}
                 <div className="flex-grow">{props.title}</div>
                 {props.endAdornment}
