@@ -13,11 +13,33 @@ from ..service_exceptions import (
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-# Allowed categories (index column names) for the volumetric tables
-ALLOWED_IDENTIFIER_COLUMN_NAMES = ["ZONE", "REGION", "FACIES"]  # , "LICENSE"]
-
 # Index column values to ignore, i.e. remove from the volumetric tables
 IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
+
+# Allowed raw volumetric columns - from FMU Standard:
+# Ref: https://github.com/equinor/fmu-dataio/blob/66e9683de5943d1b982c14ac926cf13007fc2bad/src/fmu/dataio/export/rms/volumetrics.py#L25-L47
+ALLOWED_RAW_VOLUMETRIC_COLUMNS = [
+    "REAL",
+    "ZONE",
+    "REGION",
+    "LICENSE",
+    "FACIES",
+    "BULK_OIL",
+    "NET_OIL",
+    "PORV_OIL",
+    "HCPV_OIL",
+    "STOIIP_OIL",
+    "ASSOCIATEDGAS_OIL",
+    "BULK_GAS",
+    "NET_GAS",
+    "PORV_GAS",
+    "HCPV_GAS",
+    "GIIP_GAS",
+    "ASSOCIATEDOIL_GAS",
+    "BULK_TOTAL",
+    "NET_TOTAL",
+    "PORV_TOTAL",
+]
 
 
 class InplaceVolumetricsAccess:
@@ -192,7 +214,7 @@ class InplaceVolumetricsAccess:
             # Expect only one column in addition to the index columns, i.e. the volume
             volume_names_set = set(volume_table.column_names) - expected_selector_columns
             if len(volume_names_set) == 0:
-                continue # NOTE: Temporary fix for tables without volume column (e.g. "LICENSE" provided as a result name)
+                continue  # NOTE: Temporary fix for tables without volume column (e.g. "LICENSE" provided as a result name)
                 raise InvalidDataError(
                     f"Table {table_name} has collection without volume column. Collection only has columns defined as selectors: {volume_table.column_names}",
                     Service.SUMO,
@@ -202,11 +224,12 @@ class InplaceVolumetricsAccess:
                     f"Table {table_name} has collection with more than one column for volume: {volume_names_set}",
                     Service.SUMO,
                 )
-            if list(volume_names_set)[0] == "GRID":
+
+            volume_name = list(volume_names_set)[0]
+            if volume_name not in ALLOWED_RAW_VOLUMETRIC_COLUMNS:
                 continue
 
             # Add volume column to table
-            volume_name = list(volume_names_set)[0]
             volume_column = volume_table[volume_name]
             volumes_table = volumes_table.append_column(volume_name, volume_column)
 

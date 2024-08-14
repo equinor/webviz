@@ -33,7 +33,7 @@ from ._utils import (
     create_per_realization_accumulated_result_table,
     create_volumetric_table_accumulated_across_fluid_zones,
     create_inplace_volumetric_table_data_from_result_table,
-    get_valid_result_names_from_list
+    get_valid_result_names_from_list,
 )
 
 import logging
