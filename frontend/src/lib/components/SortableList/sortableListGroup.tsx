@@ -109,8 +109,8 @@ type HeaderProps = {
 
 function Header(props: HeaderProps): React.ReactNode {
     return (
-        <div className="sortable-list-item-header flex items-center gap-1 h-8 text-sm font-bold border-b border-b-gray-300">
-            <div className={resolveClassNames("sortable-list-element-indicator px-0.5 hover:cursor-grab")}>
+        <div className="sortable-list-item-header flex items-center gap-1 h-8 text-sm font-bold border-b border-b-gray-300 px-2">
+            <div className={resolveClassNames("sortable-list-element-indicator hover:cursor-grab")}>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
             <div
