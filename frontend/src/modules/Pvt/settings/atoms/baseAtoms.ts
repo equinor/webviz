@@ -1,6 +1,8 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
+import { ColorBy, PhaseType, PressureDependentVariable } from "@modules/Pvt/typesAndEnums";
 
+import { atom } from "jotai";
 import { isEqual } from "lodash";
 
 function areEnsembleIdentListsEqual(a: EnsembleIdent[], b: EnsembleIdent[]) {
@@ -14,6 +16,15 @@ function areEnsembleIdentListsEqual(a: EnsembleIdent[], b: EnsembleIdent[]) {
     }
     return true;
 }
+
+export const selectedPhaseAtom = atom<PhaseType>(PhaseType.OIL);
+export const selectedColorByAtom = atom<ColorBy>(ColorBy.ENSEMBLE);
+export const selectedDependentVariablesAtom = atom<PressureDependentVariable[]>([
+    PressureDependentVariable.FORMATION_VOLUME_FACTOR,
+    PressureDependentVariable.DENSITY,
+    PressureDependentVariable.VISCOSITY,
+    PressureDependentVariable.FLUID_RATIO,
+]);
 
 export const userSelectedEnsembleIdentsAtom = atomWithCompare<EnsembleIdent[]>([], areEnsembleIdentListsEqual);
 export const userSelectedRealizationsAtom = atomWithCompare<number[]>([], isEqual);

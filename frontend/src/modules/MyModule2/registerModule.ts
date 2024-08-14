@@ -1,9 +1,9 @@
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Interface, State } from "./state";
+import { SettingsToViewInterface, State } from "./state";
 
-ModuleRegistry.registerModule<State, Interface>({
+ModuleRegistry.registerModule<State, SettingsToViewInterface>({
     moduleName: "MyModule2",
     defaultTitle: "My Module 2",
     category: ModuleCategory.DEBUG,

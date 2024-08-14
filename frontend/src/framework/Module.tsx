@@ -14,8 +14,8 @@ import { SyncSettingKey } from "./SyncSettings";
 import {
     InterfaceBaseType,
     InterfaceInitialization,
-    UniDirectionalSettingsToViewInterface,
-} from "./UniDirectionalSettingsToViewInterface";
+    UniDirectionalModuleComponentsInterface,
+} from "./UniDirectionalModuleComponentsInterface";
 import { Workbench } from "./Workbench";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { WorkbenchSession } from "./WorkbenchSession";
@@ -35,10 +35,7 @@ export enum ModuleDevState {
 
 export type ModuleSettingsProps<
     TTStateType extends StateBaseType,
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = {
@@ -51,10 +48,7 @@ export type ModuleSettingsProps<
 
 export type ModuleViewProps<
     TTStateType extends StateBaseType,
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = {
@@ -70,25 +64,19 @@ export type ModuleAtoms<TAtoms extends Record<string, unknown>> = {
 };
 
 export type AtomsInitialization<TAtoms extends Record<string, unknown>, TInterfaceType extends InterfaceBaseType> = (
-    settingsToViewInterface: UniDirectionalSettingsToViewInterface<TInterfaceType>
+    settingsToViewInterface: UniDirectionalModuleComponentsInterface<TInterfaceType>
 ) => ModuleAtoms<TAtoms>;
 
 export type ModuleSettings<
     TTStateType extends StateBaseType,
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = React.FC<ModuleSettingsProps<TTStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>>;
 
 export type ModuleView<
     TTStateType extends StateBaseType,
-    TInterfaceType extends InterfaceBaseType = {
-        baseStates: Record<string, never>;
-        derivedStates: Record<string, never>;
-    },
+    TInterfaceType extends InterfaceBaseType = Record<string, never>,
     TSettingsAtomsType extends Record<string, unknown> = Record<string, never>,
     TViewAtomsType extends Record<string, unknown> = Record<string, never>
 > = React.FC<ModuleViewProps<TTStateType, TInterfaceType, TSettingsAtomsType, TViewAtomsType>>;

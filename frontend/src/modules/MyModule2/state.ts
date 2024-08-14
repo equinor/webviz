@@ -1,4 +1,4 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
+import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { textAtom } from "./atoms";
 
@@ -12,20 +12,12 @@ export const defaultState: State = {
 
 // ------------------------------------------------
 
-export type Interface = {
-    baseStates: {
-        text: string;
-    };
-    derivedStates: {
-        derivedText: string;
-    };
+export type SettingsToViewInterface = {
+    text: string;
+    derivedText: string;
 };
 
-export const interfaceDefinition: InterfaceInitialization<Interface> = {
-    baseStates: {
-        text: "Hello World",
-    },
-    derivedStates: {
-        derivedText: (get) => get(textAtom).toUpperCase(),
-    },
+export const interfaceDefinition: InterfaceInitialization<SettingsToViewInterface> = {
+    text: (get) => get(textAtom),
+    derivedText: (get) => get(textAtom).toUpperCase(),
 };

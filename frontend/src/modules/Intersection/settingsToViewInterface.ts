@@ -1,8 +1,17 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { InterfaceInitialization } from "@framework/UniDirectionalSettingsToViewInterface";
+import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { IntersectionType } from "@framework/types/intersection";
 import { ColorScale } from "@lib/utils/ColorScale";
 
+import {
+    gridLayerAtom,
+    intersectionExtensionLengthAtom,
+    intersectionTypeAtom,
+    seismicColorScaleAtom,
+    showGridlinesAtom,
+    showSeismicAtom,
+    zFactorAtom,
+} from "./settings/atoms/baseAtoms";
 import {
     layerManagerAtom,
     selectedCustomIntersectionPolylineIdAtom,
@@ -12,50 +21,56 @@ import {
 import { LayerManager } from "./utils/layers/LayerManager";
 
 export type SettingsToViewInterface = {
-    baseStates: {
-        showGridlines: boolean;
-        gridLayer: number;
-        zFactor: number;
-        intersectionExtensionLength: number;
-        intersectionType: IntersectionType;
-        seismicColorScale: ColorScale | null;
-        showSeismic: boolean;
-    };
-    derivedStates: {
-        ensembleIdent: EnsembleIdent | null;
-        selectedCustomIntersectionPolylineId: string | null;
-        layerManager: LayerManager;
-        wellboreHeader: {
-            uuid: string;
-            identifier: string;
-            depthReferencePoint: string;
-            depthReferenceElevation: number;
-        } | null;
-    };
+    showGridlines: boolean;
+    gridLayer: number;
+    zFactor: number;
+    intersectionExtensionLength: number;
+    intersectionType: IntersectionType;
+    seismicColorScale: ColorScale | null;
+    showSeismic: boolean;
+    ensembleIdent: EnsembleIdent | null;
+    selectedCustomIntersectionPolylineId: string | null;
+    layerManager: LayerManager;
+    wellboreHeader: {
+        uuid: string;
+        identifier: string;
+        depthReferencePoint: string;
+        depthReferenceElevation: number;
+    } | null;
 };
 
 export const interfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    baseStates: {
-        showGridlines: false,
-        gridLayer: 1,
-        zFactor: 1,
-        intersectionExtensionLength: 1000,
-        intersectionType: IntersectionType.WELLBORE,
-        seismicColorScale: null,
-        showSeismic: false,
+    showGridlines: (get) => {
+        return get(showGridlinesAtom);
     },
-    derivedStates: {
-        ensembleIdent: (get) => {
-            return get(selectedEnsembleIdentAtom);
-        },
-        selectedCustomIntersectionPolylineId: (get) => {
-            return get(selectedCustomIntersectionPolylineIdAtom);
-        },
-        layerManager: (get) => {
-            return get(layerManagerAtom);
-        },
-        wellboreHeader: (get) => {
-            return get(selectedWellboreAtom);
-        },
+    gridLayer: (get) => {
+        return get(gridLayerAtom);
+    },
+    zFactor: (get) => {
+        return get(zFactorAtom);
+    },
+    intersectionExtensionLength: (get) => {
+        return get(intersectionExtensionLengthAtom);
+    },
+    intersectionType: (get) => {
+        return get(intersectionTypeAtom);
+    },
+    seismicColorScale: (get) => {
+        return get(seismicColorScaleAtom);
+    },
+    showSeismic: (get) => {
+        return get(showSeismicAtom);
+    },
+    ensembleIdent: (get) => {
+        return get(selectedEnsembleIdentAtom);
+    },
+    selectedCustomIntersectionPolylineId: (get) => {
+        return get(selectedCustomIntersectionPolylineIdAtom);
+    },
+    layerManager: (get) => {
+        return get(layerManagerAtom);
+    },
+    wellboreHeader: (get) => {
+        return get(selectedWellboreAtom);
     },
 };

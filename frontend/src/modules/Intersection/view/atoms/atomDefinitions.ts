@@ -2,7 +2,7 @@ import { WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { apiService } from "@framework/ApiService";
 import { ModuleAtoms } from "@framework/Module";
-import { UniDirectionalSettingsToViewInterface } from "@framework/UniDirectionalSettingsToViewInterface";
+import { UniDirectionalModuleComponentsInterface } from "@framework/UniDirectionalModuleComponentsInterface";
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
@@ -27,7 +27,7 @@ export type ViewAtoms = {
 };
 
 export function viewAtomsInitialization(
-    settingsToViewInterface: UniDirectionalSettingsToViewInterface<SettingsToViewInterface>
+    settingsToViewInterface: UniDirectionalModuleComponentsInterface<SettingsToViewInterface>
 ): ModuleAtoms<ViewAtoms> {
     const selectedCustomIntersectionPolylineAtom = atom((get) => {
         const customIntersectionPolylineId = get(
