@@ -109,7 +109,7 @@ type HeaderProps = {
 
 function Header(props: HeaderProps): React.ReactNode {
     return (
-        <div className="sortable-list-item-header flex items-center gap-1 h-8 text-sm font-bold border-b border-b-gray-300 px-2">
+        <div className="sortable-list-item-header flex items-center gap-1 h-8 text-sm border-b border-b-gray-300 px-2">
             <div className={resolveClassNames("sortable-list-element-indicator hover:cursor-grab")}>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
@@ -122,7 +122,7 @@ function Header(props: HeaderProps): React.ReactNode {
             </div>
             <div className="flex items-center gap-2 flex-grow">
                 {props.startAdornment}
-                <div className="flex-grow">{props.title}</div>
+                <div className="flex-grow font-bold">{props.title}</div>
                 {props.endAdornment}
             </div>
         </div>
