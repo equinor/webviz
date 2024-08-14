@@ -1,5 +1,5 @@
-import { SurfaceAddress } from "@modules/_shared/Surface/surfaceAddress";
+import { FullSurfaceAddress } from "@modules/_shared/Surface";
 
 export interface MapState {
-    surfaceAddress: SurfaceAddress | null;
+    surfaceAddress: FullSurfaceAddress | null;
 }
