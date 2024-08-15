@@ -16,6 +16,10 @@ export class VfpDataAccessor {
         return this._vfpTable.table_number
     }
 
+    getTableType(): string {
+        return "VFPPROD"
+    }
+
     getFlowRateUnit(): string {
         const flowRateUnits = this._unitSet.FLOWRATE_UNITS
         const flowRateType = this._vfpTable.flow_rate_type

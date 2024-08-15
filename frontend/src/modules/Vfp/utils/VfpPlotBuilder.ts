@@ -15,7 +15,7 @@ export class VfpPlotBuilder {
 
     makeLayout(size: Size2D) : Partial<Layout> {
         return {
-            title: "VFP Table number: " + this._vfpDataAccessor.getTableNumber(),
+            title: `VFP type: ${this._vfpDataAccessor.getTableType()}, table number: ${this._vfpDataAccessor.getTableNumber()}`,
             xaxis: { title: this._vfpDataAccessor.getFlowRateUnit()},
             yaxis: { title: this._vfpDataAccessor.getBhpUnit()},
             width: size.width,

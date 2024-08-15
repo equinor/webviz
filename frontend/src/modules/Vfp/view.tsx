@@ -28,15 +28,11 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, 
 
     let content = null;
 
-    if (vfpDataQuery.isFetching) {
-        return (
-            <ContentMessage type={ContentMessageType.INFO}>
+    if (vfpDataQuery.isFetching || vfpDataQuery.data === undefined) {
+        content = <ContentMessage type={ContentMessageType.INFO}>
                 <CircularProgress />
             </ContentMessage>
-        ); 
-    }
-
-    if (vfpDataQuery.isError || vfpDataQuery.data === undefined) {
+    } else if (vfpDataQuery.isError) {
         content = <div className="w-full h-full flex justify-center items-center">Could not load VFP data</div>;
     } else {
         const vfpTable = vfpDataQuery.data
