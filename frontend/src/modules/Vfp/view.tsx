@@ -3,7 +3,8 @@ import Plot from "react-plotly.js";
 
 import { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { PlotData, PlotMarker } from "plotly.js";
+import { CircularProgress } from "@lib/components/CircularProgress";
+import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 
 import { Interface, State } from "./state";
 import { VfpDataAccessor } from "./utils/VfpDataAccessor";
@@ -14,8 +15,7 @@ import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, Interface>) {
     const colorScale = workbenchSettings.useContinuousColorScale({gradientType: ColorScaleGradientType.Sequential})
 
-    const vfpTableName = viewContext.useSettingsToViewInterfaceValue("vfpTableName");
-    const vfpTable = viewContext.useSettingsToViewInterfaceValue("vfpTable");
+    const vfpDataQuery = viewContext.useSettingsToViewInterfaceValue("vfpDataQuery");
     const selectedThpIndices = viewContext.useSettingsToViewInterfaceValue("selectedThpIndices");
     const selectedWfrIndices = viewContext.useSettingsToViewInterfaceValue("selectedWfrIndices");
     const selectedGfrIndices = viewContext.useSettingsToViewInterfaceValue("selectedGfrIndices");
@@ -27,9 +27,19 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, 
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     let content = null;
-    if (vfpTable === undefined) {
-        content = <div className="w-full h-full flex justify-center items-center">VFP table not available.</div>;
+
+    if (vfpDataQuery.isFetching) {
+        return (
+            <ContentMessage type={ContentMessageType.INFO}>
+                <CircularProgress />
+            </ContentMessage>
+        ); 
+    }
+
+    if (vfpDataQuery.isError || vfpDataQuery.data === undefined) {
+        content = <div className="w-full h-full flex justify-center items-center">Could not load VFP data</div>;
     } else {
+        const vfpTable = vfpDataQuery.data
         const vfpPlotBuilder = new VfpPlotBuilder(new VfpDataAccessor(vfpTable), colorScale);
 
         const layout = vfpPlotBuilder.makeLayout(wrapperDivSize);
