@@ -20,6 +20,23 @@ export class VfpDataAccessor {
         return "VFPPROD"
     }
 
+    getFlowRateLabel(): string {
+        const flowRateType = this._vfpTable.flow_rate_type
+        const flowRateUnit = this.getFlowRateUnit()
+        if (flowRateType == FlowRateType_api.OIL) {
+            return `Oil Rate (${flowRateUnit})`
+        } else if (flowRateType == FlowRateType_api.GAS) {
+            return `Gas Rate (${flowRateUnit})`
+        } else if (flowRateType == FlowRateType_api.LIQ) {
+            return `Liquid Rate (${flowRateUnit})`
+        } else if (flowRateType == FlowRateType_api.TM) {
+            return `TM (${flowRateUnit})`
+        } else if (flowRateType == FlowRateType_api.WG) {
+            return `WG (${flowRateUnit})`
+        }
+        return "Flow rate type unknown"      
+    }
+
     getFlowRateUnit(): string {
         const flowRateUnits = this._unitSet.FLOWRATE_UNITS
         const flowRateType = this._vfpTable.flow_rate_type
@@ -33,9 +50,8 @@ export class VfpDataAccessor {
             return flowRateUnits.TM
         } else if (flowRateType == FlowRateType_api.WG) {
             return flowRateUnits.WG
-        } else {
-            return "Unknown"
         }
+        return "Flow rate type unknown"     
     }
 
     getBhpUnit(): string {   

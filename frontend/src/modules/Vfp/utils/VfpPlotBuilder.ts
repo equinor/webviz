@@ -13,11 +13,11 @@ export class VfpPlotBuilder {
         this._colorScale = colorScale
     }
 
-    makeLayout(size: Size2D) : Partial<Layout> {
+    makeLayout(size: Size2D, pressureOption: PressureOption) : Partial<Layout> {
         return {
             title: `VFP type: ${this._vfpDataAccessor.getTableType()}, table number: ${this._vfpDataAccessor.getTableNumber()}`,
-            xaxis: { title: this._vfpDataAccessor.getFlowRateUnit()},
-            yaxis: { title: this._vfpDataAccessor.getBhpUnit()},
+            xaxis: { title: this._vfpDataAccessor.getFlowRateLabel()},
+            yaxis: { title: `${pressureOption} (${this._vfpDataAccessor.getBhpUnit()})`},
             width: size.width,
             height: size.height,
         };
@@ -103,7 +103,7 @@ export class VfpPlotBuilder {
         const gfrValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.GFR)[gfrIndex]
         const alqValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.ALQ)[alqIndex]
 
-        const name = `THP=${thpValue} ${this._vfpDataAccessor.getWfrType()}=${wfrValue} ${this._vfpDataAccessor.getGfrType()}=${gfrValue} ALQ=${alqValue}`
+        const hovertext = `THP=${thpValue}<br>${this._vfpDataAccessor.getWfrType()}=${wfrValue}<br>${this._vfpDataAccessor.getGfrType()}=${gfrValue}<br>ALQ=${alqValue}`
         let bhpValues = this._vfpDataAccessor.getBhpValues(thpIndex, wfrIndex, gfrIndex, alqIndex)
 
         if (pressureOption === PressureOption.DP) {
@@ -114,12 +114,12 @@ export class VfpPlotBuilder {
             x: this._vfpDataAccessor.getFlowRateValues(),
             y: bhpValues,
             mode: "lines+markers",
-            name: name,
             line: {
                 color,
             },
             showlegend: false,
-            hovertemplate: name,
+            hovertext: hovertext,
+            hoverinfo: "y+x+text",
         };
 
         return trace

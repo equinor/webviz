@@ -38,7 +38,7 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, 
         const vfpTable = vfpDataQuery.data
         const vfpPlotBuilder = new VfpPlotBuilder(new VfpDataAccessor(vfpTable), colorScale);
 
-        const layout = vfpPlotBuilder.makeLayout(wrapperDivSize);
+        const layout = vfpPlotBuilder.makeLayout(wrapperDivSize, selectedPressureOption);
         const data = vfpPlotBuilder.makeTraces(
             selectedThpIndices,
             selectedWfrIndices,
