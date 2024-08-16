@@ -24,7 +24,7 @@ class VfpAccess:
         self._iteration_name = iteration_name
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "VFPAccess":
+    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "VfpAccess":
         sumo_client = create_sumo_client(access_token)
         case: Case = await create_sumo_case_async(sumo_client, case_uuid, want_keepalive_pit=False)
         return VfpAccess(case, iteration_name)
@@ -84,11 +84,11 @@ class VfpAccess:
             flow_rate_type=FlowRateTypeProd[pa_table.schema.metadata[b"RATE_TYPE"].decode("utf-8")],
             unit_type=UnitType[pa_table.schema.metadata[b"UNIT_TYPE"].decode("utf-8")],
             tab_type=TabType[pa_table.schema.metadata[b"TAB_TYPE"].decode("utf-8")],
-            thp_values=np.frombuffer(pa_table.schema.metadata[b"THP_VALUES"], dtype=np.float64),
-            wfr_values=np.frombuffer(pa_table.schema.metadata[b"WFR_VALUES"], dtype=np.float64),
-            gfr_values=np.frombuffer(pa_table.schema.metadata[b"GFR_VALUES"], dtype=np.float64),
-            alq_values=np.frombuffer(pa_table.schema.metadata[b"ALQ_VALUES"], dtype=np.float64),
-            flow_rate_values=np.frombuffer(pa_table.schema.metadata[b"FLOW_VALUES"], dtype=np.float64),
+            thp_values=np.frombuffer(pa_table.schema.metadata[b"THP_VALUES"], dtype=np.float64).tolist(),
+            wfr_values=np.frombuffer(pa_table.schema.metadata[b"WFR_VALUES"], dtype=np.float64).tolist(),
+            gfr_values=np.frombuffer(pa_table.schema.metadata[b"GFR_VALUES"], dtype=np.float64).tolist(),
+            alq_values=np.frombuffer(pa_table.schema.metadata[b"ALQ_VALUES"], dtype=np.float64).tolist(),
+            flow_rate_values=np.frombuffer(pa_table.schema.metadata[b"FLOW_VALUES"], dtype=np.float64).tolist(),
             bhp_values=[val for sublist in np.array(pa_table.columns).tolist() for val in sublist],
         )
         return vfp_table
