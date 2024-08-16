@@ -53,7 +53,7 @@ async def get_vfp_table(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     timer.lap_ms()
-    vfp_table: VfpProdTable = await vfp_access.get_vfp_table_from_tagname(
+    vfp_table: VfpProdTable = await vfp_access.get_vfpprod_table_from_tagname(
         tagname=vfp_table_name, realization=realization
     )
 

@@ -1,4 +1,4 @@
-import { VfpProdTable_api, UnitType_api, FlowRateType_api, TabType_api, ALQ_api, WFR_api, GFR_api } from "@api";
+import { VfpProdTable_api, UnitType_api, FlowRateTypeProd_api, TabType_api, ALQ_api, WFR_api, GFR_api } from "@api";
 import { VFPPROD_UNITS, UNITSET, VfpParam } from "../types";
 
 export class VfpDataAccessor {
@@ -23,15 +23,15 @@ export class VfpDataAccessor {
     getFlowRateLabel(): string {
         const flowRateType = this._vfpTable.flow_rate_type
         const flowRateUnit = this.getFlowRateUnit()
-        if (flowRateType == FlowRateType_api.OIL) {
+        if (flowRateType == FlowRateTypeProd_api.OIL) {
             return `Oil Rate (${flowRateUnit})`
-        } else if (flowRateType == FlowRateType_api.GAS) {
+        } else if (flowRateType == FlowRateTypeProd_api.GAS) {
             return `Gas Rate (${flowRateUnit})`
-        } else if (flowRateType == FlowRateType_api.LIQ) {
+        } else if (flowRateType == FlowRateTypeProd_api.LIQ) {
             return `Liquid Rate (${flowRateUnit})`
-        } else if (flowRateType == FlowRateType_api.TM) {
+        } else if (flowRateType == FlowRateTypeProd_api.TM) {
             return `TM (${flowRateUnit})`
-        } else if (flowRateType == FlowRateType_api.WG) {
+        } else if (flowRateType == FlowRateTypeProd_api.WG) {
             return `WG (${flowRateUnit})`
         }
         return "Flow rate type unknown"      
@@ -40,15 +40,15 @@ export class VfpDataAccessor {
     getFlowRateUnit(): string {
         const flowRateUnits = this._unitSet.FLOWRATE_UNITS
         const flowRateType = this._vfpTable.flow_rate_type
-        if (flowRateType == FlowRateType_api.OIL) {
+        if (flowRateType == FlowRateTypeProd_api.OIL) {
             return flowRateUnits.OIL
-        } else if (flowRateType == FlowRateType_api.GAS) {
+        } else if (flowRateType == FlowRateTypeProd_api.GAS) {
             return flowRateUnits.GAS
-        } else if (flowRateType == FlowRateType_api.LIQ) {
+        } else if (flowRateType == FlowRateTypeProd_api.LIQ) {
             return flowRateUnits.LIQ
-        } else if (flowRateType == FlowRateType_api.TM) {
+        } else if (flowRateType == FlowRateTypeProd_api.TM) {
             return flowRateUnits.TM
-        } else if (flowRateType == FlowRateType_api.WG) {
+        } else if (flowRateType == FlowRateTypeProd_api.WG) {
             return flowRateUnits.WG
         }
         return "Flow rate type unknown"     

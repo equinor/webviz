@@ -32,7 +32,7 @@ export type { EnsembleSensitivity as EnsembleSensitivity_api } from './models/En
 export type { EnsembleSensitivityCase as EnsembleSensitivityCase_api } from './models/EnsembleSensitivityCase';
 export type { FenceMeshSection as FenceMeshSection_api } from './models/FenceMeshSection';
 export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
-export { FlowRateType as FlowRateType_api } from './models/FlowRateType';
+export { FlowRateTypeProd as FlowRateTypeProd_api } from './models/FlowRateTypeProd';
 export { Frequency as Frequency_api } from './models/Frequency';
 export { GFR as GFR_api } from './models/GFR';
 export type { GraphUserPhoto as GraphUserPhoto_api } from './models/GraphUserPhoto';

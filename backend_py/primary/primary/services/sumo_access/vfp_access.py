@@ -9,7 +9,7 @@ from fmu.sumo.explorer.objects import Case
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
 
 from ._helpers import create_sumo_case_async, create_sumo_client
-from .vfp_types import ALQ, GFR, WFR, FlowRateType, TabType, UnitType, VfpProdTable, VfpType
+from .vfp_types import ALQ, GFR, WFR, FlowRateTypeProd, TabType, UnitType, VfpProdTable, VfpType
 
 LOGGER = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class VfpAccess:
 
         return pa_table
 
-    async def get_vfp_table_from_tagname(self, tagname: str, realization: int) -> VfpProdTable:
+    async def get_vfpprod_table_from_tagname(self, tagname: str, realization: int) -> VfpProdTable:
         """Returns a VFP table as a VFP table object for a specific tagname (table name)
         and realization.
         """
@@ -81,7 +81,7 @@ class VfpAccess:
             wfr_type=WFR[pa_table.schema.metadata[b"WFR_TYPE"].decode("utf-8")],
             gfr_type=GFR[pa_table.schema.metadata[b"GFR_TYPE"].decode("utf-8")],
             alq_type=alq_type,
-            flow_rate_type=FlowRateType[pa_table.schema.metadata[b"RATE_TYPE"].decode("utf-8")],
+            flow_rate_type=FlowRateTypeProd[pa_table.schema.metadata[b"RATE_TYPE"].decode("utf-8")],
             unit_type=UnitType[pa_table.schema.metadata[b"UNIT_TYPE"].decode("utf-8")],
             tab_type=TabType[pa_table.schema.metadata[b"TAB_TYPE"].decode("utf-8")],
             thp_values=np.frombuffer(pa_table.schema.metadata[b"THP_VALUES"], dtype=np.float64),

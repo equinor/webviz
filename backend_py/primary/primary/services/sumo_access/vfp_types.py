@@ -11,9 +11,18 @@ class VfpType(Enum):
 
 
 # Flow rate types
-class FlowRateType(Enum):
+class FlowRateTypeProd(Enum):
     OIL = "OIL"
     LIQ = "LIQ"
+    GAS = "GAS"
+    WG = "WG"
+    TM = "TM"
+
+
+# Flow rate types for injection curves
+class FlowRateTypeInj(Enum):
+    OIL = "OIL"
+    WAT = "WAT"
     GAS = "GAS"
     WG = "WG"
     TM = "TM"
@@ -74,12 +83,24 @@ class VfpProdTable(BaseModel):
     wfr_type: WFR
     gfr_type: GFR
     alq_type: ALQ
-    flow_rate_type: FlowRateType
+    flow_rate_type: FlowRateTypeProd
     unit_type: UnitType
     tab_type: TabType
     thp_values: List[float]
     wfr_values: List[float]
     gfr_values: List[float]
     alq_values: List[float]
+    flow_rate_values: List[float]
+    bhp_values: List[float]
+
+
+class VfpInjTable(BaseModel):
+    vfp_type: VfpType
+    table_number: int
+    datum: float
+    flow_rate_type: FlowRateTypeInj
+    unit_type: UnitType
+    tab_type: TabType
+    thp_values: List[float]
     flow_rate_values: List[float]
     bhp_values: List[float]

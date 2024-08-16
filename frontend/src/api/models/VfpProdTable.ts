@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { ALQ } from './ALQ';
-import type { FlowRateType } from './FlowRateType';
+import type { FlowRateTypeProd } from './FlowRateTypeProd';
 import type { GFR } from './GFR';
 import type { TabType } from './TabType';
 import type { UnitType } from './UnitType';
@@ -16,7 +16,7 @@ export type VfpProdTable = {
     wfr_type: WFR;
     gfr_type: GFR;
     alq_type: ALQ;
-    flow_rate_type: FlowRateType;
+    flow_rate_type: FlowRateTypeProd;
     unit_type: UnitType;
     tab_type: TabType;
     thp_values: Array<number>;
