@@ -17,7 +17,8 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { PolygonsAddress, PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
-import { SurfaceAddress, SurfaceAddressFactory, SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
+import { RealizationSurfaceAddress, StatisticalSurfaceAddress } from "@modules/_shared/Surface";
+import { SurfaceAddressBuilder, SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
 import { useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
@@ -242,21 +243,19 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
 
     React.useEffect(
         function propagateMeshSurfaceSelectionToView() {
-            let surfAddr: SurfaceAddress | null = null;
+            let surfAddr: RealizationSurfaceAddress | StatisticalSurfaceAddress | null = null;
 
             if (computedEnsembleIdent && computedMeshSurfaceName && computedMeshSurfaceAttribute) {
-                const addrFactory = new SurfaceAddressFactory(
-                    computedEnsembleIdent.getCaseUuid(),
-                    computedEnsembleIdent.getEnsembleName(),
-                    computedMeshSurfaceName,
-                    computedMeshSurfaceAttribute,
-                    null
-                );
-
-                if (aggregation === null) {
-                    surfAddr = addrFactory.createRealizationAddress(realizationNum);
+                const addrBuilder = new SurfaceAddressBuilder();
+                addrBuilder.withEnsembleIdent(computedEnsembleIdent);
+                addrBuilder.withName(computedMeshSurfaceName);
+                addrBuilder.withAttribute(computedMeshSurfaceAttribute);
+                if (aggregation) {
+                    addrBuilder.withStatisticFunction(aggregation);
+                    surfAddr = addrBuilder.buildStatisticalAddress();
                 } else {
-                    surfAddr = addrFactory.createStatisticalAddress(aggregation);
+                    addrBuilder.withRealization(realizationNum);
+                    surfAddr = addrBuilder.buildRealizationAddress();
                 }
             }
 
@@ -278,24 +277,23 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     );
     React.useEffect(
         function propagatePropertySurfaceSelectionToView() {
-            let surfAddr: SurfaceAddress | null = null;
+            let surfAddr: RealizationSurfaceAddress | StatisticalSurfaceAddress | null = null;
             if (!usePropertySurface) {
                 setPropertySurfaceAddress(surfAddr);
                 return;
             }
             if (computedEnsembleIdent && computedPropertySurfaceName && computedPropertySurfaceAttribute) {
-                const addrFactory = new SurfaceAddressFactory(
-                    computedEnsembleIdent.getCaseUuid(),
-                    computedEnsembleIdent.getEnsembleName(),
-                    computedPropertySurfaceName,
-                    computedPropertySurfaceAttribute,
-                    computedPropertyTimeOrInterval
-                );
-
-                if (aggregation === null) {
-                    surfAddr = addrFactory.createRealizationAddress(realizationNum);
+                const addrBuilder = new SurfaceAddressBuilder();
+                addrBuilder.withEnsembleIdent(computedEnsembleIdent);
+                addrBuilder.withName(computedPropertySurfaceName);
+                addrBuilder.withAttribute(computedPropertySurfaceAttribute);
+                addrBuilder.withTimeOrInterval(computedPropertyTimeOrInterval);
+                if (aggregation) {
+                    addrBuilder.withStatisticFunction(aggregation);
+                    surfAddr = addrBuilder.buildStatisticalAddress();
                 } else {
-                    surfAddr = addrFactory.createStatisticalAddress(aggregation);
+                    addrBuilder.withRealization(realizationNum);
+                    surfAddr = addrBuilder.buildRealizationAddress();
                 }
             }
 

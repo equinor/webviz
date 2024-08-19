@@ -124,30 +124,53 @@ def create_ensemble_sensitivity_cases(
 
 
 def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[EnsembleParameter]:
-    """Convert a parameter table to an EnsembleParameter"""
+    """Convert a parameter table to EnsembleParameters"""
     ensemble_parameters: List[EnsembleParameter] = []
-    for column_name in parameter_table.column_names:
-        if column_name == "REAL":
+    parameter_str_arr = [param_str for param_str in parameter_table.column_names if param_str != "REAL"]
+    parameter_group_dict = _parameter_str_arr_to_parameter_group_dict(parameter_str_arr)
+    ensemble_parameters = []
+    for group_name, parameter_names in parameter_group_dict.items():
+        if group_name and "LOG10_" in group_name:
             continue
-        parameter_name_components = column_name.split(":")
+        for parameter_name in parameter_names:
+            is_logarithmic = parameter_name in parameter_group_dict.get(f"LOG10_{group_name}", [])
+            table_column_name = _parameter_name_and_group_name_to_parameter_str(parameter_name, group_name)
+            ensemble_parameters.append(
+                EnsembleParameter(
+                    name=parameter_name,
+                    group_name=f"LOG10_{group_name}" if is_logarithmic else group_name,
+                    is_logarithmic=is_logarithmic,
+                    is_numerical=parameter_table.schema.field(table_column_name).type != pa.string,
+                    is_constant=len(set(parameter_table[table_column_name])) == 1,
+                    descriptive_name=parameter_name,
+                    values=parameter_table[table_column_name].to_numpy().tolist(),
+                    realizations=parameter_table["REAL"].to_numpy().tolist(),
+                )
+            )
+    return ensemble_parameters
+
+
+def _parameter_name_and_group_name_to_parameter_str(parameter_name: str, group_name: Optional[str]) -> str:
+    """Convert a parameter name and group name to a parameter string"""
+    return f"{group_name}:{parameter_name}" if group_name else parameter_name
+
+
+def _parameter_str_arr_to_parameter_group_dict(parameter_str_arr: List[str]) -> dict:
+    """Convert a list of parameter strings to a dictionary of parameter groups"""
+    parameter_group_dict: dict = {}
+    for parameter_str in parameter_str_arr:
+        parameter_name_components = parameter_str.split(":")
         if len(parameter_name_components) > 2:
-            raise ValueError(f"Parameter {column_name} has too many componenents. Expected <groupname>:<parametername>")
+            raise ValueError(
+                f"Parameter {parameter_str} has too many componenents. Expected <groupname>:<parametername>"
+            )
         if len(parameter_name_components) == 1:
-            parameter_name = column_name
+            parameter_name = parameter_name_components[0]
             group_name = None
         else:
             group_name = parameter_name_components[0]
             parameter_name = parameter_name_components[1]
-        ensemble_parameters.append(
-            EnsembleParameter(
-                name=parameter_name,
-                is_logarithmic=column_name.startswith("LOG10_"),
-                is_numerical=parameter_table.schema.field(column_name).type != pa.string,
-                is_constant=len(set(parameter_table[column_name])) == 1,
-                group_name=group_name,
-                descriptive_name=parameter_name,
-                values=parameter_table[column_name].to_numpy().tolist(),
-                realizations=parameter_table["REAL"].to_numpy().tolist(),
-            )
-        )
-    return ensemble_parameters
+        if group_name not in parameter_group_dict:
+            parameter_group_dict[group_name] = []
+        parameter_group_dict[group_name].append(parameter_name)
+    return parameter_group_dict

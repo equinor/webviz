@@ -1,7 +1,7 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { ParameterIdent } from "@framework/EnsembleParameters";
+import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleViewProps } from "@framework/Module";
 import { EnsembleRealizationFilterFunction, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
@@ -35,18 +35,10 @@ export function View(props: ModuleViewProps<Interfaces>) {
         filterEnsembleRealizationsFunc
     );
 
-    const colorSet = props.workbenchSettings.useColorSet();
-    const ensembleColors = new Map<string, string>();
-    ensembleSet.getEnsembleArr().forEach((ensemble, index) => {
-        const color = index === 0 ? colorSet.getFirstColor() : colorSet.getNextColor();
-        ensembleColors.set(ensemble.getDisplayName(), color);
-    });
-
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
             <ParameterDistributionPlot
                 dataArr={parameterDataArr}
-                ensembleColors={ensembleColors}
                 plotType={selectedVisualizationType}
                 showIndividualRealizationValues={showIndividualRealizationValues}
                 showPercentilesAndMeanLines={showPercentilesAndMeanLines}
@@ -80,6 +72,8 @@ function makeParameterDataArr(
 
             const filteredRealizations = new Set(filterEnsembleRealizations(ensembleIdent));
             const parameter = ensembleParameters.getParameter(parameterIdent);
+            parameterDataArrEntry.isLogarithmic =
+                parameter.type === ParameterType.CONTINUOUS ? parameter.isLogarithmic : false;
 
             const parameterValues: number[] = [];
             const realizationNumbers: number[] = [];
@@ -92,6 +86,7 @@ function makeParameterDataArr(
 
             const ensembleParameterValues = {
                 ensembleDisplayName: ensemble.getDisplayName(),
+                ensembleColor: ensemble.getColor(),
                 values: parameterValues,
                 realizations: realizationNumbers,
             };

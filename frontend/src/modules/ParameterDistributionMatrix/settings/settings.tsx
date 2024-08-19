@@ -25,6 +25,7 @@ import {
 } from "./atoms/derivedAtoms";
 
 import { Interfaces } from "../interfaces";
+import { MAX_PARAMETERS } from "../typesAndEnums";
 import { ParameterDistributionPlotType, ParameterDistributionPlotTypeEnumToStringMapping } from "../typesAndEnums";
 
 const MAX_PARAMETERS = 50;
