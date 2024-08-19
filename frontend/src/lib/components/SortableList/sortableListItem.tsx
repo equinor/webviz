@@ -3,7 +3,7 @@ import React from "react";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
+import { DragIndicator } from "@mui/icons-material";
 
 import { HoveredArea, SortableListContext } from "./sortableList";
 import { SortableListDropIndicator } from "./sortableListDropIndicator";
@@ -93,7 +93,7 @@ type HeaderProps = {
 
 function Header(props: HeaderProps): React.ReactNode {
     return (
-        <div className="flex gap-1 h-8 bg-slate-100 hover:bg-blue-100 text-sm items-center border-b border-b-gray-300 px-2">
+        <div className="flex gap-1 h-8 bg-slate-100 text-sm items-center border-b border-b-gray-300 px-2">
             <div className={resolveClassNames("sortable-list-element-indicator hover:cursor-grab")}>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
@@ -101,13 +101,6 @@ function Header(props: HeaderProps): React.ReactNode {
                 {props.startAdornment}
                 <div className="flex-grow">{props.title}</div>
                 {props.endAdornment}
-            </div>
-            <div
-                className="hover:cursor-pointer hover:text-blue-800 p-0.5 rounded"
-                onClick={props.onToggleExpanded}
-                title={props.expanded ? "Hide children" : "Show children"}
-            >
-                {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </div>
         </div>
     );
