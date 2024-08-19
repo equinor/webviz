@@ -1,42 +1,11 @@
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { apiService } from "@framework/ApiService";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 
 import { atom } from "jotai";
-import { atomWithQuery } from "jotai-tanstack-query";
 
-import {
-    customIntersectionPolylineIdAtom,
-    ensembleIdentAtom,
-    highlightedWellboreUuidAtom,
-    intersectionTypeAtom,
-} from "./baseAtoms";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
-export const fieldWellboreTrajectoriesQueryAtom = atomWithQuery((get) => {
-    const ensembleIdent = get(ensembleIdentAtom);
-    const ensembleSet = get(EnsembleSetAtom);
-
-    let fieldIdentifier: string | null = null;
-    if (ensembleIdent) {
-        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-        if (ensemble) {
-            fieldIdentifier = ensemble.getFieldIdentifier();
-        }
-    }
-
-    return {
-        queryKey: ["getFieldWellboreTrajectories", fieldIdentifier ?? ""],
-        queryFn: () => apiService.well.getFieldWellTrajectories(fieldIdentifier ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: Boolean(fieldIdentifier),
-    };
-});
+import { customIntersectionPolylineIdAtom, highlightedWellboreUuidAtom, intersectionTypeAtom } from "./baseAtoms";
+import { fieldWellboreTrajectoriesQueryAtom } from "./queryAtoms";
 
 export const intersectionReferenceSystemAtom = atom((get) => {
     const fieldWellboreTrajectories = get(fieldWellboreTrajectoriesQueryAtom);

@@ -1,6 +1,4 @@
-import { WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { apiService } from "@framework/ApiService";
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
@@ -8,36 +6,19 @@ import { CURVE_FITTING_EPSILON } from "@modules/Intersection/typesAndEnums";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
 
 import { atom } from "jotai";
-import { atomWithQuery } from "jotai-tanstack-query";
 
 import {
     intersectionExtensionLengthAtom,
     intersectionTypeAtom,
     selectedCustomIntersectionPolylineIdAtom,
-    wellboreHeaderAtom,
 } from "./baseAtoms";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
+import { wellboreTrajectoryQueryAtom } from "./queryAtoms";
 
 export const selectedCustomIntersectionPolylineAtom = atom((get) => {
     const customIntersectionPolylineId = get(selectedCustomIntersectionPolylineIdAtom);
     const customIntersectionPolylines = get(IntersectionPolylinesAtom);
 
     return customIntersectionPolylines.find((el) => el.id === customIntersectionPolylineId);
-});
-
-export const wellboreTrajectoryQueryAtom = atomWithQuery((get) => {
-    const wellbore = get(wellboreHeaderAtom);
-
-    return {
-        queryKey: ["getWellboreTrajectory", wellbore?.uuid ?? ""],
-        queryFn: () => apiService.well.getWellTrajectories(wellbore?.uuid ? [wellbore.uuid] : []),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        select: (data: WellboreTrajectory_api[]) => data[0],
-        enabled: wellbore?.uuid ? true : false,
-    };
 });
 
 export const intersectionReferenceSystemAtom = atom((get) => {

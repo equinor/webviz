@@ -9,7 +9,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { useAtomValue } from "jotai";
 
-import { intersectionReferenceSystemAtom, polylineAtom, wellboreTrajectoryQueryAtom } from "./atoms/derivedAtoms";
+import { intersectionReferenceSystemAtom, polylineAtom } from "./atoms/derivedAtoms";
+import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { LayersWrapper } from "./components/layersWrapper";
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 
