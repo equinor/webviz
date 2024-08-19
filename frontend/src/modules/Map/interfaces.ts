@@ -1,10 +1,10 @@
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { SurfaceAddress } from "@modules/_shared/Surface/surfaceAddress";
+import { FullSurfaceAddress } from "@modules/_shared/Surface/surfaceAddress";
 
 import { surfaceAddressAtom } from "./settings/atoms/baseAtoms";
 
 type SettingsToViewInterface = {
-    surfaceAddress: SurfaceAddress | null;
+    surfaceAddress: FullSurfaceAddress | null;
 };
 
 export type Interfaces = {

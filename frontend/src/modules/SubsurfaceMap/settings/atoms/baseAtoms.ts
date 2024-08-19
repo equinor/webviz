@@ -1,11 +1,11 @@
 import { SurfaceMeshLayerSettings, ViewSettings } from "@modules/SubsurfaceMap/_utils";
 import { PolygonsAddress } from "@modules/_shared/Polygons";
-import { SurfaceAddress } from "@modules/_shared/Surface";
+import { RealizationSurfaceAddress, StatisticalSurfaceAddress } from "@modules/_shared/Surface";
 
 import { atom } from "jotai";
 
-export const meshSurfaceAddressAtom = atom<SurfaceAddress | null>(null);
-export const propertySurfaceAddressAtom = atom<SurfaceAddress | null>(null);
+export const meshSurfaceAddressAtom = atom<RealizationSurfaceAddress | StatisticalSurfaceAddress | null>(null);
+export const propertySurfaceAddressAtom = atom<RealizationSurfaceAddress | StatisticalSurfaceAddress | null>(null);
 export const polygonsAddressAtom = atom<PolygonsAddress | null>(null);
 export const selectedWellUuidsAtom = atom<string[]>([]);
 export const surfaceSettingsAtom = atom<SurfaceMeshLayerSettings | null>(null);

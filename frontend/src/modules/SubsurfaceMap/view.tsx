@@ -26,7 +26,6 @@ import {
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
 import { Interfaces } from "./interfaces";
-import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
 
 type Bounds = [number, number, number, number];
 

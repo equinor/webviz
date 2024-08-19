@@ -25,10 +25,12 @@ import {
 } from "./atoms/derivedAtoms";
 
 import { Interfaces } from "../interfaces";
-import { MAX_PARAMETERS } from "../typesAndEnums";
-import { ParameterDistributionPlotType, ParameterDistributionPlotTypeEnumToStringMapping } from "../typesAndEnums";
+import {
+    MAX_PARAMETERS,
+    ParameterDistributionPlotType,
+    ParameterDistributionPlotTypeEnumToStringMapping,
+} from "../typesAndEnums";
 
-const MAX_PARAMETERS = 50;
 export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
