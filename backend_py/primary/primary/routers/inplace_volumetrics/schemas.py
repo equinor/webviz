@@ -13,13 +13,13 @@ class InplaceVolumetricsIdentifier(str, Enum):
 
 class InplaceVolumetricsIdentifierWithValues(BaseModel):
     """Unique values for an index column in a volumetric table
-    All values should ideally be strings, but it is commmon to see integers, especially for REGION"""
+    All values should ideally be strings, but it is common to see integers, especially for REGION"""
 
     identifier: InplaceVolumetricsIdentifier
     values: List[Union[str, int]]
 
 
-class Statistics(StrEnum):
+class InplaceVolumetricStatistic(StrEnum):
     """
     Definition of possible statistics for a result column in an inplace volumetrics table
     """
@@ -84,26 +84,6 @@ class InplaceVolumetricData(BaseModel):
     entries: List[InplaceVolumetricDataEntry]
 
 
-class InplaceVolumetricResponseNames(str, Enum):
-    """Allowed volumetric response names"""
-
-    BULK_OIL = "BULK_OIL"
-    BULK_WATER = "BULK_WATER"
-    BULK_GAS = "BULK_GAS"
-    NET_OIL = "NET_OIL"
-    NET_WATER = "NET_WATER"
-    NET_GAS = "NET_GAS"
-    PORV_OIL = "PORV_OIL"
-    PORV_WATER = "PORV_WATER"
-    PORV_GAS = "PORV_GAS"
-    HCPV_OIL = "HCPV_OIL"
-    HCPV_GAS = "HCPV_GAS"
-    STOIIP_OIL = "STOIIP_OIL"
-    GIIP_GAS = "GIIP_GAS"
-    ASSOCIATEDGAS_OIL = "ASSOCIATEDGAS_OIL"
-    ASSOCIATEDOIL_GAS = "ASSOCIATEDOIL_GAS"
-
-
 class RepeatedTableColumnData(BaseModel):
     """
     Data for a single column in a volumetric table
@@ -138,7 +118,7 @@ class TableColumnStatisticalData(BaseModel):
     """
 
     columnName: str
-    statisticValues: Dict[Statistics, List[float]]
+    statisticValues: Dict[InplaceVolumetricStatistic, List[float]]
 
 
 class InplaceVolumetricTableData(BaseModel):

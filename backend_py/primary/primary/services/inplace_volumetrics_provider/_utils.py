@@ -11,7 +11,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     InplaceVolumetricsIdentifier,
     InplaceVolumetricResultName,
     RepeatedTableColumnData,
-    Statistics,
+    Statistic,
     TableColumnData,
     TableColumnStatisticalData,
 )
@@ -22,6 +22,7 @@ This file contains general utility functions for the Inplace Volumetrics provide
 The methods can be used to calculate, aggregate and create data for the Inplace Volumetrics provider
 """
 
+
 def get_valid_result_names_from_list(result_names: List[str]) -> List[str]:
     """
     Get valid result names from list of result names
@@ -31,6 +32,7 @@ def get_valid_result_names_from_list(result_names: List[str]) -> List[str]:
         if result_name in InplaceVolumetricResultName.__members__:
             valid_result_names.append(result_name)
     return valid_result_names
+
 
 def create_per_realization_accumulated_result_table(
     result_table: pa.Table,
@@ -94,12 +96,12 @@ def create_statistical_grouped_result_table_data_pandas(
         result_name: TableColumnStatisticalData(
             column_name=result_name,
             statistic_values={
-                Statistics.MEAN: [],
-                Statistics.STD_DEV: [],
-                Statistics.MIN: [],
-                Statistics.MAX: [],
-                Statistics.P10: [],
-                Statistics.P90: [],
+                Statistic.MEAN: [],
+                Statistic.STD_DEV: [],
+                Statistic.MIN: [],
+                Statistic.MAX: [],
+                Statistic.P10: [],
+                Statistic.P90: [],
             },
         )
         for result_name in valid_result_names
@@ -114,12 +116,12 @@ def create_statistical_grouped_result_table_data_pandas(
             result_column_array = group_df[result_name].to_numpy()
             statistics_data = result_statistical_data_dict[result_name]  # Get reference to dictionary
 
-            statistics_data.statistic_values[Statistics.MEAN].append(np.mean(result_column_array))
-            statistics_data.statistic_values[Statistics.STD_DEV].append(np.std(result_column_array))
-            statistics_data.statistic_values[Statistics.MIN].append(np.min(result_column_array))
-            statistics_data.statistic_values[Statistics.MAX].append(np.max(result_column_array))
-            statistics_data.statistic_values[Statistics.P10].append(np.percentile(result_column_array, 10))
-            statistics_data.statistic_values[Statistics.P90].append(np.percentile(result_column_array, 90))
+            statistics_data.statistic_values[Statistic.MEAN].append(np.mean(result_column_array))
+            statistics_data.statistic_values[Statistic.STD_DEV].append(np.std(result_column_array))
+            statistics_data.statistic_values[Statistic.MIN].append(np.min(result_column_array))
+            statistics_data.statistic_values[Statistic.MAX].append(np.max(result_column_array))
+            statistics_data.statistic_values[Statistic.P10].append(np.percentile(result_column_array, 10))
+            statistics_data.statistic_values[Statistic.P90].append(np.percentile(result_column_array, 90))
 
     # Handle case where group by identifiers are empty
     if len(group_by_list) == 0:
@@ -159,22 +161,22 @@ def create_statistical_grouped_result_table_data_pandas(
     return (selector_column_data_list, result_statistical_data_list)
 
 
-def _get_statistic_enum_from_pyarrow_aggregate_func_name(func: str) -> Statistics:
+def _get_statistic_enum_from_pyarrow_aggregate_func_name(func: str) -> Statistic:
     """
     Get statistic enum from pyarrow aggregate function name
     """
     if func == "mean":
-        return Statistics.MEAN
+        return Statistic.MEAN
     if func == "stddev":
-        return Statistics.STD_DEV
+        return Statistic.STD_DEV
     if func == "min":
-        return Statistics.MIN
+        return Statistic.MIN
     if func == "max":
-        return Statistics.MAX
+        return Statistic.MAX
     if func == "p10":
-        return Statistics.P10
+        return Statistic.P10
     if func == "p90":
-        return Statistics.P90
+        return Statistic.P90
 
     raise ValueError(f"Unknown statistic function name: {func}")
 
@@ -270,8 +272,8 @@ def create_statistical_grouped_result_table_data_pyarrow(
 
                 p10_array.append(get_valid_percentile_value(group_percentiles[0]))
                 p90_array.append(get_valid_percentile_value(group_percentiles[1]))
-        result_statistical_data.statistic_values[Statistics.P10] = p10_array
-        result_statistical_data.statistic_values[Statistics.P90] = p90_array
+        result_statistical_data.statistic_values[Statistic.P10] = p10_array
+        result_statistical_data.statistic_values[Statistic.P90] = p90_array
 
         # Add result statistical data to dictionary
         results_statistical_data_dict[result_name] = result_statistical_data

@@ -1,8 +1,8 @@
 import {
     InplaceStatisticalVolumetricTableDataPerFluidSelection_api,
+    InplaceVolumetricStatistic_api,
     InplaceVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricsIdentifier_api,
-    Statistics_api,
 } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
@@ -41,7 +41,7 @@ export type SourceAndTableIdentifierUnion =
     (typeof sourceAndTableIdentifiersUnion)[keyof typeof sourceAndTableIdentifiersUnion];
 
 export type StatisticalColumns = Partial<{
-    [key in Statistics_api]: Column<number>;
+    [key in InplaceVolumetricStatistic_api]: Column<number>;
 }>;
 
 export type StatisticalTableColumnData = {
@@ -50,4 +50,13 @@ export type StatisticalTableColumnData = {
     // - Statistical columns: Map with result name as key, and its statistical columns as value. One column per statistical type (e.g. mean, min, max, etc.)
     nonStatisticalColumns: Column[];
     resultStatisticalColumns: Map<string, StatisticalColumns>;
+};
+
+export const InplaceVolumetricStatisticEnumToStringMapping = {
+    [InplaceVolumetricStatistic_api.MEAN]: "Mean",
+    [InplaceVolumetricStatistic_api.MIN]: "Min",
+    [InplaceVolumetricStatistic_api.MAX]: "Max",
+    [InplaceVolumetricStatistic_api.STDDEV]: "Stddev",
+    [InplaceVolumetricStatistic_api.P10]: "P10",
+    [InplaceVolumetricStatistic_api.P90]: "P90",
 };

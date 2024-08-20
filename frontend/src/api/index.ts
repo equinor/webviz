@@ -52,6 +52,7 @@ export { InplaceVolumetricResultName as InplaceVolumetricResultName_api } from '
 export { InplaceVolumetricsIdentifier as InplaceVolumetricsIdentifier_api } from './models/InplaceVolumetricsIdentifier';
 export type { InplaceVolumetricsIdentifierWithValues as InplaceVolumetricsIdentifierWithValues_api } from './models/InplaceVolumetricsIdentifierWithValues';
 export type { InplaceVolumetricsTableDefinition as InplaceVolumetricsTableDefinition_api } from './models/InplaceVolumetricsTableDefinition';
+export { InplaceVolumetricStatistic as InplaceVolumetricStatistic_api } from './models/InplaceVolumetricStatistic';
 export type { InplaceVolumetricTableData as InplaceVolumetricTableData_api } from './models/InplaceVolumetricTableData';
 export type { InplaceVolumetricTableDataPerFluidSelection as InplaceVolumetricTableDataPerFluidSelection_api } from './models/InplaceVolumetricTableDataPerFluidSelection';
 export { NodeType as NodeType_api } from './models/NodeType';
@@ -72,7 +73,6 @@ export type { SeismicFenceData as SeismicFenceData_api } from './models/SeismicF
 export type { SeismicFencePolyline as SeismicFencePolyline_api } from './models/SeismicFencePolyline';
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
-export { Statistics as Statistics_api } from './models/Statistics';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
 export type { StratigraphicUnit as StratigraphicUnit_api } from './models/StratigraphicUnit';
 export type { SummaryVectorDateObservation as SummaryVectorDateObservation_api } from './models/SummaryVectorDateObservation';

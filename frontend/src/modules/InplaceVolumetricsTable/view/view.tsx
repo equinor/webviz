@@ -34,6 +34,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     const resultNames = props.viewContext.useSettingsToViewInterfaceValue("resultNames");
     const accumulationOptions = props.viewContext.useSettingsToViewInterfaceValue("accumulationOptions");
     const tableType = props.viewContext.useSettingsToViewInterfaceValue("tableType");
+    const statisticOptions = props.viewContext.useSettingsToViewInterfaceValue("statisticOptions");
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const divBoundingRect = useElementBoundingRect(divRef);
@@ -106,6 +107,7 @@ export function View(props: ModuleViewProps<Record<string, never>, SettingsToVie
     } else if (tableType === TableType.STATISTICAL) {
         const tableHeadingsAndRows = createStatisticalTableHeadingsAndRowsFromTablesData(
             statisticalTableDataQueries.tablesData,
+            statisticOptions,
             ensembleSet
         );
 

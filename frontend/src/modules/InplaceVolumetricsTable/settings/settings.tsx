@@ -1,5 +1,6 @@
 import React from "react";
 
+import { InplaceVolumetricStatistic_api } from "@api";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
@@ -10,6 +11,7 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 import { TagOption, TagPicker } from "@lib/components/TagPicker";
 import {
+    InplaceVolumetricStatisticEnumToStringMapping,
     SourceAndTableIdentifierUnion,
     SourceIdentifier,
     TableType,
@@ -20,6 +22,7 @@ import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/I
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
+    selectedStatisticOptionsAtom,
     selectedTableTypeAtom,
     userSelectedAccumulationOptionsAtom,
     userSelectedEnsembleIdentsAtom,
@@ -65,6 +68,7 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
     const setSelectedAccumulationOptions = useSetAtom(userSelectedAccumulationOptionsAtom);
 
     const [selectedTableType, setSelectedTableType] = useAtom(selectedTableTypeAtom);
+    const [selectedStatisticOptions, setSelectedStatisticOptions] = useAtom(selectedStatisticOptionsAtom);
 
     function handleFilterChange(newFilter: InplaceVolumetricsFilter) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
@@ -82,6 +86,10 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         setSelectedAccumulationOptions(newAccumulationOptions);
     }
 
+    function handleStatisticOptionsChange(newStatistics: InplaceVolumetricStatistic_api[]) {
+        setSelectedStatisticOptions(newStatistics);
+    }
+
     function handleSelectedTableTypeChange(value: string) {
         setSelectedTableType(value as TableType);
     }
@@ -97,6 +105,12 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
         accumulateOptions.push({ label: identifier.identifier, value: identifier.identifier });
     }
 
+    const statisticOptions: TagOption<InplaceVolumetricStatistic_api>[] = Object.values(
+        InplaceVolumetricStatistic_api
+    ).map((elm: InplaceVolumetricStatistic_api) => {
+        return { label: InplaceVolumetricStatisticEnumToStringMapping[elm], value: elm };
+    });
+
     return (
         <div className="flex flex-col gap-2">
             <PendingWrapper isPending={tableDefinitionsQueryResult.isLoading}>
@@ -111,7 +125,16 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                                 onChange={handleSelectedTableTypeChange}
                             />
                         </Label>
-                        <Label text="Result">
+                        {selectedTableType === TableType.STATISTICAL && (
+                            <Label text="Statistics">
+                                <TagPicker
+                                    value={selectedStatisticOptions}
+                                    tags={statisticOptions}
+                                    onChange={handleStatisticOptionsChange}
+                                />
+                            </Label>
+                        )}
+                        <Label text="Results">
                             <Select
                                 value={selectedResultNames}
                                 options={resultNameOptions}
@@ -120,7 +143,7 @@ export function Settings(props: ModuleSettingsProps<Record<string, never>, Setti
                                 size={5}
                             />
                         </Label>
-                        <Label text="Group by">
+                        <Label text="Grouping">
                             <TagPicker
                                 value={selectedAccumulationOptions}
                                 tags={accumulateOptions}

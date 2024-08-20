@@ -33,6 +33,7 @@ class InplaceVolumetricResultName(StrEnum):
     BULK_TOTAL = "BULK_TOTAL"
     PORV_TOTAL = "PORV_TOTAL"
 
+
 class InplaceVolumetricsIdentifier(StrEnum):
     """
     Definition of valid index names for an inplace volumetrics table
@@ -49,6 +50,7 @@ class FluidZone(StrEnum):
     GAS = "Gas"
     WATER = "Water"  # TODO: Remove or keep?
 
+
 class Property(StrEnum):
     NTG = "NTG"
     PORO = "PORO"
@@ -58,7 +60,7 @@ class Property(StrEnum):
     BG = "BG"
 
 
-class Statistics(StrEnum):
+class Statistic(StrEnum):
     """
     Definition of possible statistics for a result column in an inplace volumetrics table
     """
@@ -111,7 +113,7 @@ class TableColumnData:
 @dataclass
 class TableColumnStatisticalData:
     column_name: str
-    statistic_values: Dict[Statistics, List[float]]  # Statistics values Length = number of rows in the table
+    statistic_values: Dict[Statistic, List[float]]  # Statistics values Length = number of rows in the table
 
 
 @dataclass

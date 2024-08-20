@@ -17,6 +17,7 @@ export type SelectOption<TValue = string> = {
     value: TValue;
     adornment?: React.ReactNode;
     label: string;
+    hoverText?: string;
     disabled?: boolean;
 };
 
@@ -414,7 +415,7 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
                                 >
                                     {option.adornment}
                                     <span
-                                        title={option.label}
+                                        title={option.hoverText ?? option.label}
                                         className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap flex-grow"
                                     >
                                         {option.label}

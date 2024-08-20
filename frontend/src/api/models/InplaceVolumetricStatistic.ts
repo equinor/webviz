@@ -5,7 +5,7 @@
 /**
  * Definition of possible statistics for a result column in an inplace volumetrics table
  */
-export enum Statistics {
+export enum InplaceVolumetricStatistic {
     MEAN = 'mean',
     STDDEV = 'stddev',
     MAX = 'max',

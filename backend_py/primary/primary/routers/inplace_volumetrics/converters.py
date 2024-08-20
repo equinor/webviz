@@ -1,6 +1,7 @@
-from typing import List
+from typing import Dict, List
 
 from primary.services.sumo_access.inplace_volumetrics_types import (
+    Statistic,
     InplaceVolumetricsTableDefinition,
     InplaceVolumetricTableDataPerFluidSelection,
     InplaceStatisticalVolumetricTableDataPerFluidSelection,
@@ -81,7 +82,10 @@ def convert_statistical_table_data_per_fluid_selection_to_schema(
         ]
 
         result_columns_statistics = [
-            schemas.TableColumnStatisticalData(columnName=column.column_name, statisticValues=column.statistic_values)
+            schemas.TableColumnStatisticalData(
+                columnName=column.column_name,
+                statisticValues=_convert_statistic_values_dict_to_schema(column.statistic_values),
+            )
             for column in table.result_column_statistics
         ]
 
@@ -94,3 +98,33 @@ def convert_statistical_table_data_per_fluid_selection_to_schema(
         )
 
     return schemas.InplaceStatisticalVolumetricTableDataPerFluidSelection(tableDataPerFluidSelection=tables)
+
+
+def _convert_statistic_values_dict_to_schema(
+    statistic_values: Dict[Statistic, List[float]],
+) -> Dict[schemas.InplaceVolumetricStatistic, List[float]]:
+    """Converts the statistic values dictionary from the service layer format to API format"""
+    return {
+        _convert_statistic_enum_to_inplace_volumetric_statistic_enum(statistic): values
+        for statistic, values in statistic_values.items()
+    }
+
+
+def _convert_statistic_enum_to_inplace_volumetric_statistic_enum(
+    statistic: Statistic,
+) -> schemas.InplaceVolumetricStatistic:
+    """Converts the statistic enum from the service layer format to API enum"""
+    if statistic == Statistic.MEAN:
+        return schemas.InplaceVolumetricStatistic.MEAN
+    if statistic == Statistic.STD_DEV:
+        return schemas.InplaceVolumetricStatistic.STD_DEV
+    if statistic == Statistic.MIN:
+        return schemas.InplaceVolumetricStatistic.MIN
+    if statistic == Statistic.MAX:
+        return schemas.InplaceVolumetricStatistic.MAX
+    if statistic == Statistic.P10:
+        return schemas.InplaceVolumetricStatistic.P10
+    if statistic == Statistic.P90:
+        return schemas.InplaceVolumetricStatistic.P90
+
+    raise ValueError(f"Unknown statistic value: {statistic.value}")

@@ -1,4 +1,4 @@
-import { FluidZone_api } from "@api";
+import { FluidZone_api, InplaceVolumetricStatistic_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { TableHeading, TableRow } from "@lib/components/Table/table";
@@ -42,6 +42,7 @@ export function createTableHeadingsAndRowsFromTablesData(
 
 export function createStatisticalTableHeadingsAndRowsFromTablesData(
     tablesData: InplaceVolumetricsStatisticalTableData[],
+    statisticOptions: InplaceVolumetricStatistic_api[],
     ensembleSet: EnsembleSet
 ): {
     headings: TableHeading;
@@ -50,7 +51,7 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
     const tableHeadings: TableHeading = {};
     const tableRows: TableRow<any>[] = [];
 
-    const columnData = makeStatisticalTableColumnDataFromApiData(tablesData);
+    const columnData = makeStatisticalTableColumnDataFromApiData(tablesData, statisticOptions);
 
     const nonStatisticalColumns = columnData.nonStatisticalColumns;
     const resultStatisticalColumns = columnData.resultStatisticalColumns;

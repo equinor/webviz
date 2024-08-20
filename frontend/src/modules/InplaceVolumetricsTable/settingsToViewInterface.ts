@@ -1,9 +1,9 @@
-import { InplaceVolumetricResultName_api } from "@api";
+import { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 import { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
-import { selectedTableTypeAtom } from "./settings/atoms/baseAtoms";
+import { selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./settings/atoms/baseAtoms";
 import {
     selectedAccumulationOptionsAtom,
     selectedEnsembleIdentsAtom,
@@ -18,6 +18,7 @@ export type SettingsToViewInterface = {
     resultNames: InplaceVolumetricResultName_api[];
     accumulationOptions: Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>[];
     tableType: TableType;
+    statisticOptions: InplaceVolumetricStatistic_api[];
 };
 
 export const interfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
@@ -32,4 +33,5 @@ export const interfaceInitialization: InterfaceInitialization<SettingsToViewInte
     resultNames: (get) => get(selectedResultNamesAtom),
     accumulationOptions: (get) => get(selectedAccumulationOptionsAtom),
     tableType: (get) => get(selectedTableTypeAtom),
+    statisticOptions: (get) => get(selectedStatisticOptionsAtom),
 };

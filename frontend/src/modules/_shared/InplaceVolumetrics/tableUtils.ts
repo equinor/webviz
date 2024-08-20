@@ -1,7 +1,8 @@
-import { Statistics_api } from "@api";
+import { InplaceVolumetricStatistic_api } from "@api";
 
 import { Column, ColumnType, Table } from "./Table";
 import {
+    InplaceVolumetricStatisticEnumToStringMapping,
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
     SourceIdentifier,
@@ -97,7 +98,8 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
 }
 
 export function makeStatisticalTableColumnDataFromApiData(
-    data: InplaceVolumetricsStatisticalTableData[]
+    data: InplaceVolumetricsStatisticalTableData[],
+    statisticOptions: InplaceVolumetricStatistic_api[]
 ): StatisticalTableColumnData {
     // Result statistical tables
     const resultStatisticalColumns: Map<string, StatisticalColumns> = new Map();
@@ -132,14 +134,12 @@ export function makeStatisticalTableColumnDataFromApiData(
                     continue;
                 }
 
-                const statisticalColumns: StatisticalColumns = {
-                    mean: new Column<number>("Mean", ColumnType.RESULT),
-                    stddev: new Column<number>("Stddev", ColumnType.RESULT),
-                    p90: new Column<number>("P90", ColumnType.RESULT),
-                    p10: new Column<number>("P10", ColumnType.RESULT),
-                    min: new Column<number>("Min", ColumnType.RESULT),
-                    max: new Column<number>("Max", ColumnType.RESULT),
-                };
+                // Add statistical columns for each result column based on the selected statistic options
+                const statisticalColumns: StatisticalColumns = {};
+                for (const statistic of statisticOptions) {
+                    const columnName = InplaceVolumetricStatisticEnumToStringMapping[statistic];
+                    statisticalColumns[statistic] = new Column<number>(columnName, ColumnType.RESULT);
+                }
                 resultStatisticalColumns.set(resultColumn.columnName, statisticalColumns);
             }
         }
@@ -222,7 +222,7 @@ export function makeStatisticalTableColumnDataFromApiData(
                 }
 
                 for (const keyStr of Object.keys(statisticalColumns)) {
-                    const key = keyStr as Statistics_api;
+                    const key = keyStr as InplaceVolumetricStatistic_api;
                     statisticalColumns[key]?.addRowValues(nullArray);
                 }
             }
