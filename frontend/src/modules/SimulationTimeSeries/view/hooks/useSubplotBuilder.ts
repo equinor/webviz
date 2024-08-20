@@ -2,16 +2,21 @@ import { SummaryVectorObservations_api } from "@api";
 import { ViewContext } from "@framework/ModuleContext";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { Size2D } from "@lib/utils/geometry";
-import { SettingsAtoms } from "@modules/SimulationTimeSeries/settings/atoms/atomDefinitions";
-import { SettingsToViewInterface } from "@modules/SimulationTimeSeries/settingsToViewInterface";
-import { State } from "@modules/SimulationTimeSeries/state";
+import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
+import { useAtomValue } from "jotai";
 import { Layout } from "plotly.js";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 import { GroupBy, VectorSpec, VisualizationMode } from "../../typesAndEnums";
-import { ViewAtoms } from "../atoms/atomDefinitions";
+import {
+    activeTimestampUtcMsAtom,
+    loadedVectorSpecificationsAndHistoricalDataAtom,
+    loadedVectorSpecificationsAndRealizationDataAtom,
+    loadedVectorSpecificationsAndStatisticsDataAtom,
+} from "../atoms/derivedAtoms";
+import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
 import { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import { SubplotBuilder, SubplotOwner } from "../utils/subplotBuilder";
 import { TimeSeriesPlotData } from "../utils/timeSeriesPlotData";
@@ -21,7 +26,7 @@ import {
 } from "../utils/vectorSpecificationsAndQueriesUtils";
 
 export function useSubplotBuilder(
-    viewContext: ViewContext<State, SettingsToViewInterface, SettingsAtoms, ViewAtoms>,
+    viewContext: ViewContext<Interfaces>,
     wrapperDivSize: Size2D,
     colorSet: ColorSet,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null
@@ -33,18 +38,12 @@ export function useSubplotBuilder(
     const showHistorical = viewContext.useSettingsToViewInterfaceValue("showHistorical");
     const statisticsSelection = viewContext.useSettingsToViewInterfaceValue("statisticsSelection");
 
-    const vectorObservationsQueries = viewContext.useViewAtomValue("vectorObservationsQueries");
-    const loadedVectorSpecificationsAndRealizationData = viewContext.useViewAtomValue(
-        "loadedVectorSpecificationsAndRealizationData"
-    );
-    const loadedVectorSpecificationsAndStatisticsData = viewContext.useViewAtomValue(
-        "loadedVectorSpecificationsAndStatisticsData"
-    );
-    const loadedVectorSpecificationsAndHistoricalData = viewContext.useViewAtomValue(
-        "loadedVectorSpecificationsAndHistoricalData"
-    );
+    const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
+    const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
+    const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
+    const loadedVectorSpecificationsAndHistoricalData = useAtomValue(loadedVectorSpecificationsAndHistoricalDataAtom);
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
-    const activeTimestampUtcMs = viewContext.useViewAtomValue("activeTimestampUtcMs");
+    const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 

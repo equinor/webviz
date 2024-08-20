@@ -9,11 +9,10 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { ParameterDistributionPlot } from "./components/ParameterDistributionPlot";
 
-import { Interface } from "../settingsToViewInterface";
-import { State } from "../state";
+import { Interfaces } from "../interfaces";
 import { ParameterDataArr } from "../typesAndEnums";
 
-export function View(props: ModuleViewProps<State, Interface>) {
+export function View(props: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
