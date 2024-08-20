@@ -16,25 +16,19 @@ import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { calcExtendedSimplifiedWellboreTrajectoryInXYPlane } from "@modules/_shared/utils/wellbore";
 import { NorthArrow3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 
+import { editCustomIntersectionPolylineEditModeActiveAtom, intersectionTypeAtom } from "./atoms/baseAtoms";
 import { SyncedSettingsUpdateWrapper } from "./components/SyncedSettingsUpdateWrapper";
 import { useGridParameterQuery, useGridSurfaceQuery } from "./queries/gridQueries";
 import { useGridPolylineIntersection as useGridPolylineIntersectionQuery } from "./queries/polylineIntersection";
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 import { makeAxesLayer, makeGrid3DLayer, makeIntersectionLayer, makeWellsLayer } from "./utils/layers";
 
+import { Interfaces } from "../interfaces";
 import { userSelectedCustomIntersectionPolylineIdAtom } from "../settings/atoms/baseAtoms";
-import { SettingsToViewInterface } from "../settingsToViewInterface";
-import {
-    editCustomIntersectionPolylineEditModeActiveAtom,
-    intersectionTypeAtom,
-    selectedEnsembleIdentAtom,
-    selectedHighlightedWellboreUuidAtom,
-} from "../sharedAtoms/sharedAtoms";
-import { State } from "../state";
 
-export function View(props: ModuleViewProps<State, SettingsToViewInterface>): React.ReactNode {
+export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const syncedSettingKeys = props.viewContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
@@ -49,11 +43,10 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
 
     const useCustomBounds = props.viewContext.useSettingsToViewInterfaceValue("useCustomBounds");
 
-    const highlightedWellboreUuid = useAtomValue(selectedHighlightedWellboreUuidAtom);
-
-    const ensembleIdent = useAtomValue(selectedEnsembleIdentAtom);
     const intersectionPolylines = useIntersectionPolylines(props.workbenchSession);
 
+    const ensembleIdent = props.viewContext.useSettingsToViewInterfaceValue("ensembleIdent");
+    const highlightedWellboreUuid = props.viewContext.useSettingsToViewInterfaceValue("highlightedWellboreUuid");
     const realization = props.viewContext.useSettingsToViewInterfaceValue("realization");
     const wellboreUuids = props.viewContext.useSettingsToViewInterfaceValue("wellboreUuids");
     const gridModelName = props.viewContext.useSettingsToViewInterfaceValue("gridModelName");
@@ -62,6 +55,15 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
     const gridModelParameterDateOrInterval = props.viewContext.useSettingsToViewInterfaceValue(
         "gridModelParameterDateOrInterval"
     );
+
+    const editPolylineModeActive = props.viewContext.useSettingsToViewInterfaceValue(
+        "editCustomIntersectionPolylineEditModeActive"
+    );
+    const setEditPolylineModeActive = useSetAtom(editCustomIntersectionPolylineEditModeActiveAtom);
+
+    const intersectionType = props.viewContext.useSettingsToViewInterfaceValue("intersectionType");
+    const setIntersectionType = useSetAtom(intersectionTypeAtom);
+
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
     React.useEffect(
@@ -85,10 +87,6 @@ export function View(props: ModuleViewProps<State, SettingsToViewInterface>): Re
 
     const intersectionExtensionLength =
         props.viewContext.useSettingsToViewInterfaceValue("intersectionExtensionLength");
-    const [editPolylineModeActive, setEditPolylineModeActive] = useAtom(
-        editCustomIntersectionPolylineEditModeActiveAtom
-    );
-    const [intersectionType, setIntersectionType] = useAtom(intersectionTypeAtom);
 
     const [selectedCustomIntersectionPolylineId, setSelectedCustomIntersectionPolylineId] = useAtom(
         userSelectedCustomIntersectionPolylineIdAtom

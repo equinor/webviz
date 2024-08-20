@@ -7,12 +7,14 @@ import { IntersectionType } from "@framework/types/intersection";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { ViewAtoms } from "./atoms/atomDefinitions";
+import { useAtomValue } from "jotai";
+
+import { intersectionReferenceSystemAtom, polylineAtom } from "./atoms/derivedAtoms";
+import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { LayersWrapper } from "./components/layersWrapper";
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { State } from "../state";
+import { Interfaces } from "../interfaces";
 import { LayerStatus, useLayersStatuses } from "../utils/layers/BaseLayer";
 import { isGridLayer } from "../utils/layers/GridLayer";
 import { LayerManagerTopic, useLayerManagerTopicValue } from "../utils/layers/LayerManager";
@@ -21,17 +23,15 @@ import { isSurfaceLayer } from "../utils/layers/SurfaceLayer";
 import { isSurfacesUncertaintyLayer } from "../utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "../utils/layers/WellpicksLayer";
 
-export function View(
-    props: ModuleViewProps<State, SettingsToViewInterface, Record<string, never>, ViewAtoms>
-): JSX.Element {
+export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
     const ensembleIdent = props.viewContext.useSettingsToViewInterfaceValue("ensembleIdent");
-    const intersectionReferenceSystem = props.viewContext.useViewAtomValue("intersectionReferenceSystemAtom");
+    const intersectionReferenceSystem = useAtomValue(intersectionReferenceSystemAtom);
     const wellboreHeader = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
-    const wellboreTrajectoryQuery = props.viewContext.useViewAtomValue("wellboreTrajectoryQueryAtom");
-    const polyline = props.viewContext.useViewAtomValue("polylineAtom");
+    const wellboreTrajectoryQuery = useAtomValue(wellboreTrajectoryQueryAtom);
+    const polyline = useAtomValue(polylineAtom);
     const extensionLength = props.viewContext.useSettingsToViewInterfaceValue("intersectionExtensionLength");
     const wellbore = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
 

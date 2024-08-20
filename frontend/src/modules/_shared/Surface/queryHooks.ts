@@ -1,9 +1,12 @@
-import { SurfaceData_api, SurfaceMetaSet_api } from "@api";
+import { SurfaceDef_api, SurfaceMetaSet_api } from "@api";
+import { SurfaceDataPng_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
+import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
+import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
-import { SurfaceData_trans, transformSurfaceData } from "./queryDataTransforms";
-import { SurfaceAddress } from "./surfaceAddress";
+import { SurfaceDataFloat_trans, transformSurfaceData } from "./queryDataTransforms";
+import { FullSurfaceAddress } from "./surfaceAddress";
+import { encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -31,82 +34,45 @@ export function useObservedSurfacesMetadataQuery(caseUuid: string | undefined): 
     });
 }
 
-export function useSurfaceDataQueryByAddress(surfAddr: SurfaceAddress | null): UseQueryResult<SurfaceData_trans> {
-    function dummyApiCall(): Promise<SurfaceData_api> {
-        return new Promise((_resolve, reject) => {
-            reject(null);
-        });
+export function useSurfaceDataQuery(surfAddrStr: string | null, format: "float", resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans>; // prettier-ignore
+export function useSurfaceDataQuery(surfAddrStr: string | null, format: "png", resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataPng_api>; // prettier-ignore
+export function useSurfaceDataQuery(surfAddrStr: string | null, format: "float" | "png", resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api>; // prettier-ignore
+export function useSurfaceDataQuery(
+    surfAddrStr: string | null,
+    format: "float" | "png",
+    resampleTo: SurfaceDef_api | null,
+    allowEnable: boolean
+): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    if (surfAddrStr) {
+        const surfAddrType = peekSurfaceAddressType(surfAddrStr);
+        if (surfAddrType !== "OBS" && surfAddrType !== "REAL" && surfAddrType !== "STAT") {
+            throw new Error("Invalid surface address type for surface data query");
+        }
     }
 
-    let queryFn: QueryFunction<SurfaceData_api> | null = null;
-    let queryKey: QueryKey | null = null;
-
-    if (surfAddr === null) {
-        queryKey = ["getSurfaceData_DUMMY_ALWAYS_DISABLED"];
-        queryFn = dummyApiCall;
-    } else if (surfAddr.addressType === "realization") {
-        queryKey = [
-            "getRealizationSurfaceData",
-            surfAddr.caseUuid,
-            surfAddr.ensemble,
-            surfAddr.realizationNum,
-            surfAddr.name,
-            surfAddr.attribute,
-            surfAddr.isoDateOrInterval,
-        ];
-        queryFn = () =>
-            apiService.surface.getRealizationSurfaceData(
-                surfAddr.caseUuid,
-                surfAddr.ensemble,
-                surfAddr.realizationNum,
-                surfAddr.name,
-                surfAddr.attribute,
-                surfAddr.isoDateOrInterval ?? undefined
-            );
-    } else if (surfAddr.addressType === "observed") {
-        queryKey = [
-            "getObservedSurfaceData",
-            surfAddr.caseUuid,
-            surfAddr.name,
-            surfAddr.attribute,
-            surfAddr.isoDateOrInterval,
-        ];
-        queryFn = () =>
-            apiService.surface.getObservedSurfaceData(
-                surfAddr.caseUuid,
-                surfAddr.name,
-                surfAddr.attribute,
-                surfAddr.isoDateOrInterval ?? ""
-            );
-    } else if (surfAddr.addressType === "statistical") {
-        queryKey = [
-            "getStatisticalSurfaceData",
-            surfAddr.caseUuid,
-            surfAddr.ensemble,
-            surfAddr.statisticFunction,
-            surfAddr.name,
-            surfAddr.attribute,
-            surfAddr.isoDateOrInterval,
-        ];
-        queryFn = () =>
-            apiService.surface.getStatisticalSurfaceData(
-                surfAddr.caseUuid,
-                surfAddr.ensemble,
-                surfAddr.statisticFunction,
-                surfAddr.name,
-                surfAddr.attribute,
-                surfAddr.isoDateOrInterval ?? undefined
-            );
-    } else {
-        throw new Error("Invalid surface address type");
+    let resampleToKeyValStr: string | null = null;
+    if (resampleTo) {
+        resampleToKeyValStr = encodePropertiesAsKeyValStr(resampleTo);
     }
 
     return useQuery({
-        queryKey: queryKey,
-        queryFn: queryFn,
+        queryKey: ["getSurfaceData", surfAddrStr, resampleToKeyValStr, format],
+        queryFn: () => apiService.surface.getSurfaceData(surfAddrStr ?? "", format, resampleToKeyValStr),
         select: transformSurfaceData,
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
-        enabled: Boolean(surfAddr),
+        enabled: allowEnable && Boolean(surfAddrStr),
     });
+}
+
+export function useSurfaceDataQueryByAddress(surfAddr: FullSurfaceAddress | null, format: "float", resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataFloat_trans>; // prettier-ignore
+export function useSurfaceDataQueryByAddress(surfAddr: FullSurfaceAddress | null, format: "png", resampleTo: SurfaceDef_api | null, allowEnable: boolean): UseQueryResult<SurfaceDataPng_api>; // prettier-ignore
+export function useSurfaceDataQueryByAddress(
+    surfAddr: FullSurfaceAddress | null,
+    format: "float" | "png",
+    resampleTo: SurfaceDef_api | null,
+    allowEnable: boolean
+): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    const surfAddrStr = surfAddr ? encodeSurfAddrStr(surfAddr) : null;
+    return useSurfaceDataQuery(surfAddrStr, format, resampleTo, allowEnable);
 }

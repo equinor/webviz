@@ -1,6 +1,6 @@
 import React from "react";
 
-import { PolygonData_api, WellboreTrajectory_api } from "@api";
+import { BoundingBox2d_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleViewProps } from "@framework/Module";
@@ -16,7 +16,6 @@ import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
 import { ViewAnnotation } from "@webviz/subsurface-viewer/dist/components/ViewAnnotation";
 
 import {
-    SurfaceMeta,
     createAxesLayer,
     createContinuousColorScaleForMap,
     createNorthArrowLayer,
@@ -26,17 +25,16 @@ import {
     createWellboreTrajectoryLayer,
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
-import { usePropertySurfaceDataByQueryAddress } from "./queryHooks";
-import { state } from "./state";
+import { Interfaces } from "./interfaces";
 
 type Bounds = [number, number, number, number];
 
 const updateViewPortBounds = (
     existingViewPortBounds: Bounds | undefined,
     resetBounds: boolean,
-    surfaceMeta: SurfaceMeta
+    surfaceBB: BoundingBox2d_api
 ): Bounds => {
-    const updatedBounds: Bounds = [surfaceMeta.x_min, surfaceMeta.y_min, surfaceMeta.x_max, surfaceMeta.y_max];
+    const updatedBounds: Bounds = [surfaceBB.min_x, surfaceBB.min_y, surfaceBB.max_x, surfaceBB.max_y];
 
     if (!existingViewPortBounds || resetBounds) {
         console.debug("updateViewPortBounds: no existing bounds, returning updated bounds");
@@ -57,8 +55,14 @@ const updateViewPortBounds = (
     // Otherwise, return the existing bounds
     return existingViewPortBounds;
 };
+
 //-----------------------------------------------------------------------------------------------------------
-export function View({ viewContext, workbenchSettings, workbenchServices, workbenchSession }: ModuleViewProps<state>) {
+export function View({
+    viewContext,
+    workbenchSettings,
+    workbenchServices,
+    workbenchSession,
+}: ModuleViewProps<Interfaces>) {
     const myInstanceIdStr = viewContext.getInstanceIdString();
     console.debug(`${myInstanceIdStr} -- render TopographicMap view`);
     const viewIds = {
@@ -70,12 +74,12 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
 
     const ensembleSet = useEnsembleSet(workbenchSession);
 
-    const meshSurfAddr = viewContext.useStoreValue("meshSurfaceAddress");
-    const propertySurfAddr = viewContext.useStoreValue("propertySurfaceAddress");
-    const polygonsAddr = viewContext.useStoreValue("polygonsAddress");
-    const selectedWellUuids = viewContext.useStoreValue("selectedWellUuids");
-    const surfaceSettings = viewContext.useStoreValue("surfaceSettings");
-    const viewSettings = viewContext.useStoreValue("viewSettings");
+    const meshSurfAddr = viewContext.useSettingsToViewInterfaceValue("meshSurfaceAddress");
+    const propertySurfAddr = viewContext.useSettingsToViewInterfaceValue("propertySurfaceAddress");
+    const polygonsAddr = viewContext.useSettingsToViewInterfaceValue("polygonsAddress");
+    const selectedWellUuids = viewContext.useSettingsToViewInterfaceValue("selectedWellUuids");
+    const surfaceSettings = viewContext.useSettingsToViewInterfaceValue("surfaceSettings");
+    const viewSettings = viewContext.useSettingsToViewInterfaceValue("viewSettings");
     const [resetBounds, toggleResetBounds] = React.useState<boolean>(false);
     const [axesLayer, setAxesLayer] = React.useState<Record<string, unknown> | null>(null);
     const [viewportBounds, setviewPortBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
@@ -87,10 +91,15 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
     const colorTables = createContinuousColorScaleForMap(surfaceColorScale);
     const show3D: boolean = viewSettings?.show3d ?? true;
 
-    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr);
+    const meshSurfDataQuery = useSurfaceDataQueryByAddress(meshSurfAddr, "float", null, true);
 
-    const hasMeshSurfData = meshSurfDataQuery?.data ? true : false;
-    const propertySurfDataQuery = usePropertySurfaceDataByQueryAddress(meshSurfAddr, propertySurfAddr, hasMeshSurfData);
+    let hasMeshSurfData = false;
+    let resampleTo: SurfaceDef_api | null = null;
+    if (meshSurfDataQuery.data) {
+        hasMeshSurfData = true;
+        resampleTo = meshSurfDataQuery.data.surface_def;
+    }
+    const propertySurfDataQuery = useSurfaceDataQueryByAddress(propertySurfAddr, "float", resampleTo, hasMeshSurfData);
 
     let fieldIdentifier: null | string = null;
     if (meshSurfAddr) {
@@ -106,31 +115,22 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
 
     // Mesh data query should only trigger update if the property surface address is not set or if the property surface data is loaded
     if (meshSurfDataQuery.data && !propertySurfAddr) {
-        // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
-        const newMeshData = Array.from(meshSurfDataQuery.data.valuesFloat32Arr);
-
-        const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
-            newSurfaceMetaData,
-            newMeshData,
+            meshSurfDataQuery.data.surface_def,
+            meshSurfDataQuery.data.valuesFloat32Arr,
             surfaceSettings
         );
         newLayers.push(surfaceLayer);
-        colorRange = [meshSurfDataQuery.data.val_min, meshSurfDataQuery.data.val_max];
+        colorRange = [meshSurfDataQuery.data.value_min, meshSurfDataQuery.data.value_max];
     } else if (meshSurfDataQuery.data && propertySurfDataQuery.data) {
-        // Drop conversion as soon as SubsurfaceViewer accepts typed arrays
-        const newMeshData = Array.from(meshSurfDataQuery.data.valuesFloat32Arr);
-        const newPropertyData = Array.from(propertySurfDataQuery.data.valuesFloat32Arr);
-
-        const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
-            newSurfaceMetaData,
-            newMeshData,
+            meshSurfDataQuery.data.surface_def,
+            meshSurfDataQuery.data.valuesFloat32Arr,
             surfaceSettings,
-            newPropertyData
+            propertySurfDataQuery.data.valuesFloat32Arr
         );
         newLayers.push(surfaceLayer);
-        colorRange = [propertySurfDataQuery.data.val_min, propertySurfDataQuery.data.val_max];
+        colorRange = [propertySurfDataQuery.data.value_min, propertySurfDataQuery.data.value_max];
     }
 
     // Calculate viewport bounds and axes layer from the surface bounds.
@@ -138,17 +138,17 @@ export function View({ viewContext, workbenchSettings, workbenchServices, workbe
 
     React.useEffect(() => {
         if (meshSurfDataQuery.data) {
-            const newSurfaceMetaData: SurfaceMeta = { ...meshSurfDataQuery.data };
+            const surfaceBoundingBox = meshSurfDataQuery.data.transformed_bbox_utm;
 
-            setviewPortBounds(updateViewPortBounds(viewportBounds, resetBounds, newSurfaceMetaData));
+            setviewPortBounds(updateViewPortBounds(viewportBounds, resetBounds, surfaceBoundingBox));
             toggleResetBounds(false);
 
             const axesLayer: Record<string, unknown> = createAxesLayer([
-                newSurfaceMetaData.x_min,
-                newSurfaceMetaData.y_min,
+                surfaceBoundingBox.min_x,
+                surfaceBoundingBox.min_y,
                 0,
-                newSurfaceMetaData.x_max,
-                newSurfaceMetaData.y_max,
+                surfaceBoundingBox.max_x,
+                surfaceBoundingBox.max_y,
                 3500,
             ]);
             setAxesLayer(axesLayer);
