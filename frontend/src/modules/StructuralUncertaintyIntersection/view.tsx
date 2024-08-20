@@ -16,21 +16,21 @@ import { isEqual } from "lodash";
 
 import Legend from "./components/Legend";
 import { EsvIntersection } from "./components/esvIntersection";
+import { Interfaces } from "./interfaces";
 import { useSampleSurfaceInPointsQueries } from "./queryHooks";
-import { State } from "./state";
 
-export const View = ({ viewContext }: ModuleViewProps<State>) => {
+export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement | null>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
     const statusWriter = useViewStatusWriter(viewContext);
 
-    const surfaceSetAddress = viewContext.useStoreValue("SurfaceSetAddress");
-    const visualizationMode = viewContext.useStoreValue("visualizationMode");
-    const statisticFunctions = viewContext.useStoreValue("statisticFunctions");
-    const wellboreAddress = viewContext.useStoreValue("wellboreAddress");
-    const intersectionSettings = viewContext.useStoreValue("intersectionSettings");
-    const stratigraphyColorMap = viewContext.useStoreValue("stratigraphyColorMap");
+    const surfaceSetAddress = viewContext.useSettingsToViewInterfaceValue("surfaceSetAddress");
+    const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
+    const statisticFunctions = viewContext.useSettingsToViewInterfaceValue("statisticFunctions");
+    const wellboreAddress = viewContext.useSettingsToViewInterfaceValue("wellboreAddress");
+    const intersectionSettings = viewContext.useSettingsToViewInterfaceValue("intersectionSettings");
+    const stratigraphyColorMap = viewContext.useSettingsToViewInterfaceValue("stratigraphyColorMap");
 
     // Extended wellbore trajectory for creating intersection/fence extended on both sides of wellbore
     const [extendedWellboreTrajectory, setExtendedWellboreTrajectory] = React.useState<Trajectory | null>(null);

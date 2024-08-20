@@ -1,7 +1,7 @@
 import { StatisticFunction_api } from "@api";
 import { Wellbore } from "@framework/types/wellbore";
 
-import { IntersectionSettings, SurfaceSetAddress, VisualizationMode } from "./types";
+import { IntersectionSettings, SurfaceSetAddress, VisualizationMode } from "./typesAndEnums";
 
 export interface State {
     wellboreAddress: Wellbore | null;

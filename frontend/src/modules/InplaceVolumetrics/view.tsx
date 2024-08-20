@@ -12,17 +12,17 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { Layout, PlotData, PlotHoverEvent } from "plotly.js";
 
 import { ChannelIds } from "./channelDefs";
+import { Interfaces } from "./interfaces";
 import { useRealizationsResponseQuery } from "./queryHooks";
-import { VolumetricResponseAbbreviations } from "./settings";
-import { State } from "./state";
+import { VolumetricResponseAbbreviations } from "./settings/settings";
 
-export const View = (props: ModuleViewProps<State>) => {
+export const View = (props: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const ensembleIdent = props.viewContext.useStoreValue("ensembleIdent");
-    const tableName = props.viewContext.useStoreValue("tableName");
-    const responseName = props.viewContext.useStoreValue("responseName");
-    const categoryFilter = props.viewContext.useStoreValue("categoricalFilter");
+    const ensembleIdent = props.viewContext.useSettingsToViewInterfaceValue("ensembleIdent");
+    const tableName = props.viewContext.useSettingsToViewInterfaceValue("tableName");
+    const responseName = props.viewContext.useSettingsToViewInterfaceValue("responseName");
+    const categoryFilter = props.viewContext.useSettingsToViewInterfaceValue("categoricalFilter");
     const responseBody: Body_get_realizations_response_api = { categorical_filter: categoryFilter || undefined };
     const realizationsResponseQuery = useRealizationsResponseQuery(
         ensembleIdent?.getCaseUuid() ?? "",
@@ -95,7 +95,7 @@ export const View = (props: ModuleViewProps<State>) => {
         dependencies: [realizationsResponseQuery.data, ensemble, tableName, responseName],
         contents: [{ contentIdString: responseName || "", displayName: responseName || "", dataGenerator }],
     });
-    
+
     const layout: Partial<Layout> = {
         width: wrapperDivSize.width,
         height: wrapperDivSize.height,
