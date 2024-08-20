@@ -3,13 +3,13 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { channelDefs } from "./channelDefs";
+import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
 
 export const MODULE_NAME = "InplaceVolumetricsPlot";
 const description = "Inplace Volumetrics Plot";
 
-ModuleRegistry.registerModule<Record<string, any>, SettingsToViewInterface>({
+ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     defaultTitle: "Inplace Volumetrics Plot",
     category: ModuleCategory.MAIN,

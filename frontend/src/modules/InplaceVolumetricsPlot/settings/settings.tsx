@@ -37,10 +37,10 @@ import {
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
 
-export function Settings(props: ModuleSettingsProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
+export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const tableDefinitionsQueryResult = useAtomValue(tableDefinitionsQueryAtom);
     const tableDefinitionsAccessor = useAtomValue(tableDefinitionsAccessorAtom);

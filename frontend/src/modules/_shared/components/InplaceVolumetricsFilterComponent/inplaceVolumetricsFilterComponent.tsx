@@ -18,7 +18,7 @@ import { cloneDeep, isEqual } from "lodash";
 
 export type InplaceVolumetricsFilterComponentProps = {
     ensembleSet: EnsembleSet;
-    settingsContext: SettingsContext<any, any, any, any>;
+    settingsContext: SettingsContext<any>;
     workbenchServices: WorkbenchServices;
     availableTableNames: string[];
     availableFluidZones: FluidZone_api[];

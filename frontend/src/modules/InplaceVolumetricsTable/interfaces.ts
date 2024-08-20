@@ -21,7 +21,11 @@ export type SettingsToViewInterface = {
     statisticOptions: InplaceVolumetricStatistic_api[];
 };
 
-export const interfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
+export type Interfaces = {
+    settingsToView: SettingsToViewInterface;
+};
+
+export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     filter: (get) => {
         return {
             ensembleIdents: get(selectedEnsembleIdentsAtom),

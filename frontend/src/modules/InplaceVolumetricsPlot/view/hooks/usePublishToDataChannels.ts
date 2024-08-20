@@ -4,7 +4,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ViewContext } from "@framework/ModuleContext";
 import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
-import { SettingsToViewInterface } from "@modules/InplaceVolumetricsPlot/settingsToViewInterface";
+import { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
 import { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
@@ -32,7 +32,7 @@ function makeDataGeneratorFunc(
             data.push({ key, value });
         }
 
-        let metaData: ChannelContentMetaData = {
+        const metaData: ChannelContentMetaData = {
             unit: "",
             ensembleIdentString: ensembleIdent.toString(),
             displayString: `${resultName} (${ensembleName}, ${tableName}, ${fluidZone})`,
@@ -46,12 +46,7 @@ function makeDataGeneratorFunc(
 }
 
 export function usePublishToDataChannels(
-    viewContext: ViewContext<
-        Record<string, never>,
-        SettingsToViewInterface,
-        Record<string, never>,
-        Record<string, never>
-    >,
+    viewContext: ViewContext<Interfaces>,
     ensembleSet: EnsembleSet,
     table?: Table,
     resultName?: InplaceVolumetricResultName_api

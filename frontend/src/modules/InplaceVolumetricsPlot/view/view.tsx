@@ -32,11 +32,11 @@ import { PlotData } from "plotly.js";
 
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 
+import { Interfaces } from "../interfaces";
 import { RealizationAndResult, calcConvergenceArray } from "../settings/utils/convergenceCalculation";
-import { SettingsToViewInterface } from "../settingsToViewInterface";
 import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
 
-export function View(props: ModuleViewProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
+export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleRealizationFilter = useEnsembleRealizationFilterFunc(props.workbenchSession);

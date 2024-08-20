@@ -25,7 +25,11 @@ export type SettingsToViewInterface = {
     plotType: PlotType;
 };
 
-export const interfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
+export type Interfaces = {
+    settingsToView: SettingsToViewInterface;
+};
+
+export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     filter: (get) => {
         return {
             ensembleIdents: get(selectedEnsembleIdentsAtom),

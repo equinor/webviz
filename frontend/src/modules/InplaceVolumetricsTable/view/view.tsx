@@ -23,9 +23,9 @@ import {
     createTableHeadingsAndRowsFromTablesData,
 } from "./utils/tableComponentUtils";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 
-export function View(props: ModuleViewProps<Record<string, never>, SettingsToViewInterface>): React.ReactNode {
+export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleRealizationFilter = useEnsembleRealizationFilterFunc(props.workbenchSession);

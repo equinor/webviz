@@ -17,7 +17,6 @@ import { Layout, PlotData } from "plotly.js";
 
 import { Interfaces } from "./interfaces";
 import { PlotType } from "./typesAndEnums";
-import { makeHistogramTrace } from "./utils/histogram";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 
