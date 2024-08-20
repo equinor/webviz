@@ -1,6 +1,7 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
@@ -123,6 +124,7 @@ type TableHeadingCellInformation = {
     id: string;
     colSpan: number;
     rowSpan: number;
+    hasSubHeaders: boolean;
 };
 
 type TableHeadingInformation = {
@@ -163,6 +165,7 @@ function extractInformationFromTableHeading(
             const subHeadingInfo = extractInformationFromTableHeading(subHeading, depth + 1, headerRows);
             headerRows[depth].push({
                 id: col,
+                hasSubHeaders: true,
                 colSpan: subHeadingInfo.numColumns,
                 rowSpan: 1,
             });
@@ -172,6 +175,7 @@ function extractInformationFromTableHeading(
             numColumns++;
             headerRows[depth].push({
                 id: col,
+                hasSubHeaders: false,
                 colSpan: 1,
                 rowSpan: maxDepth - depth,
             });
@@ -212,7 +216,29 @@ function flattenHeadings(
     return newHeadings;
 }
 
-export const Table: React.FC<TableProps<TableHeading>> = (props) => {
+function calcMaxColumnWidths<THeading extends TableHeading>(
+    headings: THeading,
+    data: TableRow<THeading>[]
+): { [key: string]: number } {
+    const columnWidths: { [key: string]: number } = {};
+    for (const col in headings) {
+        columnWidths[col] = getTextWidthWithFont(headings[col].label, "Equinor", 1.5);
+    }
+    for (const row of data) {
+        for (const col in row) {
+            const cellContent = row[col];
+            const formatValue = headings[col]?.formatValue;
+            const value = cellContent === null ? "" : formatValue ? formatValue(cellContent) : cellContent.toString();
+            columnWidths[col] = Math.max(columnWidths[col], getTextWidthWithFont(value, "Equinor", 1.1));
+        }
+    }
+    return columnWidths;
+}
+
+const HEADER_HEIGHT_PX = 30;
+const ROW_HEIGHT_PX = 30;
+
+export function Table(props: TableProps<TableHeading>): React.ReactNode {
     const [layoutError, setLayoutError] = React.useState<LayoutError>({ error: false, message: "" });
     const [preprocessedData, setPreprocessedData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
     const [filteredData, setFilteredData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
@@ -221,8 +247,10 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         SortColumnAndDirectionElement[]
     >([]);
     const [headerRows, setHeaderRows] = React.useState<TableHeadingCellInformation[][]>([]);
+    const [prevFlattenedHeadings, setPrevFlattenedHeadings] = React.useState<Omit<TableHeading, "subHeading">>({});
     const [flattenedHeadings, setFlattenedHeadings] = React.useState<Omit<TableHeading, "subHeading">>({});
     const [dataColumnIds, setDataColumnIds] = React.useState<string[]>([]);
+    const [columnWidths, setColumnWidths] = React.useState<{ [key: string]: number }>({});
 
     const [prevData, setPrevData] = React.useState<TableRow<TableHeading>[]>([]);
     const [prevHeadings, setPrevHeadings] = React.useState<TableHeading>({});
@@ -264,6 +292,14 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
         }
         const newFlattenedHeadings = flattenHeadings(props.headings);
         setFlattenedHeadings(newFlattenedHeadings);
+    }
+
+    if (!isEqual(prevData, props.data) || !isEqual(prevFlattenedHeadings, flattenedHeadings)) {
+        setColumnWidths(calcMaxColumnWidths(flattenedHeadings, props.data));
+    }
+
+    if (!isEqual(prevFlattenedHeadings, flattenedHeadings)) {
+        setPrevFlattenedHeadings(flattenedHeadings);
     }
 
     function handlePointerOver(row: TableRow<any> | null) {
@@ -384,10 +420,14 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
             headingCells.push(
                 <th
                     key={cell.id}
-                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left drop-shadow sticky top-0", {
-                        "text-center": cell.colSpan > 1,
+                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left drop-shadow", {
+                        "text-center": cell.hasSubHeaders,
                     })}
-                    style={{ width: `${flattenedHeadings[cell.id].sizeInPercent}%` }}
+                    style={{
+                        width: `${flattenedHeadings[cell.id].sizeInPercent}%`,
+                        minWidth: cell.hasSubHeaders ? undefined : columnWidths[cell.id],
+                        height: HEADER_HEIGHT_PX * (cell.rowSpan + (!cell.hasSubHeaders ? 1 : 0)),
+                    }}
                     scope="col"
                     rowSpan={cell.rowSpan}
                     colSpan={cell.colSpan}
@@ -395,9 +435,9 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                     <div className="h-full flex flex-col">
                         <div className="px-1 flex items-center gap-1 flex-grow">
                             <span className="flex-grow pt-1">{flattenedHeadings[cell.id].label}</span>
-                            {cell.colSpan === 1 ? makeSortButtons(cell.id) : null}
+                            {!cell.hasSubHeaders ? makeSortButtons(cell.id) : null}
                         </div>
-                        {cell.colSpan === 1 && (
+                        {!cell.hasSubHeaders && (
                             <div className="p-0 text-sm flex flex-col justify-end">
                                 <Input
                                     type="text"
@@ -440,17 +480,17 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
             <div
                 ref={containerRef}
                 className="relative overflow-auto"
-                style={{ width: props.width, maxHeight: props.height }}
+                style={{ width: props.width, height: props.height }}
             >
-                <table className="w-full h-full border-0 border-separate border-spacing-0 text-sm">
-                    <thead className="border-0 m-0 p-0 sticky">{makeHeadings()}</thead>
+                <table className="w-full max-h-full border-0 border-separate border-spacing-0 text-sm">
+                    <thead className="border-0 m-0 p-0 sticky top-0">{makeHeadings()}</thead>
                     <tbody style={{ width: props.width, maxHeight: props.height }}>
                         <Virtualization
                             containerRef={containerRef}
                             direction="vertical"
                             placeholderComponent="tr"
                             items={filteredData}
-                            itemSize={30}
+                            itemSize={ROW_HEIGHT_PX}
                             renderItem={(item: IdentifiedTableRow<any>) => {
                                 return (
                                     <tr
@@ -463,7 +503,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                         onPointerOver={() => handlePointerOver(item.values)}
                                         onPointerLeave={() => handlePointerOver(null)}
                                         onPointerDown={() => handlePointerDown(item.values)}
-                                        style={{ height: 30 }}
+                                        style={{ height: 30, maxHeight: ROW_HEIGHT_PX }}
                                     >
                                         {dataColumnIds.map((col) => {
                                             if (item.values[col] === undefined) {
@@ -474,7 +514,7 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
                                             return (
                                                 <td
                                                     key={`${item.id}-${col}`}
-                                                    className="border p-1"
+                                                    className="border p-1 whitespace-nowrap"
                                                     style={formatStyle ? formatStyle(item.values[col]) : undefined}
                                                 >
                                                     {format ? format(item.values[col]) : item.values[col]}
@@ -490,6 +530,6 @@ export const Table: React.FC<TableProps<TableHeading>> = (props) => {
             </div>
         </BaseComponent>
     );
-};
+}
 
 Table.displayName = "Table";
