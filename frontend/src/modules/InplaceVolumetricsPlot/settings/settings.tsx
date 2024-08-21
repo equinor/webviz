@@ -7,7 +7,6 @@ import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFil
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -89,64 +88,60 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         plotTypeOptions.push({ label, value: type as PlotType });
     }
 
+    const plotSettings = (
+        <CollapsibleGroup title="Plot settings" expanded>
+            <div className="flex flex-col gap-2">
+                <Label text="Plot type">
+                    <Dropdown value={selectedPlotType} options={plotTypeOptions} onChange={setSelectedPlotType} />
+                </Label>
+                <Label text="Result 1">
+                    <Dropdown
+                        value={selectedResultName ?? undefined}
+                        options={resultNameOptions}
+                        onChange={setSelectedResultName}
+                    />
+                </Label>
+                <Label text="Result 2">
+                    <Dropdown
+                        value={selectedResultName2 ?? undefined}
+                        options={resultNameOptions}
+                        onChange={setSelectedResultName2}
+                        disabled={selectedPlotType !== PlotType.SCATTER && selectedPlotType !== PlotType.BAR}
+                    />
+                </Label>
+                <Label text="Subplot by">
+                    <Dropdown
+                        value={selectedSubplotBy ?? undefined}
+                        options={subplotOptions}
+                        onChange={setSelectedSubplotBy}
+                    />
+                </Label>
+                <Label text="Color by">
+                    <Dropdown
+                        value={selectedColorBy ?? undefined}
+                        options={colorByOptions}
+                        onChange={setSelectedColorBy}
+                    />
+                </Label>
+            </div>
+        </CollapsibleGroup>
+    );
+
     return (
-        <div className="flex flex-col gap-2">
-            <PendingWrapper isPending={tableDefinitionsQueryResult.isLoading}>
-                <CollapsibleGroup title="Plot settings" expanded>
-                    <div className="flex flex-col gap-2">
-                        <Label text="Plot type">
-                            <Dropdown
-                                value={selectedPlotType}
-                                options={plotTypeOptions}
-                                onChange={setSelectedPlotType}
-                            />
-                        </Label>
-                        <Label text="Result 1">
-                            <Dropdown
-                                value={selectedResultName ?? undefined}
-                                options={resultNameOptions}
-                                onChange={setSelectedResultName}
-                            />
-                        </Label>
-                        <Label text="Result 2">
-                            <Dropdown
-                                value={selectedResultName2 ?? undefined}
-                                options={resultNameOptions}
-                                onChange={setSelectedResultName2}
-                                disabled={selectedPlotType !== PlotType.SCATTER && selectedPlotType !== PlotType.BAR}
-                            />
-                        </Label>
-                        <Label text="Subplot by">
-                            <Dropdown
-                                value={selectedSubplotBy ?? undefined}
-                                options={subplotOptions}
-                                onChange={setSelectedSubplotBy}
-                            />
-                        </Label>
-                        <Label text="Color by">
-                            <Dropdown
-                                value={selectedColorBy ?? undefined}
-                                options={colorByOptions}
-                                onChange={setSelectedColorBy}
-                            />
-                        </Label>
-                    </div>
-                </CollapsibleGroup>
-            </PendingWrapper>
-            <InplaceVolumetricsFilterComponent
-                ensembleSet={ensembleSet}
-                settingsContext={props.settingsContext}
-                workbenchServices={props.workbenchServices}
-                isPending={tableDefinitionsQueryResult.isLoading}
-                availableFluidZones={tableDefinitionsAccessor.getUniqueFluidZones()}
-                availableTableNames={tableDefinitionsAccessor.getUniqueTableNames()}
-                availableIdentifiersWithValues={tableDefinitionsAccessor.getUniqueIdentifierValues()}
-                selectedEnsembleIdents={selectedEnsembleIdents}
-                selectedFluidZones={selectedFluidZones}
-                selectedIdentifiersValues={selectedIdentifiersValues}
-                selectedTableNames={selectedTableNames}
-                onChange={handleFilterChange}
-            />
-        </div>
+        <InplaceVolumetricsFilterComponent
+            ensembleSet={ensembleSet}
+            settingsContext={props.settingsContext}
+            workbenchServices={props.workbenchServices}
+            isPending={tableDefinitionsQueryResult.isLoading}
+            availableFluidZones={tableDefinitionsAccessor.getUniqueFluidZones()}
+            availableTableNames={tableDefinitionsAccessor.getUniqueTableNames()}
+            availableIdentifiersWithValues={tableDefinitionsAccessor.getUniqueIdentifierValues()}
+            selectedEnsembleIdents={selectedEnsembleIdents}
+            selectedFluidZones={selectedFluidZones}
+            selectedIdentifiersValues={selectedIdentifiersValues}
+            selectedTableNames={selectedTableNames}
+            onChange={handleFilterChange}
+            additionalSettings={plotSettings}
+        />
     );
 }

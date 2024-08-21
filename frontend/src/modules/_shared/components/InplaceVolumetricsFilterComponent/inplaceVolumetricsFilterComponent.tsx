@@ -30,6 +30,7 @@ export type InplaceVolumetricsFilterComponentProps = {
     onChange: (filter: InplaceVolumetricsFilter) => void;
     isPending?: boolean;
     errorMessage?: string;
+    additionalSettings?: React.ReactNode;
 };
 
 export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilterComponentProps): React.ReactNode {
@@ -202,6 +203,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                 />
             </CollapsibleGroup>
             <PendingWrapper isPending={props.isPending ?? false} errorMessage={props.errorMessage}>
+                <div className="flex flex-col gap-2">{props.additionalSettings}</div>
                 <div className="flex flex-col gap-2">
                     <CollapsibleGroup title="Volumetric table names" expanded>
                         <Select

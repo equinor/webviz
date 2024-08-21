@@ -7,7 +7,6 @@ import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFil
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 import { TagOption, TagPicker } from "@lib/components/TagPicker";
 import {
@@ -111,62 +110,62 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         return { label: InplaceVolumetricStatisticEnumToStringMapping[elm], value: elm };
     });
 
+    const tableSettings = (
+        <CollapsibleGroup title="Result and grouping" expanded>
+            <div className="flex flex-col gap-2">
+                <Label text="Table type">
+                    <Dropdown
+                        value={selectedTableType}
+                        options={Object.values(TableType).map((val: TableType) => {
+                            return { value: val, label: TableTypeToStringMapping[val] };
+                        })}
+                        onChange={handleSelectedTableTypeChange}
+                    />
+                </Label>
+                {selectedTableType === TableType.STATISTICAL && (
+                    <Label text="Statistics">
+                        <TagPicker
+                            value={selectedStatisticOptions}
+                            tags={statisticOptions}
+                            onChange={handleStatisticOptionsChange}
+                        />
+                    </Label>
+                )}
+                <Label text="Results">
+                    <Select
+                        value={selectedResultNames}
+                        options={resultNameOptions}
+                        onChange={setSelectedResultNames}
+                        multiple
+                        size={5}
+                    />
+                </Label>
+                <Label text="Grouping">
+                    <TagPicker
+                        value={selectedAccumulationOptions}
+                        tags={accumulateOptions}
+                        onChange={handleAccumulationOptionsChange}
+                    />
+                </Label>
+            </div>
+        </CollapsibleGroup>
+    );
+
     return (
-        <div className="flex flex-col gap-2">
-            <PendingWrapper isPending={tableDefinitionsQueryResult.isLoading}>
-                <CollapsibleGroup title="Result and grouping" expanded>
-                    <div className="flex flex-col gap-2">
-                        <Label text="Table type">
-                            <Dropdown
-                                value={selectedTableType}
-                                options={Object.values(TableType).map((val: TableType) => {
-                                    return { value: val, label: TableTypeToStringMapping[val] };
-                                })}
-                                onChange={handleSelectedTableTypeChange}
-                            />
-                        </Label>
-                        {selectedTableType === TableType.STATISTICAL && (
-                            <Label text="Statistics">
-                                <TagPicker
-                                    value={selectedStatisticOptions}
-                                    tags={statisticOptions}
-                                    onChange={handleStatisticOptionsChange}
-                                />
-                            </Label>
-                        )}
-                        <Label text="Results">
-                            <Select
-                                value={selectedResultNames}
-                                options={resultNameOptions}
-                                onChange={setSelectedResultNames}
-                                multiple
-                                size={5}
-                            />
-                        </Label>
-                        <Label text="Grouping">
-                            <TagPicker
-                                value={selectedAccumulationOptions}
-                                tags={accumulateOptions}
-                                onChange={handleAccumulationOptionsChange}
-                            />
-                        </Label>
-                    </div>
-                </CollapsibleGroup>
-            </PendingWrapper>
-            <InplaceVolumetricsFilterComponent
-                ensembleSet={ensembleSet}
-                settingsContext={props.settingsContext}
-                workbenchServices={props.workbenchServices}
-                isPending={tableDefinitionsQueryResult.isLoading}
-                availableFluidZones={tableDefinitionsAccessor.getUniqueFluidZones()}
-                availableTableNames={tableDefinitionsAccessor.getUniqueTableNames()}
-                availableIdentifiersWithValues={tableDefinitionsAccessor.getUniqueIdentifierValues()}
-                selectedEnsembleIdents={selectedEnsembleIdents}
-                selectedFluidZones={selectedFluidZones}
-                selectedIdentifiersValues={selectedIdentifiersValues}
-                selectedTableNames={selectedTableNames}
-                onChange={handleFilterChange}
-            />
-        </div>
+        <InplaceVolumetricsFilterComponent
+            ensembleSet={ensembleSet}
+            settingsContext={props.settingsContext}
+            workbenchServices={props.workbenchServices}
+            isPending={tableDefinitionsQueryResult.isLoading}
+            availableFluidZones={tableDefinitionsAccessor.getUniqueFluidZones()}
+            availableTableNames={tableDefinitionsAccessor.getUniqueTableNames()}
+            availableIdentifiersWithValues={tableDefinitionsAccessor.getUniqueIdentifierValues()}
+            selectedEnsembleIdents={selectedEnsembleIdents}
+            selectedFluidZones={selectedFluidZones}
+            selectedIdentifiersValues={selectedIdentifiersValues}
+            selectedTableNames={selectedTableNames}
+            onChange={handleFilterChange}
+            additionalSettings={tableSettings}
+        />
     );
 }
