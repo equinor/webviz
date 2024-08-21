@@ -1,20 +1,32 @@
+import { WellboreHeader_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import { viewerHorizontalAtom } from "@modules/3DViewer/settings/atoms/baseAtoms";
 
-import { WellboreHeader } from "src/api/models/WellboreHeader";
-
-import { userSelectedWellLogCurveNamesAtom } from "./settings/atoms/baseAtoms";
-import { selectedFieldIdentifierAtom, selectedLogNameAtom, selectedWellboreAtom } from "./settings/atoms/derivedAtoms";
+import {
+    TemplateTrackConfig,
+    logViewerTrackConfigs,
+    userSelectedWellLogCurveNamesAtom,
+} from "./settings/atoms/baseAtoms";
+import {
+    allSelectedWellLogCurves,
+    selectedFieldIdentifierAtom,
+    selectedWellboreAtom,
+} from "./settings/atoms/derivedAtoms";
 
 export type SettingsToViewInterface = {
     selectedField: string | null;
-    wellboreHeader: WellboreHeader | null;
+    wellboreHeader: WellboreHeader_api | null;
     curveNames: string[];
-    selectedLog: string | null;
+    requiredDataCurves: string[];
+    templateTrackConfigs: TemplateTrackConfig[];
+    viewerHorizontal: boolean;
 };
 
 export const interfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     selectedField: (get) => get(selectedFieldIdentifierAtom),
     wellboreHeader: (get) => get(selectedWellboreAtom),
     curveNames: (get) => get(userSelectedWellLogCurveNamesAtom),
-    selectedLog: (get) => get(selectedLogNameAtom),
+    templateTrackConfigs: (get) => get(logViewerTrackConfigs),
+    requiredDataCurves: (get) => get(allSelectedWellLogCurves),
+    viewerHorizontal: (get) => get(viewerHorizontalAtom),
 };

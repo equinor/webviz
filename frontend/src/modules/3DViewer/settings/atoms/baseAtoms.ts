@@ -9,6 +9,8 @@ export const showIntersectionAtom = atom<boolean>(false);
 export const gridLayerAtom = atom<number>(1);
 export const intersectionExtensionLengthAtom = atom<number>(1000);
 export const colorScaleAtom = atom<ColorScale | null>(null);
+export const viewerHorizontalAtom = atom<boolean>(false);
+
 export const useCustomBoundsAtom = atom<boolean>(false);
 
 export const userSelectedEnsembleIdentAtom = atom<EnsembleIdent | null>(null);

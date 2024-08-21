@@ -1,12 +1,19 @@
-import { ViewStatusWriter } from "@framework/StatusWriter";
-import { useWellboreTrajectoriesQuery } from "@modules/_shared/WellBore";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import React, { useMemo, useRef } from "react";
+
+import { WellboreHeader_api, WellboreTrajectory_api } from "@api";
+import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { ModuleViewProps } from "@framework/Module";
+import { GlobalTopicDefinitions } from "@framework/WorkbenchServices";
 import { WellLogViewer } from "@webviz/well-log-viewer";
+import { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
-import { WellboreHeader } from "src/api/models/WellboreHeader";
+import { isEqual } from "lodash";
 
-import { sanitizeCurveDataQueriesResult, useCurveDataQueries } from "./queries/wellLogQueries";
+import { LogCurveDataWithName } from "./queries/wellLogQueries";
 
+import { TemplateTrackConfig } from "../settings/atoms/baseAtoms";
+import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { State } from "../state";
 import { COLOR_TABLES } from "../utils/logViewerColors";
 import { createLogTemplate } from "../utils/logViewerTemplate";
 import { createWellLog } from "../utils/queryDataTransform";
@@ -17,54 +24,117 @@ const AXIS_MNEMOS = {
     time: ["TIME"],
 };
 
-export type SubsurfaceLogViewerWrapperProps = {
-    wellboreHeader: WellboreHeader | null;
-    wellLogName: string | null;
-    selectedCurves: string[];
+type GlobalHoverMd = GlobalTopicDefinitions["global.hoverMd"];
 
-    statusWriter: ViewStatusWriter;
+export type SubsurfaceLogViewerWrapperProps = {
+    // Data
+    wellboreHeader: WellboreHeader_api | null;
+    curveData: LogCurveDataWithName[];
+    trajectoryData: WellboreTrajectory_api;
+    intersectionReferenceSystem: IntersectionReferenceSystem;
+
+    // Viewer config
+    horizontal: boolean;
+    templateTrackConfigs: TemplateTrackConfig[];
+
+    // Passing the module props to make context and service access less cumbersome
+    moduleProps: ModuleViewProps<State, SettingsToViewInterface>;
 };
 
-export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
-    const wellboreUuid = props.wellboreHeader?.wellboreUuid ?? "";
-    const wellLogName = props.wellLogName ?? "";
-    const selectedCurves = props.selectedCurves;
-    const statusWriter = props.statusWriter;
+function useGloballySyncedMd(
+    onValueChange: (newValue: number) => void,
+    compProps: Pick<SubsurfaceLogViewerWrapperProps, "wellboreHeader" | "moduleProps">
+): (newValue: number | null) => void {
+    const workbenchServices = compProps.moduleProps.workbenchServices;
+    const instanceId = compProps.moduleProps.viewContext.getInstanceIdString();
+    const wellboreUuid = compProps.wellboreHeader?.wellboreUuid ?? "";
+    const lastRecievedChange = useRef<GlobalHoverMd>(null);
 
-    const wellboreTrajectoryData = useWellboreTrajectoriesQuery(wellboreUuid ? [wellboreUuid] : []);
-    usePropagateApiErrorToStatusWriter(wellboreTrajectoryData, statusWriter);
+    React.useEffect(() => {
+        function onGlobalValueChanged(newValue: GlobalHoverMd) {
+            if (!isEqual(lastRecievedChange, newValue)) {
+                lastRecievedChange.current = newValue;
 
-    const curveDataQueries = useCurveDataQueries(wellboreUuid, props.selectedCurves);
-    // TODO: Have every single query propagete their errors?
-    // forEach: usePropagateApiErrorToStatusWriter(query, statusWriter);
+                if (newValue?.wellboreUuid === wellboreUuid) {
+                    onValueChange(newValue.md);
+                }
+            }
+        }
 
-    const dataReady = curveDataQueries.every((q) => q.isSuccess) && wellboreTrajectoryData.isSuccess;
+        workbenchServices.subscribe("global.hoverMd", onGlobalValueChanged, instanceId);
+    }, [workbenchServices, instanceId, wellboreUuid, onValueChange]);
 
-    // TODO: Whenever I change the curves, the loader keeps spinning untill I trigger an ipdate
-    statusWriter.setLoading(!dataReady);
+    function broadcastGlobalMdChange(newMd: number | null) {
+        const payload: GlobalHoverMd = newMd ? { wellboreUuid, md: newMd } : null;
 
-    if (!dataReady) {
-        return <span>Loading...</span>;
+        workbenchServices.publishGlobalData("global.hoverMd", payload, instanceId);
     }
 
-    const curveData = sanitizeCurveDataQueriesResult(curveDataQueries, selectedCurves);
-    const welllog = createWellLog(wellLogName, curveData, wellboreTrajectoryData.data[0]);
-    const template = createLogTemplate(props.selectedCurves);
+    return broadcastGlobalMdChange;
+}
+
+export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
+    const wellLogController = useRef<WellLogController | null>(null);
+
+    const trajectoryData = props.trajectoryData;
+    const curveData = props.curveData;
+    const intersectionReferenceSystem = props.intersectionReferenceSystem;
+
+    // Curve data transform is a bit heavy, so we use Memo-hooks to reduce re-render overhead
+    const template = useMemo(() => createLogTemplate(props.templateTrackConfigs), [props.templateTrackConfigs]);
+    const welllog = useMemo(
+        () => createWellLog(curveData, trajectoryData, intersectionReferenceSystem),
+        [curveData, trajectoryData, intersectionReferenceSystem]
+    );
+
+    // Global md-hover sync
+    const broadcastGlobalMdChange = useGloballySyncedMd(handleGlobalMdChange, props);
+    function handleGlobalMdChange(newMd: number) {
+        wellLogController.current?.selectContent([newMd, undefined]);
+    }
+
+    // Log viewer callback methods
+    function handleCreateController(controller: WellLogController) {
+        wellLogController.current = controller;
+    }
+
+    function handleTrackMouseEvent(/* welllogView: WellLogView, e: TrackMouseEvent */) {
+        // No-op method. This method is just here to stop the builtin meny from showing
+    }
+
+    function handleSelection() {
+        broadcastGlobalMdChange(wellLogController.current?.getContentSelection()[0] ?? null);
+    }
+
+    // This callback doesnt work, callback is never fired
+    // function handleViewerInfo(x: number, logController: any, iFrom: number, iTo: number) {
+    //     console.log("x", x);
+    //     console.log("logController", logController);
+    //     console.log("iFrom", iFrom);
+    //     console.log("iTo", iTo);
+    // }
 
     return (
-        <WellLogViewer
-            id="asasdads"
-            welllog={welllog}
-            template={template}
-            axisMnemos={AXIS_MNEMOS}
-            colorTables={COLOR_TABLES}
-            axisTitles={{
-                md: "DEPTH",
-                tvd: "TVD",
-                time: "TIME",
-            }}
-            layout={{ right: undefined }}
-        />
+        <div className="h-full" onMouseLeave={() => broadcastGlobalMdChange(null)}>
+            <WellLogViewer
+                id="asasdads"
+                welllog={welllog}
+                template={template}
+                axisMnemos={AXIS_MNEMOS}
+                colorTables={COLOR_TABLES}
+                axisTitles={{
+                    md: "DEPTH",
+                    tvd: "TVD",
+                    time: "TIME",
+                }}
+                horizontal={props.horizontal}
+                layout={{ right: undefined }}
+                options={{}}
+                onTrackMouseEvent={handleTrackMouseEvent}
+                onCreateController={handleCreateController}
+                onContentSelection={handleSelection}
+            />
+        </div>
     );
     // TODO: Disable right panel, and make it a floating box on hover, to match intersection
     // layout={{ right: undefined }}

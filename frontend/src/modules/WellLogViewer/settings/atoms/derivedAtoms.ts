@@ -1,15 +1,10 @@
-import { WellboreLogCurveHeader_api } from "@api";
+import { WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
 import { atom } from "jotai";
 import _, { Dictionary } from "lodash";
-import { WellboreHeader } from "src/api/models/WellboreHeader";
 
-import {
-    userSelectedFieldIdentifierAtom,
-    userSelectedWellLogNameAtom,
-    userSelectedWellboreUuidAtom,
-} from "./baseAtoms";
+import { logViewerTrackConfigs, userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./baseAtoms";
 import { drilledWellboreHeadersQueryAtom, wellLogCurveHeadersQueryAtom } from "./queryAtoms";
 
 export const selectedFieldIdentifierAtom = atom((get) => {
@@ -25,7 +20,7 @@ export const selectedFieldIdentifierAtom = atom((get) => {
     }
 });
 
-export const selectedWellboreAtom = atom<WellboreHeader | null>((get) => {
+export const selectedWellboreAtom = atom<WellboreHeader_api | null>((get) => {
     const availableWellboreHeaders = get(drilledWellboreHeadersQueryAtom)?.data;
     const selectedWellboreId = get(userSelectedWellboreUuidAtom);
 
@@ -38,26 +33,20 @@ export const groupedCurveHeadersAtom = atom<Dictionary<WellboreLogCurveHeader_ap
     return _.groupBy(logCurveHeaders, "logName");
 });
 
-export const selectedLogNameAtom = atom<string | null>((get) => {
-    const logCurveHeaders = Object.keys(get(groupedCurveHeadersAtom));
-    const selectedLogName = get(userSelectedWellLogNameAtom) ?? "";
+export const allSelectedWellLogCurves = atom<string[]>((get) => {
+    const templateTracks = get(logViewerTrackConfigs);
 
-    if (!logCurveHeaders || logCurveHeaders.length < 1) return null;
-    else return logCurveHeaders.includes(selectedLogName) ? selectedLogName : logCurveHeaders[0];
-});
+    return templateTracks.reduce<string[]>((acc, trackCfg) => {
+        const usedCurves = _.map(trackCfg.plots, "name");
 
-export const availableLogCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
-    const selectedLogName = get(selectedLogNameAtom);
-    const curveGroups = get(groupedCurveHeadersAtom);
-
-    if (!selectedLogName) return [];
-    else return curveGroups[selectedLogName] ?? [];
+        return _.uniq([...acc, ...usedCurves]);
+    }, []);
 });
 
 function getSelectedWellboreHeader(
     currentId: string | null,
-    wellboreHeaderSet: WellboreHeader[] | null | undefined
-): WellboreHeader | null {
+    wellboreHeaderSet: WellboreHeader_api[] | null | undefined
+): WellboreHeader_api | null {
     if (!wellboreHeaderSet || wellboreHeaderSet.length < 1) {
         return null;
     }
