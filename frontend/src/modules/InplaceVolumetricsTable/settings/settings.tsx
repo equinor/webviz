@@ -94,13 +94,13 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     }
 
     const resultNameOptions = tableDefinitionsAccessor
-        .getUniqueResultNames()
+        .getResultNamesIntersection()
         .map((name) => ({ label: name, value: name }));
 
     const accumulateOptions: TagOption<
         Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>
     >[] = [{ label: "FLUID ZONE", value: SourceIdentifier.FLUID_ZONE }];
-    for (const identifier of tableDefinitionsAccessor.getUniqueIdentifierValues()) {
+    for (const identifier of tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()) {
         accumulateOptions.push({ label: identifier.identifier, value: identifier.identifier });
     }
 
@@ -157,9 +157,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             settingsContext={props.settingsContext}
             workbenchServices={props.workbenchServices}
             isPending={tableDefinitionsQueryResult.isLoading}
-            availableFluidZones={tableDefinitionsAccessor.getUniqueFluidZones()}
-            availableTableNames={tableDefinitionsAccessor.getUniqueTableNames()}
-            availableIdentifiersWithValues={tableDefinitionsAccessor.getUniqueIdentifierValues()}
+            availableFluidZones={tableDefinitionsAccessor.getFluidZonesIntersection()}
+            availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
+            availableIdentifiersWithValues={tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()}
             selectedEnsembleIdents={selectedEnsembleIdents}
             selectedFluidZones={selectedFluidZones}
             selectedIdentifiersValues={selectedIdentifiersValues}

@@ -64,17 +64,20 @@ export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     if (!userSelectedFluidZones) {
-        return tableDefinitionsAccessor.getUniqueFluidZones();
+        return tableDefinitionsAccessor.getFluidZonesIntersection();
     }
 
-    return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getUniqueFluidZones());
+    return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getFluidZonesIntersection());
 });
 
 export const selectedResultNamesAtom = atom<InplaceVolumetricResultName_api[]>((get) => {
     const userSelectedResultNames = get(userSelectedResultNamesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const fixedSelection = fixupUserSelection(userSelectedResultNames, tableDefinitionsAccessor.getUniqueResultNames());
+    const fixedSelection = fixupUserSelection(
+        userSelectedResultNames,
+        tableDefinitionsAccessor.getResultNamesIntersection()
+    );
 
     return fixedSelection;
 });
@@ -89,7 +92,7 @@ export const selectedAccumulationOptionsAtom = atom<
         SourceAndTableIdentifierUnion,
         SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME
     >[] = [SourceIdentifier.FLUID_ZONE];
-    for (const identifier of tableDefinitionsAccessor.getUniqueIdentifierValues()) {
+    for (const identifier of tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()) {
         availableUniqueAccumulationOptions.push(identifier.identifier);
     }
 
@@ -104,7 +107,7 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
     const userSelectedIdentifierValues = get(userSelectedIdentifiersValuesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const uniqueIdentifierValues = tableDefinitionsAccessor.getUniqueIdentifierValues();
+    const uniqueIdentifierValues = tableDefinitionsAccessor.getIdentifiersWithIntersectionValues();
     const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
 
     if (!userSelectedIdentifierValues) {

@@ -78,7 +78,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     }
 
     const resultNameOptions: DropdownOption<InplaceVolumetricResultName_api>[] = tableDefinitionsAccessor
-        .getUniqueResultNames()
+        .getResultNamesIntersection()
         .map((name) => ({ label: name, value: name }));
 
     const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames);
@@ -133,9 +133,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             settingsContext={props.settingsContext}
             workbenchServices={props.workbenchServices}
             isPending={tableDefinitionsQueryResult.isLoading}
-            availableFluidZones={tableDefinitionsAccessor.getUniqueFluidZones()}
-            availableTableNames={tableDefinitionsAccessor.getUniqueTableNames()}
-            availableIdentifiersWithValues={tableDefinitionsAccessor.getUniqueIdentifierValues()}
+            availableFluidZones={tableDefinitionsAccessor.getFluidZonesIntersection()}
+            availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
+            availableIdentifiersWithValues={tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()}
             selectedEnsembleIdents={selectedEnsembleIdents}
             selectedFluidZones={selectedFluidZones}
             selectedIdentifiersValues={selectedIdentifiersValues}

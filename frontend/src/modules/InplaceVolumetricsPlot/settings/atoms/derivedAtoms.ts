@@ -68,10 +68,10 @@ export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     if (!userSelectedFluidZones) {
-        return tableDefinitionsAccessor.getUniqueFluidZones();
+        return tableDefinitionsAccessor.getFluidZonesIntersection();
     }
 
-    return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getUniqueFluidZones(), true);
+    return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getFluidZonesIntersection(), true);
 });
 
 export const selectedResultNameAtom = atom<InplaceVolumetricResultName_api | null>((get) => {
@@ -79,15 +79,15 @@ export const selectedResultNameAtom = atom<InplaceVolumetricResultName_api | nul
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     if (!userSelectedResultName) {
-        if (tableDefinitionsAccessor.getUniqueResultNames().length === 0) {
+        if (tableDefinitionsAccessor.getResultNamesIntersection().length === 0) {
             return null;
         }
-        return tableDefinitionsAccessor.getUniqueResultNames()[0];
+        return tableDefinitionsAccessor.getResultNamesIntersection()[0];
     }
 
     const fixedSelection = fixupUserSelection(
         [userSelectedResultName],
-        tableDefinitionsAccessor.getUniqueResultNames()
+        tableDefinitionsAccessor.getResultNamesIntersection()
     );
     if (fixedSelection.length === 0) {
         return null;
@@ -101,15 +101,15 @@ export const selectedResultName2Atom = atom<InplaceVolumetricResultName_api | nu
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     if (!userSelectedResultName) {
-        if (tableDefinitionsAccessor.getUniqueResultNames().length === 0) {
+        if (tableDefinitionsAccessor.getResultNamesIntersection().length === 0) {
             return null;
         }
-        return tableDefinitionsAccessor.getUniqueResultNames()[0];
+        return tableDefinitionsAccessor.getResultNamesIntersection()[0];
     }
 
     const fixedSelection = fixupUserSelection(
         [userSelectedResultName],
-        tableDefinitionsAccessor.getUniqueResultNames()
+        tableDefinitionsAccessor.getResultNamesIntersection()
     );
     if (fixedSelection.length === 0) {
         return null;
@@ -122,7 +122,7 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
     const userSelectedIdentifierValues = get(userSelectedIdentifiersValuesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const uniqueIdentifierValues = tableDefinitionsAccessor.getUniqueIdentifierValues();
+    const uniqueIdentifierValues = tableDefinitionsAccessor.getIdentifiersWithIntersectionValues();
     const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
 
     if (!userSelectedIdentifierValues) {
