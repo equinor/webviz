@@ -1,21 +1,16 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Settings } from "./settings";
-import { DisplayComponentType, State } from "./state";
-import { View } from "./view";
+import { Interfaces, settingsToViewInterfaceInitialization, viewToSettingsInterfaceInitialization } from "./interfaces";
+import { MODULE_NAME } from "./registerModule";
+import { viewToSettingsInterfaceEffects } from "./settings/atoms/interfaceEffects";
+import { Settings } from "./settings/settings";
+import { View } from "./view/view";
 
-const defaultState: State = {
-    displayComponentType: DisplayComponentType.TornadoChart,
-    referenceSensitivityName: null,
-    sensitivityNames: [],
-    selectedSensitivity: null,
-    responseChannelName: null,
-    hideZeroY: false,
-    showLabels: true,
-    showRealizationPoints: false,
-};
-
-const module = ModuleRegistry.initModule<State>("TornadoChart", defaultState);
+const module = ModuleRegistry.initModule<Interfaces>(MODULE_NAME, {
+    settingsToViewInterfaceInitialization,
+    viewToSettingsInterfaceInitialization,
+    viewToSettingsInterfaceEffects,
+});
 
 module.viewFC = View;
 module.settingsFC = Settings;

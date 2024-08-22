@@ -11,16 +11,11 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
-import { SettingsToViewInterface } from "./settingsToViewInterface";
-import { State } from "./state";
+import { Interfaces } from "./interfaces";
 import { PvtDataAccessor } from "./utils/PvtDataAccessor";
 import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
-export function View({
-    viewContext,
-    workbenchSettings,
-    workbenchSession,
-}: ModuleViewProps<State, SettingsToViewInterface>) {
+export function View({ viewContext, workbenchSettings, workbenchSession }: ModuleViewProps<Interfaces>) {
     const colorSet = workbenchSettings.useColorSet();
     const statusWriter = useViewStatusWriter(viewContext);
     const ensembleSet = useEnsembleSet(workbenchSession);

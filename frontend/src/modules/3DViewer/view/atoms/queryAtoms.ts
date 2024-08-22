@@ -1,14 +1,15 @@
 import { apiService } from "@framework/ApiService";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { selectedEnsembleIdentAtom } from "@modules/3DViewer/sharedAtoms/sharedAtoms";
 
 import { atomWithQuery } from "jotai-tanstack-query";
+
+import { ensembleIdentAtom } from "./baseAtoms";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
 export const fieldWellboreTrajectoriesQueryAtom = atomWithQuery((get) => {
-    const ensembleIdent = get(selectedEnsembleIdentAtom);
+    const ensembleIdent = get(ensembleIdentAtom);
     const ensembleSet = get(EnsembleSetAtom);
 
     let fieldIdentifier: string | null = null;
