@@ -13,7 +13,6 @@ import "./Rft/registerModule";
 import "./SeismicIntersection/registerModule";
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
-import "./StructuralUncertaintyIntersection/registerModule";
 import "./SubsurfaceMap/registerModule";
 import "./TornadoChart/registerModule";
 import "./WellCompletions/registerModule";
