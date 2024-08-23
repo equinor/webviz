@@ -14,7 +14,9 @@ export const PLOT_SCALE_OPTIONS: (DropdownOption & { value: TemplatePlotScaleTyp
     { label: "Logaritmic", value: "log" },
 ];
 
-export const PLOT_TYPE_OPTIONS: (DropdownOption & { value: TemplatePlotTypes })[] = [
+type PlotDropdownOption = DropdownOption & { value: TemplatePlotTypes };
+
+export const PLOT_TYPE_OPTIONS: PlotDropdownOption[] = [
     { value: "line", label: "Line" },
     { value: "linestep", label: "Linestep" },
     { value: "dot", label: "Dot" },
@@ -22,9 +24,13 @@ export const PLOT_TYPE_OPTIONS: (DropdownOption & { value: TemplatePlotTypes })[
     { value: "gradientfill", label: "Gradientfill" },
 
     // Type requires to named curves, don't know how to do the flow for that
-    { value: "differential", label: "Differential", disabled: true },
-    { value: "stacked", label: "Stacked", disabled: true },
+    { value: "differential", label: "Differential" },
+    { value: "stacked", label: "Stacked" },
 ];
+
+export function isCompositePlotType(type: TemplatePlotTypes) {
+    return ["differential", "stacked"].includes(type);
+}
 
 export function createLogTemplate(templateTrackConfigs: TemplateTrackConfig[]): Template {
     return {

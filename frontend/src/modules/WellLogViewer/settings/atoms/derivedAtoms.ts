@@ -36,11 +36,16 @@ export const groupedCurveHeadersAtom = atom<Dictionary<WellboreLogCurveHeader_ap
 export const allSelectedWellLogCurves = atom<string[]>((get) => {
     const templateTracks = get(logViewerTrackConfigs);
 
-    return templateTracks.reduce<string[]>((acc, trackCfg) => {
-        const usedCurves = _.map(trackCfg.plots, "name");
+    const curveNames = templateTracks.reduce<string[]>((acc, trackCfg) => {
+        const usedCurves = _.flatMap(trackCfg.plots, ({ name, name2 }) => {
+            if (name2) return [name, name2];
+            else return [name];
+        });
 
         return _.uniq([...acc, ...usedCurves]);
     }, []);
+
+    return curveNames;
 });
 
 function getSelectedWellboreHeader(
