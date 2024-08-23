@@ -71,9 +71,9 @@ export class PlotBuilder {
                 const oldLayout = figure.getLayout();
 
                 figure.updateLayout({
-                    // @ts-ignore
+                    // @ts-expect-error - Ignore string type of xAxisKey for oldLayout[xAxisKey]
                     [xAxisKey]: { ...oldLayout[xAxisKey], ...this._axesOptions.x },
-                    // @ts-ignore
+                    // @ts-expect-error - Ignore string type of yAxisKey for oldLayout[yAxisKey]
                     [yAxisKey]: { ...oldLayout[yAxisKey], ...this._axesOptions.y },
                 });
             }

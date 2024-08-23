@@ -262,7 +262,7 @@ function makeDensityPlot(title: string, table: Table, resultName: string, color:
         marker: {
             color,
         },
-        // @ts-ignore
+        // @ts-expect-error - arguments in the plotly types
         side: "positive",
         y0: 0,
         orientation: "h",
@@ -290,7 +290,7 @@ function makeBoxPlot(title: string, table: Table, resultName: string, color: str
         marker: {
             color,
         },
-        // @ts-ignore
+        // @ts-expect-error - missing arguments in the plotly types
         y0: 0,
     });
 

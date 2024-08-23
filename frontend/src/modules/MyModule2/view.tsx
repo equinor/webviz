@@ -1,12 +1,6 @@
-import { ModuleViewProps } from "@framework/Module";
 import { Table, TableHeading, TableRow } from "@lib/components/Table/table";
 
-import { Interfaces } from "./interfaces";
-
-export const View = (props: ModuleViewProps<Interfaces>) => {
-    const text = props.viewContext.useSettingsToViewInterfaceValue("text");
-    const derivedText = props.viewContext.useSettingsToViewInterfaceValue("derivedText");
-
+export const View = () => {
     const heading: TableHeading = {
         col1: {
             label: "Column 1",
