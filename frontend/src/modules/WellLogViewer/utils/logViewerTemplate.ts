@@ -22,8 +22,8 @@ export const PLOT_TYPE_OPTIONS: (DropdownOption & { value: TemplatePlotTypes })[
     { value: "gradientfill", label: "Gradientfill" },
 
     // Type requires to named curves, don't know how to do the flow for that
-    // { value: "differential", label: "Differential" },
-    // { value: "stacked", label: "Stacked" },
+    { value: "differential", label: "Differential", disabled: true },
+    { value: "stacked", label: "Stacked", disabled: true },
 ];
 
 export function createLogTemplate(templateTrackConfigs: TemplateTrackConfig[]): Template {

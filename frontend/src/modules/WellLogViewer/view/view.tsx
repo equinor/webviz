@@ -10,10 +10,9 @@ import { intersectionReferenceSystemAtom } from "./atoms/derivedAtoms";
 import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { sanitizeCurveDataQueriesResult, useCurveDataQueries } from "./queries/wellLogQueries";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { State } from "../state";
+import { InterfaceTypes } from "../interfaces";
 
-export function View(props: ModuleViewProps<State, SettingsToViewInterface>) {
+export function View(props: ModuleViewProps<InterfaceTypes>) {
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     // Passed setting atoms

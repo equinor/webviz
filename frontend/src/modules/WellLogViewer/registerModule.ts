@@ -7,7 +7,7 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
-import { State } from "./state";
+import { InterfaceTypes } from "./interfaces";
 
 export const MODULE_NAME = "WellLogViewer";
 const MODULE_TITLE = "Well log Viewer";
@@ -15,7 +15,7 @@ const MODULE_TITLE = "Well log Viewer";
 const MODULE_DESCRIPTION = "Well log Viewer";
 // TODO: preview Icon
 
-ModuleRegistry.registerModule<State>({
+ModuleRegistry.registerModule<InterfaceTypes>({
     moduleName: MODULE_NAME,
     defaultTitle: MODULE_TITLE,
     description: MODULE_DESCRIPTION,

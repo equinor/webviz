@@ -13,9 +13,8 @@ import { isEqual } from "lodash";
 
 import { LogCurveDataWithName } from "./queries/wellLogQueries";
 
+import { InterfaceTypes } from "../interfaces";
 import { TemplateTrackConfig } from "../settings/atoms/baseAtoms";
-import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { State } from "../state";
 import { COLOR_TABLES } from "../utils/logViewerColors";
 import { createLogTemplate } from "../utils/logViewerTemplate";
 import { createWellLog } from "../utils/queryDataTransform";
@@ -46,14 +45,14 @@ export type SubsurfaceLogViewerWrapperProps = {
     templateTrackConfigs: TemplateTrackConfig[];
 
     // Passing the module props to make context and service access less cumbersome
-    moduleProps: ModuleViewProps<State, SettingsToViewInterface>;
+    moduleProps: ModuleViewProps<InterfaceTypes>;
 };
 
 function useGloballySyncedMd(
     wellboreHeader: WellboreHeader_api | null,
     wellLogController: WellLogController | null,
     workbenchServices: WorkbenchServices,
-    viewContext: ViewContext<State, SettingsToViewInterface, Record<string, never>, Record<string, never>>
+    viewContext: ViewContext<InterfaceTypes>
 ) {
     const instanceId = viewContext.getInstanceIdString();
     const wellboreUuid = wellboreHeader?.wellboreUuid ?? "";
@@ -92,7 +91,7 @@ function useGloballySyncedMd(
 function useGloballySyncedVerticalScale(
     wellLogController: WellLogController | null,
     workbenchServices: WorkbenchServices,
-    viewContext: ViewContext<State, SettingsToViewInterface, Record<string, never>, Record<string, never>>
+    viewContext: ViewContext<InterfaceTypes>
 ) {
     // TODO: This value DOES NOT update properly when you ENABLE the setting. So something else needs to trigger a re-render
     const syncableSettingKeys = viewContext.useSyncedSettingKeys();

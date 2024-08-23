@@ -20,9 +20,7 @@ import { selectedFieldIdentifierAtom, selectedWellboreAtom } from "./atoms/deriv
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { CurveTracks } from "./components/CurveTracks";
 
-// import { LogSettings } from "./components/LogSettings";
-import { SettingsToViewInterface } from "../settingsToViewInterface";
-import { State } from "../state";
+import { InterfaceTypes } from "../interfaces";
 import { useTrackedGlobalValue } from "../utils/hooks";
 
 function useSyncedWellboreSetting(
@@ -51,7 +49,7 @@ function useSyncedWellboreSetting(
     return [selectedWellboreHeader, setSelectedWellboreHeader];
 }
 
-export function Settings(props: ModuleSettingsProps<State, SettingsToViewInterface>) {
+export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Utilities
     const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
