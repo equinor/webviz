@@ -5,6 +5,7 @@
  */
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
+import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { State } from "./state";
 
@@ -21,4 +22,6 @@ ModuleRegistry.registerModule<State>({
 
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
+
+    syncableSettingKeys: [SyncSettingKey.INTERSECTION, SyncSettingKey.VERTICAL_SCALE],
 });

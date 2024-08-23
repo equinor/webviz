@@ -95,7 +95,7 @@ function maybeInjectDataRow(
     if (!rowAcc[targetMdValue]) {
         rowAcc[targetMdValue] = Array(rowLength).fill(null) as SafeWellLogDataRow;
         rowAcc[targetMdValue][0] = targetMdValue;
-        rowAcc[targetMdValue][1] = referenceSystem.project(targetMdValue)[0] ?? 0;
+        rowAcc[targetMdValue][1] = referenceSystem.project(targetMdValue)[1] ?? 0;
     }
 }
 

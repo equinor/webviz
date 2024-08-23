@@ -1,8 +1,10 @@
 import { WellboreHeader_api } from "@api";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
+import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
+import { IntersectionType } from "@framework/types/intersection";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
@@ -21,45 +23,54 @@ import { CurveTracks } from "./components/CurveTracks";
 // import { LogSettings } from "./components/LogSettings";
 import { SettingsToViewInterface } from "../settingsToViewInterface";
 import { State } from "../state";
+import { useTrackedGlobalValue } from "../utils/hooks";
 
-function useSyncedChangeHandler(setter: (...args: any[]) => any, valueTransform?: (v: any) => void) {
-    return function handleValueChange(newValue: unknown) {
-        console.debug(newValue);
+function useSyncedWellboreSetting(
+    syncHelper: SyncSettingsHelper
+): [typeof selectedWellboreHeader, typeof setSelectedWellboreHeader] {
+    const localSetSelectedWellboreHeader = useSetAtom(userSelectedWellboreUuidAtom);
+    // Global syncronization
+    const globalIntersection = syncHelper.useValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection");
+    useTrackedGlobalValue(globalIntersection, () => {
+        if (globalIntersection?.type === IntersectionType.WELLBORE) {
+            localSetSelectedWellboreHeader(globalIntersection.uuid);
+        }
+    });
 
-        if (valueTransform) newValue = valueTransform(newValue);
+    function setSelectedWellboreHeader(wellboreUuid: string | null) {
+        localSetSelectedWellboreHeader(wellboreUuid);
 
-        setter(newValue);
-        // TODO: Setup syncing
-    };
-}
+        syncHelper.publishValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection", {
+            type: IntersectionType.WELLBORE,
+            uuid: wellboreUuid ?? "",
+        });
+    }
+    // Leave AFTER checking global, othwise the select menu will highlight the wrong value
+    const selectedWellboreHeader = useAtomValue(selectedWellboreAtom);
 
-function takeFirstEl(els: any[]) {
-    console.debug(els);
-
-    return els[0] ?? null;
+    return [selectedWellboreHeader, setSelectedWellboreHeader];
 }
 
 export function Settings(props: ModuleSettingsProps<State, SettingsToViewInterface>) {
+    // Utilities
+    const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
+    const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
+
     // Ensemble selections
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
     const selectedField = useAtomValue(selectedFieldIdentifierAtom);
     const setSelectedField = useSetAtom(userSelectedFieldIdentifierAtom);
-    const handleEnsembleSelectionChange = useSyncedChangeHandler(setSelectedField);
-
-    // const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
-    // const setSelectedEnsembleIdent = useSetAtom(userSelectedEnsembleIdentAtom);
-    // const handleEnsembleSelectionChange = useSyncedChangeHandler(setSelectedEnsembleIdent, takeFirstEl);
 
     // Wellbore selection
     const wellboreHeaders = useAtomValue(drilledWellboreHeadersQueryAtom);
+    const [selectedWellboreHeader, setSelectedWellboreHeader] = useSyncedWellboreSetting(syncHelper);
 
-    const selectedWellboreHeader = useAtomValue(selectedWellboreAtom);
-    const setSelectedWellboreHeader = useSetAtom(userSelectedWellboreUuidAtom);
-    const handleWellboreSelectionChange = useSyncedChangeHandler(setSelectedWellboreHeader, takeFirstEl);
+    function handleWellboreSelectionChange(uuids: string[]) {
+        setSelectedWellboreHeader(uuids[0] ?? null);
+    }
 
     // Well log selection
-
     const [horizontal, setHorizontal] = useAtom(viewerHorizontalAtom);
 
     // Error messages
@@ -70,11 +81,7 @@ export function Settings(props: ModuleSettingsProps<State, SettingsToViewInterfa
         <div className="flex flex-col h-full">
             <CollapsibleGroup title="Wellbore" expanded>
                 <Label text="Field">
-                    <FieldDropdown
-                        value={selectedField}
-                        ensembleSet={ensembleSet}
-                        onChange={handleEnsembleSelectionChange}
-                    />
+                    <FieldDropdown value={selectedField} ensembleSet={ensembleSet} onChange={setSelectedField} />
                 </Label>
 
                 <Label text="Wellbore" wrapperClassName="mt-4">

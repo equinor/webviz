@@ -15,6 +15,7 @@ export const intersectionReferenceSystemAtom = atom<IntersectionReferenceSystem 
     const offset = wellboreTrajectoryQuery.data.mdArr[0];
 
     const referenceSystem = new IntersectionReferenceSystem(systemPath);
+
     referenceSystem.offset = offset;
 
     return referenceSystem;

@@ -18,7 +18,7 @@ export type CurveTrackItemProps = {
 export function CurveTrackItem(props: CurveTrackItemProps) {
     const [isExpanded, setIsExpanded] = React.useState<boolean>(true);
 
-    const deleteAdornment = (
+    const itemEndAdornment = (
         <ListItemEndAdornment
             track={props.trackConfig}
             isExpanded={isExpanded}
@@ -28,8 +28,8 @@ export function CurveTrackItem(props: CurveTrackItemProps) {
     );
 
     return (
-        <SortableListItem id={props.trackConfig._id} title={props.trackConfig.title} endAdornment={deleteAdornment}>
-            <div hidden={!isExpanded} onPointerDown={(e) => e.stopPropagation()}>
+        <SortableListItem id={props.trackConfig._id} title={props.trackConfig.title} endAdornment={itemEndAdornment}>
+            <div hidden={!isExpanded}>
                 <TrackSettings {...props} />
             </div>
         </SortableListItem>
