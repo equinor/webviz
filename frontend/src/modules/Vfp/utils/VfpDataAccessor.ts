@@ -1,4 +1,4 @@
-import { VfpProdTable_api, UnitType_api, FlowRateTypeProd_api, ALQ_api, WFR_api, GFR_api } from "@api";
+import { VfpProdTable_api, FlowRateTypeProd_api, ALQ_api, WFR_api, GFR_api } from "@api";
 import { VfpParam } from "../types";
 
 export class VfpDataAccessor {

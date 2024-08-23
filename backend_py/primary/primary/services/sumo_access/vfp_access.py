@@ -1,6 +1,6 @@
 import logging
 from io import BytesIO
-from typing import List
+from typing import Any, Dict, List
 
 import numpy as np
 import pyarrow as pa
@@ -91,7 +91,7 @@ class VfpAccess:
         wfr_type = WFR[pa_table.schema.metadata[b"WFR_TYPE"].decode("utf-8")]
         gfr_type = GFR[pa_table.schema.metadata[b"GFR_TYPE"].decode("utf-8")]
         flow_rate_type = FlowRateTypeProd[pa_table.schema.metadata[b"RATE_TYPE"].decode("utf-8")]
-        units = VFPPROD_UNITS[unit_type]
+        units: Dict[VfpParam, Any] = VFPPROD_UNITS[unit_type]
 
         return VfpProdTable(
             vfp_type=VfpType[pa_table.schema.metadata[b"VFP_TYPE"].decode("utf-8")],

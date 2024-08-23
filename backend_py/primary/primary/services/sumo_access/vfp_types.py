@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import Any, Dict, List
 
 from pydantic import BaseModel
 
@@ -130,7 +130,7 @@ class VfpInjTable(BaseModel):
 
 
 # Unit definitions for VFPPROD
-VFPPROD_UNITS = {
+VFPPROD_UNITS: Dict[UnitType, Dict[VfpParam, Any]] = {
     UnitType.DEFAULT: {
         VfpParam.FLOWRATE: {
             FlowRateTypeProd.OIL: "",
