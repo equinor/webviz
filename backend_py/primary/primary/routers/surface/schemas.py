@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List
+from typing import List, Literal
 
 from pydantic import BaseModel, ConfigDict
 from webviz_pkg.core_utils.b64 import B64FloatArray
@@ -77,21 +77,45 @@ class SurfaceMetaSet(BaseModel):
     surface_names_in_strat_order: list[str]
 
 
-class SurfaceData(BaseModel):
-    x_ori: float
-    y_ori: float
-    x_count: int
-    y_count: int
-    x_inc: float
-    y_inc: float
-    x_min: float
-    x_max: float
-    y_min: float
-    y_max: float
-    val_min: float
-    val_max: float
-    rot_deg: float
+class BoundingBox2d(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    min_x: float
+    min_y: float
+    max_x: float
+    max_y: float
+
+
+class SurfaceDef(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    npoints_x: int  # number of grid points in the x direction
+    npoints_y: int  # number of grid points in the y direction
+    inc_x: float  # increment/spacing between points in x direction
+    inc_y: float  # increment/spacing between points in y direction
+    origin_utm_x: float  # x-coordinate of the origin of the surface grid in UTM
+    origin_utm_y: float  # y-coordinate of the origin of the surface grid in UTM
+    rot_deg: float  # rotation of surface in degrees around origin, rotation is counter-clockwise from the x-axis
+
+
+class SurfaceDataBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    format: Literal["float", "png"]
+    surface_def: SurfaceDef
+    transformed_bbox_utm: BoundingBox2d
+    value_min: float
+    value_max: float
+
+
+class SurfaceDataFloat(SurfaceDataBase):
+    format: Literal["float"] = "float"
     values_b64arr: B64FloatArray
+
+
+class SurfaceDataPng(SurfaceDataBase):
+    format: Literal["png"] = "png"
+    png_image_base64: str
 
 
 class SurfaceIntersectionData(BaseModel):

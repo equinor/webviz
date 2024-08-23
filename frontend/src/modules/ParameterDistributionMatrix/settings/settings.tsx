@@ -24,12 +24,14 @@ import {
     selectedParameterIdentsAtom,
 } from "./atoms/derivedAtoms";
 
-import { Interface } from "../settingsToViewInterface";
-import { State } from "../state";
-import { MAX_PARAMETERS } from "../typesAndEnums";
-import { ParameterDistributionPlotType, ParameterDistributionPlotTypeEnumToStringMapping } from "../typesAndEnums";
+import { Interfaces } from "../interfaces";
+import {
+    MAX_PARAMETERS,
+    ParameterDistributionPlotType,
+    ParameterDistributionPlotTypeEnumToStringMapping,
+} from "../typesAndEnums";
 
-export function Settings({ workbenchSession }: ModuleSettingsProps<State, Interface>) {
+export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
     const selectedEnsembleIdents = useAtomValue(selectedEnsembleIdentsAtom);

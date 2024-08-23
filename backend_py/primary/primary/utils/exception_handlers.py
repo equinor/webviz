@@ -52,11 +52,15 @@ def my_request_validation_error_handler(request: Request, exc: RequestValidation
         if type(loc) is list:
             loc = ",".join(loc)
 
+        # We're seeing some cases where the input is not JSON serializable, so we'll just always convert it to a
+        # string to avoid triggering an exception when we try and call json.dumps() further down.
+        input_as_str = str(err.get("input"))
+
         simplified_err_arr.append(
             {
                 "msg": err.get("msg"),
                 "loc": loc,
-                "input": err.get("input"),
+                "input": input_as_str,
             }
         )
 

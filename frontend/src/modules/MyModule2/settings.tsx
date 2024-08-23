@@ -9,14 +9,7 @@ import { useAtom } from "jotai";
 
 import { textAtom } from "./atoms";
 
-type Item = {
-    id: string;
-    type: "item" | "group";
-    title: string;
-    children: Item[];
-};
-
-export const Settings = () => {
+export function Settings(): React.ReactNode {
     const [atomText, setAtomText] = useAtom(textAtom);
     const [items, setItems] = React.useState<Item[]>([
         {
@@ -175,7 +168,7 @@ export const Settings = () => {
             </div>
         </>
     );
-};
+}
 
 Settings.displayName = "Settings";
 
