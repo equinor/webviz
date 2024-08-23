@@ -17,11 +17,9 @@ export function calcConvergenceArray(realizationAndResultArray: RealizationAndRe
     const growingDataArray: number[] = [];
     const convergenceArray: ConvergenceResult[] = [];
     let sum = 0;
-    let sumOfSquares = 0;
     for (const [index, realizationAndResult] of sortedArray.entries()) {
         growingDataArray.push(realizationAndResult.resultValue);
         sum += realizationAndResult.resultValue;
-        sumOfSquares += realizationAndResult.resultValue * realizationAndResult.resultValue;
         const mean = sum / (index + 1);
 
         const p10 = computeQuantile(growingDataArray, 0.1);

@@ -11,7 +11,7 @@ import {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
 } from "@modules/_shared/InplaceVolumetrics/types";
-import { UseQueryResult, useQueries } from "@tanstack/react-query";
+import { UseQueryResult } from "@tanstack/react-query";
 
 import { InplaceVolumetricsIdentifier } from "src/api/models/InplaceVolumetricsIdentifier";
 
@@ -44,11 +44,11 @@ export function useGetAggregatedStatisticalTableDataQueries(
     tableNames: string[],
     resultNames: InplaceVolumetricResultName_api[],
     fluidZones: FluidZone_api[],
-    accumulateByIdentifiers: InplaceVolumetricsIdentifier[],
+    groupByIdentifiers: InplaceVolumetricsIdentifier[],
     accumulateFluidZones: boolean,
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
     allowEnable: boolean
-): AggregatedStatisticalTableDataResults {
+) {
     const uniqueSources: { ensembleIdent: EnsembleIdent; realizations: readonly number[]; tableName: string }[] = [];
     for (const el of ensembleIdentsWithRealizations) {
         for (const tableName of tableNames) {
@@ -56,74 +56,78 @@ export function useGetAggregatedStatisticalTableDataQueries(
         }
     }
 
-    const queries = uniqueSources.map((source) => ({
-        queryKey: [
-            "postGetAggregatedStatisticalTableData",
-            source.ensembleIdent.toString(),
-            source.tableName,
-            source.realizations,
-            fluidZones,
-            accumulateByIdentifiers,
-            accumulateFluidZones,
-            resultNames,
-            identifiersWithValues,
-        ],
-        queryFn: () =>
-            apiService.inplaceVolumetrics.postGetAggregatedStatisticalTableData(
-                source.ensembleIdent.getCaseUuid(),
-                source.ensembleIdent.getEnsembleName(),
+    const queries = uniqueSources.map((source) => {
+        return () => ({
+            queryKey: [
+                "postGetAggregatedStatisticalTableData",
+                source.ensembleIdent.toString(),
                 source.tableName,
-                resultNames,
+                source.realizations,
                 fluidZones,
+                groupByIdentifiers,
                 accumulateFluidZones,
-                {
-                    group_by_identifiers: accumulateByIdentifiers,
-                    identifiers_with_values: identifiersWithValues,
-                },
-                [...source.realizations]
+                resultNames,
+                identifiersWithValues,
+            ],
+            queryFn: () =>
+                apiService.inplaceVolumetrics.postGetAggregatedStatisticalTableData(
+                    source.ensembleIdent.getCaseUuid(),
+                    source.ensembleIdent.getEnsembleName(),
+                    source.tableName,
+                    resultNames,
+                    fluidZones,
+                    accumulateFluidZones,
+                    {
+                        group_by_identifiers: groupByIdentifiers,
+                        identifiers_with_values: identifiersWithValues,
+                    },
+                    [...source.realizations]
+                ),
+            staleTime: STALE_TIME,
+            cacheTime: CACHE_TIME,
+            enabled: Boolean(
+                allowEnable &&
+                    source.ensembleIdent &&
+                    source.tableName &&
+                    source.realizations.length &&
+                    fluidZones.length &&
+                    resultNames.length &&
+                    identifiersWithValues.length
             ),
-        staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: Boolean(
-            allowEnable &&
-                source.ensembleIdent &&
-                source.tableName &&
-                source.realizations.length &&
-                fluidZones.length &&
-                resultNames.length &&
-                identifiersWithValues.length
-        ),
-    }));
-
-    return useQueries({
-        queries,
-        combine: (
-            results: UseQueryResult<InplaceStatisticalVolumetricTableDataPerFluidSelection_api, Error>[]
-        ): AggregatedStatisticalTableDataResults => {
-            const tablesData: InplaceVolumetricsStatisticalTableData[] = [];
-            const errors: Error[] = [];
-            for (const [index, result] of results.entries()) {
-                if (result.data) {
-                    tablesData.push({
-                        ensembleIdent: uniqueSources[index].ensembleIdent,
-                        tableName: uniqueSources[index].tableName,
-                        data: result.data,
-                    });
-                }
-                if (result.error) {
-                    errors.push(result.error);
-                }
-            }
-
-            return {
-                tablesData: tablesData,
-                isFetching: results.some((result) => result.isFetching),
-                someQueriesFailed: results.some((result) => result.isError),
-                allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
-                errors: errors,
-            };
-        },
+        });
     });
+
+    function combine(
+        results: UseQueryResult<InplaceStatisticalVolumetricTableDataPerFluidSelection_api, Error>[]
+    ): AggregatedStatisticalTableDataResults {
+        const tablesData: InplaceVolumetricsStatisticalTableData[] = [];
+        const errors: Error[] = [];
+        for (const [index, result] of results.entries()) {
+            if (result.data) {
+                tablesData.push({
+                    ensembleIdent: uniqueSources[index].ensembleIdent,
+                    tableName: uniqueSources[index].tableName,
+                    data: result.data,
+                });
+            }
+            if (result.error) {
+                errors.push(result.error);
+            }
+        }
+
+        return {
+            tablesData: tablesData,
+            isFetching: results.some((result) => result.isFetching),
+            someQueriesFailed: results.some((result) => result.isError),
+            allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
+            errors: errors,
+        };
+    }
+
+    return {
+        queries,
+        combine,
+    };
 }
 
 export function useGetAggregatedPerRealizationTableDataQueries(
@@ -131,11 +135,11 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     tableNames: string[],
     resultNames: InplaceVolumetricResultName_api[],
     fluidZones: FluidZone_api[],
-    accumulateByIdentifiers: InplaceVolumetricsIdentifier[],
+    groupByIdentifiers: InplaceVolumetricsIdentifier[],
     accumulateFluidZones: boolean,
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
     allowEnable: boolean
-): AggregatedTableDataResults {
+) {
     const uniqueSources: { ensembleIdent: EnsembleIdent; realizations: readonly number[]; tableName: string }[] = [];
     for (const el of ensembleIdentsWithRealizations) {
         for (const tableName of tableNames) {
@@ -143,72 +147,76 @@ export function useGetAggregatedPerRealizationTableDataQueries(
         }
     }
 
-    const queries = uniqueSources.map((source) => ({
-        queryKey: [
-            "postGetAggregatedPerRealizationTableData",
-            source.ensembleIdent.toString(),
-            source.tableName,
-            source.realizations,
-            fluidZones,
-            accumulateByIdentifiers,
-            accumulateFluidZones,
-            resultNames,
-            identifiersWithValues,
-        ],
-        queryFn: () =>
-            apiService.inplaceVolumetrics.postGetAggregatedPerRealizationTableData(
-                source.ensembleIdent.getCaseUuid(),
-                source.ensembleIdent.getEnsembleName(),
+    const queries = uniqueSources.map((source) => {
+        return () => ({
+            queryKey: [
+                "postGetAggregatedPerRealizationTableData",
+                source.ensembleIdent.toString(),
                 source.tableName,
-                resultNames,
+                source.realizations,
                 fluidZones,
+                groupByIdentifiers,
                 accumulateFluidZones,
-                {
-                    group_by_identifiers: accumulateByIdentifiers,
-                    identifiers_with_values: identifiersWithValues,
-                },
-                [...source.realizations]
+                resultNames,
+                identifiersWithValues,
+            ],
+            queryFn: () =>
+                apiService.inplaceVolumetrics.postGetAggregatedPerRealizationTableData(
+                    source.ensembleIdent.getCaseUuid(),
+                    source.ensembleIdent.getEnsembleName(),
+                    source.tableName,
+                    resultNames,
+                    fluidZones,
+                    accumulateFluidZones,
+                    {
+                        group_by_identifiers: groupByIdentifiers,
+                        identifiers_with_values: identifiersWithValues,
+                    },
+                    [...source.realizations]
+                ),
+            staleTime: STALE_TIME,
+            cacheTime: CACHE_TIME,
+            enabled: Boolean(
+                allowEnable &&
+                    source.ensembleIdent &&
+                    source.tableName &&
+                    source.realizations.length &&
+                    fluidZones.length &&
+                    resultNames.length &&
+                    identifiersWithValues.length
             ),
-        staleTime: STALE_TIME,
-        cacheTime: CACHE_TIME,
-        enabled: Boolean(
-            allowEnable &&
-                source.ensembleIdent &&
-                source.tableName &&
-                source.realizations.length &&
-                fluidZones.length &&
-                resultNames.length &&
-                identifiersWithValues.length
-        ),
-    }));
-
-    return useQueries({
-        queries,
-        combine: (
-            results: UseQueryResult<InplaceVolumetricTableDataPerFluidSelection_api, Error>[]
-        ): AggregatedTableDataResults => {
-            const tablesData: InplaceVolumetricsTableData[] = [];
-            const errors: Error[] = [];
-            for (const [index, result] of results.entries()) {
-                if (result.data) {
-                    tablesData.push({
-                        ensembleIdent: uniqueSources[index].ensembleIdent,
-                        tableName: uniqueSources[index].tableName,
-                        data: result.data,
-                    });
-                }
-                if (result.error) {
-                    errors.push(result.error);
-                }
-            }
-
-            return {
-                tablesData: tablesData,
-                isFetching: results.some((result) => result.isFetching),
-                someQueriesFailed: results.some((result) => result.isError),
-                allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
-                errors: errors,
-            };
-        },
+        });
     });
+
+    function combine(
+        results: UseQueryResult<InplaceVolumetricTableDataPerFluidSelection_api, Error>[]
+    ): AggregatedTableDataResults {
+        const tablesData: InplaceVolumetricsTableData[] = [];
+        const errors: Error[] = [];
+        for (const [index, result] of results.entries()) {
+            if (result.data) {
+                tablesData.push({
+                    ensembleIdent: uniqueSources[index].ensembleIdent,
+                    tableName: uniqueSources[index].tableName,
+                    data: result.data,
+                });
+            }
+            if (result.error) {
+                errors.push(result.error);
+            }
+        }
+
+        return {
+            tablesData: tablesData,
+            isFetching: results.some((result) => result.isFetching),
+            someQueriesFailed: results.some((result) => result.isError),
+            allQueriesFailed: results.length > 0 && results.every((result) => result.isError),
+            errors: errors,
+        };
+    }
+
+    return {
+        queries,
+        combine,
+    };
 }

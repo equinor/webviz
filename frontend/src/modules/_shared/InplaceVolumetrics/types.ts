@@ -40,6 +40,11 @@ const sourceAndTableIdentifiersUnion = { ...SourceIdentifier, ...InplaceVolumetr
 export type SourceAndTableIdentifierUnion =
     (typeof sourceAndTableIdentifiersUnion)[keyof typeof sourceAndTableIdentifiersUnion];
 
+export const AccumulationOption = {
+    FLUID_ZONE: "FLUID_ZONE",
+    ...InplaceVolumetricsIdentifier_api,
+};
+
 export type StatisticalColumns = Partial<{
     [key in InplaceVolumetricStatistic_api]: Column<number>;
 }>;
