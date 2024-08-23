@@ -81,6 +81,7 @@ export type { SurfaceRealizationSampleValues as SurfaceRealizationSampleValues_a
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
 export { SurfaceTimeType as SurfaceTimeType_api } from './models/SurfaceTimeType';
 export { TabType as TabType_api } from './models/TabType';
+export type { THP as THP_api } from './models/THP';
 export { TreeNode as TreeNode_api } from './models/TreeNode';
 export { UnitType as UnitType_api } from './models/UnitType';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';

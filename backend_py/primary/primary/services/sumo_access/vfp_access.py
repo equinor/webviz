@@ -9,7 +9,19 @@ from fmu.sumo.explorer.objects import Case
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
 
 from ._helpers import create_sumo_case_async, create_sumo_client
-from .vfp_types import ALQ, GFR, WFR, FlowRateTypeProd, TabType, UnitType, VfpProdTable, VfpType
+from .vfp_types import (
+    ALQ,
+    GFR,
+    WFR,
+    FlowRateTypeProd,
+    TabType,
+    UnitType,
+    VfpProdTable,
+    VfpType,
+    VfpParam,
+    VFPPROD_UNITS,
+    THP,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -74,15 +86,23 @@ class VfpAccess:
         if pa_table.schema.metadata[b"ALQ_TYPE"].decode("utf-8") != "''":
             alq_type = ALQ[pa_table.schema.metadata[b"ALQ_TYPE"].decode("utf-8")]
 
-        vfp_table = VfpProdTable(
+        unit_type = UnitType[pa_table.schema.metadata[b"UNIT_TYPE"].decode("utf-8")]
+        thp_type = THP[pa_table.schema.metadata[b"THP_TYPE"].decode("utf-8")]
+        wfr_type = WFR[pa_table.schema.metadata[b"WFR_TYPE"].decode("utf-8")]
+        gfr_type = GFR[pa_table.schema.metadata[b"GFR_TYPE"].decode("utf-8")]
+        flow_rate_type = FlowRateTypeProd[pa_table.schema.metadata[b"RATE_TYPE"].decode("utf-8")]
+        units = VFPPROD_UNITS[unit_type]
+
+        return VfpProdTable(
             vfp_type=VfpType[pa_table.schema.metadata[b"VFP_TYPE"].decode("utf-8")],
             table_number=int(pa_table.schema.metadata[b"TABLE_NUMBER"].decode("utf-8")),
             datum=float(pa_table.schema.metadata[b"DATUM"].decode("utf-8")),
-            wfr_type=WFR[pa_table.schema.metadata[b"WFR_TYPE"].decode("utf-8")],
-            gfr_type=GFR[pa_table.schema.metadata[b"GFR_TYPE"].decode("utf-8")],
+            thp_type=thp_type,
+            wfr_type=wfr_type,
+            gfr_type=gfr_type,
             alq_type=alq_type,
-            flow_rate_type=FlowRateTypeProd[pa_table.schema.metadata[b"RATE_TYPE"].decode("utf-8")],
-            unit_type=UnitType[pa_table.schema.metadata[b"UNIT_TYPE"].decode("utf-8")],
+            flow_rate_type=flow_rate_type,
+            unit_type=unit_type,
             tab_type=TabType[pa_table.schema.metadata[b"TAB_TYPE"].decode("utf-8")],
             thp_values=np.frombuffer(pa_table.schema.metadata[b"THP_VALUES"], dtype=np.float64).tolist(),
             wfr_values=np.frombuffer(pa_table.schema.metadata[b"WFR_VALUES"], dtype=np.float64).tolist(),
@@ -90,5 +110,10 @@ class VfpAccess:
             alq_values=np.frombuffer(pa_table.schema.metadata[b"ALQ_VALUES"], dtype=np.float64).tolist(),
             flow_rate_values=np.frombuffer(pa_table.schema.metadata[b"FLOW_VALUES"], dtype=np.float64).tolist(),
             bhp_values=[val for sublist in np.array(pa_table.columns).tolist() for val in sublist],
+            flow_rate_unit=units[VfpParam.FLOWRATE][flow_rate_type],
+            thp_unit=units[VfpParam.THP][thp_type],
+            wfr_unit=units[VfpParam.WFR][wfr_type],
+            gfr_unit=units[VfpParam.GFR][gfr_type],
+            alq_unit=units[VfpParam.ALQ][alq_type],
+            bhp_unit=units[VfpParam.THP][thp_type],
         )
-        return vfp_table

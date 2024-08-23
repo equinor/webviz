@@ -1,15 +1,12 @@
-import { VfpProdTable_api, UnitType_api, FlowRateTypeProd_api, TabType_api, ALQ_api, WFR_api, GFR_api } from "@api";
-import { VFPPROD_UNITS, UNITSET, VfpParam } from "../types";
+import { VfpProdTable_api, UnitType_api, FlowRateTypeProd_api, ALQ_api, WFR_api, GFR_api } from "@api";
+import { VfpParam } from "../types";
 
 export class VfpDataAccessor {
     private _vfpTable: VfpProdTable_api;
-    private _unitType: UnitType_api;
-    private _unitSet: UNITSET;
+
 
     constructor(vfpTable: VfpProdTable_api) {
         this._vfpTable = vfpTable
-        this._unitType = vfpTable.unit_type
-        this._unitSet = VFPPROD_UNITS[this._unitType]
     }
 
     getTableNumber(): number {
@@ -17,7 +14,7 @@ export class VfpDataAccessor {
     }
 
     getTableType(): string {
-        return "VFPPROD"
+        return this._vfpTable.vfp_type
     }
 
     getFlowRateLabel(): string {
@@ -38,29 +35,11 @@ export class VfpDataAccessor {
     }
 
     getFlowRateUnit(): string {
-        const flowRateUnits = this._unitSet.FLOWRATE_UNITS
-        const flowRateType = this._vfpTable.flow_rate_type
-        if (flowRateType == FlowRateTypeProd_api.OIL) {
-            return flowRateUnits.OIL
-        } else if (flowRateType == FlowRateTypeProd_api.GAS) {
-            return flowRateUnits.GAS
-        } else if (flowRateType == FlowRateTypeProd_api.LIQ) {
-            return flowRateUnits.LIQ
-        } else if (flowRateType == FlowRateTypeProd_api.TM) {
-            return flowRateUnits.TM
-        } else if (flowRateType == FlowRateTypeProd_api.WG) {
-            return flowRateUnits.WG
-        }
-        return "Flow rate type unknown"     
+        return this._vfpTable.flow_rate_unit   
     }
 
     getBhpUnit(): string {   
-        const tabType = this._vfpTable.tab_type
-        if (tabType == TabType_api.TEMP) {
-            return "Units for tab type TEMP not implemented"
-        }
-        // BHP unit must be the same as THP unit.
-        return this._unitSet.THP_UNITS.THP
+        return this._vfpTable.bhp_unit
     }
 
     getFlowRateValues(): number[] {
@@ -82,49 +61,13 @@ export class VfpDataAccessor {
 
     getVfpParamUnit(vfpParam: VfpParam): string {
         if (vfpParam == VfpParam.THP) {
-            return this._unitSet.THP_UNITS.THP
+            return this._vfpTable.thp_unit
         } else if (vfpParam == VfpParam.WFR) {
-            const wfrUnits = this._unitSet.WFR_UNITS
-            const wfrType = this.getWfrType()
-            if (wfrType == WFR_api.WCT) {
-                return wfrUnits.WCT
-            } else if (wfrType == WFR_api.WGR) {
-                return wfrUnits.WGR
-            } else if (wfrType == WFR_api.WOR) {
-                return wfrUnits.WOR
-            } else if (wfrType == WFR_api.WTF) {
-                return wfrUnits.WTF
-            } else if (wfrType == WFR_api.WWR) {
-                return wfrUnits.WWR
-            }
+            return this._vfpTable.wfr_unit
         } else if (vfpParam == VfpParam.GFR) {
-            const gfrUnits = this._unitSet.GFR_UNITS
-            const gfrType = this.getGfrType()
-            if (gfrType == GFR_api.GLR) {
-                return gfrUnits.GLR
-            } else if (gfrType == GFR_api.GOR) {
-                return gfrUnits.GOR
-            } else if (gfrType == GFR_api.MMW) {
-                return gfrUnits.MMW
-            } else if (gfrType == GFR_api.OGR) {
-                return gfrUnits.OGR
-            }
+            return this._vfpTable.gfr_unit
         } else if (vfpParam == VfpParam.ALQ) {
-            const alqUnits = this._unitSet.ALQ_UNITS
-            const alqType = this.getAlqType()
-            if (alqType == ALQ_api.GRAT) {
-                return alqUnits.GRAT
-            } else if (alqType == ALQ_api.IGLR) {
-                return alqUnits.IGLR
-            } else if (alqType == ALQ_api.TGLR) {
-                return alqUnits.TGLR
-            } else if (alqType == ALQ_api.DENO) {
-                return alqUnits.DENO
-            } else if (alqType == ALQ_api.DENG) {
-                return alqUnits.DENG
-            } else if (alqType == ALQ_api.BEAN) {
-                return alqUnits.BEAN
-            }
+            return this._vfpTable.alq_unit
         }
         return ""
     }

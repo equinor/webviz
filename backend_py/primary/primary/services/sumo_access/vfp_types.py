@@ -10,6 +10,14 @@ class VfpType(Enum):
     VFPINJ = "VFPINJ"
 
 
+class VfpParam(Enum):
+    FLOWRATE = "FLOWRATE"
+    THP = "THP"
+    WFR = "WFR"
+    GFR = "GFR"
+    ALQ = "ALQ"
+
+
 # Flow rate types
 class FlowRateTypeProd(Enum):
     OIL = "OIL"
@@ -26,6 +34,11 @@ class FlowRateTypeInj(Enum):
     GAS = "GAS"
     WG = "WG"
     TM = "TM"
+
+
+# THP type
+class THP(Enum):
+    THP = "THP"
 
 
 # Water fraction types
@@ -80,6 +93,7 @@ class VfpProdTable(BaseModel):
     vfp_type: VfpType
     table_number: int
     datum: float
+    thp_type: THP
     wfr_type: WFR
     gfr_type: GFR
     alq_type: ALQ
@@ -92,6 +106,12 @@ class VfpProdTable(BaseModel):
     alq_values: List[float]
     flow_rate_values: List[float]
     bhp_values: List[float]
+    flow_rate_unit: str
+    thp_unit: str
+    wfr_unit: str
+    gfr_unit: str
+    alq_unit: str
+    bhp_unit: str
 
 
 class VfpInjTable(BaseModel):
@@ -104,3 +124,225 @@ class VfpInjTable(BaseModel):
     thp_values: List[float]
     flow_rate_values: List[float]
     bhp_values: List[float]
+    flow_rate_unit: str
+    thp_unit: str
+    bhp_unit: str
+
+
+# Unit definitions for VFPPROD
+VFPPROD_UNITS = {
+    UnitType.DEFAULT: {
+        VfpParam.FLOWRATE: {
+            FlowRateTypeProd.OIL: "",
+            FlowRateTypeProd.LIQ: "",
+            FlowRateTypeProd.GAS: "",
+            FlowRateTypeProd.WG: "",
+            FlowRateTypeProd.TM: "",
+        },
+        VfpParam.THP: {THP.THP: "barsa"},
+        VfpParam.WFR: {
+            WFR.WOR: "",
+            WFR.WCT: "",
+            WFR.WGR: "",
+            WFR.WWR: "",
+            WFR.WTF: "",
+        },
+        VfpParam.GFR: {
+            GFR.GOR: "",
+            GFR.GLR: "",
+            GFR.OGR: "",
+            GFR.MMW: "",
+        },
+        VfpParam.ALQ: {
+            ALQ.GRAT: "",
+            ALQ.IGLR: "",
+            ALQ.TGLR: "",
+            ALQ.DENO: "",
+            ALQ.DENG: "",
+            ALQ.BEAN: "",
+            ALQ.UNDEFINED: "",
+        },
+    },
+    UnitType.METRIC: {
+        VfpParam.FLOWRATE: {
+            FlowRateTypeProd.OIL: "sm3/day",
+            FlowRateTypeProd.LIQ: "sm3/day",
+            FlowRateTypeProd.GAS: "sm3/day",
+            FlowRateTypeProd.WG: "sm3/day",
+            FlowRateTypeProd.TM: "kg-M/day",
+        },
+        VfpParam.THP: {THP.THP: "barsa"},
+        VfpParam.WFR: {
+            WFR.WOR: "sm3/sm3",
+            WFR.WCT: "sm3/sm3",
+            WFR.WGR: "sm3/sm3",
+            WFR.WWR: "sm3/sm3",
+            WFR.WTF: "",
+        },
+        VfpParam.GFR: {
+            GFR.GOR: "sm3/sm3",
+            GFR.GLR: "sm3/sm3",
+            GFR.OGR: "sm3/sm3",
+            GFR.MMW: "kg/kg-M",
+        },
+        VfpParam.ALQ: {
+            ALQ.GRAT: "sm3/day",
+            ALQ.IGLR: "sm3/sm3",
+            ALQ.TGLR: "sm3/sm3",
+            ALQ.DENO: "kg/m3",
+            ALQ.DENG: "kg/m3",
+            ALQ.BEAN: "mm",
+            ALQ.UNDEFINED: "",
+        },
+    },
+    UnitType.FIELD: {
+        VfpParam.FLOWRATE: {
+            FlowRateTypeProd.OIL: "stb/day",
+            FlowRateTypeProd.LIQ: "stb/day",
+            FlowRateTypeProd.GAS: "Mscf/day",
+            FlowRateTypeProd.WG: "lb-M/day",
+            FlowRateTypeProd.TM: "lb-M/day",
+        },
+        VfpParam.THP: {THP.THP: "psia"},
+        VfpParam.WFR: {
+            WFR.WOR: "stb/stb",
+            WFR.WCT: "stb/stb",
+            WFR.WGR: "stb/Mscf",
+            WFR.WWR: "stb/Mscf",
+            WFR.WTF: "",
+        },
+        VfpParam.GFR: {
+            GFR.GOR: "Mscf/stb",
+            GFR.GLR: "Mscf/stb",
+            GFR.OGR: "stb/Mscf",
+            GFR.MMW: "lb/lb-M",
+        },
+        VfpParam.ALQ: {
+            ALQ.GRAT: "Mscf/day",
+            ALQ.IGLR: "Mscf/stb",
+            ALQ.TGLR: "Mscf/stb",
+            ALQ.DENO: "lb/ft3",
+            ALQ.DENG: "lb/ft3",
+            ALQ.BEAN: "1/64",
+            ALQ.UNDEFINED: "",
+        },
+    },
+    UnitType.LAB: {
+        VfpParam.FLOWRATE: {
+            FlowRateTypeProd.OIL: "scc/hr",
+            FlowRateTypeProd.LIQ: "scc/hr",
+            FlowRateTypeProd.GAS: "scc/hr",
+            FlowRateTypeProd.WG: "scc/hr",
+            FlowRateTypeProd.TM: "lb-M/day",
+        },
+        VfpParam.THP: {THP.THP: "atma"},
+        VfpParam.WFR: {
+            WFR.WOR: "scc/scc",
+            WFR.WCT: "scc/scc",
+            WFR.WGR: "scc/scc",
+            WFR.WWR: "scc/scc",
+            WFR.WTF: "",
+        },
+        VfpParam.GFR: {
+            GFR.GOR: "scc/scc",
+            GFR.GLR: "scc/scc",
+            GFR.OGR: "scc/scc",
+            GFR.MMW: "lb/lb-M",
+        },
+        VfpParam.ALQ: {
+            ALQ.GRAT: "scc/hr",
+            ALQ.IGLR: "scc/scc",
+            ALQ.TGLR: "scc/scc",
+            ALQ.DENO: "gm/cc",
+            ALQ.DENG: "gm/cc",
+            ALQ.BEAN: "mm",
+            ALQ.UNDEFINED: "",
+        },
+    },
+    UnitType.PVTM: {
+        VfpParam.FLOWRATE: {
+            FlowRateTypeProd.OIL: "sm3/day",
+            FlowRateTypeProd.LIQ: "sm3/day",
+            FlowRateTypeProd.GAS: "sm3/day",
+            FlowRateTypeProd.WG: "sm3/day",
+            FlowRateTypeProd.TM: "kg-M/day",
+        },
+        VfpParam.THP: {THP.THP: "atma"},
+        VfpParam.WFR: {
+            WFR.WOR: "sm3/sm3",
+            WFR.WCT: "sm3/sm3",
+            WFR.WGR: "sm3/sm3",
+            WFR.WWR: "sm3/sm3",
+            WFR.WTF: "",
+        },
+        VfpParam.GFR: {
+            GFR.GOR: "sm3/sm3",
+            GFR.GLR: "sm3/sm3",
+            GFR.OGR: "sm3/sm3",
+            GFR.MMW: "kg/kg-M",
+        },
+        VfpParam.ALQ: {
+            ALQ.GRAT: "sm3/day",
+            ALQ.IGLR: "sm3/sm3",
+            ALQ.TGLR: "sm3/sm3",
+            ALQ.DENO: "kg/m3",
+            ALQ.DENG: "kg/m3",
+            ALQ.BEAN: "mm",
+            ALQ.UNDEFINED: "",
+        },
+    },
+}
+
+# # Unit definitions for VFPINJ
+# VFPINJ_UNITS = {
+#     "DEFAULT": {
+#         "FLO": {
+#             "OIL": "",
+#             "WAT": "",
+#             "GAS": "",
+#             "WG": "",
+#             "TM": "",
+#         },
+#         "THP": {"THP": ""},
+#     },
+#     "METRIC": {
+#         "FLO": {
+#             "OIL": "sm3/day",
+#             "WAT": "sm3/day",
+#             "GAS": "sm3/day",
+#             "WG": "sm3/day",
+#             "TM": "kg-M/day",
+#         },
+#         "THP": {"THP": "barsa"},
+#     },
+#     "FIELD": {
+#         "FLO": {
+#             "OIL": "stb/day",
+#             "WAT": "stb/day",
+#             "GAS": "Mscf/day",
+#             "WG": "Mscf/day",
+#             "TM": "lb-M/day",
+#         },
+#         "THP": {"THP": "psia"},
+#     },
+#     "LAB": {
+#         "FLO": {
+#             "OIL": "scc/hr",
+#             "WAT": "scc/hr",
+#             "GAS": "scc/hr",
+#             "WG": "scc/hr",
+#             "TM": "gm-M/hr",
+#         },
+#         "THP": {"THP": "atma"},
+#     },
+#     "PVT-M": {
+#         "FLO": {
+#             "OIL": "sm3/day",
+#             "WAT": "sm3/day",
+#             "GAS": "sm3/day",
+#             "WG": "sm3/day",
+#             "TM": "kg-M/day",
+#         },
+#         "THP": {"THP": "atma"},
+#     },
+# }
