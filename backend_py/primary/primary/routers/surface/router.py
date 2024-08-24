@@ -139,6 +139,8 @@ async def get_surface_data(
     if not isinstance(addr, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
         raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
+    LOGGER.info(f"Got address: {addr}")
+
     if addr.address_type == "REAL":
         access = SurfaceAccess.from_case_uuid(access_token, addr.case_uuid, addr.ensemble_name)
         xtgeo_surf = await access.get_realization_surface_data_async(
@@ -152,9 +154,6 @@ async def get_surface_data(
             raise HTTPException(status_code=404, detail="Could not get realization surface")
 
     elif addr.address_type == "STAT":
-        if addr.stat_realizations is not None:
-            raise HTTPException(status_code=501, detail="Statistics with specific realizations not yet supported")
-
         service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
         if service_stat_func_to_compute is None:
             raise HTTPException(status_code=404, detail="Invalid statistic requested")
@@ -164,6 +163,7 @@ async def get_surface_data(
             statistic_function=service_stat_func_to_compute,
             name=addr.name,
             attribute=addr.attribute,
+            realizations=addr.stat_realizations,
             time_or_interval_str=addr.iso_time_or_interval,
         )
         perf_metrics.record_lap("sumo-calc")
