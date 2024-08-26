@@ -8,11 +8,11 @@ export type VolumeDefinitionsType = {
     [key: string]: VolumeDefinition;
 };
 
-// This is a simple example of a volume definitions object.
+// This is a simple example of a volume definitions object - in order of priority.
 // See the original file for the full list of volume definitions:
 // - https://github.com/equinor/webviz-subsurface/blob/master/webviz_subsurface/_abbreviations/abbreviation_data/volume_terminology.json
 // - `eclsum` not included
-export const volumeDefinitions: VolumeDefinitionsType = {
+export const orderedVolumeDefinitions: VolumeDefinitionsType = {
     STOIIP: { description: "Stock tank oil initially in place", unit: "Sm³" },
     GIIP: { description: "Gas initially in place", unit: "Sm³" },
     STOIIP_TOTAL: { description: "Stock tank oil initially in place (total)", unit: "Sm³" },

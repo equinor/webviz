@@ -55,6 +55,8 @@ export function useGetAggregatedStatisticalTableDataQueries(
         }
     }
 
+    const eachIdentifierHasValues = identifiersWithValues.every((identifier) => identifier.values.length > 0);
+
     const queries = uniqueSources.map((source) => {
         return () => ({
             queryKey: [
@@ -91,7 +93,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
                     source.realizations.length &&
                     fluidZones.length &&
                     resultNames.length &&
-                    identifiersWithValues.length
+                    eachIdentifierHasValues
             ),
         });
     });
@@ -146,6 +148,8 @@ export function useGetAggregatedPerRealizationTableDataQueries(
         }
     }
 
+    const eachIdentifierHasValues = identifiersWithValues.every((identifier) => identifier.values.length > 0);
+
     const queries = uniqueSources.map((source) => {
         return () => ({
             queryKey: [
@@ -182,7 +186,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                     source.realizations.length &&
                     fluidZones.length &&
                     resultNames.length &&
-                    identifiersWithValues.length
+                    eachIdentifierHasValues
             ),
         });
     });

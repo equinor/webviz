@@ -1,4 +1,4 @@
-import { VolumeDefinition, volumeDefinitions } from "@assets/volumeDefinitions";
+import { VolumeDefinition, orderedVolumeDefinitions } from "@assets/volumeDefinitions";
 
 /**
  * Returns volume definition for vector if it exists, otherwise returns null.
@@ -7,8 +7,8 @@ import { VolumeDefinition, volumeDefinitions } from "@assets/volumeDefinitions";
  * @returns Volume definition for vector if it exists, otherwise returns null.
  */
 export function getVolumeDefinition(volumeName: string): VolumeDefinition | null {
-    if (volumeName in volumeDefinitions) {
-        return volumeDefinitions[volumeName];
+    if (volumeName in orderedVolumeDefinitions) {
+        return orderedVolumeDefinitions[volumeName];
     }
     return null;
 }

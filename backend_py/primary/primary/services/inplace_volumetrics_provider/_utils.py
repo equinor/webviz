@@ -1,6 +1,5 @@
 from typing import Dict, List, Tuple
 
-import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 import numpy as np
@@ -61,104 +60,6 @@ def create_per_realization_accumulated_result_table(
     accumulated_table = accumulated_table.rename_columns(new_column_names)
 
     return accumulated_table
-
-
-def create_statistical_grouped_result_table_data_pandas(
-    result_table: pa.Table,
-    selector_columns: List[str],
-    group_by_identifiers: List[InplaceVolumetricsIdentifier],
-) -> Tuple[List[RepeatedTableColumnData], List[TableColumnStatisticalData]]:
-    """
-    Create result table with statistics across realizations based on group by identifiers selection. The
-    statistics are calculated across all realizations per grouping, thus the output will have one row per group.
-
-    Statistics: Mean, stddev, min, max, p10, p90
-
-    TODO: Add p10 and p90 later on (find each "group" (how to?) and filter table to get respective rows. Thereafter pick the column to calc p10 and p90?)
-    """
-    group_by_identifier_set = set([elm.value for elm in group_by_identifiers])
-
-    # Get grouped result table with individual realizations
-    per_realization_grouped_result_table = create_per_realization_accumulated_result_table(
-        result_table, selector_columns, group_by_identifiers
-    )
-    valid_result_names = [
-        elm for elm in per_realization_grouped_result_table.column_names if elm not in selector_columns
-    ]
-
-    # Convert to pandas dataframe for easier statistical aggregation
-    dataframe = per_realization_grouped_result_table.to_pandas()
-
-    # Internal working data structures
-    group_by_list = list(group_by_identifier_set)
-    group_by_columns: Dict[str, List[float]] = {column_name: [] for column_name in group_by_list}
-    result_statistical_data_dict: Dict[str, TableColumnStatisticalData] = {
-        result_name: TableColumnStatisticalData(
-            column_name=result_name,
-            statistic_values={
-                Statistic.MEAN: [],
-                Statistic.STD_DEV: [],
-                Statistic.MIN: [],
-                Statistic.MAX: [],
-                Statistic.P10: [],
-                Statistic.P90: [],
-            },
-        )
-        for result_name in valid_result_names
-    }
-
-    # Output data structures
-    selector_column_data_list: List[RepeatedTableColumnData] = []
-    result_statistical_data_list: List[TableColumnStatisticalData] = []
-
-    def _calculate_and_append_statistics_per_group(group_df: pd.DataFrame):
-        for result_name in valid_result_names:
-            result_column_array = group_df[result_name].to_numpy()
-            statistics_data = result_statistical_data_dict[result_name]  # Get reference to dictionary
-
-            statistics_data.statistic_values[Statistic.MEAN].append(np.mean(result_column_array))
-            statistics_data.statistic_values[Statistic.STD_DEV].append(np.std(result_column_array))
-            statistics_data.statistic_values[Statistic.MIN].append(np.min(result_column_array))
-            statistics_data.statistic_values[Statistic.MAX].append(np.max(result_column_array))
-            statistics_data.statistic_values[Statistic.P10].append(np.percentile(result_column_array, 10))
-            statistics_data.statistic_values[Statistic.P90].append(np.percentile(result_column_array, 90))
-
-    # Handle case where group by identifiers are empty
-    if len(group_by_list) == 0:
-        _calculate_and_append_statistics_per_group(dataframe)
-
-    else:
-
-        # NOTE: If group by identifiers are empty, the groupby will fail with an error
-        grouped = dataframe.groupby(group_by_list)
-
-        # Iterate over each group and extract group by column values and calculate statistics for each result
-        for keys, group in grouped:
-            if len(keys) != len(group_by_columns.keys()):
-                raise ValueError(
-                    f"Number of group by keys {len(keys)} does not match number of group by columns {len(group_by_columns.keys())}"
-                )
-
-            # Get group by column values
-            for index, key in enumerate(keys):
-                column_name = group_by_list[index]
-                group_by_columns[column_name].append(key)
-
-            # Calculate and append statistics for group
-            _calculate_and_append_statistics_per_group(group)
-
-        # Convert group by columns to repeated table column data
-        for column_name, column_values in group_by_columns.items():
-            selector_column_data_list.append(
-                _create_repeated_table_column_data_from_column(column_name, pa.array(column_values))
-            )
-
-    # Convert result statistical data to list
-    for result_statistical_data in result_statistical_data_dict.values():
-        result_statistical_data_list.append(result_statistical_data)
-
-    # TODO: Verify length of each array in statistical data list?
-    return (selector_column_data_list, result_statistical_data_list)
 
 
 def _get_statistic_enum_from_pyarrow_aggregate_func_name(func: str) -> Statistic:

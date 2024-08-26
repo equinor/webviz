@@ -28,13 +28,14 @@ from ._conversion._conversion import (
 )
 
 from ._utils import (
-    create_statistical_grouped_result_table_data_pandas,
     create_statistical_grouped_result_table_data_pyarrow,
     create_per_realization_accumulated_result_table,
     create_volumetric_table_accumulated_across_fluid_zones,
     create_inplace_volumetric_table_data_from_result_table,
     get_valid_result_names_from_list,
 )
+
+from ..service_exceptions import Service, InvalidParameterError
 
 import logging
 from webviz_pkg.core_utils.perf_timer import PerfTimer
@@ -133,6 +134,15 @@ class InplaceVolumetricsProvider:
         group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
         accumulate_fluid_zones: bool = False,
     ) -> InplaceVolumetricTableDataPerFluidSelection:
+        # If one or more identifier_with_values is empty list of selections, no volume data can be shown
+        hasEmptyIdentifierSelection = any(
+            not identifier_with_values.values for identifier_with_values in identifiers_with_values
+        )
+        if hasEmptyIdentifierSelection:
+            raise InvalidParameterError(
+                "Each provided identifier column must have at least one selected value", Service.GENERAL
+            )
+
         # Get result table per fluid selection
         result_table_per_fluid_selection: Dict[str, pa.Table] = await self._create_result_table_per_fluid_selection(
             table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
@@ -175,6 +185,15 @@ class InplaceVolumetricsProvider:
         group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
         accumulate_fluid_zones: bool = False,
     ) -> InplaceStatisticalVolumetricTableDataPerFluidSelection:
+        # If one or more identifier_with_values is empty list of selections, no volume data can be shown
+        hasEmptyIdentifierSelection = any(
+            not identifier_with_values.values for identifier_with_values in identifiers_with_values
+        )
+        if hasEmptyIdentifierSelection:
+            raise InvalidParameterError(
+                "Each provided identifier column must have at least one selected value", Service.GENERAL
+            )
+
         timer = PerfTimer()
         result_table_per_fluid_selection: Dict[str, pa.Table] = await self._create_result_table_per_fluid_selection(
             table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
@@ -186,7 +205,6 @@ class InplaceVolumetricsProvider:
         # Perform aggregation per result table
         # - Aggregate by each requested group_by_identifier
         timer_pyarrow = 0
-        timer_pandas = 0
         statistical_table_data_per_fluid_selection: List[InplaceStatisticalVolumetricTableData] = []
         for fluid_selection_name, result_table in result_table_per_fluid_selection.items():
             valid_selector_columns = [col for col in possible_selector_columns if col in result_table.column_names]
@@ -199,13 +217,6 @@ class InplaceVolumetricsProvider:
             )
             timer_pyarrow += timer.lap_ms()
 
-            # __dummy_call = create_statistical_grouped_result_table_data_pandas(
-            #     result_table,
-            #     valid_selector_columns,
-            #     group_by_identifiers,
-            # )
-            timer_pandas += timer.lap_ms()
-
             statistical_table_data_per_fluid_selection.append(
                 InplaceStatisticalVolumetricTableData(
                     fluid_selection_name=fluid_selection_name,
@@ -215,8 +226,7 @@ class InplaceVolumetricsProvider:
             )
         print(
             f"Time creating table per fluid selection: {timer_create_table_per_fluid_selection}ms, ",
-            f"Time creating result table pyarrow: {timer_pyarrow}ms, ",
-            f"Time creating result table pandas: {timer_pandas}ms",
+            f"Time creating result table pyarrow: {timer_pyarrow}ms",
         )
 
         return InplaceStatisticalVolumetricTableDataPerFluidSelection(
@@ -277,9 +287,9 @@ class InplaceVolumetricsProvider:
             col for col in possible_selector_columns if col in row_filtered_raw_table.column_names
         ]
 
-        result_table_per_fluid_selection: Dict[
-            str, pa.Table
-        ] = {}  # TODO: Replace str key to FluidZoneSelection or array of FluidZone?
+        result_table_per_fluid_selection: Dict[str, pa.Table] = (
+            {}
+        )  # TODO: Replace str key to FluidZoneSelection or array of FluidZone?
         if accumulate_fluid_zones and len(fluid_zones) > 1:
             # Build result table - accumulated across fluid zones
             # - Sum each volume column across fluid zones
@@ -382,6 +392,10 @@ class InplaceVolumetricsProvider:
 
         # Add mask for each identifier filter
         for identifier_with_values in identifiers_with_values:
+            if not identifier_with_values.values:
+                mask = pa.array([False] * inplace_volumetrics_table.num_rows)
+                break
+
             identifier_column_name = identifier_with_values.identifier.value
             if identifier_column_name not in table_column_names:
                 raise ValueError(f"Identifier column name {identifier_column_name} not found in table {table_name}")
