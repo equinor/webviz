@@ -263,7 +263,7 @@ class SurfaceAccess:
         # Ensure that we got data for all the requested realizations
         if realizations is not None:
             missing_reals = list(set(realizations) - set(realizations_found))
-            if len(missing_reals):
+            if len(missing_reals) > 0:
                 raise InvalidParameterError(
                     f"Could not find source surfaces for realizations: {missing_reals} in Sumo for {surf_str}",
                     Service.SUMO,
