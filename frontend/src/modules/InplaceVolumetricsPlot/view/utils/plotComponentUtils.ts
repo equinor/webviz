@@ -96,7 +96,7 @@ export function makePlotData(
             } else if (plotType === PlotType.DISTRIBUTION) {
                 data.push(...makeDensityPlot(title, table, resultName, color));
             } else if (plotType === PlotType.BOX) {
-                const yAxisPosition = boxPlotColorByPositionMap.get(key.toString()) ?? null;
+                const yAxisPosition = boxPlotColorByPositionMap.get(key.toString());
                 data.push(...makeBoxPlot(title, table, resultName, color, yAxisPosition));
             } else if (plotType === PlotType.SCATTER) {
                 data.push(...makeScatterPlot(title, table, resultName, resultName2, color));
@@ -290,7 +290,7 @@ function makeBoxPlot(
     table: Table,
     resultName: string,
     color: string,
-    yAxisPosition: number | null = null
+    yAxisPosition?: number
 ): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 

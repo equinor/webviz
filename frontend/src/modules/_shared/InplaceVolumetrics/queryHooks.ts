@@ -4,6 +4,7 @@ import {
     InplaceVolumetricResultName_api,
     InplaceVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricsIdentifierWithValues_api,
+    InplaceVolumetricsIdentifier_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
@@ -12,8 +13,6 @@ import {
     InplaceVolumetricsTableData,
 } from "@modules/_shared/InplaceVolumetrics/types";
 import { UseQueryResult } from "@tanstack/react-query";
-
-import { InplaceVolumetricsIdentifier } from "src/api/models/InplaceVolumetricsIdentifier";
 
 export type EnsembleIdentWithRealizations = {
     ensembleIdent: EnsembleIdent;
@@ -44,7 +43,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
     tableNames: string[],
     resultNames: InplaceVolumetricResultName_api[],
     fluidZones: FluidZone_api[],
-    groupByIdentifiers: InplaceVolumetricsIdentifier[],
+    groupByIdentifiers: InplaceVolumetricsIdentifier_api[],
     accumulateFluidZones: boolean,
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
     allowEnable: boolean
@@ -135,7 +134,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     tableNames: string[],
     resultNames: InplaceVolumetricResultName_api[],
     fluidZones: FluidZone_api[],
-    groupByIdentifiers: InplaceVolumetricsIdentifier[],
+    groupByIdentifiers: InplaceVolumetricsIdentifier_api[],
     accumulateFluidZones: boolean,
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
     allowEnable: boolean

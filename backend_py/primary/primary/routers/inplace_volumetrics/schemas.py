@@ -35,7 +35,7 @@ class InplaceVolumetricStatistic(StrEnum):
 class FluidZone(StrEnum):
     OIL = "Oil"
     GAS = "Gas"
-    Water = "Water"  # TODO: Remove or keep?
+    WATER = "Water"  # TODO: Remove or keep?
 
 
 class InplaceVolumetricResultName(str, Enum):

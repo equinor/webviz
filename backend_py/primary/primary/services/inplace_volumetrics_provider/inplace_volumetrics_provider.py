@@ -277,9 +277,9 @@ class InplaceVolumetricsProvider:
             col for col in possible_selector_columns if col in row_filtered_raw_table.column_names
         ]
 
-        result_table_per_fluid_selection: Dict[str, pa.Table] = (
-            {}
-        )  # TODO: Replace str key to FluidZoneSelection or array of FluidZone?
+        result_table_per_fluid_selection: Dict[
+            str, pa.Table
+        ] = {}  # TODO: Replace str key to FluidZoneSelection or array of FluidZone?
         if accumulate_fluid_zones and len(fluid_zones) > 1:
             # Build result table - accumulated across fluid zones
             # - Sum each volume column across fluid zones
