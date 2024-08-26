@@ -11,6 +11,7 @@ import {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
 } from "@modules/_shared/InplaceVolumetrics/types";
+import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 export function createTableHeadingsAndRowsFromTablesData(
@@ -27,6 +28,7 @@ export function createTableHeadingsAndRowsFromTablesData(
     for (const column of dataTable.getColumns()) {
         tableHeadings[column.getName()] = {
             label: column.getName(),
+            hoverText: createHoverTextForVolume(column.getName()),
             sizeInPercent: 100 / dataTable.getNumColumns(),
             formatValue: makeValueFormattingFunc(column, ensembleSet),
             formatStyle: makeStyleFormattingFunc(column),
@@ -92,11 +94,14 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
         // Create table object for easier access to columns and rows
         const resultStatisticalTable = new Table(Object.values(statisticalColumns));
 
+        const resultHoverText = createHoverTextForVolume(resultName);
+
         const subHeading: TableHeading = {};
         resultStatisticalTable.getColumns().forEach((column) => {
             const columnId = `${resultName}-${column.getName()}`;
             subHeading[columnId] = {
                 label: column.getName(),
+                hoverText: `${column.getName()} - ${resultHoverText}`,
                 sizeInPercent: 100 / totalNumberOfColumns,
                 formatValue: makeValueFormattingFunc(column, ensembleSet),
                 formatStyle: makeStyleFormattingFunc(column),
@@ -105,6 +110,7 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 
         tableHeadings[resultName] = {
             label: resultName,
+            hoverText: resultHoverText,
             sizeInPercent: 100 / totalNumberOfColumns,
             subHeading: subHeading,
         };

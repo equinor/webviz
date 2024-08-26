@@ -14,6 +14,7 @@ import { Virtualization } from "../Virtualization";
 export type TableHeading = {
     [key: string]: {
         label: string;
+        hoverText?: string;
         sortable?: boolean;
         sizeInPercent: number;
         formatValue?: (value: string | number | null) => string;
@@ -208,6 +209,7 @@ function flattenHeadings(
         }
         newHeadings[col] = {
             label: headings[col].label,
+            hoverText: headings[col].hoverText,
             sizeInPercent: (parentSizeInPercent * headings[col].sizeInPercent) / 100,
             formatValue: headings[col].formatValue,
             formatStyle: headings[col].formatStyle,
@@ -434,7 +436,9 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
                 >
                     <div className="h-full flex flex-col">
                         <div className="px-1 flex items-center gap-1 flex-grow">
-                            <span className="flex-grow pt-1">{flattenedHeadings[cell.id].label}</span>
+                            <span className="flex-grow pt-1" title={flattenedHeadings[cell.id].hoverText}>
+                                {flattenedHeadings[cell.id].label}
+                            </span>
                             {!cell.hasSubHeaders ? makeSortButtons(cell.id) : null}
                         </div>
                         {!cell.hasSubHeaders && (

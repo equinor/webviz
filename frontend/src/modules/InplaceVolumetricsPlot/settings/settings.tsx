@@ -7,6 +7,7 @@ import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFil
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -79,7 +80,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const resultNameOptions: DropdownOption<InplaceVolumetricResultName_api>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
-        .map((name) => ({ label: name, value: name }));
+        .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
 
     const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames);
     const colorByOptions = makeColorByOptions(tableDefinitionsAccessor, selectedSubplotBy, selectedTableNames);

@@ -18,6 +18,7 @@ export type DropdownOption<TValue = string> = {
     value: TValue;
     label: string;
     adornment?: React.ReactNode;
+    hoverText?: string;
     disabled?: boolean;
 };
 
@@ -480,7 +481,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                                         }}
                                         style={{ height: optionHeight }}
                                         onPointerMove={() => handlePointerOver(index)}
-                                        title={option.label}
+                                        title={option.hoverText ?? option.label}
                                     >
                                         <span className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex gap-2">
                                             {option.adornment && (

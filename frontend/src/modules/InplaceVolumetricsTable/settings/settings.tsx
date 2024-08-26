@@ -1,13 +1,13 @@
 import React from "react";
 
-import { InplaceVolumetricStatistic_api } from "@api";
+import { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { Select } from "@lib/components/Select";
+import { Select, SelectOption } from "@lib/components/Select";
 import { TagOption, TagPicker } from "@lib/components/TagPicker";
 import {
     InplaceVolumetricStatisticEnumToStringMapping,
@@ -16,6 +16,7 @@ import {
     TableType,
     TableTypeToStringMapping,
 } from "@modules/_shared/InplaceVolumetrics/types";
+import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -93,9 +94,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedTableType(value as TableType);
     }
 
-    const resultNameOptions = tableDefinitionsAccessor
+    const resultNameOptions: SelectOption<InplaceVolumetricResultName_api>[] = tableDefinitionsAccessor
         .getResultNamesIntersection()
-        .map((name) => ({ label: name, value: name }));
+        .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
 
     const accumulateOptions: TagOption<
         Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>
