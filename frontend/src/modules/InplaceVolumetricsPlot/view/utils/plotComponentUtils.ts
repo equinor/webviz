@@ -65,9 +65,18 @@ export function makePlotData(
             });
         }
 
-        const data: Partial<PlotData>[] = [];
         const collection = table.splitByColumn(colorBy);
 
+        let boxPlotColorByPositionMap: Map<string | number, number> = new Map();
+        if (plotType === PlotType.BOX) {
+            // To distribute the box plots in vertical direction, use index as yAxis position
+            if (collection.getNumTables() > 1) {
+                const colorByValues = table.getColumn(colorBy)?.getUniqueValues() ?? [];
+                boxPlotColorByPositionMap = new Map(colorByValues.map((value, index) => [value.toString(), index]));
+            }
+        }
+
+        const data: Partial<PlotData>[] = [];
         let color = colorSet.getFirstColor();
         for (const [key, table] of collection.getCollectionMap()) {
             let title = key.toString();
@@ -87,7 +96,8 @@ export function makePlotData(
             } else if (plotType === PlotType.DISTRIBUTION) {
                 data.push(...makeDensityPlot(title, table, resultName, color));
             } else if (plotType === PlotType.BOX) {
-                data.push(...makeBoxPlot(title, table, resultName, color));
+                const yAxisPosition = boxPlotColorByPositionMap.get(key.toString()) ?? null;
+                data.push(...makeBoxPlot(title, table, resultName, color, yAxisPosition));
             } else if (plotType === PlotType.SCATTER) {
                 data.push(...makeScatterPlot(title, table, resultName, resultName2, color));
             } else if (plotType === PlotType.BAR) {
@@ -275,7 +285,13 @@ function makeDensityPlot(title: string, table: Table, resultName: string, color:
     return data;
 }
 
-function makeBoxPlot(title: string, table: Table, resultName: string, color: string): Partial<PlotData>[] {
+function makeBoxPlot(
+    title: string,
+    table: Table,
+    resultName: string,
+    color: string,
+    yAxisPosition: number | null = null
+): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
 
     const resultColumn = table.getColumn(resultName);
@@ -291,7 +307,7 @@ function makeBoxPlot(title: string, table: Table, resultName: string, color: str
             color,
         },
         // @ts-expect-error - missing arguments in the plotly types
-        y0: 0,
+        y0: yAxisPosition ?? 0,
     });
 
     return data;
