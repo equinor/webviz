@@ -58,17 +58,19 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
     const nonStatisticalColumns = columnData.nonStatisticalColumns;
     const resultStatisticalColumns = columnData.resultStatisticalColumns;
 
-    let numStatisticalColumns = 0;
-    for (const elm of resultStatisticalColumns.values()) {
-        numStatisticalColumns += Object.keys(elm).length;
-    }
-    const totalNumberOfColumns = nonStatisticalColumns.length + numStatisticalColumns;
+    const numNonStatisticalColumns = nonStatisticalColumns.length;
+    const numStatisticalResultColumns = resultStatisticalColumns.size;
+    const numStatisticOptions = statisticOptions.length;
+
+    // Give non-statistical columns a total width of 40%
+    const nonStatisticalColumnSizePercentage = 40;
+    const statisticalColumnSizePercentage = 100 - nonStatisticalColumnSizePercentage;
 
     // Headings for non-statistical columns
     for (const column of nonStatisticalColumns) {
         tableHeadings[column.getName()] = {
             label: column.getName(),
-            sizeInPercent: 100 / totalNumberOfColumns,
+            sizeInPercent: nonStatisticalColumnSizePercentage / numNonStatisticalColumns,
             formatValue: makeValueFormattingFunc(column, ensembleSet),
             formatStyle: makeStyleFormattingFunc(column),
         };
@@ -98,11 +100,12 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
 
         const subHeading: TableHeading = {};
         resultStatisticalTable.getColumns().forEach((column) => {
+            const columnSize = 100 / numStatisticOptions; // Size relative to parent heading (i.e. resultName)
             const columnId = `${resultName}-${column.getName()}`;
             subHeading[columnId] = {
                 label: column.getName(),
                 hoverText: `${column.getName()} - ${resultHoverText}`,
-                sizeInPercent: 100 / totalNumberOfColumns,
+                sizeInPercent: columnSize,
                 formatValue: makeValueFormattingFunc(column, ensembleSet),
                 formatStyle: makeStyleFormattingFunc(column),
             };
@@ -111,7 +114,7 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
         tableHeadings[resultName] = {
             label: resultName,
             hoverText: resultHoverText,
-            sizeInPercent: 100 / totalNumberOfColumns,
+            sizeInPercent: statisticalColumnSizePercentage / numStatisticalResultColumns,
             subHeading: subHeading,
         };
 
