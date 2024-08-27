@@ -1,28 +1,17 @@
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
-import {
-    intersectionTypeAtom,
-    selectedCustomIntersectionPolylineIdAtom,
-    selectedHighlightedWellboreUuidAtom,
-} from "@modules/3DViewer/sharedAtoms/sharedAtoms";
 
 import { atom } from "jotai";
 
+import { customIntersectionPolylineIdAtom, highlightedWellboreUuidAtom, intersectionTypeAtom } from "./baseAtoms";
 import { fieldWellboreTrajectoriesQueryAtom } from "./queryAtoms";
-
-export const selectedCustomIntersectionPolylineAtom = atom((get) => {
-    const customIntersectionPolylineId = get(selectedCustomIntersectionPolylineIdAtom);
-    const customIntersectionPolylines = get(IntersectionPolylinesAtom);
-
-    return customIntersectionPolylines.find((el) => el.id === customIntersectionPolylineId);
-});
 
 export const intersectionReferenceSystemAtom = atom((get) => {
     const fieldWellboreTrajectories = get(fieldWellboreTrajectoriesQueryAtom);
-    const wellboreUuid = get(selectedHighlightedWellboreUuidAtom);
+    const wellboreUuid = get(highlightedWellboreUuidAtom);
     const customIntersectionPolylines = get(IntersectionPolylinesAtom);
-    const customIntersectionPolylineId = get(selectedCustomIntersectionPolylineIdAtom);
+    const customIntersectionPolylineId = get(customIntersectionPolylineIdAtom);
 
     const customIntersectionPolyline = customIntersectionPolylines.find((el) => el.id === customIntersectionPolylineId);
 
@@ -65,4 +54,11 @@ export const intersectionReferenceSystemAtom = atom((get) => {
     }
 
     return null;
+});
+
+export const selectedCustomIntersectionPolylineAtom = atom((get) => {
+    const customIntersectionPolylineId = get(customIntersectionPolylineIdAtom);
+    const customIntersectionPolylines = get(IntersectionPolylinesAtom);
+
+    return customIntersectionPolylines.find((el) => el.id === customIntersectionPolylineId) ?? null;
 });

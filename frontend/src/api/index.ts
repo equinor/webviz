@@ -17,6 +17,7 @@ export type { Body_post_get_polyline_intersection as Body_post_get_polyline_inte
 export type { Body_post_get_seismic_fence as Body_post_get_seismic_fence_api } from './models/Body_post_get_seismic_fence';
 export type { Body_post_get_surface_intersection as Body_post_get_surface_intersection_api } from './models/Body_post_get_surface_intersection';
 export type { Body_post_sample_surface_in_points as Body_post_sample_surface_in_points_api } from './models/Body_post_sample_surface_in_points';
+export type { BoundingBox2d as BoundingBox2d_api } from './models/BoundingBox2d';
 export type { BoundingBox3d as BoundingBox3d_api } from './models/BoundingBox3d';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';
@@ -39,8 +40,6 @@ export type { Grid3dMappedProperty as Grid3dMappedProperty_api } from './models/
 export type { Grid3dPropertyInfo as Grid3dPropertyInfo_api } from './models/Grid3dPropertyInfo';
 export type { Grid3dZone as Grid3dZone_api } from './models/Grid3dZone';
 export type { GridDimensions as GridDimensions_api } from './models/GridDimensions';
-export type { GridIntersectionVtk as GridIntersectionVtk_api } from './models/GridIntersectionVtk';
-export type { GridSurfaceVtk as GridSurfaceVtk_api } from './models/GridSurfaceVtk';
 export type { GroupTreeData as GroupTreeData_api } from './models/GroupTreeData';
 export type { GroupTreeMetadata as GroupTreeMetadata_api } from './models/GroupTreeMetadata';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
@@ -68,7 +67,9 @@ export type { StratigraphicUnit as StratigraphicUnit_api } from './models/Strati
 export type { SummaryVectorDateObservation as SummaryVectorDateObservation_api } from './models/SummaryVectorDateObservation';
 export type { SummaryVectorObservations as SummaryVectorObservations_api } from './models/SummaryVectorObservations';
 export { SurfaceAttributeType as SurfaceAttributeType_api } from './models/SurfaceAttributeType';
-export type { SurfaceData as SurfaceData_api } from './models/SurfaceData';
+export type { SurfaceDataFloat as SurfaceDataFloat_api } from './models/SurfaceDataFloat';
+export type { SurfaceDataPng as SurfaceDataPng_api } from './models/SurfaceDataPng';
+export type { SurfaceDef as SurfaceDef_api } from './models/SurfaceDef';
 export type { SurfaceIntersectionCumulativeLengthPolyline as SurfaceIntersectionCumulativeLengthPolyline_api } from './models/SurfaceIntersectionCumulativeLengthPolyline';
 export type { SurfaceIntersectionData as SurfaceIntersectionData_api } from './models/SurfaceIntersectionData';
 export type { SurfaceMeta as SurfaceMeta_api } from './models/SurfaceMeta';

@@ -3,15 +3,14 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
+import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
-import { SettingsToViewInterface } from "./settingsToViewInterface";
-import { State } from "./state";
 
 export const MODULE_NAME = "3DViewer";
 
 const description = "Generic 3D viewer for grid, surfaces, and wells.";
 
-ModuleRegistry.registerModule<State, SettingsToViewInterface>({
+ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     defaultTitle: "3D Viewer",
     category: ModuleCategory.MAIN,

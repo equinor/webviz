@@ -40,7 +40,7 @@ export type StoredUserEnsembleSetting = {
 };
 
 export class Workbench {
-    private _moduleInstances: ModuleInstance<any, any, any, any>[];
+    private _moduleInstances: ModuleInstance<any>[];
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
     private _workbenchSettings: PrivateWorkbenchSettings;
@@ -113,11 +113,11 @@ export class Workbench {
         };
     }
 
-    getModuleInstances(): ModuleInstance<any, any, any, any>[] {
+    getModuleInstances(): ModuleInstance<any>[] {
         return this._moduleInstances;
     }
 
-    getModuleInstance(id: string): ModuleInstance<any, any, any, any> | undefined {
+    getModuleInstance(id: string): ModuleInstance<any> | undefined {
         return this._moduleInstances.find((moduleInstance) => moduleInstance.getId() === id);
     }
 
@@ -163,7 +163,7 @@ export class Workbench {
         this.notifySubscribers(WorkbenchEvents.ModuleInstancesChanged);
     }
 
-    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any, any, any, any> {
+    makeAndAddModuleInstance(moduleName: string, layout: LayoutElement): ModuleInstance<any> {
         const module = ModuleRegistry.getModule(moduleName);
         if (!module) {
             throw new Error(`Module ${moduleName} not found`);

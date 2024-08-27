@@ -14,7 +14,8 @@ import { Warning } from "@mui/icons-material";
 
 import { Layout, PlotData } from "plotly.js";
 
-import { PlotType, State } from "./state";
+import { Interfaces } from "./interfaces";
+import { PlotType } from "./typesAndEnums";
 import { makeHistogramTrace } from "./utils/histogram";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
@@ -33,7 +34,7 @@ const MaxNumberPlotsExceededMessage: React.FC = () => {
 
 MaxNumberPlotsExceededMessage.displayName = "MaxNumberPlotsExceededMessage";
 
-export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<State>) => {
+export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const [isPending, startTransition] = React.useTransition();
     const [content, setContent] = React.useState<React.ReactNode>(null);
     const [revNumberX, setRevNumberX] = React.useState<number>(0);
@@ -44,9 +45,9 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<State>)
     const [prevOrientation, setPrevOrientation] = React.useState<"v" | "h" | null>(null);
     const [prevSize, setPrevSize] = React.useState<Size2D | null>(null);
 
-    const plotType = viewContext.useStoreValue("plotType");
-    const numBins = viewContext.useStoreValue("numBins");
-    const orientation = viewContext.useStoreValue("orientation");
+    const plotType = viewContext.useSettingsToViewInterfaceValue("plotType");
+    const numBins = viewContext.useSettingsToViewInterfaceValue("numBins");
+    const orientation = viewContext.useSettingsToViewInterfaceValue("orientation");
 
     const statusWriter = useViewStatusWriter(viewContext);
 

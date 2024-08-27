@@ -6,14 +6,11 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
 import { LayerItem, Viewport } from "@framework/components/EsvIntersection";
 import { Toolbar } from "@framework/components/EsvIntersection/utilityComponents/Toolbar";
-import { SettingsToViewInterface } from "@modules/Intersection/settingsToViewInterface";
-import { State } from "@modules/Intersection/state";
+import { Interfaces } from "@modules/Intersection/interfaces";
 
 import { cloneDeep, isEqual } from "lodash";
 
 import { ReadoutWrapper } from "./readoutWrapper";
-
-import { ViewAtoms } from "../atoms/atomDefinitions";
 
 export type ViewportWrapperProps = {
     wellboreHeaderUuid: string | null;
@@ -26,7 +23,7 @@ export type ViewportWrapperProps = {
     };
     viewport: Viewport | null;
     workbenchServices: WorkbenchServices;
-    viewContext: ViewContext<State, SettingsToViewInterface, Record<string, never>, ViewAtoms>;
+    viewContext: ViewContext<Interfaces>;
 };
 
 export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {

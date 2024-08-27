@@ -9,7 +9,6 @@ import { ParameterDataArr, ParameterDistributionPlotType } from "../../typesAndE
 
 type ParameterDistributionPlotProps = {
     dataArr: ParameterDataArr[];
-    ensembleColors: Map<string, string>;
     plotType: ParameterDistributionPlotType;
     showIndividualRealizationValues: boolean;
     showPercentilesAndMeanLines: boolean;
@@ -36,7 +35,6 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                 if (shouldShowLegend) {
                     addedLegendNames.add(ensembleData.ensembleDisplayName);
                 }
-                const ensembleColor = props.ensembleColors.get(ensembleData.ensembleDisplayName);
 
                 const distributionTrace = {
                     x: ensembleData.values,
@@ -44,7 +42,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     spanmode: "hard",
                     name: ensembleData.ensembleDisplayName,
                     legendgroup: ensembleData.ensembleDisplayName,
-                    marker: { color: ensembleColor },
+                    marker: { color: ensembleData.ensembleColor },
                     xaxis: `x${subplotIndex}`,
                     yaxis: `y${subplotIndex}`,
                     showlegend: shouldShowLegend,
@@ -65,7 +63,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                             ensembleData.values,
                             yPosition,
                             ensembleData.ensembleDisplayName,
-                            ensembleColor,
+                            ensembleData.ensembleColor,
                             subplotIndex
                         )
                     );
@@ -93,7 +91,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                         hoverinfo: "x+text+name",
                         mode: "markers",
                         marker: {
-                            color: props.ensembleColors.get(ensembleData.ensembleDisplayName),
+                            color: ensembleData.ensembleColor,
                             symbol: "line-ns-open",
                         },
                         showlegend: false,
@@ -123,8 +121,6 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     throw new Error("Realizations and values must have the same length");
                 }
 
-                const ensembleColor = props.ensembleColors.get(ensembleData.ensembleDisplayName);
-
                 const verticalPosition = index * (2 + 1); // 2 is the height of each box + 1 space
                 const hoverText = ensembleData.values.map(
                     (_, index) => `Realization: ${ensembleData.realizations[index]}`
@@ -135,7 +131,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                     type: "box",
                     name: ensembleData.ensembleDisplayName,
                     legendgroup: ensembleData.ensembleDisplayName,
-                    marker: { color: ensembleColor },
+                    marker: { color: ensembleData.ensembleColor },
                     xaxis: `x${subplotIndex}`,
                     yaxis: `y${subplotIndex}`,
                     showlegend: shouldShowLegend,
@@ -157,7 +153,7 @@ export const ParameterDistributionPlot: React.FC<ParameterDistributionPlotProps>
                             ensembleData.values,
                             verticalPosition,
                             ensembleData.ensembleDisplayName,
-                            ensembleColor,
+                            ensembleData.ensembleColor,
                             subplotIndex
                         )
                     );
