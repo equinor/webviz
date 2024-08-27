@@ -11,10 +11,9 @@ import { SortableListDropIndicator } from "./sortableListDropIndicator";
 export type SortableListItemProps = {
     id: string;
     title: React.ReactNode;
-    initiallyExpanded?: boolean;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
-    children: React.ReactNode;
+    children?: React.ReactNode;
 };
 
 /**
@@ -29,8 +28,6 @@ export type SortableListItemProps = {
  * @returns {React.ReactNode} A sortable list item component.
  */
 export function SortableListItem(props: SortableListItemProps): React.ReactNode {
-    const [isExpanded, setIsExpanded] = React.useState<boolean>(props.initiallyExpanded ?? true);
-
     const divRef = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(divRef);
 
@@ -39,10 +36,6 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
     const isHovered = sortableListContext.hoveredElementId === props.id;
     const isDragging = sortableListContext.draggedElementId === props.id;
     const dragPosition = sortableListContext.dragPosition;
-
-    function handleToggleExpanded() {
-        setIsExpanded(!isExpanded);
-    }
 
     return (
         <>
@@ -57,7 +50,7 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
                         hidden: !isDragging,
                     })}
                 ></div>
-                <Header expanded={isExpanded} onToggleExpanded={handleToggleExpanded} {...props} />
+                <Header {...props} />
                 {isDragging &&
                     dragPosition &&
                     createPortal(
@@ -71,12 +64,10 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
                                 width: isDragging ? boundingClientRect.width : undefined,
                             }}
                         >
-                            <Header expanded={isExpanded} {...props} />
+                            <Header {...props} />
                         </div>
                     )}
-                <div className={resolveClassNames("bg-white border-b shadow-inner", { hidden: !isExpanded })}>
-                    {props.children}
-                </div>
+                <div className={resolveClassNames("bg-white border-b shadow-inner")}>{props.children}</div>
             </div>
             {isHovered && sortableListContext.hoveredArea === HoveredArea.BOTTOM && <SortableListDropIndicator />}
         </>
@@ -85,8 +76,6 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
 
 type HeaderProps = {
     title: React.ReactNode;
-    expanded: boolean;
-    onToggleExpanded?: () => void;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
 };
