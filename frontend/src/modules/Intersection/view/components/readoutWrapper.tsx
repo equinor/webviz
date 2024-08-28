@@ -3,16 +3,16 @@ import React from "react";
 import { IntersectionReferenceSystem, Layer } from "@equinor/esv-intersection";
 import { ViewContext } from "@framework/ModuleContext";
 import { GlobalTopicDefinitions, WorkbenchServices, useSubscribedValue } from "@framework/WorkbenchServices";
+import { Interfaces } from "@modules/Intersection/interfaces";
 import {
     EsvIntersection,
     EsvIntersectionReadoutEvent,
     LayerItem,
     Viewport,
-} from "@framework/components/EsvIntersection";
-import { HighlightItem, HighlightItemShape, ReadoutItem } from "@framework/components/EsvIntersection/types";
-import { ReadoutBox } from "@framework/components/EsvIntersection/utilityComponents/ReadoutBox";
-import { isWellborepathLayer } from "@framework/components/EsvIntersection/utils/layers";
-import { Interfaces } from "@modules/Intersection/interfaces";
+} from "@modules/_shared/components/EsvIntersection";
+import { HighlightItem, HighlightItemShape, ReadoutItem } from "@modules/_shared/components/EsvIntersection/types";
+import { ReadoutBox } from "@modules/_shared/components/EsvIntersection/utilityComponents/ReadoutBox";
+import { isWellborepathLayer } from "@modules/_shared/components/EsvIntersection/utils/layers";
 
 import { isEqual } from "lodash";
 

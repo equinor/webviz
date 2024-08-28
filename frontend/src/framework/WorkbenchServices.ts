@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Viewport } from "@framework/components/EsvIntersection/esvIntersection";
+import { Viewport } from "@modules/_shared/components/EsvIntersection/esvIntersection";
 
 import { isEqual } from "lodash";
 
