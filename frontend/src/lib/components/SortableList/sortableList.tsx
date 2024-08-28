@@ -1,7 +1,7 @@
 import React from "react";
 
 import { createPortal } from "@lib/utils/createPortal";
-import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
+import { MANHATTAN_LENGTH, Rect2D, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Vec2, point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
 
@@ -76,12 +76,17 @@ export function SortableList(props: SortableListProps): React.ReactNode {
     }
 
     React.useEffect(
-        function addEventHandlers() {
+        function addEventListeners() {
             if (!listDivRef.current) {
                 return;
             }
 
+            if (!mainDivRef.current) {
+                return;
+            }
+
             const currentListDivRef = listDivRef.current;
+            const currentMainDivRef = mainDivRef.current;
 
             let pointerDownPosition: Vec2 | null = null;
             let pointerDownPositionRelativeToElement: Vec2 = { x: 0, y: 0 };
@@ -199,14 +204,19 @@ export function SortableList(props: SortableListProps): React.ReactNode {
 
                 // If no element was found, check if the pointer is in the bottom area of the main list
                 const directChildren = elements.filter((el) => el.parentElement === currentListDivRef);
-                if (
-                    mainDivRef.current &&
-                    rectContainsPoint(mainDivRef.current.getBoundingClientRect(), vec2FromPointerEvent(e))
-                ) {
-                    return { element: directChildren[directChildren.length - 1], area: HoveredArea.BOTTOM };
+                const mainDivOriginalBoundingRect = currentMainDivRef.getBoundingClientRect();
+                const smallerMainDivRect: Rect2D = {
+                    x: mainDivOriginalBoundingRect.x + 5,
+                    y: mainDivOriginalBoundingRect.y + 5,
+                    width: mainDivOriginalBoundingRect.width - 10,
+                    height: mainDivOriginalBoundingRect.height - 10,
+                };
+
+                if (!rectContainsPoint(smallerMainDivRect, vec2FromPointerEvent(e))) {
+                    return null;
                 }
 
-                return null;
+                return { element: directChildren[directChildren.length - 1], area: HoveredArea.BOTTOM };
             }
 
             function getItemPositionInGroup(item: HTMLElement): number {
@@ -276,20 +286,6 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 const positionDelta = hoveredElementAndArea.area === HoveredArea.TOP ? 0 : 1;
                 const newPosition = getItemPositionInGroup(hoveredElementAndArea.element) + positionDelta;
                 const currentPosition = getItemPositionInGroup(draggedElement.element);
-                const hoveredItemParentGroupId = getItemParentGroupId(hoveredElementAndArea.element);
-
-                console.debug(
-                    "newPosition",
-                    newPosition,
-                    "currentPosition",
-                    currentPosition,
-                    "positionDelta",
-                    positionDelta,
-                    "draggedElementParentGroupId",
-                    draggedElement.parentId,
-                    "hoveredItemParentGroupId",
-                    hoveredItemParentGroupId
-                );
 
                 if (
                     draggedElement.parentId === getItemParentGroupId(hoveredElementAndArea.element) &&
@@ -429,7 +425,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             document.addEventListener("keydown", handleKeyDown);
             window.addEventListener("blur", handleWindowBlur);
 
-            return function removeEventHandlers() {
+            return function removeEventListeners() {
                 currentListDivRef.removeEventListener("pointerdown", handlePointerDown);
                 document.removeEventListener("pointermove", handlePointerMove);
                 document.removeEventListener("pointerup", handlePointerUp);
@@ -492,7 +488,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     ref={scrollDivRef}
                     onScroll={handleScroll}
                 >
-                    <div className="flex flex-col border border-slate-100 relative max-h-0" ref={listDivRef}>
+                    <div className="flex flex-col border border-slate-100 relative" ref={listDivRef}>
                         {makeChildren()}
                         <div className="h-2 min-h-2">
                             <div className="h-2" />

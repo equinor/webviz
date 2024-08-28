@@ -19,19 +19,19 @@ body {
     border-radius: 2px;
     width: 4px;
     height: 4px;
-    background-color: rgba(190, 190, 190, 0);
+    background-color: rgba(190, 190, 190, 0.3);
     transition: background-color 0.5s ease-in-out;
 }
 
 *:hover > *::-webkit-scrollbar-thumb {
     width: 4px;
     height: 4px;
-    background-color: rgba(190, 190, 190, 0.6);
+    background-color: rgba(190, 190, 190, 0.8);
     transition: background-color 0.5s ease-in-out;
 }
 
 *:hover > *::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(134, 134, 134, 0.8);
+    background-color: rgba(134, 134, 134, 0.9);
     transition: background-color 0.5s ease-in-out;
 }
 
