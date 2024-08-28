@@ -22,14 +22,15 @@ export const PLOT_TYPE_OPTIONS: PlotDropdownOption[] = [
     { value: "dot", label: "Dot" },
     { value: "area", label: "Area" },
     { value: "gradientfill", label: "Gradientfill" },
-
-    // Type requires to named curves, don't know how to do the flow for that
+    // TODO: Type requires two named curves, ensure the flow for that is good
     { value: "differential", label: "Differential" },
-    { value: "stacked", label: "Stacked" },
+
+    // This one is completely different; requires "discrete" metadata
+    // { value: "stacked", label: "Stacked" },
 ];
 
 export function isCompositePlotType(type: TemplatePlotTypes) {
-    return ["differential", "stacked"].includes(type);
+    return ["differential"].includes(type);
 }
 
 export function createLogTemplate(templateTrackConfigs: TemplateTrackConfig[]): Template {

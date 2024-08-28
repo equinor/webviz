@@ -2,11 +2,13 @@ import React, { useRef, useState } from "react";
 
 import { WellboreLogCurveHeader_api } from "@api";
 import { arrayMove } from "@framework/utils/arrays";
+import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
 import { SortableList, SortableListItem } from "@lib/components/SortableList";
-import { PLOT_TYPE_OPTIONS, isCompositePlotType } from "@modules/WellLogViewer/utils/logViewerTemplate";
+import { ColorSet } from "@lib/utils/ColorSet";
+import { PLOT_TYPE_OPTIONS } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { Popper } from "@mui/base";
 import { Delete } from "@mui/icons-material";
 import { TemplatePlot, TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
@@ -21,9 +23,25 @@ export type SortablePlotListProps = {
     onUpdatePlots: (plots: TemplatePlot[]) => void;
 };
 
+// Using the "Time series" palette to pick line colors
+const CURVE_COLOR_PALETTE = defaultColorPalettes[2] || defaultColorPalettes[0];
+
+const DIFF_CURVE_COLORS = [
+    // Colors based on the ones in the Time Series palette
+    "#D62728",
+    "#2CA02C",
+];
+
 export function SortablePlotList(props: SortablePlotListProps): React.ReactNode {
+    // TODO, do an offsett or something, so they dont always start on the same color?
+    const colorSet = useRef<ColorSet>(new ColorSet(CURVE_COLOR_PALETTE));
+
     function addPlot(curveName: string) {
-        props.onUpdatePlots([...props.plots, makeTrackPlot(curveName)]);
+        const newPlot = makeTrackPlot2(curveName, "line", {
+            color: colorSet.current.getNextColor(),
+        });
+
+        props.onUpdatePlots([...props.plots, newPlot]);
     }
 
     function removePlot(plot: TemplatePlot) {
@@ -86,16 +104,19 @@ function SortablePlotItem(props: SortablePlotItemProps) {
     // TODO: Fix this. Wanted a very dirty fix to handle composite plot types aswell. But its fairly error prone
     const anchorRef = useRef<HTMLDivElement>(null);
     const [popperOpen, setPopperOpen] = useState<boolean>(false);
+
     const attemptedType = useRef<TemplatePlotTypes | null>(null);
+    const secondCurveName = useRef<string | null>(null);
 
     function handlePlotTypeChange(newType: TemplatePlotTypes) {
-        const isComposite = isCompositePlotType(newType);
+        const secondCurveRequired = newType === "differential" && !props.plot.name2;
 
-        if (isComposite && !props.plot.name2) {
+        if (secondCurveRequired && secondCurveName.current) {
+            handlePlotChange({ type: newType, name2: secondCurveName.current });
+        } else if (secondCurveRequired) {
+            // We need to prompt the user for a second curve, then return to this afterwards
             attemptedType.current = newType;
             setPopperOpen(true);
-        } else if (isComposite) {
-            handlePlotChange({ type: newType });
         } else {
             handlePlotChange({ type: newType, name2: undefined });
         }
@@ -105,7 +126,15 @@ function SortablePlotItem(props: SortablePlotItemProps) {
         attemptedType.current = null;
         setPopperOpen(false);
 
-        props.onPlotUpdate({ ...props.plot, ...changes });
+        const name = changes.name ?? props.plot.name;
+        const type = changes.type ?? props.plot.type;
+
+        const newPlot = makeTrackPlot2(name, type, {
+            ...props.plot,
+            ...changes,
+        });
+
+        props.onPlotUpdate(newPlot);
     }
 
     const endAdornment = (
@@ -149,13 +178,47 @@ function SortablePlotItem(props: SortablePlotItemProps) {
     return <SortableListItem id={props.plot.name} title={itemTitle} endAdornment={endAdornment} />;
 }
 
-function makeTrackPlot(curveName: string): TemplatePlot {
-    return {
+type PlotOpts = Partial<Exclude<TemplatePlot, "name" | "type">>;
+
+function makeTrackPlot2(curveName: string, type: TemplatePlotTypes = "line", opts: PlotOpts = {}): TemplatePlot {
+    // If colors get put as undefined, new colors are selected EVERY rerender, so we should avoid that
+    const curveColor = opts.color ?? CURVE_COLOR_PALETTE.getColors()[0];
+    const curveColor2 = opts.color2 ?? CURVE_COLOR_PALETTE.getColors()[3];
+    // DIFF_CURVE_COLORS
+    const trackPlot = {
         name: curveName,
-        // TODO: Let user select type and color
-        type: "line",
-        color: "",
+        color: curveColor,
+        color2: curveColor2,
+        type,
+        ...opts,
     };
+
+    switch (type) {
+        case "stacked":
+            throw new Error("Stacked graph type currently not supported");
+        case "differential":
+            if (!opts.name2) throw new Error("Second curve required");
+
+            return {
+                ...trackPlot,
+                name2: opts.name2,
+                fill: DIFF_CURVE_COLORS.at(0),
+                fill2: DIFF_CURVE_COLORS.at(1),
+            };
+
+        case "gradientfill":
+            return {
+                ...trackPlot,
+                colorTable: "Continuous",
+            };
+
+        case "line":
+        case "linestep":
+        case "dot":
+        case "area":
+        default:
+            return trackPlot;
+    }
 }
 
 function makeCurveNameOptions(

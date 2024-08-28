@@ -6,6 +6,8 @@ import { ModuleViewProps } from "@framework/Module";
 import { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
 import { WellLogViewer } from "@webviz/well-log-viewer";
 import { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
@@ -214,7 +216,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
                 layout={{ right: undefined }}
                 axisMnemos={AXIS_MNEMOS}
                 axisTitles={AXIS_TITLES}
-                colorTables={COLOR_TABLES}
+                colorTables={colorTables}
                 onTrackMouseEvent={handleTrackMouseEvent}
                 onCreateController={handleCreateController}
                 onContentSelection={handleSelection}
