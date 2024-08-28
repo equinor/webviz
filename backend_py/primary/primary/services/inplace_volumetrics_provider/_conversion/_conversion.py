@@ -2,10 +2,7 @@ from typing import List
 
 import re
 
-import pyarrow as pa
-import pyarrow.compute as pc
-
-from primary.services.sumo_access.inplace_volumetrics_types import FluidZone, Property
+from primary.services.sumo_access.inplace_volumetrics_types import FluidZone, FluidSelection, Property
 
 """
 This file contains helper functions for conversion between different data types used in the Inplace Volumetrics provider
@@ -28,6 +25,14 @@ Terms:
     - `raw_volumetric_column_names` = create_list_of_raw_volumetric_column_names(all_volume_names, fluid_zones)
 
 """
+
+
+def convert_fluid_selection_to_fluid_zone(fluid_selection: FluidSelection) -> FluidZone | None:
+    # Check if the value is among FluidZone options
+    if fluid_selection in FluidZone.__members__.values():
+        return FluidZone(fluid_selection)
+    else:
+        return None
 
 
 def get_properties_among_result_names(result_names: List[str]) -> List[str]:
@@ -53,39 +58,6 @@ def get_required_volume_names_from_properties(properties: List[str]) -> List[str
         volume_names.update(get_required_volume_names_from_property(property))
 
     return list(volume_names)
-
-
-def _create_safe_denominator_array(denominator_array: pa.array) -> pa.array:
-    """
-    Create denominator array for safe division, i.e. replace 0 with np.nan
-    """
-    zero_mask = pc.equal(denominator_array, 0)
-    safe_denominator_array = pc.if_else(zero_mask, pa.scalar(float("nan")), denominator_array)
-    return safe_denominator_array
-
-
-def calculate_property_from_volume_arrays(property: str, nominator: pa.array, denominator: pa.array) -> pa.array:
-    """
-    Calculate property from two arrays of volumes
-
-    Assume equal length and dimension of arrays
-
-    """
-    safe_denominator = _create_safe_denominator_array(denominator)
-
-    if property == Property.NTG.value:
-        return pc.divide(nominator, safe_denominator)
-    if property == Property.PORO.value:
-        return pc.divide(nominator, safe_denominator)
-    if property == Property.PORO_NET.value:
-        return pc.divide(nominator, safe_denominator)
-    if property == Property.SW.value:
-        return pc.subtract(1, pc.divide(nominator, safe_denominator))
-    if property == Property.BO.value:
-        return pc.divide(nominator, safe_denominator)
-    if property == Property.BG.value:
-        return pc.divide(nominator, safe_denominator)
-    raise ValueError(f"Unhandled property: {property}")
 
 
 def get_required_volume_names_from_property(property: str) -> List[str]:

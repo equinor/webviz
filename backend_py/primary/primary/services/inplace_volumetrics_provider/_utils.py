@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pyarrow as pa
 import pyarrow.compute as pc
@@ -13,13 +13,80 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     Statistic,
     TableColumnData,
     TableColumnStatisticalData,
+    Property,
 )
+
+from ._conversion._conversion import get_properties_among_result_names
+
+from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
 
 """
 This file contains general utility functions for the Inplace Volumetrics provider
 
 The methods can be used to calculate, aggregate and create data for the Inplace Volumetrics provider
 """
+
+
+def create_array_with_nan_for_null(array: pa.array) -> pa.array:
+    """
+    Replace null with np.nan
+    """
+    null_mask = pc.is_null(array)
+    if not pc.any(null_mask):
+        return array
+
+    return pc.if_else(null_mask, float("nan"), array)
+
+
+def _create_safe_denominator_array(denominator_array: pa.array) -> pa.array:
+    """
+    Create denominator array for safe division, i.e. replace 0 with np.nan
+    """
+    zero_mask = pc.equal(denominator_array, 0.0)
+    safe_denominator_array = pc.if_else(zero_mask, float("nan"), denominator_array)
+    return safe_denominator_array
+
+
+def _replace_nan_and_inf_with_null(array: pa.array) -> pa.array:
+    """
+    Replace NaN and Inf with null, this is needed for pyarrow to handle null values in aggregation
+
+    The None value is used to represent null values in pyarrow array
+
+    NOTE: if pyarrow is removed, this replacement is probably not needed
+    """
+    nan_or_inf_mask = pc.or_(pc.is_nan(array), pc.is_inf(array))
+    return pc.if_else(nan_or_inf_mask, None, array)
+
+
+def calculate_property_from_volume_arrays(property: str, nominator: pa.array, denominator: pa.array) -> pa.array:
+    """
+    Calculate property from two arrays of volumes
+
+    Assume equal length and dimension of arrays
+
+    """
+    safe_denominator = _create_safe_denominator_array(denominator)
+
+    result = None
+    if property == Property.NTG.value:
+        result = pc.divide(nominator, safe_denominator)
+    if property == Property.PORO.value:
+        result = pc.divide(nominator, safe_denominator)
+    if property == Property.PORO_NET.value:
+        result = pc.divide(nominator, safe_denominator)
+    if property == Property.SW.value:
+        result = pc.subtract(1, pc.divide(nominator, safe_denominator))
+    if property == Property.BO.value:
+        result = pc.divide(nominator, safe_denominator)
+    if property == Property.BG.value:
+        result = pc.divide(nominator, safe_denominator)
+
+    if result is not None:
+        # return result
+        return _replace_nan_and_inf_with_null(result)
+
+    ValueError(f"Unhandled property: {property}")
 
 
 def get_valid_result_names_from_list(result_names: List[str]) -> List[str]:
@@ -33,24 +100,26 @@ def get_valid_result_names_from_list(result_names: List[str]) -> List[str]:
     return valid_result_names
 
 
-def create_per_realization_accumulated_result_table(
-    result_table: pa.Table,
-    selector_columns: List[str],
+def create_per_realization_accumulated_volume_table(
+    volume_table: pa.Table,
     group_by_identifiers: List[InplaceVolumetricsIdentifier],
 ) -> pa.Table:
     """
-    Create result table with accumulated sum based on group by identifiers selection. The sum results are grouped per realization,
+    Create volume table with accumulated sum based on group by identifiers selection. The sum volumes are grouped per realization,
     i.e. a column named "REAL" should always be among the output columns
+
+    After accumulating the sum, the properties can be calculated across realizations for each group.
     """
     # Group by each of the identifier (always accumulate by realization - i.e. max one value per realization)
     group_by_identifier_set = set([elm.value for elm in group_by_identifiers])
     columns_to_group_by_for_sum = set(list(group_by_identifier_set) + ["REAL"])
 
-    valid_result_names = [elm for elm in result_table.column_names if elm not in selector_columns]
+    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    valid_volume_names = [elm for elm in volume_table.column_names if elm not in possible_selector_columns]
 
     # Aggregate sum for each result name after grouping
-    accumulated_table = result_table.group_by(columns_to_group_by_for_sum).aggregate(
-        [(result_name, "sum") for result_name in valid_result_names]
+    accumulated_table = volume_table.group_by(columns_to_group_by_for_sum).aggregate(
+        [(volume_name, "sum") for volume_name in valid_volume_names]
     )
     suffix_to_remove = "_sum"
 
@@ -82,9 +151,8 @@ def _get_statistic_enum_from_pyarrow_aggregate_func_name(func: str) -> Statistic
     raise ValueError(f"Unknown statistic function name: {func}")
 
 
-def create_statistical_grouped_result_table_data_pyarrow(
-    result_table: pa.Table,
-    selector_columns: List[str],
+def create_grouped_statistical_result_table_data_pyarrow(
+    per_realization_accumulated_result_table: pa.Table,
     group_by_identifiers: List[InplaceVolumetricsIdentifier],
 ) -> Tuple[List[RepeatedTableColumnData], List[TableColumnStatisticalData]]:
     """
@@ -94,22 +162,31 @@ def create_statistical_grouped_result_table_data_pyarrow(
     The order of the arrays in the statistical data lists will match the order of the rows in the selector column data list.
 
     Statistics: Mean, stddev, min, max, p10, p90
+
+    Parameters:
+    - per_realization_accumulated_result_table: Table with accumulated results per realization
+    - group_by_identifiers: List of identifiers to group by, must be equal to the group by used for accumulating the result table
+
+    Returns:
+    - Tuple with selector column data list and results statistical data list
     """
+    if "REAL" not in per_realization_accumulated_result_table.column_names:
+        raise ValueError("REAL column not found in accumulated result table")
+
     group_by_identifier_set = set([elm.value for elm in group_by_identifiers])
 
-    # Get grouped result table with individual realizations
-    per_realization_grouped_result_table = create_per_realization_accumulated_result_table(
-        result_table, selector_columns, group_by_identifiers
-    )
+    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
     valid_selector_columns = [
-        elm for elm in selector_columns if elm in per_realization_grouped_result_table.column_names
+        elm for elm in possible_selector_columns if elm in per_realization_accumulated_result_table.column_names
     ]
+
+    # Find valid result names in table
     valid_result_names = [
-        elm for elm in per_realization_grouped_result_table.column_names if elm not in selector_columns
+        elm for elm in per_realization_accumulated_result_table.column_names if elm not in valid_selector_columns
     ]
 
     # Group table by group by identifiers
-    table_grouped_by = per_realization_grouped_result_table.group_by(group_by_identifier_set)
+    table_grouped_by = per_realization_accumulated_result_table.group_by(group_by_identifier_set)
 
     # Pyarrow statistical aggregation
     # - Each statistical aggregation will result in a new column with the result name and function name as suffix
@@ -151,7 +228,7 @@ def create_statistical_grouped_result_table_data_pyarrow(
                 raise ValueError(f"Column {statistic_column_name} not found in statistical table")
 
             statistic_enum = _get_statistic_enum_from_pyarrow_aggregate_func_name(func)
-            statistic_array = statistical_table[statistic_column_name]
+            statistic_array = create_array_with_nan_for_null(statistical_table[statistic_column_name])
             result_statistical_data.statistic_values[statistic_enum] = statistic_array.to_pylist()
 
         # Handle percentile statistics
@@ -173,8 +250,10 @@ def create_statistical_grouped_result_table_data_pyarrow(
 
                 p10_array.append(get_valid_percentile_value(group_percentiles[0]))
                 p90_array.append(get_valid_percentile_value(group_percentiles[1]))
-        result_statistical_data.statistic_values[Statistic.P10] = p10_array
-        result_statistical_data.statistic_values[Statistic.P90] = p90_array
+        
+        # Invert P10 and P90 according to oil industry standards
+        result_statistical_data.statistic_values[Statistic.P10] = p90_array
+        result_statistical_data.statistic_values[Statistic.P90] = p10_array
 
         # Add result statistical data to dictionary
         results_statistical_data_dict[result_name] = result_statistical_data
@@ -235,12 +314,13 @@ def _create_repeated_table_column_data_from_column(
 
 
 def create_inplace_volumetric_table_data_from_result_table(
-    result_table: pa.Table, selection_name: str, selector_columns: List[str]
+    result_table: pa.Table, selection_name: str
 ) -> InplaceVolumetricTableData:
     """
     Create Inplace Volumetric Table Data from result table, selection name and specified selector columns
     """
-    existing_selector_columns = [name for name in result_table.column_names if name in selector_columns]
+    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    existing_selector_columns = [name for name in result_table.column_names if name in possible_selector_columns]
     selector_column_data_list: List[RepeatedTableColumnData] = []
     for column_name in existing_selector_columns:
         column_array = result_table[column_name]
@@ -258,6 +338,59 @@ def create_inplace_volumetric_table_data_from_result_table(
         selector_columns=selector_column_data_list,
         result_columns=result_column_data_list,
     )
+
+
+def create_volumetric_table_per_fluid_zone(
+    fluid_zones: List[FluidZone],
+    volumetric_table: pa.Table,
+) -> Dict[FluidZone, pa.Table]:
+    """
+    Create a volumetric table per fluid zone
+
+    Extracts the columns for each fluid zone and creates a new table for each fluid zone, with
+    the same identifier columns and REAL column as the original table.
+
+    The fluid columns are stripped of the fluid zone suffix.
+
+    Returns:
+    Dict[FluidZone, pa.Table]: A dictionary with fluid zone as key and volumetric table as value
+
+
+    Example:
+    - Input:
+        - fluid_zone: [FluidZone.OIL, FluidZone.GAS]
+        - volumetric_table: pa.Table
+            - volumetric_table.column_names = ["REAL", "ZONE", "REGION", "FACIES", "STOIIP_OIL", "GIIP_GAS", "HCPV_OIL", "HCPV_GAS", "HCPV_WATER"]
+
+    - Output:
+        - table_dict: Dict[FluidZone, pa.Table]:
+            - table_dict[FluidZone.OIL]: volumetric_table_oil
+                - volumetric_table_oil.column_names = ["REAL", "ZONE", "REGION", "FACIES", "STOIIP", "HCPV"]
+            - table_dict[FluidZone.GAS]: volumetric_table_gas
+                - volumetric_table_gas.column_names = ["REAL", "ZONE", "REGION", "FACIES", "GIIP", "HCPV"]
+
+    """
+    column_names: List[str] = volumetric_table.column_names
+
+    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    selector_columns = [col for col in possible_selector_columns if col in column_names]
+
+    fluid_zone_to_table_map: Dict[FluidZone, pa.Table] = {}
+    for fluid_zone in fluid_zones:
+        fluid_zone_name = fluid_zone.value.upper()
+        fluid_columns = [name for name in column_names if name.endswith(f"_{fluid_zone_name}")]
+
+        if not fluid_columns:
+            continue
+
+        fluid_zone_table = volumetric_table.select(selector_columns + fluid_columns)
+
+        # Remove fluid_zone suffix from columns of fluid_zone_table
+        new_column_names = [elm.replace(f"_{fluid_zone_name}", "") for elm in fluid_zone_table.column_names]
+        fluid_zone_table = fluid_zone_table.rename_columns(new_column_names)
+
+        fluid_zone_to_table_map[fluid_zone] = fluid_zone_table
+    return fluid_zone_to_table_map
 
 
 def create_volumetric_table_accumulated_across_fluid_zones(
@@ -290,3 +423,50 @@ def create_volumetric_table_accumulated_across_fluid_zones(
         accumulated_table = accumulated_table.append_column(column_name, accumulated_column_array)
 
     return accumulated_table
+
+
+def calculate_property_column_arrays(
+    volumetric_table: pa.Table, properties: List[str], fluid_zone: Optional[FluidZone] = None
+) -> Dict[str, pa.array]:
+    """
+    Calculate property arrays as pa.array based on the available volume columns in table.
+
+    If one of the volume names needed for a property is not found, the property array is not calculated
+
+    Args:
+    - volumetric_table (pa.Table): Table with volumetric data
+    - properties (List[str]): Name of the properties to calculate
+
+    Returns:
+    - Dict[str, pa.array]: Property as key, and array with calculated property values as value
+
+    """
+
+    existing_volume_columns: List[str] = volumetric_table.column_names
+    property_arrays: Dict[str, pa.array] = {}
+
+    # NOTE: If one of the volume names needed for a property is not found, the property array is not calculated
+
+    if fluid_zone == FluidZone.OIL and "BO" in properties and set(["HCPV", "STOIIP"]).issubset(existing_volume_columns):
+        bo_array = calculate_property_from_volume_arrays("BO", volumetric_table["HCPV"], volumetric_table["STOIIP"])
+        property_arrays["BO"] = bo_array
+    if fluid_zone == FluidZone.GAS and "BG" in properties and set(["HCPV", "GIIP"]).issubset(existing_volume_columns):
+        bg_array = calculate_property_from_volume_arrays("BG", volumetric_table["HCPV"], volumetric_table["GIIP"])
+        property_arrays["BG"] = bg_array
+
+    if "NTG" in properties and set(["BULK", "NET"]).issubset(existing_volume_columns):
+        ntg_array = calculate_property_from_volume_arrays("NTG", volumetric_table["NET"], volumetric_table["BULK"])
+        property_arrays["NTG"] = ntg_array
+    if "PORO" in properties and set(["BULK", "PORV"]).issubset(existing_volume_columns):
+        poro_array = calculate_property_from_volume_arrays("PORO", volumetric_table["PORV"], volumetric_table["BULK"])
+        property_arrays["PORO"] = poro_array
+    if "PORO_NET" in properties and set(["PORV", "NET"]).issubset(existing_volume_columns):
+        poro_net_array = calculate_property_from_volume_arrays(
+            "PORO_NET", volumetric_table["PORV"], volumetric_table["NET"]
+        )
+        property_arrays["PORO_NET"] = poro_net_array
+    if "SW" in properties and set(["HCPV", "PORV"]).issubset(existing_volume_columns):
+        sw_array = calculate_property_from_volume_arrays("SW", volumetric_table["HCPV"], volumetric_table["PORV"])
+        property_arrays["SW"] = sw_array
+
+    return property_arrays

@@ -47,6 +47,11 @@ class FluidZone(StrEnum):
     GAS = "Gas"
     WATER = "Water"  # TODO: Remove or keep?
 
+class FluidSelection(StrEnum):
+    OIL = "Oil"
+    GAS = "Gas"
+    WATER = "Water"  # TODO: Remove or keep?
+    ACCUMULATED = "Accumulated"
 
 class Property(StrEnum):
     NTG = "NTG"

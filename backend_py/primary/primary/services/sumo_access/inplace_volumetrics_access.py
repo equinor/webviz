@@ -13,6 +13,7 @@ from ..service_exceptions import (
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
+
 # Index column values to ignore, i.e. remove from the volumetric tables
 IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
 
@@ -43,7 +44,7 @@ ALLOWED_RAW_VOLUMETRIC_COLUMNS = [
 
 
 class InplaceVolumetricsAccess:
-    _expected_identifier_columns = ["ZONE", "REGION", "FACIES", "LICENSE"]
+    # _expected_identifier_columns = ["ZONE", "REGION", "FACIES", "LICENSE"]
 
     def __init__(self, case: Case, case_uuid: str, iteration_name: str):
         self._case: Case = case
@@ -58,14 +59,16 @@ class InplaceVolumetricsAccess:
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return InplaceVolumetricsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    def get_expected_identifier_columns(self) -> List[str]:
-        return self._expected_identifier_columns
+    @staticmethod
+    def get_expected_identifier_columns() -> List[str]:
+        return ["ZONE", "REGION", "FACIES", "LICENSE"]
 
-    def get_possible_selector_columns(self) -> List[str]:
+    @staticmethod
+    def get_possible_selector_columns() -> List[str]:
         """
         The identifier columns and REAL column represent the selector columns of the volumetric table.
         """
-        return self.get_expected_identifier_columns() + ["REAL"]
+        return InplaceVolumetricsAccess.get_expected_identifier_columns() + ["REAL"]
 
     async def get_inplace_volumetrics_table_names_async(self) -> List[str]:
         vol_table_collection = self._case.tables.filter(
