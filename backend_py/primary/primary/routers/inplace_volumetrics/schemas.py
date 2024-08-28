@@ -55,11 +55,8 @@ class InplaceVolumetricResultName(str, Enum):
     BO = "BO"
     BG = "BG"
     SW = "SW"
-    NET_TOTAL = "NET_TOTAL"
-    STOIIP_TOTAL = "STOIIP_TOTAL"
-    GIIP_TOTAL = "GIIP_TOTAL"
-    BULK_TOTAL = "BULK_TOTAL"
-    PORV_TOTAL = "PORV_TOTAL"
+    # STOIIP_TOTAL = "STOIIP_TOTAL"
+    # GIIP_TOTAL = "GIIP_TOTAL"
 
 
 class InplaceVolumetricsTableDefinition(BaseModel):
