@@ -40,8 +40,6 @@ export type { Grid3dMappedProperty as Grid3dMappedProperty_api } from './models/
 export type { Grid3dPropertyInfo as Grid3dPropertyInfo_api } from './models/Grid3dPropertyInfo';
 export type { Grid3dZone as Grid3dZone_api } from './models/Grid3dZone';
 export type { GridDimensions as GridDimensions_api } from './models/GridDimensions';
-export type { GridIntersectionVtk as GridIntersectionVtk_api } from './models/GridIntersectionVtk';
-export type { GridSurfaceVtk as GridSurfaceVtk_api } from './models/GridSurfaceVtk';
 export type { GroupTreeData as GroupTreeData_api } from './models/GroupTreeData';
 export type { GroupTreeMetadata as GroupTreeMetadata_api } from './models/GroupTreeMetadata';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
