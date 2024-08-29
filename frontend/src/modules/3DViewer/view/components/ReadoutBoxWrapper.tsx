@@ -1,14 +1,9 @@
 import React from "react";
 
 import { InfoItem, ReadoutBox, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
-import { ExtendedLayerProps, LayerPickInfo, PropertyDataType } from "@webviz/subsurface-viewer";
+import { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
 
-import { forEach, isEqual } from "lodash";
-
-// type ReadoutInfo = {
-//     label: string;
-//     properties?: PropertyDataType[];
-// };
+import { isEqual } from "lodash";
 
 function makePositionReadout(layerPickInfo: LayerPickInfo): ReadoutItem | null {
     if (layerPickInfo.coordinate === undefined || layerPickInfo.coordinate.length < 2) {
@@ -29,33 +24,6 @@ function makePositionReadout(layerPickInfo: LayerPickInfo): ReadoutItem | null {
             },
         ],
     };
-}
-
-function makeAdditionalInformation(item: ReadoutInfo, verticalScale: number): React.ReactNode {
-    if (!item.properties) {
-        return null;
-    }
-
-    function formatValue(value: number | string): string {
-        if (typeof value === "number") {
-            return value.toFixed(2);
-        }
-        return value.toString();
-    }
-
-    // depth readout from SubsurfaceViewer is not properly working
-    return item.properties.map((el, index) => {
-        return (
-            <div className="table-row" key={index}>
-                <div className="table-cell w-32">{el.name}:</div>
-                <div className="table-cell">
-                    {el.name === "Depth"
-                        ? formatValue((typeof el.value === "string" ? parseFloat(el.value) : el.value) / verticalScale)
-                        : formatValue(el.value)}
-                </div>
-            </div>
-        );
-    });
 }
 
 // depth readout from SubsurfaceViewer is not properly working
