@@ -133,22 +133,24 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
         });
     }
 
-    if (userSelectedIdentifierValues.length === 0) {
+    if (userSelectedIdentifierValues.length !== uniqueIdentifierValues.length) {
         for (const entry of uniqueIdentifierValues) {
+            if (fixedUpIdentifierValues.find((el) => el.identifier === entry.identifier)) {
+                continue;
+            }
             fixedUpIdentifierValues.push({
                 identifier: entry.identifier,
                 values: uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? [],
             });
         }
     }
-
     return fixedUpIdentifierValues;
 });
 
 function fixupUserSelection<TSelection>(userSelection: TSelection[], validOptions: TSelection[]): TSelection[] {
     const newSelections = userSelection.filter((selection) => validOptions.includes(selection));
     if (newSelections.length === 0 && validOptions.length > 0) {
-        newSelections.push(validOptions[0]);
+        newSelections.push(...validOptions);
     }
 
     return newSelections;
