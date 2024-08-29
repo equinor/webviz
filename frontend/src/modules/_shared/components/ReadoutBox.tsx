@@ -1,4 +1,4 @@
-import { Fragment, ReactNode } from "react";
+import { Fragment, ReactNode, useEffect, useRef, useState } from "react";
 
 export type ReadoutItem = {
     label: string;
@@ -20,13 +20,58 @@ export type ReadoutBoxProps = {
 };
 
 export function ReadoutBox(props: ReadoutBoxProps): ReactNode {
+    const [flipped, setFlipped] = useState<boolean>(false);
+    const readoutRoot = useRef<HTMLDivElement>(null);
+
+    // How far away from the lower right corner the box is placed
+    // TODO: Expose as prop?
+    // TODO: use rem, not px here? parseInt(getComputedStyle(document.documentElement).fontSize) * 3
+    // ! "48" is based on the left-12/right-12 layout values.
+    const cornerDistance = 48;
+
+    useEffect(() => {
+        function maybeFlipBox(evt: MouseEvent) {
+            if (!readoutRoot.current) return;
+
+            const offsetParent = readoutRoot.current.offsetParent;
+            if (!offsetParent) return; // Not floating, I believe
+
+            const parentRect = offsetParent.getBoundingClientRect();
+            const { top, bottom, width } = readoutRoot.current.getBoundingClientRect();
+
+            // If above, or below, it's guaranteed to fit
+            if (evt.clientY < top || evt.clientY > bottom) {
+                if (flipped) setFlipped(false);
+                return;
+            }
+
+            const prefferredRight = parentRect.right - cornerDistance;
+            const prefferredLeft = parentRect.right - width - cornerDistance;
+
+            if (evt.clientX < prefferredLeft || evt.clientX > prefferredRight) {
+                if (flipped) setFlipped(false);
+            } else {
+                if (!flipped) setFlipped(true);
+            }
+        }
+
+        document.addEventListener("mousemove", maybeFlipBox);
+
+        return () => document.removeEventListener("mousemove", maybeFlipBox);
+    }, [flipped]);
+
     const readoutItems = props.readoutItems;
     const maxNumItems = props.maxNumItems ?? 3;
 
     if (readoutItems.length === 0) return null;
 
     return (
-        <div className="absolute bottom-10 right-12 z-50 w-60  flex flex-col gap-2 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none">
+        <div
+            ref={readoutRoot}
+            className={`absolute bottom-10 right-12 z-50 w-60  flex flex-col gap-2 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none ${
+                flipped ? "left-12" : "right-12"
+            }`}
+        >
             {readoutItems.map((item, idx) => {
                 if (idx < maxNumItems) {
                     return (
