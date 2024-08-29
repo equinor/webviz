@@ -178,7 +178,7 @@ function extractInformationFromTableHeading(
                 id: col,
                 hasSubHeaders: false,
                 colSpan: 1,
-                rowSpan: maxDepth - depth,
+                rowSpan: Math.max(1, maxDepth - depth),
             });
             dataColumnIds.push(col);
         }
@@ -415,6 +415,46 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
         );
     }
 
+    function makeHeadingFilterRow(): React.ReactNode {
+        const headingCells: React.ReactNode[] = [];
+
+        for (const key of dataColumnIds) {
+            headingCells.push(
+                <th
+                    key={`${key}-filter`}
+                    className="bg-slate-100 p-0 pb-1 text-left drop-shadow"
+                    style={{
+                        width: `${flattenedHeadings[key].sizeInPercent}%`,
+                        minWidth: columnWidths[key],
+                        height: HEADER_HEIGHT_PX,
+                    }}
+                    scope="col"
+                >
+                    <Input
+                        type="text"
+                        value={filterValues[key] || ""}
+                        placeholder="Filter ..."
+                        onChange={(e) => handleFilterChange(key, e.target.value)}
+                        endAdornment={
+                            <div
+                                className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
+                                onClick={() => handleFilterChange(key, "")}
+                            >
+                                <Close fontSize="inherit" />
+                            </div>
+                        }
+                        wrapperStyle={{
+                            fontWeight: "normal",
+                            fontSize: "0.5rem",
+                        }}
+                    />
+                </th>
+            );
+        }
+
+        return <tr key="filter-heading-row">{headingCells}</tr>;
+    }
+
     function makeHeadingRow(row: TableHeadingCellInformation[], depth: number): React.ReactNode {
         const headingCells: React.ReactNode[] = [];
 
@@ -422,13 +462,13 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
             headingCells.push(
                 <th
                     key={cell.id}
-                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left drop-shadow", {
+                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left", {
                         "text-center": cell.hasSubHeaders,
                     })}
                     style={{
                         width: `${flattenedHeadings[cell.id].sizeInPercent}%`,
                         minWidth: cell.hasSubHeaders ? undefined : columnWidths[cell.id],
-                        height: HEADER_HEIGHT_PX * (cell.rowSpan + (!cell.hasSubHeaders ? 1 : 0)),
+                        height: HEADER_HEIGHT_PX * cell.rowSpan,
                     }}
                     scope="col"
                     rowSpan={cell.rowSpan}
@@ -441,28 +481,6 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
                             </span>
                             {!cell.hasSubHeaders ? makeSortButtons(cell.id) : null}
                         </div>
-                        {!cell.hasSubHeaders && (
-                            <div className="p-0 text-sm flex flex-col justify-end">
-                                <Input
-                                    type="text"
-                                    value={filterValues[cell.id] || ""}
-                                    placeholder="Filter ..."
-                                    onChange={(e) => handleFilterChange(cell.id, e.target.value)}
-                                    endAdornment={
-                                        <div
-                                            className="cursor-pointer text-gray-600 hover:text-gray-500 text-sm"
-                                            onClick={() => handleFilterChange(cell.id, "")}
-                                        >
-                                            <Close fontSize="inherit" />
-                                        </div>
-                                    }
-                                    wrapperStyle={{
-                                        fontWeight: "normal",
-                                        fontSize: "0.5rem",
-                                    }}
-                                />
-                            </div>
-                        )}
                     </div>
                 </th>
             );
@@ -476,6 +494,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
         for (let depth = 0; depth < headerRows.length; depth++) {
             headingComponents.push(makeHeadingRow(headerRows[depth], depth));
         }
+        headingComponents.push(makeHeadingFilterRow());
         return <>{headingComponents}</>;
     }
 
