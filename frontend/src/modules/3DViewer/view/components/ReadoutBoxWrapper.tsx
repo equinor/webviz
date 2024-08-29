@@ -1,28 +1,31 @@
 import React from "react";
 
+import { InfoItem, ReadoutBox, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { ExtendedLayerProps, LayerPickInfo, PropertyDataType } from "@webviz/subsurface-viewer";
 
-import { isEqual } from "lodash";
+import { forEach, isEqual } from "lodash";
 
-type ReadoutInfo = {
-    label: string;
-    properties?: PropertyDataType[];
-};
+// type ReadoutInfo = {
+//     label: string;
+//     properties?: PropertyDataType[];
+// };
 
-function makePositionInfo(layerPickInfo: LayerPickInfo): ReadoutInfo | null {
+function makePositionReadout(layerPickInfo: LayerPickInfo): ReadoutItem | null {
     if (layerPickInfo.coordinate === undefined || layerPickInfo.coordinate.length < 2) {
         return null;
     }
     return {
         label: "Position",
-        properties: [
+        info: [
             {
                 name: "x",
-                value: layerPickInfo.coordinate[0].toFixed(2).toString() + " m",
+                value: layerPickInfo.coordinate[0],
+                unit: "m",
             },
             {
                 name: "y",
-                value: layerPickInfo.coordinate[1].toFixed(2).toString() + " m",
+                value: layerPickInfo.coordinate[1],
+                unit: "m",
             },
         ],
     };
@@ -55,7 +58,16 @@ function makeAdditionalInformation(item: ReadoutInfo, verticalScale: number): Re
     });
 }
 
-export type ReadoutBoxProps = {
+// depth readout from SubsurfaceViewer is not properly working
+function fixLayerDepth(item: InfoItem, verticalScale: number) {
+    const { name, value } = item;
+
+    if (name === "Depth") {
+        item.value = (typeof value === "string" ? parseFloat(value) : (value as number)) / verticalScale;
+    }
+}
+
+export type ReadoutBoxWrapperProps = {
     layerPickInfo: LayerPickInfo[];
     maxNumItems?: number;
     visible?: boolean;
@@ -63,24 +75,24 @@ export type ReadoutBoxProps = {
     verticalScale: number;
 };
 
-export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
-    const [infoData, setInfoData] = React.useState<ReadoutInfo[]>([]);
+export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNode {
+    const [infoData, setInfoData] = React.useState<ReadoutItem[]>([]);
     const [prevLayerPickInfo, setPrevLayerPickInfo] = React.useState<LayerPickInfo[]>([]);
 
     if (!isEqual(props.layerPickInfo, prevLayerPickInfo)) {
         setPrevLayerPickInfo(props.layerPickInfo);
-        const newInfoData: ReadoutInfo[] = [];
+        const newReadoutItems: ReadoutItem[] = [];
 
         if (props.layerPickInfo.length === 0) {
             setInfoData([]);
             return;
         }
 
-        const positionInfo = makePositionInfo(props.layerPickInfo[0]);
-        if (!positionInfo) {
+        const positionReadout = makePositionReadout(props.layerPickInfo[0]);
+        if (!positionReadout) {
             return;
         }
-        newInfoData.push(positionInfo);
+        newReadoutItems.push(positionReadout);
 
         for (const layerPickInfo of props.layerPickInfo) {
             const layerName = (layerPickInfo.layer?.props as unknown as ExtendedLayerProps)?.name;
@@ -93,11 +105,11 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
             // collecting card data for 1st type
             const zValue = (layerPickInfo as LayerPickInfo).propertyValue;
             if (zValue !== undefined) {
-                const property = positionInfo.properties?.find((item) => item.name === layerName);
+                const property = positionReadout.info?.find((item) => item.name === layerName);
                 if (property) {
                     property.value = zValue;
                 } else {
-                    positionInfo.properties?.push({
+                    positionReadout.info.push({
                         name: layerName,
                         value: zValue,
                     });
@@ -105,51 +117,35 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
             }
 
             // collecting card data for 2nd type
-            const layer = newInfoData.find((item) => item.label === layerName);
+            const layerReadout = newReadoutItems.find((item) => item.label === layerName);
             if (!layerProps || layerProps.length === 0) {
                 continue;
             }
-            if (layer) {
+            if (layerReadout) {
                 layerProps?.forEach((prop) => {
-                    const property = layer.properties?.find((item) => item.name === prop.name);
+                    const property = layerReadout.info?.find((item) => item.name === prop.name);
                     if (property) {
                         property.value = prop.value;
                     } else {
-                        layer.properties?.push(prop);
+                        layerReadout.info.push(prop);
                     }
                 });
             } else {
-                newInfoData.push({
+                newReadoutItems.push({
                     label: layerName ?? "Unknown layer",
-                    properties: layerProps,
+                    info: layerProps,
                 });
             }
         }
 
-        setInfoData(newInfoData);
+        newReadoutItems.forEach(({ info }) => info.forEach((i) => fixLayerDepth(i, props.verticalScale)));
+
+        setInfoData(newReadoutItems);
     }
 
     if (!props.visible) {
         return null;
     }
 
-    return (
-        <div className="absolute rounded border border-neutral-300 bottom-10 right-12 bg-white bg-opacity-75 p-2 flex flex-col gap-2 text-sm z-50 w-60 pointer-events-none backdrop-blur-sm">
-            {infoData.map((el, index) => {
-                if (index < (props.maxNumItems ?? 3)) {
-                    return (
-                        <div key={index} className="table">
-                            <div className="table-row">
-                                <div className="table-cell font-bold">{el.label}</div>
-                            </div>
-                            {makeAdditionalInformation(el, props.verticalScale)}
-                        </div>
-                    );
-                }
-            })}
-            {infoData.length > (props.maxNumItems ?? 3) && (
-                <div className="flex items-center gap-2">...and {infoData.length - (props.maxNumItems ?? 3)} more</div>
-            )}
-        </div>
-    );
+    return <ReadoutBox readoutItems={infoData} />;
 }
