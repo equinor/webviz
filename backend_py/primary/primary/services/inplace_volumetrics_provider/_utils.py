@@ -27,7 +27,7 @@ The methods can be used to calculate, aggregate and create data for the Inplace 
 """
 
 
-def create_array_with_nan_for_null(array: pa.array) -> pa.array:
+def _replace_null_with_nan(array: pa.array) -> pa.array:
     """
     Replace null with np.nan
     """
@@ -35,29 +35,18 @@ def create_array_with_nan_for_null(array: pa.array) -> pa.array:
     if not pc.any(null_mask):
         return array
 
-    return pc.if_else(null_mask, float("nan"), array)
+    return pc.if_else(null_mask, np.nan, array)
 
-
-def _create_safe_denominator_array(denominator_array: pa.array) -> pa.array:
+def _replace_inf_with_nan(array: pa.array) -> pa.array:
     """
-    Create denominator array for safe division, i.e. replace 0 with np.nan
-    """
-    zero_mask = pc.equal(denominator_array, 0.0)
-    safe_denominator_array = pc.if_else(zero_mask, float("nan"), denominator_array)
-    return safe_denominator_array
-
-
-def _replace_nan_and_inf_with_null(array: pa.array) -> pa.array:
-    """
-    Replace NaN and Inf with null, this is needed for pyarrow to handle null values in aggregation
+    Replace np.inf with np.nan, this is needed for pyarrow to handle null values in aggregation
 
     The None value is used to represent null values in pyarrow array
 
     NOTE: if pyarrow is removed, this replacement is probably not needed
     """
-    nan_or_inf_mask = pc.or_(pc.is_nan(array), pc.is_inf(array))
-    return pc.if_else(nan_or_inf_mask, None, array)
-
+    inf_mask = pc.is_inf(array)
+    return pc.if_else(inf_mask, np.nan, array)
 
 def calculate_property_from_volume_arrays(property: str, nominator: pa.array, denominator: pa.array) -> pa.array:
     """
@@ -66,25 +55,23 @@ def calculate_property_from_volume_arrays(property: str, nominator: pa.array, de
     Assume equal length and dimension of arrays
 
     """
-    safe_denominator = _create_safe_denominator_array(denominator)
 
     result = None
     if property == Property.NTG.value:
-        result = pc.divide(nominator, safe_denominator)
+        result = pc.divide(nominator, denominator)
     if property == Property.PORO.value:
-        result = pc.divide(nominator, safe_denominator)
+        result = pc.divide(nominator, denominator)
     if property == Property.PORO_NET.value:
-        result = pc.divide(nominator, safe_denominator)
+        result = pc.divide(nominator, denominator)
     if property == Property.SW.value:
-        result = pc.subtract(1, pc.divide(nominator, safe_denominator))
+        result = pc.subtract(1, pc.divide(nominator, denominator))
     if property == Property.BO.value:
-        result = pc.divide(nominator, safe_denominator)
+        result = pc.divide(nominator, denominator)
     if property == Property.BG.value:
-        result = pc.divide(nominator, safe_denominator)
+        result = pc.divide(nominator, denominator)
 
     if result is not None:
-        # return result
-        return _replace_nan_and_inf_with_null(result)
+        return _replace_inf_with_nan(result)
 
     ValueError(f"Unhandled property: {property}")
 
@@ -228,7 +215,7 @@ def create_grouped_statistical_result_table_data_pyarrow(
                 raise ValueError(f"Column {statistic_column_name} not found in statistical table")
 
             statistic_enum = _get_statistic_enum_from_pyarrow_aggregate_func_name(func)
-            statistic_array = create_array_with_nan_for_null(statistical_table[statistic_column_name])
+            statistic_array = _replace_null_with_nan(statistical_table[statistic_column_name])
             result_statistical_data.statistic_values[statistic_enum] = statistic_array.to_pylist()
 
         # Handle percentile statistics
