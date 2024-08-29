@@ -26,6 +26,11 @@ Terms:
 
 """
 
+def create_fluid_selection_name(fluid_selection: FluidSelection, fluid_zones: List[FluidZone]) -> str:
+    if fluid_selection != FluidSelection.ACCUMULATED:
+        return fluid_selection.value
+
+    return "+".join([fluid_zone.value for fluid_zone in fluid_zones])
 
 def convert_fluid_selection_to_fluid_zone(fluid_selection: FluidSelection) -> FluidZone | None:
     # Check if the value is among FluidZone options
@@ -33,6 +38,9 @@ def convert_fluid_selection_to_fluid_zone(fluid_selection: FluidSelection) -> Fl
         return FluidZone(fluid_selection)
     else:
         return None
+    
+def convert_fluid_zone_to_fluid_selection(fluid_zone: FluidZone) -> FluidSelection:
+    return FluidSelection(fluid_zone)
 
 
 def get_properties_among_result_names(result_names: List[str]) -> List[str]:

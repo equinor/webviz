@@ -76,6 +76,19 @@ class Statistic(StrEnum):
 
 
 @dataclass
+class CategorizedResultNames:
+    """
+    Class to hold categorized result names
+
+    Attributes:
+    - volume_names: List[str] - Volume names among result names
+    - property_names: List[str] - Property names among result names
+    """
+
+    volume_names: List[str]
+    property_names: List[str]
+
+@dataclass
 class InplaceVolumetricsIdentifierWithValues:
     """
     Unique values for an identifier column in an inplace volumetrics table

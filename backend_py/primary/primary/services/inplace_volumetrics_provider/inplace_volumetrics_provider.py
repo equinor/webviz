@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Sequence, Tuple
 import asyncio
 
 import pyarrow as pa
@@ -6,6 +6,7 @@ import pyarrow.compute as pc
 
 from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
 from primary.services.sumo_access.inplace_volumetrics_types import (
+    CategorizedResultNames,
     FluidZone,
     FluidSelection,
     InplaceVolumetricsIdentifier,
@@ -26,6 +27,8 @@ from ._conversion._conversion import (
     get_required_volume_names_from_properties,
     get_volume_names_from_raw_volumetric_column_names,
     convert_fluid_selection_to_fluid_zone,
+    create_fluid_selection_name,
+    convert_fluid_zone_to_fluid_selection,
 )
 
 from ._utils import (
@@ -127,38 +130,6 @@ class InplaceVolumetricsProvider:
             )
         return tables_info
 
-    @staticmethod
-    def _create_result_table(
-        volume_table: pa.Table,
-        requested_volume_names: List[str],
-        requested_properties: List[str],
-        fluid_selection: FluidSelection,
-    ) -> pa.Table:
-        """
-        Create a result table from the volume table and requested properties
-
-        If volume names needed for properties are not available in the volume table, the function will skip the property
-
-        The result table contains the requested volume names and calculated properties
-        """
-        # Convert fluid selection to fluid zone
-        fluid_zone = convert_fluid_selection_to_fluid_zone(fluid_selection)
-
-        # Calculate properties
-        property_columns = calculate_property_column_arrays(volume_table, requested_properties, fluid_zone=fluid_zone)
-
-        # Find valid selector columns and volume names
-        possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
-        available_selector_columns = [col for col in possible_selector_columns if col in volume_table.column_names]
-        available_volume_names = [name for name in requested_volume_names if name in volume_table.column_names]
-
-        # Build result table (requested volumes and calculated properties)
-        result_table = volume_table.select(available_selector_columns + available_volume_names)
-        for property_name, property_column in property_columns.items():
-            result_table = result_table.append_column(property_name, property_column)
-
-        return result_table
-
     async def get_accumulated_by_selection_per_realization_volumetric_table_data_async(
         self,
         table_name: str,
@@ -169,38 +140,14 @@ class InplaceVolumetricsProvider:
         group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
         accumulate_fluid_zones: bool = False,
     ) -> InplaceVolumetricTableDataPerFluidSelection:
-        # If one or more identifier_with_values is empty list of selections, no volume data can be shown
-        hasEmptyIdentifierSelection = any(
-            not identifier_with_values.values for identifier_with_values in identifiers_with_values
-        )
-        if hasEmptyIdentifierSelection:
-            raise InvalidParameterError(
-                "Each provided identifier column must have at least one selected value", Service.GENERAL
-            )
-
         # NOTE: "_TOTAL" columns are not handled
 
-        # Detect properties and find volume names needed to calculate properties
-        properties = get_properties_among_result_names(result_names)
-        required_volume_names_for_properties = get_required_volume_names_from_properties(properties)
-
-        # Extract volume names among result names
-        volume_names = list(set(result_names) - set(properties))
-
-        # Find all volume names needed from Sumo
-        all_volume_names = set(volume_names + required_volume_names_for_properties)
-
-        # Get volume table per fluid selection - requested volumes and volumes needed for properties
-        volume_table_per_fluid_selection: Dict[FluidSelection, pa.Table] = (
-            await self._create_volume_table_per_fluid_selection(
-                table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
+        # Create volume table per fluid zone and retrieve volume names and valid properties among requested result names
+        volume_table_per_fluid_selection, categorized_requested_result_names = (
+            await self._get_volume_table_per_fluid_selection_and_categorized_result_names_async(
+                table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
             )
         )
-
-        # If accumulate_fluid_zones valid_properties exclude BO and BG, otherwise all properties
-        valid_properties = properties
-        if accumulate_fluid_zones:
-            valid_properties = [prop for prop in properties if prop not in ["BO", "BG"]]
 
         # Perform aggregation per result table
         # - Aggregate by each requested group_by_identifier
@@ -213,12 +160,10 @@ class InplaceVolumetricsProvider:
 
             # Create result table - requested volumes and calculated properties
             accumulated_result_table = InplaceVolumetricsProvider._create_result_table(
-                accumulated_volume_table, volume_names, valid_properties, fluid_selection
+                accumulated_volume_table, categorized_requested_result_names, fluid_selection
             )
 
-            fluid_selection_name = fluid_selection.value
-            if fluid_selection == FluidSelection.ACCUMULATED:
-                fluid_selection_name = " + ".join([fluid_zone.value for fluid_zone in fluid_zones])
+            fluid_selection_name = create_fluid_selection_name(fluid_selection, fluid_zones)
 
             table_data = create_inplace_volumetric_table_data_from_result_table(
                 accumulated_result_table, fluid_selection_name
@@ -239,11 +184,73 @@ class InplaceVolumetricsProvider:
         group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
         accumulate_fluid_zones: bool = False,
     ) -> InplaceStatisticalVolumetricTableDataPerFluidSelection:
-        # If one or more identifier_with_values is empty list of selections, no volume data can be shown
-        hasEmptyIdentifierSelection = any(
+        # NOTE: "_TOTAL" columns are not handled
+
+        # Create volume table per fluid zone and retrieve volume names and valid properties among requested result names
+        volume_table_per_fluid_selection, categorized_requested_result_names = (
+            await self._get_volume_table_per_fluid_selection_and_categorized_result_names_async(
+                table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
+            )
+        )
+
+        # Perform aggregation per result table
+        # - Aggregate by each requested group_by_identifier
+        statistical_table_data_per_fluid_selection: List[InplaceStatisticalVolumetricTableData] = []
+        for fluid_selection, volume_table in volume_table_per_fluid_selection.items():
+            accumulated_volume_table = create_per_realization_accumulated_volume_table(
+                volume_table,
+                group_by_identifiers,
+            )
+
+            # Create result table - requested volumes and calculated properties
+            accumulated_result_table = InplaceVolumetricsProvider._create_result_table(
+                accumulated_volume_table, categorized_requested_result_names, fluid_selection
+            )
+
+            fluid_selection_name = create_fluid_selection_name(fluid_selection, fluid_zones)
+
+            # Create statistical table data
+            selector_column_data_list, result_column_data_list = create_grouped_statistical_result_table_data_pyarrow(
+                accumulated_result_table,
+                group_by_identifiers,
+            )
+
+            statistical_table_data_per_fluid_selection.append(
+                InplaceStatisticalVolumetricTableData(
+                    fluid_selection_name=fluid_selection_name,
+                    selector_columns=selector_column_data_list,
+                    result_column_statistics=result_column_data_list,
+                )
+            )
+
+        return InplaceStatisticalVolumetricTableDataPerFluidSelection(
+            table_data_per_fluid_selection=statistical_table_data_per_fluid_selection
+        )
+
+    async def _get_volume_table_per_fluid_selection_and_categorized_result_names_async(
+        self,
+        table_name: str,
+        result_names: set[str],
+        fluid_zones: List[FluidZone],
+        realizations: Sequence[int],
+        identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues],
+        accumulate_fluid_zones: bool,
+    ) -> Tuple[Dict[FluidSelection, pa.Table], CategorizedResultNames]:
+        """
+        Utility function to get volume table data per fluid selection, and a list of volume names and properties among the requested result names.
+
+        The function returns a dictionary with fluid selection as key and a volumetric table as value. The volumetric table contains the requested
+        volume names among result names, and all necessary volumes to calculate properties.
+
+        Note: If accumulate_fluid_zones is True, the function will exclude BO and BG from valid properties.
+
+        Calculation of properties and creation of the result table is handled outside this function.
+        """
+        # Check for empty identifier selections
+        has_empty_identifier_selection = any(
             not identifier_with_values.values for identifier_with_values in identifiers_with_values
         )
-        if hasEmptyIdentifierSelection:
+        if has_empty_identifier_selection:
             raise InvalidParameterError(
                 "Each provided identifier column must have at least one selected value", Service.GENERAL
             )
@@ -258,52 +265,54 @@ class InplaceVolumetricsProvider:
         # Find all volume names needed from Sumo
         all_volume_names = set(volume_names + required_volume_names_for_properties)
 
+        # Get volume table per fluid selection - requested volumes and volumes needed for properties
         volume_table_per_fluid_selection: Dict[FluidSelection, pa.Table] = (
             await self._create_volume_table_per_fluid_selection(
                 table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
             )
         )
 
-        # If accumulate_fluid_zones valid_properties exclude BO and BG, otherwise all properties
+        # If accumulate_fluid_zones is True, exclude BO and BG from valid properties
         valid_properties = properties
         if accumulate_fluid_zones:
             valid_properties = [prop for prop in properties if prop not in ["BO", "BG"]]
 
-        # Perform aggregation per result table
-        # - Aggregate by each requested group_by_identifier
-        statistical_table_data_per_fluid_selection: List[InplaceStatisticalVolumetricTableData] = []
-        for fluid_selection, volume_table in volume_table_per_fluid_selection.items():
-            accumulated_volume_table = create_per_realization_accumulated_volume_table(
-                volume_table,
-                group_by_identifiers,
-            )
-
-            # Create result table - requested volumes and calculated properties
-            accumulated_result_table = InplaceVolumetricsProvider._create_result_table(
-                accumulated_volume_table, volume_names, valid_properties, fluid_selection
-            )
-
-            # Create statistical table data
-            selector_column_data_list, result_column_data_list = create_grouped_statistical_result_table_data_pyarrow(
-                accumulated_result_table,
-                group_by_identifiers,
-            )
-
-            fluid_selection_name = fluid_selection.value
-            if fluid_selection == FluidSelection.ACCUMULATED:
-                fluid_selection_name = " + ".join([fluid_zone.value for fluid_zone in fluid_zones])
-
-            statistical_table_data_per_fluid_selection.append(
-                InplaceStatisticalVolumetricTableData(
-                    fluid_selection_name=fluid_selection_name,
-                    selector_columns=selector_column_data_list,
-                    result_column_statistics=result_column_data_list,
-                )
-            )
-
-        return InplaceStatisticalVolumetricTableDataPerFluidSelection(
-            table_data_per_fluid_selection=statistical_table_data_per_fluid_selection
+        return volume_table_per_fluid_selection, CategorizedResultNames(
+            volume_names=volume_names, property_names=valid_properties
         )
+
+    @staticmethod
+    def _create_result_table(
+        volume_table: pa.Table,
+        categorized_requested_result_names: CategorizedResultNames,
+        fluid_selection: FluidSelection,
+    ) -> pa.Table:
+        """
+        Create a result table from the volume table and requested properties
+
+        If volume names needed for properties are not available in the volume table, the function will skip the property
+
+        The result table contains the requested volume names and calculated properties
+        """
+        # Convert fluid selection to fluid zone
+        fluid_zone = convert_fluid_selection_to_fluid_zone(fluid_selection)
+
+        # Calculate properties
+        requested_properties = categorized_requested_result_names.property_names
+        property_columns = calculate_property_column_arrays(volume_table, requested_properties, fluid_zone=fluid_zone)
+
+        # Find valid selector columns and volume names
+        possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+        available_selector_columns = [col for col in possible_selector_columns if col in volume_table.column_names]
+        requested_volume_names = categorized_requested_result_names.volume_names
+        available_volume_names = [name for name in requested_volume_names if name in volume_table.column_names]
+
+        # Build result table (requested volumes and calculated properties)
+        result_table = volume_table.select(available_selector_columns + available_volume_names)
+        for property_name, property_column in property_columns.items():
+            result_table = result_table.append_column(property_name, property_column)
+
+        return result_table
 
     async def _create_volume_table_per_fluid_selection(
         self,
@@ -364,10 +373,9 @@ class InplaceVolumetricsProvider:
             col for col in possible_selector_columns if col in row_filtered_raw_volumetrics_table.column_names
         ]
 
-        volume_table_per_fluid_selection: Dict[str, pa.Table] = {}
+        volume_table_per_fluid_selection: Dict[FluidSelection, pa.Table] = {}
         if accumulate_fluid_zones and len(fluid_zones) > 1:
-            # Build result table - accumulated across fluid zones
-            # - Sum each volume column across fluid zones
+            # Build volume table accumulated across fluid zones
             volumetric_table_accumulated_across_fluid_zones = create_volumetric_table_accumulated_across_fluid_zones(
                 volume_table_per_fluid_zone, valid_selector_columns
             )
@@ -377,10 +385,10 @@ class InplaceVolumetricsProvider:
             )
 
         else:
-            # Build result table - per fluid zone
-            # - Requested volumes
+            # Build volume table per fluid zone
             for fluid_zone, volumetric_table in volume_table_per_fluid_zone.items():
-                volume_table_per_fluid_selection[fluid_zone] = volumetric_table
+                fluid_selection = convert_fluid_zone_to_fluid_selection(fluid_zone)
+                volume_table_per_fluid_selection[fluid_selection] = volumetric_table
 
         return volume_table_per_fluid_selection
 
