@@ -124,6 +124,9 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
     }
 
     for (const entry of userSelectedIdentifierValues) {
+        if (!uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)) {
+            continue;
+        }
         fixedUpIdentifierValues.push({
             identifier: entry.identifier,
             values: fixupUserSelection(
