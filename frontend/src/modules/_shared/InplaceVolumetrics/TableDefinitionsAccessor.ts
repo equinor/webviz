@@ -65,7 +65,8 @@ export class TableDefinitionsAccessor {
         const resultNames: Set<InplaceVolumetricResultName_api> = new Set();
         let identifiersWithIntersectionValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
 
-        for (const [index, tableDefinition] of this._tableDefinitions.entries()) {
+        let index = 0;
+        for (const tableDefinition of this._tableDefinitions) {
             if (this._tableNamesFilter && !this._tableNamesFilter.includes(tableDefinition.tableName)) {
                 continue;
             }
@@ -85,6 +86,7 @@ export class TableDefinitionsAccessor {
 
                     identifiersWithIntersectionValues.push(identifierWithValues);
                 }
+                index++;
                 continue;
             }
 
@@ -113,6 +115,8 @@ export class TableDefinitionsAccessor {
 
                 return true;
             });
+
+            index++;
         }
 
         this._fluidZonesIntersection = Array.from(fluidZones).sort();
