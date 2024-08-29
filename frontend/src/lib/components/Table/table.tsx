@@ -40,6 +40,7 @@ export type TableProps<T extends TableHeading> = {
     onHover?: (row: TableRow<T> | null) => void;
     onClick?: (row: TableRow<T>) => void;
     highlightFilter?: (row: TableRow<T>) => boolean;
+    alternatingColumnColors?: boolean;
 } & BaseComponentProps;
 
 type LayoutError = {
@@ -191,15 +192,25 @@ function extractInformationFromTableHeading(
     };
 }
 
+type FlattenedHeading = Record<
+    string,
+    Omit<TableHeading[keyof TableHeading], "subHeading"> & { headingGroupId?: string }
+>;
+
 function flattenHeadings(
     headings: TableHeading,
+    headingGroupId?: string,
     parentSizeInPercent: number = 100.0
-): Omit<TableHeading, "subHeading"> {
-    const newHeadings: Omit<TableHeading, "subHeading"> = {};
+): FlattenedHeading {
+    const newHeadings: FlattenedHeading = {};
     for (const col in headings) {
         const subHeadings = headings[col].subHeading;
         if (subHeadings) {
-            const flattenedSubHeadings = flattenHeadings(subHeadings, headings[col].sizeInPercent);
+            const flattenedSubHeadings = flattenHeadings(
+                subHeadings,
+                headingGroupId ?? col,
+                headings[col].sizeInPercent
+            );
             for (const subCol in flattenedSubHeadings) {
                 newHeadings[`${subCol}`] = {
                     ...flattenedSubHeadings[subCol],
@@ -213,6 +224,7 @@ function flattenHeadings(
             sizeInPercent: (parentSizeInPercent * headings[col].sizeInPercent) / 100,
             formatValue: headings[col].formatValue,
             formatStyle: headings[col].formatStyle,
+            headingGroupId,
         };
     }
     return newHeadings;
@@ -239,6 +251,36 @@ function calcMaxColumnWidths<THeading extends TableHeading>(
 
 const HEADER_HEIGHT_PX = 30;
 const ROW_HEIGHT_PX = 30;
+const ALTERNATING_COLUMN_HEADING_COLORS = ["bg-slate-100", "bg-slate-200"];
+const ALTERNATING_COLUMN_CELL_COLORS = ["bg-slate-50", "bg-slate-100"];
+
+class AlternatingColumnStyleHelper {
+    private _alternatingGroup = 0;
+    private _lastGroupId: string | null = null;
+    private readonly _headings: FlattenedHeading;
+    private readonly _colors: string[];
+
+    constructor(headings: FlattenedHeading, colors: string[]) {
+        this._headings = headings;
+        this._colors = colors;
+    }
+
+    getClassNames(columnId: string): string {
+        const groupId = this._headings[columnId].headingGroupId;
+
+        let isSameGroup = true;
+        if (groupId !== this._lastGroupId) {
+            this._alternatingGroup = (this._alternatingGroup + 1) % this._colors.length;
+            isSameGroup = false;
+        }
+        this._lastGroupId = groupId ?? null;
+
+        const color = this._colors[this._alternatingGroup];
+        const border = isSameGroup ? "" : "border-l border-l-slate-500";
+
+        return resolveClassNames(color, border);
+    }
+}
 
 export function Table(props: TableProps<TableHeading>): React.ReactNode {
     const [layoutError, setLayoutError] = React.useState<LayoutError>({ error: false, message: "" });
@@ -249,8 +291,8 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
         SortColumnAndDirectionElement[]
     >([]);
     const [headerRows, setHeaderRows] = React.useState<TableHeadingCellInformation[][]>([]);
-    const [prevFlattenedHeadings, setPrevFlattenedHeadings] = React.useState<Omit<TableHeading, "subHeading">>({});
-    const [flattenedHeadings, setFlattenedHeadings] = React.useState<Omit<TableHeading, "subHeading">>({});
+    const [prevFlattenedHeadings, setPrevFlattenedHeadings] = React.useState<FlattenedHeading>({});
+    const [flattenedHeadings, setFlattenedHeadings] = React.useState<FlattenedHeading>({});
     const [dataColumnIds, setDataColumnIds] = React.useState<string[]>([]);
     const [columnWidths, setColumnWidths] = React.useState<{ [key: string]: number }>({});
 
@@ -418,11 +460,21 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
     function makeHeadingFilterRow(): React.ReactNode {
         const headingCells: React.ReactNode[] = [];
 
+        const alternatingColumnStyleHelper = new AlternatingColumnStyleHelper(
+            flattenedHeadings,
+            ALTERNATING_COLUMN_HEADING_COLORS
+        );
+
         for (const key of dataColumnIds) {
+            let additionalClassNames: string = "";
+            if (props.alternatingColumnColors) {
+                additionalClassNames = alternatingColumnStyleHelper.getClassNames(key);
+            }
+
             headingCells.push(
                 <th
                     key={`${key}-filter`}
-                    className="bg-slate-100 p-0 pb-1 text-left drop-shadow"
+                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left drop-shadow", additionalClassNames)}
                     style={{
                         width: `${flattenedHeadings[key].sizeInPercent}%`,
                         minWidth: columnWidths[key],
@@ -458,13 +510,27 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
     function makeHeadingRow(row: TableHeadingCellInformation[], depth: number): React.ReactNode {
         const headingCells: React.ReactNode[] = [];
 
+        const alternatingColumnStyleHelper = new AlternatingColumnStyleHelper(
+            flattenedHeadings,
+            ALTERNATING_COLUMN_HEADING_COLORS
+        );
+
         for (const cell of row) {
+            let additionalClassNames: string = "";
+            if (props.alternatingColumnColors) {
+                additionalClassNames = alternatingColumnStyleHelper.getClassNames(cell.id);
+            }
+
             headingCells.push(
                 <th
                     key={cell.id}
-                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left", {
-                        "text-center": cell.hasSubHeaders,
-                    })}
+                    className={resolveClassNames(
+                        "p-0 pb-1 text-left",
+                        {
+                            "text-center": cell.hasSubHeaders,
+                        },
+                        additionalClassNames
+                    )}
                     style={{
                         width: `${flattenedHeadings[cell.id].sizeInPercent}%`,
                         minWidth: cell.hasSubHeaders ? undefined : columnWidths[cell.id],
@@ -498,6 +564,52 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
         return <>{headingComponents}</>;
     }
 
+    function makeDataRow(row: IdentifiedTableRow<TableHeading>): React.ReactNode {
+        const cells: React.ReactNode[] = [];
+
+        const alternatingColumnStyleHelper = new AlternatingColumnStyleHelper(
+            flattenedHeadings,
+            ALTERNATING_COLUMN_CELL_COLORS
+        );
+
+        for (const colId of dataColumnIds) {
+            let additionalClassNames: string = "";
+            if (props.alternatingColumnColors) {
+                additionalClassNames = alternatingColumnStyleHelper.getClassNames(colId);
+            }
+
+            const format = flattenedHeadings[colId].formatValue;
+            const formatStyle = flattenedHeadings[colId].formatStyle;
+            cells.push(
+                <td
+                    key={`${row.id}-${colId}`}
+                    className={resolveClassNames(
+                        "group/td group-hover/tr:bg-blue-100 border p-1 whitespace-nowrap",
+                        additionalClassNames
+                    )}
+                    style={formatStyle ? formatStyle(row.values[colId]) : undefined}
+                >
+                    {format ? format(row.values[colId]) : row.values[colId]}
+                </td>
+            );
+        }
+
+        return (
+            <tr
+                key={row.id}
+                className={`group/tr ${
+                    props.highlightFilter && props.highlightFilter(row.values) ? "bg-blue-100 " : ""
+                }`}
+                onPointerOver={() => handlePointerOver(row.values)}
+                onPointerLeave={() => handlePointerOver(null)}
+                onPointerDown={() => handlePointerDown(row.values)}
+                style={{ height: 30, maxHeight: ROW_HEIGHT_PX }}
+            >
+                {cells}
+            </tr>
+        );
+    }
+
     return (
         <BaseComponent disabled={props.disabled}>
             <div
@@ -514,39 +626,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
                             placeholderComponent="tr"
                             items={filteredData}
                             itemSize={ROW_HEIGHT_PX}
-                            renderItem={(item: IdentifiedTableRow<any>) => {
-                                return (
-                                    <tr
-                                        key={item.id}
-                                        className={`${
-                                            props.highlightFilter && props.highlightFilter(item.values)
-                                                ? "bg-blue-100 "
-                                                : ""
-                                        } hover:bg-blue-50`}
-                                        onPointerOver={() => handlePointerOver(item.values)}
-                                        onPointerLeave={() => handlePointerOver(null)}
-                                        onPointerDown={() => handlePointerDown(item.values)}
-                                        style={{ height: 30, maxHeight: ROW_HEIGHT_PX }}
-                                    >
-                                        {dataColumnIds.map((col) => {
-                                            if (item.values[col] === undefined) {
-                                                return null;
-                                            }
-                                            const format = flattenedHeadings[col].formatValue;
-                                            const formatStyle = flattenedHeadings[col].formatStyle;
-                                            return (
-                                                <td
-                                                    key={`${item.id}-${col}`}
-                                                    className="border p-1 whitespace-nowrap"
-                                                    style={formatStyle ? formatStyle(item.values[col]) : undefined}
-                                                >
-                                                    {format ? format(item.values[col]) : item.values[col]}
-                                                </td>
-                                            );
-                                        })}
-                                    </tr>
-                                );
-                            }}
+                            renderItem={makeDataRow}
                         />
                     </tbody>
                 </table>
