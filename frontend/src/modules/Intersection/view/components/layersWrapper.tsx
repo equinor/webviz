@@ -12,11 +12,8 @@ import {
 } from "@equinor/esv-intersection";
 import { ViewContext } from "@framework/ModuleContext";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
-import { LayerItem, LayerType } from "@framework/components/EsvIntersection";
-import { Viewport } from "@framework/components/EsvIntersection/esvIntersection";
-import { SurfaceStatisticalFanchart } from "@framework/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
-import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@framework/components/EsvIntersection/utils/surfaceStatisticalFancharts";
 import { IntersectionType } from "@framework/types/intersection";
+import { Viewport } from "@framework/types/viewport";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Interfaces } from "@modules/Intersection/interfaces";
 import { BaseLayer, LayerStatus, useLayers } from "@modules/Intersection/utils/layers/BaseLayer";
@@ -25,6 +22,9 @@ import { SeismicLayer, isSeismicLayer } from "@modules/Intersection/utils/layers
 import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer";
 import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
+import { LayerItem, LayerType } from "@modules/_shared/components/EsvIntersection";
+import { SurfaceStatisticalFanchart } from "@modules/_shared/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
+import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@modules/_shared/components/EsvIntersection/utils/surfaceStatisticalFancharts";
 import { ColorLegendsContainer } from "@modules_shared/components/ColorLegendsContainer";
 
 import { isEqual } from "lodash";

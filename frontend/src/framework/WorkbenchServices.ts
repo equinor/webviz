@@ -1,12 +1,11 @@
 import React from "react";
 
-import { Viewport } from "@framework/components/EsvIntersection/esvIntersection";
-
 import { isEqual } from "lodash";
 
 import { EnsembleIdent } from "./EnsembleIdent";
 import { Workbench } from "./Workbench";
 import { Intersection } from "./types/intersection";
+import { Viewport } from "./types/viewport";
 import { Wellbore } from "./types/wellbore";
 
 export type NavigatorTopicDefinitions = {
