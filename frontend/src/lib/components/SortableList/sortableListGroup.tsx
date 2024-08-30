@@ -27,6 +27,7 @@ export type SortableListGroupProps = {
  * @param {boolean} props.initiallyExpanded Whether the group should be expanded by default.
  * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
  * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
+ * @param {React.ReactNode} props.contentWhenEmpty Content to display when the group is empty.
  * @param {React.ReactNode} props.children Child components to display as the content of the list item.
  *
  * @returns {React.ReactNode} A sortable list group component.

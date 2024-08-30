@@ -10,23 +10,18 @@ import { isEqual } from "lodash";
 import { SortableListGroupProps } from "./sortableListGroup";
 import { SortableListItemProps } from "./sortableListItem";
 
-export enum HoveredArea {
-    TOP = "top",
-    BOTTOM = "bottom",
-    HEADER = "header",
-    CENTER = "center",
+export enum ItemType {
+    ITEM = "item",
+    GROUP = "group",
 }
 
-type ElementWithInfos = {
-    element: HTMLElement;
-    id: string;
-    type: ItemType | null;
-    parentId: string | null;
-    parentType: ItemType | null;
-};
-
-type HoveredElementWithInfos = ElementWithInfos & {
-    area: HoveredArea;
+export type IsMoveAllowedArgs = {
+    movedItemId: string;
+    movedItemType: ItemType | null;
+    originId: string | null;
+    originType: ItemType | null;
+    destinationId: string | null;
+    destinationType: ItemType | null;
 };
 
 export type SortableListContextType = {
@@ -43,75 +38,6 @@ export const SortableListContext = React.createContext<SortableListContextType>(
     dragPosition: null,
 });
 
-function assertTargetIsSortableListItemAndExtractProps(
-    target: EventTarget | null
-): { element: HTMLElement; id: string; parentElement: HTMLElement | null; parentId: string | null } | null {
-    if (!target) {
-        return null;
-    }
-
-    const element = target as HTMLElement;
-    if (!element || !(element instanceof HTMLElement)) {
-        return null;
-    }
-
-    const sortableListItemIndicator = element.closest(".sortable-list-element-indicator");
-    if (!sortableListItemIndicator) {
-        return null;
-    }
-
-    const sortableListElement = element.closest(".sortable-list-element");
-    if (!sortableListElement) {
-        return null;
-    }
-
-    if (!(sortableListElement instanceof HTMLElement)) {
-        return null;
-    }
-
-    const id = sortableListElement.dataset.itemId;
-    if (!id) {
-        return null;
-    }
-
-    const parentElement = sortableListElement.parentElement;
-
-    if (
-        parentElement &&
-        parentElement instanceof HTMLElement &&
-        parentElement.classList.contains("sortable-list-group")
-    ) {
-        const parentId = parentElement.dataset.itemId;
-        if (parentId) {
-            return { element: sortableListElement, id, parentElement: parentElement, parentId };
-        }
-    }
-
-    return { element: sortableListElement, id, parentElement: null, parentId: null };
-}
-
-export enum ItemType {
-    ITEM = "item",
-    GROUP = "group",
-}
-
-type HoveredItemIdAndArea = {
-    id: string;
-    area: HoveredArea;
-};
-
-export type IsMoveAllowedArgs = {
-    movedItemId: string;
-    movedItemType: ItemType | null;
-    originId: string | null;
-    originType: ItemType | null;
-    destinationId: string | null;
-    destinationType: ItemType | null;
-};
-
-const ITEM_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT = 50;
-const GROUP_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT = 30;
-
 export type SortableListProps = {
     contentWhenEmpty?: React.ReactNode;
     children: React.ReactElement<SortableListItemProps | SortableListGroupProps>[];
@@ -123,6 +49,10 @@ export type SortableListProps = {
         position: number
     ) => void;
 };
+
+const ITEM_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT = 50;
+const GROUP_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT = 30;
+const DEFAULT_SCROLL_TIME = 100;
 
 /**
  *
@@ -160,27 +90,30 @@ export function SortableList(props: SortableListProps): React.ReactNode {
     }
 
     React.useEffect(
-        function handleMount() {
+        function addEventListeners() {
             if (!listDivRef.current) {
                 return;
             }
 
+            if (!mainDivRef.current) {
+                return;
+            }
+
             const currentListDivRef = listDivRef.current;
+            const currentMainDivRef = mainDivRef.current;
 
             let pointerDownPosition: Vec2 | null = null;
             let pointerDownPositionRelativeToElement: Vec2 = { x: 0, y: 0 };
             let draggingActive: boolean = false;
-            let draggedElement: ElementWithInfos | null = null;
+            let draggedElementInfo: ElementWithInfo | null = null;
 
-            let currentlyHoveredElement: HoveredElementWithInfos | null = null;
+            let currentlyHoveredElementInfo: HoveredElementWithInfo | null = null;
 
             let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
             let doScroll: boolean = false;
-            let currentScrollTime = 100;
+            let currentScrollTime = DEFAULT_SCROLL_TIME;
 
             function handlePointerDown(e: PointerEvent) {
-                e.preventDefault();
-                e.stopPropagation();
                 const target = e.target;
                 if (!target) {
                     return;
@@ -192,19 +125,24 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 }
 
                 const element = sortableListItemProps.element;
-                draggedElement = {
+                draggedElementInfo = {
                     element,
                     id: sortableListItemProps.id,
                     type: getItemType(element),
-                    parentId: sortableListItemProps.parentId,
-                    parentType: sortableListItemProps.parentElement
-                        ? getItemType(sortableListItemProps.parentElement)
-                        : null,
+                    parent:
+                        sortableListItemProps.parentElement && sortableListItemProps.parentId
+                            ? {
+                                  element: sortableListItemProps.parentElement,
+                                  id: sortableListItemProps.parentId,
+                                  type: sortableListItemProps.parentElement
+                                      ? getItemType(sortableListItemProps.parentElement)
+                                      : null,
+                              }
+                            : null,
                 };
 
                 pointerDownPosition = { x: e.clientX, y: e.clientY };
                 draggingActive = false;
-                setIsDragging(true);
 
                 pointerDownPositionRelativeToElement = {
                     x: e.clientX - element.getBoundingClientRect().left,
@@ -213,7 +151,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 document.addEventListener("pointermove", handlePointerMove);
                 document.addEventListener("pointerup", handlePointerUp);
 
-                setIsDragging(true);
+                e.preventDefault();
             }
 
             function maybeScroll(position: Vec2) {
@@ -264,27 +202,8 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 }
             }
 
-            function getDragElementsRecursively(parent?: HTMLElement): HTMLElement[] {
-                const items: HTMLElement[] = [];
-                const parentElement = parent ?? currentListDivRef;
-
-                for (const child of parentElement.children) {
-                    if (child instanceof HTMLElement && child.classList.contains("sortable-list-item")) {
-                        items.push(child);
-                    }
-                    if (child instanceof HTMLElement && child.classList.contains("sortable-list-group")) {
-                        items.push(child);
-                        const content = child.querySelector(".sortable-list-group-content");
-                        if (content && content instanceof HTMLElement) {
-                            items.push(...getDragElementsRecursively(content));
-                        }
-                    }
-                }
-                return items;
-            }
-
             function getHoveredElementAndArea(e: PointerEvent): { element: HTMLElement; area: HoveredArea } | null {
-                const elements = getDragElementsRecursively();
+                const elements = getDragElementsRecursively(currentListDivRef);
                 for (const element of elements) {
                     if (rectContainsPoint(element.getBoundingClientRect(), vec2FromPointerEvent(e))) {
                         const type = getItemType(element);
@@ -302,74 +221,19 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                         return { element, area: getHoveredAreaOfItem(element, e) };
                     }
                 }
+
+                // If no element was found, check if the pointer is in the bottom area of the main list
                 const directChildren = elements.filter((el) => el.parentElement === currentListDivRef);
-                if (
-                    mainDivRef.current &&
-                    rectContainsPoint(mainDivRef.current.getBoundingClientRect(), vec2FromPointerEvent(e))
-                ) {
-                    return { element: directChildren[directChildren.length - 1], area: HoveredArea.BOTTOM };
-                }
+                const mainDivRect = currentMainDivRef.getBoundingClientRect();
 
-                return null;
-            }
-
-            function getItemType(item: HTMLElement): ItemType | null {
-                if (item.classList.contains("sortable-list-item")) {
-                    return ItemType.ITEM;
-                } else if (item.classList.contains("sortable-list-group")) {
-                    return ItemType.GROUP;
-                }
-                return null;
-            }
-
-            function getHoveredAreaOfItem(item: HTMLElement, e: PointerEvent): HoveredArea {
-                let factor = ITEM_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT / 100;
-                if (getItemType(item) === ItemType.GROUP) {
-                    factor = GROUP_TOP_AND_CENTER_AREA_SIZE_IN_PERCENT / 100;
-                }
-                const rect = item.getBoundingClientRect();
-                const topAreaTop = rect.top;
-                const topAreaBottom = rect.top + factor * rect.height;
-
-                if (e.clientY >= topAreaTop && e.clientY <= topAreaBottom) {
-                    return HoveredArea.TOP;
-                }
-
-                const bottomAreaTop = rect.bottom - factor * rect.height;
-                const bottomAreaBottom = rect.bottom;
-
-                if (e.clientY >= bottomAreaTop && e.clientY <= bottomAreaBottom) {
-                    return HoveredArea.BOTTOM;
-                }
-
-                const headerElement = item.querySelector(".sortable-list-item-header");
-                if (headerElement) {
-                    const headerRect = headerElement.getBoundingClientRect();
-                    if (rectContainsPoint(headerRect, { x: e.clientX, y: e.clientY })) {
-                        return HoveredArea.HEADER;
-                    }
-                }
-
-                return HoveredArea.CENTER;
-            }
-
-            function getItemParent(item: HTMLElement): HTMLElement | null {
-                const group = item.parentElement?.closest(".sortable-list-group");
-                if (!group || !(group instanceof HTMLElement)) {
+                if (!rectContainsPoint(mainDivRect, vec2FromPointerEvent(e))) {
                     return null;
                 }
-                return group;
+
+                return { element: directChildren[directChildren.length - 1], area: HoveredArea.BOTTOM };
             }
 
-            function getItemParentGroupId(item: HTMLElement): string | null {
-                const group = getItemParent(item);
-                if (!group) {
-                    return null;
-                }
-                return group.dataset.itemId ?? null;
-            }
-
-            function getItemPositionInGroup(item: HTMLElement): number {
+            function getItemPositionInGroup(item: HTMLElement, ignoreItem?: HTMLElement): number {
                 let group = item.parentElement?.closest(".sortable-list-group-content");
                 if (!group || !(group instanceof HTMLElement)) {
                     group = currentListDivRef;
@@ -379,6 +243,9 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 for (let i = 0; i < group.children.length; i++) {
                     const elm = group.children[i];
                     if (!(elm instanceof HTMLElement) || getItemType(elm) === null) {
+                        continue;
+                    }
+                    if (elm === ignoreItem) {
                         continue;
                     }
                     if (group.children[i] === item) {
@@ -391,10 +258,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             }
 
             function handlePointerMove(e: PointerEvent) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                if (!pointerDownPosition || !draggedElement) {
+                if (!pointerDownPosition || !draggedElementInfo) {
                     return;
                 }
 
@@ -403,12 +267,16 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     point2Distance(pointerDownPosition, { x: e.clientX, y: e.clientY }) > MANHATTAN_LENGTH
                 ) {
                     draggingActive = true;
-                    setDraggedItemId(draggedElement.id);
+                    setIsDragging(true);
+                    setDraggedItemId(draggedElementInfo.id);
                 }
 
                 if (!draggingActive) {
                     return;
                 }
+
+                e.preventDefault();
+                e.stopPropagation();
 
                 const dx = e.clientX - pointerDownPositionRelativeToElement.x;
                 const dy = e.clientY - pointerDownPositionRelativeToElement.y;
@@ -418,68 +286,116 @@ export function SortableList(props: SortableListProps): React.ReactNode {
 
                 maybeScroll(point);
 
-                if (rectContainsPoint(draggedElement.element.getBoundingClientRect(), point)) {
+                if (rectContainsPoint(draggedElementInfo.element.getBoundingClientRect(), point)) {
                     // Hovering the dragged element itself
-                    currentlyHoveredElement = null;
+                    currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
                     return;
                 }
 
                 const hoveredElementAndArea = getHoveredElementAndArea(e);
-                if (hoveredElementAndArea) {
-                    const { element: hoveredElement, area } = hoveredElementAndArea;
-                    const itemType = getItemType(hoveredElement);
-                    if (itemType === ItemType.ITEM && (area === HoveredArea.CENTER || area === HoveredArea.HEADER)) {
-                        currentlyHoveredElement = null;
-                        setHoveredItemIdAndArea(null);
-                        return;
-                    }
-
-                    const parentElement = getItemParent(hoveredElement);
-                    const parentType = parentElement ? getItemType(parentElement) : null;
-
-                    let destinationType = parentType;
-                    let destinationId = getItemParentGroupId(hoveredElement);
-
-                    if (itemType === ItemType.GROUP) {
-                        if (area === HoveredArea.HEADER) {
-                            destinationType = ItemType.GROUP;
-                            destinationId = hoveredElement.dataset.itemId ?? "";
-                        }
-                        if (area === HoveredArea.CENTER) {
-                            destinationType = ItemType.GROUP;
-                            destinationId = hoveredElement.dataset.itemId ?? "";
-                        }
-                    }
-
-                    if (
-                        isMoveAllowed !== undefined &&
-                        !isMoveAllowed({
-                            movedItemId: draggedElement.id,
-                            movedItemType: draggedElement.type,
-                            originId: draggedElement.parentId,
-                            originType: draggedElement.parentType,
-                            destinationId,
-                            destinationType,
-                        })
-                    ) {
-                        currentlyHoveredElement = null;
-                        setHoveredItemIdAndArea(null);
-                        return;
-                    }
-                    setHoveredItemIdAndArea({ id: hoveredElement.dataset.itemId ?? "", area });
-                    currentlyHoveredElement = {
-                        element: hoveredElement,
-                        id: hoveredElement.dataset.itemId ?? "",
-                        type: itemType,
-                        area,
-                        parentId: destinationId,
-                        parentType: destinationType,
-                    };
-                } else {
-                    currentlyHoveredElement = null;
+                if (!hoveredElementAndArea) {
+                    currentlyHoveredElementInfo = null;
                     setHoveredItemIdAndArea(null);
+                    return;
                 }
+
+                if (hoveredElementAndArea.element === draggedElementInfo.element) {
+                    currentlyHoveredElementInfo = null;
+                    setHoveredItemIdAndArea(null);
+                    return;
+                }
+
+                if (
+                    hoveredElementAndArea.element === getItemParent(draggedElementInfo.element) &&
+                    hoveredElementAndArea.area === HoveredArea.HEADER
+                ) {
+                    // Dragged element should not be moved into its own parent
+                    currentlyHoveredElementInfo = null;
+                    setHoveredItemIdAndArea(null);
+                    return;
+                }
+
+                const positionDelta = hoveredElementAndArea.area === HoveredArea.TOP ? 0 : 1;
+                const newPosition =
+                    getItemPositionInGroup(hoveredElementAndArea.element, draggedElementInfo.element) + positionDelta;
+                const currentPosition = getItemPositionInGroup(draggedElementInfo.element);
+                const draggedElementParentId = draggedElementInfo.parent?.id ?? null;
+
+                if (
+                    hoveredElementAndArea.area !== HoveredArea.HEADER &&
+                    draggedElementParentId === getGroupId(getItemParent(hoveredElementAndArea.element)) &&
+                    newPosition === currentPosition
+                ) {
+                    currentlyHoveredElementInfo = null;
+                    setHoveredItemIdAndArea(null);
+                    return;
+                }
+
+                const itemType = getItemType(hoveredElementAndArea.element);
+                if (
+                    itemType === ItemType.ITEM &&
+                    (hoveredElementAndArea.area === HoveredArea.CENTER ||
+                        hoveredElementAndArea.area === HoveredArea.HEADER)
+                ) {
+                    currentlyHoveredElementInfo = null;
+                    setHoveredItemIdAndArea(null);
+                    return;
+                }
+
+                const hoveredElementId = hoveredElementAndArea.element.dataset.itemId ?? "";
+                const parentElement = getItemParent(hoveredElementAndArea.element);
+                const parentType = parentElement ? getItemType(parentElement) : null;
+
+                let destinationType = parentType;
+                let destinationId = getGroupId(parentElement);
+
+                if (itemType === ItemType.GROUP) {
+                    if (
+                        hoveredElementAndArea.area === HoveredArea.HEADER ||
+                        hoveredElementAndArea.area === HoveredArea.CENTER
+                    ) {
+                        destinationType = ItemType.GROUP;
+                        destinationId = hoveredElementId ?? "";
+                    }
+                }
+
+                if (
+                    isMoveAllowed !== undefined &&
+                    !isMoveAllowed({
+                        movedItemId: draggedElementInfo.id,
+                        movedItemType: draggedElementInfo.type,
+                        originId: draggedElementInfo.parent?.id ?? null,
+                        originType: draggedElementInfo.parent?.type ?? null,
+                        destinationId,
+                        destinationType,
+                    })
+                ) {
+                    currentlyHoveredElementInfo = null;
+                    setHoveredItemIdAndArea(null);
+                    return;
+                }
+
+                setHoveredItemIdAndArea({
+                    id: hoveredElementId,
+                    area: hoveredElementAndArea.area,
+                });
+
+                let parent: Omit<ElementWithInfo, "parent"> | null = null;
+                if (parentElement && destinationId) {
+                    parent = {
+                        element: parentElement,
+                        id: destinationId,
+                        type: parentType,
+                    };
+                }
+
+                currentlyHoveredElementInfo = {
+                    ...hoveredElementAndArea,
+                    id: hoveredElementId,
+                    type: itemType,
+                    parent,
+                };
             }
 
             function maybeCallItemMoveCallback() {
@@ -487,20 +403,22 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     return;
                 }
 
-                if (!draggedElement || !currentlyHoveredElement) {
+                if (!draggedElementInfo || !currentlyHoveredElementInfo) {
                     return;
                 }
 
+                const draggedElementParent = getItemParent(draggedElementInfo.element);
+
                 if (isMoveAllowed !== undefined) {
-                    const parentElement = getItemParent(currentlyHoveredElement.element);
+                    const parentElement = getItemParent(currentlyHoveredElementInfo.element);
                     const parentType = parentElement ? getItemType(parentElement) : null;
                     if (
                         !isMoveAllowed({
-                            movedItemId: draggedElement.id,
-                            movedItemType: draggedElement.type,
-                            originId: getItemParentGroupId(draggedElement.element),
-                            originType: getItemType(draggedElement.element),
-                            destinationId: getItemParentGroupId(currentlyHoveredElement.element),
+                            movedItemId: draggedElementInfo.id,
+                            movedItemType: draggedElementInfo.type,
+                            originId: getGroupId(draggedElementParent),
+                            originType: getItemType(draggedElementInfo.element),
+                            destinationId: getGroupId(parentElement),
                             destinationType: parentType,
                         })
                     ) {
@@ -509,22 +427,24 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 }
 
                 if (
-                    currentlyHoveredElement.area === HoveredArea.HEADER ||
-                    currentlyHoveredElement.area === HoveredArea.CENTER
+                    currentlyHoveredElementInfo.area === HoveredArea.HEADER ||
+                    currentlyHoveredElementInfo.area === HoveredArea.CENTER
                 ) {
-                    const originId = getItemParentGroupId(draggedElement.element);
-                    const destinationId = currentlyHoveredElement.id;
+                    const originId = getGroupId(draggedElementParent);
+                    const destinationId = currentlyHoveredElementInfo.id;
                     const position = 0;
-                    onItemMoved(draggedElement.id, originId, destinationId, position);
+                    onItemMoved(draggedElementInfo.id, originId, destinationId, position);
                     return;
                 }
 
-                const originId = getItemParentGroupId(draggedElement.element);
-                const destinationId = getItemParentGroupId(currentlyHoveredElement.element);
-                const positionDelta = currentlyHoveredElement.area === HoveredArea.TOP ? 0 : 1;
-                const position = getItemPositionInGroup(currentlyHoveredElement.element) + positionDelta;
+                const originId = getGroupId(draggedElementParent);
+                const destinationId = getGroupId(getItemParent(currentlyHoveredElementInfo.element));
+                const positionDelta = currentlyHoveredElementInfo.area === HoveredArea.TOP ? 0 : 1;
+                const position =
+                    getItemPositionInGroup(currentlyHoveredElementInfo.element, draggedElementInfo.element) +
+                    positionDelta;
 
-                onItemMoved(draggedElement.id, originId, destinationId, position);
+                onItemMoved(draggedElementInfo.id, originId, destinationId, position);
             }
 
             function handlePointerUp() {
@@ -535,8 +455,8 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             function cancelDragging() {
                 draggingActive = false;
                 pointerDownPosition = null;
-                draggedElement = null;
-                currentlyHoveredElement = null;
+                draggedElementInfo = null;
+                currentlyHoveredElementInfo = null;
                 setIsDragging(false);
                 setDraggedItemId(null);
                 setHoveredItemIdAndArea(null);
@@ -560,7 +480,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             document.addEventListener("keydown", handleKeyDown);
             window.addEventListener("blur", handleWindowBlur);
 
-            return function handleUnmount() {
+            return function removeEventListeners() {
                 currentListDivRef.removeEventListener("pointerdown", handlePointerDown);
                 document.removeEventListener("pointermove", handlePointerMove);
                 document.removeEventListener("pointerup", handlePointerUp);
@@ -623,7 +543,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     ref={scrollDivRef}
                     onScroll={handleScroll}
                 >
-                    <div className="flex flex-col border border-slate-100 relative max-h-0" ref={listDivRef}>
+                    <div className="flex flex-col relative" ref={listDivRef}>
                         {makeChildren()}
                         <div className="h-2 min-h-2">
                             <div className="h-2" />
@@ -642,4 +562,147 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             </SortableListContext.Provider>
         </div>
     );
+}
+
+export enum HoveredArea {
+    TOP = "top",
+    BOTTOM = "bottom",
+    HEADER = "header",
+    CENTER = "center",
+}
+
+type ElementWithInfo = {
+    element: HTMLElement;
+    id: string;
+    type: ItemType | null;
+    parent: Omit<ElementWithInfo, "parent"> | null;
+};
+
+type HoveredElementWithInfo = ElementWithInfo & {
+    area: HoveredArea;
+};
+
+type HoveredItemIdAndArea = {
+    id: string;
+    area: HoveredArea;
+};
+
+function assertTargetIsSortableListItemAndExtractProps(
+    target: EventTarget | null
+): { element: HTMLElement; id: string; parentElement: HTMLElement | null; parentId: string | null } | null {
+    if (!target) {
+        return null;
+    }
+
+    const element = target as HTMLElement;
+    if (!element || !(element instanceof HTMLElement)) {
+        return null;
+    }
+
+    const sortableListItemIndicator = element.closest(".sortable-list-element-indicator");
+    if (!sortableListItemIndicator) {
+        return null;
+    }
+
+    const sortableListElement = element.closest(".sortable-list-element");
+    if (!sortableListElement) {
+        return null;
+    }
+
+    if (!(sortableListElement instanceof HTMLElement)) {
+        return null;
+    }
+
+    const id = sortableListElement.dataset.itemId;
+    if (!id) {
+        return null;
+    }
+
+    const parentGroup = getItemParent(sortableListElement);
+
+    if (parentGroup) {
+        const parentId = parentGroup.dataset.itemId;
+        if (parentId) {
+            return { element: sortableListElement, id, parentElement: parentGroup, parentId };
+        }
+    }
+
+    return { element: sortableListElement, id, parentElement: null, parentId: null };
+}
+
+function getItemType(item: HTMLElement): ItemType | null {
+    if (item.classList.contains("sortable-list-item")) {
+        return ItemType.ITEM;
+    } else if (item.classList.contains("sortable-list-group")) {
+        return ItemType.GROUP;
+    }
+    return null;
+}
+
+function getHoveredAreaOfItem(item: HTMLElement, e: PointerEvent): HoveredArea {
+    let factor = ITEM_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT / 100;
+    const rect = item.getBoundingClientRect();
+
+    const topAreaTop = rect.top;
+    const bottomAreaBottom = rect.bottom;
+
+    let topAreaBottom = rect.top + factor * rect.height;
+    let bottomAreaTop = rect.bottom - factor * rect.height;
+    if (getItemType(item) === ItemType.GROUP) {
+        factor = GROUP_TOP_AND_BOTTOM_AREA_SIZE_IN_PERCENT / 100;
+        topAreaBottom = rect.top + Math.min(10, factor * rect.height);
+        bottomAreaTop = rect.bottom - Math.min(10, factor * rect.height);
+    }
+
+    if (e.clientY >= topAreaTop && e.clientY <= topAreaBottom) {
+        return HoveredArea.TOP;
+    }
+
+    if (e.clientY >= bottomAreaTop && e.clientY <= bottomAreaBottom) {
+        return HoveredArea.BOTTOM;
+    }
+
+    const headerElement = item.querySelector(".sortable-list-item-header");
+    if (headerElement) {
+        const headerRect = headerElement.getBoundingClientRect();
+        if (rectContainsPoint(headerRect, { x: e.clientX, y: e.clientY })) {
+            return HoveredArea.HEADER;
+        }
+    }
+
+    return HoveredArea.CENTER;
+}
+
+function getItemParent(item: HTMLElement | null): HTMLElement | null {
+    if (!item) {
+        return null;
+    }
+
+    const group = item.parentElement?.closest(".sortable-list-group");
+    if (!group || !(group instanceof HTMLElement)) {
+        return null;
+    }
+    return group;
+}
+
+function getGroupId(group: HTMLElement | null): string | null {
+    return group?.dataset.itemId ?? null;
+}
+
+function getDragElementsRecursively(parentElement: HTMLElement): HTMLElement[] {
+    const items: HTMLElement[] = [];
+
+    for (const child of parentElement.children) {
+        if (child instanceof HTMLElement && child.classList.contains("sortable-list-item")) {
+            items.push(child);
+        }
+        if (child instanceof HTMLElement && child.classList.contains("sortable-list-group")) {
+            items.push(child);
+            const content = child.querySelector(".sortable-list-group-content");
+            if (content && content instanceof HTMLElement) {
+                items.push(...getDragElementsRecursively(content));
+            }
+        }
+    }
+    return items;
 }
