@@ -3,13 +3,9 @@ import React from "react";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ViewContext } from "@framework/ModuleContext";
 import { GlobalTopicDefinitions, WorkbenchServices, useSubscribedValue } from "@framework/WorkbenchServices";
+import { Viewport } from "@framework/types/viewport";
 import { Interfaces } from "@modules/Intersection/interfaces";
-import {
-    EsvIntersection,
-    EsvIntersectionReadoutEvent,
-    LayerItem,
-    Viewport,
-} from "@modules/_shared/components/EsvIntersection";
+import { EsvIntersection, EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import {
     ReadoutItem as EsvReadoutItem,
     HighlightItem,

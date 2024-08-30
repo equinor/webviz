@@ -4,8 +4,9 @@ import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
+import { Viewport } from "@framework/types/viewport";
 import { Interfaces } from "@modules/Intersection/interfaces";
-import { LayerItem, Viewport } from "@modules/_shared/components/EsvIntersection";
+import { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 
 import { cloneDeep, isEqual } from "lodash";
