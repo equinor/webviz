@@ -76,6 +76,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                     data={tableRows}
                     height={divBoundingRect.height}
                     onHover={handleTableHover}
+                    alternatingColumnColors
                 />
             </PendingWrapper>
         </div>

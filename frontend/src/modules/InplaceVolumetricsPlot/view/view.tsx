@@ -61,7 +61,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         : undefined
                 }
             >
-                {plots}
+                {plots ?? <div style={{ height: divBoundingRect.height }} />}
             </PendingWrapper>
         </div>
     );
