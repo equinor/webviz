@@ -14,22 +14,31 @@ export type InfoItem = {
 };
 
 export type ReadoutBoxProps = {
+    /** A list of readouts to display */
     readoutItems: ReadoutItem[];
+    /** The max number of items to show. Excess items are hidden by a "... and X more." */
     maxNumItems?: number;
+    /** Disables the small colored badge next to the item labels */
     noLabelColor?: boolean;
+    /** Disables the mouse-avoiding behaviour */
+    flipDisabled?: boolean;
 };
 
 export function ReadoutBox(props: ReadoutBoxProps): ReactNode {
+    const readoutItems = props.readoutItems;
+    const maxNumItems = props.maxNumItems ?? 3;
+
     const [flipped, setFlipped] = useState<boolean>(false);
     const readoutRoot = useRef<HTMLDivElement>(null);
 
     // How far away from the lower right corner the box is placed
     // TODO: Expose as prop?
-    // TODO: use rem, not px here? parseInt(getComputedStyle(document.documentElement).fontSize) * 3
-    // ! "48" is based on the left-12/right-12 layout values.
-    const cornerDistance = 48;
+    // ! "3" is based on the left-12/right-12 layout values.
+    const cornerDistance = parseInt(getComputedStyle(document.documentElement).fontSize) * 3;
 
     useEffect(() => {
+        if (props.flipDisabled) return;
+
         function maybeFlipBox(evt: MouseEvent) {
             if (!readoutRoot.current) return;
 
@@ -58,10 +67,7 @@ export function ReadoutBox(props: ReadoutBoxProps): ReactNode {
         document.addEventListener("mousemove", maybeFlipBox);
 
         return () => document.removeEventListener("mousemove", maybeFlipBox);
-    }, [flipped]);
-
-    const readoutItems = props.readoutItems;
-    const maxNumItems = props.maxNumItems ?? 3;
+    }, [cornerDistance, flipped, props.flipDisabled]);
 
     if (readoutItems.length === 0) return null;
 
