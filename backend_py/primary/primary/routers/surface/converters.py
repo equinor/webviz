@@ -15,6 +15,23 @@ from primary.services.utils.surface_to_png import surface_to_png_bytes_optimized
 from . import schemas
 
 
+def extract_surface_def_from_surface(xtgeo_surf: xtgeo.RegularSurface) -> schemas.SurfaceDef:
+    """
+    Extract properties from xtgeo regular surface and populate new surface definition
+    """
+    surface_def = schemas.SurfaceDef(
+        npoints_x=xtgeo_surf.ncol,
+        npoints_y=xtgeo_surf.nrow,
+        inc_x=xtgeo_surf.xinc,
+        inc_y=xtgeo_surf.yinc,
+        origin_utm_x=xtgeo_surf.xori,
+        origin_utm_y=xtgeo_surf.yori,
+        rot_deg=xtgeo_surf.rotation,
+    )
+
+    return surface_def
+
+
 def resample_to_surface_def(
     source_surface: xtgeo.RegularSurface, target_surface_def: schemas.SurfaceDef
 ) -> xtgeo.RegularSurface:
@@ -47,15 +64,7 @@ def to_api_surface_data_float(xtgeo_surf: xtgeo.RegularSurface) -> schemas.Surfa
     float32_np_arr: NDArray[np.float32] = surface_to_float32_numpy_array(xtgeo_surf)
     values_b64arr = b64_encode_float_array_as_float32(float32_np_arr)
 
-    surface_def = schemas.SurfaceDef(
-        npoints_x=xtgeo_surf.ncol,
-        npoints_y=xtgeo_surf.nrow,
-        inc_x=xtgeo_surf.xinc,
-        inc_y=xtgeo_surf.yinc,
-        origin_utm_x=xtgeo_surf.xori,
-        origin_utm_y=xtgeo_surf.yori,
-        rot_deg=xtgeo_surf.rotation,
-    )
+    surface_def = extract_surface_def_from_surface(xtgeo_surf)
 
     trans_bb_utm = schemas.BoundingBox2d(
         min_x=xtgeo_surf.xmin, min_y=xtgeo_surf.ymin, max_x=xtgeo_surf.xmax, max_y=xtgeo_surf.ymax
@@ -79,15 +88,7 @@ def to_api_surface_data_png(xtgeo_surf: xtgeo.RegularSurface) -> schemas.Surface
     png_bytes: bytes = surface_to_png_bytes_optimized(xtgeo_surf)
     png_bytes_base64 = base64.b64encode(png_bytes).decode("ascii")
 
-    surface_def = schemas.SurfaceDef(
-        npoints_x=xtgeo_surf.ncol,
-        npoints_y=xtgeo_surf.nrow,
-        inc_x=xtgeo_surf.xinc,
-        inc_y=xtgeo_surf.yinc,
-        origin_utm_x=xtgeo_surf.xori,
-        origin_utm_y=xtgeo_surf.yori,
-        rot_deg=xtgeo_surf.rotation,
-    )
+    surface_def = extract_surface_def_from_surface(xtgeo_surf)
 
     trans_bb_utm = schemas.BoundingBox2d(
         min_x=xtgeo_surf.xmin, min_y=xtgeo_surf.ymin, max_x=xtgeo_surf.xmax, max_y=xtgeo_surf.ymax

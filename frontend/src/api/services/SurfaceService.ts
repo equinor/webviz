@@ -199,7 +199,7 @@ export class SurfaceService {
         surfBAddrStr: string,
         dataFormat: 'float' | 'png' = 'float',
         resampleToDefStr?: (string | null),
-    ): CancelablePromise<Array<SurfaceDataFloat>> {
+    ): CancelablePromise<SurfaceDataFloat> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/surface/delta_surface_data',
