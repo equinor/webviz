@@ -17,7 +17,6 @@ import { LogCurveDataWithName } from "./queries/wellLogQueries";
 
 import { InterfaceTypes } from "../interfaces";
 import { TemplateTrackConfig } from "../settings/atoms/baseAtoms";
-import { COLOR_TABLES } from "../utils/logViewerColors";
 import { createLogTemplate } from "../utils/logViewerTemplate";
 import { createWellLog } from "../utils/queryDataTransform";
 
@@ -156,6 +155,11 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const [wellLogController, setWellLogController] = useState<WellLogController | null>(null);
 
     const { template, welllog } = useViewerDataTransform(props);
+
+    const colorScale = props.moduleProps.workbenchSettings.useContinuousColorScale({
+        gradientType: ColorScaleGradientType.Sequential,
+    });
+    const colorTables = createContinuousColorScaleForMap(colorScale);
 
     // Global value syncronization
     const broadcastGlobalMdChange = useGloballySyncedMd(
