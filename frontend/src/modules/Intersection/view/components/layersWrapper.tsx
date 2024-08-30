@@ -13,6 +13,7 @@ import {
 import { ViewContext } from "@framework/ModuleContext";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
 import { IntersectionType } from "@framework/types/intersection";
+import { Viewport } from "@framework/types/viewport";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { Interfaces } from "@modules/Intersection/interfaces";
 import { BaseLayer, LayerStatus, useLayers } from "@modules/Intersection/utils/layers/BaseLayer";
@@ -22,7 +23,6 @@ import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer"
 import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import { LayerItem, LayerType } from "@modules/_shared/components/EsvIntersection";
-import { Viewport } from "@modules/_shared/components/EsvIntersection/esvIntersection";
 import { SurfaceStatisticalFanchart } from "@modules/_shared/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
 import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@modules/_shared/components/EsvIntersection/utils/surfaceStatisticalFancharts";
 import { ColorLegendsContainer } from "@modules_shared/components/ColorLegendsContainer";
