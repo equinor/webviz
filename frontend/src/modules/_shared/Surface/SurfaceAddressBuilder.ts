@@ -15,6 +15,7 @@ export class SurfaceAddressBuilder {
     private _realizationNum: number | null = null;
     private _isoTimeOrInterval: string | null = null;
     private _statisticFunction: SurfaceStatisticFunction_api | null = null;
+    private _statisticRealizations: number[] | null = null;
 
     withType(addrType: SurfaceAddressType): this {
         this._addrType = addrType;
@@ -49,6 +50,11 @@ export class SurfaceAddressBuilder {
 
     withStatisticFunction(statisticFunction: SurfaceStatisticFunction_api): this {
         this._statisticFunction = statisticFunction;
+        return this;
+    }
+
+    withStatisticRealizations(realizations: number[]): this {
+        this._statisticRealizations = realizations;
         return this;
     }
 
@@ -114,7 +120,7 @@ export class SurfaceAddressBuilder {
             name: this._name!,
             attribute: this._attribute!,
             statFunction: this._statisticFunction,
-            statRealizations: null,
+            statRealizations: this._statisticRealizations,
             isoTimeOrInterval: this._isoTimeOrInterval,
         };
         return retObj;
