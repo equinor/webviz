@@ -8,11 +8,8 @@ from fmu.sumo.explorer import Explorer
 
 async def test_get_vector_list(test_user, sumo_test_ensemble_ahm):
 
-    client = SumoClient(env="prod")
-    sumo = Explorer(env="prod")
-
     vector_list = await router.get_vector_list(
-        None, user, sumo_test_ensemble_ahm.case_uuid, sumo_test_ensemble_ahm.ensemble_name
+        None, test_user, sumo_test_ensemble_ahm.case_uuid, sumo_test_ensemble_ahm.ensemble_name
     )
     
     assert len(vector_list) == 786
