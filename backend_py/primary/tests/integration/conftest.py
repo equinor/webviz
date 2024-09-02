@@ -28,9 +28,10 @@ def fixture_sumo_test_ensemble_ahm() -> SumoTestEnsemble:
 @pytest.fixture(name="test_user")
 def fixture_test_user():
     # Get tokens from environment variables
-    token = os.getenv("SUMO_TOKEN")
+    # token = os.getenv("SUMO_TOKEN")
+    token = None
     if token is None:
-        client = SumoClient(env="prod")
+        client = SumoClient(env="prod", token=token)
         token = client.authenticate()
     tokens = AccessTokens(sumo_access_token=token)
 
