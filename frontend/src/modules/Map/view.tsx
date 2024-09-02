@@ -21,8 +21,10 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
 
     const surfAddrA = surfaceAddress;
-    const surfAddrB: any = {...surfaceAddress}
-    surfAddrB.realizationNum += 1;
+    const surfAddrB: any = surfaceAddress ? {...surfaceAddress} : null;
+    if (surfAddrB) {
+        surfAddrB.realizationNum += 1;
+    }
     const surfDataQuery = useDeltaSurfaceDataQueryByAddress(surfAddrA, surfAddrB, "float", null, true);
 
     const isLoading = surfDataQuery.isFetching;
