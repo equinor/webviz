@@ -15,13 +15,20 @@ from primary.services.utils.authenticated_user import AuthenticatedUser, AccessT
 
 @dataclass
 class SumoTestEnsemble:
+    field_identifier: str
     case_uuid: str
+    case_name: str
     ensemble_name: str
 
 
 @pytest.fixture(name="sumo_test_ensemble_prod", scope="session")
 def fixture_sumo_test_ensemble_prod() -> SumoTestEnsemble:
-    return SumoTestEnsemble(case_uuid="485041ce-ad72-48a3-ac8c-484c0ed95cf8", ensemble_name="iter-0")
+    return SumoTestEnsemble(
+        field_identifier="DROGON",
+        case_name="webviz_ahm_case",
+        case_uuid="485041ce-ad72-48a3-ac8c-484c0ed95cf8",
+        ensemble_name="iter-0",
+    )
 
 
 @pytest.fixture(name="test_user", scope="session")
