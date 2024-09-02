@@ -3,7 +3,9 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query, Body, Response
 
-from primary.services.inplace_volumetrics_provider.inplace_volumetrics_provider import InplaceVolumetricsProvider
+from primary.services.inplace_volumetrics_assembler.inplace_volumetrics_assembler import (
+    InplaceVolumetricsAssembler,
+)
 from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
@@ -27,8 +29,8 @@ async def get_table_definitions(
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    provider = InplaceVolumetricsProvider(access)
-    tables = await provider.get_volumetric_table_metadata()
+    assembler = InplaceVolumetricsAssembler(access)
+    tables = await assembler.get_volumetric_table_metadata()
     return converters.to_api_table_definitions(tables)
 
 
@@ -61,9 +63,9 @@ async def post_get_aggregated_per_realization_table_data(
 
     perf_metrics.record_lap("get-access")
 
-    provider = InplaceVolumetricsProvider(access)
+    assembler = InplaceVolumetricsAssembler(access)
 
-    data = await provider.get_accumulated_by_selection_per_realization_volumetric_table_data_async(
+    data = await assembler.create_accumulated_by_selection_per_realization_volumetric_table_data_async(
         table_name=table_name,
         result_names=result_names,
         fluid_zones=fluid_zones,
@@ -109,9 +111,9 @@ async def post_get_aggregated_statistical_table_data(
 
     perf_metrics.record_lap("get-access")
 
-    provider = InplaceVolumetricsProvider(access)
+    assembler = InplaceVolumetricsAssembler(access)
 
-    data = await provider.get_accumulated_by_selection_statistical_volumetric_table_data_async(
+    data = await assembler.create_accumulated_by_selection_statistical_volumetric_table_data_async(
         table_name=table_name,
         result_names=result_names,
         fluid_zones=fluid_zones,

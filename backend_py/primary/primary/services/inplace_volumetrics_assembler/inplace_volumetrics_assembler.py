@@ -5,7 +5,10 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import polars as pl
 
-from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
+from primary.services.sumo_access.inplace_volumetrics_access import (
+    InplaceVolumetricsAccess,
+    IGNORED_IDENTIFIER_COLUMN_VALUES,
+)
 from primary.services.sumo_access.inplace_volumetrics_types import (
     CategorizedResultNames,
     FluidZone,
@@ -49,17 +52,9 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 LOGGER = logging.getLogger(__name__)
 
-# Identifier column values to ignore, i.e. remove from the volumetric tables
-IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
 
-
-# - InplaceVolumetricsConverter
-# - InplaceVolumetricsConstructor
-# - InplaceVolumetricsAssembler
-class InplaceVolumetricsProvider:
+class InplaceVolumetricsAssembler:
     """
-    TODO: Find better name?
-
     This class provides an interface for interacting with definitions used in front-end for assembling and providing
     metadata and inplace volumetrics table data
 
@@ -131,7 +126,7 @@ class InplaceVolumetricsProvider:
             )
         return tables_info
 
-    async def get_accumulated_by_selection_per_realization_volumetric_table_data_async(
+    async def create_accumulated_by_selection_per_realization_volumetric_table_data_async(
         self,
         table_name: str,
         result_names: set[str],
@@ -160,7 +155,7 @@ class InplaceVolumetricsProvider:
             )
 
             # Create result df - requested volumes and calculated properties
-            per_realization_accumulated_result_df = InplaceVolumetricsProvider._create_result_dataframe_polars(
+            per_realization_accumulated_result_df = InplaceVolumetricsAssembler._create_result_dataframe_polars(
                 per_group_summed_realization_df, categorized_requested_result_names, fluid_selection
             )
 
@@ -176,7 +171,7 @@ class InplaceVolumetricsProvider:
             table_data_per_fluid_selection=table_data_per_fluid_selection
         )
 
-    async def get_accumulated_by_selection_statistical_volumetric_table_data_async(
+    async def create_accumulated_by_selection_statistical_volumetric_table_data_async(
         self,
         table_name: str,
         result_names: set[str],
@@ -205,7 +200,7 @@ class InplaceVolumetricsProvider:
             )
 
             # Create result df - requested volumes and calculated properties
-            per_realization_accumulated_result_df = InplaceVolumetricsProvider._create_result_dataframe_polars(
+            per_realization_accumulated_result_df = InplaceVolumetricsAssembler._create_result_dataframe_polars(
                 per_group_summed_realization_df, categorized_requested_result_names, fluid_selection
             )
 
