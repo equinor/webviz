@@ -3,6 +3,7 @@ import asyncio
 
 import pyarrow as pa
 import pyarrow.compute as pc
+import polars as pl
 
 from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
 from primary.services.sumo_access.inplace_volumetrics_types import (
@@ -33,7 +34,9 @@ from ._conversion._conversion import (
 
 from ._utils import (
     calculate_property_column_arrays,
+    create_property_column_expressions,
     create_grouped_statistical_result_table_data_pyarrow,
+    create_grouped_statistical_result_table_data_polars,
     create_volumetric_table_per_fluid_zone,
     create_per_realization_accumulated_volume_table,
     create_volumetric_table_accumulated_across_fluid_zones,
@@ -158,10 +161,14 @@ class InplaceVolumetricsProvider:
                 group_by_identifiers,
             )
 
-            # Create result table - requested volumes and calculated properties
-            accumulated_result_table = InplaceVolumetricsProvider._create_result_table(
-                accumulated_volume_table, categorized_requested_result_names, fluid_selection
+            accumulated_volume_df = pl.DataFrame(accumulated_volume_table)
+
+            # Create result df - requested volumes and calculated properties
+            accumulated_result_df = InplaceVolumetricsProvider._create_result_dataframe_polars(
+                accumulated_volume_df, categorized_requested_result_names, fluid_selection
             )
+
+            accumulated_result_table = accumulated_result_df.to_arrow()
 
             fluid_selection_name = create_fluid_selection_name(fluid_selection, fluid_zones)
 
@@ -197,23 +204,26 @@ class InplaceVolumetricsProvider:
         # - Aggregate by each requested group_by_identifier
         statistical_table_data_per_fluid_selection: List[InplaceStatisticalVolumetricTableData] = []
         for fluid_selection, volume_table in volume_table_per_fluid_selection.items():
-            accumulated_volume_table = create_per_realization_accumulated_volume_table(
+            # TODO: Make polars DataFrame version?
+            per_realization_accumulated_volume_table = create_per_realization_accumulated_volume_table(
                 volume_table,
                 group_by_identifiers,
             )
 
-            # Create result table - requested volumes and calculated properties
-            accumulated_result_table = InplaceVolumetricsProvider._create_result_table(
-                accumulated_volume_table, categorized_requested_result_names, fluid_selection
+            per_realization_accumulated_volume_df = pl.DataFrame(per_realization_accumulated_volume_table)
+
+            # Create result df - requested volumes and calculated properties
+            per_realization_accumulated_result_df = InplaceVolumetricsProvider._create_result_dataframe_polars(
+                per_realization_accumulated_volume_df, categorized_requested_result_names, fluid_selection
+            )
+
+            # Create statistical table data
+            selector_column_data_list, result_column_data_list = create_grouped_statistical_result_table_data_polars(
+                per_realization_accumulated_result_df,
+                group_by_identifiers,
             )
 
             fluid_selection_name = create_fluid_selection_name(fluid_selection, fluid_zones)
-
-            # Create statistical table data
-            selector_column_data_list, result_column_data_list = create_grouped_statistical_result_table_data_pyarrow(
-                accumulated_result_table,
-                group_by_identifiers,
-            )
 
             statistical_table_data_per_fluid_selection.append(
                 InplaceStatisticalVolumetricTableData(
@@ -280,6 +290,48 @@ class InplaceVolumetricsProvider:
         return volume_table_per_fluid_selection, CategorizedResultNames(
             volume_names=volume_names, property_names=valid_properties
         )
+
+    @staticmethod
+    def _create_result_dataframe_polars(
+        volume_df: pl.DataFrame,
+        categorized_requested_result_names: CategorizedResultNames,
+        fluid_selection: FluidSelection,
+    ) -> pl.DataFrame:
+        """
+        Create a result dataframe from the volume table and requested properties
+
+        If volume names needed for properties are not available in the volume dataframe, the function will skip the property
+
+        The result dataframe contains the requested volume names and calculated properties
+        """
+        # Convert fluid selection to fluid zone
+        fluid_zone = convert_fluid_selection_to_fluid_zone(fluid_selection)
+
+        # Find valid selector columns and volume names
+        possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+        available_selector_columns = [col for col in possible_selector_columns if col in volume_df.columns]
+        requested_volume_names = categorized_requested_result_names.volume_names
+        available_volume_names = [name for name in requested_volume_names if name in volume_df.columns]
+
+        # Create property column expressions
+        requested_properties = categorized_requested_result_names.property_names
+        property_column_expressions: List[pl.Expr] = create_property_column_expressions(
+            volume_df.columns, requested_properties, fluid_zone=fluid_zone
+        )
+
+        # Build result dataframe (requested volumes and calculated properties)
+        if not property_column_expressions:
+            result_df = volume_df.select(available_selector_columns + available_volume_names)
+            return result_df
+
+        volume_and_properties_df = volume_df.with_columns(property_column_expressions)
+        available_requested_properties = [
+            prop for prop in requested_properties if prop in volume_and_properties_df.columns
+        ]
+        result_df = volume_and_properties_df.select(
+            available_selector_columns + available_volume_names + available_requested_properties
+        )
+        return result_df
 
     @staticmethod
     def _create_result_table(

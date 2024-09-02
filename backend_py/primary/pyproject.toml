@@ -28,6 +28,7 @@ pottery = "^3.0.0"
 xtgeo = "^3.8.0"
 core_utils = {path = "../libs/core_utils", develop = true}
 server_schemas = {path = "../libs/server_schemas", develop = true}
+polars = "^1.6.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.12.0"

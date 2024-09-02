@@ -1,8 +1,9 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import pyarrow as pa
 import pyarrow.compute as pc
 import numpy as np
+import polars as pl
 
 from primary.services.sumo_access.inplace_volumetrics_types import (
     FluidZone,
@@ -37,6 +38,7 @@ def _replace_null_with_nan(array: pa.array) -> pa.array:
 
     return pc.if_else(null_mask, np.nan, array)
 
+
 def _replace_inf_with_nan(array: pa.array) -> pa.array:
     """
     Replace np.inf with np.nan, this is needed for pyarrow to handle null values in aggregation
@@ -47,6 +49,7 @@ def _replace_inf_with_nan(array: pa.array) -> pa.array:
     """
     inf_mask = pc.is_inf(array)
     return pc.if_else(inf_mask, np.nan, array)
+
 
 def calculate_property_from_volume_arrays(property: str, nominator: pa.array, denominator: pa.array) -> pa.array:
     """
@@ -85,6 +88,45 @@ def get_valid_result_names_from_list(result_names: List[str]) -> List[str]:
         if result_name in InplaceVolumetricResultName.__members__:
             valid_result_names.append(result_name)
     return valid_result_names
+
+
+def create_per_realization_accumulated_volume_df(
+    volume_table: pa.Table,
+    group_by_identifiers: List[InplaceVolumetricsIdentifier],
+) -> pl.DataFrame:
+    """
+    Create volume table with accumulated sum based on group by identifiers selection. The sum volumes are grouped per realization,
+    i.e. a column named "REAL" should always be among the output columns
+
+    After accumulating the sum, the properties can be calculated across realizations for each group.
+    """
+    df = pl.DataFrame(volume_table)
+
+    # Group by each of the identifier (always accumulate by realization - i.e. max one value per realization)
+    group_by_identifier_set = set([elm.value for elm in group_by_identifiers])
+    columns_to_group_by_for_sum = set(list(group_by_identifier_set) + ["REAL"])
+
+    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    valid_volume_names = [elm for elm in volume_table.column_names if elm not in possible_selector_columns]
+
+    # NOTE: Is excluding correct here? As this might aggregate over a selector column not in the group by - e.g. FACIES?
+    # Make usage of include and provide a list of volume names?
+    accumulated_df = df.group_by(columns_to_group_by_for_sum).agg([pl.sum("*").exclude(columns_to_group_by_for_sum)])
+
+    return accumulated_df
+
+    # Aggregate sum for each result name after grouping
+    accumulated_table = volume_table.group_by(columns_to_group_by_for_sum).aggregate(
+        [(volume_name, "sum") for volume_name in valid_volume_names]
+    )
+    suffix_to_remove = "_sum"
+
+    # Remove suffix from column names
+    column_names_with_suffix = accumulated_table.column_names
+    new_column_names = [column_name.replace(suffix_to_remove, "") for column_name in column_names_with_suffix]
+    accumulated_table = accumulated_table.rename_columns(new_column_names)
+
+    return accumulated_table
 
 
 def create_per_realization_accumulated_volume_table(
@@ -237,10 +279,151 @@ def create_grouped_statistical_result_table_data_pyarrow(
 
                 p10_array.append(get_valid_percentile_value(group_percentiles[0]))
                 p90_array.append(get_valid_percentile_value(group_percentiles[1]))
-        
+
         # Invert P10 and P90 according to oil industry standards
         result_statistical_data.statistic_values[Statistic.P10] = p90_array
         result_statistical_data.statistic_values[Statistic.P90] = p10_array
+
+        # Add result statistical data to dictionary
+        results_statistical_data_dict[result_name] = result_statistical_data
+
+    # Create list of results statistical data from dictionary values
+    results_statistical_data_list: List[TableColumnStatisticalData] = list(results_statistical_data_dict.values())
+
+    # Validate length of columns
+    _validate_length_of_statistics_data_lists(selector_column_data_list, results_statistical_data_list)
+
+    return (selector_column_data_list, results_statistical_data_list)
+
+
+def _get_statistical_function_expression(statistic: Statistic) -> Callable[[pl.Expr], pl.Expr] | None:
+    """
+    Get statistical function Polars expression based on statistic enum
+    """
+    statistical_function_expression_map: dict[Statistic, Callable[[pl.Expr], pl.Expr]] = {
+        Statistic.MEAN: lambda col: col.mean(),
+        # "median": lambda col: col.median(),
+        # "sum": lambda col: col.sum(),
+        Statistic.MIN: lambda col: col.min(),
+        Statistic.MAX: lambda col: col.max(),
+        Statistic.STD_DEV: lambda col: col.std(),
+        # "var": lambda col: col.var(),
+        Statistic.P10: lambda col: col.quantile(0.1, "linear"),
+        Statistic.P90: lambda col: col.quantile(0.9, "linear"),
+    }
+
+    return statistical_function_expression_map.get(statistic)
+
+
+def _create_statistical_expression(statistic: Statistic, column_name: str, drop_nans=True) -> pl.Expr:
+    """
+    Generate the Polars expression for the given statistic.
+    """
+    base_col = pl.col(column_name)
+    if drop_nans:
+        base_col = base_col.drop_nans()
+    stat_func_expr = _get_statistical_function_expression(statistic)
+    if stat_func_expr is None:
+        raise ValueError(f"Unsupported statistic: {statistic}")
+    return stat_func_expr(base_col).alias(f"{column_name}_{statistic}")
+
+
+def _create_statistic_aggregation_expressions(
+    result_columns: List[str], statistics: List[Statistic], drop_nans=True
+) -> List[pl.Expr]:
+    """
+    Create Polars expressions for aggregation of result columns
+    """
+    expressions = []
+    for column_name in result_columns:
+        for statistic in statistics:
+            expressions.append(_create_statistical_expression(statistic, column_name, drop_nans))
+    return expressions
+
+
+def create_grouped_statistical_result_table_data_polars(
+    result_df: pl.DataFrame,
+    group_by_identifiers: List[InplaceVolumetricsIdentifier],
+) -> Tuple[List[RepeatedTableColumnData], List[TableColumnStatisticalData]]:
+    """
+    Create result table with statistics across column values based on group by identifiers selection. The
+    statistics are calculated across all values per grouping, thus the output will have one row per group.
+
+    To get statistics across all realizations, the input result df must be pre-processed to contain non-duplicate "REAL" values
+    per group when grouping with group_by_identifiers.
+
+    The order of the arrays in the statistical data lists will match the order of the rows in the selector column data list.
+
+    Statistics: Mean, stddev, min, max, p10, p90
+
+    Parameters:
+    - result_df: Dataframe with selector columns and result columns
+    - group_by_identifiers: List of identifiers to group by, should be equal to the group by used used to pre-process the input result df
+
+    Returns:
+    - Tuple with selector column data list and results statistical data list
+    """
+
+    group_by_identifier_values = list(set([elm.value for elm in group_by_identifiers]))
+
+    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    valid_selector_columns = [elm for elm in possible_selector_columns if elm in result_df.columns]
+
+    # Find valid result names in table
+    valid_result_names = [elm for elm in result_df.columns if elm not in valid_selector_columns]
+
+    # Define statistical aggregation expressions
+    requested_statistics = [
+        Statistic.MEAN,
+        Statistic.STD_DEV,
+        Statistic.MIN,
+        Statistic.MAX,
+        Statistic.P10,
+        Statistic.P90,
+    ]
+    statistic_aggregation_expressions = _create_statistic_aggregation_expressions(
+        valid_result_names, requested_statistics
+    )
+
+    # Groupby and aggregate result df
+    # - Expect the result df to have one unique column per statistic per result name, i.e. "result_name_mean", "result_name_stddev", etc.
+    per_group_statistical_df: pl.DataFrame | None = None
+    if len(group_by_identifier_values) > 0:
+        per_group_statistical_df = (
+            result_df.select(*group_by_identifier_values, *valid_result_names)
+            .group_by(*group_by_identifier_values)
+            .agg(statistic_aggregation_expressions)
+        )
+    else:
+        # per_group_statistical_df = result_df.select(*valid_result_names).agg(statistic_aggregation_expressions)
+        per_group_statistical_df = result_df.select(statistic_aggregation_expressions)
+
+    ########################################################
+    # Create column data structures from df
+    #
+    # # NOTE: Refactor the code below and place into a separate function to build "output" format?
+    #
+    ########################################################
+
+    # Build selector columns from statistical table
+    selector_column_data_list: List[RepeatedTableColumnData] = []
+    final_selector_columns = [name for name in per_group_statistical_df.columns if name in valid_selector_columns]
+    for column_name in final_selector_columns:
+        column_array = per_group_statistical_df[column_name]
+        selector_column_data_list.append(_create_repeated_table_column_data_from_column(column_name, column_array))
+
+    # Fill statistics for each result
+    results_statistical_data_dict: Dict[str, TableColumnStatisticalData] = {}
+    available_statistic_column_names = per_group_statistical_df.columns
+    for result_name in valid_result_names:
+        result_statistical_data = TableColumnStatisticalData(column_name=result_name, statistic_values={})
+        for statistic in requested_statistics:
+            statistic_column_name = f"{result_name}_{statistic}"
+            if statistic_column_name not in available_statistic_column_names:
+                raise ValueError(f"Column {statistic_column_name} not found in statistical table")
+
+            statistic_array = per_group_statistical_df[statistic_column_name]
+            result_statistical_data.statistic_values[statistic] = statistic_array.to_list()
 
         # Add result statistical data to dictionary
         results_statistical_data_dict[result_name] = result_statistical_data
@@ -457,3 +640,38 @@ def calculate_property_column_arrays(
         property_arrays["SW"] = sw_array
 
     return property_arrays
+
+
+def create_property_column_expressions(
+    volume_df_columns: List[str], properties: List[str], fluid_zone: Optional[FluidZone] = None
+) -> List[pl.Expr]:
+    """
+    Create expressions for property columns base available volume columns.
+
+    If one of the volume names needed for a property is not found, the property expressions is not provided
+
+    Args:
+    - volume_df_columns (List[str]): List of column names of volume pl.Dataframe
+    - properties (List[str]): Name of the properties to calculate
+
+    Returns:
+    - List[pl.Expr]: List of expressions for property columns
+
+    """
+    calculated_property_expressions: List[pl.Expr] = []
+
+    # NOTE: If one of the volume names needed for a property is not found, the property array is not calculated
+    if "BO" in properties and fluid_zone == FluidZone.OIL and set(["HCPV", "STOIIP"]).issubset(volume_df_columns):
+        calculated_property_expressions.append((pl.col("HCPV") / pl.col("STOIIP")).alias("BO"))
+    if "BG" in properties and fluid_zone == FluidZone.GAS and set(["HCPV", "GIIP"]).issubset(volume_df_columns):
+        calculated_property_expressions.append((pl.col("HCPV") / pl.col("GIIP")).alias("BG"))
+    if "NTG" in properties and set(["BULK", "NET"]).issubset(volume_df_columns):
+        calculated_property_expressions.append((pl.col("NET") / pl.col("BULK")).alias("NTG"))
+    if "PORO" in properties and set(["BULK", "PORV"]).issubset(volume_df_columns):
+        calculated_property_expressions.append((pl.col("PORV") / pl.col("BULK")).alias("PORO"))
+    if "PORO_NET" in properties and set(["PORV", "NET"]).issubset(volume_df_columns):
+        calculated_property_expressions.append((pl.col("PORV") / pl.col("NET")).alias("PORO_NET"))
+    if "SW" in properties and set(["HCPV", "PORV"]).issubset(volume_df_columns):
+        calculated_property_expressions.append((1 - pl.col("HCPV") / pl.col("PORV")).alias("SW"))
+
+    return calculated_property_expressions
