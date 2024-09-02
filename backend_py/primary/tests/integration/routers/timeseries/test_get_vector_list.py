@@ -9,16 +9,21 @@ from fmu.sumo.explorer import Explorer
 async def test_get_vector_list(test_user, sumo_test_ensemble_ahm):
 
     client = SumoClient(env="prod")
-    token = client.authenticate()
+    sumo = Explorer(env="prod")
+    cases = [case.uuid for case in sumo.cases]
+    assert "485041ce-ad72-48a3-ac8c-484c0ed95cf8" in cases
+
+    token = "TEST_USER"
     tokens = AccessTokens(sumo_access_token=token)
     user =  AuthenticatedUser(user_id="test_user", username="test_user", access_tokens=tokens)
     assert user.has_sumo_access_token() == True
     assert len(user.get_sumo_access_token()) == 537
 
-    sumo = Explorer(env="prod")
+    
 
-    cases = [case.uuid for case in sumo.cases]
-    assert "485041ce-ad72-48a3-ac8c-484c0ed95cf8" in cases
+
+
+
     res = client.post("/search", json={})
 
     response = await client.post_async("/search", json={})

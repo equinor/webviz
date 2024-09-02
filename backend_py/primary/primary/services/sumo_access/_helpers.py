@@ -11,7 +11,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 def create_sumo_client(access_token: str) -> SumoClient:
-    sumo_client = SumoClient(env="prod")
+    if access_token == "TEST_USER":
+        access_token = None
+    sumo_client = SumoClient(env=config.SUMO_ENV, token=access_token, interactive=False)
     return sumo_client
 
 
