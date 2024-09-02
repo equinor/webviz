@@ -9,8 +9,8 @@ import { TemplatePlotScaleTypes } from "@webviz/well-log-viewer/dist/components/
 
 import { useAtomValue } from "jotai";
 
-import { CurveTrackItemProps } from "./CurveTrackItem";
 import { SortablePlotList } from "./SortablePlotList";
+import { CurveTrackItemProps } from "./SortableTrackItem";
 
 import { TemplateTrackConfig } from "../../atoms/baseAtoms";
 import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";

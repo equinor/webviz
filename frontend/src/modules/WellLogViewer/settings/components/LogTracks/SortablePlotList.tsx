@@ -15,7 +15,7 @@ import { TemplatePlot, TemplatePlotTypes } from "@webviz/well-log-viewer/dist/co
 
 import _ from "lodash";
 
-import { AddItemButton } from "./AddItemButton";
+import { AddItemButton } from "../AddItemButton";
 
 export type SortablePlotListProps = {
     availableCurveHeaders: WellboreLogCurveHeader_api[];
@@ -174,7 +174,6 @@ function SortablePlotItem(props: SortablePlotItemProps) {
 
     const itemTitle = name2 ? `${name} & ${name2}` : name;
 
-    // @ts-expect-error Complains about missing child components. Dont intend to add expansion content, so no children are needed
     return <SortableListItem id={props.plot.name} title={itemTitle} endAdornment={endAdornment} />;
 }
 

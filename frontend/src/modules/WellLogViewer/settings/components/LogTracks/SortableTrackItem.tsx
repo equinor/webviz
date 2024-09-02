@@ -15,7 +15,7 @@ export type CurveTrackItemProps = {
     onDeleteTrack: (track: TemplateTrackConfig) => void;
 };
 
-export function CurveTrackItem(props: CurveTrackItemProps) {
+export function SortableTrackItem(props: CurveTrackItemProps) {
     const [isExpanded, setIsExpanded] = React.useState<boolean>(true);
 
     const itemEndAdornment = (

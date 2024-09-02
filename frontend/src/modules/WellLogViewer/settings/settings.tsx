@@ -18,7 +18,7 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom, selectedWellboreAtom } from "./atoms/derivedAtoms";
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
-import { CurveTracks } from "./components/CurveTracks";
+import { LogTracks } from "./components/LogTracks";
 
 import { InterfaceTypes } from "../interfaces";
 import { useTrackedGlobalValue } from "../utils/hooks";
@@ -111,7 +111,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
 
             <div className="my-1" />
 
-            <CurveTracks statusWriter={statusWriter} />
+            <LogTracks statusWriter={statusWriter} />
         </div>
     );
 }

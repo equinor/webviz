@@ -7,16 +7,16 @@ import { SortableList } from "@lib/components/SortableList";
 import { useAtom } from "jotai";
 import { v4 } from "uuid";
 
-import { AddItemButton } from "./AddItemButton";
-import { CurveTrackItem } from "./CurveTrackItem";
+import { SortableTrackItem } from "./SortableTrackItem";
 
 import { TemplateTrackConfig, logViewerTrackConfigs } from "../../atoms/baseAtoms";
+import { AddItemButton } from "../AddItemButton";
 
-interface CurveTracksProps {
+interface LogTracksProps {
     statusWriter: SettingsStatusWriter;
 }
 
-export function CurveTracks(props: CurveTracksProps): React.ReactNode {
+export function LogTracks(props: LogTracksProps): React.ReactNode {
     const [trackConfigs, setTrackConfigs] = useAtom(logViewerTrackConfigs);
 
     function handleNewPlotTrack() {
@@ -60,7 +60,7 @@ export function CurveTracks(props: CurveTracksProps): React.ReactNode {
 
             <SortableList onItemMoved={handleTrackMove}>
                 {trackConfigs.map((config) => (
-                    <CurveTrackItem
+                    <SortableTrackItem
                         key={config._id}
                         trackConfig={config}
                         statusWriter={props.statusWriter}
