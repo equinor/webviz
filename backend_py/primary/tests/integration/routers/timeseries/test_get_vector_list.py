@@ -16,7 +16,7 @@ async def test_get_vector_list(test_user, sumo_test_ensemble_ahm):
 
     sumo = Explorer(env="prod")
 
-    cases = [case.uuid for case in await sumo.cases]
+    cases = [case.uuid for case in sumo.cases]
     assert cases == []
     
     vector_list = await router.get_vector_list(
