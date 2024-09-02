@@ -68,7 +68,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     const [filteredOptions, setFilteredOptions] = React.useState<SelectOption[]>(props.options);
     const [selectionAnchor, setSelectionAnchor] = React.useState<number | null>(null);
     const [selectedOptionValues, setSelectedOptionValues] = React.useState<string[]>([]);
-    const [prevPropsValue, setPrevPropsValue] = React.useState<string[]>([]);
+    const [prevPropsValue, setPrevPropsValue] = React.useState<string[] | undefined>(undefined);
     const [currentFocusIndex, setCurrentFocusIndex] = React.useState<number>(0);
     const [virtualizationStartIndex, setVirtualizationStartIndex] = React.useState<number>(0);
     const [reportedVirtualizationStartIndex, setReportedVirtualizationStartIndex] = React.useState<number>(0);
@@ -84,9 +84,10 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         filterOptions(newOptions, filterString);
     }
 
-    if (props.value && !isEqual(props.value, prevPropsValue)) {
-        setSelectedOptionValues([...props.value]);
-        setPrevPropsValue([...props.value]);
+    if (!isEqual(props.value, prevPropsValue)) {
+        setPrevPropsValue(props.value ? [...props.value] : undefined);
+        setSelectedOptionValues(props.value ? [...props.value] : []);
+        setSelectionAnchor(props.value ? filteredOptions.findIndex((option) => option.value === props.value[0]) : null);
     }
 
     const handleOnChange = React.useCallback(
@@ -344,6 +345,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
 
         setCurrentFocusIndex(newCurrentKeyboardFocusIndex);
         setVirtualizationStartIndex(newVirtualizationStartIndex);
+        setSelectionAnchor(newFilteredOptions.findIndex((option) => option.value === selectedOptionValues[0]));
     }
 
     function handleFilterChange(event: React.ChangeEvent<HTMLInputElement>) {
