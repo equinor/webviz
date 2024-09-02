@@ -1,0 +1,84 @@
+name: Test access DROGON-READ shared-key
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+  release:
+    types:
+      - published
+  workflow_dispatch:
+  # schedule:
+  #   - cron: "48 4 * * *"
+
+jobs:
+  build_pywheels:
+    name: PY ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        os: [ubuntu-latest]
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # - name: Set up Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: ${{ matrix.python-version }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # - name: Install fmu-sumo
+      #   run: >
+      #     python -m pip install --upgrade pip &&
+      #     python -m pip install .[test]
+
+      - name: 📦 Install poetry and dependencies
+        working-directory: ./backend_py/primary
+        run: |
+          pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry lock --check --no-update  # Check lock file is consistent with pyproject.toml
+          poetry install --with dev
+
+      - name: 🤖 Run tests
+        working-directory: ./backend_py/primary
+        env:
+          WEBVIZ_CLIENT_SECRET: 0
+          WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
+          WEBVIZ_SMDA_RESOURCE_SCOPE: 0
+          WEBVIZ_VDS_HOST_ADDRESS: 0
+          WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
+          WEBVIZ_SSDL_RESOURCE_SCOPE: 0
+          sharedkey: ${{ secrets.SHARED_KEY_DROGON_READ_DEV }}
+        run: |
+          echo "Length of sharedkey variable read from Github Secrets:" ${#sharedkey}
+          mkdir ~/.sumo
+          echo $sharedkey > ~/.sumo/88d2b022-3539-4dda-9e66-853801334a86.sharedkey
+          ls -l ~/.sumo/88d2b022-3539-4dda-9e66-853801334a86.sharedkey
+          pytest -s --timeout=300 ./tests/integration
+
+      # - name: Run tests
+      #   shell: bash
+      #   env:
+      #     sharedkey: ${{ secrets.SHARED_KEY_DROGON_READ_DEV }}
+      #   run: |
+      #     pip list | grep -i sumo
+
+      #     echo "Length of sharedkey variable read from Github Secrets:" ${#sharedkey}
+      #     mkdir ~/.sumo
+      #     echo $sharedkey > ~/.sumo/88d2b022-3539-4dda-9e66-853801334a86.sharedkey
+      #     ls -l ~/.sumo/88d2b022-3539-4dda-9e66-853801334a86.sharedkey
+
+      #     pytest -s --timeout=300 tests/test_access/tst_access_drogon_read_login.py
