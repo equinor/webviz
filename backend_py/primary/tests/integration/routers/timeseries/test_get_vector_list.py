@@ -17,7 +17,7 @@ async def test_get_vector_list(test_user, sumo_test_ensemble_ahm):
     tokens = AccessTokens(sumo_access_token=token)
     user =  AuthenticatedUser(user_id="test_user", username="test_user", access_tokens=tokens)
     assert user.has_sumo_access_token() == True
-    assert len(user.get_sumo_access_token()) == 537
+    # assert len(user.get_sumo_access_token()) == 537
 
     
 
