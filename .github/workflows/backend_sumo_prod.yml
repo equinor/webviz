@@ -57,13 +57,6 @@ jobs:
         working-directory: ./backend_py/primary
         env:
           sharedkey: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
-          WEBVIZ_CLIENT_SECRET: 0
-          WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
-          WEBVIZ_SMDA_RESOURCE_SCOPE: 0
-          WEBVIZ_VDS_HOST_ADDRESS: 0
-          WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
-          WEBVIZ_SSDL_RESOURCE_SCOPE: 0
-
         run: |
           echo "Length of sharedkey variable read from Github Secrets:" ${#sharedkey}
           mkdir ~/.sumo
