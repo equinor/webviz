@@ -252,7 +252,7 @@ function calcMaxColumnWidths<THeading extends TableHeading>(
 const HEADER_HEIGHT_PX = 30;
 const ROW_HEIGHT_PX = 30;
 const ALTERNATING_COLUMN_HEADING_COLORS = ["bg-slate-100", "bg-slate-200"];
-const ALTERNATING_COLUMN_CELL_COLORS = ["bg-slate-50", "bg-slate-100"];
+const ALTERNATING_COLUMN_CELL_COLORS = ["bg-white", "bg-slate-50"];
 
 class AlternatingColumnStyleHelper {
     private _alternatingGroup = 0;
@@ -469,6 +469,8 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
             let additionalClassNames: string = "";
             if (props.alternatingColumnColors) {
                 additionalClassNames = alternatingColumnStyleHelper.getClassNames(key);
+            } else {
+                additionalClassNames = "bg-slate-100";
             }
 
             headingCells.push(
@@ -519,13 +521,15 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
             let additionalClassNames: string = "";
             if (props.alternatingColumnColors) {
                 additionalClassNames = alternatingColumnStyleHelper.getClassNames(cell.id);
+            } else {
+                additionalClassNames = "bg-slate-100";
             }
 
             headingCells.push(
                 <th
                     key={cell.id}
                     className={resolveClassNames(
-                        "p-0 pb-1 text-left",
+                        "p-0 pb-1 text-left border",
                         {
                             "text-center": cell.hasSubHeaders,
                         },

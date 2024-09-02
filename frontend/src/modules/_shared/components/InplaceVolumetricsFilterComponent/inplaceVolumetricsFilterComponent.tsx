@@ -31,6 +31,7 @@ export type InplaceVolumetricsFilterComponentProps = {
     isPending?: boolean;
     errorMessage?: string;
     additionalSettings?: React.ReactNode;
+    areCurrentlySelectedTablesComparable?: boolean;
 };
 
 export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilterComponentProps): React.ReactNode {
@@ -192,6 +193,11 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));
     const fluidZoneOptions = props.availableFluidZones.map((zone) => ({ value: zone, label: zone }));
 
+    let errorMessage: string | undefined = undefined;
+    if (props.areCurrentlySelectedTablesComparable === false) {
+        errorMessage = "Selected tables are not comparable";
+    }
+
     return (
         <>
             <CollapsibleGroup title="Ensembles" expanded>
@@ -223,27 +229,35 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                             size={3}
                         />
                     </CollapsibleGroup>
-                    <CollapsibleGroup title="Identifier filters" expanded>
-                        <div className="flex flex-col gap-2">
-                            {props.availableIdentifiersWithValues.map((identifier) => (
-                                <CollapsibleGroup key={identifier.identifier} title={identifier.identifier} expanded>
-                                    <SelectWithQuickSelectButtons
-                                        options={identifier.values.map((value) => ({
-                                            value: value,
-                                            label: value.toString(),
-                                        }))}
-                                        value={
-                                            identifiersValues.find((el) => el.identifier === identifier.identifier)
-                                                ?.values ?? []
-                                        }
-                                        onChange={(value) => handleIdentifierValuesChange(identifier.identifier, value)}
-                                        multiple
-                                        size={Math.max(Math.min(identifier.values.length, 10), 3)}
-                                    />
-                                </CollapsibleGroup>
-                            ))}
-                        </div>
-                    </CollapsibleGroup>
+                    <PendingWrapper isPending={false} errorMessage={errorMessage}>
+                        <CollapsibleGroup title="Identifier filters" expanded>
+                            <div className="flex flex-col gap-2">
+                                {props.availableIdentifiersWithValues.map((identifier) => (
+                                    <CollapsibleGroup
+                                        key={identifier.identifier}
+                                        title={identifier.identifier}
+                                        expanded
+                                    >
+                                        <SelectWithQuickSelectButtons
+                                            options={identifier.values.map((value) => ({
+                                                value: value,
+                                                label: value.toString(),
+                                            }))}
+                                            value={
+                                                identifiersValues.find((el) => el.identifier === identifier.identifier)
+                                                    ?.values ?? []
+                                            }
+                                            onChange={(value) =>
+                                                handleIdentifierValuesChange(identifier.identifier, value)
+                                            }
+                                            multiple
+                                            size={Math.max(Math.min(identifier.values.length, 10), 3)}
+                                        />
+                                    </CollapsibleGroup>
+                                ))}
+                            </div>
+                        </CollapsibleGroup>
+                    </PendingWrapper>
                 </div>
             </PendingWrapper>
         </>
