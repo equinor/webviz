@@ -249,6 +249,7 @@ async def get_delta_surface_data(
     perf_metrics = ResponsePerfMetrics(response)
 
     access_token = authenticated_user.get_sumo_access_token()
+    perf_metrics.record_lap("get-token")
 
     addr_a = decode_surf_addr_str(surf_a_addr_str)
     addr_b = decode_surf_addr_str(surf_b_addr_str)
@@ -259,6 +260,8 @@ async def get_delta_surface_data(
 
 
     sumo_client = create_sumo_client(access_token)
+    perf_metrics.record_lap("create-sumo-client")
+
     async with asyncio.TaskGroup() as tg:
         surf_a_task = tg.create_task(_get_fully_addressed_surf_async(sumo_client, addr_a, perf_metrics.spawn_sub_metrics(), "A"))
         surf_b_task = tg.create_task(_get_fully_addressed_surf_async(sumo_client, addr_b, perf_metrics.spawn_sub_metrics(), "B"))
