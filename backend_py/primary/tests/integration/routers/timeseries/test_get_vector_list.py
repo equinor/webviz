@@ -22,9 +22,9 @@ async def test_get_vector_list(test_user, sumo_test_ensemble_ahm):
 
     response = await client.post_async("/search", json={})
     assert 1 == 1
-    # vector_list = await router.get_vector_list(
-    #     None, user, sumo_test_ensemble_ahm.case_uuid, sumo_test_ensemble_ahm.ensemble_name
-    # )
+    vector_list = await router.get_vector_list(
+        None, user, sumo_test_ensemble_ahm.case_uuid, sumo_test_ensemble_ahm.ensemble_name
+    )
     
-    # assert len(vector_list) == 786
-    # assert isinstance(vector_list[0], schemas.VectorDescription)
+    assert len(vector_list) == 786
+    assert isinstance(vector_list[0], schemas.VectorDescription)
