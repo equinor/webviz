@@ -9,6 +9,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
 import { TagOption, TagPicker } from "@lib/components/TagPicker";
+import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 import {
     InplaceVolumetricStatisticEnumToStringMapping,
     SourceAndTableIdentifierUnion,
@@ -167,6 +168,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             selectedTableNames={selectedTableNames}
             onChange={handleFilterChange}
             additionalSettings={tableSettings}
+            areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
         />
     );
 }
