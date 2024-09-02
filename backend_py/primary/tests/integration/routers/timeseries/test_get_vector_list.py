@@ -17,7 +17,7 @@ async def test_get_vector_list(test_user, sumo_test_ensemble_ahm):
     sumo = Explorer(env="prod")
 
     cases = [case.uuid for case in sumo.cases]
-    # assert cases == []
+    assert "485041ce-ad72-48a3-ac8c-484c0ed95cf8" in cases
     res = client.post("/search", json={})
 
     response = await client.post_async("/search", json={})
