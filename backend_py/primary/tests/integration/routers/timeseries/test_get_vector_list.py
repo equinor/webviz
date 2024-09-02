@@ -3,7 +3,7 @@ from primary.routers.timeseries import schemas
 from sumo.wrapper import SumoClient
 
 from primary.services.utils.authenticated_user import AuthenticatedUser, AccessTokens
-
+from fmu.sumo.explorer import Explorer
 
 async def test_get_vector_list(test_user, sumo_test_ensemble_ahm):
 
@@ -14,7 +14,10 @@ async def test_get_vector_list(test_user, sumo_test_ensemble_ahm):
     assert user.has_sumo_access_token() == True
     assert len(user.get_sumo_access_token()) == 537
 
+    sumo = Explorer(env="prod")
 
+    cases = [case.uuid for case in await sumo.cases]
+    assert cases == []
     
     vector_list = await router.get_vector_list(
         None, user, sumo_test_ensemble_ahm.case_uuid, sumo_test_ensemble_ahm.ensemble_name
