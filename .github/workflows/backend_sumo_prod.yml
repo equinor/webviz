@@ -53,14 +53,19 @@ jobs:
           poetry install --with dev
 
       - name: 🤖 Run tests
-        shell: bash
         working-directory: ./backend_py/primary
         env:
-          sharedkey: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
+          WEBVIZ_CLIENT_SECRET: 0
+          WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
+          WEBVIZ_SMDA_RESOURCE_SCOPE: 0
+          WEBVIZ_VDS_HOST_ADDRESS: 0
+          WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
+          WEBVIZ_SSDL_RESOURCE_SCOPE: 0
+          sharedkey_sumo_prod: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
         run: |
-          echo "Length of sharedkey variable read from Github Secrets:" ${#sharedkey}
+          echo "Length of sharedkey_sumo_prod variable read from Github Secrets:" ${#sharedkey_sumo_prod}
           mkdir ~/.sumo
-          echo $sharedkey > ~/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
+          echo $sharedkey_sumo_prod > ~/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
           ls -l ~/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
           pytest -s --timeout=300 ./tests/integration
 
