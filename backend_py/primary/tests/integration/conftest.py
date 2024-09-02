@@ -2,7 +2,6 @@ import os
 from dataclasses import dataclass
 
 import pytest
-from sumo.wrapper import SumoClient
 
 from primary.services.utils.authenticated_user import AuthenticatedUser, AccessTokens
 
@@ -20,12 +19,12 @@ class SumoTestEnsemble:
     ensemble_name: str
 
 
-@pytest.fixture(name="sumo_test_ensemble_ahm")
-def fixture_sumo_test_ensemble_ahm() -> SumoTestEnsemble:
+@pytest.fixture(name="sumo_test_ensemble_prod", scope="session")
+def fixture_sumo_test_ensemble_prod() -> SumoTestEnsemble:
     return SumoTestEnsemble(case_uuid="485041ce-ad72-48a3-ac8c-484c0ed95cf8", ensemble_name="iter-0")
 
 
-@pytest.fixture(name="test_user")
+@pytest.fixture(name="test_user", scope="session")
 def fixture_test_user():
     token = "DUMMY_TOKEN_FOR_TESTING"
     tokens = AccessTokens(sumo_access_token=token)
