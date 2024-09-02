@@ -13,6 +13,10 @@ const filterAtom = atom((get) => {
     return settingsToViewInterfaceInitialization.filter(get);
 });
 
+export const areSelectedTablesComparableAtom = atom((get) => {
+    return settingsToViewInterfaceInitialization.areSelectedTablesComparable(get);
+});
+
 export const tableTypeAtom = atom((get) => {
     return settingsToViewInterfaceInitialization.tableType(get);
 });

@@ -11,7 +11,7 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import { useAtomValue } from "jotai";
 
-import { hasAllQueriesFailedAtom, isQueryFetchingAtom } from "./atoms/derivedAtoms";
+import { areSelectedTablesComparableAtom, hasAllQueriesFailedAtom, isQueryFetchingAtom } from "./atoms/derivedAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useTableBuilder } from "./hooks/useTableBuilder";
 
@@ -26,6 +26,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const hasAllQueriesFailed = useAtomValue(hasAllQueriesFailedAtom);
     const isQueryFetching = useAtomValue(isQueryFetchingAtom);
+    const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
 
     useMakeViewStatusWriterMessages(statusWriter);
     statusWriter.setLoading(isQueryFetching);
@@ -65,12 +66,20 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         [props.workbenchServices]
     );
 
+    function createErrorMessage(): string | null {
+        if (hasAllQueriesFailed) {
+            return "Failed to load table data";
+        }
+        if (!areSelectedTablesComparable) {
+            return "Selected tables are not comparable";
+        }
+
+        return null;
+    }
+
     return (
         <div ref={divRef} className="w-full h-full relative">
-            <PendingWrapper
-                isPending={isQueryFetching}
-                errorMessage={hasAllQueriesFailed ? "Failed to load table data" : undefined}
-            >
+            <PendingWrapper isPending={isQueryFetching} errorMessage={createErrorMessage() ?? undefined}>
                 <TableComponent
                     headings={headings}
                     data={tableRows}

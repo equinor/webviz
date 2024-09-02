@@ -46,6 +46,11 @@ export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get)
     return new TableDefinitionsAccessor(tableDefinitions.isLoading ? [] : tableDefinitions.data, selectedTableNames);
 });
 
+export const areSelectedTablesComparableAtom = atom<boolean>((get) => {
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+    return tableDefinitionsAccessor.getAreTablesComparable();
+});
+
 export const selectedTableNamesAtom = atom<string[]>((get) => {
     const userSelectedTableNames = get(userSelectedTableNamesAtom);
     const tableDefinitionsQueryResult = get(tableDefinitionsQueryAtom);

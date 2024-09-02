@@ -7,6 +7,7 @@ import { TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import {
     accumulateFluidZonesAtom,
+    areSelectedTablesComparableAtom,
     ensembleIdentsWithRealizationsAtom,
     fluidZonesAtom,
     groupByIdentifiersAtom,
@@ -26,8 +27,9 @@ export const perRealizationTableDataResultsAtom = atomWithQueries((get) => {
     const fluidZones = get(fluidZonesAtom);
     const identifiersValues = get(identifiersValuesAtom);
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
+    const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
 
-    const enableQueries = tableType === TableType.PER_REALIZATION;
+    const enableQueries = tableType === TableType.PER_REALIZATION && areSelectedTablesComparable;
 
     return useGetAggregatedPerRealizationTableDataQueries(
         ensembleIdentsWithRealizations,
@@ -51,8 +53,9 @@ export const statisticalTableDataResultsAtom = atomWithQueries((get) => {
     const fluidZones = get(fluidZonesAtom);
     const identifiersValues = get(identifiersValuesAtom);
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
+    const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
 
-    const enableQueries = tableType === TableType.STATISTICAL;
+    const enableQueries = tableType === TableType.STATISTICAL && areSelectedTablesComparable;
 
     return useGetAggregatedStatisticalTableDataQueries(
         ensembleIdentsWithRealizations,
