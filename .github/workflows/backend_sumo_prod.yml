@@ -27,12 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🤖 Get secrets
+      - name: 🤖 Get shared key from Sumo
         working-directory: ./backend_py/primary
         env:
           SHARED_KEY_SUMO_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
         run: |
           echo "Length of SHARED_KEY_SUMO_PROD variable read from Github Secrets:" ${#SHARED_KEY_SUMO_PROD}
+          if [ ${#SHARED_KEY_SUMO_PROD} -eq 0 ]; then
+            echo "Error: SHARED_KEY_SUMO_PROD is empty. Stopping the action."
+            exit 1
+          fi
           mkdir ~/.sumo
           echo $SHARED_KEY_SUMO_PROD > ~/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
           ls -l ~/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
