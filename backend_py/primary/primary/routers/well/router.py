@@ -59,9 +59,7 @@ async def get_field_well_trajectories(
     else:
         well_access = SmdaWellAccess(authenticated_user.get_smda_access_token())
 
-    wellbore_trajectories = await well_access.get_field_wellbore_trajectories(
-        field_identifier=field_identifier
-    )
+    wellbore_trajectories = await well_access.get_field_wellbore_trajectories(field_identifier=field_identifier)
 
     return [
         converters.convert_well_trajectory_to_schema(wellbore_trajectory)

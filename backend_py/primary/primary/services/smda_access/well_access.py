@@ -1,7 +1,6 @@
-from typing import List, Optional
+from typing import List
 
 from .types import WellborePick, WellboreTrajectory, WellboreHeader
-
 from .queries.get_wellbore_headers import get_wellbore_headers
 from .queries.get_wellbore_picks_for_field import get_wellbore_picks_for_field
 from .queries.get_wellbore_trajectories import get_wellbore_trajectories, get_field_wellbore_trajectories
@@ -20,9 +19,7 @@ class WellAccess:
         )
         return wellbore_picks
 
-    async def get_field_wellbore_trajectories(
-        self, field_identifier: str
-    ) -> List[WellboreTrajectory]:
+    async def get_field_wellbore_trajectories(self, field_identifier: str) -> List[WellboreTrajectory]:
         wellbore_trajectories = await get_field_wellbore_trajectories(
             access_token=self._smda_token,
             field_identifier=field_identifier,
