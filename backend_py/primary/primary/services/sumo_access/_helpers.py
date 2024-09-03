@@ -11,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def create_sumo_client(access_token: str) -> SumoClient:
-    if access_token == "DUMMY_TOKEN_FOR_TESTING": # nosec bandit B105
+    if access_token == "DUMMY_TOKEN_FOR_TESTING":  # nosec bandit B105
         sumo_client = SumoClient(env=config.SUMO_ENV, interactive=False)
     else:
         sumo_client = SumoClient(env=config.SUMO_ENV, token=access_token, interactive=False)
