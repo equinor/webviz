@@ -44,7 +44,7 @@ class VfpAccess:
     async def get_all_vfp_table_names_for_realization(self, realization: int) -> List[str]:
         """Returns all VFP table names/tagnames for a realization."""
         table_collection = self._case.tables.filter(
-            content="lift_curves", realization=1, iteration=self._iteration_name
+            content="lift_curves", realization=realization, iteration=self._iteration_name
         )
         table_count = await table_collection.length_async()
         if table_count == 0:
@@ -69,7 +69,7 @@ class VfpAccess:
                 f"Multiple VFP tables found with tagname: {tagname} and realization: {realization}", Service.SUMO
             )
 
-        sumo_table = table_collection[0]
+        sumo_table = await table_collection.getitem_async(0)
         byte_stream: BytesIO = await sumo_table.blob_async
         pa_table: pa.Table = pq.read_table(byte_stream)
 
