@@ -48,7 +48,7 @@ import {
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-import { SettingsToViewInterface } from "../settingsToViewInterface";
+import { Interfaces } from "../interfaces";
 import {
     FanchartStatisticOption,
     FanchartStatisticOptionEnumToStringMapping,
@@ -61,10 +61,7 @@ import {
     VisualizationModeEnumToStringMapping,
 } from "../typesAndEnums";
 
-export function Settings({
-    settingsContext,
-    workbenchSession,
-}: ModuleSettingsProps<Record<string, never>, SettingsToViewInterface>) {
+export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
     const statusWriter = useSettingsStatusWriter(settingsContext);
 
