@@ -39,20 +39,17 @@ export class WellService {
      * Get Field Well Trajectories
      * Get well trajectories for field
      * @param fieldIdentifier Sumo field identifier
-     * @param uniqueWellboreIdentifiers Optional subset of well names
      * @returns WellboreTrajectory Successful Response
      * @throws ApiError
      */
     public getFieldWellTrajectories(
         fieldIdentifier: string,
-        uniqueWellboreIdentifiers?: Array<string>,
     ): CancelablePromise<Array<WellboreTrajectory>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/well/field_well_trajectories/',
             query: {
                 'field_identifier': fieldIdentifier,
-                'unique_wellbore_identifiers': uniqueWellboreIdentifiers,
             },
             errors: {
                 422: `Validation Error`,
