@@ -32,6 +32,7 @@ export type InplaceVolumetricsFilterComponentProps = {
     errorMessage?: string;
     additionalSettings?: React.ReactNode;
     areCurrentlySelectedTablesComparable?: boolean;
+    debounceMs?: number;
 };
 
 export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilterComponentProps): React.ReactNode {
@@ -50,6 +51,8 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     >(props.selectedIdentifiersValues);
     const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumetricsFilter | null>(null);
 
+    const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
     if (!isEqual(props.selectedEnsembleIdents, prevEnsembleIdents)) {
         setEnsembleIdents(props.selectedEnsembleIdents);
         setPrevEnsembleIdents(props.selectedEnsembleIdents);
@@ -66,7 +69,20 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     }
 
     if (!isEqual(props.selectedIdentifiersValues, prevIdentifiersValues)) {
-        setIdentifiersValues(props.selectedIdentifiersValues);
+        setIdentifiersValues((prev) => {
+            const newIdentifiersValues = [...prev];
+            for (const [index, identifier] of props.selectedIdentifiersValues.entries()) {
+                if (
+                    !isEqual(
+                        prevIdentifiersValues.find((filter) => filter.identifier === identifier.identifier)?.values,
+                        identifier.values
+                    )
+                ) {
+                    newIdentifiersValues[index] = { ...identifier };
+                }
+            }
+            return newIdentifiersValues;
+        });
         setPrevIdentifiersValues(props.selectedIdentifiersValues);
     }
 
@@ -117,14 +133,19 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
         setPrevSyncedFilter(syncedFilter);
     }
 
-    function handleEnsembleIdentsChange(newEnsembleIdents: EnsembleIdent[], publish = true): void {
-        setEnsembleIdents(newEnsembleIdents);
-        const filter = {
-            ensembleIdents: newEnsembleIdents,
-            tableNames: tableNames,
-            fluidZones,
-            identifiersValues: identifiersValues,
+    React.useEffect(function mountEffect() {
+        const currentDebounceTimeoutRef = debounceTimeoutRef.current;
+        return function unmountEffect() {
+            if (currentDebounceTimeoutRef) {
+                clearTimeout(currentDebounceTimeoutRef);
+            }
         };
+    }, []);
+
+    function callOnChangeAndMaybePublish(filter: InplaceVolumetricsFilter, publish: boolean): void {
+        if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current);
+        }
         props.onChange(filter);
         if (publish) {
             syncHelper.publishValue(
@@ -135,17 +156,36 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
         }
     }
 
+    function maybeDebounceOnChange(filter: InplaceVolumetricsFilter, publish: boolean): void {
+        if (debounceTimeoutRef.current) {
+            clearTimeout(debounceTimeoutRef.current);
+        }
+
+        if (!props.debounceMs) {
+            callOnChangeAndMaybePublish(filter, publish);
+            return;
+        }
+
+        debounceTimeoutRef.current = setTimeout(() => {
+            callOnChangeAndMaybePublish(filter, publish);
+        }, props.debounceMs);
+    }
+
+    function handleEnsembleIdentsChange(newEnsembleIdents: EnsembleIdent[], publish = true): void {
+        setEnsembleIdents(newEnsembleIdents);
+        const filter = {
+            ensembleIdents: newEnsembleIdents,
+            tableNames: tableNames,
+            fluidZones,
+            identifiersValues: identifiersValues,
+        };
+        callOnChangeAndMaybePublish(filter, publish);
+    }
+
     function handleTableNamesChange(newTableNames: string[], publish = true): void {
         setTableNames(newTableNames);
         const filter = { ensembleIdents, tableNames: newTableNames, fluidZones, identifiersValues: identifiersValues };
-        props.onChange(filter);
-        if (publish) {
-            syncHelper.publishValue(
-                SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
-                "global.syncValue.inplaceVolumetricsFilter",
-                filter
-            );
-        }
+        callOnChangeAndMaybePublish(filter, publish);
     }
 
     function handleFluidZoneChange(newFluidZones: FluidZone_api[], publish = true): void {
@@ -156,14 +196,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             fluidZones: newFluidZones,
             identifiersValues: identifiersValues,
         };
-        props.onChange(filter);
-        if (publish) {
-            syncHelper.publishValue(
-                SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
-                "global.syncValue.inplaceVolumetricsFilter",
-                filter
-            );
-        }
+        maybeDebounceOnChange(filter, publish);
     }
 
     function handleIdentifierValuesChange(
@@ -180,14 +213,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
         }
         setIdentifiersValues(newIdentifiersValues);
         const filter = { ensembleIdents, tableNames: tableNames, fluidZones, identifiersValues: newIdentifiersValues };
-        props.onChange(filter);
-        if (publish) {
-            syncHelper.publishValue(
-                SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
-                "global.syncValue.inplaceVolumetricsFilter",
-                filter
-            );
-        }
+        maybeDebounceOnChange(filter, publish);
     }
 
     const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));

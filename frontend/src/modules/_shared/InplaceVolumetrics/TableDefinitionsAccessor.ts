@@ -65,7 +65,7 @@ export class TableDefinitionsAccessor {
     private makeIntersections(): void {
         const fluidZones: Set<FluidZone_api> = new Set();
         const resultNames: Set<InplaceVolumetricResultName_api> = new Set();
-        let identifiersWithValuesIntersection: InplaceVolumetricsIdentifierWithValues_api[] = [];
+        const identifiersWithValuesIntersection: InplaceVolumetricsIdentifierWithValues_api[] = [];
 
         let index = 0;
         for (const tableDefinition of this._tableDefinitions) {
@@ -171,5 +171,65 @@ export class TableDefinitionsAccessor {
 
     getAreTablesComparable(): boolean {
         return !this._tablesNotComparable;
+    }
+
+    hasEnsembleIdents(ensembleIdents: EnsembleIdent[]): boolean {
+        for (const ensembleIdent of ensembleIdents) {
+            if (!this._uniqueEnsembleIdents.includes(ensembleIdent)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    hasTableNames(tableNames: string[]): boolean {
+        for (const tableName of tableNames) {
+            if (!this._tableNamesIntersection.includes(tableName)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    hasFluidZones(fluidZones: FluidZone_api[]): boolean {
+        for (const fluidZone of fluidZones) {
+            if (!this._fluidZonesIntersection.includes(fluidZone)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    hasResultNames(resultNames: InplaceVolumetricResultName_api[]): boolean {
+        for (const resultName of resultNames) {
+            if (!this._resultNamesIntersection.includes(resultName)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    hasIdentifiersWithValues(identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[]): boolean {
+        for (const identifierValue of identifiersWithValues) {
+            const identifier = identifierValue.identifier;
+            const tableDefinitionsIdentifier = this._identifiersWithIntersectionValues.find(
+                (el) => el.identifier === identifier
+            );
+            if (!tableDefinitionsIdentifier) {
+                return false;
+            }
+
+            for (const value of identifierValue.values) {
+                if (!tableDefinitionsIdentifier.values.includes(value)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

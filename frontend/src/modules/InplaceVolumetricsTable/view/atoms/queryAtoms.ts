@@ -5,6 +5,7 @@ import {
 } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
+import { areTableDefinitionSelectionsValidAtom } from "./baseAtoms";
 import {
     accumulateFluidZonesAtom,
     areSelectedTablesComparableAtom,
@@ -28,8 +29,10 @@ export const perRealizationTableDataResultsAtom = atomWithQueries((get) => {
     const identifiersValues = get(identifiersValuesAtom);
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
+    const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
 
-    const enableQueries = tableType === TableType.PER_REALIZATION && areSelectedTablesComparable;
+    const enableQueries =
+        tableType === TableType.PER_REALIZATION && areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
     return useGetAggregatedPerRealizationTableDataQueries(
         ensembleIdentsWithRealizations,
@@ -54,8 +57,10 @@ export const statisticalTableDataResultsAtom = atomWithQueries((get) => {
     const identifiersValues = get(identifiersValuesAtom);
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
     const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
+    const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
 
-    const enableQueries = tableType === TableType.STATISTICAL && areSelectedTablesComparable;
+    const enableQueries =
+        tableType === TableType.STATISTICAL && areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
     return useGetAggregatedStatisticalTableDataQueries(
         ensembleIdentsWithRealizations,
