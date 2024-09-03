@@ -6,13 +6,13 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 
-import { Interface, State } from "./state";
+import { Interfaces } from "./interfaces";
 import { VfpDataAccessor } from "./utils/VfpDataAccessor";
 import { VfpPlotBuilder } from "./utils/VfpPlotBuilder";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 
-export function View({ viewContext, workbenchSettings }: ModuleViewProps<State, Interface>) {
+export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) {
     const colorScale = workbenchSettings.useContinuousColorScale({gradientType: ColorScaleGradientType.Sequential})
 
     const vfpDataQuery = viewContext.useSettingsToViewInterfaceValue("vfpDataQuery");

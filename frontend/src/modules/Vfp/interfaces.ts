@@ -14,9 +14,7 @@ import { selectedColorByAtom } from "./settings/atoms/derivedAtoms";
 import { UseQueryResult } from "@tanstack/react-query";
 import { VfpProdTable_api } from "@api";
 
-export type State = Record<string, never>;
-
-export type Interface = {
+type SettingsToViewInterface = {
     vfpDataQuery: UseQueryResult<VfpProdTable_api, Error>;
     selectedThpIndices: number[] | null;
     selectedWfrIndices: number[] | null;
@@ -26,7 +24,11 @@ export type Interface = {
     selectedColorBy: VfpParam;
 };
 
-export const interfaceInitialization: InterfaceInitialization<Interface> = {
+export type Interfaces = {
+    settingsToView: SettingsToViewInterface;
+};
+
+export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     vfpDataQuery: (get) => {
         return get(vfpTableQueryAtom);
     },

@@ -38,11 +38,11 @@ import {
 } from "./atoms/derivedAtoms";
 import { vfpTableQueryAtom } from "./atoms/queryAtoms";
 
-import { Interface, State } from "../state";
+import { Interfaces } from "../interfaces";
 import { PressureOption, VfpParam } from "../types";
 import { VfpDataAccessor } from "../utils/VfpDataAccessor";
 
-export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<State, Interface>) {
+export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
     const ensembleSet = useEnsembleSet(workbenchSession);
 

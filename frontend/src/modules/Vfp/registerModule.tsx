@@ -2,15 +2,15 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
+import { Interfaces } from "./interfaces";
 import { preview } from "./preview";
-import { Interface, State } from "./state";
 
 export const MODULE_NAME = "Vfp";
 
 const description =
     "Visualizes Vfp tables from Eclipse.";
 
-ModuleRegistry.registerModule<State, Interface>({
+ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     defaultTitle: "VFP",
     category: ModuleCategory.MAIN,
