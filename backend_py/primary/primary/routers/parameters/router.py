@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Query
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.parameter_access import ParameterAccess
-from primary.services.sumo_access.parameter_types import EnsembleParameter, EnsembleSensitivity
 from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
@@ -53,16 +52,25 @@ async def get_parameter(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     parameter_name: str = Query(description="Parameter name"),
-) -> Optional[EnsembleParameter]:
+) -> Optional[schemas.EnsembleParameter]:
     """Get a parameter in a given Sumo ensemble"""
 
     access = await ParameterAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    parameters = (await access.get_parameters_and_sensitivities()).parameters
-    for parameter in parameters:
+    parameters_and_sensitivities = await access.get_parameters_and_sensitivities()
+    for parameter in parameters_and_sensitivities.parameters:
         if parameter.name == parameter_name:
-            return parameter
+            return schemas.EnsembleParameter(
+                name=parameter.name,
+                is_logarithmic=parameter.is_logarithmic,
+                is_numerical=parameter.is_numerical,
+                is_constant=parameter.is_constant,
+                group_name=parameter.group_name,
+                descriptive_name=parameter.descriptive_name,
+                realizations=parameter.realizations,
+                values=parameter.values,
+            )
     return None
 
 
@@ -71,12 +79,27 @@ async def get_parameters(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-) -> List[EnsembleParameter]:
+) -> List[schemas.EnsembleParameter]:
     access = await ParameterAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    parameters = (await access.get_parameters_and_sensitivities()).parameters
-    return [parameter for parameter in parameters]
+    parameters_and_sensitivities = await access.get_parameters_and_sensitivities()
+    parameters_ret_arr: List[schemas.EnsembleParameter] = []
+    for parameter in parameters_and_sensitivities.parameters:
+        parameters_ret_arr.append(
+            schemas.EnsembleParameter(
+                name=parameter.name,
+                is_logarithmic=parameter.is_logarithmic,
+                is_numerical=parameter.is_numerical,
+                is_constant=parameter.is_constant,
+                group_name=parameter.group_name,
+                descriptive_name=parameter.descriptive_name,
+                realizations=parameter.realizations,
+                values=parameter.values,
+            )
+        )
+
+    return parameters_ret_arr
 
 
 @router.get("/is_sensitivity_run/")
@@ -99,12 +122,25 @@ async def get_sensitivities(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
-) -> List[EnsembleSensitivity]:
+) -> List[schemas.EnsembleSensitivity]:
     """Get sensitivities in a given Sumo ensemble"""
 
     access = await ParameterAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
-    sensitivities = (await access.get_parameters_and_sensitivities()).sensitivities
-    return sensitivities if sensitivities else []
+    parameters_and_sensitivities = (await access.get_parameters_and_sensitivities())
+    sensitivities_ret_arr: List[schemas.EnsembleSensitivity] = []
+    for sensitivity in parameters_and_sensitivities.sensitivities:
+        sensitivities_ret_arr.append(
+            schemas.EnsembleSensitivity(
+                name=sensitivity.name,
+                type=sensitivity.type,
+                cases=[
+                    schemas.EnsembleSensitivityCase(name=case.name, realizations=case.realizations)
+                    for case in sensitivity.cases
+                ],
+            )
+        )
+    
+    return sensitivities_ret_arr

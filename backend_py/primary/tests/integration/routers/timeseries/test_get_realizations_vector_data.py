@@ -15,14 +15,14 @@ from primary.routers.timeseries import schemas
     ],
 )
 async def test_get_realizations_vector_data_dates(
-    test_user, sumo_test_ensemble_prod, frequency, date_count, expected_mean
+    test_user, sumo_test_ensemble_ahm, frequency, date_count, expected_mean
 ) -> None:
 
     realization_data = await router.get_realizations_vector_data(
         None,
         test_user,
-        sumo_test_ensemble_prod.case_uuid,
-        sumo_test_ensemble_prod.ensemble_name,
+        sumo_test_ensemble_ahm.case_uuid,
+        sumo_test_ensemble_ahm.ensemble_name,
         "FOPT",
         frequency,
     )
@@ -43,14 +43,14 @@ async def test_get_realizations_vector_data_dates(
     ],
 )
 async def test_get_realizations_vector_data_realizations(
-    test_user, sumo_test_ensemble_prod, realizations, real_count, expected_mean
+    test_user, sumo_test_ensemble_ahm, realizations, real_count, expected_mean
 ) -> None:
 
     realization_data = await router.get_realizations_vector_data(
         None,
         test_user,
-        sumo_test_ensemble_prod.case_uuid,
-        sumo_test_ensemble_prod.ensemble_name,
+        sumo_test_ensemble_ahm.case_uuid,
+        sumo_test_ensemble_ahm.ensemble_name,
         "FOPT",
         schemas.Frequency.YEARLY,
         realizations,

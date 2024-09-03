@@ -13,9 +13,6 @@ from . import schemas
 router = APIRouter()
 
 
-
-
-
 @router.get("/fields")
 async def get_fields(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -54,8 +51,6 @@ async def get_ensembles(
     """Get list of ensembles for a case"""
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     iteration_info_arr = await case_inspector.get_iterations_async()
-
-    print(iteration_info_arr)
 
     return [schemas.EnsembleInfo(name=it.name, realization_count=it.realization_count) for it in iteration_info_arr]
 

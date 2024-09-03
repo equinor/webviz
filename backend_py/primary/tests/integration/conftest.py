@@ -21,8 +21,8 @@ class SumoTestEnsemble:
     ensemble_name: str
 
 
-@pytest.fixture(name="sumo_test_ensemble_prod", scope="session")
-def fixture_sumo_test_ensemble_prod() -> SumoTestEnsemble:
+@pytest.fixture(name="sumo_test_ensemble_ahm", scope="session")
+def fixture_sumo_test_ensemble_ahm() -> SumoTestEnsemble:
     return SumoTestEnsemble(
         field_identifier="DROGON",
         case_name="webviz_ahm_case",
@@ -30,7 +30,14 @@ def fixture_sumo_test_ensemble_prod() -> SumoTestEnsemble:
         ensemble_name="iter-0",
     )
 
-
+@pytest.fixture(name="sumo_test_ensemble_design", scope="session")
+def fixture_sumo_test_ensemble_design() -> SumoTestEnsemble:
+    return SumoTestEnsemble(
+        field_identifier="DROGON",
+        case_name="01_drogon_design",
+        case_uuid="b89873c8-6f4d-40e5-978c-afc47beb2a26",
+        ensemble_name="iter-0",
+    )
 @pytest.fixture(name="test_user", scope="session")
 def fixture_test_user():
     token = "DUMMY_TOKEN_FOR_TESTING"
