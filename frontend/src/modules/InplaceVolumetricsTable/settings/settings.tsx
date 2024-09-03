@@ -168,6 +168,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             onChange={handleFilterChange}
             additionalSettings={tableSettings}
             areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
+            debounceMs={1500}
         />
     );
 }

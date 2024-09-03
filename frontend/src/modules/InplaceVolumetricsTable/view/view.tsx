@@ -11,7 +11,12 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import { useAtomValue } from "jotai";
 
-import { areSelectedTablesComparableAtom, hasAllQueriesFailedAtom, isQueryFetchingAtom } from "./atoms/derivedAtoms";
+import { areTableDefinitionSelectionsValidAtom } from "./atoms/baseAtoms";
+import {
+    areSelectedTablesComparableAtom,
+    hasAllQueriesFailedAtom as haveAllQueriesFailedAtom,
+    isQueryFetchingAtom,
+} from "./atoms/derivedAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useTableBuilder } from "./hooks/useTableBuilder";
 
@@ -24,9 +29,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const divRef = React.useRef<HTMLDivElement>(null);
     const divBoundingRect = useElementBoundingRect(divRef);
 
-    const hasAllQueriesFailed = useAtomValue(hasAllQueriesFailedAtom);
+    const haveAllQueriesFailed = useAtomValue(haveAllQueriesFailedAtom);
     const isQueryFetching = useAtomValue(isQueryFetchingAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
+    const areTableDefinitionSelectionsValid = useAtomValue(areTableDefinitionSelectionsValidAtom);
 
     useMakeViewStatusWriterMessages(statusWriter);
     statusWriter.setLoading(isQueryFetching);
@@ -67,7 +73,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     );
 
     function createErrorMessage(): string | null {
-        if (hasAllQueriesFailed) {
+        if (haveAllQueriesFailed) {
             return "Failed to load table data";
         }
         if (!areSelectedTablesComparable) {
@@ -77,9 +83,14 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         return null;
     }
 
+    // If a user selects a single table first and initiates a fetch but then selects a set of tables that are not comparable,
+    // we don't want to show that the module is pending, but rather immediately show the error message that the tables are not comparable.
+    // The query is still fetching, but we don't want to show the pending state.
+    const isPending = isQueryFetching && areSelectedTablesComparable;
+
     return (
         <div ref={divRef} className="w-full h-full relative">
-            <PendingWrapper isPending={isQueryFetching} errorMessage={createErrorMessage() ?? undefined}>
+            <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
                 <TableComponent
                     headings={headings}
                     data={tableRows}

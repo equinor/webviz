@@ -46,6 +46,43 @@ export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get)
     return new TableDefinitionsAccessor(tableDefinitions.isLoading ? [] : tableDefinitions.data, selectedTableNames);
 });
 
+export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedTableNames = get(selectedTableNamesAtom);
+    const selectedFluidZones = get(selectedFluidZonesAtom);
+    const selectedResultNames = get(selectedResultNamesAtom);
+    const selectedIdentifiersWithValues = get(selectedIdentifiersValuesAtom);
+
+    const tableDefinitionsQuery = get(tableDefinitionsQueryAtom);
+
+    if (tableDefinitionsQuery.isLoading) {
+        return false;
+    }
+
+    if (!tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents)) {
+        return false;
+    }
+
+    if (!tableDefinitionsAccessor.hasTableNames(selectedTableNames)) {
+        return false;
+    }
+
+    if (!tableDefinitionsAccessor.hasFluidZones(selectedFluidZones)) {
+        return false;
+    }
+
+    if (!tableDefinitionsAccessor.hasResultNames(selectedResultNames)) {
+        return false;
+    }
+
+    if (!tableDefinitionsAccessor.hasIdentifiersWithValues(selectedIdentifiersWithValues)) {
+        return false;
+    }
+
+    return true;
+});
+
 export const areSelectedTablesComparableAtom = atom<boolean>((get) => {
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
     return tableDefinitionsAccessor.getAreTablesComparable();

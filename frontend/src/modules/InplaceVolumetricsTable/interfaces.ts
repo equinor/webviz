@@ -6,6 +6,7 @@ import { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@mod
 import { selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./settings/atoms/baseAtoms";
 import {
     areSelectedTablesComparableAtom,
+    areTableDefinitionSelectionsValidAtom,
     selectedAccumulationOptionsAtom,
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
@@ -21,6 +22,7 @@ export type SettingsToViewInterface = {
     accumulationOptions: Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>[];
     tableType: TableType;
     statisticOptions: InplaceVolumetricStatistic_api[];
+    areTableDefinitionSelectionsValid: boolean;
 };
 
 export type Interfaces = {
@@ -41,4 +43,5 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     accumulationOptions: (get) => get(selectedAccumulationOptionsAtom),
     tableType: (get) => get(selectedTableTypeAtom),
     statisticOptions: (get) => get(selectedStatisticOptionsAtom),
+    areTableDefinitionSelectionsValid: (get) => get(areTableDefinitionSelectionsValidAtom),
 };
