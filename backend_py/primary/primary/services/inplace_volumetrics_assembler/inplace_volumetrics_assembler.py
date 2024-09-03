@@ -354,8 +354,8 @@ class InplaceVolumetricsAssembler:
             realizations=realizations,
             identifiers_with_values=identifiers_with_values,
         )
-        timer_create_raw_table = timer.lap_ms()
-        print(f"Time creating raw table: {timer_create_raw_table}ms")
+        timer_create_raw_df = timer.lap_ms()
+        print(f"Time creating raw DataFrame: {timer_create_raw_df}ms")
 
         # Build a new table with one merged column per result and additional fluid zone column is created.
         # I.e. where result column has values per fluid zone appended after each other. Num rows is then original num rows * num fluid zones
@@ -395,11 +395,69 @@ class InplaceVolumetricsAssembler:
     ) -> pl.DataFrame:
         """
         Create DataFrame filtered on identifier values and realizations
-
-        TODO: Handle filtering using Polars instead of PyArrow?
         """
         if realizations is not None and len(realizations) == 0:
             return {}
+
+        # Inplace volumetrics Polars DataFrame
+        inplace_volumetrics_df: pl.DataFrame = await self._get_inplace_volumetrics_table_as_polars_df_async(
+            table_name=table_name, volumetric_columns=volumetric_columns
+        )
+
+        timer = PerfTimer()
+        column_names = inplace_volumetrics_df.columns
+
+        # Build mask for rows - default all rows
+        num_rows = inplace_volumetrics_df.height
+        mask = pl.Series([True] * num_rows)
+
+        # Mask/filter out rows with ignored identifier values
+        for identifier_name in InplaceVolumetricsIdentifier:
+            if identifier_name.value in column_names:
+                ignored_identifier_values_mask = inplace_volumetrics_df[identifier_name.value].is_in(
+                    IGNORED_IDENTIFIER_COLUMN_VALUES
+                )
+                mask = mask & ~ignored_identifier_values_mask
+
+        # Add mask for realizations
+        if realizations is not None:
+            # Check if every element in realizations exists in inplace_volumetrics_df["REAL"]
+            real_values_set = set(inplace_volumetrics_df["REAL"].to_list())
+            missing_realizations_set = set(realizations) - real_values_set
+
+            if missing_realizations_set:
+                raise ValueError(
+                    f"Missing data error: The following realization values do not exist in 'REAL' column: {missing_realizations_set}"
+                )
+
+            realization_mask = inplace_volumetrics_df["REAL"].is_in(realizations)
+            mask = mask & realization_mask
+
+        # Add mask for each identifier filter
+        for identifier_with_values in identifiers_with_values:
+            if not identifier_with_values.values:
+                mask = pl.Series([False] * num_rows)
+                break
+
+            identifier_column_name = identifier_with_values.identifier.value
+            if identifier_column_name not in column_names:
+                raise ValueError(f"Identifier column name {identifier_column_name} not found in table {table_name}")
+
+            identifier_mask = inplace_volumetrics_df[identifier_column_name].is_in(identifier_with_values.values)
+            mask = mask & identifier_mask
+
+        filtered_df = inplace_volumetrics_df.filter(mask)
+        time_row_filtering = timer.lap_ms()
+        print(f"DATAFRAME row filtering (based on selectors): {time_row_filtering}ms")
+
+        return filtered_df
+
+    async def _get_inplace_volumetrics_table_as_polars_df_async(
+        self, table_name: str, volumetric_columns: set[str]
+    ) -> pl.DataFrame:
+        """
+        Get the inplace volumetrics table as Polars DataFrame
+        """
 
         # Get the inplace volumetrics table from collection in Sumo
         #
@@ -413,54 +471,4 @@ class InplaceVolumetricsAssembler:
             )
         )
 
-        timer = PerfTimer()
-        table_column_names = inplace_volumetrics_table.column_names
-
-        # Build mask for rows - default all rows
-        mask = pa.array([True] * inplace_volumetrics_table.num_rows)
-
-        # Mask/filter out rows with ignored identifier values
-        for identifier_name in InplaceVolumetricsIdentifier:
-            if identifier_name.value in table_column_names:
-                ignored_identifier_values_mask = pc.is_in(
-                    inplace_volumetrics_table[identifier_name.value],
-                    value_set=pa.array(IGNORED_IDENTIFIER_COLUMN_VALUES),
-                )
-                mask = pc.and_(mask, pc.invert(ignored_identifier_values_mask))
-
-        # Add mask for realizations
-        if realizations is not None:
-            # Check if every element in pa.array(realizations) exists in vol_table["REAL"]
-            real_values_set = set(inplace_volumetrics_table["REAL"].to_pylist())
-            missing_realizations = [real for real in realizations if real not in real_values_set]
-
-            if missing_realizations:
-                raise ValueError(
-                    f"Missing data error: The following realization values do not exist in 'REAL' column: {missing_realizations}"
-                )
-
-            realization_mask = pc.is_in(inplace_volumetrics_table["REAL"], value_set=pa.array(realizations))
-            mask = pc.and_(mask, realization_mask)
-
-        # Add mask for each identifier filter
-        for identifier_with_values in identifiers_with_values:
-            if not identifier_with_values.values:
-                mask = pa.array([False] * inplace_volumetrics_table.num_rows)
-                break
-
-            identifier_column_name = identifier_with_values.identifier.value
-            if identifier_column_name not in table_column_names:
-                raise ValueError(f"Identifier column name {identifier_column_name} not found in table {table_name}")
-
-            identifier_mask = pc.is_in(
-                inplace_volumetrics_table[identifier_column_name], value_set=pa.array(identifier_with_values.values)
-            )
-            mask = pc.and_(mask, identifier_mask)
-
-        filtered_table = inplace_volumetrics_table.filter(mask)
-        time_row_filtering = timer.lap_ms()
-        print(f"Volumetric table row filtering (based on selectors): {time_row_filtering}ms")
-
-        filtered_df = pl.DataFrame(filtered_table)
-
-        return filtered_df
+        return pl.DataFrame(inplace_volumetrics_table)
