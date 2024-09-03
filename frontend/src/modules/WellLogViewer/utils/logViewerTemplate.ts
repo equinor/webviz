@@ -3,11 +3,10 @@ import {
     Template,
     TemplatePlotScaleTypes,
     TemplatePlotTypes,
+    TemplateTrack,
 } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { MAIN_AXIS_CURVE } from "./queryDataTransform";
-
-import { TemplateTrackConfig } from "../settings/atoms/baseAtoms";
 
 export const PLOT_SCALE_OPTIONS: (DropdownOption & { value: TemplatePlotScaleTypes })[] = [
     { label: "Linear", value: "linear" },
@@ -33,7 +32,7 @@ export function isCompositePlotType(type: TemplatePlotTypes) {
     return ["differential"].includes(type);
 }
 
-export function createLogTemplate(templateTrackConfigs: TemplateTrackConfig[]): Template {
+export function createLogTemplate(templateTrackConfigs: TemplateTrack[]): Template {
     return {
         name: "Template test",
         scale: { primary: MAIN_AXIS_CURVE.name, allowSecondary: true },

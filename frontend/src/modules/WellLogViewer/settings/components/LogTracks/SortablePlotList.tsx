@@ -1,26 +1,26 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 
 import { WellboreLogCurveHeader_api } from "@api";
 import { arrayMove } from "@framework/utils/arrays";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
-import { Dropdown } from "@lib/components/Dropdown";
+import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { Select, SelectOption } from "@lib/components/Select";
 import { SortableList, SortableListItem } from "@lib/components/SortableList";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { PLOT_TYPE_OPTIONS } from "@modules/WellLogViewer/utils/logViewerTemplate";
-import { Popper } from "@mui/base";
-import { Delete } from "@mui/icons-material";
-import { TemplatePlot, TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import { Delete, SwapHoriz } from "@mui/icons-material";
+import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import _ from "lodash";
+import { v4 } from "uuid";
 
+import { TemplatePlotConfig } from "../../atoms/baseAtoms";
 import { AddItemButton } from "../AddItemButton";
 
 export type SortablePlotListProps = {
     availableCurveHeaders: WellboreLogCurveHeader_api[];
-    plots: TemplatePlot[];
-    onUpdatePlots: (plots: TemplatePlot[]) => void;
+    plots: TemplatePlotConfig[];
+    onUpdatePlots: (plots: TemplatePlotConfig[]) => void;
 };
 
 // Using the "Time series" palette to pick line colors
@@ -33,23 +33,26 @@ const DIFF_CURVE_COLORS = [
 ];
 
 export function SortablePlotList(props: SortablePlotListProps): React.ReactNode {
+    const curveHeaderOptions = makeCurveNameOptions(props.availableCurveHeaders);
+
     // TODO, do an offsett or something, so they dont always start on the same color?
     const colorSet = useRef<ColorSet>(new ColorSet(CURVE_COLOR_PALETTE));
 
-    function addPlot(curveName: string) {
-        const newPlot = makeTrackPlot2(curveName, "line", {
+    function addPlot(plotType: string) {
+        const plotConfig: TemplatePlotConfig = makeTrackPlot({
             color: colorSet.current.getNextColor(),
+            type: plotType as TemplatePlotTypes,
         });
 
-        props.onUpdatePlots([...props.plots, newPlot]);
+        props.onUpdatePlots([...props.plots, plotConfig]);
     }
 
-    function removePlot(plot: TemplatePlot) {
-        props.onUpdatePlots(props.plots.filter((p) => p.name !== plot.name));
+    function removePlot(plot: TemplatePlotConfig) {
+        props.onUpdatePlots(props.plots.filter((p) => p._id !== plot._id));
     }
 
-    function handlePlotUpdate(newPlot: TemplatePlot) {
-        const newPlots = props.plots.map((p) => (p.name === newPlot.name ? newPlot : p));
+    function handlePlotUpdate(newPlot: TemplatePlotConfig) {
+        const newPlots = props.plots.map((p) => (p._id === newPlot._id ? newPlot : p));
 
         props.onUpdatePlots(newPlots);
     }
@@ -70,18 +73,16 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
         props.onUpdatePlots(newTrackCfg);
     }
 
-    const curveHeaderOptions = makeCurveNameOptions(props.availableCurveHeaders, props.plots);
-
     return (
         <div className="">
             <Label text="Plots" position="left" wrapperClassName="!justify-between" labelClassName="!mb-0">
-                <AddItemButton buttonText="Add plot" options={curveHeaderOptions} onOptionClicked={addPlot} />
+                <AddItemButton buttonText="Add plot" options={PLOT_TYPE_OPTIONS} onOptionClicked={addPlot} />
             </Label>
 
             <SortableList onItemMoved={handleTrackMove}>
                 {props.plots.map((plot) => (
                     <SortablePlotItem
-                        key={plot.name}
+                        key={plot._id}
                         plot={plot}
                         curveHeaderOptions={curveHeaderOptions}
                         onPlotUpdate={handlePlotUpdate}
@@ -94,120 +95,120 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 }
 
 type SortablePlotItemProps = {
-    plot: TemplatePlot;
-    curveHeaderOptions: SelectOption[];
-    onPlotUpdate: (plot: TemplatePlot) => void;
-    onDeletePlot: (plot: TemplatePlot) => void;
+    plot: TemplatePlotConfig;
+    curveHeaderOptions: DropdownOption[];
+    onPlotUpdate: (plot: TemplatePlotConfig) => void;
+    onDeletePlot: (plot: TemplatePlotConfig) => void;
 };
 
 function SortablePlotItem(props: SortablePlotItemProps) {
-    // TODO: Fix this. Wanted a very dirty fix to handle composite plot types aswell. But its fairly error prone
-    const anchorRef = useRef<HTMLDivElement>(null);
-    const [popperOpen, setPopperOpen] = useState<boolean>(false);
+    const plot = props.plot;
+    const secondCurveNeeded = plot.type === "differential";
 
-    const attemptedType = useRef<TemplatePlotTypes | null>(null);
-    const secondCurveName = useRef<string | null>(null);
-
-    function handlePlotTypeChange(newType: TemplatePlotTypes) {
-        const secondCurveRequired = newType === "differential" && !props.plot.name2;
-
-        if (secondCurveRequired && secondCurveName.current) {
-            handlePlotChange({ type: newType, name2: secondCurveName.current });
-        } else if (secondCurveRequired) {
-            // We need to prompt the user for a second curve, then return to this afterwards
-            attemptedType.current = newType;
-            setPopperOpen(true);
-        } else {
-            handlePlotChange({ type: newType, name2: undefined });
-        }
-    }
-
-    function handlePlotChange(changes: Partial<TemplatePlot>) {
-        attemptedType.current = null;
-        setPopperOpen(false);
-
-        const name = changes.name ?? props.plot.name;
-        const type = changes.type ?? props.plot.type;
-
-        const newPlot = makeTrackPlot2(name, type, {
-            ...props.plot,
+    function handlePlotChange(changes: Partial<TemplatePlotConfig>) {
+        const newPlot = makeTrackPlot({
+            ...plot,
             ...changes,
         });
 
         props.onPlotUpdate(newPlot);
     }
 
+    const title = (
+        <>
+            <Dropdown
+                placeholder="Select a curve"
+                value={plot.name}
+                options={props.curveHeaderOptions}
+                onChange={(v) => handlePlotChange({ name: v })}
+            />
+        </>
+    );
+
     const endAdornment = (
         <>
-            <div ref={anchorRef}>
+            {secondCurveNeeded && (
+                <>
+                    <button
+                        title="Swap curves"
+                        aria-label="Swap curves"
+                        className="rounded hover:bg-slate-300 text-base block px-1 -mx-1"
+                        onClick={() => handlePlotChange({ name: plot.name2, name2: plot.name })}
+                    >
+                        <SwapHoriz fontSize="inherit" />
+                    </button>
+                    <Dropdown
+                        placeholder="Select 2nd curve"
+                        value={plot.name2}
+                        options={props.curveHeaderOptions}
+                        onChange={(v) => handlePlotChange({ name2: v })}
+                    />
+                </>
+            )}
+            <div className="text-xs w-28">
                 <Dropdown
-                    value={props.plot.type}
+                    value={plot.type}
                     options={PLOT_TYPE_OPTIONS}
-                    // @ts-expect-error Throws because the handler uses the TemplatePlotTypes type, and not "string". We KNOW the options are valid types, so the error means nothing
-                    onChange={handlePlotTypeChange}
+                    onChange={(v) => handlePlotChange({ type: v as TemplatePlotTypes })}
                 />
             </div>
-
-            <Popper anchorEl={anchorRef.current} open={popperOpen} placement="bottom-end">
-                <div className="bg-white border border-gray-300 rounded-md shadow-md overflow-y-auto  box-border p-3 w-96 text-sm">
-                    <div className="mb-2">This plot-type requires a two curves! Select one more:</div>
-
-                    <Select
-                        options={props.curveHeaderOptions}
-                        onChange={([v]) => handlePlotChange({ name2: v, type: attemptedType.current ?? "" })}
-                        size={5}
-                    />
-                </div>
-            </Popper>
 
             <button
                 className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded text-xs text-red-800"
                 title="Remove Track"
-                onClick={() => props.onDeletePlot(props.plot)}
+                onClick={() => props.onDeletePlot(plot)}
             >
                 <Delete fontSize="inherit" />
             </button>
         </>
     );
 
-    const { name, name2 } = props.plot;
-
-    const itemTitle = name2 ? `${name} & ${name2}` : name;
-
-    return <SortableListItem id={props.plot.name} title={itemTitle} endAdornment={endAdornment} />;
+    return <SortableListItem id={plot._id} title={title} endAdornment={endAdornment} />;
 }
 
-type PlotOpts = Partial<Exclude<TemplatePlot, "name" | "type">>;
+// function isValidPlotConfig(plot: Partial<TemplatePlotConfig>): plot is TemplatePlot {
+// function isValidPlotConfig(plot: Partial<TemplatePlotConfig>): boolean {
+//     if (!plot.name) return false;
+//     if (plot.type === "differential" && !plot.name2) return false;
+//     return true;
+// }
 
-function makeTrackPlot2(curveName: string, type: TemplatePlotTypes = "line", opts: PlotOpts = {}): TemplatePlot {
+function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotConfig {
     // If colors get put as undefined, new colors are selected EVERY rerender, so we should avoid that
-    const curveColor = opts.color ?? CURVE_COLOR_PALETTE.getColors()[0];
-    const curveColor2 = opts.color2 ?? CURVE_COLOR_PALETTE.getColors()[3];
+    const curveColor = plot.color ?? CURVE_COLOR_PALETTE.getColors()[0];
+    const curveColor2 = plot.color2 ?? CURVE_COLOR_PALETTE.getColors()[3];
     // DIFF_CURVE_COLORS
-    const trackPlot = {
-        name: curveName,
+    const config: TemplatePlotConfig = {
+        ...plot,
+        _id: plot._id ?? v4(),
+        _isValid: Boolean(plot.name),
+        name: plot.name,
+        type: plot.type,
         color: curveColor,
         color2: curveColor2,
-        type,
-        ...opts,
+
+        //Reset the values that are curve specific
+        name2: undefined,
+        fill: undefined,
+        fill2: undefined,
+        colorTable: undefined,
     };
 
-    switch (type) {
+    switch (plot.type) {
         case "stacked":
             throw new Error("Stacked graph type currently not supported");
         case "differential":
-            if (!opts.name2) throw new Error("Second curve required");
-
             return {
-                ...trackPlot,
-                name2: opts.name2,
+                ...config,
+                _isValid: config._isValid && Boolean(plot.name2),
+                name2: plot.name2,
                 fill: DIFF_CURVE_COLORS.at(0),
                 fill2: DIFF_CURVE_COLORS.at(1),
             };
 
         case "gradientfill":
             return {
-                ...trackPlot,
+                ...config,
                 colorTable: "Continuous",
             };
 
@@ -216,30 +217,19 @@ function makeTrackPlot2(curveName: string, type: TemplatePlotTypes = "line", opt
         case "dot":
         case "area":
         default:
-            return trackPlot;
+            return config;
     }
 }
 
-function makeCurveNameOptions(
-    curveHeaders: WellboreLogCurveHeader_api[],
-    currentSelectedPlots: TemplatePlot[]
-): SelectOption[] {
+function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): DropdownOption[] {
     return _.chain(curveHeaders)
-        .sortBy("logName")
-        .filter((curveHeader) => {
-            return !currentSelectedPlots.some((p) => p.name === curveHeader.curveName);
-        })
-        .map((curveHeader): SelectOption => {
+        .sortBy(["logName", "curveName"])
+
+        .flatMap((curveHeader): DropdownOption => {
             return {
                 value: curveHeader.curveName,
                 label: curveHeader.curveName,
-                disabled: currentSelectedPlots.some((p) => p.name === curveHeader.curveName),
-
-                // adornment: (
-                //     <span title={`Well log name`} className="bg-gray-300 rounded px-1 text-[12px] h-4">
-                //         {curveHeader.logName}
-                //     </span>
-                // ),
+                // group: curveHeader.logName,
             };
         })
         .value();

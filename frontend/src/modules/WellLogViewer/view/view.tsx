@@ -18,7 +18,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     // Passed setting atoms
     const selectedWellboreHeader = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
     const requiredDataCurves = props.viewContext.useSettingsToViewInterfaceValue("requiredDataCurves");
-    const templateTrackConfigs = props.viewContext.useSettingsToViewInterfaceValue("templateTrackConfigs");
+    const templateTracks = props.viewContext.useSettingsToViewInterfaceValue("templateTracks");
     const viewerHorizontal = props.viewContext.useSettingsToViewInterfaceValue("viewerHorizontal");
 
     // Derived vals
@@ -53,7 +53,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
                 trajectoryData={wellboreTrajectoryDataQuery.data}
                 intersectionReferenceSystem={intersectionReferenceSystem}
                 curveData={curveData}
-                templateTrackConfigs={templateTrackConfigs}
+                templateTracks={templateTracks}
                 horizontal={viewerHorizontal}
                 moduleProps={props}
             />

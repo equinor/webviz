@@ -1,5 +1,6 @@
 import { WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { atom } from "jotai";
 import _, { Dictionary } from "lodash";
@@ -33,8 +34,19 @@ export const groupedCurveHeadersAtom = atom<Dictionary<WellboreLogCurveHeader_ap
     return _.groupBy(logCurveHeaders, "logName");
 });
 
+export const wellLogTemplateTracks = atom<TemplateTrack[]>((get) => {
+    const templateTrackConfigs = get(logViewerTrackConfigs);
+
+    return templateTrackConfigs.map((config): TemplateTrack => {
+        return {
+            ...config,
+            plots: config.plots.filter(({ _isValid }) => _isValid) as TemplatePlot[],
+        };
+    });
+});
+
 export const allSelectedWellLogCurves = atom<string[]>((get) => {
-    const templateTracks = get(logViewerTrackConfigs);
+    const templateTracks = get(wellLogTemplateTracks);
 
     const curveNames = templateTracks.reduce<string[]>((acc, trackCfg) => {
         const usedCurves = _.flatMap(trackCfg.plots, ({ name, name2 }) => {

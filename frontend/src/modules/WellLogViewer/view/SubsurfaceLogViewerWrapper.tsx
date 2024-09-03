@@ -9,6 +9,7 @@ import { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchS
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
 import { WellLogViewer } from "@webviz/well-log-viewer";
+import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
 import { isEqual } from "lodash";
@@ -16,7 +17,6 @@ import { isEqual } from "lodash";
 import { LogCurveDataWithName } from "./queries/wellLogQueries";
 
 import { InterfaceTypes } from "../interfaces";
-import { TemplateTrackConfig } from "../settings/atoms/baseAtoms";
 import { createLogTemplate } from "../utils/logViewerTemplate";
 import { createWellLog } from "../utils/queryDataTransform";
 
@@ -43,7 +43,7 @@ export type SubsurfaceLogViewerWrapperProps = {
 
     // Viewer config
     horizontal: boolean;
-    templateTrackConfigs: TemplateTrackConfig[];
+    templateTracks: TemplateTrack[];
 
     // Passing the module props to make context and service access less cumbersome
     moduleProps: ModuleViewProps<InterfaceTypes>;
@@ -135,7 +135,7 @@ function useGloballySyncedVerticalScale(
 }
 
 export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
-    const trackConfigs = props.templateTrackConfigs;
+    const trackConfigs = props.templateTracks;
     const trajectoryData = props.trajectoryData;
     const curveData = props.curveData;
     const intersectionReferenceSystem = props.intersectionReferenceSystem;

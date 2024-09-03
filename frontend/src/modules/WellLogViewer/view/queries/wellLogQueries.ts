@@ -12,7 +12,7 @@ export function useCurveDataQueries(
         queries: curveNames.map((name) => ({
             queryKey: ["getLogCurveData", wellboreUuid, name],
             queryFn: () => apiService.well.getLogCurveData(wellboreUuid, name),
-            enabled: Boolean(wellboreUuid),
+            enabled: Boolean(wellboreUuid && name),
             ...DEFAULT_OPTIONS,
         })),
     });
