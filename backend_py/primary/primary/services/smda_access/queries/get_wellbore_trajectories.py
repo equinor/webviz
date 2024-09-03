@@ -9,20 +9,23 @@ from ._get_request import get
 
 LOGGER = logging.getLogger(__name__)
 
-
-async def get_wellbore_trajectories(access_token: str, wellbore_uuids: List[str]) -> List[WellboreTrajectory]:
+async def _fetch_wellbore_trajectories(access_token: str, params: dict) -> List[WellboreTrajectory]:
     endpoint = "wellbore-survey-samples"
-    params = {
+    base_params = {
         "_projection": "wellbore_uuid, unique_wellbore_identifier,easting,northing,tvd_msl,md",
-        "_sort": "unique_wellbore_identifier,md",
-        "wellbore_uuid": ", ".join(wellbore_uuids),
+        "_sort": "unique_wellbore_identifier,md"
     }
+    base_params.update(params)
+    
 
     timer = PerfTimer()
-    result = await get(access_token=access_token, endpoint=endpoint, params=params)
+
+    result = await get(access_token=access_token, endpoint=endpoint, params=base_params)
     LOGGER.debug(f"TIME SMDA fetch wellbore trajectories took {timer.lap_s():.2f} seconds")
+
     resultdf = pd.DataFrame.from_dict(result)
     LOGGER.debug(f"TIME SMDA wellbore trajectories to dataframe{timer.lap_s():.2f} seconds")
+
     wellbore_trajectories: List[WellboreTrajectory] = []
     for wellbore, df in resultdf.groupby("unique_wellbore_identifier"):
         tvd_arr = df["tvd_msl"]
@@ -46,3 +49,22 @@ async def get_wellbore_trajectories(access_token: str, wellbore_uuids: List[str]
         )
     LOGGER.debug(f"TIME SMDA wellbore trajectories to list and validate {timer.lap_s():.2f} seconds")
     return wellbore_trajectories
+
+async def get_wellbore_trajectories(access_token: str, wellbore_uuids: List[str]) -> List[WellboreTrajectory]:
+
+    params = {
+        "wellbore_uuid": ", ".join(wellbore_uuids),
+    }
+    return await _fetch_wellbore_trajectories(access_token, params)    
+    
+
+async def get_field_wellbore_trajectories(
+    access_token: str,
+    field_identifier: str,
+    ) -> List[WellboreTrajectory]:
+    
+    params = {
+        "field_identifier": field_identifier,
+    }
+    
+    return await _fetch_wellbore_trajectories(access_token, params)

@@ -49,7 +49,6 @@ async def get_field_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Sumo field identifier"),
-    unique_wellbore_identifiers:List[str] =  Query(None, description="Optional subset of well names")
     # fmt:on
 ) -> List[schemas.WellboreTrajectory]:
     """Get well trajectories for field"""
@@ -61,7 +60,7 @@ async def get_field_well_trajectories(
         well_access = SmdaWellAccess(authenticated_user.get_smda_access_token())
 
     wellbore_trajectories = await well_access.get_field_wellbore_trajectories(
-        field_identifier=field_identifier, unique_wellbore_identifiers=unique_wellbore_identifiers
+        field_identifier=field_identifier
     )
 
     return [

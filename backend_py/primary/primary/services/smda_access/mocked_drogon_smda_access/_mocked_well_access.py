@@ -22,7 +22,7 @@ class WellAccess:
     # type: ignore
     # pylint: disable=unused-argument
     async def get_field_wellbore_trajectories(
-        self, field_identifier: str, unique_wellbore_identifiers: Optional[List[str]] = None
+        self, field_identifier: str
     ) -> List[WellboreTrajectory]:
         """Get all Drogon trajectories"""
         return [
