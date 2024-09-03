@@ -32,6 +32,7 @@ export type DropdownProps = {
     width?: string | number;
     showArrows?: boolean;
     debounceTimeMs?: number;
+    placeholder?: string;
 } & BaseComponentProps;
 
 const defaultProps = {
@@ -397,6 +398,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                         onChange={handleInputChange}
                         value={makeInputValue()}
                         rounded={props.showArrows ? "left" : "all"}
+                        placeholder={props.placeholder}
                     />
                 </div>
                 {props.showArrows && (
