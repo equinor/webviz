@@ -14,12 +14,7 @@ on:
 
 jobs:
   sumo_prod:
-    name: PY ${{ matrix.python-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-        os: [ubuntu-latest]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
@@ -41,10 +36,11 @@ jobs:
           echo $SHARED_KEY_SUMO_PROD > ~/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
           ls -l ~/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
+          cache: pip
 
       - name: 📦 Install poetry and dependencies
         working-directory: ./backend_py/primary
