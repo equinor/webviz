@@ -33,11 +33,13 @@ polars = "^1.6.0"
 [tool.poetry.group.dev.dependencies]
 black = "^22.12.0"
 pylint = "^2.15.10"
-pytest = "^7.2.1"
+pytest = "^8.3.2"
 mypy = "^1.9.0"
 bandit = "^1.7.5"
 types-requests = "^2.31.0.1"
 types-redis = "^4.6.0"
+pytest-timeout = "^2.3.1"
+pytest-asyncio = "^0.24.0"
 
 
 [build-system]
@@ -64,5 +66,8 @@ disallow_untyped_defs = true
 [tool.pytest.ini_options]
 pythonpath = ["."]
 filterwarnings = "ignore::DeprecationWarning:pkg_resources"
+asyncio_mode="auto"
+asyncio_default_fixture_loop_scope="session"
+
 
 

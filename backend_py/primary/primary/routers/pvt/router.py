@@ -41,9 +41,9 @@ async def get_table_data(
     if table_schema is None:
         raise HTTPException(status_code=404, detail="PVT table not found")
 
-    sumo_table_data = await access.get_realization_table_async(table_schema, realization=realization)
+    sumo = await access.get_realization_table_async(table_schema, realization=realization)
 
-    pvt_data = pvt_dataframe_to_api_data(sumo_table_data.to_pandas())
+    pvt_data = pvt_dataframe_to_api_data(sumo.to_pandas())
 
     return pvt_data
 

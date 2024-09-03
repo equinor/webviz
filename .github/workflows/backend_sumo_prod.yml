@@ -1,0 +1,60 @@
+name: Test access DROGON-READ shared-key
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main
+  release:
+    types:
+      - published
+  # workflow_dispatch:
+  # schedule:
+  #   - cron: "48 4 * * *"
+
+jobs:
+  build_pywheels:
+    name: PY ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+        os: [ubuntu-latest]
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 📦 Install poetry and dependencies
+        working-directory: ./backend_py/primary
+        run: |
+          pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry lock --check --no-update  # Check lock file is consistent with pyproject.toml
+          poetry install --with dev
+
+      - name: 🤖 Run tests
+        working-directory: ./backend_py/primary
+        env:
+          WEBVIZ_CLIENT_SECRET: 0
+          WEBVIZ_SMDA_SUBSCRIPTION_KEY: 0
+          WEBVIZ_SMDA_RESOURCE_SCOPE: 0
+          WEBVIZ_VDS_HOST_ADDRESS: 0
+          WEBVIZ_ENTERPRISE_SUBSCRIPTION_KEY: 0
+          WEBVIZ_SSDL_RESOURCE_SCOPE: 0
+          WEBVIZ_SUMU_ENV: prod
+          SHARED_KEY_SUMO_PROD: ${{ secrets.SHARED_KEY_DROGON_READ_PROD }}
+        run: |
+          echo "Length of SHARED_KEY_SUMO_PROD variable read from Github Secrets:" ${#SHARED_KEY_SUMO_PROD}
+          mkdir ~/.sumo
+          echo $SHARED_KEY_SUMO_PROD > ~/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
+          ls -l ~/.sumo/9e5443dd-3431-4690-9617-31eed61cb55a.sharedkey
+          pytest -s --timeout=300 ./tests/integration
