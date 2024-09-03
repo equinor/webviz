@@ -229,7 +229,7 @@ function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): Dropd
             return {
                 value: curveHeader.curveName,
                 label: curveHeader.curveName,
-                // group: curveHeader.logName,
+                group: curveHeader.logName,
             };
         })
         .value();
