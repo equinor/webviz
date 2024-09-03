@@ -298,7 +298,7 @@ class InplaceVolumetricsAssembler:
         possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
         available_selector_columns = [col for col in possible_selector_columns if col in volume_df.columns]
         requested_volume_names = categorized_requested_result_names.volume_names
-        available_volume_names = [name for name in requested_volume_names if name in volume_df.columns]
+        available_requested_volume_names = [name for name in requested_volume_names if name in volume_df.columns]
 
         # Create property column expressions
         requested_properties = categorized_requested_result_names.property_names
@@ -306,18 +306,12 @@ class InplaceVolumetricsAssembler:
             volume_df.columns, requested_properties, fluid_zone=fluid_zone
         )
 
-        # Build result dataframe (requested volumes and calculated properties)
-        if not property_column_expressions:
-            result_df = volume_df.select(available_selector_columns + available_volume_names)
-            return result_df
-
-        volume_and_properties_df = volume_df.with_columns(property_column_expressions)
-        available_requested_properties = [
-            prop for prop in requested_properties if prop in volume_and_properties_df.columns
-        ]
-        result_df = volume_and_properties_df.select(
-            available_selector_columns + available_volume_names + available_requested_properties
+        # Create result dataframe, select columns and calculate properties
+        column_names_and_expressions: List[str | pl.Expr] = (
+            available_selector_columns + available_requested_volume_names + property_column_expressions
         )
+        result_df = volume_df.select(column_names_and_expressions)
+
         return result_df
 
     async def _create_volume_df_per_fluid_selection(

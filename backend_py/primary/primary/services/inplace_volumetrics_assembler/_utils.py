@@ -208,14 +208,15 @@ def create_grouped_statistical_result_table_data_polars(
     # - Expect the result df to have one unique column per statistic per result name, i.e. "result_name_mean", "result_name_stddev", etc.
     per_group_statistical_df: pl.DataFrame | None = None
     if len(group_by_identifier_values) > 0:
+        # Perform aggregation per grouping
         per_group_statistical_df = (
-            result_df.select(*group_by_identifier_values, *valid_result_names)
-            .group_by(*group_by_identifier_values)
+            result_df.select(group_by_identifier_values + valid_result_names)
+            .group_by(group_by_identifier_values)
             .agg(statistic_aggregation_expressions)
         )
     else:
-        # per_group_statistical_df = result_df.select(*valid_result_names).agg(statistic_aggregation_expressions)
-        # NOTE: Verify if this is correct
+        # If no grouping, aggregate entire df using expressions in select
+        # Only keep the result name columns and its statistics (i.e. keep no identifier columns)
         per_group_statistical_df = result_df.select(statistic_aggregation_expressions)
 
     # Convert statistical DataFrame to statistical result table data
@@ -337,15 +338,15 @@ def create_volumetric_df_per_fluid_zone(
 
     fluid_zone_to_df_map: Dict[FluidZone, pl.DataFrame] = {}
     for fluid_zone in fluid_zones:
-        fluid_zone_name = fluid_zone.value.upper()
-        fluid_columns = [name for name in column_names if name.endswith(f"_{fluid_zone_name}")]
+        fluid_zone_suffix = f"_{fluid_zone.value.upper()}"
+        fluid_columns = [name for name in column_names if name.endswith(fluid_zone_suffix)]
 
         if not fluid_columns:
             continue
 
-        # Mapping old column, to column without suffix, e.g. "HCPV_OIL" -> "HCPV"
-        no_suffix_column_map: Dict[str, str] = {col: col.removesuffix(f"_{fluid_zone_name}") for col in fluid_columns}
-        fluid_zone_df = volumetric_df.select(selector_columns + fluid_columns).rename(no_suffix_column_map)
+        # Mapping old column with suffix to new column without fluid zone suffix, e.g. "HCPV_OIL" -> "HCPV"
+        columns_rename_map: Dict[str, str] = {col: col.removesuffix(fluid_zone_suffix) for col in fluid_columns}
+        fluid_zone_df = volumetric_df.select(selector_columns + fluid_columns).rename(columns_rename_map)
 
         # Place DataFrame into fluid zone map
         fluid_zone_to_df_map[fluid_zone] = fluid_zone_df
@@ -380,7 +381,7 @@ def create_volumetric_summed_fluid_zones_df(
     ]
     volumetric_names_with_fluid_zone = [col for col in volumetric_df.columns if col not in valid_selector_columns]
 
-    # Create a set of volume names without fluid zone suffix
+    # Extract set of volume names without fluid zone suffix
     suffixes_to_remove = [f"_{fluid_zone.value.upper()}" for fluid_zone in fluid_zones]
     volumetric_names = list(
         set(
@@ -395,7 +396,6 @@ def create_volumetric_summed_fluid_zones_df(
 
     # Per volume name without fluid zone suffix, sum the columns with the same name
     volume_name_sum_expressions: List[pl.Expr] = []
-    valid_summed_columns: List[str] = []
     for volume_name in volumetric_names:
         volume_columns_with_suffix = [col for col in volumetric_df.columns if col.startswith(volume_name)]
 
@@ -409,13 +409,21 @@ def create_volumetric_summed_fluid_zones_df(
 
         # Add sum expression to list
         volume_name_sum_expressions.append(volume_name_sum_expression.alias(volume_name))
-        valid_summed_columns.append(volume_name)
 
-    # Create summed column with expressions, and select wanted columns
-    volumetric_across_fluid_zones_df = volumetric_df.with_columns(volume_name_sum_expressions).select(
-        valid_selector_columns + valid_summed_columns
-    )
+    # Create df with selector columns and summed volume columns using expressions
+    column_names_and_expressions: List[str | pl.Expr] = valid_selector_columns + volume_name_sum_expressions
+    volumetric_across_fluid_zones_df = volumetric_df.select(column_names_and_expressions)
+
     return volumetric_across_fluid_zones_df
+
+
+def _create_named_expression_with_nan_for_inf(expr: pl.Expr, name: str) -> pl.Expr:
+    """
+    Replace inf values with nan in a Polars expression and assign a new name
+
+    returns: New expression with inf values replaced with nan and assigned a new name
+    """
+    return pl.when(expr.is_infinite()).then(np.nan).otherwise(expr).alias(name)
 
 
 def create_property_column_expressions(
@@ -437,17 +445,27 @@ def create_property_column_expressions(
     calculated_property_expressions: List[pl.Expr] = []
 
     # NOTE: If one of the volume names needed for a property is not found, the property array is not calculated
+    # TODO: Consider "/"-operator vs pl.col().truediv() for division, e.g. pl.col("NET").truediv(pl.col("BULK"))
     if "BO" in properties and fluid_zone == FluidZone.OIL and set(["HCPV", "STOIIP"]).issubset(volume_df_columns):
-        calculated_property_expressions.append((pl.col("HCPV") / pl.col("STOIIP")).alias("BO"))
+        expression = pl.col("HCPV") / pl.col("STOIIP")
+        calculated_property_expressions.append(_create_named_expression_with_nan_for_inf(expression, "BO"))
     if "BG" in properties and fluid_zone == FluidZone.GAS and set(["HCPV", "GIIP"]).issubset(volume_df_columns):
-        calculated_property_expressions.append((pl.col("HCPV") / pl.col("GIIP")).alias("BG"))
+        expression = pl.col("HCPV") / pl.col("GIIP")
+        calculated_property_expressions.append(_create_named_expression_with_nan_for_inf(expression, "BG"))
     if "NTG" in properties and set(["BULK", "NET"]).issubset(volume_df_columns):
-        calculated_property_expressions.append((pl.col("NET") / pl.col("BULK")).alias("NTG"))
+        ntg_expression = pl.col("NET") / pl.col("BULK")
+        calculated_property_expressions.append(_create_named_expression_with_nan_for_inf(ntg_expression, "NTG"))
     if "PORO" in properties and set(["BULK", "PORV"]).issubset(volume_df_columns):
-        calculated_property_expressions.append((pl.col("PORV") / pl.col("BULK")).alias("PORO"))
+        poro_expression = pl.col("PORV") / pl.col("BULK")
+        calculated_property_expressions.append(_create_named_expression_with_nan_for_inf(poro_expression, "PORO"))
     if "PORO_NET" in properties and set(["PORV", "NET"]).issubset(volume_df_columns):
-        calculated_property_expressions.append((pl.col("PORV") / pl.col("NET")).alias("PORO_NET"))
+        poro_net_expression = pl.col("PORV") / pl.col("NET")
+        calculated_property_expressions.append(
+            _create_named_expression_with_nan_for_inf(poro_net_expression, "PORO_NET")
+        )
     if "SW" in properties and set(["HCPV", "PORV"]).issubset(volume_df_columns):
-        calculated_property_expressions.append((1 - pl.col("HCPV") / pl.col("PORV")).alias("SW"))
+        # NOTE: HCPV/PORV = 0/0 = Nan -> 1 - Nan = Nan, if HCPV = 0 and PORV = 0 -> SW = 1 it must be handled
+        sw_expression = 1 - pl.col("HCPV") / pl.col("PORV")
+        calculated_property_expressions.append(_create_named_expression_with_nan_for_inf(sw_expression, "SW"))
 
     return calculated_property_expressions
