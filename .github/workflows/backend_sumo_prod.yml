@@ -1,4 +1,4 @@
-name: Test access DROGON-READ shared-key
+name: Test Sumo Prod
 
 on:
   push:
