@@ -105,65 +105,68 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         }
     }, [props.containerRef, initialScrollPositions]);
 
-    React.useEffect(() => {
-        let lastScrollPosition = -1;
-        function handleScroll() {
-            if (isProgrammaticScroll) {
-                setIsProgrammaticScroll(false);
-                return;
-            }
-            if (props.containerRef.current) {
-                const scrollPosition =
-                    props.direction === "vertical"
-                        ? props.containerRef.current.scrollTop
-                        : props.containerRef.current.scrollLeft;
-
-                if (scrollPosition === lastScrollPosition) {
+    React.useEffect(
+        function mountScrollEffect() {
+            let lastScrollPosition = -1;
+            function handleScroll() {
+                if (isProgrammaticScroll) {
+                    setIsProgrammaticScroll(false);
                     return;
                 }
+                if (props.containerRef.current) {
+                    const scrollPosition =
+                        props.direction === "vertical"
+                            ? props.containerRef.current.scrollTop
+                            : props.containerRef.current.scrollLeft;
 
-                lastScrollPosition = scrollPosition;
+                    if (scrollPosition === lastScrollPosition) {
+                        return;
+                    }
 
-                const size = props.direction === "vertical" ? containerSize.height : containerSize.width;
+                    lastScrollPosition = scrollPosition;
 
-                const startIndex = Math.max(0, Math.floor(scrollPosition / props.itemSize) - 1);
-                const endIndex = Math.min(
-                    props.items.length - 1,
-                    Math.ceil((scrollPosition + size) / props.itemSize) + 1
-                );
+                    const size = props.direction === "vertical" ? containerSize.height : containerSize.width;
 
-                setRange({ start: startIndex, end: endIndex });
-                setPlaceholderSizes({
-                    start: startIndex * props.itemSize,
-                    end: (props.items.length - 1 - endIndex) * props.itemSize,
-                });
+                    const startIndex = Math.max(0, Math.floor(scrollPosition / props.itemSize) - 1);
+                    const endIndex = Math.min(
+                        props.items.length - 1,
+                        Math.ceil((scrollPosition + size) / props.itemSize) + 1
+                    );
 
-                if (onScroll) {
-                    onScroll(startIndex);
+                    setRange({ start: startIndex, end: endIndex });
+                    setPlaceholderSizes({
+                        start: startIndex * props.itemSize,
+                        end: (props.items.length - 1 - endIndex) * props.itemSize,
+                    });
+
+                    if (onScroll) {
+                        onScroll(startIndex);
+                    }
                 }
             }
-        }
 
-        if (props.containerRef.current) {
-            props.containerRef.current.addEventListener("scroll", handleScroll);
-        }
-        handleScroll();
-
-        return () => {
             if (props.containerRef.current) {
-                props.containerRef.current.removeEventListener("scroll", handleScroll);
+                props.containerRef.current.addEventListener("scroll", handleScroll);
             }
-        };
-    }, [
-        props.containerRef,
-        props.direction,
-        props.items,
-        props.itemSize,
-        containerSize.height,
-        containerSize.width,
-        onScroll,
-        isProgrammaticScroll,
-    ]);
+            handleScroll();
+
+            return function unmountScrollEffect() {
+                if (props.containerRef.current) {
+                    props.containerRef.current.removeEventListener("scroll", handleScroll);
+                }
+            };
+        },
+        [
+            props.containerRef,
+            props.direction,
+            props.items,
+            props.itemSize,
+            containerSize.height,
+            containerSize.width,
+            onScroll,
+            isProgrammaticScroll,
+        ]
+    );
 
     const makeStyle = (size: number) => {
         if (props.direction === "vertical") {

@@ -68,6 +68,21 @@ type OptionListItem =
 const noMatchingOptionsText = "No matching options";
 const noOptionsText = "No options";
 
+function makeOptionListItems(options: DropdownOption[]): OptionListItem[] {
+    const optionsWithSeperators: OptionListItem[] = options.flatMap((option, index) => {
+        const optionItem = { type: "option", actualIndex: index, content: option } as OptionListItem;
+        const seperatorItem = { type: "separator", content: option.group } as OptionListItem;
+
+        if (option.group && option.group !== options[index - 1]?.group) {
+            return [seperatorItem, optionItem];
+        } else {
+            return [optionItem];
+        }
+    });
+
+    return optionsWithSeperators;
+}
+
 export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     const { onChange } = props;
 
@@ -80,9 +95,13 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     const [filter, setFilter] = React.useState<string | null>(null);
     const [selection, setSelection] = React.useState<string | number>(props.value);
     const [prevValue, setPrevValue] = React.useState<string | number>(props.value);
-    const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<DropdownOption[]>(props.options);
+    const [prevFilteredOptionsWithSeparators, setPrevFilteredOptionsWithSeparators] = React.useState<OptionListItem[]>(
+        makeOptionListItems(props.options)
+    );
     const [selectionIndex, setSelectionIndex] = React.useState<number>(-1);
-    const [filteredOptions, setFilteredOptions] = React.useState<DropdownOption[]>(props.options);
+    const [filteredOptionsWithSeparators, setFilteredOptionsWithSeparators] = React.useState<OptionListItem[]>(
+        makeOptionListItems(props.options)
+    );
     const [optionIndexWithFocus, setOptionIndexWithFocus] = React.useState<number>(-1);
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [keyboardFocus, setKeyboardFocus] = React.useState<boolean>(false);
@@ -95,11 +114,13 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     const setOptionIndexWithFocusToCurrentSelection = React.useCallback(
         function handleFilteredOptionsChange() {
-            const index = filteredOptions.findIndex((option) => option.value === selection);
+            const index = filteredOptionsWithSeparators.findIndex(
+                (option) => option.type === "option" && option.content.value === selection
+            );
             setSelectionIndex(index);
             setOptionIndexWithFocus(index);
         },
-        [filteredOptions, selection]
+        [filteredOptionsWithSeparators, selection]
     );
 
     if (prevValue !== props.value) {
@@ -108,26 +129,10 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         setPrevValue(props.value);
     }
 
-    if (!isEqual(prevFilteredOptions, filteredOptions)) {
+    if (!isEqual(prevFilteredOptionsWithSeparators, filteredOptionsWithSeparators)) {
         setOptionIndexWithFocusToCurrentSelection();
-        setPrevFilteredOptions(filteredOptions);
+        setPrevFilteredOptionsWithSeparators(filteredOptionsWithSeparators);
     }
-
-    // TODO: Use this offset to make key navigation work for StartIndex
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let indexOffset = 0;
-    // Inject seperator items to render between groups
-    const optionsWithSeperators: OptionListItem[] = filteredOptions.flatMap((option, index) => {
-        const optionItem = { type: "option", actualIndex: index, content: option } as OptionListItem;
-        const seperatorItem = { type: "separator", content: option.group } as OptionListItem;
-
-        if (option.group && option.group !== filteredOptions[index - 1]?.group) {
-            if (index <= optionIndexWithFocus) indexOffset++;
-            return [seperatorItem, optionItem];
-        } else {
-            return [optionItem];
-        }
-    });
 
     React.useEffect(function handleMount() {
         return function handleUnmount() {
@@ -148,7 +153,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                 ) {
                     setDropdownVisible(false);
                     setFilter(null);
-                    setFilteredOptions(props.options);
+                    setFilteredOptionsWithSeparators(makeOptionListItems(props.options));
                     setOptionIndexWithFocus(-1);
                 }
             }
@@ -184,7 +189,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));
 
             const newFilteredOptions = props.options.filter((option) => option.label.includes(filter || ""));
-            setFilteredOptions(newFilteredOptions);
+            setFilteredOptionsWithSeparators(makeOptionListItems(newFilteredOptions));
         },
         [props.options, filter]
     );
@@ -195,7 +200,9 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                 const inputClientBoundingRect = inputRef.current?.getBoundingClientRect();
                 const bodyClientBoundingRect = document.body.getBoundingClientRect();
 
-                const height = Math.min(minHeight, Math.max(filteredOptions.length * optionHeight, optionHeight)) + 2;
+                const height =
+                    Math.min(minHeight, Math.max(filteredOptionsWithSeparators.length * optionHeight, optionHeight)) +
+                    2;
 
                 if (inputClientBoundingRect && bodyClientBoundingRect) {
                     const newDropdownRect: DropdownRect = {
@@ -227,7 +234,9 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                         Math.max(
                             0,
                             Math.round(
-                                (filteredOptions.findIndex((option) => option.value === selection) || 0) -
+                                (filteredOptionsWithSeparators.findIndex(
+                                    (option) => option.type === "option" && option.content.value === selection
+                                ) || 0) -
                                     height / optionHeight / 2
                             )
                         )
@@ -239,7 +248,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         [
             inputBoundingRect,
             dropdownVisible,
-            filteredOptions,
+            filteredOptionsWithSeparators,
             selection,
             dropdownRect.width,
             props.options,
@@ -275,7 +284,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             setSelectionIndex(props.options.findIndex((option) => option.value === value));
             setDropdownVisible(false);
             setFilter(null);
-            setFilteredOptions(props.options);
+            setFilteredOptionsWithSeparators(makeOptionListItems(props.options));
             setOptionIndexWithFocus(-1);
 
             handleOnChange(value);
@@ -286,7 +295,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             setSelectionIndex,
             setDropdownVisible,
             setFilter,
-            setFilteredOptions,
+            setFilteredOptionsWithSeparators,
             setSelection,
             handleOnChange,
         ]
@@ -300,20 +309,47 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     if (dropdownVisible) {
                         if (e.key === "ArrowUp") {
                             e.preventDefault();
-                            const adjustedOptionIndexWithFocus =
+                            let adjustedOptionIndexWithFocus =
                                 optionIndexWithFocus === -1 ? selectionIndex : optionIndexWithFocus;
-                            const newIndex = Math.max(0, adjustedOptionIndexWithFocus - 1);
+                            adjustedOptionIndexWithFocus--;
+
+                            // Make sure we are focusing on an option and not a separator
+                            const item = filteredOptionsWithSeparators[adjustedOptionIndexWithFocus];
+                            let scrollToTop = false;
+                            if (item && item.type !== "option") {
+                                if (adjustedOptionIndexWithFocus === 0) {
+                                    adjustedOptionIndexWithFocus = 1;
+                                    scrollToTop = true;
+                                } else {
+                                    adjustedOptionIndexWithFocus--;
+                                }
+                            }
+
+                            const newIndex = Math.max(0, adjustedOptionIndexWithFocus);
                             setOptionIndexWithFocus(newIndex);
-                            if (newIndex < currentStartIndex) {
-                                setStartIndex(newIndex);
+                            const newStartIndex = newIndex - (scrollToTop ? 1 : 0);
+                            if (newStartIndex < currentStartIndex) {
+                                setStartIndex(newStartIndex);
                             }
                             setKeyboardFocus(true);
                         }
                         if (e.key === "ArrowDown") {
                             e.preventDefault();
-                            const adjustedOptionIndexWithFocus =
+                            let adjustedOptionIndexWithFocus =
                                 optionIndexWithFocus === -1 ? selectionIndex : optionIndexWithFocus;
-                            const newIndex = Math.min(filteredOptions.length - 1, adjustedOptionIndexWithFocus + 1);
+                            adjustedOptionIndexWithFocus++;
+
+                            // Make sure we are focusing on an option and not a separator
+                            const item = filteredOptionsWithSeparators[adjustedOptionIndexWithFocus];
+                            if (item && item.type !== "option") {
+                                adjustedOptionIndexWithFocus++;
+                            }
+
+                            const newIndex = Math.min(
+                                filteredOptionsWithSeparators.length - 1,
+                                adjustedOptionIndexWithFocus
+                            );
+
                             setOptionIndexWithFocus(newIndex);
                             if (newIndex >= currentStartIndex + minHeight / optionHeight - 1) {
                                 setStartIndex(Math.max(0, newIndex - minHeight / optionHeight + 1));
@@ -322,9 +358,10 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                         }
                         if (e.key === "Enter") {
                             e.preventDefault();
-                            const option = filteredOptions[keyboardFocus ? optionIndexWithFocus : selectionIndex];
-                            if (option && !option.disabled) {
-                                handleOptionClick(option.value);
+                            const option =
+                                filteredOptionsWithSeparators[keyboardFocus ? optionIndexWithFocus : selectionIndex];
+                            if (option && option.type === "option" && !option.content.disabled) {
+                                handleOptionClick(option.content.value);
                             }
                         }
                     }
@@ -339,7 +376,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         },
         [
             selection,
-            filteredOptions,
+            filteredOptionsWithSeparators,
             dropdownVisible,
             startIndex,
             handleOptionClick,
@@ -357,7 +394,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
             setFilter(event.target.value);
             const newFilteredOptions = props.options.filter((option) => option.label.includes(event.target.value));
-            setFilteredOptions(newFilteredOptions);
+            setFilteredOptionsWithSeparators(makeOptionListItems(newFilteredOptions));
             setSelectionIndex(newFilteredOptions.findIndex((option) => option.value === selection));
         },
         [props.options, selection]
@@ -384,8 +421,20 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     }
 
     function handleSelectPreviousOption() {
-        const newIndex = Math.max(0, selectionIndex - 1);
-        const newValue = filteredOptions[newIndex].value;
+        let newIndex = Math.max(0, selectionIndex - 1);
+        let item = filteredOptionsWithSeparators[newIndex];
+        if (item && item.type === "separator") {
+            if (newIndex === 0) {
+                newIndex = 1;
+            } else {
+                newIndex--;
+            }
+            item = filteredOptionsWithSeparators[newIndex];
+        }
+        if (!item || item.type !== "option") {
+            throw new Error("Every separator should be followed by an option");
+        }
+        const newValue = item.content.value;
         setSelectionIndex(newIndex);
         setSelection(newValue);
         handleOnChange(newValue);
@@ -393,13 +442,40 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     }
 
     function handleSelectNextOption() {
-        const newIndex = Math.min(filteredOptions.length - 1, selectionIndex + 1);
-        const newValue = filteredOptions[newIndex].value;
+        let newIndex = Math.min(filteredOptionsWithSeparators.length - 1, selectionIndex + 1);
+        let item = filteredOptionsWithSeparators[newIndex];
+        if (item && item.type === "separator") {
+            newIndex++;
+            item = filteredOptionsWithSeparators[newIndex];
+        }
+        if (newIndex >= filteredOptionsWithSeparators.length - 1 || !item || item.type !== "option") {
+            throw new Error("Every separator should be followed by an option");
+        }
+        const newValue = item.content.value;
         setSelectionIndex(newIndex);
         setSelection(newValue);
         handleOnChange(newValue);
         setOptionIndexWithFocus(-1);
     }
+
+    const renderItem = React.useCallback(
+        function renderItem(item: OptionListItem, index: number) {
+            if (item.type === "separator") {
+                return <SeperatorLine text={item.content} />;
+            } else {
+                return (
+                    <OptionItem
+                        isSelected={selection === item.content.value}
+                        isFocused={optionIndexWithFocus === index}
+                        {...item.content}
+                        onSelect={handleOptionClick}
+                        onPointerOver={() => handlePointerOver(index)}
+                    />
+                );
+            }
+        },
+        [handleOptionClick, handlePointerOver, optionIndexWithFocus, selection]
+    );
 
     return (
         <BaseComponent disabled={props.disabled}>
@@ -448,8 +524,8 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                             className={resolveClassNames(
                                 "border border-gray-300 hover:bg-blue-100 rounded-tr cursor-pointer",
                                 {
-                                    "pointer-events-none": selectionIndex >= filteredOptions.length - 1,
-                                    "text-gray-400": selectionIndex >= filteredOptions.length - 1,
+                                    "pointer-events-none": selectionIndex >= filteredOptionsWithSeparators.length - 1,
+                                    "text-gray-400": selectionIndex >= filteredOptionsWithSeparators.length - 1,
                                 }
                             )}
                             onClick={handleSelectNextOption}
@@ -465,7 +541,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                             style={{ ...dropdownRect }}
                             ref={dropdownRef}
                         >
-                            {filteredOptions.length === 0 && (
+                            {filteredOptionsWithSeparators.length === 0 && (
                                 <div className="p-1 flex items-center text-gray-400 select-none">
                                     {props.options.length === 0 || filter === ""
                                         ? noOptionsText
@@ -474,25 +550,11 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                             )}
                             <Virtualization
                                 direction="vertical"
-                                items={optionsWithSeperators}
+                                items={filteredOptionsWithSeparators}
                                 itemSize={optionHeight}
                                 containerRef={dropdownRef}
                                 startIndex={startIndex}
-                                renderItem={(item: OptionListItem) => {
-                                    if (item.type === "separator") {
-                                        return <SeperatorLine text={item.content} />;
-                                    } else {
-                                        return (
-                                            <OptionItem
-                                                isSelected={selection === item.content.value}
-                                                isFocused={optionIndexWithFocus === item.actualIndex}
-                                                {...item.content}
-                                                onSelect={handleOptionClick}
-                                                onPointerOver={() => handlePointerOver(item.actualIndex)}
-                                            />
-                                        );
-                                    }
-                                }}
+                                renderItem={renderItem}
                             />
                         </div>
                     )}
@@ -513,7 +575,7 @@ function OptionItem(props: OptionProps): React.ReactNode {
 
     return (
         <div
-            className={resolveClassNames("flex", "items-center", "cursor-pointer", "select-none", "pl-1", "pr-1", {
+            className={resolveClassNames("flex", "items-center", "cursor-pointer", "select-none", "px-1", {
                 "bg-blue-600 text-white box-border hover:bg-blue-700": isSelected,
                 "bg-blue-100": !isSelected && isFocused,
                 "bg-blue-700": isSelected && isFocused,
@@ -535,7 +597,7 @@ function OptionItem(props: OptionProps): React.ReactNode {
 
 function SeperatorLine(props: { text: string }): React.ReactNode {
     return (
-        <div className=" px-1 flex gap-1 text-xs text-slate-500 italic items-center" style={{ height: optionHeight }}>
+        <div className="px-1 flex gap-1 text-xs text-slate-500 italic items-center" style={{ height: optionHeight }}>
             <hr className="bg-slate-700 h-px w-1" />
             <span className="block">{props.text}</span>
             <hr className="bg-slate-700 flex-grow h-px block" />
