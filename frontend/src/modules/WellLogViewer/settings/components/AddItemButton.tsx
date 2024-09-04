@@ -17,23 +17,31 @@ export type AddItemButtonProps = {
  * Generic add-button, for the top of  sortable-lists. Uses a dropdown if there's more than 1 available options
  */
 export function AddItemButton(props: AddItemButtonProps): React.ReactNode {
-    const options = props.options;
+    const { onOptionClicked, onAddClicked } = props;
 
-    function handleOptionClicked(item: SelectOption) {
-        if (props.onOptionClicked) props.onOptionClicked(item.value);
-    }
+    const handleOptionClicked = React.useCallback(
+        function handleOptionClicked(item: SelectOption) {
+            if (onOptionClicked) onOptionClicked(item.value);
+        },
+        [onOptionClicked]
+    );
 
-    if (!options) {
-        return <Button>{renderAddButton(props.buttonText, false, props.onAddClicked)}</Button>;
+    if (!props.options) {
+        return (
+            <Button onClick={onAddClicked}>
+                <ButtonContent text={props.buttonText} />
+            </Button>
+        );
     }
 
     return (
         <Dropdown>
-            <MenuButton>{renderAddButton(props.buttonText, true)}</MenuButton>
+            <MenuButton>
+                <ButtonContent text={props.buttonText} multiple />
+            </MenuButton>
 
-            {/* Not expected to reorder, so key on index is fine */}
             <Menu className="text-sm p-1 max-h-96 overflow-auto" anchorOrigin="bottom-end">
-                {options.map((entry) => (
+                {props.options.map((entry) => (
                     <MenuItem key={entry.value} className="text-sm p-0.5" onClick={() => handleOptionClicked(entry)}>
                         {entry.label}
                     </MenuItem>
@@ -43,12 +51,12 @@ export function AddItemButton(props: AddItemButtonProps): React.ReactNode {
     );
 }
 
-function renderAddButton(text: string, multiple: boolean, onClick?: () => void): React.ReactNode {
+function ButtonContent(props: { text: string; multiple?: boolean }) {
     return (
-        <div className="flex items-center gap-1 py-0.5 px-1 text-sm rounded hover:bg-blue-100" onClick={onClick}>
+        <div className="flex items-center gap-1 py-0.5 px-1 text-sm rounded hover:bg-blue-100">
             <Add fontSize="inherit" />
-            <span>{text}</span>
-            {multiple && <ArrowDropDown />}
+            <span>{props.text}</span>
+            {props.multiple && <ArrowDropDown />}
         </div>
     );
 }

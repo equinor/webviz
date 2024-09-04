@@ -19,37 +19,49 @@ interface LogTracksProps {
 export function LogTracks(props: LogTracksProps): React.ReactNode {
     const [trackConfigs, setTrackConfigs] = useAtom(logViewerTrackConfigs);
 
-    function handleNewPlotTrack() {
-        const newConfig = createNewConfig(`Plot track #${trackConfigs.length + 1}`);
+    const handleNewPlotTrack = React.useCallback(
+        function handleNewPlotTrack() {
+            const newConfig = createNewConfig(`Plot track #${trackConfigs.length + 1}`);
 
-        setTrackConfigs([...trackConfigs, newConfig]);
-    }
+            setTrackConfigs([...trackConfigs, newConfig]);
+        },
+        [setTrackConfigs, trackConfigs]
+    );
 
-    function handleDeleteTrack(track: TemplateTrackConfig) {
-        setTrackConfigs(trackConfigs.filter((configs) => configs._id !== track._id));
-    }
+    const handleDeleteTrack = React.useCallback(
+        function handleDeleteTrack(track: TemplateTrackConfig) {
+            setTrackConfigs(trackConfigs.filter((configs) => configs._id !== track._id));
+        },
+        [setTrackConfigs, trackConfigs]
+    );
 
-    function handleEditTrack(updatedItem: TemplateTrackConfig) {
-        const newConfigs = trackConfigs.map((tc) => (tc._id === updatedItem._id ? updatedItem : tc));
+    const handleEditTrack = React.useCallback(
+        function handleEditTrack(updatedItem: TemplateTrackConfig) {
+            const newConfigs = trackConfigs.map((tc) => (tc._id === updatedItem._id ? updatedItem : tc));
 
-        setTrackConfigs(newConfigs);
-    }
+            setTrackConfigs(newConfigs);
+        },
+        [setTrackConfigs, trackConfigs]
+    );
 
-    function handleTrackMove(
-        movedItemId: string,
-        originId: string | null,
-        destinationId: string | null,
-        newPosition: number
-    ) {
-        // Skip update if the item was moved above or below itself, as this means no actual move happened
-        // TODO: This should probably be checked inside SortableList
-        const currentPosition = trackConfigs.findIndex((cfg) => cfg._id === movedItemId);
-        if (currentPosition === newPosition || currentPosition + 1 === newPosition) return;
+    const handleTrackMove = React.useCallback(
+        function handleTrackMove(
+            movedItemId: string,
+            originId: string | null,
+            destinationId: string | null,
+            newPosition: number
+        ) {
+            // Skip update if the item was moved above or below itself, as this means no actual move happened
+            // TODO: This should probably be checked inside SortableList
+            const currentPosition = trackConfigs.findIndex((cfg) => cfg._id === movedItemId);
+            if (currentPosition === newPosition || currentPosition + 1 === newPosition) return;
 
-        const newTrackCfg = arrayMove(trackConfigs, currentPosition, newPosition);
+            const newTrackCfg = arrayMove(trackConfigs, currentPosition, newPosition);
 
-        setTrackConfigs(newTrackCfg);
-    }
+            setTrackConfigs(newTrackCfg);
+        },
+        [setTrackConfigs, trackConfigs]
+    );
 
     return (
         <div className="h-full  [&_>_div]:!flex-grow-0">

@@ -21,14 +21,17 @@ type ConfigChanges = Pick<Partial<TemplateTrackConfig>, "width" | "plots" | "sca
 const INPUT_DEBOUNCE_TIME = 500;
 
 export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
-    const currentConfig = props.trackConfig;
+    const { onUpdateTrack } = props;
 
     const curveHeadersQuery = useAtomValue(wellLogCurveHeadersQueryAtom);
     const curveHeadersErrorStatus = usePropagateApiErrorToStatusWriter(curveHeadersQuery, props.statusWriter) ?? "";
 
-    function updateTrackConfig(configChanges: ConfigChanges) {
-        props.onUpdateTrack({ ...currentConfig, ...configChanges });
-    }
+    const updateTrackConfig = React.useCallback(
+        function updateTrackConfig(configChanges: ConfigChanges) {
+            onUpdateTrack({ ...props.trackConfig, ...configChanges });
+        },
+        [props.trackConfig, onUpdateTrack]
+    );
 
     return (
         <div
@@ -38,7 +41,7 @@ export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
             <label htmlFor="trackTitle">Track title</label>
             <Input
                 id="trackTitle"
-                value={currentConfig.title}
+                value={props.trackConfig.title}
                 debounceTimeMs={INPUT_DEBOUNCE_TIME}
                 onValueChange={(val) => updateTrackConfig({ title: val })}
             />
@@ -47,18 +50,17 @@ export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
             <Input
                 id="trackWidth"
                 type="number"
-                value={currentConfig.width}
+                value={props.trackConfig.width}
                 min={1}
                 max={6}
                 debounceTimeMs={INPUT_DEBOUNCE_TIME}
                 onValueChange={(val) => updateTrackConfig({ width: Number(val) })}
             />
 
-            {/* TODO: Track scale */}
             <label htmlFor="trackScale">Scale</label>
             <Dropdown
                 id="trackScale"
-                value={currentConfig.scale ?? ""}
+                value={props.trackConfig.scale ?? ""}
                 options={PLOT_SCALE_OPTIONS}
                 filter={false}
                 onChange={(val) => {
@@ -71,12 +73,11 @@ export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
                 <PendingWrapper isPending={curveHeadersQuery.isPending} errorMessage={curveHeadersErrorStatus}>
                     <SortablePlotList
                         availableCurveHeaders={curveHeadersQuery.data ?? []}
-                        plots={currentConfig.plots}
+                        plots={props.trackConfig.plots}
                         onUpdatePlots={(plots) => updateTrackConfig({ plots: plots })}
                     />
                 </PendingWrapper>
             </div>
-            {/* </div> */}
         </div>
     );
 }

@@ -1,3 +1,5 @@
+import React from "react";
+
 import { WellboreHeader_api } from "@api";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -10,12 +12,11 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
-import { viewerHorizontalAtom } from "@modules/3DViewer/settings/atoms/baseAtoms";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
+import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom, viewerHorizontalAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom, selectedWellboreAtom } from "./atoms/derivedAtoms";
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { LogTracks } from "./components/LogTracks";
@@ -64,9 +65,12 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     const wellboreHeaders = useAtomValue(drilledWellboreHeadersQueryAtom);
     const [selectedWellboreHeader, setSelectedWellboreHeader] = useSyncedWellboreSetting(syncHelper);
 
-    function handleWellboreSelectionChange(uuids: string[]) {
-        setSelectedWellboreHeader(uuids[0] ?? null);
-    }
+    const handleWellboreSelectionChange = React.useCallback(
+        function handleWellboreSelectionChange(uuids: string[]) {
+            setSelectedWellboreHeader(uuids[0] ?? null);
+        },
+        [setSelectedWellboreHeader]
+    );
 
     // Well log selection
     const [horizontal, setHorizontal] = useAtom(viewerHorizontalAtom);

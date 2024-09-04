@@ -13,8 +13,7 @@ export type TemplateTrackConfig = Omit<TemplateTrack, "plots"> & {
 };
 
 export const logViewerTrackConfigs = atom<TemplateTrackConfig[]>([]);
+export const viewerHorizontalAtom = atom<boolean>(false);
 
 export const userSelectedFieldIdentifierAtom = atom<string | null>(null);
 export const userSelectedWellboreUuidAtom = atom<string | null>(null);
-export const userSelectedWellLogNameAtom = atom<string | null>(null);
-export const userSelectedWellLogCurveNamesAtom = atom<string[]>([]);

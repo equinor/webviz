@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React from "react";
 
 import { WellboreHeader_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
@@ -60,9 +60,9 @@ function useGloballySyncedMd(
     const instanceId = viewContext.getInstanceIdString();
     const wellboreUuid = wellboreHeader?.wellboreUuid ?? "";
 
-    const lastRecievedChange = useRef<GlobalHoverMd>(null);
+    const lastRecievedChange = React.useRef<GlobalHoverMd>(null);
 
-    const handleGlobalValueChange = useCallback(
+    const handleGlobalValueChange = React.useCallback(
         (newValue: GlobalHoverMd) => {
             if (!isEqual(lastRecievedChange, newValue)) {
                 lastRecievedChange.current = newValue;
@@ -75,7 +75,7 @@ function useGloballySyncedMd(
         [wellLogController, wellboreUuid]
     );
 
-    const broadcastGlobalMdChange = useCallback(
+    const broadcastGlobalMdChange = React.useCallback(
         (newMd: number | null) => {
             const payload: GlobalHoverMd = newMd ? { wellboreUuid, md: newMd } : null;
 
@@ -84,7 +84,7 @@ function useGloballySyncedMd(
         [instanceId, wellboreUuid, workbenchServices]
     );
 
-    useEffect(() => {
+    React.useEffect(() => {
         return workbenchServices.subscribe("global.hoverMd", handleGlobalValueChange, instanceId);
     }, [handleGlobalValueChange, instanceId, workbenchServices]);
 
@@ -102,7 +102,7 @@ function useGloballySyncedVerticalScale(
     const verticalSyncActive = syncableSettingKeys.includes(SyncSettingKey.VERTICAL_SCALE);
 
     // Cannot use the SyncHelper utility here, since we want to avoid a re-render and instead propagate the change via the well log controller
-    const handleGlobalVertScaleChange = useCallback(
+    const handleGlobalVertScaleChange = React.useCallback(
         (newScale: number | null) => {
             if (newScale === null || newScale < 1) return;
             if (!wellLogController) return console.warn("No well log controller set");
@@ -112,7 +112,7 @@ function useGloballySyncedVerticalScale(
         [wellLogController]
     );
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (verticalSyncActive) {
             const unsubscribe = workbenchServices.subscribe(
                 "global.syncValue.verticalScale",
@@ -124,7 +124,7 @@ function useGloballySyncedVerticalScale(
         }
     }, [workbenchServices, verticalSyncActive, syncableSettingKeys, moduleInstanceId, handleGlobalVertScaleChange]);
 
-    const broadcastVerticalScaleChange = useCallback(
+    const broadcastVerticalScaleChange = React.useCallback(
         (newScale: number | null) => {
             if (!verticalSyncActive || newScale === null) return;
 
@@ -143,8 +143,8 @@ export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
     const intersectionReferenceSystem = props.intersectionReferenceSystem;
 
     // Curve data transform is a bit heavy, so we use Memo-hooks to reduce re-render overhead
-    const template = useMemo(() => createLogTemplate(trackConfigs), [trackConfigs]);
-    const welllog = useMemo(
+    const template = React.useMemo(() => createLogTemplate(trackConfigs), [trackConfigs]);
+    const welllog = React.useMemo(
         () => createWellLog(curveData, trajectoryData, intersectionReferenceSystem),
         [curveData, trajectoryData, intersectionReferenceSystem]
     );
@@ -154,15 +154,15 @@ export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
 
 export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
     // <WellLogViewer /> uses an internal controller to change things like zoom, selection and so on. Use this when possible to avoid uneccessary re-renders
-    const [wellLogController, setWellLogController] = useState<WellLogController | null>(null);
-    const [wellLogReadout, setWellLogReadout] = useState<Info[]>([]);
+    const [wellLogController, setWellLogController] = React.useState<WellLogController | null>(null);
+    const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
 
     const { template, welllog } = useViewerDataTransform(props);
 
     const colorScale = props.moduleProps.workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Sequential,
     });
-    const colorTables = useMemo(() => createContinuousColorScaleForMap(colorScale), [colorScale]);
+    const colorTables = React.useMemo(() => createContinuousColorScaleForMap(colorScale), [colorScale]);
 
     // Global value syncronization
     const broadcastGlobalMdChange = useGloballySyncedMd(
@@ -178,37 +178,46 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         props.moduleProps.viewContext
     );
 
-    const handleMouseOut = useCallback(() => {
-        broadcastGlobalMdChange(null);
-        setWellLogReadout([]);
-    }, [broadcastGlobalMdChange]);
+    const handleMouseOut = React.useCallback(
+        function handleMouseOut() {
+            broadcastGlobalMdChange(null);
+            setWellLogReadout([]);
+        },
+        [broadcastGlobalMdChange]
+    );
 
     // Log viewer module callbacks
-    const handleCreateController = useCallback((controller: WellLogController) => {
+    const handleCreateController = React.useCallback(function handleCreateController(controller: WellLogController) {
         // ? Something weird happens during HMR, where the controller ref becomes null, but this event still fires?
         console.debug("Setting well log viewer controller...", controller);
         setWellLogController(controller);
     }, []);
 
-    const handleContentRescale = useCallback(() => {
-        const currentScale = wellLogController?.getContentZoom();
+    const handleContentRescale = React.useCallback(
+        function handleContentRescale() {
+            const currentScale = wellLogController?.getContentZoom();
 
-        if (currentScale) broadcastVerticalScaleChange(currentScale);
-    }, [broadcastVerticalScaleChange, wellLogController]);
+            if (currentScale) broadcastVerticalScaleChange(currentScale);
+        },
+        [broadcastVerticalScaleChange, wellLogController]
+    );
 
-    const handleSelection = useCallback(() => {
-        const currentSelection = wellLogController?.getContentSelection()[0] ?? null;
+    const handleSelection = React.useCallback(
+        function handleSelection() {
+            const currentSelection = wellLogController?.getContentSelection()[0] ?? null;
 
-        broadcastGlobalMdChange(currentSelection);
+            broadcastGlobalMdChange(currentSelection);
 
-        // TODO: It's possible to pin and select a range, should we have that color a section of other synced intersections?
-    }, [broadcastGlobalMdChange, wellLogController]);
+            // TODO: It's possible to pin and select a range, should we have that color a section of other synced intersections?
+        },
+        [broadcastGlobalMdChange, wellLogController]
+    );
 
-    const handleInfoFilled = useCallback((infos: Info[]) => {
+    const handleInfoFilled = React.useCallback(function handleInfoFilled(infos: Info[]) {
         setWellLogReadout(infos);
     }, []);
 
-    const handleTrackMouseEvent = useCallback(
+    const handleTrackMouseEvent = React.useCallback(
         (/* welllogView: WellLogView, e: TrackMouseEvent */) => {
             // ! No-op method. Passed to the viewer to make it not show the context menu for tracks
         },
@@ -239,6 +248,4 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
             <ReadoutWrapper templateTracks={props.templateTracks} wellLogReadout={wellLogReadout} />
         </div>
     );
-    // TODO: Disable right panel, and make it a floating box on hover, to match intersection
-    // layout={{ right: undefined }}
 }

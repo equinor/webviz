@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 
 import { WellboreLogCurveHeader_api } from "@api";
 import { arrayMove } from "@framework/utils/arrays";
@@ -33,45 +33,59 @@ const DIFF_CURVE_COLORS = [
 ];
 
 export function SortablePlotList(props: SortablePlotListProps): React.ReactNode {
+    const { onUpdatePlots } = props;
+
     const curveHeaderOptions = makeCurveNameOptions(props.availableCurveHeaders);
 
     // TODO, do an offsett or something, so they dont always start on the same color?
-    const colorSet = useRef<ColorSet>(new ColorSet(CURVE_COLOR_PALETTE));
+    const colorSet = React.useRef<ColorSet>(new ColorSet(CURVE_COLOR_PALETTE));
 
-    function addPlot(plotType: string) {
-        const plotConfig: TemplatePlotConfig = makeTrackPlot({
-            color: colorSet.current.getNextColor(),
-            type: plotType as TemplatePlotTypes,
-        });
+    const addPlot = React.useCallback(
+        function addPlot(plotType: string) {
+            const plotConfig: TemplatePlotConfig = makeTrackPlot({
+                color: colorSet.current.getNextColor(),
+                type: plotType as TemplatePlotTypes,
+            });
 
-        props.onUpdatePlots([...props.plots, plotConfig]);
-    }
+            onUpdatePlots([...props.plots, plotConfig]);
+        },
+        [onUpdatePlots, props.plots]
+    );
 
-    function removePlot(plot: TemplatePlotConfig) {
-        props.onUpdatePlots(props.plots.filter((p) => p._id !== plot._id));
-    }
+    const removePlot = React.useCallback(
+        function removePlot(plot: TemplatePlotConfig) {
+            onUpdatePlots(props.plots.filter((p) => p._id !== plot._id));
+        },
+        [onUpdatePlots, props.plots]
+    );
 
-    function handlePlotUpdate(newPlot: TemplatePlotConfig) {
-        const newPlots = props.plots.map((p) => (p._id === newPlot._id ? newPlot : p));
+    const handlePlotUpdate = React.useCallback(
+        function handlePlotUpdate(newPlot: TemplatePlotConfig) {
+            const newPlots = props.plots.map((p) => (p._id === newPlot._id ? newPlot : p));
 
-        props.onUpdatePlots(newPlots);
-    }
+            onUpdatePlots(newPlots);
+        },
+        [onUpdatePlots, props.plots]
+    );
 
-    function handleTrackMove(
-        movedItemId: string,
-        originId: string | null,
-        destinationId: string | null,
-        newPosition: number
-    ) {
-        // Skip update if the item was moved above or below itself, as this means no actual move happened
-        // TODO: This should probably be checked inside SortableList
-        const currentPosition = props.plots.findIndex((p) => p.name === movedItemId);
-        if (currentPosition === newPosition || currentPosition + 1 === newPosition) return;
+    const handleTrackMove = React.useCallback(
+        function handleTrackMove(
+            movedItemId: string,
+            originId: string | null,
+            destinationId: string | null,
+            newPosition: number
+        ) {
+            // Skip update if the item was moved above or below itself, as this means no actual move happened
+            // TODO: This should probably be checked inside SortableList
+            const currentPosition = props.plots.findIndex((p) => p.name === movedItemId);
+            if (currentPosition === newPosition || currentPosition + 1 === newPosition) return;
 
-        const newTrackCfg = arrayMove(props.plots, currentPosition, newPosition);
+            const newTrackCfg = arrayMove(props.plots, currentPosition, newPosition);
 
-        props.onUpdatePlots(newTrackCfg);
-    }
+            onUpdatePlots(newTrackCfg);
+        },
+        [onUpdatePlots, props.plots]
+    );
 
     return (
         <div className="">
@@ -102,23 +116,26 @@ type SortablePlotItemProps = {
 };
 
 function SortablePlotItem(props: SortablePlotItemProps) {
-    const plot = props.plot;
-    const secondCurveNeeded = plot.type === "differential";
+    const { onPlotUpdate } = props;
+    const secondCurveNeeded = props.plot.type === "differential";
 
-    function handlePlotChange(changes: Partial<TemplatePlotConfig>) {
-        const newPlot = makeTrackPlot({
-            ...plot,
-            ...changes,
-        });
+    const handlePlotChange = React.useCallback(
+        function handlePlotChange(changes: Partial<TemplatePlotConfig>) {
+            const newPlot = makeTrackPlot({
+                ...props.plot,
+                ...changes,
+            });
 
-        props.onPlotUpdate(newPlot);
-    }
+            onPlotUpdate(newPlot);
+        },
+        [props.plot, onPlotUpdate]
+    );
 
     const title = (
         <>
             <Dropdown
                 placeholder="Select a curve"
-                value={plot.name}
+                value={props.plot.name}
                 options={props.curveHeaderOptions}
                 onChange={(v) => handlePlotChange({ name: v })}
             />
@@ -133,13 +150,13 @@ function SortablePlotItem(props: SortablePlotItemProps) {
                         title="Swap curves"
                         aria-label="Swap curves"
                         className="rounded hover:bg-slate-300 text-base block px-1 -mx-1"
-                        onClick={() => handlePlotChange({ name: plot.name2, name2: plot.name })}
+                        onClick={() => handlePlotChange({ name: props.plot.name2, name2: props.plot.name })}
                     >
                         <SwapHoriz fontSize="inherit" />
                     </button>
                     <Dropdown
                         placeholder="Select 2nd curve"
-                        value={plot.name2}
+                        value={props.plot.name2}
                         options={props.curveHeaderOptions}
                         onChange={(v) => handlePlotChange({ name2: v })}
                     />
@@ -147,7 +164,7 @@ function SortablePlotItem(props: SortablePlotItemProps) {
             )}
             <div className="text-xs w-28">
                 <Dropdown
-                    value={plot.type}
+                    value={props.plot.type}
                     options={PLOT_TYPE_OPTIONS}
                     onChange={(v) => handlePlotChange({ type: v as TemplatePlotTypes })}
                 />
@@ -156,14 +173,14 @@ function SortablePlotItem(props: SortablePlotItemProps) {
             <button
                 className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded text-xs text-red-800"
                 title="Remove Track"
-                onClick={() => props.onDeletePlot(plot)}
+                onClick={() => props.onDeletePlot(props.plot)}
             >
                 <Delete fontSize="inherit" />
             </button>
         </>
     );
 
-    return <SortableListItem id={plot._id} title={title} endAdornment={endAdornment} />;
+    return <SortableListItem id={props.plot._id} title={title} endAdornment={endAdornment} />;
 }
 
 // function isValidPlotConfig(plot: Partial<TemplatePlotConfig>): plot is TemplatePlot {
