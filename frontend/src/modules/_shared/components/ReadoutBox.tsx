@@ -1,5 +1,7 @@
 import { Fragment, ReactNode, useEffect, useRef, useState } from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
 export type ReadoutItem = {
     label: string;
     info: InfoItem[];
@@ -74,7 +76,7 @@ export function ReadoutBox(props: ReadoutBoxProps): ReactNode {
     return (
         <div
             ref={readoutRoot}
-            className={`absolute bottom-10 right-12 z-50 w-60  flex flex-col gap-2 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none ${
+            className={`absolute bottom-10 right-12 z-[9999] w-60 items-center grid grid-cols-[0.7rem,_1fr,_1fr,_auto] gap-x-2 gap-y-1 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none ${
                 flipped ? "left-12" : "right-12"
             }`}
         >
@@ -82,15 +84,20 @@ export function ReadoutBox(props: ReadoutBoxProps): ReactNode {
                 if (idx < maxNumItems) {
                     return (
                         <Fragment key={idx}>
-                            <div className="flex gap-2 font-bold items-center">
-                                {!props.noLabelColor && (
-                                    <div
-                                        className="rounded-full w-3 h-3 border border-slate-500"
-                                        style={{ backgroundColor: item.color }}
-                                    />
-                                )}
-                                <span className="block">{item.label}</span>
-                            </div>
+                            {!props.noLabelColor && (
+                                <div
+                                    className="rounded-full w-3 h-3 border border-slate-500"
+                                    style={{ backgroundColor: item.color }}
+                                />
+                            )}
+                            <span
+                                className={resolveClassNames("block font-bold", {
+                                    "col-span-4": props.noLabelColor,
+                                    "col-span-3": !props.noLabelColor,
+                                })}
+                            >
+                                {item.label}
+                            </span>
 
                             {item.info && item.info.map((i: InfoItem, idx: number) => <InfoItem key={idx} {...i} />)}
                         </Fragment>
@@ -98,7 +105,7 @@ export function ReadoutBox(props: ReadoutBoxProps): ReactNode {
                 }
             })}
             {readoutItems.length > maxNumItems && (
-                <div className="flex items-center gap-2">...and {readoutItems.length - maxNumItems} more</div>
+                <div className="col-span-4 italic">...and {readoutItems.length - maxNumItems} more</div>
             )}
         </div>
     );
@@ -106,12 +113,12 @@ export function ReadoutBox(props: ReadoutBoxProps): ReactNode {
 
 function InfoItem(props: InfoItem): ReactNode {
     return (
-        <div className="table-row">
-            <div className="table-cell w-4 align-middle">{props.adornment}</div>
-            <div className="table-cell w-32 align-middle">{props.name}:</div>
-            <div className="table-cell align-middle">{makeFormatedInfoValue(props.value)}</div>
-            {props.unit && <div className="table-cell text-right align-middle">{props.unit}</div>}
-        </div>
+        <>
+            <div className="place-self-center">{props.adornment}</div>
+            <div className="">{props.name}:</div>
+            <div className="place-self-end">{makeFormatedInfoValue(props.value)}</div>
+            {props.unit && <div className=" text-right">{props.unit}</div>}
+        </>
     );
 }
 
