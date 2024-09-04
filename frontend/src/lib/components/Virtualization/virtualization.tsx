@@ -97,13 +97,16 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         }
     }
 
-    React.useEffect(() => {
-        if (props.containerRef.current && initialScrollPositions) {
-            setIsProgrammaticScroll(true);
-            props.containerRef.current.scrollTop = initialScrollPositions.top;
-            props.containerRef.current.scrollLeft = initialScrollPositions.left;
-        }
-    }, [props.containerRef, initialScrollPositions]);
+    React.useEffect(
+        function applyInitialScrollPositionEffect() {
+            if (props.containerRef.current && initialScrollPositions) {
+                setIsProgrammaticScroll(true);
+                props.containerRef.current.scrollTop = initialScrollPositions.top;
+                props.containerRef.current.scrollLeft = initialScrollPositions.left;
+            }
+        },
+        [props.containerRef, initialScrollPositions]
+    );
 
     React.useEffect(
         function mountScrollEffect() {
@@ -168,13 +171,13 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
         ]
     );
 
-    const makeStyle = (size: number) => {
+    function makeStyle(size: number) {
         if (props.direction === "vertical") {
             return { height: size };
         } else {
             return { width: size };
         }
-    };
+    }
 
     return (
         <>

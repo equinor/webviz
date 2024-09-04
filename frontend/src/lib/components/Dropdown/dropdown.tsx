@@ -41,8 +41,8 @@ const defaultProps = {
     filter: false,
 };
 
-const minHeight = 200;
-const optionHeight = 32;
+const MIN_HEIGHT = 200;
+const OPTION_HEIGHT = 32;
 
 type DropdownRect = {
     left?: number;
@@ -134,7 +134,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         setPrevFilteredOptionsWithSeparators(filteredOptionsWithSeparators);
     }
 
-    React.useEffect(function handleMount() {
+    React.useEffect(function mountEffect() {
         return function handleUnmount() {
             if (debounceTimerRef.current) {
                 clearTimeout(debounceTimerRef.current);
@@ -143,7 +143,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     }, []);
 
     React.useEffect(
-        function handleOptionsChange() {
+        function handleOptionsChangeEffect() {
             function handleMouseDown(event: MouseEvent) {
                 if (
                     dropdownRef.current &&
@@ -168,7 +168,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     );
 
     React.useEffect(
-        function updateDropdownRectWidth() {
+        function updateDropdownRectWidthEffect() {
             let longestOptionWidth = props.options.reduce((prev, current) => {
                 const labelWidth = getTextWidthWithFont(current.label, "Equinor", 1);
                 const adornmentWidth = current.adornment ? convertRemToPixels((5 + 2) / 4) : 0;
@@ -195,14 +195,16 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     );
 
     React.useEffect(
-        function computeDropdownRect() {
+        function computeDropdownRectEffect() {
             if (dropdownVisible) {
                 const inputClientBoundingRect = inputRef.current?.getBoundingClientRect();
                 const bodyClientBoundingRect = document.body.getBoundingClientRect();
 
                 const height =
-                    Math.min(minHeight, Math.max(filteredOptionsWithSeparators.length * optionHeight, optionHeight)) +
-                    2;
+                    Math.min(
+                        MIN_HEIGHT,
+                        Math.max(filteredOptionsWithSeparators.length * OPTION_HEIGHT, OPTION_HEIGHT)
+                    ) + 2;
 
                 if (inputClientBoundingRect && bodyClientBoundingRect) {
                     const newDropdownRect: DropdownRect = {
@@ -212,7 +214,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     };
 
                     if (inputClientBoundingRect.y + inputBoundingRect.height + height > window.innerHeight) {
-                        newDropdownRect.top = inputClientBoundingRect.y - minHeight;
+                        newDropdownRect.top = inputClientBoundingRect.y - MIN_HEIGHT;
                         newDropdownRect.height = Math.min(height, inputClientBoundingRect.y);
                     } else {
                         newDropdownRect.top = inputClientBoundingRect.y + inputBoundingRect.height;
@@ -237,7 +239,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                                 (filteredOptionsWithSeparators.findIndex(
                                     (option) => option.type === "option" && option.content.value === selection
                                 ) || 0) -
-                                    height / optionHeight / 2
+                                    height / OPTION_HEIGHT / 2
                             )
                         )
                     );
@@ -302,10 +304,10 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     );
 
     React.useEffect(
-        function addKeyDownEventHandler() {
+        function addKeyDownEventHandlerEffect() {
             function handleKeyDown(e: KeyboardEvent) {
                 if (dropdownRef.current) {
-                    const currentStartIndex = Math.round(dropdownRef.current?.scrollTop / optionHeight);
+                    const currentStartIndex = Math.round(dropdownRef.current?.scrollTop / OPTION_HEIGHT);
                     if (dropdownVisible) {
                         if (e.key === "ArrowUp") {
                             e.preventDefault();
@@ -351,8 +353,8 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                             );
 
                             setOptionIndexWithFocus(newIndex);
-                            if (newIndex >= currentStartIndex + minHeight / optionHeight - 1) {
-                                setStartIndex(Math.max(0, newIndex - minHeight / optionHeight + 1));
+                            if (newIndex >= currentStartIndex + MIN_HEIGHT / OPTION_HEIGHT - 1) {
+                                setStartIndex(Math.max(0, newIndex - MIN_HEIGHT / OPTION_HEIGHT + 1));
                             }
                             setKeyboardFocus(true);
                         }
@@ -458,24 +460,22 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         setOptionIndexWithFocus(-1);
     }
 
-    const renderItem = React.useCallback(
-        function renderItem(item: OptionListItem, index: number) {
-            if (item.type === "separator") {
-                return <SeperatorLine text={item.content} />;
-            } else {
-                return (
-                    <OptionItem
-                        isSelected={selection === item.content.value}
-                        isFocused={optionIndexWithFocus === index}
-                        {...item.content}
-                        onSelect={handleOptionClick}
-                        onPointerOver={() => handlePointerOver(index)}
-                    />
-                );
-            }
-        },
-        [handleOptionClick, handlePointerOver, optionIndexWithFocus, selection]
-    );
+    function renderItem(item: OptionListItem, index: number) {
+        if (item.type === "separator") {
+            return <SeparatorItem key={`${item.content}-${index}`} text={item.content} />;
+        } else {
+            return (
+                <OptionItem
+                    key={item.content.value}
+                    isSelected={selection === item.content.value}
+                    isFocused={optionIndexWithFocus === index}
+                    {...item.content}
+                    onSelect={handleOptionClick}
+                    onPointerOver={() => handlePointerOver(index)}
+                />
+            );
+        }
+    }
 
     return (
         <BaseComponent disabled={props.disabled}>
@@ -548,14 +548,16 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                                         : noMatchingOptionsText}
                                 </div>
                             )}
-                            <Virtualization
-                                direction="vertical"
-                                items={filteredOptionsWithSeparators}
-                                itemSize={optionHeight}
-                                containerRef={dropdownRef}
-                                startIndex={startIndex}
-                                renderItem={renderItem}
-                            />
+                            <div style={{ height: filteredOptionsWithSeparators.length * OPTION_HEIGHT }}>
+                                <Virtualization
+                                    direction="vertical"
+                                    items={filteredOptionsWithSeparators}
+                                    itemSize={OPTION_HEIGHT}
+                                    containerRef={dropdownRef}
+                                    startIndex={startIndex}
+                                    renderItem={renderItem}
+                                />
+                            </div>
                         </div>
                     )}
             </div>
@@ -570,37 +572,41 @@ type OptionProps = DropdownOption & {
     onSelect: (value: ValType) => void;
     onPointerOver: (value: ValType) => void;
 };
-function OptionItem(props: OptionProps): React.ReactNode {
-    const { value, isSelected, isFocused, disabled, label, adornment, onSelect, onPointerOver } = props;
 
+function OptionItem(props: OptionProps): React.ReactNode {
     return (
         <div
             className={resolveClassNames("flex", "items-center", "cursor-pointer", "select-none", "px-1", {
-                "bg-blue-600 text-white box-border hover:bg-blue-700": isSelected,
-                "bg-blue-100": !isSelected && isFocused,
-                "bg-blue-700": isSelected && isFocused,
-                "pointer-events-none": disabled,
-                "text-gray-400": disabled,
+                "bg-blue-600 text-white box-border hover:bg-blue-700": props.isSelected,
+                "bg-blue-100": !props.isSelected && props.isFocused,
+                "bg-blue-700": props.isSelected && props.isFocused,
+                "pointer-events-none": props.disabled,
+                "text-gray-400": props.disabled,
             })}
-            style={{ height: optionHeight }}
-            title={label}
-            onPointerMove={() => onPointerOver(value)}
-            onClick={() => !disabled && onSelect(value)}
+            style={{ height: OPTION_HEIGHT }}
+            title={props.label}
+            onPointerMove={() => props.onPointerOver(props.value)}
+            onClick={() => !props.disabled && props.onSelect(props.value)}
         >
-            <span className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex gap-2">
-                {adornment && <span className="max-w-5 max-h-5 overflow-hidden">{adornment}</span>}
-                {label}
+            <span
+                className={resolveClassNames("whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex gap-2", {
+                    "ml-2": props.group !== undefined,
+                })}
+            >
+                {props.adornment && <span className="max-w-5 max-h-5 overflow-hidden">{props.adornment}</span>}
+                {props.label}
             </span>
         </div>
     );
 }
 
-function SeperatorLine(props: { text: string }): React.ReactNode {
+function SeparatorItem(props: { text: string }): React.ReactNode {
     return (
-        <div className="px-1 flex gap-1 text-xs text-slate-500 italic items-center" style={{ height: optionHeight }}>
-            <hr className="bg-slate-700 h-px w-1" />
-            <span className="block">{props.text}</span>
-            <hr className="bg-slate-700 flex-grow h-px block" />
+        <div
+            className="px-1 flex gap-1 text-xs text-gray-500 uppercase font-semibold items-center pointer-events-none select-none"
+            style={{ height: OPTION_HEIGHT }}
+        >
+            <span className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex gap-2">{props.text}</span>
         </div>
     );
 }
