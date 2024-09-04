@@ -15,6 +15,8 @@ export const PLOT_SCALE_OPTIONS: (DropdownOption & { value: TemplatePlotScaleTyp
 
 type PlotDropdownOption = DropdownOption & { value: TemplatePlotTypes };
 
+export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
+
 export const PLOT_TYPE_OPTIONS: PlotDropdownOption[] = [
     { value: "line", label: "Line" },
     { value: "linestep", label: "Linestep" },

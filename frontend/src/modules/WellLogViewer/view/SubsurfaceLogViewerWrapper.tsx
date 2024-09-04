@@ -9,11 +9,13 @@ import { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchS
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
 import { WellLogViewer } from "@webviz/well-log-viewer";
+import { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
 import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
 import { isEqual } from "lodash";
 
+import { ReadoutWrapper } from "./ReadoutWrapper";
 import { LogCurveDataWithName } from "./queries/wellLogQueries";
 
 import { InterfaceTypes } from "../interfaces";
@@ -153,13 +155,14 @@ export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
 export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
     // <WellLogViewer /> uses an internal controller to change things like zoom, selection and so on. Use this when possible to avoid uneccessary re-renders
     const [wellLogController, setWellLogController] = useState<WellLogController | null>(null);
+    const [wellLogReadout, setWellLogReadout] = useState<Info[]>([]);
 
     const { template, welllog } = useViewerDataTransform(props);
 
     const colorScale = props.moduleProps.workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Sequential,
     });
-    const colorTables = createContinuousColorScaleForMap(colorScale);
+    const colorTables = useMemo(() => createContinuousColorScaleForMap(colorScale), [colorScale]);
 
     // Global value syncronization
     const broadcastGlobalMdChange = useGloballySyncedMd(
@@ -175,44 +178,48 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         props.moduleProps.viewContext
     );
 
+    const handleMouseOut = useCallback(() => {
+        broadcastGlobalMdChange(null);
+        setWellLogReadout([]);
+    }, [broadcastGlobalMdChange]);
+
     // Log viewer module callbacks
-    function handleCreateController(controller: WellLogController) {
+    const handleCreateController = useCallback((controller: WellLogController) => {
         // ? Something weird happens during HMR, where the controller ref becomes null, but this event still fires?
         console.debug("Setting well log viewer controller...", controller);
         setWellLogController(controller);
-    }
+    }, []);
 
-    function handleContentRescale() {
+    const handleContentRescale = useCallback(() => {
         const currentScale = wellLogController?.getContentZoom();
 
         if (currentScale) broadcastVerticalScaleChange(currentScale);
-    }
+    }, [broadcastVerticalScaleChange, wellLogController]);
 
-    function handleTrackMouseEvent(/* welllogView: WellLogView, e: TrackMouseEvent */) {
-        // ! No-op method. Passed to the viewer to make it not show the context menu for tracks
-    }
-
-    function handleSelection() {
+    const handleSelection = useCallback(() => {
         const currentSelection = wellLogController?.getContentSelection()[0] ?? null;
 
         broadcastGlobalMdChange(currentSelection);
 
-        // TODO: Take the current MD, and show respective data for all tracks
         // TODO: It's possible to pin and select a range, should we have that color a section of other synced intersections?
-    }
+    }, [broadcastGlobalMdChange, wellLogController]);
 
-    // This callback doesnt work, viewer never fires it
-    // function handleViewerInfo(x: number, logController: any, iFrom: number, iTo: number) {
-    //     console.log("x", x);
-    //     console.log("logController", logController);
-    //     console.log("iFrom", iFrom);
-    //     console.log("iTo", iTo);
-    // }
+    const handleInfoFilled = useCallback((infos: Info[]) => {
+        setWellLogReadout(infos);
+    }, []);
+
+    const handleTrackMouseEvent = useCallback(
+        (/* welllogView: WellLogView, e: TrackMouseEvent */) => {
+            // ! No-op method. Passed to the viewer to make it not show the context menu for tracks
+        },
+        []
+    );
 
     return (
-        <div className="h-full" onMouseLeave={() => broadcastGlobalMdChange(null)}>
+        // The weird tailwind-class hides the built-in hover tooltip
+        <div className="h-full [&_.welllogview_.overlay_.depth]:!invisible" onMouseLeave={handleMouseOut}>
             <WellLogViewer
-                id="asasdads"
+                id="well-log-viewer"
                 welllog={welllog}
                 template={template}
                 horizontal={props.horizontal}
@@ -221,11 +228,15 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
                 axisMnemos={AXIS_MNEMOS}
                 axisTitles={AXIS_TITLES}
                 colorTables={colorTables}
+                // Disable the pin and selection logic, since we dont use that for anything yet
+                options={{ hideSelectionInterval: true }}
                 onTrackMouseEvent={handleTrackMouseEvent}
                 onCreateController={handleCreateController}
                 onContentSelection={handleSelection}
                 onContentRescale={handleContentRescale}
+                onInfoFilled={handleInfoFilled}
             />
+            <ReadoutWrapper templateTracks={props.templateTracks} wellLogReadout={wellLogReadout} />
         </div>
     );
     // TODO: Disable right panel, and make it a floating box on hover, to match intersection
