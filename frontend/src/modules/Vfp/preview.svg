@@ -1,14 +1,56 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg version="1.1" viewBox="0 0 558.19 214.16" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#">
-  <g transform="translate(224.25 7.5948)">
-    <g transform="matrix(1.3314 0 0 1 73.914 0)" fill="none">
-      <g transform="matrix(1.2372 0 0 .9994 53.084 .059752)" stroke="#0700b8" stroke-width="2">
-        <path d="m-218.06 68.08c20.225 2.9354 39.971 9.1443 58.236 18.312 11.421 5.732 22.231 12.592 33.141 19.243 15.608 9.5154 31.461 18.629 47.574 27.261 39.369 21.093 80.442 39.369 123.48 51.316 22.809 6.3318 46.116 10.869 69.634 13.556" vector-effect="non-scaling-stroke" />
-        <path d="m-199.46 71.768c62.294-13.816 125.1-25.344 188.24-34.554 14.008-2.0432 28.034-3.9724 42.095-5.6127 27.849-3.2488 55.831-5.3629 83.852-6.3354" vector-effect="non-scaling-stroke" />
-        <path d="m-161.41 85.576c59.267-16.973 119.93-29.051 181.18-36.068 31.556-3.6154 63.265-5.8899 95.014-6.8154" vector-effect="non-scaling-stroke" />
-        <path d="m-133.84 101.1c61.217-16.499 123.72-28.219 186.76-35.018 20.532-2.2146 41.121-3.908 61.739-5.0781" vector-effect="non-scaling-stroke" />
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 150 150">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+        stroke: #626467;
+      }
+
+      .cls-1, .cls-2, .cls-3, .cls-4, .cls-5 {
+        stroke-miterlimit: 10;
+      }
+
+      .cls-2, .cls-3 {
+        stroke-width: 5px;
+      }
+
+      .cls-2, .cls-4 {
+        fill: #f4bf19;
+        stroke: #f4bf19;
+      }
+
+      .cls-3, .cls-5 {
+        fill: #309cd7;
+        stroke: #309cd7;
+      }
+
+      .cls-4, .cls-5 {
+        stroke-width: 2px;
+      }
+    </style>
+  </defs>
+  <!-- Generator: Adobe Illustrator 28.6.0, SVG Export Plug-In . SVG Version: 1.2.0 Build 709)  -->
+  <g>
+    <g id="Layer_1">
+      <g id="Layer_1-2" data-name="Layer_1">
+        <g id="Layer_1-2">
+          <polyline class="cls-1" points="143 144.5 7 144.5 7 8.6"/>
+        </g>
       </g>
-      <path d="m-222.86-7.5948v213.07h418.09" stroke="black" stroke-width="1" vector-effect="non-scaling-stroke" />
+      <path class="cls-5" d="M96.1,90c-20.3,26.2-38.6,39.5-54.5,39.5s-23.4-19.7-23.5-19.9l-2.7,1.3c.4.9,10.6,21.6,26.2,21.6s37.3-14.7,59.1-43.6c.8-1.1,1.7-2.3,2.5-3.4-2.3,1.5-4.7,3-7.1,4.5Z"/>
+      <path class="cls-5" d="M113.2,58.9c.9-.7,1.8-1.4,2.6-2,14.6-23.1,24.4-43.7,24.5-44l-2.7-1.3c-.1.2-10.6,22.5-26.2,46.5-.1.2-.2.3-.3.5.7,0,1.4,0,2.1.3Z"/>
+      <circle class="cls-3" cx="16.5" cy="109.5" r="2.3"/>
+      <circle class="cls-3" cx="37.9" cy="130.4" r="2.3"/>
+      <circle class="cls-3" cx="84.7" cy="105.8" r="2.3"/>
+      <circle class="cls-3" cx="138" cy="14" r="2.3"/>
+      <g>
+        <path class="cls-4" d="M44.8,101.5c-11.9,0-20.4-5.5-25.1-16.3l2.7-1.2c4,9.1,10.7,13.8,20.4,14.4,32.5,2,87.3-45.5,89.7-49.5-.2.3-.2,1,.2,1.5.5.5,1.1.6,1.5.4l-1.4-2.7c1-.5,1.7-.2,2,.1.5.4.6,1.1.4,1.8-.8,2.3-15.8,15.4-31.9,26.6-15.9,11-38.7,24.2-57.2,24.8-.5,0-.9,0-1.4,0Z"/>
+        <path class="cls-2" d="M23.3,84.8c0,3-4.6,3-4.6,0,0-3,4.6-3,4.6,0Z"/>
+        <path class="cls-2" d="M40.9,99.7c0,3-4.6,3-4.6,0,0-3,4.6-3,4.6,0Z"/>
+        <path class="cls-2" d="M84.1,88.1c0,3-4.6,3-4.6,0,0-3,4.6-3,4.6,0Z"/>
+        <path class="cls-2" d="M136.1,49.9c0,3-4.6,3-4.6,0,0-3,4.6-3,4.6,0Z"/>
+        <path class="cls-2" d="M110,71.7c0,3-4.6,3-4.6,0,0-3,4.6-3,4.6,0Z"/>
+      </g>
     </g>
   </g>
 </svg>
