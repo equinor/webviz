@@ -139,8 +139,6 @@ class InplaceVolumetricsAssembler:
         group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
         accumulate_fluid_zones: bool = False,
     ) -> InplaceVolumetricTableDataPerFluidSelection:
-        # NOTE: "_TOTAL" columns are not handled
-
         # Create volume df per fluid zone and retrieve volume names and valid properties among requested result names
         volume_df_per_fluid_selection, categorized_requested_result_names = (
             await self._get_volume_df_per_fluid_selection_and_categorized_result_names_async(
@@ -184,8 +182,6 @@ class InplaceVolumetricsAssembler:
         group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
         accumulate_fluid_zones: bool = False,
     ) -> InplaceStatisticalVolumetricTableDataPerFluidSelection:
-        # NOTE: "_TOTAL" columns are not handled
-
         # Create volume df per fluid zone and retrieve volume names and valid properties among requested result names
         volume_df_per_fluid_selection, categorized_requested_result_names = (
             await self._get_volume_df_per_fluid_selection_and_categorized_result_names_async(
@@ -244,7 +240,7 @@ class InplaceVolumetricsAssembler:
 
         Note: If accumulate_fluid_zones is True, the function will exclude BO and BG from valid properties.
 
-        Calculation of properties and creation of the results is handled outside this function.
+        Calculation of volume names and properties, and creation of the results is handled outside this function.
         """
         # Check for empty identifier selections
         has_empty_identifier_selection = any(
