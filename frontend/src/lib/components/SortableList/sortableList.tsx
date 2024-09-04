@@ -152,6 +152,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 document.addEventListener("pointerup", handlePointerUp);
 
                 e.preventDefault();
+                e.stopPropagation();
             }
 
             function maybeScroll(position: Vec2) {
