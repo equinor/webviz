@@ -2,7 +2,7 @@ from typing import List
 
 import re
 
-from primary.services.sumo_access.inplace_volumetrics_types import FluidZone, FluidSelection, Property
+from primary.services.sumo_access.inplace_volumetrics_types import CalculatedVolume, FluidZone, FluidSelection, Property
 
 """
 This file contains helper functions for conversion between different data types used in the Inplace Volumetrics provider
@@ -26,21 +26,51 @@ Terms:
 
 """
 
+
 def create_fluid_selection_name(fluid_selection: FluidSelection, fluid_zones: List[FluidZone]) -> str:
     if fluid_selection != FluidSelection.ACCUMULATED:
         return fluid_selection.value
 
     return "+".join([fluid_zone.value for fluid_zone in fluid_zones])
 
-def convert_fluid_selection_to_fluid_zone(fluid_selection: FluidSelection) -> FluidZone | None:
+
+def get_fluid_zone_from_selection(fluid_selection: FluidSelection) -> FluidZone | None:
     # Check if the value is among FluidZone options
     if fluid_selection in FluidZone.__members__.values():
         return FluidZone(fluid_selection)
     else:
         return None
-    
+
+
 def convert_fluid_zone_to_fluid_selection(fluid_zone: FluidZone) -> FluidSelection:
     return FluidSelection(fluid_zone)
+
+
+def get_calculated_volumes_among_result_names(result_names: List[str]) -> List[str]:
+    """
+    Function to get calculated volumes among result names
+    """
+    possible_calculated_volumes = set()
+    for calculated_volume in result_names:
+        if calculated_volume in CalculatedVolume.__members__:
+            possible_calculated_volumes.add(calculated_volume)
+
+    return list(possible_calculated_volumes)
+
+
+def get_required_volume_names_from_calculated_volumes(calculated_volumes: List[str]) -> List[str]:
+    """
+    Function to convert calculated volumes to list of required volume names
+
+    NOTE: This function lists all volume names needed, but fluid zone is not considered
+    """
+    volume_names = set()
+    if "STOIIP_TOTAL" in calculated_volumes:
+        volume_names.update(["STOIIP", "ASSOCIATEDOIL"])
+    if "GIIP_TOTAL" in calculated_volumes:
+        volume_names.update(["GIIP", "ASSOCIATEDGAS"])
+
+    return list(volume_names)
 
 
 def get_properties_among_result_names(result_names: List[str]) -> List[str]:

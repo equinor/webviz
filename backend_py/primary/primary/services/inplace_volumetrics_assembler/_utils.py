@@ -291,7 +291,7 @@ def create_inplace_volumetric_table_data_from_result_df(
     result_column_data_list: List[TableColumnData] = []
     for column_name in existing_result_column_names:
         result_column_data_list.append(
-            TableColumnData(column_name=column_name, values=result_df[column_name].fill_null(np.nan).to_list())
+            TableColumnData(column_name=column_name, values=result_df[column_name].to_list())
         )
 
     return InplaceVolumetricTableData(
@@ -430,7 +430,7 @@ def create_property_column_expressions(
     volume_df_columns: List[str], properties: List[str], fluid_zone: Optional[FluidZone] = None
 ) -> List[pl.Expr]:
     """
-    Create expressions for property columns base available volume columns.
+    Create Polars expressions for property columns base available volume columns.
 
     If one of the volume names needed for a property is not found, the property expressions is not provided
 
@@ -439,7 +439,7 @@ def create_property_column_expressions(
     - properties (List[str]): Name of the properties to calculate
 
     Returns:
-    - List[pl.Expr]: List of expressions for property columns
+    - List[pl.Expr]: List of Polars expressions for property columns
 
     """
     calculated_property_expressions: List[pl.Expr] = []
@@ -469,3 +469,48 @@ def create_property_column_expressions(
         calculated_property_expressions.append(_create_named_expression_with_nan_for_inf(sw_expression, "SW"))
 
     return calculated_property_expressions
+
+
+def create_calculated_volume_column_expressions(
+    volume_df_columns: List[str], calculated_volumes: List[str], fluid_zone: Optional[FluidZone] = None
+) -> List[pl.Expr]:
+    """
+    Create Polars expressions for calculated volume columns base available volume columns.
+
+    Args:
+    - volume_df_columns (List[str]): List of column names of volume pl.DataFrame
+    - calculated_volumes (List[str]): Name of the volume column to calculate
+
+    Returns:
+    - List[pl.Expr]: List of Polars expressions for calculated volume columns
+
+    """
+    calculated_volume_expressions: List[pl.Expr] = []
+
+    # Handle STOIIP_TOTAL and GIIP_TOTAL
+    if "STOIIP_TOTAL" in calculated_volumes:
+        stoiip_total_expression: pl.Expr | None = None
+        if fluid_zone is None and set(["STOIIP", "ASSOCIATEDOIL"]).issubset(volume_df_columns):
+            stoiip_total_expression = pl.col("STOIIP") + pl.col("ASSOCIATEDOIL")
+        if fluid_zone == FluidZone.OIL and "STOIIP" in volume_df_columns:
+            stoiip_total_expression = pl.col("STOIIP")
+        if fluid_zone == FluidZone.GAS and "ASSOCIATEDOIL" in volume_df_columns:
+            stoiip_total_expression = pl.col("ASSOCIATEDOIL")
+        if stoiip_total_expression is not None:
+            calculated_volume_expressions.append(
+                _create_named_expression_with_nan_for_inf(stoiip_total_expression, "STOIIP_TOTAL")
+            )
+    if "GIIP_TOTAL" in calculated_volumes:
+        giip_total_expression: pl.Expr | None = None
+        if fluid_zone is None and set(["GIIP", "ASSOCIATEDGAS"]).issubset(volume_df_columns):
+            giip_total_expression = pl.col("GIIP") + pl.col("ASSOCIATEDGAS")
+        if fluid_zone == FluidZone.GAS and "GIIP" in volume_df_columns:
+            giip_total_expression = pl.col("GIIP")
+        if fluid_zone == FluidZone.OIL and "ASSOCIATEDGAS" in volume_df_columns:
+            giip_total_expression = pl.col("ASSOCIATEDGAS")
+        if giip_total_expression is not None:
+            calculated_volume_expressions.append(
+                _create_named_expression_with_nan_for_inf(giip_total_expression, "GIIP_TOTAL")
+            )
+
+    return calculated_volume_expressions

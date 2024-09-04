@@ -27,8 +27,8 @@ class InplaceVolumetricResultName(StrEnum):
     BO = "BO"
     BG = "BG"
     SW = "SW"
-    # STOIIP_TOTAL = "STOIIP_TOTAL"
-    # GIIP_TOTAL = "GIIP_TOTAL"
+    STOIIP_TOTAL = "STOIIP_TOTAL"
+    GIIP_TOTAL = "GIIP_TOTAL"
 
 
 class InplaceVolumetricsIdentifier(StrEnum):
@@ -47,11 +47,18 @@ class FluidZone(StrEnum):
     GAS = "Gas"
     WATER = "Water"  # TODO: Remove or keep?
 
+
 class FluidSelection(StrEnum):
     OIL = "Oil"
     GAS = "Gas"
     WATER = "Water"  # TODO: Remove or keep?
     ACCUMULATED = "Accumulated"
+
+
+class CalculatedVolume(StrEnum):
+    STOIIP_TOTAL = "STOIIP_TOTAL"
+    GIIP_TOTAL = "GIIP_TOTAL"
+
 
 class Property(StrEnum):
     NTG = "NTG"
@@ -81,12 +88,15 @@ class CategorizedResultNames:
     Class to hold categorized result names
 
     Attributes:
-    - volume_names: List[str] - Volume names among result names
+    - volume_names: List[str] - Basic volume names among result names
+    - calculated_volume_names: List[str] - Calculated volume names among result names (STOIIP_TOTAL, GIIP_TOTAL)
     - property_names: List[str] - Property names among result names
     """
 
     volume_names: List[str]
+    calculated_volume_names: List[str]
     property_names: List[str]
+
 
 @dataclass
 class InplaceVolumetricsIdentifierWithValues:

@@ -26,16 +26,19 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
 from ._conversion._conversion import (
     create_raw_volumetric_columns_from_volume_names_and_fluid_zones,
     get_available_properties_from_volume_names,
+    get_calculated_volumes_among_result_names,
     get_fluid_zones,
     get_properties_among_result_names,
+    get_required_volume_names_from_calculated_volumes,
     get_required_volume_names_from_properties,
     get_volume_names_from_raw_volumetric_column_names,
-    convert_fluid_selection_to_fluid_zone,
+    get_fluid_zone_from_selection,
     create_fluid_selection_name,
     convert_fluid_zone_to_fluid_selection,
 )
 
 from ._utils import (
+    create_calculated_volume_column_expressions,
     create_property_column_expressions,
     create_volumetric_summed_fluid_zones_df,
     create_grouped_statistical_result_table_data_polars,
@@ -256,11 +259,19 @@ class InplaceVolumetricsAssembler:
         properties = get_properties_among_result_names(result_names)
         required_volume_names_for_properties = get_required_volume_names_from_properties(properties)
 
+        # Detect calculated volumes among result names and find volume names needed for calculation
+        calculated_volume_names = get_calculated_volumes_among_result_names(result_names)
+        required_volume_names_for_calculated_volumes = get_required_volume_names_from_calculated_volumes(
+            calculated_volume_names
+        )
+
         # Extract volume names among result names
-        volume_names = list(set(result_names) - set(properties))
+        volume_names = list(set(result_names) - set(properties) - set(calculated_volume_names))
 
         # Find all volume names needed from Sumo
-        all_volume_names = set(volume_names + required_volume_names_for_properties)
+        all_volume_names = set(
+            volume_names + required_volume_names_for_properties + required_volume_names_for_calculated_volumes
+        )
 
         # Get volume table per fluid selection - requested volumes and volumes needed for properties
         volume_df_per_fluid_selection: Dict[FluidSelection, pl.DataFrame] = (
@@ -275,7 +286,7 @@ class InplaceVolumetricsAssembler:
             valid_properties = [prop for prop in properties if prop not in ["BO", "BG"]]
 
         return volume_df_per_fluid_selection, CategorizedResultNames(
-            volume_names=volume_names, property_names=valid_properties
+            volume_names=volume_names, calculated_volume_names=calculated_volume_names, property_names=valid_properties
         )
 
     @staticmethod
@@ -292,7 +303,7 @@ class InplaceVolumetricsAssembler:
         The result dataframe contains the requested volume names and calculated properties
         """
         # Convert fluid selection to fluid zone
-        fluid_zone = convert_fluid_selection_to_fluid_zone(fluid_selection)
+        fluid_zone: FluidZone | None = get_fluid_zone_from_selection(fluid_selection)
 
         # Find valid selector columns and volume names
         possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
@@ -300,15 +311,24 @@ class InplaceVolumetricsAssembler:
         requested_volume_names = categorized_requested_result_names.volume_names
         available_requested_volume_names = [name for name in requested_volume_names if name in volume_df.columns]
 
+        # Create calculated volume column expressions
+        requested_calculated_volume_names = categorized_requested_result_names.calculated_volume_names
+        calculated_volume_column_expressions: List[pl.Expr] = create_calculated_volume_column_expressions(
+            volume_df.columns, requested_calculated_volume_names, fluid_zone
+        )
+
         # Create property column expressions
         requested_properties = categorized_requested_result_names.property_names
         property_column_expressions: List[pl.Expr] = create_property_column_expressions(
-            volume_df.columns, requested_properties, fluid_zone=fluid_zone
+            volume_df.columns, requested_properties, fluid_zone
         )
 
-        # Create result dataframe, select columns and calculate properties
+        # Create result dataframe, select columns and calculate volumes + properties
         column_names_and_expressions: List[str | pl.Expr] = (
-            available_selector_columns + available_requested_volume_names + property_column_expressions
+            available_selector_columns
+            + available_requested_volume_names
+            + calculated_volume_column_expressions
+            + property_column_expressions
         )
         result_df = volume_df.select(column_names_and_expressions)
 
