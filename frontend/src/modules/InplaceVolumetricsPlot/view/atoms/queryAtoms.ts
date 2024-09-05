@@ -3,13 +3,17 @@ import { atomWithQueries } from "@framework/utils/atomUtils";
 import { useGetAggregatedPerRealizationTableDataQueries } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 
 import {
+    areSelectedTablesComparableAtom,
+    areTableDefinitionSelectionsValidAtom,
+    resultName2Atom,
+    resultNameAtom,
+} from "./baseAtoms";
+import {
     doAccumulateFluidZonesAtom,
     ensembleIdentsWithRealizationsAtom,
     fluidZonesAtom,
     groupByIdentifiersAtom,
     identifiersValuesAtom,
-    resultName2Atom,
-    resultNameAtom,
     tableNamesAtom,
 } from "./derivedAtoms";
 
@@ -30,8 +34,10 @@ export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
     const fluidZones = get(fluidZonesAtom);
     const identifiersValues = get(identifiersValuesAtom);
     const ensembleIdentsWithRealizations = get(ensembleIdentsWithRealizationsAtom);
+    const areSelectedTablesComparable = get(areSelectedTablesComparableAtom);
+    const areTableDefinitionSelectionsValid = get(areTableDefinitionSelectionsValidAtom);
 
-    const enableQueries = true;
+    const enableQueries = areSelectedTablesComparable && areTableDefinitionSelectionsValid;
 
     return useGetAggregatedPerRealizationTableDataQueries(
         ensembleIdentsWithRealizations,

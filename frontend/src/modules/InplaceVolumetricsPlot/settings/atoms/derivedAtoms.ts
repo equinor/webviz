@@ -1,6 +1,8 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
+import { fixupUserSelectedIdentifierValues } from "@modules/_shared/InplaceVolumetrics/fixupUserSelectedIdentifierValues";
 import { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 import {
     TableDefinitionsAccessor,
@@ -48,6 +50,53 @@ export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get)
     const tableDefinitions = get(tableDefinitionsQueryAtom);
 
     return new TableDefinitionsAccessor(tableDefinitions.isLoading ? [] : tableDefinitions.data, selectedTableNames);
+});
+
+export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedTableNames = get(selectedTableNamesAtom);
+    const selectedFluidZones = get(selectedFluidZonesAtom);
+    const selectedResultName = get(selectedResultNameAtom);
+    const selectedResultName2 = get(selectedResultName2Atom);
+    const selectedIdentifiersWithValues = get(selectedIdentifiersValuesAtom);
+
+    const tableDefinitionsQuery = get(tableDefinitionsQueryAtom);
+
+    if (tableDefinitionsQuery.isLoading) {
+        return false;
+    }
+
+    if (!tableDefinitionsAccessor.hasEnsembleIdents(selectedEnsembleIdents)) {
+        return false;
+    }
+
+    if (!tableDefinitionsAccessor.hasTableNames(selectedTableNames)) {
+        return false;
+    }
+
+    if (!tableDefinitionsAccessor.hasFluidZones(selectedFluidZones)) {
+        return false;
+    }
+
+    if (!selectedResultName || !tableDefinitionsAccessor.hasResultName(selectedResultName)) {
+        return false;
+    }
+
+    if (selectedResultName2 && !tableDefinitionsAccessor.hasResultName(selectedResultName2)) {
+        return false;
+    }
+
+    if (!tableDefinitionsAccessor.hasIdentifiersWithValues(selectedIdentifiersWithValues)) {
+        return false;
+    }
+
+    return true;
+});
+
+export const areSelectedTablesComparableAtom = atom<boolean>((get) => {
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+    return tableDefinitionsAccessor.getAreTablesComparable();
 });
 
 export const selectedTableNamesAtom = atom<string[]>((get) => {
@@ -123,41 +172,13 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     const uniqueIdentifierValues = tableDefinitionsAccessor.getIdentifiersWithIntersectionValues();
-    const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
+    const selectAllOnFixup = true;
 
-    if (!userSelectedIdentifierValues) {
-        for (const entry of uniqueIdentifierValues) {
-            fixedUpIdentifierValues.push({
-                identifier: entry.identifier,
-                values: fixupUserSelection(
-                    entry.values,
-                    uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? [],
-                    true
-                ),
-            });
-        }
-        return fixedUpIdentifierValues;
-    }
-
-    for (const entry of userSelectedIdentifierValues) {
-        fixedUpIdentifierValues.push({
-            identifier: entry.identifier,
-            values: fixupUserSelection(
-                entry.values,
-                uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? [],
-                true
-            ),
-        });
-    }
-
-    if (userSelectedIdentifierValues.length === 0) {
-        for (const entry of uniqueIdentifierValues) {
-            fixedUpIdentifierValues.push({
-                identifier: entry.identifier,
-                values: uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? [],
-            });
-        }
-    }
+    const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = fixupUserSelectedIdentifierValues(
+        userSelectedIdentifierValues,
+        uniqueIdentifierValues,
+        selectAllOnFixup
+    );
 
     return fixedUpIdentifierValues;
 });
@@ -186,19 +207,3 @@ export const selectedColorByAtom = atom<SourceAndTableIdentifierUnion>((get) => 
 
     return fixedSelection[0];
 });
-
-function fixupUserSelection<TSelection>(
-    userSelection: TSelection[],
-    validOptions: TSelection[],
-    selectAll: boolean = false
-): TSelection[] {
-    const newSelections = userSelection.filter((selection) => validOptions.includes(selection));
-    if (newSelections.length === 0 && validOptions.length > 0) {
-        if (selectAll) {
-            return validOptions;
-        }
-        newSelections.push(validOptions[0]);
-    }
-
-    return newSelections;
-}

@@ -11,12 +11,8 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import { useAtomValue } from "jotai";
 
-import { areTableDefinitionSelectionsValidAtom } from "./atoms/baseAtoms";
-import {
-    areSelectedTablesComparableAtom,
-    hasAllQueriesFailedAtom as haveAllQueriesFailedAtom,
-    isQueryFetchingAtom,
-} from "./atoms/derivedAtoms";
+import { areSelectedTablesComparableAtom } from "./atoms/baseAtoms";
+import { hasAllQueriesFailedAtom as haveAllQueriesFailedAtom, isQueryFetchingAtom } from "./atoms/derivedAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useTableBuilder } from "./hooks/useTableBuilder";
 
@@ -32,7 +28,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const haveAllQueriesFailed = useAtomValue(haveAllQueriesFailedAtom);
     const isQueryFetching = useAtomValue(isQueryFetchingAtom);
     const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
-    const areTableDefinitionSelectionsValid = useAtomValue(areTableDefinitionSelectionsValidAtom);
 
     useMakeViewStatusWriterMessages(statusWriter);
     statusWriter.setLoading(isQueryFetching);
@@ -74,10 +69,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     function createErrorMessage(): string | null {
         if (haveAllQueriesFailed) {
-            return "Failed to load table data";
+            return "Failed to load volumetric table data";
         }
         if (!areSelectedTablesComparable) {
-            return "Selected tables are not comparable";
+            return "Selected volumetric tables are not comparable";
         }
 
         return null;

@@ -1,6 +1,8 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
+import { fixupUserSelectedIdentifierValues } from "@modules/_shared/InplaceVolumetrics/fixupUserSelectedIdentifierValues";
 import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import {
     TableDefinitionsAccessor,
@@ -109,7 +111,7 @@ export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
         return tableDefinitionsAccessor.getFluidZonesIntersection();
     }
 
-    return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getFluidZonesIntersection());
+    return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getFluidZonesIntersection(), true);
 });
 
 export const selectedResultNamesAtom = atom<InplaceVolumetricResultName_api[]>((get) => {
@@ -150,53 +152,13 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     const uniqueIdentifierValues = tableDefinitionsAccessor.getIdentifiersWithIntersectionValues();
-    const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
+    const selectAllOnFixup = true;
 
-    if (!userSelectedIdentifierValues) {
-        for (const entry of uniqueIdentifierValues) {
-            fixedUpIdentifierValues.push({
-                identifier: entry.identifier,
-                values: fixupUserSelection(
-                    entry.values,
-                    uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? []
-                ),
-            });
-        }
-        return fixedUpIdentifierValues;
-    }
+    const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = fixupUserSelectedIdentifierValues(
+        userSelectedIdentifierValues,
+        uniqueIdentifierValues,
+        selectAllOnFixup
+    );
 
-    for (const entry of userSelectedIdentifierValues) {
-        if (!uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)) {
-            continue;
-        }
-        fixedUpIdentifierValues.push({
-            identifier: entry.identifier,
-            values: fixupUserSelection(
-                entry.values,
-                uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? []
-            ),
-        });
-    }
-
-    if (userSelectedIdentifierValues.length !== uniqueIdentifierValues.length) {
-        for (const entry of uniqueIdentifierValues) {
-            if (fixedUpIdentifierValues.find((el) => el.identifier === entry.identifier)) {
-                continue;
-            }
-            fixedUpIdentifierValues.push({
-                identifier: entry.identifier,
-                values: uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? [],
-            });
-        }
-    }
     return fixedUpIdentifierValues;
 });
-
-function fixupUserSelection<TSelection>(userSelection: TSelection[], validOptions: TSelection[]): TSelection[] {
-    const newSelections = userSelection.filter((selection) => validOptions.includes(selection));
-    if (newSelections.length === 0 && validOptions.length > 0) {
-        newSelections.push(...validOptions);
-    }
-
-    return newSelections;
-}

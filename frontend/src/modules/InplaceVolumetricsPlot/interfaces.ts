@@ -5,6 +5,8 @@ import { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetri
 
 import { userSelectedPlotTypeAtom } from "./settings/atoms/baseAtoms";
 import {
+    areSelectedTablesComparableAtom,
+    areTableDefinitionSelectionsValidAtom,
     selectedColorByAtom,
     selectedEnsembleIdentsAtom,
     selectedFluidZonesAtom,
@@ -23,6 +25,8 @@ export type SettingsToViewInterface = {
     subplotBy: SourceAndTableIdentifierUnion;
     colorBy: SourceAndTableIdentifierUnion;
     plotType: PlotType;
+    areSelectedTablesComparable: boolean;
+    areTableDefinitionSelectionsValid: boolean;
 };
 
 export type Interfaces = {
@@ -43,4 +47,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     subplotBy: (get) => get(selectedSubplotByAtom),
     colorBy: (get) => get(selectedColorByAtom),
     plotType: (get) => get(userSelectedPlotTypeAtom),
+    areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),
+    areTableDefinitionSelectionsValid: (get) => get(areTableDefinitionSelectionsValidAtom),
 };

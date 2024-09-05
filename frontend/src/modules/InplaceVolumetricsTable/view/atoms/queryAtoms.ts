@@ -5,17 +5,19 @@ import {
 } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
-import { areTableDefinitionSelectionsValidAtom } from "./baseAtoms";
+import {
+    areSelectedTablesComparableAtom,
+    areTableDefinitionSelectionsValidAtom,
+    resultNamesAtom,
+    tableTypeAtom,
+} from "./baseAtoms";
 import {
     accumulateFluidZonesAtom,
-    areSelectedTablesComparableAtom,
     ensembleIdentsWithRealizationsAtom,
     fluidZonesAtom,
     groupByIdentifiersAtom,
     identifiersValuesAtom,
-    resultNamesAtom,
     tableNamesAtom,
-    tableTypeAtom,
 } from "./derivedAtoms";
 
 export const perRealizationTableDataResultsAtom = atomWithQueries((get) => {

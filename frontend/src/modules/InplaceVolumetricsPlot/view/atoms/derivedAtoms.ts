@@ -1,37 +1,12 @@
 import { InplaceVolumetricsIdentifier_api } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
-import { settingsToViewInterfaceInitialization } from "@modules/InplaceVolumetricsPlot/interfaces";
 import { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
 
-// Forwarding atoms from initialization
-const filterAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.filter(get);
-});
+import { colorByAtom, filterAtom, subplotByAtom } from "./baseAtoms";
 
-export const subplotByAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.subplotBy(get);
-});
-
-export const colorByAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.colorBy(get);
-});
-
-export const resultNameAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.resultName(get);
-});
-
-export const resultName2Atom = atom((get) => {
-    return settingsToViewInterfaceInitialization.resultName2(get);
-});
-
-export const plotTypeAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.plotType(get);
-});
-
-// Derived atoms
 export const tableNamesAtom = atom((get) => {
     const filter = get(filterAtom);
     return filter?.tableNames ?? [];

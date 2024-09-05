@@ -4,7 +4,7 @@ import { TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { useAtomValue } from "jotai";
 
-import { statisticOptionsAtom, tableTypeAtom } from "../atoms/derivedAtoms";
+import { statisticOptionsAtom, tableTypeAtom } from "../atoms/baseAtoms";
 import { perRealizationTableDataResultsAtom, statisticalTableDataResultsAtom } from "../atoms/queryAtoms";
 import {
     createStatisticalTableHeadingsAndRowsFromTablesData,

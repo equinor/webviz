@@ -9,7 +9,7 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import { useAtomValue } from "jotai";
 
-import { resultNameAtom } from "./atoms/derivedAtoms";
+import { areSelectedTablesComparableAtom, resultNameAtom } from "./atoms/baseAtoms";
 import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useBuildPlotAndTable } from "./hooks/usePlotBuilder";
@@ -31,6 +31,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const resultName = useAtomValue(resultNameAtom);
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
+    const areSelectedTablesComparable = useAtomValue(areSelectedTablesComparableAtom);
 
     statusWriter.setLoading(aggregatedTableDataQueries.isFetching);
     useMakeViewStatusWriterMessages(statusWriter);
@@ -51,16 +52,25 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     usePublishToDataChannels(props.viewContext, ensembleSet, table, resultName ?? undefined);
 
+    function createErrorMessage(): string | null {
+        if (aggregatedTableDataQueries.allQueriesFailed) {
+            return "Failed to load volumetric table data";
+        }
+        if (!areSelectedTablesComparable) {
+            return "Selected volumetric tables are not comparable";
+        }
+
+        return null;
+    }
+
+    // If a user selects a single table first and initiates a fetch but then selects a set of tables that are not comparable,
+    // we don't want to show that the module is pending, but rather immediately show the error message that the tables are not comparable.
+    // The query is still fetching, but we don't want to show the pending state.
+    const isPending = aggregatedTableDataQueries.isFetching && areSelectedTablesComparable;
+
     return (
         <div ref={divRef} className="w-full h-full relative">
-            <PendingWrapper
-                isPending={aggregatedTableDataQueries.isFetching}
-                errorMessage={
-                    aggregatedTableDataQueries.allQueriesFailed
-                        ? "Failed to load aggregated volumetric data"
-                        : undefined
-                }
-            >
+            <PendingWrapper isPending={isPending} errorMessage={createErrorMessage() ?? undefined}>
                 {plots ?? <div style={{ height: divBoundingRect.height }} />}
             </PendingWrapper>
         </div>

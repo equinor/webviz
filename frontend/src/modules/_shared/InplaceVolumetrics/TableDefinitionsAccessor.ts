@@ -213,6 +213,10 @@ export class TableDefinitionsAccessor {
         return true;
     }
 
+    hasResultName(resultName: InplaceVolumetricResultName_api): boolean {
+        return this._resultNamesIntersection.includes(resultName);
+    }
+
     hasIdentifiersWithValues(identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[]): boolean {
         for (const identifierValue of identifiersWithValues) {
             const identifier = identifierValue.identifier;

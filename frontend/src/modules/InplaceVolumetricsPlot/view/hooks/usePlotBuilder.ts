@@ -11,7 +11,7 @@ import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableU
 
 import { useAtomValue } from "jotai";
 
-import { colorByAtom, plotTypeAtom, resultName2Atom, resultNameAtom, subplotByAtom } from "../atoms/derivedAtoms";
+import { colorByAtom, plotTypeAtom, resultName2Atom, resultNameAtom, subplotByAtom } from "../atoms/baseAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";
 import { makeFormatLabelFunction, makePlotData } from "../utils/plotComponentUtils";
 

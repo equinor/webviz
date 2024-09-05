@@ -143,6 +143,8 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             selectedTableNames={selectedTableNames}
             onChange={handleFilterChange}
             additionalSettings={plotSettings}
+            areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
+            debounceMs={1500}
         />
     );
 }

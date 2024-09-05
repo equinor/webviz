@@ -1,39 +1,13 @@
 import { InplaceVolumetricsIdentifier_api } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
-import { settingsToViewInterfaceInitialization } from "@modules/InplaceVolumetricsTable/interfaces";
 import { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
 
+import { accumulationOptionsAtom, filterAtom, tableTypeAtom } from "./baseAtoms";
 import { perRealizationTableDataResultsAtom, statisticalTableDataResultsAtom } from "./queryAtoms";
 
-// Forwarding atoms from initialization
-const filterAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.filter(get);
-});
-
-export const areSelectedTablesComparableAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.areSelectedTablesComparable(get);
-});
-
-export const tableTypeAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.tableType(get);
-});
-
-export const resultNamesAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.resultNames(get);
-});
-
-export const accumulationOptionsAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.accumulationOptions(get);
-});
-
-export const statisticOptionsAtom = atom((get) => {
-    return settingsToViewInterfaceInitialization.statisticOptions(get);
-});
-
-// Derived atoms
 export const tableNamesAtom = atom((get) => {
     const filter = get(filterAtom);
     return filter?.tableNames ?? [];
@@ -79,8 +53,7 @@ export const groupByIdentifiersAtom = atom((get) => {
 
 export const activeQueriesResultAtom = atom((get) => {
     // Active queries result atom based on selected table type
-
-    const tableType = settingsToViewInterfaceInitialization.tableType(get);
+    const tableType = get(tableTypeAtom);
     if (tableType === TableType.PER_REALIZATION) {
         return get(perRealizationTableDataResultsAtom);
     }
