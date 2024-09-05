@@ -1,6 +1,7 @@
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@framework/utils/atomUtils";
 
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
@@ -35,3 +36,8 @@ export const ensembleSetDependentAtom = atom<EnsembleIdent | null>((get) => {
     const firstEnsemble = ensembleSet.getEnsembleArr()[0];
     return firstEnsemble?.getIdent() ?? null;
 });
+
+export const persistentTextSettingAtom = atomWithModuleInstanceStorage<string>("myPersistentValue", "");
+export function cleanUpInstanceAtomStorage(instanceId: string) {
+    clearModuleInstanceStorage(instanceId, "myPersistentValue");
+}
