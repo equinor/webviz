@@ -2,13 +2,13 @@ import { WellboreHeader_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
-import { viewerHorizontalAtom } from "./settings/atoms/baseAtoms";
 import {
     allSelectedWellLogCurves,
     selectedFieldIdentifierAtom,
     selectedWellboreAtom,
     wellLogTemplateTracks,
 } from "./settings/atoms/derivedAtoms";
+import { viewerHorizontalAtom } from "./settings/atoms/persistedAtoms";
 
 export type InterfaceTypes = {
     settingsToView: SettingsToViewInterface;

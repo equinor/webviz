@@ -6,7 +6,7 @@ import { Delete, ExpandLess, ExpandMore, Settings, Warning } from "@mui/icons-ma
 
 import { TrackSettings } from "./TrackSettings";
 
-import { TemplateTrackConfig } from "../../atoms/baseAtoms";
+import { TemplateTrackConfig } from "../../atoms/persistedAtoms";
 
 export type CurveTrackItemProps = {
     trackConfig: TemplateTrackConfig;

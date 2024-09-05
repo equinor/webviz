@@ -9,7 +9,7 @@ import { v4 } from "uuid";
 
 import { SortableTrackItem } from "./SortableTrackItem";
 
-import { TemplateTrackConfig, logViewerTrackConfigs } from "../../atoms/baseAtoms";
+import { TemplateTrackConfig, logViewerTrackConfigs } from "../../atoms/persistedAtoms";
 import { AddItemButton } from "../AddItemButton";
 
 interface LogTracksProps {

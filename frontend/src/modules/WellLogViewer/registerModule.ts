@@ -8,6 +8,7 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { InterfaceTypes } from "./interfaces";
+import { clearStorageForInstance } from "./settings/atoms/persistedAtoms";
 
 export const MODULE_NAME = "WellLogViewer";
 const MODULE_TITLE = "Well log Viewer";
@@ -24,4 +25,7 @@ ModuleRegistry.registerModule<InterfaceTypes>({
     devState: ModuleDevState.DEV,
 
     syncableSettingKeys: [SyncSettingKey.INTERSECTION, SyncSettingKey.VERTICAL_SCALE],
+    onUnloadInstance(instanceId) {
+        clearStorageForInstance(instanceId);
+    },
 });

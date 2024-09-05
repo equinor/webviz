@@ -5,7 +5,8 @@ import { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/compon
 import { atom } from "jotai";
 import _, { Dictionary } from "lodash";
 
-import { logViewerTrackConfigs, userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./baseAtoms";
+import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./baseAtoms";
+import { logViewerTrackConfigs } from "./persistedAtoms";
 import { drilledWellboreHeadersQueryAtom, wellLogCurveHeadersQueryAtom } from "./queryAtoms";
 
 export const selectedFieldIdentifierAtom = atom((get) => {

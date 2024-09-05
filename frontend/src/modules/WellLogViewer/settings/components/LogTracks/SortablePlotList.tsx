@@ -14,7 +14,7 @@ import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellL
 import _ from "lodash";
 import { v4 } from "uuid";
 
-import { TemplatePlotConfig } from "../../atoms/baseAtoms";
+import { TemplatePlotConfig } from "../../atoms/persistedAtoms";
 import { AddItemButton } from "../AddItemButton";
 
 export type SortablePlotListProps = {

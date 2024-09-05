@@ -16,8 +16,9 @@ import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePr
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom, viewerHorizontalAtom } from "./atoms/baseAtoms";
+import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom, selectedWellboreAtom } from "./atoms/derivedAtoms";
+import { viewerHorizontalAtom } from "./atoms/persistedAtoms";
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { LogTracks } from "./components/LogTracks";
 
