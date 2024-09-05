@@ -3,6 +3,7 @@ from typing import List
 import re
 
 from primary.services.sumo_access.inplace_volumetrics_types import CalculatedVolume, FluidZone, FluidSelection, Property
+from primary.services.sumo_access.inplace_volumetrics_access import ALLOWED_RAW_VOLUMETRIC_COLUMNS
 
 """
 This file contains helper functions for conversion between different data types used in the Inplace Volumetrics provider
@@ -210,6 +211,8 @@ def create_raw_volumetric_columns_from_volume_name_and_fluid_zones(
     volumetric_columns = []
 
     for fluid_zone in fluid_zones:
-        volumetric_columns.append(f"{volume_name}_{fluid_zone.value.upper()}")
+        candidate_column = f"{volume_name}_{fluid_zone.value.upper()}"
+        if candidate_column in ALLOWED_RAW_VOLUMETRIC_COLUMNS:
+            volumetric_columns.append(f"{volume_name}_{fluid_zone.value.upper()}")
 
     return volumetric_columns

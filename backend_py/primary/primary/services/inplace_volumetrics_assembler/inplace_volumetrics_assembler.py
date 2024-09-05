@@ -366,6 +366,10 @@ class InplaceVolumetricsAssembler:
             volume_names, fluid_zones
         )
 
+        if not raw_volumetric_column_names:
+            # Combination of volume names and fluid zones did not result in any raw volumetric columns
+            return {}
+
         timer = PerfTimer()
         # Get the raw volumetric table as DataFrame, filtered on identifiers and realizations
         row_filtered_raw_volumetrics_df = await self._create_row_filtered_volumetric_df_async(
