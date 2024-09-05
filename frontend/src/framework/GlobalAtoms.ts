@@ -8,6 +8,10 @@ import { RealizationFilterSet } from "./RealizationFilterSet";
 import { EnsembleRealizationFilterFunction } from "./WorkbenchSession";
 import { atomWithCompare } from "./utils/atomUtils";
 
+/** A module's instance-id. Available in the jotai-store of each module, otherwise null */
+// ? Should this one be moved to `AtomStoreMaster.ts`?
+export const CurrentModuleInstanceIdAtom = atom<string | null>(null);
+
 export const EnsembleSetAtom = atomWithCompare<EnsembleSet>(new EnsembleSet([]), isEqual);
 
 export const EnsembleRealizationFilterFunctionAtom = atom<EnsembleRealizationFilterFunction | null>((get) => {
