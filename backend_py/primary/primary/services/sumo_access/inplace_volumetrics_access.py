@@ -42,10 +42,10 @@ ALLOWED_RAW_VOLUMETRIC_COLUMNS = [
     "PORV_TOTAL",
 ]
 
+POSSIBLE_IDENTIFIER_COLUMNS = ["ZONE", "REGION", "FACIES", "LICENSE"]
+
 
 class InplaceVolumetricsAccess:
-    # _expected_identifier_columns = ["ZONE", "REGION", "FACIES", "LICENSE"]
-
     def __init__(self, case: Case, case_uuid: str, iteration_name: str):
         self._case: Case = case
         self._case_uuid: str = case_uuid
@@ -60,15 +60,15 @@ class InplaceVolumetricsAccess:
         return InplaceVolumetricsAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
     @staticmethod
-    def get_expected_identifier_columns() -> List[str]:
-        return ["ZONE", "REGION", "FACIES", "LICENSE"]
+    def get_possible_identifier_columns() -> List[str]:
+        return POSSIBLE_IDENTIFIER_COLUMNS
 
     @staticmethod
     def get_possible_selector_columns() -> List[str]:
         """
         The identifier columns and REAL column represent the selector columns of the volumetric table.
         """
-        return InplaceVolumetricsAccess.get_expected_identifier_columns() + ["REAL"]
+        return InplaceVolumetricsAccess.get_possible_identifier_columns() + ["REAL"]
 
     async def get_inplace_volumetrics_table_names_async(self) -> List[str]:
         vol_table_collection = self._case.tables.filter(
@@ -208,17 +208,19 @@ class InplaceVolumetricsAccess:
         expected_selector_columns = possible_selector_columns.intersection(vol_table_columns)
 
         # Initialize volumetric table
-        volumes_table: pa.Table = arrow_tables[0]
+        volumes_table: pa.Table | None = None
 
         # Build table by adding response columns
-        for i in range(1, len(arrow_tables)):
-            volume_table: pa.Table = arrow_tables[i]
-
-            # Expect only one column in addition to the index columns, i.e. the volume
+        for volume_table in arrow_tables:
+            # Find volumes among columns - expect only one volume column
             volume_names_set = set(volume_table.column_names) - expected_selector_columns
+
             if column_names is None and len(volume_names_set) == 0:
                 # When no column names are specified, we skip tables with only selector columns and no volume columns
+                # E.g. if a selector columns is incorrectly added as a volume column - we skip the table
                 continue
+
+            # When requesting volume columns, we expect one volume name per table in the collection
             if len(volume_names_set) == 0:
                 raise InvalidDataError(
                     f"Table {table_name} has collection without volume column. Collection only has columns defined as selectors: {volume_table.column_names}",
@@ -235,11 +237,23 @@ class InplaceVolumetricsAccess:
                 # Skip invalid volume columns
                 continue
 
+            # Initialize table with first valid volume column
+            if volumes_table is None:
+                volumes_table = volume_table
+                continue
+
             # Add volume column to table
             volume_column = volume_table[volume_name]
             volumes_table = volumes_table.append_column(volume_name, volume_column)
 
         time_build_single_table_ms = timer.lap_ms()
+
+        if volumes_table is None:
+            raise NoDataError(
+                f"No valid inplace volumetrics tables found in case={self._case_uuid}, iteration={self._iteration_name}, table_name={table_name}, column_names={column_names}",
+                Service.SUMO,
+            )
+
         print(
             f"Access Volumetric collection tables: count tables and column names: {time_num_tables_and_collection_columns}ms, "
             f"collection download: {time_async_download_ms}ms, "

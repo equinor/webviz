@@ -83,7 +83,11 @@ class InplaceVolumetricsAssembler:
         vol_table_names = await self._inplace_volumetrics_access.get_inplace_volumetrics_table_names_async()
 
         async def get_named_inplace_volumetrics_table_async(table_name: str) -> Dict[str, pa.Table]:
-            return {table_name: await self._inplace_volumetrics_access.get_inplace_volumetrics_table_async(table_name)}
+            return {
+                table_name: await self._inplace_volumetrics_access.get_inplace_volumetrics_table_async(
+                    table_name, column_names=None
+                )
+            }
 
         tasks = [
             asyncio.create_task(get_named_inplace_volumetrics_table_async(vol_table_name))
@@ -108,7 +112,7 @@ class InplaceVolumetricsAssembler:
             valid_result_names = get_valid_result_names_from_list(result_names)
 
             identifiers_with_values = []
-            for identifier_name in self._inplace_volumetrics_access.get_expected_identifier_columns():
+            for identifier_name in self._inplace_volumetrics_access.get_possible_identifier_columns():
                 if identifier_name in table.column_names:
                     identifier_values = table[identifier_name].unique().to_pylist()
                     filtered_identifier_values = [
