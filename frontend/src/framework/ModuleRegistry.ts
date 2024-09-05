@@ -1,5 +1,12 @@
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
-import { InterfaceEffects, Module, ModuleCategory, ModuleDevState, ModuleInterfaceTypes } from "./Module";
+import {
+    InterfaceEffects,
+    Module,
+    ModuleCategory,
+    ModuleDevState,
+    ModuleInterfaceTypes,
+    OnInstanceUnloadFunc,
+} from "./Module";
 import { ModuleDataTagId } from "./ModuleDataTags";
 import { DrawPreviewFunc } from "./Preview";
 import { SyncSettingKey } from "./SyncSettings";
@@ -17,6 +24,7 @@ export type RegisterModuleOptions = {
     channelReceiverDefinitions?: ChannelReceiverDefinition[];
     preview?: DrawPreviewFunc;
     description?: string;
+    onUnloadInstance?: OnInstanceUnloadFunc;
 };
 
 export class ModuleNotFoundError extends Error {
@@ -49,6 +57,7 @@ export class ModuleRegistry {
             channelDefinitions: options.channelDefinitions,
             channelReceiverDefinitions: options.channelReceiverDefinitions,
             drawPreviewFunc: options.preview,
+            onUnloadInstanceFunc: options.onUnloadInstance,
             description: options.description,
         });
         this._registeredModules[options.moduleName] = module;
