@@ -4,8 +4,9 @@ import {
     InplaceVolumetricsIdentifierWithValues_api,
     InplaceVolumetricsTableDefinition_api,
 } from "@api";
-import { ORDERED_VOLUME_DEFINITIONS } from "@assets/volumeDefinitions";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+
+import { sortResultNames } from "./sortResultNames";
 
 type TableDefinitionsForEnsembleIdent = {
     ensembleIdent: EnsembleIdent;
@@ -130,23 +131,8 @@ export class TableDefinitionsAccessor {
         }
 
         this._fluidZonesIntersection = Array.from(fluidZones).sort();
-        this._resultNamesIntersection = this.sortResultNames(Array.from(resultNames).sort());
+        this._resultNamesIntersection = sortResultNames(Array.from(resultNames));
         this._identifiersWithIntersectionValues = identifiersWithValuesIntersection.sort();
-    }
-
-    private sortResultNames(resultNames: InplaceVolumetricResultName_api[]): InplaceVolumetricResultName_api[] {
-        const sortedResultNames: InplaceVolumetricResultName_api[] = [];
-        const resultNamesSet = new Set(resultNames);
-
-        for (const volumeDefinition in ORDERED_VOLUME_DEFINITIONS) {
-            const volumeDefinitionAbbreviation = volumeDefinition as InplaceVolumetricResultName_api;
-            if (resultNamesSet.has(volumeDefinitionAbbreviation)) {
-                sortedResultNames.push(volumeDefinitionAbbreviation);
-                resultNamesSet.delete(volumeDefinitionAbbreviation);
-            }
-        }
-
-        return sortedResultNames.concat(Array.from(resultNamesSet));
     }
 
     getUniqueEnsembleIdents(): EnsembleIdent[] {

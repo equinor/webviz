@@ -3,6 +3,7 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { TableHeading, TableRow } from "@lib/components/Table/table";
 import { Column, ColumnType, Row, Table } from "@modules/_shared/InplaceVolumetrics/Table";
+import { sortResultNameStrings } from "@modules/_shared/InplaceVolumetrics/sortResultNames";
 import {
     makeStatisticalTableColumnDataFromApiData,
     makeTableFromApiData,
@@ -86,7 +87,7 @@ export function createStatisticalTableHeadingsAndRowsFromTablesData(
     const numberOfRows = rows.length;
 
     // Headings and row data for result statistical columns
-    const sortedResultNames = Array.from(resultStatisticalColumns.keys()).sort();
+    const sortedResultNames = sortResultNameStrings(Array.from(resultStatisticalColumns.keys()));
     for (const resultName of sortedResultNames) {
         const statisticalColumns = resultStatisticalColumns.get(resultName);
         if (!statisticalColumns) {
