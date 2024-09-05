@@ -139,6 +139,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         onChange={setSelectedResultNames}
                         multiple
                         size={5}
+                        debounceTimeMs={1500}
                     />
                 </Label>
                 <Label text="Grouping">
@@ -146,6 +147,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         value={selectedAccumulationOptions}
                         tags={accumulateOptions}
                         onChange={handleAccumulationOptionsChange}
+                        debounceTimeMs={1500}
                     />
                 </Label>
             </div>
