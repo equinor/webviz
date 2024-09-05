@@ -347,6 +347,10 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     getInitialSettings(): InitialSettings | null {
         return this._initialSettings;
     }
+
+    unload() {
+        this._module.onInstanceUnload(this._id);
+    }
 }
 
 export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
