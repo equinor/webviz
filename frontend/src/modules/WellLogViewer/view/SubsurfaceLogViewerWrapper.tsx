@@ -156,6 +156,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     // <WellLogViewer /> uses an internal controller to change things like zoom, selection and so on. Use this when possible to avoid uneccessary re-renders
     const [wellLogController, setWellLogController] = React.useState<WellLogController | null>(null);
     const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
+    const [showReadoutBox, setShowReadoutBox] = React.useState<boolean>(false);
 
     const { template, welllog } = useViewerDataTransform(props);
 
@@ -181,10 +182,14 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const handleMouseOut = React.useCallback(
         function handleMouseOut() {
             broadcastGlobalMdChange(null);
-            setWellLogReadout([]);
+            setShowReadoutBox(false);
         },
         [broadcastGlobalMdChange]
     );
+
+    const handleMouseIn = React.useCallback(function handleMouseIn() {
+        setShowReadoutBox(true);
+    }, []);
 
     // Log viewer module callbacks
     const handleCreateController = React.useCallback(function handleCreateController(controller: WellLogController) {
@@ -226,7 +231,11 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
 
     return (
         // The weird tailwind-class hides the built-in hover tooltip
-        <div className="h-full [&_.welllogview_.overlay_.depth]:!invisible" onMouseLeave={handleMouseOut}>
+        <div
+            className="h-full [&_.welllogview_.overlay_.depth]:!invisible"
+            onMouseEnter={handleMouseIn}
+            onMouseLeave={handleMouseOut}
+        >
             <WellLogViewer
                 id="well-log-viewer"
                 welllog={welllog}
@@ -245,7 +254,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
                 onContentRescale={handleContentRescale}
                 onInfoFilled={handleInfoFilled}
             />
-            <ReadoutWrapper templateTracks={props.templateTracks} wellLogReadout={wellLogReadout} />
+            {showReadoutBox && <ReadoutWrapper templateTracks={props.templateTracks} wellLogReadout={wellLogReadout} />}
         </div>
     );
 }
