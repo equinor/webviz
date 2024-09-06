@@ -55,7 +55,6 @@ function ensureKeyboardSelectionInView(
 export function Select<TValue = string>(props: SelectProps<TValue>) {
     const { onChange } = props;
 
-    const valueWithDefault = props.value ?? [];
     const sizeWithDefault = props.size ?? 1;
     const multipleWithDefault = props.multiple ?? false;
     const filterWithDefault = props.filter ?? false;
@@ -65,8 +64,8 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
     const [options, setOptions] = React.useState<SelectOption<TValue>[]>(props.options);
     const [filteredOptions, setFilteredOptions] = React.useState<SelectOption<TValue>[]>(props.options);
     const [selectionAnchor, setSelectionAnchor] = React.useState<number | null>(null);
-    const [selectedOptionValues, setSelectedOptionValues] = React.useState<string[]>([]);
-    const [prevPropsValue, setPrevPropsValue] = React.useState<string[] | undefined>(undefined);
+    const [selectedOptionValues, setSelectedOptionValues] = React.useState<TValue[]>([]);
+    const [prevPropsValue, setPrevPropsValue] = React.useState<TValue[] | undefined>(undefined);
     const [currentFocusIndex, setCurrentFocusIndex] = React.useState<number>(0);
     const [virtualizationStartIndex, setVirtualizationStartIndex] = React.useState<number>(0);
     const [reportedVirtualizationStartIndex, setReportedVirtualizationStartIndex] = React.useState<number>(0);
@@ -83,9 +82,10 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
     }
 
     if (!isEqual(props.value, prevPropsValue)) {
+        const firstValueIndex = filteredOptions.findIndex((option) => option.value === props.value?.[0]);
+        setSelectionAnchor(firstValueIndex !== -1 ? firstValueIndex : null);
         setPrevPropsValue(props.value ? [...props.value] : undefined);
         setSelectedOptionValues(props.value ? [...props.value] : []);
-        setSelectionAnchor(props.value ? filteredOptions.findIndex((option) => option.value === props.value[0]) : null);
     }
 
     const handleOnChange = React.useCallback(
@@ -343,7 +343,6 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
 
         setCurrentFocusIndex(newCurrentKeyboardFocusIndex);
         setVirtualizationStartIndex(newVirtualizationStartIndex);
-        setSelectionAnchor(newFilteredOptions.findIndex((option) => option.value === selectedOptionValues[0]));
     }
 
     function handleFilterChange(event: React.ChangeEvent<HTMLInputElement>) {
