@@ -1,6 +1,6 @@
 [tool.poetry]
 package-mode = false
-name = "user-grid3d-vtk"
+name = "user-mock"
 
 [build-system]
 requires = ["poetry-core"]

@@ -65,8 +65,8 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
     const [options, setOptions] = React.useState<SelectOption<TValue>[]>(props.options);
     const [filteredOptions, setFilteredOptions] = React.useState<SelectOption<TValue>[]>(props.options);
     const [selectionAnchor, setSelectionAnchor] = React.useState<number | null>(null);
-    const [selectedOptionValues, setSelectedOptionValues] = React.useState<TValue[]>([]);
-    const [prevPropsValue, setPrevPropsValue] = React.useState<TValue[]>([]);
+    const [selectedOptionValues, setSelectedOptionValues] = React.useState<string[]>([]);
+    const [prevPropsValue, setPrevPropsValue] = React.useState<string[] | undefined>(undefined);
     const [currentFocusIndex, setCurrentFocusIndex] = React.useState<number>(0);
     const [virtualizationStartIndex, setVirtualizationStartIndex] = React.useState<number>(0);
     const [reportedVirtualizationStartIndex, setReportedVirtualizationStartIndex] = React.useState<number>(0);
@@ -82,9 +82,10 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
         filterOptions(newOptions, filterString);
     }
 
-    if (valueWithDefault && !isEqual(valueWithDefault, prevPropsValue)) {
-        setSelectedOptionValues([...valueWithDefault]);
-        setPrevPropsValue([...valueWithDefault]);
+    if (!isEqual(props.value, prevPropsValue)) {
+        setPrevPropsValue(props.value ? [...props.value] : undefined);
+        setSelectedOptionValues(props.value ? [...props.value] : []);
+        setSelectionAnchor(props.value ? filteredOptions.findIndex((option) => option.value === props.value[0]) : null);
     }
 
     const handleOnChange = React.useCallback(
@@ -342,6 +343,7 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
 
         setCurrentFocusIndex(newCurrentKeyboardFocusIndex);
         setVirtualizationStartIndex(newVirtualizationStartIndex);
+        setSelectionAnchor(newFilteredOptions.findIndex((option) => option.value === selectedOptionValues[0]));
     }
 
     function handleFilterChange(event: React.ChangeEvent<HTMLInputElement>) {

@@ -20,7 +20,7 @@ numpy = "^1.24.1"
 orjson = "^3.8.10"
 pandas = {version = "2.0.1", extras = ["performance"]}
 httpx = "^0.24.0"
-fmu-sumo = "1.2.4"
+fmu-sumo = "1.2.5"
 sumo-wrapper-python = "1.0.9"
 azure-monitor-opentelemetry = "^1.1.0"
 requests-toolbelt = "^1.0.0"
