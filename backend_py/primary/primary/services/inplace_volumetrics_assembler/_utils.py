@@ -14,8 +14,6 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     TableColumnStatisticalData,
 )
 
-from ._conversion._conversion import get_properties_among_result_names
-
 from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
 
 """
@@ -75,12 +73,9 @@ def _get_statistical_function_expression(statistic: Statistic) -> Callable[[pl.E
     """
     statistical_function_expression_map: dict[Statistic, Callable[[pl.Expr], pl.Expr]] = {
         Statistic.MEAN: lambda col: col.mean(),
-        # "median": lambda col: col.median(),
-        # "sum": lambda col: col.sum(),
         Statistic.MIN: lambda col: col.min(),
         Statistic.MAX: lambda col: col.max(),
         Statistic.STD_DEV: lambda col: col.std(),
-        # "var": lambda col: col.var(),
         Statistic.P10: lambda col: col.quantile(0.9, "linear"),  # Inverted P10 and P90
         Statistic.P90: lambda col: col.quantile(0.1, "linear"),  # Inverted P10 and P90
     }
