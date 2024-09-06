@@ -1,8 +1,14 @@
-from typing import List
+from typing import List, Iterable
 
 import re
 
-from primary.services.sumo_access.inplace_volumetrics_types import CalculatedVolume, FluidZone, FluidSelection, Property
+from primary.services.sumo_access.inplace_volumetrics_types import (
+    CalculatedVolume,
+    FluidZone,
+    FluidSelection,
+    Property,
+    InplaceVolumetricsIdentifier,
+)
 from primary.services.sumo_access.inplace_volumetrics_access import ALLOWED_RAW_VOLUMETRIC_COLUMNS
 
 """
@@ -28,6 +34,16 @@ Terms:
 """
 
 
+def get_identifier_from_string(identifier_str: str) -> InplaceVolumetricsIdentifier | None:
+    """
+    Function to convert string to InplaceVolumetricsIdentifier
+    """
+    if identifier_str in InplaceVolumetricsIdentifier.__members__:
+        return InplaceVolumetricsIdentifier(identifier_str)
+
+    return None
+
+
 def create_fluid_selection_name(fluid_selection: FluidSelection, fluid_zones: List[FluidZone]) -> str:
     if fluid_selection != FluidSelection.ACCUMULATED:
         return fluid_selection.value
@@ -47,7 +63,7 @@ def convert_fluid_zone_to_fluid_selection(fluid_zone: FluidZone) -> FluidSelecti
     return FluidSelection(fluid_zone)
 
 
-def get_calculated_volumes_among_result_names(result_names: List[str]) -> List[str]:
+def get_calculated_volumes_among_result_names(result_names: Iterable[str]) -> List[str]:
     """
     Function to get calculated volumes among result names
     """
@@ -59,7 +75,7 @@ def get_calculated_volumes_among_result_names(result_names: List[str]) -> List[s
     return list(possible_calculated_volumes)
 
 
-def get_required_volume_names_from_calculated_volumes(calculated_volumes: List[str]) -> List[str]:
+def get_required_volume_names_from_calculated_volumes(calculated_volumes: Iterable[str]) -> List[str]:
     """
     Function to convert calculated volumes to list of required volume names
 
@@ -74,7 +90,7 @@ def get_required_volume_names_from_calculated_volumes(calculated_volumes: List[s
     return list(volume_names)
 
 
-def get_properties_among_result_names(result_names: List[str]) -> List[str]:
+def get_properties_among_result_names(result_names: Iterable[str]) -> List[str]:
     """
     Function to get properties among result names
     """
@@ -87,7 +103,7 @@ def get_properties_among_result_names(result_names: List[str]) -> List[str]:
     return list(properties)
 
 
-def get_required_volume_names_from_properties(properties: List[str]) -> List[str]:
+def get_required_volume_names_from_properties(properties: Iterable[str]) -> List[str]:
     """
     Function to convert properties to list of required volume names
     """
@@ -120,7 +136,7 @@ def get_required_volume_names_from_property(property: str) -> List[str]:
         raise ValueError(f"Unhandled property: {property}")
 
 
-def get_available_properties_from_volume_names(volume_names: set[str]) -> List[str]:
+def get_available_properties_from_volume_names(volume_names: Iterable[str]) -> List[str]:
     """
     Function to get available properties from volume names
     """
@@ -142,7 +158,7 @@ def get_available_properties_from_volume_names(volume_names: set[str]) -> List[s
     return list(properties)
 
 
-def get_volume_names_from_raw_volumetric_column_names(raw_volumetric_column_names: set[str]) -> List[str]:
+def get_volume_names_from_raw_volumetric_column_names(raw_volumetric_column_names: Iterable[str]) -> List[str]:
     """
     Function to get volume names from volumetric column names
 
@@ -165,7 +181,7 @@ def get_volume_names_from_raw_volumetric_column_names(raw_volumetric_column_name
     return list(volume_names)
 
 
-def get_fluid_zones(raw_volumetric_column_names: set[str]) -> List[FluidZone]:
+def get_fluid_zones(raw_volumetric_column_names: Iterable[str]) -> List[FluidZone]:
     """
     Function to get fluid zones from raw volumetric column names
     """

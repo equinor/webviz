@@ -1,8 +1,7 @@
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Optional, Tuple
 import asyncio
 
 import pyarrow as pa
-import pyarrow.compute as pc
 import polars as pl
 
 from primary.services.sumo_access.inplace_volumetrics_access import (
@@ -28,6 +27,7 @@ from ._conversion._conversion import (
     get_available_properties_from_volume_names,
     get_calculated_volumes_among_result_names,
     get_fluid_zones,
+    get_identifier_from_string,
     get_properties_among_result_names,
     get_required_volume_names_from_calculated_volumes,
     get_required_volume_names_from_properties,
@@ -113,14 +113,16 @@ class InplaceVolumetricsAssembler:
 
             identifiers_with_values = []
             for identifier_name in self._inplace_volumetrics_access.get_possible_identifier_columns():
-                if identifier_name in table.column_names:
+                identifier = get_identifier_from_string(identifier_name)
+                if identifier is not None and identifier_name in table.column_names:
                     identifier_values = table[identifier_name].unique().to_pylist()
                     filtered_identifier_values = [
                         value for value in identifier_values if value not in IGNORED_IDENTIFIER_COLUMN_VALUES
                     ]
                     identifiers_with_values.append(
                         InplaceVolumetricsIdentifierWithValues(
-                            identifier=identifier_name, values=filtered_identifier_values
+                            identifier=identifier,
+                            values=filtered_identifier_values,
                         )
                     )
             tables_info.append(
@@ -138,16 +140,17 @@ class InplaceVolumetricsAssembler:
         table_name: str,
         result_names: set[str],
         fluid_zones: List[FluidZone],
-        realizations: Sequence[int] = None,
+        realizations: Optional[List[int]] = None,
         identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
-        group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
+        group_by_identifiers: List[InplaceVolumetricsIdentifier] = [],
         accumulate_fluid_zones: bool = False,
     ) -> InplaceVolumetricTableDataPerFluidSelection:
         # Create volume df per fluid zone and retrieve volume names and valid properties among requested result names
-        volume_df_per_fluid_selection, categorized_requested_result_names = (
-            await self._get_volume_df_per_fluid_selection_and_categorized_result_names_async(
-                table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
-            )
+        (
+            volume_df_per_fluid_selection,
+            categorized_requested_result_names,
+        ) = await self._get_volume_df_per_fluid_selection_and_categorized_result_names_async(
+            table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
         )
 
         # Perform aggregation per result table
@@ -181,16 +184,17 @@ class InplaceVolumetricsAssembler:
         table_name: str,
         result_names: set[str],
         fluid_zones: List[FluidZone],
-        realizations: Sequence[int] = None,
+        realizations: Optional[List[int]] = None,
         identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
-        group_by_identifiers: Sequence[InplaceVolumetricsIdentifier] = [InplaceVolumetricsIdentifier.ZONE],
+        group_by_identifiers: List[InplaceVolumetricsIdentifier] = [],
         accumulate_fluid_zones: bool = False,
     ) -> InplaceStatisticalVolumetricTableDataPerFluidSelection:
         # Create volume df per fluid zone and retrieve volume names and valid properties among requested result names
-        volume_df_per_fluid_selection, categorized_requested_result_names = (
-            await self._get_volume_df_per_fluid_selection_and_categorized_result_names_async(
-                table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
-            )
+        (
+            volume_df_per_fluid_selection,
+            categorized_requested_result_names,
+        ) = await self._get_volume_df_per_fluid_selection_and_categorized_result_names_async(
+            table_name, result_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
         )
 
         # Perform aggregation per result table
@@ -232,7 +236,7 @@ class InplaceVolumetricsAssembler:
         table_name: str,
         result_names: set[str],
         fluid_zones: List[FluidZone],
-        realizations: Sequence[int],
+        realizations: Optional[List[int]],
         identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues],
         accumulate_fluid_zones: bool,
     ) -> Tuple[Dict[FluidSelection, pl.DataFrame], CategorizedResultNames]:
@@ -274,10 +278,10 @@ class InplaceVolumetricsAssembler:
         )
 
         # Get volume table per fluid selection - requested volumes and volumes needed for properties
-        volume_df_per_fluid_selection: Dict[FluidSelection, pl.DataFrame] = (
-            await self._create_volume_df_per_fluid_selection(
-                table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
-            )
+        volume_df_per_fluid_selection: Dict[
+            FluidSelection, pl.DataFrame
+        ] = await self._create_volume_df_per_fluid_selection(
+            table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
         )
 
         # If accumulate_fluid_zones is True, exclude BO and BG from valid properties
@@ -324,7 +328,7 @@ class InplaceVolumetricsAssembler:
         )
 
         # Create result dataframe, select columns and calculate volumes + properties
-        column_names_and_expressions: List[str | pl.Expr] = (
+        column_names_and_expressions = (
             available_selector_columns
             + available_requested_volume_names
             + calculated_volume_column_expressions
@@ -339,7 +343,7 @@ class InplaceVolumetricsAssembler:
         table_name: str,
         volume_names: set[str],
         fluid_zones: List[FluidZone],
-        realizations: Sequence[int] = None,
+        realizations: Optional[List[int]],
         identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
         accumulate_fluid_zones: bool = False,
     ) -> Dict[FluidSelection, pl.DataFrame]:
@@ -356,7 +360,7 @@ class InplaceVolumetricsAssembler:
         - table_name: str - Name of the table in Sumo
         - volume_names: set[str] - All volume names needed from Sumo, including volume names needed for properties
         - fluid_zones: List[FluidZone] - Fluid zones to create volumetric tables for
-        - realizations: Sequence[int] - Realizations to include in the volumetric table
+        - realizations: List[int] - Realizations to include in the volumetric table
         - identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] - Identifier values to filter the volumetric table, i.e. row filtering
         - accumulate_fluid_zones: bool - Whether to accumulate the volumes across fluid zones
         """
@@ -378,6 +382,11 @@ class InplaceVolumetricsAssembler:
             realizations=realizations,
             identifiers_with_values=identifiers_with_values,
         )
+
+        if row_filtered_raw_volumetrics_df is None:
+            # No data found for the given identifiers and realizations
+            return {}
+
         timer_create_raw_df = timer.lap_ms()
         print(f"Time creating raw DataFrame: {timer_create_raw_df}ms")
 
@@ -413,19 +422,19 @@ class InplaceVolumetricsAssembler:
     async def _create_row_filtered_volumetric_df_async(
         self,
         table_name: str,
-        volumetric_columns: set[str],
-        realizations: Sequence[int] = None,
+        volumetric_columns: List[str],
+        realizations: Optional[List[int]] = None,
         identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
-    ) -> pl.DataFrame:
+    ) -> pl.DataFrame | None:
         """
         Create DataFrame filtered on identifier values and realizations
         """
         if realizations is not None and len(realizations) == 0:
-            return {}
+            return None
 
         # Inplace volumetrics Polars DataFrame
         inplace_volumetrics_df: pl.DataFrame = await self._get_inplace_volumetrics_table_as_polars_df_async(
-            table_name=table_name, volumetric_columns=volumetric_columns
+            table_name=table_name, volumetric_columns=set(volumetric_columns)
         )
 
         timer = PerfTimer()

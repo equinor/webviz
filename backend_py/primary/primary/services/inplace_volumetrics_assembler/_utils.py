@@ -73,8 +73,6 @@ def _get_statistical_function_expression(statistic: Statistic) -> Callable[[pl.E
 
     Note: Inverted P10 and P90 according to oil industry standards
     """
-    quantile_interpolation = "linear"
-
     statistical_function_expression_map: dict[Statistic, Callable[[pl.Expr], pl.Expr]] = {
         Statistic.MEAN: lambda col: col.mean(),
         # "median": lambda col: col.median(),
@@ -83,14 +81,14 @@ def _get_statistical_function_expression(statistic: Statistic) -> Callable[[pl.E
         Statistic.MAX: lambda col: col.max(),
         Statistic.STD_DEV: lambda col: col.std(),
         # "var": lambda col: col.var(),
-        Statistic.P10: lambda col: col.quantile(0.9, quantile_interpolation),  # Inverted P10 and P90
-        Statistic.P90: lambda col: col.quantile(0.1, quantile_interpolation),  # Inverted P10 and P90
+        Statistic.P10: lambda col: col.quantile(0.9, "linear"),  # Inverted P10 and P90
+        Statistic.P90: lambda col: col.quantile(0.1, "linear"),  # Inverted P10 and P90
     }
 
     return statistical_function_expression_map.get(statistic)
 
 
-def _create_statistical_expression(statistic: Statistic, column_name: str, drop_nans=True) -> pl.Expr:
+def _create_statistical_expression(statistic: Statistic, column_name: str, drop_nans: bool = True) -> pl.Expr:
     """
     Generate the Polars expression for the given statistic.
     """
@@ -104,7 +102,7 @@ def _create_statistical_expression(statistic: Statistic, column_name: str, drop_
 
 
 def _create_statistic_aggregation_expressions(
-    result_columns: List[str], statistics: List[Statistic], drop_nans=True
+    result_columns: List[str], statistics: List[Statistic], drop_nans: bool = True
 ) -> List[pl.Expr]:
     """
     Create Polars expressions for aggregation of result columns

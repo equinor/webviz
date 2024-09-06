@@ -20,4 +20,6 @@ export enum InplaceVolumetricResultName {
     BO = 'BO',
     BG = 'BG',
     SW = 'SW',
+    STOIIP_TOTAL = 'STOIIP_TOTAL',
+    GIIP_TOTAL = 'GIIP_TOTAL',
 }

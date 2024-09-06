@@ -35,6 +35,7 @@ async def get_table_definitions(
 
 
 @router.post("/get_aggregated_per_realization_table_data/", tags=["inplace_volumetrics"])
+# pylint: disable=too-many-arguments
 async def post_get_aggregated_per_realization_table_data(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -67,11 +68,11 @@ async def post_get_aggregated_per_realization_table_data(
 
     data = await assembler.create_accumulated_by_selection_per_realization_volumetric_table_data_async(
         table_name=table_name,
-        result_names=result_names,
-        fluid_zones=fluid_zones,
-        group_by_identifiers=group_by_identifiers,
+        result_names=set(result_names),
+        fluid_zones=converters.convert_schema_to_fluid_zones(fluid_zones),
+        group_by_identifiers=converters.convert_schema_to_identifiers(group_by_identifiers),
         realizations=realizations,
-        identifiers_with_values=identifiers_with_values,
+        identifiers_with_values=converters.convert_schema_to_identifiers_with_values(identifiers_with_values),
         accumulate_fluid_zones=accumulate_fluid_zones,
     )
 
@@ -83,6 +84,7 @@ async def post_get_aggregated_per_realization_table_data(
 
 
 @router.post("/get_aggregated_statistical_table_data/", tags=["inplace_volumetrics"])
+# pylint: disable=too-many-arguments
 async def post_get_aggregated_statistical_table_data(
     response: Response,
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
@@ -115,11 +117,11 @@ async def post_get_aggregated_statistical_table_data(
 
     data = await assembler.create_accumulated_by_selection_statistical_volumetric_table_data_async(
         table_name=table_name,
-        result_names=result_names,
-        fluid_zones=fluid_zones,
-        group_by_identifiers=group_by_identifiers,
+        result_names=set(result_names),
+        fluid_zones=converters.convert_schema_to_fluid_zones(fluid_zones),
+        group_by_identifiers=converters.convert_schema_to_identifiers(group_by_identifiers),
         realizations=realizations,
-        identifiers_with_values=identifiers_with_values,
+        identifiers_with_values=converters.convert_schema_to_identifiers_with_values(identifiers_with_values),
         accumulate_fluid_zones=accumulate_fluid_zones,
     )
 

@@ -45,13 +45,13 @@ class InplaceVolumetricsIdentifier(StrEnum):
 class FluidZone(StrEnum):
     OIL = "Oil"
     GAS = "Gas"
-    WATER = "Water"  # TODO: Remove or keep?
+    WATER = "Water"
 
 
 class FluidSelection(StrEnum):
     OIL = "Oil"
     GAS = "Gas"
-    WATER = "Water"  # TODO: Remove or keep?
+    WATER = "Water"
     ACCUMULATED = "Accumulated"
 
 
@@ -169,8 +169,12 @@ class InplaceStatisticalVolumetricTableData:
 
 @dataclass
 class InplaceVolumetricTableDataPerFluidSelection:
-    # TODO: Find a better name for this class
-    # table_name: str
+    """
+    Volumetric data for a single table per fluid selection
+
+    Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
+    """
+
     table_data_per_fluid_selection: List[InplaceVolumetricTableData]
 
 
