@@ -46,7 +46,7 @@ export const wellLogTemplateTracks = atom<TemplateTrack[]>((get) => {
     });
 });
 
-export const allSelectedWellLogCurves = atom<string[]>((get) => {
+export const allSelectedWellLogCurvesAtom = atom<string[]>((get) => {
     const templateTracks = get(wellLogTemplateTracks);
 
     const curveNames = templateTracks.reduce<string[]>((acc, trackCfg) => {

@@ -1,3 +1,5 @@
+import React from "react";
+
 import { WellboreLogCurveData_api } from "@api";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -43,6 +45,21 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     statusWriter.setLoading(mainElementsLoading);
 
     const mainElementsSuccess = curveDataQueries.every((q) => q.isSuccess) && wellboreTrajectoryDataQuery.isSuccess;
+
+    React.useEffect(
+        function setModuleName() {
+            let title = "";
+
+            if (selectedWellboreHeader?.uniqueWellboreIdentifier) {
+                title = selectedWellboreHeader.uniqueWellboreIdentifier;
+            } else {
+                title = "Well log Viewer";
+            }
+
+            props.viewContext.setInstanceTitle(title);
+        },
+        [props.viewContext, selectedWellboreHeader?.uniqueWellboreIdentifier]
+    );
 
     if (mainElementsLoading) {
         return (

@@ -3,7 +3,7 @@ import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponen
 import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import {
-    allSelectedWellLogCurves,
+    allSelectedWellLogCurvesAtom,
     selectedFieldIdentifierAtom,
     selectedWellboreAtom,
     wellLogTemplateTracks,
@@ -26,6 +26,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     selectedField: (get) => get(selectedFieldIdentifierAtom),
     wellboreHeader: (get) => get(selectedWellboreAtom),
     templateTracks: (get) => get(wellLogTemplateTracks),
-    requiredDataCurves: (get) => get(allSelectedWellLogCurves),
+    requiredDataCurves: (get) => get(allSelectedWellLogCurvesAtom),
     viewerHorizontal: (get) => get(viewerHorizontalAtom),
 };

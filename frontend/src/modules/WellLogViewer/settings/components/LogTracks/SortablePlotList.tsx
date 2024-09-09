@@ -162,7 +162,7 @@ function SortablePlotItem(props: SortablePlotItemProps) {
                     />
                 </>
             )}
-            <div className="text-xs w-28">
+            <div className="text-xs w-28 flex-shrink-0">
                 <Dropdown
                     value={props.plot.type}
                     options={PLOT_TYPE_OPTIONS}
@@ -183,18 +183,10 @@ function SortablePlotItem(props: SortablePlotItemProps) {
     return <SortableListItem id={props.plot._id} title={title} endAdornment={endAdornment} />;
 }
 
-// function isValidPlotConfig(plot: Partial<TemplatePlotConfig>): plot is TemplatePlot {
-// function isValidPlotConfig(plot: Partial<TemplatePlotConfig>): boolean {
-//     if (!plot.name) return false;
-//     if (plot.type === "differential" && !plot.name2) return false;
-//     return true;
-// }
-
 function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): DropdownOption[] {
     return _.chain(curveHeaders)
         .sortBy(["logName", "curveName"])
-
-        .flatMap((curveHeader): DropdownOption => {
+        .map((curveHeader): DropdownOption => {
             return {
                 value: curveHeader.curveName,
                 label: curveHeader.curveName,
