@@ -34,18 +34,21 @@ class WellborePerforation(BaseModel):
 
 
 class WellboreLogCurveHeader(BaseModel):
-    log_name: str
+    log_name: str | None
     curve_name: str
-    curve_unit: str
+    curve_unit: str | None
 
 
 class WellboreLogCurveData(BaseModel):
+    name: str
     index_min: float
     index_max: float
     min_curve_value: float
     max_curve_value: float
-    DataPoints: list[list[float | None]]
-    curve_alias: str
-    curve_description: str
+    curve_alias: str | None
+    curve_description: str | None
     index_unit: str
-    no_data_value: float
+    no_data_value: float | None
+    unit: str
+    curve_unit_desc: str | None
+    DataPoints: list[list[float | None]]

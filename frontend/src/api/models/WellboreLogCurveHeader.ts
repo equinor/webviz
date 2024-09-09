@@ -5,6 +5,6 @@
 export type WellboreLogCurveHeader = {
     logName: string;
     curveName: string;
-    curveUnit: string;
+    curveUnit: (string | null);
 };
 

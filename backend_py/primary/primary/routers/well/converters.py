@@ -131,6 +131,9 @@ def convert_wellbore_log_curve_data_to_schema(
     wellbore_log_curve_data: WellboreLogCurveData,
 ) -> schemas.WellboreLogCurveData:
     return schemas.WellboreLogCurveData(
+        name=wellbore_log_curve_data.name,
+        unit=wellbore_log_curve_data.unit,
+        curveUnitDesc=wellbore_log_curve_data.curve_unit_desc,
         indexMin=wellbore_log_curve_data.index_min,
         indexMax=wellbore_log_curve_data.index_max,
         minCurveValue=wellbore_log_curve_data.min_curve_value,
