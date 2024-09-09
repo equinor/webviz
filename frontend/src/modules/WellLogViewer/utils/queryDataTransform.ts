@@ -2,7 +2,7 @@
  * Utilities to convert fetched well log data to the JSON well-log format (see https://jsonwelllogformat.org/)
  * @author Anders R. Hunderi
  */
-import { WellboreTrajectory_api } from "@api";
+import { WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import {
     WellLog,
@@ -12,8 +12,6 @@ import {
 } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 
 import _ from "lodash";
-
-import { LogCurveDataWithName } from "../view/queries/wellLogQueries";
 
 export const MAIN_AXIS_CURVE: WellLogCurve = {
     name: "MD",
@@ -30,7 +28,7 @@ export const SECONDARY_AXIS_CURVE: WellLogCurve = {
 };
 
 export function createWellLog(
-    curveData: LogCurveDataWithName[],
+    curveData: WellboreLogCurveData_api[],
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem
 ): WellLog {
@@ -44,17 +42,18 @@ export function createWellLog(
     return { header, curves, data };
 }
 
-function createLogCurves(curveData: LogCurveDataWithName[]): WellLogCurve[] {
+function createLogCurves(curveData: WellboreLogCurveData_api[]): WellLogCurve[] {
     return [MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE, ...curveData.map(apiCurveToLogCurve)];
 }
 
-function apiCurveToLogCurve(curve: LogCurveDataWithName): WellLogCurve {
+function apiCurveToLogCurve(curve: WellboreLogCurveData_api): WellLogCurve {
     return {
         name: curve.name,
         dimensions: curve.dataPoints[0].length - 1,
         valueType: typeof curve.dataPoints[0][1],
         // ? if this is just gonna be the meter in depth for all of them
-        unit: curve.indexUnit,
+        unit: curve.unit,
+        description: curve.curveDescription,
         // quantity,
         // description
     };
@@ -64,7 +63,7 @@ type SafeWellLogDataRow = [number, ...WellLogDataRow];
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 
 function createLogData(
-    curveData: LogCurveDataWithName[],
+    curveData: WellboreLogCurveData_api[],
     referenceSystem: IntersectionReferenceSystem
 ): SafeWellLogDataRow[] {
     // We add 2 since each row also includes the MD and TVD axis curves

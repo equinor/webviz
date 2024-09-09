@@ -17,17 +17,3 @@ export function useCurveDataQueries(
         })),
     });
 }
-
-export type LogCurveDataWithName = { name: string } & WellboreLogCurveData_api;
-
-// The curve data objects thats returned from the api doesnt return the items with their names. A bit unsure of the difference, but I use the name later, so need to re-add them
-// TODO: Need to figure out if this is intentional, and potentially add the name to the backend return-payload
-export function sanitizeCurveDataQueriesResult(
-    curveDataQueries: UseQueryResult<WellboreLogCurveData_api>[],
-    expectedCurveNames: string[]
-): LogCurveDataWithName[] {
-    return curveDataQueries.map((q, i) => ({
-        ...q.data,
-        name: expectedCurveNames[i],
-    })) as LogCurveDataWithName[];
-}

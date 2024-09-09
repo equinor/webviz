@@ -7,11 +7,13 @@ import { Label } from "@lib/components/Label";
 import { SortableList, SortableListItem } from "@lib/components/SortableList";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { CURVE_COLOR_PALETTE, PLOT_TYPE_OPTIONS, makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
-import { Delete, SwapHoriz } from "@mui/icons-material";
+import { Delete, SwapHoriz, Warning } from "@mui/icons-material";
 import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
+import { useAtomValue } from "jotai";
 import _ from "lodash";
 
+import { allSelectedWellLogCurvesAtom } from "../../atoms/derivedAtoms";
 import { TemplatePlotConfig } from "../../atoms/persistedAtoms";
 import { AddItemButton } from "../AddItemButton";
 
@@ -22,9 +24,18 @@ export type SortablePlotListProps = {
 };
 
 export function SortablePlotList(props: SortablePlotListProps): React.ReactNode {
+    const allSelectedWellLogCurves = useAtomValue(allSelectedWellLogCurvesAtom);
+
     const { onUpdatePlots } = props;
 
     const curveHeaderOptions = makeCurveNameOptions(props.availableCurveHeaders);
+
+    // If the current selection does not exist, keep it in the selection, with a warning. This can happen when the user is importing a config, or swapping between wellbores
+    allSelectedWellLogCurves.forEach((curveName) => {
+        if (!curveHeaderOptions.some(({ value }) => value === curveName)) {
+            curveHeaderOptions.push(makeMissingCurveOption(curveName));
+        }
+    });
 
     // TODO, do an offsett or something, so they dont always start on the same color?
     const colorSet = React.useRef<ColorSet>(new ColorSet(CURVE_COLOR_PALETTE));
@@ -191,4 +202,19 @@ function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): Dropd
             };
         })
         .value();
+}
+
+// Helper method to show a missing curve as a disabled option
+function makeMissingCurveOption(curveName: string): DropdownOption {
+    return {
+        label: curveName,
+        value: curveName,
+        group: "Unavailable curves!",
+        disabled: true,
+        adornment: (
+            <span title="This plot is is not available for this wellbore!" className="text-yellow-500">
+                <Warning fontSize="inherit" />
+            </span>
+        ),
+    };
 }

@@ -1,6 +1,11 @@
+import { WellboreLogCurveData_api } from "@api";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { ContentError } from "@modules/_shared/components/ContentMessage";
+import {
+    usePropagateAllApiErrorsToStatusWriter,
+    usePropagateApiErrorToStatusWriter,
+} from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { CircularProgress } from "@mui/material";
 
 import { useAtomValue } from "jotai";
@@ -8,7 +13,7 @@ import { useAtomValue } from "jotai";
 import { SubsurfaceLogViewerWrapper } from "./SubsurfaceLogViewerWrapper";
 import { intersectionReferenceSystemAtom } from "./atoms/derivedAtoms";
 import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
-import { sanitizeCurveDataQueriesResult, useCurveDataQueries } from "./queries/wellLogQueries";
+import { useCurveDataQueries } from "./queries/wellLogQueries";
 
 import { InterfaceTypes } from "../interfaces";
 
@@ -32,10 +37,12 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     // TODO: Have every single query propagete their errors?
     // forEach: usePropagateApiErrorToStatusWriter(query, statusWriter);
     usePropagateApiErrorToStatusWriter(wellboreTrajectoryDataQuery, statusWriter);
+    usePropagateAllApiErrorsToStatusWriter(curveDataQueries, statusWriter);
 
-    const mainElementsLoading = !curveDataQueries.every((q) => q.isSuccess) || !wellboreTrajectoryDataQuery.isSuccess;
-
+    const mainElementsLoading = !curveDataQueries.every((q) => q.isFetched) || !wellboreTrajectoryDataQuery.isFetched;
     statusWriter.setLoading(mainElementsLoading);
+
+    const mainElementsSuccess = curveDataQueries.every((q) => q.isSuccess) && wellboreTrajectoryDataQuery.isSuccess;
 
     if (mainElementsLoading) {
         return (
@@ -43,8 +50,10 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
                 <CircularProgress />
             </div>
         );
+    } else if (!mainElementsSuccess) {
+        return <ContentError>Error loading curve data.</ContentError>;
     } else {
-        const curveData = sanitizeCurveDataQueriesResult(curveDataQueries, requiredDataCurves);
+        const curveData = curveDataQueries.map(({ data }) => data as WellboreLogCurveData_api);
         if (!intersectionReferenceSystem) throw new Error("Unexpected null for reference system");
 
         return (
