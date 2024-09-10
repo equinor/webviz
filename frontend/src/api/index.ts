@@ -10,6 +10,7 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export { ALQ as ALQ_api } from './models/ALQ';
 export { B64FloatArray as B64FloatArray_api } from './models/B64FloatArray';
 export { B64UintArray as B64UintArray_api } from './models/B64UintArray';
 export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
@@ -31,7 +32,9 @@ export type { EnsembleSensitivity as EnsembleSensitivity_api } from './models/En
 export type { EnsembleSensitivityCase as EnsembleSensitivityCase_api } from './models/EnsembleSensitivityCase';
 export type { FenceMeshSection as FenceMeshSection_api } from './models/FenceMeshSection';
 export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
+export { FlowRateTypeProd as FlowRateTypeProd_api } from './models/FlowRateTypeProd';
 export { Frequency as Frequency_api } from './models/Frequency';
+export { GFR as GFR_api } from './models/GFR';
 export type { GraphUserPhoto as GraphUserPhoto_api } from './models/GraphUserPhoto';
 export type { Grid3dDimensions as Grid3dDimensions_api } from './models/Grid3dDimensions';
 export type { Grid3dGeometry as Grid3dGeometry_api } from './models/Grid3dGeometry';
@@ -77,7 +80,10 @@ export type { SurfaceMetaSet as SurfaceMetaSet_api } from './models/SurfaceMetaS
 export type { SurfaceRealizationSampleValues as SurfaceRealizationSampleValues_api } from './models/SurfaceRealizationSampleValues';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
 export { SurfaceTimeType as SurfaceTimeType_api } from './models/SurfaceTimeType';
+export { TabType as TabType_api } from './models/TabType';
+export type { THP as THP_api } from './models/THP';
 export { TreeNode as TreeNode_api } from './models/TreeNode';
+export { UnitType as UnitType_api } from './models/UnitType';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';
 export type { ValidationError as ValidationError_api } from './models/ValidationError';
 export type { VectorDescription as VectorDescription_api } from './models/VectorDescription';
@@ -85,6 +91,8 @@ export type { VectorHistoricalData as VectorHistoricalData_api } from './models/
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
+export type { VfpProdTable as VfpProdTable_api } from './models/VfpProdTable';
+export { VfpType as VfpType_api } from './models/VfpType';
 export type { WellboreCasing as WellboreCasing_api } from './models/WellboreCasing';
 export type { WellboreCompletion as WellboreCompletion_api } from './models/WellboreCompletion';
 export type { WellboreHeader as WellboreHeader_api } from './models/WellboreHeader';
@@ -99,6 +107,7 @@ export type { WellCompletionsUnitInfo as WellCompletionsUnitInfo_api } from './m
 export type { WellCompletionsUnits as WellCompletionsUnits_api } from './models/WellCompletionsUnits';
 export type { WellCompletionsWell as WellCompletionsWell_api } from './models/WellCompletionsWell';
 export type { WellCompletionsZone as WellCompletionsZone_api } from './models/WellCompletionsZone';
+export { WFR as WFR_api } from './models/WFR';
 
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
@@ -114,5 +123,6 @@ export { RftService } from './services/RftService';
 export { SeismicService } from './services/SeismicService';
 export { SurfaceService } from './services/SurfaceService';
 export { TimeseriesService } from './services/TimeseriesService';
+export { VfpService } from './services/VfpService';
 export { WellService } from './services/WellService';
 export { WellCompletionsService } from './services/WellCompletionsService';
