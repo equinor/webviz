@@ -120,6 +120,9 @@ def convert_wellbore_perforation_to_schema(
 def convert_wellbore_log_curve_header_to_schema(
     wellbore_log_curve_header: WellboreLogCurveHeader,
 ) -> schemas.WellboreLogCurveHeader:
+    if wellbore_log_curve_header.log_name is None:
+        raise AttributeError("Missing log name is not allowed")
+
     return schemas.WellboreLogCurveHeader(
         logName=wellbore_log_curve_header.log_name,
         curveName=wellbore_log_curve_header.curve_name,
