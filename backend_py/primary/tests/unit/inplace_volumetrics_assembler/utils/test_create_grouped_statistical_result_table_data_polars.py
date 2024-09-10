@@ -1,3 +1,4 @@
+from typing import List
 import polars as pl
 
 from primary.services.inplace_volumetrics_assembler._utils import (
@@ -9,7 +10,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
 )
 
 
-def test_create_grouped_statistical_result_table_data_polars():
+def test_create_grouped_statistical_result_table_data_polars() -> None:
     # Create a sample result DataFrame
     data = {
         "ZONE": ["A", "B", "A", "B"],
@@ -55,7 +56,7 @@ def test_create_grouped_statistical_result_table_data_polars():
     assert result_statistical_data.statistic_values[Statistic.P90] == p90_values
 
 
-def test_create_grouped_statistical_result_table_data_polars_no_grouping():
+def test_create_grouped_statistical_result_table_data_polars_no_grouping() -> None:
     # Create a sample result DataFrame
     data = {
         "ZONE": ["A", "A", "B", "B"],
@@ -65,7 +66,7 @@ def test_create_grouped_statistical_result_table_data_polars_no_grouping():
     }
     result_df = pl.DataFrame(data)
 
-    group_by_identifiers = []
+    group_by_identifiers: List[InplaceVolumetricsIdentifier] = []
 
     selector_column_data_list, results_statistical_data_list = create_grouped_statistical_result_table_data_polars(
         result_df, group_by_identifiers

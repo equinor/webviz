@@ -5,7 +5,7 @@ from primary.services.inplace_volumetrics_assembler._utils import _create_named_
 from primary.services.inplace_volumetrics_assembler._utils import FluidZone
 
 
-def test_create_property_column_expressions_bo():
+def test_create_property_column_expressions_bo() -> None:
     volume_df_columns = ["HCPV", "STOIIP"]
     properties = ["BO"]
     fluid_zone = FluidZone.OIL
@@ -17,7 +17,7 @@ def test_create_property_column_expressions_bo():
     assert str(created_expressions[0]) == str(expected_expression)
 
 
-def test_create_property_column_expressions_bg():
+def test_create_property_column_expressions_bg() -> None:
     volume_df_columns = ["HCPV", "GIIP"]
     properties = ["BG"]
     fluid_zone = FluidZone.GAS
@@ -29,7 +29,7 @@ def test_create_property_column_expressions_bg():
     assert str(created_expressions[0]) == str(expected_expression)
 
 
-def test_create_property_column_expressions_ntg():
+def test_create_property_column_expressions_ntg() -> None:
     volume_df_columns = ["BULK", "NET"]
     properties = ["NTG"]
 
@@ -40,7 +40,7 @@ def test_create_property_column_expressions_ntg():
     assert str(created_expressions[0]) == str(expected_expression)
 
 
-def test_create_property_column_expressions_poro_and_poro_net():
+def test_create_property_column_expressions_poro_and_poro_net() -> None:
     volume_df_columns = ["BULK", "PORV", "NET"]
     properties = ["PORO", "PORO_NET"]
 
@@ -53,7 +53,7 @@ def test_create_property_column_expressions_poro_and_poro_net():
     assert str(created_expressions[1]) == str(expected_poro_net_expression)
 
 
-def test_create_property_column_expressions_missing_columns():
+def test_create_property_column_expressions_missing_columns() -> None:
     volume_df_columns = ["HCPV", "PORV"]  # Missing STOIIP for BO
     properties = ["BO", "SW"]
     fluid_zone = FluidZone.OIL
@@ -64,16 +64,16 @@ def test_create_property_column_expressions_missing_columns():
     assert str(created_expressions[0]) == str(expected_expression)
 
 
-def test_create_property_column_expressions_no_properties():
+def test_create_property_column_expressions_no_properties() -> None:
     volume_df_columns = ["HCPV", "STOIIP"]
-    properties = []
+    properties: List[str] = []
     fluid_zone = FluidZone.OIL
 
     expressions = create_property_column_expressions(volume_df_columns, properties, fluid_zone)
     assert len(expressions) == 0
 
 
-def test_create_property_column_expressions_no_fluid_zone():
+def test_create_property_column_expressions_no_fluid_zone() -> None:
     volume_df_columns = ["HCPV", "STOIIP"]
     properties = ["BO"]
 

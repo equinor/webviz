@@ -7,7 +7,7 @@ from primary.services.inplace_volumetrics_assembler._utils import (
 from primary.services.sumo_access.inplace_volumetrics_types import Statistic
 
 
-def test_convert_statistical_df_to_statistical_result_table_data():
+def test_convert_statistical_df_to_statistical_result_table_data() -> None:
     # Create a sample statistical DataFrame
     data = {
         "ZONE": ["A", "B", "A", "B"],
@@ -56,7 +56,7 @@ def test_convert_statistical_df_to_statistical_result_table_data():
     assert result_statistical_data.statistic_values[Statistic.P90] == [12.0, 22.0, 32.0, 42.0]
 
 
-def test_convert_statistical_df_to_statistical_result_table_data_missing_column():
+def test_convert_statistical_df_to_statistical_result_table_data_missing_column() -> None:
     # Create a sample statistical DataFrame with a missing column
     data = {
         "selector1": ["A", "B", "A", "B"],

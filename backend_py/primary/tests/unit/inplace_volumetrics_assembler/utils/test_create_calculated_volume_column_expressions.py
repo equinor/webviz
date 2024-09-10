@@ -6,7 +6,7 @@ from primary.services.inplace_volumetrics_assembler._utils import (
 from primary.services.inplace_volumetrics_assembler._utils import FluidZone
 
 
-def test_create_calculated_volume_column_expressions_no_fluid_zone():
+def test_create_calculated_volume_column_expressions_no_fluid_zone() -> None:
     volume_df_columns = ["STOIIP", "ASSOCIATEDOIL", "GIIP", "ASSOCIATEDGAS"]
     calculated_volumes = ["STOIIP_TOTAL", "GIIP_TOTAL"]
     expressions = create_calculated_volume_column_expressions(volume_df_columns, calculated_volumes)
@@ -23,7 +23,7 @@ def test_create_calculated_volume_column_expressions_no_fluid_zone():
     assert str(expressions[1]) == str(second_expected_expression)
 
 
-def test_create_calculated_volume_column_expressions_oil_zone():
+def test_create_calculated_volume_column_expressions_oil_zone() -> None:
     volume_df_columns = ["STOIIP", "ASSOCIATEDOIL", "GIIP", "ASSOCIATEDGAS"]
     calculated_volumes = ["STOIIP_TOTAL", "GIIP_TOTAL"]
     expressions = create_calculated_volume_column_expressions(volume_df_columns, calculated_volumes, FluidZone.OIL)
@@ -36,7 +36,7 @@ def test_create_calculated_volume_column_expressions_oil_zone():
     assert str(expressions[1]) == str(second_expected_expression)
 
 
-def test_create_calculated_volume_column_expressions_gas_zone():
+def test_create_calculated_volume_column_expressions_gas_zone() -> None:
     volume_df_columns = ["STOIIP", "ASSOCIATEDOIL", "GIIP", "ASSOCIATEDGAS"]
     calculated_volumes = ["GIIP_TOTAL", "STOIIP_TOTAL"]
     expressions = create_calculated_volume_column_expressions(volume_df_columns, calculated_volumes, FluidZone.GAS)
@@ -49,7 +49,7 @@ def test_create_calculated_volume_column_expressions_gas_zone():
     assert str(expressions[1]) == str(second_expected_expression)
 
 
-def test_create_calculated_volume_column_expressions_missing_columns():
+def test_create_calculated_volume_column_expressions_missing_columns() -> None:
     volume_df_columns = ["STOIIP"]
     calculated_volumes = ["STOIIP_TOTAL", "GIIP_TOTAL"]
     expressions = create_calculated_volume_column_expressions(volume_df_columns, calculated_volumes)
@@ -57,7 +57,7 @@ def test_create_calculated_volume_column_expressions_missing_columns():
     assert len(expressions) == 0
 
 
-def test_create_calculated_volume_column_expressions_partial_columns():
+def test_create_calculated_volume_column_expressions_partial_columns() -> None:
     volume_df_columns = ["STOIIP", "ASSOCIATEDOIL", "GIIP"]  # Missing ASSOCIATEDGAS when fluid_zone is None
     calculated_volumes = ["STOIIP_TOTAL", "GIIP_TOTAL"]
     expressions = create_calculated_volume_column_expressions(volume_df_columns, calculated_volumes)

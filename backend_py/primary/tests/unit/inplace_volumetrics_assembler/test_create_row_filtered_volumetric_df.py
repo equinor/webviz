@@ -1,3 +1,4 @@
+from typing import List
 import pytest
 import polars as pl
 import re
@@ -10,19 +11,19 @@ from primary.services.sumo_access.inplace_volumetrics_access import IGNORED_IDEN
 
 
 @pytest.fixture
-def inplace_volumetrics_df():
+def inplace_volumetrics_df() -> pl.DataFrame:
     return pl.DataFrame({"REAL": [1, 2, 3], "ZONE": ["A", "B", "C"], "VOLUME": [10, 20, 30]})
 
 
-def test_create_row_filtered_volumetric_df_no_realizations(inplace_volumetrics_df):
-    no_realizations = []
+def test_create_row_filtered_volumetric_df_no_realizations(inplace_volumetrics_df: pl.DataFrame) -> None:
+    no_realizations: List[int] = []
     result_df = InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
         table_name="test_table", inplace_volumetrics_df=inplace_volumetrics_df, realizations=no_realizations
     )
     assert result_df is None
 
 
-def test_create_row_filtered_volumetric_df_no_data_found(inplace_volumetrics_df):
+def test_create_row_filtered_volumetric_df_no_data_found(inplace_volumetrics_df: pl.DataFrame) -> None:
     with pytest.raises(
         ValueError,
         match=re.escape("Missing data error: The following realization values do not exist in 'REAL' column: [4, 5]"),
@@ -32,7 +33,7 @@ def test_create_row_filtered_volumetric_df_no_data_found(inplace_volumetrics_df)
         )
 
 
-def test_create_row_filtered_volumetric_df_with_realizations(inplace_volumetrics_df):
+def test_create_row_filtered_volumetric_df_with_realizations(inplace_volumetrics_df: pl.DataFrame) -> None:
     valid_realizations = [1, 2]
     result_df = InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
         table_name="test_table", inplace_volumetrics_df=inplace_volumetrics_df, realizations=valid_realizations
@@ -44,7 +45,7 @@ def test_create_row_filtered_volumetric_df_with_realizations(inplace_volumetrics
     assert result_df.sort("REAL").equals(expected_df)
 
 
-def test_create_row_filtered_volumetric_df_with_identifiers(inplace_volumetrics_df):
+def test_create_row_filtered_volumetric_df_with_identifiers(inplace_volumetrics_df: pl.DataFrame) -> None:
     identifiers_with_values = [
         InplaceVolumetricsIdentifierWithValues(identifier=InplaceVolumetricsIdentifier("ZONE"), values=["A", "C"])
     ]
@@ -60,7 +61,7 @@ def test_create_row_filtered_volumetric_df_with_identifiers(inplace_volumetrics_
     assert result_df.sort("REAL").equals(expected_df)
 
 
-def test_create_row_filtered_volumetric_df_missing_identifier_column(inplace_volumetrics_df):
+def test_create_row_filtered_volumetric_df_missing_identifier_column(inplace_volumetrics_df: pl.DataFrame) -> None:
     identifiers_with_values = [
         InplaceVolumetricsIdentifierWithValues(identifier=InplaceVolumetricsIdentifier("REGION"), values=["X", "Y"])
     ]
@@ -72,7 +73,7 @@ def test_create_row_filtered_volumetric_df_missing_identifier_column(inplace_vol
         )
 
 
-def test_create_row_filtered_volumetric_df_with_ignored_identifier_values():
+def test_create_row_filtered_volumetric_df_with_ignored_identifier_values() -> None:
     # IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
     ignored_value = IGNORED_IDENTIFIER_COLUMN_VALUES[0]
 
@@ -98,7 +99,7 @@ def test_create_row_filtered_volumetric_df_with_ignored_identifier_values():
     assert result_df.sort("REAL").equals(expected_df)
 
 
-def test_create_row_filtered_volumetric_df_with_realizations_and_identifiers():
+def test_create_row_filtered_volumetric_df_with_realizations_and_identifiers() -> None:
     inplace_volumetrics_df = pl.DataFrame(
         {
             "REAL": [1, 2, 3, 4],

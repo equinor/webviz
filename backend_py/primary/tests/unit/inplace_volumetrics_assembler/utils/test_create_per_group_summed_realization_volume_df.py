@@ -1,11 +1,12 @@
 import pytest
 import polars as pl
+from typing import List
 
 from primary.services.inplace_volumetrics_assembler._utils import create_per_group_summed_realization_volume_df
 from primary.services.sumo_access.inplace_volumetrics_types import InplaceVolumetricsIdentifier
 
 
-def test_create_per_group_summed_realization_volume_df():
+def test_create_per_group_summed_realization_volume_df() -> None:
     # Create a sample DataFrame
     volume_df = pl.DataFrame(
         {
@@ -44,7 +45,7 @@ def test_create_per_group_summed_realization_volume_df():
     assert result_df.equals(expected_df)
 
 
-def test_create_per_group_summed_realization_volume_df_no_group_by_identifiers():
+def test_create_per_group_summed_realization_volume_df_no_group_by_identifiers() -> None:
     # Create a sample DataFrame
     volume_df = pl.DataFrame(
         {
@@ -57,7 +58,7 @@ def test_create_per_group_summed_realization_volume_df_no_group_by_identifiers()
     )
 
     # Define empty group by identifiers
-    group_by_identifiers = []
+    group_by_identifiers: List[InplaceVolumetricsIdentifier] = []
 
     # Call the function
     result_df = create_per_group_summed_realization_volume_df(volume_df, group_by_identifiers).sort("REAL")
@@ -75,7 +76,7 @@ def test_create_per_group_summed_realization_volume_df_no_group_by_identifiers()
     assert result_df.equals(expected_df)
 
 
-def test_create_per_group_summed_realization_volume_df_missing_real_column():
+def test_create_per_group_summed_realization_volume_df_missing_real_column() -> None:
     # Create a sample DataFrame without the "REAL" column
     volume_df = pl.DataFrame(
         {

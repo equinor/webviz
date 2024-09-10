@@ -6,7 +6,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import FluidZone
 
 
 @pytest.fixture
-def volumetric_df():
+def volumetric_df() -> pl.DataFrame:
     data = {
         "REAL": [1, 2, 3],
         "ZONE": ["A", "B", "C"],
@@ -21,7 +21,7 @@ def volumetric_df():
     return pl.DataFrame(data)
 
 
-def test_create_volumetric_summed_fluid_zones_df(volumetric_df):
+def test_create_volumetric_summed_fluid_zones_df(volumetric_df: pl.DataFrame) -> None:
 
     fluid_zones = [FluidZone.OIL, FluidZone.GAS]
     result = create_volumetric_summed_fluid_zones_df(volumetric_df, fluid_zones)
@@ -34,7 +34,7 @@ def test_create_volumetric_summed_fluid_zones_df(volumetric_df):
     assert result["HCPV"].to_list() == [1700, 1900, 2100]  # Should exclude HCPV_WATER
 
 
-def test_create_volumetric_summed_fluid_zones_df_no_fluid_columns(volumetric_df):
+def test_create_volumetric_summed_fluid_zones_df_no_fluid_columns(volumetric_df: pl.DataFrame) -> None:
     fluid_zones = [FluidZone.OIL, FluidZone.GAS]
     volumetric_df = volumetric_df.select(["REAL", "ZONE", "REGION", "FACIES"])  # Removing fluid columns
     result = create_volumetric_summed_fluid_zones_df(volumetric_df, fluid_zones)
@@ -43,7 +43,7 @@ def test_create_volumetric_summed_fluid_zones_df_no_fluid_columns(volumetric_df)
     assert result.shape == (3, 4)
 
 
-def test_create_volumetric_summed_fluid_zones_df_partial_fluid_columns(volumetric_df):
+def test_create_volumetric_summed_fluid_zones_df_partial_fluid_columns(volumetric_df: pl.DataFrame) -> None:
     fluid_zones = [FluidZone.OIL, FluidZone.GAS]
     volumetric_df = volumetric_df.select(
         ["REAL", "ZONE", "REGION", "FACIES", "STOIIP_OIL", "HCPV_OIL"]

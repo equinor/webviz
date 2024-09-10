@@ -5,15 +5,8 @@ from primary.services.inplace_volumetrics_assembler._utils import create_volumet
 from primary.services.sumo_access.inplace_volumetrics_types import FluidZone
 
 
-# Mocking InplaceVolumetricsAccess.get_possible_selector_columns
-class MockInplaceVolumetricsAccess:
-    @staticmethod
-    def get_possible_selector_columns():
-        return ["REAL", "ZONE", "REGION", "FACIES"]
-
-
 @pytest.fixture
-def volumetric_df():
+def volumetric_df() -> pl.DataFrame:
     data = {
         "REAL": [1, 2, 3],
         "ZONE": ["A", "B", "C"],
@@ -28,7 +21,7 @@ def volumetric_df():
     return pl.DataFrame(data)
 
 
-def test_create_volumetric_df_per_fluid_zone(volumetric_df):
+def test_create_volumetric_df_per_fluid_zone(volumetric_df: pl.DataFrame) -> None:
     fluid_zones = [FluidZone.OIL, FluidZone.GAS]
     result = create_volumetric_df_per_fluid_zone(fluid_zones, volumetric_df)
 
@@ -51,9 +44,9 @@ def test_create_volumetric_df_per_fluid_zone(volumetric_df):
     assert gas_df["HCPV"].to_list() == [1000, 1100, 1200]
 
 
-def test_create_volumetric_df_per_fluid_zone_no_fluid_columns(volumetric_df):
+def test_create_volumetric_df_per_fluid_zone_no_fluid_columns(volumetric_df: pl.DataFrame) -> None:
     fluid_zones = [FluidZone.OIL, FluidZone.GAS]
     volumetric_df = volumetric_df.select(["REAL", "ZONE", "REGION", "FACIES"])  # Removing fluid columns
     result = create_volumetric_df_per_fluid_zone(fluid_zones, volumetric_df)
 
-    assert result == {}
+    assert not result
