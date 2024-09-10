@@ -1,7 +1,7 @@
+from typing import List
 import pytest
 import polars as pl
 import numpy as np
-from typing import List
 
 from primary.services.sumo_access.inplace_volumetrics_types import (
     RepeatedTableColumnData,

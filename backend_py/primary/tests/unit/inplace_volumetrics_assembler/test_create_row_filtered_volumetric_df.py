@@ -1,7 +1,8 @@
+import re
 from typing import List
 import pytest
 import polars as pl
-import re
+
 from primary.services.inplace_volumetrics_assembler.inplace_volumetrics_assembler import InplaceVolumetricsAssembler
 from primary.services.sumo_access.inplace_volumetrics_types import (
     InplaceVolumetricsIdentifier,

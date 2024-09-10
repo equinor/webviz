@@ -1,5 +1,6 @@
+from typing import List
 import polars as pl
-from typing import List, Optional
+
 from primary.services.inplace_volumetrics_assembler._utils import create_property_column_expressions
 from primary.services.inplace_volumetrics_assembler._utils import _create_named_expression_with_nan_for_inf
 from primary.services.inplace_volumetrics_assembler._utils import FluidZone

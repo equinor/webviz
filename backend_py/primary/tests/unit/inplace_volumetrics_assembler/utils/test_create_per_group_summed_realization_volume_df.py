@@ -1,6 +1,6 @@
+from typing import List
 import pytest
 import polars as pl
-from typing import List
 
 from primary.services.inplace_volumetrics_assembler._utils import create_per_group_summed_realization_volume_df
 from primary.services.sumo_access.inplace_volumetrics_types import InplaceVolumetricsIdentifier

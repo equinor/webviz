@@ -2,8 +2,8 @@ import polars as pl
 from primary.services.inplace_volumetrics_assembler._utils import (
     create_calculated_volume_column_expressions,
     _create_named_expression_with_nan_for_inf,
+    FluidZone,
 )
-from primary.services.inplace_volumetrics_assembler._utils import FluidZone
 
 
 def test_create_calculated_volume_column_expressions_no_fluid_zone() -> None:

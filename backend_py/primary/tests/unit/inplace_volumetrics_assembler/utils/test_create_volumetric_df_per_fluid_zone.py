@@ -1,7 +1,7 @@
 import pytest
 import polars as pl
-from primary.services.inplace_volumetrics_assembler._utils import create_volumetric_df_per_fluid_zone
 
+from primary.services.inplace_volumetrics_assembler._utils import create_volumetric_df_per_fluid_zone
 from primary.services.sumo_access.inplace_volumetrics_types import FluidZone
 
 
