@@ -242,7 +242,7 @@ def _validate_length_of_statistics_data_lists(
         num_rows = len(selector_column_data.indices)
         if num_rows != expected_num_rows:
             raise ValueError(
-                f"Length of selector column data list ({num_rows}) does not match expected number of rows ({expected_num_rows})"
+                f"Length of {selector_column_data.column_name} column data list does not match expected number of rows: {expected_num_rows}. Got: {num_rows}"
             )
     for result_statistical_data in result_statistical_data_list:
         for statistic, statistic_values in result_statistical_data.statistic_values.items():
@@ -258,8 +258,12 @@ def _create_repeated_table_column_data_from_polars_column(
 ) -> RepeatedTableColumnData:
     """
     Create repeated table column data from column name and column values as Polars Series
+
+    Note that the unique values are not sorted, but the indices vector is built to preserve order
+    in the input column values.
     """
 
+    # unique() method might not preserve the order of the unique values
     unique_values: List[str | int] = column_values.unique().to_list()
     value_to_index_map = {value: index for index, value in enumerate(unique_values)}
     indices: List[int] = [value_to_index_map[value] for value in column_values.to_list()]
@@ -273,6 +277,9 @@ def create_inplace_volumetric_table_data_from_result_df(
     """
     Create Inplace Volumetric Table Data from result DataFrame, selection name and specified selector columns
     """
+    if result_df.is_empty():
+        return InplaceVolumetricTableData(fluid_selection_name=selection_name, selector_columns=[], result_columns=[])
+
     possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
     existing_selector_columns = [name for name in result_df.columns if name in possible_selector_columns]
     selector_column_data_list: List[RepeatedTableColumnData] = []
@@ -326,8 +333,9 @@ def create_volumetric_df_per_fluid_zone(
     """
     column_names: List[str] = volumetric_df.columns
 
+    # Iterate over column_names to keep order of volumetric_df.columns
     possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
-    selector_columns = [col for col in possible_selector_columns if col in column_names]
+    selector_columns = [col for col in column_names if col in possible_selector_columns]
 
     fluid_zone_to_df_map: Dict[FluidZone, pl.DataFrame] = {}
     for fluid_zone in fluid_zones:
@@ -368,29 +376,33 @@ def create_volumetric_summed_fluid_zones_df(
             - volumetric_df_across_fluid_zones.columns = ["REAL", "ZONE", "REGION", "FACIES", "STOIIP", "GIIP", "HCPV"]
     """
 
+    # Iterate over column_names to keep order of volumetric_df.columns
+    possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
+    valid_selector_columns = [col for col in volumetric_df.columns if col in possible_selector_columns]
+
     # Get volume names among columns
-    valid_selector_columns = [
-        col for col in volumetric_df.columns if col in InplaceVolumetricsAccess.get_possible_selector_columns()
-    ]
     volumetric_names_with_fluid_zone = [col for col in volumetric_df.columns if col not in valid_selector_columns]
 
     # Extract set of volume names without fluid zone suffix
     suffixes_to_remove = [f"_{fluid_zone.value.upper()}" for fluid_zone in fluid_zones]
     volumetric_names = list(
-        set(
-            [
-                name.removesuffix(suffix)  # Remove the suffix if it exists
-                for name in volumetric_names_with_fluid_zone
-                for suffix in suffixes_to_remove
-                if name.endswith(suffix)  # Only remove if the suffix is present
-            ]
-        )
+        {
+            name.removesuffix(suffix)  # Remove the suffix if it exists
+            for name in volumetric_names_with_fluid_zone
+            for suffix in suffixes_to_remove
+            if name.endswith(suffix)  # Only remove if the suffix is present
+        }
     )
 
     # Per volume name without fluid zone suffix, sum the columns with the same name
     volume_name_sum_expressions: List[pl.Expr] = []
     for volume_name in volumetric_names:
-        volume_columns_with_suffix = [col for col in volumetric_df.columns if col.startswith(volume_name)]
+        # Get volume columns with selected fluid zones
+        volume_columns_with_suffix = [
+            col
+            for col in volumetric_df.columns
+            if col.startswith(volume_name) and any(col.endswith(suffix) for suffix in suffixes_to_remove)
+        ]
 
         if not volume_columns_with_suffix:
             continue

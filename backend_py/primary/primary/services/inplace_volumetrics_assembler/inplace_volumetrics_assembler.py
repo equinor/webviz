@@ -278,10 +278,10 @@ class InplaceVolumetricsAssembler:
         )
 
         # Get volume table per fluid selection - requested volumes and volumes needed for properties
-        volume_df_per_fluid_selection: Dict[
-            FluidSelection, pl.DataFrame
-        ] = await self._create_volume_df_per_fluid_selection(
-            table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
+        volume_df_per_fluid_selection: Dict[FluidSelection, pl.DataFrame] = (
+            await self._create_volume_df_per_fluid_selection(
+                table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
+            )
         )
 
         # If accumulate_fluid_zones is True, exclude BO and BG from valid properties
@@ -376,9 +376,12 @@ class InplaceVolumetricsAssembler:
 
         timer = PerfTimer()
         # Get the raw volumetric table as DataFrame, filtered on identifiers and realizations
-        row_filtered_raw_volumetrics_df = await self._create_row_filtered_volumetric_df_async(
+        raw_volumetrics_df: pl.DataFrame = await self._get_inplace_volumetrics_table_as_polars_df_async(
+            table_name=table_name, volumetric_columns=set(raw_volumetric_column_names)
+        )
+        row_filtered_raw_volumetrics_df = InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
             table_name=table_name,
-            volumetric_columns=raw_volumetric_column_names,
+            inplace_volumetrics_df=raw_volumetrics_df,
             realizations=realizations,
             identifiers_with_values=identifiers_with_values,
         )
@@ -419,23 +422,28 @@ class InplaceVolumetricsAssembler:
 
         return volume_df_per_fluid_selection
 
-    async def _create_row_filtered_volumetric_df_async(
-        self,
+    @staticmethod
+    def _create_row_filtered_volumetric_df(
         table_name: str,
-        volumetric_columns: List[str],
+        inplace_volumetrics_df: pl.DataFrame,
         realizations: Optional[List[int]] = None,
         identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
     ) -> pl.DataFrame | None:
         """
         Create DataFrame filtered on identifier values and realizations
+
+        The function filters the provided inplace volumetric DataFrame based on the identifiers and realizations provided.
         """
         if realizations is not None and len(realizations) == 0:
             return None
 
-        # Inplace volumetrics Polars DataFrame
-        inplace_volumetrics_df: pl.DataFrame = await self._get_inplace_volumetrics_table_as_polars_df_async(
-            table_name=table_name, volumetric_columns=set(volumetric_columns)
-        )
+        column_names = inplace_volumetrics_df.columns
+
+        # If any identifier column name is not found in the table, raise an error
+        for elm in identifiers_with_values:
+            identifier_column_name = elm.identifier.value
+            if identifier_column_name not in column_names:
+                raise ValueError(f"Identifier column name {identifier_column_name} not found in table {table_name}")
 
         timer = PerfTimer()
         column_names = inplace_volumetrics_df.columns
@@ -460,7 +468,7 @@ class InplaceVolumetricsAssembler:
 
             if missing_realizations_set:
                 raise ValueError(
-                    f"Missing data error: The following realization values do not exist in 'REAL' column: {missing_realizations_set}"
+                    f"Missing data error: The following realization values do not exist in 'REAL' column: {list(missing_realizations_set)}"
                 )
 
             realization_mask = inplace_volumetrics_df["REAL"].is_in(realizations)
@@ -473,9 +481,6 @@ class InplaceVolumetricsAssembler:
                 break
 
             identifier_column_name = identifier_with_values.identifier.value
-            if identifier_column_name not in column_names:
-                raise ValueError(f"Identifier column name {identifier_column_name} not found in table {table_name}")
-
             identifier_mask = inplace_volumetrics_df[identifier_column_name].is_in(identifier_with_values.values)
             mask = mask & identifier_mask
 
