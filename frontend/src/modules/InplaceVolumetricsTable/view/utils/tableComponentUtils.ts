@@ -219,5 +219,13 @@ function formatResultValue(value: string | number | null): string {
         suffix = "k";
     }
 
-    return `${value.toFixed(2)} ${suffix}`;
+    // Determine the number of decimal places based on the value's magnitude
+    let decimalPlaces = 2;
+    if (Math.abs(value) < 0.01) {
+        decimalPlaces = 4;
+    } else if (Math.abs(value) < 0.1) {
+        decimalPlaces = 3;
+    }
+
+    return `${value.toFixed(decimalPlaces)} ${suffix}`;
 }
