@@ -55,6 +55,7 @@ class VfpAccess:
         """Returns a VFP table as a pyarrow table for a specific tagname (table name)
         and realization.
         """
+
         table_collection = self._case.tables.filter(
             tagname=tagname, realization=realization, iteration=self._iteration_name
         )
@@ -79,6 +80,8 @@ class VfpAccess:
         """Returns a VFP table as a VFP table object for a specific tagname (table name)
         and realization.
         """
+        if tagname.lower().startswith("vfpinj"):
+            raise NotImplementedError("VFPINJ not implemented.")
 
         pa_table = await self.get_vfp_table_from_tagname_as_pyarrow(tagname, realization)
 

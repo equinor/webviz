@@ -10,6 +10,8 @@ import { Interfaces } from "./interfaces";
 import { VfpDataAccessor } from "./utils/VfpDataAccessor";
 import { VfpPlotBuilder } from "./utils/VfpPlotBuilder";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { useViewStatusWriter } from "@framework/StatusWriter";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 
 export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) {
@@ -26,13 +28,18 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
+    const statusWriter = useViewStatusWriter(viewContext);
+    const statusError = usePropagateApiErrorToStatusWriter(vfpDataQuery, statusWriter);
+
     let content = null;
 
-    if (vfpDataQuery.isFetching || vfpDataQuery.data === undefined) {
+    if (vfpDataQuery.isFetching) {
         content = <ContentMessage type={ContentMessageType.INFO}>
                 <CircularProgress />
             </ContentMessage>
-    } else if (vfpDataQuery.isError) {
+    } else if (statusError !== null) {
+        content = <div className="w-full h-full flex justify-center items-center">{statusError}</div>;
+    } else if (vfpDataQuery.isError  || vfpDataQuery.data === undefined) {
         content = <div className="w-full h-full flex justify-center items-center">Could not load VFP data</div>;
     } else {
         const vfpTable = vfpDataQuery.data

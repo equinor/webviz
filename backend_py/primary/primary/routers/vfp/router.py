@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Response, HTTPException
 
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
@@ -56,9 +56,13 @@ async def get_vfp_table(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     perf_metrics.record_lap("get-access")
-    vfp_table: VfpProdTable = await vfp_access.get_vfpprod_table_from_tagname(
-        tagname=vfp_table_name, realization=realization
-    )
+    try:
+        vfp_table: VfpProdTable = await vfp_access.get_vfpprod_table_from_tagname(
+            tagname=vfp_table_name, realization=realization
+        )
+    except NotImplementedError as ex:
+        raise HTTPException(status_code=404, detail=ex)
+
     perf_metrics.record_lap("get-vfp-table")
     LOGGER.info(f"VFP table loaded in: {perf_metrics.to_string()}")
 
