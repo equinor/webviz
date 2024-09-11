@@ -6,7 +6,8 @@ import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { SortableList, SortableListItem } from "@lib/components/SortableList";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { CURVE_COLOR_PALETTE, PLOT_TYPE_OPTIONS, makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
+import { CURVE_COLOR_PALETTE } from "@modules/WellLogViewer/utils/logViewerColors";
+import { PLOT_TYPE_OPTIONS, makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { Delete, SwapHoriz, Warning } from "@mui/icons-material";
 import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 

@@ -1,6 +1,5 @@
 /**
  * Utilities to convert fetched well log data to the JSON well-log format (see https://jsonwelllogformat.org/)
- * @author Anders R. Hunderi
  */
 import { WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
@@ -49,7 +48,9 @@ function createLogCurves(curveData: WellboreLogCurveData_api[]): WellLogCurve[] 
 function apiCurveToLogCurve(curve: WellboreLogCurveData_api): WellLogCurve {
     return {
         name: curve.name,
-        dimensions: curve.dataPoints[0].length - 1,
+        // ! The Well Log JSON format does *technically* support multiple dimensions, but the subsurface component does not
+        // dimensions: curve.dataPoints[0].length - 1,
+        dimensions: 1,
         valueType: typeof curve.dataPoints[0][1],
         // ? if this is just gonna be the meter in depth for all of them
         unit: curve.unit,
@@ -59,7 +60,7 @@ function apiCurveToLogCurve(curve: WellboreLogCurveData_api): WellLogCurve {
     };
 }
 
-type SafeWellLogDataRow = [number, ...WellLogDataRow];
+type SafeWellLogDataRow = [number, ...(WellLogDataRow | [])];
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 
 function createLogData(
@@ -71,14 +72,13 @@ function createLogData(
     const rowAcc: DataRowAccumulatorMap = {};
 
     curveData.forEach((curve, curveIndex) => {
-        curve.dataPoints.forEach(([scaleIdx, ...restData]: WellLogDataRow) => {
+        curve.dataPoints.forEach(([scaleIdx, entry, ...restData]) => {
             if (!scaleIdx) return console.warn("Unexpected null for scale entry");
-            if (typeof scaleIdx === "string") return console.warn("Unexpected string for scale entry");
+            if (restData.length) console.warn("Multi-dimensional data not supported, using first value only");
 
             maybeInjectDataRow(rowAcc, scaleIdx, rowLength, referenceSystem);
 
-            // Same +2 here, because of MD and TVD curves
-            rowAcc[scaleIdx][curveIndex + 2] = restData[0];
+            rowAcc[scaleIdx][curveIndex + 2] = entry === curve.noDataValue ? null : entry;
         });
     });
 
@@ -125,7 +125,7 @@ type PartialHeader = Pick<WellLogHeader, "startIndex" | "endIndex" | "step">;
 function getDerivedLogHeaderValues(wellboreTrajectory: WellboreTrajectory_api): PartialHeader {
     return {
         startIndex: wellboreTrajectory.mdArr[0] ?? 0,
-        endIndex: wellboreTrajectory.mdArr.slice(-1)[1] ?? 4000,
+        endIndex: wellboreTrajectory.mdArr[wellboreTrajectory.mdArr.length - 1] ?? 4000,
         // Unsure if this one is even used?
         step: 1,
     };

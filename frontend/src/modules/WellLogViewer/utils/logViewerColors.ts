@@ -1,6 +1,13 @@
+import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorTable } from "@webviz/well-log-viewer/dist/components/ColorTableTypes";
 
+// Using the "Time series" palette to pick line colors
+export const CURVE_COLOR_PALETTE = defaultColorPalettes[2];
+// Colors based on the ones in the Time Series palette
+export const DIFF_CURVE_COLORS = ["#D62728", "#2CA02C"];
+
 // TODO: Copied from the Subsurface component documentation examples, find out how it works exactly, and ask about general color settings
+/* istanbul ignore next  -- Leaving this here as an example, not actually used */
 export const COLOR_TABLES: ColorTable[] = [
     {
         name: "Physics",

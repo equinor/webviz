@@ -1,4 +1,6 @@
-import { defaultColorPalettes } from "@framework/utils/colorPalettes";
+/**
+ * Utilities and constants used for generating well-log-viewer template configs
+ */
 import { DropdownOption } from "@lib/components/Dropdown";
 import {
     Template,
@@ -7,31 +9,24 @@ import {
     TemplateTrack,
 } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
-import _ from "lodash";
 import { v4 } from "uuid";
 
+import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "./logViewerColors";
 import { MAIN_AXIS_CURVE } from "./queryDataTransform";
 
 import { TemplatePlotConfig, TemplateTrackConfig } from "../settings/atoms/persistedAtoms";
 
-export const PLOT_SCALE_OPTIONS: (DropdownOption & { value: TemplatePlotScaleTypes })[] = [
+type PlotDropdownOption = DropdownOption & { value: TemplatePlotTypes };
+type TemplatePlotScaleOption = DropdownOption & { value: TemplatePlotScaleTypes };
+
+export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
+
+export const PLOT_SCALE_OPTIONS: TemplatePlotScaleOption[] = [
     { label: "Linear", value: "linear" },
     { label: "Logaritmic", value: "log" },
 ];
 
-type PlotDropdownOption = DropdownOption & { value: TemplatePlotTypes };
-
-// Using the "Time series" palette to pick line colors
-export const CURVE_COLOR_PALETTE = defaultColorPalettes[2] || defaultColorPalettes[0];
-const DIFF_CURVE_COLORS = [
-    // Colors based on the ones in the Time Series palette
-    "#D62728",
-    "#2CA02C",
-];
-
-export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
-
-const PLOT_TYPES = ["line", "linestep", "dot", "area", "gradientfill", "differential", "stacked"];
+export const PLOT_TYPES = ["line", "linestep", "dot", "area", "gradientfill", "differential", "stacked"];
 export const PLOT_TYPE_OPTIONS: PlotDropdownOption[] = [
     { value: "line", label: "Line" },
     { value: "linestep", label: "Linestep" },
@@ -51,7 +46,8 @@ export function isCompositePlotType(type: TemplatePlotTypes) {
 
 export function createLogTemplate(templateTrackConfigs: TemplateTrack[]): Template {
     return {
-        name: "Template test",
+        // AFAIK, this name is not show anywhere
+        name: "Well log viewer",
         scale: { primary: MAIN_AXIS_CURVE.name, allowSecondary: true },
         tracks: templateTrackConfigs,
     };
@@ -65,13 +61,13 @@ export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotCo
     const config: TemplatePlotConfig = {
         ...plot,
         _id: plot._id ?? v4(),
-        _isValid: Boolean(plot.name),
+        _isValid: Boolean(plot.name && plot.type),
         name: plot.name,
         type: plot.type,
         color: curveColor,
         color2: curveColor2,
 
-        //Reset the values that are curve specific
+        // Reset the values that are curve specific
         name2: undefined,
         fill: undefined,
         fill2: undefined,
@@ -100,15 +96,16 @@ export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotCo
         case "linestep":
         case "dot":
         case "area":
-        default:
             return config;
+        default:
+            throw new Error(`Unsupported plot type: ${plot.type}`);
     }
 }
 
-function isValidPlot(config: Partial<TemplatePlotConfig>): boolean {
+export function isValidPlot(config: Partial<TemplatePlotConfig>): boolean {
     // This is irregardless of plot type
     if (!config.type || !config.name || !config.color) return false;
-    if (!Object.keys(PLOT_TYPES).includes(config.type)) return false;
+    if (!PLOT_TYPES.includes(config.type)) return false;
 
     switch (config.type) {
         case "stacked":
@@ -128,47 +125,27 @@ export function transformToTrackConfigs(objs: any[]): TemplateTrackConfig[] {
 
 function transformToTrackConfig(obj: any): TemplateTrackConfig {
     // ! Remember to keep this up to date if the config's structure changes
-    const requiredFields = _.pick<TemplateTrackConfig>(obj, ["title", "plots"]);
-    const optionalFields = _.pick<TemplateTrackConfig>(obj, ["_id", "required", "width", "scale", "domain"]);
+    const requiredFields = {
+        title: obj.title,
+        plots: obj.plots,
+    };
+
+    const optionalFields = {
+        _id: obj._id,
+        required: obj.required,
+        width: obj.width,
+        scale: obj.scale,
+        domain: obj.domain,
+    };
 
     validateRequiredFields(requiredFields);
 
     return {
-        ..._.omit(requiredFields),
-        ..._.omit(optionalFields),
+        ...optionalFields,
         _id: optionalFields._id ?? v4(),
-        plots: requiredFields.plots.map(transformToPlotConfig),
+        title: requiredFields.title,
+        plots: requiredFields.plots.map(makeTrackPlot),
     };
-}
-
-function transformToPlotConfig(obj: any): TemplatePlotConfig {
-    const plotConfig = _.pick<TemplatePlotConfig>(obj, [
-        "name",
-        "style",
-        "scale",
-        "name2",
-        "type",
-        "scale",
-        "domain",
-        "color",
-        "inverseColor",
-        "fill",
-        "fillOpacity",
-        "colorTable",
-        "inverseColorTable",
-        "colorScale",
-        "inverseColorScale",
-        "color2",
-        "fill2",
-        "showLabels",
-        "showLines",
-        "labelRotation",
-    ]) as TemplatePlotConfig;
-
-    plotConfig._id = obj._id ?? v4();
-    plotConfig._isValid = isValidPlot(plotConfig);
-
-    return plotConfig;
 }
 
 function validateRequiredFields<T>(partialObj: Partial<T>): asserts partialObj is T {
