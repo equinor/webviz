@@ -20,7 +20,7 @@ import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from ".
 import { selectedFieldIdentifierAtom, selectedWellboreAtom } from "./atoms/derivedAtoms";
 import { viewerHorizontalAtom } from "./atoms/persistedAtoms";
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
-import { LogTracks } from "./components/LogTracks";
+import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
 
 import { InterfaceTypes } from "../interfaces";
 import { useTrackedGlobalValue } from "../utils/hooks";
@@ -116,7 +116,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
 
             <div className="my-1" />
 
-            <LogTracks statusWriter={statusWriter} />
+            <TemplateTrackSettings statusWriter={statusWriter} />
         </div>
     );
 }

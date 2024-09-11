@@ -18,11 +18,11 @@ import { SortableTrackItem } from "./SortableTrackItem";
 import { TemplateTrackConfig, logViewerTrackConfigs } from "../../atoms/persistedAtoms";
 import { AddItemButton } from "../AddItemButton";
 
-interface LogTracksProps {
+interface TemplateTrackSettingsProps {
     statusWriter: SettingsStatusWriter;
 }
 
-export function LogTracks(props: LogTracksProps): React.ReactNode {
+export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.ReactNode {
     const [trackConfigs, setTrackConfigs] = useAtom(logViewerTrackConfigs);
     const jsonImportInputRef = React.useRef<HTMLInputElement | null>(null);
 
