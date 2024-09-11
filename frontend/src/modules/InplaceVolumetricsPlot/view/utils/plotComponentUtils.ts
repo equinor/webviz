@@ -34,7 +34,7 @@ export function makeFormatLabelFunction(
 export function makePlotData(
     plotType: PlotType,
     resultName: string,
-    resultName2: string,
+    resultNameOrSelectorName: string,
     colorBy: SourceAndTableIdentifierUnion,
     ensembleSet: EnsembleSet,
     colorSet: ColorSet
@@ -99,9 +99,9 @@ export function makePlotData(
                 const yAxisPosition = boxPlotColorByPositionMap.get(key.toString());
                 data.push(...makeBoxPlot(title, table, resultName, color, yAxisPosition));
             } else if (plotType === PlotType.SCATTER) {
-                data.push(...makeScatterPlot(title, table, resultName, resultName2, color));
+                data.push(...makeScatterPlot(title, table, resultName, resultNameOrSelectorName, color));
             } else if (plotType === PlotType.BAR) {
-                data.push(...makeBarPlot(title, table, resultName, resultName2, color));
+                data.push(...makeBarPlot(title, table, resultName, resultNameOrSelectorName, color));
             }
 
             color = colorSet.getNextColor();
@@ -115,7 +115,7 @@ function makeBarPlot(
     title: string,
     table: Table,
     resultName: string,
-    resultName2: string,
+    selectorName: string,
     color: string
 ): Partial<PlotData>[] {
     const data: Partial<PlotData>[] = [];
@@ -124,14 +124,14 @@ function makeBarPlot(
     if (!resultColumn) {
         return [];
     }
-    const resultColumn2 = table.getColumn(resultName2);
-    if (!resultColumn2) {
+    const selectorColumn = table.getColumn(selectorName);
+    if (!selectorColumn) {
         return [];
     }
 
     data.push({
-        x: resultColumn.getAllRowValues(),
-        y: resultColumn2.getAllRowValues(),
+        x: selectorColumn.getAllRowValues(),
+        y: resultColumn.getAllRowValues(),
         name: title,
         type: "bar",
         marker: {

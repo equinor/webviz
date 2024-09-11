@@ -1,7 +1,7 @@
 import { InplaceVolumetricResultName_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
-import { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import { SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { userSelectedPlotTypeAtom } from "./settings/atoms/baseAtoms";
 import {
@@ -13,6 +13,7 @@ import {
     selectedIdentifiersValuesAtom,
     selectedResultName2Atom,
     selectedResultNameAtom,
+    selectedSelectorColumnAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/derivedAtoms";
@@ -22,6 +23,7 @@ export type SettingsToViewInterface = {
     filter: InplaceVolumetricsFilter;
     resultName: InplaceVolumetricResultName_api | null;
     resultName2: InplaceVolumetricResultName_api | null;
+    selectorColumn: SelectorColumn | null;
     subplotBy: SourceAndTableIdentifierUnion;
     colorBy: SourceAndTableIdentifierUnion;
     plotType: PlotType;
@@ -44,6 +46,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     resultName: (get) => get(selectedResultNameAtom),
     resultName2: (get) => get(selectedResultName2Atom),
+    selectorColumn: (get) => get(selectedSelectorColumnAtom),
     subplotBy: (get) => get(selectedSubplotByAtom),
     colorBy: (get) => get(selectedColorByAtom),
     plotType: (get) => get(userSelectedPlotTypeAtom),

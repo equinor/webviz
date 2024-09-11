@@ -11,7 +11,14 @@ import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableU
 
 import { useAtomValue } from "jotai";
 
-import { colorByAtom, plotTypeAtom, resultName2Atom, resultNameAtom, subplotByAtom } from "../atoms/baseAtoms";
+import {
+    colorByAtom,
+    plotTypeAtom,
+    resultName2Atom,
+    resultNameAtom,
+    selectorColumnAtom,
+    subplotByAtom,
+} from "../atoms/baseAtoms";
 import { aggregatedTableDataQueriesAtom } from "../atoms/queryAtoms";
 import { makeFormatLabelFunction, makePlotData } from "../utils/plotComponentUtils";
 
@@ -29,6 +36,7 @@ export function useBuildPlotAndTable(
     const plotType = useAtomValue(plotTypeAtom);
     const resultName = useAtomValue(resultNameAtom);
     const resultName2 = useAtomValue(resultName2Atom);
+    const selectorColumn = useAtomValue(selectorColumnAtom);
     const subplotBy = useAtomValue(subplotByAtom);
     const colorBy = useAtomValue(colorByAtom);
 
@@ -45,9 +53,16 @@ export function useBuildPlotAndTable(
     }
     viewContext.setInstanceTitle(title);
 
+    let resultNameOrSelectorName: string | null = null;
+    if (plotType === PlotType.BAR && selectorColumn) {
+        resultNameOrSelectorName = selectorColumn.toString();
+    }
+    if (plotType !== PlotType.BAR && resultName2) {
+        resultNameOrSelectorName = resultName2.toString();
+    }
     const plotbuilder = new PlotBuilder(
         table,
-        makePlotData(plotType, resultName ?? "", resultName2 ?? "", colorBy, ensembleSet, colorSet)
+        makePlotData(plotType, resultName ?? "", resultNameOrSelectorName ?? "", colorBy, ensembleSet, colorSet)
     );
 
     plotbuilder.setSubplotByColumn(subplotBy);

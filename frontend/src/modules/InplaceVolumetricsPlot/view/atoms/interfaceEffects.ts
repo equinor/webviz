@@ -9,6 +9,7 @@ import {
     plotTypeAtom,
     resultName2Atom,
     resultNameAtom,
+    selectorColumnAtom,
     subplotByAtom,
 } from "./baseAtoms";
 
@@ -24,6 +25,10 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     (getInterfaceValue, setAtomValue) => {
         const resultName2 = getInterfaceValue("resultName2");
         setAtomValue(resultName2Atom, resultName2);
+    },
+    (getInterfaceValue, setAtomValue) => {
+        const selectorColumn = getInterfaceValue("selectorColumn");
+        setAtomValue(selectorColumnAtom, selectorColumn);
     },
     (getInterfaceValue, setAtomValue) => {
         const subplotBy = getInterfaceValue("subplotBy");

@@ -40,6 +40,12 @@ const sourceAndTableIdentifiersUnion = { ...SourceIdentifier, ...InplaceVolumetr
 export type SourceAndTableIdentifierUnion =
     (typeof sourceAndTableIdentifiersUnion)[keyof typeof sourceAndTableIdentifiersUnion];
 
+export enum RealSelector {
+    REAL = "REAL",
+}
+export const selectorColumns = { ...RealSelector, ...InplaceVolumetricsIdentifier_api } as const;
+export type SelectorColumn = (typeof selectorColumns)[keyof typeof selectorColumns];
+
 export const AccumulationOption = {
     FLUID_ZONE: "FLUID_ZONE",
     ...InplaceVolumetricsIdentifier_api,

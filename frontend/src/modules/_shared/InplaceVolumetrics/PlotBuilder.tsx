@@ -53,6 +53,10 @@ export class PlotBuilder {
     }
 
     private calcNumRowsAndCols(numTables: number): { numRows: number; numCols: number } {
+        if (numTables < 1) {
+            return { numRows: 1, numCols: 1 };
+        }
+
         const numRows = Math.ceil(Math.sqrt(numTables));
         const numCols = Math.ceil(numTables / numRows);
         return { numRows, numCols };
@@ -132,7 +136,8 @@ export class PlotBuilder {
             return figure;
         }
 
-        const tableCollection = table.splitByColumn(this._subplotByColumn);
+        const keepColumn = true;
+        const tableCollection = table.splitByColumn(this._subplotByColumn, keepColumn);
         const numTables = tableCollection.getNumTables();
         const { numRows, numCols } = this.calcNumRowsAndCols(numTables);
 

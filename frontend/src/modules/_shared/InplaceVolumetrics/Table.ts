@@ -161,7 +161,7 @@ export class Table {
         return rows.map((row) => this.getRow(row.index));
     }
 
-    splitByColumn(columnName: string): TableCollection {
+    splitByColumn(columnName: string, keepColumn: boolean = false): TableCollection {
         const columnIndex = this._columns.findIndex((column) => column.getName() === columnName);
 
         if (columnIndex === -1) {
@@ -177,7 +177,7 @@ export class Table {
             const rows = this.filterRowsByColumn(columnName, (v) => v === value);
             const columns: Column[] = [];
             for (let i = 0; i < numCols; i++) {
-                if (i === columnIndex) {
+                if (i === columnIndex && !keepColumn) {
                     continue;
                 }
 

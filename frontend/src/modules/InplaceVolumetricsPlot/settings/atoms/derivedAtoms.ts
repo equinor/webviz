@@ -3,7 +3,7 @@ import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelectedIdentifierValues } from "@modules/_shared/InplaceVolumetrics/fixupUserSelectedIdentifierValues";
-import { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import { RealSelector, SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 import {
     TableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,
@@ -18,6 +18,7 @@ import {
     userSelectedIdentifiersValuesAtom,
     userSelectedResultName2Atom,
     userSelectedResultNameAtom,
+    userSelectedSelectorColumnAtom,
     userSelectedSubplotByAtom,
     userSelectedTableNamesAtom,
 } from "./baseAtoms";
@@ -160,6 +161,26 @@ export const selectedResultName2Atom = atom<InplaceVolumetricResultName_api | nu
         [userSelectedResultName],
         tableDefinitionsAccessor.getResultNamesIntersection()
     );
+    if (fixedSelection.length === 0) {
+        return null;
+    }
+
+    return fixedSelection[0];
+});
+
+export const selectedSelectorColumnAtom = atom<SelectorColumn | null>((get) => {
+    const userSelectedSelectorColumn = get(userSelectedSelectorColumnAtom);
+    const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
+
+    const possibleSelectorColumns = [
+        RealSelector.REAL,
+        ...tableDefinitionsAccessor.getIdentifiersWithIntersectionValues().map((ident) => ident.identifier),
+    ];
+    if (!userSelectedSelectorColumn) {
+        return possibleSelectorColumns[0];
+    }
+
+    const fixedSelection = fixupUserSelection([userSelectedSelectorColumn], possibleSelectorColumns);
     if (fixedSelection.length === 0) {
         return null;
     }

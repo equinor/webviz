@@ -5,7 +5,7 @@ import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
 
-import { colorByAtom, filterAtom, subplotByAtom } from "./baseAtoms";
+import { colorByAtom, filterAtom, selectorColumnAtom, subplotByAtom } from "./baseAtoms";
 
 export const tableNamesAtom = atom((get) => {
     const filter = get(filterAtom);
@@ -33,6 +33,7 @@ export const doAccumulateFluidZonesAtom = atom((get) => {
 export const groupByIdentifiersAtom = atom((get) => {
     const subplotBy = get(subplotByAtom);
     const colorBy = get(colorByAtom);
+    const selectorColumn = get(selectorColumnAtom);
 
     const groupByIdentifiers: InplaceVolumetricsIdentifier_api[] = [];
     if (Object.values(InplaceVolumetricsIdentifier_api).includes(subplotBy as any)) {
@@ -40,6 +41,9 @@ export const groupByIdentifiersAtom = atom((get) => {
     }
     if (Object.values(InplaceVolumetricsIdentifier_api).includes(colorBy as any)) {
         groupByIdentifiers.push(colorBy as InplaceVolumetricsIdentifier_api);
+    }
+    if (selectorColumn !== null && Object.values(InplaceVolumetricsIdentifier_api).includes(selectorColumn as any)) {
+        groupByIdentifiers.push(selectorColumn as InplaceVolumetricsIdentifier_api);
     }
     return groupByIdentifiers;
 });

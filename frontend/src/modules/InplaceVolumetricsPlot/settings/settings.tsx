@@ -7,6 +7,8 @@ import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFil
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { SelectorColumn } from "@modules/_shared/InplaceVolumetrics/types";
+import { RealSelector } from "@modules/_shared/InplaceVolumetrics/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
@@ -20,6 +22,7 @@ import {
     userSelectedPlotTypeAtom,
     userSelectedResultName2Atom,
     userSelectedResultNameAtom,
+    userSelectedSelectorColumnAtom,
     userSelectedSubplotByAtom,
     userSelectedTableNamesAtom,
 } from "./atoms/baseAtoms";
@@ -30,6 +33,7 @@ import {
     selectedIdentifiersValuesAtom,
     selectedResultName2Atom,
     selectedResultNameAtom,
+    selectedSelectorColumnAtom,
     selectedSubplotByAtom,
     selectedTableNamesAtom,
     tableDefinitionsAccessorAtom,
@@ -50,6 +54,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const selectedTableNames = useAtomValue(selectedTableNamesAtom);
     const setSelectedTableNames = useSetAtom(userSelectedTableNamesAtom);
+
+    const selectedSelectorColumn = useAtomValue(selectedSelectorColumnAtom);
+    const setSelectedSelectorColumn = useSetAtom(userSelectedSelectorColumnAtom);
 
     const selectedFluidZones = useAtomValue(selectedFluidZonesAtom);
     const setSelectedFluidZones = useSetAtom(userSelectedFluidZonesAtom);
@@ -82,6 +89,15 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         .getResultNamesIntersection()
         .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
 
+    // Create selector options
+    const identifiersIntersection = tableDefinitionsAccessor.getIdentifiersWithIntersectionValues().map((ident) => {
+        return ident.identifier;
+    });
+    const selectorOptions: DropdownOption<SelectorColumn>[] = [
+        { label: RealSelector.REAL, value: RealSelector.REAL },
+        ...identifiersIntersection.map((name) => ({ label: name, value: name })),
+    ];
+
     const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames);
     const colorByOptions = makeColorByOptions(tableDefinitionsAccessor, selectedSubplotBy, selectedTableNames);
     const plotTypeOptions: DropdownOption<PlotType>[] = [];
@@ -102,14 +118,25 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                         onChange={setSelectedResultName}
                     />
                 </Label>
-                <Label text="Result 2">
-                    <Dropdown
-                        value={selectedResultName2 ?? undefined}
-                        options={resultNameOptions}
-                        onChange={setSelectedResultName2}
-                        disabled={selectedPlotType !== PlotType.SCATTER && selectedPlotType !== PlotType.BAR}
-                    />
-                </Label>
+                {selectedPlotType !== PlotType.BAR ? (
+                    <Label text="Result 2">
+                        <Dropdown
+                            value={selectedResultName2 ?? undefined}
+                            options={resultNameOptions}
+                            onChange={setSelectedResultName2}
+                            disabled={selectedPlotType !== PlotType.SCATTER}
+                        />
+                    </Label>
+                ) : (
+                    <Label text="Selector">
+                        <Dropdown
+                            value={selectedSelectorColumn ?? undefined}
+                            options={selectorOptions}
+                            onChange={setSelectedSelectorColumn}
+                            disabled={selectedPlotType !== PlotType.BAR}
+                        />
+                    </Label>
+                )}
                 <Label text="Subplot by">
                     <Dropdown
                         value={selectedSubplotBy ?? undefined}
