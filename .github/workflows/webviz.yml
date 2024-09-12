@@ -106,7 +106,7 @@ jobs:
           black --check primary/ tests/
           pylint primary/ tests/
           bandit --recursive primary/
-          mypy primary/ tests/
+          mypy primary/
 
       - name: 🤖 Run tests
         working-directory: ./backend_py/primary

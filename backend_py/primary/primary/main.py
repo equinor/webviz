@@ -14,7 +14,7 @@ from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
 from primary.routers.correlations.router import router as correlations_router
 from primary.routers.dev.router import router as dev_router
-from primary.routers.explore import router as explore_router
+from primary.routers.explore.router import router as explore_router
 from primary.routers.general import router as general_router
 from primary.routers.graph.router import router as graph_router
 from primary.routers.grid3d.router import router as grid3d_router

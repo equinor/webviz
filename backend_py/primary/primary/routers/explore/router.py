@@ -8,43 +8,21 @@ from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.sumo_inspector import SumoInspector
 from primary.services.utils.authenticated_user import AuthenticatedUser
 
+from . import schemas
+
 router = APIRouter()
-
-
-class FieldInfo(BaseModel):
-    field_identifier: str
-
-
-class CaseInfo(BaseModel):
-    uuid: str
-    name: str
-    status: str
-    user: str
-
-
-class EnsembleInfo(BaseModel):
-    name: str
-    realization_count: int
-
-
-class EnsembleDetails(BaseModel):
-    name: str
-    field_identifier: str
-    case_name: str
-    case_uuid: str
-    realizations: Sequence[int]
 
 
 @router.get("/fields")
 async def get_fields(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-) -> List[FieldInfo]:
+) -> List[schemas.FieldInfo]:
     """
     Get list of fields
     """
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
     field_ident_arr = await sumo_inspector.get_fields_async()
-    ret_arr = [FieldInfo(field_identifier=field_ident.identifier) for field_ident in field_ident_arr]
+    ret_arr = [schemas.FieldInfo(field_identifier=field_ident.identifier) for field_ident in field_ident_arr]
 
     return ret_arr
 
@@ -53,14 +31,14 @@ async def get_fields(
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
-) -> List[CaseInfo]:
+) -> List[schemas.CaseInfo]:
     """Get list of cases for specified field"""
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
     case_info_arr = await sumo_inspector.get_cases_async(field_identifier=field_identifier)
 
-    ret_arr: List[CaseInfo] = []
+    ret_arr: List[schemas.CaseInfo] = []
 
-    ret_arr = [CaseInfo(uuid=ci.uuid, name=ci.name, status=ci.status, user=ci.user) for ci in case_info_arr]
+    ret_arr = [schemas.CaseInfo(uuid=ci.uuid, name=ci.name, status=ci.status, user=ci.user) for ci in case_info_arr]
 
     return ret_arr
 
@@ -69,14 +47,12 @@ async def get_cases(
 async def get_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
-) -> List[EnsembleInfo]:
+) -> List[schemas.EnsembleInfo]:
     """Get list of ensembles for a case"""
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     iteration_info_arr = await case_inspector.get_iterations_async()
 
-    print(iteration_info_arr)
-
-    return [EnsembleInfo(name=it.name, realization_count=it.realization_count) for it in iteration_info_arr]
+    return [schemas.EnsembleInfo(name=it.name, realization_count=it.realization_count) for it in iteration_info_arr]
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
@@ -84,7 +60,7 @@ async def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
     ensemble_name: str = Path(description="Ensemble name"),
-) -> EnsembleDetails:
+) -> schemas.EnsembleDetails:
     """Get more detailed information for an ensemble"""
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
@@ -95,7 +71,7 @@ async def get_ensemble_details(
     if len(field_identifiers) != 1:
         raise NotImplementedError("Multiple field identifiers not supported")
 
-    return EnsembleDetails(
+    return schemas.EnsembleDetails(
         name=ensemble_name,
         case_name=case_name,
         case_uuid=case_uuid,
