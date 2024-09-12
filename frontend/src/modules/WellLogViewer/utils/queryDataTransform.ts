@@ -3,14 +3,18 @@
  */
 import { WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import {
     WellLog,
     WellLogCurve,
     WellLogDataRow,
     WellLogHeader,
 } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
+import { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
 import _ from "lodash";
+
+import { COLOR_TABLES } from "./logViewerColors";
 
 export const MAIN_AXIS_CURVE: WellLogCurve = {
     name: "MD",
@@ -129,4 +133,63 @@ function getDerivedLogHeaderValues(wellboreTrajectory: WellboreTrajectory_api): 
         // Unsure if this one is even used?
         step: 1,
     };
+}
+
+export function createLogViewerWellpicks(wellborePicks: WellPicksLayerData): WellPickProps {
+    let wellpickData = generateWellpickData(wellborePicks);
+    wellpickData = mergeStackedPicks(wellpickData);
+
+    return {
+        wellpick: {
+            header: {},
+            curves: [
+                MAIN_AXIS_CURVE,
+                {
+                    name: "PICK",
+                    valueType: "string",
+                    dimensions: 1,
+                },
+            ],
+            data: wellpickData,
+        },
+        name: "PICK",
+        color: "Stratigraphy",
+        // TODO: Color table should be generated form workbench settings
+        colorTables: COLOR_TABLES,
+    };
+}
+
+function generateWellpickData(wellborePicks: WellPicksLayerData): WellLogDataRow[] {
+    const rowsFromNonUnitPicks = wellborePicks.nonUnitPicks.map(pickToDataRow);
+    // Each unit-pick consists of two picks, entry and exit
+    const rowsFromUnitPicks = wellborePicks.unitPicks.flatMap(({ entryPick, exitPick }) => [
+        pickToDataRow(entryPick),
+        pickToDataRow(exitPick),
+    ]);
+
+    return [...rowsFromNonUnitPicks, ...rowsFromUnitPicks];
+}
+
+function pickToDataRow(pick: WellPicksLayerData["nonUnitPicks"][0]): WellLogDataRow {
+    return [pick.md, pick.identifier];
+}
+
+// ! The well log viewer does not support stacked wellpicks (same MD), and will render them on top of eachother!
+// ! As a workaround, we merge stacked picks into a single pick with all their names.
+function mergeStackedPicks(wellborePicks: WellLogDataRow[]): WellLogDataRow[] {
+    const mergedPicks: Record<number, WellLogDataRow> = {};
+
+    wellborePicks.forEach((pick) => {
+        const md = pick[0] as number;
+
+        if (!mergedPicks[md]) mergedPicks[md] = pick;
+        else mergedPicks[md] = mergePicks(mergedPicks[md], pick);
+    });
+
+    return Object.values(mergedPicks);
+}
+
+function mergePicks(pick1: WellLogDataRow, pick2: WellLogDataRow): WellLogDataRow {
+    // ! I have no clue how the well-log viewer computes the colors, but if I DONT use a plus here they all end up having the same color???
+    return [pick1[0], `${pick1[1]} + ${pick2[1]}`];
 }

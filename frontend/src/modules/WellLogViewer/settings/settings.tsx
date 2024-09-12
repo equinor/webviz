@@ -7,20 +7,19 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { IntersectionType } from "@framework/types/intersection";
-import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 
 import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom, selectedWellboreAtom } from "./atoms/derivedAtoms";
-import { viewerHorizontalAtom } from "./atoms/persistedAtoms";
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
+import { ViewerSettings } from "./components/ViewerSettings";
 
 import { InterfaceTypes } from "../interfaces";
 import { useTrackedGlobalValue } from "../utils/hooks";
@@ -73,9 +72,6 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
         [setSelectedWellboreHeader]
     );
 
-    // Well log selection
-    const [horizontal, setHorizontal] = useAtom(viewerHorizontalAtom);
-
     // Error messages
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
     const wellboreHeadersErrorStatus = usePropagateApiErrorToStatusWriter(wellboreHeaders, statusWriter) ?? "";
@@ -104,14 +100,8 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
             {/* Spacer to slightly seperate the two collapsible items */}
             <div className="my-1" />
 
-            {/* ? Shouldn't all base components allow you to pass a root className */}
             <CollapsibleGroup title="Well Log settings" expanded>
-                {/* TODO: Other settings, like, color, vertical, scale, etc */}
-                <Label text="Horizontal" position="left" labelClassName="!mb-0">
-                    <Checkbox checked={horizontal} onChange={(e, checked) => setHorizontal(checked)} />
-                </Label>
-
-                <div className="h-full"></div>
+                <ViewerSettings statusWriter={statusWriter} />
             </CollapsibleGroup>
 
             <div className="my-1" />

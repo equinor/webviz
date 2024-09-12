@@ -8,6 +8,7 @@ import { SyncSettingKey } from "@framework/SyncSettings";
 import { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
+import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import { WellLogViewer } from "@webviz/well-log-viewer";
 import { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
 import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
@@ -19,7 +20,7 @@ import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import { InterfaceTypes } from "../interfaces";
 import { createLogTemplate } from "../utils/logViewerTemplate";
-import { createWellLog } from "../utils/queryDataTransform";
+import { createLogViewerWellpicks, createWellLog } from "../utils/queryDataTransform";
 
 const AXIS_MNEMOS = {
     md: ["DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],
@@ -41,6 +42,7 @@ export type SubsurfaceLogViewerWrapperProps = {
     curveData: WellboreLogCurveData_api[];
     trajectoryData: WellboreTrajectory_api;
     intersectionReferenceSystem: IntersectionReferenceSystem;
+    wellpicks: WellPicksLayerData;
 
     // Viewer config
     horizontal: boolean;
@@ -143,12 +145,13 @@ export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
 
     // Curve data transform is a bit heavy, so we use Memo-hooks to reduce re-render overhead
     const template = React.useMemo(() => createLogTemplate(trackConfigs), [trackConfigs]);
+    const wellpicks = React.useMemo(() => createLogViewerWellpicks(props.wellpicks), [props.wellpicks]);
     const welllog = React.useMemo(
         () => createWellLog(curveData, trajectoryData, intersectionReferenceSystem),
         [curveData, trajectoryData, intersectionReferenceSystem]
     );
 
-    return { template, welllog };
+    return { template, welllog, wellpicks };
 }
 
 export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProps) {
@@ -157,7 +160,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
     const [showReadoutBox, setShowReadoutBox] = React.useState<boolean>(false);
 
-    const { template, welllog } = useViewerDataTransform(props);
+    const { template, welllog, wellpicks } = useViewerDataTransform(props);
 
     const colorScale = props.moduleProps.workbenchSettings.useContinuousColorScale({
         gradientType: ColorScaleGradientType.Sequential,
@@ -239,6 +242,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
                 id="well-log-viewer"
                 welllog={welllog}
                 template={template}
+                wellpick={wellpicks}
                 horizontal={props.horizontal}
                 // Removes the default right-side readout panel
                 layout={{ right: undefined }}

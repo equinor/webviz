@@ -1,11 +1,13 @@
 import { WellboreHeader_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import {
     allSelectedWellLogCurvesAtom,
     selectedFieldIdentifierAtom,
     selectedWellboreAtom,
+    selectedWellborePicksAtom,
     wellLogTemplateTracks,
 } from "./settings/atoms/derivedAtoms";
 import { viewerHorizontalAtom } from "./settings/atoms/persistedAtoms";
@@ -20,6 +22,7 @@ export type SettingsToViewInterface = {
     requiredDataCurves: string[];
     templateTracks: TemplateTrack[];
     viewerHorizontal: boolean;
+    selectedWellborePicks: WellPicksLayerData;
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
@@ -28,4 +31,5 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     templateTracks: (get) => get(wellLogTemplateTracks),
     requiredDataCurves: (get) => get(allSelectedWellLogCurvesAtom),
     viewerHorizontal: (get) => get(viewerHorizontalAtom),
+    selectedWellborePicks: (get) => get(selectedWellborePicksAtom),
 };

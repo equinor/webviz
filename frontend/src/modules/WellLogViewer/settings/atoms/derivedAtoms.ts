@@ -1,25 +1,39 @@
 import { WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { atom } from "jotai";
 import _, { Dictionary } from "lodash";
 
-import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./baseAtoms";
+import {
+    userSelectedFieldIdentifierAtom,
+    userSelectedNonUnitWellpicksAtom,
+    userSelectedUnitWellpicksAtom,
+    userSelectedWellboreUuidAtom,
+} from "./baseAtoms";
 import { logViewerTrackConfigs } from "./persistedAtoms";
-import { drilledWellboreHeadersQueryAtom, wellLogCurveHeadersQueryAtom } from "./queryAtoms";
+import {
+    drilledWellboreHeadersQueryAtom,
+    wellLogCurveHeadersQueryAtom,
+    wellborePicksAndStratigraphyQueryAtom,
+} from "./queryAtoms";
 
-export const selectedFieldIdentifierAtom = atom((get) => {
+export const selectedEnsembleSetAtom = atom((get) => {
     const ensembleSetArr = get(EnsembleSetAtom).getEnsembleArr();
-    const selectedFieldIdentifier = get(userSelectedFieldIdentifierAtom);
+    const selectedFieldId = get(userSelectedFieldIdentifierAtom);
 
     if (ensembleSetArr.length < 1) {
         return null;
-    } else if (ensembleSetArr.some((e) => e.getFieldIdentifier() === selectedFieldIdentifier)) {
-        return selectedFieldIdentifier;
     } else {
-        return ensembleSetArr[0].getFieldIdentifier();
+        const selectedEnsemble = ensembleSetArr.find((e) => e.getFieldIdentifier() === selectedFieldId);
+
+        return selectedEnsemble ?? ensembleSetArr[0];
     }
+});
+
+export const selectedFieldIdentifierAtom = atom((get) => {
+    return get(selectedEnsembleSetAtom)?.getFieldIdentifier() ?? null;
 });
 
 export const selectedWellboreAtom = atom<WellboreHeader_api | null>((get) => {
@@ -27,6 +41,22 @@ export const selectedWellboreAtom = atom<WellboreHeader_api | null>((get) => {
     const selectedWellboreId = get(userSelectedWellboreUuidAtom);
 
     return getSelectedWellboreHeader(selectedWellboreId, availableWellboreHeaders);
+});
+
+export const selectedWellborePicksAtom = atom<WellPicksLayerData>((get) => {
+    const wellborePicks = get(wellborePicksAndStratigraphyQueryAtom)?.data;
+    const selectedUnitPicks = get(userSelectedUnitWellpicksAtom);
+    const selectedNonUnitPicks = get(userSelectedNonUnitWellpicksAtom);
+
+    if (!wellborePicks) return { unitPicks: [], nonUnitPicks: [] };
+    else {
+        const unitPicks = wellborePicks.unitPicks.filter((pick) => selectedUnitPicks.includes(pick.name));
+        const nonUnitPicks = wellborePicks.nonUnitPicks.filter((pick) =>
+            selectedNonUnitPicks.includes(pick.identifier)
+        );
+
+        return { unitPicks, nonUnitPicks };
+    }
 });
 
 export const groupedCurveHeadersAtom = atom<Dictionary<WellboreLogCurveHeader_api[]>>((get) => {
