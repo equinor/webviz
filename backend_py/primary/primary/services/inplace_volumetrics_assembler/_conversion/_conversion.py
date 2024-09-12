@@ -229,6 +229,6 @@ def create_raw_volumetric_columns_from_volume_name_and_fluid_zones(
     for fluid_zone in fluid_zones:
         candidate_column = f"{volume_name}_{fluid_zone.value.upper()}"
         if candidate_column in ALLOWED_RAW_VOLUMETRIC_COLUMNS:
-            volumetric_columns.append(f"{volume_name}_{fluid_zone.value.upper()}")
+            volumetric_columns.append(candidate_column)
 
     return volumetric_columns
