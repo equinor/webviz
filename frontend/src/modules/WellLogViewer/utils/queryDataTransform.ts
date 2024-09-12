@@ -33,14 +33,15 @@ export const SECONDARY_AXIS_CURVE: WellLogCurve = {
 export function createWellLog(
     curveData: WellboreLogCurveData_api[],
     wellboreTrajectory: WellboreTrajectory_api,
-    referenceSystem: IntersectionReferenceSystem
+    referenceSystem: IntersectionReferenceSystem,
+    padDataWithEmptyRows = false
 ): WellLog {
     // TODO: these all iterate over the curve data list, so should probably just combine them into a single reduce method to optimize
     const header = createLogHeader(wellboreTrajectory);
 
     // ! Important: Always make sure that the data row and curve arrays are in the same order!
     const curves = createLogCurves(curveData);
-    const data = createLogData(curveData, referenceSystem);
+    const data = createLogData(curveData, wellboreTrajectory, referenceSystem, padDataWithEmptyRows);
 
     return { header, curves, data };
 }
@@ -69,13 +70,21 @@ type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 
 function createLogData(
     curveData: WellboreLogCurveData_api[],
-    referenceSystem: IntersectionReferenceSystem
+    wellboreTrajectory: WellboreTrajectory_api,
+    referenceSystem: IntersectionReferenceSystem,
+    padWithEmptyRows: boolean
 ): SafeWellLogDataRow[] {
     // We add 2 since each row also includes the MD and TVD axis curves
     const rowLength = curveData.length + 2;
     const rowAcc: DataRowAccumulatorMap = {};
 
+    let minCurveMd = Number.MAX_VALUE;
+    let maxCurveMd = Number.MIN_VALUE;
+
     curveData.forEach((curve, curveIndex) => {
+        if (curve.indexMin < minCurveMd) minCurveMd = curve.indexMin;
+        if (curve.indexMax > maxCurveMd) maxCurveMd = curve.indexMax;
+
         curve.dataPoints.forEach(([scaleIdx, entry, ...restData]) => {
             if (!scaleIdx) return console.warn("Unexpected null for scale entry");
             if (restData.length) console.warn("Multi-dimensional data not supported, using first value only");
@@ -85,6 +94,15 @@ function createLogData(
             rowAcc[scaleIdx][curveIndex + 2] = entry === curve.noDataValue ? null : entry;
         });
     });
+
+    if (padWithEmptyRows) {
+        wellboreTrajectory.mdArr.forEach((mdValue, index) => {
+            if (mdValue < maxCurveMd && mdValue > minCurveMd) return;
+
+            maybeInjectDataRow(rowAcc, mdValue, rowLength, referenceSystem);
+            rowAcc[mdValue][1] = wellboreTrajectory.tvdMslArr[index] ?? 0;
+        });
+    }
 
     return _.sortBy(Object.values(rowAcc), "0");
 }

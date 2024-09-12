@@ -38,6 +38,11 @@ export const viewerHorizontalAtom = atom<boolean, [boolean], void>(
     (get, set, newVal) => setPersistentModuleField(get, set, "viewerHorizontal", newVal)
 );
 
+export const padDataWithEmptyRowsAtom = atom<boolean, [boolean], void>(
+    (get) => getPersistentModuleField(get, "padDataWithEmptyRows", true),
+    (get, set, newVal) => setPersistentModuleField(get, set, "padDataWithEmptyRows", newVal)
+);
+
 export function clearStorageForInstance(instanceId: string) {
     clearModuleInstanceStorage(instanceId, STORAGE_KEY);
 }

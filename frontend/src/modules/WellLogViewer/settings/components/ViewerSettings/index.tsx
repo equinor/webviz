@@ -9,7 +9,7 @@ import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePr
 import { useAtom, useAtomValue } from "jotai";
 
 import { userSelectedNonUnitWellpicksAtom, userSelectedUnitWellpicksAtom } from "../../atoms/baseAtoms";
-import { viewerHorizontalAtom } from "../../atoms/persistedAtoms";
+import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "../../atoms/persistedAtoms";
 import { wellborePicksAndStratigraphyQueryAtom } from "../../atoms/queryAtoms";
 import { WellpickSelect } from "../WellpickSelect";
 
@@ -20,6 +20,7 @@ export type ViewerSettingsProps = {
 export function ViewerSettings(props: ViewerSettingsProps): React.ReactNode {
     // Well log selection
     const [horizontal, setHorizontal] = useAtom(viewerHorizontalAtom);
+    const [padWithEmptyRows, setPadWithEmptyRows] = useAtom(padDataWithEmptyRowsAtom);
 
     // Wellpick selection
     const borePicksAndStratQuery = useAtomValue(wellborePicksAndStratigraphyQueryAtom);
@@ -32,8 +33,12 @@ export function ViewerSettings(props: ViewerSettingsProps): React.ReactNode {
     return (
         <div className="space-y-2">
             {/* TODO: Other settings, like, color, max cols, etc */}
-            <Label text="Horizontal: " position="left" labelClassName="!mb-0">
+            <Label text="Horizontal:" position="left" labelClassName="!mb-0">
                 <Checkbox checked={horizontal} onChange={(e, checked) => setHorizontal(checked)} />
+            </Label>
+
+            <Label text="Limit zoom to data:" position="left" labelClassName="!mb-0">
+                <Checkbox checked={!padWithEmptyRows} onChange={(e, checked) => setPadWithEmptyRows(!checked)} />
             </Label>
 
             <Label text="Well picks">

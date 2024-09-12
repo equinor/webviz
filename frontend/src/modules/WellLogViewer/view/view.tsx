@@ -27,6 +27,8 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     const requiredDataCurves = props.viewContext.useSettingsToViewInterfaceValue("requiredDataCurves");
     const templateTracks = props.viewContext.useSettingsToViewInterfaceValue("templateTracks");
     const viewerHorizontal = props.viewContext.useSettingsToViewInterfaceValue("viewerHorizontal");
+    const padDataWithEmptyRows = props.viewContext.useSettingsToViewInterfaceValue("padDataWithEmptyRows");
+
     const wellborePicks = props.viewContext.useSettingsToViewInterfaceValue("selectedWellborePicks");
 
     // Derived vals
@@ -83,6 +85,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
                 curveData={curveData}
                 templateTracks={templateTracks}
                 horizontal={viewerHorizontal}
+                padDataWithEmptyRows={padDataWithEmptyRows}
                 moduleProps={props}
             />
         );

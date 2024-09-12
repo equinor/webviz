@@ -46,6 +46,7 @@ export type SubsurfaceLogViewerWrapperProps = {
 
     // Viewer config
     horizontal: boolean;
+    padDataWithEmptyRows: boolean;
     templateTracks: TemplateTrack[];
 
     // Passing the module props to make context and service access less cumbersome
@@ -142,13 +143,14 @@ export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
     const trajectoryData = props.trajectoryData;
     const curveData = props.curveData;
     const intersectionReferenceSystem = props.intersectionReferenceSystem;
+    const padDataWithEmptyRows = props.padDataWithEmptyRows;
 
     // Curve data transform is a bit heavy, so we use Memo-hooks to reduce re-render overhead
     const template = React.useMemo(() => createLogTemplate(trackConfigs), [trackConfigs]);
     const wellpicks = React.useMemo(() => createLogViewerWellpicks(props.wellpicks), [props.wellpicks]);
     const welllog = React.useMemo(
-        () => createWellLog(curveData, trajectoryData, intersectionReferenceSystem),
-        [curveData, trajectoryData, intersectionReferenceSystem]
+        () => createWellLog(curveData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows),
+        [curveData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows]
     );
 
     return { template, welllog, wellpicks };
