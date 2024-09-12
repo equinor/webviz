@@ -1,4 +1,5 @@
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
+import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
@@ -13,7 +14,8 @@ ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     defaultTitle: "Inplace Volumetrics Plot",
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.DEV,
+    devState: ModuleDevState.PROD,
+    dataTagIds: [ModuleDataTagId.INPLACE_VOLUMETRICS],
     description,
     syncableSettingKeys: [SyncSettingKey.INPLACE_VOLUMETRICS_FILTER],
     channelDefinitions: channelDefs,
