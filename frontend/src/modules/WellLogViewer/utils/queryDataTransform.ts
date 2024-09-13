@@ -96,11 +96,10 @@ function createLogData(
     });
 
     if (padWithEmptyRows) {
-        wellboreTrajectory.mdArr.forEach((mdValue, index) => {
-            if (mdValue < maxCurveMd && mdValue > minCurveMd) return;
+        wellboreTrajectory.mdArr.forEach((mdValue) => {
+            if (mdValue <= maxCurveMd && mdValue >= minCurveMd) return;
 
             maybeInjectDataRow(rowAcc, mdValue, rowLength, referenceSystem);
-            rowAcc[mdValue][1] = wellboreTrajectory.tvdMslArr[index] ?? 0;
         });
     }
 
