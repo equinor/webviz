@@ -68,7 +68,7 @@ def test_create_grouped_statistical_result_table_data_polars_no_grouping() -> No
     }
     result_df = pl.DataFrame(data)
 
-    group_by_identifiers: List[InplaceVolumetricsIdentifier] = None
+    group_by_identifiers = None
 
     selector_column_data_list, results_statistical_data_list = create_grouped_statistical_result_table_data_polars(
         result_df, group_by_identifiers
