@@ -1,4 +1,3 @@
-from typing import Dict, List, Optional, Tuple
 import asyncio
 
 import pyarrow as pa
@@ -77,12 +76,10 @@ class InplaceVolumetricsAssembler:
     def __init__(self, inplace_volumetrics_access: InplaceVolumetricsAccess):
         self._inplace_volumetrics_access = inplace_volumetrics_access
 
-    # TODO: When having metadata, provide all column names, and the get the possible properties from the result names
-    # Provide the available properties from metadata, without suffix and provide possible FluidZones
-    async def get_volumetric_table_metadata(self) -> List[InplaceVolumetricsTableDefinition]:
+    async def get_volumetric_table_metadata_async(self) -> list[InplaceVolumetricsTableDefinition]:
         vol_table_names = await self._inplace_volumetrics_access.get_inplace_volumetrics_table_names_async()
 
-        async def get_named_inplace_volumetrics_table_async(table_name: str) -> Dict[str, pa.Table]:
+        async def get_named_inplace_volumetrics_table_async(table_name: str) -> dict[str, pa.Table]:
             return {
                 table_name: await self._inplace_volumetrics_access.get_inplace_volumetrics_table_async(
                     table_name, column_names=None
@@ -96,7 +93,7 @@ class InplaceVolumetricsAssembler:
         tables = await asyncio.gather(*tasks)
         print(tables, len(tables))
 
-        tables_info: List[InplaceVolumetricsTableDefinition] = []
+        tables_info: list[InplaceVolumetricsTableDefinition] = []
         for table_result in tables:
             table_name, table = list(table_result.items())[0]
 
@@ -139,12 +136,17 @@ class InplaceVolumetricsAssembler:
         self,
         table_name: str,
         result_names: set[str],
-        fluid_zones: List[FluidZone],
-        realizations: Optional[List[int]] = None,
-        identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
-        group_by_identifiers: List[InplaceVolumetricsIdentifier] = [],
+        fluid_zones: list[FluidZone],
+        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues],
+        group_by_identifiers: list[InplaceVolumetricsIdentifier] | None,
+        realizations: list[int] | None,
         accumulate_fluid_zones: bool = False,
     ) -> InplaceVolumetricTableDataPerFluidSelection:
+        if group_by_identifiers == []:
+            raise InvalidParameterError("Group by identifiers must be non-empty list or None", Service.GENERAL)
+        if realizations == []:
+            raise InvalidParameterError("Realizations must be non-empty list or None", Service.GENERAL)
+
         # Create volume df per fluid zone and retrieve volume names and valid properties among requested result names
         (
             volume_df_per_fluid_selection,
@@ -155,7 +157,7 @@ class InplaceVolumetricsAssembler:
 
         # Perform aggregation per result table
         # - Aggregate by each requested group_by_identifier
-        table_data_per_fluid_selection: List[InplaceVolumetricTableData] = []
+        table_data_per_fluid_selection: list[InplaceVolumetricTableData] = []
         for fluid_selection, volume_df in volume_df_per_fluid_selection.items():
             # Create per group summed realization values
             per_group_summed_realization_df = create_per_group_summed_realization_volume_df(
@@ -183,12 +185,17 @@ class InplaceVolumetricsAssembler:
         self,
         table_name: str,
         result_names: set[str],
-        fluid_zones: List[FluidZone],
-        realizations: Optional[List[int]] = None,
-        identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
-        group_by_identifiers: List[InplaceVolumetricsIdentifier] = [],
+        fluid_zones: list[FluidZone],
+        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues],
+        group_by_identifiers: list[InplaceVolumetricsIdentifier] | None,
+        realizations: list[int] | None,
         accumulate_fluid_zones: bool = False,
     ) -> InplaceStatisticalVolumetricTableDataPerFluidSelection:
+        if group_by_identifiers == []:
+            raise InvalidParameterError("Group by identifiers must be non-empty list or None", Service.GENERAL)
+        if realizations == []:
+            raise InvalidParameterError("Realizations must be non-empty list or None", Service.GENERAL)
+
         # Create volume df per fluid zone and retrieve volume names and valid properties among requested result names
         (
             volume_df_per_fluid_selection,
@@ -199,7 +206,7 @@ class InplaceVolumetricsAssembler:
 
         # Perform aggregation per result table
         # - Aggregate by each requested group_by_identifier
-        statistical_table_data_per_fluid_selection: List[InplaceStatisticalVolumetricTableData] = []
+        statistical_table_data_per_fluid_selection: list[InplaceStatisticalVolumetricTableData] = []
         for fluid_selection, volume_df in volume_df_per_fluid_selection.items():
             # Create per group summed realization values
             per_group_summed_realization_df = create_per_group_summed_realization_volume_df(
@@ -235,11 +242,11 @@ class InplaceVolumetricsAssembler:
         self,
         table_name: str,
         result_names: set[str],
-        fluid_zones: List[FluidZone],
-        realizations: Optional[List[int]],
-        identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues],
+        fluid_zones: list[FluidZone],
+        realizations: list[int] | None,
+        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues],
         accumulate_fluid_zones: bool,
-    ) -> Tuple[Dict[FluidSelection, pl.DataFrame], CategorizedResultNames]:
+    ) -> tuple[dict[FluidSelection, pl.DataFrame], CategorizedResultNames]:
         """
         Utility function to get volume table data as pl.DataFrame per fluid selection, and a list of volume names and properties among the requested result names.
 
@@ -278,7 +285,7 @@ class InplaceVolumetricsAssembler:
         )
 
         # Get volume table per fluid selection - requested volumes and volumes needed for properties
-        volume_df_per_fluid_selection: Dict[
+        volume_df_per_fluid_selection: dict[
             FluidSelection, pl.DataFrame
         ] = await self._create_volume_df_per_fluid_selection(
             table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
@@ -317,13 +324,13 @@ class InplaceVolumetricsAssembler:
 
         # Create calculated volume column expressions
         requested_calculated_volume_names = categorized_requested_result_names.calculated_volume_names
-        calculated_volume_column_expressions: List[pl.Expr] = create_calculated_volume_column_expressions(
+        calculated_volume_column_expressions: list[pl.Expr] = create_calculated_volume_column_expressions(
             volume_df.columns, requested_calculated_volume_names, fluid_zone
         )
 
         # Create property column expressions
         requested_properties = categorized_requested_result_names.property_names
-        property_column_expressions: List[pl.Expr] = create_property_column_expressions(
+        property_column_expressions: list[pl.Expr] = create_property_column_expressions(
             volume_df.columns, requested_properties, fluid_zone
         )
 
@@ -342,11 +349,11 @@ class InplaceVolumetricsAssembler:
         self,
         table_name: str,
         volume_names: set[str],
-        fluid_zones: List[FluidZone],
-        realizations: Optional[List[int]],
-        identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
+        fluid_zones: list[FluidZone],
+        realizations: list[int] | None,
+        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues] = [],
         accumulate_fluid_zones: bool = False,
-    ) -> Dict[FluidSelection, pl.DataFrame]:
+    ) -> dict[FluidSelection, pl.DataFrame]:
         """
         This function creates a volumetric DataFrame per fluid selection
 
@@ -359,9 +366,9 @@ class InplaceVolumetricsAssembler:
         Input:
         - table_name: str - Name of the table in Sumo
         - volume_names: set[str] - All volume names needed from Sumo, including volume names needed for properties
-        - fluid_zones: List[FluidZone] - Fluid zones to create volumetric tables for
-        - realizations: List[int] - Realizations to include in the volumetric table
-        - identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] - Identifier values to filter the volumetric table, i.e. row filtering
+        - fluid_zones: list[FluidZone] - Fluid zones to create volumetric tables for
+        - realizations: list[int] - Realizations to include in the volumetric table
+        - identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues] - Identifier values to filter the volumetric table, i.e. row filtering
         - accumulate_fluid_zones: bool - Whether to accumulate the volumes across fluid zones
         """
 
@@ -400,7 +407,7 @@ class InplaceVolumetricsAssembler:
         # filtered_table.column_names = ["REAL", "ZONE", "REGION", "FACIES", "LICENSE", "STOIIP_OIL", "GIIP_GAS", "HCPV_OIL", "HCPV_GAS", "HCPV_WATER"]
         # fluid_zones = [FluidZone.OIL, FluidZone.GAS, FluidZone.WATER]
         # ["REAL", "ZONE", "REGION", "FACIES", "LICENSE", "STOIIP", "BO", "HCPV"]
-        volume_df_per_fluid_selection: Dict[FluidSelection, pl.DataFrame] = {}
+        volume_df_per_fluid_selection: dict[FluidSelection, pl.DataFrame] = {}
         if accumulate_fluid_zones and len(fluid_zones) > 1:
             # Build volume df summed across fluid zones
             volumetric_summed_fluid_zones_df = create_volumetric_summed_fluid_zones_df(
@@ -411,7 +418,7 @@ class InplaceVolumetricsAssembler:
             return volume_df_per_fluid_selection
 
         # Handle each fluid zone separately
-        volume_df_per_fluid_zone: Dict[FluidZone, pl.DataFrame] = create_volumetric_df_per_fluid_zone(
+        volume_df_per_fluid_zone: dict[FluidZone, pl.DataFrame] = create_volumetric_df_per_fluid_zone(
             fluid_zones, row_filtered_raw_volumetrics_df
         )
 
@@ -426,16 +433,17 @@ class InplaceVolumetricsAssembler:
     def _create_row_filtered_volumetric_df(
         table_name: str,
         inplace_volumetrics_df: pl.DataFrame,
-        realizations: Optional[List[int]] = None,
-        identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues] = [],
+        realizations: list[int] | None,
+        identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues] = [],
     ) -> pl.DataFrame | None:
         """
         Create DataFrame filtered on identifier values and realizations
 
         The function filters the provided inplace volumetric DataFrame based on the identifiers and realizations provided.
+        If realizations is None, all realizations are included.
         """
         if realizations is not None and len(realizations) == 0:
-            return None
+            raise InvalidParameterError("Realizations must be a non-empty list or None", Service.GENERAL)
 
         column_names = inplace_volumetrics_df.columns
 

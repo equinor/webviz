@@ -14,6 +14,7 @@ import {
 } from "@modules/_shared/InplaceVolumetrics/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
+import { createScaledNumberWithSuffix } from "@modules/_shared/utils/numberSuffixFormatting";
 
 export function createTableHeadingsAndRowsFromTablesData(
     tablesData: InplaceVolumetricsTableData[],
@@ -209,21 +210,13 @@ function formatResultValue(value: string | number | null): string {
         return value;
     }
 
-    let suffix = "";
-    const log = Math.log10(Math.abs(value));
-    if (log >= 6) {
-        value /= 1e6;
-        suffix = "M";
-    } else if (log >= 3) {
-        value /= 1e3;
-        suffix = "k";
-    }
+    const { scaledValue, suffix } = createScaledNumberWithSuffix(value);
 
     // Determine the number of decimal places based on the value's magnitude
     let decimalPlaces = 2;
-    if (Math.abs(value) < 0.01) {
+    if (Math.abs(scaledValue) < 0.01) {
         decimalPlaces = 4;
-    } else if (Math.abs(value) < 0.1) {
+    } else if (Math.abs(scaledValue) < 0.1) {
         decimalPlaces = 3;
     }
 

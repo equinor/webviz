@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Body, Response
 
@@ -21,16 +21,16 @@ router = APIRouter()
 
 @router.get("/table_definitions/", tags=["inplace_volumetrics"])
 async def get_table_definitions(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-) -> List[schemas.InplaceVolumetricsTableDefinition]:
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+) -> list[schemas.InplaceVolumetricsTableDefinition]:
     """Get the volumetric tables definitions for a given ensemble."""
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     assembler = InplaceVolumetricsAssembler(access)
-    tables = await assembler.get_volumetric_table_metadata()
+    tables = await assembler.get_volumetric_table_metadata_async()
     return converters.to_api_table_definitions(tables)
 
 
@@ -38,24 +38,33 @@ async def get_table_definitions(
 # pylint: disable=too-many-arguments
 async def post_get_aggregated_per_realization_table_data(
     response: Response,
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    table_name: str = Query(description="Table name"),
-    result_names: List[str] = Query(description="The name of the volumetric results"),
-    fluid_zones: List[schemas.FluidZone] = Query(description="The fluid zones to aggregate by"),
-    realizations: Optional[List[int]] = Query(
-        None, description="Optional realization to include. If not specified, all realizations will be returned."
-    ),
-    group_by_identifiers: List[schemas.InplaceVolumetricsIdentifier] = Body(
-        embed=True, description="The identifiers to group table data by"
-    ),
-    identifiers_with_values: List[schemas.InplaceVolumetricsIdentifierWithValues] = Body(
-        embed=True, description="Selected identifiers and wanted values"
-    ),
-    accumulate_fluid_zones: bool = Query(description="Whether to accumulate fluid zones"),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    table_name: Annotated[str, Query(description="Table name")],
+    result_names: Annotated[list[str], Query(description="The name of the volumetric results")],
+    fluid_zones: Annotated[list[schemas.FluidZone], Query(description="The fluid zones to aggregate by")],
+    identifiers_with_values: Annotated[
+        list[schemas.InplaceVolumetricsIdentifierWithValues],
+        Body(embed=True, description="Selected identifiers and wanted values"),
+    ],
+    accumulate_fluid_zones: Annotated[bool, Query(description="Whether to accumulate fluid zones")],
+    group_by_identifiers: Annotated[
+        list[schemas.InplaceVolumetricsIdentifier] | None, Query(description="The identifiers to group table data by")
+    ] = None,
+    realizations: Annotated[
+        list[int] | None,
+        Query(
+            description="Optional list of realizations to include. If not specified, all realizations will be returned."
+        ),
+    ] = None,
 ) -> schemas.InplaceVolumetricTableDataPerFluidSelection:
-    """Get aggregated volumetric data for a given table with data per realization based on requested results and categories/index filter."""
+    """
+    Get aggregated volumetric data for a given table with data per realization based on requested results and categories/index filter.
+
+    Note: This endpoint is a post endpoint because the list of identifiers with values can be quite large and may exceed the query string limit.
+    As the endpoint is post, the identifiers with values object is kept for convenience.
+    """
     perf_metrics = ResponsePerfMetrics(response)
 
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
@@ -87,24 +96,33 @@ async def post_get_aggregated_per_realization_table_data(
 # pylint: disable=too-many-arguments
 async def post_get_aggregated_statistical_table_data(
     response: Response,
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    case_uuid: str = Query(description="Sumo case uuid"),
-    ensemble_name: str = Query(description="Ensemble name"),
-    table_name: str = Query(description="Table name"),
-    result_names: List[str] = Query(description="The name of the volumetric results"),
-    fluid_zones: List[schemas.FluidZone] = Query(description="The fluid zones to aggregate by"),
-    realizations: Optional[List[int]] = Query(
-        None, description="Optional realization to include. If not specified, all realizations will be returned."
-    ),
-    group_by_identifiers: List[schemas.InplaceVolumetricsIdentifier] = Body(
-        embed=True, description="The identifiers to group table data by"
-    ),
-    identifiers_with_values: List[schemas.InplaceVolumetricsIdentifierWithValues] = Body(
-        embed=True, description="Selected identifiers and wanted values"
-    ),
-    accumulate_fluid_zones: bool = Query(description="Whether to accumulate fluid zones"),
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    table_name: Annotated[str, Query(description="Table name")],
+    result_names: Annotated[list[str], Query(description="The name of the volumetric results")],
+    fluid_zones: Annotated[list[schemas.FluidZone], Query(description="The fluid zones to aggregate by")],
+    identifiers_with_values: Annotated[
+        list[schemas.InplaceVolumetricsIdentifierWithValues],
+        Body(embed=True, description="Selected identifiers and wanted values"),
+    ],
+    accumulate_fluid_zones: Annotated[bool, Query(description="Whether to accumulate fluid zones")],
+    group_by_identifiers: Annotated[
+        list[schemas.InplaceVolumetricsIdentifier] | None, Query(description="The identifiers to group table data by")
+    ] = None,
+    realizations: Annotated[
+        list[int] | None,
+        Query(
+            description="Optional list of realizations to include. If not specified, all realizations will be returned."
+        ),
+    ] = None,
 ) -> schemas.InplaceStatisticalVolumetricTableDataPerFluidSelection:
-    """Get statistical volumetric data across selected realizations for a given table based on requested results and categories/index filter."""
+    """
+    Get statistical volumetric data across selected realizations for a given table based on requested results and categories/index filter.
+
+    Note: This endpoint is a post endpoint because the list of identifiers with values can be quite large and may exceed the query string limit.
+    As the endpoint is post, the identifiers with values object is kept for convenience.
+    """
     perf_metrics = ResponsePerfMetrics(response)
 
     access = await InplaceVolumetricsAccess.from_case_uuid_async(

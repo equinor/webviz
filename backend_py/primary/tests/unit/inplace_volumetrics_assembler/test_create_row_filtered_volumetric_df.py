@@ -9,6 +9,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     InplaceVolumetricsIdentifierWithValues,
 )
 from primary.services.sumo_access.inplace_volumetrics_access import IGNORED_IDENTIFIER_COLUMN_VALUES
+from primary.services.service_exceptions import InvalidParameterError
 
 
 @pytest.fixture
@@ -17,11 +18,13 @@ def inplace_volumetrics_df() -> pl.DataFrame:
 
 
 def test_create_row_filtered_volumetric_df_no_realizations(inplace_volumetrics_df: pl.DataFrame) -> None:
-    no_realizations: List[int] = []
-    result_df = InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
-        table_name="test_table", inplace_volumetrics_df=inplace_volumetrics_df, realizations=no_realizations
-    )
-    assert result_df is None
+    empty_realizations_list: List[int] = []
+    with pytest.raises(InvalidParameterError, match="Realizations must be a non-empty list or None"):
+        InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
+            table_name="test_table", inplace_volumetrics_df=inplace_volumetrics_df, realizations=empty_realizations_list
+        )
+
+    # assert result_df is None
 
 
 def test_create_row_filtered_volumetric_df_no_data_found(inplace_volumetrics_df: pl.DataFrame) -> None:
@@ -53,6 +56,7 @@ def test_create_row_filtered_volumetric_df_with_identifiers(inplace_volumetrics_
     result_df = InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
         table_name="test_table",
         inplace_volumetrics_df=inplace_volumetrics_df,
+        realizations=None,
         identifiers_with_values=identifiers_with_values,
     )
 
@@ -70,6 +74,7 @@ def test_create_row_filtered_volumetric_df_missing_identifier_column(inplace_vol
         InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
             table_name="test_table",
             inplace_volumetrics_df=inplace_volumetrics_df,
+            realizations=None,
             identifiers_with_values=identifiers_with_values,
         )
 
@@ -91,6 +96,7 @@ def test_create_row_filtered_volumetric_df_with_ignored_identifier_values() -> N
     result_df = InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
         table_name="test_table",
         inplace_volumetrics_df=inplace_volumetrics_df,
+        realizations=None,
         identifiers_with_values=identifiers_with_values,
     )
 

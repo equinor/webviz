@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from primary.services.sumo_access.inplace_volumetrics_types import (
     FluidZone,
     Statistic,
@@ -14,8 +12,8 @@ from . import schemas
 
 
 def convert_schema_to_identifiers_with_values(
-    identifiers_with_values: List[schemas.InplaceVolumetricsIdentifierWithValues],
-) -> List[InplaceVolumetricsIdentifierWithValues]:
+    identifiers_with_values: list[schemas.InplaceVolumetricsIdentifierWithValues],
+) -> list[InplaceVolumetricsIdentifierWithValues]:
     converted = []
     for identifier_with_values in identifiers_with_values:
         identifier = _convert_schema_to_identifier(identifier_with_values.identifier)
@@ -24,15 +22,18 @@ def convert_schema_to_identifiers_with_values(
     return converted
 
 
-def convert_schema_to_fluid_zones(fluid_zones: List[schemas.FluidZone]) -> List[FluidZone]:
+def convert_schema_to_fluid_zones(fluid_zones: list[schemas.FluidZone]) -> list[FluidZone]:
     """Converts the fluid zones from the API format to the sumo service format"""
     return [FluidZone(fluid_zone.value) for fluid_zone in fluid_zones]
 
 
 def convert_schema_to_identifiers(
-    identifiers: List[schemas.InplaceVolumetricsIdentifier],
-) -> List[InplaceVolumetricsIdentifier]:
+    identifiers: list[schemas.InplaceVolumetricsIdentifier] | None,
+) -> list[InplaceVolumetricsIdentifier] | None:
     """Converts the identifiers from the API format to the sumo service format"""
+    if identifiers is None:
+        return None
+
     return [_convert_schema_to_identifier(identifier) for identifier in identifiers]
 
 
@@ -41,12 +42,12 @@ def _convert_schema_to_identifier(identifier: schemas.InplaceVolumetricsIdentifi
     return InplaceVolumetricsIdentifier(identifier.value)
 
 
-def _convert_fluid_zones_to_schema(fluid_zones: List[FluidZone]) -> List[schemas.FluidZone]:
+def _convert_fluid_zones_to_schema(fluid_zones: list[FluidZone]) -> list[schemas.FluidZone]:
     """Converts the fluid zones from the sumo service to the API format"""
     return [schemas.FluidZone(fluid_zone.value) for fluid_zone in fluid_zones]
 
 
-def _convert_result_names_to_schema(result_names: List[str]) -> List[schemas.InplaceVolumetricResultName]:
+def _convert_result_names_to_schema(result_names: list[str]) -> list[schemas.InplaceVolumetricResultName]:
     """Converts the result names from the sumo service to the API format"""
     return [schemas.InplaceVolumetricResultName(result_name) for result_name in result_names]
 
@@ -57,8 +58,8 @@ def _convert_identifier_string_to_schema(identifier_string: str) -> schemas.Inpl
 
 
 def to_api_table_definitions(
-    table_definitions: List[InplaceVolumetricsTableDefinition],
-) -> List[schemas.InplaceVolumetricsTableDefinition]:
+    table_definitions: list[InplaceVolumetricsTableDefinition],
+) -> list[schemas.InplaceVolumetricsTableDefinition]:
     """Converts the table definitions from the sumo service to the API format"""
     return [
         schemas.InplaceVolumetricsTableDefinition(
@@ -82,7 +83,7 @@ def convert_table_data_per_fluid_selection_to_schema(
 ) -> schemas.InplaceVolumetricTableDataPerFluidSelection:
     """Converts the table data from the sumo service to the schema format"""
 
-    tables: List[schemas.InplaceVolumetricTableData] = []
+    tables: list[schemas.InplaceVolumetricTableData] = []
 
     for table in table_per_fluid_selection.table_data_per_fluid_selection:
         selector_columns = [
@@ -115,7 +116,7 @@ def convert_statistical_table_data_per_fluid_selection_to_schema(
 ) -> schemas.InplaceStatisticalVolumetricTableDataPerFluidSelection:
     """Converts the table data from the sumo service to the schema format"""
 
-    tables: List[schemas.InplaceStatisticalVolumetricTableData] = []
+    tables: list[schemas.InplaceStatisticalVolumetricTableData] = []
 
     for table in table_data_per_fluid_selection.table_data_per_fluid_selection:
         selector_columns = [
@@ -147,8 +148,8 @@ def convert_statistical_table_data_per_fluid_selection_to_schema(
 
 
 def _convert_statistic_values_dict_to_schema(
-    statistic_values: Dict[Statistic, List[float]],
-) -> Dict[schemas.InplaceVolumetricStatistic, List[float]]:
+    statistic_values: dict[Statistic, list[float]],
+) -> dict[schemas.InplaceVolumetricStatistic, list[float]]:
     """Converts the statistic values dictionary from the service layer format to API format"""
     return {
         _convert_statistic_enum_to_inplace_volumetric_statistic_enum(statistic): values

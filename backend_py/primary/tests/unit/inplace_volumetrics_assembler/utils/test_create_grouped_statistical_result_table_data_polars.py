@@ -1,4 +1,5 @@
 from typing import List
+import pytest
 import polars as pl
 
 from primary.services.inplace_volumetrics_assembler._utils import (
@@ -8,6 +9,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     Statistic,
     InplaceVolumetricsIdentifier,
 )
+from primary.services.service_exceptions import InvalidParameterError
 
 
 def test_create_grouped_statistical_result_table_data_polars() -> None:
@@ -66,7 +68,7 @@ def test_create_grouped_statistical_result_table_data_polars_no_grouping() -> No
     }
     result_df = pl.DataFrame(data)
 
-    group_by_identifiers: List[InplaceVolumetricsIdentifier] = []
+    group_by_identifiers: List[InplaceVolumetricsIdentifier] = None
 
     selector_column_data_list, results_statistical_data_list = create_grouped_statistical_result_table_data_polars(
         result_df, group_by_identifiers
@@ -84,3 +86,19 @@ def test_create_grouped_statistical_result_table_data_polars_no_grouping() -> No
     assert result_statistical_data.statistic_values[Statistic.MAX] == [40.0]
     assert result_statistical_data.statistic_values[Statistic.P10] == [37.0]
     assert result_statistical_data.statistic_values[Statistic.P90] == [13.0]
+
+
+def test_create_grouped_statistical_result_table_data_polars_empty_grouping_list() -> None:
+    # Create a sample result DataFrame
+    data = {
+        "ZONE": ["A", "A", "B", "B"],
+        "REGION": ["X", "X", "Y", "Y"],
+        "REAL": [1, 2, 1, 2],
+        "result1": [10.0, 20.0, 30.0, 40.0],
+    }
+    result_df = pl.DataFrame(data)
+
+    empty_group_by_identifiers_list: List[InplaceVolumetricsIdentifier] = []
+
+    with pytest.raises(InvalidParameterError, match="Group by identifiers must be a non-empty list or None"):
+        create_grouped_statistical_result_table_data_polars(result_df, empty_group_by_identifiers_list)

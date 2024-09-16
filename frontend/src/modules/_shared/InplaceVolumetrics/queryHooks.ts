@@ -56,8 +56,10 @@ export function useGetAggregatedStatisticalTableDataQueries(
     }
 
     const eachIdentifierHasValues = identifiersWithValues.every((identifier) => identifier.values.length > 0);
+    const validGroupByIdentifiers = groupByIdentifiers.length === 0 ? null : groupByIdentifiers;
 
     const queries = uniqueSources.map((source) => {
+        const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         return () => ({
             queryKey: [
                 "postGetAggregatedStatisticalTableData",
@@ -79,10 +81,10 @@ export function useGetAggregatedStatisticalTableDataQueries(
                     fluidZones,
                     accumulateFluidZones,
                     {
-                        group_by_identifiers: groupByIdentifiers,
                         identifiers_with_values: identifiersWithValues,
                     },
-                    [...source.realizations]
+                    validGroupByIdentifiers,
+                    validRealizations
                 ),
             staleTime: STALE_TIME,
             cacheTime: CACHE_TIME,
@@ -90,7 +92,8 @@ export function useGetAggregatedStatisticalTableDataQueries(
                 allowEnable &&
                     source.ensembleIdent &&
                     source.tableName &&
-                    source.realizations.length &&
+                    validRealizations &&
+                    validRealizations.length &&
                     fluidZones.length &&
                     resultNames.length &&
                     eachIdentifierHasValues
@@ -149,8 +152,10 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     }
 
     const eachIdentifierHasValues = identifiersWithValues.every((identifier) => identifier.values.length > 0);
+    const validGroupByIdentifiers = groupByIdentifiers.length === 0 ? null : groupByIdentifiers;
 
     const queries = uniqueSources.map((source) => {
+        const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
         return () => ({
             queryKey: [
                 "postGetAggregatedPerRealizationTableData",
@@ -171,11 +176,12 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                     resultNames,
                     fluidZones,
                     accumulateFluidZones,
+
                     {
-                        group_by_identifiers: groupByIdentifiers,
                         identifiers_with_values: identifiersWithValues,
                     },
-                    [...source.realizations]
+                    validGroupByIdentifiers,
+                    validRealizations
                 ),
             staleTime: STALE_TIME,
             cacheTime: CACHE_TIME,
@@ -183,7 +189,8 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                 allowEnable &&
                     source.ensembleIdent &&
                     source.tableName &&
-                    source.realizations.length &&
+                    validRealizations &&
+                    validRealizations.length &&
                     fluidZones.length &&
                     resultNames.length &&
                     eachIdentifierHasValues

@@ -1,4 +1,3 @@
-from typing import Dict, List, Union
 from enum import Enum, StrEnum
 
 from pydantic import BaseModel
@@ -16,7 +15,7 @@ class InplaceVolumetricsIdentifierWithValues(BaseModel):
     All values should ideally be strings, but it is common to see integers, especially for REGION"""
 
     identifier: InplaceVolumetricsIdentifier
-    values: List[Union[str, int]]
+    values: list[str | int]
 
 
 class InplaceVolumetricStatistic(StrEnum):
@@ -63,22 +62,22 @@ class InplaceVolumetricsTableDefinition(BaseModel):
     """Definition of a volumetric table"""
 
     tableName: str
-    fluidZones: List[FluidZone]
-    resultNames: List[InplaceVolumetricResultName]
-    identifiersWithValues: List[InplaceVolumetricsIdentifierWithValues]
+    fluidZones: list[FluidZone]
+    resultNames: list[InplaceVolumetricResultName]
+    identifiersWithValues: list[InplaceVolumetricsIdentifierWithValues]
 
 
 class InplaceVolumetricDataEntry(BaseModel):
-    result_values: List[float]
-    index_values: List[Union[str, int]]
+    result_values: list[float]
+    index_values: list[str | int]
 
 
 class InplaceVolumetricData(BaseModel):
     vol_table_name: str
     result_name: str
-    realizations: List[int]
-    index_names: List[str]
-    entries: List[InplaceVolumetricDataEntry]
+    realizations: list[int]
+    index_names: list[str]
+    entries: list[InplaceVolumetricDataEntry]
 
 
 class RepeatedTableColumnData(BaseModel):
@@ -92,8 +91,8 @@ class RepeatedTableColumnData(BaseModel):
     """
 
     columnName: str
-    uniqueValues: List[str | int]
-    indices: List[int]
+    uniqueValues: list[str | int]
+    indices: list[int]
 
 
 class TableColumnData(BaseModel):
@@ -104,7 +103,7 @@ class TableColumnData(BaseModel):
     """
 
     columnName: str
-    columnValues: List[float]
+    columnValues: list[float]
 
 
 class TableColumnStatisticalData(BaseModel):
@@ -115,7 +114,7 @@ class TableColumnStatisticalData(BaseModel):
     """
 
     columnName: str
-    statisticValues: Dict[InplaceVolumetricStatistic, List[float]]
+    statisticValues: dict[InplaceVolumetricStatistic, list[float]]
 
 
 class InplaceVolumetricTableData(BaseModel):
@@ -125,8 +124,8 @@ class InplaceVolumetricTableData(BaseModel):
     """
 
     fluidSelectionName: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selectorColumns: List[RepeatedTableColumnData]  # Index columns and realizations
-    resultColumns: List[TableColumnData]
+    selectorColumns: list[RepeatedTableColumnData]  # Index columns and realizations
+    resultColumns: list[TableColumnData]
 
 
 class InplaceStatisticalVolumetricTableData(BaseModel):
@@ -137,8 +136,8 @@ class InplaceStatisticalVolumetricTableData(BaseModel):
     """
 
     fluidSelectionName: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selectorColumns: List[RepeatedTableColumnData]  # Index columns and realizations
-    resultColumnStatistics: List[TableColumnStatisticalData]
+    selectorColumns: list[RepeatedTableColumnData]  # Index columns and realizations
+    resultColumnStatistics: list[TableColumnStatisticalData]
 
 
 class InplaceVolumetricTableDataPerFluidSelection(BaseModel):
@@ -147,7 +146,7 @@ class InplaceVolumetricTableDataPerFluidSelection(BaseModel):
     Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
     """
 
-    tableDataPerFluidSelection: List[InplaceVolumetricTableData]
+    tableDataPerFluidSelection: list[InplaceVolumetricTableData]
 
 
 class InplaceStatisticalVolumetricTableDataPerFluidSelection(BaseModel):
@@ -156,4 +155,4 @@ class InplaceStatisticalVolumetricTableDataPerFluidSelection(BaseModel):
     Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
     """
 
-    tableDataPerFluidSelection: List[InplaceStatisticalVolumetricTableData]
+    tableDataPerFluidSelection: list[InplaceStatisticalVolumetricTableData]

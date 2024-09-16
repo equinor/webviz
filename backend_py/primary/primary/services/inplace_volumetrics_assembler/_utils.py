@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable
 
 import numpy as np
 import polars as pl
@@ -15,6 +15,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
 )
 
 from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
+from ..service_exceptions import Service, InvalidParameterError
 
 """
 This file contains general utility functions for the Inplace Volumetrics provider
@@ -23,7 +24,7 @@ The methods can be used to calculate, aggregate and create data for the Inplace 
 """
 
 
-def get_valid_result_names_from_list(result_names: List[str]) -> List[str]:
+def get_valid_result_names_from_list(result_names: list[str]) -> list[str]:
     """
     Get valid result names from list of result names
     """
@@ -36,7 +37,7 @@ def get_valid_result_names_from_list(result_names: List[str]) -> List[str]:
 
 def create_per_group_summed_realization_volume_df(
     volume_df: pl.DataFrame,
-    group_by_identifiers: List[InplaceVolumetricsIdentifier],
+    group_by_identifiers: list[InplaceVolumetricsIdentifier] | None,
 ) -> pl.DataFrame:
     """
     Create volume DataFrame with sum per selected group. The sum volumes are grouped per realization, i.e. a column named "REAL"
@@ -51,8 +52,9 @@ def create_per_group_summed_realization_volume_df(
         raise ValueError("REAL column not found in volume DataFrame")
 
     # Group by each of the identifier (always accumulate by realization - i.e. max one value per realization)
-    group_by_identifier_set = set([elm.value for elm in group_by_identifiers])
-    columns_to_group_by_for_sum = set(list(group_by_identifier_set) + ["REAL"])
+    columns_to_group_by_for_sum = ["REAL"]
+    if group_by_identifiers:
+        columns_to_group_by_for_sum = list({elm.value for elm in group_by_identifiers} | {"REAL"})
 
     # Selector columns should not be aggregated
     possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
@@ -97,8 +99,8 @@ def _create_statistical_expression(statistic: Statistic, column_name: str, drop_
 
 
 def _create_statistic_aggregation_expressions(
-    result_columns: List[str], statistics: List[Statistic], drop_nans: bool = True
-) -> List[pl.Expr]:
+    result_columns: list[str], statistics: list[Statistic], drop_nans: bool = True
+) -> list[pl.Expr]:
     """
     Create Polars expressions for aggregation of result columns
     """
@@ -111,9 +113,9 @@ def _create_statistic_aggregation_expressions(
 
 def _convert_statistical_df_to_statistical_result_table_data(
     statistical_df: pl.DataFrame,
-    valid_result_names: List[str],
-    requested_statistics: List[Statistic],
-) -> Tuple[List[RepeatedTableColumnData], List[TableColumnStatisticalData]]:
+    valid_result_names: list[str],
+    requested_statistics: list[Statistic],
+) -> tuple[list[RepeatedTableColumnData], list[TableColumnStatisticalData]]:
     """
     Convert statistical DataFrame to statistical result table data
 
@@ -122,14 +124,14 @@ def _convert_statistical_df_to_statistical_result_table_data(
     possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
 
     # Build selector columns from statistical table
-    selector_column_data_list: List[RepeatedTableColumnData] = []
+    selector_column_data_list: list[RepeatedTableColumnData] = []
     final_selector_columns = [name for name in possible_selector_columns if name in statistical_df.columns]
     for column_name in final_selector_columns:
         column = statistical_df[column_name]
         selector_column_data_list.append(_create_repeated_table_column_data_from_polars_column(column_name, column))
 
     # Fill statistics for each result
-    results_statistical_data_dict: Dict[str, TableColumnStatisticalData] = {}
+    results_statistical_data_dict: dict[str, TableColumnStatisticalData] = {}
     available_statistic_column_names = statistical_df.columns
     for result_name in valid_result_names:
         result_statistical_data = TableColumnStatisticalData(column_name=result_name, statistic_values={})
@@ -145,7 +147,7 @@ def _convert_statistical_df_to_statistical_result_table_data(
         results_statistical_data_dict[result_name] = result_statistical_data
 
     # Create list of results statistical data from dictionary values
-    results_statistical_data_list: List[TableColumnStatisticalData] = list(results_statistical_data_dict.values())
+    results_statistical_data_list: list[TableColumnStatisticalData] = list(results_statistical_data_dict.values())
 
     # Validate length of columns
     _validate_length_of_statistics_data_lists(selector_column_data_list, results_statistical_data_list)
@@ -155,8 +157,8 @@ def _convert_statistical_df_to_statistical_result_table_data(
 
 def create_grouped_statistical_result_table_data_polars(
     result_df: pl.DataFrame,
-    group_by_identifiers: List[InplaceVolumetricsIdentifier],
-) -> Tuple[List[RepeatedTableColumnData], List[TableColumnStatisticalData]]:
+    group_by_identifiers: list[InplaceVolumetricsIdentifier] | None,
+) -> tuple[list[RepeatedTableColumnData], list[TableColumnStatisticalData]]:
     """
     Create result table data with statistics across column values based on group by identifiers selection. The
     statistics are calculated across all values per grouping, thus the output will have one row per group.
@@ -170,13 +172,13 @@ def create_grouped_statistical_result_table_data_polars(
 
     Parameters:
     - result_df: Dataframe with selector columns and result columns
-    - group_by_identifiers: List of identifiers to group by, should be equal to the group by used used to pre-process the input result df
+    - group_by_identifiers: list of identifiers to group by, should be equal to the group by used used to pre-process the input result df
 
     Returns:
     - Tuple with selector column data list and results statistical data list
     """
-
-    group_by_identifier_values = list(set([elm.value for elm in group_by_identifiers]))
+    if group_by_identifiers == []:
+        raise InvalidParameterError("Group by identifiers must be a non-empty list or None", Service.GENERAL)
 
     possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
     valid_selector_columns = [elm for elm in possible_selector_columns if elm in result_df.columns]
@@ -200,17 +202,18 @@ def create_grouped_statistical_result_table_data_polars(
     # Groupby and aggregate result df
     # - Expect the result df to have one unique column per statistic per result name, i.e. "result_name_mean", "result_name_stddev", etc.
     per_group_statistical_df: pl.DataFrame | None = None
-    if len(group_by_identifier_values) > 0:
+    if group_by_identifiers is None:
+        # If no grouping, aggregate entire df using expressions in select
+        # Only keep the result name columns and its statistics (i.e. keep no identifier columns)
+        per_group_statistical_df = result_df.select(statistic_aggregation_expressions)
+    else:
+        group_by_identifier_values = list(set([elm.value for elm in group_by_identifiers]))
         # Perform aggregation per grouping
         per_group_statistical_df = (
             result_df.select(group_by_identifier_values + valid_result_names)
             .group_by(group_by_identifier_values)
             .agg(statistic_aggregation_expressions)
         )
-    else:
-        # If no grouping, aggregate entire df using expressions in select
-        # Only keep the result name columns and its statistics (i.e. keep no identifier columns)
-        per_group_statistical_df = result_df.select(statistic_aggregation_expressions)
 
     # Convert statistical DataFrame to statistical result table data
     selector_column_data_list, results_statistical_data_list = _convert_statistical_df_to_statistical_result_table_data(
@@ -221,8 +224,8 @@ def create_grouped_statistical_result_table_data_polars(
 
 
 def _validate_length_of_statistics_data_lists(
-    selector_column_data_list: List[RepeatedTableColumnData],
-    result_statistical_data_list: List[TableColumnStatisticalData],
+    selector_column_data_list: list[RepeatedTableColumnData],
+    result_statistical_data_list: list[TableColumnStatisticalData],
 ) -> None:
     """
     Verify that the length of the statistical data lists are equal. I.e. equal number of rows in each list.
@@ -264,9 +267,9 @@ def _create_repeated_table_column_data_from_polars_column(
     """
 
     # unique() method might not preserve the order of the unique values
-    unique_values: List[str | int] = column_values.unique().to_list()
+    unique_values: list[str | int] = column_values.unique().to_list()
     value_to_index_map = {value: index for index, value in enumerate(unique_values)}
-    indices: List[int] = [value_to_index_map[value] for value in column_values.to_list()]
+    indices: list[int] = [value_to_index_map[value] for value in column_values.to_list()]
 
     return RepeatedTableColumnData(column_name=column_name, unique_values=unique_values, indices=indices)
 
@@ -282,13 +285,13 @@ def create_inplace_volumetric_table_data_from_result_df(
 
     possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
     existing_selector_columns = [name for name in result_df.columns if name in possible_selector_columns]
-    selector_column_data_list: List[RepeatedTableColumnData] = []
+    selector_column_data_list: list[RepeatedTableColumnData] = []
     for column_name in existing_selector_columns:
         column = result_df[column_name]
         selector_column_data_list.append(_create_repeated_table_column_data_from_polars_column(column_name, column))
 
     existing_result_column_names = [name for name in result_df.columns if name not in existing_selector_columns]
-    result_column_data_list: List[TableColumnData] = []
+    result_column_data_list: list[TableColumnData] = []
     for column_name in existing_result_column_names:
         result_column_data_list.append(
             TableColumnData(column_name=column_name, values=result_df[column_name].to_list())
@@ -302,9 +305,9 @@ def create_inplace_volumetric_table_data_from_result_df(
 
 
 def create_volumetric_df_per_fluid_zone(
-    fluid_zones: List[FluidZone],
+    fluid_zones: list[FluidZone],
     volumetric_df: pl.DataFrame,
-) -> Dict[FluidZone, pl.DataFrame]:
+) -> dict[FluidZone, pl.DataFrame]:
     """
     Create a volumetric DataFrame per fluid zone
 
@@ -314,7 +317,7 @@ def create_volumetric_df_per_fluid_zone(
     The fluid columns are stripped of the fluid zone suffix.
 
     Returns:
-    Dict[FluidZone, pl.DataFrame]: A dictionary with fluid zone as key and volumetric DataFrame as value
+    dict[FluidZone, pl.DataFrame]: A dictionary with fluid zone as key and volumetric DataFrame as value
 
 
     Example:
@@ -324,20 +327,20 @@ def create_volumetric_df_per_fluid_zone(
             - volumetric_df.columns = ["REAL", "ZONE", "REGION", "FACIES", "STOIIP_OIL", "GIIP_GAS", "HCPV_OIL", "HCPV_GAS", "HCPV_WATER"]
 
     - Output:
-        - df_dict: Dict[FluidZone, pl.DataFrame]:
+        - df_dict: dict[FluidZone, pl.DataFrame]:
             - df_dict[FluidZone.OIL]: volumetric_df_oil
                 volumetric_df_oil.columns = ["REAL", "ZONE", "REGION", "FACIES", "STOIIP", "HCPV"]
             - df_dict[FluidZone.GAS]: volumetric_df_gas
                 - volumetric_df_gas.columns = ["REAL", "ZONE", "REGION", "FACIES", "GIIP", "HCPV"]
 
     """
-    column_names: List[str] = volumetric_df.columns
+    column_names: list[str] = volumetric_df.columns
 
     # Iterate over column_names to keep order of volumetric_df.columns
     possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
     selector_columns = [col for col in column_names if col in possible_selector_columns]
 
-    fluid_zone_to_df_map: Dict[FluidZone, pl.DataFrame] = {}
+    fluid_zone_to_df_map: dict[FluidZone, pl.DataFrame] = {}
     for fluid_zone in fluid_zones:
         fluid_zone_suffix = f"_{fluid_zone.value.upper()}"
         fluid_columns = [name for name in column_names if name.endswith(fluid_zone_suffix)]
@@ -346,7 +349,7 @@ def create_volumetric_df_per_fluid_zone(
             continue
 
         # Mapping old column with suffix to new column without fluid zone suffix, e.g. "HCPV_OIL" -> "HCPV"
-        columns_rename_map: Dict[str, str] = {col: col.removesuffix(fluid_zone_suffix) for col in fluid_columns}
+        columns_rename_map: dict[str, str] = {col: col.removesuffix(fluid_zone_suffix) for col in fluid_columns}
         fluid_zone_df = volumetric_df.select(selector_columns + fluid_columns).rename(columns_rename_map)
 
         # Place DataFrame into fluid zone map
@@ -356,7 +359,7 @@ def create_volumetric_df_per_fluid_zone(
 
 def create_volumetric_summed_fluid_zones_df(
     volumetric_df: pl.DataFrame,
-    fluid_zones: List[FluidZone],
+    fluid_zones: list[FluidZone],
 ) -> pl.DataFrame:
     """
     Creating a volumetric DataFrame summed across fluid zones
@@ -395,7 +398,7 @@ def create_volumetric_summed_fluid_zones_df(
     )
 
     # Per volume name without fluid zone suffix, sum the columns with the same name
-    volume_name_sum_expressions: List[pl.Expr] = []
+    volume_name_sum_expressions: list[pl.Expr] = []
     for volume_name in volumetric_names:
         # Get volume columns with selected fluid zones
         volume_columns_with_suffix = [
@@ -416,7 +419,7 @@ def create_volumetric_summed_fluid_zones_df(
         volume_name_sum_expressions.append(volume_name_sum_expression.alias(volume_name))
 
     # Create df with selector columns and summed volume columns using expressions
-    column_names_and_expressions: List[str | pl.Expr] = valid_selector_columns + volume_name_sum_expressions
+    column_names_and_expressions: list[str | pl.Expr] = valid_selector_columns + volume_name_sum_expressions
     volumetric_across_fluid_zones_df = volumetric_df.select(column_names_and_expressions)
 
     return volumetric_across_fluid_zones_df
@@ -432,22 +435,22 @@ def _create_named_expression_with_nan_for_inf(expr: pl.Expr, name: str) -> pl.Ex
 
 
 def create_property_column_expressions(
-    volume_df_columns: List[str], properties: List[str], fluid_zone: Optional[FluidZone] = None
-) -> List[pl.Expr]:
+    volume_df_columns: list[str], properties: list[str], fluid_zone: FluidZone | None = None
+) -> list[pl.Expr]:
     """
     Create Polars expressions for property columns base available volume columns.
 
     If one of the volume names needed for a property is not found, the property expressions is not provided
 
     Args:
-    - volume_df_columns (List[str]): List of column names of volume pl.Dataframe
-    - properties (List[str]): Name of the properties to calculate
+    - volume_df_columns (list[str]): list of column names of volume pl.Dataframe
+    - properties (list[str]): Name of the properties to calculate
 
     Returns:
-    - List[pl.Expr]: List of Polars expressions for property columns
+    - list[pl.Expr]: list of Polars expressions for property columns
 
     """
-    calculated_property_expressions: List[pl.Expr] = []
+    calculated_property_expressions: list[pl.Expr] = []
 
     # NOTE: If one of the volume names needed for a property is not found, the property array is not calculated
     # TODO: Consider "/"-operator vs pl.col().truediv() for division, e.g. pl.col("NET").truediv(pl.col("BULK"))
@@ -477,20 +480,20 @@ def create_property_column_expressions(
 
 
 def create_calculated_volume_column_expressions(
-    volume_df_columns: List[str], calculated_volumes: List[str], fluid_zone: Optional[FluidZone] = None
-) -> List[pl.Expr]:
+    volume_df_columns: list[str], calculated_volumes: list[str], fluid_zone: FluidZone | None = None
+) -> list[pl.Expr]:
     """
     Create Polars expressions for calculated volume columns base available volume columns.
 
     Args:
-    - volume_df_columns (List[str]): List of column names of volume pl.DataFrame
-    - calculated_volumes (List[str]): Name of the volume column to calculate
+    - volume_df_columns (list[str]): list of column names of volume pl.DataFrame
+    - calculated_volumes (list[str]): Name of the volume column to calculate
 
     Returns:
-    - List[pl.Expr]: List of Polars expressions for calculated volume columns
+    - list[pl.Expr]: list of Polars expressions for calculated volume columns
 
     """
-    calculated_volume_expressions: List[pl.Expr] = []
+    calculated_volume_expressions: list[pl.Expr] = []
 
     # Handle STOIIP_TOTAL and GIIP_TOTAL
     if "STOIIP_TOTAL" in calculated_volumes:

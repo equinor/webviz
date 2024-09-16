@@ -1,10 +1,12 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Deselect, SelectAll } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import { Button } from "../Button";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 
@@ -33,6 +35,7 @@ export type SelectProps<TValue = string> = {
     multiple?: boolean;
     width?: string | number;
     debounceTimeMs?: number;
+    showQuickSelectButtons?: boolean;
 } & BaseComponentProps;
 
 const noMatchingOptionsText = "No matching options";
@@ -354,82 +357,122 @@ export function Select<TValue = string>(props: SelectProps<TValue>) {
         setReportedVirtualizationStartIndex(index);
     }
 
+    function handleSelectAll() {
+        if (!onChange) {
+            return;
+        }
+        onChange(props.options.map((option) => option.value));
+    }
+
+    function handleUnselectAll() {
+        if (!onChange) {
+            return;
+        }
+        onChange([]);
+    }
+
     return (
-        <BaseComponent disabled={props.disabled}>
-            <div
-                id={props.wrapperId}
-                className={resolveClassNames("relative", {
-                    "no-select": props.disabled,
-                    "pointer-events-none": props.disabled,
-                    "opacity-30": props.disabled,
-                })}
-                style={{ width: props.width, minWidth: props.width }}
-            >
-                {filterWithDefault && (
-                    <Input
-                        id={props.id}
-                        type="text"
-                        value={filterString}
-                        onChange={handleFilterChange}
-                        placeholder="Filter options..."
-                    />
-                )}
-                <div
-                    className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white input-comp"
-                    style={{ height: sizeWithDefault * 24 + 2 }}
-                    ref={ref}
-                    tabIndex={0}
-                >
-                    {filteredOptions.length === 0 && (
-                        <div className="p-1 flex items-center text-gray-400 select-none">
-                            {options.length === 0 || filterString === "" ? noOptionsText : noMatchingOptionsText}
-                        </div>
-                    )}
-                    <Virtualization
-                        containerRef={ref}
-                        items={filteredOptions}
-                        itemSize={24}
-                        onScroll={handleVirtualizationScroll}
-                        renderItem={(option, index) => {
-                            return (
-                                <div
-                                    key={option.value}
-                                    className={resolveClassNames(
-                                        "cursor-pointer",
-                                        "pl-2",
-                                        "pr-2",
-                                        "flex",
-                                        "gap-2",
-                                        "items-center",
-                                        "select-none",
-                                        {
-                                            "hover:bg-blue-100": !selectedOptionValues.includes(option.value),
-                                            "bg-blue-600 text-white box-border hover:bg-blue-700":
-                                                selectedOptionValues.includes(option.value),
-                                            "pointer-events-none": option.disabled,
-                                            "text-gray-400": option.disabled,
-                                            outline: index === currentFocusIndex && hasFocus,
-                                        }
-                                    )}
-                                    onClick={(e) => handleOptionClick(e, option, index)}
-                                    style={{ height: 24 }}
-                                >
-                                    {option.adornment}
-                                    <span
-                                        title={option.hoverText ?? option.label}
-                                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap flex-grow"
-                                    >
-                                        {option.label}
-                                    </span>
-                                </div>
-                            );
-                        }}
-                        direction="vertical"
-                        startIndex={virtualizationStartIndex}
-                    />
+        <div className="flex flex-col gap-2 text-sm">
+            {props.showQuickSelectButtons && (
+                <div className="flex gap-2 items-center">
+                    <Button
+                        onClick={handleSelectAll}
+                        startIcon={<SelectAll fontSize="inherit" />}
+                        variant="text"
+                        title="Select all"
+                        size="small"
+                        disabled={props.disabled}
+                    >
+                        Select all
+                    </Button>
+                    <Button
+                        onClick={handleUnselectAll}
+                        startIcon={<Deselect fontSize="inherit" />}
+                        variant="text"
+                        title="Unselect all"
+                        size="small"
+                        disabled={props.disabled}
+                    >
+                        Unselect all
+                    </Button>
                 </div>
-            </div>
-        </BaseComponent>
+            )}
+            <BaseComponent disabled={props.disabled}>
+                <div
+                    id={props.wrapperId}
+                    className={resolveClassNames("relative", {
+                        "no-select": props.disabled,
+                        "pointer-events-none": props.disabled,
+                        "opacity-30": props.disabled,
+                    })}
+                    style={{ width: props.width, minWidth: props.width }}
+                >
+                    {filterWithDefault && (
+                        <Input
+                            id={props.id}
+                            type="text"
+                            value={filterString}
+                            onChange={handleFilterChange}
+                            placeholder="Filter options..."
+                        />
+                    )}
+                    <div
+                        className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white input-comp"
+                        style={{ height: sizeWithDefault * 24 + 2 }}
+                        ref={ref}
+                        tabIndex={0}
+                    >
+                        {filteredOptions.length === 0 && (
+                            <div className="p-1 flex items-center text-gray-400 select-none">
+                                {options.length === 0 || filterString === "" ? noOptionsText : noMatchingOptionsText}
+                            </div>
+                        )}
+                        <Virtualization
+                            containerRef={ref}
+                            items={filteredOptions}
+                            itemSize={24}
+                            onScroll={handleVirtualizationScroll}
+                            renderItem={(option, index) => {
+                                return (
+                                    <div
+                                        key={option.value}
+                                        className={resolveClassNames(
+                                            "cursor-pointer",
+                                            "pl-2",
+                                            "pr-2",
+                                            "flex",
+                                            "gap-2",
+                                            "items-center",
+                                            "select-none",
+                                            {
+                                                "hover:bg-blue-100": !selectedOptionValues.includes(option.value),
+                                                "bg-blue-600 text-white box-border hover:bg-blue-700":
+                                                    selectedOptionValues.includes(option.value),
+                                                "pointer-events-none": option.disabled,
+                                                "text-gray-400": option.disabled,
+                                                outline: index === currentFocusIndex && hasFocus,
+                                            }
+                                        )}
+                                        onClick={(e) => handleOptionClick(e, option, index)}
+                                        style={{ height: 24 }}
+                                    >
+                                        {option.adornment}
+                                        <span
+                                            title={option.hoverText ?? option.label}
+                                            className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap flex-grow"
+                                        >
+                                            {option.label}
+                                        </span>
+                                    </div>
+                                );
+                            }}
+                            direction="vertical"
+                            startIndex={virtualizationStartIndex}
+                        />
+                    </div>
+                </div>
+            </BaseComponent>
+        </div>
     );
 }
 

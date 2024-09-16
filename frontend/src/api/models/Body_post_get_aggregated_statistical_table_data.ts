@@ -2,13 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { InplaceVolumetricsIdentifier } from './InplaceVolumetricsIdentifier';
 import type { InplaceVolumetricsIdentifierWithValues } from './InplaceVolumetricsIdentifierWithValues';
 export type Body_post_get_aggregated_statistical_table_data = {
-    /**
-     * The identifiers to group table data by
-     */
-    group_by_identifiers: Array<InplaceVolumetricsIdentifier>;
     /**
      * Selected identifiers and wanted values
      */
