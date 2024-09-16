@@ -5,13 +5,14 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
 
 from primary.auth.auth_helper import AuthHelper
+from primary.services.sumo_access.surface_access import SurfaceAccess
 from primary.services.sumo_access.seismic_access import SeismicAccess, VdsHandle
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.services.vds_access.request_types import VdsCoordinates, VdsCoordinateSystem
 from primary.services.vds_access.response_types import VdsMetadata
 from primary.services.vds_access.vds_access import VdsAccess
 
-from . import schemas
+from . import converters, schemas
 
 LOGGER = logging.getLogger(__name__)
 
@@ -99,3 +100,49 @@ async def post_get_seismic_fence(
         min_fence_depth=depth_axis_meta.min,
         max_fence_depth=depth_axis_meta.max,
     )
+
+
+"""
+@router.get("/get_seismic_attribute_near_surface/")
+async def get_seismic_attribute_near_surface(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    case_uuid: str = Query(description="Sumo case uuid"),
+    ensemble_name: str = Query(description="Ensemble name"),
+    realization_num: int = Query(description="Realization number"),
+    seismic_cube_attribute: str = Query(description="Seismic cube attribute"),
+    seismic_timestamp_or_timestep: str = Query(description="Timestamp or timestep"),
+    surface_name: str = Query(description="Surface name"),
+    surface_attribute: str = Query(description="Surface attribute"),
+) -> schemas.SurfaceMeshAndProperty:
+    ""
+    Get a directory of surface names, attributes and time/interval strings for simulated dynamic surfaces.
+    ""
+    seismic_access = SeismicAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+
+    timestamp = None
+    timestep = None
+    if "--" in seismic_timestamp_or_timestep:
+        timestep = seismic_timestamp_or_timestep
+    else:
+        timestamp = seismic_timestamp_or_timestep
+
+    vds_handle: Optional[VdsHandle] = None
+    try:
+        vds_handle = await seismic_access.get_vds_handle_async(
+            realization=1,
+            iteration=ensemble_name,
+            cube_tagname=seismic_cube_attribute,
+            timestep=timestep,
+            timestamp=timestamp,
+        )
+    except ValueError as err:
+        raise HTTPException(status_code=404, detail=str(err)) from err
+
+    surface_access = SurfaceAccess(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    xtg_surf = surface_access.get_static_surf(real_num=1, name=surface_name, attribute=surface_attribute).copy()
+
+    vdsaccess = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
+    seismic_values = vdsaccess.get_surface_values(xtgeo_surf=xtg_surf, above=5, below=5, attribute="mean")
+
+    return converters.to_api_surface_data(xtg_surf, seismic_values)
+"""

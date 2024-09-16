@@ -41,7 +41,8 @@ class WellboreHeader(BaseModel):
     well_northing: float
     depth_reference_point: str
     depth_reference_elevation: float
-
+    wellbore_purpose:str
+    wellbore_status:str
 
 class StratigraphicUnit(BaseModel):
     """

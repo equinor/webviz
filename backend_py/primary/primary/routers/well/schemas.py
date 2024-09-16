@@ -32,7 +32,8 @@ class WellboreHeader(BaseModel):
     wellNorthing: float
     depthReferencePoint: str
     depthReferenceElevation: float
-
+    wellborePurpose: str
+    wellboreStatus: str
 
 class WellboreTrajectory(BaseModel):
     wellboreUuid: str

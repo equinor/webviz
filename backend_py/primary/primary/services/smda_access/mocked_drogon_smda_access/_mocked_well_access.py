@@ -85,6 +85,8 @@ class WellAccess:
                 well_northing=5934232.000,
                 depth_reference_point="RKB",
                 depth_reference_elevation=25.0,
+                wellbore_purpose="production",
+                wellbore_status="active",
             ),
             WellboreHeader(
                 wellbore_uuid="drogon_horizontal",
@@ -95,5 +97,7 @@ class WellAccess:
                 well_northing=5930542.294,
                 depth_reference_point="RKB",
                 depth_reference_elevation=49.0,
+                wellbore_purpose="production",
+                wellbore_status="active",
             ),
         ]

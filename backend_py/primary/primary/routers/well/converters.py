@@ -57,6 +57,8 @@ def convert_wellbore_header_to_schema(
         wellNorthing=drilled_wellbore_header.well_northing,
         depthReferencePoint=drilled_wellbore_header.depth_reference_point,
         depthReferenceElevation=drilled_wellbore_header.depth_reference_elevation,
+        wellborePurpose=drilled_wellbore_header.wellbore_purpose,
+        wellboreStatus=drilled_wellbore_header.wellbore_status,
     )
 
 
