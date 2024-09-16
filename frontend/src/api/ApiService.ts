@@ -19,6 +19,7 @@ import { RftService } from './services/RftService';
 import { SeismicService } from './services/SeismicService';
 import { SurfaceService } from './services/SurfaceService';
 import { TimeseriesService } from './services/TimeseriesService';
+import { VfpService } from './services/VfpService';
 import { WellService } from './services/WellService';
 import { WellCompletionsService } from './services/WellCompletionsService';
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
@@ -37,6 +38,7 @@ export class ApiService {
     public readonly seismic: SeismicService;
     public readonly surface: SurfaceService;
     public readonly timeseries: TimeseriesService;
+    public readonly vfp: VfpService;
     public readonly well: WellService;
     public readonly wellCompletions: WellCompletionsService;
     public readonly request: BaseHttpRequest;
@@ -66,6 +68,7 @@ export class ApiService {
         this.seismic = new SeismicService(this.request);
         this.surface = new SurfaceService(this.request);
         this.timeseries = new TimeseriesService(this.request);
+        this.vfp = new VfpService(this.request);
         this.well = new WellService(this.request);
         this.wellCompletions = new WellCompletionsService(this.request);
     }

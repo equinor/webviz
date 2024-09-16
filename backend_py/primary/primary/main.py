@@ -28,6 +28,7 @@ from primary.routers.rft.router import router as rft_router
 from primary.routers.seismic.router import router as seismic_router
 from primary.routers.surface.router import router as surface_router
 from primary.routers.timeseries.router import router as timeseries_router
+from primary.routers.vfp.router import router as vfp_router
 from primary.routers.well.router import router as well_router
 from primary.routers.well_completions.router import router as well_completions_router
 from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
@@ -87,6 +88,7 @@ app.include_router(polygons_router, prefix="/polygons", tags=["polygons"])
 app.include_router(graph_router, prefix="/graph", tags=["graph"])
 app.include_router(observations_router, prefix="/observations", tags=["observations"])
 app.include_router(rft_router, prefix="/rft", tags=["rft"])
+app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
 
 auth_helper = AuthHelper()
