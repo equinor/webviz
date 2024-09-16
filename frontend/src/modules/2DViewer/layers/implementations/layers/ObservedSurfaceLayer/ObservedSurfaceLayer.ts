@@ -14,7 +14,7 @@ import { ObservedSurfaceContext } from "./ObservedSurfaceContext";
 import { ObservedSurfaceSettings } from "./types";
 
 import { LayerDelegate } from "../../../delegates/LayerDelegate";
-import { Layer } from "../../../interfaces";
+import { BoundingBox, Layer } from "../../../interfaces";
 
 export class ObservedSurfaceLayer
     implements Layer<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
@@ -44,6 +44,19 @@ export class ObservedSurfaceLayer
         newSettings: ObservedSurfaceSettings
     ): boolean {
         return !isEqual(prevSettings, newSettings);
+    }
+
+    makeBoundingBox(): BoundingBox | null {
+        const data = this._layerDelegate.getData();
+        if (!data) {
+            return null;
+        }
+
+        return {
+            x: [data.transformed_bbox_utm.min_x, data.transformed_bbox_utm.max_x],
+            y: [data.transformed_bbox_utm.min_y, data.transformed_bbox_utm.max_y],
+            z: [0, 0],
+        };
     }
 
     fechData(queryClient: QueryClient): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {

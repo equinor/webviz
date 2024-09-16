@@ -16,7 +16,7 @@ import { RealizationGridContext } from "./RealizationGridContext";
 import { RealizationGridSettings } from "./types";
 
 import { LayerDelegate } from "../../../delegates/LayerDelegate";
-import { Layer } from "../../../interfaces";
+import { BoundingBox, Layer } from "../../../interfaces";
 
 export class RealizationGridLayer
     implements
@@ -65,6 +65,19 @@ export class RealizationGridLayer
         newSettings: RealizationGridSettings
     ): boolean {
         return !isEqual(prevSettings, newSettings);
+    }
+
+    makeBoundingBox(): BoundingBox | null {
+        const data = this._layerDelegate.getData();
+        if (!data) {
+            return null;
+        }
+
+        return {
+            x: [data.gridSurfaceData.xmin, data.gridSurfaceData.xmax],
+            y: [data.gridSurfaceData.ymin, data.gridSurfaceData.ymax],
+            z: [data.gridSurfaceData.zmin, data.gridSurfaceData.zmax],
+        };
     }
 
     fechData(queryClient: QueryClient): Promise<{

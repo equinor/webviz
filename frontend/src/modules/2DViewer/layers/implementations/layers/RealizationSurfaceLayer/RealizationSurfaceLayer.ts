@@ -1,5 +1,6 @@
 import { SurfaceDataPng_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { calcBoundsForRotationAroundUpperLeftCorner } from "@modules/2DViewer/layers/components/utils";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
@@ -14,7 +15,7 @@ import { isEqual } from "lodash";
 import { RealizationSurfaceContext } from "./RealizationSurfaceContext";
 import { RealizationSurfaceSettings } from "./types";
 
-import { Layer } from "../../../interfaces";
+import { BoundingBox, Layer } from "../../../interfaces";
 
 export class RealizationSurfaceLayer
     implements Layer<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
@@ -44,6 +45,19 @@ export class RealizationSurfaceLayer
         newSettings: RealizationSurfaceSettings
     ): boolean {
         return !isEqual(prevSettings, newSettings);
+    }
+
+    makeBoundingBox(): BoundingBox | null {
+        const data = this._layerDelegate.getData();
+        if (!data) {
+            return null;
+        }
+
+        return {
+            x: [data.transformed_bbox_utm.min_x, data.transformed_bbox_utm.max_x],
+            y: [data.transformed_bbox_utm.min_y, data.transformed_bbox_utm.max_y],
+            z: [0, 0],
+        };
     }
 
     fechData(queryClient: QueryClient): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {

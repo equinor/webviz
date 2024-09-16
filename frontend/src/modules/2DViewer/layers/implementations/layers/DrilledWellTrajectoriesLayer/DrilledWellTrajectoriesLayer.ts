@@ -11,7 +11,7 @@ import { DrilledWellTrajectoriesContext } from "./DrilledWellTrajectoriesContext
 import { DrilledWellTrajectoriesSettings } from "./types";
 
 import { LayerDelegate } from "../../../delegates/LayerDelegate";
-import { Layer } from "../../../interfaces";
+import { BoundingBox, Layer } from "../../../interfaces";
 
 export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]> {
     private _layerDelegate: LayerDelegate<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]>;
@@ -39,6 +39,36 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         newSettings: DrilledWellTrajectoriesSettings
     ): boolean {
         return !isEqual(prevSettings, newSettings);
+    }
+
+    makeBoundingBox(): BoundingBox | null {
+        const data = this._layerDelegate.getData();
+        if (!data) {
+            return null;
+        }
+
+        const bbox: BoundingBox = {
+            x: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
+            y: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
+            z: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
+        };
+
+        for (const trajectory of data) {
+            for (const point of trajectory.northingArr) {
+                bbox.x[0] = Math.min(bbox.x[0], point);
+                bbox.x[1] = Math.max(bbox.x[1], point);
+            }
+            for (const point of trajectory.eastingArr) {
+                bbox.y[0] = Math.min(bbox.y[0], point);
+                bbox.y[1] = Math.max(bbox.y[1], point);
+            }
+            for (const point of trajectory.tvdMslArr) {
+                bbox.z[0] = Math.min(bbox.z[0], point);
+                bbox.z[1] = Math.max(bbox.z[1], point);
+            }
+        }
+
+        return bbox;
     }
 
     fechData(queryClient: QueryClient): Promise<WellboreTrajectory_api[]> {

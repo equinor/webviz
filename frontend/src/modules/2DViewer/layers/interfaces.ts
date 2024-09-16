@@ -33,6 +33,12 @@ export enum LayerStatus {
     INVALID_SETTINGS = "INVALID_SETTINGS",
 }
 
+export type BoundingBox = {
+    x: [number, number];
+    y: [number, number];
+    z: [number, number];
+};
+
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
     (oldValues: { [K in TKey]: TSettings[K] }, newValues: { [K in TKey]: TSettings[K] }): void;
 }
@@ -41,6 +47,7 @@ export interface Layer<TSettings extends Settings, TData> extends Item {
     getLayerDelegate(): LayerDelegate<TSettings, TData>;
     doSettingsChangesRequireDataRefetch(prevSettings: TSettings, newSettings: TSettings): boolean;
     fechData(queryClient: QueryClient): Promise<TData>;
+    makeBoundingBox?(): BoundingBox | null;
 }
 
 export function instanceofLayer(item: Item): item is Layer<Settings, any> {

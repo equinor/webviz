@@ -53,27 +53,31 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             groupDelegate = group.getGroupDelegate();
         }
 
+        const numSharedSettings = groupDelegate.findChildren((item) => {
+            return item instanceof SharedSetting;
+        }).length;
+
         switch (identifier) {
             case "view":
-                groupDelegate.appendChild(new View("New View", colorSet.getNextColor()));
+                groupDelegate.insertChild(new View("New View", colorSet.getNextColor()), numSharedSettings);
                 return;
             case "observed_surface":
-                groupDelegate.appendChild(new ObservedSurfaceLayer());
+                groupDelegate.insertChild(new ObservedSurfaceLayer(), numSharedSettings);
                 return;
             case "statistical_surface":
-                groupDelegate.appendChild(new StatisticalSurfaceLayer());
+                groupDelegate.insertChild(new StatisticalSurfaceLayer(), numSharedSettings);
                 return;
             case "realization_surface":
-                groupDelegate.appendChild(new RealizationSurfaceLayer());
+                groupDelegate.insertChild(new RealizationSurfaceLayer(), numSharedSettings);
                 return;
             case "realization_polygons":
-                groupDelegate.appendChild(new RealizationPolygonsLayer());
+                groupDelegate.insertChild(new RealizationPolygonsLayer(), numSharedSettings);
                 return;
             case "drilled_wellbores":
-                groupDelegate.appendChild(new DrilledWellTrajectoriesLayer());
+                groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(), numSharedSettings);
                 return;
             case "realization_grid":
-                groupDelegate.appendChild(new RealizationGridLayer());
+                groupDelegate.insertChild(new RealizationGridLayer(), numSharedSettings);
                 return;
             case "ensemble":
                 groupDelegate.prependChild(new SharedSetting(new Ensemble()));
@@ -161,13 +165,16 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         destination.insertChild(movedItem, position);
     }
 
+    const hasView = groupDelegate.findChildren((item) => item instanceof View).length > 0;
+    const adjustedLayerActions = hasView ? LAYER_ACTIONS : LAYER_ACTIONS.filter((group) => group.label === "View");
+
     return (
         <div className="h-full flex flex-col gap-1">
             <div className="flex-grow flex flex-col min-h-0">
                 <div className="w-full flex-grow flex flex-col min-h-0">
                     <div className="flex bg-slate-100 p-2 items-center border-b border-gray-300 gap-2">
                         <div className="flex-grow font-bold text-sm">Layers</div>
-                        <LayersActions layersActionGroups={LAYER_ACTIONS} onActionClick={handleLayerAction} />
+                        <LayersActions layersActionGroups={adjustedLayerActions} onActionClick={handleLayerAction} />
                     </div>
                     <div className="w-full flex-grow flex flex-col relative h-full">
                         <SortableList

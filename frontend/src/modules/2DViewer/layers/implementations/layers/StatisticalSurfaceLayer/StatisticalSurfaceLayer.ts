@@ -14,7 +14,7 @@ import { isEqual } from "lodash";
 import { StatisticalSurfaceContext } from "./StatisticalSurfaceContext";
 import { StatisticalSurfaceSettings } from "./types";
 
-import { Layer } from "../../../interfaces";
+import { BoundingBox, Layer } from "../../../interfaces";
 
 export class StatisticalSurfaceLayer
     implements Layer<StatisticalSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
@@ -44,6 +44,19 @@ export class StatisticalSurfaceLayer
         newSettings: StatisticalSurfaceSettings
     ): boolean {
         return !isEqual(prevSettings, newSettings);
+    }
+
+    makeBoundingBox(): BoundingBox | null {
+        const data = this._layerDelegate.getData();
+        if (!data) {
+            return null;
+        }
+
+        return {
+            x: [data.transformed_bbox_utm.min_x, data.transformed_bbox_utm.max_x],
+            y: [data.transformed_bbox_utm.min_y, data.transformed_bbox_utm.max_y],
+            z: [0, 0],
+        };
     }
 
     fechData(queryClient: QueryClient): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {

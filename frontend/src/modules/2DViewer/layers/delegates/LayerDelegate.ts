@@ -8,7 +8,7 @@ import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
 import { PublishSubscribe, PublishSubscribeHandler } from "../PublishSubscribeHandler";
 import { SharedSetting } from "../SharedSetting";
-import { Layer, LayerStatus, Settings, SettingsContext } from "../interfaces";
+import { BoundingBox, Layer, LayerStatus, Settings, SettingsContext } from "../interfaces";
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -32,6 +32,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
     private _status: LayerStatus = LayerStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
+    private _boundingBox: BoundingBox | null = null;
 
     constructor(owner: Layer<TSettings, TData>, settingsContext: SettingsContext<TSettings>) {
         this._owner = owner;
@@ -69,6 +70,14 @@ export class LayerDelegate<TSettings extends Settings, TData>
 
     getSettingsContext(): SettingsContext<TSettings> {
         return this._settingsContext;
+    }
+
+    getBoundingBox(): BoundingBox | null {
+        return this._boundingBox;
+    }
+
+    private invalidateBoundingBox(): void {
+        this._boundingBox = null;
     }
 
     setLayerManager(layerManager: LayerManager | null): void {
@@ -210,9 +219,13 @@ export class LayerDelegate<TSettings extends Settings, TData>
         }
 
         this.setStatus(LayerStatus.LOADING);
+        this.invalidateBoundingBox();
 
         try {
             this._data = await this._owner.fechData(queryClient);
+            if (this._owner.makeBoundingBox) {
+                this._boundingBox = this._owner.makeBoundingBox();
+            }
             if (this._queryKeys.length === null && isDevMode()) {
                 console.warn(
                     "Did you forget to use 'setQueryKeys' in your layer implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour."

@@ -11,7 +11,7 @@ import { isEqual } from "lodash";
 import { RealizationPolygonsContext } from "./RealizationPolygonsContext";
 import { RealizationPolygonsSettings } from "./types";
 
-import { Layer } from "../../../interfaces";
+import { BoundingBox, Layer } from "../../../interfaces";
 
 export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettings, PolygonData_api[]> {
     private _layerDelegate: LayerDelegate<RealizationPolygonsSettings, PolygonData_api[]>;
@@ -39,6 +39,36 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
         newSettings: RealizationPolygonsSettings
     ): boolean {
         return !isEqual(prevSettings, newSettings);
+    }
+
+    makeBoundingBox(): BoundingBox | null {
+        const data = this._layerDelegate.getData();
+        if (!data) {
+            return null;
+        }
+
+        const bbox: BoundingBox = {
+            x: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
+            y: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
+            z: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
+        };
+
+        for (const polygon of data) {
+            for (const point of polygon.x_arr) {
+                bbox.x[0] = Math.min(bbox.x[0], point);
+                bbox.x[1] = Math.max(bbox.x[1], point);
+            }
+            for (const point of polygon.y_arr) {
+                bbox.y[0] = Math.min(bbox.y[0], point);
+                bbox.y[1] = Math.max(bbox.y[1], point);
+            }
+            for (const point of polygon.z_arr) {
+                bbox.z[0] = Math.min(bbox.z[0], point);
+                bbox.z[1] = Math.max(bbox.z[1], point);
+            }
+        }
+
+        return bbox;
     }
 
     fechData(queryClient: QueryClient): Promise<PolygonData_api[]> {

@@ -5,7 +5,7 @@ import { MenuDivider } from "@lib/components/MenuDivider";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
 import { Dropdown, MenuButton } from "@mui/base";
-import { Add, ArrowDropDown, GridView } from "@mui/icons-material";
+import { Add, ArrowDropDown } from "@mui/icons-material";
 
 export type LayersAction = {
     identifier: string;
@@ -40,7 +40,7 @@ export function LayersActions<TLayerType extends string, TSettingType extends st
                     content.push(<MenuDivider key={index} />);
                 }
                 content.push(
-                    <MenuHeading key={`${item.label}-${index}`} style={{ paddingLeft: `${indentLevel * 1}rem` }}>
+                    <MenuHeading key={`${item.label}-${index}`} style={{ paddingLeft: `${indentLevel + 1}rem` }}>
                         {item.label}
                     </MenuHeading>
                 );
