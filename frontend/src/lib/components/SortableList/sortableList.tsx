@@ -22,6 +22,7 @@ export type IsMoveAllowedArgs = {
     originType: ItemType | null;
     destinationId: string | null;
     destinationType: ItemType | null;
+    position: number;
 };
 
 export type SortableListContextType = {
@@ -114,6 +115,8 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             let currentScrollTime = DEFAULT_SCROLL_TIME;
 
             function handlePointerDown(e: PointerEvent) {
+                e.preventDefault();
+                e.stopPropagation();
                 const target = e.target;
                 if (!target) {
                     return;
@@ -318,7 +321,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 }
 
                 const positionDelta = hoveredElementAndArea.area === HoveredArea.TOP ? 0 : 1;
-                const newPosition =
+                let newPosition =
                     getItemPositionInGroup(hoveredElementAndArea.element, draggedElementInfo.element) + positionDelta;
                 const currentPosition = getItemPositionInGroup(draggedElementInfo.element);
                 const draggedElementParentId = draggedElementInfo.parent?.id ?? null;
@@ -358,6 +361,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     ) {
                         destinationType = ItemType.GROUP;
                         destinationId = hoveredElementId ?? "";
+                        newPosition = 0;
                     }
                 }
 
@@ -370,6 +374,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                         originType: draggedElementInfo.parent?.type ?? null,
                         destinationId,
                         destinationType,
+                        position: newPosition,
                     })
                 ) {
                     currentlyHoveredElementInfo = null;
@@ -410,40 +415,41 @@ export function SortableList(props: SortableListProps): React.ReactNode {
 
                 const draggedElementParent = getItemParent(draggedElementInfo.element);
 
-                if (isMoveAllowed !== undefined) {
-                    const parentElement = getItemParent(currentlyHoveredElementInfo.element);
-                    const parentType = parentElement ? getItemType(parentElement) : null;
-                    if (
-                        !isMoveAllowed({
-                            movedItemId: draggedElementInfo.id,
-                            movedItemType: draggedElementInfo.type,
-                            originId: getGroupId(draggedElementParent),
-                            originType: getItemType(draggedElementInfo.element),
-                            destinationId: getGroupId(parentElement),
-                            destinationType: parentType,
-                        })
-                    ) {
-                        return;
-                    }
-                }
+                const originId = getGroupId(draggedElementParent);
+
+                const destination = getItemParent(currentlyHoveredElementInfo.element);
+                let destinationId = getGroupId(destination);
+                let destinationType = destination ? getItemType(destination) : null;
+
+                const positionDelta = currentlyHoveredElementInfo.area === HoveredArea.TOP ? 0 : 1;
+                let position =
+                    getItemPositionInGroup(currentlyHoveredElementInfo.element, draggedElementInfo.element) +
+                    positionDelta;
 
                 if (
                     currentlyHoveredElementInfo.area === HoveredArea.HEADER ||
                     currentlyHoveredElementInfo.area === HoveredArea.CENTER
                 ) {
-                    const originId = getGroupId(draggedElementParent);
-                    const destinationId = currentlyHoveredElementInfo.id;
-                    const position = 0;
-                    onItemMoved(draggedElementInfo.id, originId, destinationId, position);
-                    return;
+                    destinationId = currentlyHoveredElementInfo.id;
+                    destinationType = currentlyHoveredElementInfo.type;
+                    position = 0;
                 }
 
-                const originId = getGroupId(draggedElementParent);
-                const destinationId = getGroupId(getItemParent(currentlyHoveredElementInfo.element));
-                const positionDelta = currentlyHoveredElementInfo.area === HoveredArea.TOP ? 0 : 1;
-                const position =
-                    getItemPositionInGroup(currentlyHoveredElementInfo.element, draggedElementInfo.element) +
-                    positionDelta;
+                if (isMoveAllowed !== undefined) {
+                    if (
+                        !isMoveAllowed({
+                            movedItemId: draggedElementInfo.id,
+                            movedItemType: draggedElementInfo.type,
+                            originId: originId,
+                            originType: getItemType(draggedElementInfo.element),
+                            destinationId,
+                            destinationType,
+                            position,
+                        })
+                    ) {
+                        return;
+                    }
+                }
 
                 onItemMoved(draggedElementInfo.id, originId, destinationId, position);
             }
@@ -500,6 +506,19 @@ export function SortableList(props: SortableListProps): React.ReactNode {
 
     function makeChildren(): React.ReactNode[] {
         const children: React.ReactNode[] = [];
+        if (props.children.length === 0 && props.contentWhenEmpty) {
+            if (typeof props.contentWhenEmpty === "string") {
+                children.push(props.contentWhenEmpty);
+            } else if (React.isValidElement(props.contentWhenEmpty)) {
+                children.push(
+                    React.cloneElement(props.contentWhenEmpty, {
+                        key: "contentWhenEmpty",
+                    })
+                );
+            }
+            return children;
+        }
+
         for (const child of props.children) {
             if (typeof child.type === "string") {
                 continue;
@@ -522,7 +541,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
     }
 
     return (
-        <div className="w-full h-full flex flex-col relative" ref={mainDivRef}>
+        <div className="w-full h-full flex flex-col relative min-h-0 max-h-full" ref={mainDivRef}>
             <SortableListContext.Provider
                 value={{
                     draggedElementId: draggedItemId,
@@ -544,7 +563,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     ref={scrollDivRef}
                     onScroll={handleScroll}
                 >
-                    <div className="flex flex-col relative" ref={listDivRef}>
+                    <div className="flex flex-col relative min-h-0" ref={listDivRef}>
                         {makeChildren()}
                         <div className="h-2 min-h-2">
                             <div className="h-2" />
