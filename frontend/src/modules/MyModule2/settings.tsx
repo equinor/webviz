@@ -141,11 +141,11 @@ export function Settings(): React.ReactNode {
     );
 
     function makeChildren(items: Item[]): React.ReactElement[] {
-        return items.map((item) => {
+        return items.map((item, idx) => {
             if (item.type === "item") {
                 return (
                     <SortableListItem key={item.id} title={item.title} id={item.id}>
-                        {item.title}
+                        {idx % 2 === 0 ? item.title : undefined}
                     </SortableListItem>
                 );
             } else {

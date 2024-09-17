@@ -69,7 +69,9 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
                             <Header {...props} />
                         </div>
                     )}
-                <div className={resolveClassNames("bg-white border-b shadow")}>{props.children}</div>
+                {props.children !== undefined && (
+                    <div className={resolveClassNames("bg-white border-b shadow")}>{props.children}</div>
+                )}
             </div>
             {isHovered && sortableListContext.hoveredArea === HoveredArea.BOTTOM && <SortableListDropIndicator />}
         </>
