@@ -1,6 +1,5 @@
 import { SurfaceDataPng_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { calcBoundsForRotationAroundUpperLeftCorner } from "@modules/2DViewer/layers/components/utils";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";

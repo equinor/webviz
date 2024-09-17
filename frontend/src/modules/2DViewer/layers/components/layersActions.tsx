@@ -9,10 +9,12 @@ import { Add, ArrowDropDown } from "@mui/icons-material";
 
 export type LayersAction = {
     identifier: string;
+    icon?: React.ReactNode;
     label: string;
 };
 
 export type LayersActionGroup = {
+    icon?: React.ReactNode;
     label: string;
     children: (LayersAction | LayersActionGroup)[];
 };
@@ -21,14 +23,12 @@ function isLayersActionGroup(action: LayersAction | LayersActionGroup): action i
     return (action as LayersActionGroup).children !== undefined;
 }
 
-export type LayersActionsProps<TLayerType extends string, TSettingType extends string> = {
+export type LayersActionsProps = {
     layersActionGroups: LayersActionGroup[];
     onActionClick: (actionIdentifier: string) => void;
 };
 
-export function LayersActions<TLayerType extends string, TSettingType extends string>(
-    props: LayersActionsProps<TLayerType, TSettingType>
-): React.ReactNode {
+export function LayersActions(props: LayersActionsProps): React.ReactNode {
     function makeContent(
         layersActionGroups: (LayersActionGroup | LayersAction)[],
         indentLevel: number = 0
@@ -40,7 +40,12 @@ export function LayersActions<TLayerType extends string, TSettingType extends st
                     content.push(<MenuDivider key={index} />);
                 }
                 content.push(
-                    <MenuHeading key={`${item.label}-${index}`} style={{ paddingLeft: `${indentLevel + 1}rem` }}>
+                    <MenuHeading
+                        key={`${item.label}-${index}`}
+                        style={{ paddingLeft: `${indentLevel + 1}rem` }}
+                        classNames="flex gap-2 items-center"
+                    >
+                        {item.icon}
                         {item.label}
                     </MenuHeading>
                 );
@@ -49,10 +54,11 @@ export function LayersActions<TLayerType extends string, TSettingType extends st
                 content.push(
                     <MenuItem
                         key={item.identifier}
-                        className="text-sm p-0.5"
+                        className="text-sm p-0.5 flex gap-2 items-center"
                         style={{ paddingLeft: `${indentLevel * 1}rem` }}
                         onClick={() => props.onActionClick(item.identifier)}
                     >
+                        {item.icon}
                         {item.label}
                     </MenuItem>
                 );

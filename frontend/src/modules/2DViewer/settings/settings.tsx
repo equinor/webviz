@@ -2,7 +2,7 @@ import React from "react";
 
 import { ModuleSettingsProps } from "@framework/Module";
 import { IsMoveAllowedArgs, SortableList } from "@lib/components/SortableList";
-import { Add } from "@mui/icons-material";
+import { Add, Panorama, SettingsApplications } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useSetAtom } from "jotai";
@@ -11,6 +11,7 @@ import { layerManagerAtom } from "./atoms/baseAtoms";
 
 import { LayerManager } from "../layers/LayerManager";
 import { usePublishSubscribeTopicValue } from "../layers/PublishSubscribeHandler";
+import { SettingsGroup } from "../layers/SettingsGroup";
 import { SharedSetting } from "../layers/SharedSetting";
 import { View } from "../layers/View";
 import { LayersActionGroup, LayersActions } from "../layers/components/layersActions";
@@ -60,6 +61,9 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         switch (identifier) {
             case "view":
                 groupDelegate.insertChild(new View("New View", colorSet.getNextColor()), numSharedSettings);
+                return;
+            case "settings-group":
+                groupDelegate.insertChild(new SettingsGroup("Settings group"), numSharedSettings);
                 return;
             case "observed_surface":
                 groupDelegate.insertChild(new ObservedSurfaceLayer(), numSharedSettings);
@@ -201,7 +205,18 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
         children: [
             {
                 identifier: "view",
+                icon: <Panorama fontSize="inherit" />,
                 label: "Add View",
+            },
+        ],
+    },
+    {
+        label: "Settings group",
+        children: [
+            {
+                identifier: "settings-group",
+                icon: <SettingsApplications fontSize="inherit" />,
+                label: "Add Settings group",
             },
         ],
     },

@@ -2,11 +2,14 @@ import React from "react";
 
 import { Layer as DeckGlLayer, View as DeckGlView } from "@deck.gl/core/typed";
 import { ModuleViewProps } from "@framework/Module";
-import { Rect2D, outerRectContainsInnerRect, rectContainsPoint } from "@lib/utils/geometry";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { Rect2D, rectContainsPoint } from "@lib/utils/geometry";
+import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
+import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { useQueryClient } from "@tanstack/react-query";
 import { ViewportType } from "@webviz/subsurface-viewer";
-import SubsurfaceViewer, { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { Axes2DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { makeLayer } from "./layerFactory";
@@ -22,6 +25,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const id = React.useId();
 
     const [prevBounds, setPrevBounds] = React.useState<[number, number, number, number] | null>(null);
+
+    const mainDivRef = React.useRef<HTMLDivElement>(null);
+    const mainDivSize = useElementSize(mainDivRef);
 
     const queryClient = useQueryClient();
     const layerManager = props.viewContext.useSettingsToViewInterfaceValue("layerManager");
@@ -66,12 +72,14 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             /* @ts-expect-error */
             <DeckGlView key={group} id={group}>
-                <div className="w-full font-bold text-lg flex gap-2 justify-center items-center">
-                    <div
-                        className="rounded-full h-3 w-3"
-                        style={{ backgroundColor: results.groupMeta.get(group)?.color ?? undefined }}
-                    />
-                    <div className="">{results.groupMeta.get(group)?.name ?? group}</div>
+                <div className="font-bold text-lg flex gap-2 justify-center items-center">
+                    <div className="flex gap-2 items-center bg-white p-2 backdrop-blur bg-opacity-50 rounded">
+                        <div
+                            className="rounded-full h-3 w-3 border border-white"
+                            style={{ backgroundColor: results.groupMeta.get(group)?.color ?? undefined }}
+                        />
+                        <div className="">{results.groupMeta.get(group)?.name ?? group}</div>
+                    </div>
                 </div>
             </DeckGlView>
         );
@@ -110,8 +118,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         setPrevBounds(results.bounds);
     }
 
+    const colorScales: { id: string; colorScale: ColorScaleWithName }[] = [];
+
     return (
-        <div className="relative w-full h-full flex flex-col">
+        <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
+            <ColorLegendsContainer colorScales={colorScales} height={mainDivSize.height / 2 - 50} position="left" />
             <SubsurfaceViewerWithCameraState
                 id={`subsurface-viewer-${id}`}
                 views={views}

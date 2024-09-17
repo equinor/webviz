@@ -327,7 +327,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 const draggedElementParentId = draggedElementInfo.parent?.id ?? null;
 
                 if (
-                    hoveredElementAndArea.area !== HoveredArea.HEADER &&
+                    ![HoveredArea.HEADER, HoveredArea.CENTER].includes(hoveredElementAndArea.area) &&
                     draggedElementParentId === getGroupId(getItemParent(hoveredElementAndArea.element)) &&
                     newPosition === currentPosition
                 ) {
