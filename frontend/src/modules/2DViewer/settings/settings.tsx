@@ -9,12 +9,13 @@ import { useSetAtom } from "jotai";
 
 import { layerManagerAtom } from "./atoms/baseAtoms";
 
+import { ColorScale } from "../layers/ColorScale";
 import { LayerManager } from "../layers/LayerManager";
 import { usePublishSubscribeTopicValue } from "../layers/PublishSubscribeHandler";
 import { SettingsGroup } from "../layers/SettingsGroup";
 import { SharedSetting } from "../layers/SharedSetting";
 import { View } from "../layers/View";
-import { LayersActionGroup, LayersActions } from "../layers/components/layersActions";
+import { LayersActionGroup, LayersActions } from "../layers/components/LayersActions";
 import { makeComponent } from "../layers/components/utils";
 import { GroupBaseTopic } from "../layers/delegates/GroupDelegate";
 import { DrilledWellTrajectoriesLayer } from "../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
@@ -64,6 +65,9 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 return;
             case "settings-group":
                 groupDelegate.insertChild(new SettingsGroup("Settings group"), numSharedSettings);
+                return;
+            case "color-scale":
+                groupDelegate.insertChild(new ColorScale("Color scale"), numSharedSettings);
                 return;
             case "observed_surface":
                 groupDelegate.insertChild(new ObservedSurfaceLayer(), numSharedSettings);
@@ -273,6 +277,15 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
             {
                 identifier: "surface_name",
                 label: "Surface Name",
+            },
+        ],
+    },
+    {
+        label: "Color scales",
+        children: [
+            {
+                identifier: "color-scale",
+                label: "Color scale",
             },
         ],
     },

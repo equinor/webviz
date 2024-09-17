@@ -1,11 +1,13 @@
 import { SortableListItemProps } from "@lib/components/SortableList";
 
+import { ColorScaleComponent } from "./ColorScaleComponent";
 import { LayerComponent } from "./LayerComponent";
+import { LayersActionGroup } from "./LayersActions";
 import { SettingsGroupComponent } from "./SettingsGroupComponent";
 import { SharedSettingComponent } from "./SharedSettingComponent";
 import { ViewComponent } from "./ViewComponent";
-import { LayersActionGroup } from "./layersActions";
 
+import { ColorScale } from "../ColorScale";
 import { SettingsGroup } from "../SettingsGroup";
 import { SharedSetting } from "../SharedSetting";
 import { View } from "../View";
@@ -17,7 +19,7 @@ export function makeComponent(
     onActionClick?: (identifier: string, group: Group) => void
 ): React.ReactElement<SortableListItemProps> {
     if (instanceofLayer(item)) {
-        return <LayerComponent key={item.getItemDelegate().getId()} layer={item} onRemove={() => {}} />;
+        return <LayerComponent key={item.getItemDelegate().getId()} layer={item} />;
     }
     if (instanceofGroup(item)) {
         if (item instanceof SettingsGroup) {
@@ -41,7 +43,10 @@ export function makeComponent(
         }
     }
     if (item instanceof SharedSetting) {
-        return <SharedSettingComponent key={item.getItemDelegate().getId()} sharedSetting={item} onRemove={() => {}} />;
+        return <SharedSettingComponent key={item.getItemDelegate().getId()} sharedSetting={item} />;
+    }
+    if (item instanceof ColorScale) {
+        return <ColorScaleComponent key={item.getItemDelegate().getId()} colorScale={item} />;
     }
     throw new Error("Not implemented");
 }

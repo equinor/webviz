@@ -1,18 +1,13 @@
 import { PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
 import { Layer } from "@deck.gl/core/typed";
 import { GeoJsonLayer } from "@deck.gl/layers/typed";
-import { ColorScale } from "@lib/utils/ColorScale";
 import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
-import {
-    ColormapLayer,
-    Grid3DLayer,
-    Hillshading2DLayer,
-    MapLayer,
-    WellsLayer,
-} from "@webviz/subsurface-viewer/dist/layers";
+import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
+import { ColormapLayer, Grid3DLayer, MapLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
+import { Rgb, parse } from "culori";
 import { Feature } from "geojson";
 import { SurfaceDataPng } from "src/api/models/SurfaceDataPng";
 
@@ -24,7 +19,7 @@ import { RealizationSurfaceLayer } from "../layers/implementations/layers/Realiz
 import { StatisticalSurfaceLayer } from "../layers/implementations/layers/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
 import { Layer as LayerInterface } from "../layers/interfaces";
 
-export function makeLayer(layer: LayerInterface<any, any>): Layer | null {
+export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
     const data = layer.getLayerDelegate().getData();
 
     if (!data) {
@@ -46,7 +41,13 @@ export function makeLayer(layer: LayerInterface<any, any>): Layer | null {
         return makeWellsLayer(data, layer.getItemDelegate().getId(), null);
     }
     if (layer instanceof RealizationGridLayer) {
-        return makeGrid3DLayer(layer.getItemDelegate().getId(), data.gridSurfaceData, data.gridParameterData, false);
+        return makeGrid3DLayer(
+            layer.getItemDelegate().getId(),
+            data.gridSurfaceData,
+            data.gridParameterData,
+            false,
+            colorScale
+        );
     }
     return null;
 }
@@ -252,13 +253,13 @@ export function makeGrid3DLayer(
     id: string,
     gridSurfaceData: GridSurface_trans,
     gridParameterData: GridMappedProperty_trans,
-    showGridLines: boolean
+    showGridLines: boolean,
+    colorScale?: ColorScaleWithName
     // colorScale: ColorScale
 ): WorkingGrid3dLayer {
     const offsetXyz = [gridSurfaceData.origin_utm_x, gridSurfaceData.origin_utm_y, 0];
     const pointsNumberArray = gridSurfaceData.pointsFloat32Arr.map((val, i) => val + offsetXyz[i % 3]);
     const polysNumberArray = gridSurfaceData.polysUint32Arr;
-    console.log(gridParameterData);
     const grid3dLayer = new Grid3DLayer({
         id: id,
         pointsData: pointsNumberArray,
@@ -271,17 +272,17 @@ export function makeGrid3DLayer(
         colorMapName: "Physics",
         colorMapClampColor: true,
         colorMapRange: [gridParameterData.min_grid_prop_value, gridParameterData.max_grid_prop_value],
-        /*
-        colorMapFunction: (value: number) => {
-            const interpolatedColor = colorScale.getColorPalette().getInterpolatedColor(value);
-            // const nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
-            const color = parse(interpolatedColor) as Rgb; // colorScale.getColorForValue(nonNormalizedValue)) as Rgb;
-            if (color === undefined) {
-                return [0, 0, 0];
-            }
-            return [color.r * 255, color.g * 255, color.b * 255];
-        },
-        */
+        colorMapFunction: colorScale
+            ? (value: number) => {
+                  const interpolatedColor = colorScale.getColorPalette().getInterpolatedColor(value);
+                  // const nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
+                  const color = parse(interpolatedColor) as Rgb; // colorScale.getColorForValue(nonNormalizedValue)) as Rgb;
+                  if (color === undefined) {
+                      return [0, 0, 0];
+                  }
+                  return [color.r * 255, color.g * 255, color.b * 255];
+              }
+            : undefined,
     });
     return grid3dLayer as unknown as WorkingGrid3dLayer;
 }

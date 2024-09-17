@@ -9,7 +9,6 @@ import { SharedSetting } from "../SharedSetting";
 
 export type SharedSettingComponentProps = {
     sharedSetting: SharedSetting;
-    onRemove: (id: string) => void;
 };
 
 export function SharedSettingComponent(props: SharedSettingComponentProps): React.ReactNode {

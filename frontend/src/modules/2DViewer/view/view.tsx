@@ -15,6 +15,7 @@ import { Axes2DLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { makeLayer } from "./layerFactory";
 
 import { Interfaces } from "../interfaces";
+import { ColorScale } from "../layers/ColorScale";
 import { LayerManager, LayerManagerTopic } from "../layers/LayerManager";
 import { usePublishSubscribeTopicValue } from "../layers/PublishSubscribeHandler";
 import { View as ViewGroup } from "../layers/View";
@@ -118,11 +119,13 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         setPrevBounds(results.bounds);
     }
 
-    const colorScales: { id: string; colorScale: ColorScaleWithName }[] = [];
-
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
-            <ColorLegendsContainer colorScales={colorScales} height={mainDivSize.height / 2 - 50} position="left" />
+            <ColorLegendsContainer
+                colorScales={results.colorScales}
+                height={mainDivSize.height / 2 - 50}
+                position="left"
+            />
             <SubsurfaceViewerWithCameraState
                 id={`subsurface-viewer-${id}`}
                 views={views}
@@ -154,6 +157,7 @@ function extractGroupsAndLayers(items: Item[]): {
     groupMeta: Map<string, GroupMeta>;
     globalLayers: DeckGlLayer[];
     bounds: [number, number, number, number];
+    colorScales: { id: string; colorScale: ColorScaleWithName }[];
 } {
     const groupLayersMap: Map<string, DeckGlLayer[]> = new Map();
     const groupMeta: Map<string, GroupMeta> = new Map();
@@ -164,6 +168,7 @@ function extractGroupsAndLayers(items: Item[]): {
         Number.NEGATIVE_INFINITY,
         Number.NEGATIVE_INFINITY,
     ];
+    const colorScales: { id: string; colorScale: ColorScaleWithName }[] = [];
 
     for (const item of items) {
         if (!item.getItemDelegate().isVisible()) {
@@ -175,7 +180,12 @@ function extractGroupsAndLayers(items: Item[]): {
                 continue;
             }
 
-            const layer = makeLayer(item);
+            const colorScale = findColorScale(item);
+            if (colorScale) {
+                colorScales.push(colorScale);
+            }
+
+            const layer = makeLayer(item, colorScale?.colorScale);
             if (!layer) {
                 continue;
             }
@@ -191,9 +201,11 @@ function extractGroupsAndLayers(items: Item[]): {
                     color: item.getGroupDelegate().getColor(),
                 });
 
-                const { layers: children, bounds: newBounds } = recursivelyExtractLayers(
-                    item.getGroupDelegate().getChildren()
-                );
+                const {
+                    layers: children,
+                    bounds: newBounds,
+                    colorScales: newColorScales,
+                } = recursivelyExtractLayers(item.getGroupDelegate().getChildren());
                 groupLayersMap.set(item.getItemDelegate().getId(), children);
                 bounds = [
                     Math.min(bounds[0], newBounds[0]),
@@ -201,11 +213,35 @@ function extractGroupsAndLayers(items: Item[]): {
                     Math.max(bounds[2], newBounds[2]),
                     Math.max(bounds[3], newBounds[3]),
                 ];
+                colorScales.push(...newColorScales);
             }
         }
     }
 
-    return { groupLayersMap, groupMeta, globalLayers, bounds };
+    return { groupLayersMap, groupMeta, globalLayers, bounds, colorScales };
+}
+
+function findColorScale(layer: Layer<any, any>): { id: string; colorScale: ColorScaleWithName } | null {
+    const colorScaleItemArr = layer
+        .getItemDelegate()
+        .getParentGroup()
+        ?.getAncestorAndSiblingItems((item) => item instanceof ColorScale);
+    if (!colorScaleItemArr || colorScaleItemArr.length === 0) {
+        return null;
+    }
+
+    const colorScaleItem = colorScaleItemArr[0];
+    if (!(colorScaleItem instanceof ColorScale)) {
+        return null;
+    }
+
+    return {
+        id: layer.getItemDelegate().getId(),
+        colorScale: ColorScaleWithName.fromColorScale(
+            colorScaleItem.getColorScale(),
+            layer.getItemDelegate().getName()
+        ),
+    };
 }
 
 function findBounds(
@@ -228,7 +264,11 @@ function findBounds(
     ];
 }
 
-function recursivelyExtractLayers(items: Item[]): { layers: DeckGlLayer[]; bounds: [number, number, number, number] } {
+function recursivelyExtractLayers(items: Item[]): {
+    layers: DeckGlLayer[];
+    bounds: [number, number, number, number];
+    colorScales: { id: string; colorScale: ColorScaleWithName }[];
+} {
     const layers: DeckGlLayer[] = [];
     let bounds: [number, number, number, number] = [
         Number.POSITIVE_INFINITY,
@@ -236,6 +276,7 @@ function recursivelyExtractLayers(items: Item[]): { layers: DeckGlLayer[]; bound
         Number.NEGATIVE_INFINITY,
         Number.NEGATIVE_INFINITY,
     ];
+    const colorScales: { id: string; colorScale: ColorScaleWithName }[] = [];
 
     for (const item of items) {
         if (!item.getItemDelegate().isVisible()) {
@@ -243,7 +284,12 @@ function recursivelyExtractLayers(items: Item[]): { layers: DeckGlLayer[]; bound
         }
 
         if (instanceofLayer(item)) {
-            const layer = makeLayer(item);
+            const colorScale = findColorScale(item);
+            if (colorScale) {
+                colorScales.push(colorScale);
+            }
+
+            const layer = makeLayer(item, colorScale?.colorScale);
             if (!layer) {
                 continue;
             }
@@ -270,5 +316,5 @@ function recursivelyExtractLayers(items: Item[]): { layers: DeckGlLayer[]; bound
         }
     }
 
-    return { layers: layers.reverse(), bounds };
+    return { layers: layers.reverse(), bounds, colorScales };
 }

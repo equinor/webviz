@@ -33,6 +33,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
     private _boundingBox: BoundingBox | null = null;
+    private _valueRange: [number, number] | null = null;
 
     constructor(owner: Layer<TSettings, TData>, settingsContext: SettingsContext<TSettings>) {
         this._owner = owner;
@@ -78,6 +79,14 @@ export class LayerDelegate<TSettings extends Settings, TData>
 
     private invalidateBoundingBox(): void {
         this._boundingBox = null;
+    }
+
+    private invalidateValueRange(): void {
+        this._valueRange = null;
+    }
+
+    getValueRange(): [number, number] | null {
+        return this._valueRange;
     }
 
     setLayerManager(layerManager: LayerManager | null): void {
@@ -220,11 +229,15 @@ export class LayerDelegate<TSettings extends Settings, TData>
 
         this.setStatus(LayerStatus.LOADING);
         this.invalidateBoundingBox();
+        this.invalidateValueRange();
 
         try {
             this._data = await this._owner.fechData(queryClient);
             if (this._owner.makeBoundingBox) {
                 this._boundingBox = this._owner.makeBoundingBox();
+            }
+            if (this._owner.makeValueRange) {
+                this._valueRange = this._owner.makeValueRange();
             }
             if (this._queryKeys.length === null && isDevMode()) {
                 console.warn(

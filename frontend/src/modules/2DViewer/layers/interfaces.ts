@@ -48,6 +48,7 @@ export interface Layer<TSettings extends Settings, TData> extends Item {
     doSettingsChangesRequireDataRefetch(prevSettings: TSettings, newSettings: TSettings): boolean;
     fechData(queryClient: QueryClient): Promise<TData>;
     makeBoundingBox?(): BoundingBox | null;
+    makeValueRange?(): [number, number] | null;
 }
 
 export function instanceofLayer(item: Item): item is Layer<Settings, any> {

@@ -1,8 +1,8 @@
 import { SortableListGroup } from "@lib/components/SortableList";
 import { SettingsApplications } from "@mui/icons-material";
 
-import { LayersActionGroup, LayersActions } from "./layersActions";
-import { RemoveButtonComponent } from "./removeButtonComponent";
+import { LayersActionGroup, LayersActions } from "./LayersActions";
+import { RemoveButtonComponent } from "./RemoveButtonComponent";
 import { makeComponent } from "./utils";
 
 import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";

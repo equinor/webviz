@@ -1,10 +1,10 @@
 import { SortableListGroup } from "@lib/components/SortableList";
 
-import { EditNameComponent } from "./editNameComponent";
-import { LayersActionGroup, LayersActions } from "./layersActions";
-import { RemoveButtonComponent } from "./removeButtonComponent";
+import { EditNameComponent } from "./EditNameComponent";
+import { LayersActionGroup, LayersActions } from "./LayersActions";
+import { RemoveButtonComponent } from "./RemoveButtonComponent";
+import { VisibilityToggleComponent } from "./VisibilityToggleComponent";
 import { makeComponent } from "./utils";
-import { VisibilityToggleComponent } from "./visibilityToggleComponent";
 
 import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
 import { GroupBaseTopic } from "../delegates/GroupDelegate";

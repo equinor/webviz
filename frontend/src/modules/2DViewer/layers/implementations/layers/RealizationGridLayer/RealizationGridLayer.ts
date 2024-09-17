@@ -80,6 +80,15 @@ export class RealizationGridLayer
         };
     }
 
+    makeValueRange(): [number, number] | null {
+        const data = this._layerDelegate.getData();
+        if (!data) {
+            return null;
+        }
+
+        return [data.gridParameterData.min_grid_prop_value, data.gridParameterData.max_grid_prop_value];
+    }
+
     fechData(queryClient: QueryClient): Promise<{
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;

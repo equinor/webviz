@@ -5,10 +5,10 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { SortableListItem } from "@lib/components/SortableList";
 import { Check, Error } from "@mui/icons-material";
 
+import { EditNameComponent } from "./EditNameComponent";
+import { RemoveButtonComponent } from "./RemoveButtonComponent";
 import { SettingComponent } from "./SettingComponent";
-import { EditNameComponent } from "./editNameComponent";
-import { RemoveButtonComponent } from "./removeButtonComponent";
-import { VisibilityToggleComponent } from "./visibilityToggleComponent";
+import { VisibilityToggleComponent } from "./VisibilityToggleComponent";
 
 import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
 import { LayerDelegateTopic } from "../delegates/LayerDelegate";
@@ -16,7 +16,6 @@ import { Layer, LayerStatus, Setting } from "../interfaces";
 
 export type LayerComponentProps = {
     layer: Layer<any, any>;
-    onRemove: (id: string) => void;
 };
 
 export function LayerComponent(props: LayerComponentProps): React.ReactNode {
