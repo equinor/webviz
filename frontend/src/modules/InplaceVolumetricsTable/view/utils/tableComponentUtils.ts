@@ -220,5 +220,5 @@ function formatResultValue(value: string | number | null): string {
         decimalPlaces = 3;
     }
 
-    return `${value.toFixed(decimalPlaces)} ${suffix}`;
+    return `${scaledValue.toFixed(decimalPlaces)} ${suffix}`;
 }
