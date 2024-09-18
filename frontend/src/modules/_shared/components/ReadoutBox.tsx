@@ -133,11 +133,11 @@ function InfoLabel(props: { item: ReadoutItem; noLabelColor?: boolean }): React.
 
 function InfoItem(props: InfoItem): React.ReactNode {
     return (
-        <div className="table-row">
-            <div className="table-cell w-4 align-middle">{props.adornment}</div>
-            <div className="table-cell w-32 align-middle">{props.name}:</div>
-            <div className="table-cell align-middle">{makeFormattedInfoValue(props.value)}</div>
-            {props.unit && <div className="table-cell text-right align-middle">{props.unit}</div>}
+        <div className="grid gap-x-1 gap-y-3 items-center" style={{ gridTemplateColumns: "1rem 8rem 1fr auto" }}>
+            <div>{props.adornment}</div>
+            <div>{props.name}:</div>
+            <div>{makeFormattedInfoValue(props.value)}</div>
+            <div className="text-right">{props.unit}</div>
         </div>
     );
 }
