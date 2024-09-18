@@ -1,4 +1,9 @@
-import { Fragment, ReactNode, useEffect, useRef, useState } from "react";
+import React from "react";
+
+import { useStableProp } from "@lib/hooks/useStableProp";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+
+import _ from "lodash";
 
 export type ReadoutItem = {
     label: string;
@@ -13,6 +18,10 @@ export type InfoItem = {
     unit?: string;
 };
 
+// Top not included, as it's not relevant
+type EdgeDistance = { left: number; right: number; bottom: number };
+type PartialEdgeDistance = Partial<EdgeDistance>;
+
 export type ReadoutBoxProps = {
     /** A list of readouts to display */
     readoutItems: ReadoutItem[];
@@ -22,66 +31,71 @@ export type ReadoutBoxProps = {
     noLabelColor?: boolean;
     /** Disables the mouse-avoiding behaviour */
     flipDisabled?: boolean;
+    /** The distance between the box and the edges of the parent container. Give a single number for equal distance on all sides */
+    edgeDistanceRem?: number | PartialEdgeDistance;
 };
 
-export function ReadoutBox(props: ReadoutBoxProps): ReactNode {
-    const readoutItems = props.readoutItems;
-    const maxNumItems = props.maxNumItems ?? 3;
+export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
+    const maxNumItemsOrDefault = props.maxNumItems ?? 3;
 
-    const [flipped, setFlipped] = useState<boolean>(false);
-    const readoutRoot = useRef<HTMLDivElement>(null);
+    const [flipped, setFlipped] = React.useState<boolean>(false);
+    const [stableEdgeDistanceRem] = useStableProp(props.edgeDistanceRem);
+    const edgeDistance = React.useMemo(() => computeEdgeDistance(stableEdgeDistanceRem), [stableEdgeDistanceRem]);
+    const readoutRoot = React.useRef<HTMLDivElement>(null);
 
-    // How far away from the lower right corner the box is placed
-    // TODO: Expose as prop?
-    // ! "3" is based on the left-12/right-12 layout values.
-    const cornerDistance = parseInt(getComputedStyle(document.documentElement).fontSize) * 3;
+    React.useEffect(
+        function addListenersForFlip() {
+            if (props.flipDisabled) return;
 
-    useEffect(() => {
-        if (props.flipDisabled) return;
+            function maybeFlipBox(evt: MouseEvent) {
+                if (!readoutRoot.current) return;
 
-        function maybeFlipBox(evt: MouseEvent) {
-            if (!readoutRoot.current) return;
+                const offsetParent = readoutRoot.current.offsetParent;
+                if (!offsetParent) return; // Not floating, I believe
 
-            const offsetParent = readoutRoot.current.offsetParent;
-            if (!offsetParent) return; // Not floating, I believe
+                const parentRect = offsetParent.getBoundingClientRect();
+                const { top, bottom, width } = readoutRoot.current.getBoundingClientRect();
 
-            const parentRect = offsetParent.getBoundingClientRect();
-            const { top, bottom, width } = readoutRoot.current.getBoundingClientRect();
+                // If above, or below, it's guaranteed to fit
+                if (evt.clientY < top || evt.clientY > bottom) {
+                    if (flipped) setFlipped(false);
+                    return;
+                }
 
-            // If above, or below, it's guaranteed to fit
-            if (evt.clientY < top || evt.clientY > bottom) {
-                if (flipped) setFlipped(false);
-                return;
+                const prefferredRight = parentRect.right - edgeDistance.right;
+                const prefferredLeft = parentRect.right - width - edgeDistance.right;
+
+                if (evt.clientX < prefferredLeft || evt.clientX > prefferredRight) {
+                    if (flipped) setFlipped(false);
+                } else {
+                    if (!flipped) setFlipped(true);
+                }
             }
 
-            const prefferredRight = parentRect.right - cornerDistance;
-            const prefferredLeft = parentRect.right - width - cornerDistance;
+            document.addEventListener("mousemove", maybeFlipBox);
+            return () => document.removeEventListener("mousemove", maybeFlipBox);
+        },
+        [props.flipDisabled, flipped, edgeDistance]
+    );
 
-            if (evt.clientX < prefferredLeft || evt.clientX > prefferredRight) {
-                if (flipped) setFlipped(false);
-            } else {
-                if (!flipped) setFlipped(true);
-            }
-        }
+    // Guard. If there are no readout items, don't render the box
+    if (props.readoutItems.length === 0) return null;
 
-        document.addEventListener("mousemove", maybeFlipBox);
+    const boxPositionStyle: React.CSSProperties = { bottom: edgeDistance.bottom + "px" };
 
-        return () => document.removeEventListener("mousemove", maybeFlipBox);
-    }, [cornerDistance, flipped, props.flipDisabled]);
-
-    if (readoutItems.length === 0) return null;
+    if (flipped) boxPositionStyle.left = edgeDistance.left + "px";
+    else boxPositionStyle.right = edgeDistance.right + "px";
 
     return (
         <div
             ref={readoutRoot}
-            className={`absolute bottom-10 right-12 z-50 w-60  flex flex-col gap-2 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none ${
-                flipped ? "left-12" : "right-12"
-            }`}
+            className="absolute z-50 w-60 flex flex-col gap-2 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none"
+            style={boxPositionStyle}
         >
-            {readoutItems.map((item, idx) => {
-                if (idx < maxNumItems) {
+            {props.readoutItems.map((item, idx) => {
+                if (idx < maxNumItemsOrDefault) {
                     return (
-                        <Fragment key={idx}>
+                        <React.Fragment key={idx}>
                             <div className="flex gap-2 font-bold items-center">
                                 {!props.noLabelColor && (
                                     <div
@@ -93,18 +107,20 @@ export function ReadoutBox(props: ReadoutBoxProps): ReactNode {
                             </div>
 
                             {item.info && item.info.map((i: InfoItem, idx: number) => <InfoItem key={idx} {...i} />)}
-                        </Fragment>
+                        </React.Fragment>
                     );
                 }
             })}
-            {readoutItems.length > maxNumItems && (
-                <div className="flex items-center gap-2">...and {readoutItems.length - maxNumItems} more</div>
+            {props.readoutItems.length > maxNumItemsOrDefault && (
+                <div className="flex items-center gap-2">
+                    ...and {props.readoutItems.length - maxNumItemsOrDefault} more
+                </div>
             )}
         </div>
     );
 }
 
-function InfoItem(props: InfoItem): ReactNode {
+function InfoItem(props: InfoItem): React.ReactNode {
     return (
         <div className="table-row">
             <div className="table-cell w-4 align-middle">{props.adornment}</div>
@@ -113,6 +129,19 @@ function InfoItem(props: InfoItem): ReactNode {
             {props.unit && <div className="table-cell text-right align-middle">{props.unit}</div>}
         </div>
     );
+}
+
+const DEFAULT_EDGE_DISTANCE: EdgeDistance = { left: 3, right: 3, bottom: 2.5 };
+
+function computeEdgeDistance(edgeDistanceProp?: number | PartialEdgeDistance): EdgeDistance {
+    let edgesRem: EdgeDistance;
+
+    if (typeof edgeDistanceProp === "number") {
+        edgesRem = { left: edgeDistanceProp, right: edgeDistanceProp, bottom: edgeDistanceProp };
+    } else {
+        edgesRem = _.defaults({}, edgeDistanceProp ?? {}, DEFAULT_EDGE_DISTANCE);
+    }
+    return _.mapValues(edgesRem, convertRemToPixels);
 }
 
 function makeFormatedInfoValue(value: string | number | boolean | number[]): string {
