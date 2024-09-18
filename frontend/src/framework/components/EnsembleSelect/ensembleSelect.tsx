@@ -7,7 +7,7 @@ type EnsembleSelectProps = {
     ensembleSet: EnsembleSet;
     value: EnsembleIdent[];
     onChange: (ensembleIdentArr: EnsembleIdent[]) => void;
-} & Omit<SelectProps, "options" | "value" | "onChange">;
+} & Omit<SelectProps<string>, "options" | "value" | "onChange">;
 
 export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
     const { ensembleSet, value, onChange, multiple, ...rest } = props;
