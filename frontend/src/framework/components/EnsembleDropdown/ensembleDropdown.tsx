@@ -7,7 +7,7 @@ type EnsembleDropdownProps = {
     ensembleSet: EnsembleSet;
     value: EnsembleIdent | null;
     onChange: (ensembleIdent: EnsembleIdent | null) => void;
-} & Omit<DropdownProps, "options" | "value" | "onChange">;
+} & Omit<DropdownProps<string>, "options" | "value" | "onChange">;
 
 export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     const { ensembleSet, value, onChange, ...rest } = props;
