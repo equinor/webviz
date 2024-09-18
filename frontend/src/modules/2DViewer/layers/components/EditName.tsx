@@ -4,11 +4,11 @@ import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
 import { Item } from "../interfaces";
 
-type EditItemNameComponentProps = {
+type EditItemNameProps = {
     item: Item;
 };
 
-export function EditNameComponent(props: EditItemNameComponentProps): React.ReactNode {
+export function EditName(props: EditItemNameProps): React.ReactNode {
     const itemName = usePublishSubscribeTopicValue(props.item.getItemDelegate(), ItemDelegateTopic.NAME);
 
     const [editingName, setEditingName] = React.useState<boolean>(false);

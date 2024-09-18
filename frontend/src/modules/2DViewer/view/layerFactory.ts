@@ -26,10 +26,10 @@ export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorSca
         return null;
     }
     if (layer instanceof ObservedSurfaceLayer) {
-        return createMapImageLayer(data, layer.getItemDelegate().getId());
+        return createMapImageLayer(data, layer.getItemDelegate().getId(), colorScale);
     }
     if (layer instanceof RealizationSurfaceLayer) {
-        return createMapImageLayer(data, layer.getItemDelegate().getId());
+        return createMapImageLayer(data, layer.getItemDelegate().getId(), colorScale);
     }
     if (layer instanceof StatisticalSurfaceLayer) {
         return createMapFloatLayer(data, layer.getItemDelegate().getId());
@@ -76,7 +76,7 @@ function createMapFloatLayer(layerData: SurfaceDataFloat_trans, id: string): Map
     });
 }
 
-function createMapImageLayer(layerData: SurfaceDataPng, id: string): ColormapLayer {
+function createMapImageLayer(layerData: SurfaceDataPng, id: string, colorScale?: ColorScaleWithName): ColormapLayer {
     return new ColormapLayer({
         id: id,
         image: `data:image/png;base64,${layerData.png_image_base64}`,
@@ -88,8 +88,10 @@ function createMapImageLayer(layerData: SurfaceDataPng, id: string): ColormapLay
         parameters: {
             depthTest: false,
         },
+        colorMapFunction: makeColorMapFunction(colorScale),
     });
 }
+
 function _calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;
     const height = (surfDef.npoints_y - 1) * surfDef.inc_y;
@@ -272,17 +274,25 @@ export function makeGrid3DLayer(
         colorMapName: "Physics",
         colorMapClampColor: true,
         colorMapRange: [gridParameterData.min_grid_prop_value, gridParameterData.max_grid_prop_value],
-        colorMapFunction: colorScale
-            ? (value: number) => {
-                  const interpolatedColor = colorScale.getColorForValue(value);
-                  // const nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
-                  const color = parse(interpolatedColor) as Rgb; // colorScale.getColorForValue(nonNormalizedValue)) as Rgb;
-                  if (color === undefined) {
-                      return [0, 0, 0];
-                  }
-                  return [color.r * 255, color.g * 255, color.b * 255];
-              }
-            : undefined,
+        colorMapFunction: makeColorMapFunction(colorScale),
     });
     return grid3dLayer as unknown as WorkingGrid3dLayer;
+}
+
+function makeColorMapFunction(
+    colorScale: ColorScaleWithName | undefined
+): ((value: number) => [number, number, number]) | undefined {
+    if (!colorScale) {
+        return undefined;
+    }
+
+    return (value: number) => {
+        const interpolatedColor = colorScale.getColorForValue(value);
+        // const nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
+        const color = parse(interpolatedColor) as Rgb; // colorScale.getColorForValue(nonNormalizedValue)) as Rgb;
+        if (color === undefined) {
+            return [0, 0, 0];
+        }
+        return [color.r * 255, color.g * 255, color.b * 255];
+    };
 }

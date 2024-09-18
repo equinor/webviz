@@ -4,11 +4,11 @@ import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
 import { Item } from "../interfaces";
 
-export type VisibilityToggleComponentProps = {
+export type VisibilityToggleProps = {
     item: Item;
 };
 
-export function VisibilityToggleComponent(props: VisibilityToggleComponentProps): React.ReactNode {
+export function VisibilityToggle(props: VisibilityToggleProps): React.ReactNode {
     const isVisible = usePublishSubscribeTopicValue(props.item.getItemDelegate(), ItemDelegateTopic.VISIBILITY);
 
     function handleToggleLayerVisibility() {

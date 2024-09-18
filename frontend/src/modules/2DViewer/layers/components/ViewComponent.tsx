@@ -1,9 +1,10 @@
 import { SortableListGroup } from "@lib/components/SortableList";
 
-import { EditNameComponent } from "./EditNameComponent";
+import { EditName } from "./EditName";
+import { EmptyContent } from "./EmptyContent";
 import { LayersActionGroup, LayersActions } from "./LayersActions";
-import { RemoveButtonComponent } from "./RemoveButtonComponent";
-import { VisibilityToggleComponent } from "./VisibilityToggleComponent";
+import { RemoveButton } from "./RemoveButton";
+import { VisibilityToggle } from "./VisibilityToggle";
 import { makeComponent } from "./utils";
 
 import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
@@ -31,7 +32,7 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
         if (props.actions) {
             adorment.push(<LayersActions layersActionGroups={props.actions} onActionClick={handleActionClick} />);
         }
-        adorment.push(<RemoveButtonComponent item={props.group} />);
+        adorment.push(<RemoveButton item={props.group} />);
         return adorment;
     }
 
@@ -47,19 +48,15 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
                             backgroundColor: color ?? undefined,
                         }}
                     />
-                    <EditNameComponent item={props.group} />
+                    <EditName item={props.group} />
                 </div>
             }
             contentStyle={{
                 backgroundColor: color ?? undefined,
             }}
-            startAdornment={<VisibilityToggleComponent item={props.group} />}
+            startAdornment={<VisibilityToggle item={props.group} />}
             endAdornment={<>{makeEndAdornment()}</>}
-            contentWhenEmpty={
-                <div className="flex !bg-white h-16 justify-center text-sm items-center gap-1">
-                    Drag a layer inside to add it to this group.
-                </div>
-            }
+            contentWhenEmpty={<EmptyContent>Drag a layer inside to add it to this group.</EmptyContent>}
         >
             {children.map((child: Item) => makeComponent(child, props.actions, props.onActionClick))}
         </SortableListGroup>

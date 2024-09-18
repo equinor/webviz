@@ -4,10 +4,12 @@ import { Item, instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum GroupBaseTopic {
     CHILDREN = "CHILDREN",
+    TREE_REVISION_NUMBER = "TREE_REVISION_NUMBER",
 }
 
 export type GroupBaseTopicPayloads = {
     [GroupBaseTopic.CHILDREN]: Item[];
+    [GroupBaseTopic.TREE_REVISION_NUMBER]: number;
 };
 
 export class GroupDelegate implements PublishSubscribe<GroupBaseTopic, GroupBaseTopicPayloads> {
@@ -15,6 +17,8 @@ export class GroupDelegate implements PublishSubscribe<GroupBaseTopic, GroupBase
     private _color: string | null = null;
     private _children: Item[] = [];
     private _publishSubscribeHandler = new PublishSubscribeHandler<GroupBaseTopic>();
+    private _subscriptions: Map<string, () => void> = new Map();
+    private _treeRevisionNumber: number = 0;
 
     constructor(owner: Item | null) {
         this._owner = owner;
@@ -28,6 +32,11 @@ export class GroupDelegate implements PublishSubscribe<GroupBaseTopic, GroupBase
         this._color = color;
     }
 
+    private incrementTreeRevisionNumber() {
+        this._treeRevisionNumber++;
+        this._publishSubscribeHandler.notifySubscribers(GroupBaseTopic.TREE_REVISION_NUMBER);
+    }
+
     private takeOwnershipOfChild(child: Item) {
         const layerManager = this._owner?.getItemDelegate().getLayerManager() ?? null;
 
@@ -37,8 +46,18 @@ export class GroupDelegate implements PublishSubscribe<GroupBaseTopic, GroupBase
         if (instanceofLayer(child)) {
             child.getLayerDelegate().setLayerManager(layerManager);
         }
+        if (instanceofGroup(child)) {
+            const unsubscribeFunc = child
+                .getGroupDelegate()
+                .getPublishSubscribeHandler()
+                .makeSubscriberFunction(GroupBaseTopic.CHILDREN)(() => {
+                this.incrementTreeRevisionNumber();
+            });
+            this._subscriptions.set(child.getItemDelegate().getId(), unsubscribeFunc);
+        }
 
         this._publishSubscribeHandler.notifySubscribers(GroupBaseTopic.CHILDREN);
+        this._publishSubscribeHandler.notifySubscribers(GroupBaseTopic.TREE_REVISION_NUMBER);
         this.notifyManagerOfItemChange();
     }
 
@@ -49,8 +68,15 @@ export class GroupDelegate implements PublishSubscribe<GroupBaseTopic, GroupBase
         if (instanceofLayer(child)) {
             child.getLayerDelegate().setLayerManager(null);
         }
+        if (instanceofGroup(child)) {
+            const unsubscribeFunc = this._subscriptions.get(child.getItemDelegate().getId());
+            if (unsubscribeFunc) {
+                unsubscribeFunc();
+            }
+        }
 
         this._publishSubscribeHandler.notifySubscribers(GroupBaseTopic.CHILDREN);
+        this._publishSubscribeHandler.notifySubscribers(GroupBaseTopic.TREE_REVISION_NUMBER);
         this.notifyManagerOfItemChange();
     }
 
@@ -154,6 +180,9 @@ export class GroupDelegate implements PublishSubscribe<GroupBaseTopic, GroupBase
         const snapshotGetter = (): any => {
             if (topic === GroupBaseTopic.CHILDREN) {
                 return this._children;
+            }
+            if (topic === GroupBaseTopic.TREE_REVISION_NUMBER) {
+                return this._treeRevisionNumber;
             }
         };
 

@@ -1,7 +1,11 @@
 import React from "react";
 
+import { Icon } from "@equinor/eds-core-react";
+import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
 import { ModuleSettingsProps } from "@framework/Module";
 import { IsMoveAllowedArgs, SortableList } from "@lib/components/SortableList";
+import { useElementSize } from "@lib/hooks/useElementSize";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { Add, Panorama, SettingsApplications } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -30,6 +34,9 @@ import { SurfaceName } from "../layers/implementations/settings/SurfaceName";
 import { Group, Item, instanceofGroup } from "../layers/interfaces";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
+    const layerListRef = React.useRef<HTMLDivElement>(null);
+    const layerListSize = useElementSize(layerListRef);
+
     const queryClient = useQueryClient();
     const layerManager = React.useRef<LayerManager>(
         new LayerManager(props.workbenchSession, props.workbenchSettings, queryClient)
@@ -67,7 +74,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 groupDelegate.insertChild(new SettingsGroup("Settings group"), numSharedSettings);
                 return;
             case "color-scale":
-                groupDelegate.insertChild(new ColorScale("Color scale"), numSharedSettings);
+                groupDelegate.prependChild(new ColorScale("Color scale"));
                 return;
             case "observed_surface":
                 groupDelegate.insertChild(new ObservedSurfaceLayer(), numSharedSettings);
@@ -113,22 +120,22 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             return false;
         }
 
-        const numSharedSettings =
+        const numSharedSettingsAndColorScales =
             destinationItem.getGroupDelegate().findChildren((item) => {
-                return item instanceof SharedSetting;
+                return item instanceof SharedSetting || item instanceof ColorScale;
             }).length ?? 0;
 
-        if (!(movedItem instanceof SharedSetting)) {
-            if (args.position < numSharedSettings) {
+        if (!(movedItem instanceof SharedSetting || movedItem instanceof ColorScale)) {
+            if (args.position < numSharedSettingsAndColorScales) {
                 return false;
             }
         } else {
             if (args.originId === args.destinationId) {
-                if (args.position >= numSharedSettings) {
+                if (args.position >= numSharedSettingsAndColorScales) {
                     return false;
                 }
             } else {
-                if (args.position > numSharedSettings) {
+                if (args.position > numSharedSettingsAndColorScales) {
                     return false;
                 }
             }
@@ -174,17 +181,20 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     }
 
     const hasView = groupDelegate.findChildren((item) => item instanceof View).length > 0;
-    const adjustedLayerActions = hasView ? LAYER_ACTIONS : LAYER_ACTIONS.filter((group) => group.label === "View");
+    const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
 
     return (
         <div className="h-full flex flex-col gap-1">
             <div className="flex-grow flex flex-col min-h-0">
-                <div className="w-full flex-grow flex flex-col min-h-0">
-                    <div className="flex bg-slate-100 p-2 items-center border-b border-gray-300 gap-2">
+                <div className="w-full flex-grow flex flex-col min-h-0" ref={layerListRef}>
+                    <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
                         <div className="flex-grow font-bold text-sm">Layers</div>
                         <LayersActions layersActionGroups={adjustedLayerActions} onActionClick={handleLayerAction} />
                     </div>
-                    <div className="w-full flex-grow flex flex-col relative h-full">
+                    <div
+                        className="w-full flex-grow flex flex-col relative"
+                        style={{ height: layerListSize.height - convertRemToPixels(12) }}
+                    >
                         <SortableList
                             onItemMoved={handleItemMoved}
                             isMoveAllowed={checkIfItemMoveAllowed}
@@ -203,24 +213,42 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     );
 }
 
-const LAYER_ACTIONS: LayersActionGroup[] = [
+const INITIAL_LAYER_ACTIONS: LayersActionGroup[] = [
     {
-        label: "View",
+        label: "Groups",
         children: [
             {
                 identifier: "view",
-                icon: <Panorama fontSize="inherit" />,
-                label: "Add View",
+                icon: <Panorama fontSize="small" />,
+                label: "Add view",
+            },
+        ],
+    },
+];
+
+const LAYER_ACTIONS: LayersActionGroup[] = [
+    {
+        label: "Groups",
+        children: [
+            {
+                identifier: "view",
+                icon: <Panorama fontSize="small" />,
+                label: "Add view",
+            },
+            {
+                identifier: "settings-group",
+                icon: <SettingsApplications fontSize="small" />,
+                label: "Add settings group",
             },
         ],
     },
     {
-        label: "Settings group",
+        label: "Utilities",
         children: [
             {
-                identifier: "settings-group",
-                icon: <SettingsApplications fontSize="inherit" />,
-                label: "Add Settings group",
+                identifier: "color-scale",
+                icon: <Icon data={color_palette} fontSize="small" />,
+                label: "Color scale",
             },
         ],
     },
@@ -232,14 +260,17 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 children: [
                     {
                         identifier: "observed_surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Observed Surface",
                     },
                     {
                         identifier: "statistical_surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Statistical Surface",
                     },
                     {
                         identifier: "realization_surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Realization Surface",
                     },
                 ],
@@ -249,14 +280,17 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 children: [
                     {
                         identifier: "realization_polygons",
+                        icon: <Icon data={fault} fontSize="small" />,
                         label: "Realization Polygons",
                     },
                     {
                         identifier: "drilled_wellbores",
+                        icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Drilled Wellbore Trajectories",
                     },
                     {
                         identifier: "realization_grid",
+                        icon: <Icon data={grid_layer} fontSize="small" />,
                         label: "Realization Grid",
                     },
                 ],
@@ -268,27 +302,24 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
         children: [
             {
                 identifier: "ensemble",
+                icon: <Icon data={settings} fontSize="small" />,
                 label: "Ensemble",
             },
             {
                 identifier: "realization",
+                icon: <Icon data={settings} fontSize="small" />,
                 label: "Realization",
             },
             {
                 identifier: "surface_name",
+                icon: <Icon data={settings} fontSize="small" />,
                 label: "Surface Name",
-            },
-        ],
-    },
-    {
-        label: "Color scales",
-        children: [
-            {
-                identifier: "color-scale",
-                label: "Color scale",
             },
         ],
     },
 ];
 
-const VIEW_ACTIONS: LayersActionGroup[] = LAYER_ACTIONS.filter((group) => group.label !== "View");
+const VIEW_ACTIONS: LayersActionGroup[] = LAYER_ACTIONS.map((group) => ({
+    ...group,
+    children: group.children.filter((child) => child.label !== "Add view"),
+}));

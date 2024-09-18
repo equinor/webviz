@@ -1,8 +1,9 @@
 import { SortableListGroup } from "@lib/components/SortableList";
 import { SettingsApplications } from "@mui/icons-material";
 
+import { EmptyContent } from "./EmptyContent";
 import { LayersActionGroup, LayersActions } from "./LayersActions";
-import { RemoveButtonComponent } from "./RemoveButtonComponent";
+import { RemoveButton } from "./RemoveButton";
 import { makeComponent } from "./utils";
 
 import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
@@ -30,7 +31,7 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
         if (props.actions) {
             adorment.push(<LayersActions layersActionGroups={props.actions} onActionClick={handleActionClick} />);
         }
-        adorment.push(<RemoveButtonComponent item={props.group} />);
+        adorment.push(<RemoveButton item={props.group} />);
         return adorment;
     }
 
@@ -48,9 +49,7 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
             startAdornment={<SettingsApplications fontSize="inherit" />}
             endAdornment={<>{makeEndAdornment()}</>}
             contentWhenEmpty={
-                <div className="flex !bg-white h-16 justify-center text-sm items-center gap-1">
-                    Drag a layer or setting inside to add it to this settings group.
-                </div>
+                <EmptyContent>Drag a layer or setting inside to add it to this settings group.</EmptyContent>
             }
         >
             {children.map((child: Item) => makeComponent(child, props.actions, props.onActionClick))}

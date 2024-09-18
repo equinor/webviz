@@ -9,9 +9,10 @@ import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/Sub
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { useQueryClient } from "@tanstack/react-query";
 import { ViewportType } from "@webviz/subsurface-viewer";
-import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import { ViewStateType, ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { Axes2DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
+import { Toolbar } from "./components/Toolbar";
 import { makeLayer } from "./layerFactory";
 
 import { Interfaces } from "../interfaces";
@@ -26,6 +27,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const id = React.useId();
 
     const [prevBounds, setPrevBounds] = React.useState<[number, number, number, number] | null>(null);
+    const [verticalScale, setVerticalScale] = React.useState<number>(1);
+    const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
@@ -40,6 +43,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     usePublishSubscribeTopicValue(
         layerManager ?? new LayerManager(props.workbenchSession, props.workbenchSettings, queryClient),
         LayerManagerTopic.LAYER_DATA_REVISION
+    );
+
+    usePublishSubscribeTopicValue(
+        layerManager?.getGroupDelegate() || new GroupDelegate(null),
+        GroupBaseTopic.TREE_REVISION_NUMBER
     );
 
     const results = extractGroupsAndLayers(items);
@@ -94,33 +102,67 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         })
     );
 
-    if (prevBounds !== null) {
-        const oldBoundingRect: Rect2D | null = {
-            x: prevBounds[0],
-            y: prevBounds[1],
-            width: prevBounds[2] - prevBounds[0],
-            height: prevBounds[3] - prevBounds[1],
-        };
+    if (results.bounds !== null) {
+        if (prevBounds !== null) {
+            const oldBoundingRect: Rect2D | null = {
+                x: prevBounds[0],
+                y: prevBounds[1],
+                width: prevBounds[2] - prevBounds[0],
+                height: prevBounds[3] - prevBounds[1],
+            };
 
-        const newBoundingRect: Rect2D = {
-            x: results.bounds[0],
-            y: results.bounds[1],
-            width: results.bounds[2] - results.bounds[0],
-            height: results.bounds[3] - results.bounds[1],
-        };
+            const newBoundingRect: Rect2D = {
+                x: results.bounds[0],
+                y: results.bounds[1],
+                width: results.bounds[2] - results.bounds[0],
+                height: results.bounds[3] - results.bounds[1],
+            };
 
-        if (
-            rectContainsPoint(oldBoundingRect, newBoundingRect) ||
-            rectContainsPoint(newBoundingRect, oldBoundingRect)
-        ) {
+            if (
+                !(
+                    rectContainsPoint(oldBoundingRect, newBoundingRect) ||
+                    rectContainsPoint(newBoundingRect, oldBoundingRect)
+                )
+            ) {
+                setPrevBounds(results.bounds);
+            }
+        } else {
             setPrevBounds(results.bounds);
         }
-    } else {
-        setPrevBounds(results.bounds);
+    }
+
+    function handleFitInViewClick() {
+        if (prevBounds === null) {
+            return;
+        }
+        const targetX = (prevBounds[0] + prevBounds[2]) / 2;
+        const targetY = (prevBounds[1] + prevBounds[3]) / 2;
+        const targetZ = 10.0;
+
+        setCameraPositionSetByAction({
+            rotationOrbit: 100,
+            rotationX: 90,
+            target: [targetX, targetY, targetZ],
+            zoom: NaN,
+        });
+    }
+
+    function handleVerticalScaleDecrease() {
+        setVerticalScale((prev) => prev - 0.1);
+    }
+
+    function handleVerticalScaleIncrease() {
+        setVerticalScale((prev) => prev + 0.1);
     }
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
+            <Toolbar
+                onFitInView={handleFitInViewClick}
+                onVerticalScaleDecrease={handleVerticalScaleDecrease}
+                onVerticalScaleIncrease={handleVerticalScaleIncrease}
+                verticalScale={verticalScale}
+            />
             <ColorLegendsContainer
                 colorScales={results.colorScales}
                 height={mainDivSize.height / 2 - 50}
@@ -129,7 +171,9 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             <SubsurfaceViewerWithCameraState
                 id={`subsurface-viewer-${id}`}
                 views={views}
-                bounds={prevBounds ?? results.bounds}
+                cameraPosition={cameraPositionSetByAction ?? undefined}
+                onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
+                bounds={prevBounds ?? undefined}
                 layers={viewerLayers}
                 scale={{
                     visible: true,
@@ -140,6 +184,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         top: 10,
                     },
                 }}
+                verticalScale={verticalScale}
             >
                 {viewportAnnotations}
             </SubsurfaceViewerWithCameraState>
@@ -156,18 +201,13 @@ function extractGroupsAndLayers(items: Item[]): {
     groupLayersMap: Map<string, DeckGlLayer[]>;
     groupMeta: Map<string, GroupMeta>;
     globalLayers: DeckGlLayer[];
-    bounds: [number, number, number, number];
+    bounds: [number, number, number, number] | null;
     colorScales: { id: string; colorScale: ColorScaleWithName }[];
 } {
     const groupLayersMap: Map<string, DeckGlLayer[]> = new Map();
     const groupMeta: Map<string, GroupMeta> = new Map();
     const globalLayers: DeckGlLayer[] = [];
-    let bounds: [number, number, number, number] = [
-        Number.POSITIVE_INFINITY,
-        Number.POSITIVE_INFINITY,
-        Number.NEGATIVE_INFINITY,
-        Number.NEGATIVE_INFINITY,
-    ];
+    let bounds: [number, number, number, number] | null = null;
     const colorScales: { id: string; colorScale: ColorScaleWithName }[] = [];
 
     for (const item of items) {
@@ -207,12 +247,17 @@ function extractGroupsAndLayers(items: Item[]): {
                     colorScales: newColorScales,
                 } = recursivelyExtractLayers(item.getGroupDelegate().getChildren());
                 groupLayersMap.set(item.getItemDelegate().getId(), children);
-                bounds = [
-                    Math.min(bounds[0], newBounds[0]),
-                    Math.min(bounds[1], newBounds[1]),
-                    Math.max(bounds[2], newBounds[2]),
-                    Math.max(bounds[3], newBounds[3]),
-                ];
+
+                if (!bounds) {
+                    bounds = newBounds;
+                } else if (newBounds) {
+                    bounds = [
+                        Math.min(bounds[0], newBounds[0]),
+                        Math.min(bounds[1], newBounds[1]),
+                        Math.max(bounds[2], newBounds[2]),
+                        Math.max(bounds[3], newBounds[3]),
+                    ];
+                }
                 colorScales.push(...newColorScales);
             }
         }
@@ -246,8 +291,8 @@ function findColorScale(layer: Layer<any, any>): { id: string; colorScale: Color
 
 function findBounds(
     layer: Layer<any, any>,
-    currentBounds: [number, number, number, number]
-): [number, number, number, number] {
+    currentBounds: [number, number, number, number] | null
+): [number, number, number, number] | null {
     const boundingBox = layer.getLayerDelegate().getBoundingBox();
     if (!boundingBox) {
         return currentBounds;
@@ -255,6 +300,10 @@ function findBounds(
 
     const [xMin, xMax] = boundingBox.x;
     const [yMin, yMax] = boundingBox.y;
+
+    if (!currentBounds) {
+        return [xMin, yMin, xMax, yMax];
+    }
 
     return [
         Math.min(xMin, currentBounds[0]),
@@ -266,16 +315,11 @@ function findBounds(
 
 function recursivelyExtractLayers(items: Item[]): {
     layers: DeckGlLayer[];
-    bounds: [number, number, number, number];
+    bounds: [number, number, number, number] | null;
     colorScales: { id: string; colorScale: ColorScaleWithName }[];
 } {
     const layers: DeckGlLayer[] = [];
-    let bounds: [number, number, number, number] = [
-        Number.POSITIVE_INFINITY,
-        Number.POSITIVE_INFINITY,
-        Number.NEGATIVE_INFINITY,
-        Number.NEGATIVE_INFINITY,
-    ];
+    let bounds: [number, number, number, number] | null = null;
     const colorScales: { id: string; colorScale: ColorScaleWithName }[] = [];
 
     for (const item of items) {
@@ -307,12 +351,16 @@ function recursivelyExtractLayers(items: Item[]): {
             );
             layers.push(...childLayers);
 
-            bounds = [
-                Math.min(bounds[0], childBounds[0]),
-                Math.min(bounds[1], childBounds[1]),
-                Math.max(bounds[2], childBounds[2]),
-                Math.max(bounds[3], childBounds[3]),
-            ];
+            if (!bounds) {
+                bounds = childBounds;
+            } else if (childBounds) {
+                bounds = [
+                    Math.min(bounds[0], childBounds[0]),
+                    Math.min(bounds[1], childBounds[1]),
+                    Math.max(bounds[2], childBounds[2]),
+                    Math.max(bounds[3], childBounds[3]),
+                ];
+            }
         }
     }
 

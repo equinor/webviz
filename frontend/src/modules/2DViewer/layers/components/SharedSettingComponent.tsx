@@ -25,11 +25,13 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
             endAdornment={<Actions sharedSetting={props.sharedSetting} />}
             headerClassNames="!bg-teal-200"
         >
-            <SettingComponent
-                setting={props.sharedSetting.getWrappedSetting()}
-                workbenchSession={manager.getWorkbenchSession()}
-                workbenchSettings={manager.getWorkbenchSettings()}
-            />
+            <div className="table border">
+                <SettingComponent
+                    setting={props.sharedSetting.getWrappedSetting()}
+                    workbenchSession={manager.getWorkbenchSession()}
+                    workbenchSettings={manager.getWorkbenchSettings()}
+                />
+            </div>
         </SortableListItem>
     );
 }

@@ -5,10 +5,10 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { SortableListItem } from "@lib/components/SortableList";
 import { Check, Error } from "@mui/icons-material";
 
-import { EditNameComponent } from "./EditNameComponent";
-import { RemoveButtonComponent } from "./RemoveButtonComponent";
+import { EditName } from "./EditName";
+import { RemoveButton } from "./RemoveButton";
 import { SettingComponent } from "./SettingComponent";
-import { VisibilityToggleComponent } from "./VisibilityToggleComponent";
+import { VisibilityToggle } from "./VisibilityToggle";
 
 import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
 import { LayerDelegateTopic } from "../delegates/LayerDelegate";
@@ -46,11 +46,11 @@ export function LayerComponent(props: LayerComponentProps): React.ReactNode {
         <SortableListItem
             key={props.layer.getItemDelegate().getId()}
             id={props.layer.getItemDelegate().getId()}
-            title={<EditNameComponent item={props.layer} />}
-            startAdornment={<VisibilityToggleComponent item={props.layer} />}
+            title={<EditName item={props.layer} />}
+            startAdornment={<VisibilityToggle item={props.layer} />}
             endAdornment={<Actions layer={props.layer} />}
         >
-            <div className="table">
+            <div className="table border">
                 {makeSettings(props.layer.getLayerDelegate().getSettingsContext().getDelegate().getSettings())}
             </div>
         </SortableListItem>
@@ -102,7 +102,7 @@ function Actions(props: ActionProps): React.ReactNode {
     return (
         <>
             {makeStatus()}
-            <RemoveButtonComponent item={props.layer} />
+            <RemoveButton item={props.layer} />
         </>
     );
 }

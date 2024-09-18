@@ -58,7 +58,7 @@ export function LayersActions(props: LayersActionsProps): React.ReactNode {
                         style={{ paddingLeft: `${indentLevel * 1}rem` }}
                         onClick={() => props.onActionClick(item.identifier)}
                     >
-                        {item.icon}
+                        <span className="text-slate-700">{item.icon}</span>
                         {item.label}
                     </MenuItem>
                 );

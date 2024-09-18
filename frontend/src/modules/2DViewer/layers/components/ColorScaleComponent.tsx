@@ -4,7 +4,7 @@ import { SortableListItem } from "@lib/components/SortableList";
 import { ColorScale as ColorScaleImpl } from "@lib/utils/ColorScale";
 import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
 
-import { RemoveButtonComponent } from "./RemoveButtonComponent";
+import { RemoveButton } from "./RemoveButton";
 
 import { ColorScale } from "../ColorScale";
 
@@ -40,9 +40,9 @@ export function ColorScaleComponent(props: ColorScaleComponentProps): React.Reac
             key={props.colorScale.getItemDelegate().getId()}
             id={props.colorScale.getItemDelegate().getId()}
             title={<span className="font-bold">Color scale</span>}
-            endAdornment={<RemoveButtonComponent item={props.colorScale} />}
+            endAdornment={<RemoveButton item={props.colorScale} />}
         >
-            <div className="p-2">{makeColorScaleSelector()}</div>
+            <div className="p-2 text-sm border">{makeColorScaleSelector()}</div>
         </SortableListItem>
     );
 }
