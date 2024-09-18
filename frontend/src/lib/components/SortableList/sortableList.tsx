@@ -115,8 +115,6 @@ export function SortableList(props: SortableListProps): React.ReactNode {
             let currentScrollTime = DEFAULT_SCROLL_TIME;
 
             function handlePointerDown(e: PointerEvent) {
-                e.preventDefault();
-                e.stopPropagation();
                 const target = e.target;
                 if (!target) {
                     return;
