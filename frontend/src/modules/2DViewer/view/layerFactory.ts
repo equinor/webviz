@@ -274,7 +274,7 @@ export function makeGrid3DLayer(
         colorMapRange: [gridParameterData.min_grid_prop_value, gridParameterData.max_grid_prop_value],
         colorMapFunction: colorScale
             ? (value: number) => {
-                  const interpolatedColor = colorScale.getColorPalette().getInterpolatedColor(value);
+                  const interpolatedColor = colorScale.getColorForValue(value);
                   // const nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
                   const color = parse(interpolatedColor) as Rgb; // colorScale.getColorForValue(nonNormalizedValue)) as Rgb;
                   if (color === undefined) {

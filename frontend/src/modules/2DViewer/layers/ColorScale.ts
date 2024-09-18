@@ -30,7 +30,7 @@ export class ColorScale implements Item {
 
     setColorScale(colorScale: ColorScaleImpl): void {
         this._colorScale = colorScale;
-        this.getItemDelegate().getLayerManager()?.publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+        this.getItemDelegate().getLayerManager()?.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
     }
 
     getAreBoundariesUserDefined(): boolean {
