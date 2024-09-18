@@ -152,9 +152,6 @@ async def get_surface_data(
             raise HTTPException(status_code=404, detail="Could not get realization surface")
 
     elif addr.address_type == "STAT":
-        if addr.stat_realizations is not None:
-            raise HTTPException(status_code=501, detail="Statistics with specific realizations not yet supported")
-
         service_stat_func_to_compute = StatisticFunction.from_string_value(addr.stat_function)
         if service_stat_func_to_compute is None:
             raise HTTPException(status_code=404, detail="Invalid statistic requested")
@@ -164,6 +161,7 @@ async def get_surface_data(
             statistic_function=service_stat_func_to_compute,
             name=addr.name,
             attribute=addr.attribute,
+            realizations=addr.stat_realizations,
             time_or_interval_str=addr.iso_time_or_interval,
         )
         perf_metrics.record_lap("sumo-calc")

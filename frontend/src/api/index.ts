@@ -10,9 +10,11 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export { ALQ as ALQ_api } from './models/ALQ';
 export { B64FloatArray as B64FloatArray_api } from './models/B64FloatArray';
 export { B64UintArray as B64UintArray_api } from './models/B64UintArray';
-export type { Body_get_realizations_response as Body_get_realizations_response_api } from './models/Body_get_realizations_response';
+export type { Body_post_get_aggregated_per_realization_table_data as Body_post_get_aggregated_per_realization_table_data_api } from './models/Body_post_get_aggregated_per_realization_table_data';
+export type { Body_post_get_aggregated_statistical_table_data as Body_post_get_aggregated_statistical_table_data_api } from './models/Body_post_get_aggregated_statistical_table_data';
 export type { Body_post_get_polyline_intersection as Body_post_get_polyline_intersection_api } from './models/Body_post_get_polyline_intersection';
 export type { Body_post_get_seismic_fence as Body_post_get_seismic_fence_api } from './models/Body_post_get_seismic_fence';
 export type { Body_post_get_surface_intersection as Body_post_get_surface_intersection_api } from './models/Body_post_get_surface_intersection';
@@ -31,7 +33,10 @@ export type { EnsembleSensitivity as EnsembleSensitivity_api } from './models/En
 export type { EnsembleSensitivityCase as EnsembleSensitivityCase_api } from './models/EnsembleSensitivityCase';
 export type { FenceMeshSection as FenceMeshSection_api } from './models/FenceMeshSection';
 export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
+export { FlowRateTypeProd as FlowRateTypeProd_api } from './models/FlowRateTypeProd';
+export { FluidZone as FluidZone_api } from './models/FluidZone';
 export { Frequency as Frequency_api } from './models/Frequency';
+export { GFR as GFR_api } from './models/GFR';
 export type { GraphUserPhoto as GraphUserPhoto_api } from './models/GraphUserPhoto';
 export type { Grid3dDimensions as Grid3dDimensions_api } from './models/Grid3dDimensions';
 export type { Grid3dGeometry as Grid3dGeometry_api } from './models/Grid3dGeometry';
@@ -43,8 +48,15 @@ export type { GridDimensions as GridDimensions_api } from './models/GridDimensio
 export type { GroupTreeData as GroupTreeData_api } from './models/GroupTreeData';
 export type { GroupTreeMetadata as GroupTreeMetadata_api } from './models/GroupTreeMetadata';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
-export type { InplaceVolumetricsCategoricalMetaData as InplaceVolumetricsCategoricalMetaData_api } from './models/InplaceVolumetricsCategoricalMetaData';
-export type { InplaceVolumetricsTableMetaData as InplaceVolumetricsTableMetaData_api } from './models/InplaceVolumetricsTableMetaData';
+export type { InplaceStatisticalVolumetricTableData as InplaceStatisticalVolumetricTableData_api } from './models/InplaceStatisticalVolumetricTableData';
+export type { InplaceStatisticalVolumetricTableDataPerFluidSelection as InplaceStatisticalVolumetricTableDataPerFluidSelection_api } from './models/InplaceStatisticalVolumetricTableDataPerFluidSelection';
+export { InplaceVolumetricResultName as InplaceVolumetricResultName_api } from './models/InplaceVolumetricResultName';
+export { InplaceVolumetricsIdentifier as InplaceVolumetricsIdentifier_api } from './models/InplaceVolumetricsIdentifier';
+export type { InplaceVolumetricsIdentifierWithValues as InplaceVolumetricsIdentifierWithValues_api } from './models/InplaceVolumetricsIdentifierWithValues';
+export type { InplaceVolumetricsTableDefinition as InplaceVolumetricsTableDefinition_api } from './models/InplaceVolumetricsTableDefinition';
+export { InplaceVolumetricStatistic as InplaceVolumetricStatistic_api } from './models/InplaceVolumetricStatistic';
+export type { InplaceVolumetricTableData as InplaceVolumetricTableData_api } from './models/InplaceVolumetricTableData';
+export type { InplaceVolumetricTableDataPerFluidSelection as InplaceVolumetricTableDataPerFluidSelection_api } from './models/InplaceVolumetricTableDataPerFluidSelection';
 export { NodeType as NodeType_api } from './models/NodeType';
 export type { Observations as Observations_api } from './models/Observations';
 export type { PointSetXY as PointSetXY_api } from './models/PointSetXY';
@@ -53,6 +65,7 @@ export { PolygonsAttributeType as PolygonsAttributeType_api } from './models/Pol
 export type { PolygonsMeta as PolygonsMeta_api } from './models/PolygonsMeta';
 export type { PolylineIntersection as PolylineIntersection_api } from './models/PolylineIntersection';
 export type { PvtData as PvtData_api } from './models/PvtData';
+export type { RepeatedTableColumnData as RepeatedTableColumnData_api } from './models/RepeatedTableColumnData';
 export type { RftInfo as RftInfo_api } from './models/RftInfo';
 export type { RftObservation as RftObservation_api } from './models/RftObservation';
 export type { RftObservations as RftObservations_api } from './models/RftObservations';
@@ -77,7 +90,12 @@ export type { SurfaceMetaSet as SurfaceMetaSet_api } from './models/SurfaceMetaS
 export type { SurfaceRealizationSampleValues as SurfaceRealizationSampleValues_api } from './models/SurfaceRealizationSampleValues';
 export { SurfaceStatisticFunction as SurfaceStatisticFunction_api } from './models/SurfaceStatisticFunction';
 export { SurfaceTimeType as SurfaceTimeType_api } from './models/SurfaceTimeType';
+export type { TableColumnData as TableColumnData_api } from './models/TableColumnData';
+export type { TableColumnStatisticalData as TableColumnStatisticalData_api } from './models/TableColumnStatisticalData';
+export { TabType as TabType_api } from './models/TabType';
+export type { THP as THP_api } from './models/THP';
 export { TreeNode as TreeNode_api } from './models/TreeNode';
+export { UnitType as UnitType_api } from './models/UnitType';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';
 export type { ValidationError as ValidationError_api } from './models/ValidationError';
 export type { VectorDescription as VectorDescription_api } from './models/VectorDescription';
@@ -85,6 +103,8 @@ export type { VectorHistoricalData as VectorHistoricalData_api } from './models/
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
+export type { VfpProdTable as VfpProdTable_api } from './models/VfpProdTable';
+export { VfpType as VfpType_api } from './models/VfpType';
 export type { WellboreCasing as WellboreCasing_api } from './models/WellboreCasing';
 export type { WellboreCompletion as WellboreCompletion_api } from './models/WellboreCompletion';
 export type { WellboreHeader as WellboreHeader_api } from './models/WellboreHeader';
@@ -99,6 +119,7 @@ export type { WellCompletionsUnitInfo as WellCompletionsUnitInfo_api } from './m
 export type { WellCompletionsUnits as WellCompletionsUnits_api } from './models/WellCompletionsUnits';
 export type { WellCompletionsWell as WellCompletionsWell_api } from './models/WellCompletionsWell';
 export type { WellCompletionsZone as WellCompletionsZone_api } from './models/WellCompletionsZone';
+export { WFR as WFR_api } from './models/WFR';
 
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
@@ -114,5 +135,6 @@ export { RftService } from './services/RftService';
 export { SeismicService } from './services/SeismicService';
 export { SurfaceService } from './services/SurfaceService';
 export { TimeseriesService } from './services/TimeseriesService';
+export { VfpService } from './services/VfpService';
 export { WellService } from './services/WellService';
 export { WellCompletionsService } from './services/WellCompletionsService';

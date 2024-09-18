@@ -1,7 +1,10 @@
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
-export function makeDistinguishableEnsembleDisplayName(ensembleIdent: EnsembleIdent, allEnsembles: Ensemble[]): string {
+export function makeDistinguishableEnsembleDisplayName(
+    ensembleIdent: EnsembleIdent,
+    allEnsembles: readonly Ensemble[]
+): string {
     const ensemble = allEnsembles.find((ensemble) => ensemble.getIdent().equals(ensembleIdent));
 
     if (ensemble) {
