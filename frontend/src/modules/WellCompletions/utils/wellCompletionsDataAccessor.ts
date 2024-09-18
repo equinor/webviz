@@ -67,7 +67,7 @@ export class WellCompletionsDataAccessor {
         // Extract all subzones
         this._subzones = [];
         this._data.zones.forEach((zone) =>
-            WellCompletionsDataAccessor.createLeafNodesAndAssignColor(zone, stratigraphyColorSet, this._subzones)
+            WellCompletionsDataAccessor.propagateSubzoneArray(zone, stratigraphyColorSet, this._subzones)
         );
     }
 
@@ -121,14 +121,16 @@ export class WellCompletionsDataAccessor {
         );
     }
 
-    private static findEarliestCompletionDateIndices(well: WellCompletionsWell_api, subzones: Zone[]): number {
+    private static findEarliestWellCompletionDateIndex(well: WellCompletionsWell_api, subzones: Zone[]): number {
         let earliestCompDateIndex = Number.POSITIVE_INFINITY;
         subzones.forEach((zone) => {
             if (zone.name in well.completions) {
                 const completion = well.completions[zone.name];
                 //Find the earliest date for the given completion
                 const earliestDate = completion.t.find((_, index) => completion.open[index] > 0);
-                if (earliestDate !== undefined) earliestCompDateIndex = Math.min(earliestCompDateIndex, earliestDate);
+                if (earliestDate !== undefined) {
+                    earliestCompDateIndex = Math.min(earliestCompDateIndex, earliestDate);
+                }
             }
         });
 
@@ -146,7 +148,7 @@ export class WellCompletionsDataAccessor {
         const wellPlotData: WellPlotData[] = [];
         wells.forEach((well) => {
             const completionsPlotData: CompletionPlotData[] = [];
-            const earliestCompDateIndex = this.findEarliestCompletionDateIndices(well, subzones);
+            const earliestCompDateIndex = this.findEarliestWellCompletionDateIndex(well, subzones);
             let hasData = false;
             subzones.forEach((zone, zoneIndex) => {
                 const length = range[1] - range[0] + 1;
@@ -190,7 +192,11 @@ export class WellCompletionsDataAccessor {
                     khMin: dFunction(khMinValues),
                     khMax: dFunction(khMaxValues),
                 };
-                if (newCompletion.open !== 0) hasData = true;
+
+                if (newCompletion.open !== 0) {
+                    hasData = true;
+                }
+
                 //If value changed
                 if (
                     completionsPlotData.length === 0 ||
@@ -215,6 +221,7 @@ export class WellCompletionsDataAccessor {
     }
 
     private static isCompletionValuesEqual(completion1: CompletionPlotData, completion2: CompletionPlotData) {
+        // TODO: REPLACE WITH NEW UTILITY FUNCTION
         return (
             completion1.open === completion2.open &&
             completion1.shut === completion2.shut &&
@@ -224,20 +231,29 @@ export class WellCompletionsDataAccessor {
         );
     }
 
-    private static createLeafNodesAndAssignColor(
+    /**
+     * Recursively propagate subzones from the API to the Zone object
+     *
+     * The subzone is: leaf nodes with a color from the stratigraphyColorSet
+     *
+     * @param apiZone
+     * @param stratigraphyColorSet
+     * @param subzoneArray
+     */
+    private static propagateSubzoneArray(
         apiZone: WellCompletionsZone_api,
         stratigraphyColorSet: ColorSet,
-        leafNodes: Zone[]
+        subzoneArray: Zone[]
     ): void {
         const color =
-            leafNodes.length === 0 ? stratigraphyColorSet.getFirstColor() : stratigraphyColorSet.getNextColor();
+            subzoneArray.length === 0 ? stratigraphyColorSet.getFirstColor() : stratigraphyColorSet.getNextColor();
 
         // Depth-first search to find all leaf nodes
         if (!apiZone.subzones || apiZone.subzones.length === 0) {
-            leafNodes.push({ name: apiZone.name, color: color });
+            subzoneArray.push({ name: apiZone.name, color: color });
         } else {
             apiZone.subzones.forEach((apiSubZone) =>
-                WellCompletionsDataAccessor.createLeafNodesAndAssignColor(apiSubZone, stratigraphyColorSet, leafNodes)
+                WellCompletionsDataAccessor.propagateSubzoneArray(apiSubZone, stratigraphyColorSet, subzoneArray)
             );
         }
     }
