@@ -100,11 +100,9 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
                 <React.Fragment key={idx}>
                     <InfoLabel item={item} noLabelColor={props.noLabelColor} />
 
-                    <div className="table">
-                        {item.info.map((i: InfoItem, idx: number) => (
-                            <InfoItem key={idx} {...i} />
-                        ))}
-                    </div>
+                    {item.info.map((i: InfoItem, idx: number) => (
+                        <InfoItem key={idx} {...i} />
+                    ))}
                 </React.Fragment>
             ))}
 
