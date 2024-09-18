@@ -164,15 +164,14 @@ function makeFormattedInfoValue(value: string | number | boolean | number[]): st
         } else {
             formattedValue = value.map((el) => formatValue(el)).join(" - ");
         }
-    }
-    if (typeof value === "number" || typeof value === "string") {
+    } else {
         formattedValue = formatValue(value);
     }
 
     return formattedValue;
 }
 
-function formatValue(value: number | string): string {
+function formatValue(value: number | string | boolean): string {
     if (typeof value === "number") {
         return (+value.toFixed(2)).toString();
     }

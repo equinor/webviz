@@ -83,7 +83,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     );
 
     const formatEsvLayout = React.useCallback(
-        (item: EsvReadoutItem, index: number): ReadoutItem => {
+        function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
             return esvReadoutToGenericReadout(item, index, props.layerIdToNameMap);
         },
         [props.layerIdToNameMap]
