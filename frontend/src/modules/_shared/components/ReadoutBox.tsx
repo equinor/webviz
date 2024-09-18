@@ -37,6 +37,7 @@ export type ReadoutBoxProps = {
 
 export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
     const maxNumItemsOrDefault = props.maxNumItems ?? 3;
+    const visibleReadoutItems = _.take(props.readoutItems, maxNumItemsOrDefault);
 
     const [flipped, setFlipped] = React.useState<boolean>(false);
     const [stableEdgeDistanceRem] = useStableProp(props.edgeDistanceRem);
@@ -58,24 +59,27 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
 
                 // If above, or below, it's guaranteed to fit
                 if (evt.clientY < top || evt.clientY > bottom) {
-                    if (flipped) setFlipped(false);
+                    setFlipped(false);
                     return;
                 }
 
-                const prefferredRight = parentRect.right - edgeDistance.right;
-                const prefferredLeft = parentRect.right - width - edgeDistance.right;
+                const preferredRight = parentRect.right - edgeDistance.right;
+                const preferredLeft = parentRect.right - width - edgeDistance.right;
 
-                if (evt.clientX < prefferredLeft || evt.clientX > prefferredRight) {
-                    if (flipped) setFlipped(false);
+                if (evt.clientX < preferredLeft || evt.clientX > preferredRight) {
+                    setFlipped(false);
                 } else {
-                    if (!flipped) setFlipped(true);
+                    setFlipped(true);
                 }
             }
 
             document.addEventListener("mousemove", maybeFlipBox);
-            return () => document.removeEventListener("mousemove", maybeFlipBox);
+
+            return function removeFlipListeners() {
+                document.removeEventListener("mousemove", maybeFlipBox);
+            };
         },
-        [props.flipDisabled, flipped, edgeDistance]
+        [props.flipDisabled, edgeDistance]
     );
 
     // Guard. If there are no readout items, don't render the box
@@ -92,25 +96,18 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
             className="absolute z-50 w-60 flex flex-col gap-2 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none"
             style={boxPositionStyle}
         >
-            {props.readoutItems.map((item, idx) => {
-                if (idx < maxNumItemsOrDefault) {
-                    return (
-                        <React.Fragment key={idx}>
-                            <div className="flex gap-2 font-bold items-center">
-                                {!props.noLabelColor && (
-                                    <div
-                                        className="rounded-full w-3 h-3 border border-slate-500"
-                                        style={{ backgroundColor: item.color }}
-                                    />
-                                )}
-                                <span className="block">{item.label}</span>
-                            </div>
+            {visibleReadoutItems.map((item, idx) => (
+                <React.Fragment key={idx}>
+                    <InfoLabel item={item} noLabelColor={props.noLabelColor} />
 
-                            {item.info && item.info.map((i: InfoItem, idx: number) => <InfoItem key={idx} {...i} />)}
-                        </React.Fragment>
-                    );
-                }
-            })}
+                    <div className="table">
+                        {item.info.map((i: InfoItem, idx: number) => (
+                            <InfoItem key={idx} {...i} />
+                        ))}
+                    </div>
+                </React.Fragment>
+            ))}
+
             {props.readoutItems.length > maxNumItemsOrDefault && (
                 <div className="flex items-center gap-2">
                     ...and {props.readoutItems.length - maxNumItemsOrDefault} more
@@ -120,12 +117,26 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
     );
 }
 
+function InfoLabel(props: { item: ReadoutItem; noLabelColor?: boolean }): React.ReactNode {
+    return (
+        <div className="flex gap-2 font-bold items-center">
+            {!props.noLabelColor && (
+                <div
+                    className="rounded-full w-3 h-3 border border-slate-500"
+                    style={{ backgroundColor: props.item.color }}
+                />
+            )}
+            <span className="block">{props.item.label}</span>
+        </div>
+    );
+}
+
 function InfoItem(props: InfoItem): React.ReactNode {
     return (
         <div className="table-row">
             <div className="table-cell w-4 align-middle">{props.adornment}</div>
             <div className="table-cell w-32 align-middle">{props.name}:</div>
-            <div className="table-cell align-middle">{makeFormatedInfoValue(props.value)}</div>
+            <div className="table-cell align-middle">{makeFormattedInfoValue(props.value)}</div>
             {props.unit && <div className="table-cell text-right align-middle">{props.unit}</div>}
         </div>
     );
@@ -144,7 +155,7 @@ function computeEdgeDistance(edgeDistanceProp?: number | PartialEdgeDistance): E
     return _.mapValues(edgesRem, convertRemToPixels);
 }
 
-function makeFormatedInfoValue(value: string | number | boolean | number[]): string {
+function makeFormattedInfoValue(value: string | number | boolean | number[]): string {
     let formattedValue = "";
 
     if (value instanceof Array) {
