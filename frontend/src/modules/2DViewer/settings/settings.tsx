@@ -19,9 +19,10 @@ import { usePublishSubscribeTopicValue } from "../layers/PublishSubscribeHandler
 import { SettingsGroup } from "../layers/SettingsGroup";
 import { SharedSetting } from "../layers/SharedSetting";
 import { View } from "../layers/View";
+import { ExpandCollapseAllButton } from "../layers/components/ExpandCollapseAllButton";
 import { LayersActionGroup, LayersActions } from "../layers/components/LayersActions";
 import { makeComponent } from "../layers/components/utils";
-import { GroupBaseTopic } from "../layers/delegates/GroupDelegate";
+import { GroupDelegateTopic } from "../layers/delegates/GroupDelegate";
 import { DrilledWellTrajectoriesLayer } from "../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
 import { ObservedSurfaceLayer } from "../layers/implementations/layers/ObservedSurfaceLayer/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "../layers/implementations/layers/RealizationGridLayer/RealizationGridLayer";
@@ -45,7 +46,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const colorSet = props.workbenchSettings.useColorSet();
 
     const groupDelegate = layerManager.current.getGroupDelegate();
-    const items = usePublishSubscribeTopicValue(groupDelegate, GroupBaseTopic.CHILDREN);
+    const items = usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
     const setLayerManager = useSetAtom(layerManagerAtom);
 
@@ -66,9 +67,13 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             return item instanceof SharedSetting;
         }).length;
 
+        const numViews = groupDelegate.getDescendantItems((item) => item instanceof View).length;
+
         switch (identifier) {
             case "view":
-                groupDelegate.insertChild(new View("New View", colorSet.getNextColor()), numSharedSettings);
+                groupDelegate.appendChild(
+                    new View(numViews > 0 ? `View (${numViews})` : "View", colorSet.getNextColor())
+                );
                 return;
             case "settings-group":
                 groupDelegate.insertChild(new SettingsGroup("Settings group"), numSharedSettings);
@@ -180,7 +185,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         destination.insertChild(movedItem, position);
     }
 
-    const hasView = groupDelegate.findChildren((item) => item instanceof View).length > 0;
+    const hasView = groupDelegate.getDescendantItems((item) => item instanceof View).length > 0;
     const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
 
     return (
@@ -189,6 +194,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 <div className="w-full flex-grow flex flex-col min-h-0" ref={layerListRef}>
                     <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
                         <div className="flex-grow font-bold text-sm">Layers</div>
+                        {layerManager && <ExpandCollapseAllButton group={layerManager.current} />}
                         <LayersActions layersActionGroups={adjustedLayerActions} onActionClick={handleLayerAction} />
                     </div>
                     <div
@@ -204,7 +210,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                                 </div>
                             }
                         >
-                            {items.map((item: Item) => makeComponent(item, VIEW_ACTIONS, handleLayerAction))}
+                            {items.map((item: Item) => makeComponent(item, LAYER_ACTIONS, handleLayerAction))}
                         </SortableList>
                     </div>
                 </div>
@@ -220,7 +226,12 @@ const INITIAL_LAYER_ACTIONS: LayersActionGroup[] = [
             {
                 identifier: "view",
                 icon: <Panorama fontSize="small" />,
-                label: "Add view",
+                label: "View",
+            },
+            {
+                identifier: "settings-group",
+                icon: <SettingsApplications fontSize="small" />,
+                label: "Settings group",
             },
         ],
     },
@@ -233,12 +244,12 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
             {
                 identifier: "view",
                 icon: <Panorama fontSize="small" />,
-                label: "Add view",
+                label: "View",
             },
             {
                 identifier: "settings-group",
                 icon: <SettingsApplications fontSize="small" />,
-                label: "Add settings group",
+                label: "Settings group",
             },
         ],
     },
@@ -318,8 +329,3 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
         ],
     },
 ];
-
-const VIEW_ACTIONS: LayersActionGroup[] = LAYER_ACTIONS.map((group) => ({
-    ...group,
-    children: group.children.filter((child) => child.label !== "Add view"),
-}));

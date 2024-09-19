@@ -11,13 +11,13 @@ import { Rgb, parse } from "culori";
 import { Feature } from "geojson";
 import { SurfaceDataPng } from "src/api/models/SurfaceDataPng";
 
-import { DrilledWellTrajectoriesLayer } from "../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
-import { ObservedSurfaceLayer } from "../layers/implementations/layers/ObservedSurfaceLayer/ObservedSurfaceLayer";
-import { RealizationGridLayer } from "../layers/implementations/layers/RealizationGridLayer/RealizationGridLayer";
-import { RealizationPolygonsLayer } from "../layers/implementations/layers/RealizationPolygonsLayer/RealizationPolygonsLayer";
-import { RealizationSurfaceLayer } from "../layers/implementations/layers/RealizationSurfaceLayer/RealizationSurfaceLayer";
-import { StatisticalSurfaceLayer } from "../layers/implementations/layers/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
-import { Layer as LayerInterface } from "../layers/interfaces";
+import { DrilledWellTrajectoriesLayer } from "../../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
+import { ObservedSurfaceLayer } from "../../layers/implementations/layers/ObservedSurfaceLayer/ObservedSurfaceLayer";
+import { RealizationGridLayer } from "../../layers/implementations/layers/RealizationGridLayer/RealizationGridLayer";
+import { RealizationPolygonsLayer } from "../../layers/implementations/layers/RealizationPolygonsLayer/RealizationPolygonsLayer";
+import { RealizationSurfaceLayer } from "../../layers/implementations/layers/RealizationSurfaceLayer/RealizationSurfaceLayer";
+import { StatisticalSurfaceLayer } from "../../layers/implementations/layers/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
+import { Layer as LayerInterface } from "../../layers/interfaces";
 
 export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
     const data = layer.getLayerDelegate().getData();

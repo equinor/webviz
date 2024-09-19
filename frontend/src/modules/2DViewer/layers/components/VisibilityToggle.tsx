@@ -1,3 +1,4 @@
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
@@ -16,12 +17,8 @@ export function VisibilityToggle(props: VisibilityToggleProps): React.ReactNode 
     }
 
     return (
-        <div
-            className="hover:cursor-pointer rounded hover:text-blue-600"
-            onClick={handleToggleLayerVisibility}
-            title="Toggle visibility"
-        >
+        <DenseIconButton onClick={handleToggleLayerVisibility} title="Toggle visibility">
             {isVisible ? <Visibility fontSize="inherit" /> : <VisibilityOff fontSize="inherit" />}
-        </div>
+        </DenseIconButton>
     );
 }

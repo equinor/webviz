@@ -285,8 +285,13 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
     );
 }
 
+export type ColorScaleWithId = {
+    id: string;
+    colorScale: ColorScaleWithName;
+};
+
 export type ColorLegendsContainerProps = {
-    colorScales: { id: string; colorScale: ColorScaleWithName }[];
+    colorScales: ColorScaleWithId[];
     height: number;
     position?: "left" | "right";
 };

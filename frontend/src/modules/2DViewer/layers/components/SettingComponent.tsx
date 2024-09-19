@@ -3,7 +3,6 @@ import React from "react";
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
 import { Setting, SettingComponentProps as SettingComponentPropsInterface, SettingTopic } from "../interfaces";
@@ -30,10 +29,14 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
         props.setting.getDelegate().setValue(newValue);
     }
 
+    if (overriddenValue !== undefined) {
+        return null;
+    }
+
     return (
-        <div key={props.setting.getDelegate().getId()} className={resolveClassNames("table-row", { hidden: false })}>
-            <div className="table-cell align-middle p-1 text-xs">{props.setting.getLabel()}</div>
-            <div className="table-cell align-middle p-1 text-sm w-full">
+        <React.Fragment key={props.setting.getDelegate().getId()}>
+            <div className="p-1 w-32">{props.setting.getLabel()}</div>
+            <div className="p-1 w-full">
                 <PendingWrapper isPending={isLoading}>
                     <componentRef.current
                         onValueChange={handleValueChanged}
@@ -46,6 +49,6 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
                     />
                 </PendingWrapper>
             </div>
-        </div>
+        </React.Fragment>
     );
 }

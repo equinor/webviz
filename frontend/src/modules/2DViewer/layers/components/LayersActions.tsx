@@ -1,5 +1,6 @@
 import React from "react";
 
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Menu } from "@lib/components/Menu";
 import { MenuDivider } from "@lib/components/MenuDivider";
 import { MenuHeading } from "@lib/components/MenuHeading";
@@ -70,11 +71,11 @@ export function LayersActions(props: LayersActionsProps): React.ReactNode {
     return (
         <Dropdown>
             <MenuButton>
-                <div className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded text-sm flex items-center gap-2">
+                <DenseIconButton title="Add items">
                     <Add fontSize="inherit" />
                     <span>Add</span>
                     <ArrowDropDown fontSize="inherit" />
-                </div>
+                </DenseIconButton>
             </MenuButton>
             <Menu anchorOrigin="bottom-end" className="text-sm p-1">
                 {makeContent(props.layersActionGroups)}

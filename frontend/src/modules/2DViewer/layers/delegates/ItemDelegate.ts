@@ -8,12 +8,14 @@ import { PublishSubscribe, PublishSubscribeHandler } from "../PublishSubscribeHa
 export enum ItemDelegateTopic {
     NAME = "NAME",
     VISIBILITY = "VISIBILITY",
+    EXPANDED = "EXPANDED",
     LAYER_MANAGER = "LAYER_MANAGER",
 }
 
 export type ItemDelegatePayloads = {
     [ItemDelegateTopic.NAME]: string;
     [ItemDelegateTopic.VISIBILITY]: boolean;
+    [ItemDelegateTopic.EXPANDED]: boolean;
     [ItemDelegateTopic.LAYER_MANAGER]: LayerManager;
 };
 
@@ -21,6 +23,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
     private _id: string;
     private _name: string;
     private _visible: boolean = true;
+    private _expanded: boolean = true;
     private _parentGroup: GroupDelegate | null = null;
     private _layerManager: LayerManager | null = null;
     private _publishSubscribeHandler = new PublishSubscribeHandler<ItemDelegateTopic>();
@@ -75,6 +78,15 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
         }
     }
 
+    isExpanded(): boolean {
+        return this._expanded;
+    }
+
+    setIsExpanded(expanded: boolean): void {
+        this._expanded = expanded;
+        this._publishSubscribeHandler.notifySubscribers(ItemDelegateTopic.EXPANDED);
+    }
+
     makeSnapshotGetter<T extends ItemDelegateTopic>(topic: T): () => ItemDelegatePayloads[T] {
         const snapshotGetter = (): any => {
             if (topic === ItemDelegateTopic.NAME) {
@@ -82,6 +94,9 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
             }
             if (topic === ItemDelegateTopic.VISIBILITY) {
                 return this._visible;
+            }
+            if (topic === ItemDelegateTopic.EXPANDED) {
+                return this._expanded;
             }
             if (topic === ItemDelegateTopic.LAYER_MANAGER) {
                 return this._layerManager;

@@ -2,12 +2,14 @@ import { SortableListGroup } from "@lib/components/SortableList";
 import { SettingsApplications } from "@mui/icons-material";
 
 import { EmptyContent } from "./EmptyContent";
+import { ExpandCollapseAllButton } from "./ExpandCollapseAllButton";
 import { LayersActionGroup, LayersActions } from "./LayersActions";
 import { RemoveButton } from "./RemoveButton";
 import { makeComponent } from "./utils";
 
 import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
-import { GroupBaseTopic } from "../delegates/GroupDelegate";
+import { GroupDelegateTopic } from "../delegates/GroupDelegate";
+import { ItemDelegateTopic } from "../delegates/ItemDelegate";
 import { Group, Item } from "../interfaces";
 
 export type SettingsGroupComponentProps = {
@@ -17,7 +19,8 @@ export type SettingsGroupComponentProps = {
 };
 
 export function SettingsGroupComponent(props: SettingsGroupComponentProps): React.ReactNode {
-    const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupBaseTopic.CHILDREN);
+    const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
+    const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
     const color = props.group.getGroupDelegate().getColor();
 
     function handleActionClick(actionIdentifier: string) {
@@ -27,12 +30,13 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
     }
 
     function makeEndAdornment() {
-        const adorment: React.ReactNode[] = [];
+        const adornment: React.ReactNode[] = [];
         if (props.actions) {
-            adorment.push(<LayersActions layersActionGroups={props.actions} onActionClick={handleActionClick} />);
+            adornment.push(<LayersActions layersActionGroups={props.actions} onActionClick={handleActionClick} />);
         }
-        adorment.push(<RemoveButton item={props.group} />);
-        return adorment;
+        adornment.push(<ExpandCollapseAllButton group={props.group} />);
+        adornment.push(<RemoveButton item={props.group} />);
+        return adornment;
     }
 
     return (
@@ -51,6 +55,7 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
             contentWhenEmpty={
                 <EmptyContent>Drag a layer or setting inside to add it to this settings group.</EmptyContent>
             }
+            expanded={isExpanded}
         >
             {children.map((child: Item) => makeComponent(child, props.actions, props.onActionClick))}
         </SortableListGroup>

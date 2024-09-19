@@ -36,7 +36,7 @@ export function makeComponent(
                 <ViewComponent
                     key={item.getItemDelegate().getId()}
                     group={item}
-                    actions={layerActions}
+                    actions={layerActions ? filterAwayViewActions(layerActions) : undefined}
                     onActionClick={onActionClick}
                 />
             );
@@ -49,4 +49,11 @@ export function makeComponent(
         return <ColorScaleComponent key={item.getItemDelegate().getId()} colorScale={item} />;
     }
     throw new Error("Not implemented");
+}
+
+function filterAwayViewActions(actions: LayersActionGroup[]): LayersActionGroup[] {
+    return actions.map((group) => ({
+        ...group,
+        children: group.children.filter((child) => child.label !== "View"),
+    }));
 }

@@ -5,14 +5,18 @@ import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { DragIndicator, ExpandLess, ExpandMore } from "@mui/icons-material";
 
+import { isEqual } from "lodash";
+
 import { HoveredArea, SortableListContext } from "./sortableList";
 import { SortableListDropIndicator } from "./sortableListDropIndicator";
 import { SortableListItemProps } from "./sortableListItem";
 
+import { DenseIconButton } from "../DenseIconButton";
+
 export type SortableListGroupProps = {
     id: string;
     title: React.ReactNode;
-    initiallyExpanded?: boolean;
+    expanded?: boolean;
     startAdornment?: React.ReactNode;
     endAdornment?: React.ReactNode;
     headerStyle?: React.CSSProperties;
@@ -26,7 +30,7 @@ export type SortableListGroupProps = {
  * @param {SortableListGroupProps} props Object of properties for the SortableListGroup component (see below for details).
  * @param {string} props.id ID that is unique among all components inside the sortable list.
  * @param {React.ReactNode} props.title Title of the list item.
- * @param {boolean} props.initiallyExpanded Whether the group should be expanded by default.
+ * @param {boolean} props.expanded Whether the group should be expanded.
  * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
  * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
  * @param {React.ReactNode} props.contentWhenEmpty Content to display when the group is empty.
@@ -35,7 +39,15 @@ export type SortableListGroupProps = {
  * @returns {React.ReactNode} A sortable list group component.
  */
 export function SortableListGroup(props: SortableListGroupProps): React.ReactNode {
-    const [isExpanded, setIsExpanded] = React.useState<boolean>(props.initiallyExpanded ?? true);
+    const [isExpanded, setIsExpanded] = React.useState<boolean>(props.expanded ?? true);
+    const [prevExpanded, setPrevExpanded] = React.useState<boolean | undefined>(props.expanded);
+
+    if (!isEqual(props.expanded, prevExpanded)) {
+        if (props.expanded !== undefined) {
+            setIsExpanded(props.expanded);
+        }
+        setPrevExpanded(props.expanded);
+    }
 
     const divRef = React.useRef<HTMLDivElement>(null);
     const boundingClientRect = useElementBoundingRect(divRef);
@@ -141,13 +153,12 @@ function Header(props: HeaderProps): React.ReactNode {
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
             {props.expandable && (
-                <div
-                    className="hover:cursor-pointer hover:text-blue-800 p-0.5 rounded"
+                <DenseIconButton
                     onClick={props.onToggleExpanded}
                     title={props.expanded ? "Hide children" : "Show children"}
                 >
                     {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-                </div>
+                </DenseIconButton>
             )}
             <div className="flex items-center gap-2 flex-grow">
                 {props.startAdornment}
