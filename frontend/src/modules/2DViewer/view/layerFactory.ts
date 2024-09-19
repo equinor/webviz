@@ -32,7 +32,7 @@ export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorSca
         return createMapImageLayer(data, layer.getItemDelegate().getId(), colorScale);
     }
     if (layer instanceof StatisticalSurfaceLayer) {
-        return createMapFloatLayer(data, layer.getItemDelegate().getId());
+        return createMapImageLayer(data, layer.getItemDelegate().getId());
     }
     if (layer instanceof RealizationPolygonsLayer) {
         return createPolygonsLayer(data, layer.getItemDelegate().getId());

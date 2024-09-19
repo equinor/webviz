@@ -107,14 +107,14 @@ export class StatisticalSurfaceLayer
 
         const surfAddrStr = surfaceAddress ? encodeSurfAddrStr(surfaceAddress) : null;
 
-        const queryKey = ["getSurfaceData", surfAddrStr, null, "float"];
+        const queryKey = ["getSurfaceData", surfAddrStr, null, "png"];
 
         this._layerDelegate.registerQueryKey(queryKey);
 
         const promise = queryClient
             .fetchQuery({
                 queryKey,
-                queryFn: () => apiService.surface.getSurfaceData(surfAddrStr ?? "", "float", null),
+                queryFn: () => apiService.surface.getSurfaceData(surfAddrStr ?? "", "png", null),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
             })
