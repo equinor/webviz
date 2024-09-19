@@ -2,10 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export enum FlowRateTypeProd {
+export enum FlowRateType {
     OIL = 'OIL',
     LIQ = 'LIQ',
     GAS = 'GAS',
     WG = 'WG',
     TM = 'TM',
+    WAT = 'WAT',
 }

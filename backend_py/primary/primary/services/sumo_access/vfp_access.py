@@ -122,9 +122,9 @@ class VfpAccess:
                 alq_type = ALQ[pa_table.schema.metadata[b"ALQ_TYPE"].decode("utf-8")]
             wfr_type = WFR[pa_table.schema.metadata[b"WFR_TYPE"].decode("utf-8")]
             gfr_type = GFR[pa_table.schema.metadata[b"GFR_TYPE"].decode("utf-8")]
-            wfr_values = (np.frombuffer(pa_table.schema.metadata[b"WFR_VALUES"], dtype=np.float64).tolist(),)
-            gfr_values = (np.frombuffer(pa_table.schema.metadata[b"GFR_VALUES"], dtype=np.float64).tolist(),)
-            alq_values = (np.frombuffer(pa_table.schema.metadata[b"ALQ_VALUES"], dtype=np.float64).tolist(),)
+            wfr_values = np.frombuffer(pa_table.schema.metadata[b"WFR_VALUES"], dtype=np.float64).tolist()
+            gfr_values = np.frombuffer(pa_table.schema.metadata[b"GFR_VALUES"], dtype=np.float64).tolist()
+            alq_values = np.frombuffer(pa_table.schema.metadata[b"ALQ_VALUES"], dtype=np.float64).tolist()
 
             return VfpProdTable(
                 table_number=table_number,

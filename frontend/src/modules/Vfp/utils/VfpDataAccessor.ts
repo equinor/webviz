@@ -1,11 +1,11 @@
-import { VfpProdTable_api, FlowRateTypeProd_api, ALQ_api, WFR_api, GFR_api } from "@api";
+import { VfpProdTable_api, VfpInjTable_api, FlowRateType_api, ALQ_api, WFR_api, GFR_api } from "@api";
 import { VfpParam } from "../types";
 
 export class VfpDataAccessor {
-    private _vfpTable: VfpProdTable_api;
+    private _vfpTable: VfpProdTable_api | VfpInjTable_api;
 
 
-    constructor(vfpTable: VfpProdTable_api) {
+    constructor(vfpTable: VfpProdTable_api | VfpInjTable_api) {
         this._vfpTable = vfpTable
     }
 
@@ -20,16 +20,18 @@ export class VfpDataAccessor {
     getFlowRateLabel(): string {
         const flowRateType = this._vfpTable.flow_rate_type
         const flowRateUnit = this.getFlowRateUnit()
-        if (flowRateType == FlowRateTypeProd_api.OIL) {
+        if (flowRateType == FlowRateType_api.OIL) {
             return `Oil Rate (${flowRateUnit})`
-        } else if (flowRateType == FlowRateTypeProd_api.GAS) {
+        } else if (flowRateType == FlowRateType_api.GAS) {
             return `Gas Rate (${flowRateUnit})`
-        } else if (flowRateType == FlowRateTypeProd_api.LIQ) {
+        } else if (flowRateType == FlowRateType_api.LIQ) {
             return `Liquid Rate (${flowRateUnit})`
-        } else if (flowRateType == FlowRateTypeProd_api.TM) {
+        } else if (flowRateType == FlowRateType_api.TM) {
             return `TM (${flowRateUnit})`
-        } else if (flowRateType == FlowRateTypeProd_api.WG) {
+        } else if (flowRateType == FlowRateType_api.WG) {
             return `WG (${flowRateUnit})`
+        } else if (flowRateType == FlowRateType_api.WAT) {
+            return `Water Rate (${flowRateUnit})`
         }
         return "Flow rate type unknown"      
     }
