@@ -1,12 +1,11 @@
 import logging
-from typing import List
 
 from fastapi import APIRouter, Depends, Query, Response, HTTPException
 
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
 from primary.services.sumo_access.vfp_access import VfpAccess
-from primary.services.sumo_access.vfp_types import VfpProdTable
+from primary.services.sumo_access.vfp_types import VfpProdTable, VfpInjTable
 from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
@@ -25,7 +24,7 @@ async def get_vfp_table_names(
     ensemble_name: str = Query(description="Ensemble name"),
     realization: int = Query(description="Realization"),
     # fmt:on
-) -> List[str]:
+) -> list[str]:
     perf_metrics = ResponsePerfMetrics(response)
 
     vfp_access = await VfpAccess.from_case_uuid_async(
@@ -49,7 +48,7 @@ async def get_vfp_table(
     realization: int = Query(description="Realization"),
     vfp_table_name: str = Query(description="VFP table name")
     # fmt:on
-) -> VfpProdTable:
+) -> VfpProdTable | VfpInjTable:
     perf_metrics = ResponsePerfMetrics(response)
 
     vfp_access = await VfpAccess.from_case_uuid_async(
