@@ -3,6 +3,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Additional tailwind component classes */
+@layer components {
+    .input-comp {
+        @apply hover:outline hover:outline-1 hover:outline-blue-300 focus:outline focus:outline-1 focus:outline-blue-600;
+    }
+}
+
+/* Custom CSS styles*/
+
 body {
     overflow: hidden;
     font-family: Equinor;
@@ -19,19 +28,19 @@ body {
     border-radius: 2px;
     width: 4px;
     height: 4px;
-    background-color: rgba(190, 190, 190, 0);
+    background-color: rgba(190, 190, 190, 0.3);
     transition: background-color 0.5s ease-in-out;
 }
 
 *:hover > *::-webkit-scrollbar-thumb {
     width: 4px;
     height: 4px;
-    background-color: rgba(190, 190, 190, 0.6);
+    background-color: rgba(190, 190, 190, 0.8);
     transition: background-color 0.5s ease-in-out;
 }
 
 *:hover > *::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(134, 134, 134, 0.8);
+    background-color: rgba(134, 134, 134, 0.9);
     transition: background-color 0.5s ease-in-out;
 }
 

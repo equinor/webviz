@@ -239,6 +239,7 @@ export function View({
                         bounds={viewportBounds}
                         layers={newLayers}
                         colorTables={colorTables}
+                        getTooltip={undefined}
                         views={{
                             layout: [1, 1],
                             showLabel: false,
