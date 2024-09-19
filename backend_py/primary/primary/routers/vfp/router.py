@@ -56,7 +56,7 @@ async def get_vfp_table(
     )
     perf_metrics.record_lap("get-access")
     try:
-        vfp_table: VfpProdTable = await vfp_access.get_vfpprod_table_from_tagname(
+        vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfpprod_table_from_tagname(
             tagname=vfp_table_name, realization=realization
         )
     except NotImplementedError as ex:
