@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from pydantic import BaseModel
 
@@ -19,21 +19,13 @@ class VfpParam(Enum):
 
 
 # Flow rate types
-class FlowRateTypeProd(Enum):
+class FlowRateType(Enum):
     OIL = "OIL"
     LIQ = "LIQ"
     GAS = "GAS"
     WG = "WG"
     TM = "TM"
-
-
-# Flow rate types for injection curves
-class FlowRateTypeInj(Enum):
-    OIL = "OIL"
     WAT = "WAT"
-    GAS = "GAS"
-    WG = "WG"
-    TM = "TM"
 
 
 # THP type
@@ -90,22 +82,22 @@ class TabType(Enum):
 # The values are ordered so that the index of flow_rate_values moves fastest, and the index of thp_values moves
 # slowest. The order is: THP, WFR, GFR, ALQ, Flow rates.
 class VfpProdTable(BaseModel):
-    vfp_type: VfpType
+    vfp_type: VfpType = VfpType.VFPPROD
     table_number: int
     datum: float
     thp_type: THP
     wfr_type: WFR
     gfr_type: GFR
     alq_type: ALQ
-    flow_rate_type: FlowRateTypeProd
+    flow_rate_type: FlowRateType
     unit_type: UnitType
     tab_type: TabType
-    thp_values: List[float]
-    wfr_values: List[float]
-    gfr_values: List[float]
-    alq_values: List[float]
-    flow_rate_values: List[float]
-    bhp_values: List[float]
+    thp_values: list[float]
+    wfr_values: list[float]
+    gfr_values: list[float]
+    alq_values: list[float]
+    flow_rate_values: list[float]
+    bhp_values: list[float]
     flow_rate_unit: str
     thp_unit: str
     wfr_unit: str
@@ -115,29 +107,30 @@ class VfpProdTable(BaseModel):
 
 
 class VfpInjTable(BaseModel):
-    vfp_type: VfpType
+    vfp_type: VfpType = VfpType.VFPINJ
     table_number: int
     datum: float
-    flow_rate_type: FlowRateTypeInj
+    flow_rate_type: FlowRateType
     unit_type: UnitType
     tab_type: TabType
-    thp_values: List[float]
-    flow_rate_values: List[float]
-    bhp_values: List[float]
+    thp_values: list[float]
+    flow_rate_values: list[float]
+    bhp_values: list[float]
     flow_rate_unit: str
     thp_unit: str
     bhp_unit: str
 
 
 # Unit definitions for VFPPROD
-VFPPROD_UNITS: Dict[UnitType, Dict[VfpParam, Any]] = {
+VFP_UNITS: Dict[UnitType, Dict[VfpParam, Any]] = {
     UnitType.DEFAULT: {
         VfpParam.FLOWRATE: {
-            FlowRateTypeProd.OIL: "",
-            FlowRateTypeProd.LIQ: "",
-            FlowRateTypeProd.GAS: "",
-            FlowRateTypeProd.WG: "",
-            FlowRateTypeProd.TM: "",
+            FlowRateType.OIL: "",
+            FlowRateType.LIQ: "",
+            FlowRateType.GAS: "",
+            FlowRateType.WG: "",
+            FlowRateType.TM: "",
+            FlowRateType.WAT: "",
         },
         VfpParam.THP: {THP.THP: "barsa"},
         VfpParam.WFR: {
@@ -165,11 +158,12 @@ VFPPROD_UNITS: Dict[UnitType, Dict[VfpParam, Any]] = {
     },
     UnitType.METRIC: {
         VfpParam.FLOWRATE: {
-            FlowRateTypeProd.OIL: "sm³/day",
-            FlowRateTypeProd.LIQ: "sm³/day",
-            FlowRateTypeProd.GAS: "sm³/day",
-            FlowRateTypeProd.WG: "sm³/day",
-            FlowRateTypeProd.TM: "kg-M/day",
+            FlowRateType.OIL: "sm³/day",
+            FlowRateType.LIQ: "sm³/day",
+            FlowRateType.GAS: "sm³/day",
+            FlowRateType.WG: "sm³/day",
+            FlowRateType.TM: "kg-M/day",
+            FlowRateType.WAT: "sm³/day",
         },
         VfpParam.THP: {THP.THP: "barsa"},
         VfpParam.WFR: {
@@ -197,11 +191,12 @@ VFPPROD_UNITS: Dict[UnitType, Dict[VfpParam, Any]] = {
     },
     UnitType.FIELD: {
         VfpParam.FLOWRATE: {
-            FlowRateTypeProd.OIL: "stb/day",
-            FlowRateTypeProd.LIQ: "stb/day",
-            FlowRateTypeProd.GAS: "Mscf/day",
-            FlowRateTypeProd.WG: "lb-M/day",
-            FlowRateTypeProd.TM: "lb-M/day",
+            FlowRateType.OIL: "stb/day",
+            FlowRateType.LIQ: "stb/day",
+            FlowRateType.GAS: "Mscf/day",
+            FlowRateType.WG: "lb-M/day",
+            FlowRateType.TM: "lb-M/day",
+            FlowRateType.WAT: "stb/day",
         },
         VfpParam.THP: {THP.THP: "psia"},
         VfpParam.WFR: {
@@ -229,11 +224,12 @@ VFPPROD_UNITS: Dict[UnitType, Dict[VfpParam, Any]] = {
     },
     UnitType.LAB: {
         VfpParam.FLOWRATE: {
-            FlowRateTypeProd.OIL: "scc/hr",
-            FlowRateTypeProd.LIQ: "scc/hr",
-            FlowRateTypeProd.GAS: "scc/hr",
-            FlowRateTypeProd.WG: "scc/hr",
-            FlowRateTypeProd.TM: "lb-M/day",
+            FlowRateType.OIL: "scc/hr",
+            FlowRateType.LIQ: "scc/hr",
+            FlowRateType.GAS: "scc/hr",
+            FlowRateType.WG: "scc/hr",
+            FlowRateType.TM: "lb-M/day",
+            FlowRateType.WAT: "scc/hr",
         },
         VfpParam.THP: {THP.THP: "atma"},
         VfpParam.WFR: {
@@ -261,11 +257,12 @@ VFPPROD_UNITS: Dict[UnitType, Dict[VfpParam, Any]] = {
     },
     UnitType.PVTM: {
         VfpParam.FLOWRATE: {
-            FlowRateTypeProd.OIL: "sm³/day",
-            FlowRateTypeProd.LIQ: "sm³/day",
-            FlowRateTypeProd.GAS: "sm³/day",
-            FlowRateTypeProd.WG: "sm³/day",
-            FlowRateTypeProd.TM: "kg-M/day",
+            FlowRateType.OIL: "sm³/day",
+            FlowRateType.LIQ: "sm³/day",
+            FlowRateType.GAS: "sm³/day",
+            FlowRateType.WG: "sm³/day",
+            FlowRateType.TM: "kg-M/day",
+            FlowRateType.WAT: "sm³/day",
         },
         VfpParam.THP: {THP.THP: "atma"},
         VfpParam.WFR: {
@@ -292,57 +289,3 @@ VFPPROD_UNITS: Dict[UnitType, Dict[VfpParam, Any]] = {
         },
     },
 }
-
-# # Unit definitions for VFPINJ
-# VFPINJ_UNITS = {
-#     "DEFAULT": {
-#         "FLO": {
-#             "OIL": "",
-#             "WAT": "",
-#             "GAS": "",
-#             "WG": "",
-#             "TM": "",
-#         },
-#         "THP": {"THP": ""},
-#     },
-#     "METRIC": {
-#         "FLO": {
-#             "OIL": "sm³/day",
-#             "WAT": "sm³/day",
-#             "GAS": "sm³/day",
-#             "WG": "sm³/day",
-#             "TM": "kg-M/day",
-#         },
-#         "THP": {"THP": "barsa"},
-#     },
-#     "FIELD": {
-#         "FLO": {
-#             "OIL": "stb/day",
-#             "WAT": "stb/day",
-#             "GAS": "Mscf/day",
-#             "WG": "Mscf/day",
-#             "TM": "lb-M/day",
-#         },
-#         "THP": {"THP": "psia"},
-#     },
-#     "LAB": {
-#         "FLO": {
-#             "OIL": "scc/hr",
-#             "WAT": "scc/hr",
-#             "GAS": "scc/hr",
-#             "WG": "scc/hr",
-#             "TM": "gm-M/hr",
-#         },
-#         "THP": {"THP": "atma"},
-#     },
-#     "PVT-M": {
-#         "FLO": {
-#             "OIL": "sm³/day",
-#             "WAT": "sm³/day",
-#             "GAS": "sm³/day",
-#             "WG": "sm³/day",
-#             "TM": "kg-M/day",
-#         },
-#         "THP": {"THP": "atma"},
-#     },
-# }
