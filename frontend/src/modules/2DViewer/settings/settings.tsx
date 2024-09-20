@@ -31,7 +31,9 @@ import { RealizationSurfaceLayer } from "../layers/implementations/layers/Realiz
 import { StatisticalSurfaceLayer } from "../layers/implementations/layers/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
 import { Ensemble } from "../layers/implementations/settings/Ensemble";
 import { Realization } from "../layers/implementations/settings/Realization";
+import { SurfaceAttribute } from "../layers/implementations/settings/SurfaceAttribute";
 import { SurfaceName } from "../layers/implementations/settings/SurfaceName";
+import { TimeOrInterval } from "../layers/implementations/settings/TimeOrInterval";
 import { Group, Item, instanceofGroup } from "../layers/interfaces";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
@@ -107,6 +109,12 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 return;
             case "surface_name":
                 groupDelegate.prependChild(new SharedSetting(new SurfaceName()));
+                return;
+            case "surface_attribute":
+                groupDelegate.prependChild(new SharedSetting(new SurfaceAttribute()));
+                return;
+            case "Date":
+                groupDelegate.prependChild(new SharedSetting(new TimeOrInterval()));
                 return;
         }
     }
@@ -325,6 +333,16 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 identifier: "surface_name",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Surface Name",
+            },
+            {
+                identifier: "surface_attribute",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Surface Attribute",
+            },
+            {
+                identifier: "Date",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Date",
             },
         ],
     },
