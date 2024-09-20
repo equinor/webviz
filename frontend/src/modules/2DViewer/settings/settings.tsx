@@ -3,6 +3,9 @@ import React from "react";
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
 import { ModuleSettingsProps } from "@framework/Module";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { FieldDropdown } from "@framework/components/FieldDropdown";
+import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { IsMoveAllowedArgs, SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
@@ -35,14 +38,16 @@ import { SurfaceName } from "../layers/implementations/settings/SurfaceName";
 import { Group, Item, instanceofGroup } from "../layers/interfaces";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
-    const layerListRef = React.useRef<HTMLDivElement>(null);
-    const layerListSize = useElementSize(layerListRef);
-
+    const [fieldId, setFieldId] = React.useState<string | null>(null);
     const queryClient = useQueryClient();
+
+    const layerListRef = React.useRef<HTMLDivElement>(null);
     const layerManager = React.useRef<LayerManager>(
         new LayerManager(props.workbenchSession, props.workbenchSettings, queryClient)
     );
 
+    const layerListSize = useElementSize(layerListRef);
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
     const colorSet = props.workbenchSettings.useColorSet();
 
     const groupDelegate = layerManager.current.getGroupDelegate();
@@ -185,11 +190,18 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         destination.insertChild(movedItem, position);
     }
 
+    function handleFieldChange(fieldId: string | null) {
+        setFieldId(fieldId);
+    }
+
     const hasView = groupDelegate.getDescendantItems((item) => item instanceof View).length > 0;
     const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
 
     return (
         <div className="h-full flex flex-col gap-1">
+            <CollapsibleGroup title="Field" expanded>
+                <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldId} />
+            </CollapsibleGroup>
             <div className="flex-grow flex flex-col min-h-0">
                 <div className="w-full flex-grow flex flex-col min-h-0" ref={layerListRef}>
                     <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">

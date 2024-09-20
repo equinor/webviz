@@ -12,6 +12,7 @@ export enum LayerManagerTopic {
     SETTINGS_CHANGED = "settings-changed",
     AVAILABLE_SETTINGS_CHANGED = "available-settings-changed",
     LAYER_DATA_REVISION = "layer-data-changed",
+    GLOBAL_SETTINGS_CHANGED = "global-settings-changed",
 }
 
 export type LayerManagerTopicPayload = {
@@ -19,7 +20,13 @@ export type LayerManagerTopicPayload = {
     [LayerManagerTopic.SETTINGS_CHANGED]: void;
     [LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED]: void;
     [LayerManagerTopic.LAYER_DATA_REVISION]: number;
+    [LayerManagerTopic.GLOBAL_SETTINGS_CHANGED]: void;
 };
+
+export type GlobalSettings = {
+    fieldId: string | null;
+};
+
 export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, LayerManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
     private _workbenchSettings: WorkbenchSettings;
@@ -28,6 +35,9 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     private _publishSubscribeHandler = new PublishSubscribeHandler<LayerManagerTopic>();
     private _itemDelegate: ItemDelegate;
     private _layerDataRevision: number = 0;
+    private _globalSettings: GlobalSettings = {
+        fieldId: null,
+    };
 
     constructor(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings, queryClient: QueryClient) {
         this._workbenchSession = workbenchSession;
@@ -44,6 +54,15 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
 
     getGroupDelegate(): GroupDelegate {
         return this._groupDelegate;
+    }
+
+    updateGlobalSetting<T extends keyof GlobalSettings>(key: T, value: GlobalSettings[T]): void {
+        this._globalSettings[key] = value;
+        this._publishSubscribeHandler.notifySubscribers(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+    }
+
+    getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] {
+        return this._globalSettings[key];
     }
 
     publishTopic(topic: LayerManagerTopic): void {
