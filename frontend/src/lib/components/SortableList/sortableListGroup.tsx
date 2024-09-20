@@ -81,11 +81,11 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
                     })}
                 ></div>
                 <Header
+                    {...props}
                     onToggleExpanded={handleToggleExpanded}
                     expanded={isExpanded}
                     expandable={hasContent}
                     hovered={isHeaderHovered}
-                    {...props}
                 />
                 {isDragging &&
                     dragPosition &&

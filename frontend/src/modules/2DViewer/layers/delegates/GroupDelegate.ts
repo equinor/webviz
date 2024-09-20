@@ -80,7 +80,6 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
         this._subscriptions.set(child.getItemDelegate().getId(), subscriptionSet);
 
         this._publishSubscribeHandler.notifySubscribers(GroupDelegateTopic.CHILDREN);
-        this._publishSubscribeHandler.notifySubscribers(GroupDelegateTopic.TREE_REVISION_NUMBER);
         this.notifyManagerOfItemChange();
         this.incrementTreeRevisionNumber();
     }
@@ -102,8 +101,8 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
         }
 
         this._publishSubscribeHandler.notifySubscribers(GroupDelegateTopic.CHILDREN);
-        this._publishSubscribeHandler.notifySubscribers(GroupDelegateTopic.TREE_REVISION_NUMBER);
         this.notifyManagerOfItemChange();
+        this.incrementTreeRevisionNumber();
     }
 
     private notifyManagerOfItemChange() {

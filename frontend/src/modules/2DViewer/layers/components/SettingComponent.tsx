@@ -35,8 +35,8 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
 
     return (
         <React.Fragment key={props.setting.getDelegate().getId()}>
-            <div className="p-1 w-32">{props.setting.getLabel()}</div>
-            <div className="p-1 w-full">
+            <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
+            <div className="p-0.5 px-2 w-full">
                 <PendingWrapper isPending={isLoading}>
                     <componentRef.current
                         onValueChange={handleValueChanged}

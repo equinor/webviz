@@ -1,12 +1,19 @@
 import React from "react";
 
+import { Icon } from "@equinor/eds-core-react";
+import { color_palette } from "@equinor/eds-icons";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
 import { ColorScale as ColorScaleImpl } from "@lib/utils/ColorScale";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { RemoveButton } from "./RemoveButton";
 
 import { ColorScale } from "../ColorScale";
+import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
+import { ItemDelegateTopic } from "../delegates/ItemDelegate";
 
 export type ColorScaleComponentProps = {
     colorScale: ColorScale;
@@ -14,6 +21,7 @@ export type ColorScaleComponentProps = {
 
 export function ColorScaleComponent(props: ColorScaleComponentProps): React.ReactNode {
     const workbenchSettings = props.colorScale.getItemDelegate().getLayerManager()?.getWorkbenchSettings();
+    const isExpanded = usePublishSubscribeTopicValue(props.colorScale.getItemDelegate(), ItemDelegateTopic.EXPANDED);
 
     function handleColorScaleChange(newColorScale: ColorScaleImpl, areBoundariesUserDefined: boolean): void {
         props.colorScale.setColorScale(newColorScale);
@@ -35,14 +43,31 @@ export function ColorScaleComponent(props: ColorScaleComponentProps): React.Reac
         );
     }
 
+    function handleToggleExpanded(): void {
+        props.colorScale.getItemDelegate().setIsExpanded(!isExpanded);
+    }
+
     return (
         <SortableListItem
             key={props.colorScale.getItemDelegate().getId()}
             id={props.colorScale.getItemDelegate().getId()}
             title={<span className="font-bold">Color scale</span>}
+            startAdornment={
+                <div className="flex gap-1 items-center">
+                    <DenseIconButton
+                        onClick={handleToggleExpanded}
+                        title={isExpanded ? "Hide settings" : "Show settings"}
+                    >
+                        {isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
+                    </DenseIconButton>
+                    <Icon data={color_palette} size={16} />
+                </div>
+            }
             endAdornment={<RemoveButton item={props.colorScale} />}
         >
-            <div className="p-2 text-sm border">{makeColorScaleSelector()}</div>
+            <div className={resolveClassNames("p-2 text-sm border", { hidden: !isExpanded })}>
+                {makeColorScaleSelector()}
+            </div>
         </SortableListItem>
     );
 }

@@ -65,6 +65,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         views.layout = [numCols, numRows];
 
         viewerLayers.push(...viewsAndLayers.layers);
+        colorScales.push(...viewsAndLayers.colorScales);
         const globalLayerIds = viewsAndLayers.layers.map((layer) => layer.layer.id);
 
         for (const view of viewsAndLayers.views) {
@@ -138,13 +139,13 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         }
         const targetX = (prevBoundingBox.x[0] + prevBoundingBox.x[1]) / 2;
         const targetY = (prevBoundingBox.y[0] + prevBoundingBox.y[1]) / 2;
-        const targetZ = (prevBoundingBox.z[0] + prevBoundingBox.z[1]) / 2;
+        const targetZ = -(prevBoundingBox.z[0] + prevBoundingBox.z[1]) / 2;
 
         setCameraPositionSetByAction({
             rotationOrbit: 100,
             rotationX: 90,
             target: [targetX, targetY, targetZ],
-            zoom: NaN,
+            zoom: -5.0,
         });
     }
 
@@ -158,7 +159,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     let bounds: [number, number, number, number] | undefined = undefined;
     if (prevBoundingBox) {
-        bounds = [prevBoundingBox.x[0], prevBoundingBox.x[1], prevBoundingBox.y[0], prevBoundingBox.y[1]];
+        bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
     }
 
     const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);

@@ -59,6 +59,15 @@ export class StatisticalSurfaceLayer
         };
     }
 
+    makeValueRange(): [number, number] | null {
+        const data = this._layerDelegate.getData();
+        if (!data) {
+            return null;
+        }
+
+        return [data.value_min, data.value_max];
+    }
+
     fechData(queryClient: QueryClient): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();

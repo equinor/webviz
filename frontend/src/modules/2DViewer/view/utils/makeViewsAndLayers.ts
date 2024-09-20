@@ -83,13 +83,13 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
                 continue;
             }
 
-            const layer = makeLayer(child);
+            const colorScale = findColorScale(child);
+
+            const layer = makeLayer(child, colorScale?.colorScale ?? undefined);
 
             if (!layer) {
                 continue;
             }
-
-            const colorScale = findColorScale(child);
 
             if (colorScale) {
                 collectedColorScales.push(colorScale);
@@ -124,12 +124,21 @@ function findColorScale(layer: Layer<any, any>): { id: string; colorScale: Color
         return null;
     }
 
+    const colorScaleWithName = ColorScaleWithName.fromColorScale(
+        colorScaleItem.getColorScale(),
+        layer.getItemDelegate().getName()
+    );
+
+    if (!colorScaleItem.getAreBoundariesUserDefined()) {
+        const range = layer.getLayerDelegate().getValueRange();
+        if (range) {
+            colorScaleWithName.setRange(range[0], range[1]);
+        }
+    }
+
     return {
         id: layer.getItemDelegate().getId(),
-        colorScale: ColorScaleWithName.fromColorScale(
-            colorScaleItem.getColorScale(),
-            layer.getItemDelegate().getName()
-        ),
+        colorScale: colorScaleWithName,
     };
 }
 
