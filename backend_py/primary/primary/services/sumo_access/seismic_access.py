@@ -45,7 +45,7 @@ class SeismicAccess:
                 iso_date_or_interval=iso_string_or_time_interval,
                 is_observation=cube["data"]["is_observation"],
                 # Assume undefined vertical domain is depth. fmu-dataio should always set this, but it is not guaranteed yet.
-                is_depth=cube["data"].get("vertical_domain","depth") == "depth"
+                is_depth=cube["data"].get("vertical_domain", "depth") == "depth",
             )
             seismic_cube_meta_list.append(seismic_meta)
         return seismic_cube_meta_list
