@@ -15,6 +15,7 @@ services:
       - ./frontend/src:/usr/src/app/frontend/src
       - ./frontend/theme:/usr/src/app/frontend/theme
       - ./frontend/index.html:/usr/src/app/frontend/index.html
+      - ../webviz-subsurface-components/:/usr/src/webviz-subsurface-components/
 
   backend-primary:
     build:

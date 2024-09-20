@@ -40,5 +40,5 @@ class WellCompletionsData(BaseModel):
     version: str
     units: WellCompletionsUnits
     zones: List[WellCompletionsZone]
-    timeSteps: List[str]
+    sorted_completion_dates: List[str]
     wells: List[WellCompletionsWell]

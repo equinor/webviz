@@ -8,24 +8,24 @@ import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { WellCompletionsPlot } from "@webviz/well-completions-plot";
 
 import { Interfaces } from "./interfaces";
-import { DataLoadingStatus } from "./state";
+import { DataLoadingStatus } from "./typesAndEnums";
 
 export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
     const wellCompletionsPlotId = React.useId();
     const statusWriter = useViewStatusWriter(viewContext);
 
     const plotData = viewContext.useSettingsToViewInterfaceValue("plotData");
-    const availableTimeSteps = viewContext.useSettingsToViewInterfaceValue("availableTimeSteps");
+    const sortedCompletionDates = viewContext.useSettingsToViewInterfaceValue("sortedCompletionDates");
     const dataLoadingStatus = viewContext.useSettingsToViewInterfaceValue("dataLoadingStatus");
 
-    statusWriter.setLoading(dataLoadingStatus === DataLoadingStatus.Loading);
+    statusWriter.setLoading(dataLoadingStatus === DataLoadingStatus.LOADING);
 
     return (
         <div className="w-full h-full">
             {!plotData ? (
-                dataLoadingStatus === DataLoadingStatus.Error ? (
+                dataLoadingStatus === DataLoadingStatus.ERROR ? (
                     <ContentError>Error loading well completions data</ContentError>
-                ) : dataLoadingStatus === DataLoadingStatus.Loading ? (
+                ) : dataLoadingStatus === DataLoadingStatus.LOADING ? (
                     <ContentInfo>
                         <CircularProgress />
                     </ContentInfo>
@@ -35,7 +35,7 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
             ) : (
                 <WellCompletionsPlot
                     id={wellCompletionsPlotId}
-                    timeSteps={availableTimeSteps || []}
+                    sortedCompletionDates={sortedCompletionDates || []}
                     plotData={plotData}
                 />
             )}

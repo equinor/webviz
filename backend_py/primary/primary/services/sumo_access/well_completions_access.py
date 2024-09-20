@@ -143,9 +143,9 @@ class WellCompletionDataConverter:
 
         # NOTE:
         # - How to handle well attributes? Should be provided by Sumo?
-        self._well_attributes: Dict[
-            str, Dict[str, WellCompletionsAttributeType]
-        ] = {}  # Each well has dict of attributes
+        self._well_attributes: Dict[str, Dict[str, WellCompletionsAttributeType]] = (
+            {}
+        )  # Each well has dict of attributes
 
     def create_data(self) -> WellCompletionsData:
         """Creates well completions dataset for front-end"""
@@ -156,7 +156,7 @@ class WellCompletionDataConverter:
                 kh=WellCompletionsUnitInfo(unit=self._kh_unit, decimalPlaces=self._kh_decimal_places)
             ),
             zones=self._extract_well_completions_zones(zones=self._zones_tree, zone_name_list=self._zone_name_list),
-            timeSteps=[pd.to_datetime(str(dte)).strftime("%Y-%m-%d") for dte in self._datemap.keys()],
+            sorted_completion_dates=[pd.to_datetime(str(dte)).strftime("%Y-%m-%d") for dte in self._datemap.keys()],
             wells=self._extract_wells(),
         )
 
