@@ -3,6 +3,7 @@ import { Layout, PlotData, PlotMarker } from "plotly.js";
 import { PressureOption, VfpParam } from "../types";
 import { VfpDataAccessor } from "./VfpDataAccessor";
 import { ColorScale } from "@lib/utils/ColorScale";
+import { VfpType_api } from "@api";
 
 export class VfpPlotBuilder {
     private _vfpDataAccessor: VfpDataAccessor;
@@ -103,8 +104,15 @@ export class VfpPlotBuilder {
         const gfrValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.GFR)[gfrIndex]
         const alqValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.ALQ)[alqIndex]
 
-        const hovertext = `THP=${thpValue}<br>${this._vfpDataAccessor.getWfrType()}=${wfrValue}<br>${this._vfpDataAccessor.getGfrType()}=${gfrValue}<br>ALQ=${alqValue}`
-        let bhpValues = this._vfpDataAccessor.getBhpValues(thpIndex, wfrIndex, gfrIndex, alqIndex)
+        let hovertext = `THP=${thpValue}}`
+        let bhpValues: number[] = []
+
+        if (this._vfpDataAccessor.getTableType()==VfpType_api.VFPPROD) {
+            hovertext += `<br>${this._vfpDataAccessor.getWfrType()}=${wfrValue}<br>${this._vfpDataAccessor.getGfrType()}=${gfrValue}<br>ALQ=${alqValue}`
+            bhpValues = this._vfpDataAccessor.getVfpProdBhpValues(thpIndex, wfrIndex, gfrIndex, alqIndex)
+        } else if (this._vfpDataAccessor.getTableType()==VfpType_api.VFPINJ) {
+            bhpValues = this._vfpDataAccessor.getVfpInjBhpValues(thpIndex)
+        }
 
         if (pressureOption === PressureOption.DP) {
             bhpValues = bhpValues.map(bhp => bhp - thpValue)

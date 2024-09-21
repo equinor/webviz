@@ -1,5 +1,6 @@
 import { VfpProdTable_api, VfpInjTable_api, FlowRateType_api, ALQ_api, WFR_api, GFR_api } from "@api";
 import { VfpParam } from "../types";
+import { VfpType_api } from "@api";
 
 export class VfpDataAccessor {
     private _vfpTable: VfpProdTable_api | VfpInjTable_api;
@@ -51,26 +52,36 @@ export class VfpDataAccessor {
     getVfpParamValues(vfpParam: VfpParam): number [] {
         if (vfpParam == VfpParam.THP) {
             return this._vfpTable.thp_values
-        } else if (vfpParam == VfpParam.WFR) {
-            return this._vfpTable.wfr_values
-        } else if (vfpParam == VfpParam.GFR) {
-            return this._vfpTable.gfr_values
-        } else if (vfpParam == VfpParam.ALQ) {
-            return this._vfpTable.alq_values
         }
+        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
+            const vfpProdTable = <VfpProdTable_api>this._vfpTable
+            if (vfpParam == VfpParam.WFR) {
+                return vfpProdTable.wfr_values
+            } else if (vfpParam == VfpParam.GFR) {
+                return vfpProdTable.gfr_values
+            } else if (vfpParam == VfpParam.ALQ) {
+                return vfpProdTable.alq_values
+            }
+        }
+        // throw Error?
         return []
     }
 
     getVfpParamUnit(vfpParam: VfpParam): string {
         if (vfpParam == VfpParam.THP) {
             return this._vfpTable.thp_unit
-        } else if (vfpParam == VfpParam.WFR) {
-            return this._vfpTable.wfr_unit
-        } else if (vfpParam == VfpParam.GFR) {
-            return this._vfpTable.gfr_unit
-        } else if (vfpParam == VfpParam.ALQ) {
-            return this._vfpTable.alq_unit
+        } 
+        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
+            const vfpProdTable = <VfpProdTable_api>this._vfpTable        
+            if (vfpParam == VfpParam.WFR) {
+                return vfpProdTable.wfr_unit
+            } else if (vfpParam == VfpParam.GFR) {
+                return vfpProdTable.gfr_unit
+            } else if (vfpParam == VfpParam.ALQ) {
+                return vfpProdTable.alq_unit
+            }
         }
+        // throw Error?
         return ""
     }
 
@@ -78,16 +89,20 @@ export class VfpDataAccessor {
         let label = ""
         if (vfpParam == VfpParam.THP) {
             label = "THP"
-        } else if (vfpParam == VfpParam.WFR) {
-            label = this._vfpTable.wfr_type
-        } else if (vfpParam == VfpParam.GFR) {
-            label = this._vfpTable.gfr_type
-        } else if (vfpParam == VfpParam.ALQ) {
-            if (this._vfpTable.alq_type === ALQ_api._) {
-                label = "ALQ"
-            } else {
-                label = "ALQ: " + this._vfpTable.alq_type
-            }
+        } 
+        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
+            const vfpProdTable = <VfpProdTable_api>this._vfpTable
+            if (vfpParam == VfpParam.WFR) {
+                label = vfpProdTable.wfr_type
+            } else if (vfpParam == VfpParam.GFR) {
+                label = vfpProdTable.gfr_type
+            } else if (vfpParam == VfpParam.ALQ) {
+                if (vfpProdTable.alq_type === ALQ_api._) {
+                    label = "ALQ"
+                } else {
+                    label = "ALQ: " + vfpProdTable.alq_type
+                }
+            }            
         }
         const unit = this.getVfpParamUnit(vfpParam)
         if (includeUnit && unit != "") {
@@ -97,35 +112,64 @@ export class VfpDataAccessor {
     }
 
     getWfrType(): WFR_api {
-        return this._vfpTable.wfr_type
+        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
+            const vfpProdTable = <VfpProdTable_api>this._vfpTable
+            return vfpProdTable.wfr_type
+        }
+        throw Error("WFR type is not valid for VFPINJ tables.")
     }
 
     getGfrType(): GFR_api {
-        return this._vfpTable.gfr_type
+        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
+            let vfpProdTable = <VfpProdTable_api>this._vfpTable
+            return vfpProdTable.gfr_type
+        }
+        throw Error("GFR type is not valid for VFPINJ tables.")
     }
 
     getAlqType(): ALQ_api {
-        return this._vfpTable.alq_type
+        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
+            let vfpProdTable = <VfpProdTable_api>this._vfpTable
+            return vfpProdTable.alq_type
+        }
+        throw Error("ALQ type is not valid for VFPINJ tables.")
     }
 
-    getBhpValues(thpIndex: number, wfrIndex: number, gfrIndex: number, alqIndex: number) : number[] {
-        const nbWfrValues = this._vfpTable.wfr_values.length
-        const nbGfrValues = this._vfpTable.gfr_values.length
-        const nbAlqValues = this._vfpTable.alq_values.length
-        const nbFlowRates = this._vfpTable.flow_rate_values.length
-        const startIndex = nbFlowRates*(nbAlqValues*(nbGfrValues*(nbWfrValues*thpIndex+wfrIndex)+gfrIndex)+alqIndex)
-        return this._vfpTable.bhp_values.slice(startIndex, startIndex+nbFlowRates)
+    getVfpProdBhpValues(thpIndex: number, wfrIndex: number, gfrIndex: number, alqIndex: number) : number[] {
+        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
+            const vfpProdTable = <VfpProdTable_api>this._vfpTable
+            const nbWfrValues = vfpProdTable.wfr_values.length
+            const nbGfrValues = vfpProdTable.gfr_values.length
+            const nbAlqValues = vfpProdTable.alq_values.length
+            const nbFlowRates = this._vfpTable.flow_rate_values.length
+            const startIndex = nbFlowRates*(nbAlqValues*(nbGfrValues*(nbWfrValues*thpIndex+wfrIndex)+gfrIndex)+alqIndex)
+            return this._vfpTable.bhp_values.slice(startIndex, startIndex+nbFlowRates)
+        }
+        throw Error("The getVfpProdBhpValues function is not valid for VFPINJ tables.")
+    }
+
+    getVfpInjBhpValues(thpIndex: number) : number[] {
+        if (this._vfpTable.vfp_type === VfpType_api.VFPINJ) {
+            const nbFlowRates = this._vfpTable.flow_rate_values.length
+            const startIndex = nbFlowRates*thpIndex
+            return this._vfpTable.bhp_values.slice(startIndex, startIndex+nbFlowRates)
+        }
+        throw Error("The getVfpInjBhpValues function is not valid for VFPPROD tables.")    
     }
 
     getNumberOfValues(vfpParam: VfpParam): number {
         if (vfpParam == VfpParam.THP) {
             return this._vfpTable.thp_values.length
-        } else if (vfpParam == VfpParam.WFR) {
-            return this._vfpTable.wfr_values.length
-        } else if (vfpParam == VfpParam.GFR) {
-            return this._vfpTable.gfr_values.length
-        } else if (vfpParam == VfpParam.ALQ) {
-            return this._vfpTable.alq_values.length
+        } 
+        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
+            const vfpProdTable = <VfpProdTable_api>this._vfpTable
+            if (vfpParam == VfpParam.WFR) {
+                return vfpProdTable.wfr_values.length
+            } else if (vfpParam == VfpParam.GFR) {
+                return vfpProdTable.gfr_values.length
+            } else if (vfpParam == VfpParam.ALQ) {
+                return vfpProdTable.alq_values.length
+            }            
         }
         return NaN
     }
