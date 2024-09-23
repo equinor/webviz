@@ -1,7 +1,7 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { DataLoadingStatus, TimeAggregationSelection } from "@modules/WellCompletions/typesAndEnums";
-import { WellCompletionsDataAccessorNEW } from "@modules/WellCompletions/utils/wellCompletionsDataAccessorNEW";
+import { WellCompletionsDataAccessor } from "@modules/WellCompletions/utils/wellCompletionsDataAccessor";
 import { PlotData } from "@webviz/well-completions-plot";
 
 import { atom } from "jotai";
@@ -16,6 +16,7 @@ import {
     userSelectedHideZeroCompletionsAtom,
     userSelectedRealizationNumberAtom,
     userSelectedSortWellsByAtom,
+    userSelectedSortWellsDirectionAtom,
     userSelectedTimeAggregationAtom,
 } from "./baseAtoms";
 import { wellCompletionsQueryAtom } from "./queryAtoms";
@@ -54,27 +55,39 @@ export const selectedRealizationNumberAtom = atom<number | null>((get) => {
     return userSelectedRealizationNumber;
 });
 
-export const dataLoadingStatusAtom = atom<DataLoadingStatus>((get) => {
+export const isQueryFetchingAtom = atom<boolean>((get) => {
     const wellCompletionsQuery = get(wellCompletionsQueryAtom);
-    if (wellCompletionsQuery.isFetching) {
+
+    return wellCompletionsQuery.isFetching;
+});
+
+export const isQueryErrorAtom = atom<boolean>((get) => {
+    const wellCompletionsQuery = get(wellCompletionsQueryAtom);
+
+    return wellCompletionsQuery.isError;
+});
+
+export const dataLoadingStatusAtom = atom<DataLoadingStatus>((get) => {
+    const isQueryFetching = get(isQueryFetchingAtom);
+    const isQueryError = get(isQueryErrorAtom);
+
+    if (isQueryFetching) {
         return DataLoadingStatus.LOADING;
-    } else if (wellCompletionsQuery.isError) {
+    } else if (isQueryError) {
         return DataLoadingStatus.ERROR;
     }
     return DataLoadingStatus.IDLE;
 });
 
-export const wellCompletionsDataAccessorAtom = atom<WellCompletionsDataAccessorNEW | null>((get) => {
+export const wellCompletionsDataAccessorAtom = atom<WellCompletionsDataAccessor | null>((get) => {
     const wellCompletionsQuery = get(wellCompletionsQueryAtom);
     const selectedStratigraphyColorSet = get(selectedStratigraphyColorSetAtom);
 
-    // NOTE: Old code did not create new instance of WellCompletionsDataAccessorNEW when loading data, only clearing content
-    // When new data was retrieved, the instance parsed new data. This is not the case here.
     if (!wellCompletionsQuery.data || !selectedStratigraphyColorSet) {
         return null;
     }
 
-    return new WellCompletionsDataAccessorNEW(wellCompletionsQuery.data, selectedStratigraphyColorSet);
+    return new WellCompletionsDataAccessor(wellCompletionsQuery.data, selectedStratigraphyColorSet);
 });
 
 export const sortedCompletionDatesAtom = atom<string[] | null>((get) => {
@@ -139,6 +152,7 @@ export const plotDataAtom = atom<PlotData | null>((get) => {
     const userSelectedHideZeroCompletions = get(userSelectedHideZeroCompletionsAtom);
     const userSelectedTimeAggregation = get(userSelectedTimeAggregationAtom);
     const userSelectedSortWellsBy = get(userSelectedSortWellsByAtom);
+    const userSelectedSortWellsDirection = get(userSelectedSortWellsDirectionAtom);
 
     const selectedCompletionDateIndex = get(selectedCompletionDateIndexAtom);
     const selectedCompletionDateIndexRange = get(selectedCompletionDateIndexRangeAtom);
@@ -157,10 +171,8 @@ export const plotDataAtom = atom<PlotData | null>((get) => {
 
     wellCompletionsDataAccessor.setSearchWellText(userSearchWellText);
     wellCompletionsDataAccessor.setHideZeroCompletions(userSelectedHideZeroCompletions);
+    wellCompletionsDataAccessor.setSortWellsBy(userSelectedSortWellsBy);
+    wellCompletionsDataAccessor.setSortDirection(userSelectedSortWellsDirection);
 
-    return wellCompletionsDataAccessor.createPlotData(
-        completionDateIndexSelection,
-        userSelectedTimeAggregation,
-        userSelectedSortWellsBy
-    );
+    return wellCompletionsDataAccessor.createPlotData(completionDateIndexSelection, userSelectedTimeAggregation);
 });

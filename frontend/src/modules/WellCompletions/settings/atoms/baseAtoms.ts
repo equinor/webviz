@@ -1,7 +1,7 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { RealizationSelection, TimeAggregationSelection } from "@modules/WellCompletions/typesAndEnums";
-import { SortWellsBy } from "@webviz/well-completions-plot";
+import { SortDirection, SortWellsBy } from "@webviz/well-completions-plot";
 
 import { atom } from "jotai";
 
@@ -16,3 +16,4 @@ export const userSelectedEnsembleIdentAtom = atom<EnsembleIdent | null>(null);
 export const userSelectedRealizationNumberAtom = atom<number | null>(null);
 export const userSelectedRealizationSelectionAtom = atom<RealizationSelection>(RealizationSelection.AGGREGATED);
 export const userSelectedSortWellsByAtom = atom<SortWellsBy>(SortWellsBy.WELL_NAME);
+export const userSelectedSortWellsDirectionAtom = atom<SortDirection>(SortDirection.ASCENDING);

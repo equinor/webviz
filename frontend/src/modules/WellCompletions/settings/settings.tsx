@@ -2,22 +2,22 @@ import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
-// import { useSettingsStatusWriter } from "@framework/StatusWriter";
+import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { CircularProgress } from "@lib/components/CircularProgress";
+import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { DiscreteSlider } from "@lib/components/DiscreteSlider";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
 import { ColorSet } from "@lib/utils/ColorSet";
-// import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import { SortWellsBy, SortWellsByEnumToStringMapping } from "@webviz/well-completions-plot";
+import { ArrowDownwardSharp, ArrowUpwardSharp } from "@mui/icons-material";
+import { SortDirection, SortWellsBy, SortWellsByEnumToStringMapping } from "@webviz/well-completions-plot";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { isEqual } from "lodash";
@@ -33,16 +33,19 @@ import {
     userSelectedRealizationNumberAtom,
     userSelectedRealizationSelectionAtom,
     userSelectedSortWellsByAtom,
+    userSelectedSortWellsDirectionAtom,
     userSelectedTimeAggregationAtom,
 } from "./atoms/baseAtoms";
 import {
+    isQueryErrorAtom,
+    isQueryFetchingAtom,
     selectedCompletionDateIndexAtom,
     selectedCompletionDateIndexRangeAtom,
     selectedEnsembleIdentAtom,
     selectedRealizationNumberAtom,
     sortedCompletionDatesAtom,
 } from "./atoms/derivedAtoms";
-import { useWellCompletionsQuery } from "./hooks/queryHooks";
+import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
 import { Interfaces } from "../interfaces";
 import {
@@ -59,7 +62,7 @@ export const Settings = ({
     workbenchSettings,
 }: ModuleSettingsProps<Interfaces>) => {
     const ensembleSet = useEnsembleSet(workbenchSession);
-    // const statusWriter = useSettingsStatusWriter(settingsContext);
+    const statusWriter = useSettingsStatusWriter(settingsContext);
     const stratigraphyColorSet = workbenchSettings.useColorSet();
 
     const setSyncedEnsembleIdents = useSetAtom(syncedEnsembleIdentsAtom);
@@ -74,6 +77,8 @@ export const Settings = ({
     const sortedCompletionDates = useAtomValue(sortedCompletionDatesAtom);
     const selectedCompletionDateIndex = useAtomValue(selectedCompletionDateIndexAtom);
     const selectedCompletionDateIndexRange = useAtomValue(selectedCompletionDateIndexRangeAtom);
+    const isQueryFetching = useAtomValue(isQueryFetchingAtom);
+    const isQueryError = useAtomValue(isQueryErrorAtom);
 
     const [userSelectedTimeAggregation, setUserSelectedTimeAggregation] = useAtom(userSelectedTimeAggregationAtom);
     const [userSelectedHideZeroCompletions, setUserSelectedHideZeroCompletions] = useAtom(
@@ -83,6 +88,9 @@ export const Settings = ({
         userSelectedRealizationSelectionAtom
     );
     const [userSelectedSortWellsBy, setUserSelectedSortWellsBy] = useAtom(userSelectedSortWellsByAtom);
+    const [userSelectedSortWellsDirection, setUserSelectedSortWellsDirection] = useAtom(
+        userSelectedSortWellsDirectionAtom
+    );
 
     const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<EnsembleIdent[] | null>(null);
     const [prevStratigraphyColorSet, setPrevStratigraphyColorSet] = React.useState<ColorSet | null>(null);
@@ -104,13 +112,7 @@ export const Settings = ({
         }
     }
 
-    const wellCompletionsQuery = useWellCompletionsQuery(
-        selectedEnsembleIdent?.getCaseUuid(),
-        selectedEnsembleIdent?.getEnsembleName(),
-        0
-    );
-
-    // usePropagateApiErrorToStatusWriter(wellCompletionsQuery, statusWriter);
+    useMakeSettingsStatusWriterMessages(statusWriter);
 
     function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
         setUserSelectedEnsembleIdent(newEnsembleIdent);
@@ -146,6 +148,14 @@ export const Settings = ({
         setUserSelectedHideZeroCompletions(checked);
     }
 
+    function handleSetAscendingSortDirection() {
+        setUserSelectedSortWellsDirection(SortDirection.ASCENDING);
+    }
+
+    function handleSetDescendingSortDirection() {
+        setUserSelectedSortWellsDirection(SortDirection.DESCENDING);
+    }
+
     const createValueLabelFormat = React.useCallback(
         function createValueLabelFormat(value: number): string {
             if (!sortedCompletionDates || !sortedCompletionDates.length) {
@@ -162,6 +172,14 @@ export const Settings = ({
 
     const selectedEnsemble = selectedEnsembleIdent ? ensembleSet.findEnsemble(selectedEnsembleIdent) : null;
     const isSingleRealizationSelection = userSelectedRealizationSelection === RealizationSelection.SINGLE;
+
+    function createErrorMessage(): string | null {
+        if (!isQueryError) {
+            return null;
+        }
+
+        return "Failed to load well completions data";
+    }
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
@@ -203,11 +221,7 @@ export const Settings = ({
                 </div>
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Completions selections">
-                <QueryStateWrapper
-                    queryResult={wellCompletionsQuery}
-                    loadingComponent={<CircularProgress />}
-                    errorComponent={"Could not find well completions data"}
-                >
+                <PendingWrapper isPending={isQueryFetching} errorMessage={createErrorMessage() ?? undefined}>
                     <div className="flex flex-col gap-2 overflow-y-auto">
                         <Label text="Time Aggregation">
                             <RadioGroup
@@ -265,26 +279,55 @@ export const Settings = ({
                                 />
                             </Label>
                         )}
-                        <Label text="Search well names">
-                            <Input onChange={handleSearchWellChange} placeholder={"..."} />
-                        </Label>
                         <Label text="Filter by completions">
                             <Switch
                                 checked={userSelectedHideZeroCompletions}
                                 onChange={handleHideZeroCompletionsChange}
                             />
                         </Label>
+                        <Label text="Search well names">
+                            <Input onChange={handleSearchWellChange} placeholder={"..."} />
+                        </Label>
                         <Label text="Sort wells by">
-                            <Dropdown
-                                options={Object.values(SortWellsBy).map((elm: SortWellsBy) => {
-                                    return { value: elm, label: SortWellsByEnumToStringMapping[elm] };
-                                })}
-                                value={userSelectedSortWellsBy}
-                                onChange={setUserSelectedSortWellsBy}
-                            />
+                            <div className="flex items-center gap-2">
+                                <div className="flex-grow">
+                                    <Dropdown
+                                        options={Object.values(SortWellsBy).map((elm: SortWellsBy) => {
+                                            return { value: elm, label: SortWellsByEnumToStringMapping[elm] };
+                                        })}
+                                        value={userSelectedSortWellsBy}
+                                        onChange={setUserSelectedSortWellsBy}
+                                    />
+                                </div>
+                                <div className="flex items-center">
+                                    <Button
+                                        onClick={handleSetAscendingSortDirection}
+                                        title="Sort ascending"
+                                        startIcon={<ArrowUpwardSharp />}
+                                        variant={
+                                            userSelectedSortWellsDirection === SortDirection.ASCENDING
+                                                ? "contained"
+                                                : undefined
+                                        }
+                                        size="medium"
+                                    />
+                                    <Button
+                                        onClick={handleSetDescendingSortDirection}
+                                        title="Sort descending"
+                                        startIcon={<ArrowDownwardSharp />}
+                                        variant={
+                                            userSelectedSortWellsDirection === SortDirection.DESCENDING
+                                                ? "contained"
+                                                : undefined
+                                        }
+                                        size="medium"
+                                        name="test"
+                                    />
+                                </div>
+                            </div>
                         </Label>
                     </div>
-                </QueryStateWrapper>
+                </PendingWrapper>
             </CollapsibleGroup>
         </div>
     );
