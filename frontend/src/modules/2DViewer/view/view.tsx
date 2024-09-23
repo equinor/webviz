@@ -2,6 +2,7 @@ import React from "react";
 
 import { View as DeckGlView } from "@deck.gl/core/typed";
 import { ModuleViewProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect2D, rectContainsPoint } from "@lib/utils/geometry";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
@@ -31,6 +32,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const mainDivSize = useElementSize(mainDivRef);
 
     const queryClient = useQueryClient();
+    const statusWriter = useViewStatusWriter(props.viewContext);
     const layerManager = props.viewContext.useSettingsToViewInterfaceValue("layerManager");
     const groupDelegate = layerManager?.getGroupDelegate() ?? new GroupDelegate(null);
 
@@ -121,6 +123,10 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 setPrevBoundingBox(viewsAndLayers.boundingBox);
             }
         }
+
+        console.debug("numLoadingLayers", viewsAndLayers.numLoadingLayers);
+
+        statusWriter.setLoading(viewsAndLayers.numLoadingLayers > 0);
     }
 
     function handleFitInViewClick() {

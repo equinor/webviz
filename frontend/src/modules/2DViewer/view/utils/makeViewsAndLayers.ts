@@ -31,12 +31,14 @@ export type DeckGlViewsAndLayers = {
     layers: DeckGlLayerWithPosition[];
     boundingBox: BoundingBox | null;
     colorScales: ColorScaleWithId[];
+    numLoadingLayers: number;
 };
 
 export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: number = 0): DeckGlViewsAndLayers {
     const collectedViews: DeckGlView[] = [];
     const collectedLayers: DeckGlLayerWithPosition[] = [];
     const collectedColorScales: ColorScaleWithId[] = [];
+    let collectedNumLoadingLayers = 0;
     let globalBoundingBox: BoundingBox | null = null;
 
     const children = group.getGroupDelegate().getChildren();
@@ -54,12 +56,13 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
         }
 
         if (instanceofGroup(child)) {
-            const { views, layers, boundingBox, colorScales } = recursivelyMakeViewsAndLayers(
+            const { views, layers, boundingBox, colorScales, numLoadingLayers } = recursivelyMakeViewsAndLayers(
                 child,
                 numCollectedLayers + collectedLayers.length
             );
 
             collectedColorScales.push(...colorScales);
+            collectedNumLoadingLayers += numLoadingLayers;
             maybeApplyBoundingBox(boundingBox);
 
             if (child instanceof View) {
@@ -79,6 +82,10 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
         }
 
         if (instanceofLayer(child)) {
+            if (child.getLayerDelegate().getStatus() === LayerStatus.LOADING) {
+                collectedNumLoadingLayers++;
+            }
+
             if (child.getLayerDelegate().getStatus() !== LayerStatus.SUCCESS) {
                 continue;
             }
@@ -107,6 +114,7 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
         layers: collectedLayers,
         boundingBox: globalBoundingBox,
         colorScales: collectedColorScales,
+        numLoadingLayers: collectedNumLoadingLayers,
     };
 }
 
