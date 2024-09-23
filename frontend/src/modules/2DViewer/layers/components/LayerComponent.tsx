@@ -5,7 +5,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Check, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
+import { Check, CheckCircle, Error, ErrorOutline, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { EditName } from "./EditName";
 import { RemoveButton } from "./RemoveButton";
@@ -105,15 +105,15 @@ function EndActions(props: EndActionProps): React.ReactNode {
             const error = props.layer.getLayerDelegate().getError();
             if (typeof error === "string") {
                 return (
-                    <div title={error} className="rounded-full bg-red-700 text-white p-0.5">
-                        <Error fontSize="inherit" />
+                    <div title={error} className="text-red-700 p-0.5">
+                        <Error fontSize="small" />
                     </div>
                 );
             } else {
                 const statusMessage = error as StatusMessage;
                 return (
                     <div title={statusMessage.message}>
-                        <Error fontSize="inherit" className="rounded-full bg-red-700 text-white p-0.5" />
+                        <Error className="text-red-700 p-0.5" fontSize="small" />
                     </div>
                 );
             }
@@ -121,7 +121,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
         if (status === LayerStatus.SUCCESS) {
             return (
                 <div title="Successfully loaded">
-                    <Check fontSize="inherit" className="rounded-full bg-green-700 text-white p-0.5" />
+                    <CheckCircle className="text-green-700 p-0.5" fontSize="small" />
                 </div>
             );
         }

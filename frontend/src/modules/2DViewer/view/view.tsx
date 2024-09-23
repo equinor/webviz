@@ -10,7 +10,7 @@ import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/Sub
 import { useQueryClient } from "@tanstack/react-query";
 import { ViewportType } from "@webviz/subsurface-viewer";
 import { ViewStateType, ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
-import { Axes2DLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { Axes2DLayer, NorthArrow3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Toolbar } from "./components/Toolbar";
 import { DeckGlLayerWithPosition, recursivelyMakeViewsAndLayers } from "./utils/makeViewsAndLayers";
@@ -25,7 +25,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const id = React.useId();
 
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
-    const [verticalScale, setVerticalScale] = React.useState<number>(1);
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
@@ -73,7 +72,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 id: view.id,
                 name: view.name,
                 isSync: true,
-                layerIds: ["axes", ...globalLayerIds, ...view.layers.map((layer) => layer.layer.id)],
+                layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id)],
             });
             viewerLayers.push(...view.layers);
 
@@ -93,15 +92,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 </DeckGlView>
             );
         }
-
-        viewerLayers.push({
-            layer: new Axes2DLayer({
-                id: "axes",
-                axisColor: [80, 80, 80],
-                backgroundColor: [250, 250, 250],
-            }),
-            position: -1,
-        });
 
         if (viewsAndLayers.boundingBox !== null) {
             if (prevBoundingBox !== null) {
@@ -149,14 +139,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         });
     }
 
-    function handleVerticalScaleDecrease() {
-        setVerticalScale((prev) => prev - 0.1);
-    }
-
-    function handleVerticalScaleIncrease() {
-        setVerticalScale((prev) => prev + 0.1);
-    }
-
     let bounds: [number, number, number, number] | undefined = undefined;
     if (prevBoundingBox) {
         bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
@@ -166,12 +148,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
-            <Toolbar
-                onFitInView={handleFitInViewClick}
-                onVerticalScaleDecrease={handleVerticalScaleDecrease}
-                onVerticalScaleIncrease={handleVerticalScaleIncrease}
-                verticalScale={verticalScale}
-            />
+            <Toolbar onFitInView={handleFitInViewClick} />
             <ColorLegendsContainer colorScales={colorScales} height={mainDivSize.height / 2 - 50} position="left" />
             <SubsurfaceViewerWithCameraState
                 id={`subsurface-viewer-${id}`}
@@ -189,7 +166,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         top: 10,
                     },
                 }}
-                verticalScale={verticalScale}
             >
                 {viewportAnnotations}
             </SubsurfaceViewerWithCameraState>
