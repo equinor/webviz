@@ -119,6 +119,10 @@ function findColorScale(layer: Layer<any, any>): { id: string; colorScale: Color
         return null;
     }
 
+    if (layer.getLayerDelegate().getColoringType() !== "COLORSCALE") {
+        return null;
+    }
+
     const colorScaleItem = colorScaleItemArr[0];
     if (!(colorScaleItem instanceof ColorScale)) {
         return null;

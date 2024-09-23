@@ -12,9 +12,10 @@ import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { Add, Panorama, SettingsApplications } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { layerManagerAtom } from "./atoms/baseAtoms";
+import { layerManagerAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
+import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 
 import { ColorScale } from "../layers/ColorScale";
 import { LayerManager } from "../layers/LayerManager";
@@ -40,7 +41,6 @@ import { TimeOrInterval } from "../layers/implementations/settings/TimeOrInterva
 import { Group, Item, instanceofGroup } from "../layers/interfaces";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
-    const [fieldId, setFieldId] = React.useState<string | null>(null);
     const queryClient = useQueryClient();
 
     const layerListRef = React.useRef<HTMLDivElement>(null);
@@ -56,12 +56,21 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const items = usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
     const setLayerManager = useSetAtom(layerManagerAtom);
+    const fieldIdentifier = useAtomValue(selectedFieldIdentifierAtom);
+    const setFieldIdentifier = useSetAtom(userSelectedFieldIdentifierAtom);
 
     React.useEffect(
         function onMountEffect() {
             setLayerManager(layerManager.current);
         },
         [setLayerManager]
+    );
+
+    React.useEffect(
+        function onFieldIdentifierChanged() {
+            layerManager.current.updateGlobalSetting("fieldId", fieldIdentifier);
+        },
+        [fieldIdentifier]
     );
 
     function handleLayerAction(identifier: string, group?: Group) {
@@ -199,7 +208,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     }
 
     function handleFieldChange(fieldId: string | null) {
-        setFieldId(fieldId);
+        setFieldIdentifier(fieldId);
         layerManager.current.updateGlobalSetting("fieldId", fieldId);
     }
 
@@ -209,7 +218,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     return (
         <div className="h-full flex flex-col gap-1">
             <CollapsibleGroup title="Field" expanded>
-                <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldId} />
+                <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier} />
             </CollapsibleGroup>
             <div className="flex-grow flex flex-col min-h-0">
                 <div className="w-full flex-grow flex flex-col min-h-0" ref={layerListRef}>

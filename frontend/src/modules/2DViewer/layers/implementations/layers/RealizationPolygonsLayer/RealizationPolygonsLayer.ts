@@ -1,7 +1,7 @@
 import { PolygonData_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
-import { LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
+import { LayerColoringType, LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
 
     constructor() {
         this._itemDelegate = new ItemDelegate("Realization Polygons");
-        this._layerDelegate = new LayerDelegate(this, new RealizationPolygonsContext());
+        this._layerDelegate = new LayerDelegate(this, new RealizationPolygonsContext(), LayerColoringType.NONE);
     }
 
     getSettingsContext() {

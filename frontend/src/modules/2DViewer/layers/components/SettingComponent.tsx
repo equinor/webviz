@@ -4,13 +4,13 @@ import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 
+import { LayerManager, LayerManagerTopic } from "../LayerManager";
 import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
 import { Setting, SettingComponentProps as SettingComponentPropsInterface, SettingTopic } from "../interfaces";
 
 export type SettingComponentProps<TValue> = {
     setting: Setting<TValue>;
-    workbenchSession: WorkbenchSession;
-    workbenchSettings: WorkbenchSettings;
+    manager: LayerManager;
 };
 
 export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): React.ReactNode {
@@ -24,6 +24,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     );
     const overriddenValue = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.OVERRIDDEN_CHANGED);
     const isLoading = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.LOADING_STATE_CHANGED);
+    const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
 
     function handleValueChanged(newValue: TValue) {
         props.setting.getDelegate().setValue(newValue);
@@ -44,8 +45,9 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
                         isOverridden={overriddenValue !== undefined}
                         overriddenValue={overriddenValue}
                         availableValues={availableValues}
-                        workbenchSession={props.workbenchSession}
-                        workbenchSettings={props.workbenchSettings}
+                        globalSettings={globalSettings}
+                        workbenchSession={props.manager.getWorkbenchSession()}
+                        workbenchSettings={props.manager.getWorkbenchSettings()}
                     />
                 </PendingWrapper>
             </div>

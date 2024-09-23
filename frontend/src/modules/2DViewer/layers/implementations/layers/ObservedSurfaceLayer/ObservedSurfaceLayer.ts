@@ -13,7 +13,7 @@ import { isEqual } from "lodash";
 import { ObservedSurfaceContext } from "./ObservedSurfaceContext";
 import { ObservedSurfaceSettings } from "./types";
 
-import { LayerDelegate } from "../../../delegates/LayerDelegate";
+import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
 import { BoundingBox, Layer } from "../../../interfaces";
 
 export class ObservedSurfaceLayer
@@ -24,7 +24,7 @@ export class ObservedSurfaceLayer
 
     constructor() {
         this._itemDelegate = new ItemDelegate("Observed Surface");
-        this._layerDelegate = new LayerDelegate(this, new ObservedSurfaceContext());
+        this._layerDelegate = new LayerDelegate(this, new ObservedSurfaceContext(), LayerColoringType.COLORSCALE);
     }
 
     getSettingsContext() {

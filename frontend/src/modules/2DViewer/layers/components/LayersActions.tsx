@@ -77,7 +77,7 @@ export function LayersActions(props: LayersActionsProps): React.ReactNode {
                     <ArrowDropDown fontSize="inherit" />
                 </DenseIconButton>
             </MenuButton>
-            <Menu anchorOrigin="bottom-end" className="text-sm p-1">
+            <Menu anchorOrigin="bottom-end" className="text-sm p-1 max-h-80 overflow-auto">
                 {makeContent(props.layersActionGroups)}
             </Menu>
         </Dropdown>

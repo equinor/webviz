@@ -30,16 +30,26 @@ export class Ensemble implements Setting<EnsembleIdent | null> {
 
             React.useEffect(
                 function onMountEffect() {
-                    if (props.value === null) {
-                        onValueChange(ensembleSet.getEnsembleArr()[0]?.getIdent() ?? null);
+                    const filteredEnsembles = ensembleSet
+                        .getEnsembleArr()
+                        .filter((ensemble) => ensemble.getFieldIdentifier() === props.globalSettings.fieldId);
+                    if (
+                        props.value === null ||
+                        !filteredEnsembles.some((ensemble) => ensemble.getIdent() === props.value)
+                    ) {
+                        onValueChange(filteredEnsembles.at(0)?.getIdent() ?? null);
                     }
                 },
-                [onValueChange, ensembleSet, props.value]
+                [onValueChange, ensembleSet, props.value, props.globalSettings.fieldId]
             );
+
+            const filteredEnsembles = ensembleSet
+                .getEnsembleArr()
+                .filter((ensemble) => ensemble.getFieldIdentifier() === props.globalSettings.fieldId);
 
             return (
                 <EnsembleDropdown
-                    ensembleSet={ensembleSet}
+                    ensembles={filteredEnsembles}
                     value={!props.isOverridden ? props.value : props.overriddenValue}
                     onChange={props.onValueChange}
                     disabled={props.isOverridden}
