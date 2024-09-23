@@ -2,6 +2,8 @@ import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { QueryClient } from "@tanstack/react-query";
 
+import { isEqual } from "lodash";
+
 import { PublishSubscribe, PublishSubscribeHandler } from "./PublishSubscribeHandler";
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
@@ -57,8 +59,10 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     }
 
     updateGlobalSetting<T extends keyof GlobalSettings>(key: T, value: GlobalSettings[T]): void {
-        this._globalSettings[key] = value;
-        this._publishSubscribeHandler.notifySubscribers(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+        if (!isEqual(this._globalSettings[key], value)) {
+            this._globalSettings[key] = value;
+            this._publishSubscribeHandler.notifySubscribers(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+        }
     }
 
     getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] {
@@ -97,6 +101,9 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
             }
             if (topic === LayerManagerTopic.LAYER_DATA_REVISION) {
                 return this._layerDataRevision;
+            }
+            if (topic === LayerManagerTopic.GLOBAL_SETTINGS_CHANGED) {
+                return this._globalSettings;
             }
         };
 

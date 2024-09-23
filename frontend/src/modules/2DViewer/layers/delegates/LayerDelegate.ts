@@ -15,6 +15,12 @@ export enum LayerDelegateTopic {
     DATA = "DATA",
 }
 
+export enum LayerColoringType {
+    NONE = "NONE",
+    COLORSCALE = "COLORSCALE",
+    COLORSET = "COLORSET",
+}
+
 export type LayerDelegatePayloads<TData> = {
     [LayerDelegateTopic.STATUS]: LayerStatus;
     [LayerDelegateTopic.DATA]: TData;
@@ -34,8 +40,13 @@ export class LayerDelegate<TSettings extends Settings, TData>
     private _error: StatusMessage | string | null = null;
     private _boundingBox: BoundingBox | null = null;
     private _valueRange: [number, number] | null = null;
+    private _coloringType: LayerColoringType;
 
-    constructor(owner: Layer<TSettings, TData>, settingsContext: SettingsContext<TSettings>) {
+    constructor(
+        owner: Layer<TSettings, TData>,
+        settingsContext: SettingsContext<TSettings>,
+        coloringType: LayerColoringType
+    ) {
         this._owner = owner;
         this._settingsContext = settingsContext;
         this._settingsContext
@@ -44,6 +55,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
             .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
             this.handleSettingsChange();
         });
+        this._coloringType = coloringType;
     }
 
     handleSettingsChange(): void {
@@ -75,6 +87,10 @@ export class LayerDelegate<TSettings extends Settings, TData>
 
     getBoundingBox(): BoundingBox | null {
         return this._boundingBox;
+    }
+
+    getColoringType(): LayerColoringType {
+        return this._coloringType;
     }
 
     private invalidateBoundingBox(): void {

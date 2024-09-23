@@ -287,9 +287,9 @@ function makeColorMapFunction(
     }
 
     return (value: number) => {
-        const interpolatedColor = colorScale.getColorForValue(value);
-        // const nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
-        const color = parse(interpolatedColor) as Rgb; // colorScale.getColorForValue(nonNormalizedValue)) as Rgb;
+        const nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
+        const interpolatedColor = colorScale.getColorForValue(nonNormalizedValue);
+        const color = parse(interpolatedColor) as Rgb;
         if (color === undefined) {
             return [0, 0, 0];
         }

@@ -2,6 +2,7 @@ import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { QueryClient } from "@tanstack/react-query";
 
+import { GlobalSettings } from "./LayerManager";
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { LayerDelegate } from "./delegates/LayerDelegate";
@@ -75,6 +76,7 @@ export type SettingComponentProps<TValue> = {
     availableValues: AvailableValuesType<Exclude<TValue, null>>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
+    globalSettings: GlobalSettings;
 };
 
 export interface Setting<TValue> {

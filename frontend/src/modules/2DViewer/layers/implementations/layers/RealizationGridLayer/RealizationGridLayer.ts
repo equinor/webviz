@@ -15,7 +15,7 @@ import { isEqual } from "lodash";
 import { RealizationGridContext } from "./RealizationGridContext";
 import { RealizationGridSettings } from "./types";
 
-import { LayerDelegate } from "../../../delegates/LayerDelegate";
+import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
 import { BoundingBox, Layer } from "../../../interfaces";
 
 export class RealizationGridLayer
@@ -39,7 +39,7 @@ export class RealizationGridLayer
 
     constructor() {
         this._itemDelegate = new ItemDelegate("Realization Grid layer");
-        this._layerDelegate = new LayerDelegate(this, new RealizationGridContext());
+        this._layerDelegate = new LayerDelegate(this, new RealizationGridContext(), LayerColoringType.COLORSCALE);
     }
 
     getSettingsContext() {

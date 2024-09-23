@@ -1,7 +1,7 @@
 import { SurfaceDataPng_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
-import { LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
+import { LayerColoringType, LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
@@ -24,7 +24,7 @@ export class RealizationSurfaceLayer
 
     constructor() {
         this._itemDelegate = new ItemDelegate("Realization Surface");
-        this._layerDelegate = new LayerDelegate(this, new RealizationSurfaceContext());
+        this._layerDelegate = new LayerDelegate(this, new RealizationSurfaceContext(), LayerColoringType.COLORSCALE);
     }
 
     getSettingsContext() {

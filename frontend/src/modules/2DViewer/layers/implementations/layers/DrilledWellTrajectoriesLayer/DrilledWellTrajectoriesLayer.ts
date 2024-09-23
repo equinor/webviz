@@ -10,7 +10,7 @@ import { isEqual } from "lodash";
 import { DrilledWellTrajectoriesContext } from "./DrilledWellTrajectoriesContext";
 import { DrilledWellTrajectoriesSettings } from "./types";
 
-import { LayerDelegate } from "../../../delegates/LayerDelegate";
+import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
 import { BoundingBox, Layer } from "../../../interfaces";
 
 export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]> {
@@ -19,7 +19,7 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
 
     constructor() {
         this._itemDelegate = new ItemDelegate("Drilled Well Trajectories");
-        this._layerDelegate = new LayerDelegate(this, new DrilledWellTrajectoriesContext());
+        this._layerDelegate = new LayerDelegate(this, new DrilledWellTrajectoriesContext(), LayerColoringType.NONE);
     }
 
     getSettingsContext() {
