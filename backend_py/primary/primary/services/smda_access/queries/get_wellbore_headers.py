@@ -51,8 +51,8 @@ async def get_wellbore_headers(
     for survey_header in survey_header_results:
         for wellbore_header in wellbore_headers_results:
             if survey_header['unique_wellbore_identifier'] == wellbore_header['unique_wellbore_identifier']:
-                survey_header['wellbore_purpose'] = wellbore_header['wellbore_purpose']
-                survey_header['wellbore_status'] = wellbore_header['wellbore_status']
+                survey_header['wellbore_purpose'] = wellbore_header.get('wellbore_purpose')
+                survey_header['wellbore_status'] = wellbore_header.get('wellbore_status')
                 break
         
     LOGGER.debug(f"TIME SMDA fetch well headers took {timer.lap_s():.2f} seconds")
