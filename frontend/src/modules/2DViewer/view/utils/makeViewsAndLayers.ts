@@ -144,7 +144,7 @@ function findColorScale(layer: Layer<any, any>): { id: string; colorScale: Color
     if (!colorScaleItem.getAreBoundariesUserDefined()) {
         const range = layer.getLayerDelegate().getValueRange();
         if (range) {
-            colorScaleWithName.setRange(range[0], range[1]);
+            colorScaleWithName.setRangeAndMidPoint(range[0], range[1], (range[0] + range[1]) / 2);
         }
     }
 

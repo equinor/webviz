@@ -1,6 +1,7 @@
 import { PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
 import { Layer } from "@deck.gl/core/typed";
 import { GeoJsonLayer } from "@deck.gl/layers/typed";
+import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
@@ -287,7 +288,18 @@ function makeColorMapFunction(
     }
 
     return (value: number) => {
-        const nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
+        let nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
+        if (colorScale.getGradientType() === ColorScaleGradientType.Diverging) {
+            if (nonNormalizedValue < colorScale.getDivMidPoint()) {
+                nonNormalizedValue = value * (colorScale.getDivMidPoint() - colorScale.getMin()) + colorScale.getMin();
+            }
+            if (nonNormalizedValue >= colorScale.getDivMidPoint()) {
+                nonNormalizedValue =
+                    1 -
+                    (nonNormalizedValue - colorScale.getDivMidPoint()) /
+                        (colorScale.getMax() - colorScale.getDivMidPoint());
+            }
+        }
         const interpolatedColor = colorScale.getColorForValue(nonNormalizedValue);
         const color = parse(interpolatedColor) as Rgb;
         if (color === undefined) {
