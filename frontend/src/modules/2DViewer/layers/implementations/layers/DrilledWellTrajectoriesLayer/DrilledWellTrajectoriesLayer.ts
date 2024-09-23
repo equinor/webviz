@@ -87,14 +87,15 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         }
 
         const queryKey = ["getWellTrajectories", fieldIdentifier];
+        console.log(queryKey);
         this._layerDelegate.registerQueryKey(queryKey);
 
         const promise = queryClient
             .fetchQuery({
                 queryKey,
                 queryFn: () => apiService.well.getFieldWellTrajectories(fieldIdentifier ?? ""),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                staleTime: 1800000, // TODO
+                gcTime: 1800000,
             })
             .then((response: WellboreTrajectory_api[]) => {
                 return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
