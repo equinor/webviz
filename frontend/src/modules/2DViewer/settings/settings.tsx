@@ -200,6 +200,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     function handleFieldChange(fieldId: string | null) {
         setFieldId(fieldId);
+        layerManager.current.updateGlobalSetting("fieldId", fieldId);
     }
 
     const hasView = groupDelegate.getDescendantItems((item) => item instanceof View).length > 0;
