@@ -24,7 +24,7 @@ export class VfpPlotBuilder {
         };
     }
 
-    makeTraces(
+    makeVfpProdTraces(
         selectedThpIndices: number[] | null,
         selectedWfrIndices: number[] | null,
         selectedGfrIndices: number[] | null, 
@@ -70,7 +70,7 @@ export class VfpPlotBuilder {
                         }[colorBy]
                         const color = this._colorScale.getColorForValue(colorByValues[colorByParamIndex])
 
-                        const trace = this.getSingleVfpTrace(thpIndex, wfrIndex, gfrIndex, alqIndex, pressureOption, color)
+                        const trace = this.getSingleVfpProdTrace(thpIndex, wfrIndex, gfrIndex, alqIndex, pressureOption, color)
                         data.push(trace)
                     }
                 }
@@ -98,21 +98,91 @@ export class VfpPlotBuilder {
         return data
     }
 
-    private getSingleVfpTrace(thpIndex: number, wfrIndex: number, gfrIndex: number, alqIndex: number, pressureOption: PressureOption, color: string) : Partial<PlotData> { 
+
+    makeVfpInjTraces(
+        selectedThpIndices: number[] | null,
+        pressureOption: PressureOption,
+    ) : Partial<PlotData>[] {
+
+        const data: Partial<PlotData>[] = [];
+
+        if (selectedThpIndices == null) {
+            return [];
+        }
+
+        const colorByValues = this._vfpDataAccessor.getVfpParamValues(VfpParam.THP)
+        const colorByIndices = selectedThpIndices
+
+        const selectedColorByValues = colorByIndices.map(index => colorByValues[index])
+        const minValue = Math.min(...selectedColorByValues)
+        const maxValue = Math.max(...selectedColorByValues)
+        const midValue = minValue + (maxValue - minValue) / 2;
+        this._colorScale.setRangeAndMidPoint(minValue, maxValue, midValue)
+
+        for (let i = 0; i < selectedThpIndices.length; i++) {
+            const thpIndex = selectedThpIndices[i]
+            const color = this._colorScale.getColorForValue(colorByValues[thpIndex])
+            const trace = this.getSingleVfpInjTrace(thpIndex, pressureOption, color)
+            data.push(trace)
+        }
+
+        // Add color scale legend
+        const colorScaleMarker: Partial<PlotMarker> = {
+           ...this._colorScale.getAsPlotlyColorScaleMarkerObject(),
+            colorbar: {
+                title: this._vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true),
+                titleside: "right",
+                ticks: "outside",
+                len: 0.75,
+            },
+        };
+        const parameterColorLegendTrace: Partial<PlotData> = {
+            x: [null],
+            y: [null],
+            marker: colorScaleMarker,
+            showlegend: false,
+        };
+        data.push(parameterColorLegendTrace);
+        
+        return data
+    }
+
+
+    private getSingleVfpProdTrace(thpIndex: number, wfrIndex: number, gfrIndex: number, alqIndex: number, pressureOption: PressureOption, color: string) : Partial<PlotData> { 
         const thpValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.THP)[thpIndex]
         const wfrValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.WFR)[wfrIndex]
         const gfrValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.GFR)[gfrIndex]
         const alqValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.ALQ)[alqIndex]
 
-        let hovertext = `THP=${thpValue}}`
-        let bhpValues: number[] = []
+        const hovertext = `THP=${thpValue}}<br>${this._vfpDataAccessor.getWfrType()}=${wfrValue}<br>${this._vfpDataAccessor.getGfrType()}=${gfrValue}<br>ALQ=${alqValue}`
+        let bhpValues = this._vfpDataAccessor.getVfpProdBhpValues(thpIndex, wfrIndex, gfrIndex, alqIndex)
 
-        if (this._vfpDataAccessor.getTableType()==VfpType_api.VFPPROD) {
-            hovertext += `<br>${this._vfpDataAccessor.getWfrType()}=${wfrValue}<br>${this._vfpDataAccessor.getGfrType()}=${gfrValue}<br>ALQ=${alqValue}`
-            bhpValues = this._vfpDataAccessor.getVfpProdBhpValues(thpIndex, wfrIndex, gfrIndex, alqIndex)
-        } else if (this._vfpDataAccessor.getTableType()==VfpType_api.VFPINJ) {
-            bhpValues = this._vfpDataAccessor.getVfpInjBhpValues(thpIndex)
+
+        if (pressureOption === PressureOption.DP) {
+            bhpValues = bhpValues.map(bhp => bhp - thpValue)
         }
+
+        const trace: Partial<PlotData> =  {
+            x: this._vfpDataAccessor.getFlowRateValues(),
+            y: bhpValues,
+            mode: "lines+markers",
+            line: {
+                color,
+            },
+            showlegend: false,
+            hovertext: hovertext,
+            hoverinfo: "y+x+text",
+        };
+
+        return trace
+    }
+
+    private getSingleVfpInjTrace(thpIndex: number, pressureOption: PressureOption, color: string) : Partial<PlotData> { 
+        const thpValue = this._vfpDataAccessor.getVfpParamValues(VfpParam.THP)[thpIndex]
+
+        const hovertext = `THP=${thpValue}}`
+        let bhpValues = this._vfpDataAccessor.getVfpInjBhpValues(thpIndex)
+
 
         if (pressureOption === PressureOption.DP) {
             bhpValues = bhpValues.map(bhp => bhp - thpValue)
