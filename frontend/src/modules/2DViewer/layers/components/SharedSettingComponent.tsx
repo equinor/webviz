@@ -75,13 +75,9 @@ function Actions(props: ActionProps): React.ReactNode {
 
     return (
         <>
-            <div
-                className="hover:cursor-pointer rounded hover:text-red-800"
-                onClick={handleRemove}
-                title="Remove layer group"
-            >
+            <DenseIconButton onClick={handleRemove} title="Remove layer group">
                 <Delete fontSize="inherit" />
-            </div>
+            </DenseIconButton>
         </>
     );
 }
