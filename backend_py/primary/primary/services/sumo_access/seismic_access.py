@@ -44,7 +44,7 @@ class SeismicAccess:
                 seismic_attribute=cube["data"].get("tagname"),
                 iso_date_or_interval=iso_string_or_time_interval,
                 is_observation=cube["data"]["is_observation"],
-                is_depth=cube["data"]["vertical_domain"] == "depth",
+                is_depth=cube["data"].get("vertical_domain","depth") == "depth"
             )
             seismic_cube_meta_list.append(seismic_meta)
         return seismic_cube_meta_list
