@@ -18,7 +18,7 @@ async def get_stratigraphic_column_identifier(sumo_client: SumoClient, case_id: 
     response = await sumo_client.post_async("/search", json=query)
     result = response.json()
     hits = result["hits"]["hits"]
-    return hits[0]["_source"]["masterdata"]["smda"]["stratigraphic_column"]["identifier"]
+    return hits[0]["_source"]["masterdata"]["smda"]["stratigraphic_column"]["uuid"]
 
 
 async def get_field_identifiers(sumo_client: SumoClient, case_id: str) -> List[str]:

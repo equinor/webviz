@@ -5,11 +5,11 @@ from ..types import StratigraphicUnit
 from ._get_request import get
 
 
-async def get_stratigraphic_units(access_token: str, stratigraphic_column_identifier: str) -> List[StratigraphicUnit]:
+async def get_stratigraphic_units(access_token: str, strat_column_uuid: str) -> List[StratigraphicUnit]:
     """Returns a list of all stratigraphic units in a stratigraphic column."""
     endpoint = "strat-units"
     params = {
-        "strat_column_identifier": stratigraphic_column_identifier,
+        "strat_column_uuid": strat_column_uuid,
         "_sort": "top_age",
         "_projection": "top,base,identifier,strat_unit_level,strat_unit_type,strat_unit_parent,top_age,base_age,color_r,color_g,color_b",
     }
