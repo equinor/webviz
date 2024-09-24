@@ -6,7 +6,7 @@ import { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
 import { isEqual } from "lodash";
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
-const READOUT_EDGE_DISTANCE = { left: 6 };
+const READOUT_EDGE_DISTANCE_REM = { left: 6 };
 
 function makePositionReadout(layerPickInfo: LayerPickInfo): ReadoutItem | null {
     if (layerPickInfo.coordinate === undefined || layerPickInfo.coordinate.length < 2) {
@@ -118,5 +118,5 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
         return null;
     }
 
-    return <ReadoutBox readoutItems={infoData} edgeDistanceRem={READOUT_EDGE_DISTANCE} />;
+    return <ReadoutBox readoutItems={infoData} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} />;
 }

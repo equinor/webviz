@@ -18,7 +18,7 @@ import { ReadoutBox, ReadoutItem } from "@modules/_shared/components/ReadoutBox"
 import { isEqual } from "lodash";
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
-const READOUT_EDGE_DISTANCE = { left: 6 };
+const READOUT_EDGE_DISTANCE_REM = { left: 6 };
 
 export type ReadoutWrapperProps = {
     wellboreHeaderUuid: string | null;
@@ -132,7 +132,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 onReadout={handleReadoutItemsChange}
                 onViewportChange={props.onViewportChange}
             />
-            <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE} />
+            <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} />
         </>
     );
 }

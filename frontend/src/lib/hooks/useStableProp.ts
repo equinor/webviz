@@ -13,8 +13,8 @@ export function useStableProp<T>(value: T): [prop: T, propDidChange: boolean] {
 
     if (_.isEqual(value, prevInternalValue)) {
         return [prevInternalValue, false];
-    } else {
-        setPrevInternalValue(value);
-        return [value, true];
     }
+
+    setPrevInternalValue(value);
+    return [value, true];
 }
