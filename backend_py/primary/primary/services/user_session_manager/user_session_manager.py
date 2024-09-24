@@ -49,7 +49,7 @@ _USER_SESSION_DEFS: dict[UserComponent, _UserSessionDef] = {
     UserComponent.GRID3D_RI: _UserSessionDef(
         job_component_name="user-grid3d-ri",
         port=8002,
-        resource_req=RadixResourceRequests(cpu="4", memory="32Gi"),
+        resource_req=RadixResourceRequests(cpu="4", memory="64Gi"),
         payload_dict={"ri_omp_num_treads": 4},
     ),
 }
