@@ -3,6 +3,7 @@ import React from "react";
 import { View as DeckGlView } from "@deck.gl/core/typed";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect2D, rectContainsPoint } from "@lib/utils/geometry";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
@@ -11,7 +12,6 @@ import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/Sub
 import { useQueryClient } from "@tanstack/react-query";
 import { ViewportType } from "@webviz/subsurface-viewer";
 import { ViewStateType, ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
-import { Axes2DLayer, NorthArrow3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Toolbar } from "./components/Toolbar";
 import { DeckGlLayerWithPosition, recursivelyMakeViewsAndLayers } from "./utils/makeViewsAndLayers";
@@ -27,6 +27,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
+    const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
@@ -56,6 +57,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     let numCols = 0;
     let numRows = 0;
+
+    let numLoadingLayers = 0;
 
     if (layerManager) {
         const viewsAndLayers = recursivelyMakeViewsAndLayers(layerManager);
@@ -124,25 +127,12 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             }
         }
 
-        console.debug("numLoadingLayers", viewsAndLayers.numLoadingLayers);
-
+        numLoadingLayers = viewsAndLayers.numLoadingLayers;
         statusWriter.setLoading(viewsAndLayers.numLoadingLayers > 0);
     }
 
     function handleFitInViewClick() {
-        if (prevBoundingBox === null) {
-            return;
-        }
-        const targetX = (prevBoundingBox.x[0] + prevBoundingBox.x[1]) / 2;
-        const targetY = (prevBoundingBox.y[0] + prevBoundingBox.y[1]) / 2;
-        const targetZ = -(prevBoundingBox.z[0] + prevBoundingBox.z[1]) / 2;
-
-        setCameraPositionSetByAction({
-            rotationOrbit: 100,
-            rotationX: 90,
-            target: [targetX, targetY, targetZ],
-            zoom: -5.0,
-        });
+        setTriggerHomeCounter((prev) => prev + 1);
     }
 
     let bounds: [number, number, number, number] | undefined = undefined;
@@ -154,27 +144,41 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
-            <Toolbar onFitInView={handleFitInViewClick} />
-            <ColorLegendsContainer colorScales={colorScales} height={mainDivSize.height / 2 - 50} position="left" />
-            <SubsurfaceViewerWithCameraState
-                id={`subsurface-viewer-${id}`}
-                views={views}
-                bounds={bounds}
-                cameraPosition={cameraPositionSetByAction ?? undefined}
-                onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
-                layers={layers}
-                scale={{
-                    visible: true,
-                    incrementValue: 100,
-                    widthPerUnit: 100,
-                    cssStyle: {
-                        right: 10,
-                        top: 10,
-                    },
-                }}
-            >
-                {viewportAnnotations}
-            </SubsurfaceViewerWithCameraState>
+            <PendingWrapper isPending={numLoadingLayers > 0}>
+                <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
+                    <Toolbar onFitInView={handleFitInViewClick} />
+                    <ColorLegendsContainer
+                        colorScales={colorScales}
+                        height={mainDivSize.height / 2 - 50}
+                        position="left"
+                    />
+                    <SubsurfaceViewerWithCameraState
+                        id={`subsurface-viewer-${id}`}
+                        views={views}
+                        bounds={bounds}
+                        cameraPosition={cameraPositionSetByAction ?? undefined}
+                        onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
+                        layers={layers}
+                        scale={{
+                            visible: true,
+                            incrementValue: 100,
+                            widthPerUnit: 100,
+                            cssStyle: {
+                                right: 10,
+                                top: 10,
+                            },
+                        }}
+                        triggerHome={triggerHomeCounter}
+                    >
+                        {viewportAnnotations}
+                    </SubsurfaceViewerWithCameraState>
+                    {views.viewports.length === 0 && (
+                        <div className="absolute left-1/2 top-1/2 w-64 h-10 -ml-32 -mt-5 text-center">
+                            Please add views and layers in the settings panel.
+                        </div>
+                    )}
+                </div>
+            </PendingWrapper>
         </div>
     );
 }

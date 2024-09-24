@@ -12,7 +12,7 @@ import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { Add, Panorama, SettingsApplications } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 
 import { layerManagerAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
