@@ -241,7 +241,7 @@ function makeFilterOptions(values: number[] | undefined): SelectOption[] {
 }
 
 function makeColorByOptions(vfpType: VfpType_api | null, vfpDataAccessor: VfpDataAccessor | null): SelectOption[] {
-    let options = [{ label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP }]
+    const options = [{ label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP }]
     if (vfpType === VfpType_api.VFPPROD) {
         options.push(...[
             { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR, false) ?? "WFR", value: VfpParam.WFR },
