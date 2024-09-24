@@ -186,11 +186,11 @@ spec:
         UVICORN_PORT: 8002
       payload:
         path: /compute/args
-            resources:
-      requests:
-        memory: 32Gi
-      limits:
-        memory: 32Gi
+      resources:
+        requests:
+          memory: 32Gi
+        limits:
+          memory: 32Gi
 
   dnsAppAlias:
     environment: prod
