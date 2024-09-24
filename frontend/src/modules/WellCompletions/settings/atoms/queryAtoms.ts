@@ -4,7 +4,7 @@ import { RealizationSelection } from "@modules/WellCompletions/typesAndEnums";
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { userSelectedRealizationSelectionAtom } from "./baseAtoms";
-import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom } from "./derivedAtoms";
+import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom, validRealizationNumbersAtom } from "./derivedAtoms";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -13,26 +13,27 @@ export const wellCompletionsQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
     const selectedRealizationNumber = get(selectedRealizationNumberAtom);
     const userSelectedRealizationSelection = get(userSelectedRealizationSelectionAtom);
+    const validRealizationNumbers = get(validRealizationNumbersAtom);
 
     const caseUuid = selectedEnsembleIdent?.getCaseUuid();
     const ensembleName = selectedEnsembleIdent?.getEnsembleName();
 
-    // When single realization is selected, we need to pass a valid realization number to the query
-    let realizationNumber: number | null = null;
-    let hasValidRealizationNumber = true;
+    // Initialize with multiple realizations request
+    let realizations: number | number[] | null = validRealizationNumbers;
+    let hasValidRealizations = validRealizationNumbers.length !== 0;
     if (userSelectedRealizationSelection === RealizationSelection.SINGLE) {
-        realizationNumber = selectedRealizationNumber;
-        hasValidRealizationNumber = selectedRealizationNumber !== null;
+        realizations = selectedRealizationNumber;
+        hasValidRealizations = selectedRealizationNumber !== null;
     }
 
-    // TODO: Consider rewriting backend to have specific argument for single realization and specific argument for aggregated realization
+    // Disable query if realization number is null for single realization request
     const query = {
-        queryKey: ["getWellCompletions", caseUuid, ensembleName, realizationNumber],
+        queryKey: ["getWellCompletionsData", caseUuid, ensembleName, realizations],
         queryFn: () =>
-            apiService.wellCompletions.getWellCompletionsData(caseUuid ?? "", ensembleName ?? "", realizationNumber),
+            apiService.wellCompletions.getWellCompletionsData(caseUuid ?? "", ensembleName ?? "", realizations),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
-        enabled: !!(caseUuid && ensembleName && hasValidRealizationNumber),
+        enabled: !!(caseUuid && ensembleName && hasValidRealizations),
     };
 
     return query;

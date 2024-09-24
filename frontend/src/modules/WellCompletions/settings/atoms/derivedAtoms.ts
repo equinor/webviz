@@ -35,14 +35,19 @@ export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
     return userSelectedEnsembleIdent;
 });
 
-export const selectedRealizationNumberAtom = atom<number | null>((get) => {
+export const validRealizationNumbersAtom = atom<number[]>((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-    const userSelectedRealizationNumber = get(userSelectedRealizationNumberAtom);
     const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
     const validRealizationNumbers = selectedEnsembleIdent
         ? [...validEnsembleRealizationsFunction(selectedEnsembleIdent)]
         : [];
+    return validRealizationNumbers;
+});
+
+export const selectedRealizationNumberAtom = atom<number | null>((get) => {
+    const userSelectedRealizationNumber = get(userSelectedRealizationNumberAtom);
+    const validRealizationNumbers = get(validRealizationNumbersAtom);
 
     if (validRealizationNumbers.length === 0) {
         return null;

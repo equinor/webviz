@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type Completions = {
-    't': Array<number>;
+    sorted_completion_date_indices: Array<number>;
     open: Array<number>;
     shut: Array<number>;
     kh_mean: Array<number>;

@@ -139,7 +139,9 @@ export class WellCompletionsDataAccessor {
             if (zone.name in well.completions) {
                 const completion = well.completions[zone.name];
                 //Find the earliest date for the given completion
-                const earliestDate = completion.t.find((_, index) => completion.open[index] > 0);
+                const earliestDate = completion.sorted_completion_date_indices.find(
+                    (_, index) => completion.open[index] > 0
+                );
                 if (earliestDate !== undefined) {
                     earliestCompDateIndex = Math.min(earliestCompDateIndex, earliestDate);
                 }
@@ -181,8 +183,8 @@ export class WellCompletionsDataAccessor {
                     let currentkhMinValue = 0;
                     let currentkhMaxValue = 0;
                     for (let rangeI = 0; rangeI < length; rangeI++) {
-                        const timeStep = rangeI + dateIndexRange[0];
-                        while (timeStep >= completion.t[index]) {
+                        const dateIndex = rangeI + dateIndexRange[0];
+                        while (dateIndex >= completion.sorted_completion_date_indices[index]) {
                             currentOpenValue = completion.open[index];
                             currentShutValue = completion.shut[index];
                             currentkhMeanValue = completion.kh_mean[index];
