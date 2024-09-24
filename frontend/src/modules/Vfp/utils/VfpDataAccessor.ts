@@ -14,7 +14,7 @@ export class VfpDataAccessor {
         return this._vfpTable.table_number
     }
 
-    getTableType(): string {
+    getVfpType(): VfpType_api {
         return this._vfpTable.vfp_type
     }
 

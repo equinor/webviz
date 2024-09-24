@@ -16,7 +16,7 @@ export class VfpPlotBuilder {
 
     makeLayout(size: Size2D, pressureOption: PressureOption) : Partial<Layout> {
         return {
-            title: `VFP type: ${this._vfpDataAccessor.getTableType()}, table number: ${this._vfpDataAccessor.getTableNumber()}`,
+            title: `VFP type: ${this._vfpDataAccessor.getVfpType()}, table number: ${this._vfpDataAccessor.getTableNumber()}`,
             xaxis: { title: this._vfpDataAccessor.getFlowRateLabel()},
             yaxis: { title: `${pressureOption} (${this._vfpDataAccessor.getBhpUnit()})`},
             width: size.width,
