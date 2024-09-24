@@ -3,7 +3,6 @@ import { Layout, PlotData, PlotMarker } from "plotly.js";
 import { PressureOption, VfpParam } from "../types";
 import { VfpDataAccessor } from "./VfpDataAccessor";
 import { ColorScale } from "@lib/utils/ColorScale";
-import { VfpType_api } from "@api";
 
 export class VfpPlotBuilder {
     private _vfpDataAccessor: VfpDataAccessor;
