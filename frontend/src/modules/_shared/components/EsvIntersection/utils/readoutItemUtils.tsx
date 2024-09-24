@@ -1,6 +1,16 @@
-import { Casing, Cement, Completion, HoleSize, PAndA, Perforation, SchematicData } from "@equinor/esv-intersection";
+import {
+    Casing,
+    Cement,
+    Completion,
+    HoleSize,
+    Layer,
+    PAndA,
+    Perforation,
+    SchematicData,
+} from "@equinor/esv-intersection";
 import { ijkFromCellIndex } from "@framework/utils/cellIndexUtils";
 
+import { getColorFromLayerData } from "./intersectionConversion";
 import {
     isCalloutCanvasLayer,
     isPolylineIntersectionLayer,
@@ -12,6 +22,7 @@ import {
     isWellborepathLayer,
 } from "./layers";
 
+import { ReadoutItem as GenericReadoutItem, InfoItem } from "../../ReadoutBox";
 import { AdditionalInformationItem, AdditionalInformationType, ReadoutItem } from "../types/types";
 
 export function getLabelFromLayerData(readoutItem: ReadoutItem): string {
@@ -444,4 +455,92 @@ export function getAdditionalInformationItemsFromReadoutItem(readoutItem: Readou
     }
 
     return items;
+}
+
+export function esvReadoutToGenericReadout(
+    readout: ReadoutItem,
+    index: number,
+    layerIdToNameMap: Record<string, string>
+): GenericReadoutItem {
+    return {
+        label: makeLabelFromLayer(readout.layer, layerIdToNameMap) ?? getLabelFromLayerData(readout),
+        color: getColorFromLayerData(readout.layer, index),
+        info: esvReadoutToInfoItems(readout),
+    };
+}
+
+function makeLabelFromLayer(layer: Layer<any>, layerIdToNameMap: Record<string, string>): string | null {
+    return layerIdToNameMap[layer.id];
+}
+
+function esvReadoutToInfoItems(item: ReadoutItem): InfoItem[] {
+    const additionalInformation = getAdditionalInformationItemsFromReadoutItem(item);
+
+    return additionalInformation
+        .filter((el) => !(el.type === AdditionalInformationType.SCHEMATIC_INFO && el.label === "ID"))
+        .map((el) => {
+            return {
+                name: el.label,
+                unit: el.unit,
+                adornment: makeAdornment(el),
+                value: el.value,
+            };
+        });
+}
+
+function makeAdornment(item: AdditionalInformationItem): React.ReactNode {
+    if (item.lineStyle) {
+        return (
+            <svg
+                style={{
+                    height: 8,
+                    width: 8,
+                }}
+                version="1.1"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <line
+                    x1="0"
+                    y1="4"
+                    x2="8"
+                    y2="4"
+                    style={{
+                        stroke: item.lineStyle.color,
+                        opacity: item.lineStyle.alpha,
+                        strokeWidth: 1,
+                        strokeDasharray: item.lineStyle.dashSegments?.join(","),
+                    }}
+                />
+            </svg>
+        );
+    }
+
+    if (item.areaStyle) {
+        return (
+            <svg
+                style={{
+                    height: 8,
+                    width: 8,
+                }}
+                version="1.1"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <rect
+                    x="0"
+                    y="0"
+                    width="8"
+                    height="8"
+                    style={{
+                        fill: item.areaStyle.fillColor,
+                        opacity: item.areaStyle.alpha,
+                        stroke: item.areaStyle.strokeStyle?.color,
+                        strokeWidth: 1,
+                        strokeDasharray: item.areaStyle.strokeStyle?.dashSegments?.join(","),
+                    }}
+                />
+            </svg>
+        );
+    }
+
+    return null;
 }

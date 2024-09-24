@@ -1,8 +1,8 @@
+import { TreeDataNode } from "@lib/components/SmartNodeSelector";
 import {
     addVectorToVectorSelectorData,
     createVectorSelectorDataFromVectors,
-} from "@framework/components/VectorSelector";
-import { TreeDataNode } from "@lib/components/SmartNodeSelector";
+} from "@modules/_shared/components/VectorSelector";
 
 import { describe, expect, test } from "vitest";
 
