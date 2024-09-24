@@ -1,6 +1,6 @@
 import logging
 from io import BytesIO
-from typing import Any, Dict, List
+from typing import List
 
 import numpy as np
 import pyarrow as pa
