@@ -92,13 +92,11 @@ class VfpAccess:
         unit_type = UnitType[pa_table.schema.metadata[b"UNIT_TYPE"].decode("utf-8")]
         thp_type = THP[pa_table.schema.metadata[b"THP_TYPE"].decode("utf-8")]
         flow_rate_type = FlowRateType[pa_table.schema.metadata[b"RATE_TYPE"].decode("utf-8")]
-        units: Dict[VfpParam, Any] = VFP_UNITS[unit_type]
         table_number = int(pa_table.schema.metadata[b"TABLE_NUMBER"].decode("utf-8"))
         datum = float(pa_table.schema.metadata[b"DATUM"].decode("utf-8"))
         tab_type = TabType[pa_table.schema.metadata[b"TAB_TYPE"].decode("utf-8")]
         thp_values = np.frombuffer(pa_table.schema.metadata[b"THP_VALUES"], dtype=np.float64).tolist()
         flow_rate_values = np.frombuffer(pa_table.schema.metadata[b"FLOW_VALUES"], dtype=np.float64).tolist()
-        bhp_values = [val for sublist in np.array(pa_table.columns).tolist() for val in sublist]
 
         if vfp_type == VfpType.VFPINJ:
             return VfpInjTable(
@@ -109,13 +107,13 @@ class VfpAccess:
                 tab_type=tab_type,
                 thp_values=thp_values,
                 flow_rate_values=flow_rate_values,
-                bhp_values=bhp_values,
-                flow_rate_unit=units[VfpParam.FLOWRATE][flow_rate_type],
-                thp_unit=units[VfpParam.THP][thp_type],
-                bhp_unit=units[VfpParam.THP][thp_type],
+                bhp_values=[val for sublist in np.array(pa_table.columns).tolist() for val in sublist],
+                flow_rate_unit=VFP_UNITS[unit_type][VfpParam.FLOWRATE][flow_rate_type],
+                thp_unit=VFP_UNITS[unit_type][VfpParam.THP][thp_type],
+                bhp_unit=VFP_UNITS[unit_type][VfpParam.THP][thp_type],
             )
 
-        elif vfp_type == VfpType.VFPPROD:
+        if vfp_type == VfpType.VFPPROD:
             # Extracting additional data valid only for VFPPROD
             alq_type = ALQ.UNDEFINED
             if pa_table.schema.metadata[b"ALQ_TYPE"].decode("utf-8") != "''":
@@ -141,13 +139,13 @@ class VfpAccess:
                 gfr_values=gfr_values,
                 alq_values=alq_values,
                 flow_rate_values=flow_rate_values,
-                bhp_values=bhp_values,
-                flow_rate_unit=units[VfpParam.FLOWRATE][flow_rate_type],
-                thp_unit=units[VfpParam.THP][thp_type],
-                wfr_unit=units[VfpParam.WFR][wfr_type],
-                gfr_unit=units[VfpParam.GFR][gfr_type],
-                alq_unit=units[VfpParam.ALQ][alq_type],
-                bhp_unit=units[VfpParam.THP][thp_type],
+                bhp_values=[val for sublist in np.array(pa_table.columns).tolist() for val in sublist],
+                flow_rate_unit=VFP_UNITS[unit_type][VfpParam.FLOWRATE][flow_rate_type],
+                thp_unit=VFP_UNITS[unit_type][VfpParam.THP][thp_type],
+                wfr_unit=VFP_UNITS[unit_type][VfpParam.WFR][wfr_type],
+                gfr_unit=VFP_UNITS[unit_type][VfpParam.GFR][gfr_type],
+                alq_unit=VFP_UNITS[unit_type][VfpParam.ALQ][alq_type],
+                bhp_unit=VFP_UNITS[unit_type][VfpParam.THP][thp_type],
             )
-        else:
-            raise ValueError(f"VfpType {vfp_type} not implemented.")
+
+        raise ValueError(f"VfpType {vfp_type} not implemented.")
