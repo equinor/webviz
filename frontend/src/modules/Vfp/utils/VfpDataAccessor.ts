@@ -53,14 +53,13 @@ export class VfpDataAccessor {
         if (vfpParam == VfpParam.THP) {
             return this._vfpTable.thp_values
         }
-        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
-            const vfpProdTable = <VfpProdTable_api>this._vfpTable
+        if ("wfr_values" in this._vfpTable) { // This means that it is a VFPPROD table
             if (vfpParam == VfpParam.WFR) {
-                return vfpProdTable.wfr_values
+                return this._vfpTable.wfr_values
             } else if (vfpParam == VfpParam.GFR) {
-                return vfpProdTable.gfr_values
+                return this._vfpTable.gfr_values
             } else if (vfpParam == VfpParam.ALQ) {
-                return vfpProdTable.alq_values
+                return this._vfpTable.alq_values
             }
         }
         // throw Error?
@@ -71,14 +70,13 @@ export class VfpDataAccessor {
         if (vfpParam == VfpParam.THP) {
             return this._vfpTable.thp_unit
         } 
-        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
-            const vfpProdTable = <VfpProdTable_api>this._vfpTable        
+        if ("wfr_values" in this._vfpTable) { // This means that it is a VFPPROD table    
             if (vfpParam == VfpParam.WFR) {
-                return vfpProdTable.wfr_unit
+                return this._vfpTable.wfr_unit
             } else if (vfpParam == VfpParam.GFR) {
-                return vfpProdTable.gfr_unit
+                return this._vfpTable.gfr_unit
             } else if (vfpParam == VfpParam.ALQ) {
-                return vfpProdTable.alq_unit
+                return this._vfpTable.alq_unit
             }
         }
         // throw Error?
@@ -90,17 +88,16 @@ export class VfpDataAccessor {
         if (vfpParam == VfpParam.THP) {
             label = "THP"
         } 
-        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
-            const vfpProdTable = <VfpProdTable_api>this._vfpTable
+        if ("wfr_values" in this._vfpTable) { // This means that it is a VFPPROD table
             if (vfpParam == VfpParam.WFR) {
-                label = vfpProdTable.wfr_type
+                label = this._vfpTable.wfr_type
             } else if (vfpParam == VfpParam.GFR) {
-                label = vfpProdTable.gfr_type
+                label = this._vfpTable.gfr_type
             } else if (vfpParam == VfpParam.ALQ) {
-                if (vfpProdTable.alq_type === ALQ_api._) {
+                if (this._vfpTable.alq_type === ALQ_api._) {
                     label = "ALQ"
                 } else {
-                    label = "ALQ: " + vfpProdTable.alq_type
+                    label = "ALQ: " + this._vfpTable.alq_type
                 }
             }            
         }
@@ -112,35 +109,31 @@ export class VfpDataAccessor {
     }
 
     getWfrType(): WFR_api {
-        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
-            const vfpProdTable = <VfpProdTable_api>this._vfpTable
-            return vfpProdTable.wfr_type
+        if ("wfr_type" in this._vfpTable) { // This means that it is a VFPPROD table
+            return this._vfpTable.wfr_type
         }
         throw Error("WFR type is not valid for VFPINJ tables.")
     }
 
     getGfrType(): GFR_api {
-        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
-            let vfpProdTable = <VfpProdTable_api>this._vfpTable
-            return vfpProdTable.gfr_type
+        if ("gfr_type" in this._vfpTable) { // This means that it is a VFPPROD table
+            return this._vfpTable.gfr_type
         }
         throw Error("GFR type is not valid for VFPINJ tables.")
     }
 
     getAlqType(): ALQ_api {
-        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
-            let vfpProdTable = <VfpProdTable_api>this._vfpTable
-            return vfpProdTable.alq_type
+        if ("alq_type" in this._vfpTable) { // This means that it is a VFPPROD table
+            return this._vfpTable.alq_type
         }
         throw Error("ALQ type is not valid for VFPINJ tables.")
     }
 
     getVfpProdBhpValues(thpIndex: number, wfrIndex: number, gfrIndex: number, alqIndex: number) : number[] {
-        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
-            const vfpProdTable = <VfpProdTable_api>this._vfpTable
-            const nbWfrValues = vfpProdTable.wfr_values.length
-            const nbGfrValues = vfpProdTable.gfr_values.length
-            const nbAlqValues = vfpProdTable.alq_values.length
+        if ("wfr_values" in this._vfpTable) { // This means that it is a VFPPROD table
+            const nbWfrValues = this._vfpTable.wfr_values.length
+            const nbGfrValues = this._vfpTable.gfr_values.length
+            const nbAlqValues = this._vfpTable.alq_values.length
             const nbFlowRates = this._vfpTable.flow_rate_values.length
             const startIndex = nbFlowRates*(nbAlqValues*(nbGfrValues*(nbWfrValues*thpIndex+wfrIndex)+gfrIndex)+alqIndex)
             return this._vfpTable.bhp_values.slice(startIndex, startIndex+nbFlowRates)
@@ -161,14 +154,13 @@ export class VfpDataAccessor {
         if (vfpParam == VfpParam.THP) {
             return this._vfpTable.thp_values.length
         } 
-        if (this._vfpTable.vfp_type === VfpType_api.VFPPROD) {
-            const vfpProdTable = <VfpProdTable_api>this._vfpTable
+        if ("wfr_values" in this._vfpTable) { // This means that it is a VFPPROD table
             if (vfpParam == VfpParam.WFR) {
-                return vfpProdTable.wfr_values.length
+                return this._vfpTable.wfr_values.length
             } else if (vfpParam == VfpParam.GFR) {
-                return vfpProdTable.gfr_values.length
+                return this._vfpTable.gfr_values.length
             } else if (vfpParam == VfpParam.ALQ) {
-                return vfpProdTable.alq_values.length
+                return this._vfpTable.alq_values.length
             }            
         }
         return NaN

@@ -93,9 +93,8 @@ export const selectedWfrIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
     const userSelectedWfrIndicies = get(userSelectedWfrIndicesAtom);
 
-    if (vfpTable?.vfp_type == VfpType_api.VFPPROD) {
-        const vfpProdTable = <VfpProdTable_api>vfpTable
-        const wfr_values = vfpProdTable.wfr_values ?? [];
+    if (vfpTable != undefined && "wfr_values" in vfpTable) {
+        const wfr_values = vfpTable.wfr_values ?? [];
         if (wfr_values.length === 0) {
             return null;
         }
@@ -115,9 +114,8 @@ export const selectedGfrIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
     const userSelectedGfrIndicies = get(userSelectedGfrIndicesAtom);
 
-    if (vfpTable?.vfp_type == VfpType_api.VFPPROD) {
-        const vfpProdTable = <VfpProdTable_api>vfpTable
-        const gfr_values = vfpProdTable.gfr_values ?? [];
+    if (vfpTable != undefined && "gfr_values" in vfpTable) {
+        const gfr_values = vfpTable.gfr_values ?? [];
         if (gfr_values.length === 0) {
             return null;
         }
@@ -135,9 +133,8 @@ export const selectedAlqIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
     const userSelectedAlqIndicies = get(userSelectedAlqIndicesAtom);
 
-    if (vfpTable?.vfp_type == VfpType_api.VFPPROD) {
-        const vfpProdTable = <VfpProdTable_api>vfpTable
-        const alq_values = vfpProdTable.alq_values ?? [];
+    if (vfpTable != undefined && "alq_values" in vfpTable) {
+        const alq_values = vfpTable.alq_values ?? [];
         if (alq_values.length === 0) {
             return null;
         }
