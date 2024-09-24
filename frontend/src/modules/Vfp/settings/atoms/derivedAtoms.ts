@@ -161,9 +161,13 @@ export const selectedPressureOptionAtom = atom<PressureOption>((get) => {
 });
 
 export const selectedColorByAtom = atom<VfpParam>((get) => {
+    const vfpTable = get(vfpTableQueryAtom).data;
     const userSelectedColorBy = get(userSelectedColorByAtom);
 
     if (userSelectedColorBy === null) {
+        return VfpParam.THP
+    }
+    if (vfpTable?.vfp_type == VfpType_api.VFPINJ && ["WFR", "GFR", "ALQ"].includes(userSelectedColorBy)) {
         return VfpParam.THP
     }
     return userSelectedColorBy
