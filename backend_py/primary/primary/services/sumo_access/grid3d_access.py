@@ -105,6 +105,7 @@ class Grid3dAccess:
             bbox = get_bbox_from_sumo_grid_obj(grid_geometry)
 
             # Get the properties for the grid geometry
+            grid_geometry_name = grid_geometry_name if grid_geometry_name != "Geogrid" else ""
             property_info_arr = await self.get_properties_info_arr_async(grid_geometry_name, realization)
 
             grid_model_meta_arr.append(
