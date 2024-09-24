@@ -1,4 +1,4 @@
-import { SurfaceDef_api, PolygonData_api, WellboreTrajectory_api } from "@api";
+import { PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
 
 export type SurfaceMeshLayerSettings = {
     contours?: boolean | number[];
@@ -112,6 +112,7 @@ export function createWellboreTrajectoryLayer(wellTrajectories: WellboreTrajecto
         lineStyle: { width: 2 },
         wellHeadStyle: { size: 1 },
         pickable: true,
+        ZIncreasingDownwards: false,
     };
 }
 export function wellTrajectoryToGeojson(wellTrajectory: WellboreTrajectory_api): Record<string, unknown> {
