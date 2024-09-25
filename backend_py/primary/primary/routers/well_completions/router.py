@@ -45,4 +45,10 @@ async def get_well_completions_data(
     if not data:
         raise HTTPException(status_code=404, detail="Well completions data not found")
 
-    return converters.convert_completions_data_to_schema(data)
+    return schemas.WellCompletionsData(
+        version=data.version,
+        units=converters.convert_units_to_schema(data.units),
+        zones=[converters.convert_zone_to_schema(zone) for zone in data.zones],
+        sortedCompletionDates=data.sorted_completion_dates,
+        wells=[converters.convert_well_to_schema(well) for well in data.wells],
+    )

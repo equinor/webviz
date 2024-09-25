@@ -51,7 +51,6 @@ export class WellCompletionsDataAccessor {
 
     constructor(data: WellCompletionsData_api, stratigraphyColorSet: ColorSet) {
         // TODO:
-        // - Filter wells when filter functionality is in place
         // - Filter subzones when filter functionality is in place
 
         this._data = data;
@@ -97,8 +96,6 @@ export class WellCompletionsDataAccessor {
         completionDateIndexSelection: number | [number, number],
         timeAggregation: TimeAggregationSelection
     ): PlotData | null {
-        // TODO: Consider removing function arguments, and use setter-methods for each argument and set to an attribute.
-        //       This would make it easier to modify/adjust single attributes and call "createPlotData" again.
         if (!this._data) return null;
 
         let dateIndexRange: [number, number] | null = null;
@@ -119,7 +116,7 @@ export class WellCompletionsDataAccessor {
             ? Array.from(this._wells as WellCompletionsWell_api[]).filter((well) => wellNameRegex(well.name))
             : this._wells;
 
-        // TODO: Add filtering of well.attributes values
+        // TODO: Add filtering of well.attributes values when attribute information is available
 
         return WellCompletionsDataAccessor.computePlotData(
             this._subzones,
@@ -244,7 +241,7 @@ export class WellCompletionsDataAccessor {
             sortedWells = createSortedWells(wellPlotData, sortWellsBy, sortDirection);
         } else {
             // If not sorted by well name:
-            // - Perform sort and then ensure sorted by ascending well name for the elements compared to be equal.
+            // - Perform selected sort, and then ensure sorted by ascending well name for the elements stated as equal in selected sort
             const sortBySequence = new Map([
                 [sortWellsBy, sortDirection],
                 [SortWellsBy.WELL_NAME, SortDirection.ASCENDING],

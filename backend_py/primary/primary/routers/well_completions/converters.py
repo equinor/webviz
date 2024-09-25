@@ -39,14 +39,3 @@ def convert_zone_to_schema(zone: WellCompletionsZone) -> schemas.WellCompletions
         name=zone.name,
         subzones=[convert_zone_to_schema(subzone) for subzone in zone.subzones] if zone.subzones else None,
     )
-
-
-def convert_completions_data_to_schema(data: WellCompletionsData) -> schemas.WellCompletionsData:
-    wells = [convert_well_to_schema(well) for well in data.wells]
-    return schemas.WellCompletionsData(
-        version=data.version,
-        units=convert_units_to_schema(data.units),
-        zones=[convert_zone_to_schema(zone) for zone in data.zones],
-        sortedCompletionDates=data.sorted_completion_dates,
-        wells=wells,
-    )
