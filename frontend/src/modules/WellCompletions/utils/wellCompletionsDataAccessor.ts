@@ -56,7 +56,7 @@ export class WellCompletionsDataAccessor {
 
         this._data = data;
         this._wells = this._data.wells;
-        this._sortedCompletionDates = this._data.sorted_completion_dates; // TODO: Ensure sorted time steps/dates from back-end
+        this._sortedCompletionDates = this._data.sortedCompletionDates;
         this._searchWellText = "";
         this._hideZeroCompletions = false;
         this._sortWellsBy = null;
@@ -139,7 +139,7 @@ export class WellCompletionsDataAccessor {
             if (zone.name in well.completions) {
                 const completion = well.completions[zone.name];
                 //Find the earliest date for the given completion
-                const earliestDate = completion.sorted_completion_date_indices.find(
+                const earliestDate = completion.sortedCompletionDateIndices.find(
                     (_, index) => completion.open[index] > 0
                 );
                 if (earliestDate !== undefined) {
@@ -184,12 +184,12 @@ export class WellCompletionsDataAccessor {
                     let currentkhMaxValue = 0;
                     for (let rangeI = 0; rangeI < length; rangeI++) {
                         const dateIndex = rangeI + dateIndexRange[0];
-                        while (dateIndex >= completion.sorted_completion_date_indices[index]) {
+                        while (dateIndex >= completion.sortedCompletionDateIndices[index]) {
                             currentOpenValue = completion.open[index];
                             currentShutValue = completion.shut[index];
-                            currentkhMeanValue = completion.kh_mean[index];
-                            currentkhMinValue = completion.kh_min[index];
-                            currentkhMaxValue = completion.kh_max[index];
+                            currentkhMeanValue = completion.khMean[index];
+                            currentkhMinValue = completion.khMin[index];
+                            currentkhMaxValue = completion.khMax[index];
                             index++;
                         }
                         openValues[rangeI] = currentOpenValue;

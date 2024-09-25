@@ -44,6 +44,7 @@ import {
     selectedEnsembleIdentAtom,
     selectedRealizationNumberAtom,
     sortedCompletionDatesAtom,
+    validRealizationNumbersAtom,
 } from "./atoms/derivedAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
@@ -74,6 +75,7 @@ export const Settings = ({
     const setUserSelectedRealizationNumber = useSetAtom(userSelectedRealizationNumberAtom);
     const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
     const selectedRealizationNumber = useAtomValue(selectedRealizationNumberAtom);
+    const validRealizationNumbers = useAtomValue(validRealizationNumbersAtom);
     const sortedCompletionDates = useAtomValue(sortedCompletionDatesAtom);
     const selectedCompletionDateIndex = useAtomValue(selectedCompletionDateIndexAtom);
     const selectedCompletionDateIndexRange = useAtomValue(selectedCompletionDateIndexRangeAtom);
@@ -170,9 +172,6 @@ export const Settings = ({
         [sortedCompletionDates]
     );
 
-    const selectedEnsemble = selectedEnsembleIdent ? ensembleSet.findEnsemble(selectedEnsembleIdent) : null;
-    const isSingleRealizationSelection = userSelectedRealizationSelection === RealizationSelection.SINGLE;
-
     function createErrorMessage(): string | null {
         if (!isQueryError) {
             return null;
@@ -180,6 +179,8 @@ export const Settings = ({
 
         return "Failed to load well completions data";
     }
+
+    const isSingleRealizationSelection = userSelectedRealizationSelection === RealizationSelection.SINGLE;
 
     return (
         <div className="flex flex-col gap-2 overflow-y-auto">
@@ -203,16 +204,12 @@ export const Settings = ({
                         <Label text={isSingleRealizationSelection ? "Realization" : "Realization (disabled)"}>
                             <Dropdown
                                 disabled={!isSingleRealizationSelection}
-                                options={
-                                    !selectedEnsemble
-                                        ? []
-                                        : selectedEnsemble.getRealizations().map((realization: number) => {
-                                              return {
-                                                  label: realization.toString(),
-                                                  value: realization.toString(),
-                                              };
-                                          })
-                                }
+                                options={validRealizationNumbers.map((realization: number) => {
+                                    return {
+                                        label: realization.toString(),
+                                        value: realization.toString(),
+                                    };
+                                })}
                                 value={selectedRealizationNumber?.toString() ?? undefined}
                                 onChange={handleSelectedRealizationNumberChange}
                             />

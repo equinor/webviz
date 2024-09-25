@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
-WellCompletionsAttributeType = str | int | bool
+from primary.services.sumo_access.well_completions_types import WellCompletionsAttributeType
+
 
 class Completions(BaseModel):
     sortedCompletionDateIndices: list[int]
@@ -10,10 +11,12 @@ class Completions(BaseModel):
     khMin: list[float]
     khMax: list[float]
 
+
 class WellCompletionsWell(BaseModel):
     name: str
     attributes: dict[str, WellCompletionsAttributeType]
     completions: dict[str, Completions]
+
 
 class WellCompletionsZone(BaseModel):
     name: str

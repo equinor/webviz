@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-WellCompletionsAttributeType = str| int| bool
+WellCompletionsAttributeType = str | int | bool
 
 
 class Completions(BaseModel):

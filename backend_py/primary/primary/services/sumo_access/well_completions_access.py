@@ -49,7 +49,7 @@ class WellCompletionsAccess:
         well_completions_table = well_completions_table_collection[0].to_arrow_async()
         return well_completions_table
 
-    async def get_well_completions_table_async(self, realizations: list[int] | None) -> pa.Table | None:
+    async def get_well_completions_table_async(self) -> pa.Table:
         """Get assembled well completions table for multiple realizations, i.e. assemble from collection into single table
 
         Expected table columns: ["WELL", "DATE", "ZONE", "REAL", "OP/SH", "KH"]
@@ -87,11 +87,11 @@ class WellCompletionsAccess:
         # Assemble tables into single table
         # - Expect "OP/SH" to be in first or second table, and "KH" to be in the other table
         if "OP/SH" in first_table.column_names and "KH" in second_table.column_names:
-            well_completions_table: pa.Table = first_table
+            well_completions_table = first_table
             well_completions_table = well_completions_table.append_column("KH", second_table["KH"])
             return well_completions_table
         if "OP/SH" in second_table.column_names and "KH" in first_table.column_names:
-            well_completions_table: pa.Table = second_table
+            well_completions_table = second_table
             well_completions_table = well_completions_table.append_column("KH", first_table["KH"])
             return well_completions_table
 

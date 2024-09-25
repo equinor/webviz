@@ -7,7 +7,9 @@ from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from primary.services.sumo_access.well_completions_access import WellCompletionsAccess
 from primary.services.well_completions_assembler.well_completions_assembler import WellCompletionsAssembler
-from primary.services.sumo_access.well_completions_types import WellCompletionsData
+
+from . import converters
+from . import schemas
 
 router = APIRouter()
 
@@ -20,7 +22,7 @@ async def get_well_completions_data(
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     realization: Annotated[int | list[int] | None, Query( description="Optional realizations to include. Provide single realization or list of realizations. If not specified, all realizations will be returned.")] = None,
     # fmt:on
-) -> WellCompletionsData:
+) -> schemas.WellCompletionsData:
     access = await WellCompletionsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
@@ -43,4 +45,4 @@ async def get_well_completions_data(
     if not data:
         raise HTTPException(status_code=404, detail="Well completions data not found")
 
-    return data
+    return converters.convert_completions_data_to_schema(data)
