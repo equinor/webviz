@@ -1,46 +1,42 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Deselect, SelectAll } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import { Button } from "../Button";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
-import { withDefaults } from "../_component-utils/components";
 
 enum KeyModifier {
     SHIFT = "shift",
     CONTROL = "control",
 }
 
-export type SelectOption = {
-    value: string;
+export type SelectOption<TValue = string> = {
+    value: TValue;
     adornment?: React.ReactNode;
     label: string;
+    hoverText?: string;
     disabled?: boolean;
 };
 
-export type SelectProps = {
+export type SelectProps<TValue = string> = {
     id?: string;
     wrapperId?: string;
-    options: SelectOption[];
-    value?: string[];
-    onChange?: (values: string[]) => void;
+    options: SelectOption<TValue>[];
+    value?: TValue[];
+    onChange?: (values: TValue[]) => void;
     placeholder?: string;
     filter?: boolean;
     size?: number;
     multiple?: boolean;
     width?: string | number;
     debounceTimeMs?: number;
+    showQuickSelectButtons?: boolean;
 } & BaseComponentProps;
-
-const defaultProps = {
-    value: [""],
-    filter: false,
-    size: 1,
-    multiple: false,
-};
 
 const noMatchingOptionsText = "No matching options";
 
@@ -59,16 +55,20 @@ function ensureKeyboardSelectionInView(
     return prevViewStartIndex;
 }
 
-export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
+export function Select<TValue = string>(props: SelectProps<TValue>) {
     const { onChange } = props;
+
+    const sizeWithDefault = props.size ?? 1;
+    const multipleWithDefault = props.multiple ?? false;
+    const filterWithDefault = props.filter ?? false;
 
     const [filterString, setFilterString] = React.useState<string>("");
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
-    const [options, setOptions] = React.useState<SelectOption[]>(props.options);
-    const [filteredOptions, setFilteredOptions] = React.useState<SelectOption[]>(props.options);
+    const [options, setOptions] = React.useState<SelectOption<TValue>[]>(props.options);
+    const [filteredOptions, setFilteredOptions] = React.useState<SelectOption<TValue>[]>(props.options);
     const [selectionAnchor, setSelectionAnchor] = React.useState<number | null>(null);
-    const [selectedOptionValues, setSelectedOptionValues] = React.useState<string[]>([]);
-    const [prevPropsValue, setPrevPropsValue] = React.useState<string[] | undefined>(undefined);
+    const [selectedOptionValues, setSelectedOptionValues] = React.useState<TValue[]>([]);
+    const [prevPropsValue, setPrevPropsValue] = React.useState<TValue[] | undefined>(undefined);
     const [currentFocusIndex, setCurrentFocusIndex] = React.useState<number>(0);
     const [virtualizationStartIndex, setVirtualizationStartIndex] = React.useState<number>(0);
     const [reportedVirtualizationStartIndex, setReportedVirtualizationStartIndex] = React.useState<number>(0);
@@ -85,13 +85,14 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
     }
 
     if (!isEqual(props.value, prevPropsValue)) {
+        const firstValueIndex = filteredOptions.findIndex((option) => option.value === props.value?.[0]);
+        setSelectionAnchor(firstValueIndex !== -1 ? firstValueIndex : null);
         setPrevPropsValue(props.value ? [...props.value] : undefined);
         setSelectedOptionValues(props.value ? [...props.value] : []);
-        setSelectionAnchor(props.value ? filteredOptions.findIndex((option) => option.value === props.value[0]) : null);
     }
 
     const handleOnChange = React.useCallback(
-        function handleOnChange(values: string[]) {
+        function handleOnChange(values: TValue[]) {
             if (!onChange) {
                 return;
             }
@@ -129,14 +130,14 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     return;
                 }
 
-                if (!props.multiple) {
+                if (!multipleWithDefault) {
                     const newSelectedOptions = [filteredOptions[index].value];
                     setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
                     handleOnChange(newSelectedOptions);
                 }
 
-                let newSelectedOptions: string[] = [filteredOptions[index].value];
+                let newSelectedOptions: TValue[] = [filteredOptions[index].value];
 
                 if (modifiers.includes(KeyModifier.CONTROL) && !modifiers.includes(KeyModifier.SHIFT)) {
                     return;
@@ -162,7 +163,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     return;
                 }
 
-                if (!props.multiple) {
+                if (!multipleWithDefault) {
                     const newSelectedOptions = [filteredOptions[index].value];
                     setSelectedOptionValues(newSelectedOptions);
                     setSelectionAnchor(null);
@@ -171,7 +172,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
 
                 setSelectionAnchor(index);
 
-                let newSelectedOptions: string[] = [];
+                let newSelectedOptions: TValue[] = [];
                 if (selectedOptionValues.includes(filteredOptions[index].value)) {
                     newSelectedOptions = selectedOptionValues.filter((value) => value !== filteredOptions[index].value);
                 } else {
@@ -202,7 +203,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     const newIndex = Math.max(0, currentFocusIndex - 1);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
+                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, sizeWithDefault)
                     );
                     makeKeyboardSelection(newIndex, modifiers);
                 }
@@ -212,7 +213,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + 1);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
+                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, sizeWithDefault)
                     );
                     makeKeyboardSelection(newIndex, modifiers);
                 }
@@ -224,20 +225,20 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
 
                 if (e.key === "PageDown") {
                     e.preventDefault();
-                    const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + props.size);
+                    const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + sizeWithDefault);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
+                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, sizeWithDefault)
                     );
                     makeKeyboardSelection(newIndex, modifiers);
                 }
 
                 if (e.key === "PageUp") {
                     e.preventDefault();
-                    const newIndex = Math.max(0, currentFocusIndex - props.size);
+                    const newIndex = Math.max(0, currentFocusIndex - sizeWithDefault);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, props.size)
+                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, sizeWithDefault)
                     );
                     makeKeyboardSelection(newIndex, modifiers);
                 }
@@ -253,7 +254,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
                     e.preventDefault();
                     const newIndex = filteredOptions.length - 1;
                     setCurrentFocusIndex(newIndex);
-                    setVirtualizationStartIndex(Math.max(0, newIndex - props.size + 1));
+                    setVirtualizationStartIndex(Math.max(0, newIndex - sizeWithDefault + 1));
                     makeKeyboardSelection(newIndex, modifiers);
                 }
             }
@@ -275,8 +276,8 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         [
             currentFocusIndex,
             filteredOptions,
-            props.size,
-            props.multiple,
+            sizeWithDefault,
+            multipleWithDefault,
             handleOnChange,
             selectionAnchor,
             selectedOptionValues,
@@ -284,20 +285,20 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         ]
     );
 
-    function handleOptionClick(e: React.MouseEvent<HTMLDivElement>, option: SelectOption, index: number) {
+    function handleOptionClick(e: React.MouseEvent<HTMLDivElement>, option: SelectOption<TValue>, index: number) {
         if (option.disabled) {
             return;
         }
 
         setCurrentFocusIndex(index);
 
-        if (!props.multiple) {
+        if (!multipleWithDefault) {
             setSelectedOptionValues([option.value]);
             handleOnChange([option.value]);
             return;
         }
 
-        let newSelectedOptions: string[] = [];
+        let newSelectedOptions: TValue[] = [];
         if (e.shiftKey && selectionAnchor !== null) {
             const start = Math.min(index, selectionAnchor);
             const end = Math.max(index, selectionAnchor);
@@ -319,7 +320,7 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         setSelectedOptionValues(newSelectedOptions);
     }
 
-    function filterOptions(options: SelectOption[], filterString: string) {
+    function filterOptions(options: SelectOption<TValue>[], filterString: string) {
         let newCurrentKeyboardFocusIndex = 0;
         let newVirtualizationStartIndex = 0;
 
@@ -357,83 +358,123 @@ export const Select = withDefaults<SelectProps>()(defaultProps, (props) => {
         setReportedVirtualizationStartIndex(index);
     }
 
+    function handleSelectAll() {
+        if (!onChange) {
+            return;
+        }
+        onChange(props.options.map((option) => option.value));
+    }
+
+    function handleUnselectAll() {
+        if (!onChange) {
+            return;
+        }
+        onChange([]);
+    }
+
     return (
-        <BaseComponent disabled={props.disabled}>
-            <div
-                id={props.wrapperId}
-                className={resolveClassNames("relative", {
-                    "no-select": props.disabled,
-                    "pointer-events-none": props.disabled,
-                    "opacity-30": props.disabled,
-                })}
-                style={{ width: props.width, minWidth: props.width }}
-            >
-                {props.filter && (
-                    <Input
-                        id={props.id}
-                        type="text"
-                        value={filterString}
-                        onChange={handleFilterChange}
-                        placeholder="Filter options..."
-                    />
-                )}
-                <div
-                    className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white"
-                    style={{ height: props.size * 24 + 2 }}
-                    ref={ref}
-                    tabIndex={0}
-                >
-                    {filteredOptions.length === 0 && (
-                        <div className="p-1 flex items-center text-gray-400 select-none">
-                            {options.length === 0 || filterString === "" ? noOptionsText : noMatchingOptionsText}
-                        </div>
-                    )}
-                    <Virtualization
-                        containerRef={ref}
-                        items={filteredOptions}
-                        itemSize={24}
-                        onScroll={handleVirtualizationScroll}
-                        renderItem={(option, index) => {
-                            return (
-                                <div
-                                    key={option.value}
-                                    className={resolveClassNames(
-                                        "cursor-pointer",
-                                        "pl-2",
-                                        "pr-2",
-                                        "flex",
-                                        "gap-2",
-                                        "items-center",
-                                        "select-none",
-                                        {
-                                            "hover:bg-blue-100": !selectedOptionValues.includes(option.value),
-                                            "bg-blue-600 text-white box-border hover:bg-blue-700":
-                                                selectedOptionValues.includes(option.value),
-                                            "pointer-events-none": option.disabled,
-                                            "text-gray-400": option.disabled,
-                                            outline: index === currentFocusIndex && hasFocus,
-                                        }
-                                    )}
-                                    onClick={(e) => handleOptionClick(e, option, index)}
-                                    style={{ height: 24 }}
-                                >
-                                    {option.adornment}
-                                    <span
-                                        title={option.label}
-                                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap flex-grow"
-                                    >
-                                        {option.label}
-                                    </span>
-                                </div>
-                            );
-                        }}
-                        direction="vertical"
-                        startIndex={virtualizationStartIndex}
-                    />
+        <div className="flex flex-col gap-2 text-sm">
+            {props.showQuickSelectButtons && (
+                <div className="flex gap-2 items-center">
+                    <Button
+                        onClick={handleSelectAll}
+                        startIcon={<SelectAll fontSize="inherit" />}
+                        variant="text"
+                        title="Select all"
+                        size="small"
+                        disabled={props.disabled}
+                    >
+                        Select all
+                    </Button>
+                    <Button
+                        onClick={handleUnselectAll}
+                        startIcon={<Deselect fontSize="inherit" />}
+                        variant="text"
+                        title="Unselect all"
+                        size="small"
+                        disabled={props.disabled}
+                    >
+                        Unselect all
+                    </Button>
                 </div>
-            </div>
-        </BaseComponent>
+            )}
+            <BaseComponent disabled={props.disabled}>
+                <div
+                    id={props.wrapperId}
+                    className={resolveClassNames("relative", {
+                        "no-select": props.disabled,
+                        "pointer-events-none": props.disabled,
+                        "opacity-30": props.disabled,
+                    })}
+                    style={{ width: props.width, minWidth: props.width }}
+                >
+                    {filterWithDefault && (
+                        <Input
+                            id={props.id}
+                            type="text"
+                            value={filterString}
+                            onChange={handleFilterChange}
+                            placeholder="Filter options..."
+                        />
+                    )}
+                    <div
+                        className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white input-comp"
+                        style={{ height: sizeWithDefault * 24 + 2 }}
+                        ref={ref}
+                        tabIndex={0}
+                    >
+                        {filteredOptions.length === 0 && (
+                            <div className="p-1 flex items-center text-gray-400 select-none">
+                                {options.length === 0 || filterString === "" ? noOptionsText : noMatchingOptionsText}
+                            </div>
+                        )}
+                        <Virtualization
+                            containerRef={ref}
+                            items={filteredOptions}
+                            itemSize={24}
+                            onScroll={handleVirtualizationScroll}
+                            renderItem={(option, index) => {
+                                return (
+                                    <div
+                                        key={option.value}
+                                        className={resolveClassNames(
+                                            "cursor-pointer",
+                                            "pl-2",
+                                            "pr-2",
+                                            "flex",
+                                            "gap-2",
+                                            "items-center",
+                                            "select-none",
+                                            {
+                                                "hover:bg-blue-100": !selectedOptionValues.includes(option.value),
+                                                "bg-blue-600 text-white box-border hover:bg-blue-700":
+                                                    selectedOptionValues.includes(option.value),
+                                                "pointer-events-none": option.disabled,
+                                                "text-gray-400": option.disabled,
+                                                outline: index === currentFocusIndex && hasFocus,
+                                            }
+                                        )}
+                                        onClick={(e) => handleOptionClick(e, option, index)}
+                                        style={{ height: 24 }}
+                                    >
+                                        {option.adornment}
+                                        <span
+                                            title={option.hoverText ?? option.label}
+                                            className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap flex-grow"
+                                        >
+                                            {option.label}
+                                        </span>
+                                    </div>
+                                );
+                            }}
+                            direction="vertical"
+                            startIndex={virtualizationStartIndex}
+                        />
+                    </div>
+                </div>
+            </BaseComponent>
+        </div>
     );
-});
+}
 
 Select.displayName = "Select";

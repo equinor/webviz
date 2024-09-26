@@ -8,7 +8,6 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { ParameterListFilter } from "@framework/components/ParameterListFilter";
-import { VectorSelector } from "@framework/components/VectorSelector";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -19,6 +18,7 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
 import { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 import { FilterAlt } from "@mui/icons-material";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";

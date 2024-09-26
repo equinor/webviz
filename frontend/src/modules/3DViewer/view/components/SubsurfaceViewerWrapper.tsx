@@ -18,7 +18,8 @@ import { Feature } from "geojson";
 import { isEqual } from "lodash";
 
 import { PolylineEditingPanel } from "./PolylineEditingPanel";
-import { ReadoutBox } from "./ReadoutBox";
+import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
+import { SubsurfaceViewerWithCameraState } from "./SubsurfaceViewerWithCameraState";
 
 import { createContinuousColorScaleForMap } from "../utils/colorTables";
 
@@ -588,7 +589,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 height={divSize.height / 2 - 50}
                 position="left"
             />
-            <ReadoutBox layerPickInfo={layerPickingInfo} visible={pointerOver} verticalScale={verticalScale} />
+            <ReadoutBoxWrapper layerPickInfo={layerPickingInfo} visible={pointerOver} verticalScale={verticalScale} />
             {props.enableIntersectionPolylineEditing && polylineEditingActive && (
                 <PolylineEditingPanel
                     currentlyEditedPolyline={currentlyEditedPolyline}
