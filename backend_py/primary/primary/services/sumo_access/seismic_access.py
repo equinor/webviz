@@ -25,7 +25,8 @@ class SeismicAccess:
         return SeismicAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_seismic_cube_meta_list_async(self) -> List[SeismicCubeMeta]:
-        seismic_cube_collection: CubeCollection = self._case.cubes.filter(iteration=self._iteration_name, realization=0)
+        first_realization = (await self._case.get_realizations_async())[0]
+        seismic_cube_collection: CubeCollection = self._case.cubes.filter(iteration=self._iteration_name, realization=first_realization)
         seismic_cube_meta_list: List[SeismicCubeMeta] = []
         async for cube in seismic_cube_collection:
             t_start = cube["data"].get("time", {}).get("t0", {}).get("value", None)
