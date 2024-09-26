@@ -19,7 +19,6 @@ import { isEqual } from "lodash";
 
 import { PolylineEditingPanel } from "./PolylineEditingPanel";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
-import { SubsurfaceViewerWithCameraState } from "./SubsurfaceViewerWithCameraState";
 
 import { createContinuousColorScaleForMap } from "../utils/colorTables";
 
