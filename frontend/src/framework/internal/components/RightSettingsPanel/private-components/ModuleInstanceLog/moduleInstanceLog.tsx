@@ -123,7 +123,10 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
     }
 
     return (
-        <div ref={ref} className="w-full h-full">
+        <div
+            ref={ref}
+            className={`w-full ${drawerContent === RightDrawerContent.ModuleInstanceLog ? "h-full" : "h-0"}`}
+        >
             <Drawer
                 title={makeTitle()}
                 icon={<History />}

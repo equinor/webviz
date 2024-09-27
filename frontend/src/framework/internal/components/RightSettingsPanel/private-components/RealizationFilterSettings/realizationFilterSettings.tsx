@@ -8,24 +8,21 @@ import {
     RealizationFilter,
     RealizationFilterType,
     RealizationFilterTypeStringMapping,
-    RealizationIndexSelection,
+    RealizationNumberSelection,
 } from "@framework/RealizationFilter";
 import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { EnsembleRealizationFilter } from "@framework/components/EnsembleRealizationFilter";
 import { RealizationPicker, RealizationPickerSelection } from "@framework/components/RealizationPicker";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { RadioGroup } from "@lib/components/RadioGroup";
 import { Check, FilterAlt as FilterIcon } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
-import {
-    makeRealizationIndexSelectionsFromRealizationPickerTags,
-    makeRealizationPickerTagsFromRealizationIndexSelections,
-} from "./utils/dataTypeConversion";
+import { makeRealizationPickerTagsFromRealizationIndexSelections } from "./utils/dataTypeConversion";
 
 import { Drawer } from "../../../Drawer";
 
@@ -38,14 +35,14 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const [candidateEnsembleIdent, setCandidateEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
     const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
     const [realizationIndexSelections, setRealizationIndexSelections] = React.useState<
-        readonly RealizationIndexSelection[] | null
+        readonly RealizationNumberSelection[] | null
     >(null);
     const [selectedRealizationFilter, setSelectedRealizationFilter] = React.useState<RealizationFilter | null>(null);
     const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>([]);
     const [selectedIncludeOrExcludeFiltering, setSelectedIncludeOrExcludeFiltering] =
         React.useState<IncludeExcludeFilter>(IncludeExcludeFilter.INCLUDE_FILTER);
     const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
-        RealizationFilterType.REALIZATION_INDEX
+        RealizationFilterType.BY_REALIZATION_NUMBER
     );
 
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
@@ -53,7 +50,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
     const hasUnsavedChanges = !selectedRealizationFilter
         ? false
-        : !isEqual(realizationIndexSelections, selectedRealizationFilter.getRealizationIndexSelections()) ||
+        : !isEqual(realizationIndexSelections, selectedRealizationFilter.getRealizationNumberSelections()) ||
           selectedFilterType !== selectedRealizationFilter.getFilterType() ||
           selectedIncludeOrExcludeFiltering !== selectedRealizationFilter.getIncludeOrExcludeFilter();
 
@@ -62,12 +59,12 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             setSelectedRealizationFilter(null);
             setRealizationIndexSelections(null);
             setSelectedRangeTags([]);
-            setSelectedFilterType(RealizationFilterType.REALIZATION_INDEX);
+            setSelectedFilterType(RealizationFilterType.BY_REALIZATION_NUMBER);
             return;
         }
 
         const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
-        const realizationIndexSelection = realizationFilter.getRealizationIndexSelections();
+        const realizationIndexSelection = realizationFilter.getRealizationNumberSelections();
 
         setSelectedRealizationFilter(realizationFilter);
         setRealizationIndexSelections(realizationIndexSelection);
@@ -87,20 +84,10 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setStatesFromEnsembleIdent(ensembleIdent);
     }
 
-    function handleRealizationPickChange(newSelection: RealizationPickerSelection) {
-        const realizationIndexSelection =
-            newSelection.selectedRangeTags.length === 0
-                ? null
-                : makeRealizationIndexSelectionsFromRealizationPickerTags(newSelection.selectedRangeTags);
-
-        setSelectedRangeTags(newSelection.selectedRangeTags);
-        setRealizationIndexSelections(realizationIndexSelection);
-    }
-
     function handleDiscardChangesClick() {
         if (!selectedRealizationFilter) return;
 
-        const realizationIndexSelections = selectedRealizationFilter.getRealizationIndexSelections();
+        const realizationIndexSelections = selectedRealizationFilter.getRealizationNumberSelections();
         setRealizationIndexSelections(realizationIndexSelections);
         setSelectedRangeTags(makeRealizationPickerTagsFromRealizationIndexSelections(realizationIndexSelections));
         setSelectedFilterType(selectedRealizationFilter.getFilterType());
@@ -131,7 +118,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
         selectedRealizationFilter.setFilterType(selectedFilterType);
         selectedRealizationFilter.setIncludeOrExcludeFilter(selectedIncludeOrExcludeFiltering);
-        selectedRealizationFilter.setRealizationIndexSelections(realizationIndexSelections);
+        selectedRealizationFilter.setRealizationNumberSelections(realizationIndexSelections);
 
         // Notify subscribers of change.
         props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
@@ -141,30 +128,27 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         props.onClose();
     }
 
+    function handleFilterChange() {
+        // Notify subscribers of change.
+        props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
+    }
+
     return (
-        <Drawer
-            title="Realization Filter"
-            icon={<FilterIcon />}
-            visible={drawerContent === RightDrawerContent.RealizationFilterSettings}
-            onClose={handleFilterSettingsClose}
-        >
-            <div className="flex flex-col p-2 gap-4 overflow-y-auto">
-                <Label text="Ensemble">
-                    <Dropdown
-                        value={selectedRealizationFilter?.getAssignedEnsembleIdent().toString() ?? undefined}
-                        options={ensembleSet.getEnsembleArr().map((elm) => {
-                            return { value: elm.getIdent().toString(), label: elm.getDisplayName() };
-                        })}
-                        onChange={handleSelectedEnsembleChange}
-                    />
-                </Label>
-                <Label text="Active Filter Type">
+        <div className={`w-full ${drawerContent === RightDrawerContent.RealizationFilterSettings ? "h-full" : "h-0"}`}>
+            <Drawer
+                title="Realization Filter"
+                icon={<FilterIcon />}
+                visible={drawerContent === RightDrawerContent.RealizationFilterSettings}
+                onClose={handleFilterSettingsClose}
+            >
+                <div className="flex flex-col p-2 gap-4 overflow-y-auto">
+                    {/* <Label text="Active Filter Type">
                     <RadioGroup
                         value={selectedFilterType}
                         options={[
                             {
-                                label: RealizationFilterTypeStringMapping[RealizationFilterType.REALIZATION_INDEX],
-                                value: RealizationFilterType.REALIZATION_INDEX,
+                                label: RealizationFilterTypeStringMapping[RealizationFilterType.BY_REALIZATION_NUMBER],
+                                value: RealizationFilterType.BY_REALIZATION_NUMBER,
                             },
                         ]}
                         onChange={(_, value: string | number) => setSelectedFilterType(value as RealizationFilterType)}
@@ -201,47 +185,63 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                         debounceTimeMs={500}
                         onChange={handleRealizationPickChange}
                         disabled={
-                            !selectedRealizationFilter || selectedFilterType !== RealizationFilterType.REALIZATION_INDEX
+                            !selectedRealizationFilter ||
+                            selectedFilterType !== RealizationFilterType.BY_REALIZATION_NUMBER
                         }
                     />
-                </Label>
-                <div className="flex gap-4">
-                    <Button
-                        color="danger"
-                        variant="contained"
-                        disabled={!selectedRealizationFilter || !hasUnsavedChanges}
-                        onClick={handleDiscardChangesClick}
-                    >
-                        Discard changes
-                    </Button>
-                    <Button
-                        variant="contained"
-                        disabled={!selectedRealizationFilter || !hasUnsavedChanges}
-                        startIcon={<Check fontSize="small" />}
-                        onClick={handleApplyButtonClick}
-                    >
-                        Apply
-                    </Button>
+                </Label> */}
+                    <div className="flex-grow space-y-4">
+                        {ensembleSet.getEnsembleArr().map((ensemble) => {
+                            return (
+                                <EnsembleRealizationFilter
+                                    key={ensemble.getIdent().toString()}
+                                    realizationFilter={realizationFilterSet.getRealizationFilterForEnsembleIdent(
+                                        ensemble.getIdent()
+                                    )}
+                                    active={true}
+                                    onFilterChange={handleFilterChange}
+                                />
+                            );
+                        })}
+                    </div>
+                    <div className="flex gap-4">
+                        <Button
+                            color="danger"
+                            variant="contained"
+                            disabled={!selectedRealizationFilter || !hasUnsavedChanges}
+                            onClick={handleDiscardChangesClick}
+                        >
+                            Discard changes
+                        </Button>
+                        <Button
+                            variant="contained"
+                            disabled={!selectedRealizationFilter || !hasUnsavedChanges}
+                            startIcon={<Check fontSize="small" />}
+                            onClick={handleApplyButtonClick}
+                        >
+                            Apply
+                        </Button>
+                    </div>
+                    {
+                        <Dialog
+                            open={dialogOpen}
+                            onClose={() => setDialogOpen(false)}
+                            title="Unsaved changes"
+                            modal
+                            actions={
+                                <div className="flex gap-4">
+                                    <Button onClick={handleDoNotSaveClick} color="danger">
+                                        No, don&apos;t save
+                                    </Button>
+                                    <Button onClick={handleDoSaveClick}>Yes, save</Button>
+                                </div>
+                            }
+                        >
+                            You have unsaved changes which will be lost. Do you want to save changes?
+                        </Dialog>
+                    }
                 </div>
-                {
-                    <Dialog
-                        open={dialogOpen}
-                        onClose={() => setDialogOpen(false)}
-                        title="Unsaved changes"
-                        modal
-                        actions={
-                            <div className="flex gap-4">
-                                <Button onClick={handleDoNotSaveClick} color="danger">
-                                    No, don&apos;t save
-                                </Button>
-                                <Button onClick={handleDoSaveClick}>Yes, save</Button>
-                            </div>
-                        }
-                    >
-                        You have unsaved changes which will be lost. Do you want to save changes?
-                    </Dialog>
-                }
-            </div>
-        </Drawer>
+            </Drawer>
+        </div>
     );
 };

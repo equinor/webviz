@@ -25,7 +25,7 @@ describe("Test functionality of Realization Filter class", () => {
     test("Test set/get filter type", () => {
         const realizationFilter = new RealizationFilter(FIRST_ENSEMBLE);
 
-        expect(realizationFilter.getFilterType()).toBe(RealizationFilterType.REALIZATION_INDEX);
+        expect(realizationFilter.getFilterType()).toBe(RealizationFilterType.BY_REALIZATION_NUMBER);
     });
 
     test("Test set/get include or exclude filter state", () => {
@@ -39,20 +39,20 @@ describe("Test functionality of Realization Filter class", () => {
     test("Test set/get realization index selections", () => {
         const realizationFilter = new RealizationFilter(FIRST_ENSEMBLE);
 
-        expect(realizationFilter.getRealizationIndexSelections()).toBeNull();
-        realizationFilter.setRealizationIndexSelections([1, 2, 3]);
-        expect(realizationFilter.getRealizationIndexSelections()).toEqual([1, 2, 3]);
-        realizationFilter.setRealizationIndexSelections([1, 2, 3, { start: 9, end: 15 }]);
-        expect(realizationFilter.getRealizationIndexSelections()).toEqual([1, 2, 3, { start: 9, end: 15 }]);
+        expect(realizationFilter.getRealizationNumberSelections()).toBeNull();
+        realizationFilter.setRealizationNumberSelections([1, 2, 3]);
+        expect(realizationFilter.getRealizationNumberSelections()).toEqual([1, 2, 3]);
+        realizationFilter.setRealizationNumberSelections([1, 2, 3, { start: 9, end: 15 }]);
+        expect(realizationFilter.getRealizationNumberSelections()).toEqual([1, 2, 3, { start: 9, end: 15 }]);
     });
 
     test("Test get filtered realizations - include", () => {
         const realizationFilter = new RealizationFilter(FIRST_ENSEMBLE);
 
         expect(realizationFilter.getFilteredRealizations()).toEqual(FIRST_ENSEMBLE_REALIZATIONS);
-        realizationFilter.setRealizationIndexSelections([1, 2, 3]);
+        realizationFilter.setRealizationNumberSelections([1, 2, 3]);
         expect(realizationFilter.getFilteredRealizations()).toEqual([1, 2, 3]);
-        realizationFilter.setRealizationIndexSelections([1, 2, 3, { start: 9, end: 15 }]);
+        realizationFilter.setRealizationNumberSelections([1, 2, 3, { start: 9, end: 15 }]);
         expect(realizationFilter.getFilteredRealizations()).toEqual([1, 2, 3, 9, 10, 15]);
     });
 
@@ -61,9 +61,9 @@ describe("Test functionality of Realization Filter class", () => {
         realizationFilter.setIncludeOrExcludeFilter(IncludeExcludeFilter.EXCLUDE_FILTER);
 
         expect(realizationFilter.getFilteredRealizations()).toEqual(FIRST_ENSEMBLE_REALIZATIONS);
-        realizationFilter.setRealizationIndexSelections([1, 2, 3]);
+        realizationFilter.setRealizationNumberSelections([1, 2, 3]);
         expect(realizationFilter.getFilteredRealizations()).toEqual([4, 5, 6, 7, 8, 9, 10, 15]);
-        realizationFilter.setRealizationIndexSelections([1, 2, 3, { start: 9, end: 15 }]);
+        realizationFilter.setRealizationNumberSelections([1, 2, 3, { start: 9, end: 15 }]);
         expect(realizationFilter.getFilteredRealizations()).toEqual([4, 5, 6, 7, 8]);
     });
 });
