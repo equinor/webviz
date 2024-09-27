@@ -84,7 +84,9 @@ function createMapImageLayer(layerData: SurfaceDataPng, id: string, colorScale?:
         bounds: _calcBoundsForRotationAroundUpperLeftCorner(layerData.surface_def),
         rotDeg: layerData.surface_def.rot_deg,
         valueRange: [layerData.value_min, layerData.value_max],
-        colorMapRange: [layerData.value_min, layerData.value_max],
+        colorMapRange: colorScale
+            ? [colorScale.getMin(), colorScale.getMax()]
+            : [layerData.value_min, layerData.value_max],
         colorMapName: "Physics",
         parameters: {
             depthTest: false,
