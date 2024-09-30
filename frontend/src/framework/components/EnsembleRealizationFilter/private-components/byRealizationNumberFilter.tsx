@@ -1,6 +1,6 @@
 import React from "react";
 
-import { IncludeExcludeFilter, RealizationFilter, RealizationNumberSelection } from "@framework/RealizationFilter";
+import { IncludeExcludeFilter, RealizationNumberSelection } from "@framework/RealizationFilter";
 import { RealizationPicker, RealizationPickerSelection } from "@framework/components/RealizationPicker";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
@@ -12,75 +12,85 @@ import {
     makeRealizationPickerTagsFromRealizationNumberSelections,
 } from "../private-utils/conversionUtils";
 
-export interface ByRealizationNumberFilterHandles {
-    saveChanges: () => void;
-    discardChanges: () => void;
+export interface ByRealizationNumberFilterSelection {
+    realizationNumberSelections: RealizationNumberSelection[] | null;
+    includeOrExcludeFilter: IncludeExcludeFilter;
 }
 
 export type ByRealizationNumberFilterProps = {
-    realizationFilter: RealizationFilter;
     disabled: boolean;
-    onEditedChange: (isEdited: boolean) => void;
+    initialRealizationNumberSelections?: readonly RealizationNumberSelection[] | null;
+    realizationNumberSelections: readonly RealizationNumberSelection[] | null;
+    availableRealizationNumbers: readonly number[];
+    selectedIncludeOrExcludeFilter: IncludeExcludeFilter;
+    onFilterChange: (selection: ByRealizationNumberFilterSelection) => void;
 };
 
-// TODO:
-// - Consider to simplify component to not use the realizationFilter, but get props.realizationFilter.getRealizationNumberSelections()
-//   and props.realizationFilter.getRealizationNumberSelections() as props directly instead. Provide the currently active realization values?
+export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps> = (props) => {
+    const [prevInitialRealizationNumberSelections, setPrevInitialRealizationNumberSelections] = React.useState<
+        readonly RealizationNumberSelection[] | null
+    >(props.initialRealizationNumberSelections ?? null);
+    const [prevRealizationNumberSelections, setPrevRealizationNumberSelections] = React.useState<
+        readonly RealizationNumberSelection[] | null
+    >(props.realizationNumberSelections ?? null);
 
-// Forward ref to provide saveChanges function to parent component
-export const ByRealizationNumberFilter = React.forwardRef<
-    ByRealizationNumberFilterHandles,
-    ByRealizationNumberFilterProps
->((props: ByRealizationNumberFilterProps, ref) => {
-    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>([]);
-    const [selectedIncludeOrExcludeFilter, setSelectedIncludeOrExcludeFilter] = React.useState<IncludeExcludeFilter>(
-        IncludeExcludeFilter.INCLUDE_FILTER
+    const [initialRangeTags, setInitialRangeTags] = React.useState<string[]>(
+        props.initialRealizationNumberSelections
+            ? makeRealizationPickerTagsFromRealizationNumberSelections(props.initialRealizationNumberSelections)
+            : []
+    );
+    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>(
+        props.realizationNumberSelections
+            ? makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
+            : []
     );
 
-    const [realizationNumberSelections, setRealizationNumberSelections] = React.useState<
-        readonly RealizationNumberSelection[] | null
-    >(null);
+    if (!isEqual(props.initialRealizationNumberSelections, prevInitialRealizationNumberSelections)) {
+        if (!props.initialRealizationNumberSelections) {
+            setInitialRangeTags([]);
+            return;
+        }
+        setPrevInitialRealizationNumberSelections(props.initialRealizationNumberSelections ?? null);
+        setInitialRangeTags(
+            makeRealizationPickerTagsFromRealizationNumberSelections(props.initialRealizationNumberSelections)
+        );
+    }
 
-    const [prevHasUnsavedChanges, setPrevHasUnsavedChanges] = React.useState(false);
+    if (!isEqual(props.realizationNumberSelections, prevRealizationNumberSelections)) {
+        if (!props.realizationNumberSelections) {
+            setSelectedRangeTags([]);
+            return;
+        }
+        setPrevRealizationNumberSelections(props.realizationNumberSelections ?? null);
+        setSelectedRangeTags(
+            makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
+        );
+    }
 
-    const hasUnsavedChanges =
-        !isEqual(realizationNumberSelections, props.realizationFilter.getRealizationNumberSelections()) ||
-        selectedIncludeOrExcludeFilter !== props.realizationFilter.getIncludeOrExcludeFilter();
-
-    if (hasUnsavedChanges !== prevHasUnsavedChanges) {
-        setPrevHasUnsavedChanges(hasUnsavedChanges);
-        props.onEditedChange(hasUnsavedChanges);
+    function handleIncludeExcludeFilterChange(newFilter: IncludeExcludeFilter) {
+        props.onFilterChange({
+            realizationNumberSelections: makeRealizationNumberSelectionsFromRealizationPickerTags(selectedRangeTags),
+            includeOrExcludeFilter: newFilter,
+        });
     }
 
     function handleRealizationPickChange(newSelection: RealizationPickerSelection) {
-        const realizationNumberSelection =
+        const realizationNumberSelections =
             newSelection.selectedRangeTags.length === 0
                 ? null
                 : makeRealizationNumberSelectionsFromRealizationPickerTags(newSelection.selectedRangeTags);
 
-        setSelectedRangeTags(newSelection.selectedRangeTags);
-        setRealizationNumberSelections(realizationNumberSelection);
+        props.onFilterChange({
+            realizationNumberSelections: realizationNumberSelections,
+            includeOrExcludeFilter: props.selectedIncludeOrExcludeFilter,
+        });
     }
-
-    // Provide saveChanges function to parent component
-    React.useImperativeHandle(ref, () => ({
-        saveChanges() {
-            props.realizationFilter.setRealizationNumberSelections(realizationNumberSelections);
-            props.realizationFilter.setIncludeOrExcludeFilter(selectedIncludeOrExcludeFilter);
-        },
-        discardChanges() {
-            const realizationNumberSelection = props.realizationFilter.getRealizationNumberSelections();
-            setRealizationNumberSelections(realizationNumberSelection);
-            setSelectedIncludeOrExcludeFilter(props.realizationFilter.getIncludeOrExcludeFilter());
-            setSelectedRangeTags(makeRealizationPickerTagsFromRealizationNumberSelections(realizationNumberSelection));
-        },
-    }));
 
     return (
         <div className="flex flex-col gap-2">
             <Label text="Filtering Option">
                 <RadioGroup
-                    value={selectedIncludeOrExcludeFilter}
+                    value={props.selectedIncludeOrExcludeFilter}
                     options={[
                         {
                             value: IncludeExcludeFilter.INCLUDE_FILTER,
@@ -91,16 +101,15 @@ export const ByRealizationNumberFilter = React.forwardRef<
                             label: "Exclude",
                         },
                     ]}
-                    onChange={(_, value: string | number) =>
-                        setSelectedIncludeOrExcludeFilter(value as IncludeExcludeFilter)
-                    }
+                    onChange={(_, value) => handleIncludeExcludeFilterChange(value)}
                     disabled={props.disabled}
                 />
             </Label>
             <Label text="Realization numbers">
                 <RealizationPicker
+                    initialRangeTags={initialRangeTags}
                     selectedRangeTags={selectedRangeTags}
-                    validRealizations={props.realizationFilter.getAvailableEnsembleRealizations()}
+                    validRealizations={props.availableRealizationNumbers}
                     debounceTimeMs={500}
                     onChange={handleRealizationPickChange}
                     disabled={props.disabled}
@@ -108,7 +117,4 @@ export const ByRealizationNumberFilter = React.forwardRef<
             </Label>
         </div>
     );
-});
-
-export default ByRealizationNumberFilter;
-ByRealizationNumberFilter.displayName = "ByRealizationNumberFilter";
+};

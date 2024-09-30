@@ -2,7 +2,7 @@ import { isEqual } from "lodash";
 
 import { Ensemble } from "./Ensemble";
 import { EnsembleIdent } from "./EnsembleIdent";
-import { Parameter, ParameterIdent, ParameterType } from "./EnsembleParameters";
+import { EnsembleParameters, ParameterIdent, ParameterType } from "./EnsembleParameters";
 
 export enum RealizationFilterType {
     BY_REALIZATION_NUMBER = "byRealizationNumber",
@@ -70,8 +70,8 @@ export class RealizationFilter {
         return this._assignedEnsemble.getRealizations();
     }
 
-    getAvailableEnsembleParameterArray(): readonly Parameter[] {
-        return this._assignedEnsemble.getParameters().getParameterArr();
+    getEnsembleParameters(): EnsembleParameters {
+        return this._assignedEnsemble.getParameters();
     }
 
     getAssignedEnsembleIdent(): EnsembleIdent {
@@ -117,6 +117,8 @@ export class RealizationFilter {
     }
 
     getContinuousParameterIdentRangeReadonlyMap(): ReadonlyMap<string, NumberRange> | null {
+        // TODO: How to efficiently return a readonly map? To prevent external modification
+
         // Read only to prevent external modification
         if (this._continuousParameterIdentStringRangeMap === null) {
             return null;
@@ -130,7 +132,6 @@ export class RealizationFilter {
         if (filterType === this._filterType) return;
 
         this._filterType = filterType;
-        this.runFiltering();
     }
 
     getFilterType(): RealizationFilterType {
@@ -139,7 +140,6 @@ export class RealizationFilter {
 
     setIncludeOrExcludeFilter(value: IncludeExcludeFilter): void {
         this._includeExcludeFilter = value;
-        this.runFiltering();
     }
 
     getIncludeOrExcludeFilter(): IncludeExcludeFilter {
@@ -150,7 +150,7 @@ export class RealizationFilter {
         return this._filteredRealizations;
     }
 
-    private runFiltering(): void {
+    runFiltering(): void {
         if (this._filterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
             this.runRealizationNumberSelectionFiltering();
         } else if (this._filterType === RealizationFilterType.BY_PARAMETER_VALUES) {

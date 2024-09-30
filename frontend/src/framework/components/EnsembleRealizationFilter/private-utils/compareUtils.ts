@@ -1,4 +1,15 @@
+import { EnsembleParameters, ParameterIdent } from "@framework/EnsembleParameters";
 import { NumberRange } from "@framework/RealizationFilter";
+
+export function getValidContinuousParameterIdentStrings(
+    parameterIdentStrings: string[],
+    ensembleParameters: EnsembleParameters
+): string[] {
+    return parameterIdentStrings.filter((paramIdentString) => {
+        const parameterIdent = ParameterIdent.fromString(paramIdentString);
+        return ensembleParameters.findParameter(parameterIdent) !== null;
+    });
+}
 
 export function areContinuousParameterIdentStringRangeMapsEqual(
     continuousParameterIdentStringRangeMap: Map<string, NumberRange>,

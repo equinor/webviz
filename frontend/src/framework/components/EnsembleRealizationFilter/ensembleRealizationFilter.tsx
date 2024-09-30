@@ -8,7 +8,9 @@ import {
     RealizationFilterTypeStringMapping,
     RealizationNumberSelection,
 } from "@framework/RealizationFilter";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Button } from "@lib/components/Button";
+import { Dialog } from "@lib/components/Dialog";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Check, Clear } from "@mui/icons-material";
@@ -18,12 +20,13 @@ import { isEqual } from "lodash";
 import { ByContinuousParameterValueFilter } from "./private-components/byContinuousParameterValueFilter";
 import {
     ByRealizationNumberFilter,
-    ByRealizationNumberFilterHandles,
+    ByRealizationNumberFilterSelection,
 } from "./private-components/byRealizationNumberFilter";
 import { areContinuousParameterIdentStringRangeMapsEqual } from "./private-utils/compareUtils";
+import { makeRealizationPickerTagsFromRealizationNumberSelections } from "./private-utils/conversionUtils";
 
 export type EnsembleRealizationFilterProps = {
-    // ensemble: Ensemble;
+    // ensemble: Ensemble; // Should realization filter only provide access to ensemble ident, and the access to details must be through ensemble object?
     realizationFilter: RealizationFilter; // Should be ref stable and not change address in memory
     active: boolean;
     onFilterChange: () => void;
@@ -37,110 +40,113 @@ export type EnsembleRealizationFilterProps = {
  * @returns
  */
 export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps> = (props) => {
-    const byRealizationNumberFilterRef = React.useRef<ByRealizationNumberFilterHandles>(null);
+    const [prevRealizationFilter, setPrevRealizationFilter] = React.useState<RealizationFilter | null>(null);
 
     const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
-    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>([]);
-    const [selectedIncludeOrExcludeFiltering, setSelectedIncludeOrExcludeFiltering] =
-        React.useState<IncludeExcludeFilter>(IncludeExcludeFilter.INCLUDE_FILTER);
-    const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
-        RealizationFilterType.BY_REALIZATION_NUMBER
-    );
-
+    const [initialRealizationNumberSelections, setInitialRealizationNumberSelections] = React.useState<
+        readonly RealizationNumberSelection[] | null
+    >(null);
     const [realizationNumberSelections, setRealizationNumberSelections] = React.useState<
         readonly RealizationNumberSelection[] | null
     >(null);
+    const [selectedIncludeOrExcludeFilter, setSelectedIncludeOrExcludeFilter] = React.useState<IncludeExcludeFilter>(
+        IncludeExcludeFilter.INCLUDE_FILTER
+    );
+    const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
+        RealizationFilterType.BY_REALIZATION_NUMBER
+    );
     const [continuousParameterRangeSelections, setContinuousParameterRangeSelections] = React.useState<Map<
         string,
         NumberRange
     > | null>(null);
-    const [isRealizationNumberFilterEdited, setIsRealizationNumberFilterEdited] = React.useState<boolean>(false);
-    const [isContinuousParameterValueFilterEdited, setIsContinuousParameterValueFilterEdited] =
-        React.useState<boolean>(false);
 
-    // TODO: Check if realizationFilter is updated? I.e. new address in memory
-    // const [prevRealizationFilter, setPrevRealizationFilter] = React.useState<RealizationFilter | null>(null);
-    // if (prevRealizationFilter !== props.realizationFilter) {
-    //     setPrevRealizationFilter(props.realizationFilter);
-    //     setSelectedIncludeOrExcludeFiltering(props.realizationFilter.getIncludeExcludeFilter());
-    //     setSelectedFilterType(props.realizationFilter.getFilterType());
-    //     setRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
-    //     setContinuousParameterRangeSelections(props.realizationFilter.getContinuousParameterRangeSelections());
-    // }
+    // Update of realization filter object/address
+    if (prevRealizationFilter !== props.realizationFilter) {
+        setPrevRealizationFilter(props.realizationFilter);
+        setSelectedFilterType(props.realizationFilter.getFilterType());
+        setSelectedIncludeOrExcludeFilter(props.realizationFilter.getIncludeOrExcludeFilter());
+        setInitialRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
+        setRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
+        // setContinuousParameterRangeSelections(props.realizationFilter.getContinuousParameterIdentRangeReadonlyMap());
+    }
 
+    // Dependency array for useMemo checks address of continuousParameterIdentRangeReadonlyMap
+    const continuousParameterIdentRangeReadonlyMap =
+        props.realizationFilter.getContinuousParameterIdentRangeReadonlyMap();
     const isContinuousParameterRangeSelectionsEqual = React.useMemo((): boolean => {
         // Both selections are null
-        if (
-            continuousParameterRangeSelections === null &&
-            props.realizationFilter.getContinuousParameterIdentRangeReadonlyMap() === null
-        ) {
+        if (continuousParameterRangeSelections === null && continuousParameterIdentRangeReadonlyMap === null) {
             return true;
         }
         // Only one of the selections is null
-        if (
-            continuousParameterRangeSelections === null ||
-            props.realizationFilter.getContinuousParameterIdentRangeReadonlyMap() === null
-        ) {
+        if (continuousParameterRangeSelections === null || continuousParameterIdentRangeReadonlyMap === null) {
             return false;
         }
 
         // Compare non-null selections
         return areContinuousParameterIdentStringRangeMapsEqual(
             continuousParameterRangeSelections,
-            props.realizationFilter.getContinuousParameterIdentRangeReadonlyMap() as Map<string, NumberRange>
+            continuousParameterIdentRangeReadonlyMap as Map<string, NumberRange>
         );
-    }, [continuousParameterRangeSelections, props.realizationFilter.getContinuousParameterIdentRangeReadonlyMap()]);
+    }, [continuousParameterRangeSelections, continuousParameterIdentRangeReadonlyMap]);
 
-    const hasUnsavedChanges =
+    const isFilterEdited =
         !isEqual(realizationNumberSelections, props.realizationFilter.getRealizationNumberSelections()) ||
         !isContinuousParameterRangeSelectionsEqual ||
         selectedFilterType !== props.realizationFilter.getFilterType() ||
-        selectedIncludeOrExcludeFiltering !== props.realizationFilter.getIncludeOrExcludeFilter();
+        selectedIncludeOrExcludeFilter !== props.realizationFilter.getIncludeOrExcludeFilter();
 
-    function handleRealizationNumberFilterEditedChanged(isEdited: boolean) {
-        setIsRealizationNumberFilterEdited(isEdited);
+    function handleRealizationNumberFilterChanged(selection: ByRealizationNumberFilterSelection) {
+        setRealizationNumberSelections(selection.realizationNumberSelections);
+        setSelectedIncludeOrExcludeFilter(selection.includeOrExcludeFilter);
     }
+
     function handleContinuousParameterValueFilterEditedChanged(isEdited: boolean) {
-        setIsContinuousParameterValueFilterEdited(isEdited);
+        return;
     }
 
-    function handleSaveClick() {
-        if (isRealizationNumberFilterEdited && byRealizationNumberFilterRef.current) {
-            byRealizationNumberFilterRef.current.saveChanges();
+    function handleActiveFilterTypeChange(newValue: RealizationFilterType) {
+        setSelectedFilterType(newValue);
+
+        // To ensure correct visualization when mounting realization number filter component
+        if (newValue === RealizationFilterType.BY_REALIZATION_NUMBER) {
+            setInitialRealizationNumberSelections(realizationNumberSelections);
         }
-        if (isContinuousParameterValueFilterEdited) {
-            // Save changes for continuous parameter value filter
-        }
-        props.onFilterChange();
+    }
+
+    function handleApplyClick() {
+        // Write states to realization filter
+        props.realizationFilter.setFilterType(selectedFilterType);
+        props.realizationFilter.setIncludeOrExcludeFilter(selectedIncludeOrExcludeFilter);
+        props.realizationFilter.setRealizationNumberSelections(realizationNumberSelections);
+        // props.realizationFilter.setContinuousParameterIdentStringRangeMap(continuousParameterRangeSelections);
+
+        // Run filtering
+        props.realizationFilter.runFiltering();
+
+        // Force update to re-render edited state visualization
         forceUpdate();
     }
 
     function handleDiscardClick() {
-        // Reset realization number filter
-        if (isRealizationNumberFilterEdited && byRealizationNumberFilterRef.current) {
-            byRealizationNumberFilterRef.current.discardChanges();
-        }
-        if (isContinuousParameterValueFilterEdited) {
-            // Save changes for continuous parameter value filter
-        }
-
-        // Reset continuous parameter value filter
-        // Reset state
-        // setIsRealizationNumberFilterEdited(false);
-        // setIsContinuousParameterValueFilterEdited(false);
-        forceUpdate();
+        setSelectedFilterType(props.realizationFilter.getFilterType());
+        setSelectedIncludeOrExcludeFilter(props.realizationFilter.getIncludeOrExcludeFilter());
+        setInitialRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
+        setRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
     }
-
-    const isEdited = isRealizationNumberFilterEdited || isContinuousParameterValueFilterEdited;
 
     return (
         <div className="mb-4">
-            <div className={`border ${isEdited ? "border-orange-400" : "border-lightgrey"}  shadow-md p-2 rounded-md`}>
+            <div
+                className={`border ${
+                    isFilterEdited ? "border-orange-400" : "border-lightgrey"
+                }  shadow-md p-2 rounded-md`}
+            >
                 <div className="my-2 border-b border-lightgrey pb-2">
                     <div
                         className={`flex justify-center items-center p-2 ${
-                            isEdited ? "bg-orange-100" : "bg-slate-200"
+                            isFilterEdited ? "bg-orange-100" : "bg-slate-200"
                         } h-10`}
                     >
                         <div className="font-bold flex-grow p-0 text-sm">
@@ -148,16 +154,16 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         </div>
                         <div className="flex gap-1">
                             <Button
-                                variant={isEdited ? "contained" : "outlined"}
-                                disabled={!isEdited}
+                                variant={isFilterEdited ? "contained" : "outlined"}
+                                disabled={!isFilterEdited}
                                 size="small"
                                 startIcon={<Check fontSize="small" />}
-                                onClick={handleSaveClick}
+                                onClick={handleApplyClick}
                             />
                             <Button
                                 color="danger"
-                                variant={isEdited ? "contained" : "outlined"}
-                                disabled={!isEdited}
+                                variant={isFilterEdited ? "contained" : "outlined"}
+                                disabled={!isFilterEdited}
                                 size="small"
                                 startIcon={<Clear fontSize="small" />}
                                 onClick={handleDiscardClick}
@@ -176,25 +182,33 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                                         value: filterType,
                                     };
                                 })}
-                                onChange={setSelectedFilterType}
+                                onChange={handleActiveFilterTypeChange}
                             />
                         </Label>
                     </div>
-                    {selectedFilterType === RealizationFilterType.BY_REALIZATION_NUMBER && (
-                        <ByRealizationNumberFilter
-                            ref={byRealizationNumberFilterRef}
-                            realizationFilter={props.realizationFilter}
-                            disabled={selectedFilterType !== RealizationFilterType.BY_REALIZATION_NUMBER}
-                            onEditedChange={handleRealizationNumberFilterEditedChanged}
-                        />
-                    )}
-                    {selectedFilterType === RealizationFilterType.BY_PARAMETER_VALUES && (
-                        <ByContinuousParameterValueFilter
-                            realizationFilter={props.realizationFilter}
-                            disabled={selectedFilterType !== RealizationFilterType.BY_PARAMETER_VALUES}
-                            onEditedChange={handleContinuousParameterValueFilterEditedChanged}
-                        />
-                    )}
+                    {
+                        // Note: This is a conditional rendering based on the selected filter type, i.e. mount and unmount of component
+                        selectedFilterType === RealizationFilterType.BY_REALIZATION_NUMBER && (
+                            <ByRealizationNumberFilter
+                                initialRealizationNumberSelections={initialRealizationNumberSelections}
+                                realizationNumberSelections={realizationNumberSelections}
+                                availableRealizationNumbers={props.realizationFilter.getAvailableEnsembleRealizations()}
+                                selectedIncludeOrExcludeFilter={selectedIncludeOrExcludeFilter}
+                                disabled={selectedFilterType !== RealizationFilterType.BY_REALIZATION_NUMBER}
+                                onFilterChange={handleRealizationNumberFilterChanged}
+                            />
+                        )
+                    }
+                    {
+                        // Note: This is a conditional rendering based on the selected filter type, i.e. mount and unmount of component
+                        selectedFilterType === RealizationFilterType.BY_PARAMETER_VALUES && (
+                            <ByContinuousParameterValueFilter
+                                ensembleParameters={props.realizationFilter.getEnsembleParameters()}
+                                disabled={selectedFilterType !== RealizationFilterType.BY_PARAMETER_VALUES}
+                                onEditedChange={handleContinuousParameterValueFilterEditedChanged}
+                            />
+                        )
+                    }
                 </div>
             </div>
         </div>
