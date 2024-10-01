@@ -5,6 +5,7 @@ export enum LayerType {
     REALIZATION_GRID = "realizationGrid",
     REALIZATION_POLYGONS = "realizationPolygons",
     DRILLED_WELLBORE_TRAJECTORIES = "drilledWellTrajectories",
+    DRILLED_WELLBORE_PICKS = "drilledWellPicks",
 }
 
 export const LAYER_TYPE_TO_STRING_MAPPING: Record<LayerType, string> = {
@@ -14,6 +15,7 @@ export const LAYER_TYPE_TO_STRING_MAPPING: Record<LayerType, string> = {
     [LayerType.REALIZATION_GRID]: "Realization Grid Layer",
     [LayerType.REALIZATION_POLYGONS]: "Realization Polygons",
     [LayerType.DRILLED_WELLBORE_TRAJECTORIES]: "Drilled Well Trajectories",
+    [LayerType.DRILLED_WELLBORE_PICKS]: "Drilled Well Picks",
 };
 
 export enum SharedSettingType {

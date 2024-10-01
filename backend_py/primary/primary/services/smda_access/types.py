@@ -17,6 +17,7 @@ class WellborePick(BaseModel):
     md: float
     md_msl: float
     unique_wellbore_identifier: str
+    wellbore_uuid:str
     pick_identifier: str
     confidence: Optional[str] = None
     depth_reference_point: str
@@ -41,8 +42,9 @@ class WellboreHeader(BaseModel):
     well_northing: float
     depth_reference_point: str
     depth_reference_elevation: float
-    wellbore_purpose:str | None
-    wellbore_status:str | None
+    wellbore_purpose: str | None
+    wellbore_status: str | None
+
 
 class StratigraphicUnit(BaseModel):
     """

@@ -19,6 +19,7 @@ def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.Well
         md=wellbore_pick.md,
         mdMsl=wellbore_pick.md_msl,
         uniqueWellboreIdentifier=wellbore_pick.unique_wellbore_identifier,
+        wellboreUuid=wellbore_pick.wellbore_uuid,
         pickIdentifier=wellbore_pick.pick_identifier,
         confidence=wellbore_pick.confidence,
         depthReferencePoint=wellbore_pick.depth_reference_point,

@@ -47,7 +47,7 @@ def flatten_hierarchical_structure(units: List[HierarchicalStratigraphicUnit]) -
 
 
 def flatten_hierarchical_structure_to_surface_name(
-    units: List[HierarchicalStratigraphicUnit], idx: int = 0
+    units: List[HierarchicalStratigraphicUnit], only_include_top_and_base: bool = False, idx: int = 0
 ) -> List[StratigraphicSurface]:
     """Flattens the hierarchy of stratigraphic units to a list of stratigraphic surfaces preserving the order.
     On Drogon this will result in the following list:
@@ -76,16 +76,21 @@ def flatten_hierarchical_structure_to_surface_name(
                 strat_unit_identifier=unit.identifier,
             )
         )
-        flattened_list.append(
-            StratigraphicSurface(
-                name=unit.identifier,
-                feature=StratigraphicFeature.ZONE,
-                strat_unit_parent=unit.strat_unit_parent,
-                relative_strat_unit_level=idx,
-                strat_unit_identifier=unit.identifier,
+        if not only_include_top_and_base:
+            flattened_list.append(
+                StratigraphicSurface(
+                    name=unit.identifier,
+                    feature=StratigraphicFeature.ZONE,
+                    strat_unit_parent=unit.strat_unit_parent,
+                    relative_strat_unit_level=idx,
+                    strat_unit_identifier=unit.identifier,
+                )
+            )
+        flattened_list.extend(
+            flatten_hierarchical_structure_to_surface_name(
+                hierarchical_unit.children, only_include_top_and_base=only_include_top_and_base, idx=idx + 1
             )
         )
-        flattened_list.extend(flatten_hierarchical_structure_to_surface_name(hierarchical_unit.children, idx=idx + 1))
         flattened_list.append(
             StratigraphicSurface(
                 name=unit.base,
@@ -100,10 +105,12 @@ def flatten_hierarchical_structure_to_surface_name(
     return flattened_list
 
 
-def sort_stratigraphic_names_by_hierarchy(strat_units: List[StratigraphicUnit]) -> List[StratigraphicSurface]:
+def sort_stratigraphic_names_by_hierarchy(
+    strat_units: List[StratigraphicUnit], only_include_top_and_base: bool = False
+) -> List[StratigraphicSurface]:
     """Get a flatten list of top/unit/base surface names in lithostratigraphical order"""
     hierarchical_units = create_hierarchical_structure(strat_units)
-    sorted_surfaces = flatten_hierarchical_structure_to_surface_name(hierarchical_units)
+    sorted_surfaces = flatten_hierarchical_structure_to_surface_name(hierarchical_units, only_include_top_and_base)
     unique_sorted_surfaces = []
     surface_names = set()
     for surface in sorted_surfaces:

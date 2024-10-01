@@ -28,6 +28,7 @@ import { LayersActionGroup, LayersActions } from "../layers/components/LayersAct
 import { makeComponent } from "../layers/components/utils";
 import { GroupDelegateTopic } from "../layers/delegates/GroupDelegate";
 import { DrilledWellTrajectoriesLayer } from "../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "../layers/implementations/layers/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
 import { ObservedSurfaceLayer } from "../layers/implementations/layers/ObservedSurfaceLayer/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "../layers/implementations/layers/RealizationGridLayer/RealizationGridLayer";
 import { RealizationPolygonsLayer } from "../layers/implementations/layers/RealizationPolygonsLayer/RealizationPolygonsLayer";
@@ -109,8 +110,11 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             case "realization_polygons":
                 groupDelegate.insertChild(new RealizationPolygonsLayer(), numSharedSettings);
                 return;
-            case "drilled_wellbores":
+            case "drilled_wellbore_trajectories":
                 groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(), numSharedSettings);
+                return;
+            case "drilled_wellbore_picks":
+                groupDelegate.insertChild(new DrilledWellborePicksLayer(), numSharedSettings);
                 return;
             case "realization_grid":
                 groupDelegate.insertChild(new RealizationGridLayer(), numSharedSettings);
@@ -325,9 +329,14 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                         label: "Realization Polygons",
                     },
                     {
-                        identifier: "drilled_wellbores",
+                        identifier: "drilled_wellbore_trajectories",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Drilled Wellbore Trajectories",
+                    },
+                    {
+                        identifier: "drilled_wellbore_picks",
+                        icon: <Icon data={wellbore} fontSize="small" />,
+                        label: "Drilled Wellbore Picks",
                     },
                     {
                         identifier: "realization_grid",

@@ -76,7 +76,6 @@ export type { SeismicFencePolyline as SeismicFencePolyline_api } from './models/
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
-export type { StratigraphicUnit as StratigraphicUnit_api } from './models/StratigraphicUnit';
 export type { SummaryVectorDateObservation as SummaryVectorDateObservation_api } from './models/SummaryVectorDateObservation';
 export type { SummaryVectorObservations as SummaryVectorObservations_api } from './models/SummaryVectorObservations';
 export { SurfaceAttributeType as SurfaceAttributeType_api } from './models/SurfaceAttributeType';
@@ -112,7 +111,6 @@ export type { WellboreLogCurveData as WellboreLogCurveData_api } from './models/
 export type { WellboreLogCurveHeader as WellboreLogCurveHeader_api } from './models/WellboreLogCurveHeader';
 export type { WellborePerforation as WellborePerforation_api } from './models/WellborePerforation';
 export type { WellborePick as WellborePick_api } from './models/WellborePick';
-export type { WellborePicksAndStratigraphicUnits as WellborePicksAndStratigraphicUnits_api } from './models/WellborePicksAndStratigraphicUnits';
 export type { WellboreTrajectory as WellboreTrajectory_api } from './models/WellboreTrajectory';
 export type { WellCompletionsData as WellCompletionsData_api } from './models/WellCompletionsData';
 export type { WellCompletionsUnitInfo as WellCompletionsUnitInfo_api } from './models/WellCompletionsUnitInfo';

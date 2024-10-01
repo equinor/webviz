@@ -58,6 +58,7 @@ class WellborePick(BaseModel):
     md: float
     mdMsl: float
     uniqueWellboreIdentifier: str
+    wellboreUuid:str
     pickIdentifier: str
     confidence: Optional[str] = None
     depthReferencePoint: str

@@ -64,27 +64,27 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
         return data;
     }
 
-    protected async fetchData(queryClient: QueryClient): Promise<WellPicksLayerData> {
-        const queryKey = [
-            "getWellborePicksAndStratigraphicUnits",
-            this._settings.ensembleIdent?.getCaseUuid(),
-            this._settings.wellboreUuid,
-        ];
-        this.registerQueryKey(queryKey);
+    // protected async fetchData(queryClient: QueryClient): Promise<WellPicksLayerData> {
+    //     const queryKey = [
+    //         "getWellborePicksAndStratigraphicUnits",
+    //         this._settings.ensembleIdent?.getCaseUuid(),
+    //         this._settings.wellboreUuid,
+    //     ];
+    //     this.registerQueryKey(queryKey);
 
-        return queryClient
-            .fetchQuery({
-                queryKey,
-                queryFn: () =>
-                    apiService.well.getWellborePicksAndStratigraphicUnits(
-                        this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                        this._settings.wellboreUuid ?? ""
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
-            })
-            .then((data) => transformFormationData(data.wellbore_picks, data.stratigraphic_units as any));
-    }
+    //     return queryClient
+    //         .fetchQuery({
+    //             queryKey,
+    //             queryFn: () =>
+    //                 apiService.well.getWellborePicksAndStratigraphicUnits(
+    //                     this._settings.ensembleIdent?.getCaseUuid() ?? "",
+    //                     this._settings.wellboreUuid ?? ""
+    //                 ),
+    //             staleTime: STALE_TIME,
+    //             gcTime: CACHE_TIME,
+    //         })
+    //         .then((data) => transformFormationData(data.wellbore_picks, data.stratigraphic_units as any));
+    // }
 }
 
 export function isWellpicksLayer(layer: BaseLayer<any, any>): layer is WellpicksLayer {

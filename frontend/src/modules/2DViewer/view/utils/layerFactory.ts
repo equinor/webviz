@@ -1,4 +1,4 @@
-import { PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
+import { PolygonData_api, SurfaceDef_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { Layer } from "@deck.gl/core/typed";
 import { GeoJsonLayer } from "@deck.gl/layers/typed";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -13,6 +13,7 @@ import { Feature } from "geojson";
 import { SurfaceDataPng } from "src/api/models/SurfaceDataPng";
 
 import { DrilledWellTrajectoriesLayer } from "../../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "../../layers/implementations/layers/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
 import { ObservedSurfaceLayer } from "../../layers/implementations/layers/ObservedSurfaceLayer/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "../../layers/implementations/layers/RealizationGridLayer/RealizationGridLayer";
 import { RealizationPolygonsLayer } from "../../layers/implementations/layers/RealizationPolygonsLayer/RealizationPolygonsLayer";
@@ -22,7 +23,7 @@ import { Layer as LayerInterface } from "../../layers/interfaces";
 
 export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
     const data = layer.getLayerDelegate().getData();
-
+    console.log(layer);
     if (!data) {
         return null;
     }
@@ -41,6 +42,9 @@ export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorSca
     if (layer instanceof DrilledWellTrajectoriesLayer) {
         return makeWellsLayer(data, layer.getItemDelegate().getId(), null);
     }
+    if (layer instanceof DrilledWellborePicksLayer) {
+        return createWellPicksLayer(data, layer.getItemDelegate().getId());
+    }
     if (layer instanceof RealizationGridLayer) {
         return makeGrid3DLayer(
             layer.getItemDelegate().getId(),
@@ -52,7 +56,35 @@ export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorSca
     }
     return null;
 }
+function createWellPicksLayer(wellPicksData: WellborePick_api[], id: string): GeoJsonLayer {
+    const features: Record<string, unknown>[] = wellPicksData.map((wellPick) => {
+        return {
+            type: "Feature",
+            geometry: {
+                type: "GeometryCollection",
+                geometries: [{ type: "Point", coordinates: [wellPick.easting, wellPick.northing] }],
+            },
+        };
+    });
+    const data: Record<string, unknown> = {
+        type: "FeatureCollection",
+        unit: "m",
+        features: features,
+    };
+    return new GeoJsonLayer({
+        id: id,
+        data: data,
+        // opacity: 0.5,
+        filled: true,
+        lineWidthMinPixels: 20,
+        parameters: {
+            depthTest: false,
+        },
+        depthTest: false,
 
+        pickable: true,
+    });
+}
 function createMapFloatLayer(layerData: SurfaceDataFloat_trans, id: string): MapLayer {
     return new MapLayer({
         id: id,

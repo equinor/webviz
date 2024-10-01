@@ -1,25 +1,25 @@
-import { WellboreTrajectory_api } from "@api";
+import { WellborePick_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
 
-import { isEqual } from "lodash";
+import { isEqual, pick } from "lodash";
 
-import { DrilledWellTrajectoriesContext } from "./DrilledWellTrajectoriesContext";
-import { DrilledWellTrajectoriesSettings } from "./types";
+import { DrilledWellborePicksContext } from "./DrilledWellborePicksContext";
+import { DrilledWellborePicksSettings } from "./types";
 
 import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
 import { BoundingBox, Layer } from "../../../interfaces";
 
-export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]> {
-    private _layerDelegate: LayerDelegate<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]>;
+export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSettings, WellborePick_api[]> {
+    private _layerDelegate: LayerDelegate<DrilledWellborePicksSettings, WellborePick_api[]>;
     private _itemDelegate: ItemDelegate;
 
     constructor() {
-        this._itemDelegate = new ItemDelegate("Drilled Wellbore trajectories");
-        this._layerDelegate = new LayerDelegate(this, new DrilledWellTrajectoriesContext(), LayerColoringType.NONE);
+        this._itemDelegate = new ItemDelegate("Drilled Wellbore picks");
+        this._layerDelegate = new LayerDelegate(this, new DrilledWellborePicksContext(), LayerColoringType.NONE);
     }
 
     getSettingsContext() {
@@ -30,13 +30,13 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]> {
+    getLayerDelegate(): LayerDelegate<DrilledWellborePicksSettings, WellborePick_api[]> {
         return this._layerDelegate;
     }
 
     doSettingsChangesRequireDataRefetch(
-        prevSettings: DrilledWellTrajectoriesSettings,
-        newSettings: DrilledWellTrajectoriesSettings
+        prevSettings: DrilledWellborePicksSettings,
+        newSettings: DrilledWellborePicksSettings
     ): boolean {
         return !isEqual(prevSettings, newSettings);
     }
@@ -54,52 +54,48 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         };
 
         for (const trajectory of data) {
-            for (const point of trajectory.northingArr) {
-                bbox.x[0] = Math.min(bbox.x[0], point);
-                bbox.x[1] = Math.max(bbox.x[1], point);
-            }
-            for (const point of trajectory.eastingArr) {
-                bbox.y[0] = Math.min(bbox.y[0], point);
-                bbox.y[1] = Math.max(bbox.y[1], point);
-            }
-            for (const point of trajectory.tvdMslArr) {
-                bbox.z[0] = Math.min(bbox.z[0], point);
-                bbox.z[1] = Math.max(bbox.z[1], point);
-            }
+            bbox.x[0] = Math.min(bbox.x[0], trajectory.northing);
+            bbox.x[1] = Math.max(bbox.x[1], trajectory.northing);
+
+            bbox.y[0] = Math.min(bbox.y[0], trajectory.easting);
+            bbox.y[1] = Math.max(bbox.y[1], trajectory.easting);
+
+            bbox.z[0] = Math.min(bbox.z[0], trajectory.tvdMsl);
+            bbox.z[1] = Math.max(bbox.z[1], trajectory.tvdMsl);
         }
 
         return bbox;
     }
 
-    fechData(queryClient: QueryClient): Promise<WellboreTrajectory_api[]> {
+    fechData(queryClient: QueryClient): Promise<WellborePick_api[]> {
         const workbenchSession = this.getSettingsContext().getDelegate().getLayerManager().getWorkbenchSession();
         const ensembleSet = workbenchSession.getEnsembleSet();
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const selectedWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
         const selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
+        const selectedPickIdentifier = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
         let fieldIdentifier: string | null = null;
         if (ensembleIdent) {
             const ensemble = ensembleSet.findEnsemble(ensembleIdent);
             if (ensemble) {
                 fieldIdentifier = ensemble.getFieldIdentifier();
-                console.log(ensemble.getStratigraphicColumnIdentifier());
             }
         }
 
-        const queryKey = ["getWellTrajectories", fieldIdentifier];
+        const queryKey = ["getWellborePicksForPickIdentifier", fieldIdentifier, selectedPickIdentifier];
         this._layerDelegate.registerQueryKey(queryKey);
 
-        const promise = queryClient
-            .fetchQuery({
-                queryKey,
-                queryFn: () => apiService.well.getWellTrajectories(fieldIdentifier ?? ""),
-                staleTime: 1800000, // TODO
-                gcTime: 1800000,
-            })
-            .then((response: WellboreTrajectory_api[]) => {
-                return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
-            });
+        const promise = queryClient.fetchQuery({
+            queryKey,
+            queryFn: () =>
+                apiService.well.getWellborePicksForPickIdentifier(fieldIdentifier ?? "", selectedPickIdentifier ?? ""),
+            staleTime: STALE_TIME,
+            gcTime: CACHE_TIME,
+        });
+        // .then((response: WellborePick_api[]) => {
+        //     return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
+        // });
 
         return promise;
     }

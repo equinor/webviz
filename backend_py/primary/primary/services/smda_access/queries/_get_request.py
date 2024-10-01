@@ -9,7 +9,7 @@ from primary import config
 load_dotenv()
 
 
-async def get(access_token: str, endpoint: str, params: dict) -> List[dict]:
+async def smda_get_request(access_token: str, endpoint: str, params: dict) -> List[dict]:
     """
     Generic GET request to SMDA API.
     Uses `next` pagination to get all results.

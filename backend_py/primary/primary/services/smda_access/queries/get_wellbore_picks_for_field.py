@@ -5,7 +5,7 @@ from ..types import WellborePick
 from ._get_request import get
 
 
-async def get_wellbore_picks_for_field(
+async def get_wellbore_picks_for_pick_identifier(
     access_token: str,
     field_identifier: str,
     pick_identifier: str,

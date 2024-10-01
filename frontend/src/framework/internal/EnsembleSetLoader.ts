@@ -97,6 +97,7 @@ export async function loadEnsembleSetMetadataFromBackend(
                 ensembleDetails.case_uuid,
                 ensembleDetails.case_name,
                 ensembleDetails.name,
+                ensembleDetails.stratigraphic_column_identifier,
                 ensembleDetails.realizations,
                 parameterArr,
                 sensitivityArr,

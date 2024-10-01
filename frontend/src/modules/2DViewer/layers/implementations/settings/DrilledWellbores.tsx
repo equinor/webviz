@@ -15,7 +15,7 @@ export class DrilledWellbores implements Setting<WellboreHeader_api[]> {
     }
 
     getLabel(): string {
-        return "Drilled wellbore trajectories";
+        return "Drilled wellbores";
     }
 
     getDelegate(): SettingDelegate<WellboreHeader_api[]> {
