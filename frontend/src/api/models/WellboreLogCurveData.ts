@@ -14,6 +14,6 @@ export type WellboreLogCurveData = {
     noDataValue: (number | null);
     unit: string;
     curveUnitDesc: (string | null);
-    dataPoints: Array<Array<(number | null)>>;
+    dataPoints: Array<Array<(number | string | null)>>;
 };
 

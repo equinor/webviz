@@ -9,8 +9,9 @@ export type TemplatePlotConfig = Partial<TemplatePlot> & {
     // Wether the config has all required fields for it's curve-type
     _isValid: boolean;
     // This is used as the value for dropdowns. Even if the curvename is supposed to be unique,  In some rare cases, the curvename is duplicated across different well-logs.
-    _logAndName: `${string}::${string}`;
-    _logAndName2?: `${string}::${string}`;
+    // The source of the fields data
+    _source: "geology" | "welllog" | "stratigraphy";
+    _sourceId: string | null;
 };
 
 /**
@@ -19,5 +20,6 @@ export type TemplatePlotConfig = Partial<TemplatePlot> & {
 export type TemplateTrackConfig = Omit<TemplateTrack, "plots"> & {
     // ID used to allow the settings-menu to drag-sort them
     _id: string;
+    _type: "discrete" | "continous";
     plots: TemplatePlotConfig[];
 };

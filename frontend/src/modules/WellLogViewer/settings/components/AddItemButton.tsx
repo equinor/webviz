@@ -4,7 +4,10 @@ import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { SelectOption } from "@lib/components/Select";
 import { Button, Dropdown, MenuButton } from "@mui/base";
-import { Add, ArrowDropDown } from "@mui/icons-material";
+import {
+    Add,
+    /* ArrowDropDown */
+} from "@mui/icons-material";
 
 export type AddItemButtonProps<TValue> = {
     buttonText: string;
@@ -40,14 +43,14 @@ export function AddItemButton<TValue>(props: AddItemButtonProps<TValue>): React.
                 <ButtonContent text={props.buttonText} multiple />
             </MenuButton>
 
-            <Menu className="text-sm p-1 max-h-96 overflow-auto" anchorOrigin="bottom-end">
+            <Menu className="text-sm p-1 max-h-96 overflow-auto" anchorOrigin="bottom">
                 {props.options.map((entry) => (
                     <MenuItem
                         key={String(entry.value)}
                         className="text-sm p-0.5"
                         onClick={() => handleOptionClicked(entry)}
                     >
-                        {entry.label}
+                        {entry.adornment} {entry.label}
                     </MenuItem>
                 ))}
             </Menu>
@@ -57,10 +60,9 @@ export function AddItemButton<TValue>(props: AddItemButtonProps<TValue>): React.
 
 function ButtonContent(props: { text: string; multiple?: boolean }) {
     return (
-        <div className="flex items-center gap-1 py-0.5 px-1 text-sm rounded hover:bg-blue-100">
+        <div className="flex items-center gap-1 py-0.5 pl-1 pr-2 text-sm rounded hover:bg-blue-100">
             <Add fontSize="inherit" />
             <span>{props.text}</span>
-            {props.multiple && <ArrowDropDown />}
         </div>
     );
 }

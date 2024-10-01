@@ -9,12 +9,15 @@ import {
     WellLogCurve,
     WellLogDataRow,
     WellLogHeader,
+    WellLogMetadataDiscrete,
 } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
 import _ from "lodash";
 
 import { COLOR_TABLES } from "./logViewerColors";
+
+import { BaseAgnosticSourceData } from "../view/queries/wellLogQueries";
 
 export const MAIN_AXIS_CURVE: WellLogCurve = {
     name: "RKB",
@@ -31,19 +34,24 @@ export const SECONDARY_AXIS_CURVE: WellLogCurve = {
 };
 
 export function createWellLog(
-    curveData: WellboreLogCurveData_api[],
+    curveData: BaseAgnosticSourceData[],
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
     padDataWithEmptyRows = false
 ): WellLog {
-    // TODO: these all iterate over the curve data list, so should probably just combine them into a single reduce method to optimize
     const header = createLogHeader(wellboreTrajectory);
 
+    // TODO: these all seperately iterate over the curve data list, so should probably just combine them into a single reduce method to optimize
     // ! Important: Always make sure that the data row and curve arrays are in the same order!
     const curves = createLogCurves(curveData);
     const data = createLogData(curveData, wellboreTrajectory, referenceSystem, padDataWithEmptyRows);
+    const metadataDiscrete = curveData.reduce((acc, curve) => {
+        if (curve._discreteMetaData) {
+            return _.set(acc, curve.name, curve._discreteMetaData);
+        } else return acc;
+    }, {} as Record<string, WellLogMetadataDiscrete>);
 
-    return { header, curves, data };
+    return { header, curves, data, metadata_discrete: metadataDiscrete };
 }
 
 function createLogCurves(curveData: WellboreLogCurveData_api[]): WellLogCurve[] {
@@ -56,7 +64,7 @@ function apiCurveToLogCurve(curve: WellboreLogCurveData_api): WellLogCurve {
         // ! The Well Log JSON format does *technically* support multiple dimensions, but the subsurface component does not
         // dimensions: curve.dataPoints[0].length - 1,
         dimensions: 1,
-        valueType: typeof curve.dataPoints[0][1],
+        valueType: typeof curve.dataPoints[0]?.[1] ?? "unknown",
         // ? if this is just gonna be the meter in depth for all of them
         unit: curve.unit,
         description: curve.curveDescription,
@@ -87,6 +95,7 @@ function createLogData(
 
         curve.dataPoints.forEach(([scaleIdx, entry, ...restData]) => {
             if (!scaleIdx) return console.warn("Unexpected null for scale entry");
+            if (typeof scaleIdx === "string") throw new Error("Scale index value cannot be a string");
             if (restData.length) console.warn("Multi-dimensional data not supported, using first value only");
 
             maybeInjectDataRow(rowAcc, scaleIdx, rowLength, referenceSystem);

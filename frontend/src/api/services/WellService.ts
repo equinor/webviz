@@ -4,6 +4,8 @@
 /* eslint-disable */
 import type { WellboreCasing } from '../models/WellboreCasing';
 import type { WellboreCompletion } from '../models/WellboreCompletion';
+import type { WellboreGeoData } from '../models/WellboreGeoData';
+import type { WellboreGeoHeader } from '../models/WellboreGeoHeader';
 import type { WellboreHeader } from '../models/WellboreHeader';
 import type { WellboreLogCurveData } from '../models/WellboreLogCurveData';
 import type { WellboreLogCurveHeader } from '../models/WellboreLogCurveHeader';
@@ -233,6 +235,51 @@ export class WellService {
             query: {
                 'wellbore_uuid': wellboreUuid,
                 'log_curve_name': logCurveName,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Wellbore Geology Headers
+     * Gets headers for geological interproation data for a given wellbore
+     * @param wellboreUuid Wellbore uuid
+     * @returns WellboreGeoHeader Successful Response
+     * @throws ApiError
+     */
+    public getWellboreGeologyHeaders(
+        wellboreUuid: string,
+    ): CancelablePromise<Array<WellboreGeoHeader>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/well/wellbore_geology_headers',
+            query: {
+                'wellbore_uuid': wellboreUuid,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Wellbore Geology Data
+     * Gets geological data entries for a given geology header
+     * @param wellboreUuid Wellbore uuid
+     * @param geologyHeaderUuid Geology header uuid
+     * @returns WellboreGeoData Successful Response
+     * @throws ApiError
+     */
+    public getWellboreGeologyData(
+        wellboreUuid: string,
+        geologyHeaderUuid: string,
+    ): CancelablePromise<Array<WellboreGeoData>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/well/wellbore_geology_data',
+            query: {
+                'wellbore_uuid': wellboreUuid,
+                'geology_header_uuid': geologyHeaderUuid,
             },
             errors: {
                 422: `Validation Error`,

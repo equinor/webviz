@@ -1,40 +1,35 @@
 import React from "react";
 
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import { SettingsStatusWriter } from "@framework/StatusWriter";
 import { Input } from "@lib/components/Input";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
-import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import { TemplatePlotScaleTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
-import { useAtomValue } from "jotai";
+import { ContinousTrackSettings } from "../ContinousTrackSettings";
+import { DiscreteTrackSettings } from "../DiscreteTrackSettings";
 
-import { SortablePlotList } from "./SortablePlotList";
-import { CurveTrackItemProps } from "./SortableTrackItem";
+export type TrackSettingsProps = {
+    trackConfig: TemplateTrackConfig;
+    statusWriter: SettingsStatusWriter;
+    onUpdateTrack: (newTrack: TemplateTrackConfig) => void;
+};
 
-import { wellLogCurveHeadersQueryAtom } from "../../../atoms/queryAtoms";
-
-export type TrackSettingsProps = CurveTrackItemProps;
-
-type ConfigChanges = Partial<Pick<TemplateTrackConfig, "width" | "plots" | "scale" | "title">>;
-type TemplatePlotScaleOption = DropdownOption<TemplatePlotScaleTypes>;
-
-const PLOT_SCALE_OPTIONS: TemplatePlotScaleOption[] = [
-    { label: "Linear", value: "linear" },
-    { label: "Logaritmic", value: "log" },
-];
+export type TrackSettingFragmentProps = {
+    trackConfig: TemplateTrackConfig;
+    statusWriter: SettingsStatusWriter;
+    onFieldChange: (changes: Partial<TemplateTrackConfig>) => void;
+};
 
 const INPUT_DEBOUNCE_TIME = 500;
 
 export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
     const { onUpdateTrack } = props;
 
-    const curveHeadersQuery = useAtomValue(wellLogCurveHeadersQueryAtom);
-    const curveHeadersErrorStatus = usePropagateApiErrorToStatusWriter(curveHeadersQuery, props.statusWriter) ?? "";
-
-    function updateTrackConfig(configChanges: ConfigChanges) {
-        onUpdateTrack({ ...props.trackConfig, ...configChanges });
-    }
+    const applyConfigChange = React.useCallback(
+        function applyConfigChange(configChanges: Partial<TemplateTrackConfig>) {
+            onUpdateTrack({ ...props.trackConfig, ...configChanges });
+        },
+        [props.trackConfig, onUpdateTrack]
+    );
 
     return (
         <div
@@ -46,7 +41,7 @@ export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
                 id="trackTitle"
                 value={props.trackConfig.title}
                 debounceTimeMs={INPUT_DEBOUNCE_TIME}
-                onValueChange={(val) => updateTrackConfig({ title: val })}
+                onValueChange={(val) => applyConfigChange({ title: val })}
             />
 
             <label htmlFor="trackWidth">Track width </label>
@@ -57,30 +52,19 @@ export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
                 min={1}
                 max={6}
                 debounceTimeMs={INPUT_DEBOUNCE_TIME}
-                onValueChange={(val) => updateTrackConfig({ width: Number(val) })}
+                onValueChange={(val) => applyConfigChange({ width: Number(val) })}
             />
 
-            <label htmlFor="trackScale">Scale</label>
-            <Dropdown<TemplatePlotScaleTypes>
-                id="trackScale"
-                value={props.trackConfig.scale}
-                options={PLOT_SCALE_OPTIONS}
-                filter={false}
-                onChange={(val) => {
-                    if (!val) updateTrackConfig({ scale: undefined });
-                    else updateTrackConfig({ scale: val });
-                }}
-            />
-
-            <div className="col-span-2">
-                <PendingWrapper isPending={curveHeadersQuery.isPending} errorMessage={curveHeadersErrorStatus}>
-                    <SortablePlotList
-                        availableCurveHeaders={curveHeadersQuery.data ?? []}
-                        plots={props.trackConfig.plots}
-                        onUpdatePlots={(plots) => updateTrackConfig({ plots: plots })}
-                    />
-                </PendingWrapper>
-            </div>
+            {makeTypeSpecificFragment({
+                trackConfig: props.trackConfig,
+                statusWriter: props.statusWriter,
+                onFieldChange: applyConfigChange,
+            })}
         </div>
     );
+}
+
+function makeTypeSpecificFragment(props: TrackSettingFragmentProps) {
+    if (props.trackConfig._type === "discrete") return <DiscreteTrackSettings {...props} />;
+    else return <ContinousTrackSettings {...props} />;
 }

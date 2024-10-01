@@ -9,6 +9,8 @@ import { Delete, ExpandLess, ExpandMore, Settings, Warning } from "@mui/icons-ma
 
 import { TrackSettings } from "./TrackSettings";
 
+import { TrackIcon } from "../../_shared/icons";
+
 export type CurveTrackItemProps = {
     trackConfig: TemplateTrackConfig;
     statusWriter: SettingsStatusWriter;
@@ -18,6 +20,8 @@ export type CurveTrackItemProps = {
 
 export function SortableTrackItem(props: CurveTrackItemProps) {
     const [isExpanded, setIsExpanded] = React.useState<boolean>(true);
+
+    const itemStartAdornment = <TrackIcon type={props.trackConfig._type} />;
 
     const itemEndAdornment = (
         <ListItemEndAdornment
@@ -29,7 +33,12 @@ export function SortableTrackItem(props: CurveTrackItemProps) {
     );
 
     return (
-        <SortableListItem id={props.trackConfig._id} title={props.trackConfig.title} endAdornment={itemEndAdornment}>
+        <SortableListItem
+            id={props.trackConfig._id}
+            title={props.trackConfig.title}
+            startAdornment={itemStartAdornment}
+            endAdornment={itemEndAdornment}
+        >
             <div hidden={!isExpanded}>
                 <TrackSettings {...props} />
             </div>

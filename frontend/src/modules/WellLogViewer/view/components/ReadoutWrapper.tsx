@@ -61,7 +61,7 @@ function curveInfoToReadoutInfo(info: Info): InfoItem {
 
     return {
         name,
-        value: info.value,
+        value: info.discrete ?? info.value,
         unit: info.units ?? "",
         adornment: <div className="w-2 h-2 rounded-full" style={{ background: info.color }} />,
     };

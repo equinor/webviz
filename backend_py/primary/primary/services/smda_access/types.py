@@ -80,3 +80,30 @@ class StratigraphicSurface(BaseModel):
     relative_strat_unit_level: int = 0
     strat_unit_parent: Optional[str] = None
     strat_unit_identifier: Optional[str] = None
+
+
+# pylint: disable-next=missing-class-docstring
+class WellboreGeoHeader(BaseModel):
+    uuid: str
+    identifier: str
+    geol_type: str
+    md_min: float
+    md_max: float
+    source: str
+    # description: str | None
+
+
+# pylint: disable-next=missing-class-docstring
+class WellboreGeoData(BaseModel):
+    uuid: str
+    identifier: str
+    geol_type: str
+    geol_group: str
+    code: int
+
+    top_depth_md: float
+    base_depth_md: float
+
+    color_r: int
+    color_g: int
+    color_b: int

@@ -67,3 +67,14 @@ export const wellboreStratigraphicUnitsQueryAtom = atomWithQuery((get) => {
         ...SHARED_QUERY_OPTS,
     };
 });
+
+export const wellboreGeologyHeadersQueryAtom = atomWithQuery((get) => {
+    const wellboreUuid = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
+
+    return {
+        queryKey: ["getWellboreGeologyHeaders", wellboreUuid],
+        enabled: Boolean(wellboreUuid),
+        queryFn: () => apiService.well.getWellboreGeologyHeaders(wellboreUuid),
+        ...SHARED_QUERY_OPTS,
+    };
+});

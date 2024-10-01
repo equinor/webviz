@@ -1,6 +1,7 @@
 /**
  * Utilities and constants used for generating well-log-viewer template configs
  */
+import { OptionalExceptFor } from "@lib/utils/typing";
 import {
     Template,
     TemplatePlotTypes,
@@ -19,6 +20,13 @@ export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
 export function isCompositePlotType(type: TemplatePlotTypes) {
     return ["differential"].includes(type);
 }
+export function plotIsDiscrete(plotConfig: TemplatePlotConfig): boolean {
+    const { type, _source } = plotConfig;
+
+    // TODO: Can we assume that some specific well-log curves are discrete based on name? For instance, STAT_WI has log named ZONE, which gives string values.
+
+    return _source === "geology" || _source === "stratigraphy" || type === "stacked";
+}
 
 export function createLogTemplate(templateTrackConfigs: TemplateTrack[]): Template {
     return {
@@ -29,7 +37,9 @@ export function createLogTemplate(templateTrackConfigs: TemplateTrack[]): Templa
     };
 }
 
-export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotConfig {
+export function makeTrackPlot(
+    plot: OptionalExceptFor<TemplatePlotConfig, "_source" | "_sourceId">
+): TemplatePlotConfig {
     // If colors get put as undefined, new colors are selected EVERY rerender, so we should avoid that
     const curveColor = plot.color ?? CURVE_COLOR_PALETTE.getColors()[0];
     const curveColor2 = plot.color2 ?? CURVE_COLOR_PALETTE.getColors()[3];
@@ -38,7 +48,6 @@ export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotCo
         ...plot,
         _id: plot._id ?? v4(),
         _isValid: Boolean(plot.name && plot.type),
-        _logAndName: plot._logAndName ?? `${plot.name}::{undefined}`,
         name: plot.name,
         type: plot.type,
         color: curveColor,
@@ -53,7 +62,11 @@ export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotCo
 
     switch (plot.type) {
         case "stacked":
-            throw new Error("Stacked graph type currently not supported");
+            return {
+                ...config,
+                color: undefined,
+                color2: undefined,
+            };
         case "differential":
             return {
                 ...config,

@@ -121,4 +121,28 @@ class WellboreLogCurveData(BaseModel):
     noDataValue: float | None
     unit: str
     curveUnitDesc: str | None
-    dataPoints: list[list[float | None]]
+    dataPoints: list[list[float | str | None]]
+
+
+# pylint: disable-next=missing-class-docstring
+class WellboreGeoHeader(BaseModel):
+    uuid: str
+    identifier: str
+    geolType: str
+    mdRange: tuple[float, float]
+    source: str
+
+
+# pylint: disable-next=missing-class-docstring
+class WellboreGeoData(BaseModel):
+    uuid: str
+    identifier: str
+    geolType: str
+    geolGroup: str
+    code: int
+
+    # ! I would like to use tuples, but OpenAPI turns them into a 'any[]' type
+    # color: tuple[int, int, int]
+    # mdRange: Tuple[float, float]
+    color: List[int]
+    mdRange: List[float]

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { WellboreHeader_api, WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
+import { WellboreHeader_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
@@ -20,6 +20,7 @@ import { ReadoutWrapper } from "./ReadoutWrapper";
 import { InterfaceTypes } from "../../interfaces";
 import { createLogTemplate } from "../../utils/logViewerTemplate";
 import { createLogViewerWellpicks, createWellLog } from "../../utils/queryDataTransform";
+import { BaseAgnosticSourceData } from "../queries/wellLogQueries";
 
 const AXIS_MNEMOS = {
     md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],
@@ -38,7 +39,7 @@ type GlobalHoverMd = GlobalTopicDefinitions["global.hoverMd"];
 export type SubsurfaceLogViewerWrapperProps = {
     // Data
     wellboreHeader: WellboreHeader_api | null;
-    curveData: WellboreLogCurveData_api[];
+    curveData: BaseAgnosticSourceData[];
     trajectoryData: WellboreTrajectory_api;
     intersectionReferenceSystem: IntersectionReferenceSystem;
     wellpicks: WellPicksLayerData;

@@ -1,4 +1,11 @@
-from primary.services.smda_access.types import WellboreHeader, WellboreTrajectory, WellborePick, StratigraphicUnit
+from primary.services.smda_access.types import (
+    WellboreHeader,
+    WellboreTrajectory,
+    WellborePick,
+    StratigraphicUnit,
+    WellboreGeoHeader,
+    WellboreGeoData,
+)
 from primary.services.ssdl_access.types import (
     WellboreCasing,
     WellboreCompletion,
@@ -149,4 +156,28 @@ def convert_wellbore_log_curve_data_to_schema(
         curveDescription=wellbore_log_curve_data.curve_description,
         indexUnit=wellbore_log_curve_data.index_unit,
         noDataValue=wellbore_log_curve_data.no_data_value,
+    )
+
+
+# pylint: disable-next=missing-function-docstring
+def convert_wellbore_geo_header_to_schema(data: WellboreGeoHeader) -> schemas.WellboreGeoHeader:
+    return schemas.WellboreGeoHeader(
+        uuid=data.uuid,
+        identifier=data.identifier,
+        geolType=data.geol_type,
+        mdRange=(data.md_min, data.md_max),
+        source=data.source,
+    )
+
+
+# pylint: disable-next=missing-function-docstring
+def convert_wellbore_geo_data_to_schema(data: WellboreGeoData) -> schemas.WellboreGeoData:
+    return schemas.WellboreGeoData(
+        uuid=data.uuid,
+        identifier=data.identifier,
+        geolType=data.geol_type,
+        geolGroup=data.geol_group,
+        code=data.code,
+        color=(data.color_r, data.color_g, data.color_b),
+        mdRange=(data.top_depth_md, data.base_depth_md),
     )

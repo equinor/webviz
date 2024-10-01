@@ -2,6 +2,7 @@ import { WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
+import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { atom } from "jotai";
@@ -101,19 +102,43 @@ export const wellLogTemplateTracks = atom<TemplateTrack[]>((get) => {
     });
 });
 
-export const allSelectedWellLogCurvesAtom = atom<string[]>((get) => {
-    const templateTracks = get(wellLogTemplateTracks);
+type PossibleCurveGroups = Required<TemplatePlotConfig>["_source"];
 
-    const curveNames = templateTracks.reduce<string[]>((acc, trackCfg) => {
-        const usedCurves = _.flatMap(trackCfg.plots, ({ name, name2 }) => {
-            if (name2) return [name, name2];
+export const plotConfigsBySourceAtom = atom((get) => {
+    const templateConfig = get(logViewerTrackConfigs);
+
+    const curveGroups: Record<PossibleCurveGroups, TemplatePlotConfig[]> = {
+        geology: [],
+        welllog: [],
+        stratigraphy: [],
+    };
+
+    // TODO: welllog entry gets weird garbage-entries
+    templateConfig.forEach((track) => {
+        const trackCurves = _.groupBy(track.plots, "_source");
+        _.merge(curveGroups, trackCurves);
+    });
+
+    return curveGroups;
+});
+
+export const allSelectedGeologyCurvesAtom = atom<TemplatePlotConfig[]>((get) => {
+    const geolPlots = get(plotConfigsBySourceAtom).geology;
+
+    return _.chain(geolPlots).filter("_isValid").uniqBy("_sourceId").value();
+});
+
+export const allSelectedWellLogCurvesAtom = atom<string[]>((get): string[] => {
+    const welllogPlots = get(plotConfigsBySourceAtom).welllog;
+
+    return _.chain(welllogPlots)
+        .flatMap(({ name, name2, _isValid }) => {
+            if (!_isValid || !name) return [];
+            else if (name2) return [name, name2];
             else return [name];
-        });
-
-        return _.uniq([...acc, ...usedCurves]);
-    }, []);
-
-    return curveNames;
+        })
+        .uniq()
+        .value();
 });
 
 /**
