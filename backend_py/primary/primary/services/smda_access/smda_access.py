@@ -10,42 +10,48 @@ from primary.services.service_exceptions import (
 
 from .types import WellborePick, WellboreTrajectory, WellboreHeader, StratigraphicUnit, StratigraphicSurface
 from .stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from .queries._get_request import smda_get_request
+from ._smda_get_request import smda_get_request
 
 LOGGER = logging.getLogger(__name__)
+
+
+class SmdaEndpoints:
+    STRAT_UNITS = "strat-units"
+    WELLBORE_SURVEY_HEADERS = "wellbore-survey-headers"
+    WELLHEADERS = "wellheaders"
+    WELLBORE_SURVEY_SAMPLES = "wellbore-survey-samples"
+    WELLBORE_PICKS = "wellbore-picks"
+
 
 class SmdaAccess:
     def __init__(self, access_token: str, field_identifier: str):
         self._smda_token = access_token
         self._field_identifier = field_identifier
 
-    async def _smda_request(self, endpoint: str, params: dict) -> List[dict]:
+    async def _smda_get_request(self, endpoint: str, params: dict) -> List[dict]:
         return await smda_get_request(access_token=self._smda_token, endpoint=endpoint, params=params)
-
 
     async def get_stratigraphic_units(self, strat_column_identifier: str) -> List[StratigraphicUnit]:
         """
-            Get stratigraphic units for a given stratigraphic column
+        Get stratigraphic units for a given stratigraphic column
         """
 
-        endpoint = "strat-units"
         params = {
             "strat_column_identifier": strat_column_identifier,
             "_sort": "strat_unit_level,top_age",
         }
-        results = await self._smda_request(endpoint=endpoint, params=params)
+        results = await self._smda_get_request(endpoint=SmdaEndpoints.STRAT_UNITS, params=params)
         if not results:
-            raise NoDataError(f"No stratigraphic units found for {strat_column_identifier=}.",Service.SMDA)
+            raise NoDataError(f"No stratigraphic units found for {strat_column_identifier=}.", Service.SMDA)
         units = [StratigraphicUnit(**result) for result in results]
         return units
-    
+
     async def get_wellbore_headers(self) -> List[WellboreHeader]:
         """
         Get wellbore header information for all wellbores in a field.
         We need the wellbores with actual survey data, so we must use the wellbore-survey-headers endpoint.
         Additionally, we need the wellbore purpose and status, which we only get from the wellheaders endpoint.
         """
-        survey_headers_endpoint = "wellbore-survey-headers"
         projection = [
             "wellbore_uuid",
             "unique_wellbore_identifier",
@@ -62,12 +68,13 @@ class SmdaAccess:
             "field_identifier": self._field_identifier,
         }
 
-        survey_header_results = await self._smda_request(endpoint=survey_headers_endpoint, params=params)
+        survey_header_results = await self._smda_get_request(
+            endpoint=SmdaEndpoints.WELLBORE_SURVEY_HEADERS, params=params
+        )
 
         if not survey_header_results:
-            raise NoDataError(f"No wellbore headers found for {self._field_identifier=}.",Service.SMDA)
-        
-        wellheaders_endpoint = "wellheaders"
+            raise NoDataError(f"No wellbore headers found for {self._field_identifier=}.", Service.SMDA)
+
         projection = ["unique_wellbore_identifier", "wellbore_purpose", "wellbore_status"]
         params = {
             "_projection": ",".join(projection),
@@ -75,7 +82,7 @@ class SmdaAccess:
             "field_identifier": self._field_identifier,
         }
 
-        wellbore_headers_results = await self._smda_request(endpoint=wellheaders_endpoint, params=params)
+        wellbore_headers_results = await self._smda_get_request(endpoint=SmdaEndpoints.WELLHEADERS, params=params)
 
         for survey_header in survey_header_results:
             for wellbore_header in wellbore_headers_results:
@@ -90,7 +97,6 @@ class SmdaAccess:
         """
         Get wellbore trajectories (survey samples) for all wells in a field, optionally with a subset of wellbores.
         """
-        endpoint = "wellbore-survey-samples"
         params = {
             "_projection": "wellbore_uuid, unique_wellbore_identifier,easting,northing,tvd_msl,md",
             "_sort": "unique_wellbore_identifier,md",
@@ -99,10 +105,12 @@ class SmdaAccess:
         if wellbore_uuids:
             params["wellbore_uuid"] = ", ".join(wellbore_uuids)
 
-        result = await self._smda_request(endpoint=endpoint, params=params)
+        result = await self._smda_get_request(endpoint=SmdaEndpoints.WELLBORE_SURVEY_SAMPLES, params=params)
 
         if not result:
-            raise NoDataError(f"No wellbore surveys found for {self._field_identifier}, {wellbore_uuids=}.",Service.SMDA)
+            raise NoDataError(
+                f"No wellbore surveys found for {self._field_identifier}, {wellbore_uuids=}.", Service.SMDA
+            )
 
         # Convert the result to polars for processing
         resultdf = pl.DataFrame(result)
@@ -124,7 +132,6 @@ class SmdaAccess:
 
         # Filter out any samples with null values
         filtered_df = resultdf.filter(pl.all_horizontal(pl.col(columns_to_check).is_not_null()))
-
 
         # Group per wellbore, maintaining order
         wellbore_data = filtered_df.group_by("unique_wellbore_identifier", maintain_order=True).agg(
@@ -158,7 +165,6 @@ class SmdaAccess:
         with the matching wellbore uuid.
         """
 
-        endpoint = "wellbore-picks"
         params = {
             "_sort": "unique_wellbore_identifier,md",
             "wellbore_uuid": wellbore_uuid,
@@ -166,12 +172,20 @@ class SmdaAccess:
         }
         if obs_no:
             params["obs_no"] = str(obs_no)
-        results = await self._smda_request(endpoint=endpoint, params=params)
+        results = await self._smda_get_request(endpoint=SmdaEndpoints.WELLBORE_PICKS, params=params)
 
         if not results:
-            raise NoDataError(f"No wellbore picks found for {wellbore_uuid=}.",Service.SMDA)
-        
-        picks = [WellborePick(**result) for result in results]
+            raise NoDataError(f"No wellbore picks found for {wellbore_uuid=}.", Service.SMDA)
+
+        picks: List[WellborePick] = []
+        for result in results:
+            # Drop any picks with missing data
+            if all([result.get(key) for key in ["northing", "easting", "tvd", "tvd_msl"]]):
+                picks.append(WellborePick(**result))
+            else:
+                LOGGER.warning(
+                    f"Invalid pick found for {result.get('pick_identifier')}, {result.get('unique_wellbore_identifier')}. This will be ignored."
+                )
         return picks
 
     async def get_wellbore_picks_for_pick_identifier(
@@ -184,7 +198,6 @@ class SmdaAccess:
         Get wellbore picks for a given pick identifier(formation top/base)
         for all wellbores in a field
         """
-        endpoint = "wellbore-picks"
         params = {
             "_sort": "unique_wellbore_identifier,md",
             "field_identifier": self._field_identifier,
@@ -194,16 +207,21 @@ class SmdaAccess:
         if obs_no:
             params["obs_no"] = str(obs_no)
 
-        results = await self._smda_request(endpoint=endpoint, params=params)
+        results = await self._smda_get_request(endpoint=SmdaEndpoints.WELLBORE_PICKS, params=params)
         if not results:
-            raise NoDataError(f"No wellbore picks found for {self._field_identifier=}, {pick_identifier=}, {interpreter=}, {obs_no=}.",Service.SMDA)
+            raise NoDataError(
+                f"No wellbore picks found for {self._field_identifier=}, {pick_identifier=}, {interpreter=}, {obs_no=}.",
+                Service.SMDA,
+            )
         picks: List[WellborePick] = []
         for result in results:
             # Drop any picks with missing data
             if all([result.get(key) for key in ["northing", "easting", "tvd", "tvd_msl"]]):
                 picks.append(WellborePick(**result))
             else:
-                LOGGER.warning(f"Invalid pick found for {pick_identifier=}, {result.get('unique_wellbore_identifier')}. This will be ignored.")
+                LOGGER.warning(
+                    f"Invalid pick found for {pick_identifier=}, {result.get('unique_wellbore_identifier')}. This will be ignored."
+                )
         return picks
 
     async def get_wellbore_pick_identifiers_in_stratigraphic_column(
