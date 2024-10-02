@@ -1,99 +1,102 @@
 import React from "react";
 
+import { RealizationFilter } from "@framework/RealizationFilter";
 import {
     IncludeExcludeFilter,
-    NumberRange,
-    RealizationFilter,
+    ParameterValueSelection,
     RealizationFilterType,
     RealizationFilterTypeStringMapping,
     RealizationNumberSelection,
-} from "@framework/RealizationFilter";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
+} from "@framework/types/realizationFilterTypes";
+import { areParameterIdentStringToValueSelectionMapsEqual } from "@framework/utils/realizationFilterTypesUtils";
 import { Button } from "@lib/components/Button";
-import { Dialog } from "@lib/components/Dialog";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Check, Clear } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
-import { ByContinuousParameterValueFilter } from "./private-components/byContinuousParameterValueFilter";
+import { ByParameterValueFilter } from "./private-components/byParameterValueFilter";
 import {
     ByRealizationNumberFilter,
     ByRealizationNumberFilterSelection,
 } from "./private-components/byRealizationNumberFilter";
-import { areContinuousParameterIdentStringRangeMapsEqual } from "./private-utils/compareUtils";
-import { makeRealizationPickerTagsFromRealizationNumberSelections } from "./private-utils/conversionUtils";
 
 export type EnsembleRealizationFilterProps = {
     // ensemble: Ensemble; // Should realization filter only provide access to ensemble ident, and the access to details must be through ensemble object?
     realizationFilter: RealizationFilter; // Should be ref stable and not change address in memory
     active: boolean;
     onFilterChange: () => void;
-    // onUnsavedChanges: (hasUnsavedChanges: boolean) => void;
 };
 
 /**
  * Component for visualizing and handling of realization filtering for an Ensemble.
  *
- * @param props
- * @returns
+ * Realization filter is used to filter ensemble realizations based on selected realization number or parameter values.
+ * The selection creates a valid subset of realization numbers for the ensemble throughout the application.
  */
 export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps> = (props) => {
-    const [prevRealizationFilter, setPrevRealizationFilter] = React.useState<RealizationFilter | null>(null);
-
     const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
-    const [initialRealizationNumberSelections, setInitialRealizationNumberSelections] = React.useState<
-        readonly RealizationNumberSelection[] | null
-    >(null);
-    const [realizationNumberSelections, setRealizationNumberSelections] = React.useState<
-        readonly RealizationNumberSelection[] | null
-    >(null);
-    const [selectedIncludeOrExcludeFilter, setSelectedIncludeOrExcludeFilter] = React.useState<IncludeExcludeFilter>(
-        IncludeExcludeFilter.INCLUDE_FILTER
-    );
+    const [prevRealizationFilter, setPrevRealizationFilter] = React.useState<RealizationFilter | null>(null);
     const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
         RealizationFilterType.BY_REALIZATION_NUMBER
     );
-    const [continuousParameterRangeSelections, setContinuousParameterRangeSelections] = React.useState<Map<
-        string,
-        NumberRange
-    > | null>(null);
+
+    const [initialRealizationNumberSelections, setInitialRealizationNumberSelections] = React.useState<
+        readonly RealizationNumberSelection[] | null
+    >(props.realizationFilter.getRealizationNumberSelections());
+    const [realizationNumberSelections, setRealizationNumberSelections] = React.useState<
+        readonly RealizationNumberSelection[] | null
+    >(props.realizationFilter.getRealizationNumberSelections());
+    const [selectedIncludeOrExcludeFilter, setSelectedIncludeOrExcludeFilter] = React.useState<IncludeExcludeFilter>(
+        props.realizationFilter.getIncludeOrExcludeFilter()
+    );
+    const [selectedParameterIdentStringToValueSelectionMap, setSelectedParameterIdentStringToValueSelectionMap] =
+        React.useState<ReadonlyMap<string, ParameterValueSelection>>(
+            new Map(props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap())
+        );
 
     // Update of realization filter object/address
+    // NOTE: Should not be necessary to check for address change, as it should be stable?
     if (prevRealizationFilter !== props.realizationFilter) {
         setPrevRealizationFilter(props.realizationFilter);
         setSelectedFilterType(props.realizationFilter.getFilterType());
         setSelectedIncludeOrExcludeFilter(props.realizationFilter.getIncludeOrExcludeFilter());
         setInitialRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
         setRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
-        // setContinuousParameterRangeSelections(props.realizationFilter.getContinuousParameterIdentRangeReadonlyMap());
     }
 
     // Dependency array for useMemo checks address of continuousParameterIdentRangeReadonlyMap
-    const continuousParameterIdentRangeReadonlyMap =
-        props.realizationFilter.getContinuousParameterIdentRangeReadonlyMap();
-    const isContinuousParameterRangeSelectionsEqual = React.useMemo((): boolean => {
+    const parameterIdentStringToValueSelectionReadonlyMap =
+        props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap();
+
+    const isParameterValueSelectionsEqual = (): boolean => {
         // Both selections are null
-        if (continuousParameterRangeSelections === null && continuousParameterIdentRangeReadonlyMap === null) {
+        if (
+            selectedParameterIdentStringToValueSelectionMap === null &&
+            parameterIdentStringToValueSelectionReadonlyMap === null
+        ) {
             return true;
         }
         // Only one of the selections is null
-        if (continuousParameterRangeSelections === null || continuousParameterIdentRangeReadonlyMap === null) {
+        if (
+            selectedParameterIdentStringToValueSelectionMap === null ||
+            parameterIdentStringToValueSelectionReadonlyMap === null
+        ) {
             return false;
         }
 
         // Compare non-null selections
-        return areContinuousParameterIdentStringRangeMapsEqual(
-            continuousParameterRangeSelections,
-            continuousParameterIdentRangeReadonlyMap as Map<string, NumberRange>
+        return areParameterIdentStringToValueSelectionMapsEqual(
+            selectedParameterIdentStringToValueSelectionMap,
+            parameterIdentStringToValueSelectionReadonlyMap as Map<string, ParameterValueSelection>
         );
-    }, [continuousParameterRangeSelections, continuousParameterIdentRangeReadonlyMap]);
+    };
 
     const isFilterEdited =
         !isEqual(realizationNumberSelections, props.realizationFilter.getRealizationNumberSelections()) ||
-        !isContinuousParameterRangeSelectionsEqual ||
+        !isParameterValueSelectionsEqual() ||
         selectedFilterType !== props.realizationFilter.getFilterType() ||
         selectedIncludeOrExcludeFilter !== props.realizationFilter.getIncludeOrExcludeFilter();
 
@@ -102,8 +105,13 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         setSelectedIncludeOrExcludeFilter(selection.includeOrExcludeFilter);
     }
 
-    function handleContinuousParameterValueFilterEditedChanged(isEdited: boolean) {
-        return;
+    function handleParameterValueFilterChanged(
+        parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection>
+    ) {
+        setSelectedParameterIdentStringToValueSelectionMap(parameterIdentStringToValueSelectionMap);
+
+        // Force re-render as selection can be a map with same reference, only value changes
+        forceUpdate();
     }
 
     function handleActiveFilterTypeChange(newValue: RealizationFilterType) {
@@ -120,10 +128,15 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         props.realizationFilter.setFilterType(selectedFilterType);
         props.realizationFilter.setIncludeOrExcludeFilter(selectedIncludeOrExcludeFilter);
         props.realizationFilter.setRealizationNumberSelections(realizationNumberSelections);
-        // props.realizationFilter.setContinuousParameterIdentStringRangeMap(continuousParameterRangeSelections);
+        props.realizationFilter.setParameterIdentStringToValueSelectionMap(
+            selectedParameterIdentStringToValueSelectionMap
+        );
 
         // Run filtering
         props.realizationFilter.runFiltering();
+
+        // Notify parent component about the filter change
+        props.onFilterChange();
 
         // Force update to re-render edited state visualization
         forceUpdate();
@@ -134,6 +147,9 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         setSelectedIncludeOrExcludeFilter(props.realizationFilter.getIncludeOrExcludeFilter());
         setInitialRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
         setRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
+        setSelectedParameterIdentStringToValueSelectionMap(
+            new Map(props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap())
+        );
     }
 
     return (
@@ -202,10 +218,13 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     {
                         // Note: This is a conditional rendering based on the selected filter type, i.e. mount and unmount of component
                         selectedFilterType === RealizationFilterType.BY_PARAMETER_VALUES && (
-                            <ByContinuousParameterValueFilter
+                            <ByParameterValueFilter
                                 ensembleParameters={props.realizationFilter.getEnsembleParameters()}
+                                selectedParameterIdentStringToValueSelectionMap={
+                                    selectedParameterIdentStringToValueSelectionMap
+                                }
                                 disabled={selectedFilterType !== RealizationFilterType.BY_PARAMETER_VALUES}
-                                onEditedChange={handleContinuousParameterValueFilterEditedChanged}
+                                onFilterChange={handleParameterValueFilterChanged}
                             />
                         )
                     }

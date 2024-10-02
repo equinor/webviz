@@ -2,28 +2,28 @@ import { isEqual } from "lodash";
 
 import { Ensemble } from "./Ensemble";
 import { EnsembleIdent } from "./EnsembleIdent";
-import { EnsembleParameters, ParameterIdent, ParameterType } from "./EnsembleParameters";
-
-export enum RealizationFilterType {
-    BY_REALIZATION_NUMBER = "byRealizationNumber",
-    BY_PARAMETER_VALUES = "byParameterValues",
-}
-export const RealizationFilterTypeStringMapping = {
-    [RealizationFilterType.BY_REALIZATION_NUMBER]: "By realization number",
-    [RealizationFilterType.BY_PARAMETER_VALUES]: "By parameter values",
-};
-
-export enum IncludeExcludeFilter {
-    INCLUDE_FILTER = "includeFilter",
-    EXCLUDE_FILTER = "excludeFilter",
-}
-export const IncludeExcludeFilterEnumToStringMapping = {
-    [IncludeExcludeFilter.INCLUDE_FILTER]: "Include Filter",
-    [IncludeExcludeFilter.EXCLUDE_FILTER]: "Exclude Filter",
-};
-
-export type NumberRange = { start: number; end: number };
-export type RealizationNumberSelection = NumberRange | number;
+import {
+    ContinuousParameter,
+    DiscreteParameter,
+    EnsembleParameters,
+    Parameter,
+    ParameterIdent,
+    ParameterType,
+} from "./EnsembleParameters";
+import {
+    DiscreteParameterValueSelection,
+    IncludeExcludeFilter,
+    NumberRange,
+    ParameterValueSelection,
+    RealizationFilterType,
+    RealizationNumberSelection,
+} from "./types/realizationFilterTypes";
+import {
+    isArrayOfNumbers,
+    isArrayOfStrings,
+    isValueSelectionAnArrayOfNumber,
+    isValueSelectionAnArrayOfString,
+} from "./utils/realizationFilterTypesUtils";
 
 /**
  * Class for filtering realizations based on realization number or parameter values.
@@ -48,6 +48,7 @@ export class RealizationFilter {
     // - Map key string vs ParameterIdent object? How to compare/get from map with ParameterIdent object? (Reference equality)
     // - Consider array of pairs: [ParameterIdent, NumberRange] where ParameterIdents must be unique
     private _continuousParameterIdentStringRangeMap: Map<string, NumberRange> | null;
+    private _parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection> | null;
 
     // Internal array for ref stability
     private _filteredRealizations: readonly number[];
@@ -64,6 +65,7 @@ export class RealizationFilter {
 
         this._realizationNumberSelections = null;
         this._continuousParameterIdentStringRangeMap = null;
+        this._parameterIdentStringToValueSelectionMap = null;
     }
 
     getAvailableEnsembleRealizations(): readonly number[] {
@@ -87,28 +89,27 @@ export class RealizationFilter {
         }
     }
 
-    setContinuousParameterIdentStringRangeMap(map: Map<string, NumberRange> | null): void {
-        this._continuousParameterIdentStringRangeMap = map;
-
+    setParameterIdentStringToValueSelectionMap(map: ReadonlyMap<string, ParameterValueSelection> | null): void {
         // Validate parameterIdent strings
         if (map !== null) {
-            for (const key of map.keys()) {
-                const parameterIdent = ParameterIdent.fromString(key);
+            for (const [parameterIdentStr, valueSelection] of map) {
+                const parameterIdent = ParameterIdent.fromString(parameterIdentStr);
                 const parameter = this._assignedEnsemble.getParameters().findParameter(parameterIdent);
                 if (!parameter) {
                     throw new Error(
-                        `Invalid parameterIdent string "${key}" for ensemble ${this._assignedEnsemble.getIdent()}`
+                        `Invalid parameterIdent string "${parameterIdentStr}" for ensemble ${this._assignedEnsemble.getIdent()}`
                     );
                 }
-                if (parameter.type !== ParameterType.CONTINUOUS) {
-                    throw new Error(`Parameter ${key} is not a continuous parameter`);
-                }
+
+                this.validateParameterAndValueSelection(parameter, valueSelection);
             }
         }
 
+        this._parameterIdentStringToValueSelectionMap = map;
+
         // Update internal array if resulting realizations has changed
         if (this._filterType === RealizationFilterType.BY_PARAMETER_VALUES) {
-            this.runContinuousParameterRangeSelectionsFiltering();
+            this.runParameterValueSelectionsFiltering();
         }
     }
 
@@ -116,16 +117,12 @@ export class RealizationFilter {
         return this._realizationNumberSelections;
     }
 
-    getContinuousParameterIdentRangeReadonlyMap(): ReadonlyMap<string, NumberRange> | null {
-        // TODO: How to efficiently return a readonly map? To prevent external modification
-
-        // Read only to prevent external modification
-        if (this._continuousParameterIdentStringRangeMap === null) {
+    getParameterIdentStringToValueSelectionReadonlyMap(): ReadonlyMap<string, ParameterValueSelection> | null {
+        if (this._parameterIdentStringToValueSelectionMap === null) {
             return null;
         }
 
-        const readonlyMap: ReadonlyMap<string, NumberRange> = this._continuousParameterIdentStringRangeMap;
-        return readonlyMap;
+        return this._parameterIdentStringToValueSelectionMap;
     }
 
     setFilterType(filterType: RealizationFilterType): void {
@@ -154,8 +151,18 @@ export class RealizationFilter {
         if (this._filterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
             this.runRealizationNumberSelectionFiltering();
         } else if (this._filterType === RealizationFilterType.BY_PARAMETER_VALUES) {
-            this.runContinuousParameterRangeSelectionsFiltering();
+            this.runParameterValueSelectionsFiltering();
         }
+    }
+
+    private createIncludeOrExcludeFilteredRealizationsArray(sourceRealizations: readonly number[]): readonly number[] {
+        const validRealizations = this._assignedEnsemble.getRealizations();
+
+        if (this._includeExcludeFilter === IncludeExcludeFilter.INCLUDE_FILTER) {
+            return sourceRealizations.filter((elm) => validRealizations.includes(elm));
+        }
+
+        return validRealizations.filter((elm) => !sourceRealizations.includes(elm));
     }
 
     private runRealizationNumberSelectionFiltering(): void {
@@ -183,54 +190,147 @@ export class RealizationFilter {
         }
     }
 
-    private runContinuousParameterRangeSelectionsFiltering(): void {
+    private runParameterValueSelectionsFiltering(): void {
         let newFilteredRealizations = this._assignedEnsemble.getRealizations();
 
-        // If parameter range selections are provided, filter the realizations
-        // Note: Parameter range filtering does not support exclude filtering, it only includes realizations
-        // that have values within the specified range
-        if (this._continuousParameterIdentStringRangeMap !== null) {
+        if (this._parameterIdentStringToValueSelectionMap !== null) {
             const parameters = this._assignedEnsemble.getParameters();
 
-            // Apply value range filter per continuous parameter with AND logic
-            for (const [parameterIdentString, range] of this._continuousParameterIdentStringRangeMap) {
+            // Apply value selection filter per parameter with AND logic
+            for (const [parameterIdentString, valueSelection] of this._parameterIdentStringToValueSelectionMap) {
                 const parameterIdent = ParameterIdent.fromString(parameterIdentString);
                 const parameter = parameters.findParameter(parameterIdent);
-                if (!parameter || parameter.type !== ParameterType.CONTINUOUS) {
+                if (!parameter) {
                     continue;
                 }
 
-                // Get indices of values within range
-                const valueIndicesWithinRange: number[] = [];
-                for (const [index, value] of parameter.values.entries()) {
-                    if (value >= range.start || value <= range.end) {
-                        valueIndicesWithinRange.push(index);
-                    }
+                // Validation of parameters and value selections are performed in setter,
+                // thus invalid selections are ignored
+                const isValueSelectionArray = Array.isArray(valueSelection);
+                let realizationsFromValueSelection: number[] | null = null;
+                if (parameter.type === ParameterType.DISCRETE && isValueSelectionArray) {
+                    // Run discrete parameter filtering
+                    realizationsFromValueSelection = this.getRealizationNumbersFromParameterValueArray(
+                        parameter,
+                        valueSelection
+                    );
+                } else if (parameter.type === ParameterType.CONTINUOUS && !isValueSelectionArray) {
+                    // Run continuous parameter filtering
+                    realizationsFromValueSelection = this.getRealizationNumbersFromParameterValueRange(
+                        parameter,
+                        valueSelection
+                    );
                 }
 
-                // Find the realization numbers at indices
-                // - Assuming realizations and values to be same length
-                const realizationsWithinRange = valueIndicesWithinRange.map((index) => parameter.realizations[index]);
+                if (realizationsFromValueSelection === null) {
+                    continue;
+                }
 
                 // Intersect with new filtered realization array
-                newFilteredRealizations = newFilteredRealizations.filter((elm) =>
-                    realizationsWithinRange.includes(elm)
-                );
+                newFilteredRealizations = newFilteredRealizations.filter((elm) => {
+                    if (realizationsFromValueSelection === null) {
+                        throw new Error(`realizationsFromValueSelection is null`);
+                    }
+                    return realizationsFromValueSelection.includes(elm);
+                });
             }
         }
-
         if (!isEqual(newFilteredRealizations, this._filteredRealizations)) {
             this._filteredRealizations = newFilteredRealizations;
         }
     }
 
-    private createIncludeOrExcludeFilteredRealizationsArray(sourceRealizations: readonly number[]): readonly number[] {
-        const validRealizations = this._assignedEnsemble.getRealizations();
-
-        if (this._includeExcludeFilter === IncludeExcludeFilter.INCLUDE_FILTER) {
-            return sourceRealizations.filter((elm) => validRealizations.includes(elm));
+    private getRealizationNumbersFromParameterValueRange(
+        parameter: ContinuousParameter,
+        valueRange: NumberRange
+    ): number[] {
+        // Get indices of values within range
+        const valueIndicesWithinRange: number[] = [];
+        for (const [index, value] of parameter.values.entries()) {
+            if (value >= valueRange.start && value <= valueRange.end) {
+                valueIndicesWithinRange.push(index);
+            }
         }
 
-        return validRealizations.filter((elm) => !sourceRealizations.includes(elm));
+        // Find the realization numbers at indices
+        // - Assuming realizations and values to be same length
+        return valueIndicesWithinRange.map((index) => parameter.realizations[index]);
+    }
+
+    private getRealizationNumbersFromParameterValueArray(
+        parameter: DiscreteParameter,
+        selectedValueArray: DiscreteParameterValueSelection
+    ): number[] {
+        if (selectedValueArray.length === 0 || parameter.values.length === 0) {
+            return [];
+        }
+
+        const isStringValueSelection = isArrayOfStrings(selectedValueArray);
+        const isNumberValues = isArrayOfNumbers(parameter.values);
+        if (isStringValueSelection && isNumberValues) {
+            throw new Error(
+                `Parameter ${parameter.name} is discrete with number values, but value selection is string`
+            );
+        }
+
+        const isNumberValueSelection = isArrayOfNumbers(selectedValueArray);
+        const isStringValues = isArrayOfStrings(parameter.values);
+        if (isNumberValueSelection && isStringValues) {
+            throw new Error(
+                `Parameter ${parameter.name} is discrete with string values, but value selection is number`
+            );
+        }
+
+        const valueIndices: number[] = [];
+
+        // Find indices of string values
+        if (isStringValueSelection && isStringValues) {
+            for (const [index, value] of parameter.values.entries()) {
+                if (selectedValueArray.includes(value)) {
+                    valueIndices.push(index);
+                }
+            }
+            return valueIndices.map((index) => parameter.realizations[index]);
+        }
+
+        // Find indices of number values
+        if (isNumberValueSelection && isNumberValues) {
+            for (const [index, value] of parameter.values.entries()) {
+                if (selectedValueArray.includes(value)) {
+                    valueIndices.push(index);
+                }
+            }
+            return valueIndices.map((index) => parameter.realizations[index]);
+        }
+
+        throw new Error(`Parameter ${parameter.name} is discrete with mixed string and number values`);
+    }
+
+    private validateParameterAndValueSelection(parameter: Parameter, valueSelection: ParameterValueSelection) {
+        if (parameter.type === ParameterType.CONTINUOUS && Array.isArray(valueSelection)) {
+            throw new Error(`Parameter ${parameter.name} is continuous, but value selection is not a NumberRange`);
+        }
+        if (parameter.type === ParameterType.DISCRETE && !Array.isArray(valueSelection)) {
+            throw new Error(`Parameter ${parameter.name} is discrete, but value selection is not an array`);
+        }
+
+        if (
+            parameter.type === ParameterType.DISCRETE &&
+            isValueSelectionAnArrayOfString(valueSelection) &&
+            isArrayOfNumbers(parameter.values)
+        ) {
+            throw new Error(
+                `Parameter ${parameter.name} is discrete with number values, but value selection is string`
+            );
+        }
+        if (
+            parameter.type === ParameterType.DISCRETE &&
+            isValueSelectionAnArrayOfNumber(valueSelection) &&
+            isArrayOfStrings(parameter.values)
+        ) {
+            throw new Error(
+                `Parameter ${parameter.name} is discrete with string values, but value selection is number`
+            );
+        }
     }
 }

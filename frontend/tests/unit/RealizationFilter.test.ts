@@ -1,5 +1,6 @@
 import { Ensemble } from "@framework/Ensemble";
-import { IncludeExcludeFilter, RealizationFilter, RealizationFilterType } from "@framework/RealizationFilter";
+import { RealizationFilter } from "@framework/RealizationFilter";
+import { IncludeExcludeFilter, RealizationFilterType } from "@framework/types/realizationFilterTypes";
 
 import { describe, expect, test } from "vitest";
 

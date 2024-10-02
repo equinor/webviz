@@ -1,7 +1,7 @@
 import React from "react";
 
-import { IncludeExcludeFilter, RealizationNumberSelection } from "@framework/RealizationFilter";
 import { RealizationPicker, RealizationPickerSelection } from "@framework/components/RealizationPicker";
+import { IncludeExcludeFilter, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
@@ -32,44 +32,47 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
     >(props.initialRealizationNumberSelections ?? null);
     const [prevRealizationNumberSelections, setPrevRealizationNumberSelections] = React.useState<
         readonly RealizationNumberSelection[] | null
-    >(props.realizationNumberSelections ?? null);
+    >(props.realizationNumberSelections);
 
-    const [initialRangeTags, setInitialRangeTags] = React.useState<string[]>(
+    const [initialRangeTags, setInitialRangeTags] = React.useState<string[] | null>(
         props.initialRealizationNumberSelections
             ? makeRealizationPickerTagsFromRealizationNumberSelections(props.initialRealizationNumberSelections)
-            : []
+            : null
     );
-    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>(
+    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[] | null>(
         props.realizationNumberSelections
             ? makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
-            : []
+            : null
     );
 
     if (!isEqual(props.initialRealizationNumberSelections, prevInitialRealizationNumberSelections)) {
         if (!props.initialRealizationNumberSelections) {
-            setInitialRangeTags([]);
-            return;
+            setInitialRangeTags(null);
+            setPrevInitialRealizationNumberSelections(null);
+        } else {
+            setInitialRangeTags(
+                makeRealizationPickerTagsFromRealizationNumberSelections(props.initialRealizationNumberSelections)
+            );
+            setPrevInitialRealizationNumberSelections(props.initialRealizationNumberSelections);
         }
-        setPrevInitialRealizationNumberSelections(props.initialRealizationNumberSelections ?? null);
-        setInitialRangeTags(
-            makeRealizationPickerTagsFromRealizationNumberSelections(props.initialRealizationNumberSelections)
-        );
     }
 
     if (!isEqual(props.realizationNumberSelections, prevRealizationNumberSelections)) {
         if (!props.realizationNumberSelections) {
-            setSelectedRangeTags([]);
-            return;
+            setSelectedRangeTags(null);
+        } else {
+            setSelectedRangeTags(
+                makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
+            );
         }
-        setPrevRealizationNumberSelections(props.realizationNumberSelections ?? null);
-        setSelectedRangeTags(
-            makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
-        );
+        setPrevRealizationNumberSelections(props.realizationNumberSelections);
     }
 
     function handleIncludeExcludeFilterChange(newFilter: IncludeExcludeFilter) {
         props.onFilterChange({
-            realizationNumberSelections: makeRealizationNumberSelectionsFromRealizationPickerTags(selectedRangeTags),
+            realizationNumberSelections: selectedRangeTags
+                ? makeRealizationNumberSelectionsFromRealizationPickerTags(selectedRangeTags)
+                : null,
             includeOrExcludeFilter: newFilter,
         });
     }
@@ -107,8 +110,8 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
             </Label>
             <Label text="Realization numbers">
                 <RealizationPicker
-                    initialRangeTags={initialRangeTags}
-                    selectedRangeTags={selectedRangeTags}
+                    initialRangeTags={initialRangeTags ?? undefined}
+                    selectedRangeTags={selectedRangeTags ?? undefined}
                     validRealizations={props.availableRealizationNumbers}
                     debounceTimeMs={500}
                     onChange={handleRealizationPickChange}
