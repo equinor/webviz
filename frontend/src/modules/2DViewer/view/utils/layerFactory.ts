@@ -66,11 +66,13 @@ function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string):
             northing: wellPick.northing,
             wellBoreUwi: wellPick.uniqueWellboreIdentifier,
             tvdMsl: wellPick.tvdMsl,
+            md: wellPick.md,
         };
     });
     return new WellPicksLayer({
         id: id,
         data: wellPicksData,
+        pickable: true,
     });
 }
 function createMapFloatLayer(layerData: SurfaceDataFloat_trans, id: string): MapLayer {
@@ -211,6 +213,8 @@ export function makeWellsLayer(
         wellHeadStyle: { size: getWellHeadStyleWidth, color: getColor },
         pickable: true,
         ZIncreasingDownwards: false,
+        outline: false,
+        lineWidthScale: 2,
     });
 
     return wellsLayer;
@@ -229,7 +233,7 @@ export function wellTrajectoryToGeojson(
         coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
     };
 
-    let color = [150, 150, 150];
+    let color = [100, 100, 100];
     let lineWidth = 2;
     let wellHeadSize = 1;
     if (wellTrajectory.wellboreUuid === selectedWellboreUuid) {
