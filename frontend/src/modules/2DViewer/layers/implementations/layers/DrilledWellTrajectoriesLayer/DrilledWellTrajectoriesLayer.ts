@@ -54,11 +54,11 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         };
 
         for (const trajectory of data) {
-            for (const point of trajectory.northingArr) {
+            for (const point of trajectory.eastingArr) {
                 bbox.x[0] = Math.min(bbox.x[0], point);
                 bbox.x[1] = Math.max(bbox.x[1], point);
             }
-            for (const point of trajectory.eastingArr) {
+            for (const point of trajectory.northingArr) {
                 bbox.y[0] = Math.min(bbox.y[0], point);
                 bbox.y[1] = Math.max(bbox.y[1], point);
             }

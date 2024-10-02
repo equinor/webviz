@@ -104,7 +104,8 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
 
             const boundingBox = child.getLayerDelegate().getBoundingBox();
             maybeApplyBoundingBox(boundingBox);
-
+            console.log(boundingBox);
+            console.log(globalBoundingBox);
             collectedLayers.push({ layer, position: numCollectedLayers + collectedLayers.length });
         }
     }

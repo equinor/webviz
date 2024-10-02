@@ -5,7 +5,7 @@ import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants"
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
 
-import { isEqual, pick } from "lodash";
+import { isEqual } from "lodash";
 
 import { DrilledWellborePicksContext } from "./DrilledWellborePicksContext";
 import { DrilledWellborePicksSettings } from "./types";
@@ -54,11 +54,11 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
         };
 
         for (const trajectory of data) {
-            bbox.x[0] = Math.min(bbox.x[0], trajectory.northing);
-            bbox.x[1] = Math.max(bbox.x[1], trajectory.northing);
+            bbox.x[0] = Math.min(bbox.x[0], trajectory.easting);
+            bbox.x[1] = Math.max(bbox.x[1], trajectory.easting);
 
-            bbox.y[0] = Math.min(bbox.y[0], trajectory.easting);
-            bbox.y[1] = Math.max(bbox.y[1], trajectory.easting);
+            bbox.y[0] = Math.min(bbox.y[0], trajectory.northing);
+            bbox.y[1] = Math.max(bbox.y[1], trajectory.northing);
 
             bbox.z[0] = Math.min(bbox.z[0], trajectory.tvdMsl);
             bbox.z[1] = Math.max(bbox.z[1], trajectory.tvdMsl);
