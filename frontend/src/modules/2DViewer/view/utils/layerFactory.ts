@@ -11,6 +11,9 @@ import { ColormapLayer, Grid3DLayer, MapLayer, WellsLayer } from "@webviz/subsur
 import { Rgb, parse } from "culori";
 import { Feature } from "geojson";
 import { SurfaceDataPng } from "src/api/models/SurfaceDataPng";
+import { WellborePick } from "src/api/models/WellborePick";
+
+import { WellBorePickLayerData, WellPicksLayer } from "./wellPickLayer";
 
 import { DrilledWellTrajectoriesLayer } from "../../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "../../layers/implementations/layers/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
@@ -23,7 +26,7 @@ import { Layer as LayerInterface } from "../../layers/interfaces";
 
 export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
     const data = layer.getLayerDelegate().getData();
-    console.log(layer);
+
     if (!data) {
         return null;
     }
@@ -56,33 +59,18 @@ export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorSca
     }
     return null;
 }
-function createWellPicksLayer(wellPicksData: WellborePick_api[], id: string): GeoJsonLayer {
-    const features: Record<string, unknown>[] = wellPicksData.map((wellPick) => {
+function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string): WellPicksLayer {
+    const wellPicksData: WellBorePickLayerData[] = wellPicksDataApi.map((wellPick) => {
         return {
-            type: "Feature",
-            geometry: {
-                type: "GeometryCollection",
-                geometries: [{ type: "Point", coordinates: [wellPick.easting, wellPick.northing] }],
-            },
+            easting: wellPick.easting,
+            northing: wellPick.northing,
+            wellBoreUwi: wellPick.uniqueWellboreIdentifier,
+            tvdMsl: wellPick.tvdMsl,
         };
     });
-    const data: Record<string, unknown> = {
-        type: "FeatureCollection",
-        unit: "m",
-        features: features,
-    };
-    return new GeoJsonLayer({
+    return new WellPicksLayer({
         id: id,
-        data: data,
-        // opacity: 0.5,
-        filled: true,
-        lineWidthMinPixels: 20,
-        parameters: {
-            depthTest: false,
-        },
-        depthTest: false,
-
-        pickable: true,
+        data: wellPicksData,
     });
 }
 function createMapFloatLayer(layerData: SurfaceDataFloat_trans, id: string): MapLayer {
