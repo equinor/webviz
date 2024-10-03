@@ -6,7 +6,12 @@ import {
     NumberRange,
     ParameterValueSelection,
 } from "@framework/types/realizationFilterTypes";
-import { isArrayOfNumbers, isArrayOfStrings } from "@framework/utils/realizationFilterTypesUtils";
+import {
+    isArrayOfNumbers,
+    isArrayOfStrings,
+    isValueSelectionAnArrayOfNumber,
+    isValueSelectionAnArrayOfString,
+} from "@framework/utils/realizationFilterTypesUtils";
 import { Label } from "@lib/components/Label";
 import { SelectOption } from "@lib/components/Select";
 import { Slider } from "@lib/components/Slider";
@@ -17,7 +22,7 @@ import { AddItemButton } from "./AddItemButton";
 
 export type ByParameterValueFilterProps = {
     ensembleParameters: EnsembleParameters; // Should be stable object - both content and reference
-    selectedParameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection>;
+    selectedParameterIdentStringToValueSelectionReadonlyMap: ReadonlyMap<string, ParameterValueSelection> | null;
     disabled: boolean;
     onFilterChange: (parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection>) => void;
 };
@@ -34,7 +39,9 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
 
     const getAllTypes = null;
     const doNeglectConstantParameters = true;
-    const selectedParameterIdentStrings = Array.from(props.selectedParameterIdentStringToValueSelectionMap.keys());
+    const selectedParameterIdentStrings = props.selectedParameterIdentStringToValueSelectionReadonlyMap
+        ? Array.from(props.selectedParameterIdentStringToValueSelectionReadonlyMap.keys())
+        : [];
 
     const nonSelectedParameterIdentStringOptions: SelectOption[] = [];
     for (const parameterIdent of props.ensembleParameters.getParameterIdents(getAllTypes)) {
@@ -53,23 +60,35 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     }
 
     function handleOptionClick(parameterIdentString: string) {
-        if (props.selectedParameterIdentStringToValueSelectionMap.has(parameterIdentString)) {
-            // If parameter already exists, do nothing
+        if (
+            props.selectedParameterIdentStringToValueSelectionReadonlyMap &&
+            props.selectedParameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+        ) {
             return;
         }
 
-        const newMap = new Map(props.selectedParameterIdentStringToValueSelectionMap);
         const parameter = props.ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
         if (parameter) {
+            // Copy map - NOTE: This is not a deep copy
+            const newMap = new Map(props.selectedParameterIdentStringToValueSelectionReadonlyMap);
+
+            const newDiscreteValueSelection: Readonly<string[] | number[]> = [];
+            let newParameterValueSelection: ParameterValueSelection = newDiscreteValueSelection;
             if (parameter.type === ParameterType.CONTINUOUS) {
                 const max = Math.max(...parameter.values);
                 const min = Math.min(...parameter.values);
-                const numberRange = { start: min, end: max };
-                newMap.set(parameterIdentString, numberRange);
-            } else {
-                newMap.set(parameterIdentString, []);
+                const numberRange: Readonly<NumberRange> = { start: min, end: max };
+                newParameterValueSelection = numberRange;
             }
-            props.onFilterChange(newMap);
+
+            // Update value selection with .set()
+            // - Do not use .get() and modify by reference, as .get() will return reference to source,
+            //   i.e. props.selectedParameterIdentStringToValueSelectionMap. Thus modifying the value
+            //   will modify the source, which is not allowed.
+            newMap.set(parameterIdentString, newParameterValueSelection);
+
+            // Trigger filter change
+            props.onFilterChange(newMap as ReadonlyMap<string, ParameterValueSelection>);
         }
     }
 
@@ -78,7 +97,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         valueSelection: ParameterValueSelection
     ) {
         // Copy map - NOTE: This is not a deep copy
-        const updatedMap = new Map(props.selectedParameterIdentStringToValueSelectionMap);
+        const updatedMap = new Map(props.selectedParameterIdentStringToValueSelectionReadonlyMap);
         if (!updatedMap.has(parameterIdentString)) {
             throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
         }
@@ -89,7 +108,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         //   will modify the source, which is not allowed.
         updatedMap.set(parameterIdentString, valueSelection);
 
-        // Trigger filter change - triggers re-render as props.onFilterChange provides new map reference
+        // Trigger filter change
         props.onFilterChange(updatedMap as ReadonlyMap<string, ParameterValueSelection>);
     }
 
@@ -105,11 +124,14 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         if (parameter.type !== ParameterType.CONTINUOUS) {
             throw new Error(`Parameter ${parameterIdentString} is not of type continuous`);
         }
-        if (!props.selectedParameterIdentStringToValueSelectionMap.has(parameterIdentString)) {
+        if (
+            props.selectedParameterIdentStringToValueSelectionReadonlyMap &&
+            !props.selectedParameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+        ) {
             throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
         }
 
-        const newRangeSelection: NumberRange = { start: valueSelection[0], end: valueSelection[1] };
+        const newRangeSelection: Readonly<NumberRange> = { start: valueSelection[0], end: valueSelection[1] };
 
         setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, newRangeSelection);
     }
@@ -125,29 +147,38 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         if (parameter.type !== ParameterType.DISCRETE) {
             throw new Error(`Parameter ${parameterIdentString} is not of type discrete`);
         }
-        if (!props.selectedParameterIdentStringToValueSelectionMap.has(parameterIdentString)) {
+        if (
+            props.selectedParameterIdentStringToValueSelectionReadonlyMap &&
+            !props.selectedParameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+        ) {
             throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
         }
 
-        setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, valueSelection);
+        const newDiscreteValueSelection: Readonly<string[] | number[]> = valueSelection;
+
+        setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, newDiscreteValueSelection);
     }
 
     function handleRemoveButtonClick(parameterIdentString: string) {
-        if (!props.selectedParameterIdentStringToValueSelectionMap.has(parameterIdentString)) {
+        if (
+            props.selectedParameterIdentStringToValueSelectionReadonlyMap &&
+            !props.selectedParameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+        ) {
             throw new Error(`Parameter ${parameterIdentString} not found`);
         }
 
         // Create a new map by selecting keys from the original map, excluding the specified key
-        const updatedMap = new Map(props.selectedParameterIdentStringToValueSelectionMap);
-        updatedMap.delete(parameterIdentString);
+        // NOTE: This is not a deep copy
+        const newMap = new Map(props.selectedParameterIdentStringToValueSelectionReadonlyMap);
+        newMap.delete(parameterIdentString);
 
-        // Trigger filter change - triggers re-render as props.onFilterChange provides new map reference
-        props.onFilterChange(updatedMap);
+        // Trigger filter change
+        props.onFilterChange(newMap);
     }
 
     function createContinuousParameterValueRangeRow(
         parameterIdentString: string,
-        valueSelection: NumberRange
+        valueSelection: Readonly<NumberRange>
     ): React.ReactNode {
         const parameterIdent = ParameterIdent.fromString(parameterIdentString);
         const parameterMinMax = props.ensembleParameters.getContinuousParameterMinMax(parameterIdent);
@@ -181,7 +212,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         if (isArrayOfStrings(valueSelection) && isArrayOfStrings(parameter.values)) {
             return (
                 <TagPicker<string>
-                    value={valueSelection}
+                    value={[...valueSelection]}
                     tags={parameter.values.map((elm) => {
                         return { label: elm, value: elm };
                     })}
@@ -222,7 +253,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                             <RemoveCircleOutline fontSize="small" />
                         </div>
                         <div className="flex-grow">
-                            {Array.isArray(valueSelection)
+                            {isValueSelectionAnArrayOfString(valueSelection) ||
+                            isValueSelectionAnArrayOfNumber(valueSelection)
                                 ? createDiscreteParameterValueSelectionRow(parameterIdentString, valueSelection)
                                 : createContinuousParameterValueRangeRow(parameterIdentString, valueSelection)}
                         </div>
@@ -239,11 +271,12 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                 options={nonSelectedParameterIdentStringOptions}
                 onOptionClicked={handleOptionClick}
             />
-            {Array.from(props.selectedParameterIdentStringToValueSelectionMap).map(
-                ([parameterIdentString, valueSelection]) => {
-                    return createParameterValueSelectionRow(parameterIdentString, valueSelection);
-                }
-            )}
+            {props.selectedParameterIdentStringToValueSelectionReadonlyMap &&
+                Array.from(props.selectedParameterIdentStringToValueSelectionReadonlyMap).map(
+                    ([parameterIdentString, valueSelection]) => {
+                        return createParameterValueSelectionRow(parameterIdentString, valueSelection);
+                    }
+                )}
         </div>
     );
 };

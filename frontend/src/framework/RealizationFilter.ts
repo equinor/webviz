@@ -43,11 +43,9 @@ export class RealizationFilter {
 
     private _realizationNumberSelections: readonly RealizationNumberSelection[] | null;
 
-    // Map of parameterIdent string to selected NumberRange
-    // NOTE:
-    // - Map key string vs ParameterIdent object? How to compare/get from map with ParameterIdent object? (Reference equality)
+    // Map of parameterIdent string to value selection (Both continuous and discrete parameters)
+    // - Map vs object: { [parameterIdentString: string]: ParameterValueSelection } - object?
     // - Consider array of pairs: [ParameterIdent, NumberRange] where ParameterIdents must be unique
-    private _continuousParameterIdentStringRangeMap: Map<string, NumberRange> | null;
     private _parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection> | null;
 
     // Internal array for ref stability
@@ -64,7 +62,6 @@ export class RealizationFilter {
         this._filteredRealizations = assignedEnsemble.getRealizations();
 
         this._realizationNumberSelections = null;
-        this._continuousParameterIdentStringRangeMap = null;
         this._parameterIdentStringToValueSelectionMap = null;
     }
 
@@ -82,17 +79,14 @@ export class RealizationFilter {
 
     setRealizationNumberSelections(selections: readonly RealizationNumberSelection[] | null): void {
         this._realizationNumberSelections = selections;
-
-        // Update internal array if resulting realizations has changed
-        if (this._filterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
-            this.runRealizationNumberSelectionFiltering();
-        }
     }
 
-    setParameterIdentStringToValueSelectionMap(map: ReadonlyMap<string, ParameterValueSelection> | null): void {
+    setParameterIdentStringToValueSelectionReadonlyMap(
+        newMap: ReadonlyMap<string, ParameterValueSelection> | null
+    ): void {
         // Validate parameterIdent strings
-        if (map !== null) {
-            for (const [parameterIdentStr, valueSelection] of map) {
+        if (newMap !== null) {
+            for (const [parameterIdentStr, valueSelection] of newMap) {
                 const parameterIdent = ParameterIdent.fromString(parameterIdentStr);
                 const parameter = this._assignedEnsemble.getParameters().findParameter(parameterIdent);
                 if (!parameter) {
@@ -105,12 +99,7 @@ export class RealizationFilter {
             }
         }
 
-        this._parameterIdentStringToValueSelectionMap = map;
-
-        // Update internal array if resulting realizations has changed
-        if (this._filterType === RealizationFilterType.BY_PARAMETER_VALUES) {
-            this.runParameterValueSelectionsFiltering();
-        }
+        this._parameterIdentStringToValueSelectionMap = newMap;
     }
 
     getRealizationNumberSelections(): readonly RealizationNumberSelection[] | null {
@@ -206,7 +195,8 @@ export class RealizationFilter {
 
                 // Validation of parameters and value selections are performed in setter,
                 // thus invalid selections are ignored
-                const isValueSelectionArray = Array.isArray(valueSelection);
+                const isValueSelectionArray =
+                    isValueSelectionAnArrayOfString(valueSelection) || isValueSelectionAnArrayOfNumber(valueSelection);
                 let realizationsFromValueSelection: number[] | null = null;
                 if (parameter.type === ParameterType.DISCRETE && isValueSelectionArray) {
                     // Run discrete parameter filtering
@@ -215,6 +205,7 @@ export class RealizationFilter {
                         valueSelection
                     );
                 } else if (parameter.type === ParameterType.CONTINUOUS && !isValueSelectionArray) {
+                    valueSelection;
                     // Run continuous parameter filtering
                     realizationsFromValueSelection = this.getRealizationNumbersFromParameterValueRange(
                         parameter,
@@ -242,7 +233,7 @@ export class RealizationFilter {
 
     private getRealizationNumbersFromParameterValueRange(
         parameter: ContinuousParameter,
-        valueRange: NumberRange
+        valueRange: Readonly<NumberRange>
     ): number[] {
         // Get indices of values within range
         const valueIndicesWithinRange: number[] = [];

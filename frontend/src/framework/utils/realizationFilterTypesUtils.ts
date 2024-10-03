@@ -2,21 +2,25 @@ import { DiscreteParameterValueSelection, ParameterValueSelection } from "@frame
 
 import { isEqual } from "lodash";
 
-export function isValueSelectionAnArrayOfString(valueSelection: ParameterValueSelection): valueSelection is string[] {
+export function isValueSelectionAnArrayOfString(
+    valueSelection: ParameterValueSelection
+): valueSelection is readonly string[] {
     if (Array.isArray(valueSelection) && isArrayOfStrings(valueSelection)) {
         return true;
     }
     return false;
 }
 
-export function isValueSelectionAnArrayOfNumber(valueSelection: ParameterValueSelection): valueSelection is number[] {
+export function isValueSelectionAnArrayOfNumber(
+    valueSelection: ParameterValueSelection
+): valueSelection is readonly number[] {
     if (Array.isArray(valueSelection) && isArrayOfNumbers(valueSelection)) {
         return true;
     }
     return false;
 }
 
-export function isArrayOfStrings(discreteValues: DiscreteParameterValueSelection): discreteValues is string[] {
+export function isArrayOfStrings(discreteValues: DiscreteParameterValueSelection): discreteValues is readonly string[] {
     if (discreteValues.length === 0) {
         return true;
     }
@@ -25,7 +29,7 @@ export function isArrayOfStrings(discreteValues: DiscreteParameterValueSelection
     return typeof discreteValues[0] === "string";
 }
 
-export function isArrayOfNumbers(discreteValues: DiscreteParameterValueSelection): discreteValues is number[] {
+export function isArrayOfNumbers(discreteValues: DiscreteParameterValueSelection): discreteValues is readonly number[] {
     if (discreteValues.length === 0) {
         return true;
     }

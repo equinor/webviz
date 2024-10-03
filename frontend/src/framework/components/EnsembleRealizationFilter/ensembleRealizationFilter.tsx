@@ -52,10 +52,12 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     const [selectedIncludeOrExcludeFilter, setSelectedIncludeOrExcludeFilter] = React.useState<IncludeExcludeFilter>(
         props.realizationFilter.getIncludeOrExcludeFilter()
     );
-    const [selectedParameterIdentStringToValueSelectionMap, setSelectedParameterIdentStringToValueSelectionMap] =
-        React.useState<ReadonlyMap<string, ParameterValueSelection>>(
-            new Map(props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap())
-        );
+    const [
+        selectedParameterIdentStringToValueSelectionReadonlyMap,
+        setSelectedParameterIdentStringToValueSelectionReadonlyMap,
+    ] = React.useState<ReadonlyMap<string, ParameterValueSelection> | null>(
+        props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()
+    );
 
     // Update of realization filter object/address
     // NOTE: Should not be necessary to check for address change, as it should be stable?
@@ -74,14 +76,14 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     const isParameterValueSelectionsEqual = (): boolean => {
         // Both selections are null
         if (
-            selectedParameterIdentStringToValueSelectionMap === null &&
+            selectedParameterIdentStringToValueSelectionReadonlyMap === null &&
             parameterIdentStringToValueSelectionReadonlyMap === null
         ) {
             return true;
         }
         // Only one of the selections is null
         if (
-            selectedParameterIdentStringToValueSelectionMap === null ||
+            selectedParameterIdentStringToValueSelectionReadonlyMap === null ||
             parameterIdentStringToValueSelectionReadonlyMap === null
         ) {
             return false;
@@ -89,7 +91,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
         // Compare non-null selections
         return areParameterIdentStringToValueSelectionMapsEqual(
-            selectedParameterIdentStringToValueSelectionMap,
+            selectedParameterIdentStringToValueSelectionReadonlyMap,
             parameterIdentStringToValueSelectionReadonlyMap as Map<string, ParameterValueSelection>
         );
     };
@@ -108,7 +110,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     function handleParameterValueFilterChanged(
         parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection>
     ) {
-        setSelectedParameterIdentStringToValueSelectionMap(parameterIdentStringToValueSelectionMap);
+        setSelectedParameterIdentStringToValueSelectionReadonlyMap(parameterIdentStringToValueSelectionMap);
 
         // Force re-render as selection can be a map with same reference, only value changes
         forceUpdate();
@@ -128,8 +130,8 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         props.realizationFilter.setFilterType(selectedFilterType);
         props.realizationFilter.setIncludeOrExcludeFilter(selectedIncludeOrExcludeFilter);
         props.realizationFilter.setRealizationNumberSelections(realizationNumberSelections);
-        props.realizationFilter.setParameterIdentStringToValueSelectionMap(
-            selectedParameterIdentStringToValueSelectionMap
+        props.realizationFilter.setParameterIdentStringToValueSelectionReadonlyMap(
+            selectedParameterIdentStringToValueSelectionReadonlyMap
         );
 
         // Run filtering
@@ -147,8 +149,8 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         setSelectedIncludeOrExcludeFilter(props.realizationFilter.getIncludeOrExcludeFilter());
         setInitialRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
         setRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
-        setSelectedParameterIdentStringToValueSelectionMap(
-            new Map(props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap())
+        setSelectedParameterIdentStringToValueSelectionReadonlyMap(
+            props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()
         );
     }
 
@@ -220,8 +222,8 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         selectedFilterType === RealizationFilterType.BY_PARAMETER_VALUES && (
                             <ByParameterValueFilter
                                 ensembleParameters={props.realizationFilter.getEnsembleParameters()}
-                                selectedParameterIdentStringToValueSelectionMap={
-                                    selectedParameterIdentStringToValueSelectionMap
+                                selectedParameterIdentStringToValueSelectionReadonlyMap={
+                                    selectedParameterIdentStringToValueSelectionReadonlyMap
                                 }
                                 disabled={selectedFilterType !== RealizationFilterType.BY_PARAMETER_VALUES}
                                 onFilterChange={handleParameterValueFilterChanged}
