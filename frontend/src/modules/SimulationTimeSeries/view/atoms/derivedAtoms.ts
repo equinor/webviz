@@ -1,5 +1,3 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 import { atom } from "jotai";
@@ -20,19 +18,6 @@ import {
 } from "./queryAtoms";
 
 import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpecificationsAndQueriesUtils";
-
-export const validEnsembleRealizationsFunctionAtom = atom((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    let validEnsembleRealizationsFunction = get(EnsembleRealizationFilterFunctionAtom);
-
-    if (validEnsembleRealizationsFunction === null) {
-        validEnsembleRealizationsFunction = (ensembleIdent: EnsembleIdent) => {
-            return ensembleSet.findEnsemble(ensembleIdent)?.getRealizations() ?? [];
-        };
-    }
-
-    return validEnsembleRealizationsFunction;
-});
 
 export const queryIsFetchingAtom = atom((get) => {
     const vectorDataQueries = get(vectorDataQueriesAtom);

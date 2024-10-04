@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 150 150">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #00536a;
+      }
+
+      .cls-2 {
+        fill: #95c7de;
+      }
+
+      .cls-3 {
+        fill: #696a6c;
+      }
+
+      .cls-4 {
+        fill: #e0e1e2;
+      }
+    </style>
+  </defs>
+  <!-- Generator: Adobe Illustrator 28.6.0, SVG Export Plug-In . SVG Version: 1.2.0 Build 709)  -->
+  <g>
+    <g id="Layer_1">
+      <rect class="cls-3" x="8.82" y="27.73" width="31.77" height="14.74"/>
+      <rect class="cls-1" x="42.83" y="27.73" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="8.82" y="47.68" width="31.77" height="14.74"/>
+      <rect class="cls-2" x="42.83" y="47.68" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="8.82" y="67.63" width="31.77" height="14.74"/>
+      <rect class="cls-2" x="42.83" y="67.63" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="8.82" y="87.58" width="31.77" height="14.74"/>
+      <rect class="cls-2" x="42.83" y="87.58" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="8.82" y="107.53" width="31.77" height="14.74"/>
+      <rect class="cls-2" x="42.83" y="107.53" width="31.77" height="14.74"/>
+      <rect class="cls-3" x="76.84" y="27.73" width="31.77" height="14.74"/>
+      <rect class="cls-3" x="110.85" y="27.73" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="76.84" y="47.68" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="110.85" y="47.68" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="76.84" y="67.63" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="110.85" y="67.63" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="76.84" y="87.58" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="110.85" y="87.58" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="76.84" y="107.53" width="31.77" height="14.74"/>
+      <rect class="cls-4" x="110.85" y="107.53" width="31.77" height="14.74"/>
+    </g>
+  </g>
+</svg>

@@ -1,20 +1,24 @@
 import React from "react";
 
-import { IntersectionReferenceSystem, Layer } from "@equinor/esv-intersection";
+import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ViewContext } from "@framework/ModuleContext";
 import { GlobalTopicDefinitions, WorkbenchServices, useSubscribedValue } from "@framework/WorkbenchServices";
-import {
-    EsvIntersection,
-    EsvIntersectionReadoutEvent,
-    LayerItem,
-    Viewport,
-} from "@framework/components/EsvIntersection";
-import { HighlightItem, HighlightItemShape, ReadoutItem } from "@framework/components/EsvIntersection/types";
-import { ReadoutBox } from "@framework/components/EsvIntersection/utilityComponents/ReadoutBox";
-import { isWellborepathLayer } from "@framework/components/EsvIntersection/utils/layers";
+import { Viewport } from "@framework/types/viewport";
 import { Interfaces } from "@modules/Intersection/interfaces";
+import { EsvIntersection, EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
+import {
+    ReadoutItem as EsvReadoutItem,
+    HighlightItem,
+    HighlightItemShape,
+} from "@modules/_shared/components/EsvIntersection/types";
+import { isWellborepathLayer } from "@modules/_shared/components/EsvIntersection/utils/layers";
+import { esvReadoutToGenericReadout } from "@modules/_shared/components/EsvIntersection/utils/readoutItemUtils";
+import { ReadoutBox, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 
 import { isEqual } from "lodash";
+
+// Needs extra distance for the left side; this avoids overlapping with legend elements
+const READOUT_EDGE_DISTANCE_REM = { left: 6 };
 
 export type ReadoutWrapperProps = {
     wellboreHeaderUuid: string | null;
@@ -78,22 +82,23 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         [readoutMd, props.workbenchServices, props.viewContext, props.wellboreHeaderUuid, moduleInstanceId]
     );
 
-    const handleReadoutItemsChange = React.useCallback(function handleReadoutItemsChange(
-        event: EsvIntersectionReadoutEvent
-    ): void {
-        setReadoutItems(event.readoutItems);
-        const items = event.readoutItems;
-        const wellboreReadoutItem = items.find((item) => isWellborepathLayer(item.layer));
-        const md = wellboreReadoutItem?.md;
-        setReadoutMd(md ?? null);
-    },
-    []);
-
-    const makeLabelFromLayer = React.useCallback(
-        function makeLabelFromLayer(layer: Layer<any>): string | null {
-            return props.layerIdToNameMap[layer.id] ?? null;
+    const formatEsvLayout = React.useCallback(
+        function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
+            return esvReadoutToGenericReadout(item, index, props.layerIdToNameMap);
         },
         [props.layerIdToNameMap]
+    );
+
+    const handleReadoutItemsChange = React.useCallback(
+        function handleReadoutItemsChange(event: EsvIntersectionReadoutEvent): void {
+            const items = event.readoutItems;
+            const wellboreReadoutItem = items.find((item) => isWellborepathLayer(item.layer));
+            const md = wellboreReadoutItem?.md;
+
+            setReadoutMd(md ?? null);
+            setReadoutItems(event.readoutItems.map(formatEsvLayout));
+        },
+        [formatEsvLayout]
     );
 
     const highlightItems: HighlightItem[] = [];
@@ -127,7 +132,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
                 onReadout={handleReadoutItemsChange}
                 onViewportChange={props.onViewportChange}
             />
-            <ReadoutBox readoutItems={readoutItems} makeLabelFromLayer={makeLabelFromLayer} />
+            <ReadoutBox readoutItems={readoutItems} edgeDistanceRem={READOUT_EDGE_DISTANCE_REM} />
         </>
     );
 }

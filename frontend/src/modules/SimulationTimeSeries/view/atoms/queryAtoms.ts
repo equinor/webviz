@@ -1,5 +1,6 @@
 import { Frequency_api, Observations_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { EnsembleVectorObservationDataMap, VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { QueryObserverResult } from "@tanstack/react-query";
@@ -10,7 +11,6 @@ import {
     vectorSpecificationsAtom,
     visualizationModeAtom,
 } from "./baseAtoms";
-import { validEnsembleRealizationsFunctionAtom } from "./derivedAtoms";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -19,7 +19,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
     const vectorSpecifications = get(vectorSpecificationsAtom);
     const resampleFrequency = get(resampleFrequencyAtom);
     const visualizationMode = get(visualizationModeAtom);
-    const validEnsembleRealizationsFunction = get(validEnsembleRealizationsFunctionAtom);
+    const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
     const enabled =
         visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS ||
@@ -64,7 +64,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
     const vectorSpecifications = get(vectorSpecificationsAtom);
     const resampleFrequency = get(resampleFrequencyAtom);
     const visualizationMode = get(visualizationModeAtom);
-    const validEnsembleRealizationsFunction = get(validEnsembleRealizationsFunctionAtom);
+    const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
 
     const enabled =
         visualizationMode === VisualizationMode.STATISTICAL_FANCHART ||

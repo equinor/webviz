@@ -48,7 +48,6 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
     private _lastDataFetchSettings: TSettings;
     private _queryKeys: unknown[][] = [];
     private _error: StatusMessage | string | null = null;
-    private _refetchRequested: boolean = false;
     private _cancellationPending: boolean = false;
 
     constructor(name: string, settings: TSettings) {
@@ -132,9 +131,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
             this.maybeCancelQuery().then(() => {
                 this._settings = { ...this._settings, ...patchesToApply };
                 this.notifySubscribers(LayerTopic.SETTINGS);
-                if (this._refetchRequested) {
-                    this.maybeRefetchData();
-                }
+                this.maybeRefetchData();
             });
         } else {
             this._cancellationPending = false;
@@ -224,7 +221,6 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
         }
 
         if (this._cancellationPending) {
-            this._refetchRequested = true;
             return;
         }
 

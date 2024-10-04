@@ -1,7 +1,7 @@
 import Plot from "react-plotly.js";
 
 import { merge } from "lodash";
-import { Annotations, Layout, PlotData } from "plotly.js";
+import { Annotations, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
 
 export class Figure {
     private _plotData: Partial<PlotData>[];
@@ -22,7 +22,7 @@ export class Figure {
         this._gridAxesMapping = gridAxesMapping ?? [[1, 1]];
     }
 
-    private getAxisIndex(row: number, column: number): number {
+    getAxisIndex(row: number, column: number): number {
         if (row > this._gridAxesMapping.length || column > this._gridAxesMapping[row - 1].length) {
             throw new Error(`Invalid row/column index: ${row}/${column}`);
         }
@@ -51,6 +51,64 @@ export class Figure {
         };
 
         this._plotData.push(adjustedTrace);
+    }
+
+    addAnnotation(annotation: Partial<Annotations>, row?: number, column?: number): void {
+        if (row === undefined) {
+            row = 1;
+        }
+        if (column === undefined) {
+            column = 1;
+        }
+
+        const axisIndex = this.getAxisIndex(row, column);
+
+        const adjustedAnnotation: Partial<Annotations> = {
+            ...annotation,
+            xref: `x${axisIndex}` as XAxisName,
+            yref: `y${axisIndex}` as YAxisName,
+        };
+
+        if (!this._plotLayout.annotations) {
+            this._plotLayout.annotations = [];
+        }
+
+        this._plotLayout.annotations.push(adjustedAnnotation);
+    }
+
+    addShape(shape: Partial<Shape>, row?: number, column?: number): void {
+        if (row === undefined) {
+            row = 1;
+        }
+        if (column === undefined) {
+            column = 1;
+        }
+
+        const axisIndex = this.getAxisIndex(row, column);
+
+        const adjustedShape: Partial<Shape> = {
+            ...shape,
+            xref: `x${axisIndex} domain` as XAxisName,
+            yref: `y${axisIndex} domain` as YAxisName,
+        };
+
+        if (!this._plotLayout.shapes) {
+            this._plotLayout.shapes = [];
+        }
+
+        this._plotLayout.shapes.push(adjustedShape);
+    }
+
+    getLayout(): Partial<Layout> {
+        return this._plotLayout;
+    }
+
+    getNumRows(): number {
+        return this._gridAxesMapping.length;
+    }
+
+    getNumColumns(): number {
+        return this._gridAxesMapping[0].length;
     }
 
     updateLayout(patch: Partial<Layout>): void {
@@ -228,7 +286,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                     xref: "paper",
                     yref: "paper",
                     x: xDomainStart + (xDomainEnd - xDomainStart) / 2,
-                    y: yDomainEnd + 0.02,
+                    y: yDomainEnd + (options.height ? 20 / options.height : 0.02),
                     text: title,
                     showarrow: false,
                     font: {

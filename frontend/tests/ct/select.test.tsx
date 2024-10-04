@@ -28,9 +28,10 @@ test.describe("Select", () => {
         await expect(select).toBeVisible();
         const firstDiv = select.locator("div").first();
         const secondDiv = firstDiv.locator("div").first();
+        const thirdDiv = secondDiv.locator("div").first();
 
         // Virtualization does always hold more elements than visible in the view, so we expect to have at least "size" visible elements
-        expect((await secondDiv.locator("div").count()) > SIZE).toBeTruthy();
+        expect((await thirdDiv.locator("div").count()) > SIZE).toBeTruthy();
     });
 
     test("Single select is working", async ({ mount }) => {
@@ -42,7 +43,7 @@ test.describe("Select", () => {
         const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} />);
 
         // Click on first element and expect selection
-        let options = await select.locator("div").first().locator("div").first().locator("div");
+        let options = await select.locator("div").first().locator("div").nth(1).locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 
@@ -81,7 +82,7 @@ test.describe("Select", () => {
         expect(select).toContainText(selectOptions1[0].value);
 
         // Click on fourth element and expect selection
-        options = await select.locator("div").first().locator("div").first().locator("div");
+        options = await select.locator("div").first().locator("div").nth(1).locator("div");
         await options.nth(3).click();
         expect(selection.includes(selectOptions1[3].value)).toBeTruthy();
     });
@@ -95,7 +96,7 @@ test.describe("Select", () => {
         const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} multiple />);
 
         // Click on first element and expect selection
-        const options = select.locator("div").first().locator("div").first().locator("div");
+        const options = select.locator("div").first().locator("div").nth(1).locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 
@@ -216,11 +217,48 @@ test.describe("Select", () => {
         }
 
         // Click on first element and expect selection
-        const options = select.locator("div").first().locator("div").first().locator("div");
+        const options = select.locator("div").first().locator("div").nth(1).locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 
         await select.press("End");
         expect(selection.includes(selectOptions2[selectOptions2.length - 1].value)).toBeTruthy();
+    });
+
+    test("Quick select buttons functionality", async ({ mount }) => {
+        let selection: string[] = [];
+        function handleChange(values: string[]) {
+            selection = values;
+        }
+
+        const select = await mount(
+            <Select
+                options={selectOptions1}
+                size={SIZE}
+                showQuickSelectButtons={true}
+                onChange={handleChange}
+                multiple={true}
+            />
+        );
+
+        // Find the "Select all" button and click it
+        const selectAllButton = select.locator("button[title='Select all']");
+        await selectAllButton.click();
+
+        // Expect all options to be selected
+        expect(selection.length === selectOptions1.length).toBeTruthy();
+        expect(
+            arrayContainsOtherArray(
+                selection,
+                selectOptions1.map((option) => option.value)
+            )
+        ).toBeTruthy();
+
+        // Find the "Unselect all" button and click it
+        const unselectAllButton = select.locator("button[title='Unselect all']");
+        await unselectAllButton.click();
+
+        // Expect no options to be selected
+        expect(selection.length === 0).toBeTruthy();
     });
 });

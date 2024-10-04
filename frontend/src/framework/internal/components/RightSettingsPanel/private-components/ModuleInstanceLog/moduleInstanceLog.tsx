@@ -188,7 +188,7 @@ function LogList(props: LogListProps): React.ReactNode {
                     <>
                         {showDatetime && (
                             <div
-                                key={entry.datetimeMs}
+                                key={`datetime-${entry.datetimeMs}`}
                                 className="text-xs p-2 sticky text-gray-600 text-right border-b border-b-slate-200"
                             >
                                 {convertDatetimeMsToHumanReadableString(entry.datetimeMs)}

@@ -10,13 +10,13 @@ import { Size2D } from "@lib/utils/geometry";
 import { makeSubplots } from "@modules/_shared/Figure";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { ContentWarning } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { makeHistogramTrace } from "@modules/_shared/histogram";
 import { Warning } from "@mui/icons-material";
 
 import { Layout, PlotData } from "plotly.js";
 
 import { Interfaces } from "./interfaces";
 import { PlotType } from "./typesAndEnums";
-import { makeHistogramTrace } from "./utils/histogram";
 import { makeHoverText, makeHoverTextWithColor, makeTitleFromChannelContent } from "./utils/stringUtils";
 import { calcTextSize } from "./utils/textSize";
 

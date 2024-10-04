@@ -3,6 +3,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Additional tailwind component classes */
+@layer components {
+    .input-comp {
+        @apply hover:outline hover:outline-1 hover:outline-blue-300 focus:outline focus:outline-1 focus:outline-blue-600;
+    }
+}
+
+/* Custom CSS styles*/
+
 body {
     overflow: hidden;
     font-family: Equinor;

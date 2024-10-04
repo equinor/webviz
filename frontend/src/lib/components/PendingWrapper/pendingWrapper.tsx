@@ -19,12 +19,12 @@ export const PendingWrapper: React.FC<PendingWrapperProps> = (props) => {
             })}
         >
             {props.isPending && (
-                <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10 backdrop-blur-sm">
                     <CircularProgress size="medium-small" />
                 </div>
             )}
             {!props.isPending && props.errorMessage && (
-                <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10 p-4 text-center">
+                <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10 p-4 text-center backdrop-blur-sm">
                     {props.errorMessage}
                 </div>
             )}
