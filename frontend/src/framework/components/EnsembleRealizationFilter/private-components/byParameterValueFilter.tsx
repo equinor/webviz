@@ -245,7 +245,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         return (
             <div key={parameterIdentString} className="flex-grow border border-lightgrey rounded-md p-2">
                 <Label text={parameterIdentString}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center">
                         <div
                             className="text-indigo-600 hover:bg-indigo-50 items-center"
                             onClick={() => handleRemoveButtonClick(parameterIdentString)}

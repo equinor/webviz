@@ -12,7 +12,7 @@ import { areParameterIdentStringToValueSelectionMapsEqual } from "@framework/uti
 import { Button } from "@lib/components/Button";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { Check, Clear } from "@mui/icons-material";
+import { ArrowDropDown, ArrowDropUp, Check, Clear } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
@@ -21,6 +21,8 @@ import {
     ByRealizationNumberFilter,
     ByRealizationNumberFilterSelection,
 } from "./private-components/byRealizationNumberFilter";
+import { RealizationNumberSelector } from "./private-components/realizationNumberSelector";
+import { createBestSuggestedRealizationNumberSelections } from "./private-utils/conversionUtils";
 
 export type EnsembleRealizationFilterProps = {
     // ensemble: Ensemble; // Should realization filter only provide access to ensemble ident, and the access to details must be through ensemble object?
@@ -38,10 +40,16 @@ export type EnsembleRealizationFilterProps = {
 export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps> = (props) => {
     const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
+    const [showActiveFilterType, setShowActiveFilterType] = React.useState<boolean>(false);
+
     const [prevRealizationFilter, setPrevRealizationFilter] = React.useState<RealizationFilter | null>(null);
     const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
         RealizationFilterType.BY_REALIZATION_NUMBER
     );
+
+    const [selectedRealizationNumbers, setSelectedRealizationNumbers] = React.useState<number[]>([
+        ...props.realizationFilter.getFilteredRealizations(),
+    ]);
 
     const [initialRealizationNumberSelections, setInitialRealizationNumberSelections] = React.useState<
         readonly RealizationNumberSelection[] | null
@@ -105,6 +113,13 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     function handleRealizationNumberFilterChanged(selection: ByRealizationNumberFilterSelection) {
         setRealizationNumberSelections(selection.realizationNumberSelections);
         setSelectedIncludeOrExcludeFilter(selection.includeOrExcludeFilter);
+
+        const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
+            selection.realizationNumberSelections,
+            props.realizationFilter.getAvailableEnsembleRealizations(),
+            selection.includeOrExcludeFilter
+        );
+        setSelectedRealizationNumbers([...realizationNumberArray]);
     }
 
     function handleParameterValueFilterChanged(
@@ -112,15 +127,59 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     ) {
         setSelectedParameterIdentStringToValueSelectionReadonlyMap(parameterIdentStringToValueSelectionMap);
 
-        // Force re-render as selection can be a map with same reference, only value changes
-        forceUpdate();
+        const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
+            parameterIdentStringToValueSelectionMap,
+            props.realizationFilter.getEnsembleParameters(),
+            props.realizationFilter.getAvailableEnsembleRealizations()
+        );
+        setSelectedRealizationNumbers([...realizationNumberArray]);
     }
 
     function handleActiveFilterTypeChange(newValue: RealizationFilterType) {
         setSelectedFilterType(newValue);
 
-        // To ensure correct visualization when mounting realization number filter component
         if (newValue === RealizationFilterType.BY_REALIZATION_NUMBER) {
+            // To ensure correct visualization when mounting realization number filter component
+            setInitialRealizationNumberSelections(realizationNumberSelections);
+
+            // Update realization numbers based on current selection
+            const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
+                realizationNumberSelections,
+                props.realizationFilter.getAvailableEnsembleRealizations(),
+                selectedIncludeOrExcludeFilter
+            );
+            setSelectedRealizationNumbers([...realizationNumberArray]);
+        } else if (newValue === RealizationFilterType.BY_PARAMETER_VALUES) {
+            const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
+                selectedParameterIdentStringToValueSelectionReadonlyMap,
+                props.realizationFilter.getEnsembleParameters(),
+                props.realizationFilter.getAvailableEnsembleRealizations()
+            );
+            setSelectedRealizationNumbers([...realizationNumberArray]);
+        }
+    }
+
+    function handleRealizationNumberSelectionsChange(realizations: readonly number[]) {
+        setSelectedRealizationNumbers([...realizations]);
+
+        let candidateRealizationNumbers = realizations;
+        if (selectedIncludeOrExcludeFilter === IncludeExcludeFilter.EXCLUDE_FILTER) {
+            candidateRealizationNumbers = props.realizationFilter
+                .getAvailableEnsembleRealizations()
+                .filter((realization) => !realizations.includes(realization));
+        }
+
+        const newRealizationNumberSelections =
+            createBestSuggestedRealizationNumberSelections(candidateRealizationNumbers);
+        setRealizationNumberSelections(newRealizationNumberSelections);
+    }
+
+    function handleShowActiveFilterTypeToggle() {
+        const prevShowActiveFilterType = showActiveFilterType;
+        setShowActiveFilterType(!prevShowActiveFilterType);
+
+        if (!prevShowActiveFilterType && selectedFilterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
+            // Due to conditional rendering, we have to ensure correct initial state when mounting realization number filter component
             setInitialRealizationNumberSelections(realizationNumberSelections);
         }
     }
@@ -152,6 +211,23 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         setSelectedParameterIdentStringToValueSelectionReadonlyMap(
             props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()
         );
+
+        if (props.realizationFilter.getFilterType() === RealizationFilterType.BY_REALIZATION_NUMBER) {
+            // Update realization numbers based on current selection
+            const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
+                props.realizationFilter.getRealizationNumberSelections(),
+                props.realizationFilter.getAvailableEnsembleRealizations(),
+                props.realizationFilter.getIncludeOrExcludeFilter()
+            );
+            setSelectedRealizationNumbers([...realizationNumberArray]);
+        } else if (props.realizationFilter.getFilterType() === RealizationFilterType.BY_PARAMETER_VALUES) {
+            const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
+                props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
+                props.realizationFilter.getEnsembleParameters(),
+                props.realizationFilter.getAvailableEnsembleRealizations()
+            );
+            setSelectedRealizationNumbers([...realizationNumberArray]);
+        }
     }
 
     return (
@@ -163,14 +239,14 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             >
                 <div className="my-2 border-b border-lightgrey pb-2">
                     <div
-                        className={`flex justify-center items-center p-2 ${
+                        className={`flex justify-center items-center p-2 rounded-md ${
                             isFilterEdited ? "bg-orange-100" : "bg-slate-200"
                         } h-10`}
                     >
-                        <div className="font-bold flex-grow p-0 text-sm">
+                        <div className="font-bold flex-grow text-sm">
                             {"Ensemble: " + props.realizationFilter.getAssignedEnsembleIdent().getEnsembleName()}
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex items-center gap-1">
                             <Button
                                 variant={isFilterEdited ? "contained" : "outlined"}
                                 disabled={!isFilterEdited}
@@ -190,46 +266,75 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                    <div className="border-b border-lightgrey pb-2">
-                        <Label text="Active Filter Type">
-                            <Dropdown
-                                value={selectedFilterType}
-                                options={Object.values(RealizationFilterType).map((filterType) => {
-                                    return {
-                                        label: RealizationFilterTypeStringMapping[filterType],
-                                        value: filterType,
-                                    };
-                                })}
-                                onChange={handleActiveFilterTypeChange}
-                            />
-                        </Label>
+                    <div className="border border-lightgrey p-1 rounded-md">
+                        <RealizationNumberSelector
+                            selectedRealizations={selectedRealizationNumbers}
+                            availableRealizations={props.realizationFilter.getAvailableEnsembleRealizations()}
+                            disabledInteraction={selectedFilterType !== RealizationFilterType.BY_REALIZATION_NUMBER}
+                            onRealizationNumberSelectionsChange={handleRealizationNumberSelectionsChange}
+                        />
                     </div>
-                    {
-                        // Note: This is a conditional rendering based on the selected filter type, i.e. mount and unmount of component
-                        selectedFilterType === RealizationFilterType.BY_REALIZATION_NUMBER && (
-                            <ByRealizationNumberFilter
-                                initialRealizationNumberSelections={initialRealizationNumberSelections}
-                                realizationNumberSelections={realizationNumberSelections}
-                                availableRealizationNumbers={props.realizationFilter.getAvailableEnsembleRealizations()}
-                                selectedIncludeOrExcludeFilter={selectedIncludeOrExcludeFilter}
-                                disabled={selectedFilterType !== RealizationFilterType.BY_REALIZATION_NUMBER}
-                                onFilterChange={handleRealizationNumberFilterChanged}
-                            />
-                        )
-                    }
-                    {
-                        // Note: This is a conditional rendering based on the selected filter type, i.e. mount and unmount of component
-                        selectedFilterType === RealizationFilterType.BY_PARAMETER_VALUES && (
-                            <ByParameterValueFilter
-                                ensembleParameters={props.realizationFilter.getEnsembleParameters()}
-                                selectedParameterIdentStringToValueSelectionReadonlyMap={
-                                    selectedParameterIdentStringToValueSelectionReadonlyMap
-                                }
-                                disabled={selectedFilterType !== RealizationFilterType.BY_PARAMETER_VALUES}
-                                onFilterChange={handleParameterValueFilterChanged}
-                            />
-                        )
-                    }
+                    <div className="flex">
+                        <div className="flex-grow" />
+                        <Button
+                            className="text-sm"
+                            variant="text"
+                            size="small"
+                            endIcon={
+                                showActiveFilterType ? (
+                                    <ArrowDropUp fontSize="small" />
+                                ) : (
+                                    <ArrowDropDown fontSize="small" />
+                                )
+                            }
+                            onClick={handleShowActiveFilterTypeToggle}
+                        >
+                            {showActiveFilterType ? "Hide filter" : "Show filter"}
+                        </Button>
+                    </div>
+                    <div className={`${showActiveFilterType ? "border-b-2 border-lightgrey" : ""}`} />
+                    {showActiveFilterType && (
+                        <>
+                            <Label text="Active Filter Type" wrapperClassName="pb-2">
+                                <Dropdown
+                                    value={selectedFilterType}
+                                    options={Object.values(RealizationFilterType).map((filterType) => {
+                                        return {
+                                            label: RealizationFilterTypeStringMapping[filterType],
+                                            value: filterType,
+                                        };
+                                    })}
+                                    onChange={handleActiveFilterTypeChange}
+                                />
+                            </Label>
+                            {
+                                // Note: This is a conditional rendering based on the selected filter type, i.e. mount and unmount of component
+                                selectedFilterType === RealizationFilterType.BY_REALIZATION_NUMBER && (
+                                    <ByRealizationNumberFilter
+                                        initialRealizationNumberSelections={initialRealizationNumberSelections}
+                                        realizationNumberSelections={realizationNumberSelections}
+                                        availableRealizationNumbers={props.realizationFilter.getAvailableEnsembleRealizations()}
+                                        selectedIncludeOrExcludeFilter={selectedIncludeOrExcludeFilter}
+                                        disabled={selectedFilterType !== RealizationFilterType.BY_REALIZATION_NUMBER}
+                                        onFilterChange={handleRealizationNumberFilterChanged}
+                                    />
+                                )
+                            }
+                            {
+                                // Note: This is a conditional rendering based on the selected filter type, i.e. mount and unmount of component
+                                selectedFilterType === RealizationFilterType.BY_PARAMETER_VALUES && (
+                                    <ByParameterValueFilter
+                                        ensembleParameters={props.realizationFilter.getEnsembleParameters()}
+                                        selectedParameterIdentStringToValueSelectionReadonlyMap={
+                                            selectedParameterIdentStringToValueSelectionReadonlyMap
+                                        }
+                                        disabled={selectedFilterType !== RealizationFilterType.BY_PARAMETER_VALUES}
+                                        onFilterChange={handleParameterValueFilterChanged}
+                                    />
+                                )
+                            }
+                        </>
+                    )}
                 </div>
             </div>
         </div>

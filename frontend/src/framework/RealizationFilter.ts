@@ -23,6 +23,7 @@ import {
     isArrayOfStrings,
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
+    makeRealizationNumberArrayFromSelections,
 } from "./utils/realizationFilterTypesUtils";
 
 /**
@@ -95,7 +96,7 @@ export class RealizationFilter {
                     );
                 }
 
-                this.validateParameterAndValueSelection(parameter, valueSelection);
+                RealizationFilter.validateParameterAndValueSelection(parameter, valueSelection);
             }
         }
 
@@ -137,56 +138,79 @@ export class RealizationFilter {
     }
 
     runFiltering(): void {
+        if (
+            this._filterType !== RealizationFilterType.BY_REALIZATION_NUMBER &&
+            this._filterType !== RealizationFilterType.BY_PARAMETER_VALUES
+        ) {
+            throw new Error(`Invalid filter type ${this._filterType}`);
+        }
+
         if (this._filterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
             this.runRealizationNumberSelectionFiltering();
-        } else if (this._filterType === RealizationFilterType.BY_PARAMETER_VALUES) {
-            this.runParameterValueSelectionsFiltering();
+            return;
         }
+        this.runParameterValueSelectionsFiltering();
     }
 
-    private createIncludeOrExcludeFilteredRealizationsArray(sourceRealizations: readonly number[]): readonly number[] {
-        const validRealizations = this._assignedEnsemble.getRealizations();
+    static createFilteredRealizationsFromRealizationNumberSelection(
+        realizationNumberSelections: readonly RealizationNumberSelection[] | null,
+        validRealizations: readonly number[],
+        includeOrExclude: IncludeExcludeFilter
+    ): readonly number[] {
+        let newFilteredRealizations = validRealizations;
 
-        if (this._includeExcludeFilter === IncludeExcludeFilter.INCLUDE_FILTER) {
-            return sourceRealizations.filter((elm) => validRealizations.includes(elm));
+        // If realization number selection is provided, filter the realizations
+        if (realizationNumberSelections !== null) {
+            // Create array from realization number selection
+            const selectedRealizationNumbers: number[] =
+                makeRealizationNumberArrayFromSelections(realizationNumberSelections);
+
+            newFilteredRealizations = RealizationFilter.createIncludeOrExcludeFilteredRealizationsArray(
+                includeOrExclude,
+                selectedRealizationNumbers,
+                validRealizations
+            );
+        }
+        return newFilteredRealizations;
+    }
+
+    static createIncludeOrExcludeFilteredRealizationsArray(
+        includeOrExclude: IncludeExcludeFilter,
+        selectedRealizations: readonly number[],
+        validRealizations: readonly number[]
+    ): readonly number[] {
+        if (includeOrExclude === IncludeExcludeFilter.INCLUDE_FILTER) {
+            return selectedRealizations.filter((elm) => validRealizations.includes(elm));
         }
 
-        return validRealizations.filter((elm) => !sourceRealizations.includes(elm));
+        // Corrected to exclude values existing in sourceRealizations
+        return validRealizations.filter((elm) => !selectedRealizations.includes(elm));
     }
 
     private runRealizationNumberSelectionFiltering(): void {
-        let newFilteredRealizations = this._assignedEnsemble.getRealizations();
-
-        // If realization number selection is provided, filter the realizations
-        if (this._realizationNumberSelections !== null) {
-            // Create array from realization number selection
-            const realizationNumberArray: number[] = [];
-            this._realizationNumberSelections.forEach((elm) => {
-                if (typeof elm === "number") {
-                    realizationNumberArray.push(elm);
-                } else {
-                    realizationNumberArray.push(
-                        ...Array.from({ length: elm.end - elm.start + 1 }, (_, i) => elm.start + i)
-                    );
-                }
-            });
-
-            newFilteredRealizations = this.createIncludeOrExcludeFilteredRealizationsArray(realizationNumberArray);
-        }
+        const newFilteredRealizations = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
+            this._realizationNumberSelections,
+            this._assignedEnsemble.getRealizations(),
+            this._includeExcludeFilter
+        );
 
         if (!isEqual(newFilteredRealizations, this._filteredRealizations)) {
             this._filteredRealizations = newFilteredRealizations;
         }
     }
 
-    private runParameterValueSelectionsFiltering(): void {
-        let newFilteredRealizations = this._assignedEnsemble.getRealizations();
+    static createFilteredRealizationsFromParameterValueSelections(
+        parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection> | null,
+        validParameters: EnsembleParameters,
+        validRealizations: readonly number[]
+    ): readonly number[] {
+        let newFilteredRealizations = validRealizations;
 
-        if (this._parameterIdentStringToValueSelectionMap !== null) {
-            const parameters = this._assignedEnsemble.getParameters();
+        if (parameterIdentStringToValueSelectionMap !== null) {
+            const parameters = validParameters;
 
             // Apply value selection filter per parameter with AND logic
-            for (const [parameterIdentString, valueSelection] of this._parameterIdentStringToValueSelectionMap) {
+            for (const [parameterIdentString, valueSelection] of parameterIdentStringToValueSelectionMap) {
                 const parameterIdent = ParameterIdent.fromString(parameterIdentString);
                 const parameter = parameters.findParameter(parameterIdent);
                 if (!parameter) {
@@ -226,12 +250,23 @@ export class RealizationFilter {
                 });
             }
         }
+
+        return newFilteredRealizations;
+    }
+
+    private runParameterValueSelectionsFiltering(): void {
+        const newFilteredRealizations = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
+            this._parameterIdentStringToValueSelectionMap,
+            this._assignedEnsemble.getParameters(),
+            this._assignedEnsemble.getRealizations()
+        );
+
         if (!isEqual(newFilteredRealizations, this._filteredRealizations)) {
             this._filteredRealizations = newFilteredRealizations;
         }
     }
 
-    private getRealizationNumbersFromParameterValueRange(
+    static getRealizationNumbersFromParameterValueRange(
         parameter: ContinuousParameter,
         valueRange: Readonly<NumberRange>
     ): number[] {
@@ -248,7 +283,7 @@ export class RealizationFilter {
         return valueIndicesWithinRange.map((index) => parameter.realizations[index]);
     }
 
-    private getRealizationNumbersFromParameterValueArray(
+    static getRealizationNumbersFromParameterValueArray(
         parameter: DiscreteParameter,
         selectedValueArray: DiscreteParameterValueSelection
     ): number[] {
@@ -297,7 +332,7 @@ export class RealizationFilter {
         throw new Error(`Parameter ${parameter.name} is discrete with mixed string and number values`);
     }
 
-    private validateParameterAndValueSelection(parameter: Parameter, valueSelection: ParameterValueSelection) {
+    static validateParameterAndValueSelection(parameter: Parameter, valueSelection: ParameterValueSelection) {
         if (parameter.type === ParameterType.CONTINUOUS && Array.isArray(valueSelection)) {
             throw new Error(`Parameter ${parameter.name} is continuous, but value selection is not a NumberRange`);
         }

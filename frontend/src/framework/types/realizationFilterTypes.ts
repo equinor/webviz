@@ -3,8 +3,8 @@ export enum RealizationFilterType {
     BY_PARAMETER_VALUES = "byParameterValues",
 }
 export const RealizationFilterTypeStringMapping = {
-    [RealizationFilterType.BY_REALIZATION_NUMBER]: "By realization number",
-    [RealizationFilterType.BY_PARAMETER_VALUES]: "By parameter values",
+    [RealizationFilterType.BY_REALIZATION_NUMBER]: "By Realization Number",
+    [RealizationFilterType.BY_PARAMETER_VALUES]: "By Parameter Values",
 };
 
 export enum IncludeExcludeFilter {

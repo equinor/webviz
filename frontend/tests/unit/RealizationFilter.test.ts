@@ -47,24 +47,37 @@ describe("Test functionality of Realization Filter class", () => {
         expect(realizationFilter.getRealizationNumberSelections()).toEqual([1, 2, 3, { start: 9, end: 15 }]);
     });
 
-    test("Test get filtered realizations - include", () => {
+    test("Test get filtered realizations by realization number - include", () => {
         const realizationFilter = new RealizationFilter(FIRST_ENSEMBLE);
+        realizationFilter.setFilterType(RealizationFilterType.BY_REALIZATION_NUMBER);
+        realizationFilter.setIncludeOrExcludeFilter(IncludeExcludeFilter.INCLUDE_FILTER);
 
+        realizationFilter.runFiltering();
         expect(realizationFilter.getFilteredRealizations()).toEqual(FIRST_ENSEMBLE_REALIZATIONS);
+
         realizationFilter.setRealizationNumberSelections([1, 2, 3]);
+        realizationFilter.runFiltering();
         expect(realizationFilter.getFilteredRealizations()).toEqual([1, 2, 3]);
+
         realizationFilter.setRealizationNumberSelections([1, 2, 3, { start: 9, end: 15 }]);
+        realizationFilter.runFiltering();
         expect(realizationFilter.getFilteredRealizations()).toEqual([1, 2, 3, 9, 10, 15]);
     });
 
     test("Test get filtered realizations - exclude", () => {
         const realizationFilter = new RealizationFilter(FIRST_ENSEMBLE);
+        realizationFilter.setFilterType(RealizationFilterType.BY_REALIZATION_NUMBER);
         realizationFilter.setIncludeOrExcludeFilter(IncludeExcludeFilter.EXCLUDE_FILTER);
 
+        realizationFilter.runFiltering();
         expect(realizationFilter.getFilteredRealizations()).toEqual(FIRST_ENSEMBLE_REALIZATIONS);
+
         realizationFilter.setRealizationNumberSelections([1, 2, 3]);
+        realizationFilter.runFiltering();
         expect(realizationFilter.getFilteredRealizations()).toEqual([4, 5, 6, 7, 8, 9, 10, 15]);
+
         realizationFilter.setRealizationNumberSelections([1, 2, 3, { start: 9, end: 15 }]);
+        realizationFilter.runFiltering();
         expect(realizationFilter.getFilteredRealizations()).toEqual([4, 5, 6, 7, 8]);
     });
 });

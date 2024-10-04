@@ -1,7 +1,14 @@
-import { DiscreteParameterValueSelection, ParameterValueSelection } from "@framework/types/realizationFilterTypes";
+import {
+    DiscreteParameterValueSelection,
+    ParameterValueSelection,
+    RealizationNumberSelection,
+} from "@framework/types/realizationFilterTypes";
 
 import { isEqual } from "lodash";
 
+/**
+ * Check if parameter value selection is an array of strings.
+ */
 export function isValueSelectionAnArrayOfString(
     valueSelection: ParameterValueSelection
 ): valueSelection is readonly string[] {
@@ -11,6 +18,9 @@ export function isValueSelectionAnArrayOfString(
     return false;
 }
 
+/**
+ * Check if parameter value selection is an array of numbers.
+ */
 export function isValueSelectionAnArrayOfNumber(
     valueSelection: ParameterValueSelection
 ): valueSelection is readonly number[] {
@@ -20,6 +30,11 @@ export function isValueSelectionAnArrayOfNumber(
     return false;
 }
 
+/**
+ * Check if array of discrete parameter values is an array of strings.
+ *
+ * DiscreteParameterValueSelection is a union type of string[] and number[].
+ */
 export function isArrayOfStrings(discreteValues: DiscreteParameterValueSelection): discreteValues is readonly string[] {
     if (discreteValues.length === 0) {
         return true;
@@ -29,6 +44,11 @@ export function isArrayOfStrings(discreteValues: DiscreteParameterValueSelection
     return typeof discreteValues[0] === "string";
 }
 
+/**
+ * Check if array of discrete parameter values is an array of numbers.
+ *
+ * DiscreteParameterValueSelection is a union type of string[] and number[].
+ */
 export function isArrayOfNumbers(discreteValues: DiscreteParameterValueSelection): discreteValues is readonly number[] {
     if (discreteValues.length === 0) {
         return true;
@@ -38,6 +58,11 @@ export function isArrayOfNumbers(discreteValues: DiscreteParameterValueSelection
     return typeof discreteValues[0] === "number";
 }
 
+/**
+ * Check if content of two maps are equal
+ *
+ * Compare two maps of parameter ident strings to value selections for equality.
+ */
 export function areParameterIdentStringToValueSelectionMapsEqual(
     firstMap: ReadonlyMap<string, ParameterValueSelection>,
     secondMap: ReadonlyMap<string, ParameterValueSelection>
@@ -56,4 +81,26 @@ export function areParameterIdentStringToValueSelectionMapsEqual(
     }
 
     return true;
+}
+
+/**
+ * Convert realization number selections to an array of realization numbers.
+ */
+export function makeRealizationNumberArrayFromSelections(
+    selections: readonly RealizationNumberSelection[] | null
+): number[] {
+    if (!selections) return [];
+
+    const realizationNumbers: number[] = [];
+    for (const selection of selections) {
+        if (typeof selection === "number") {
+            realizationNumbers.push(selection);
+        } else {
+            realizationNumbers.push(
+                ...Array.from({ length: selection.end - selection.start + 1 }, (_, i) => selection.start + i)
+            );
+        }
+    }
+
+    return realizationNumbers;
 }

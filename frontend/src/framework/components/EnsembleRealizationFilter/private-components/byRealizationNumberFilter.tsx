@@ -108,7 +108,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
                     disabled={props.disabled}
                 />
             </Label>
-            <Label text="Realization numbers">
+            <Label text="Select Realization Numbers">
                 <RealizationPicker
                     initialRangeTags={initialRangeTags ?? undefined}
                     selectedRangeTags={selectedRangeTags ?? undefined}
