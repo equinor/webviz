@@ -72,7 +72,19 @@ async def get_grid_geometry_and_property_blob_ids_async(
     parameter_time_or_interval_str: Optional[str] = None,
 ) -> Tuple[str, str]:
     """Get the blob ids for both grid geometry and grid property in a case, iteration, and realization"""
+    
+
+    # Temporary workarounds for discrepancies in the metadata
+    grid_name_for_parameters = grid_name
+    if grid_name == "Geogrid":
+        grid_name_for_parameters = ""
+    if grid_name == "TROLL_PRED_IX":
+        grid_name_for_parameters = parameter_name
+        parameter_name = grid_name
+    
+
     query: Dict[str, Any] = {
+        
         "bool": {
             "should": [
                 {
@@ -94,7 +106,7 @@ async def get_grid_geometry_and_property_blob_ids_async(
                             {"term": {"fmu.iteration.name.keyword": iteration}},
                             {"term": {"fmu.realization.id": realization}},
                             {"term": {"data.name.keyword": parameter_name}},
-                            {"term": {"data.tagname.keyword": grid_name if grid_name != "Geogrid" else ""}},
+                            {"term": {"data.tagname.keyword":grid_name_for_parameters}},
                         ]
                     }
                 },
