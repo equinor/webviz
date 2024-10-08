@@ -47,6 +47,11 @@ export function makeRealizationNumberSelectionsFromRealizationPickerTags(tags: s
     return tags.map(makeRealizationNumberSelectionFromRealizationPickerTag);
 }
 
+/**
+ * Create the best suggested realization number selections from an array of realization numbers.
+ *
+ * Sequences of realization numbers are combined into range. Separate realization numbers are kept as is.
+ */
 export function createBestSuggestedRealizationNumberSelections(
     realizationNumbers: readonly number[]
 ): readonly RealizationNumberSelection[] {

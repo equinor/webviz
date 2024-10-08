@@ -59,11 +59,11 @@ export function isArrayOfNumbers(discreteValues: DiscreteParameterValueSelection
 }
 
 /**
- * Check if content of two maps are equal
+ * Check if content of two readonly maps are equal
  *
  * Compare two maps of parameter ident strings to value selections for equality.
  */
-export function areParameterIdentStringToValueSelectionMapsEqual(
+export function areParameterIdentStringToValueSelectionReadonlyMapsEqual(
     firstMap: ReadonlyMap<string, ParameterValueSelection>,
     secondMap: ReadonlyMap<string, ParameterValueSelection>
 ): boolean {

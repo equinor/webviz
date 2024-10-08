@@ -13,66 +13,67 @@ import {
     isValueSelectionAnArrayOfString,
 } from "@framework/utils/realizationFilterTypesUtils";
 import { Label } from "@lib/components/Label";
-import { SelectOption } from "@lib/components/Select";
 import { Slider } from "@lib/components/Slider";
+import { SmartNodeSelector, SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { TagPicker } from "@lib/components/TagPicker";
-import { RemoveCircleOutline } from "@mui/icons-material";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Delete } from "@mui/icons-material";
 
-import { AddItemButton } from "./AddItemButton";
+import {
+    createSmartNodeSelectorTagListFromParameterIdentStrings,
+    createTreeDataNodeListFromParameters,
+} from "../private-utils/smartNodeSelectorUtils";
+
+export type ByParameterValueFilterSelection = {
+    parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection>;
+    smartNodeSelectorTags: string[];
+};
 
 export type ByParameterValueFilterProps = {
     ensembleParameters: EnsembleParameters; // Should be stable object - both content and reference
     selectedParameterIdentStringToValueSelectionReadonlyMap: ReadonlyMap<string, ParameterValueSelection> | null;
+    smartNodeSelectorTags: string[];
     disabled: boolean;
-    onFilterChange: (parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection>) => void;
+    onFilterChange: (selection: ByParameterValueFilterSelection) => void;
 };
 
 export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (props) => {
-    // const [prevEnsembleParameters, setPrevEnsembleParameters] = React.useState<EnsembleParameters | null>(null);
+    // Compare by reference (ensure if it is enough to compare by reference)
+    const smartNodeSelectorTreeDataNodes = React.useMemo<TreeDataNode[]>(() => {
+        const includeConstantParameters = false;
+        return createTreeDataNodeListFromParameters(
+            props.ensembleParameters.getParameterArr(),
+            includeConstantParameters
+        );
+    }, [props.ensembleParameters]);
 
-    // // Compare by reference to avoid unnecessary updates
-    // if (!isEqual(props.ensembleParameters, prevEnsembleParameters)) {
-    //     setPrevEnsembleParameters(props.ensembleParameters);
-
-    //     // Validate parameterIdent strings
-    // }
-
-    const getAllTypes = null;
-    const doNeglectConstantParameters = true;
-    const selectedParameterIdentStrings = props.selectedParameterIdentStringToValueSelectionReadonlyMap
-        ? Array.from(props.selectedParameterIdentStringToValueSelectionReadonlyMap.keys())
-        : [];
-
-    const nonSelectedParameterIdentStringOptions: SelectOption[] = [];
-    for (const parameterIdent of props.ensembleParameters.getParameterIdents(getAllTypes)) {
-        const isAlreadySelected = selectedParameterIdentStrings.includes(parameterIdent.toString());
-        const doSkipConstantParameter =
-            doNeglectConstantParameters && props.ensembleParameters.getParameter(parameterIdent).isConstant;
-        if (isAlreadySelected || doSkipConstantParameter) {
-            continue;
-        }
-
-        // Add to options
-        nonSelectedParameterIdentStringOptions.push({
-            label: parameterIdent.toString(),
-            value: parameterIdent.toString(),
-        });
-    }
-
-    function handleOptionClick(parameterIdentString: string) {
-        if (
-            props.selectedParameterIdentStringToValueSelectionReadonlyMap &&
-            props.selectedParameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
-        ) {
+    function handleParameterNameSelectionChanged(selection: SmartNodeSelectorSelection) {
+        if (selection === null) {
             return;
         }
 
-        const parameter = props.ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
-        if (parameter) {
-            // Copy map - NOTE: This is not a deep copy
-            const newMap = new Map(props.selectedParameterIdentStringToValueSelectionReadonlyMap);
+        // Find new parameter ident strings that are not in the current map
+        const newMap = new Map(props.selectedParameterIdentStringToValueSelectionReadonlyMap);
 
-            const newDiscreteValueSelection: Readonly<string[] | number[]> = [];
+        // Get selected parameter ident strings
+        const selectedParameterIdentStrings = selection.selectedIds;
+
+        // Delete deselected parameter ident strings
+        const deselectedParameterIdentStrings = Array.from(newMap.keys()).filter(
+            (paramIdentString) => !selectedParameterIdentStrings.includes(paramIdentString)
+        );
+        for (const deselectedParameterIdentString of deselectedParameterIdentStrings) {
+            newMap.delete(deselectedParameterIdentString);
+        }
+
+        // Add new selected parameter ident strings
+        const newDiscreteValueSelection: Readonly<string[] | number[]> = [];
+        for (const parameterIdentString of selectedParameterIdentStrings) {
+            const parameter = props.ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
+            if (!parameter || newMap.has(parameterIdentString)) {
+                continue;
+            }
+
             let newParameterValueSelection: ParameterValueSelection = newDiscreteValueSelection;
             if (parameter.type === ParameterType.CONTINUOUS) {
                 const max = Math.max(...parameter.values);
@@ -86,10 +87,13 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             //   i.e. props.selectedParameterIdentStringToValueSelectionMap. Thus modifying the value
             //   will modify the source, which is not allowed.
             newMap.set(parameterIdentString, newParameterValueSelection);
-
-            // Trigger filter change
-            props.onFilterChange(newMap as ReadonlyMap<string, ParameterValueSelection>);
         }
+
+        // Trigger filter change
+        props.onFilterChange({
+            parameterIdentStringToValueSelectionMap: newMap as ReadonlyMap<string, ParameterValueSelection>,
+            smartNodeSelectorTags: selection.selectedTags,
+        });
     }
 
     function setNewParameterValueSelectionAndTriggerOnChange(
@@ -109,7 +113,10 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         updatedMap.set(parameterIdentString, valueSelection);
 
         // Trigger filter change
-        props.onFilterChange(updatedMap as ReadonlyMap<string, ParameterValueSelection>);
+        props.onFilterChange({
+            parameterIdentStringToValueSelectionMap: updatedMap as ReadonlyMap<string, ParameterValueSelection>,
+            smartNodeSelectorTags: props.smartNodeSelectorTags,
+        });
     }
 
     function handleContinuousParameterValueRangeChange(parameterIdentString: string, valueSelection: number[]) {
@@ -172,8 +179,14 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         const newMap = new Map(props.selectedParameterIdentStringToValueSelectionReadonlyMap);
         newMap.delete(parameterIdentString);
 
+        // Update selector tags
+        const newSmartNodeSelectorTags = createSmartNodeSelectorTagListFromParameterIdentStrings([...newMap.keys()]);
+
         // Trigger filter change
-        props.onFilterChange(newMap);
+        props.onFilterChange({
+            parameterIdentStringToValueSelectionMap: newMap as ReadonlyMap<string, ParameterValueSelection>,
+            smartNodeSelectorTags: newSmartNodeSelectorTags,
+        });
     }
 
     function createContinuousParameterValueRangeRow(
@@ -210,10 +223,11 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         }
 
         if (isArrayOfStrings(valueSelection) && isArrayOfStrings(parameter.values)) {
+            const uniqueValues = Array.from(new Set([...parameter.values]));
             return (
                 <TagPicker<string>
                     value={[...valueSelection]}
-                    tags={parameter.values.map((elm) => {
+                    tags={uniqueValues.map((elm) => {
                         return { label: elm, value: elm };
                     })}
                     onChange={(value) => handleDiscreteParameterValueSelectionChange(parameterIdentString, value)}
@@ -222,10 +236,11 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         }
 
         if (isArrayOfNumbers(valueSelection) && isArrayOfNumbers(parameter.values)) {
+            const uniqueValues = Array.from(new Set([...parameter.values]));
             return (
                 <TagPicker<number>
                     value={valueSelection.map((elm) => elm)}
-                    tags={parameter.values.map((elm) => {
+                    tags={uniqueValues.map((elm) => {
                         return { label: elm.toString(), value: elm };
                     })}
                     onChange={(value) => handleDiscreteParameterValueSelectionChange(parameterIdentString, value)}
@@ -244,14 +259,33 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     ): React.ReactNode {
         return (
             <div key={parameterIdentString} className="flex-grow border border-lightgrey rounded-md p-2">
-                <Label text={parameterIdentString}>
-                    <div className="flex items-center">
+                <div className="flex flex-col gap-2 ">
+                    <div className="flex flex-row items-center gap-2">
                         <div
-                            className="text-indigo-600 hover:bg-indigo-50 items-center"
+                            title={`Parameter: ${parameterIdentString}`}
+                            className={resolveClassNames(
+                                "flex-grow",
+                                "text-sm",
+                                "mb-1",
+                                "text-gray-500",
+                                "leading-0",
+                                "items-center",
+                                "overflow-hidden",
+                                "whitespace-nowrap",
+                                "text-ellipsis"
+                            )}
+                        >
+                            {parameterIdentString}
+                        </div>
+                        <div
+                            title="Remove parameter"
+                            className="text-indigo-600 hover:bg-indigo-50 rounded-full p-1 cursor-pointer flex-grow-1"
                             onClick={() => handleRemoveButtonClick(parameterIdentString)}
                         >
-                            <RemoveCircleOutline fontSize="small" />
+                            <Delete fontSize="small" />
                         </div>
+                    </div>
+                    <div className="flex items-center">
                         <div className="flex-grow">
                             {isValueSelectionAnArrayOfString(valueSelection) ||
                             isValueSelectionAnArrayOfNumber(valueSelection)
@@ -259,18 +293,21 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                                 : createContinuousParameterValueRangeRow(parameterIdentString, valueSelection)}
                         </div>
                     </div>
-                </Label>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="flex-grow flex-col gap-2">
-            <AddItemButton
-                buttonText="Add Parameter"
-                options={nonSelectedParameterIdentStringOptions}
-                onOptionClicked={handleOptionClick}
-            />
+            <Label text="Select parameters">
+                <SmartNodeSelector
+                    data={smartNodeSelectorTreeDataNodes ?? []}
+                    selectedTags={props.smartNodeSelectorTags}
+                    onChange={handleParameterNameSelectionChanged}
+                    placeholder="Add parameter..."
+                />
+            </Label>
             {props.selectedParameterIdentStringToValueSelectionReadonlyMap &&
                 Array.from(props.selectedParameterIdentStringToValueSelectionReadonlyMap).map(
                     ([parameterIdentString, valueSelection]) => {

@@ -4,7 +4,7 @@ import {
     RealizationNumberSelection,
 } from "@framework/types/realizationFilterTypes";
 import {
-    areParameterIdentStringToValueSelectionMapsEqual,
+    areParameterIdentStringToValueSelectionReadonlyMapsEqual,
     isArrayOfNumbers,
     isArrayOfStrings,
     isValueSelectionAnArrayOfNumber,
@@ -26,7 +26,7 @@ describe("areParameterIdentStringToValueSelectionMapsEqual", () => {
             ["param2", [1, 2, 3]],
         ]);
 
-        expect(areParameterIdentStringToValueSelectionMapsEqual(map1, map2)).toBe(true);
+        expect(areParameterIdentStringToValueSelectionReadonlyMapsEqual(map1, map2)).toBe(true);
     });
 
     test("should return false for maps with different sizes", () => {
@@ -37,7 +37,7 @@ describe("areParameterIdentStringToValueSelectionMapsEqual", () => {
             ["param2", [1, 2, 3]],
         ]);
 
-        expect(areParameterIdentStringToValueSelectionMapsEqual(map1, map2)).toBe(false);
+        expect(areParameterIdentStringToValueSelectionReadonlyMapsEqual(map1, map2)).toBe(false);
     });
 
     test("should return false for maps with different keys", () => {
@@ -45,7 +45,7 @@ describe("areParameterIdentStringToValueSelectionMapsEqual", () => {
 
         const map2 = new Map<string, ParameterValueSelection>([["param2", ["value1", "value2"]]]);
 
-        expect(areParameterIdentStringToValueSelectionMapsEqual(map1, map2)).toBe(false);
+        expect(areParameterIdentStringToValueSelectionReadonlyMapsEqual(map1, map2)).toBe(false);
     });
 
     test("should return false for maps with different values", () => {
@@ -53,14 +53,14 @@ describe("areParameterIdentStringToValueSelectionMapsEqual", () => {
 
         const map2 = new Map<string, ParameterValueSelection>([["param1", ["value3", "value4"]]]);
 
-        expect(areParameterIdentStringToValueSelectionMapsEqual(map1, map2)).toBe(false);
+        expect(areParameterIdentStringToValueSelectionReadonlyMapsEqual(map1, map2)).toBe(false);
     });
 
     test("should return true for empty maps", () => {
         const map1 = new Map<string, ParameterValueSelection>();
         const map2 = new Map<string, ParameterValueSelection>();
 
-        expect(areParameterIdentStringToValueSelectionMapsEqual(map1, map2)).toBe(true);
+        expect(areParameterIdentStringToValueSelectionReadonlyMapsEqual(map1, map2)).toBe(true);
     });
 });
 
@@ -184,7 +184,7 @@ describe("areParameterIdentStringToValueSelectionMapsEqual", () => {
             ["param2", [1, 2, 3]],
         ]);
 
-        expect(areParameterIdentStringToValueSelectionMapsEqual(map1, map2)).toBe(true);
+        expect(areParameterIdentStringToValueSelectionReadonlyMapsEqual(map1, map2)).toBe(true);
     });
 
     test("should return false for maps with different sizes", () => {
@@ -195,7 +195,7 @@ describe("areParameterIdentStringToValueSelectionMapsEqual", () => {
             ["param2", [1, 2, 3]],
         ]);
 
-        expect(areParameterIdentStringToValueSelectionMapsEqual(map1, map2)).toBe(false);
+        expect(areParameterIdentStringToValueSelectionReadonlyMapsEqual(map1, map2)).toBe(false);
     });
 
     test("should return false for maps with different keys", () => {
@@ -203,7 +203,7 @@ describe("areParameterIdentStringToValueSelectionMapsEqual", () => {
 
         const map2 = new Map<string, ParameterValueSelection>([["param2", ["value1", "value2"]]]);
 
-        expect(areParameterIdentStringToValueSelectionMapsEqual(map1, map2)).toBe(false);
+        expect(areParameterIdentStringToValueSelectionReadonlyMapsEqual(map1, map2)).toBe(false);
     });
 
     test("should return false for maps with different values", () => {
@@ -211,14 +211,14 @@ describe("areParameterIdentStringToValueSelectionMapsEqual", () => {
 
         const map2 = new Map<string, ParameterValueSelection>([["param1", ["value3", "value4"]]]);
 
-        expect(areParameterIdentStringToValueSelectionMapsEqual(map1, map2)).toBe(false);
+        expect(areParameterIdentStringToValueSelectionReadonlyMapsEqual(map1, map2)).toBe(false);
     });
 
     test("should return true for empty maps", () => {
         const map1 = new Map<string, ParameterValueSelection>();
         const map2 = new Map<string, ParameterValueSelection>();
 
-        expect(areParameterIdentStringToValueSelectionMapsEqual(map1, map2)).toBe(true);
+        expect(areParameterIdentStringToValueSelectionReadonlyMapsEqual(map1, map2)).toBe(true);
     });
 });
 

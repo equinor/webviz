@@ -342,18 +342,22 @@ export class RealizationFilter {
 
         if (
             parameter.type === ParameterType.DISCRETE &&
-            isValueSelectionAnArrayOfString(valueSelection) &&
-            isArrayOfNumbers(parameter.values)
+            isArrayOfNumbers(parameter.values) &&
+            !isValueSelectionAnArrayOfNumber(valueSelection)
         ) {
+            // Using !isValueSelectionAnArrayOfNumber, as isValueSelectionAnArrayOfString(valueSelection) is true
+            // for empty array
             throw new Error(
                 `Parameter ${parameter.name} is discrete with number values, but value selection is string`
             );
         }
         if (
             parameter.type === ParameterType.DISCRETE &&
-            isValueSelectionAnArrayOfNumber(valueSelection) &&
-            isArrayOfStrings(parameter.values)
+            isArrayOfStrings(parameter.values) &&
+            !isValueSelectionAnArrayOfString(valueSelection)
         ) {
+            // Using !isValueSelectionAnArrayOfString, as isValueSelectionAnArrayOfNumber(valueSelection) is true
+            // for empty array
             throw new Error(
                 `Parameter ${parameter.name} is discrete with string values, but value selection is number`
             );
