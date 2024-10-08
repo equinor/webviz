@@ -4,6 +4,7 @@
 /* eslint-disable */
 export type WellboreLogCurveData = {
     name: string;
+    logName: string;
     indexMin: number;
     indexMax: number;
     minCurveValue: number;

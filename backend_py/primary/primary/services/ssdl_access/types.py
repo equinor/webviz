@@ -58,6 +58,7 @@ class WellboreLogCurveData(BaseModel):
     index_max: float
     min_curve_value: float
     max_curve_value: float
+    log_name: str
     curve_alias: str | None
     curve_description: str | None
     index_unit: str
