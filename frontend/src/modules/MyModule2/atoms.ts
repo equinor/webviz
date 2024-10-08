@@ -1,7 +1,7 @@
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@framework/utils/experiemental/atomUtils";
+import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@framework/utils/experimental/atomUtils";
 
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
