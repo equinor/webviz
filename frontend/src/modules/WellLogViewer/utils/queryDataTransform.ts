@@ -5,11 +5,11 @@ import { WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import {
-    WellLog,
     WellLogCurve,
     WellLogDataRow,
     WellLogHeader,
     WellLogMetadataDiscrete,
+    WellLogSet,
 } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
@@ -33,13 +33,76 @@ export const SECONDARY_AXIS_CURVE: WellLogCurve = {
     valueType: "float",
 };
 
+export function createWellLogSets(
+    curveDataSets: BaseAgnosticSourceData[][],
+    wellboreTrajectory: WellboreTrajectory_api,
+    referenceSystem: IntersectionReferenceSystem,
+    padDataWithEmptyRows = false
+): WellLogSet[] {
+    return curveDataSets.map((curveSet) => {
+        return {
+            header: createLogHeader(curveSet, wellboreTrajectory),
+            ...createLogCurvesAndData(curveSet, wellboreTrajectory, referenceSystem, padDataWithEmptyRows),
+        };
+    });
+}
+
+function createLogCurvesAndData(
+    curveData: BaseAgnosticSourceData[],
+    wellboreTrajectory: WellboreTrajectory_api,
+    referenceSystem: IntersectionReferenceSystem,
+    padDataWithEmptyRows: boolean
+): Pick<WellLogSet, "curves" | "data" | "metadata_discrete"> {
+    const curves: WellLogSet["curves"] = [MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE];
+    const discreteMeta: WellLogSet["metadata_discrete"] = {};
+
+    // We add 2 since each row also includes the MD and TVD axis curves
+    // ! We're assuming the DataPoints list is sorted on MD, and that continuous sets
+    const rowLength = curveData.length + 2;
+    const rowAcc: DataRowAccumulatorMap = {};
+
+    let minCurveMd = Number.MAX_VALUE;
+    let maxCurveMd = Number.MIN_VALUE;
+
+    curveData.forEach((curve, curveIndex) => {
+        if (curve.indexMin < minCurveMd) minCurveMd = curve.indexMin;
+        if (curve.indexMax > maxCurveMd) maxCurveMd = curve.indexMax;
+        if (curve._discreteMetaData) _.set(discreteMeta, curve.name, curve._discreteMetaData);
+
+        curves.push(apiCurveToLogCurve(curve));
+        curve.dataPoints.forEach(([scaleIdx, entry, ...restData]) => {
+            if (!scaleIdx) return console.warn("Unexpected null for scale entry");
+            if (typeof scaleIdx === "string") throw new Error("Scale index value cannot be a string");
+            if (restData.length) console.warn("Multi-dimensional data not supported, using first value only");
+
+            maybeInjectDataRow(rowAcc, scaleIdx, rowLength, referenceSystem);
+
+            rowAcc[scaleIdx][curveIndex + 2] = entry === curve.noDataValue ? null : entry;
+        });
+    });
+
+    if (padDataWithEmptyRows) {
+        wellboreTrajectory.mdArr.forEach((mdValue) => {
+            if (mdValue <= maxCurveMd && mdValue >= minCurveMd) return;
+
+            maybeInjectDataRow(rowAcc, mdValue, rowLength, referenceSystem);
+        });
+    }
+
+    return {
+        data: _.chain(rowAcc).values().sortBy("0").value(),
+        metadata_discrete: discreteMeta,
+        curves,
+    };
+}
+
 export function createWellLog(
     curveData: BaseAgnosticSourceData[],
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
     padDataWithEmptyRows = false
-): WellLog {
-    const header = createLogHeader(wellboreTrajectory);
+): WellLogSet {
+    const header = createLogHeader(curveData, wellboreTrajectory);
 
     // TODO: these all seperately iterate over the curve data list, so should probably just combine them into a single reduce method to optimize
     // ! Important: Always make sure that the data row and curve arrays are in the same order!
@@ -59,12 +122,14 @@ function createLogCurves(curveData: WellboreLogCurveData_api[]): WellLogCurve[] 
 }
 
 function apiCurveToLogCurve(curve: WellboreLogCurveData_api): WellLogCurve {
+    const firstValue = curve.dataPoints[0]?.[1];
+
     return {
         name: curve.name,
         // ! The Well Log JSON format does *technically* support multiple dimensions, but the subsurface component does not
         // dimensions: curve.dataPoints[0].length - 1,
         dimensions: 1,
-        valueType: typeof curve.dataPoints[0]?.[1] ?? "unknown",
+        valueType: firstValue === null ? "unknown" : typeof firstValue,
         // ? if this is just gonna be the meter in depth for all of them
         unit: curve.unit,
         description: curve.curveDescription,
@@ -128,7 +193,10 @@ function maybeInjectDataRow(
     }
 }
 
-function createLogHeader(wellboreTrajectory: WellboreTrajectory_api): WellLogHeader {
+function createLogHeader(
+    curveData: BaseAgnosticSourceData[],
+    wellboreTrajectory: WellboreTrajectory_api
+): WellLogHeader {
     // TODO: Might want more data from https://api.equinor.com/api-details#api=equinor-subsurfacedata-api-v3&operation=get-api-v-api-version-welllog-wellboreuuid, which provides:
     /*
     {
@@ -146,6 +214,8 @@ function createLogHeader(wellboreTrajectory: WellboreTrajectory_api): WellLogHea
     */
 
     return {
+        name: curveData[0].logName,
+        wellbore: wellboreTrajectory.uniqueWellboreIdentifier,
         ...getDerivedLogHeaderValues(wellboreTrajectory),
     };
 }
@@ -180,9 +250,9 @@ export function createLogViewerWellpicks(wellborePicks: WellPicksLayerData): Wel
         },
         md: MAIN_AXIS_CURVE.name,
         name: "PICK",
-        color: "Stratigraphy",
         // TODO: Color table should be generated form workbench settings
-        colorTables: COLOR_TABLES,
+        colorMapFunctionName: "Stratigraphy",
+        colorMapFunctions: COLOR_TABLES,
     };
 }
 

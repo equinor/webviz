@@ -1,20 +1,14 @@
-import { PLOT_TYPE_OPTIONS } from "@modules/WellLogViewer/settings/components/TemplateTrackSettings/private-components/plotTypeOptions";
 import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "@modules/WellLogViewer/utils/logViewerColors";
-import {
-    createLogTemplate,
-    isCompositePlotType,
-    isValidPlot,
-    makeTrackPlot,
-} from "@modules/WellLogViewer/utils/logViewerTemplate";
+import { createLogTemplate, isValidPlot, makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { MAIN_AXIS_CURVE } from "@modules/WellLogViewer/utils/queryDataTransform";
 import { configToJsonDataBlob, jsonFileToTrackConfigs } from "@modules/WellLogViewer/utils/settingsImport";
-import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { describe, expect, test } from "vitest";
 
 // These plot types are "simple", and only require name and color
-const SIMPLE_PLOT_TYPES = ["line", "linestep", "dot", "area"] as TemplatePlotTypes[];
+const SIMPLE_PLOT_TYPES = ["line", "linestep", "dot", "area"] as TemplatePlotType[];
 
 class MockFile {
     private fauxData: any;
@@ -32,7 +26,7 @@ class MockFile {
 
 describe("makeTrackPlot tests", () => {
     test("should be invalid if no name is provided", () => {
-        const plot = { type: "line" as TemplatePlotTypes };
+        const plot = { type: "line" } as TemplatePlotConfig;
         const result = makeTrackPlot(plot);
 
         expect(result).toMatchObject({
@@ -49,7 +43,7 @@ describe("makeTrackPlot tests", () => {
 
     test("should be valid for all simple types if name is provided", () => {
         SIMPLE_PLOT_TYPES.forEach((type) => {
-            const plot = { name: "SomeCurve", type: type };
+            const plot = { name: "SomeCurve", type: type } as TemplatePlotConfig;
             const result = makeTrackPlot(plot);
 
             expect(result).toMatchObject({
@@ -66,7 +60,7 @@ describe("makeTrackPlot tests", () => {
     });
 
     test("should be valid for differential type if name and name2 are provided", () => {
-        const plot = { name: "SomeCurve", name2: "SomeCurve2", type: "differential" as TemplatePlotTypes };
+        const plot = { name: "SomeCurve", name2: "SomeCurve2", type: "differential" } as TemplatePlotConfig;
         const result = makeTrackPlot(plot);
 
         expect(result).toMatchObject({
@@ -81,19 +75,20 @@ describe("makeTrackPlot tests", () => {
     });
 
     test("should throw an error for unsupported 'stacked' plot type", () => {
-        const plot = { name: "SomeCurve", type: "stacked" as TemplatePlotTypes };
+        const plot = { name: "SomeCurve", type: "stacked" } as TemplatePlotConfig;
 
         expect(() => makeTrackPlot(plot)).toThrow("Stacked graph type currently not supported");
     });
 
     test("should throw an error for unsupported plot type", () => {
-        const plot = { name: "SomeCurve", type: "unsupported" as TemplatePlotTypes };
+        // @ts-expect-error "Purposeful erroneous type"
+        const plot = { name: "SomeCurve", type: "unsupported" } as TemplatePlotConfig;
 
         expect(() => makeTrackPlot(plot)).toThrow("Unsupported plot type: unsupported");
     });
 
     test("should create a valid gradientfill plot config", () => {
-        const plot = { name: "SomeCurve", type: "gradientfill" as TemplatePlotTypes };
+        const plot = { name: "SomeCurve", type: "gradientfill" } as TemplatePlotConfig;
         const result = makeTrackPlot(plot);
 
         expect(result).toMatchObject({
@@ -104,7 +99,7 @@ describe("makeTrackPlot tests", () => {
     });
 
     test("should use provided colors if provided", () => {
-        const plot = { name: "SomeCurve", type: "line" as TemplatePlotTypes, color: "#123456", color2: "#654321" };
+        const plot = { name: "SomeCurve", type: "line", color: "#123456", color2: "#654321" } as TemplatePlotConfig;
         const result = makeTrackPlot(plot);
 
         expect(result).toMatchObject({
@@ -116,7 +111,7 @@ describe("makeTrackPlot tests", () => {
     });
 
     test("should generate a new _id if not provided", () => {
-        const plot = { type: "line" as TemplatePlotTypes };
+        const plot = { type: "line" } as TemplatePlotConfig;
         const result = makeTrackPlot(plot);
 
         expect(result._id).toBeDefined();
@@ -124,7 +119,7 @@ describe("makeTrackPlot tests", () => {
     });
 
     test("should retain the provided _id if available", () => {
-        const plot = { name: "SomeCurve", type: "line" as TemplatePlotTypes, _id: "existing-id" };
+        const plot = { name: "SomeCurve", type: "line", _id: "existing-id" } as TemplatePlotConfig;
         const result = makeTrackPlot(plot);
 
         expect(result._id).toBe("existing-id");
@@ -133,12 +128,12 @@ describe("makeTrackPlot tests", () => {
     test("should discard other curve specific values when creating a plot", () => {
         const plot = {
             name: "SomeCurve",
-            type: "line" as TemplatePlotTypes,
+            type: "line",
             // These values are not relevant line-plots
             fill: "red",
             fill2: "blue",
-            colorTable: "Discrete",
-        };
+            colorMapFunctionName: "Discrete",
+        } as TemplatePlotConfig;
 
         const result = makeTrackPlot(plot);
 
@@ -152,7 +147,7 @@ describe("makeTrackPlot tests", () => {
 
 describe("Other utilities", () => {
     test("Should catch invalid plot configs", () => {
-        const type = "line" as TemplatePlotTypes;
+        const type = "line" as TemplatePlotType;
         const config1 = { name: "SomeCurve", color: "#123456" };
         const config2 = { color: "#123456", type };
         const config3 = { name: "SomeCurve", type };
@@ -202,7 +197,7 @@ describe("Other utilities", () => {
             name: "SomeCurve",
             type: "gradientfill",
             color: "#123456",
-            colorTable: "Continuous",
+            colorMapFunctionName: "Continuous",
         } as TemplatePlotConfig;
 
         const validDifferential = {
@@ -243,16 +238,6 @@ describe("Other utilities", () => {
             tracks: [],
         });
     });
-
-    test('Should  only differental curve counts as "composite"', () => {
-        PLOT_TYPE_OPTIONS.forEach(({ value }) => {
-            if (value === "differential") {
-                expect(isCompositePlotType(value)).toBe(true);
-            } else {
-                expect(isCompositePlotType(value)).toBe(false);
-            }
-        });
-    });
 });
 
 describe("settings import export tests", () => {
@@ -260,6 +245,7 @@ describe("settings import export tests", () => {
         const input: TemplateTrackConfig[] = [
             {
                 _id: "test",
+                _type: "continous",
                 title: "test-track",
                 plots: [],
             },
@@ -391,12 +377,12 @@ describe("settings import export tests", () => {
         test("should return false if color is missing", () => {});
 
         test("should return false if type is not in PLOT_TYPES", () => {
-            const config = { name: "SomeCurve", type: "unsupported" as TemplatePlotTypes, color: "#123456" };
+            const config = { name: "SomeCurve", type: "unsupported" as TemplatePlotType, color: "#123456" };
             expect(isValidPlot(config)).toBe(false);
         });
 
         test("should throw an error for unsupported 'stacked' plot type", () => {
-            const config = { name: "SomeCurve", type: "stacked" as TemplatePlotTypes, color: "#123456" };
+            const config = { name: "SomeCurve", type: "stacked" as TemplatePlotType, color: "#123456" };
             expect(() => isValidPlot(config)).toThrow("Stacked graph type currently not supported");
         });
 
@@ -408,7 +394,7 @@ describe("settings import export tests", () => {
         });
 
         test("should return false for differential type if name2, color2, fill, or fill2 are missing", () => {
-            const config = { name: "SomeCurve", type: "differential" as TemplatePlotTypes, color: "#123456" };
+            const config = { name: "SomeCurve", type: "differential" as TemplatePlotType, color: "#123456" };
             expect(isValidPlot(config)).toBe(false);
         });
 
@@ -416,7 +402,7 @@ describe("settings import export tests", () => {
             const config = {
                 name: "SomeCurve",
                 name2: "SomeCurve2",
-                type: "differential" as TemplatePlotTypes,
+                type: "differential" as TemplatePlotType,
                 color: "#123456",
                 color2: "#654321",
                 fill: "#abcdef",
@@ -426,14 +412,14 @@ describe("settings import export tests", () => {
         });
 
         test("should return false for gradientfill type if colorTable is missing", () => {
-            const config = { name: "SomeCurve", type: "gradientfill" as TemplatePlotTypes, color: "#123456" };
+            const config = { name: "SomeCurve", type: "gradientfill" as TemplatePlotType, color: "#123456" };
             expect(isValidPlot(config)).toBe(false);
         });
 
         test("should return true for valid gradientfill type", () => {
             const config = {
                 name: "SomeCurve",
-                type: "gradientfill" as TemplatePlotTypes,
+                type: "gradientfill" as TemplatePlotType,
                 color: "#123456",
                 colorTable: "Continuous",
             };

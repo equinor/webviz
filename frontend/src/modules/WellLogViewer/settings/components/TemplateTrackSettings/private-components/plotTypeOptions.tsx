@@ -1,7 +1,7 @@
 import { DropdownOption } from "@lib/components/Dropdown";
-import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
-type PlotDropdownOption = DropdownOption<TemplatePlotTypes>;
+type PlotDropdownOption = DropdownOption<TemplatePlotType>;
 export const PLOT_TYPE_OPTIONS: PlotDropdownOption[] = [
     { value: "line", label: "Line" },
     { value: "linestep", label: "Linestep" },

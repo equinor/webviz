@@ -4,7 +4,7 @@
 import { OptionalExceptFor } from "@lib/utils/typing";
 import {
     Template,
-    TemplatePlotTypes,
+    TemplatePlotType,
     TemplateTrack,
 } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
@@ -17,7 +17,7 @@ import { TemplatePlotConfig } from "../types";
 
 export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
 
-export function isCompositePlotType(type: TemplatePlotTypes) {
+export function isCompositePlotType(type: TemplatePlotType) {
     return ["differential"].includes(type);
 }
 export function plotIsDiscrete(plotConfig: TemplatePlotConfig): boolean {
@@ -57,7 +57,7 @@ export function makeTrackPlot(
         name2: undefined,
         fill: undefined,
         fill2: undefined,
-        colorTable: undefined,
+        colorMapFunctionName: undefined,
     };
 
     switch (plot.type) {
@@ -79,7 +79,7 @@ export function makeTrackPlot(
         case "gradientfill":
             return {
                 ...config,
-                colorTable: "Continuous",
+                colorMapFunctionName: "Continuous",
             };
 
         case "line":
@@ -106,7 +106,7 @@ export function isValidPlot(config: Partial<TemplatePlotConfig>): boolean {
         case "differential":
             return Boolean(config.name2 && config.color2 && config.fill && config.fill2);
         case "gradientfill":
-            return Boolean(config.colorTable);
+            return Boolean(config.colorMapFunctionName);
         default:
             return true;
     }

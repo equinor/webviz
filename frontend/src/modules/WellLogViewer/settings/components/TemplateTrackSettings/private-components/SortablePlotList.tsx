@@ -11,7 +11,7 @@ import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { CURVE_COLOR_PALETTE } from "@modules/WellLogViewer/utils/logViewerColors";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { Delete, SwapHoriz, Warning } from "@mui/icons-material";
-import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { useAtomValue } from "jotai";
 import _ from "lodash";
@@ -43,7 +43,7 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
     });
 
     const addPlot = React.useCallback(
-        function addPlot(plotType: TemplatePlotTypes) {
+        function addPlot(plotType: TemplatePlotType) {
             const plotConfig: TemplatePlotConfig = makeTrackPlot({
                 _source: "welllog",
                 _sourceId: null,

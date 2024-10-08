@@ -7,6 +7,7 @@ import {
     createLogViewerWellpicks,
     createWellLog,
 } from "@modules/WellLogViewer/utils/queryDataTransform";
+import { WellboreLogSourceData } from "@modules/WellLogViewer/view/queries/wellLogQueries";
 
 import { describe, expect, test } from "vitest";
 
@@ -22,8 +23,9 @@ describe("QueryDataTransform", () => {
             [2000, -999],
         ];
 
-        const mockCurveData: WellboreLogCurveData_api = {
+        const mockCurveData: WellboreLogSourceData = {
             name: "GR",
+            logName: "TEST",
             unit: "API",
             curveAlias: "GR",
             curveUnitDesc: null,
@@ -35,6 +37,7 @@ describe("QueryDataTransform", () => {
             maxCurveValue: 60,
             curveDescription: "Gamma Ray",
             dataPoints: mockDataPoints,
+            _dataSource: "wellLog",
         };
 
         const mockTrajectory = {
@@ -95,8 +98,9 @@ describe("QueryDataTransform", () => {
         });
 
         test("should handle multiple curves correctly", () => {
-            const secondCurveData: WellboreLogCurveData_api = {
+            const secondCurveData: WellboreLogSourceData = {
                 name: "RHOB",
+                logName: "TEST",
                 unit: "g/cm3",
                 curveAlias: null,
                 curveUnitDesc: null,
@@ -111,6 +115,7 @@ describe("QueryDataTransform", () => {
                     [1000, 2.3],
                     [2000, 2.4],
                 ],
+                _dataSource: "wellLog",
             };
             const wellLog = createWellLog([mockCurveData, secondCurveData], mockTrajectory, mockReferenceSystem);
 

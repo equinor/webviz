@@ -268,7 +268,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
                 layout={{ right: undefined }}
                 axisMnemos={AXIS_MNEMOS}
                 axisTitles={AXIS_TITLES}
-                colorTables={colorTables}
+                colorMapFunctions={colorTables}
                 // Disable the pin and selection logic, since we dont use that for anything yet
                 options={{ hideSelectionInterval: true }}
                 onTrackMouseEvent={handleTrackMouseEvent}
