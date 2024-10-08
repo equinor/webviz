@@ -10,9 +10,10 @@ import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsC
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { useQueryClient } from "@tanstack/react-query";
-import { ViewportType } from "@webviz/subsurface-viewer";
-import { ViewStateType, ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import { LayerPickInfo, ViewportType } from "@webviz/subsurface-viewer";
+import { MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
+import { ReadoutBoxWrapper } from "./components/ReadoutBoxWrapper";
 import { Toolbar } from "./components/Toolbar";
 import { DeckGlLayerWithPosition, recursivelyMakeViewsAndLayers } from "./utils/makeViewsAndLayers";
 
@@ -28,6 +29,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
+    const [layerPickingInfo, setLayerPickingInfo] = React.useState<LayerPickInfo[]>([]);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
@@ -52,7 +54,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const views: ViewsType = {
         layout: [1, 1],
         viewports: viewports,
-        showLabel: true,
+        showLabel: false,
     };
 
     let numCols = 0;
@@ -135,6 +137,16 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         setTriggerHomeCounter((prev) => prev + 1);
     }
 
+    function handleMouseHover(event: MapMouseEvent): void {
+        setLayerPickingInfo(event.infos);
+    }
+
+    function handleMouseEvent(event: MapMouseEvent): void {
+        if (event.type === "hover") {
+            handleMouseHover(event);
+        }
+    }
+
     let bounds: [number, number, number, number] | undefined = undefined;
     if (prevBoundingBox) {
         bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
@@ -152,12 +164,14 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                         height={mainDivSize.height / 2 - 50}
                         position="left"
                     />
+                    <ReadoutBoxWrapper layerPickInfo={layerPickingInfo} visible />
                     <SubsurfaceViewerWithCameraState
                         id={`subsurface-viewer-${id}`}
                         views={views}
                         bounds={bounds}
                         cameraPosition={cameraPositionSetByAction ?? undefined}
                         onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
+                        onMouseEvent={handleMouseEvent}
                         layers={layers}
                         scale={{
                             visible: true,
@@ -167,6 +181,11 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                 right: 10,
                                 top: 10,
                             },
+                        }}
+                        coords={{
+                            visible: false,
+                            multiPicking: true, //polylineEditPointsModusActive,
+                            pickDepth: 2, // polylineEditPointsModusActive ? 2 : undefined,
                         }}
                         triggerHome={triggerHomeCounter}
                     >

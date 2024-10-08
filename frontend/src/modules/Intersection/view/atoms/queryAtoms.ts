@@ -13,7 +13,7 @@ export const wellboreTrajectoryQueryAtom = atomWithQuery((get) => {
 
     return {
         queryKey: ["getWellboreTrajectory", wellbore?.uuid ?? ""],
-        queryFn: () => apiService.well.getWellTrajectories(wellbore?.uuid ? [wellbore.uuid] : []),
+        queryFn: () => apiService.well.getWellTrajectories("", wellbore?.uuid ? [wellbore.uuid] : []),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         select: (data: WellboreTrajectory_api[]) => data[0],

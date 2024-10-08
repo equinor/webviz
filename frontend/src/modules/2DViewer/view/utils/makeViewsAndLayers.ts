@@ -1,4 +1,6 @@
 import { Layer as DeckGlLayer } from "@deck.gl/core/typed";
+import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
+import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorScale } from "@modules/2DViewer/layers/ColorScale";
 import { View } from "@modules/2DViewer/layers/View";
 import {
@@ -104,8 +106,6 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
 
             const boundingBox = child.getLayerDelegate().getBoundingBox();
             maybeApplyBoundingBox(boundingBox);
-            console.log(boundingBox);
-            console.log(globalBoundingBox);
             collectedLayers.push({ layer, position: numCollectedLayers + collectedLayers.length });
         }
     }
@@ -120,32 +120,42 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
 }
 
 function findColorScale(layer: Layer<any, any>): { id: string; colorScale: ColorScaleWithName } | null {
+    let colorScaleWithName = new ColorScaleWithName({
+        colorPalette: defaultContinuousSequentialColorPalettes[0],
+        gradientType: ColorScaleGradientType.Sequential,
+        name: layer.getItemDelegate().getName(),
+        type: ColorScaleType.Continuous,
+        steps: 10,
+    });
+
+    const range = layer.getLayerDelegate().getValueRange();
+    if (range) {
+        colorScaleWithName.setRangeAndMidPoint(range[0], range[1], (range[0] + range[1]) / 2);
+    }
+
     const colorScaleItemArr = layer
         .getItemDelegate()
         .getParentGroup()
         ?.getAncestorAndSiblingItems((item) => item instanceof ColorScale);
-    if (!colorScaleItemArr || colorScaleItemArr.length === 0) {
-        return null;
-    }
 
-    if (layer.getLayerDelegate().getColoringType() !== "COLORSCALE") {
-        return null;
-    }
+    if (
+        colorScaleItemArr &&
+        colorScaleItemArr.length > 0 &&
+        layer.getLayerDelegate().getColoringType() === "COLORSCALE"
+    ) {
+        const colorScaleItem = colorScaleItemArr[0];
+        if (colorScaleItem instanceof ColorScale) {
+            colorScaleWithName = ColorScaleWithName.fromColorScale(
+                colorScaleItem.getColorScale(),
+                layer.getItemDelegate().getName()
+            );
 
-    const colorScaleItem = colorScaleItemArr[0];
-    if (!(colorScaleItem instanceof ColorScale)) {
-        return null;
-    }
-
-    const colorScaleWithName = ColorScaleWithName.fromColorScale(
-        colorScaleItem.getColorScale(),
-        layer.getItemDelegate().getName()
-    );
-
-    if (!colorScaleItem.getAreBoundariesUserDefined()) {
-        const range = layer.getLayerDelegate().getValueRange();
-        if (range) {
-            colorScaleWithName.setRangeAndMidPoint(range[0], range[1], (range[0] + range[1]) / 2);
+            if (!colorScaleItem.getAreBoundariesUserDefined()) {
+                const range = layer.getLayerDelegate().getValueRange();
+                if (range) {
+                    colorScaleWithName.setRangeAndMidPoint(range[0], range[1], (range[0] + range[1]) / 2);
+                }
+            }
         }
     }
 

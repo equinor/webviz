@@ -1,7 +1,8 @@
 import { PolygonData_api, SurfaceDef_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { Layer } from "@deck.gl/core/typed";
 import { GeoJsonLayer } from "@deck.gl/layers/typed";
-import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import { defaultColorPalettes } from "@framework/utils/colorPalettes";
+import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
@@ -11,7 +12,6 @@ import { ColormapLayer, Grid3DLayer, MapLayer, WellsLayer } from "@webviz/subsur
 import { Rgb, parse } from "culori";
 import { Feature } from "geojson";
 import { SurfaceDataPng } from "src/api/models/SurfaceDataPng";
-import { WellborePick } from "src/api/models/WellborePick";
 
 import { WellBorePickLayerData, WellPicksLayer } from "./wellPickLayer";
 
@@ -26,6 +26,16 @@ import { Layer as LayerInterface } from "../../layers/interfaces";
 
 export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
     const data = layer.getLayerDelegate().getData();
+
+    if (colorScale === undefined) {
+        colorScale = new ColorScaleWithName({
+            colorPalette: defaultColorPalettes[0],
+            gradientType: ColorScaleGradientType.Sequential,
+            name: "Default",
+            type: ColorScaleType.Continuous,
+            steps: 10,
+        });
+    }
 
     if (!data) {
         return null;

@@ -1,4 +1,4 @@
-import React, { useId } from "react";
+import React from "react";
 
 import { Layer, PickingInfo } from "@deck.gl/core/typed";
 import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers/typed";
@@ -62,7 +62,7 @@ type IntersectionZValues = {
 export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): React.ReactNode {
     const { onVerticalScaleChange } = props;
 
-    const subsurfaceViewerId = useId();
+    const subsurfaceViewerId = React.useId();
 
     const [intersectionZValues, setIntersectionZValues] = React.useState<IntersectionZValues | undefined>(undefined);
     const [polylineEditPointsModusActive, setPolylineEditPointsModusActive] = React.useState<boolean>(false);
