@@ -24,7 +24,7 @@ export type RegisterModuleOptions = {
     channelReceiverDefinitions?: ChannelReceiverDefinition[];
     preview?: DrawPreviewFunc;
     description?: string;
-    onUnloadInstance?: OnInstanceUnloadFunc;
+    onInstanceUnload?: OnInstanceUnloadFunc;
 };
 
 export class ModuleNotFoundError extends Error {
@@ -57,7 +57,7 @@ export class ModuleRegistry {
             channelDefinitions: options.channelDefinitions,
             channelReceiverDefinitions: options.channelReceiverDefinitions,
             drawPreviewFunc: options.preview,
-            onUnloadInstanceFunc: options.onUnloadInstance,
+            onInstanceUnloadFunc: options.onInstanceUnload,
             description: options.description,
         });
         this._registeredModules[options.moduleName] = module;

@@ -11,7 +11,7 @@ ModuleRegistry.registerModule<Interfaces>({
     devState: ModuleDevState.DEV,
 
     // Runs whenever you cross out a module
-    onUnloadInstance(instanceId: string) {
+    onInstanceUnload(instanceId: string) {
         // eslint-disable-next-line no-console
         console.log(`Moduel instance ${instanceId} is unloading...`);
         cleanUpInstanceAtomStorage(instanceId);
