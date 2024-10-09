@@ -27,10 +27,12 @@ import { createBestSuggestedRealizationNumberSelections } from "./private-utils/
 import { createSmartNodeSelectorTagListFromParameterIdentStrings } from "./private-utils/smartNodeSelectorUtils";
 
 export type EnsembleRealizationFilterProps = {
-    // ensemble: Ensemble; // Should realization filter only provide access to ensemble ident, and the access to details must be through ensemble object?
     realizationFilter: RealizationFilter; // Should be ref stable and not change address in memory
-    active: boolean;
-    onFilterChange: () => void;
+    isActive: boolean;
+    isAnotherFilterActive: boolean;
+    onClick?: () => void;
+    onFilterChange?: () => void;
+    onUnsavedFilterChange?: (hasUnsavedChanges: boolean) => void;
 };
 
 /**
@@ -42,13 +44,16 @@ export type EnsembleRealizationFilterProps = {
 export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps> = (props) => {
     const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
-    const [showActiveFilterType, setShowActiveFilterType] = React.useState<boolean>(false);
-
-    const [prevRealizationFilter, setPrevRealizationFilter] = React.useState<RealizationFilter | null>(null);
-    const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
-        RealizationFilterType.BY_REALIZATION_NUMBER
+    const [prevIsFilterEdited, setPrevIsFilterEdited] = React.useState<boolean>(false);
+    const [prevIsActive, setPrevIsActive] = React.useState<boolean>(props.isActive);
+    const [prevRealizationFilter, setPrevRealizationFilter] = React.useState<RealizationFilter>(
+        props.realizationFilter
     );
 
+    const [showActiveFilterType, setShowActiveFilterType] = React.useState<boolean>(props.isActive);
+    const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
+        props.realizationFilter.getFilterType()
+    );
     const [selectedSmartNodeSelectorTags, setSelectedSmartNodeSelectorTags] = React.useState<string[]>(
         createSmartNodeSelectorTagListFromParameterIdentStrings([
             ...(props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()?.keys() ?? []),
@@ -74,14 +79,29 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()
     );
 
+    if (prevIsActive !== props.isActive) {
+        setPrevIsActive(props.isActive);
+        setShowActiveFilterType(props.isActive);
+    }
+
     // Update of realization filter object/address
     // NOTE: Should not be necessary to check for address change, as it should be stable?
     if (prevRealizationFilter !== props.realizationFilter) {
         setPrevRealizationFilter(props.realizationFilter);
         setSelectedFilterType(props.realizationFilter.getFilterType());
+        setSelectedRealizationNumbers(props.realizationFilter.getFilteredRealizations());
         setSelectedIncludeOrExcludeFilter(props.realizationFilter.getIncludeOrExcludeFilter());
         setInitialRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
         setRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
+        setSelectedParameterIdentStringToValueSelectionReadonlyMap(
+            props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()
+        );
+        setInitialRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
+        setSelectedSmartNodeSelectorTags(
+            createSmartNodeSelectorTagListFromParameterIdentStrings([
+                ...(props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()?.keys() ?? []),
+            ])
+        );
     }
 
     // Dependency array for useMemo checks address of continuousParameterIdentRangeReadonlyMap
@@ -111,11 +131,19 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         );
     };
 
-    const isFilterEdited =
+    const hasUnsavedFilterChanges =
         !isEqual(realizationNumberSelections, props.realizationFilter.getRealizationNumberSelections()) ||
         !isParameterValueSelectionsEqual() ||
         selectedFilterType !== props.realizationFilter.getFilterType() ||
         selectedIncludeOrExcludeFilter !== props.realizationFilter.getIncludeOrExcludeFilter();
+
+    if (prevIsFilterEdited !== hasUnsavedFilterChanges) {
+        setPrevIsFilterEdited(hasUnsavedFilterChanges);
+
+        if (props.onUnsavedFilterChange) {
+            props.onUnsavedFilterChange(hasUnsavedFilterChanges);
+        }
+    }
 
     function handleRealizationNumberFilterChanged(selection: ByRealizationNumberFilterSelection) {
         setRealizationNumberSelections(selection.realizationNumberSelections);
@@ -203,7 +231,9 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         props.realizationFilter.runFiltering();
 
         // Notify parent component about the filter change
-        props.onFilterChange();
+        if (props.onFilterChange) {
+            props.onFilterChange();
+        }
 
         // Force update to re-render edited state visualization
         forceUpdate();
@@ -243,29 +273,36 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     }
 
     return (
-        <div className={resolveClassNames("mb-4", { "opacity-40": false })}>
+        <div
+            className={resolveClassNames("outline mb-4 p-2 rounded-md", {
+                "outline-orange-400 shadow-orange-400 shadow-lg": props.isActive && hasUnsavedFilterChanges,
+                "outline-blue-400 shadow-blue-400 shadow-lg": props.isActive && !hasUnsavedFilterChanges,
+                "cursor-pointer hover:opacity-75 transition-opacity duration-100": !props.isActive,
+                "opacity-60 outline-2 outline-orange-400 shadow-orange-400 shadow-lg":
+                    !props.isActive && props.isAnotherFilterActive && hasUnsavedFilterChanges,
+                "opacity-30 outline-2 outline-gray-300 shadow-gray-300 shadow-md":
+                    !props.isActive && !hasUnsavedFilterChanges,
+            })}
+            onClick={props.onClick}
+        >
             <div
-                className={`border ${
-                    isFilterEdited ? "border-orange-400" : "border-lightgrey"
-                }  shadow-md p-2 rounded-md`}
+                className={resolveClassNames({
+                    "pointer-events-none": !props.isActive,
+                })}
             >
                 <div className="my-2 border-b border-lightgrey pb-2">
-                    <div
-                        className={`flex justify-center items-center p-2 rounded-md ${
-                            isFilterEdited ? "bg-orange-100" : "bg-slate-200"
-                        } h-10`}
-                    >
+                    <div className={`flex justify-center items-center p-2 rounded-md bg-slate-100 h-10`}>
                         <div className="font-bold flex-grow text-sm">
                             {"Ensemble: " + props.realizationFilter.getAssignedEnsembleIdent().getEnsembleName()}
                         </div>
                         <div
-                            className={resolveClassNames("flex", " items-center", " gap-1", {
-                                hidden: !isFilterEdited,
+                            className={resolveClassNames("flex items-center gap-1", {
+                                hidden: !hasUnsavedFilterChanges,
                             })}
                         >
                             <Button
                                 variant="contained"
-                                disabled={!isFilterEdited}
+                                disabled={!hasUnsavedFilterChanges}
                                 size="small"
                                 startIcon={<Check fontSize="small" />}
                                 onClick={handleApplyClick}
@@ -273,7 +310,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                             <Button
                                 color="danger"
                                 variant="contained"
-                                disabled={!isFilterEdited}
+                                disabled={!hasUnsavedFilterChanges}
                                 size="small"
                                 startIcon={<Clear fontSize="small" />}
                                 onClick={handleDiscardClick}
@@ -282,7 +319,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                    <div className="border border-lightgrey p-1 rounded-md">
+                    <div className="border border-lightgrey p-2 rounded-md">
                         <RealizationNumberSelector
                             selectedRealizations={selectedRealizationNumbers}
                             availableRealizations={props.realizationFilter.getAvailableEnsembleRealizations()}
@@ -308,7 +345,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                             {showActiveFilterType ? "Hide filter" : "Show filter"}
                         </Button>
                     </div>
-                    {showActiveFilterType && (
+                    {props.isActive && showActiveFilterType && (
                         <>
                             <div className="border border-lightgrey rounded-md shadow-md p-2">
                                 <Label text="Active Filter Type" wrapperClassName="border-b pb-2 mb-2">

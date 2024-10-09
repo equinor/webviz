@@ -1,5 +1,7 @@
 import React from "react";
 
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+
 import { isEqual } from "lodash";
 
 export type RealizationNumberSelectorProps = {
@@ -38,29 +40,28 @@ export const RealizationNumberSelector: React.FC<RealizationNumberSelectorProps>
         props.onRealizationNumberSelectionsChange(newRealizationNumberSelections);
     }
 
+    // grid-cols-[repeat(18,minmax(0,1fr))]
     return (
-        <div className="grid grid-cols-[repeat(18,minmax(0,1fr))] gap-1 max-w-sm">
+        <div className="grid gap-1 max-w-sm" style={{ gridTemplateColumns: "repeat(40, minmax(0, 1fr))" }}>
             {allRealizationsInRange.map((realization) => {
                 const isCurrentRealizationAvailable = props.availableRealizations.includes(realization);
+                const isRealizationSelected = props.selectedRealizations.includes(realization);
+                const isClickDisabled = props.disabledInteraction || !isCurrentRealizationAvailable;
                 return (
                     <div
                         title={`real-${realization}`}
                         key={realization}
-                        className={`w-full rounded-full aspect-square flex justify-center items-center max-w-[0.75rem] max-h-[0.75rem]
-                    ${
-                        props.selectedRealizations.includes(realization)
-                            ? "bg-green-600"
-                            : isCurrentRealizationAvailable
-                            ? "bg-gray-400"
-                            : "bg-gray-100"
-                    }
-                    ${!isCurrentRealizationAvailable ? "border-gray-600" : ""}
-                    ${!props.disabledInteraction && isCurrentRealizationAvailable ? "cursor-pointer" : ""} `}
-                        onClick={
-                            props.disabledInteraction || !isCurrentRealizationAvailable
-                                ? undefined
-                                : (e) => handleRealizationElementClick(e, realization)
-                        }
+                        className={resolveClassNames(
+                            "w-full rounded-full aspect-square flex justify-center items-center min-w-[0.5rem]",
+                            {
+                                "bg-green-600": isRealizationSelected,
+                                "bg-gray-400": !isRealizationSelected && isCurrentRealizationAvailable,
+                                "bg-gray-300": !isRealizationSelected && !isCurrentRealizationAvailable,
+                                "border-gray-600": !isCurrentRealizationAvailable,
+                                "cursor-pointer": !isClickDisabled,
+                            }
+                        )}
+                        onClick={isClickDisabled ? undefined : (e) => handleRealizationElementClick(e, realization)}
                     />
                 );
             })}

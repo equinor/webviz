@@ -1,5 +1,6 @@
 import React from "react";
 
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -13,18 +14,50 @@ export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: ()
 
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
-
-    const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
 
-    function handleFilterSettingsClose() {
+    const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
+    const [activeFilterEnsembleIdent, setActiveFilterEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const [ensembleIdentStringHasUnsavedChangesMap, setEnsembleIdentStringHasUnsavedChangesMap] = React.useState<{
+        [ensembleIdentString: string]: boolean;
+    }>({});
+
+    function handleCloseDrawerClick() {
+        setDialogOpen(false);
         props.onClose();
+    }
+
+    function handleDoNotCloseDrawerClick() {
+        setDialogOpen(false);
+    }
+
+    function handleFilterSettingsClose() {
+        // Check if there are unsaved changes
+        const hasUnsavedChanges = Object.values(ensembleIdentStringHasUnsavedChangesMap).some(
+            (hasUnsavedChanges) => hasUnsavedChanges
+        );
+        if (hasUnsavedChanges) {
+            setDialogOpen(true);
+        } else {
+            props.onClose();
+        }
     }
 
     function handleFilterChange() {
         // Notify subscribers of change.
         props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
+    }
+
+    function handleFilterEditChange(ensembleIdent: EnsembleIdent, hasUnsavedChanges: boolean) {
+        const newMap = { ...ensembleIdentStringHasUnsavedChangesMap };
+        const ensembleIdentString = ensembleIdent.toString();
+        newMap[ensembleIdentString] = hasUnsavedChanges;
+        setEnsembleIdentStringHasUnsavedChangesMap(newMap);
+    }
+
+    function handleSetActiveEnsembleRealizationFilter(ensembleIdent: EnsembleIdent) {
+        setActiveFilterEnsembleIdent(ensembleIdent);
     }
 
     return (
@@ -38,14 +71,26 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 <div className="flex flex-col p-2 gap-4 overflow-y-auto">
                     <div className="flex-grow space-y-4">
                         {ensembleSet.getEnsembleArr().map((ensemble) => {
+                            const ensembleIdent = ensemble.getIdent();
                             return (
                                 <EnsembleRealizationFilter
-                                    key={ensemble.getIdent().toString()}
+                                    key={ensembleIdent.toString()}
                                     realizationFilter={realizationFilterSet.getRealizationFilterForEnsembleIdent(
                                         ensemble.getIdent()
                                     )}
-                                    active={true}
+                                    isAnotherFilterActive={
+                                        activeFilterEnsembleIdent !== null &&
+                                        !activeFilterEnsembleIdent.equals(ensembleIdent)
+                                    }
+                                    isActive={
+                                        activeFilterEnsembleIdent !== null &&
+                                        activeFilterEnsembleIdent.equals(ensembleIdent)
+                                    }
+                                    onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
                                     onFilterChange={handleFilterChange}
+                                    onUnsavedFilterChange={(hasUnsavedChanges) =>
+                                        handleFilterEditChange(ensembleIdent, hasUnsavedChanges)
+                                    }
                                 />
                             );
                         })}
@@ -58,14 +103,13 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                             modal
                             actions={
                                 <div className="flex gap-4">
-                                    <Button onClick={() => {}} color="danger">
-                                        No, don&apos;t save
-                                    </Button>
-                                    <Button onClick={() => {}}>Yes, save</Button>
+                                    <Button onClick={handleCloseDrawerClick}>Yes</Button>
+                                    <Button onClick={handleDoNotCloseDrawerClick}>No</Button>
                                 </div>
                             }
                         >
-                            You have unsaved changes which will be lost. Do you want to save changes?
+                            You have unsaved filter changes which are not applied to the ensemble yet. Do you want still
+                            want to close the drawer?
                         </Dialog>
                     }
                 </div>

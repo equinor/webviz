@@ -34,20 +34,20 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
         readonly RealizationNumberSelection[] | null
     >(props.realizationNumberSelections);
 
-    const [initialRangeTags, setInitialRangeTags] = React.useState<string[] | null>(
+    const [initialRangeTags, setInitialRangeTags] = React.useState<string[]>(
         props.initialRealizationNumberSelections
             ? makeRealizationPickerTagsFromRealizationNumberSelections(props.initialRealizationNumberSelections)
-            : null
+            : []
     );
-    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[] | null>(
+    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>(
         props.realizationNumberSelections
             ? makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
-            : null
+            : []
     );
 
     if (!isEqual(props.initialRealizationNumberSelections, prevInitialRealizationNumberSelections)) {
         if (!props.initialRealizationNumberSelections) {
-            setInitialRangeTags(null);
+            setInitialRangeTags([]);
             setPrevInitialRealizationNumberSelections(null);
         } else {
             setInitialRangeTags(
@@ -59,7 +59,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
 
     if (!isEqual(props.realizationNumberSelections, prevRealizationNumberSelections)) {
         if (!props.realizationNumberSelections) {
-            setSelectedRangeTags(null);
+            setSelectedRangeTags([]);
         } else {
             setSelectedRangeTags(
                 makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
@@ -110,8 +110,8 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
             </Label>
             <Label text="Pick Realization Numbers">
                 <RealizationPicker
-                    initialRangeTags={initialRangeTags ?? undefined}
-                    selectedRangeTags={selectedRangeTags ?? undefined}
+                    initialRangeTags={initialRangeTags}
+                    selectedRangeTags={selectedRangeTags}
                     validRealizations={props.availableRealizationNumbers}
                     debounceTimeMs={500}
                     onChange={handleRealizationPickChange}

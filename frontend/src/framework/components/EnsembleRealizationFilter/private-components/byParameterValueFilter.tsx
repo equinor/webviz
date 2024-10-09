@@ -12,11 +12,12 @@ import {
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
 } from "@framework/utils/realizationFilterTypesUtils";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { Label } from "@lib/components/Label";
 import { Slider } from "@lib/components/Slider";
 import { SmartNodeSelector, SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
 import { TagPicker } from "@lib/components/TagPicker";
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Delete } from "@mui/icons-material";
 
 import {
@@ -25,7 +26,7 @@ import {
 } from "../private-utils/smartNodeSelectorUtils";
 
 export type ByParameterValueFilterSelection = {
-    parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection>;
+    parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection> | null;
     smartNodeSelectorTags: string[];
 };
 
@@ -89,9 +90,11 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             newMap.set(parameterIdentString, newParameterValueSelection);
         }
 
+        const nonEmptyMap = newMap.size > 0 ? (newMap as ReadonlyMap<string, ParameterValueSelection>) : null;
+
         // Trigger filter change
         props.onFilterChange({
-            parameterIdentStringToValueSelectionMap: newMap as ReadonlyMap<string, ParameterValueSelection>,
+            parameterIdentStringToValueSelectionMap: nonEmptyMap,
             smartNodeSelectorTags: selection.selectedTags,
         });
     }
@@ -182,9 +185,11 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         // Update selector tags
         const newSmartNodeSelectorTags = createSmartNodeSelectorTagListFromParameterIdentStrings([...newMap.keys()]);
 
+        const nonEmptyMap = newMap.size > 0 ? (newMap as ReadonlyMap<string, ParameterValueSelection>) : null;
+
         // Trigger filter change
         props.onFilterChange({
-            parameterIdentStringToValueSelectionMap: newMap as ReadonlyMap<string, ParameterValueSelection>,
+            parameterIdentStringToValueSelectionMap: nonEmptyMap,
             smartNodeSelectorTags: newSmartNodeSelectorTags,
         });
     }
@@ -263,27 +268,17 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                     <div className="flex flex-row items-center gap-2">
                         <div
                             title={`Parameter: ${parameterIdentString}`}
-                            className={resolveClassNames(
-                                "flex-grow",
-                                "text-sm",
-                                "mb-1",
-                                "text-gray-500",
-                                "leading-0",
-                                "items-center",
-                                "overflow-hidden",
-                                "whitespace-nowrap",
-                                "text-ellipsis"
-                            )}
+                            className="flex-grow text-sm text-gray-500 leading-none overflow-hidden whitespace-nowrap text-ellipsis"
                         >
                             {parameterIdentString}
                         </div>
-                        <div
+                        <DenseIconButton
                             title="Remove parameter"
-                            className="text-indigo-600 hover:bg-indigo-50 rounded-full p-1 cursor-pointer flex-grow-1"
+                            colorScheme={DenseIconButtonColorScheme.DANGER}
                             onClick={() => handleRemoveButtonClick(parameterIdentString)}
                         >
                             <Delete fontSize="small" />
-                        </div>
+                        </DenseIconButton>
                     </div>
                     <div className="flex items-center">
                         <div className="flex-grow">
@@ -318,13 +313,35 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     );
 };
 
-// TODO: Improve function to determine step size based on min and max
+/**
+ * Create a step size for a continuous value slider based on the min and max values.
+ *
+ * The step size is computed as a fraction of the range, and then rounded to a magnitude-adjusted value.
+ */
 function createContinuousValueSliderStep(min: number, max: number): number {
-    return (max - min) / 100;
+    const range = Math.abs(max - min);
 
-    // // Get step based on logarithmic scale
-    // const diff = max - min;
-    // const log10 = Math.log10(diff);
+    // Determine the number of steps based on the magnitude of the range
+    const magnitude = Math.floor(Math.log10(range));
 
-    // // Round to nearest integer
+    let numberOfSteps = 100;
+    let digitPrecision = 3;
+    if (magnitude < 1) {
+        numberOfSteps = 100;
+        digitPrecision = 4;
+    } else if (magnitude < 2) {
+        numberOfSteps = 100;
+    } else if (magnitude < 3) {
+        numberOfSteps = 1000;
+    } else {
+        numberOfSteps = 10000;
+    }
+
+    // Calculate the step size based on the number of steps
+    let stepSize = range / numberOfSteps;
+
+    // Reduce number of significant digits
+    stepSize = parseFloat(stepSize.toPrecision(digitPrecision));
+
+    return stepSize;
 }
