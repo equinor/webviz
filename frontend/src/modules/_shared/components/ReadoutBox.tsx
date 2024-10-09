@@ -1,6 +1,9 @@
-import { Fragment, ReactNode, useEffect, useRef, useState } from "react";
+import React from "react";
 
-import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { useStableProp } from "@lib/hooks/useStableProp";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+
+import _ from "lodash";
 
 export type ReadoutItem = {
     label: string;
@@ -15,6 +18,10 @@ export type InfoItem = {
     unit?: string;
 };
 
+// Top not included, as it's not relevant
+type EdgeDistance = { left: number; right: number; bottom: number };
+type PartialEdgeDistance = Partial<EdgeDistance>;
+
 export type ReadoutBoxProps = {
     /** A list of readouts to display */
     readoutItems: ReadoutItem[];
@@ -24,105 +31,129 @@ export type ReadoutBoxProps = {
     noLabelColor?: boolean;
     /** Disables the mouse-avoiding behaviour */
     flipDisabled?: boolean;
+    /** The distance between the box and the edges of the parent container. Give a single number for equal distance on all sides */
+    edgeDistanceRem?: number | PartialEdgeDistance;
 };
 
-export function ReadoutBox(props: ReadoutBoxProps): ReactNode {
-    const readoutItems = props.readoutItems;
-    const maxNumItems = props.maxNumItems ?? 3;
+export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
+    const maxNumItemsOrDefault = props.maxNumItems ?? 3;
+    const visibleReadoutItems = _.take(props.readoutItems, maxNumItemsOrDefault);
 
-    const [flipped, setFlipped] = useState<boolean>(false);
-    const readoutRoot = useRef<HTMLDivElement>(null);
+    const [flipped, setFlipped] = React.useState<boolean>(false);
+    const [stableEdgeDistanceRem] = useStableProp(props.edgeDistanceRem);
+    const edgeDistance = React.useMemo(() => computeEdgeDistance(stableEdgeDistanceRem), [stableEdgeDistanceRem]);
+    const readoutRoot = React.useRef<HTMLDivElement>(null);
 
-    // How far away from the lower right corner the box is placed
-    // TODO: Expose as prop?
-    // ! "3" is based on the left-12/right-12 layout values.
-    const cornerDistance = parseInt(getComputedStyle(document.documentElement).fontSize) * 3;
+    React.useEffect(
+        function addListenersForFlip() {
+            if (props.flipDisabled) return;
 
-    useEffect(() => {
-        if (props.flipDisabled) return;
+            function maybeFlipBox(evt: MouseEvent) {
+                if (!readoutRoot.current) return;
 
-        function maybeFlipBox(evt: MouseEvent) {
-            if (!readoutRoot.current) return;
+                const offsetParent = readoutRoot.current.offsetParent;
+                if (!offsetParent) return; // Not floating, I believe
 
-            const offsetParent = readoutRoot.current.offsetParent;
-            if (!offsetParent) return; // Not floating, I believe
+                const parentRect = offsetParent.getBoundingClientRect();
+                const { top, bottom, width } = readoutRoot.current.getBoundingClientRect();
 
-            const parentRect = offsetParent.getBoundingClientRect();
-            const { top, bottom, width } = readoutRoot.current.getBoundingClientRect();
+                // If above, or below, it's guaranteed to fit
+                if (evt.clientY < top || evt.clientY > bottom) {
+                    setFlipped(false);
+                    return;
+                }
 
-            // If above, or below, it's guaranteed to fit
-            if (evt.clientY < top || evt.clientY > bottom) {
-                if (flipped) setFlipped(false);
-                return;
+                const preferredRight = parentRect.right - edgeDistance.right;
+                const preferredLeft = parentRect.right - width - edgeDistance.right;
+
+                if (evt.clientX < preferredLeft || evt.clientX > preferredRight) {
+                    setFlipped(false);
+                } else {
+                    setFlipped(true);
+                }
             }
 
-            const prefferredRight = parentRect.right - cornerDistance;
-            const prefferredLeft = parentRect.right - width - cornerDistance;
+            document.addEventListener("mousemove", maybeFlipBox);
 
-            if (evt.clientX < prefferredLeft || evt.clientX > prefferredRight) {
-                if (flipped) setFlipped(false);
-            } else {
-                if (!flipped) setFlipped(true);
-            }
-        }
+            return function removeFlipListeners() {
+                document.removeEventListener("mousemove", maybeFlipBox);
+            };
+        },
+        [props.flipDisabled, edgeDistance]
+    );
 
-        document.addEventListener("mousemove", maybeFlipBox);
+    // Guard. If there are no readout items, don't render the box
+    if (props.readoutItems.length === 0) return null;
 
-        return () => document.removeEventListener("mousemove", maybeFlipBox);
-    }, [cornerDistance, flipped, props.flipDisabled]);
+    const boxPositionStyle: React.CSSProperties = { bottom: edgeDistance.bottom + "px" };
 
-    if (readoutItems.length === 0) return null;
+    if (flipped) boxPositionStyle.left = edgeDistance.left + "px";
+    else boxPositionStyle.right = edgeDistance.right + "px";
 
     return (
         <div
             ref={readoutRoot}
-            className={`absolute bottom-10 right-12 z-[9999] w-60 items-center grid grid-cols-[0.7rem,_1fr,_1fr,_auto] gap-x-2 gap-y-1 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none ${
-                flipped ? "left-12" : "right-12"
-            }`}
+            className="absolute z-50 w-60 flex flex-col gap-2 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none"
+            style={boxPositionStyle}
         >
-            {readoutItems.map((item, idx) => {
-                if (idx < maxNumItems) {
-                    return (
-                        <Fragment key={idx}>
-                            {!props.noLabelColor && (
-                                <div
-                                    className="rounded-full w-3 h-3 border border-slate-500"
-                                    style={{ backgroundColor: item.color }}
-                                />
-                            )}
-                            <span
-                                className={resolveClassNames("block font-bold", {
-                                    "col-span-4": props.noLabelColor,
-                                    "col-span-3": !props.noLabelColor,
-                                })}
-                            >
-                                {item.label}
-                            </span>
+            {visibleReadoutItems.map((item, idx) => (
+                <React.Fragment key={idx}>
+                    <InfoLabel item={item} noLabelColor={props.noLabelColor} />
 
-                            {item.info && item.info.map((i: InfoItem, idx: number) => <InfoItem key={idx} {...i} />)}
-                        </Fragment>
-                    );
-                }
-            })}
-            {readoutItems.length > maxNumItems && (
-                <div className="col-span-4 italic">...and {readoutItems.length - maxNumItems} more</div>
+                    {item.info.map((i: InfoItem, idx: number) => (
+                        <InfoItem key={idx} {...i} />
+                    ))}
+                </React.Fragment>
+            ))}
+
+            {props.readoutItems.length > maxNumItemsOrDefault && (
+                <div className="flex items-center gap-2">
+                    ...and {props.readoutItems.length - maxNumItemsOrDefault} more
+                </div>
             )}
         </div>
     );
 }
 
-function InfoItem(props: InfoItem): ReactNode {
+function InfoLabel(props: { item: ReadoutItem; noLabelColor?: boolean }): React.ReactNode {
     return (
-        <>
-            <div className="place-self-center">{props.adornment}</div>
-            <div className="">{props.name}:</div>
-            <div className="place-self-end">{makeFormatedInfoValue(props.value)}</div>
-            {props.unit && <div className=" text-right">{props.unit}</div>}
-        </>
+        <div className="flex gap-2 font-bold items-center">
+            {!props.noLabelColor && (
+                <div
+                    className="rounded-full w-3 h-3 border border-slate-500"
+                    style={{ backgroundColor: props.item.color }}
+                />
+            )}
+            <span className="block">{props.item.label}</span>
+        </div>
     );
 }
 
-function makeFormatedInfoValue(value: string | number | boolean | number[]): string {
+function InfoItem(props: InfoItem): React.ReactNode {
+    return (
+        <div className="grid gap-x-1 gap-y-3 items-center" style={{ gridTemplateColumns: "1rem 8rem 1fr auto" }}>
+            <div>{props.adornment}</div>
+            <div>{props.name}:</div>
+            <div>{makeFormattedInfoValue(props.value)}</div>
+            <div className="text-right">{props.unit}</div>
+        </div>
+    );
+}
+
+const DEFAULT_EDGE_DISTANCE: EdgeDistance = { left: 3, right: 3, bottom: 2.5 };
+
+function computeEdgeDistance(edgeDistanceProp?: number | PartialEdgeDistance): EdgeDistance {
+    let edgesRem: EdgeDistance;
+
+    if (typeof edgeDistanceProp === "number") {
+        edgesRem = { left: edgeDistanceProp, right: edgeDistanceProp, bottom: edgeDistanceProp };
+    } else {
+        edgesRem = _.defaults({}, edgeDistanceProp ?? {}, DEFAULT_EDGE_DISTANCE);
+    }
+    return _.mapValues(edgesRem, convertRemToPixels);
+}
+
+function makeFormattedInfoValue(value: string | number | boolean | number[]): string {
     let formattedValue = "";
 
     if (value instanceof Array) {
@@ -131,15 +162,14 @@ function makeFormatedInfoValue(value: string | number | boolean | number[]): str
         } else {
             formattedValue = value.map((el) => formatValue(el)).join(" - ");
         }
-    }
-    if (typeof value === "number" || typeof value === "string") {
+    } else {
         formattedValue = formatValue(value);
     }
 
     return formattedValue;
 }
 
-function formatValue(value: number | string): string {
+function formatValue(value: number | string | boolean): string {
     if (typeof value === "number") {
         return (+value.toFixed(2)).toString();
     }

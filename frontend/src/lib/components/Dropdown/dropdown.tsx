@@ -13,33 +13,28 @@ import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
-import { withDefaults } from "../_component-utils/components";
 
-export type DropdownOption = {
-    value: string;
+export type DropdownOption<TValue = string> = {
+    value: TValue;
     label: string;
     adornment?: React.ReactNode;
+    hoverText?: string;
     disabled?: boolean;
     group?: string;
 };
 
-export type DropdownProps = {
+export type DropdownProps<TValue = string> = {
     id?: string;
     wrapperId?: string;
-    options: DropdownOption[];
-    value?: string;
-    onChange?: (value: string) => void;
+    options: DropdownOption<TValue>[];
+    value?: TValue;
+    onChange?: (value: TValue) => void;
     filter?: boolean;
     width?: string | number;
     showArrows?: boolean;
     debounceTimeMs?: number;
     placeholder?: string;
 } & BaseComponentProps;
-
-const defaultProps = {
-    value: "",
-    filter: false,
-};
 
 const MIN_HEIGHT = 200;
 const OPTION_HEIGHT = 32;
@@ -83,8 +78,10 @@ function makeOptionListItems(options: DropdownOption[]): OptionListItem[] {
     return optionsWithSeperators;
 }
 
-export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
+export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const { onChange } = props;
+
+    const valueWithDefault = props.value ?? null;
 
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
     const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
@@ -93,8 +90,8 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         height: 0,
     });
     const [filter, setFilter] = React.useState<string | null>(null);
-    const [selection, setSelection] = React.useState<string | number>(props.value);
-    const [prevValue, setPrevValue] = React.useState<string | number>(props.value);
+    const [selection, setSelection] = React.useState<TValue | null>(props.value ?? null);
+    const [prevValue, setPrevValue] = React.useState<TValue | null>(props.value ?? null);
     const [prevFilteredOptionsWithSeparators, setPrevFilteredOptionsWithSeparators] = React.useState<OptionListItem[]>(
         makeOptionListItems(props.options)
     );
@@ -123,10 +120,10 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         [filteredOptionsWithSeparators, selection]
     );
 
-    if (prevValue !== props.value) {
-        setSelection(props.value);
-        setSelectionIndex(props.options.findIndex((option) => option.value === props.value));
-        setPrevValue(props.value);
+    if (!isEqual(prevValue, valueWithDefault)) {
+        setSelection(valueWithDefault);
+        setSelectionIndex(props.options.findIndex((option) => isEqual(option.value, valueWithDefault)));
+        setPrevValue(valueWithDefault);
     }
 
     if (!isEqual(prevFilteredOptionsWithSeparators, filteredOptionsWithSeparators)) {
@@ -214,7 +211,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
                     };
 
                     if (inputClientBoundingRect.y + inputBoundingRect.height + height > window.innerHeight) {
-                        newDropdownRect.top = inputClientBoundingRect.y - MIN_HEIGHT;
+                        newDropdownRect.top = inputClientBoundingRect.y - height;
                         newDropdownRect.height = Math.min(height, inputClientBoundingRect.y);
                     } else {
                         newDropdownRect.top = inputClientBoundingRect.y + inputBoundingRect.height;
@@ -259,7 +256,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     );
 
     const handleOnChange = React.useCallback(
-        function handleOnChange(value: string) {
+        function handleOnChange(value: TValue) {
             if (!onChange) {
                 return;
             }
@@ -281,9 +278,9 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     );
 
     const handleOptionClick = React.useCallback(
-        function handleOptionClick(value: string) {
+        function handleOptionClick(value: TValue) {
             setSelection(value);
-            setSelectionIndex(props.options.findIndex((option) => option.value === value));
+            setSelectionIndex(props.options.findIndex((option) => isEqual(option.value, value)));
             setDropdownVisible(false);
             setFilter(null);
             setFilteredOptionsWithSeparators(makeOptionListItems(props.options));
@@ -306,6 +303,12 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
     React.useEffect(
         function addKeyDownEventHandlerEffect() {
             function handleKeyDown(e: KeyboardEvent) {
+                if (e.key === "Escape") {
+                    setDropdownVisible(false);
+                    setOptionIndexWithFocus(-1);
+                    setKeyboardFocus(false);
+                    inputRef.current?.blur();
+                }
                 if (dropdownRef.current) {
                     const currentStartIndex = Math.round(dropdownRef.current?.scrollTop / OPTION_HEIGHT);
                     if (dropdownVisible) {
@@ -411,7 +414,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
         if (dropdownVisible && filter !== null) {
             return filter;
         }
-        return props.options.find((el) => el.value === selection)?.label || "";
+        return props.options.find((el) => isEqual(el.value, selection))?.label || "";
     }
 
     function makeInputAdornment() {
@@ -479,14 +482,14 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
 
     return (
         <BaseComponent disabled={props.disabled}>
-            <div style={{ width: props.width }} id={props.wrapperId} className="flex">
+            <div style={{ width: props.width }} id={props.wrapperId} className="flex hover input-comp rounded">
                 <div className="flex-grow">
                     <Input
                         ref={inputRef}
                         id={props.id}
                         error={
                             selection !== "" &&
-                            props.options.find((option) => option.value === selection) === undefined &&
+                            props.options.find((option) => isEqual(option.value, selection)) === undefined &&
                             props.options.length > 0
                         }
                         onClick={() => handleInputClick()}
@@ -563,7 +566,7 @@ export const Dropdown = withDefaults<DropdownProps>()(defaultProps, (props) => {
             </div>
         </BaseComponent>
     );
-});
+}
 
 type ValType = DropdownOption["value"];
 type OptionProps = DropdownOption & {

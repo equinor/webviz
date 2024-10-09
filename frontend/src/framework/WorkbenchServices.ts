@@ -4,6 +4,7 @@ import { isEqual } from "lodash";
 
 import { EnsembleIdent } from "./EnsembleIdent";
 import { Workbench } from "./Workbench";
+import { InplaceVolumetricsFilter } from "./types/inplaceVolumetricsFilter";
 import { Intersection } from "./types/intersection";
 import { Viewport } from "./types/viewport";
 import { Wellbore } from "./types/wellbore";
@@ -17,6 +18,9 @@ export type GlobalTopicDefinitions = {
     "global.hoverRealization": { realization: number } | null;
     "global.hoverTimestamp": { timestampUtcMs: number } | null;
     "global.hoverMd": { wellboreUuid: string; md: number } | null;
+    "global.hoverZone": { zoneName: string } | null;
+    "global.hoverRegion": { regionName: string } | null;
+    "global.hoverFacies": { faciesName: string } | null;
 
     "global.syncValue.ensembles": EnsembleIdent[];
     "global.syncValue.date": { timeOrInterval: string };
@@ -32,6 +36,8 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.intersection": Intersection;
     "global.syncValue.cameraPositionIntersection": Viewport;
     "global.syncValue.verticalScale": number;
+    "global.syncValue.inplaceVolumetricsFilter": InplaceVolumetricsFilter;
+    "global.syncValue.inplaceVolumetricsResultName": string;
 };
 
 export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;

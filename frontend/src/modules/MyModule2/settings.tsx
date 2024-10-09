@@ -143,11 +143,11 @@ export function Settings(): React.ReactNode {
     );
 
     function makeChildren(items: Item[]): React.ReactElement[] {
-        return items.map((item) => {
+        return items.map((item, idx) => {
             if (item.type === "item") {
                 return (
                     <SortableListItem key={item.id} title={item.title} id={item.id}>
-                        {item.title}
+                        {idx % 2 === 0 ? item.title : undefined}
                     </SortableListItem>
                 );
             } else {
@@ -170,11 +170,6 @@ export function Settings(): React.ReactNode {
             <Label text="Atom text">
                 <Input value={atomText} onChange={handleAtomTextChange} />
             </Label>
-
-            <Label text="Persistent atom text">
-                <Input value={persistentText} onChange={({ target }) => setPersistentText(target.value)} />
-            </Label>
-
             <div className="h-96">
                 <SortableList contentWhenEmpty="No items" onItemMoved={handleItemMove}>
                     {makeChildren(items)}

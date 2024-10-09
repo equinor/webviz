@@ -26,7 +26,6 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
         function propagateSettingsChange() {
             props.layer.maybeUpdateSettings(newSettings);
             props.layer.maybeRefetchData();
-            setNewSettings({});
         },
         [newSettings, props.layer]
     );
