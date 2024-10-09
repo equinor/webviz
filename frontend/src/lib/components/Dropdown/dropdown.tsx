@@ -48,11 +48,11 @@ type DropdownRect = {
     minWidth: number;
 };
 
-type OptionListItem =
+type OptionListItem<TValue> =
     | {
           type: "option";
           actualIndex: number;
-          content: DropdownOption;
+          content: DropdownOption<TValue>;
       }
     | {
           type: "separator";
@@ -63,10 +63,10 @@ type OptionListItem =
 const noMatchingOptionsText = "No matching options";
 const noOptionsText = "No options";
 
-function makeOptionListItems(options: DropdownOption[]): OptionListItem[] {
-    const optionsWithSeperators: OptionListItem[] = options.flatMap((option, index) => {
-        const optionItem = { type: "option", actualIndex: index, content: option } as OptionListItem;
-        const seperatorItem = { type: "separator", content: option.group } as OptionListItem;
+function makeOptionListItems<TValue>(options: DropdownOption<TValue>[]): OptionListItem<TValue>[] {
+    const optionsWithSeperators: OptionListItem<TValue>[] = options.flatMap((option, index) => {
+        const optionItem = { type: "option", actualIndex: index, content: option } as OptionListItem<TValue>;
+        const seperatorItem = { type: "separator", content: option.group } as OptionListItem<TValue>;
 
         if (option.group && option.group !== options[index - 1]?.group) {
             return [seperatorItem, optionItem];
@@ -92,11 +92,11 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const [filter, setFilter] = React.useState<string | null>(null);
     const [selection, setSelection] = React.useState<TValue | null>(props.value ?? null);
     const [prevValue, setPrevValue] = React.useState<TValue | null>(props.value ?? null);
-    const [prevFilteredOptionsWithSeparators, setPrevFilteredOptionsWithSeparators] = React.useState<OptionListItem[]>(
-        makeOptionListItems(props.options)
-    );
+    const [prevFilteredOptionsWithSeparators, setPrevFilteredOptionsWithSeparators] = React.useState<
+        OptionListItem<TValue>[]
+    >(makeOptionListItems(props.options));
     const [selectionIndex, setSelectionIndex] = React.useState<number>(-1);
-    const [filteredOptionsWithSeparators, setFilteredOptionsWithSeparators] = React.useState<OptionListItem[]>(
+    const [filteredOptionsWithSeparators, setFilteredOptionsWithSeparators] = React.useState<OptionListItem<TValue>[]>(
         makeOptionListItems(props.options)
     );
     const [optionIndexWithFocus, setOptionIndexWithFocus] = React.useState<number>(-1);
@@ -112,7 +112,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const setOptionIndexWithFocusToCurrentSelection = React.useCallback(
         function handleFilteredOptionsChange() {
             const index = filteredOptionsWithSeparators.findIndex(
-                (option) => option.type === "option" && option.content.value === selection
+                (option) => option.type === "option" && isEqual(option.content.value, selection)
             );
             setSelectionIndex(index);
             setOptionIndexWithFocus(index);
@@ -197,7 +197,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                 const inputClientBoundingRect = inputRef.current?.getBoundingClientRect();
                 const bodyClientBoundingRect = document.body.getBoundingClientRect();
 
-                const height =
+                const preferredHeight =
                     Math.min(
                         MIN_HEIGHT,
                         Math.max(filteredOptionsWithSeparators.length * OPTION_HEIGHT, OPTION_HEIGHT)
@@ -207,16 +207,17 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                     const newDropdownRect: DropdownRect = {
                         minWidth: inputBoundingRect.width,
                         width: dropdownRect.width,
-                        height: height,
+                        height: preferredHeight,
                     };
 
-                    if (inputClientBoundingRect.y + inputBoundingRect.height + height > window.innerHeight) {
+                    if (inputClientBoundingRect.y + inputBoundingRect.height + preferredHeight > window.innerHeight) {
+                        const height = Math.min(inputClientBoundingRect.y, preferredHeight);
                         newDropdownRect.top = inputClientBoundingRect.y - height;
-                        newDropdownRect.height = Math.min(height, inputClientBoundingRect.y);
+                        newDropdownRect.height = height;
                     } else {
                         newDropdownRect.top = inputClientBoundingRect.y + inputBoundingRect.height;
                         newDropdownRect.height = Math.min(
-                            height,
+                            preferredHeight,
                             window.innerHeight - inputClientBoundingRect.y - inputBoundingRect.height
                         );
                     }
@@ -236,7 +237,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                                 (filteredOptionsWithSeparators.findIndex(
                                     (option) => option.type === "option" && option.content.value === selection
                                 ) || 0) -
-                                    height / OPTION_HEIGHT / 2
+                                    preferredHeight / OPTION_HEIGHT / 2
                             )
                         )
                     );
@@ -400,7 +401,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             setFilter(event.target.value);
             const newFilteredOptions = props.options.filter((option) => option.label.includes(event.target.value));
             setFilteredOptionsWithSeparators(makeOptionListItems(newFilteredOptions));
-            setSelectionIndex(newFilteredOptions.findIndex((option) => option.value === selection));
+            setSelectionIndex(newFilteredOptions.findIndex((option) => isEqual(option.value, selection)));
         },
         [props.options, selection]
     );
@@ -463,14 +464,14 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         setOptionIndexWithFocus(-1);
     }
 
-    function renderItem(item: OptionListItem, index: number) {
+    function renderItem(item: OptionListItem<TValue>, index: number) {
         if (item.type === "separator") {
             return <SeparatorItem key={`${item.content}-${index}`} text={item.content} />;
         } else {
             return (
                 <OptionItem
-                    key={item.content.value}
-                    isSelected={selection === item.content.value}
+                    key={`${item.content.value}`}
+                    isSelected={isEqual(selection, item.content.value)}
                     isFocused={optionIndexWithFocus === index}
                     {...item.content}
                     onSelect={handleOptionClick}
@@ -568,21 +569,20 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     );
 }
 
-type ValType = DropdownOption["value"];
-type OptionProps = DropdownOption & {
+type OptionProps<TValue> = DropdownOption<TValue> & {
     isSelected: boolean;
     isFocused: boolean;
-    onSelect: (value: ValType) => void;
-    onPointerOver: (value: ValType) => void;
+    onSelect: (value: TValue) => void;
+    onPointerOver: (value: TValue) => void;
 };
 
-function OptionItem(props: OptionProps): React.ReactNode {
+function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
     return (
         <div
-            className={resolveClassNames("flex", "items-center", "cursor-pointer", "select-none", "px-1", {
+            className={resolveClassNames("flex items-center cursor-pointer select-none px-1", {
                 "bg-blue-600 text-white box-border hover:bg-blue-700": props.isSelected,
                 "bg-blue-100": !props.isSelected && props.isFocused,
-                "bg-blue-700": props.isSelected && props.isFocused,
+                "bg-blue-700 text-white": props.isSelected && props.isFocused,
                 "pointer-events-none": props.disabled,
                 "text-gray-400": props.disabled,
             })}
