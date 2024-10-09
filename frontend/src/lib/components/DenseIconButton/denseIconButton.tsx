@@ -8,12 +8,10 @@ export enum DenseIconButtonColorScheme {
 }
 
 const COLOR_SCHEMES: Record<DenseIconButtonColorScheme, string> = {
-    [DenseIconButtonColorScheme.DEFAULT]: "text-gray-600 hover:text-gray-900 hover:bg-blue-200 focus:outline-blue-600",
-    [DenseIconButtonColorScheme.WARNING]:
-        "text-gray-600 hover:text-gray-900 hover:bg-yellow-200 focus:outline-yellow-600",
-    [DenseIconButtonColorScheme.SUCCESS]:
-        "text-gray-600 hover:text-gray-900 hover:bg-green-200 focus:outline-green-600",
-    [DenseIconButtonColorScheme.DANGER]: "text-gray-600 hover:text-gray-900 hover:bg-red-200 focus:outline-red-600",
+    [DenseIconButtonColorScheme.DEFAULT]: "hover:bg-blue-200 focus:outline-blue-600",
+    [DenseIconButtonColorScheme.WARNING]: "hover:bg-yellow-200 focus:outline-yellow-600",
+    [DenseIconButtonColorScheme.SUCCESS]: "hover:bg-green-200 focus:outline-green-600",
+    [DenseIconButtonColorScheme.DANGER]: "hover:bg-red-200 focus:outline-red-600",
 };
 
 export type DenseIconButtonProps = {
@@ -35,7 +33,7 @@ export function DenseIconButton(props: DenseIconButtonProps): React.ReactNode {
     return (
         <button
             className={resolveClassNames(
-                "p-1 text-sm rounded flex gap-1 items-center focus:outline focus:outline-1",
+                "p-1 text-sm rounded flex gap-1 items-center focus:outline focus:outline-1 hover:text-gray-900 text-gray-600",
                 colorScheme
             )}
             onClick={handleClick}
