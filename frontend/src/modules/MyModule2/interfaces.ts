@@ -1,10 +1,11 @@
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
-import { textAtom } from "./atoms";
+import { persistentTextSettingAtom, textAtom } from "./atoms";
 
 type SettingsToViewInterface = {
     text: string;
     derivedText: string;
+    persistentText: string;
 };
 
 export type Interfaces = {
@@ -13,5 +14,6 @@ export type Interfaces = {
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     text: (get) => get(textAtom),
+    persistentText: (get) => get(persistentTextSettingAtom),
     derivedText: (get) => get(textAtom).toUpperCase(),
 };

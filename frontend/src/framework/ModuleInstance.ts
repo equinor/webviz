@@ -335,6 +335,8 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         this.setModuleInstanceState(ModuleInstanceState.RESETTING);
 
         return new Promise((resolve) => {
+            this._module.onInstanceUnload(this._id);
+
             this.initialize();
             resolve();
         });
@@ -346,6 +348,10 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
 
     getInitialSettings(): InitialSettings | null {
         return this._initialSettings;
+    }
+
+    unload() {
+        this._module.onInstanceUnload(this._id);
     }
 }
 
