@@ -9,7 +9,7 @@ export type ButtonProps = {
     variant?: "text" | "outlined" | "contained";
     startIcon?: React.ReactNode;
     endIcon?: React.ReactNode;
-    color?: "primary" | "danger" | "success" | string;
+    color?: "primary" | "danger" | "success" | "secondary";
     size?: "small" | "medium" | "large";
 } & ButtonUnstyledProps;
 
@@ -32,27 +32,33 @@ export const Button = React.forwardRef((props: ButtonProps, ref: React.Forwarded
         if (color === "primary" || !color) {
             classNames.push("border-indigo-600", "text-indigo-600", "hover:bg-indigo-50");
         } else if (color === "danger") {
-            classNames.push(`text-red-600`, `border-red-600`, `hover:bg-red-50`);
+            classNames.push("border-red-600", "text-red-600", "hover:bg-red-50");
         } else if (color === "success") {
             classNames.push("border-green-600", "text-green-600", "hover:bg-green-50");
+        } else if (color === "secondary") {
+            classNames.push("border-slate-500", "text-slate-600", "hover:bg-slate-50");
         }
     } else if (variant === "contained") {
         classNames.push("border", "border-transparent", "text-white");
         if (color === "primary" || !color) {
             classNames.push("bg-indigo-600", "hover:bg-indigo-700");
         } else if (color === "danger") {
-            classNames.push(`bg-red-600`, `hover:bg-red-700`);
+            classNames.push("bg-red-600", "hover:bg-red-700");
         } else if (color === "success") {
             classNames.push("bg-green-600", "hover:bg-green-700");
+        } else if (color === "secondary") {
+            classNames.push("bg-slate-500", "hover:bg-slate-600");
         }
     } else {
         classNames.push("bg-transparent");
         if (color === "primary" || !color) {
             classNames.push("text-indigo-600", "hover:bg-indigo-100");
         } else if (color === "danger") {
-            classNames.push(`text-red-600`, `hover:bg-red-100`);
-        } else {
+            classNames.push("text-red-600", "hover:bg-red-100");
+        } else if (color === "success") {
             classNames.push("text-green-600", "hover:bg-green-100");
+        } else if (color === "secondary") {
+            classNames.push("text-slate-600", "hover:bg-slate-100");
         }
     }
 
