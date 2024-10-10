@@ -1,7 +1,9 @@
 import React from "react";
 
-import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
+import { Edit } from "@mui/icons-material";
+
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
+import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
 import { Item } from "../interfaces";
 
 type EditItemNameProps = {
@@ -36,7 +38,7 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
 
     return (
         <div
-            className="flex-grow font-bold flex items-center pt-1"
+            className="flex-grow font-bold flex items-center gap-2 group"
             onDoubleClick={handleNameDoubleClick}
             title="Double-click to edit name"
         >
@@ -51,7 +53,14 @@ export function EditName(props: EditItemNameProps): React.ReactNode {
                     autoFocus
                 />
             ) : (
-                itemName
+                <>
+                    {itemName}
+                    <Edit
+                        fontSize="inherit"
+                        className="opacity-0 group-hover:opacity-50 cursor-pointer"
+                        onClick={handleNameDoubleClick}
+                    />
+                </>
             )}
         </div>
     );

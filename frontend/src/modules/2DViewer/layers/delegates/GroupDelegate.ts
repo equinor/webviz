@@ -1,7 +1,7 @@
 import { ItemDelegateTopic } from "./ItemDelegate";
+import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 
 import { LayerManagerTopic } from "../LayerManager";
-import { PublishSubscribe, PublishSubscribeHandler } from "../PublishSubscribeHandler";
 import { Item, instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum GroupDelegateTopic {
@@ -20,7 +20,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
     private _owner: Item | null;
     private _color: string | null = null;
     private _children: Item[] = [];
-    private _publishSubscribeHandler = new PublishSubscribeHandler<GroupDelegateTopic>();
+    private _publishSubscribeHandler = new PublishSubscribeDelegate<GroupDelegateTopic>();
     private _subscriptions: Map<string, Set<() => void>> = new Map();
     private _treeRevisionNumber: number = 0;
 
@@ -223,7 +223,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeHandler<GroupDelegateTopic> {
+    getPublishSubscribeHandler(): PublishSubscribeDelegate<GroupDelegateTopic> {
         return this._publishSubscribeHandler;
     }
 }

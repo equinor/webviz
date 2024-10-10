@@ -1,7 +1,8 @@
 import { isEqual } from "lodash";
 
+import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
+
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
-import { PublishSubscribe, PublishSubscribeHandler } from "../PublishSubscribeHandler";
 import { AvailableValuesType, Setting, SettingTopic, Settings, SettingsContext } from "../interfaces";
 
 export enum SettingsContextDelegateTopic {
@@ -30,7 +31,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     private _values: { [K in TKey]: TSettings[K] } = {} as { [K in TKey]: TSettings[K] };
     private _overriddenSettings: { [K in TKey]: TSettings[K] } = {} as { [K in TKey]: TSettings[K] };
     private _availableSettingsValues: Partial<{ [K in TKey]: AvailableValuesType<Exclude<TSettings[K], null>> }> = {};
-    private _publishSubscribeHandler = new PublishSubscribeHandler<SettingsContextDelegateTopic>();
+    private _publishSubscribeHandler = new PublishSubscribeDelegate<SettingsContextDelegateTopic>();
     private _onSettingsChanged: FetchDataFunction<TSettings, TKey> | null = null;
 
     constructor(context: SettingsContext<TSettings, TKey>, settings: { [K in TKey]: Setting<TSettings[K]> }) {
@@ -127,7 +128,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeHandler<SettingsContextDelegateTopic> {
+    getPublishSubscribeHandler(): PublishSubscribeDelegate<SettingsContextDelegateTopic> {
         return this._publishSubscribeHandler;
     }
 }

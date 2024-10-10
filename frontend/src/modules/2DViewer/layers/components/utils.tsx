@@ -1,6 +1,7 @@
 import { SortableListItemProps } from "@lib/components/SortableList";
 
 import { ColorScaleComponent } from "./ColorScaleComponent";
+import { DeltaSurfaceComponent } from "./DeltaSurfaceComponent";
 import { LayerComponent } from "./LayerComponent";
 import { LayersActionGroup } from "./LayersActions";
 import { SettingsGroupComponent } from "./SettingsGroupComponent";
@@ -8,6 +9,7 @@ import { SharedSettingComponent } from "./SharedSettingComponent";
 import { ViewComponent } from "./ViewComponent";
 
 import { ColorScale } from "../ColorScale";
+import { DeltaSurface } from "../DeltaSurface";
 import { SettingsGroup } from "../SettingsGroup";
 import { SharedSetting } from "../SharedSetting";
 import { View } from "../View";
@@ -40,6 +42,15 @@ export function makeComponent(
                     onActionClick={onActionClick}
                 />
             );
+        } else if (item instanceof DeltaSurface) {
+            return (
+                <DeltaSurfaceComponent
+                    key={item.getItemDelegate().getId()}
+                    deltaSurface={item}
+                    actions={layerActions ? filterAwayNonSurfaceActions(layerActions) : undefined}
+                    onActionClick={onActionClick}
+                />
+            );
         }
     }
     if (item instanceof SharedSetting) {
@@ -56,4 +67,27 @@ function filterAwayViewActions(actions: LayersActionGroup[]): LayersActionGroup[
         ...group,
         children: group.children.filter((child) => child.label !== "View"),
     }));
+}
+
+function filterAwayNonSurfaceActions(actions: LayersActionGroup[]): LayersActionGroup[] {
+    const result: LayersActionGroup[] = [];
+
+    for (const group of actions) {
+        if (group.label === "Shared Settings") {
+            result.push(group);
+            continue;
+        }
+        if (group.label !== "Layers") {
+            continue;
+        }
+        const children = group.children.filter((child) => child.label.includes("Surface"));
+        if (children.length > 0) {
+            result.push({
+                ...group,
+                children,
+            });
+        }
+    }
+
+    return result;
 }

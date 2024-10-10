@@ -1,9 +1,9 @@
 import { v4 } from "uuid";
 
 import { GroupDelegate } from "./GroupDelegate";
+import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
-import { PublishSubscribe, PublishSubscribeHandler } from "../PublishSubscribeHandler";
 
 export enum ItemDelegateTopic {
     NAME = "NAME",
@@ -26,7 +26,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
     private _expanded: boolean = true;
     private _parentGroup: GroupDelegate | null = null;
     private _layerManager: LayerManager | null = null;
-    private _publishSubscribeHandler = new PublishSubscribeHandler<ItemDelegateTopic>();
+    private _publishSubscribeHandler = new PublishSubscribeDelegate<ItemDelegateTopic>();
 
     constructor(name: string) {
         this._id = v4();
@@ -105,7 +105,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeHandler<ItemDelegateTopic> {
+    getPublishSubscribeHandler(): PublishSubscribeDelegate<ItemDelegateTopic> {
         return this._publishSubscribeHandler;
     }
 }

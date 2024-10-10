@@ -1,11 +1,9 @@
 import React from "react";
 
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
-import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
+import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
 import { Setting, SettingComponentProps as SettingComponentPropsInterface, SettingTopic } from "../interfaces";
 
 export type SettingComponentProps<TValue> = {

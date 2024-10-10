@@ -4,9 +4,9 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { PublishSubscribe, PublishSubscribeHandler } from "./PublishSubscribeHandler";
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
+import { PublishSubscribe, PublishSubscribeDelegate } from "./delegates/PublishSubscribeDelegate";
 import { Group, Item } from "./interfaces";
 
 export enum LayerManagerTopic {
@@ -34,7 +34,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     private _workbenchSettings: WorkbenchSettings;
     private _groupDelegate: GroupDelegate;
     private _queryClient: QueryClient;
-    private _publishSubscribeHandler = new PublishSubscribeHandler<LayerManagerTopic>();
+    private _publishSubscribeHandler = new PublishSubscribeDelegate<LayerManagerTopic>();
     private _itemDelegate: ItemDelegate;
     private _layerDataRevision: number = 0;
     private _globalSettings: GlobalSettings = {
@@ -110,7 +110,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeHandler<LayerManagerTopic> {
+    getPublishSubscribeHandler(): PublishSubscribeDelegate<LayerManagerTopic> {
         return this._publishSubscribeHandler;
     }
 }

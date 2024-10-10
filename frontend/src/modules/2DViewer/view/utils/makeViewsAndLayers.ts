@@ -2,6 +2,7 @@ import { Layer as DeckGlLayer } from "@deck.gl/core/typed";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorScale } from "@modules/2DViewer/layers/ColorScale";
+import { DeltaSurface } from "@modules/2DViewer/layers/DeltaSurface";
 import { View } from "@modules/2DViewer/layers/View";
 import {
     BoundingBox,
@@ -57,7 +58,7 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
             continue;
         }
 
-        if (instanceofGroup(child)) {
+        if (instanceofGroup(child) && !(child instanceof DeltaSurface)) {
             const { views, layers, boundingBox, colorScales, numLoadingLayers } = recursivelyMakeViewsAndLayers(
                 child,
                 numCollectedLayers + collectedLayers.length

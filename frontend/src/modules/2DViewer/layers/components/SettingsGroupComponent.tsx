@@ -7,9 +7,9 @@ import { LayersActionGroup, LayersActions } from "./LayersActions";
 import { RemoveButton } from "./RemoveButton";
 import { makeComponent } from "./utils";
 
-import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
 import { GroupDelegateTopic } from "../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
+import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
 import { Group, Item } from "../interfaces";
 
 export type SettingsGroupComponentProps = {

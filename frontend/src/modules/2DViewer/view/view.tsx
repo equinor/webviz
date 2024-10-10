@@ -8,28 +8,21 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect2D, rectContainsPoint } from "@lib/utils/geometry";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
-import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayerPickInfo, ViewportType } from "@webviz/subsurface-viewer";
-import { MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import { ViewportType } from "@webviz/subsurface-viewer";
+import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
-import { ReadoutBoxWrapper } from "./components/ReadoutBoxWrapper";
-import { Toolbar } from "./components/Toolbar";
+import { ReadoutWrapper } from "./components/ReadoutWrapper";
 import { DeckGlLayerWithPosition, recursivelyMakeViewsAndLayers } from "./utils/makeViewsAndLayers";
 
 import { Interfaces } from "../interfaces";
 import { LayerManager, LayerManagerTopic } from "../layers/LayerManager";
-import { usePublishSubscribeTopicValue } from "../layers/PublishSubscribeHandler";
 import { GroupDelegate, GroupDelegateTopic } from "../layers/delegates/GroupDelegate";
+import { usePublishSubscribeTopicValue } from "../layers/delegates/PublishSubscribeDelegate";
 import { BoundingBox } from "../layers/interfaces";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
-    const id = React.useId();
-
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
-    const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
-    const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
-    const [layerPickingInfo, setLayerPickingInfo] = React.useState<LayerPickInfo[]>([]);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
@@ -133,20 +126,6 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         statusWriter.setLoading(viewsAndLayers.numLoadingLayers > 0);
     }
 
-    function handleFitInViewClick() {
-        setTriggerHomeCounter((prev) => prev + 1);
-    }
-
-    function handleMouseHover(event: MapMouseEvent): void {
-        setLayerPickingInfo(event.infos);
-    }
-
-    function handleMouseEvent(event: MapMouseEvent): void {
-        if (event.type === "hover") {
-            handleMouseHover(event);
-        }
-    }
-
     let bounds: [number, number, number, number] | undefined = undefined;
     if (prevBoundingBox) {
         bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
@@ -158,44 +137,17 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
             <PendingWrapper isPending={numLoadingLayers > 0}>
                 <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                    <Toolbar onFitInView={handleFitInViewClick} />
                     <ColorLegendsContainer
                         colorScales={colorScales}
                         height={mainDivSize.height / 2 - 50}
                         position="left"
                     />
-                    <ReadoutBoxWrapper layerPickInfo={layerPickingInfo} visible />
-                    <SubsurfaceViewerWithCameraState
-                        id={`subsurface-viewer-${id}`}
+                    <ReadoutWrapper
                         views={views}
-                        bounds={bounds}
-                        cameraPosition={cameraPositionSetByAction ?? undefined}
-                        onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
-                        onMouseEvent={handleMouseEvent}
+                        viewportAnnotations={viewportAnnotations}
                         layers={layers}
-                        scale={{
-                            visible: true,
-                            incrementValue: 100,
-                            widthPerUnit: 100,
-                            cssStyle: {
-                                right: 10,
-                                top: 10,
-                            },
-                        }}
-                        coords={{
-                            visible: false,
-                            multiPicking: true, //polylineEditPointsModusActive,
-                            pickDepth: 2, // polylineEditPointsModusActive ? 2 : undefined,
-                        }}
-                        triggerHome={triggerHomeCounter}
-                    >
-                        {viewportAnnotations}
-                    </SubsurfaceViewerWithCameraState>
-                    {views.viewports.length === 0 && (
-                        <div className="absolute left-1/2 top-1/2 w-64 h-10 -ml-32 -mt-5 text-center">
-                            Please add views and layers in the settings panel.
-                        </div>
-                    )}
+                        bounds={bounds}
+                    />
                 </div>
             </PendingWrapper>
         </div>

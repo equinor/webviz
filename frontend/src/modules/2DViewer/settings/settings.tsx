@@ -9,7 +9,7 @@ import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { IsMoveAllowedArgs, SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Add, Panorama, SettingsApplications } from "@mui/icons-material";
+import { Add, Difference, Panorama, SettingsApplications } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAtomValue, useSetAtom } from "jotai";
@@ -18,8 +18,8 @@ import { layerManagerAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseA
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 
 import { ColorScale } from "../layers/ColorScale";
+import { DeltaSurface } from "../layers/DeltaSurface";
 import { LayerManager } from "../layers/LayerManager";
-import { usePublishSubscribeTopicValue } from "../layers/PublishSubscribeHandler";
 import { SettingsGroup } from "../layers/SettingsGroup";
 import { SharedSetting } from "../layers/SharedSetting";
 import { View } from "../layers/View";
@@ -27,6 +27,7 @@ import { ExpandCollapseAllButton } from "../layers/components/ExpandCollapseAllB
 import { LayersActionGroup, LayersActions } from "../layers/components/LayersActions";
 import { makeComponent } from "../layers/components/utils";
 import { GroupDelegateTopic } from "../layers/delegates/GroupDelegate";
+import { usePublishSubscribeTopicValue } from "../layers/delegates/PublishSubscribeDelegate";
 import { DrilledWellTrajectoriesLayer } from "../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "../layers/implementations/layers/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
 import { ObservedSurfaceLayer } from "../layers/implementations/layers/ObservedSurfaceLayer/ObservedSurfaceLayer";
@@ -39,7 +40,7 @@ import { Realization } from "../layers/implementations/settings/Realization";
 import { SurfaceAttribute } from "../layers/implementations/settings/SurfaceAttribute";
 import { SurfaceName } from "../layers/implementations/settings/SurfaceName";
 import { TimeOrInterval } from "../layers/implementations/settings/TimeOrInterval";
-import { Group, Item, instanceofGroup } from "../layers/interfaces";
+import { Group, Item, instanceofGroup, instanceofLayer } from "../layers/interfaces";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const queryClient = useQueryClient();
@@ -92,31 +93,34 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                     new View(numViews > 0 ? `View (${numViews})` : "View", colorSet.getNextColor())
                 );
                 return;
+            case "delta-surface":
+                groupDelegate.insertChild(new DeltaSurface("Delta surface"), numSharedSettings);
+                return;
             case "settings-group":
                 groupDelegate.insertChild(new SettingsGroup("Settings group"), numSharedSettings);
                 return;
             case "color-scale":
                 groupDelegate.prependChild(new ColorScale("Color scale"));
                 return;
-            case "observed_surface":
+            case "observed-surface":
                 groupDelegate.insertChild(new ObservedSurfaceLayer(), numSharedSettings);
                 return;
-            case "statistical_surface":
+            case "statistical-surface":
                 groupDelegate.insertChild(new StatisticalSurfaceLayer(), numSharedSettings);
                 return;
-            case "realization_surface":
+            case "realization-surface":
                 groupDelegate.insertChild(new RealizationSurfaceLayer(), numSharedSettings);
                 return;
-            case "realization_polygons":
+            case "realization-polygons":
                 groupDelegate.insertChild(new RealizationPolygonsLayer(), numSharedSettings);
                 return;
-            case "drilled_wellbore_trajectories":
+            case "drilled-wellbore-trajectories":
                 groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(), numSharedSettings);
                 return;
-            case "drilled_wellbore_picks":
+            case "drilled-wellbore-picks":
                 groupDelegate.insertChild(new DrilledWellborePicksLayer(), numSharedSettings);
                 return;
-            case "realization_grid":
+            case "realization-grid":
                 groupDelegate.insertChild(new RealizationGridLayer(), numSharedSettings);
                 return;
             case "ensemble":
@@ -125,10 +129,10 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             case "realization":
                 groupDelegate.prependChild(new SharedSetting(new Realization()));
                 return;
-            case "surface_name":
+            case "surface-name":
                 groupDelegate.prependChild(new SharedSetting(new SurfaceName()));
                 return;
-            case "surface_attribute":
+            case "surface-attribute":
                 groupDelegate.prependChild(new SharedSetting(new SurfaceAttribute()));
                 return;
             case "Date":
@@ -149,6 +153,27 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
         if (!destinationItem || !instanceofGroup(destinationItem)) {
             return false;
+        }
+
+        if (destinationItem instanceof DeltaSurface) {
+            if (
+                instanceofLayer(movedItem) &&
+                !(
+                    movedItem instanceof RealizationSurfaceLayer ||
+                    movedItem instanceof StatisticalSurfaceLayer ||
+                    movedItem instanceof ObservedSurfaceLayer
+                )
+            ) {
+                return false;
+            }
+
+            if (instanceofGroup(movedItem)) {
+                return false;
+            }
+
+            if (destinationItem.getGroupDelegate().findChildren((item) => instanceofLayer(item)).length >= 2) {
+                return false;
+            }
         }
 
         const numSharedSettingsAndColorScales =
@@ -285,6 +310,11 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 icon: <SettingsApplications fontSize="small" />,
                 label: "Settings group",
             },
+            {
+                identifier: "delta-surface",
+                icon: <Difference fontSize="small" />,
+                label: "Delta Surface",
+            },
         ],
     },
     {
@@ -304,17 +334,17 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 label: "Surfaces",
                 children: [
                     {
-                        identifier: "observed_surface",
+                        identifier: "observed-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Observed Surface",
                     },
                     {
-                        identifier: "statistical_surface",
+                        identifier: "statistical-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Statistical Surface",
                     },
                     {
-                        identifier: "realization_surface",
+                        identifier: "realization-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Realization Surface",
                     },
@@ -324,22 +354,22 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 label: "Others",
                 children: [
                     {
-                        identifier: "realization_polygons",
+                        identifier: "realization-polygons",
                         icon: <Icon data={fault} fontSize="small" />,
                         label: "Realization Polygons",
                     },
                     {
-                        identifier: "drilled_wellbore_trajectories",
+                        identifier: "drilled-wellbore-trajectories",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Drilled Wellbore Trajectories",
                     },
                     {
-                        identifier: "drilled_wellbore_picks",
+                        identifier: "drilled-wellbore-picks",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Drilled Wellbore Picks",
                     },
                     {
-                        identifier: "realization_grid",
+                        identifier: "realization-grid",
                         icon: <Icon data={grid_layer} fontSize="small" />,
                         label: "Realization Grid",
                     },

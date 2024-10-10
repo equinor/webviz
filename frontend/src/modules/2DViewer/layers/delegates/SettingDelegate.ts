@@ -1,13 +1,14 @@
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { PublishSubscribe, PublishSubscribeHandler } from "../PublishSubscribeHandler";
+import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
+
 import { AvailableValuesType, SettingTopic, SettingTopicPayloads } from "../interfaces";
 
 export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, SettingTopicPayloads<TValue>> {
     private _id: string;
     private _value: TValue;
-    private _publishSubscribeHandler = new PublishSubscribeHandler<SettingTopic>();
+    private _publishSubscribeHandler = new PublishSubscribeDelegate<SettingTopic>();
     private _availableValues: AvailableValuesType<TValue> = [] as AvailableValuesType<TValue>;
     private _overriddenValue: TValue | undefined = undefined;
     private _loading: boolean = false;
@@ -66,7 +67,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeHandler<SettingTopic> {
+    getPublishSubscribeHandler(): PublishSubscribeDelegate<SettingTopic> {
         return this._publishSubscribeHandler;
     }
 

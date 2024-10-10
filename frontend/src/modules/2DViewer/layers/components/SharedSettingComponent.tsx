@@ -7,9 +7,9 @@ import { Delete, ExpandLess, ExpandMore, Link } from "@mui/icons-material";
 
 import { SettingComponent } from "./SettingComponent";
 
-import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
 import { SharedSetting } from "../SharedSetting";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
+import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
 
 export type SharedSettingComponentProps = {
     sharedSetting: SharedSetting;

@@ -8,9 +8,9 @@ import { RemoveButton } from "./RemoveButton";
 import { VisibilityToggle } from "./VisibilityToggle";
 import { makeComponent } from "./utils";
 
-import { usePublishSubscribeTopicValue } from "../PublishSubscribeHandler";
 import { GroupDelegateTopic } from "../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
+import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
 import { Group, Item } from "../interfaces";
 
 export type ViewComponentProps = {

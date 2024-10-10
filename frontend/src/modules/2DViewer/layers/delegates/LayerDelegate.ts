@@ -3,10 +3,10 @@ import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import { QueryClient } from "@tanstack/react-query";
 
+import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
-import { PublishSubscribe, PublishSubscribeHandler } from "../PublishSubscribeHandler";
 import { SharedSetting } from "../SharedSetting";
 import { BoundingBox, Layer, LayerStatus, Settings, SettingsContext } from "../interfaces";
 
@@ -33,7 +33,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
     private _layerManager: LayerManager | null = null;
     private _unsubscribeFuncs: (() => void)[] = [];
     private _cancellationPending: boolean = false;
-    private _publishSubscribeHandler = new PublishSubscribeHandler<LayerDelegateTopic>();
+    private _publishSubscribeHandler = new PublishSubscribeDelegate<LayerDelegateTopic>();
     private _queryKeys: unknown[][] = [];
     private _status: LayerStatus = LayerStatus.IDLE;
     private _data: TData | null = null;
@@ -171,7 +171,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeHandler<LayerDelegateTopic> {
+    getPublishSubscribeHandler(): PublishSubscribeDelegate<LayerDelegateTopic> {
         return this._publishSubscribeHandler;
     }
 

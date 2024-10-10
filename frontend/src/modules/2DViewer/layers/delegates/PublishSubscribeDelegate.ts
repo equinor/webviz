@@ -4,10 +4,10 @@ export type TopicPayloads<TTopic extends string> = Record<TTopic, any>;
 
 export interface PublishSubscribe<TTopic extends string, TTopicPayloads extends TopicPayloads<TTopic>> {
     makeSnapshotGetter<T extends TTopic>(topic: T): () => TTopicPayloads[T];
-    getPublishSubscribeHandler(): PublishSubscribeHandler<TTopic>;
+    getPublishSubscribeHandler(): PublishSubscribeDelegate<TTopic>;
 }
 
-export class PublishSubscribeHandler<TTopic extends string> {
+export class PublishSubscribeDelegate<TTopic extends string> {
     private _subscribers = new Map<TTopic, Set<() => void>>();
 
     subscribe(topic: TTopic, subscriber: () => void): void {
