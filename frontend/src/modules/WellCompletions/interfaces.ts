@@ -1,13 +1,13 @@
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { PlotData } from "@webviz/well-completions-plot";
 
-import { availableTimeStepsAtom, dataLoadingStatusAtom, plotDataAtom } from "./settings/atoms/baseAtoms";
+import { dataLoadingStatusAtom, plotDataAtom, sortedCompletionDatesAtom } from "./settings/atoms/derivedAtoms";
 import { DataLoadingStatus } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     dataLoadingStatus: DataLoadingStatus;
     plotData: PlotData | null;
-    availableTimeSteps: string[] | null;
+    sortedCompletionDates: string[] | null;
 };
 
 export type Interfaces = {
@@ -21,7 +21,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     plotData: (get) => {
         return get(plotDataAtom);
     },
-    availableTimeSteps: (get) => {
-        return get(availableTimeStepsAtom);
+    sortedCompletionDates: (get) => {
+        return get(sortedCompletionDatesAtom);
     },
 };

@@ -12,7 +12,7 @@ export type WellCompletionsData = {
     version: string;
     units: WellCompletionsUnits;
     zones: Array<WellCompletionsZone>;
-    timeSteps: Array<string>;
+    sortedCompletionDates: Array<string>;
     wells: Array<WellCompletionsWell>;
 };
 
