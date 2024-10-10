@@ -1,5 +1,6 @@
 import React from "react";
 import Plot from "react-plotly.js";
+import { PlotData } from "plotly.js";
 
 import { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -12,6 +13,7 @@ import { VfpPlotBuilder } from "./utils/VfpPlotBuilder";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { VfpType_api } from "@api";
 
 
 export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) {
@@ -46,14 +48,23 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         const vfpPlotBuilder = new VfpPlotBuilder(new VfpDataAccessor(vfpTable), colorScale);
 
         const layout = vfpPlotBuilder.makeLayout(wrapperDivSize, selectedPressureOption);
-        const data = vfpPlotBuilder.makeTraces(
-            selectedThpIndices,
-            selectedWfrIndices,
-            selectedGfrIndices,
-            selectedAlqIndices,
-            selectedPressureOption,
-            selectedColorBy,
-        );
+        let data: Partial<PlotData>[] = [];
+        if (vfpTable.vfp_type == VfpType_api.VFPPROD) {
+            data = vfpPlotBuilder.makeVfpProdTraces(
+                selectedThpIndices,
+                selectedWfrIndices,
+                selectedGfrIndices,
+                selectedAlqIndices,
+                selectedPressureOption,
+                selectedColorBy,
+            )
+        } else if (vfpTable.vfp_type == VfpType_api.VFPINJ) {
+            data = vfpPlotBuilder.makeVfpInjTraces(
+                selectedThpIndices,
+                selectedPressureOption
+            )
+        }
+
 
         content = <Plot layout={layout} data={data} />;
     }

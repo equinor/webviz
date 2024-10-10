@@ -14,7 +14,7 @@ ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,
     defaultTitle: "VFP",
     category: ModuleCategory.MAIN,
-    devState: ModuleDevState.DEV,
+    devState: ModuleDevState.PROD,
     dataTagIds: [ModuleDataTagId.VFP],
     preview,
     description,

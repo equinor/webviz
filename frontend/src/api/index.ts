@@ -33,7 +33,7 @@ export type { EnsembleSensitivity as EnsembleSensitivity_api } from './models/En
 export type { EnsembleSensitivityCase as EnsembleSensitivityCase_api } from './models/EnsembleSensitivityCase';
 export type { FenceMeshSection as FenceMeshSection_api } from './models/FenceMeshSection';
 export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
-export { FlowRateTypeProd as FlowRateTypeProd_api } from './models/FlowRateTypeProd';
+export { FlowRateType as FlowRateType_api } from './models/FlowRateType';
 export { FluidZone as FluidZone_api } from './models/FluidZone';
 export { Frequency as Frequency_api } from './models/Frequency';
 export { GFR as GFR_api } from './models/GFR';
@@ -103,6 +103,7 @@ export type { VectorHistoricalData as VectorHistoricalData_api } from './models/
 export type { VectorRealizationData as VectorRealizationData_api } from './models/VectorRealizationData';
 export type { VectorStatisticData as VectorStatisticData_api } from './models/VectorStatisticData';
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
+export type { VfpInjTable as VfpInjTable_api } from './models/VfpInjTable';
 export type { VfpProdTable as VfpProdTable_api } from './models/VfpProdTable';
 export { VfpType as VfpType_api } from './models/VfpType';
 export type { WellboreCasing as WellboreCasing_api } from './models/WellboreCasing';
