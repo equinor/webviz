@@ -9,7 +9,7 @@ export type WebvizSpinnerAmsterdamProps = {
 export const WebvizSpinnerAmsterdam: React.FC<WebvizSpinnerAmsterdamProps> = (props) => {
     const borderWidth = props.size / 10;
     return (
-        <div style={{ width: props.size, height: props.size }} className="webviz-spinner">
+        <div style={{ width: props.size, height: props.size }} className="webviz-spinner-amsterdam">
             <div
                 className="rounded-full absolute border-t-[#003DA5]"
                 style={{

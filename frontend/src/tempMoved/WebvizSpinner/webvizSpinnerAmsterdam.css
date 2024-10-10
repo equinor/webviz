@@ -1,25 +1,25 @@
-.webviz-spinner {
+.webviz-spinner-amsterdam {
     position: relative;
     perspective: 1000;
 }
 
-.webviz-spinner > div {
+.webviz-spinner-amsterdam > div {
     border-color: transparent;
 }
 
-.webviz-spinner > div:nth-child(1) {
-    animation: spin1 1s linear infinite;
+.webviz-spinner-amsterdam > div:nth-child(1) {
+    animation: spin1-amsterdam 1s linear infinite;
 }
 
-.webviz-spinner > div:nth-child(2) {
-    animation: spin2 0.6s linear infinite;
+.webviz-spinner-amsterdam > div:nth-child(2) {
+    animation: spin2-amsterdam 0.6s linear infinite;
 }
 
-.webviz-spinner > div:nth-child(3) {
-    animation: spin3 0.8s linear infinite;
+.webviz-spinner-amsterdam > div:nth-child(3) {
+    animation: spin3-amsterdam 0.8s linear infinite;
 }
 
-@keyframes spin1 {
+@keyframes spin1-amsterdam {
     0% {
         transform: rotateY(-10deg) rotateX(60deg) rotateY(48deg) rotateZ(0deg);
         border-top-color: #C8102E;
@@ -42,7 +42,7 @@
     }
 }
 
-@keyframes spin2 {
+@keyframes spin2-amsterdam {
     0% {
         transform: rotateY(10deg) rotateX(60deg) rotateY(-48deg) rotateZ(0deg);
         border-top-color: #C8102E;
@@ -61,7 +61,7 @@
     }
 }
 
-@keyframes spin3 {
+@keyframes spin3-amsterdam {
     0% {
         transform: rotateX(58deg) rotateZ(0deg);
         border-top-color: #003DA5;
