@@ -26,6 +26,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     function handleCloseDrawerClick() {
         setDialogOpen(false);
         props.onClose();
+        setActiveFilterEnsembleIdent(null);
     }
 
     function handleDoNotCloseDrawerClick() {
@@ -41,6 +42,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             setDialogOpen(true);
         } else {
             props.onClose();
+            setActiveFilterEnsembleIdent(null);
         }
     }
 
@@ -58,6 +60,12 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
     function handleSetActiveEnsembleRealizationFilter(ensembleIdent: EnsembleIdent) {
         setActiveFilterEnsembleIdent(ensembleIdent);
+    }
+
+    function handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent: EnsembleIdent) {
+        if (activeFilterEnsembleIdent?.equals(ensembleIdent)) {
+            setActiveFilterEnsembleIdent(null);
+        }
     }
 
     return (
@@ -78,15 +86,12 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                                     realizationFilter={realizationFilterSet.getRealizationFilterForEnsembleIdent(
                                         ensemble.getIdent()
                                     )}
-                                    isAnotherFilterActive={
-                                        activeFilterEnsembleIdent !== null &&
-                                        !activeFilterEnsembleIdent.equals(ensembleIdent)
-                                    }
                                     isActive={
                                         activeFilterEnsembleIdent !== null &&
                                         activeFilterEnsembleIdent.equals(ensembleIdent)
                                     }
                                     onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
+                                    onHeaderClick={() => handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent)}
                                     onFilterChange={handleFilterChange}
                                     onUnsavedFilterChange={(hasUnsavedChanges) =>
                                         handleFilterEditChange(ensembleIdent, hasUnsavedChanges)

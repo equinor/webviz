@@ -13,7 +13,7 @@ import { Button } from "@lib/components/Button";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { ArrowDropDown, ArrowDropUp, Check, Clear } from "@mui/icons-material";
+import { Check, Clear } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
@@ -22,15 +22,15 @@ import {
     ByRealizationNumberFilter,
     ByRealizationNumberFilterSelection,
 } from "./private-components/byRealizationNumberFilter";
-import { RealizationNumberSelector } from "./private-components/realizationNumberSelector";
+import { RealizationNumberDisplay } from "./private-components/realizationNumberDisplay";
 import { createBestSuggestedRealizationNumberSelections } from "./private-utils/conversionUtils";
 import { createSmartNodeSelectorTagListFromParameterIdentStrings } from "./private-utils/smartNodeSelectorUtils";
 
 export type EnsembleRealizationFilterProps = {
     realizationFilter: RealizationFilter; // Should be ref stable and not change address in memory
     isActive: boolean;
-    isAnotherFilterActive: boolean;
     onClick?: () => void;
+    onHeaderClick?: () => void;
     onFilterChange?: () => void;
     onUnsavedFilterChange?: (hasUnsavedChanges: boolean) => void;
 };
@@ -50,7 +50,6 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         props.realizationFilter
     );
 
-    const [showActiveFilterType, setShowActiveFilterType] = React.useState<boolean>(props.isActive);
     const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
         props.realizationFilter.getFilterType()
     );
@@ -81,7 +80,11 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
     if (prevIsActive !== props.isActive) {
         setPrevIsActive(props.isActive);
-        setShowActiveFilterType(props.isActive);
+
+        if (!prevIsActive && selectedFilterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
+            // Due to conditional rendering, we have to ensure correct initial state when mounting realization number filter component
+            setInitialRealizationNumberSelections(realizationNumberSelections);
+        }
     }
 
     // Update of realization filter object/address
@@ -208,16 +211,6 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         setRealizationNumberSelections(newRealizationNumberSelections);
     }
 
-    function handleShowActiveFilterTypeToggle() {
-        const prevShowActiveFilterType = showActiveFilterType;
-        setShowActiveFilterType(!prevShowActiveFilterType);
-
-        if (!prevShowActiveFilterType && selectedFilterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
-            // Due to conditional rendering, we have to ensure correct initial state when mounting realization number filter component
-            setInitialRealizationNumberSelections(realizationNumberSelections);
-        }
-    }
-
     function handleApplyClick() {
         // Write states to realization filter
         props.realizationFilter.setFilterType(selectedFilterType);
@@ -272,80 +265,76 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         }
     }
 
+    function handleOnClick() {
+        if (props.onClick && !props.isActive) {
+            props.onClick();
+        }
+    }
+
+    function handleHeaderOnClick() {
+        if (props.onHeaderClick && props.isActive) {
+            props.onHeaderClick();
+        }
+    }
+
     return (
         <div
-            className={resolveClassNames("outline mb-4 p-2 rounded-md", {
+            className={resolveClassNames("outline mb-4 rounded-md", {
                 "outline-orange-400 shadow-orange-400 shadow-lg": props.isActive && hasUnsavedFilterChanges,
                 "outline-blue-400 shadow-blue-400 shadow-lg": props.isActive && !hasUnsavedFilterChanges,
                 "cursor-pointer hover:opacity-75 transition-opacity duration-100": !props.isActive,
                 "opacity-60 outline-2 outline-orange-400 shadow-orange-400 shadow-lg":
-                    !props.isActive && props.isAnotherFilterActive && hasUnsavedFilterChanges,
+                    !props.isActive && hasUnsavedFilterChanges,
                 "opacity-30 outline-2 outline-gray-300 shadow-gray-300 shadow-md":
                     !props.isActive && !hasUnsavedFilterChanges,
             })}
-            onClick={props.onClick}
+            onClick={handleOnClick}
         >
             <div
                 className={resolveClassNames({
                     "pointer-events-none": !props.isActive,
                 })}
             >
-                <div className="my-2 border-b border-lightgrey pb-2">
-                    <div className={`flex justify-center items-center p-2 rounded-md bg-slate-100 h-10`}>
-                        <div className="font-bold flex-grow text-sm">
-                            {"Ensemble: " + props.realizationFilter.getAssignedEnsembleIdent().getEnsembleName()}
-                        </div>
-                        <div
-                            className={resolveClassNames("flex items-center gap-1", {
-                                hidden: !hasUnsavedFilterChanges,
-                            })}
-                        >
-                            <Button
-                                variant="contained"
-                                disabled={!hasUnsavedFilterChanges}
-                                size="small"
-                                startIcon={<Check fontSize="small" />}
-                                onClick={handleApplyClick}
-                            />
-                            <Button
-                                color="danger"
-                                variant="contained"
-                                disabled={!hasUnsavedFilterChanges}
-                                size="small"
-                                startIcon={<Clear fontSize="small" />}
-                                onClick={handleDiscardClick}
-                            />
-                        </div>
+                <div className={`flex justify-center items-center p-2 rounded-md bg-slate-100 h-12 cursor-pointer`}>
+                    <div className="font-bold flex-grow text-sm" onClick={handleHeaderOnClick}>
+                        {"Ensemble: " + props.realizationFilter.getAssignedEnsembleIdent().getEnsembleName()}
                     </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                    <div className="border border-lightgrey p-2 rounded-md">
-                        <RealizationNumberSelector
-                            selectedRealizations={selectedRealizationNumbers}
-                            availableRealizations={props.realizationFilter.getAvailableEnsembleRealizations()}
-                            disabledInteraction={selectedFilterType !== RealizationFilterType.BY_REALIZATION_NUMBER}
-                            onRealizationNumberSelectionsChange={handleRealizationNumberSelectionsChange}
+                    <div
+                        className={resolveClassNames("flex items-center gap-1", {
+                            hidden: !hasUnsavedFilterChanges,
+                        })}
+                    >
+                        <Button
+                            variant="contained"
+                            disabled={!hasUnsavedFilterChanges}
+                            size="small"
+                            startIcon={<Check fontSize="small" />}
+                            onClick={handleApplyClick}
+                        />
+                        <Button
+                            color="danger"
+                            variant="contained"
+                            disabled={!hasUnsavedFilterChanges}
+                            size="small"
+                            startIcon={<Clear fontSize="small" />}
+                            onClick={handleDiscardClick}
                         />
                     </div>
-                    <div className="flex">
-                        <div className="flex-grow" />
-                        <Button
-                            className="text-sm"
-                            variant="text"
-                            size="small"
-                            endIcon={
-                                showActiveFilterType ? (
-                                    <ArrowDropUp fontSize="small" />
-                                ) : (
-                                    <ArrowDropDown fontSize="small" />
-                                )
-                            }
-                            onClick={handleShowActiveFilterTypeToggle}
-                        >
-                            {showActiveFilterType ? "Hide filter" : "Show filter"}
-                        </Button>
+                </div>
+                <div className="flex flex-col gap-2 p-2">
+                    <div className="border border-lightgrey p-2 pb-0 rounded-md">
+                        <div className="pb-2">
+                            <RealizationNumberDisplay
+                                selectedRealizations={selectedRealizationNumbers}
+                                availableRealizations={props.realizationFilter.getAvailableEnsembleRealizations()}
+                                showAsCompact={!props.isActive}
+                                disableInteraction={selectedFilterType !== RealizationFilterType.BY_REALIZATION_NUMBER}
+                                onRealizationNumberSelectionsChange={handleRealizationNumberSelectionsChange}
+                            />
+                        </div>
                     </div>
-                    {props.isActive && showActiveFilterType && (
+                    <div className="flex"></div>
+                    {props.isActive && (
                         <>
                             <div className="border border-lightgrey rounded-md shadow-md p-2">
                                 <Label text="Active Filter Type" wrapperClassName="border-b pb-2 mb-2">

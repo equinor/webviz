@@ -42,7 +42,8 @@ function addParameterNodeToTreeDataNodeList(
  */
 export function createTreeDataNodeListFromParameters(
     parameters: readonly Parameter[],
-    includeConstantParameters: boolean
+    includeConstantParameters: boolean,
+    includeNodeDescription: boolean
 ): TreeDataNode[] {
     if (parameters.length === 0) {
         return [];
@@ -58,7 +59,7 @@ export function createTreeDataNodeListFromParameters(
         const newNode: TreeDataNode = {
             id: parameterIdentString,
             name: parameter.name,
-            // description: parameter.description ?? undefined,
+            description: includeNodeDescription ? parameter.description ?? undefined : undefined,
             children: [],
         };
 

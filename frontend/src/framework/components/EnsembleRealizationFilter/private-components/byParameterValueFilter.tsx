@@ -42,9 +42,11 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     // Compare by reference (ensure if it is enough to compare by reference)
     const smartNodeSelectorTreeDataNodes = React.useMemo<TreeDataNode[]>(() => {
         const includeConstantParameters = false;
+        const includeNodeDescription = false; // Node description and name seems to be the same, i.e. duplicate information
         return createTreeDataNodeListFromParameters(
             props.ensembleParameters.getParameterArr(),
-            includeConstantParameters
+            includeConstantParameters,
+            includeNodeDescription
         );
     }, [props.ensembleParameters]);
 

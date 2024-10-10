@@ -69,22 +69,26 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
     }
 
     function handleIncludeExcludeFilterChange(newFilter: IncludeExcludeFilter) {
+        // Make selections from tags to ensure consistency with user interface
+        const newRealizationNumberSelections =
+            selectedRangeTags.length === 0
+                ? null
+                : makeRealizationNumberSelectionsFromRealizationPickerTags(selectedRangeTags);
+
         props.onFilterChange({
-            realizationNumberSelections: selectedRangeTags
-                ? makeRealizationNumberSelectionsFromRealizationPickerTags(selectedRangeTags)
-                : null,
+            realizationNumberSelections: newRealizationNumberSelections,
             includeOrExcludeFilter: newFilter,
         });
     }
 
     function handleRealizationPickChange(newSelection: RealizationPickerSelection) {
-        const realizationNumberSelections =
+        const newRealizationNumberSelections =
             newSelection.selectedRangeTags.length === 0
                 ? null
                 : makeRealizationNumberSelectionsFromRealizationPickerTags(newSelection.selectedRangeTags);
 
         props.onFilterChange({
-            realizationNumberSelections: realizationNumberSelections,
+            realizationNumberSelections: newRealizationNumberSelections,
             includeOrExcludeFilter: props.selectedIncludeOrExcludeFilter,
         });
     }
