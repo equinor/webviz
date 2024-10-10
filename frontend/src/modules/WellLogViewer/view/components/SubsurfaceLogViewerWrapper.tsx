@@ -19,7 +19,7 @@ import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import { InterfaceTypes } from "../../interfaces";
 import { createLogTemplate } from "../../utils/logViewerTemplate";
-import { createLogViewerWellpicks, createWellLog } from "../../utils/queryDataTransform";
+import { createLogViewerWellpicks, createWellLogSets } from "../../utils/queryDataTransform";
 import { BaseAgnosticSourceData } from "../queries/wellLogQueries";
 
 const AXIS_MNEMOS = {
@@ -39,7 +39,7 @@ type GlobalHoverMd = GlobalTopicDefinitions["global.hoverMd"];
 export type SubsurfaceLogViewerWrapperProps = {
     // Data
     wellboreHeader: WellboreHeader_api | null;
-    curveData: BaseAgnosticSourceData[];
+    curveData: BaseAgnosticSourceData[][];
     trajectoryData: WellboreTrajectory_api;
     intersectionReferenceSystem: IntersectionReferenceSystem;
     wellpicks: WellPicksLayerData;
@@ -156,7 +156,7 @@ export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
     const template = React.useMemo(() => createLogTemplate(trackConfigs), [trackConfigs]);
     const wellpicks = React.useMemo(() => createLogViewerWellpicks(props.wellpicks), [props.wellpicks]);
     const welllog = React.useMemo(
-        () => createWellLog(curveData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows),
+        () => createWellLogSets(curveData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows),
         [curveData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows]
     );
 
@@ -260,7 +260,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         >
             <WellLogViewer
                 id="well-log-viewer"
-                welllog={welllog}
+                wellLogSets={welllog}
                 template={template}
                 wellpick={wellpicks}
                 horizontal={props.horizontal}

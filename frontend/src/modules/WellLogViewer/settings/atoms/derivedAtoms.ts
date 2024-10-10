@@ -1,4 +1,4 @@
-import { WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
+import { StratigraphicUnit_api, WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
@@ -21,11 +21,6 @@ import {
     wellborePicksQueryAtom,
     wellboreStratigraphicUnitsQueryAtom,
 } from "./queryAtoms";
-
-/**
- * Exposing the return type of esv-intersection's transformFormationData, since they don't export that anywhere
- */
-export type TransformFormationDataResult = ReturnType<typeof transformFormationData>;
 
 export const firstEnsembleInSelectedFieldAtom = atom((get) => {
     const selectedFieldId = get(userSelectedFieldIdentifierAtom);
@@ -55,17 +50,27 @@ export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) 
     return availableWellboreHeaders.find((wh) => wh.wellboreUuid === selectedWellboreId) ?? availableWellboreHeaders[0];
 });
 
-export const availableWellPicksAtom = atom<TransformFormationDataResult>((get) => {
+/**
+ * Exposing the return type of esv-intersection's transformFormationData, since they don't export that anywhere
+ */
+export type TransformFormationDataResult = ReturnType<typeof transformFormationData>;
+export type WellPicksLayerDataAndUnits = TransformFormationDataResult & { stratUnits: StratigraphicUnit_api[] };
+
+// TODO: We now have the strat units in a seperate query, just use that instead of returning the units here
+export const availableWellPicksAtom = atom<WellPicksLayerDataAndUnits>((get) => {
     const wellborePicks = get(wellborePicksQueryAtom).data;
     const wellboreStratUnits = get(wellboreStratigraphicUnitsQueryAtom).data;
 
-    if (!wellborePicks || !wellboreStratUnits) return { nonUnitPicks: [], unitPicks: [] };
+    if (!wellborePicks || !wellboreStratUnits) return { nonUnitPicks: [], unitPicks: [], stratUnits: [] };
 
+    // ! transformFormationData mutates the data object, so need to make a copy!
+    const stratUnits = [...wellboreStratUnits];
     const transformedPickData = transformFormationData(wellborePicks, wellboreStratUnits as any);
 
     return {
         nonUnitPicks: _.uniqBy(transformedPickData.nonUnitPicks, "identifier"),
         unitPicks: _.uniqBy(transformedPickData.unitPicks, "name"),
+        stratUnits,
     };
 });
 
@@ -113,10 +118,11 @@ export const plotConfigsBySourceAtom = atom((get) => {
         stratigraphy: [],
     };
 
-    // TODO: welllog entry gets weird garbage-entries
     templateConfig.forEach((track) => {
         const trackCurves = _.groupBy(track.plots, "_source");
-        _.merge(curveGroups, trackCurves);
+        _.mergeWith(curveGroups, trackCurves, (n, s) => {
+            if (_.isArray(n)) return n.concat(s);
+        });
     });
 
     return curveGroups;
@@ -124,6 +130,12 @@ export const plotConfigsBySourceAtom = atom((get) => {
 
 export const allSelectedGeologyCurvesAtom = atom<TemplatePlotConfig[]>((get) => {
     const geolPlots = get(plotConfigsBySourceAtom).geology;
+
+    return _.chain(geolPlots).filter("_isValid").uniqBy("_sourceId").value();
+});
+
+export const allSelectedStratigraphyCurves = atom<TemplatePlotConfig[]>((get) => {
+    const geolPlots = get(plotConfigsBySourceAtom).stratigraphy;
 
     return _.chain(geolPlots).filter("_isValid").uniqBy("_sourceId").value();
 });

@@ -3,7 +3,7 @@ import React from "react";
 import { Dropdown, type DropdownOption } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import { TemplatePlotScaleTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import { TemplatePlotScale } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { useAtomValue } from "jotai";
 
@@ -12,7 +12,7 @@ import { TrackSettingFragmentProps } from "./private-components/TrackSettings";
 
 import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";
 
-type TemplatePlotScaleOption = DropdownOption<TemplatePlotScaleTypes>;
+type TemplatePlotScaleOption = DropdownOption<TemplatePlotScale>;
 
 const PLOT_SCALE_OPTIONS: TemplatePlotScaleOption[] = [
     { label: "Linear", value: "linear" },
@@ -28,7 +28,7 @@ export function ContinousTrackSettings(props: TrackSettingFragmentProps): React.
     return (
         <>
             <label htmlFor={dropdownId}>Scale</label>
-            <Dropdown<TemplatePlotScaleTypes>
+            <Dropdown<TemplatePlotScale>
                 id={dropdownId}
                 value={props.trackConfig.scale}
                 options={PLOT_SCALE_OPTIONS}

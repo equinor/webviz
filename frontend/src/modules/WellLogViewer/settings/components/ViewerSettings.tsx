@@ -23,13 +23,26 @@ export function ViewerSettings(props: ViewerSettingsProps): React.ReactNode {
     // Well log selection
     const [horizontal, setHorizontal] = useAtom(viewerHorizontalAtom);
     const [padWithEmptyRows, setPadWithEmptyRows] = useAtom(padDataWithEmptyRowsAtom);
+    const [selectedNonUnitPicks, setSelectedNonUnitPicks] = useAtom(userSelectedNonUnitWellpicksAtom);
+    const [selectedUnitPicks, setSelectedUnitPicks] = useAtom(userSelectedUnitWellpicksAtom);
+    const [addingWellpicks, setAddingWellpicks] = React.useState(
+        !!selectedNonUnitPicks.length || !!selectedUnitPicks.length
+    );
 
     // Wellpick selection
     const availableWellPicks = useAtomValue(availableWellPicksAtom);
     const wellPickQueryState = useGetWellpickQueryState(props.statusWriter);
 
-    const [selectedNonUnitPicks, setSelectedNonUnitPicks] = useAtom(userSelectedNonUnitWellpicksAtom);
-    const [selectedUnitPicks, setSelectedUnitPicks] = useAtom(userSelectedUnitWellpicksAtom);
+    const onAddWellpickChange = React.useCallback(
+        function onAddWellpickChange(_evt: unknown, checked: boolean) {
+            setAddingWellpicks(checked);
+            if (!checked) {
+                setSelectedNonUnitPicks([]);
+                setSelectedUnitPicks([]);
+            }
+        },
+        [setSelectedNonUnitPicks, setSelectedUnitPicks]
+    );
 
     return (
         <div className="space-y-2">
@@ -42,17 +55,24 @@ export function ViewerSettings(props: ViewerSettingsProps): React.ReactNode {
                 <Checkbox checked={!padWithEmptyRows} onChange={(e, checked) => setPadWithEmptyRows(!checked)} />
             </Label>
 
-            <Label text="Well picks">
-                <PendingWrapper isPending={wellPickQueryState.anyLoading} errorMessage={wellPickQueryState.errorMsg}>
-                    <WellpickSelect
-                        availableWellpicks={availableWellPicks}
-                        selectedNonUnitPicks={selectedNonUnitPicks}
-                        selectedUnitPicks={selectedUnitPicks}
-                        onNonUnitPicksChange={setSelectedNonUnitPicks}
-                        onUnitPicksChange={setSelectedUnitPicks}
-                    />
-                </PendingWrapper>
+            <Label text="Well picks:" position="left">
+                <>
+                    <Checkbox checked={addingWellpicks} onChange={onAddWellpickChange} />
+                </>
             </Label>
+            {addingWellpicks && (
+                <PendingWrapper isPending={wellPickQueryState.anyLoading} errorMessage={wellPickQueryState.errorMsg}>
+                    <div className="border-l-4 border-gray-300 pl-2 bg-gray-100 rounded-r">
+                        <WellpickSelect
+                            availableWellpicks={availableWellPicks}
+                            selectedNonUnitPicks={selectedNonUnitPicks}
+                            selectedUnitPicks={selectedUnitPicks}
+                            onNonUnitPicksChange={setSelectedNonUnitPicks}
+                            onUnitPicksChange={setSelectedUnitPicks}
+                        />
+                    </div>
+                </PendingWrapper>
+            )}
         </div>
     );
 }

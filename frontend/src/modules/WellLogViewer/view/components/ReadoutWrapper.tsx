@@ -44,7 +44,7 @@ function infoToReadoutItem(infos: Info[], iTrack: number, templateTracks: Templa
     } else {
         const trackTemplate = templateTracks[iTrack];
         return {
-            label: trackTemplate.title,
+            label: trackTemplate.title ?? trackTemplate.plots[0]?.name ?? "",
             info: infos.map(curveInfoToReadoutInfo),
         };
     }
