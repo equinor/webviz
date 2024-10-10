@@ -15,6 +15,7 @@ import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./SubsurfaceMap/registerModule";
 import "./TornadoChart/registerModule";
 import "./WellCompletions/registerModule";
+import "./WellLogViewer/registerModule";
 import "./Vfp/registerModule";
 
 

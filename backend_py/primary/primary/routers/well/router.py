@@ -216,6 +216,8 @@ async def get_wellbore_log_curve_headers(
     return [
         converters.convert_wellbore_log_curve_header_to_schema(wellbore_log_curve_header)
         for wellbore_log_curve_header in wellbore_log_curve_headers
+        # Missing log name implies garbage data, so we simply drop them
+        if wellbore_log_curve_header.log_name is not None
     ]
 
 

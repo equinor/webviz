@@ -1,5 +1,7 @@
 import { WritableAtom, createStore } from "jotai";
 
+import { CurrentModuleInstanceIdAtom } from "./GlobalAtoms";
+
 export type AtomStore = ReturnType<typeof createStore>;
 
 export class AtomStoreMaster {
@@ -16,6 +18,8 @@ export class AtomStoreMaster {
 
     makeAtomStoreForModuleInstance(moduleInstanceId: string) {
         const atomStore = createStore();
+        // Make the module's own id available within each module's store
+        atomStore.set(CurrentModuleInstanceIdAtom, moduleInstanceId);
         this._atomStores.set(moduleInstanceId, atomStore);
 
         const atomStates = Array.from(this._atomStates.entries());

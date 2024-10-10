@@ -10,6 +10,8 @@ export const showIntersectionAtom = atom<boolean>(false);
 export const gridLayerAtom = atom<number>(1);
 export const intersectionExtensionLengthAtom = atom<number>(1000);
 export const colorScaleAtom = atom<ColorScale | null>(null);
+export const viewerHorizontalAtom = atom<boolean>(false);
+
 export const useCustomBoundsAtom = atom<boolean>(false);
 export const intersectionTypeAtom = atom<IntersectionType>(IntersectionType.WELLBORE);
 export const addCustomIntersectionPolylineEditModeActiveAtom = atom<boolean>(false);

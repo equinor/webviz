@@ -20,6 +20,7 @@ export type DropdownOption<TValue = string> = {
     adornment?: React.ReactNode;
     hoverText?: string;
     disabled?: boolean;
+    group?: string;
 };
 
 export type DropdownProps<TValue = string> = {
@@ -32,10 +33,11 @@ export type DropdownProps<TValue = string> = {
     width?: string | number;
     showArrows?: boolean;
     debounceTimeMs?: number;
+    placeholder?: string;
 } & BaseComponentProps;
 
-const minHeight = 200;
-const optionHeight = 32;
+const MIN_HEIGHT = 200;
+const OPTION_HEIGHT = 32;
 
 type DropdownRect = {
     left?: number;
@@ -46,8 +48,35 @@ type DropdownRect = {
     minWidth: number;
 };
 
+type OptionListItem<TValue> =
+    | {
+          type: "option";
+          actualIndex: number;
+          content: DropdownOption<TValue>;
+      }
+    | {
+          type: "separator";
+          actualIndex: never;
+          content: string;
+      };
+
 const noMatchingOptionsText = "No matching options";
 const noOptionsText = "No options";
+
+function makeOptionListItems<TValue>(options: DropdownOption<TValue>[]): OptionListItem<TValue>[] {
+    const optionsWithSeperators: OptionListItem<TValue>[] = options.flatMap((option, index) => {
+        const optionItem = { type: "option", actualIndex: index, content: option } as OptionListItem<TValue>;
+        const seperatorItem = { type: "separator", content: option.group } as OptionListItem<TValue>;
+
+        if (option.group && option.group !== options[index - 1]?.group) {
+            return [seperatorItem, optionItem];
+        } else {
+            return [optionItem];
+        }
+    });
+
+    return optionsWithSeperators;
+}
 
 export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const { onChange } = props;
@@ -63,9 +92,13 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const [filter, setFilter] = React.useState<string | null>(null);
     const [selection, setSelection] = React.useState<TValue | null>(props.value ?? null);
     const [prevValue, setPrevValue] = React.useState<TValue | null>(props.value ?? null);
-    const [prevFilteredOptions, setPrevFilteredOptions] = React.useState<DropdownOption<TValue>[]>(props.options);
+    const [prevFilteredOptionsWithSeparators, setPrevFilteredOptionsWithSeparators] = React.useState<
+        OptionListItem<TValue>[]
+    >(makeOptionListItems(props.options));
     const [selectionIndex, setSelectionIndex] = React.useState<number>(-1);
-    const [filteredOptions, setFilteredOptions] = React.useState<DropdownOption<TValue>[]>(props.options);
+    const [filteredOptionsWithSeparators, setFilteredOptionsWithSeparators] = React.useState<OptionListItem<TValue>[]>(
+        makeOptionListItems(props.options)
+    );
     const [optionIndexWithFocus, setOptionIndexWithFocus] = React.useState<number>(-1);
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [keyboardFocus, setKeyboardFocus] = React.useState<boolean>(false);
@@ -78,11 +111,13 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
 
     const setOptionIndexWithFocusToCurrentSelection = React.useCallback(
         function handleFilteredOptionsChange() {
-            const index = filteredOptions.findIndex((option) => isEqual(option.value, selection));
+            const index = filteredOptionsWithSeparators.findIndex(
+                (option) => option.type === "option" && isEqual(option.content.value, selection)
+            );
             setSelectionIndex(index);
             setOptionIndexWithFocus(index);
         },
-        [filteredOptions, selection]
+        [filteredOptionsWithSeparators, selection]
     );
 
     if (!isEqual(prevValue, valueWithDefault)) {
@@ -91,12 +126,12 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         setPrevValue(valueWithDefault);
     }
 
-    if (!isEqual(prevFilteredOptions, filteredOptions)) {
+    if (!isEqual(prevFilteredOptionsWithSeparators, filteredOptionsWithSeparators)) {
         setOptionIndexWithFocusToCurrentSelection();
-        setPrevFilteredOptions(filteredOptions);
+        setPrevFilteredOptionsWithSeparators(filteredOptionsWithSeparators);
     }
 
-    React.useEffect(function handleMount() {
+    React.useEffect(function mountEffect() {
         return function handleUnmount() {
             if (debounceTimerRef.current) {
                 clearTimeout(debounceTimerRef.current);
@@ -105,7 +140,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     }, []);
 
     React.useEffect(
-        function handleOptionsChange() {
+        function handleOptionsChangeEffect() {
             function handleMouseDown(event: MouseEvent) {
                 if (
                     dropdownRef.current &&
@@ -115,7 +150,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                 ) {
                     setDropdownVisible(false);
                     setFilter(null);
-                    setFilteredOptions(props.options);
+                    setFilteredOptionsWithSeparators(makeOptionListItems(props.options));
                     setOptionIndexWithFocus(-1);
                 }
             }
@@ -130,7 +165,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     );
 
     React.useEffect(
-        function updateDropdownRectWidth() {
+        function updateDropdownRectWidthEffect() {
             let longestOptionWidth = props.options.reduce((prev, current) => {
                 const labelWidth = getTextWidthWithFont(current.label, "Equinor", 1);
                 const adornmentWidth = current.adornment ? convertRemToPixels((5 + 2) / 4) : 0;
@@ -151,33 +186,38 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));
 
             const newFilteredOptions = props.options.filter((option) => option.label.includes(filter || ""));
-            setFilteredOptions(newFilteredOptions);
+            setFilteredOptionsWithSeparators(makeOptionListItems(newFilteredOptions));
         },
         [props.options, filter]
     );
 
     React.useEffect(
-        function computeDropdownRect() {
+        function computeDropdownRectEffect() {
             if (dropdownVisible) {
                 const inputClientBoundingRect = inputRef.current?.getBoundingClientRect();
                 const bodyClientBoundingRect = document.body.getBoundingClientRect();
 
-                const height = Math.min(minHeight, Math.max(filteredOptions.length * optionHeight, optionHeight)) + 2;
+                const preferredHeight =
+                    Math.min(
+                        MIN_HEIGHT,
+                        Math.max(filteredOptionsWithSeparators.length * OPTION_HEIGHT, OPTION_HEIGHT)
+                    ) + 2;
 
                 if (inputClientBoundingRect && bodyClientBoundingRect) {
                     const newDropdownRect: DropdownRect = {
                         minWidth: inputBoundingRect.width,
                         width: dropdownRect.width,
-                        height: height,
+                        height: preferredHeight,
                     };
 
-                    if (inputClientBoundingRect.y + inputBoundingRect.height + height > window.innerHeight) {
+                    if (inputClientBoundingRect.y + inputBoundingRect.height + preferredHeight > window.innerHeight) {
+                        const height = Math.min(inputClientBoundingRect.y, preferredHeight);
                         newDropdownRect.top = inputClientBoundingRect.y - height;
-                        newDropdownRect.height = Math.min(height, inputClientBoundingRect.y);
+                        newDropdownRect.height = height;
                     } else {
                         newDropdownRect.top = inputClientBoundingRect.y + inputBoundingRect.height;
                         newDropdownRect.height = Math.min(
-                            height,
+                            preferredHeight,
                             window.innerHeight - inputClientBoundingRect.y - inputBoundingRect.height
                         );
                     }
@@ -194,8 +234,10 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                         Math.max(
                             0,
                             Math.round(
-                                (filteredOptions.findIndex((option) => option.value === selection) || 0) -
-                                    height / optionHeight / 2
+                                (filteredOptionsWithSeparators.findIndex(
+                                    (option) => option.type === "option" && option.content.value === selection
+                                ) || 0) -
+                                    preferredHeight / OPTION_HEIGHT / 2
                             )
                         )
                     );
@@ -206,7 +248,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         [
             inputBoundingRect,
             dropdownVisible,
-            filteredOptions,
+            filteredOptionsWithSeparators,
             selection,
             dropdownRect.width,
             props.options,
@@ -242,7 +284,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             setSelectionIndex(props.options.findIndex((option) => isEqual(option.value, value)));
             setDropdownVisible(false);
             setFilter(null);
-            setFilteredOptions(props.options);
+            setFilteredOptionsWithSeparators(makeOptionListItems(props.options));
             setOptionIndexWithFocus(-1);
 
             handleOnChange(value);
@@ -253,14 +295,14 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             setSelectionIndex,
             setDropdownVisible,
             setFilter,
-            setFilteredOptions,
+            setFilteredOptionsWithSeparators,
             setSelection,
             handleOnChange,
         ]
     );
 
     React.useEffect(
-        function addKeyDownEventHandler() {
+        function addKeyDownEventHandlerEffect() {
             function handleKeyDown(e: KeyboardEvent) {
                 if (e.key === "Escape") {
                     setDropdownVisible(false);
@@ -269,35 +311,63 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                     inputRef.current?.blur();
                 }
                 if (dropdownRef.current) {
-                    const currentStartIndex = Math.round(dropdownRef.current?.scrollTop / optionHeight);
+                    const currentStartIndex = Math.round(dropdownRef.current?.scrollTop / OPTION_HEIGHT);
                     if (dropdownVisible) {
                         if (e.key === "ArrowUp") {
                             e.preventDefault();
-                            const adjustedOptionIndexWithFocus =
+                            let adjustedOptionIndexWithFocus =
                                 optionIndexWithFocus === -1 ? selectionIndex : optionIndexWithFocus;
-                            const newIndex = Math.max(0, adjustedOptionIndexWithFocus - 1);
+                            adjustedOptionIndexWithFocus--;
+
+                            // Make sure we are focusing on an option and not a separator
+                            const item = filteredOptionsWithSeparators[adjustedOptionIndexWithFocus];
+                            let scrollToTop = false;
+                            if (item && item.type !== "option") {
+                                if (adjustedOptionIndexWithFocus === 0) {
+                                    adjustedOptionIndexWithFocus = 1;
+                                    scrollToTop = true;
+                                } else {
+                                    adjustedOptionIndexWithFocus--;
+                                }
+                            }
+
+                            const newIndex = Math.max(0, adjustedOptionIndexWithFocus);
                             setOptionIndexWithFocus(newIndex);
-                            if (newIndex < currentStartIndex) {
-                                setStartIndex(newIndex);
+                            const newStartIndex = newIndex - (scrollToTop ? 1 : 0);
+                            if (newStartIndex < currentStartIndex) {
+                                setStartIndex(newStartIndex);
                             }
                             setKeyboardFocus(true);
                         }
                         if (e.key === "ArrowDown") {
                             e.preventDefault();
-                            const adjustedOptionIndexWithFocus =
+                            let adjustedOptionIndexWithFocus =
                                 optionIndexWithFocus === -1 ? selectionIndex : optionIndexWithFocus;
-                            const newIndex = Math.min(filteredOptions.length - 1, adjustedOptionIndexWithFocus + 1);
+                            adjustedOptionIndexWithFocus++;
+
+                            // Make sure we are focusing on an option and not a separator
+                            const item = filteredOptionsWithSeparators[adjustedOptionIndexWithFocus];
+                            if (item && item.type !== "option") {
+                                adjustedOptionIndexWithFocus++;
+                            }
+
+                            const newIndex = Math.min(
+                                filteredOptionsWithSeparators.length - 1,
+                                adjustedOptionIndexWithFocus
+                            );
+
                             setOptionIndexWithFocus(newIndex);
-                            if (newIndex >= currentStartIndex + minHeight / optionHeight - 1) {
-                                setStartIndex(Math.max(0, newIndex - minHeight / optionHeight + 1));
+                            if (newIndex >= currentStartIndex + MIN_HEIGHT / OPTION_HEIGHT - 1) {
+                                setStartIndex(Math.max(0, newIndex - MIN_HEIGHT / OPTION_HEIGHT + 1));
                             }
                             setKeyboardFocus(true);
                         }
                         if (e.key === "Enter") {
                             e.preventDefault();
-                            const option = filteredOptions[keyboardFocus ? optionIndexWithFocus : selectionIndex];
-                            if (option && !option.disabled) {
-                                handleOptionClick(option.value);
+                            const option =
+                                filteredOptionsWithSeparators[keyboardFocus ? optionIndexWithFocus : selectionIndex];
+                            if (option && option.type === "option" && !option.content.disabled) {
+                                handleOptionClick(option.content.value);
                             }
                         }
                     }
@@ -312,7 +382,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         },
         [
             selection,
-            filteredOptions,
+            filteredOptionsWithSeparators,
             dropdownVisible,
             startIndex,
             handleOptionClick,
@@ -330,7 +400,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
             setFilter(event.target.value);
             const newFilteredOptions = props.options.filter((option) => option.label.includes(event.target.value));
-            setFilteredOptions(newFilteredOptions);
+            setFilteredOptionsWithSeparators(makeOptionListItems(newFilteredOptions));
             setSelectionIndex(newFilteredOptions.findIndex((option) => isEqual(option.value, selection)));
         },
         [props.options, selection]
@@ -357,8 +427,20 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     }
 
     function handleSelectPreviousOption() {
-        const newIndex = Math.max(0, selectionIndex - 1);
-        const newValue = filteredOptions[newIndex].value;
+        let newIndex = Math.max(0, selectionIndex - 1);
+        let item = filteredOptionsWithSeparators[newIndex];
+        if (item && item.type === "separator") {
+            if (newIndex === 0) {
+                newIndex = 1;
+            } else {
+                newIndex--;
+            }
+            item = filteredOptionsWithSeparators[newIndex];
+        }
+        if (!item || item.type !== "option") {
+            throw new Error("Every separator should be followed by an option");
+        }
+        const newValue = item.content.value;
         setSelectionIndex(newIndex);
         setSelection(newValue);
         handleOnChange(newValue);
@@ -366,12 +448,37 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     }
 
     function handleSelectNextOption() {
-        const newIndex = Math.min(filteredOptions.length - 1, selectionIndex + 1);
-        const newValue = filteredOptions[newIndex].value;
+        let newIndex = Math.min(filteredOptionsWithSeparators.length - 1, selectionIndex + 1);
+        let item = filteredOptionsWithSeparators[newIndex];
+        if (item && item.type === "separator") {
+            newIndex++;
+            item = filteredOptionsWithSeparators[newIndex];
+        }
+        if (newIndex >= filteredOptionsWithSeparators.length - 1 || !item || item.type !== "option") {
+            throw new Error("Every separator should be followed by an option");
+        }
+        const newValue = item.content.value;
         setSelectionIndex(newIndex);
         setSelection(newValue);
         handleOnChange(newValue);
         setOptionIndexWithFocus(-1);
+    }
+
+    function renderItem(item: OptionListItem<TValue>, index: number) {
+        if (item.type === "separator") {
+            return <SeparatorItem key={`${item.content}-${index}`} text={item.content} />;
+        } else {
+            return (
+                <OptionItem
+                    key={`${item.content.value}`}
+                    isSelected={isEqual(selection, item.content.value)}
+                    isFocused={optionIndexWithFocus === index}
+                    {...item.content}
+                    onSelect={handleOptionClick}
+                    onPointerOver={() => handlePointerOver(index)}
+                />
+            );
+        }
     }
 
     return (
@@ -400,6 +507,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                         onChange={handleInputChange}
                         value={makeInputValue()}
                         rounded={props.showArrows ? "left" : "all"}
+                        placeholder={props.placeholder}
                     />
                 </div>
                 {props.showArrows && (
@@ -420,8 +528,8 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                             className={resolveClassNames(
                                 "border border-gray-300 hover:bg-blue-100 rounded-tr cursor-pointer",
                                 {
-                                    "pointer-events-none": selectionIndex >= filteredOptions.length - 1,
-                                    "text-gray-400": selectionIndex >= filteredOptions.length - 1,
+                                    "pointer-events-none": selectionIndex >= filteredOptionsWithSeparators.length - 1,
+                                    "text-gray-400": selectionIndex >= filteredOptionsWithSeparators.length - 1,
                                 }
                             )}
                             onClick={handleSelectNextOption}
@@ -437,67 +545,72 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                             style={{ ...dropdownRect }}
                             ref={dropdownRef}
                         >
-                            {filteredOptions.length === 0 && (
+                            {filteredOptionsWithSeparators.length === 0 && (
                                 <div className="p-1 flex items-center text-gray-400 select-none">
                                     {props.options.length === 0 || filter === ""
                                         ? noOptionsText
                                         : noMatchingOptionsText}
                                 </div>
                             )}
-                            <Virtualization
-                                direction="vertical"
-                                items={filteredOptions}
-                                itemSize={optionHeight}
-                                containerRef={dropdownRef}
-                                startIndex={startIndex}
-                                renderItem={(option, index) => (
-                                    <div
-                                        key={option.value}
-                                        className={resolveClassNames(
-                                            "flex",
-                                            "items-center",
-                                            "cursor-pointer",
-                                            "select-none",
-                                            "pl-1",
-                                            "pr-1",
-                                            {
-                                                "bg-blue-600 text-white box-border hover:bg-blue-700": isEqual(
-                                                    selection,
-                                                    option.value
-                                                ),
-                                                "bg-blue-100":
-                                                    !isEqual(selection, option.value) && optionIndexWithFocus === index,
-                                                "bg-blue-700 text-white":
-                                                    !isEqual(selection, option.value) && optionIndexWithFocus === index,
-                                                "pointer-events-none": option.disabled,
-                                                "text-gray-400": option.disabled,
-                                            }
-                                        )}
-                                        onClick={() => {
-                                            if (option.disabled) {
-                                                return;
-                                            }
-                                            handleOptionClick(option.value);
-                                        }}
-                                        style={{ height: optionHeight }}
-                                        onPointerMove={() => handlePointerOver(index)}
-                                        title={option.hoverText ?? option.label}
-                                    >
-                                        <span className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex gap-2">
-                                            {option.adornment && (
-                                                <span className="max-w-5 max-h-5 overflow-hidden">
-                                                    {option.adornment}
-                                                </span>
-                                            )}
-                                            {option.label}
-                                        </span>
-                                    </div>
-                                )}
-                            />
+                            <div style={{ height: filteredOptionsWithSeparators.length * OPTION_HEIGHT }}>
+                                <Virtualization
+                                    direction="vertical"
+                                    items={filteredOptionsWithSeparators}
+                                    itemSize={OPTION_HEIGHT}
+                                    containerRef={dropdownRef}
+                                    startIndex={startIndex}
+                                    renderItem={renderItem}
+                                />
+                            </div>
                         </div>
                     )}
             </div>
         </BaseComponent>
+    );
+}
+
+type OptionProps<TValue> = DropdownOption<TValue> & {
+    isSelected: boolean;
+    isFocused: boolean;
+    onSelect: (value: TValue) => void;
+    onPointerOver: (value: TValue) => void;
+};
+
+function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
+    return (
+        <div
+            className={resolveClassNames("flex items-center cursor-pointer select-none px-1", {
+                "bg-blue-600 text-white box-border hover:bg-blue-700": props.isSelected,
+                "bg-blue-100": !props.isSelected && props.isFocused,
+                "bg-blue-700 text-white": props.isSelected && props.isFocused,
+                "pointer-events-none": props.disabled,
+                "text-gray-400": props.disabled,
+            })}
+            style={{ height: OPTION_HEIGHT }}
+            title={props.label}
+            onPointerMove={() => props.onPointerOver(props.value)}
+            onClick={() => !props.disabled && props.onSelect(props.value)}
+        >
+            <span
+                className={resolveClassNames("whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex gap-2", {
+                    "ml-2": props.group !== undefined,
+                })}
+            >
+                {props.adornment && <span className="max-w-5 max-h-5 overflow-hidden">{props.adornment}</span>}
+                {props.label}
+            </span>
+        </div>
+    );
+}
+
+function SeparatorItem(props: { text: string }): React.ReactNode {
+    return (
+        <div
+            className="px-1 flex gap-1 text-xs text-gray-500 uppercase font-semibold items-center pointer-events-none select-none"
+            style={{ height: OPTION_HEIGHT }}
+        >
+            <span className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex gap-2">{props.text}</span>
+        </div>
     );
 }
 
