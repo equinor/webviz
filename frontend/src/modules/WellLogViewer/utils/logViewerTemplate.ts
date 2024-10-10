@@ -62,6 +62,7 @@ export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotCo
         ...plot,
         _id: plot._id ?? v4(),
         _isValid: Boolean(plot.name && plot.type),
+        _logAndName: plot._logAndName ?? `${plot.name}::{undefined}`,
         name: plot.name,
         type: plot.type,
         color: curveColor,

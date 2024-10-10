@@ -33,7 +33,7 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 
     // If the current selection does not exist, keep it in the selection, with a warning. This can happen when the user is importing a config, or swapping between wellbores
     allSelectedWellLogCurves.forEach((curveName) => {
-        if (!curveHeaderOptions.some(({ value }) => value === curveName)) {
+        if (!curveHeaderOptions.some(({ value }) => value.endsWith("::" + curveName))) {
             curveHeaderOptions.push(makeMissingCurveOption(curveName));
         }
     });
@@ -136,9 +136,10 @@ function SortablePlotItem(props: SortablePlotItemProps) {
         <>
             <Dropdown
                 placeholder="Select a curve"
-                value={props.plot.name}
+                value={props.plot._logAndName}
                 options={props.curveHeaderOptions}
-                onChange={(v) => handlePlotChange({ name: v })}
+                // @ts-expect-error onChange is typed for a completely normal string, but we're using a formatted one
+                onChange={(v) => handlePlotChange({ _logAndName: v, name: v.split("::")[1] })}
             />
         </>
     );
@@ -183,13 +184,19 @@ function SortablePlotItem(props: SortablePlotItemProps) {
 
     return <SortableListItem id={props.plot._id} title={title} endAdornment={endAdornment} />;
 }
+function sortStatLogsToTop(o: WellboreLogCurveHeader_api) {
+    if (o.logName.startsWith("STAT_")) return 0;
+    else return 1;
+}
 
 function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): DropdownOption[] {
+    // It's my understanding that the STAT logs are the main curves users' would care about, so sorting them to the top first
     return _.chain(curveHeaders)
-        .sortBy(["logName", "curveName"])
+        .sortBy([sortStatLogsToTop, "logName", "curveName"])
         .map((curveHeader): DropdownOption => {
             return {
-                value: curveHeader.curveName,
+                // ... surely they wont have log-names with :: in them, RIGHT?
+                value: `${curveHeader.logName}::${curveHeader.curveName}`,
                 label: curveHeader.curveName,
                 group: curveHeader.logName,
             };
@@ -198,10 +205,10 @@ function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): Dropd
 }
 
 // Helper method to show a missing curve as a disabled option
-function makeMissingCurveOption(curveName: string): DropdownOption {
+function makeMissingCurveOption(curveAndLogName: string): DropdownOption {
     return {
-        label: curveName,
-        value: curveName,
+        label: curveAndLogName.split("::")[0],
+        value: curveAndLogName,
         group: "Unavailable curves!",
         disabled: true,
         adornment: (

@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Any
 
 
 class WellboreCompletion(BaseModel):
@@ -37,6 +38,18 @@ class WellboreLogCurveHeader(BaseModel):
     log_name: str | None
     curve_name: str
     curve_unit: str | None
+
+    # Defining a hash-function to facilitate usage in Sets
+    def __hash__(self) -> int:
+        # No globally unique field, but curve-name should be unique (per wellbore)
+        return hash(self.curve_name + (self.log_name or "N/A"))
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, WellboreLogCurveHeader):
+            # delegate to the other item in the comparison
+            return NotImplemented
+
+        return (self.curve_name, self.log_name) == (other.curve_name, other.log_name)
 
 
 class WellboreLogCurveData(BaseModel):
