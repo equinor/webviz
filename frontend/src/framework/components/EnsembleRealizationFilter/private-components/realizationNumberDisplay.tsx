@@ -88,6 +88,52 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         return <div className="flex flex-wrap gap-1">{groupDivs}</div>;
     }
 
+    function createNonCompactRealizationNumberVisualization_NEW(): React.ReactNode {
+        const mainDivElements: JSX.Element[] = [];
+
+        const numRealizationsPerGroup = 25;
+        let realizationCount = 0;
+        let groupElements: JSX.Element[] = [];
+        for (const realization of allRealizationsInRange) {
+            const isCurrentRealizationAvailable = props.availableRealizations.includes(realization);
+            const isRealizationSelected = props.selectedRealizations.includes(realization);
+            const isClickDisabled = props.disableInteraction || !isCurrentRealizationAvailable;
+
+            if (realizationCount === 0) {
+                groupElements = [];
+            }
+
+            groupElements.push(
+                <div
+                    title={`real-${realization}`}
+                    key={realization}
+                    className={resolveClassNames("w-[12px] h-[12px] rounded-sm flex justify-center items-center", {
+                        "bg-green-600": isRealizationSelected,
+                        "bg-gray-400": !isRealizationSelected && isCurrentRealizationAvailable,
+                        "bg-gray-300": !isRealizationSelected && !isCurrentRealizationAvailable,
+                        "cursor-pointer": !isClickDisabled,
+                    })}
+                    onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}
+                />
+            );
+
+            if (++realizationCount === numRealizationsPerGroup) {
+                const groupElement = (
+                    <div className="flex flex-wrap justify-start w-[84px] gap-[4px] p-[4px]">{[...groupElements]}</div>
+                );
+                mainDivElements.push(groupElement);
+                realizationCount = 0;
+            }
+        }
+
+        return (
+            <div className="flex flex-row">
+                <div className="flex flex-wrap justify-start gap-1 bg-white">{mainDivElements}</div>
+                <div className="flex-grow" />
+            </div>
+        );
+    }
+
     function createCompactRealizationNumberVisualization(): React.ReactNode {
         const { width, height } = divSize;
         const realizationCount = allRealizationsInRange.length;
@@ -124,11 +170,56 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         );
     }
 
+    function createCompactRealizationNumberVisualization_NEW(): React.ReactNode {
+        const mainDivElements: JSX.Element[] = [];
+
+        const numRealizationsPerGroup = 25;
+        let realizationCount = 0;
+        let groupElements: JSX.Element[] = [];
+        for (const realization of allRealizationsInRange) {
+            const isCurrentRealizationAvailable = props.availableRealizations.includes(realization);
+            const isRealizationSelected = props.selectedRealizations.includes(realization);
+            const isClickDisabled = props.disableInteraction || !isCurrentRealizationAvailable;
+
+            if (realizationCount === 0) {
+                groupElements = [];
+            }
+
+            groupElements.push(
+                <div
+                    title={`real-${realization}`}
+                    key={realization}
+                    className={resolveClassNames("w-[6px] h-[6px] flex justify-center items-center", {
+                        "bg-green-600": isRealizationSelected,
+                        "bg-gray-400": !isRealizationSelected && isCurrentRealizationAvailable,
+                        "bg-gray-300": !isRealizationSelected && !isCurrentRealizationAvailable,
+                        "cursor-pointer": !isClickDisabled,
+                    })}
+                />
+            );
+
+            if (++realizationCount === numRealizationsPerGroup) {
+                const groupElement = (
+                    <div className="flex flex-wrap justify-start w-[38px] gap-[2px] bg-white">{[...groupElements]}</div>
+                );
+                mainDivElements.push(groupElement);
+                realizationCount = 0;
+            }
+        }
+
+        return (
+            <div className="flex flex-row">
+                <div className="flex flex-wrap justify-start gap-1 bg-white">{mainDivElements}</div>
+                <div className="flex-grow" />
+            </div>
+        );
+    }
+
     return (
         <div ref={divRef}>
             {props.showAsCompact
-                ? createCompactRealizationNumberVisualization()
-                : createNonCompactRealizationNumberVisualization()}
+                ? createCompactRealizationNumberVisualization_NEW()
+                : createNonCompactRealizationNumberVisualization_NEW()}
         </div>
     );
 };
