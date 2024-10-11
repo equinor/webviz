@@ -13,7 +13,8 @@ import { Rgb, parse } from "culori";
 import { Feature } from "geojson";
 import { SurfaceDataPng } from "src/api/models/SurfaceDataPng";
 
-import { WellBorePickLayerData, WellPicksLayer } from "./wellPickLayer";
+import { AdvancedWellsLayer } from "./AdvancedWellsLayer";
+import { WellBorePickLayerData, WellborePicksLayer } from "./WellborePicksLayer";
 
 import { DrilledWellTrajectoriesLayer } from "../../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "../../layers/implementations/layers/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
@@ -41,13 +42,28 @@ export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorSca
         return null;
     }
     if (layer instanceof ObservedSurfaceLayer) {
-        return createMapImageLayer(data, layer.getItemDelegate().getId(), colorScale);
+        return createMapImageLayer(
+            data,
+            layer.getItemDelegate().getId(),
+            layer.getItemDelegate().getName(),
+            colorScale
+        );
     }
     if (layer instanceof RealizationSurfaceLayer) {
-        return createMapImageLayer(data, layer.getItemDelegate().getId(), colorScale);
+        return createMapImageLayer(
+            data,
+            layer.getItemDelegate().getId(),
+            layer.getItemDelegate().getName(),
+            colorScale
+        );
     }
     if (layer instanceof StatisticalSurfaceLayer) {
-        return createMapImageLayer(data, layer.getItemDelegate().getId(), colorScale);
+        return createMapImageLayer(
+            data,
+            layer.getItemDelegate().getId(),
+            layer.getItemDelegate().getName(),
+            colorScale
+        );
     }
     if (layer instanceof RealizationPolygonsLayer) {
         return createPolygonsLayer(data, layer.getItemDelegate().getId());
@@ -69,7 +85,7 @@ export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorSca
     }
     return null;
 }
-function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string): WellPicksLayer {
+function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string): WellborePicksLayer {
     const wellPicksData: WellBorePickLayerData[] = wellPicksDataApi.map((wellPick) => {
         return {
             easting: wellPick.easting,
@@ -77,9 +93,10 @@ function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string):
             wellBoreUwi: wellPick.uniqueWellboreIdentifier,
             tvdMsl: wellPick.tvdMsl,
             md: wellPick.md,
+            pickable: true,
         };
     });
-    return new WellPicksLayer({
+    return new WellborePicksLayer({
         id: id,
         data: wellPicksData,
         pickable: true,
@@ -109,9 +126,16 @@ function createMapFloatLayer(layerData: SurfaceDataFloat_trans, id: string): Map
     });
 }
 
-function createMapImageLayer(layerData: SurfaceDataPng, id: string, colorScale?: ColorScaleWithName): ColormapLayer {
+function createMapImageLayer(
+    layerData: SurfaceDataPng,
+    id: string,
+    name: string,
+    colorScale?: ColorScaleWithName
+): ColormapLayer {
     return new ColormapLayer({
         id: id,
+        // @ts-expect-error - wrong typescript definition of AspenTech - ColormapLayer should extend ExtendedLayer in addition to BitmapLayer
+        name: name,
         image: `data:image/png;base64,${layerData.png_image_base64}`,
         bounds: _calcBoundsForRotationAroundUpperLeftCorner(layerData.surface_def),
         rotDeg: layerData.surface_def.rot_deg,
@@ -211,7 +235,7 @@ export function makeWellsLayer(
         return [50, 50, 50, 100];
     }
 
-    const wellsLayer = new WellsLayer({
+    const wellsLayer = new AdvancedWellsLayer({
         id: id,
         data: {
             type: "FeatureCollection",
@@ -221,6 +245,7 @@ export function makeWellsLayer(
         refine: false,
         lineStyle: { width: getLineStyleWidth, color: getColor },
         wellHeadStyle: { size: getWellHeadStyleWidth, color: getColor },
+        wellNameVisible: true,
         pickable: true,
         ZIncreasingDownwards: false,
         outline: false,

@@ -121,6 +121,10 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
 }
 
 function findColorScale(layer: Layer<any, any>): { id: string; colorScale: ColorScaleWithName } | null {
+    if (layer.getLayerDelegate().getColoringType() !== "COLORSCALE") {
+        return null;
+    }
+
     let colorScaleWithName = new ColorScaleWithName({
         colorPalette: defaultContinuousSequentialColorPalettes[0],
         gradientType: ColorScaleGradientType.Sequential,
@@ -139,11 +143,7 @@ function findColorScale(layer: Layer<any, any>): { id: string; colorScale: Color
         .getParentGroup()
         ?.getAncestorAndSiblingItems((item) => item instanceof ColorScale);
 
-    if (
-        colorScaleItemArr &&
-        colorScaleItemArr.length > 0 &&
-        layer.getLayerDelegate().getColoringType() === "COLORSCALE"
-    ) {
+    if (colorScaleItemArr && colorScaleItemArr.length > 0) {
         const colorScaleItem = colorScaleItemArr[0];
         if (colorScaleItem instanceof ColorScale) {
             colorScaleWithName = ColorScaleWithName.fromColorScale(

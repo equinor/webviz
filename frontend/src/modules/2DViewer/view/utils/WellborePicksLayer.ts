@@ -1,5 +1,5 @@
-import { CompositeLayer } from "@deck.gl/core/typed";
-// import { CollisionFilterExtension } from "@deck.gl/extensions/typed";
+import { CompositeLayer, FilterContext } from "@deck.gl/core/typed";
+import { CollisionFilterExtension } from "@deck.gl/extensions/typed";
 import { GeoJsonLayer, TextLayer } from "@deck.gl/layers/typed";
 
 import type { Feature, FeatureCollection } from "geojson";
@@ -20,7 +20,15 @@ export type WellBorePicksLayerProps = {
     data: WellBorePickLayerData[];
 };
 
-export class WellPicksLayer extends CompositeLayer<WellBorePicksLayerProps> {
+export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> {
+    filterSubLayer(context: FilterContext): boolean {
+        if (context.layer.id.includes("text")) {
+            return context.viewport.zoom > -4;
+        }
+
+        return true;
+    }
+
     renderLayers() {
         const features: Feature[] = this.props.data.map((wellPick) => {
             return {
@@ -53,16 +61,17 @@ export class WellPicksLayer extends CompositeLayer<WellBorePicksLayerProps> {
                     data: pointsData,
                     // pointType: 'circle+text',
                     filled: true,
-                    lineWidthMinPixels: 20,
-
+                    lineWidthMinPixels: 10,
+                    lineWidthUnits: "meters",
                     parameters: {
                         depthTest: false,
                     },
+                    getLineWidth: 10,
                     depthTest: false,
                     pickable: true,
                     getText: (d: Feature) => d.properties?.wellBoreUwi,
-                    // getFillColor: [100, 100, 100, 100],
                     getLineColor: [50, 50, 50],
+                    extensions: [new CollisionFilterExtension()],
                 })
             ),
 
@@ -73,22 +82,15 @@ export class WellPicksLayer extends CompositeLayer<WellBorePicksLayerProps> {
                     depthTest: false,
                     pickable: true,
                     getColor: [0, 0, 0],
-                    getSize: 100,
+                    getSize: 10,
                     sizeUnits: "meters",
-                    sizeMaxPixels: 20,
+                    sizeMinPixels: 12,
                     getAlignmentBaseline: "top",
                     getTextAnchor: "middle",
                     getPixelOffset: [0, 10],
                     getPosition: (d: TextLayerData) => d.coordinates,
                     getText: (d: TextLayerData) => d.name,
-                    // collisionEnabled: true,
-                    // // getCollisionPriority: d => Math.log10(d.population),
-                    // collisionTestProps: {
-                    //     sizeScale: 32 * 2,
-                    //     sizeMaxPixels: 30 * 2,
-                    //     sizeMinPixels: 30 * 2,
-                    // },
-                    // extensions: [new CollisionFilterExtension()],
+                    extensions: [new CollisionFilterExtension()],
                 })
             ),
         ];

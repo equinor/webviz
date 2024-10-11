@@ -62,22 +62,30 @@ export function ReadoutBoxWrapper(props: ReadoutBoxWrapperProps): React.ReactNod
             // 1. defined as propertyValue, used for general layer info (now using for positional data)
             // 2. Another defined as array of property object described by type PropertyDataType
 
+            const layerReadout = newReadoutItems.find((item) => item.label === layerName);
+
             // collecting card data for 1st type
             const zValue = (layerPickInfo as LayerPickInfo).propertyValue;
             if (zValue !== undefined) {
-                const property = positionReadout.info?.find((item) => item.name === layerName);
-                if (property) {
-                    property.value = zValue;
-                } else {
-                    positionReadout.info.push({
-                        name: layerName,
+                if (layerReadout) {
+                    layerReadout.info.push({
+                        name: "Property value",
                         value: zValue,
+                    });
+                } else {
+                    newReadoutItems.push({
+                        label: layerName ?? "Unknown layer",
+                        info: [
+                            {
+                                name: "Property value",
+                                value: zValue,
+                            },
+                        ],
                     });
                 }
             }
 
             // collecting card data for 2nd type
-            const layerReadout = newReadoutItems.find((item) => item.label === layerName);
             if (!layerProps || layerProps.length === 0) {
                 continue;
             }
