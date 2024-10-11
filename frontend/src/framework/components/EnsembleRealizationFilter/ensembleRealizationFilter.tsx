@@ -29,6 +29,7 @@ import { createSmartNodeSelectorTagListFromParameterIdentStrings } from "./priva
 export type EnsembleRealizationFilterProps = {
     realizationFilter: RealizationFilter; // Should be ref stable and not change address in memory
     isActive: boolean;
+    isAnotherFilterActive: boolean;
     onClick?: () => void;
     onHeaderClick?: () => void;
     onFilterChange?: () => void;
@@ -280,13 +281,17 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     return (
         <div
             className={resolveClassNames("outline mb-4 rounded-md", {
+                "cursor-pointer": !props.isActive,
+                "hover:opacity-75 transition-opacity duration-100": !props.isActive && props.isAnotherFilterActive,
+                "hover:outline-blue-400 hover:shadow-blue-400 hover:shadow-md":
+                    !props.isActive && !props.isAnotherFilterActive,
                 "outline-orange-400 shadow-orange-400 shadow-lg": props.isActive && hasUnsavedFilterChanges,
                 "outline-blue-400 shadow-blue-400 shadow-lg": props.isActive && !hasUnsavedFilterChanges,
-                "cursor-pointer hover:opacity-75 transition-opacity duration-100": !props.isActive,
-                "opacity-60 outline-2 outline-orange-400 shadow-orange-400 shadow-lg":
-                    !props.isActive && hasUnsavedFilterChanges,
-                "opacity-30 outline-2 outline-gray-300 shadow-gray-300 shadow-md":
-                    !props.isActive && !hasUnsavedFilterChanges,
+                "opacity-100": props.isActive || !props.isAnotherFilterActive,
+                "opacity-60 ": !props.isActive && props.isAnotherFilterActive && hasUnsavedFilterChanges,
+                "opacity-30": !props.isActive && props.isAnotherFilterActive && !hasUnsavedFilterChanges,
+                "outline-2 outline-orange-400 shadow-orange-400 shadow-lg": !props.isActive && hasUnsavedFilterChanges,
+                "outline-2 outline-gray-300 shadow-gray-300 shadow-md": !props.isActive && !hasUnsavedFilterChanges,
             })}
             onClick={handleOnClick}
         >

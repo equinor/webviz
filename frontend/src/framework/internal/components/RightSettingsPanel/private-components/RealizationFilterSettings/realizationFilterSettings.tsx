@@ -80,16 +80,17 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                     <div className="flex-grow space-y-4">
                         {ensembleSet.getEnsembleArr().map((ensemble) => {
                             const ensembleIdent = ensemble.getIdent();
+                            const isActive =
+                                activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
+                            const isAnotherActive = !isActive && activeFilterEnsembleIdent !== null;
                             return (
                                 <EnsembleRealizationFilter
                                     key={ensembleIdent.toString()}
                                     realizationFilter={realizationFilterSet.getRealizationFilterForEnsembleIdent(
                                         ensemble.getIdent()
                                     )}
-                                    isActive={
-                                        activeFilterEnsembleIdent !== null &&
-                                        activeFilterEnsembleIdent.equals(ensembleIdent)
-                                    }
+                                    isActive={isActive}
+                                    isAnotherFilterActive={isAnotherActive}
                                     onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
                                     onHeaderClick={() => handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent)}
                                     onFilterChange={handleFilterChange}
