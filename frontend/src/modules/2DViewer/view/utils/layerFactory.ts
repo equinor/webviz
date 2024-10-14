@@ -13,9 +13,6 @@ import { Rgb, parse } from "culori";
 import { Feature } from "geojson";
 import { SurfaceDataPng } from "src/api/models/SurfaceDataPng";
 
-import { AdvancedWellsLayer } from "./AdvancedWellsLayer";
-import { WellBorePickLayerData, WellborePicksLayer } from "./WellborePicksLayer";
-
 import { DrilledWellTrajectoriesLayer } from "../../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "../../layers/implementations/layers/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
 import { ObservedSurfaceLayer } from "../../layers/implementations/layers/ObservedSurfaceLayer/ObservedSurfaceLayer";
@@ -24,6 +21,8 @@ import { RealizationPolygonsLayer } from "../../layers/implementations/layers/Re
 import { RealizationSurfaceLayer } from "../../layers/implementations/layers/RealizationSurfaceLayer/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "../../layers/implementations/layers/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
 import { Layer as LayerInterface } from "../../layers/interfaces";
+import { AdvancedWellsLayer } from "../customDeckGlLayers/AdvancedWellsLayer";
+import { WellBorePickLayerData, WellborePicksLayer } from "../customDeckGlLayers/WellborePicksLayer";
 
 export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
     const data = layer.getLayerDelegate().getData();

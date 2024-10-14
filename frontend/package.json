@@ -19,6 +19,7 @@
         "test:ct:ui": "playwright test -c playwright.ct.config.ts --ui"
     },
     "dependencies": {
+        "@deck.gl/carto": "^8.9.35",
         "@equinor/eds-core-react": "^0.42.0",
         "@equinor/eds-icons": "^0.21.0",
         "@equinor/esv-intersection": "^3.0.10",

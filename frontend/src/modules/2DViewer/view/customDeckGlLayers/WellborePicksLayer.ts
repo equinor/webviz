@@ -11,10 +11,12 @@ export type WellBorePickLayerData = {
     tvdMsl: number;
     md: number;
 };
+
 type TextLayerData = {
     coordinates: [number, number, number];
     name: string;
 };
+
 export type WellBorePicksLayerProps = {
     id: string;
     data: WellBorePickLayerData[];
@@ -22,6 +24,7 @@ export type WellBorePicksLayerProps = {
 
 export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> {
     filterSubLayer(context: FilterContext): boolean {
+        return true;
         if (context.layer.id.includes("text")) {
             return context.viewport.zoom > -4;
         }
@@ -54,6 +57,10 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
             };
         });
 
+        const fontSize = 12;
+        const sizeMinPixels = 12;
+        const sizeMaxPixels = 12;
+
         return [
             new GeoJsonLayer(
                 this.getSubLayerProps({
@@ -61,17 +68,19 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                     data: pointsData,
                     // pointType: 'circle+text',
                     filled: true,
-                    lineWidthMinPixels: 10,
+                    lineWidthMinPixels: 5,
+                    lineWidthMaxPixels: 5,
                     lineWidthUnits: "meters",
                     parameters: {
                         depthTest: false,
                     },
-                    getLineWidth: 10,
+                    getLineWidth: 1,
                     depthTest: false,
                     pickable: true,
                     getText: (d: Feature) => d.properties?.wellBoreUwi,
                     getLineColor: [50, 50, 50],
-                    extensions: [new CollisionFilterExtension()],
+                    // extensions: [new CollisionFilterExtension()],
+                    collisionGroup: "wellbore-picks",
                 })
             ),
 
@@ -79,18 +88,33 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                 this.getSubLayerProps({
                     id: "text",
                     data: textData,
-                    depthTest: false,
+                    depthTest: true,
                     pickable: true,
                     getColor: [0, 0, 0],
+                    fontSettings: {
+                        fontSize: fontSize * 2,
+                        sdf: true,
+                    },
+                    outlineColor: [255, 255, 255],
+                    outlineWidth: 3,
                     getSize: 10,
+                    sizeScale: fontSize,
                     sizeUnits: "meters",
-                    sizeMinPixels: 12,
+                    sizeMinPixels: sizeMinPixels,
+                    sizeMaxPixels: sizeMaxPixels,
                     getAlignmentBaseline: "top",
                     getTextAnchor: "middle",
-                    getPixelOffset: [0, 10],
                     getPosition: (d: TextLayerData) => d.coordinates,
                     getText: (d: TextLayerData) => d.name,
+                    // maxWidth: 64 * 12,
                     extensions: [new CollisionFilterExtension()],
+                    collisionGroup: "wellbore-picks",
+
+                    collisionTestProps: {
+                        sizeScale: fontSize * 2,
+                        sizeMaxPixels: sizeMaxPixels * 2,
+                        sizeMinPixels: sizeMinPixels * 2,
+                    },
                 })
             ),
         ];

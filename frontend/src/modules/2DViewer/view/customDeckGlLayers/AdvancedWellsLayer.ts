@@ -35,10 +35,28 @@ export class AdvancedWellsLayer extends WellsLayer {
         }
 
         const newColorsLayer = new GeoJsonLayer({
-            ...colorsLayer.props,
-            id: "colors2",
-            lineWidthMinPixels: 2,
-            lineWidthUnits: "pixels",
+            data: colorsLayer.props.data,
+            pickable: true,
+            stroked: false,
+            positionFormat: colorsLayer.props.positionFormat,
+            pointRadiusUnits: "meters",
+            lineWidthUnits: "meters",
+            pointRadiusScale: this.props.pointRadiusScale,
+            lineWidthScale: this.props.lineWidthScale,
+            getLineWidth: colorsLayer.props.getLineWidth,
+            getPointRadius: colorsLayer.props.getPointRadius,
+            lineBillboard: true,
+            pointBillboard: true,
+            parameters: colorsLayer.props.parameters,
+            visible: colorsLayer.props.visible,
+            id: "colors",
+            lineWidthMinPixels: 1,
+            lineWidthMaxPixels: 5,
+            extensions: colorsLayer.props.extensions,
+            getDashArray: colorsLayer.props.getDashArray,
+            getLineColor: colorsLayer.props.getLineColor,
+            getFillColor: colorsLayer.props.getFillColor,
+            autoHighlight: true,
         });
 
         return [newColorsLayer, ...layers.filter((layer) => layer !== colorsLayer)];
