@@ -30,6 +30,7 @@ export type EnsembleRealizationFilterProps = {
     realizationFilter: RealizationFilter; // Should be ref stable and not change address in memory
     isActive: boolean;
     isAnotherFilterActive: boolean;
+    title?: string;
     onClick?: () => void;
     onHeaderClick?: () => void;
     onFilterChange?: () => void;
@@ -302,7 +303,8 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             >
                 <div className={`flex justify-center items-center p-2 rounded-md bg-slate-100 h-12 cursor-pointer`}>
                     <div className="font-bold flex-grow text-sm" onClick={handleHeaderOnClick}>
-                        {"Ensemble: " + props.realizationFilter.getAssignedEnsembleIdent().getEnsembleName()}
+                        {props.title ??
+                            "Ensemble: " + props.realizationFilter.getAssignedEnsembleIdent().getEnsembleName()}
                     </div>
                     <div
                         className={resolveClassNames("flex items-center gap-1", {
@@ -327,16 +329,16 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     </div>
                 </div>
                 <div className="flex flex-col gap-2 p-2">
-                    <div className="border border-lightgrey p-2 pb-0 rounded-md">
-                        <div className="pb-2">
-                            <RealizationNumberDisplay
-                                selectedRealizations={selectedRealizationNumbers}
-                                availableRealizations={props.realizationFilter.getAvailableEnsembleRealizations()}
-                                showAsCompact={!props.isActive}
-                                disableInteraction={selectedFilterType !== RealizationFilterType.BY_REALIZATION_NUMBER}
-                                onRealizationNumberSelectionsChange={handleRealizationNumberSelectionsChange}
-                            />
-                        </div>
+                    <div className="border border-lightgrey p-2 rounded-md">
+                        <RealizationNumberDisplay
+                            selectedRealizations={selectedRealizationNumbers}
+                            availableRealizations={props.realizationFilter.getAvailableEnsembleRealizations()}
+                            showAsCompact={!props.isActive}
+                            disableInteraction={
+                                selectedFilterType !== RealizationFilterType.BY_REALIZATION_NUMBER || !props.isActive
+                            }
+                            onRealizationNumberSelectionsChange={handleRealizationNumberSelectionsChange}
+                        />
                     </div>
                     <div className="flex"></div>
                     {props.isActive && (

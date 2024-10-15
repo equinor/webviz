@@ -86,6 +86,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                             return (
                                 <EnsembleRealizationFilter
                                     key={ensembleIdent.toString()}
+                                    title={ensemble.getCustomName() ?? ensemble.getDisplayName()}
                                     realizationFilter={realizationFilterSet.getRealizationFilterForEnsembleIdent(
                                         ensemble.getIdent()
                                     )}
