@@ -32,10 +32,16 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
     function makeEndAdornment() {
         const adornment: React.ReactNode[] = [];
         if (props.actions) {
-            adornment.push(<LayersActions layersActionGroups={props.actions} onActionClick={handleActionClick} />);
+            adornment.push(
+                <LayersActions
+                    key="layers-actions"
+                    layersActionGroups={props.actions}
+                    onActionClick={handleActionClick}
+                />
+            );
         }
-        adornment.push(<ExpandCollapseAllButton group={props.group} />);
-        adornment.push(<RemoveButton item={props.group} />);
+        adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
+        adornment.push(<RemoveButton key="remove" item={props.group} />);
         return adornment;
     }
 

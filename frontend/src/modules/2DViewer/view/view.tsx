@@ -1,6 +1,6 @@
 import React from "react";
 
-import { View as DeckGlView } from "@deck.gl/core/typed";
+import { View as DeckGlView } from "@deck.gl/core";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";

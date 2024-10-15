@@ -5,7 +5,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { CheckCircle, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
+import { CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { EditName } from "./EditName";
 import { RemoveButton } from "./RemoveButton";
@@ -85,8 +85,19 @@ type EndActionProps = {
 
 function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.layer.getLayerDelegate(), LayerDelegateTopic.STATUS);
+    const isSubordinated = usePublishSubscribeTopicValue(
+        props.layer.getLayerDelegate(),
+        LayerDelegateTopic.SUBORDINATED
+    );
 
     function makeStatus(): React.ReactNode {
+        if (isSubordinated) {
+            return (
+                <div title="Subordinated">
+                    <Difference fontSize="small" />
+                </div>
+            );
+        }
         if (status === LayerStatus.LOADING) {
             return (
                 <div title="Loading">

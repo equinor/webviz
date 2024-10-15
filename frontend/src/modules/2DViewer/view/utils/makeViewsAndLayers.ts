@@ -1,4 +1,4 @@
-import { Layer as DeckGlLayer } from "@deck.gl/core/typed";
+import { Layer as DeckGlLayer } from "@deck.gl/core";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorScale } from "@modules/2DViewer/layers/ColorScale";

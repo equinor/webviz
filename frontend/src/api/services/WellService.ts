@@ -108,6 +108,30 @@ export class WellService {
         });
     }
     /**
+     * Get Wellbore Picks For Wellbore
+     * Get wellbore picks for field and pick identifier
+     * @param fieldIdentifier Official field identifier
+     * @param wellboreUuid Wellbore uuid
+     * @returns WellborePick Successful Response
+     * @throws ApiError
+     */
+    public getWellborePicksForWellbore(
+        fieldIdentifier: string,
+        wellboreUuid: string,
+    ): CancelablePromise<Array<WellborePick>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/well/wellbore_picks_for_wellbore/',
+            query: {
+                'field_identifier': fieldIdentifier,
+                'wellbore_uuid': wellboreUuid,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
      * Get Wellbore Completions
      * Get well bore completions for a single well bore
      * @param wellboreUuid Wellbore uuid

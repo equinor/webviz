@@ -37,10 +37,16 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
             props.actions &&
             props.deltaSurface.getGroupDelegate().findChildren((item) => instanceofLayer(item)).length < 2
         ) {
-            adornment.push(<LayersActions layersActionGroups={props.actions} onActionClick={handleActionClick} />);
+            adornment.push(
+                <LayersActions
+                    key="layers-actions"
+                    layersActionGroups={props.actions}
+                    onActionClick={handleActionClick}
+                />
+            );
         }
-        adornment.push(<ExpandCollapseAllButton group={props.deltaSurface} />);
-        adornment.push(<RemoveButton item={props.deltaSurface} />);
+        adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.deltaSurface} />);
+        adornment.push(<RemoveButton key="remove" item={props.deltaSurface} />);
         return adornment;
     }
 

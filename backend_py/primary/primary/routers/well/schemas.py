@@ -34,6 +34,8 @@ class WellboreHeader(BaseModel):
     depthReferenceElevation: float
     wellborePurpose: str
     wellboreStatus: str
+    slotIdentifier: str
+
 
 class WellboreTrajectory(BaseModel):
     wellboreUuid: str
@@ -58,7 +60,7 @@ class WellborePick(BaseModel):
     md: float
     mdMsl: float
     uniqueWellboreIdentifier: str
-    wellboreUuid:str
+    wellboreUuid: str
     pickIdentifier: str
     confidence: Optional[str] = None
     depthReferencePoint: str

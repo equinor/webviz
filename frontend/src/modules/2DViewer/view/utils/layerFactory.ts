@@ -1,6 +1,6 @@
 import { PolygonData_api, SurfaceDef_api, WellborePick_api, WellboreTrajectory_api } from "@api";
-import { Layer } from "@deck.gl/core/typed";
-import { GeoJsonLayer } from "@deck.gl/layers/typed";
+import { Layer } from "@deck.gl/core";
+import { GeoJsonLayer } from "@deck.gl/layers";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
@@ -10,7 +10,7 @@ import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { ColormapLayer, Grid3DLayer, MapLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Rgb, parse } from "culori";
-import { Feature } from "geojson";
+import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 import { SurfaceDataPng } from "src/api/models/SurfaceDataPng";
 
 import { DrilledWellTrajectoriesLayer } from "../../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
@@ -93,6 +93,7 @@ function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string):
             tvdMsl: wellPick.tvdMsl,
             md: wellPick.md,
             pickable: true,
+            slotName: "",
         };
     });
     return new WellborePicksLayer({
@@ -133,7 +134,6 @@ function createMapImageLayer(
 ): ColormapLayer {
     return new ColormapLayer({
         id: id,
-        // @ts-expect-error - wrong typescript definition of AspenTech - ColormapLayer should extend ExtendedLayer in addition to BitmapLayer
         name: name,
         image: `data:image/png;base64,${layerData.png_image_base64}`,
         bounds: _calcBoundsForRotationAroundUpperLeftCorner(layerData.surface_def),
@@ -144,7 +144,7 @@ function createMapImageLayer(
             : [layerData.value_min, layerData.value_max],
         colorMapName: "Physics",
         parameters: {
-            depthTest: false,
+            depthWriteEnabled: false,
         },
         colorMapFunction: makeColorMapFunction(colorScale),
     });
@@ -168,12 +168,11 @@ function _calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [
 }
 
 function createPolygonsLayer(polygonsData: PolygonData_api[], id: string): GeoJsonLayer {
-    const features: Record<string, unknown>[] = polygonsData.map((polygon) => {
+    const features: Feature<Geometry, GeoJsonProperties>[] = polygonsData.map((polygon) => {
         return polygonsToGeojson(polygon);
     });
-    const data: Record<string, unknown> = {
+    const data: FeatureCollection<Geometry, GeoJsonProperties> = {
         type: "FeatureCollection",
-        unit: "m",
         features: features,
     };
     return new GeoJsonLayer({
@@ -189,8 +188,8 @@ function createPolygonsLayer(polygonsData: PolygonData_api[], id: string): GeoJs
         pickable: true,
     });
 }
-function polygonsToGeojson(polygons: PolygonData_api): Record<string, unknown> {
-    const data: Record<string, unknown> = {
+function polygonsToGeojson(polygons: PolygonData_api): Feature<Geometry, GeoJsonProperties> {
+    const data: Feature<Geometry, GeoJsonProperties> = {
         type: "Feature",
         geometry: {
             type: "Polygon",
@@ -348,18 +347,7 @@ function makeColorMapFunction(
     }
 
     return (value: number) => {
-        let nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
-        if (colorScale.getGradientType() === ColorScaleGradientType.Diverging) {
-            if (nonNormalizedValue < colorScale.getDivMidPoint()) {
-                nonNormalizedValue = value * (colorScale.getDivMidPoint() - colorScale.getMin()) + colorScale.getMin();
-            }
-            if (nonNormalizedValue >= colorScale.getDivMidPoint()) {
-                nonNormalizedValue =
-                    1 -
-                    (nonNormalizedValue - colorScale.getDivMidPoint()) /
-                        (colorScale.getMax() - colorScale.getDivMidPoint());
-            }
-        }
+        const nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
         const interpolatedColor = colorScale.getColorForValue(nonNormalizedValue);
         const color = parse(interpolatedColor) as Rgb;
         if (color === undefined) {

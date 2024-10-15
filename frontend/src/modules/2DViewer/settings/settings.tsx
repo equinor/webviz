@@ -253,8 +253,8 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 <div className="w-full flex-grow flex flex-col min-h-0" ref={layerListRef}>
                     <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
                         <div className="flex-grow font-bold text-sm">Layers</div>
-                        {layerManager && <ExpandCollapseAllButton group={layerManager.current} />}
                         <LayersActions layersActionGroups={adjustedLayerActions} onActionClick={handleLayerAction} />
+                        {layerManager && <ExpandCollapseAllButton group={layerManager.current} />}
                     </div>
                     <div
                         className="w-full flex-grow flex flex-col relative"

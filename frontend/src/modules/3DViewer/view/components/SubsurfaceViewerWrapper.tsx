@@ -1,7 +1,7 @@
 import React from "react";
 
-import { Layer, PickingInfo } from "@deck.gl/core/typed";
-import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers/typed";
+import { Layer, PickingInfo } from "@deck.gl/core";
+import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
 import { Button } from "@lib/components/Button";
 import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";

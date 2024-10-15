@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Layer as DeckGlLayer } from "@deck.gl/core/typed";
+import { Layer as DeckGlLayer } from "@deck.gl/core";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 
@@ -62,6 +62,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                     pickDepth: 2,
                 }}
                 triggerHome={triggerHomeCounter}
+                pickingRadius={10}
             >
                 {props.viewportAnnotations}
             </SubsurfaceViewerWithCameraState>

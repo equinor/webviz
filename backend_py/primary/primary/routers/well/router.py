@@ -31,7 +31,7 @@ async def get_drilled_wellbore_headers(
         # Handle DROGON
         well_access = DrogonSmdaAccess()
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(),field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
 
     wellbore_headers = await well_access.get_wellbore_headers()
 
@@ -54,14 +54,13 @@ async def get_well_trajectories(
     else:
         well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
 
-    wellbore_trajectories = await well_access.get_wellbore_trajectories(
-        wellbore_uuids=wellbore_uuids
-    )
+    wellbore_trajectories = await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
 
     return [
         converters.convert_well_trajectory_to_schema(wellbore_trajectory)
         for wellbore_trajectory in wellbore_trajectories
     ]
+
 
 @router.get("/wellbore_pick_identifiers/")
 async def get_wellbore_pick_identifiers(
@@ -76,14 +75,15 @@ async def get_wellbore_pick_identifiers(
     if field_identifier == "DROGON":
         # Handle DROGON
         well_access = DrogonSmdaAccess()
-    
+
     else:
         well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
 
     wellbore_picks = await well_access.get_wellbore_pick_identifiers_in_stratigraphic_column(
-         strat_column_identifier=strat_column_identifier
+        strat_column_identifier=strat_column_identifier
     )
     return [wellbore_pick.name for wellbore_pick in wellbore_picks]
+
 
 @router.get("/wellbore_picks_for_pick_identifier/")
 async def get_wellbore_picks_for_pick_identifier(
@@ -98,14 +98,34 @@ async def get_wellbore_picks_for_pick_identifier(
     if field_identifier == "DROGON":
         # Handle DROGON
         well_access = DrogonSmdaAccess()
-    
+
     else:
         well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
 
-    wellbore_picks = await well_access.get_wellbore_picks_for_pick_identifier(
-         pick_identifier=pick_identifier
-    )
+    wellbore_picks = await well_access.get_wellbore_picks_for_pick_identifier(pick_identifier=pick_identifier)
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
+
+
+@router.get("/wellbore_picks_for_wellbore/")
+async def get_wellbore_picks_for_wellbore(
+    # fmt:off
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    field_identifier: str = Query(description="Official field identifier"),
+    wellbore_uuid: str = Query(description="Wellbore uuid")
+    # fmt:on
+) -> List[schemas.WellborePick]:
+    """Get wellbore picks for field and pick identifier"""
+    well_access: Union[SmdaAccess, DrogonSmdaAccess]
+    if field_identifier == "DROGON":
+        # Handle DROGON
+        well_access = DrogonSmdaAccess()
+
+    else:
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+
+    wellbore_picks = await well_access.get_wellbore_picks_for_wellbore(wellbore_uuid=wellbore_uuid)
+    return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
+
 
 @router.get("/wellbore_completions/")
 async def get_wellbore_completions(

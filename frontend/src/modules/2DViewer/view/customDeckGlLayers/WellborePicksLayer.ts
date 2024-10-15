@@ -1,6 +1,6 @@
-import { CompositeLayer, FilterContext } from "@deck.gl/core/typed";
-import { CollisionFilterExtension } from "@deck.gl/extensions/typed";
-import { GeoJsonLayer, TextLayer } from "@deck.gl/layers/typed";
+import { CompositeLayer, FilterContext } from "@deck.gl/core";
+import { CollisionFilterExtension } from "@deck.gl/extensions";
+import { GeoJsonLayer, TextLayer } from "@deck.gl/layers";
 
 import type { Feature, FeatureCollection } from "geojson";
 
@@ -10,6 +10,7 @@ export type WellBorePickLayerData = {
     wellBoreUwi: string;
     tvdMsl: number;
     md: number;
+    slotName: string;
 };
 
 type TextLayerData = {

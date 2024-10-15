@@ -1,5 +1,5 @@
-import { FilterContext, Layer, LayersList } from "@deck.gl/core/typed";
-import { GeoJsonLayer } from "@deck.gl/layers/typed";
+import { FilterContext, Layer, LayersList } from "@deck.gl/core";
+import { GeoJsonLayer } from "@deck.gl/layers";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 export class AdvancedWellsLayer extends WellsLayer {

@@ -13,6 +13,7 @@ import { BoundingBox, Layer, LayerStatus, Settings, SettingsContext } from "../i
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
     DATA = "DATA",
+    SUBORDINATED = "SUBORDINATED",
 }
 
 export enum LayerColoringType {
@@ -24,6 +25,7 @@ export enum LayerColoringType {
 export type LayerDelegatePayloads<TData> = {
     [LayerDelegateTopic.STATUS]: LayerStatus;
     [LayerDelegateTopic.DATA]: TData;
+    [LayerDelegateTopic.SUBORDINATED]: boolean;
 };
 export class LayerDelegate<TSettings extends Settings, TData>
     implements PublishSubscribe<LayerDelegateTopic, LayerDelegatePayloads<TData>>
@@ -41,6 +43,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
     private _boundingBox: BoundingBox | null = null;
     private _valueRange: [number, number] | null = null;
     private _coloringType: LayerColoringType;
+    private _isSubordinated: boolean = false;
 
     constructor(
         owner: Layer<TSettings, TData>,
@@ -93,6 +96,15 @@ export class LayerDelegate<TSettings extends Settings, TData>
         return this._coloringType;
     }
 
+    getIsSubordinated(): boolean {
+        return this._isSubordinated;
+    }
+
+    setIsSubordinated(isSubordinated: boolean): void {
+        this._isSubordinated = isSubordinated;
+        this._publishSubscribeHandler.notifySubscribers(LayerDelegateTopic.SUBORDINATED);
+    }
+
     private invalidateBoundingBox(): void {
         this._boundingBox = null;
     }
@@ -106,6 +118,10 @@ export class LayerDelegate<TSettings extends Settings, TData>
     }
 
     setLayerManager(layerManager: LayerManager | null): void {
+        if (this._layerManager === layerManager) {
+            return;
+        }
+
         this._layerManager = layerManager;
         this._settingsContext.getDelegate().setLayerManager(layerManager);
 
@@ -124,6 +140,10 @@ export class LayerDelegate<TSettings extends Settings, TData>
 
             this._unsubscribeFuncs.push(unsubscribeFunc1);
             this._unsubscribeFuncs.push(unsubscribeFunc2);
+
+            if (this._settingsContext.areCurrentSettingsValid()) {
+                this.maybeRefetchData();
+            }
         } else {
             this._unsubscribeFuncs.forEach((unsubscribeFunc) => {
                 unsubscribeFunc();
@@ -165,6 +185,9 @@ export class LayerDelegate<TSettings extends Settings, TData>
             }
             if (topic === LayerDelegateTopic.DATA) {
                 return this._data;
+            }
+            if (topic === LayerDelegateTopic.SUBORDINATED) {
+                return this._isSubordinated;
             }
         };
 
@@ -240,6 +263,10 @@ export class LayerDelegate<TSettings extends Settings, TData>
         }
 
         if (this._cancellationPending) {
+            return;
+        }
+
+        if (this._isSubordinated) {
             return;
         }
 

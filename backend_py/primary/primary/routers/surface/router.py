@@ -295,6 +295,24 @@ async def get_misfit_surface_data(
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
+@router.get("/stratigraphic_units")
+async def get_stratigraphic_units(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    # fmt:on
+) -> list[schemas.StratigraphicUnit]:
+    perf_metrics = ResponsePerfMetrics(response)
+
+    strat_units = await _get_stratigraphic_units_for_case_async(authenticated_user, case_uuid)
+    api_strat_units = [converters.to_api_stratigraphic_unit(strat_unit) for strat_unit in strat_units]
+
+    LOGGER.info(f"Got stratigraphic units in: {perf_metrics.to_string()}")
+
+    return api_strat_units
+
+
 async def _get_stratigraphic_units_for_case_async(
     authenticated_user: AuthenticatedUser, case_uuid: str
 ) -> list[StratigraphicUnit]:
@@ -309,7 +327,7 @@ async def _get_stratigraphic_units_for_case_async(
     if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
         smda_access = DrogonSmdaAccess()
     else:
-        smda_access = SmdaAccess(authenticated_user.get_smda_access_token(),field_identifier=field_identifiers[0])
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifiers[0])
 
     strat_units = await smda_access.get_stratigraphic_units(strat_column_identifier)
     perf_metrics.record_lap("get-strat-units")

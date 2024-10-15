@@ -10,10 +10,14 @@ export interface PublishSubscribe<TTopic extends string, TTopicPayloads extends 
 export class PublishSubscribeDelegate<TTopic extends string> {
     private _subscribers = new Map<TTopic, Set<() => void>>();
 
-    subscribe(topic: TTopic, subscriber: () => void): void {
+    subscribe(topic: TTopic, subscriber: () => void): () => void {
         const subscribers = this._subscribers.get(topic) ?? new Set();
         subscribers.add(subscriber);
         this._subscribers.set(topic, subscribers);
+
+        return () => {
+            subscribers.delete(subscriber);
+        };
     }
 
     notifySubscribers(topic: TTopic): void {

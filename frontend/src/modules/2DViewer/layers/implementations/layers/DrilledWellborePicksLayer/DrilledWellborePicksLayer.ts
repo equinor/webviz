@@ -86,16 +86,20 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
         const queryKey = ["getWellborePicksForPickIdentifier", fieldIdentifier, selectedPickIdentifier];
         this._layerDelegate.registerQueryKey(queryKey);
 
-        const promise = queryClient.fetchQuery({
-            queryKey,
-            queryFn: () =>
-                apiService.well.getWellborePicksForPickIdentifier(fieldIdentifier ?? "", selectedPickIdentifier ?? ""),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
-        });
-        // .then((response: WellborePick_api[]) => {
-        //     return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
-        // });
+        const promise = queryClient
+            .fetchQuery({
+                queryKey,
+                queryFn: () =>
+                    apiService.well.getWellborePicksForPickIdentifier(
+                        fieldIdentifier ?? "",
+                        selectedPickIdentifier ?? ""
+                    ),
+                staleTime: STALE_TIME,
+                gcTime: CACHE_TIME,
+            })
+            .then((response: WellborePick_api[]) => {
+                return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
+            });
 
         return promise;
     }
