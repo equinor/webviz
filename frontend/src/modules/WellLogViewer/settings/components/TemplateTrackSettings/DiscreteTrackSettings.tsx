@@ -1,72 +1,81 @@
 import React from "react";
 
-import { StratigraphicUnit_api, WellboreGeoHeader_api } from "@api";
+import { WellLogCurveSourceEnum_api, WellboreLogCurveHeader_api } from "@api";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
-import { Modify } from "@lib/utils/typing";
 import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import { QueryObserverResult } from "@tanstack/react-query";
 
 import { useAtomValue } from "jotai";
 import _ from "lodash";
-import { StratigraphicUnit } from "src/api/models/StratigraphicUnit";
 
 import { TrackSettingFragmentProps } from "./private-components/TrackSettings";
 
-import { wellboreGeologyHeadersQueryAtom, wellboreStratigraphicUnitsQueryAtom } from "../../atoms/queryAtoms";
+import { availableDiscreteCurvesAtom, availableFlagCurvesAtom } from "../../atoms/derivedAtoms";
+import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";
+import { curveSourceToText } from "../_shared/strings";
+
+const DEFAULT_SOURCE = WellLogCurveSourceEnum_api.SMDA_GEOLOGY;
 
 export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.ReactNode {
     const { onFieldChange } = props;
     const currentPlot = props.trackConfig.plots[0];
 
-    const [activeSource, setActiveSource] = React.useState(currentPlot?._source ?? "geology");
+    const currentCurveHeader = currentPlot?._curveHeader;
+
+    const [activeSource, setActiveSource] = React.useState(currentCurveHeader?.source ?? DEFAULT_SOURCE);
 
     const categoryId = React.useId();
     const selectId = React.useId();
 
-    const geoHeadersQuery = useAtomValue(wellboreGeologyHeadersQueryAtom);
-    const wellboreStratigraphicUnitsQuery = useAtomValue(wellboreStratigraphicUnitsQueryAtom);
+    const curveHeadersQuery = useAtomValue(wellLogCurveHeadersQueryAtom);
+    const curveHeadersError = usePropagateApiErrorToStatusWriter(curveHeadersQuery, props.statusWriter);
 
-    const { activeQuery, selectOptions } = makeCurveOptions(
-        activeSource,
-        geoHeadersQuery,
-        wellboreStratigraphicUnitsQuery
+    const availableDiscreteCurves = useAtomValue(availableDiscreteCurvesAtom);
+    const availableFlagCurves = useAtomValue(availableFlagCurvesAtom);
+    const availableCurveHeaders = React.useMemo(
+        () => [...availableDiscreteCurves, ...availableFlagCurves],
+        [availableDiscreteCurves, availableFlagCurves]
     );
+    const categories = _.chain(availableCurveHeaders)
+        .map("source")
+        .uniq()
+        .map((source) => ({ value: source, label: curveSourceToText(source) }))
+        .value() as DropdownOption<WellLogCurveSourceEnum_api>[];
 
-    const queryError = usePropagateApiErrorToStatusWriter(activeQuery, props.statusWriter) ?? "";
+    const selectOptions = makeCurveOptions(activeSource, availableCurveHeaders);
 
     const handleGeoHeaderSelect = React.useCallback(
         function handleGeoHeaderSelect([choice]: string[]) {
-            const chosenOption = selectOptions.find(({ value }) => value === choice);
+            const chosenOption = availableCurveHeaders.find(
+                ({ source, sourceId }) => source === activeSource && sourceId === choice
+            );
 
             if (!chosenOption) return console.warn(`Selected value '${choice}' not found`);
 
-            const newTrackPlot = makePlotConfigForChoice(activeSource, chosenOption);
+            const newTrackPlot = makePlotConfigForChoice(chosenOption);
 
             onFieldChange({ plots: [newTrackPlot] });
         },
-        [selectOptions, activeSource, onFieldChange]
+        [availableCurveHeaders, onFieldChange, activeSource]
     );
 
     return (
         <>
             <label htmlFor={categoryId}>Type</label>
-            <Dropdown
-                id={categoryId}
-                value={activeSource}
-                options={makeDataGroupOptions()}
-                onChange={(v) => setActiveSource(v)}
-            />
+
+            <PendingWrapper isPending={curveHeadersQuery.isPending} errorMessage={curveHeadersError ?? ""}>
+                <Dropdown id={categoryId} value={activeSource} options={categories} onChange={setActiveSource} />
+            </PendingWrapper>
 
             <div className="col-span-2">
-                <label htmlFor={selectId}>Geological header</label>
-                <PendingWrapper isPending={activeQuery.isPending} errorMessage={queryError}>
+                <label htmlFor={selectId}>Curve</label>
+                <PendingWrapper isPending={curveHeadersQuery.isPending} errorMessage={curveHeadersError ?? ""}>
                     <Select
                         id={selectId}
-                        value={currentPlot?._sourceId ? [currentPlot._sourceId] : []}
+                        value={currentCurveHeader?.sourceId ? [currentCurveHeader.sourceId] : []}
                         options={selectOptions}
                         size={Math.max(Math.min(6, selectOptions.length), 2)}
                         onChange={handleGeoHeaderSelect}
@@ -77,99 +86,42 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
     );
 }
 
-type GeoHeaderSelectOption = SelectOption & {
-    _header: WellboreGeoHeader_api;
-};
-
-type DataGroupDropdownOption = Modify<DropdownOption, { value: TemplatePlotConfig["_source"] }>;
-
-function makeDataGroupOptions(): DataGroupDropdownOption[] {
-    return [
-        { label: "Geology", value: "geology" },
-        { label: "Stratigraphy", value: "stratigraphy" },
-    ];
+function makeCurveOptions(
+    chosenSource: WellLogCurveSourceEnum_api,
+    headers: WellboreLogCurveHeader_api[]
+): SelectOption[] {
+    return _.chain(headers)
+        .filter(["source", chosenSource])
+        .map((header): SelectOption => {
+            return {
+                label: header.curveName,
+                value: header.sourceId,
+            };
+        })
+        .value();
 }
 
-function makeCurveOptions(
-    chosenSource: TemplatePlotConfig["_source"],
-    geoHeadersQuery: QueryObserverResult<WellboreGeoHeader_api[], Error>,
-    stratUnitsQuery: QueryObserverResult<StratigraphicUnit_api[], Error>
-): { selectOptions: SelectOption[]; activeQuery: QueryObserverResult } {
-    switch (chosenSource) {
-        case "geology":
-            return {
-                selectOptions: makeGeoHeaderOptions(geoHeadersQuery.data ?? []),
-                activeQuery: geoHeadersQuery,
-            };
-        case "stratigraphy":
-            return {
-                selectOptions: makeStratigraphyOptions(stratUnitsQuery?.data ?? []),
-                activeQuery: stratUnitsQuery,
-            };
-        // case "welllog":
+function makePlotConfigForChoice(chosenHeader: WellboreLogCurveHeader_api): TemplatePlotConfig {
+    const settings: Parameters<typeof makeTrackPlot>[0] = {
+        _curveHeader: chosenHeader,
+        name: chosenHeader.curveName,
+        type: "stacked",
+    };
+
+    switch (chosenHeader.source) {
+        case WellLogCurveSourceEnum_api.SMDA_GEOLOGY:
+            settings.showLines = false;
+            break;
+        case WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY:
+        case WellLogCurveSourceEnum_api.SSDL_WELL_LOG:
+            settings.showLines = true;
+            break;
 
         default:
-            throw new Error(`Unknown category: ${chosenSource}`);
+            throw new Error(`Unsupported source choice '${chosenHeader.source}'`);
     }
-}
 
-function makeGeoHeaderOptions(geoHeaders: WellboreGeoHeader_api[]): GeoHeaderSelectOption[] {
-    return geoHeaders.map((header) => {
-        return {
-            _header: header,
-            value: header.uuid,
-            label: header.identifier,
-            adornment: (
-                <span
-                    className="order-1 text-[0.75rem] flex-shrink-[9999] overflow-hidden leading-tight block bg-gray-400 px-1 py-0.5 rounded text-white text-ellipsis whitespace-nowrap w-auto "
-                    title={header.source}
-                >
-                    {shortenGeoSourceName(header.source)}
-                </span>
-            ),
-        };
-    });
-}
-
-function makeStratigraphyOptions(stratUnits: StratigraphicUnit[]) {
-    const types = _.groupBy(stratUnits, "stratUnitType");
-
-    const opts = [] as SelectOption[];
-
-    if (types.group) opts.push({ label: "Groups", value: "group" });
-    if (types.formation) opts.push({ label: "Formations", value: "formation" });
-    if (types.subzone) opts.push({ label: "Subzone", value: "subzone" });
-
-    return opts;
-}
-
-function makePlotConfigForChoice(
-    chosenSource: TemplatePlotConfig["_source"],
-    choice: SelectOption
-): TemplatePlotConfig {
-    if (chosenSource === "geology") {
-        const geoChoice = choice as GeoHeaderSelectOption;
-
-        return makeTrackPlot({
-            _source: "geology",
-            _sourceId: geoChoice._header.uuid,
-            name: geoChoice.label + geoChoice._header.source,
-            style: "discrete",
-            type: "stacked",
-            showLines: false,
-        });
-    } else if (chosenSource === "stratigraphy") {
-        return makeTrackPlot({
-            _source: "stratigraphy",
-            _sourceId: choice.value,
-            name: choice.label,
-            style: "discrete",
-            type: "stacked",
-            showLines: false,
-        });
-    } else {
-        throw new Error(`Unknown source choice '${chosenSource}'`);
-    }
+    return makeTrackPlot(settings);
 }
 
 function shortenGeoSourceName(sourceName: string, maxLength = 10) {

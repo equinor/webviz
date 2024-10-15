@@ -1,3 +1,4 @@
+import { WellLogCurveSourceEnum_api } from "@api";
 import { apiService } from "@framework/ApiService";
 
 import { atomWithQuery } from "jotai-tanstack-query";
@@ -33,10 +34,15 @@ export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
 */
 export const wellLogCurveHeadersQueryAtom = atomWithQuery((get) => {
     const wellboreId = get(selectedWellboreHeaderAtom)?.wellboreUuid;
+    const sources = [
+        WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
+        WellLogCurveSourceEnum_api.SMDA_GEOLOGY,
+        WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY,
+    ];
 
     return {
         queryKey: ["getWellboreLogCurveHeaders", wellboreId],
-        queryFn: () => apiService.well.getWellboreLogCurveHeaders(wellboreId ?? ""),
+        queryFn: () => apiService.well.getWellboreLogCurveHeaders(wellboreId ?? "", sources),
         enabled: Boolean(wellboreId),
         ...SHARED_QUERY_OPTS,
     };
@@ -64,17 +70,6 @@ export const wellboreStratigraphicUnitsQueryAtom = atomWithQuery((get) => {
         queryKey: ["getWellborePicksForWellbore", caseUuid],
         enabled: Boolean(caseUuid),
         queryFn: () => apiService.surface.getStratigraphicUnits(caseUuid),
-        ...SHARED_QUERY_OPTS,
-    };
-});
-
-export const wellboreGeologyHeadersQueryAtom = atomWithQuery((get) => {
-    const wellboreUuid = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
-
-    return {
-        queryKey: ["getWellboreGeologyHeaders", wellboreUuid],
-        enabled: Boolean(wellboreUuid),
-        queryFn: () => apiService.well.getWellboreGeologyHeaders(wellboreUuid),
         ...SHARED_QUERY_OPTS,
     };
 });

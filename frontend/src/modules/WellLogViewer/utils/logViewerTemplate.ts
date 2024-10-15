@@ -1,6 +1,7 @@
 /**
  * Utilities and constants used for generating well-log-viewer template configs
  */
+import { WellLogCurveTypeEnum_api } from "@api";
 import { OptionalExceptFor } from "@lib/utils/typing";
 import {
     Template,
@@ -21,11 +22,11 @@ export function isCompositePlotType(type: TemplatePlotType) {
     return ["differential"].includes(type);
 }
 export function plotIsDiscrete(plotConfig: TemplatePlotConfig): boolean {
-    const { type, _source } = plotConfig;
+    const { _curveHeader } = plotConfig;
 
     // TODO: Can we assume that some specific well-log curves are discrete based on name? For instance, STAT_WI has log named ZONE, which gives string values.
 
-    return _source === "geology" || _source === "stratigraphy" || type === "stacked";
+    return _curveHeader?.curveType === WellLogCurveTypeEnum_api.DISCRETE;
 }
 
 export function createLogTemplate(templateTrackConfigs: TemplateTrack[]): Template {
@@ -37,9 +38,7 @@ export function createLogTemplate(templateTrackConfigs: TemplateTrack[]): Templa
     };
 }
 
-export function makeTrackPlot(
-    plot: OptionalExceptFor<TemplatePlotConfig, "_source" | "_sourceId">
-): TemplatePlotConfig {
+export function makeTrackPlot(plot: OptionalExceptFor<TemplatePlotConfig, "_curveHeader">): TemplatePlotConfig {
     // If colors get put as undefined, new colors are selected EVERY rerender, so we should avoid that
     const curveColor = plot.color ?? CURVE_COLOR_PALETTE.getColors()[0];
     const curveColor2 = plot.color2 ?? CURVE_COLOR_PALETTE.getColors()[3];
@@ -62,34 +61,28 @@ export function makeTrackPlot(
 
     switch (plot.type) {
         case "stacked":
-            return {
-                ...config,
-                color: undefined,
-                color2: undefined,
-            };
+            config.color = undefined;
+            config.color2 = undefined;
+            break;
         case "differential":
-            return {
-                ...config,
-                _isValid: config._isValid && Boolean(plot.name2),
-                name2: plot.name2,
-                fill: DIFF_CURVE_COLORS.at(0),
-                fill2: DIFF_CURVE_COLORS.at(1),
-            };
-
+            config._isValid = config._isValid && Boolean(plot.name2);
+            config.name2 = plot.name2;
+            config.fill = DIFF_CURVE_COLORS.at(0);
+            config.fill2 = DIFF_CURVE_COLORS.at(1);
+            break;
         case "gradientfill":
-            return {
-                ...config,
-                colorMapFunctionName: "Continuous",
-            };
-
+            config.colorMapFunctionName = "Continuous";
+            break;
         case "line":
         case "linestep":
         case "dot":
         case "area":
-            return config;
+            break;
         default:
             throw new Error(`Unsupported plot type: ${plot.type}`);
     }
+
+    return config;
 }
 
 // Matches the ones from the TemplatePlotTypes literal

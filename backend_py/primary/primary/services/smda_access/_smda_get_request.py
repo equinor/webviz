@@ -92,10 +92,10 @@ async def smda_get_aggregation_request(access_token: str, endpoint: str, params:
 
             print(response_aggregations)
 
-            for aggregation_key in params["_aggregations"].split(","):
+            for aggregation_key in params["_aggregation"].split(","):
                 # A count, is the only aggregation that exists
                 buckets = response_aggregations[aggregation_key + "_count"]["buckets"]
-                aggregations.update({aggregation_key, buckets})
+                aggregations.update({aggregation_key: buckets})
 
         elif response.status_code == 404:
             print(f"{str(response.status_code) } {endpoint} either does not exists or can not be found")

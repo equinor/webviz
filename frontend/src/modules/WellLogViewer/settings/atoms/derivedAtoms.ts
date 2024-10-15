@@ -1,4 +1,4 @@
-import { StratigraphicUnit_api, WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
+import { StratigraphicUnit_api, WellLogCurveTypeEnum_api, WellboreHeader_api } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
@@ -90,10 +90,22 @@ export const selectedWellborePicksAtom = atom<WellPicksLayerData>((get) => {
     }
 });
 
-export const groupedCurveHeadersAtom = atom<Record<string, WellboreLogCurveHeader_api[]>>((get) => {
+export const availableContinuousCurvesAtom = atom((get) => {
     const logCurveHeaders = get(wellLogCurveHeadersQueryAtom)?.data ?? [];
 
-    return _.groupBy(logCurveHeaders, "logName");
+    return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.CONTINUOUS]);
+});
+
+export const availableDiscreteCurvesAtom = atom((get) => {
+    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom)?.data ?? [];
+
+    return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.DISCRETE]);
+});
+
+export const availableFlagCurvesAtom = atom((get) => {
+    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom)?.data ?? [];
+
+    return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.FLAG]);
 });
 
 export const wellLogTemplateTracks = atom<TemplateTrack[]>((get) => {
@@ -107,7 +119,7 @@ export const wellLogTemplateTracks = atom<TemplateTrack[]>((get) => {
     });
 });
 
-type PossibleCurveGroups = Required<TemplatePlotConfig>["_source"];
+type PossibleCurveGroups = "geology" | "welllog" | "stratigraphy";
 
 export const plotConfigsBySourceAtom = atom((get) => {
     const templateConfig = get(logViewerTrackConfigs);
