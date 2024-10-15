@@ -3,6 +3,8 @@ import { GeoJsonLayer } from "@deck.gl/layers/typed";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 export class AdvancedWellsLayer extends WellsLayer {
+    static layerName: string = "AdvancedWellsLayer";
+
     constructor(props: any) {
         super(props);
     }

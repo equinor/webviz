@@ -33,10 +33,16 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
     function makeEndAdornment() {
         const adornments: React.ReactNode[] = [];
         if (props.actions) {
-            adornments.push(<LayersActions layersActionGroups={props.actions} onActionClick={handleActionClick} />);
+            adornments.push(
+                <LayersActions
+                    key="layers-actions"
+                    layersActionGroups={props.actions}
+                    onActionClick={handleActionClick}
+                />
+            );
         }
-        adornments.push(<ExpandCollapseAllButton group={props.group} />);
-        adornments.push(<RemoveButton item={props.group} />);
+        adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
+        adornments.push(<RemoveButton key="remove" item={props.group} />);
         return adornments;
     }
 

@@ -1,11 +1,11 @@
 import React from "react";
 
-import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Menu } from "@lib/components/Menu";
+import { MenuButton } from "@lib/components/MenuButton/menuButton";
 import { MenuDivider } from "@lib/components/MenuDivider";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
-import { Dropdown, MenuButton } from "@mui/base";
+import { Dropdown } from "@mui/base";
 import { Add, ArrowDropDown } from "@mui/icons-material";
 
 export type LayersAction = {
@@ -54,7 +54,7 @@ export function LayersActions(props: LayersActionsProps): React.ReactNode {
             } else {
                 content.push(
                     <MenuItem
-                        key={item.identifier}
+                        key={`${item.identifier}-${index}`}
                         className="text-sm p-0.5 flex gap-2 items-center"
                         style={{ paddingLeft: `${indentLevel * 1}rem` }}
                         onClick={() => props.onActionClick(item.identifier)}
@@ -70,12 +70,10 @@ export function LayersActions(props: LayersActionsProps): React.ReactNode {
 
     return (
         <Dropdown>
-            <MenuButton>
-                <DenseIconButton title="Add items">
-                    <Add fontSize="inherit" />
-                    <span>Add</span>
-                    <ArrowDropDown fontSize="inherit" />
-                </DenseIconButton>
+            <MenuButton label="Add items">
+                <Add fontSize="inherit" />
+                <span>Add</span>
+                <ArrowDropDown fontSize="inherit" />
             </MenuButton>
             <Menu anchorOrigin="bottom-end" className="text-sm p-1 max-h-80 overflow-auto">
                 {makeContent(props.layersActionGroups)}

@@ -26,7 +26,6 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     }
 
     function handleMouseHover(event: MapMouseEvent): void {
-        console.debug("Hover event", event);
         setLayerPickingInfo(event.infos);
     }
 

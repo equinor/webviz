@@ -23,8 +23,9 @@ export type WellBorePicksLayerProps = {
 };
 
 export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> {
+    static layerName: string = "WellborePicksLayer";
+
     filterSubLayer(context: FilterContext): boolean {
-        return true;
         if (context.layer.id.includes("text")) {
             return context.viewport.zoom > -4;
         }
