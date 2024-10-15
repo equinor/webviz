@@ -12,6 +12,7 @@ import type { WellboreLogCurveHeader } from '../models/WellboreLogCurveHeader';
 import type { WellborePerforation } from '../models/WellborePerforation';
 import type { WellborePick } from '../models/WellborePick';
 import type { WellboreTrajectory } from '../models/WellboreTrajectory';
+import type { WellLogCurveSourceEnum } from '../models/WellLogCurveSourceEnum';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class WellService {
@@ -200,17 +201,20 @@ export class WellService {
      * Get Wellbore Log Curve Headers
      * Get all log curve headers for a single well bore
      * @param wellboreUuid Wellbore uuid
+     * @param sources Sources to fetch well-logs from.
      * @returns WellboreLogCurveHeader Successful Response
      * @throws ApiError
      */
     public getWellboreLogCurveHeaders(
         wellboreUuid: string,
+        sources?: Array<WellLogCurveSourceEnum>,
     ): CancelablePromise<Array<WellboreLogCurveHeader>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/well/wellbore_log_curve_headers/',
             query: {
                 'wellbore_uuid': wellboreUuid,
+                'sources': sources,
             },
             errors: {
                 422: `Validation Error`,

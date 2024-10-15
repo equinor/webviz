@@ -121,6 +121,8 @@ export type { WellCompletionsUnitInfo as WellCompletionsUnitInfo_api } from './m
 export type { WellCompletionsUnits as WellCompletionsUnits_api } from './models/WellCompletionsUnits';
 export type { WellCompletionsWell as WellCompletionsWell_api } from './models/WellCompletionsWell';
 export type { WellCompletionsZone as WellCompletionsZone_api } from './models/WellCompletionsZone';
+export { WellLogCurveSourceEnum as WellLogCurveSourceEnum_api } from './models/WellLogCurveSourceEnum';
+export { WellLogCurveTypeEnum as WellLogCurveTypeEnum_api } from './models/WellLogCurveTypeEnum';
 export { WFR as WFR_api } from './models/WFR';
 
 export { DefaultService } from './services/DefaultService';

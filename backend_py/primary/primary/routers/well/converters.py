@@ -15,6 +15,7 @@ from primary.services.ssdl_access.types import (
 )
 
 from . import schemas
+from . import utils
 
 
 def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.WellborePick:
@@ -127,16 +128,46 @@ def convert_wellbore_perforation_to_schema(
     )
 
 
-def convert_wellbore_log_curve_header_to_schema(
-    wellbore_log_curve_header: WellboreLogCurveHeader,
-) -> schemas.WellboreLogCurveHeader:
-    if wellbore_log_curve_header.log_name is None:
+# TODO: Add wellbore survey sample endpoint. for last set of curves (for now) SSDL might be best
+# TODO: Evaluate if the current header structure is the most useful
+def convert_wellbore_log_curve_header_to_schema(curve_header: WellboreLogCurveHeader) -> schemas.WellboreLogCurveHeader:
+    if curve_header.log_name is None:
         raise AttributeError("Missing log name is not allowed")
 
     return schemas.WellboreLogCurveHeader(
-        logName=wellbore_log_curve_header.log_name,
-        curveName=wellbore_log_curve_header.curve_name,
-        curveUnit=wellbore_log_curve_header.curve_unit,
+        source=schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG,
+        sourceId=f"{curve_header.log_name}::{curve_header.curve_name}",
+        curveType=utils.curve_type_from_header(curve_header),
+        logName=curve_header.log_name,
+        curveName=curve_header.curve_name,
+        curveUnit=curve_header.curve_unit,
+    )
+
+
+def convert_wellbore_geo_header_to_well_log_header(
+    geo_header: WellboreGeoHeader,
+) -> schemas.WellboreLogCurveHeader:
+
+    return schemas.WellboreLogCurveHeader(
+        source=schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY,
+        sourceId=geo_header.uuid,
+        curveType=utils.curve_type_from_header(geo_header),
+        logName="Geology",
+        curveName=geo_header.identifier,
+        curveUnit="UNITLESS",
+    )
+
+
+def convert_strat_unit_type_to_well_log_header(
+    strat_unit_type: str,
+) -> schemas.WellboreLogCurveHeader:
+    return schemas.WellboreLogCurveHeader(
+        source=schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY,
+        sourceId=strat_unit_type,
+        curveType=schemas.WellLogCurveTypeEnum.DISCRETE,
+        logName="Stratigraphy",
+        curveName=strat_unit_type[0].upper() + strat_unit_type[1:],
+        curveUnit="UNITLESS",
     )
 
 

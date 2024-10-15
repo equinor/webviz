@@ -10,13 +10,14 @@ from primary.services.service_exceptions import (
 
 from .types import WellborePick, WellboreTrajectory, WellboreHeader, StratigraphicUnit, StratigraphicSurface
 from .stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from ._smda_get_request import smda_get_request
+from ._smda_get_request import smda_get_request, smda_get_aggregation_request
 
 LOGGER = logging.getLogger(__name__)
 
 
 class SmdaEndpoints:
     STRAT_UNITS = "strat-units"
+    WELLBORE_STRATIGRAPHY = "wellbore-stratigraphy"
     WELLBORE_SURVEY_HEADERS = "wellbore-survey-headers"
     WELLHEADERS = "wellheaders"
     WELLBORE_SURVEY_SAMPLES = "wellbore-survey-samples"
@@ -30,6 +31,9 @@ class SmdaAccess:
 
     async def _smda_get_request(self, endpoint: str, params: dict) -> List[dict]:
         return await smda_get_request(access_token=self._smda_token, endpoint=endpoint, params=params)
+
+    async def _smda_get_aggregation_request(self, endpoint: str, params: dict) -> dict:
+        return await smda_get_aggregation_request(access_token=self._smda_token, endpoint=endpoint, params=params)
 
     async def get_stratigraphic_units(self, strat_column_identifier: str) -> List[StratigraphicUnit]:
         """
@@ -45,6 +49,23 @@ class SmdaAccess:
             raise NoDataError(f"No stratigraphic units found for {strat_column_identifier=}.", Service.SMDA)
         units = [StratigraphicUnit(**result) for result in results]
         return units
+
+    async def get_strat_unit_types_for_wellbore(self, wellbore_uuid: str) -> List[str]:
+        """
+        Get a list of all stratigraphic unit types (group, formation, subzone, etc...) that are present for a given wellbore
+        """
+        endpoint = SmdaEndpoints.WELLBORE_STRATIGRAPHY
+        params = {"wellbore_uuid": wellbore_uuid, "_aggregation": "strat_unit_type"}
+
+        result = await self._smda_get_aggregation_request(endpoint=endpoint, params=params)
+
+        print(result)
+
+        unit_types = map(lambda entry: entry["key"], result["strat_unit_type"])
+
+        print(unit_types)
+
+        return list(unit_types)
 
     async def get_wellbore_headers(self) -> List[WellboreHeader]:
         """

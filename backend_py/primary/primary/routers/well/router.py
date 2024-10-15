@@ -199,24 +199,65 @@ async def get_wellbore_log_curve_headers(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
+    sources: List[schemas.WellLogCurveSourceEnum] = Query(
+       description="Sources to fetch well-logs from. ",
+       default=[schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG]
+    )
     # fmt:on
 ) -> List[schemas.WellboreLogCurveHeader]:
-    """Get all log curve headers for a single well bore"""
+    """
+    Get all log curve headers for a single well bore.
+    Logs are available from multiple sources, which can be specificed by the "sources" parameter.
+    """
 
     # Handle DROGON
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         return []
 
+    curve_headers = []
+
+    if schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG in sources:
+        curve_headers += await __get_headers_from_ssdl_well_log(authenticated_user, wellbore_uuid)
+
+    if schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY in sources:
+        curve_headers += await __get_headers_from_smda_geology(authenticated_user, wellbore_uuid)
+
+    if schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY in sources:
+        curve_headers += await __get_headers_from_smda_stratigraghpy(authenticated_user, wellbore_uuid)
+
+    return curve_headers
+
+
+async def __get_headers_from_ssdl_well_log(
+    authenticated_user: AuthenticatedUser, wellbore_uuid: str
+) -> list[schemas.WellboreLogCurveHeader]:
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+    headers = await well_access.get_log_curve_headers_for_wellbore(wellbore_uuid)
 
-    wellbore_log_curve_headers = await well_access.get_log_curve_headers_for_wellbore(wellbore_uuid=wellbore_uuid)
+    # Missing log name implies garbage data, so we drop them
+    valid_headers = filter(lambda header: header.log_name is not None, headers)
 
-    return [
-        converters.convert_wellbore_log_curve_header_to_schema(wellbore_log_curve_header)
-        for wellbore_log_curve_header in wellbore_log_curve_headers
-        # Missing log name implies garbage data, so we simply drop them
-        if wellbore_log_curve_header.log_name is not None
-    ]
+    return [converters.convert_wellbore_log_curve_header_to_schema(head) for head in valid_headers]
+
+
+async def __get_headers_from_smda_geology(
+    authenticated_user: AuthenticatedUser, wellbore_uuid: str
+) -> list[schemas.WellboreLogCurveHeader]:
+    # TODO fix field
+    geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token(), "FIELD")
+    geo_headers = await geol_access.get_wellbore_geology_headers(wellbore_uuid)
+
+    return [converters.convert_wellbore_geo_header_to_well_log_header(header) for header in geo_headers]
+
+
+async def __get_headers_from_smda_stratigraghpy(
+    authenticated_user: AuthenticatedUser, wellbore_uuid: str
+) -> list[schemas.WellboreLogCurveHeader]:
+    # TODO fix field
+    strat_access = SmdaAccess(authenticated_user.get_smda_access_token(), "FIELD")
+    unit_types = await strat_access.get_strat_unit_types_for_wellbore(wellbore_uuid)
+
+    return [converters.convert_strat_unit_type_to_well_log_header(u_type) for u_type in unit_types]
 
 
 @router.get("/log_curve_data/")
