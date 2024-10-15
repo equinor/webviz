@@ -34,7 +34,7 @@ export function SortableTrackItem(props: CurveTrackItemProps) {
 
     return (
         <SortableListItem
-            id={props.trackConfig._id}
+            id={props.trackConfig._key}
             title={props.trackConfig.title}
             startAdornment={itemStartAdornment}
             endAdornment={itemEndAdornment}

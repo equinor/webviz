@@ -37,7 +37,6 @@ function transformToTrackConfig(obj: any): TemplateTrackConfig {
     };
 
     const optionalFields = {
-        _id: obj._id,
         required: obj.required,
         width: obj.width,
         scale: obj.scale,
@@ -48,7 +47,7 @@ function transformToTrackConfig(obj: any): TemplateTrackConfig {
 
     return {
         ...optionalFields,
-        _id: optionalFields._id ?? v4(),
+        _key: v4(),
         _type: requiredFields._type,
         title: requiredFields.title,
         plots: requiredFields.plots.map(makeTrackPlot),

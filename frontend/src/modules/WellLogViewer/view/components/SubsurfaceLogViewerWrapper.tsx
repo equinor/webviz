@@ -270,7 +270,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
                 axisTitles={AXIS_TITLES}
                 colorMapFunctions={colorTables}
                 // Disable the pin and selection logic, since we dont use that for anything yet
-                options={{ hideSelectionInterval: true }}
+                options={{ hideSelectionInterval: true, maxVisibleTrackNum: 12 }}
                 onTrackMouseEvent={handleTrackMouseEvent}
                 onCreateController={handleCreateController}
                 onContentSelection={handleSelection}

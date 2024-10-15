@@ -1,3 +1,4 @@
+import { WellLogCurveTypeEnum_api } from "@api";
 import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "@modules/WellLogViewer/utils/logViewerColors";
 import { createLogTemplate, isValidPlot, makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
@@ -31,7 +32,7 @@ describe("makeTrackPlot tests", () => {
 
         expect(result).toMatchObject({
             ...plot,
-            _id: expect.any(String),
+            _key: expect.any(String),
             _isValid: false,
             color: CURVE_COLOR_PALETTE.getColors()[0],
             color2: CURVE_COLOR_PALETTE.getColors()[3],
@@ -48,7 +49,7 @@ describe("makeTrackPlot tests", () => {
 
             expect(result).toMatchObject({
                 ...plot,
-                _id: expect.any(String),
+                _key: expect.any(String),
                 _isValid: true,
                 color: CURVE_COLOR_PALETTE.getColors()[0],
                 color2: CURVE_COLOR_PALETTE.getColors()[3],
@@ -65,7 +66,7 @@ describe("makeTrackPlot tests", () => {
 
         expect(result).toMatchObject({
             ...plot,
-            _id: expect.any(String),
+            _key: expect.any(String),
             _isValid: true,
             color: CURVE_COLOR_PALETTE.getColors()[0],
             color2: CURVE_COLOR_PALETTE.getColors()[3],
@@ -92,7 +93,7 @@ describe("makeTrackPlot tests", () => {
         const result = makeTrackPlot(plot);
 
         expect(result).toMatchObject({
-            _id: expect.any(String),
+            _key: expect.any(String),
             _isValid: true,
             colorTable: "Continuous",
         });
@@ -103,26 +104,26 @@ describe("makeTrackPlot tests", () => {
         const result = makeTrackPlot(plot);
 
         expect(result).toMatchObject({
-            _id: expect.any(String),
+            _key: expect.any(String),
             _isValid: true,
             color: "#123456",
             color2: "#654321",
         });
     });
 
-    test("should generate a new _id if not provided", () => {
+    test("should generate a new _key if not provided", () => {
         const plot = { type: "line" } as TemplatePlotConfig;
         const result = makeTrackPlot(plot);
 
-        expect(result._id).toBeDefined();
-        expect(result._id).toHaveLength(36); // UUID length
+        expect(result._key).toBeDefined();
+        expect(result._key).toHaveLength(36); // UUID length
     });
 
-    test("should retain the provided _id if available", () => {
-        const plot = { name: "SomeCurve", type: "line", _id: "existing-id" } as TemplatePlotConfig;
+    test("should retain the provided _key if available", () => {
+        const plot = { name: "SomeCurve", type: "line", _key: "existing-id" } as TemplatePlotConfig;
         const result = makeTrackPlot(plot);
 
-        expect(result._id).toBe("existing-id");
+        expect(result._key).toBe("existing-id");
     });
 
     test("should discard other curve specific values when creating a plot", () => {
@@ -244,8 +245,8 @@ describe("settings import export tests", () => {
     test("should export a list of configs as a data-blob url", () => {
         const input: TemplateTrackConfig[] = [
             {
-                _id: "test",
-                _type: "continous",
+                _key: "test",
+                _type: WellLogCurveTypeEnum_api.CONTINUOUS,
                 title: "test-track",
                 plots: [],
             },
@@ -285,7 +286,7 @@ describe("settings import export tests", () => {
             title: "Track 1",
             plots: [
                 {
-                    _id: expect.any(String),
+                    _key: expect.any(String),
                     _isValid: true,
                     name: "Curve 1",
                     type: "line",
@@ -297,7 +298,7 @@ describe("settings import export tests", () => {
             title: "Track 2",
             plots: [
                 {
-                    _id: expect.any(String),
+                    _key: expect.any(String),
                     _isValid: true,
                     name: "Curve 2",
                     type: "dot",
@@ -306,7 +307,7 @@ describe("settings import export tests", () => {
         });
     });
 
-    test("should generate a new _id if not provided", async () => {
+    test("should generate a _key if not provided", async () => {
         const input = new MockFile([
             {
                 title: "Track 1",
@@ -316,22 +317,8 @@ describe("settings import export tests", () => {
 
         const result = await jsonFileToTrackConfigs(input as unknown as File);
 
-        expect(result[0]._id).toBeDefined();
-        expect(result[0]._id).toHaveLength(36); // UUID length
-    });
-
-    test("should retain the provided _id if available", async () => {
-        const input = new MockFile([
-            {
-                title: "Track 1",
-                _id: "existing-id",
-                plots: [{ name: "Curve 1", type: "line", color: "#123456" }],
-            },
-        ]);
-
-        const result = await jsonFileToTrackConfigs(input as unknown as File);
-
-        expect(result[0]._id).toBe("existing-id");
+        expect(result[0]._key).toBeDefined();
+        expect(result[0]._key).toHaveLength(36); // UUID length
     });
 
     test("should throw an error if required track fields are missing", async () => {

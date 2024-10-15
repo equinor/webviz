@@ -45,7 +45,7 @@ export function makeTrackPlot(plot: OptionalExceptFor<TemplatePlotConfig, "_curv
     // DIFF_CURVE_COLORS
     const config: TemplatePlotConfig = {
         ...plot,
-        _id: plot._id ?? v4(),
+        _key: plot._key ?? v4(),
         _isValid: Boolean(plot.name && plot.type),
         name: plot.name,
         type: plot.type,
