@@ -35,6 +35,15 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     const surfData = surfDataQuery.data;
 
+    if (surfData?.valuesFloat32Arr) {
+        // Hack since MapLayer seems to freak out if all values are equal (probably chokes if min/max range is zero)
+        if (surfData.valuesFloat32Arr.every((v) => v === 0 || isNaN(v))) {
+            console.log("All numeric values are zero, setting first value to 1");
+            const firstZeroVal = surfData.valuesFloat32Arr.indexOf(0);
+            surfData.valuesFloat32Arr[firstZeroVal] = 1;
+        }
+    }
+
     return (
         <div className="relative w-full h-full flex flex-col">
             {hasError ? (
