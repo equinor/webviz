@@ -90,11 +90,10 @@ export class StatisticalSurfaceLayer
                 .getRealizationFilterSet()
                 .getRealizationFilterForEnsembleIdent(ensembleIdent)
                 .getFilteredRealizations();
+            const currentEnsemble = workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent);
 
             // If sensitivity is set, filter realizations further to only include the realizations that are in the sensitivity
             if (sensitivityNameCasePair) {
-                const currentEnsemble = workbenchSession.getEnsembleSet().findEnsemble(ensembleIdent);
-
                 const sensitivity = currentEnsemble
                     ?.getSensitivities()
                     ?.getCaseByName(sensitivityNameCasePair.sensitivityName, sensitivityNameCasePair.sensitivityCase);
@@ -105,7 +104,12 @@ export class StatisticalSurfaceLayer
                     sensitivityRealizations.includes(realization)
                 );
             }
-            addrBuilder.withStatisticRealizations(filteredRealizations.map((realization) => realization));
+
+            // If realizations are filtered, update the address
+            let allRealizations = currentEnsemble?.getRealizations() ?? [];
+            if (!isEqual([...allRealizations], [...filteredRealizations])) {
+                addrBuilder.withStatisticRealizations([...filteredRealizations]);
+            }
 
             if (timeOrInterval !== SurfaceTimeType_api.NO_TIME) {
                 addrBuilder.withTimeOrInterval(timeOrInterval);
