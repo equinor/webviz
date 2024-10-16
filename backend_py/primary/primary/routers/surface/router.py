@@ -5,12 +5,14 @@ from typing import Annotated, List, Optional, Literal
 import xtgeo
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, Body, status
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from fmu.sumo.explorer.explorer import SumoClient
 
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.surface_access import SurfaceAccess
 from primary.services.smda_access.stratigraphy_access import StratigraphyAccess, StratigraphicUnit
 from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from primary.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
+from primary.services.sumo_access._helpers import create_sumo_client
 from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
 from primary.services.utils.authenticated_user import AuthenticatedUser
@@ -25,9 +27,6 @@ from . import dependencies
 
 from .surface_address import RealizationSurfaceAddress, ObservedSurfaceAddress, StatisticalSurfaceAddress
 from .surface_address import decode_surf_addr_str
-
-from  primary.services.sumo_access._helpers import create_sumo_client
-from fmu.sumo.explorer.explorer import SumoClient
 
 
 LOGGER = logging.getLogger(__name__)
@@ -245,7 +244,7 @@ async def get_delta_surface_data(
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
     # fmt:on
-) -> schemas.SurfaceDataFloat:
+) -> schemas.SurfaceDataFloat | schemas.SurfaceDataPng:
     perf_metrics = ResponsePerfMetrics(response)
 
     access_token = authenticated_user.get_sumo_access_token()
@@ -261,8 +260,12 @@ async def get_delta_surface_data(
         raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
     async with asyncio.TaskGroup() as tg:
-        surf_a_task = tg.create_task(_get_fully_addressed_surf_async(sumo_client, addr_a, perf_metrics.create_sub_metrics_object(), "A"))
-        surf_b_task = tg.create_task(_get_fully_addressed_surf_async(sumo_client, addr_b, perf_metrics.create_sub_metrics_object(), "B"))
+        surf_a_task = tg.create_task(
+            _get_fully_addressed_surf_async(sumo_client, addr_a, perf_metrics.create_sub_metrics_object(), "A")
+        )
+        surf_b_task = tg.create_task(
+            _get_fully_addressed_surf_async(sumo_client, addr_b, perf_metrics.create_sub_metrics_object(), "B")
+        )
 
     xtgeo_surf_a = surf_a_task.result()
     xtgeo_surf_b = surf_b_task.result()
@@ -356,12 +359,17 @@ async def _get_stratigraphic_units_for_case_async(
     return strat_units
 
 
-async def _get_fully_addressed_surf_async(sumo_client: SumoClient, addr: RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress, perf_metrics: ResponsePerfMetrics, suffix_str: str | None)-> xtgeo.RegularSurface:
+async def _get_fully_addressed_surf_async(
+    sumo_client: SumoClient,
+    addr: RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress,
+    perf_metrics: ResponsePerfMetrics,
+    suffix_str: str | None,
+) -> xtgeo.RegularSurface:
     metrics_suffix = f"-{suffix_str}" if suffix_str else ""
     exception_suffix = f" {suffix_str}" if suffix_str else ""
 
     if addr.address_type == "REAL":
-        access = SurfaceAccess.from_case_uuid_with_sumo_client(sumo_client, addr.case_uuid, addr.ensemble_name)
+        access = SurfaceAccess.from_case_uuid_using_sumo_client(sumo_client, addr.case_uuid, addr.ensemble_name)
         xtgeo_surf = await access.get_realization_surface_data_async(
             real_num=addr.realization,
             name=addr.name,
@@ -377,7 +385,7 @@ async def _get_fully_addressed_surf_async(sumo_client: SumoClient, addr: Realiza
         if service_stat_func_to_compute is None:
             raise HTTPException(status_code=404, detail="Invalid statistic requested for surface" + exception_suffix)
 
-        access = SurfaceAccess.from_case_uuid_with_sumo_client(sumo_client, addr.case_uuid, addr.ensemble_name)
+        access = SurfaceAccess.from_case_uuid_using_sumo_client(sumo_client, addr.case_uuid, addr.ensemble_name)
         xtgeo_surf = await access.get_statistical_surface_data_async(
             statistic_function=service_stat_func_to_compute,
             name=addr.name,
@@ -387,10 +395,10 @@ async def _get_fully_addressed_surf_async(sumo_client: SumoClient, addr: Realiza
         )
         perf_metrics.record_lap("sumo-calc" + metrics_suffix)
         if not xtgeo_surf:
-            raise HTTPException(status_code=404, detail="Could not get or compute statistical surface" + exception_suffix)
+            raise HTTPException(status_code=404, detail="Could not compute statistical surface" + exception_suffix)
 
     elif addr.address_type == "OBS":
-        access = SurfaceAccess.from_case_uuid_no_iteration_with_sumo_client(sumo_client, addr.case_uuid)
+        access = SurfaceAccess.from_case_uuid_no_iteration_using_sumo_client(sumo_client, addr.case_uuid)
         xtgeo_surf = await access.get_observed_surface_data_async(
             name=addr.name, attribute=addr.attribute, time_or_interval_str=addr.iso_time_or_interval
         )

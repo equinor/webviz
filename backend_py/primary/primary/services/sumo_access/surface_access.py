@@ -39,11 +39,13 @@ class SurfaceAccess:
         return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=None)
 
     @classmethod
-    def from_case_uuid_with_sumo_client(cls, sumo_client: SumoClient, case_uuid: str, iteration_name: str) -> "SurfaceAccess":
+    def from_case_uuid_using_sumo_client(
+        cls, sumo_client: SumoClient, case_uuid: str, iteration_name: str
+    ) -> "SurfaceAccess":
         return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     @classmethod
-    def from_case_uuid_no_iteration_with_sumo_client(cls, sumo_client: SumoClient, case_uuid: str) -> "SurfaceAccess":
+    def from_case_uuid_no_iteration_using_sumo_client(cls, sumo_client: SumoClient, case_uuid: str) -> "SurfaceAccess":
         return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=None)
 
     async def get_realization_surfaces_metadata_async(self) -> SurfaceMetaSet:
