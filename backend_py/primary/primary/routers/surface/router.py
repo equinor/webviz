@@ -138,17 +138,17 @@ async def get_surface_data(
     perf_metrics = ResponsePerfMetrics(response)
 
     access_token = authenticated_user.get_sumo_access_token()
+    sumo_client = create_sumo_client(access_token)
 
     addr = decode_surf_addr_str(surf_addr_str)
     if not isinstance(addr, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
         raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
-    # Does its own error handling
-    sumo_client = create_sumo_client(access_token)
+    # Does its own error handling by throwing HTTPException
     xtgeo_surf = await _get_fully_addressed_surf_async(sumo_client, addr, perf_metrics, None)
 
     if resample_to is not None:
-        xtgeo_surf = converters.resample_to_surface_def(xtgeo_surf, resample_to)
+        xtgeo_surf = converters.resampled_to_surface_def_if_needed(xtgeo_surf, resample_to)
         perf_metrics.record_lap("resample")
 
     surf_data_response: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
@@ -250,6 +250,8 @@ async def get_delta_surface_data(
 
     access_token = authenticated_user.get_sumo_access_token()
     perf_metrics.record_lap("get-token")
+    sumo_client = create_sumo_client(access_token)
+    perf_metrics.record_lap("create-sumo-client")
 
     addr_a = decode_surf_addr_str(surf_a_addr_str)
     addr_b = decode_surf_addr_str(surf_b_addr_str)
@@ -258,42 +260,49 @@ async def get_delta_surface_data(
     if not isinstance(addr_b, RealizationSurfaceAddress | ObservedSurfaceAddress | StatisticalSurfaceAddress):
         raise HTTPException(status_code=404, detail="Endpoint only supports address types REAL, OBS and STAT")
 
-
-    sumo_client = create_sumo_client(access_token)
-    perf_metrics.record_lap("create-sumo-client")
-
     async with asyncio.TaskGroup() as tg:
-        surf_a_task = tg.create_task(_get_fully_addressed_surf_async(sumo_client, addr_a, perf_metrics.spawn_sub_metrics(), "A"))
-        surf_b_task = tg.create_task(_get_fully_addressed_surf_async(sumo_client, addr_b, perf_metrics.spawn_sub_metrics(), "B"))
+        surf_a_task = tg.create_task(_get_fully_addressed_surf_async(sumo_client, addr_a, perf_metrics.create_sub_metrics_object(), "A"))
+        surf_b_task = tg.create_task(_get_fully_addressed_surf_async(sumo_client, addr_b, perf_metrics.create_sub_metrics_object(), "B"))
 
     xtgeo_surf_a = surf_a_task.result()
     xtgeo_surf_b = surf_b_task.result()
-    perf_metrics.record_lap("download-combined")
+    perf_metrics.record_lap("obtain-both-surfs")
 
     # xtgeo_surf_a = await _get_fully_addressed_surf_async(access_token, addr_a, perf_metrics, "A")
     # xtgeo_surf_b = await _get_fully_addressed_surf_async(access_token, addr_b, perf_metrics, "B")
 
-    if resample_to is not None:
-        xtgeo_surf_a = converters.resample_to_surface_def(xtgeo_surf_a, resample_to)
-        perf_metrics.record_lap("resample-A")
+    LOGGER.debug("===============================")
+    LOGGER.debug(f"SURF_A rotation =  {xtgeo_surf_a.rotation}")
+    LOGGER.debug(f"SURF_A xori,yori = {xtgeo_surf_a.xori}, {xtgeo_surf_a.yori}")
+    LOGGER.debug(f"SURF_A xinc,yinc = {xtgeo_surf_a.xinc}, {xtgeo_surf_a.yinc}")
+    LOGGER.debug(f"SURF_A ncol,nrow = {xtgeo_surf_a.ncol}, {xtgeo_surf_a.nrow}")
+    LOGGER.debug("-------------------------------")
+    LOGGER.debug(f"SURF_B rotation =  {xtgeo_surf_b.rotation}")
+    LOGGER.debug(f"SURF_B xori,yori = {xtgeo_surf_b.xori}, {xtgeo_surf_b.yori}")
+    LOGGER.debug(f"SURF_B xinc,yinc = {xtgeo_surf_b.xinc}, {xtgeo_surf_b.yinc}")
+    LOGGER.debug(f"SURF_B ncol,nrow = {xtgeo_surf_b.ncol}, {xtgeo_surf_b.nrow}")
+    LOGGER.debug("===============================")
 
-    if not xtgeo_surf_a.compare_topology(xtgeo_surf_b):
-        target_surf_def = converters.extract_surface_def_from_surface(xtgeo_surf_a)
-        xtgeo_surf_b = converters.resample_to_surface_def(xtgeo_surf_b, target_surf_def)
-        perf_metrics.record_lap("resample-B")
-
-    print("-------------------------------")
-    print(f"{xtgeo_surf_a.rotation=}")
-    print(xtgeo_surf_a)
-    print("-------------------------------")
-
+    # From the xtgeo code it seems the subtract operation on the surfaces will automatically resample
+    # the data to the target surface (surface A), if needed.
+    # If the two surfaces differ only in their mask, it seems the subtract operation will do an unnecessary
+    # resampling, but for now this is probably not critical, so just utilize the xtgeo subtract method.
     xtgeo_surf_a.subtract(xtgeo_surf_b)
     perf_metrics.record_lap("calc-delta")
 
-    print("-------------------------------")
-    print(f"{xtgeo_surf_a.rotation=}")
-    print(xtgeo_surf_a)
-    print("-------------------------------")
+    # It could probably be debated whether the resampling should be done after computing the delta
+    # surface or if we should resample the B surface first. For now, leave the resampling to last.
+    if resample_to is not None:
+        xtgeo_surf_a = converters.resampled_to_surface_def_if_needed(xtgeo_surf_a, resample_to)
+        perf_metrics.record_lap("resample")
+
+    LOGGER.debug("===============================")
+    LOGGER.debug(f"SURF_RESULT rotation =  {xtgeo_surf_a.rotation}")
+    LOGGER.debug(f"SURF_RESULT xori,yori = {xtgeo_surf_a.xori}, {xtgeo_surf_a.yori}")
+    LOGGER.debug(f"SURF_RESULT xinc,yinc = {xtgeo_surf_a.xinc}, {xtgeo_surf_a.yinc}")
+    LOGGER.debug(f"SURF_RESULT ncol,nrow = {xtgeo_surf_a.ncol}, {xtgeo_surf_a.nrow}")
+    LOGGER.debug("===============================")
+    LOGGER.debug(f"\n{str(xtgeo_surf_a)}")
 
     surf_data_response: schemas.SurfaceDataFloat | schemas.SurfaceDataPng
     if data_format == "float":
@@ -303,7 +312,7 @@ async def get_delta_surface_data(
 
     perf_metrics.record_lap("convert")
 
-    LOGGER.info(f"Got delta surface in: {perf_metrics.to_string()}")
+    LOGGER.info(f"Created delta surface in: {perf_metrics.to_string()}")
 
     return surf_data_response
 

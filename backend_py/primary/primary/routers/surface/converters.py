@@ -32,7 +32,7 @@ def extract_surface_def_from_surface(xtgeo_surf: xtgeo.RegularSurface) -> schema
     return surface_def
 
 
-def resample_to_surface_def(
+def resampled_to_surface_def_if_needed(
     source_surface: xtgeo.RegularSurface, target_surface_def: schemas.SurfaceDef
 ) -> xtgeo.RegularSurface:
     """
@@ -49,7 +49,9 @@ def resample_to_surface_def(
         rotation=target_surface_def.rot_deg,
     )
 
-    if target_surface.compare_topology(source_surface):
+    # Ignore mask and compare only the grid definitions since target_surface will never have a mask set
+    if target_surface.compare_topology(source_surface, strict=False):
+        # Grid definitions are equal so no need to resample
         return source_surface
 
     target_surface.resample(source_surface)

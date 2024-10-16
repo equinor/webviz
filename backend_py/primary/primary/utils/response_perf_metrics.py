@@ -15,7 +15,7 @@ class ResponsePerfMetrics:
         if target_response_for_metrics is not None:
             self._headers = target_response_for_metrics.headers
 
-    def spawn_sub_metrics(self) -> "ResponsePerfMetrics":
+    def create_sub_metrics_object(self) -> "ResponsePerfMetrics":
         sub_metrics = ResponsePerfMetrics(None)
         sub_metrics._metrics_dict = self._metrics_dict
         sub_metrics._headers = self._headers
