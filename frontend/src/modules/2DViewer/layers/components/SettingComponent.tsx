@@ -16,6 +16,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
         props.setting.makeComponent()
     );
     const value = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.VALUE_CHANGED);
+    const isValid = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.VALIDITY_CHANGED);
     const availableValues = usePublishSubscribeTopicValue(
         props.setting.getDelegate(),
         SettingTopic.AVAILABLE_VALUES_CHANGED
@@ -40,6 +41,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
                     <componentRef.current
                         onValueChange={handleValueChanged}
                         value={value}
+                        isValueValid={isValid}
                         isOverridden={overriddenValue !== undefined}
                         overriddenValue={overriddenValue}
                         availableValues={availableValues}

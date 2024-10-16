@@ -7,7 +7,11 @@ import { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
 
 export class Realization implements Setting<number | null> {
-    private _delegate: SettingDelegate<number | null> = new SettingDelegate<number | null>(null);
+    private _delegate: SettingDelegate<number | null>;
+
+    constructor() {
+        this._delegate = new SettingDelegate<number | null>(null, this);
+    }
 
     getType(): SettingType {
         return SettingType.REALIZATION;

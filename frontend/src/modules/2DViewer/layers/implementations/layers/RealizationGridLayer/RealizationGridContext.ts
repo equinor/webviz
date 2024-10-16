@@ -1,11 +1,10 @@
-import { Grid3dInfo_api, Grid3dPropertyInfo_api, SurfaceTimeType_api } from "@api";
+import { Grid3dInfo_api, Grid3dPropertyInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 
 import { isEqual } from "lodash";
-import { SurfaceMetaSet } from "src/api/models/SurfaceMetaSet";
 
 import { RealizationGridSettings } from "./types";
 
@@ -43,15 +42,86 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
         return this._contextDelegate.getSettings();
     }
 
-    private setAvailableSettingsValues() {
+    async fetchData(oldValues: RealizationGridSettings, newValues: RealizationGridSettings): Promise<boolean> {
+        const queryClient = this.getDelegate().getLayerManager().getQueryClient();
+
         const settings = this.getDelegate().getSettings();
+
+        const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
+        const ensembleSet = workbenchSession.getEnsembleSet();
+        const fieldIdentifier = this.getDelegate().getLayerManager().getGlobalSetting("fieldId");
+
+        this.getDelegate().setAvailableValues(
+            SettingType.ENSEMBLE,
+            ensembleSet
+                .getEnsembleArr()
+                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .map((ensemble) => ensemble.getIdent())
+        );
+
+        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
+        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+
+        // Fix up EnsembleIdent
+        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
+            if (availableEnsembleIdents.length > 0) {
+                currentEnsembleIdent = availableEnsembleIdents[0];
+                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
+            }
+        }
+        if (currentEnsembleIdent !== null) {
+            const realizations = workbenchSession
+                .getRealizationFilterSet()
+                .getRealizationFilterForEnsembleIdent(currentEnsembleIdent)
+                .getFilteredRealizations();
+            this.getDelegate().setAvailableValues(SettingType.REALIZATION, [...realizations]);
+
+            const currentRealization = newValues[SettingType.REALIZATION];
+            if (currentRealization === null || !realizations.includes(currentRealization)) {
+                if (realizations.length > 0) {
+                    settings[SettingType.REALIZATION].getDelegate().setValue(realizations[0]);
+                }
+            }
+        }
+
+        if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
+            this._fetchDataCache = null;
+
+            settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(true);
+            settings[SettingType.GRID_NAME].getDelegate().setLoadingState(true);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
+
+            try {
+                this._fetchDataCache = await queryClient.fetchQuery({
+                    queryKey: [
+                        "getRealizationGridsMetadata",
+                        newValues[SettingType.ENSEMBLE],
+                        newValues[SettingType.REALIZATION],
+                    ],
+                    queryFn: () =>
+                        apiService.grid3D.getGridModelsInfo(
+                            newValues[SettingType.ENSEMBLE]?.getCaseUuid() ?? "",
+                            newValues[SettingType.ENSEMBLE]?.getEnsembleName() ?? "",
+                            newValues[SettingType.REALIZATION] ?? 0
+                        ),
+                    staleTime: STALE_TIME,
+                    gcTime: CACHE_TIME,
+                });
+            } catch (e) {
+                settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(false);
+                settings[SettingType.GRID_NAME].getDelegate().setLoadingState(false);
+                settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+                return false;
+            }
+        }
+
         settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(false);
         settings[SettingType.GRID_NAME].getDelegate().setLoadingState(false);
         settings[SettingType.GRID_LAYER].getDelegate().setLoadingState(false);
         settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
 
         if (!this._fetchDataCache) {
-            return;
+            return false;
         }
 
         const availableGridNames: string[] = [];
@@ -119,76 +189,7 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
                 settings[SettingType.TIME_OR_INTERVAL].getDelegate().setValue(currentTimeOrInterval);
             }
         }
-    }
-
-    fetchData(oldValues: RealizationGridSettings, newValues: RealizationGridSettings): void {
-        const queryClient = this.getDelegate().getLayerManager().getQueryClient();
-
-        const settings = this.getDelegate().getSettings();
-
-        const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
-        const ensembleSet = workbenchSession.getEnsembleSet();
-
-        this.getDelegate().setAvailableValues(
-            SettingType.ENSEMBLE,
-            ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent())
-        );
-
-        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
-        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
-
-        // Fix up EnsembleIdent
-        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
-            if (availableEnsembleIdents.length > 0) {
-                currentEnsembleIdent = availableEnsembleIdents[0];
-                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
-            }
-        }
-        if (currentEnsembleIdent !== null) {
-            const realizations = workbenchSession
-                .getRealizationFilterSet()
-                .getRealizationFilterForEnsembleIdent(currentEnsembleIdent)
-                .getFilteredRealizations();
-            this.getDelegate().setAvailableValues(SettingType.REALIZATION, [...realizations]);
-
-            const currentRealization = newValues[SettingType.REALIZATION];
-            if (currentRealization === null || !realizations.includes(currentRealization)) {
-                if (realizations.length > 0) {
-                    settings[SettingType.REALIZATION].getDelegate().setValue(realizations[0]);
-                }
-            }
-        }
-
-        if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
-            this._fetchDataCache = null;
-
-            settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(true);
-            settings[SettingType.GRID_NAME].getDelegate().setLoadingState(true);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
-
-            queryClient
-                .fetchQuery({
-                    queryKey: [
-                        "getRealizationGridsMetadata",
-                        newValues[SettingType.ENSEMBLE],
-                        newValues[SettingType.REALIZATION],
-                    ],
-                    queryFn: () =>
-                        apiService.grid3D.getGridModelsInfo(
-                            newValues[SettingType.ENSEMBLE]?.getCaseUuid() ?? "",
-                            newValues[SettingType.ENSEMBLE]?.getEnsembleName() ?? "",
-                            newValues[SettingType.REALIZATION] ?? 0
-                        ),
-                    staleTime: STALE_TIME,
-                    gcTime: CACHE_TIME,
-                })
-                .then((response: Grid3dInfo_api[]) => {
-                    this._fetchDataCache = response;
-                    this.setAvailableSettingsValues();
-                });
-            return;
-        }
-        this.setAvailableSettingsValues();
+        return true;
     }
 
     areCurrentSettingsValid(): boolean {

@@ -1,10 +1,11 @@
 import { LayerManager, LayerManagerTopic } from "./LayerManager";
 import { ItemDelegate, ItemDelegateTopic } from "./delegates/ItemDelegate";
+import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelegate";
 import { Item, Layer, Setting, SettingTopic, instanceofLayer } from "./interfaces";
 
 export class SharedSetting implements Item {
     private _wrappedSetting: Setting<any>;
-    private _unsubscribeFuncs: (() => void)[] = [];
+    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _itemDelegate: ItemDelegate;
 
     constructor(wrappedSetting: Setting<any>) {
@@ -27,21 +28,24 @@ export class SharedSetting implements Item {
 
     handleLayerManagerChange(layerManager: LayerManager | null): void {
         if (layerManager) {
-            this._unsubscribeFuncs.push(
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "layer-manager",
                 layerManager.getPublishSubscribeHandler().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(
                     () => {
                         this.makeIntersectionOfAvailableValues();
                     }
                 )
             );
-            this._unsubscribeFuncs.push(
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "layer-manager",
                 layerManager.getPublishSubscribeHandler().makeSubscriberFunction(LayerManagerTopic.SETTINGS_CHANGED)(
                     () => {
                         this.makeIntersectionOfAvailableValues();
                     }
                 )
             );
-            this._unsubscribeFuncs.push(
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "layer-manager",
                 layerManager
                     .getPublishSubscribeHandler()
                     .makeSubscriberFunction(LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED)(() => {
@@ -49,10 +53,7 @@ export class SharedSetting implements Item {
                 })
             );
         } else {
-            this._unsubscribeFuncs.forEach((unsubscribeFunc) => {
-                unsubscribeFunc();
-            });
-            this._unsubscribeFuncs = [];
+            this._unsubscribeHandler.unsubscribe("layer-manager");
         }
     }
 

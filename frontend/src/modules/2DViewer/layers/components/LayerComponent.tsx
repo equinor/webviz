@@ -5,7 +5,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
+import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { EditName } from "./EditName";
 import { RemoveButton } from "./RemoveButton";
@@ -15,6 +15,7 @@ import { VisibilityToggle } from "./VisibilityToggle";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
 import { LayerDelegateTopic } from "../delegates/LayerDelegate";
 import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
+import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../delegates/SettingsContextDelegate";
 import { Layer, LayerStatus, Setting } from "../interfaces";
 
 export type LayerComponentProps = {
@@ -85,6 +86,10 @@ type EndActionProps = {
 
 function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.layer.getLayerDelegate(), LayerDelegateTopic.STATUS);
+    const settingsLoadingState = usePublishSubscribeTopicValue(
+        props.layer.getLayerDelegate().getSettingsContext().getDelegate(),
+        SettingsContextDelegateTopic.LOADING_STATE
+    );
     const isSubordinated = usePublishSubscribeTopicValue(
         props.layer.getLayerDelegate(),
         LayerDelegateTopic.SUBORDINATED
@@ -98,7 +103,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
                 </div>
             );
         }
-        if (status === LayerStatus.LOADING) {
+        if (status === LayerStatus.LOADING || settingsLoadingState === SettingsContextLoadingState.LOADING) {
             return (
                 <div title="Loading">
                     <CircularProgress size="extra-small" />
@@ -126,6 +131,13 @@ function EndActions(props: EndActionProps): React.ReactNode {
             return (
                 <div title="Successfully loaded">
                     <CheckCircle className="text-green-700 p-0.5" fontSize="small" />
+                </div>
+            );
+        }
+        if (status === LayerStatus.INVALID_SETTINGS) {
+            return (
+                <div title="Invalid settings">
+                    <Block className="text-red-700 p-0.5" fontSize="small" />
                 </div>
             );
         }

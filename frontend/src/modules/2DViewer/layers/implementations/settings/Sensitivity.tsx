@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
@@ -12,8 +12,11 @@ export type SensitivityNameCasePair = {
 };
 
 export class Sensitivity implements Setting<SensitivityNameCasePair | null> {
-    private _delegate: SettingDelegate<SensitivityNameCasePair | null> =
-        new SettingDelegate<SensitivityNameCasePair | null>(null);
+    private _delegate: SettingDelegate<SensitivityNameCasePair | null>;
+
+    constructor() {
+        this._delegate = new SettingDelegate<SensitivityNameCasePair | null>(null, this);
+    }
 
     getType(): SettingType {
         return SettingType.STATISTIC_FUNCTION;

@@ -3,7 +3,7 @@ import { GeoJsonLayer } from "@deck.gl/layers";
 import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 export class AdvancedWellsLayer extends WellsLayer {
-    static layerName: string = "AdvancedWellsLayer";
+    static layerName: string = "WellsLayer";
 
     constructor(props: any) {
         super(props);
@@ -59,6 +59,7 @@ export class AdvancedWellsLayer extends WellsLayer {
             getLineColor: colorsLayer.props.getLineColor,
             getFillColor: colorsLayer.props.getFillColor,
             autoHighlight: true,
+            onHover: () => {},
         });
 
         return [newColorsLayer, ...layers.filter((layer) => layer !== colorsLayer)];

@@ -5,6 +5,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
+import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
 import { SharedSetting } from "../SharedSetting";
@@ -33,7 +34,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
     private _owner: Layer<TSettings, TData>;
     private _settingsContext: SettingsContext<TSettings>;
     private _layerManager: LayerManager | null = null;
-    private _unsubscribeFuncs: (() => void)[] = [];
+    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _cancellationPending: boolean = false;
     private _publishSubscribeHandler = new PublishSubscribeDelegate<LayerDelegateTopic>();
     private _queryKeys: unknown[][] = [];
@@ -52,23 +53,27 @@ export class LayerDelegate<TSettings extends Settings, TData>
     ) {
         this._owner = owner;
         this._settingsContext = settingsContext;
-        this._settingsContext
-            .getDelegate()
-            .getPublishSubscribeHandler()
-            .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
-            this.handleSettingsChange();
-        });
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "settings-context",
+            this._settingsContext
+                .getDelegate()
+                .getPublishSubscribeHandler()
+                .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
+                this.handleSettingsChange();
+            })
+        );
         this._coloringType = coloringType;
     }
 
     handleSettingsChange(): void {
         this._cancellationPending = true;
-        if (this._settingsContext.areCurrentSettingsValid()) {
+        if (this._settingsContext.getDelegate().areCurrentSettingsValid()) {
             this.maybeCancelQuery().then(() => {
                 this.maybeRefetchData();
             });
         } else {
             this._cancellationPending = false;
+            this._status = LayerStatus.INVALID_SETTINGS;
         }
     }
 
@@ -138,17 +143,14 @@ export class LayerDelegate<TSettings extends Settings, TData>
                 this.handleSharedSettingsChanged();
             });
 
-            this._unsubscribeFuncs.push(unsubscribeFunc1);
-            this._unsubscribeFuncs.push(unsubscribeFunc2);
+            this._unsubscribeHandler.registerUnsubscribeFunction("layer-manager", unsubscribeFunc1);
+            this._unsubscribeHandler.registerUnsubscribeFunction("layer-manager", unsubscribeFunc2);
 
-            if (this._settingsContext.areCurrentSettingsValid()) {
+            if (this._settingsContext.getDelegate().areCurrentSettingsValid()) {
                 this.maybeRefetchData();
             }
         } else {
-            this._unsubscribeFuncs.forEach((unsubscribeFunc) => {
-                unsubscribeFunc();
-            });
-            this._unsubscribeFuncs = [];
+            this._unsubscribeHandler.unsubscribe("layer-manager");
         }
     }
 

@@ -1,4 +1,4 @@
-import { WorkbenchSession } from "@framework/WorkbenchSession";
+import { WorkbenchSession, WorkbenchSessionEvent } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -7,6 +7,7 @@ import { isEqual } from "lodash";
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./delegates/PublishSubscribeDelegate";
+import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelegate";
 import { Group, Item } from "./interfaces";
 
 export enum LayerManagerTopic {
@@ -40,6 +41,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     private _globalSettings: GlobalSettings = {
         fieldId: null,
     };
+    private _subscriptionsHandler = new UnsubscribeHandlerDelegate();
 
     constructor(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings, queryClient: QueryClient) {
         this._workbenchSession = workbenchSession;
@@ -48,6 +50,16 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         this._itemDelegate = new ItemDelegate("LayerManager");
         this._itemDelegate.setLayerManager(this);
         this._groupDelegate = new GroupDelegate(this);
+        this._subscriptionsHandler.registerUnsubscribeFunction(
+            "workbenchSession",
+            this._workbenchSession.subscribe(WorkbenchSessionEvent.EnsembleSetChanged, () =>
+                this.handleEnsembleSetChanged()
+            )
+        );
+    }
+
+    private handleEnsembleSetChanged() {
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
     }
 
     getItemDelegate(): ItemDelegate {
@@ -112,5 +124,9 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
 
     getPublishSubscribeHandler(): PublishSubscribeDelegate<LayerManagerTopic> {
         return this._publishSubscribeHandler;
+    }
+
+    beforeDestroy() {
+        this._subscriptionsHandler.unsubscribeAll();
     }
 }

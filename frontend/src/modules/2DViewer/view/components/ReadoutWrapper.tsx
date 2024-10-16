@@ -62,7 +62,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                     pickDepth: 2,
                 }}
                 triggerHome={triggerHomeCounter}
-                pickingRadius={10}
+                pickingRadius={5}
             >
                 {props.viewportAnnotations}
             </SubsurfaceViewerWithCameraState>

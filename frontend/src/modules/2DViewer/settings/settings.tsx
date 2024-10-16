@@ -6,15 +6,21 @@ import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Menu } from "@lib/components/Menu";
+import { MenuButton } from "@lib/components/MenuButton";
+import { MenuHeading } from "@lib/components/MenuHeading";
+import { MenuItem } from "@lib/components/MenuItem";
 import { IsMoveAllowedArgs, SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Add, Difference, Panorama, SettingsApplications } from "@mui/icons-material";
+import { Dropdown } from "@mui/base";
+import { Check, Settings as SettingsIcon, TableRowsOutlined, ViewColumnOutlined } from "@mui/icons-material";
+import { Add, Panorama, SettingsApplications } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { layerManagerAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
+import { layerManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 
 import { ColorScale } from "../layers/ColorScale";
@@ -41,12 +47,13 @@ import { SurfaceAttribute } from "../layers/implementations/settings/SurfaceAttr
 import { SurfaceName } from "../layers/implementations/settings/SurfaceName";
 import { TimeOrInterval } from "../layers/implementations/settings/TimeOrInterval";
 import { Group, Item, instanceofGroup, instanceofLayer } from "../layers/interfaces";
+import { PreferredViewLayout } from "../types";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const queryClient = useQueryClient();
 
     const layerListRef = React.useRef<HTMLDivElement>(null);
-    const layerManager = React.useRef<LayerManager>(
+    const layerManagerRef = React.useRef<LayerManager>(
         new LayerManager(props.workbenchSession, props.workbenchSettings, queryClient)
     );
 
@@ -54,29 +61,36 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const colorSet = props.workbenchSettings.useColorSet();
 
-    const groupDelegate = layerManager.current.getGroupDelegate();
+    const groupDelegate = layerManagerRef.current.getGroupDelegate();
     const items = usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
     const setLayerManager = useSetAtom(layerManagerAtom);
     const fieldIdentifier = useAtomValue(selectedFieldIdentifierAtom);
     const setFieldIdentifier = useSetAtom(userSelectedFieldIdentifierAtom);
 
+    const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
+
     React.useEffect(
         function onMountEffect() {
-            setLayerManager(layerManager.current);
+            const layerManagerCurrent = layerManagerRef.current;
+            setLayerManager(layerManagerCurrent);
+
+            return function onUnmountEffect() {
+                layerManagerCurrent.beforeDestroy();
+            };
         },
         [setLayerManager]
     );
 
     React.useEffect(
         function onFieldIdentifierChanged() {
-            layerManager.current.updateGlobalSetting("fieldId", fieldIdentifier);
+            layerManagerRef.current.updateGlobalSetting("fieldId", fieldIdentifier);
         },
         [fieldIdentifier]
     );
 
     function handleLayerAction(identifier: string, group?: Group) {
-        let groupDelegate = layerManager.current.getGroupDelegate();
+        let groupDelegate = layerManagerRef.current.getGroupDelegate();
         if (group) {
             groupDelegate = group.getGroupDelegate();
         }
@@ -149,7 +163,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
         const destinationItem = args.destinationId
             ? groupDelegate.findDescendantById(args.destinationId)
-            : layerManager.current;
+            : layerManagerRef.current;
 
         if (!destinationItem || !instanceofGroup(destinationItem)) {
             return false;
@@ -211,7 +225,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             return;
         }
 
-        let origin = layerManager.current.getGroupDelegate();
+        let origin = layerManagerRef.current.getGroupDelegate();
         if (originId) {
             const candidate = groupDelegate.findDescendantById(originId);
             if (candidate && instanceofGroup(candidate)) {
@@ -219,7 +233,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             }
         }
 
-        let destination = layerManager.current.getGroupDelegate();
+        let destination = layerManagerRef.current.getGroupDelegate();
         if (destinationId) {
             const candidate = groupDelegate.findDescendantById(destinationId);
             if (candidate && instanceofGroup(candidate)) {
@@ -238,7 +252,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     function handleFieldChange(fieldId: string | null) {
         setFieldIdentifier(fieldId);
-        layerManager.current.updateGlobalSetting("fieldId", fieldId);
+        layerManagerRef.current.updateGlobalSetting("fieldId", fieldId);
     }
 
     const hasView = groupDelegate.getDescendantItems((item) => item instanceof View).length > 0;
@@ -254,7 +268,27 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                     <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
                         <div className="flex-grow font-bold text-sm">Layers</div>
                         <LayersActions layersActionGroups={adjustedLayerActions} onActionClick={handleLayerAction} />
-                        {layerManager && <ExpandCollapseAllButton group={layerManager.current} />}
+                        {layerManagerRef && <ExpandCollapseAllButton group={layerManagerRef.current} />}
+                        <Dropdown>
+                            <MenuButton label="Settings">
+                                <SettingsIcon fontSize="inherit" />
+                            </MenuButton>
+                            <Menu>
+                                <MenuHeading>Preferred view layout</MenuHeading>
+                                <ViewLayoutMenuItem
+                                    checked={preferredViewLayout === PreferredViewLayout.HORIZONTAL}
+                                    onClick={() => setPreferredViewLayout(PreferredViewLayout.HORIZONTAL)}
+                                >
+                                    <ViewColumnOutlined fontSize="inherit" /> Horizontal
+                                </ViewLayoutMenuItem>
+                                <ViewLayoutMenuItem
+                                    checked={preferredViewLayout === PreferredViewLayout.VERTICAL}
+                                    onClick={() => setPreferredViewLayout(PreferredViewLayout.VERTICAL)}
+                                >
+                                    <TableRowsOutlined fontSize="inherit" /> Vertical
+                                </ViewLayoutMenuItem>
+                            </Menu>
+                        </Dropdown>
                     </div>
                     <div
                         className="w-full flex-grow flex flex-col relative"
@@ -275,6 +309,23 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 </div>
             </div>
         </div>
+    );
+}
+
+type ViewLayoutMenuItemProps = {
+    checked: boolean;
+    onClick: () => void;
+    children: React.ReactNode;
+};
+
+function ViewLayoutMenuItem(props: ViewLayoutMenuItemProps): React.ReactNode {
+    return (
+        <MenuItem onClick={props.onClick}>
+            <div className="flex items-center gap-4">
+                <div className="w-4">{props.checked && <Check fontSize="small" />}</div>
+                <div className="flex gap-2 items-center">{props.children}</div>
+            </div>
+        </MenuItem>
     );
 }
 
@@ -310,11 +361,13 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 icon: <SettingsApplications fontSize="small" />,
                 label: "Settings group",
             },
+            /*
             {
                 identifier: "delta-surface",
                 icon: <Difference fontSize="small" />,
                 label: "Delta Surface",
             },
+            */
         ],
     },
     {
@@ -391,12 +444,12 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 label: "Realization",
             },
             {
-                identifier: "surface_name",
+                identifier: "surface-name",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Surface Name",
             },
             {
-                identifier: "surface_attribute",
+                identifier: "surface-attribute",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Surface Attribute",
             },

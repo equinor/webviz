@@ -10,7 +10,11 @@ import { SettingType } from "../../settingsTypes";
 type ValueType = string | null;
 
 export class TimeOrInterval implements Setting<ValueType> {
-    private _delegate: SettingDelegate<ValueType> = new SettingDelegate<ValueType>(null);
+    private _delegate: SettingDelegate<ValueType>;
+
+    constructor() {
+        this._delegate = new SettingDelegate<ValueType | null>(null, this);
+    }
 
     getType(): SettingType {
         return SettingType.TIME_OR_INTERVAL;

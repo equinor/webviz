@@ -44,19 +44,70 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         return this._contextDelegate.getSettings();
     }
 
-    private setAvailableSettingsValues() {
+    async fetchData(oldValues: StatisticalSurfaceSettings, newValues: StatisticalSurfaceSettings): Promise<boolean> {
+        const queryClient = this.getDelegate().getLayerManager().getQueryClient();
+
         const settings = this.getDelegate().getSettings();
+
+        const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
+        const ensembleSet = workbenchSession.getEnsembleSet();
+        const fieldIdentifier = this.getDelegate().getLayerManager().getGlobalSetting("fieldId");
+
+        this.getDelegate().setAvailableValues(
+            SettingType.ENSEMBLE,
+            ensembleSet
+                .getEnsembleArr()
+                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .map((ensemble) => ensemble.getIdent())
+        );
+
+        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
+        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+
+        // Fix up EnsembleIdent
+        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
+            if (availableEnsembleIdents.length > 0) {
+                currentEnsembleIdent = availableEnsembleIdents[0];
+                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
+            }
+        }
+
+        if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
+            this._fetchDataCache = null;
+
+            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(true);
+            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setValue(null);
+
+            try {
+                this._fetchDataCache = await queryClient.fetchQuery({
+                    queryKey: ["getRealizationSurfacesMetadata", newValues[SettingType.ENSEMBLE]],
+                    queryFn: () =>
+                        apiService.surface.getRealizationSurfacesMetadata(
+                            newValues[SettingType.ENSEMBLE]?.getCaseUuid() ?? "",
+                            newValues[SettingType.ENSEMBLE]?.getEnsembleName() ?? ""
+                        ),
+                    staleTime: STALE_TIME,
+                    gcTime: CACHE_TIME,
+                });
+            } catch (e) {
+                settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
+                settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
+                settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+                return false;
+            }
+        }
+
         settings[SettingType.SENSITIVITY].getDelegate().setLoadingState(false);
         settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
         settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
         settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
 
         if (!this._fetchDataCache) {
-            return;
+            return false;
         }
-        const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
-        const ensembleSet = workbenchSession.getEnsembleSet();
-        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+
         let currentEnsemble: FrameworkEnsemble | null = null;
         if (currentEnsembleIdent) {
             currentEnsemble = ensembleSet.findEnsemble(currentEnsembleIdent);
@@ -158,58 +209,8 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
                 settings[SettingType.TIME_OR_INTERVAL].getDelegate().setValue(currentTimeOrInterval);
             }
         }
-    }
 
-    fetchData(oldValues: StatisticalSurfaceSettings, newValues: StatisticalSurfaceSettings): void {
-        const queryClient = this.getDelegate().getLayerManager().getQueryClient();
-
-        const settings = this.getDelegate().getSettings();
-
-        const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
-        const ensembleSet = workbenchSession.getEnsembleSet();
-
-        this.getDelegate().setAvailableValues(
-            SettingType.ENSEMBLE,
-            ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent())
-        );
-
-        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
-        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
-
-        // Fix up EnsembleIdent
-        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
-            if (availableEnsembleIdents.length > 0) {
-                currentEnsembleIdent = availableEnsembleIdents[0];
-                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
-            }
-        }
-
-        if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
-            this._fetchDataCache = null;
-
-            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(true);
-            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setValue(null);
-
-            queryClient
-                .fetchQuery({
-                    queryKey: ["getRealizationSurfacesMetadata", newValues[SettingType.ENSEMBLE]],
-                    queryFn: () =>
-                        apiService.surface.getRealizationSurfacesMetadata(
-                            newValues[SettingType.ENSEMBLE]?.getCaseUuid() ?? "",
-                            newValues[SettingType.ENSEMBLE]?.getEnsembleName() ?? ""
-                        ),
-                    staleTime: STALE_TIME,
-                    gcTime: CACHE_TIME,
-                })
-                .then((response: SurfaceMetaSet) => {
-                    this._fetchDataCache = response;
-                    this.setAvailableSettingsValues();
-                });
-            return;
-        }
-        this.setAvailableSettingsValues();
+        return true;
     }
 
     areCurrentSettingsValid(): boolean {

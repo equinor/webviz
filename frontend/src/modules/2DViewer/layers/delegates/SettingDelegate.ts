@@ -3,18 +3,21 @@ import { v4 } from "uuid";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 
-import { AvailableValuesType, SettingTopic, SettingTopicPayloads } from "../interfaces";
+import { AvailableValuesType, Setting, SettingTopic, SettingTopicPayloads } from "../interfaces";
 
 export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, SettingTopicPayloads<TValue>> {
     private _id: string;
+    private _owner: Setting<TValue>;
     private _value: TValue;
+    private _isValueValid: boolean = false;
     private _publishSubscribeHandler = new PublishSubscribeDelegate<SettingTopic>();
     private _availableValues: AvailableValuesType<TValue> = [] as AvailableValuesType<TValue>;
     private _overriddenValue: TValue | undefined = undefined;
     private _loading: boolean = false;
 
-    constructor(value: TValue) {
+    constructor(value: TValue, owner: Setting<TValue>) {
         this._id = v4();
+        this._owner = owner;
         this._value = value;
     }
 
@@ -29,12 +32,21 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return this._value;
     }
 
+    isValueValid(): boolean {
+        return this._isValueValid;
+    }
+
     setValue(value: TValue): void {
         if (isEqual(this._value, value)) {
             return;
         }
         this._value = value;
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
+    }
+
+    setIsValueValid(isValueValid: boolean): void {
+        this._isValueValid = isValueValid;
+        this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALIDITY_CHANGED);
     }
 
     setLoadingState(loading: boolean): void {
@@ -52,6 +64,9 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         const snapshotGetter = (): any => {
             if (topic === SettingTopic.VALUE_CHANGED) {
                 return this._value;
+            }
+            if (topic === SettingTopic.VALIDITY_CHANGED) {
+                return this._isValueValid;
             }
             if (topic === SettingTopic.AVAILABLE_VALUES_CHANGED) {
                 return this._availableValues;
@@ -75,8 +90,30 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return this._availableValues;
     }
 
+    private maybeFixupValue(value: TValue): TValue {
+        if (this._availableValues.length === 0) {
+            this.setIsValueValid(false);
+            return value;
+        }
+        if (this._availableValues.includes(value)) {
+            this.setIsValueValid(true);
+            return value;
+        }
+        this.setIsValueValid(true);
+
+        if (this._owner.fixupValue) {
+            return this._owner.fixupValue(this._availableValues);
+        }
+
+        if (Array.isArray(value)) {
+            return [this._availableValues[0]] as TValue;
+        }
+        return this._availableValues[0] as TValue;
+    }
+
     setAvailableValues(availableValues: AvailableValuesType<TValue>): void {
         this._availableValues = availableValues;
+        this.setValue(this.maybeFixupValue(this._value));
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);
     }
 }

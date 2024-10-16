@@ -34,31 +34,15 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
         return this._contextDelegate.getSettings();
     }
 
-    private setAvailableSettingsValues() {
-        const settings = this.getDelegate().getSettings();
-        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
-
-        if (!this._fetchDataCache) {
-            return;
-        }
-        const availableWellboreHeaders: WellboreHeader_api[] = this._fetchDataCache;
-        this._contextDelegate.setAvailableValues(SettingType.SMDA_WELLBORE_HEADERS, availableWellboreHeaders);
-
-        const currentWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
-        let newWellboreHeaders = currentWellboreHeaders.filter((header) =>
-            availableWellboreHeaders.some((availableHeader) => availableHeader.wellboreUuid === header.wellboreUuid)
-        );
-        if (newWellboreHeaders.length === 0) {
-            newWellboreHeaders = availableWellboreHeaders;
-        }
-        if (!isEqual(currentWellboreHeaders, newWellboreHeaders)) {
-            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setValue(newWellboreHeaders);
-        }
-    }
-
-    fetchData(oldValues: DrilledWellTrajectoriesSettings, newValues: DrilledWellTrajectoriesSettings): void {
-        if (isEqual(oldValues[SettingType.ENSEMBLE], newValues[SettingType.ENSEMBLE])) {
-            return;
+    async fetchData(
+        oldValues: DrilledWellTrajectoriesSettings,
+        newValues: DrilledWellTrajectoriesSettings
+    ): Promise<boolean> {
+        if (
+            isEqual(oldValues[SettingType.ENSEMBLE], newValues[SettingType.ENSEMBLE]) &&
+            newValues[SettingType.ENSEMBLE] !== null
+        ) {
+            return true;
         }
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
 
@@ -68,10 +52,14 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
 
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
         const ensembleSet = workbenchSession.getEnsembleSet();
+        const fieldIdentifier = this.getDelegate().getLayerManager().getGlobalSetting("fieldId");
 
         this.getDelegate().setAvailableValues(
             SettingType.ENSEMBLE,
-            ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent())
+            ensembleSet
+                .getEnsembleArr()
+                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .map((ensemble) => ensemble.getIdent())
         );
 
         const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
@@ -96,20 +84,39 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
                 }
             }
 
-            queryClient
-                .fetchQuery({
+            try {
+                this._fetchDataCache = await queryClient.fetchQuery({
                     queryKey: ["getDrilledWellboreHeaders", fieldIdentifier ?? ""],
                     queryFn: () => apiService.well.getDrilledWellboreHeaders(fieldIdentifier ?? ""),
                     staleTime: STALE_TIME,
                     gcTime: CACHE_TIME,
-                })
-                .then((response: WellboreHeader_api[]) => {
-                    this._fetchDataCache = response;
-                    this.setAvailableSettingsValues();
                 });
-            return;
+            } catch (e) {
+                settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
+                return false;
+            }
         }
-        this.setAvailableSettingsValues();
+
+        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
+
+        if (!this._fetchDataCache) {
+            return false;
+        }
+        const availableWellboreHeaders: WellboreHeader_api[] = this._fetchDataCache;
+        this._contextDelegate.setAvailableValues(SettingType.SMDA_WELLBORE_HEADERS, availableWellboreHeaders);
+
+        const currentWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
+        let newWellboreHeaders = currentWellboreHeaders.filter((header) =>
+            availableWellboreHeaders.some((availableHeader) => availableHeader.wellboreUuid === header.wellboreUuid)
+        );
+        if (newWellboreHeaders.length === 0) {
+            newWellboreHeaders = availableWellboreHeaders;
+        }
+        if (!isEqual(currentWellboreHeaders, newWellboreHeaders)) {
+            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setValue(newWellboreHeaders);
+        }
+
+        return true;
     }
 
     areCurrentSettingsValid(): boolean {

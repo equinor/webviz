@@ -41,14 +41,97 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
         return this._contextDelegate.getSettings();
     }
 
-    private setAvailableSettingsValues() {
+    async fetchData(oldValues: RealizationSurfaceSettings, newValues: RealizationSurfaceSettings): Promise<boolean> {
+        if (
+            isEqual(oldValues[SettingType.ENSEMBLE], newValues[SettingType.ENSEMBLE]) &&
+            newValues[SettingType.ENSEMBLE] !== null
+        ) {
+            return true;
+        }
+
+        const queryClient = this.getDelegate().getLayerManager().getQueryClient();
+
         const settings = this.getDelegate().getSettings();
+        const fieldIdentifier = this.getDelegate().getLayerManager().getGlobalSetting("fieldId");
+
+        const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
+        const ensembleSet = workbenchSession.getEnsembleSet();
+
+        this.getDelegate().setAvailableValues(
+            SettingType.ENSEMBLE,
+            ensembleSet
+                .getEnsembleArr()
+                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .map((ensemble) => ensemble.getIdent())
+        );
+
+        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
+        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+
+        // Fix up EnsembleIdent
+        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
+            if (availableEnsembleIdents.length > 0) {
+                currentEnsembleIdent = availableEnsembleIdents[0];
+                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
+            }
+        }
+
+        if (currentEnsembleIdent !== null) {
+            const realizations = workbenchSession
+                .getRealizationFilterSet()
+                .getRealizationFilterForEnsembleIdent(currentEnsembleIdent)
+                .getFilteredRealizations();
+            this.getDelegate().setAvailableValues(SettingType.REALIZATION, [...realizations]);
+
+            const currentRealization = newValues[SettingType.REALIZATION];
+            if (currentRealization === null || !realizations.includes(currentRealization)) {
+                if (realizations.length > 0) {
+                    settings[SettingType.REALIZATION].getDelegate().setValue(realizations[0]);
+                }
+            }
+        }
+
+        if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
+            this._fetchDataCache = null;
+
+            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(true);
+            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setValue(null);
+
+            try {
+                this._fetchDataCache = await queryClient.fetchQuery({
+                    queryKey: [
+                        "getRealizationSurfacesMetadata",
+                        newValues[SettingType.ENSEMBLE],
+                        newValues[SettingType.REALIZATION],
+                    ],
+                    queryFn: () =>
+                        apiService.surface.getRealizationSurfacesMetadata(
+                            newValues[SettingType.ENSEMBLE]?.getCaseUuid() ?? "",
+                            newValues[SettingType.ENSEMBLE]?.getEnsembleName() ?? ""
+                        ),
+                    staleTime: STALE_TIME,
+                    gcTime: CACHE_TIME,
+                });
+            } catch (e) {
+                settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
+                settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
+                settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+                return false;
+            }
+        }
+
         settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
         settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
         settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
 
         if (!this._fetchDataCache) {
-            return;
+            return false;
+        }
+
+        if (!this._fetchDataCache.surfaces) {
+            return false;
         }
 
         const availableAttributes: string[] = [];
@@ -122,77 +205,8 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
                 settings[SettingType.TIME_OR_INTERVAL].getDelegate().setValue(currentTimeOrInterval);
             }
         }
-    }
 
-    fetchData(oldValues: RealizationSurfaceSettings, newValues: RealizationSurfaceSettings): void {
-        const queryClient = this.getDelegate().getLayerManager().getQueryClient();
-
-        const settings = this.getDelegate().getSettings();
-
-        const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
-        const ensembleSet = workbenchSession.getEnsembleSet();
-
-        this.getDelegate().setAvailableValues(
-            SettingType.ENSEMBLE,
-            ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent())
-        );
-
-        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
-        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
-
-        // Fix up EnsembleIdent
-        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
-            if (availableEnsembleIdents.length > 0) {
-                currentEnsembleIdent = availableEnsembleIdents[0];
-                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
-            }
-        }
-
-        if (currentEnsembleIdent !== null) {
-            const realizations = workbenchSession
-                .getRealizationFilterSet()
-                .getRealizationFilterForEnsembleIdent(currentEnsembleIdent)
-                .getFilteredRealizations();
-            this.getDelegate().setAvailableValues(SettingType.REALIZATION, [...realizations]);
-
-            const currentRealization = newValues[SettingType.REALIZATION];
-            if (currentRealization === null || !realizations.includes(currentRealization)) {
-                if (realizations.length > 0) {
-                    settings[SettingType.REALIZATION].getDelegate().setValue(realizations[0]);
-                }
-            }
-        }
-
-        if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
-            this._fetchDataCache = null;
-
-            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(true);
-            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setValue(null);
-
-            queryClient
-                .fetchQuery({
-                    queryKey: [
-                        "getRealizationSurfacesMetadata",
-                        newValues[SettingType.ENSEMBLE],
-                        newValues[SettingType.REALIZATION],
-                    ],
-                    queryFn: () =>
-                        apiService.surface.getRealizationSurfacesMetadata(
-                            newValues[SettingType.ENSEMBLE]?.getCaseUuid() ?? "",
-                            newValues[SettingType.ENSEMBLE]?.getEnsembleName() ?? ""
-                        ),
-                    staleTime: STALE_TIME,
-                    gcTime: CACHE_TIME,
-                })
-                .then((response: SurfaceMetaSet) => {
-                    this._fetchDataCache = response;
-                    this.setAvailableSettingsValues();
-                });
-            return;
-        }
-        this.setAvailableSettingsValues();
+        return true;
     }
 
     areCurrentSettingsValid(): boolean {

@@ -8,7 +8,11 @@ import { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
 
 export class DrilledWellbores implements Setting<WellboreHeader_api[]> {
-    private _delegate: SettingDelegate<WellboreHeader_api[]> = new SettingDelegate<WellboreHeader_api[]>([]);
+    private _delegate: SettingDelegate<WellboreHeader_api[]>;
+
+    constructor() {
+        this._delegate = new SettingDelegate<WellboreHeader_api[]>([], this);
+    }
 
     getType(): SettingType {
         return SettingType.SMDA_WELLBORE_HEADERS;
@@ -20,6 +24,10 @@ export class DrilledWellbores implements Setting<WellboreHeader_api[]> {
 
     getDelegate(): SettingDelegate<WellboreHeader_api[]> {
         return this._delegate;
+    }
+
+    fixupValue(availableValues: WellboreHeader_api[]): WellboreHeader_api[] {
+        return availableValues;
     }
 
     makeComponent(): (props: SettingComponentProps<WellboreHeader_api[]>) => React.ReactNode {

@@ -640,6 +640,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 }}
                 getTooltip={makeTooltip}
                 verticalScale={verticalScale}
+                pickingRadius={10}
             />
             <div className="absolute bottom-0 right-0 z-30 bg-white bg-opacity-50 p-2 pointer-events-none">
                 {makeHelperText()}

@@ -8,8 +8,11 @@ import { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
 
 export class StatisticFunction implements Setting<SurfaceStatisticFunction_api> {
-    private _delegate: SettingDelegate<SurfaceStatisticFunction_api> =
-        new SettingDelegate<SurfaceStatisticFunction_api>(SurfaceStatisticFunction_api.MEAN);
+    private _delegate: SettingDelegate<SurfaceStatisticFunction_api>;
+
+    constructor() {
+        this._delegate = new SettingDelegate<SurfaceStatisticFunction_api>(SurfaceStatisticFunction_api.MEAN, this);
+    }
 
     getType(): SettingType {
         return SettingType.STATISTIC_FUNCTION;

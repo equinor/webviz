@@ -31,3 +31,8 @@ export const SHARED_SETTING_TYPE_TO_STRING_MAPPING: Record<SharedSettingType, st
     [SharedSettingType.SURFACE_ATTRIBUTE]: "Surface Attribute",
     [SharedSettingType.SURFACE_NAME]: "Surface Name",
 };
+
+export enum PreferredViewLayout {
+    HORIZONTAL = "horizontal",
+    VERTICAL = "vertical",
+}

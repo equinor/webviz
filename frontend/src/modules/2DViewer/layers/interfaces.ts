@@ -41,7 +41,7 @@ export type BoundingBox = {
 };
 
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
-    (oldValues: { [K in TKey]: TSettings[K] }, newValues: { [K in TKey]: TSettings[K] }): void;
+    (oldValues: { [K in TKey]: TSettings[K] }, newValues: { [K in TKey]: TSettings[K] }): Promise<boolean>;
 }
 
 export interface Layer<TSettings extends Settings, TData> extends Item {
@@ -71,6 +71,7 @@ export type AvailableValuesType<TValue> = TValue extends Array<unknown> ? TValue
 export type SettingComponentProps<TValue> = {
     onValueChange: (newValue: TValue) => void;
     value: TValue;
+    isValueValid: boolean;
     overriddenValue: TValue | null;
     isOverridden: boolean;
     availableValues: AvailableValuesType<Exclude<TValue, null>>;
@@ -84,11 +85,12 @@ export interface Setting<TValue> {
     getLabel(): string;
     makeComponent(): (props: SettingComponentProps<TValue>) => React.ReactNode;
     getDelegate(): SettingDelegate<TValue>;
+    fixupValue?: (availableValues: AvailableValuesType<TValue>) => TValue;
 }
 
 export enum SettingTopic {
     VALUE_CHANGED = "VALUE_CHANGED",
-    VALUE_CHANGED_BY_USER = "VALUE_CHANGED_BY_USER",
+    VALIDITY_CHANGED = "VALIDITY_CHANGED",
     AVAILABLE_VALUES_CHANGED = "AVAILABLE_VALUES_CHANGED",
     OVERRIDDEN_CHANGED = "OVERRIDDEN_CHANGED",
     LOADING_STATE_CHANGED = "LOADING_STATE_CHANGED",
@@ -96,7 +98,7 @@ export enum SettingTopic {
 
 export type SettingTopicPayloads<TValue> = {
     [SettingTopic.VALUE_CHANGED]: TValue;
-    [SettingTopic.VALUE_CHANGED_BY_USER]: TValue;
+    [SettingTopic.VALIDITY_CHANGED]: boolean;
     [SettingTopic.AVAILABLE_VALUES_CHANGED]: Exclude<TValue, null>[];
     [SettingTopic.OVERRIDDEN_CHANGED]: TValue | undefined;
     [SettingTopic.LOADING_STATE_CHANGED]: boolean;

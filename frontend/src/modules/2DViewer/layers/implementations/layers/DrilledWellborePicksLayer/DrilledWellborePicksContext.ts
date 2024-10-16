@@ -70,16 +70,20 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
         }
     }
 
-    fetchData(oldValues: DrilledWellborePicksSettings, newValues: DrilledWellborePicksSettings): void {
-        if (isEqual(oldValues[SettingType.ENSEMBLE], newValues[SettingType.ENSEMBLE])) {
-            return;
+    async fetchData(
+        oldValues: DrilledWellborePicksSettings,
+        newValues: DrilledWellborePicksSettings
+    ): Promise<boolean> {
+        if (
+            isEqual(oldValues[SettingType.ENSEMBLE], newValues[SettingType.ENSEMBLE]) &&
+            newValues[SettingType.ENSEMBLE] !== null
+        ) {
+            return true;
         }
+
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
 
         const settings = this.getDelegate().getSettings();
-
-        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(true);
-        settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
 
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
         const ensembleSet = workbenchSession.getEnsembleSet();
@@ -102,6 +106,9 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._wellboreHeadersCache = null;
+
+            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(true);
+            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
 
             let fieldIdentifier: string | null = null;
             let stratColumnIdentiier: string | null = null;
@@ -126,16 +133,53 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
             });
-            Promise.all([wellboreHeadersPromise, pickStratigraphyPromise]).then(
-                ([wellboreHeaders, pickIdentifiers]) => {
-                    this._wellboreHeadersCache = wellboreHeaders;
-                    this._pickIdentifierCache = pickIdentifiers;
-                    this.setAvailableSettingsValues();
-                }
-            );
-            return;
+
+            try {
+                const [wellboreHeaders, pickIdentifiers] = await Promise.all([
+                    wellboreHeadersPromise,
+                    pickStratigraphyPromise,
+                ]);
+
+                this._wellboreHeadersCache = wellboreHeaders;
+                this._pickIdentifierCache = pickIdentifiers;
+            } catch (error) {
+                settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
+                settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
+                return false;
+            }
         }
-        this.setAvailableSettingsValues();
+
+        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
+        settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
+
+        if (!this._wellboreHeadersCache || !this._pickIdentifierCache) {
+            return false;
+        }
+        const availableWellboreHeaders: WellboreHeader_api[] = this._wellboreHeadersCache;
+        this._contextDelegate.setAvailableValues(SettingType.SMDA_WELLBORE_HEADERS, availableWellboreHeaders);
+
+        const currentWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
+        let newWellboreHeaders = currentWellboreHeaders.filter((header) =>
+            availableWellboreHeaders.some((availableHeader) => availableHeader.wellboreUuid === header.wellboreUuid)
+        );
+        if (newWellboreHeaders.length === 0) {
+            newWellboreHeaders = availableWellboreHeaders;
+        }
+        if (!isEqual(currentWellboreHeaders, newWellboreHeaders)) {
+            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setValue(newWellboreHeaders);
+        }
+        const availablePickIdentifiers: string[] = this._pickIdentifierCache;
+        this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availablePickIdentifiers);
+
+        let currentPickIdentifier = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
+        if (!currentPickIdentifier || !availablePickIdentifiers.includes(currentPickIdentifier)) {
+            if (availablePickIdentifiers.length > 0) {
+                currentPickIdentifier = availablePickIdentifiers[0];
+                settings[SettingType.SURFACE_NAME].getDelegate().setValue(currentPickIdentifier);
+            }
+        }
+
+        return true;
     }
 
     areCurrentSettingsValid(): boolean {

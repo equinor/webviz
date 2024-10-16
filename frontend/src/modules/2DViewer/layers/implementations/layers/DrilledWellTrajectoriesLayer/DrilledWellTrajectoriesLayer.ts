@@ -1,7 +1,6 @@
 import { WellboreTrajectory_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
-import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -83,7 +82,6 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
             const ensemble = ensembleSet.findEnsemble(ensembleIdent);
             if (ensemble) {
                 fieldIdentifier = ensemble.getFieldIdentifier();
-                console.log(ensemble.getStratigraphicColumnIdentifier());
             }
         }
 
