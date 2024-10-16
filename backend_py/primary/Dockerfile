@@ -1,6 +1,6 @@
 FROM python:3.11-slim@sha256:ad2c4e5884418404c5289acad4a471dde8500e24ba57ad574cdcae46523e507a
 
-# Only needed if we're installing packages from git/GitHub
+# Install Git (only needed if we're installing packages from git/GitHub)
 RUN apt update && apt install --assume-yes git
 
 RUN useradd --create-home --uid 1234 appuser  # Changing to non-root user early
