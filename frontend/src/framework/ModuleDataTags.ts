@@ -10,6 +10,7 @@ export enum ModuleDataTagId {
     OBSERVATIONS = "observations",
     SEISMIC = "seismic",
     WELL_COMPLETIONS = "well-completions",
+    VFP = "vfp"
 }
 
 export type ModuleDataTag = {
