@@ -83,6 +83,11 @@ class WellCompletionsAssembler:
             well_completions_table = well_completions_table.filter(realization_mask)
 
         self._well_completions_df = pl.DataFrame(well_completions_table)
+        if self._well_completions_df.height == 0:
+                raise InvalidDataError(
+                    f"No well completions data found for realizations: {realizations}", Service.GENERAL
+                )
+
         self._initialize_well_completions_data_from_df()
 
     def _initialize_well_completions_data_from_df(self) -> None:
@@ -97,7 +102,10 @@ class WellCompletionsAssembler:
                 f"Expected columns: {expected_columns} - got: {self._well_completions_df.columns}", Service.GENERAL
             )
 
-        self._zone_name_list = list(self._well_completions_df["ZONE"].unique())
+        # Create list of unique zones, maintaining order
+        # - This awaits issue https://github.com/equinor/fmu-dataio/issues/337
+        #   in equinor/fmu-dataio to be resolved, providing order/priority of zones/stratigraphy
+        self._zone_name_list = list(self._well_completions_df["ZONE"].unique(maintain_order=True))
 
         # Create list of unique dates and date index column
         self._sorted_unique_dates: list[datetime.datetime] = sorted(self._well_completions_df["DATE"].unique())

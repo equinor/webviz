@@ -34,6 +34,10 @@ async def get_well_completions_data(
         await well_completions_assembler.fetch_and_initialize_well_completions_single_realization_table_data_async(
             realization=realization
         )
+    elif realization is not None and len(realization) == 1:
+        await well_completions_assembler.fetch_and_initialize_well_completions_single_realization_table_data_async(
+            realization=realization[0]
+        )
     else:
         await well_completions_assembler.fetch_and_initialize_well_completions_table_data_async(
             realizations=realization

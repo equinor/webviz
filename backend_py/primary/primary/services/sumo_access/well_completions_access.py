@@ -46,7 +46,7 @@ class WellCompletionsAccess:
                 service=Service.SUMO,
             )
 
-        well_completions_table = well_completions_table_collection[0].to_arrow_async()
+        well_completions_table = await well_completions_table_collection[0].to_arrow_async()
         return well_completions_table
 
     async def get_well_completions_table_async(self) -> pa.Table:

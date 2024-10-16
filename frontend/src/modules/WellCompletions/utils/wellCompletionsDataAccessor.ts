@@ -15,9 +15,8 @@ import {
     areCompletionsPlotDataValuesEqual,
     createSortedWells,
     createSortedWellsFromSequence,
+    createWellNameRegexMatcher,
 } from "@webviz/well-completions-plot";
-
-import { getRegexPredicate } from "./stringUtils";
 
 import { TimeAggregationSelection } from "../typesAndEnums";
 
@@ -44,6 +43,7 @@ export class WellCompletionsDataAccessor {
     private _subzones: Zone[];
     private _wells: WellCompletionsWell_api[];
     private _sortedCompletionDates: string[];
+    private _excludeWellText: string;
     private _searchWellText: string;
     private _sortWellsBy: SortWellsBy | null;
     private _sortDirection: SortDirection;
@@ -56,6 +56,7 @@ export class WellCompletionsDataAccessor {
         this._data = data;
         this._wells = this._data.wells;
         this._sortedCompletionDates = this._data.sortedCompletionDates;
+        this._excludeWellText = "";
         this._searchWellText = "";
         this._hideZeroCompletions = false;
         this._sortWellsBy = null;
@@ -66,6 +67,10 @@ export class WellCompletionsDataAccessor {
         this._data.zones.forEach((zone) =>
             WellCompletionsDataAccessor.propagateSubzoneArray(zone, stratigraphyColorSet, this._subzones)
         );
+    }
+
+    setExcludeWellText(excludeWell: string): void {
+        this._excludeWellText = excludeWell;
     }
 
     setSearchWellText(searchWell: string): void {
@@ -110,11 +115,30 @@ export class WellCompletionsDataAccessor {
         }
         if (dateIndexRange[0] === -1 || dateIndexRange[1] === -1) return null;
 
-        // Filter wells based on search text
-        const wellNameRegex = getRegexPredicate(this._searchWellText);
-        const filteredWells = this._searchWellText
-            ? Array.from(this._wells as WellCompletionsWell_api[]).filter((well) => wellNameRegex(well.name))
-            : this._wells;
+        // Filter wells based on exclude and search text
+        const wellNames = this._wells.map((well) => well.name);
+
+        // Exclude wells based on exclude text
+        let excludeWellNames: string[] = [];
+        if (this._excludeWellText) {
+            const excludeWellRegex = createWellNameRegexMatcher(this._excludeWellText);
+            excludeWellNames = wellNames.filter((name) => {
+                return excludeWellRegex(name);
+            });
+        }
+
+        // Include wells based on search text
+        let includeWellNames: string[] = wellNames;
+        if (this._searchWellText) {
+            const wellNameRegex = createWellNameRegexMatcher(this._searchWellText);
+            includeWellNames = wellNames.filter((name) => {
+                return wellNameRegex(name);
+            });
+        }
+
+        const filteredWells = this._wells.filter(
+            (well) => !excludeWellNames.includes(well.name) && includeWellNames.includes(well.name)
+        );
 
         // TODO: Add filtering of well.attributes values when attribute information is available
 

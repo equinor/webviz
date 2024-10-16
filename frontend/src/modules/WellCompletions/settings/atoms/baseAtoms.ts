@@ -7,6 +7,7 @@ import { atom } from "jotai";
 
 export const syncedEnsembleIdentsAtom = atom<EnsembleIdent[] | null>(null);
 export const selectedStratigraphyColorSetAtom = atom<ColorSet | null>(null);
+export const userExcludeWellTextAtom = atom<string>("");
 export const userSearchWellTextAtom = atom<string>("");
 export const userSelectedCompletionDateIndexAtom = atom<number>(0);
 export const userSelectedCompletionDateIndexRangeAtom = atom<[number, number]>([0, 0]);

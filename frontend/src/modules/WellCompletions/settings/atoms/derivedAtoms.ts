@@ -9,6 +9,7 @@ import { atom } from "jotai";
 import {
     selectedStratigraphyColorSetAtom,
     syncedEnsembleIdentsAtom,
+    userExcludeWellTextAtom,
     userSearchWellTextAtom,
     userSelectedCompletionDateIndexAtom,
     userSelectedCompletionDateIndexRangeAtom,
@@ -153,6 +154,7 @@ export const selectedCompletionDateIndexRangeAtom = atom<[number, number] | null
 export const plotDataAtom = atom<PlotData | null>((get) => {
     const wellCompletionsDataAccessor = get(wellCompletionsDataAccessorAtom);
 
+    const userExcludeWellText = get(userExcludeWellTextAtom);
     const userSearchWellText = get(userSearchWellTextAtom);
     const userSelectedHideZeroCompletions = get(userSelectedHideZeroCompletionsAtom);
     const userSelectedTimeAggregation = get(userSelectedTimeAggregationAtom);
@@ -174,6 +176,7 @@ export const plotDataAtom = atom<PlotData | null>((get) => {
         return null;
     }
 
+    wellCompletionsDataAccessor.setExcludeWellText(userExcludeWellText);
     wellCompletionsDataAccessor.setSearchWellText(userSearchWellText);
     wellCompletionsDataAccessor.setHideZeroCompletions(userSelectedHideZeroCompletions);
     wellCompletionsDataAccessor.setSortWellsBy(userSelectedSortWellsBy);

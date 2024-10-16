@@ -25,6 +25,7 @@ import { isEqual } from "lodash";
 import {
     selectedStratigraphyColorSetAtom,
     syncedEnsembleIdentsAtom,
+    userExcludeWellTextAtom,
     userSearchWellTextAtom,
     userSelectedCompletionDateIndexAtom,
     userSelectedCompletionDateIndexRangeAtom,
@@ -68,6 +69,7 @@ export const Settings = ({
 
     const setSyncedEnsembleIdents = useSetAtom(syncedEnsembleIdentsAtom);
     const setSelectedStratigraphyColorSet = useSetAtom(selectedStratigraphyColorSetAtom);
+    const setUserExcludeWellText = useSetAtom(userExcludeWellTextAtom);
     const setUserSearchWellText = useSetAtom(userSearchWellTextAtom);
     const setUserSelectedCompletionDateIndex = useSetAtom(userSelectedCompletionDateIndexAtom);
     const setUserSelectedCompletionDateIndexRange = useSetAtom(userSelectedCompletionDateIndexRangeAtom);
@@ -138,6 +140,11 @@ export const Settings = ({
         throw new Error(
             "Invalid time step index selection, expected number or array of numbers length 2, got: " + newIndex
         );
+    }
+
+    function handleExcludeWellChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const value = e.target.value;
+        setUserExcludeWellText(value);
     }
 
     function handleSearchWellChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -281,6 +288,9 @@ export const Settings = ({
                                 checked={userSelectedHideZeroCompletions}
                                 onChange={handleHideZeroCompletionsChange}
                             />
+                        </Label>
+                        <Label text="Exclude well names">
+                            <Input onChange={handleExcludeWellChange} placeholder={"..."} />
                         </Label>
                         <Label text="Search well names">
                             <Input onChange={handleSearchWellChange} placeholder={"..."} />
