@@ -84,9 +84,7 @@ class WellCompletionsAssembler:
 
         self._well_completions_df = pl.DataFrame(well_completions_table)
         if self._well_completions_df.height == 0:
-                raise InvalidDataError(
-                    f"No well completions data found for realizations: {realizations}", Service.GENERAL
-                )
+            raise InvalidDataError(f"No well completions data found for realizations: {realizations}", Service.GENERAL)
 
         self._initialize_well_completions_data_from_df()
 
