@@ -180,7 +180,7 @@ class SmdaAccess:
         picks: List[WellborePick] = []
         for result in results:
             # Drop any picks with missing data
-            if all([result.get(key) for key in ["northing", "easting", "tvd", "tvd_msl"]]):
+            if all(result.get(key) for key in ["northing", "easting", "tvd", "tvd_msl"]):
                 picks.append(WellborePick(**result))
             else:
                 LOGGER.warning(
@@ -216,7 +216,7 @@ class SmdaAccess:
         picks: List[WellborePick] = []
         for result in results:
             # Drop any picks with missing data
-            if all([result.get(key) for key in ["northing", "easting", "tvd", "tvd_msl"]]):
+            if all(result.get(key) for key in ["northing", "easting", "tvd", "tvd_msl"]):
                 picks.append(WellborePick(**result))
             else:
                 LOGGER.warning(
