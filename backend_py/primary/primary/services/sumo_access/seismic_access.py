@@ -26,7 +26,9 @@ class SeismicAccess:
 
     async def get_seismic_cube_meta_list_async(self) -> List[SeismicCubeMeta]:
         first_realization = (await self._case.get_realizations_async())[0]
-        seismic_cube_collection: CubeCollection = self._case.cubes.filter(iteration=self._iteration_name, realization=first_realization)
+        seismic_cube_collection: CubeCollection = self._case.cubes.filter(
+            iteration=self._iteration_name, realization=first_realization
+        )
         seismic_cube_meta_list: List[SeismicCubeMeta] = []
         async for cube in seismic_cube_collection:
             t_start = cube["data"].get("time", {}).get("t0", {}).get("value", None)
@@ -45,7 +47,7 @@ class SeismicAccess:
                 seismic_attribute=cube["data"].get("tagname"),
                 iso_date_or_interval=iso_string_or_time_interval,
                 is_observation=cube["data"]["is_observation"],
-                is_depth=cube["data"].get("vertical_domain","depth") == "depth"
+                is_depth=cube["data"].get("vertical_domain", "depth") == "depth",
             )
             seismic_cube_meta_list.append(seismic_meta)
         return seismic_cube_meta_list
