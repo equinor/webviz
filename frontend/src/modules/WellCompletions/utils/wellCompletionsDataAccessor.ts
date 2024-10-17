@@ -183,10 +183,12 @@ export class WellCompletionsDataAccessor {
         units: WellCompletionsUnits_api
     ): PlotData {
         const wellPlotData: WellPlotData[] = [];
-        wells.forEach((well) => {
+
+        // Subzones must be sorted by increasing depth, i.e. from most shallow to deepest
+        for (const well of wells) {
             const completionsPlotData: CompletionPlotData[] = [];
             const earliestCompDateIndex = this.findEarliestWellCompletionDateIndex(well, subzones);
-            let hasData = false;
+            let hasAtLeastOneOpenCompletion = false;
             subzones.forEach((zone, zoneIndex) => {
                 const length = dateIndexRange[1] - dateIndexRange[0] + 1;
                 const openValues = Array(length).fill(0);
@@ -221,7 +223,7 @@ export class WellCompletionsDataAccessor {
                     }
                 }
                 const aggregateValues = TimeAggregationTypeFunction[timeAggregation];
-                const newCompletion = {
+                const zoneCompletion = {
                     zoneIndex,
                     open: aggregateValues(openValues),
                     shut: aggregateValues(shutValues),
@@ -230,8 +232,8 @@ export class WellCompletionsDataAccessor {
                     khMax: aggregateValues(khMaxValues),
                 };
 
-                if (newCompletion.open !== 0) {
-                    hasData = true;
+                if (zoneCompletion.open !== 0) {
+                    hasAtLeastOneOpenCompletion = true;
                 }
 
                 //If value changed
@@ -239,20 +241,20 @@ export class WellCompletionsDataAccessor {
                     completionsPlotData.length === 0 ||
                     !areCompletionsPlotDataValuesEqual(
                         completionsPlotData[completionsPlotData.length - 1],
-                        newCompletion
+                        zoneCompletion
                     )
                 ) {
-                    completionsPlotData.push(newCompletion);
+                    completionsPlotData.push(zoneCompletion);
                 }
             });
-            if (!hideZeroCompletions || hasData) {
+            if (!hideZeroCompletions || hasAtLeastOneOpenCompletion) {
                 wellPlotData.push({
                     ...well,
                     completions: completionsPlotData,
                     earliestCompDateIndex: earliestCompDateIndex,
                 });
             }
-        });
+        }
 
         // No sorting
         if (sortWellsBy === null) {
