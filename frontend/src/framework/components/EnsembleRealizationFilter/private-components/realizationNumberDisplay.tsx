@@ -16,12 +16,6 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
     const divRef = React.useRef<HTMLDivElement>(null);
     const divSize = useElementSize(divRef);
 
-    // Compact and non-compact element width and gap
-    const compactWidthAndHeight = 9; //px
-    const compactGap = 3; //px
-    const nonCompactWidthAndHeight = 12; //px
-    const nonCompactGap = 4; //px
-
     const [prevSelectedRealizations, setPrevSelectedRealizations] = React.useState<readonly number[]>();
     const [allRealizationsInRange, setAllRealizationsInRange] = React.useState<number[]>(
         Array.from({ length: Math.max(...props.availableRealizations) + 1 }, (_, i) => i)
@@ -48,14 +42,12 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         props.onRealizationNumberSelectionsChange(newRealizationNumberSelections);
     }
 
-    function createRealizationNumberVisualization2(isCompact: boolean, numRealizationPerRow: number): React.ReactNode {
+    function createRealizationNumberVisualization(isCompact: boolean, numRealizationPerRow: number): React.ReactNode {
         const mainDivElements: JSX.Element[] = [];
 
         // Compact/non-compact div size and gap class definitions
-        const gapClass = isCompact ? `gap-[${compactGap}px]` : `gap-[${nonCompactGap}px]`;
-        const realizationDivSizeClass = isCompact
-            ? `w-[${compactWidthAndHeight}px] h-[${compactWidthAndHeight}px]`
-            : `w-[${nonCompactWidthAndHeight}px] h-[${nonCompactWidthAndHeight}px]`;
+        const gapClass = isCompact ? "gap-[3px]" : "gap-[4px]";
+        const realizationDivSizeClass = isCompact ? "w-[9px] h-[9px]" : "w-[12px] h-[12px]";
 
         let rowElmCounter = 0;
         let rowElements: JSX.Element[] = [];
@@ -95,15 +87,21 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         return <div className={resolveClassNames(`flex flex-col justify-start ${gapClass}`)}>{mainDivElements}</div>;
     }
 
+    // Compact and non-compact element width and gap (Must be in sync with the CSS in createRealizationNumberVisualization() function)
+    const nonCompactGapPx = 4;
+    const nonCompactWidthAndHeightPx = 12;
+
     // Find the number of realizations that can fit in a row based on non-compact size, as factor of 5
-    const candidateNumberOfRealizationsPerRow = Math.floor(divSize.width / (nonCompactWidthAndHeight + nonCompactGap));
+    const candidateNumberOfRealizationsPerRow = Math.floor(
+        divSize.width / (nonCompactWidthAndHeightPx + nonCompactGapPx)
+    );
     const remainder = candidateNumberOfRealizationsPerRow % 5;
     const newNumberOfRealizationsPerRow =
         remainder === 0 ? candidateNumberOfRealizationsPerRow : candidateNumberOfRealizationsPerRow - remainder;
 
     return (
         <div ref={divRef}>
-            {createRealizationNumberVisualization2(props.showAsCompact ?? false, newNumberOfRealizationsPerRow)}
+            {createRealizationNumberVisualization(props.showAsCompact ?? false, newNumberOfRealizationsPerRow)}
         </div>
     );
 };
