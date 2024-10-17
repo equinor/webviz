@@ -136,10 +136,13 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     if (vfpTableData) {
         vfpDataAccessor = new VfpDataAccessor(vfpTableData)
         thpLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true)
-        wfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.WFR, true)
-        gfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.GFR, true)
-        alqLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.ALQ, true)
         vfpType = vfpDataAccessor.getVfpType()
+        
+        if (vfpType == VfpType.VFPPROD) {
+            wfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.WFR, true)
+            gfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.GFR, true)
+            alqLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.ALQ, true)
+        }
     }
 
     return (
