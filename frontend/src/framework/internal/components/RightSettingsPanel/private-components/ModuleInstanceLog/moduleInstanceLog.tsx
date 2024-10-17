@@ -185,22 +185,18 @@ function LogList(props: LogListProps): React.ReactNode {
                 }
                 lastDatetimeMs = entry.datetimeMs;
                 return (
-                    <>
+                    <React.Fragment key={entry.id}>
                         {showDatetime && (
-                            <div
-                                key={`datetime-${entry.datetimeMs}`}
-                                className="text-xs p-2 sticky text-gray-600 text-right border-b border-b-slate-200"
-                            >
+                            <div className="text-xs p-2 sticky text-gray-600 text-right border-b border-b-slate-200">
                                 {convertDatetimeMsToHumanReadableString(entry.datetimeMs)}
                             </div>
                         )}
                         <LogEntryComponent
-                            key={entry.id}
                             logEntry={entry}
                             onShowDetails={props.onShowDetails}
                             onHideDetails={props.onHideDetails}
                         />
-                    </>
+                    </React.Fragment>
                 );
             })}
         </>
