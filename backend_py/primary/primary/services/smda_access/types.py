@@ -44,7 +44,6 @@ class WellboreHeader(BaseModel):
     depth_reference_elevation: float
     wellbore_purpose: str | None
     wellbore_status: str | None
-    slot_identifier: str | None
 
 
 class StratigraphicUnit(BaseModel):

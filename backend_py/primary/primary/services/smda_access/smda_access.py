@@ -75,7 +75,7 @@ class SmdaAccess:
         if not survey_header_results:
             raise NoDataError(f"No wellbore headers found for {self._field_identifier=}.", Service.SMDA)
 
-        projection = ["unique_wellbore_identifier", "wellbore_purpose", "wellbore_status", "slot_identifier"]
+        projection = ["unique_wellbore_identifier", "wellbore_purpose", "wellbore_status"]
         params = {
             "_projection": ",".join(projection),
             "_sort": "unique_wellbore_identifier",
@@ -89,7 +89,6 @@ class SmdaAccess:
                 if survey_header["unique_wellbore_identifier"] == wellbore_header["unique_wellbore_identifier"]:
                     survey_header["wellbore_purpose"] = wellbore_header.get("wellbore_purpose")
                     survey_header["wellbore_status"] = wellbore_header.get("wellbore_status")
-                    survey_header["slot_identifier"] = wellbore_header.get("slot_identifier")
                     break
 
         return [WellboreHeader(**result) for result in survey_header_results]
