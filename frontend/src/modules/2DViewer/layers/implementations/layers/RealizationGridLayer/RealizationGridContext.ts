@@ -14,6 +14,7 @@ import { GridAttribute } from "../../settings/GridAttribute";
 import { GridLayer } from "../../settings/GridLayer";
 import { GridName } from "../../settings/GridName";
 import { Realization } from "../../settings/Realization";
+import { ShowGridLines } from "../../settings/ShowGridLines";
 import { TimeOrInterval } from "../../settings/TimeOrInterval";
 
 export class RealizationGridContext implements SettingsContext<RealizationGridSettings> {
@@ -30,6 +31,7 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
                 [SettingType.GRID_ATTRIBUTE]: new GridAttribute(),
                 [SettingType.GRID_LAYER]: new GridLayer(),
                 [SettingType.TIME_OR_INTERVAL]: new TimeOrInterval(),
+                [SettingType.SHOW_GRID_LINES]: new ShowGridLines(),
             }
         );
     }
@@ -59,16 +61,8 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
                 .map((ensemble) => ensemble.getIdent())
         );
 
-        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
-        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
 
-        // Fix up EnsembleIdent
-        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
-            if (availableEnsembleIdents.length > 0) {
-                currentEnsembleIdent = availableEnsembleIdents[0];
-                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
-            }
-        }
         if (currentEnsembleIdent !== null) {
             const realizations = workbenchSession
                 .getRealizationFilterSet()
@@ -128,13 +122,8 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
         availableGridNames.push(...Array.from(new Set(this._fetchDataCache.map((gridModel) => gridModel.grid_name))));
         this._contextDelegate.setAvailableValues(SettingType.GRID_NAME, availableGridNames);
 
-        let currentGridName = settings[SettingType.GRID_NAME].getDelegate().getValue();
-        if (!currentGridName || !availableGridNames.includes(currentGridName)) {
-            if (availableGridNames.length > 0) {
-                currentGridName = availableGridNames[0];
-                settings[SettingType.GRID_NAME].getDelegate().setValue(currentGridName);
-            }
-        }
+        const currentGridName = settings[SettingType.GRID_NAME].getDelegate().getValue();
+
         const gridDimensions =
             this._fetchDataCache.find((gridModel) => gridModel.grid_name === currentGridName)?.dimensions ?? null;
         const availableGridLayers: number[] = [];
@@ -145,12 +134,6 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
         }
         this._contextDelegate.setAvailableValues(SettingType.GRID_LAYER, availableGridLayers);
 
-        let currentGridLayer = settings[SettingType.GRID_LAYER].getDelegate().getValue();
-        if (currentGridLayer === null || !availableGridLayers.length || availableGridLayers[2] < currentGridLayer) {
-            currentGridLayer = availableGridLayers[2];
-            settings[SettingType.GRID_LAYER].getDelegate().setValue(currentGridLayer);
-        }
-
         const availableGridAttributes: string[] = [];
         const gridAttributeArr: Grid3dPropertyInfo_api[] =
             this._fetchDataCache.find((gridModel) => gridModel.grid_name === currentGridName)?.property_info_arr ?? [];
@@ -160,15 +143,9 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
         }
         this._contextDelegate.setAvailableValues(SettingType.GRID_ATTRIBUTE, availableGridAttributes);
 
-        let currentGridAttribute = settings[SettingType.GRID_ATTRIBUTE].getDelegate().getValue();
-        if (!currentGridAttribute || !availableGridAttributes.includes(currentGridAttribute)) {
-            if (availableGridAttributes.length > 0) {
-                currentGridAttribute = availableGridAttributes[0];
-                settings[SettingType.GRID_ATTRIBUTE].getDelegate().setValue(currentGridAttribute);
-            }
-        }
-
+        const currentGridAttribute = settings[SettingType.GRID_ATTRIBUTE].getDelegate().getValue();
         const availableTimeOrIntervals: string[] = [];
+
         if (currentGridName && currentGridAttribute) {
             availableTimeOrIntervals.push(
                 ...Array.from(
@@ -182,13 +159,6 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
         }
         this._contextDelegate.setAvailableValues(SettingType.TIME_OR_INTERVAL, availableTimeOrIntervals);
 
-        let currentTimeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
-        if (!currentTimeOrInterval || !availableTimeOrIntervals.includes(currentTimeOrInterval)) {
-            if (availableTimeOrIntervals.length > 0) {
-                currentTimeOrInterval = availableTimeOrIntervals[0];
-                settings[SettingType.TIME_OR_INTERVAL].getDelegate().setValue(currentTimeOrInterval);
-            }
-        }
         return true;
     }
 

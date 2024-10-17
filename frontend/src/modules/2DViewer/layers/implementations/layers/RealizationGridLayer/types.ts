@@ -8,4 +8,5 @@ export type RealizationGridSettings = {
     [SettingType.GRID_NAME]: string | null;
     [SettingType.GRID_LAYER]: number | null;
     [SettingType.TIME_OR_INTERVAL]: string | null;
+    [SettingType.SHOW_GRID_LINES]: boolean;
 };

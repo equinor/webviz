@@ -5,9 +5,8 @@ import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
-import { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
-import { ColormapLayer, Grid3DLayer, MapLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { ColormapLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Rgb, parse } from "culori";
 import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
@@ -78,7 +77,7 @@ export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorSca
             layer.getItemDelegate().getId(),
             data.gridSurfaceData,
             data.gridParameterData,
-            false,
+            layer.getSettingsContext().getDelegate().getSettings().showGridLines.getDelegate().getValue(),
             colorScale
         );
     }
@@ -102,6 +101,8 @@ function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string):
         pickable: true,
     });
 }
+
+/*
 function createMapFloatLayer(layerData: SurfaceDataFloat_trans, id: string): MapLayer {
     return new MapLayer({
         id: id,
@@ -125,6 +126,7 @@ function createMapFloatLayer(layerData: SurfaceDataFloat_trans, id: string): Map
         depthTest: false,
     });
 }
+*/
 
 function createMapImageLayer(
     layerData: SurfaceDataPng,
@@ -328,7 +330,7 @@ export function makeGrid3DLayer(
         polysData: polysNumberArray,
         propertiesData: gridParameterData.polyPropsFloat32Arr,
         ZIncreasingDownwards: false,
-        gridLines: true,
+        gridLines: showGridLines,
         material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },
         pickable: true,
         colorMapName: "Physics",

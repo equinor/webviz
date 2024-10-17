@@ -56,16 +56,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
                 .map((ensemble) => ensemble.getIdent())
         );
 
-        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
-        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
-
-        // Fix up EnsembleIdent
-        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
-            if (availableEnsembleIdents.length > 0) {
-                currentEnsembleIdent = availableEnsembleIdents[0];
-                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
-            }
-        }
+        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._fetchDataCache = null;
@@ -73,7 +64,6 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
             settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(true);
             settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
             settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setValue(null);
 
             try {
                 this._fetchDataCache = await queryClient.fetchQuery({
@@ -107,14 +97,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         );
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_ATTRIBUTE, availableAttributes);
 
-        let currentAttribute = settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().getValue();
-        if (!currentAttribute || !availableAttributes.includes(currentAttribute)) {
-            if (availableAttributes.length > 0) {
-                currentAttribute = availableAttributes[0];
-                settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setValue(currentAttribute);
-            }
-        }
-
+        const currentAttribute = settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().getValue();
         const availableSurfaceNames: string[] = [];
 
         if (currentAttribute) {
@@ -130,13 +113,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         }
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availableSurfaceNames);
 
-        let currentSurfaceName = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
-        if (!currentSurfaceName || !availableSurfaceNames.includes(currentSurfaceName)) {
-            if (availableSurfaceNames.length > 0) {
-                currentSurfaceName = availableSurfaceNames[0];
-                settings[SettingType.SURFACE_NAME].getDelegate().setValue(currentSurfaceName);
-            }
-        }
+        const currentSurfaceName = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
 
         const availableTimeOrIntervals: string[] = [];
         if (currentAttribute && currentSurfaceName) {
@@ -162,14 +139,6 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
             }
         }
         this._contextDelegate.setAvailableValues(SettingType.TIME_OR_INTERVAL, availableTimeOrIntervals);
-
-        let currentTimeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
-        if (!currentTimeOrInterval || !availableTimeOrIntervals.includes(currentTimeOrInterval)) {
-            if (availableTimeOrIntervals.length > 0) {
-                currentTimeOrInterval = availableTimeOrIntervals[0];
-                settings[SettingType.TIME_OR_INTERVAL].getDelegate().setValue(currentTimeOrInterval);
-            }
-        }
 
         return true;
     }

@@ -74,8 +74,14 @@ export class RealizationGridLayer
         }
 
         return {
-            x: [data.gridSurfaceData.xmin, data.gridSurfaceData.xmax],
-            y: [data.gridSurfaceData.ymin, data.gridSurfaceData.ymax],
+            x: [
+                data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmin,
+                data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmax,
+            ],
+            y: [
+                data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymin,
+                data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymax,
+            ],
             z: [data.gridSurfaceData.zmin, data.gridSurfaceData.zmax],
         };
     }

@@ -85,7 +85,7 @@ export interface Setting<TValue> {
     getLabel(): string;
     makeComponent(): (props: SettingComponentProps<TValue>) => React.ReactNode;
     getDelegate(): SettingDelegate<TValue>;
-    fixupValue?: (availableValues: AvailableValuesType<TValue>) => TValue;
+    fixupValue?: (availableValues: AvailableValuesType<TValue>, currentValue: TValue) => TValue;
 }
 
 export enum SettingTopic {

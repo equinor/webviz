@@ -27,6 +27,33 @@ export class GridLayer implements Setting<ValueType> {
         return this._delegate;
     }
 
+    fixupValue(availableValues: null[] | number[], currentValue: ValueType): ValueType {
+        if (availableValues.length < 3) {
+            return null;
+        }
+
+        const min = 0;
+        const max = availableValues[2];
+
+        if (max === null) {
+            return null;
+        }
+
+        if (currentValue === null) {
+            return min;
+        }
+
+        if (currentValue < min) {
+            return min;
+        }
+
+        if (currentValue > max) {
+            return max;
+        }
+
+        return currentValue;
+    }
+
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
         return function Ensemble(props: SettingComponentProps<ValueType>) {
             const kRange = props.availableValues ? Array.from({ length: props.availableValues[2] }, (_, i) => i) : [];

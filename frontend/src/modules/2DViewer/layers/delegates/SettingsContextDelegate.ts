@@ -104,6 +104,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
 
     private setLoadingState(loadingState: SettingsContextLoadingState): void {
         this._loadingStatus = loadingState;
+        this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE);
     }
 
     getLoadingState(): SettingsContextLoadingState {
@@ -132,6 +133,10 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     }
 
     private handleSettingsChanged() {
+        if (this._loadingStatus === SettingsContextLoadingState.LOADING) {
+            return;
+        }
+
         if (!isEqual(this._cachedValues, this._values)) {
             this.fetchData().then((result) => {
                 if (!result) {

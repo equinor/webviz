@@ -371,16 +371,6 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
         ],
     },
     {
-        label: "Utilities",
-        children: [
-            {
-                identifier: "color-scale",
-                icon: <Icon data={color_palette} fontSize="small" />,
-                label: "Color scale",
-            },
-        ],
-    },
-    {
         label: "Layers",
         children: [
             {
@@ -404,13 +394,8 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 ],
             },
             {
-                label: "Others",
+                label: "Wells",
                 children: [
-                    {
-                        identifier: "realization-polygons",
-                        icon: <Icon data={fault} fontSize="small" />,
-                        label: "Realization Polygons",
-                    },
                     {
                         identifier: "drilled-wellbore-trajectories",
                         icon: <Icon data={wellbore} fontSize="small" />,
@@ -421,6 +406,21 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Drilled Wellbore Picks",
                     },
+                ],
+            },
+            {
+                label: "Polygons",
+                children: [
+                    {
+                        identifier: "realization-polygons",
+                        icon: <Icon data={fault} fontSize="small" />,
+                        label: "Realization Polygons",
+                    },
+                ],
+            },
+            {
+                label: "Others",
+                children: [
                     {
                         identifier: "realization-grid",
                         icon: <Icon data={grid_layer} fontSize="small" />,
@@ -457,6 +457,16 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 identifier: "Date",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Date",
+            },
+        ],
+    },
+    {
+        label: "Utilities",
+        children: [
+            {
+                identifier: "color-scale",
+                icon: <Icon data={color_palette} fontSize="small" />,
+                label: "Color scale",
             },
         ],
     },

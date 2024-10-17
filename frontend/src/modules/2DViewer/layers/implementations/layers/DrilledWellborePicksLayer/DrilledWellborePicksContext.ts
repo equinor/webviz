@@ -93,16 +93,7 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
             ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent())
         );
 
-        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
-        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
-
-        // Fix up EnsembleIdent
-        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
-            if (availableEnsembleIdents.length > 0) {
-                currentEnsembleIdent = availableEnsembleIdents[0];
-                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
-            }
-        }
+        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._wellboreHeadersCache = null;
@@ -126,6 +117,7 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
             });
+
             const pickStratigraphyPromise = queryClient.fetchQuery({
                 queryKey: ["getPickStratigraphy", fieldIdentifier ?? "", stratColumnIdentiier ?? ""],
                 queryFn: () =>
@@ -155,29 +147,12 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
         if (!this._wellboreHeadersCache || !this._pickIdentifierCache) {
             return false;
         }
+
         const availableWellboreHeaders: WellboreHeader_api[] = this._wellboreHeadersCache;
         this._contextDelegate.setAvailableValues(SettingType.SMDA_WELLBORE_HEADERS, availableWellboreHeaders);
 
-        const currentWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
-        let newWellboreHeaders = currentWellboreHeaders.filter((header) =>
-            availableWellboreHeaders.some((availableHeader) => availableHeader.wellboreUuid === header.wellboreUuid)
-        );
-        if (newWellboreHeaders.length === 0) {
-            newWellboreHeaders = availableWellboreHeaders;
-        }
-        if (!isEqual(currentWellboreHeaders, newWellboreHeaders)) {
-            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setValue(newWellboreHeaders);
-        }
         const availablePickIdentifiers: string[] = this._pickIdentifierCache;
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availablePickIdentifiers);
-
-        let currentPickIdentifier = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
-        if (!currentPickIdentifier || !availablePickIdentifiers.includes(currentPickIdentifier)) {
-            if (availablePickIdentifiers.length > 0) {
-                currentPickIdentifier = availablePickIdentifiers[0];
-                settings[SettingType.SURFACE_NAME].getDelegate().setValue(currentPickIdentifier);
-            }
-        }
 
         return true;
     }

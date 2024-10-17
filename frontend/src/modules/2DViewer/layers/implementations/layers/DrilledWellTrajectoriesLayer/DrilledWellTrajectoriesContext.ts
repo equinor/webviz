@@ -62,16 +62,7 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
                 .map((ensemble) => ensemble.getIdent())
         );
 
-        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
-        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
-
-        // Fix up EnsembleIdent
-        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
-            if (availableEnsembleIdents.length > 0) {
-                currentEnsembleIdent = availableEnsembleIdents[0];
-                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
-            }
-        }
+        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._fetchDataCache = null;
@@ -104,17 +95,6 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
         }
         const availableWellboreHeaders: WellboreHeader_api[] = this._fetchDataCache;
         this._contextDelegate.setAvailableValues(SettingType.SMDA_WELLBORE_HEADERS, availableWellboreHeaders);
-
-        const currentWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
-        let newWellboreHeaders = currentWellboreHeaders.filter((header) =>
-            availableWellboreHeaders.some((availableHeader) => availableHeader.wellboreUuid === header.wellboreUuid)
-        );
-        if (newWellboreHeaders.length === 0) {
-            newWellboreHeaders = availableWellboreHeaders;
-        }
-        if (!isEqual(currentWellboreHeaders, newWellboreHeaders)) {
-            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setValue(newWellboreHeaders);
-        }
 
         return true;
     }

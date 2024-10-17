@@ -26,8 +26,14 @@ export class DrilledWellbores implements Setting<WellboreHeader_api[]> {
         return this._delegate;
     }
 
-    fixupValue(availableValues: WellboreHeader_api[]): WellboreHeader_api[] {
-        return availableValues;
+    fixupValue(availableValues: WellboreHeader_api[], currentValue: WellboreHeader_api[]): WellboreHeader_api[] {
+        const matchingValues = currentValue.filter((value) =>
+            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid)
+        );
+        if (matchingValues.length === 0) {
+            return availableValues;
+        }
+        return matchingValues;
     }
 
     makeComponent(): (props: SettingComponentProps<WellboreHeader_api[]>) => React.ReactNode {

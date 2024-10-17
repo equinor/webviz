@@ -19,6 +19,9 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         this._id = v4();
         this._owner = owner;
         this._value = value;
+        if (typeof value === "boolean") {
+            this._isValueValid = true;
+        }
     }
 
     getId(): string {
@@ -41,6 +44,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             return;
         }
         this._value = value;
+
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
     }
 
@@ -91,6 +95,10 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
     }
 
     private maybeFixupValue(value: TValue): TValue {
+        if (typeof value === "boolean") {
+            this.setIsValueValid(true);
+            return value;
+        }
         if (this._availableValues.length === 0) {
             this.setIsValueValid(false);
             return value;
@@ -102,7 +110,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         this.setIsValueValid(true);
 
         if (this._owner.fixupValue) {
-            return this._owner.fixupValue(this._availableValues);
+            return this._owner.fixupValue(this._availableValues, value);
         }
 
         if (Array.isArray(value)) {

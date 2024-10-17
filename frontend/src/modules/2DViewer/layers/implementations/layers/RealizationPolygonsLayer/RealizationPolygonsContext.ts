@@ -55,16 +55,7 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
                 .map((ensemble) => ensemble.getIdent())
         );
 
-        const availableEnsembleIdents = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent());
-        let currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
-
-        // Fix up EnsembleIdent
-        if (currentEnsembleIdent === null || !availableEnsembleIdents.includes(currentEnsembleIdent)) {
-            if (availableEnsembleIdents.length > 0) {
-                currentEnsembleIdent = availableEnsembleIdents[0];
-                settings[SettingType.ENSEMBLE].getDelegate().setValue(currentEnsembleIdent);
-            }
-        }
+        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
 
         if (currentEnsembleIdent !== null) {
             const realizations = workbenchSession
@@ -72,13 +63,6 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
                 .getRealizationFilterForEnsembleIdent(currentEnsembleIdent)
                 .getFilteredRealizations();
             this.getDelegate().setAvailableValues(SettingType.REALIZATION, [...realizations]);
-
-            const currentRealization = newValues[SettingType.REALIZATION];
-            if (currentRealization === null || !realizations.includes(currentRealization)) {
-                if (realizations.length > 0) {
-                    settings[SettingType.REALIZATION].getDelegate().setValue(realizations[0]);
-                }
-            }
         }
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
@@ -118,13 +102,7 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
         );
         this._contextDelegate.setAvailableValues(SettingType.POLYGONS_ATTRIBUTE, availableAttributes);
 
-        let currentAttribute = settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().getValue();
-        if (!currentAttribute || !availableAttributes.includes(currentAttribute)) {
-            if (availableAttributes.length > 0) {
-                currentAttribute = availableAttributes[0];
-                settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setValue(currentAttribute);
-            }
-        }
+        const currentAttribute = settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().getValue();
 
         const availablePolygonsName: string[] = [];
 
@@ -140,14 +118,6 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
             );
         }
         this._contextDelegate.setAvailableValues(SettingType.POLYGONS_NAME, availablePolygonsName);
-
-        let currentPolygonsName = settings[SettingType.POLYGONS_NAME].getDelegate().getValue();
-        if (!currentPolygonsName || !availablePolygonsName.includes(currentPolygonsName)) {
-            if (availablePolygonsName.length > 0) {
-                currentPolygonsName = availablePolygonsName[0];
-                settings[SettingType.POLYGONS_NAME].getDelegate().setValue(currentPolygonsName);
-            }
-        }
 
         return true;
     }

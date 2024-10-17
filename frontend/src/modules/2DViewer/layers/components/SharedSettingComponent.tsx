@@ -34,13 +34,13 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
             title={<span className="font-bold">{props.sharedSetting.getItemDelegate().getName()}</span>}
             startAdornment={
                 <div className="flex gap-1 items-center">
-                    <Link fontSize="inherit" />
                     <DenseIconButton
                         onClick={handleToggleExpanded}
                         title={isExpanded ? "Hide settings" : "Show settings"}
                     >
                         {isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
                     </DenseIconButton>
+                    <Link fontSize="inherit" />
                 </div>
             }
             endAdornment={<Actions sharedSetting={props.sharedSetting} />}
