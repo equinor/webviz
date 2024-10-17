@@ -34,16 +34,7 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
         return this._contextDelegate.getSettings();
     }
 
-    async fetchData(
-        oldValues: DrilledWellTrajectoriesSettings,
-        newValues: DrilledWellTrajectoriesSettings
-    ): Promise<boolean> {
-        if (
-            isEqual(oldValues[SettingType.ENSEMBLE], newValues[SettingType.ENSEMBLE]) &&
-            newValues[SettingType.ENSEMBLE] !== null
-        ) {
-            return true;
-        }
+    async fetchData(oldValues: DrilledWellTrajectoriesSettings): Promise<boolean> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
 
         const settings = this.getDelegate().getSettings();
@@ -83,6 +74,7 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
                     gcTime: CACHE_TIME,
                 });
             } catch (e) {
+                this._contextDelegate.setAvailableValues(SettingType.SMDA_WELLBORE_HEADERS, []);
                 settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
                 return false;
             }

@@ -3,7 +3,6 @@ import React from "react";
 import { WellboreHeader_api } from "@api";
 import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
@@ -16,6 +15,7 @@ export type WellboreSelectorProps = {
 };
 
 export function WellboreSelector(props: WellboreSelectorProps): React.ReactNode {
+    const { onSelectedWellboreUuidsChange } = props;
     const availableWellboreStatuses = Array.from(new Set(props.wellboreHeaders.map((header) => header.wellboreStatus)));
     const availableWellborePurposes = Array.from(
         new Set(props.wellboreHeaders.map((header) => header.wellborePurpose))
@@ -29,14 +29,14 @@ export function WellboreSelector(props: WellboreSelectorProps): React.ReactNode 
         validStateArray: availableWellborePurposes,
     });
     React.useEffect(() => {
-        props.onSelectedWellboreUuidsChange(
+        onSelectedWellboreUuidsChange(
             props.wellboreHeaders
                 .filter((header) => selectedWellborePurposes.includes(header.wellborePurpose))
                 .filter((header) => selectedWellboreStatuses.includes(header.wellboreStatus))
                 // .filter((header) => props.selectedWellboreUuids.includes(header.wellboreUuid))
                 .map((header) => header.wellboreUuid)
         );
-    }, [selectedWellborePurposes, selectedWellboreStatuses]);
+    }, [selectedWellborePurposes, selectedWellboreStatuses, onSelectedWellboreUuidsChange, props.wellboreHeaders]);
 
     function handleSelectAll() {
         props.onSelectedWellboreUuidsChange(

@@ -106,7 +106,7 @@ export class StatisticalSurfaceLayer
             }
 
             // If realizations are filtered, update the address
-            let allRealizations = currentEnsemble?.getRealizations() ?? [];
+            const allRealizations = currentEnsemble?.getRealizations() ?? [];
             if (!isEqual([...allRealizations], [...filteredRealizations])) {
                 addrBuilder.withStatisticRealizations([...filteredRealizations]);
             }

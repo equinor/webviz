@@ -91,7 +91,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         }
     }
 
-    private async fetchData(): Promise<boolean> {
+    private async fetchData(): Promise<void> {
         this.setLoadingState(SettingsContextLoadingState.LOADING);
         const result = await this._parentContext.fetchData(this._cachedValues, this._values);
         if (result) {
@@ -99,7 +99,6 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         } else {
             this.setLoadingState(SettingsContextLoadingState.FAILED);
         }
-        return result;
     }
 
     private setLoadingState(loadingState: SettingsContextLoadingState): void {
@@ -138,10 +137,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         }
 
         if (!isEqual(this._cachedValues, this._values)) {
-            this.fetchData().then((result) => {
-                if (!result) {
-                    return;
-                }
+            this.fetchData().then(() => {
                 if (this._onSettingsChanged) {
                     this._onSettingsChanged(this._cachedValues, this._values);
                 }

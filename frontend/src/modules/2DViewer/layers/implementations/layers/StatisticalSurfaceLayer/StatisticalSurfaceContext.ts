@@ -1,10 +1,9 @@
-import { SurfaceTimeType_api } from "@api";
+import { SurfaceMetaSet_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { Ensemble as FrameworkEnsemble } from "@framework/Ensemble";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 
 import { isEqual } from "lodash";
-import { SurfaceMetaSet } from "src/api/models/SurfaceMetaSet";
 
 import { StatisticalSurfaceSettings } from "./types";
 
@@ -20,7 +19,7 @@ import { TimeOrInterval } from "../../settings/TimeOrInterval";
 
 export class StatisticalSurfaceContext implements SettingsContext<StatisticalSurfaceSettings> {
     private _contextDelegate: SettingsContextDelegate<StatisticalSurfaceSettings>;
-    private _fetchDataCache: SurfaceMetaSet | null = null;
+    private _fetchDataCache: SurfaceMetaSet_api | null = null;
 
     constructor() {
         this._contextDelegate = new SettingsContextDelegate<

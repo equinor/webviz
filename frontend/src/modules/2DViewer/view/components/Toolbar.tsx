@@ -1,7 +1,6 @@
 import { Button } from "@lib/components/Button";
-import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
-import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
-import { Add, FilterCenterFocus, Remove } from "@mui/icons-material";
+import { Toolbar as GenericToolbar } from "@modules/_shared/components/Toolbar";
+import { FilterCenterFocus } from "@mui/icons-material";
 
 export type ToolbarProps = {
     onFitInView: () => void;

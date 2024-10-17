@@ -1,4 +1,4 @@
-import { PolygonData_api, SurfaceDef_api, WellborePick_api, WellboreTrajectory_api } from "@api";
+import { PolygonData_api, SurfaceDataPng_api, SurfaceDef_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { Layer } from "@deck.gl/core";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
@@ -10,7 +10,6 @@ import { ColormapLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewe
 
 import { Rgb, parse } from "culori";
 import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
-import { SurfaceDataPng } from "src/api/models/SurfaceDataPng";
 
 import { DrilledWellTrajectoriesLayer } from "../../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "../../layers/implementations/layers/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
@@ -129,7 +128,7 @@ function createMapFloatLayer(layerData: SurfaceDataFloat_trans, id: string): Map
 */
 
 function createMapImageLayer(
-    layerData: SurfaceDataPng,
+    layerData: SurfaceDataPng_api,
     id: string,
     name: string,
     colorScale?: ColorScaleWithName
@@ -141,14 +140,12 @@ function createMapImageLayer(
         bounds: _calcBoundsForRotationAroundUpperLeftCorner(layerData.surface_def),
         rotDeg: layerData.surface_def.rot_deg,
         valueRange: [layerData.value_min, layerData.value_max],
-        colorMapRange: colorScale
-            ? [colorScale.getMin(), colorScale.getMax()]
-            : [layerData.value_min, layerData.value_max],
+        colorMapRange: [layerData.value_min, layerData.value_max],
         colorMapName: "Physics",
         parameters: {
             depthWriteEnabled: false,
         },
-        colorMapFunction: makeColorMapFunction(colorScale),
+        colorMapFunction: makeColorMapFunction(colorScale, layerData.value_min, layerData.value_max),
     });
 }
 
@@ -336,20 +333,26 @@ export function makeGrid3DLayer(
         colorMapName: "Physics",
         colorMapClampColor: true,
         colorMapRange: [gridParameterData.min_grid_prop_value, gridParameterData.max_grid_prop_value],
-        colorMapFunction: makeColorMapFunction(colorScale),
+        colorMapFunction: makeColorMapFunction(
+            colorScale,
+            gridParameterData.min_grid_prop_value,
+            gridParameterData.max_grid_prop_value
+        ),
     });
     return grid3dLayer as unknown as WorkingGrid3dLayer;
 }
 
 function makeColorMapFunction(
-    colorScale: ColorScaleWithName | undefined
+    colorScale: ColorScaleWithName | undefined,
+    valueMin: number,
+    valueMax: number
 ): ((value: number) => [number, number, number]) | undefined {
     if (!colorScale) {
         return undefined;
     }
 
     return (value: number) => {
-        const nonNormalizedValue = value * (colorScale.getMax() - colorScale.getMin()) + colorScale.getMin();
+        const nonNormalizedValue = value * (valueMax - valueMin) + valueMin;
         const interpolatedColor = colorScale.getColorForValue(nonNormalizedValue);
         const color = parse(interpolatedColor) as Rgb;
         if (color === undefined) {

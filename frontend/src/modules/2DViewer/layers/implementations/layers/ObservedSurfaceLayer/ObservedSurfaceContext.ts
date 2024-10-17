@@ -1,11 +1,10 @@
-import { SurfaceTimeType_api } from "@api";
+import { SurfaceMetaSet_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 
 import { isEqual } from "lodash";
-import { SurfaceMetaSet } from "src/api/models/SurfaceMetaSet";
 
 import { ObservedSurfaceSettings } from "./types";
 
@@ -17,7 +16,7 @@ import { TimeOrInterval } from "../../settings/TimeOrInterval";
 
 export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSettings> {
     private _contextDelegate: SettingsContextDelegate<ObservedSurfaceSettings>;
-    private _fetchDataCache: SurfaceMetaSet | null = null;
+    private _fetchDataCache: SurfaceMetaSet_api | null = null;
 
     constructor() {
         this._contextDelegate = new SettingsContextDelegate<ObservedSurfaceSettings, keyof ObservedSurfaceSettings>(
