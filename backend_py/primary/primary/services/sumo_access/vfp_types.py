@@ -82,7 +82,6 @@ class TabType(Enum):
 # The values are ordered so that the index of flow_rate_values moves fastest, and the index of thp_values moves
 # slowest. The order is: THP, WFR, GFR, ALQ, Flow rates.
 class VfpProdTable(BaseModel):
-    vfp_type: VfpType = VfpType.VFPPROD
     table_number: int
     datum: float
     thp_type: THP
@@ -107,7 +106,6 @@ class VfpProdTable(BaseModel):
 
 
 class VfpInjTable(BaseModel):
-    vfp_type: VfpType = VfpType.VFPINJ
     table_number: int
     datum: float
     flow_rate_type: FlowRateType

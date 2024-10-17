@@ -13,7 +13,6 @@ import { VfpPlotBuilder } from "./utils/VfpPlotBuilder";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import { VfpType_api } from "@api";
 
 
 export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) {
@@ -45,11 +44,12 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         content = <div className="w-full h-full flex justify-center items-center">Could not load VFP data</div>;
     } else {
         const vfpTable = vfpDataQuery.data
-        const vfpPlotBuilder = new VfpPlotBuilder(new VfpDataAccessor(vfpTable), colorScale);
+        const vfpDataAccessor = new VfpDataAccessor(vfpTable)
+        const vfpPlotBuilder = new VfpPlotBuilder(vfpDataAccessor, colorScale);
 
         const layout = vfpPlotBuilder.makeLayout(wrapperDivSize, selectedPressureOption);
         let data: Partial<PlotData>[] = [];
-        if (vfpTable.vfp_type == VfpType_api.VFPPROD) {
+        if (vfpDataAccessor.isProdTable()) {
             data = vfpPlotBuilder.makeVfpProdTraces(
                 selectedThpIndices,
                 selectedWfrIndices,
@@ -58,7 +58,7 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 selectedPressureOption,
                 selectedColorBy,
             )
-        } else if (vfpTable.vfp_type == VfpType_api.VFPINJ) {
+        } else if (vfpDataAccessor.isInjTable()) {
             data = vfpPlotBuilder.makeVfpInjTraces(
                 selectedThpIndices,
                 selectedPressureOption

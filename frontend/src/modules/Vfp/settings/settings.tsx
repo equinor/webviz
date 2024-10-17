@@ -39,9 +39,8 @@ import {
 import { vfpTableQueryAtom } from "./atoms/queryAtoms";
 
 import { Interfaces } from "../interfaces";
-import { PressureOption, VfpParam } from "../types";
+import { PressureOption, VfpParam, VfpType } from "../types";
 import { VfpDataAccessor } from "../utils/VfpDataAccessor";
-import { VfpType_api } from "@api";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
@@ -133,7 +132,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     let alqLabel = "ALQ";
     const vfpTableData = vfpTableQuery?.data;
     let vfpDataAccessor: VfpDataAccessor | null = null
-    let vfpType: VfpType_api | null = null
+    let vfpType: VfpType | null = null
     if (vfpTableData) {
         vfpDataAccessor = new VfpDataAccessor(vfpTableData)
         thpLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true)
@@ -185,7 +184,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 multiple={true}
                             />
                         </Label>
-                        {vfpType===VfpType_api.VFPPROD && <div><Label text={wfrLabel}>
+                        {vfpType === VfpType.VFPPROD && <div><Label text={wfrLabel}>
                             <Select
                                 options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.WFR))}
                                 value={selectedWfrIndicies?.map((value) => value.toString()) ?? []}
@@ -240,9 +239,9 @@ function makeFilterOptions(values: number[] | undefined): SelectOption[] {
     return values?.map((value, index) => ({ label: value.toString(), value: index.toString() })) ?? [];
 }
 
-function makeColorByOptions(vfpType: VfpType_api | null, vfpDataAccessor: VfpDataAccessor | null): SelectOption[] {
+function makeColorByOptions(vfpType: VfpType | null, vfpDataAccessor: VfpDataAccessor | null): SelectOption[] {
     const options = [{ label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP }]
-    if (vfpType === VfpType_api.VFPPROD) {
+    if (vfpType === VfpType.VFPPROD) {
         options.push(...[
             { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR, false) ?? "WFR", value: VfpParam.WFR },
             { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.GFR, false) ?? "GFR", value: VfpParam.GFR },

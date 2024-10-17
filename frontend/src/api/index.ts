@@ -105,7 +105,6 @@ export type { VectorStatisticData as VectorStatisticData_api } from './models/Ve
 export type { VectorStatisticSensitivityData as VectorStatisticSensitivityData_api } from './models/VectorStatisticSensitivityData';
 export type { VfpInjTable as VfpInjTable_api } from './models/VfpInjTable';
 export type { VfpProdTable as VfpProdTable_api } from './models/VfpProdTable';
-export { VfpType as VfpType_api } from './models/VfpType';
 export type { WellboreCasing as WellboreCasing_api } from './models/WellboreCasing';
 export type { WellboreCompletion as WellboreCompletion_api } from './models/WellboreCompletion';
 export type { WellboreHeader as WellboreHeader_api } from './models/WellboreHeader';

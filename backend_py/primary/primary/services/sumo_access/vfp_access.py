@@ -71,13 +71,15 @@ class VfpAccess:
                 f"Multiple VFP tables found with tagname: {tagname} and realization: {realization}", Service.SUMO
             )
 
-        sumo_table = await table_collection.getitem_async(0)
-        byte_stream: BytesIO = await sumo_table.blob_async
-        pa_table: pa.Table = pq.read_table(byte_stream)
+        # sumo_table = await table_collection.getitem_async(0)
+        # byte_stream: BytesIO = await sumo_table.blob_async
+        # pa_table: pa.Table = pq.read_table(byte_stream)
+
+        pa_table: pa.Table = await table_collection[0].to_arrow_async()
 
         return pa_table
 
-    async def get_vfpprod_table_from_tagname(self, tagname: str, realization: int) -> VfpProdTable | VfpInjTable:
+    async def get_vfp_table_from_tagname(self, tagname: str, realization: int) -> VfpProdTable | VfpInjTable:
         """Returns a VFP table as a VFP table object for a specific tagname (table name)
         and realization.
 

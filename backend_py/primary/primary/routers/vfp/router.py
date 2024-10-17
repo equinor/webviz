@@ -9,6 +9,7 @@ from primary.services.sumo_access.vfp_types import VfpProdTable, VfpInjTable
 from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
+from . import converters
 
 LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ async def get_vfp_table(
     realization: int = Query(description="Realization"),
     vfp_table_name: str = Query(description="VFP table name")
     # fmt:on
-) -> VfpProdTable | VfpInjTable:
+) -> schemas.VfpProdTable | schemas.VfpInjTable:
     perf_metrics = ResponsePerfMetrics(response)
 
     vfp_access = await VfpAccess.from_case_uuid_async(
@@ -56,7 +57,7 @@ async def get_vfp_table(
     )
     perf_metrics.record_lap("get-access")
     try:
-        vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfpprod_table_from_tagname(
+        vfp_table: VfpProdTable | VfpInjTable = await vfp_access.get_vfp_table_from_tagname(
             tagname=vfp_table_name, realization=realization
         )
     except NotImplementedError as ex:
@@ -65,4 +66,4 @@ async def get_vfp_table(
     perf_metrics.record_lap("get-vfp-table")
     LOGGER.info(f"VFP table loaded in: {perf_metrics.to_string()}")
 
-    return vfp_table
+    return converters.to_api_table_definitions(vfp_table)
