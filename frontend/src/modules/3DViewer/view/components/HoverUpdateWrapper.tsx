@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GeoJsonLayer } from "@deck.gl/layers/typed";
+import { GeoJsonLayer } from "@deck.gl/layers";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ViewContext } from "@framework/ModuleContext";
 import { GlobalTopicDefinitions, WorkbenchServices, useSubscribedValue } from "@framework/WorkbenchServices";

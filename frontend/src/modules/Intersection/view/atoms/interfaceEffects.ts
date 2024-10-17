@@ -5,10 +5,15 @@ import {
     intersectionExtensionLengthAtom,
     intersectionTypeAtom,
     selectedCustomIntersectionPolylineIdAtom,
+    selectedFieldIdentifierAtom,
     wellboreHeaderAtom,
 } from "./baseAtoms";
 
 export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInterface> = [
+    (getInterfaceValue, setAtomValue) => {
+        const fieldIdentifier = getInterfaceValue("fieldIdentifier");
+        setAtomValue(selectedFieldIdentifierAtom, fieldIdentifier);
+    },
     (getInterfaceValue, setAtomValue) => {
         const selectedCustomIntersectionPolylineId = getInterfaceValue("selectedCustomIntersectionPolylineId");
         setAtomValue(selectedCustomIntersectionPolylineIdAtom, selectedCustomIntersectionPolylineId);

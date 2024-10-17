@@ -100,6 +100,14 @@ export class ColorScale {
     getColorForValue(value: number): string {
         let color = "";
 
+        // Clamp colors
+        if (value < this._min) {
+            value = this._min;
+        }
+        if (value > this._max) {
+            value = this._max;
+        }
+
         if (this._type === ColorScaleType.Discrete) {
             const colors = this.sampleColors(this._steps);
             const normalizedValue = this.calcNormalizedValue(value, this._min, this._max);

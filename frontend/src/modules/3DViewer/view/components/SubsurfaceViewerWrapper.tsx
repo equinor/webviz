@@ -1,12 +1,13 @@
-import React, { useId } from "react";
+import React from "react";
 
-import { Layer, PickingInfo } from "@deck.gl/core/typed";
-import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers/typed";
+import { Layer, PickingInfo } from "@deck.gl/core";
+import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
 import { Button } from "@lib/components/Button";
 import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
+import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { Add, FilterCenterFocus, Polyline, Remove } from "@mui/icons-material";
 import { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
@@ -18,7 +19,6 @@ import { isEqual } from "lodash";
 
 import { PolylineEditingPanel } from "./PolylineEditingPanel";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
-import { SubsurfaceViewerWithCameraState } from "./SubsurfaceViewerWithCameraState";
 
 import { createContinuousColorScaleForMap } from "../utils/colorTables";
 
@@ -62,7 +62,7 @@ type IntersectionZValues = {
 export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): React.ReactNode {
     const { onVerticalScaleChange } = props;
 
-    const subsurfaceViewerId = useId();
+    const subsurfaceViewerId = React.useId();
 
     const [intersectionZValues, setIntersectionZValues] = React.useState<IntersectionZValues | undefined>(undefined);
     const [polylineEditPointsModusActive, setPolylineEditPointsModusActive] = React.useState<boolean>(false);
@@ -640,6 +640,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 }}
                 getTooltip={makeTooltip}
                 verticalScale={verticalScale}
+                pickingRadius={10}
             />
             <div className="absolute bottom-0 right-0 z-30 bg-white bg-opacity-50 p-2 pointer-events-none">
                 {makeHelperText()}

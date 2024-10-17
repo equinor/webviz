@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { Body_post_get_surface_intersection } from '../models/Body_post_get_surface_intersection';
 import type { Body_post_sample_surface_in_points } from '../models/Body_post_sample_surface_in_points';
+import type { StratigraphicUnit } from '../models/StratigraphicUnit';
 import type { SurfaceDataFloat } from '../models/SurfaceDataFloat';
 import type { SurfaceDataPng } from '../models/SurfaceDataPng';
 import type { SurfaceIntersectionData } from '../models/SurfaceIntersectionData';
@@ -243,6 +244,26 @@ export class SurfaceService {
                 'realizations': realizations,
                 'data_format': dataFormat,
                 'resample_to_def_str': resampleToDefStr,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Stratigraphic Units
+     * @param caseUuid Sumo case uuid
+     * @returns StratigraphicUnit Successful Response
+     * @throws ApiError
+     */
+    public getStratigraphicUnits(
+        caseUuid: string,
+    ): CancelablePromise<Array<StratigraphicUnit>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/surface/stratigraphic_units',
+            query: {
+                'case_uuid': caseUuid,
             },
             errors: {
                 422: `Validation Error`,

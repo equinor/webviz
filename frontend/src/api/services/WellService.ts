@@ -8,7 +8,7 @@ import type { WellboreHeader } from '../models/WellboreHeader';
 import type { WellboreLogCurveData } from '../models/WellboreLogCurveData';
 import type { WellboreLogCurveHeader } from '../models/WellboreLogCurveHeader';
 import type { WellborePerforation } from '../models/WellborePerforation';
-import type { WellborePicksAndStratigraphicUnits } from '../models/WellborePicksAndStratigraphicUnits';
+import type { WellborePick } from '../models/WellborePick';
 import type { WellboreTrajectory } from '../models/WellboreTrajectory';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -17,7 +17,7 @@ export class WellService {
     /**
      * Get Drilled Wellbore Headers
      * Get wellbore headers for all wells in the field
-     * @param fieldIdentifier Sumo field identifier
+     * @param fieldIdentifier Official field identifier
      * @returns WellboreHeader Successful Response
      * @throws ApiError
      */
@@ -36,43 +36,22 @@ export class WellService {
         });
     }
     /**
-     * Get Field Well Trajectories
-     * Get well trajectories for field
-     * @param fieldIdentifier Sumo field identifier
-     * @param uniqueWellboreIdentifiers Optional subset of well names
-     * @returns WellboreTrajectory Successful Response
-     * @throws ApiError
-     */
-    public getFieldWellTrajectories(
-        fieldIdentifier: string,
-        uniqueWellboreIdentifiers?: Array<string>,
-    ): CancelablePromise<Array<WellboreTrajectory>> {
-        return this.httpRequest.request({
-            method: 'GET',
-            url: '/well/field_well_trajectories/',
-            query: {
-                'field_identifier': fieldIdentifier,
-                'unique_wellbore_identifiers': uniqueWellboreIdentifiers,
-            },
-            errors: {
-                422: `Validation Error`,
-            },
-        });
-    }
-    /**
      * Get Well Trajectories
-     * Get well trajectories
-     * @param wellboreUuids Wellbore uuids
+     * Get well trajectories for field
+     * @param fieldIdentifier Official field identifier
+     * @param wellboreUuids Optional subset of wellbore uuids
      * @returns WellboreTrajectory Successful Response
      * @throws ApiError
      */
     public getWellTrajectories(
-        wellboreUuids: Array<string>,
+        fieldIdentifier: string,
+        wellboreUuids?: Array<string>,
     ): CancelablePromise<Array<WellboreTrajectory>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/well/well_trajectories/',
             query: {
+                'field_identifier': fieldIdentifier,
                 'wellbore_uuids': wellboreUuids,
             },
             errors: {
@@ -81,22 +60,70 @@ export class WellService {
         });
     }
     /**
-     * Get Wellbore Picks And Stratigraphic Units
-     * Get well bore picks for a single well bore
-     * @param caseUuid Sumo case uuid
-     * @param wellboreUuid Wellbore uuid
-     * @returns WellborePicksAndStratigraphicUnits Successful Response
+     * Get Wellbore Pick Identifiers
+     * Get wellbore pick identifiers for field and stratigraphic column
+     * @param fieldIdentifier Official field identifier
+     * @param stratColumnIdentifier Stratigraphic column identifier
+     * @returns string Successful Response
      * @throws ApiError
      */
-    public getWellborePicksAndStratigraphicUnits(
-        caseUuid: string,
-        wellboreUuid: string,
-    ): CancelablePromise<WellborePicksAndStratigraphicUnits> {
+    public getWellborePickIdentifiers(
+        fieldIdentifier: string,
+        stratColumnIdentifier: string,
+    ): CancelablePromise<Array<string>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/well/wellbore_picks_and_stratigraphic_units/',
+            url: '/well/wellbore_pick_identifiers/',
             query: {
-                'case_uuid': caseUuid,
+                'field_identifier': fieldIdentifier,
+                'strat_column_identifier': stratColumnIdentifier,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Wellbore Picks For Pick Identifier
+     * Get wellbore picks for field and pick identifier
+     * @param fieldIdentifier Official field identifier
+     * @param pickIdentifier Pick identifier
+     * @returns WellborePick Successful Response
+     * @throws ApiError
+     */
+    public getWellborePicksForPickIdentifier(
+        fieldIdentifier: string,
+        pickIdentifier: string,
+    ): CancelablePromise<Array<WellborePick>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/well/wellbore_picks_for_pick_identifier/',
+            query: {
+                'field_identifier': fieldIdentifier,
+                'pick_identifier': pickIdentifier,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Wellbore Picks For Wellbore
+     * Get wellbore picks for field and pick identifier
+     * @param fieldIdentifier Official field identifier
+     * @param wellboreUuid Wellbore uuid
+     * @returns WellborePick Successful Response
+     * @throws ApiError
+     */
+    public getWellborePicksForWellbore(
+        fieldIdentifier: string,
+        wellboreUuid: string,
+    ): CancelablePromise<Array<WellborePick>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/well/wellbore_picks_for_wellbore/',
+            query: {
+                'field_identifier': fieldIdentifier,
                 'wellbore_uuid': wellboreUuid,
             },
             errors: {

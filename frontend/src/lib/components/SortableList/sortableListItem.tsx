@@ -22,7 +22,6 @@ export type SortableListItemProps = {
  * @param {SortableListItemProps} props Object of properties for the SortableListItem component (see below for details).
  * @param {string} props.id ID that is unique among all components inside the sortable list.
  * @param {React.ReactNode} props.title Title component of the list item.
- * @param {string} props.headerClassNames Class names to apply to the header of the list item.
  * @param {React.ReactNode} props.startAdornment Start adornment to display to the left of the title.
  * @param {React.ReactNode} props.endAdornment End adornment to display to the right of the title.
  * @param {React.ReactNode} props.children Child components to display as the content of the list item.
@@ -69,9 +68,7 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
                             <Header {...props} />
                         </div>
                     )}
-                {props.children !== undefined && (
-                    <div className={resolveClassNames("bg-white border-b shadow")}>{props.children}</div>
-                )}
+                <div className={resolveClassNames("bg-white border-b shadow")}>{props.children}</div>
             </div>
             {isHovered && sortableListContext.hoveredArea === HoveredArea.BOTTOM && <SortableListDropIndicator />}
         </>

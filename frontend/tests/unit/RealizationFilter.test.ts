@@ -10,6 +10,7 @@ const FIRST_ENSEMBLE = new Ensemble(
     "First ensemble UUID",
     "First case",
     "First ensemble",
+    "DROGON_HAS_NO_STRAT_COLUMN",
     FIRST_ENSEMBLE_REALIZATIONS,
     [],
     null,

@@ -1,0 +1,16 @@
+export enum SettingType {
+    ENSEMBLE = "ensemble",
+    REALIZATION = "realization",
+    STATISTIC_FUNCTION = "statisticFunction",
+    SENSITIVITY = "sensitivity",
+    SURFACE_NAME = "surfaceName",
+    SURFACE_ATTRIBUTE = "surfaceAttribute",
+    TIME_OR_INTERVAL = "timeOrInterval",
+    POLYGONS_ATTRIBUTE = "polygonsAttribute",
+    POLYGONS_NAME = "polygonsName",
+    SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
+    GRID_NAME = "gridName",
+    GRID_ATTRIBUTE = "gridAttribute",
+    GRID_LAYER = "gridLayer",
+    SHOW_GRID_LINES = "showGridLines",
+}

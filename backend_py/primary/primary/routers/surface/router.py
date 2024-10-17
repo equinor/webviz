@@ -7,9 +7,9 @@ from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.surface_access import SurfaceAccess
-from primary.services.smda_access.stratigraphy_access import StratigraphyAccess, StratigraphicUnit
+from primary.services.smda_access import SmdaAccess, StratigraphicUnit
 from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from primary.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
+from primary.services.smda_access.drogon import DrogonSmdaAccess
 from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
 from primary.services.utils.authenticated_user import AuthenticatedUser
@@ -295,22 +295,41 @@ async def get_misfit_surface_data(
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
 
 
+@router.get("/stratigraphic_units")
+async def get_stratigraphic_units(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    # fmt:on
+) -> list[schemas.StratigraphicUnit]:
+    perf_metrics = ResponsePerfMetrics(response)
+
+    strat_units = await _get_stratigraphic_units_for_case_async(authenticated_user, case_uuid)
+    api_strat_units = [converters.to_api_stratigraphic_unit(strat_unit) for strat_unit in strat_units]
+
+    LOGGER.info(f"Got stratigraphic units in: {perf_metrics.to_string()}")
+
+    return api_strat_units
+
+
 async def _get_stratigraphic_units_for_case_async(
     authenticated_user: AuthenticatedUser, case_uuid: str
 ) -> list[StratigraphicUnit]:
     perf_metrics = PerfMetrics()
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
+    field_identifiers = await case_inspector.get_field_identifiers_async()
     strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     perf_metrics.record_lap("get-strat-ident")
 
-    strat_access: StratigraphyAccess | _mocked_stratigraphy_access.StratigraphyAccess
+    smda_access: SmdaAccess | DrogonSmdaAccess
     if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
-        strat_access = _mocked_stratigraphy_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
+        smda_access = DrogonSmdaAccess()
     else:
-        strat_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifiers[0])
 
-    strat_units = await strat_access.get_stratigraphic_units(strat_column_identifier)
+    strat_units = await smda_access.get_stratigraphic_units(strat_column_identifier)
     perf_metrics.record_lap("get-strat-units")
 
     LOGGER.info(f"Got stratigraphic units for case in : {perf_metrics.to_string()}")

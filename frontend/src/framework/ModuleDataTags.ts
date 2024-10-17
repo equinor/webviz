@@ -10,7 +10,8 @@ export enum ModuleDataTagId {
     OBSERVATIONS = "observations",
     SEISMIC = "seismic",
     WELL_COMPLETIONS = "well-completions",
-    VFP = "vfp"
+    VFP = "vfp",
+    POLYGONS = "polygons",
 }
 
 export type ModuleDataTag = {
@@ -29,6 +30,11 @@ export const ModuleDataTags: ModuleDataTag[] = [
         id: ModuleDataTagId.GRID3D,
         name: "3D grid model",
         description: "3D grid model",
+    },
+    {
+        id: ModuleDataTagId.POLYGONS,
+        name: "Polygons",
+        description: "Polygons",
     },
     {
         id: ModuleDataTagId.GROUP_TREE,

@@ -30,6 +30,7 @@ class EnsembleInfo(BaseModel):
 class EnsembleDetails(BaseModel):
     name: str
     field_identifier: str
+    stratigraphic_column_identifier: str
     case_name: str
     case_uuid: str
     realizations: Sequence[int]
@@ -91,6 +92,7 @@ async def get_ensemble_details(
     case_name = await case_inspector.get_case_name_async()
     realizations = await case_inspector.get_realizations_in_iteration_async(ensemble_name)
     field_identifiers = await case_inspector.get_field_identifiers_async()
+    stratigraphic_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
 
     if len(field_identifiers) != 1:
         raise NotImplementedError("Multiple field identifiers not supported")
@@ -101,4 +103,5 @@ async def get_ensemble_details(
         case_uuid=case_uuid,
         realizations=realizations,
         field_identifier=field_identifiers[0],
+        stratigraphic_column_identifier=stratigraphic_column_identifier,
     )

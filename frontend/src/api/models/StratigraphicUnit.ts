@@ -2,11 +2,6 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-/**
- * Stratigraphic unit from SMDA
- *
- * Camel case attributes needed for esvIntersection component in front-end
- */
 export type StratigraphicUnit = {
     identifier: string;
     top: string;
