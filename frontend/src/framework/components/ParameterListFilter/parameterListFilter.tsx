@@ -88,7 +88,7 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
                     selectedTags={selectedTags}
                     label={props.showTitle ? "Parameter filtering" : undefined}
                     onChange={handleSmartNodeSelectorChange}
-                    placeholder="Add new filter..."
+                    placeholder="Add new filter condition..."
                 />
                 <div className={resolveClassNames("text-right relative w-full mt-2 text-slate-600 text-sm")}>
                     Number of matches: {numberOfMatchingParameters}
