@@ -62,7 +62,6 @@ def convert_wellbore_header_to_schema(
             drilled_wellbore_header.wellbore_purpose if drilled_wellbore_header.wellbore_purpose else ""
         ),  # TODO: Handle None
         wellboreStatus=drilled_wellbore_header.wellbore_status if drilled_wellbore_header.wellbore_status else "",
-        slotIdentifier=drilled_wellbore_header.slot_identifier if drilled_wellbore_header.slot_identifier else "",
     )
 
 

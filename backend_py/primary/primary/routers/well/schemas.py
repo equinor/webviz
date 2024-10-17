@@ -34,7 +34,6 @@ class WellboreHeader(BaseModel):
     depthReferenceElevation: float
     wellborePurpose: str
     wellboreStatus: str
-    slotIdentifier: str
 
 
 class WellboreTrajectory(BaseModel):
