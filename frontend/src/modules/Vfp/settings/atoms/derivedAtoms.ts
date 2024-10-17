@@ -19,6 +19,7 @@ import {
 import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
 import { PressureOption, VfpParam } from "../../types";
+import { VfpType_api } from "@api";
 
 export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);
@@ -90,47 +91,61 @@ export const selectedThpIndicesAtom = atom<number[] | null>((get) => {
 
 export const selectedWfrIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
-    const wfr_values = vfpTable?.wfr_values ?? [];
     const userSelectedWfrIndicies = get(userSelectedWfrIndicesAtom);
 
-    if (wfr_values.length === 0) {
+    if (vfpTable != undefined && "wfr_values" in vfpTable) {
+        const wfr_values = vfpTable.wfr_values ?? [];
+        if (wfr_values.length === 0) {
+            return null;
+        }
+        if (!userSelectedWfrIndicies) {
+            return [0];
+        } 
+        return userSelectedWfrIndicies;
+    } else {
+        // If the table is VFPINJ, then always return null
         return null;
     }
-    if (!userSelectedWfrIndicies) {
-        return [0];
-    }
 
-    return userSelectedWfrIndicies;
+
 });
 
 export const selectedGfrIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
-    const wfr_values = vfpTable?.gfr_values ?? [];
     const userSelectedGfrIndicies = get(userSelectedGfrIndicesAtom);
 
-    if (wfr_values.length === 0) {
+    if (vfpTable != undefined && "gfr_values" in vfpTable) {
+        const gfr_values = vfpTable.gfr_values ?? [];
+        if (gfr_values.length === 0) {
+            return null;
+        }
+        if (!userSelectedGfrIndicies) {
+            return [0];
+        }
+        return userSelectedGfrIndicies;
+    } else {
+        // If the table is VFPINJ, then always return null
         return null;
     }
-    if (!userSelectedGfrIndicies) {
-        return [0];
-    }
-
-    return userSelectedGfrIndicies;
 });
 
 export const selectedAlqIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
-    const wfr_values = vfpTable?.alq_values ?? [];
     const userSelectedAlqIndicies = get(userSelectedAlqIndicesAtom);
 
-    if (wfr_values.length === 0) {
+    if (vfpTable != undefined && "alq_values" in vfpTable) {
+        const alq_values = vfpTable.alq_values ?? [];
+        if (alq_values.length === 0) {
+            return null;
+        }
+        if (!userSelectedAlqIndicies) {
+            return [0];
+        }
+        return userSelectedAlqIndicies;
+    } else {
+        // If the table is VFPINJ, then always return null
         return null;
     }
-    if (!userSelectedAlqIndicies) {
-        return [0];
-    }
-
-    return userSelectedAlqIndicies;
 });
 
 export const selectedPressureOptionAtom = atom<PressureOption>((get) => {
@@ -143,9 +158,13 @@ export const selectedPressureOptionAtom = atom<PressureOption>((get) => {
 });
 
 export const selectedColorByAtom = atom<VfpParam>((get) => {
+    const vfpTable = get(vfpTableQueryAtom).data;
     const userSelectedColorBy = get(userSelectedColorByAtom);
 
     if (userSelectedColorBy === null) {
+        return VfpParam.THP
+    }
+    if (vfpTable?.vfp_type == VfpType_api.VFPINJ && ["WFR", "GFR", "ALQ"].includes(userSelectedColorBy)) {
         return VfpParam.THP
     }
     return userSelectedColorBy

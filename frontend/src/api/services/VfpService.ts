@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { VfpInjTable } from '../models/VfpInjTable';
 import type { VfpProdTable } from '../models/VfpProdTable';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -39,7 +40,7 @@ export class VfpService {
      * @param ensembleName Ensemble name
      * @param realization Realization
      * @param vfpTableName VFP table name
-     * @returns VfpProdTable Successful Response
+     * @returns any Successful Response
      * @throws ApiError
      */
     public getVfpTable(
@@ -47,7 +48,7 @@ export class VfpService {
         ensembleName: string,
         realization: number,
         vfpTableName: string,
-    ): CancelablePromise<VfpProdTable> {
+    ): CancelablePromise<(VfpProdTable | VfpInjTable)> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/vfp/vfp_table/',
