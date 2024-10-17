@@ -293,7 +293,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                     })}
                     onChange={handleVisualizationModeChange}
                 />
-                <div className="mt-4 outline outline-1 outline-gray-300 rounded-md p-2 shadow-md shadow-gray-400">
+                <div className="mt-6 p-2 rounded-md outline outline-1 outline-slate-300">
                     <div
                         className={resolveClassNames("", {
                             hidden: visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS,
@@ -308,66 +308,61 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             hidden: visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
                         })}
                     >
-                        <Label text="Color realization by parameter">
-                            <div className="pt-2">
-                                <Switch
-                                    checked={colorRealizationsByParameter}
-                                    disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
-                                    onChange={(event) => setColorRealizationsByParameter(event.target.checked)}
-                                />
+                        <Label text="Color realization by parameter" position="left" wrapperClassName="mt-2 mb-2">
+                            <Switch
+                                checked={colorRealizationsByParameter}
+                                disabled={visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS}
+                                onChange={(event) => setColorRealizationsByParameter(event.target.checked)}
+                            />
+                        </Label>
+                        <div
+                            className={resolveClassNames({
+                                "pointer-events-none opacity-70":
+                                    !colorRealizationsByParameter ||
+                                    visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                            })}
+                        >
+                            <div className="flex flex-col">
+                                <div className="flex flex-row justify-center items-center p-2 bg-slate-100 shadow-sm border-b">
+                                    <h3 className="text-sm font-semibold flex-grow leading-none">Select Parameter</h3>
+                                    <IconButton
+                                        color="secondary"
+                                        title="Filter list of parameters"
+                                        onClick={() => setShowParameterListFilter((prev) => !prev)}
+                                    >
+                                        <FilterAlt fontSize="small" />
+                                    </IconButton>
+                                </div>
                                 <div
-                                    className={resolveClassNames({
-                                        "pointer-events-none opacity-70":
-                                            !colorRealizationsByParameter ||
-                                            visualizationMode !== VisualizationMode.INDIVIDUAL_REALIZATIONS,
+                                    className={resolveClassNames("p-2 border shadow-md", {
+                                        hidden: !showParameterListFilter,
                                     })}
                                 >
-                                    <div className="flex flex-col">
-                                        <div className="flex flex-row justify-center items-center p-2 bg-slate-100 shadow-sm border-b">
-                                            <h3 className="text-sm font-semibold flex-grow leading-none">
-                                                Select Parameter
-                                            </h3>
-                                            <IconButton
-                                                color="secondary"
-                                                title="Filter list of parameters"
-                                                onClick={() => setShowParameterListFilter((prev) => !prev)}
-                                            >
-                                                <FilterAlt fontSize="small" />
-                                            </IconButton>
-                                        </div>
-                                        <div
-                                            className={resolveClassNames("p-2 pb-3 border shadow-md", {
-                                                hidden: !showParameterListFilter,
-                                            })}
-                                        >
-                                            <div className="pl-1 text-sm text-gray-500">
-                                                Filter parameters on selection
-                                            </div>
-                                            <ParameterListFilter
-                                                parameters={continuousAndNonConstantParametersUnion}
-                                                initialFilters={["Continuous", "Nonconstant"]}
-                                                onChange={handleParameterListFilterChange}
-                                            />
-                                        </div>
-                                        <div className="pt-2">
-                                            <Select
-                                                options={filteredParameterIdentList.map((elm) => ({
-                                                    value: elm.toString(),
-                                                    label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
-                                                }))}
-                                                size={6}
-                                                value={
-                                                    selectedParameterIdentStr
-                                                        ? [selectedParameterIdentStr.toString()]
-                                                        : undefined
-                                                }
-                                                onChange={handleColorByParameterChange}
-                                            />
-                                        </div>
-                                    </div>
+                                    <Label text="Filter parameters on selection">
+                                        <ParameterListFilter
+                                            parameters={continuousAndNonConstantParametersUnion}
+                                            initialFilters={["Continuous", "Nonconstant"]}
+                                            onChange={handleParameterListFilterChange}
+                                        />
+                                    </Label>
+                                </div>
+                                <div className={`${showParameterListFilter ? "pt-3" : "pt-1"}`}>
+                                    <Select
+                                        options={filteredParameterIdentList.map((elm) => ({
+                                            value: elm.toString(),
+                                            label: elm.groupName ? `${elm.groupName}:${elm.name}` : elm.name,
+                                        }))}
+                                        size={6}
+                                        value={
+                                            selectedParameterIdentStr
+                                                ? [selectedParameterIdentStr.toString()]
+                                                : undefined
+                                        }
+                                        onChange={handleColorByParameterChange}
+                                    />
                                 </div>
                             </div>
-                        </Label>
+                        </div>
                     </div>
                 </div>
             </CollapsibleGroup>
