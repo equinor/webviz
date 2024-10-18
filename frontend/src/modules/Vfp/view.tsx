@@ -8,8 +8,8 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 
 import { Interfaces } from "./interfaces";
-import { VfpDataAccessor } from "./utils/VfpDataAccessor";
-import { VfpPlotBuilder } from "./utils/VfpPlotBuilder";
+import { VfpDataAccessor } from "./utils/vfpDataAccessor";
+import { VfpPlotBuilder } from "./utils/vfpPlotBuilder";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";

@@ -40,7 +40,7 @@ import { vfpTableQueryAtom } from "./atoms/queryAtoms";
 
 import { Interfaces } from "../interfaces";
 import { PressureOption, VfpParam, VfpType } from "../types";
-import { VfpDataAccessor } from "../utils/VfpDataAccessor";
+import { VfpDataAccessor } from "../utils/vfpDataAccessor";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
