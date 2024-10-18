@@ -3,24 +3,15 @@ import { VfpParam, VfpType } from "../types";
 
 export class VfpDataAccessor {
     private _vfpTable: VfpProdTable_api | VfpInjTable_api;
-
+    private _isProdTable: boolean;
 
     constructor(vfpTable: VfpProdTable_api | VfpInjTable_api) {
         this._vfpTable = vfpTable
+        this._isProdTable = isProdTable(this._vfpTable)
     }
 
     isProdTable(): boolean {
-        if ("isProdTable" in this._vfpTable) {
-            return true
-        }
-        return false
-    }
-
-    isInjTable(): boolean {
-        if ("isInjTable" in this._vfpTable) {
-            return true
-        }
-        return false
+        return this._isProdTable
     }
 
     getTableNumber(): number {
@@ -50,7 +41,7 @@ export class VfpDataAccessor {
         } else if (flowRateType === FlowRateType_api.WAT) {
             return `Water Rate (${flowRateUnit})`
         }
-        return "Flow rate type unknown"      
+        throw Error("Unhandled flow rate type.")    
     }
 
     getFlowRateUnit(): string {
@@ -181,4 +172,8 @@ export class VfpDataAccessor {
         }
         throw Error("Unhandled vfp parameter ${vfpParam}")
     }
+}
+
+export function isProdTable(vfpTable: VfpProdTable_api | VfpInjTable_api): boolean {
+    return "isProdTable" in vfpTable
 }
