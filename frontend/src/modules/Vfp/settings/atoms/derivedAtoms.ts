@@ -19,7 +19,7 @@ import {
 import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
 import { PressureOption, VfpParam } from "../../types";
-import { isProdTable } from "@modules/Vfp/utils/VfpDataAccessor";
+import { isProdTable } from "@modules/Vfp/utils/vfpTableClassifier";
 
 export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);

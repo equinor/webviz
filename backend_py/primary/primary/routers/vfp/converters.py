@@ -45,4 +45,4 @@ def to_api_table_definitions(
             thpUnit=vfp_table.thp_unit,
             bhpUnit=vfp_table.bhp_unit,
         )
-    raise ValueError(f"VFP type ")
+    raise ValueError("Unhandled VFP table type when converting to schema")
