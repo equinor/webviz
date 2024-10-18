@@ -10,7 +10,7 @@ export type RealizationNumberDisplayProps = {
     availableRealizations: readonly number[];
     showAsCompact?: boolean;
     disableInteraction: boolean;
-    onRealizationNumberSelectionsChange: (realizationNumberSelections: readonly number[]) => void;
+    onRealizationNumberClick: (selectedRealizations: readonly number[]) => void;
 };
 export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> = (props) => {
     const divRef = React.useRef<HTMLDivElement>(null);
@@ -32,14 +32,14 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         }
         if (!props.selectedRealizations.includes(realization)) {
             // Add the realization to the selected realizations
-            props.onRealizationNumberSelectionsChange([...props.selectedRealizations, realization]);
+            props.onRealizationNumberClick([...props.selectedRealizations, realization]);
             return;
         }
         // Remove the realization from the selected realizations
         const newRealizationNumberSelections = props.selectedRealizations.filter(
             (selectedRealization) => selectedRealization !== realization
         );
-        props.onRealizationNumberSelectionsChange(newRealizationNumberSelections);
+        props.onRealizationNumberClick(newRealizationNumberSelections);
     }
 
     function createRealizationNumberVisualization(isCompact: boolean, numRealizationPerRow: number): React.ReactNode {
