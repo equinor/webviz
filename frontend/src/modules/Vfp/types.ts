@@ -16,3 +16,8 @@ export enum PressureOption {
     BHP = "BHP",
     DP = "DP",
 }
+
+export enum VfpType {
+    VFPPROD = "VFPPROD",
+    VFPINJ = "VFPINJ",
+}

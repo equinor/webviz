@@ -1,5 +1,6 @@
 import React from "react";
 import Plot from "react-plotly.js";
+import { PlotData } from "plotly.js";
 
 import { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -7,8 +8,8 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 
 import { Interfaces } from "./interfaces";
-import { VfpDataAccessor } from "./utils/VfpDataAccessor";
-import { VfpPlotBuilder } from "./utils/VfpPlotBuilder";
+import { VfpDataAccessor } from "./utils/vfpDataAccessor";
+import { VfpPlotBuilder } from "./utils/vfpPlotBuilder";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -43,17 +44,28 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         content = <div className="w-full h-full flex justify-center items-center">Could not load VFP data</div>;
     } else {
         const vfpTable = vfpDataQuery.data
-        const vfpPlotBuilder = new VfpPlotBuilder(new VfpDataAccessor(vfpTable), colorScale);
+        const vfpDataAccessor = new VfpDataAccessor(vfpTable)
+        const vfpPlotBuilder = new VfpPlotBuilder(vfpDataAccessor, colorScale);
 
         const layout = vfpPlotBuilder.makeLayout(wrapperDivSize, selectedPressureOption);
-        const data = vfpPlotBuilder.makeTraces(
-            selectedThpIndices,
-            selectedWfrIndices,
-            selectedGfrIndices,
-            selectedAlqIndices,
-            selectedPressureOption,
-            selectedColorBy,
-        );
+        let data: Partial<PlotData>[] = [];
+        if (vfpDataAccessor.isProdTable()) {
+            data = vfpPlotBuilder.makeVfpProdTraces(
+                selectedThpIndices,
+                selectedWfrIndices,
+                selectedGfrIndices,
+                selectedAlqIndices,
+                selectedPressureOption,
+                selectedColorBy,
+            )
+        }
+        if (vfpDataAccessor.isInjTable()) {
+            data = vfpPlotBuilder.makeVfpInjTraces(
+                selectedThpIndices,
+                selectedPressureOption
+            )
+        }
+
 
         content = <Plot layout={layout} data={data} />;
     }
@@ -62,4 +74,5 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
             {content}
         </div>
     );
+
 }

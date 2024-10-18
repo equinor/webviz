@@ -39,8 +39,8 @@ import {
 import { vfpTableQueryAtom } from "./atoms/queryAtoms";
 
 import { Interfaces } from "../interfaces";
-import { PressureOption, VfpParam } from "../types";
-import { VfpDataAccessor } from "../utils/VfpDataAccessor";
+import { PressureOption, VfpParam, VfpType } from "../types";
+import { VfpDataAccessor } from "../utils/vfpDataAccessor";
 
 export function Settings({ workbenchSession, settingsContext }: ModuleSettingsProps<Interfaces>) {
     const statusWriter = useSettingsStatusWriter(settingsContext);
@@ -131,13 +131,18 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     let gfrLabel = "GFR";
     let alqLabel = "ALQ";
     const vfpTableData = vfpTableQuery?.data;
-    let vfpDataAccessor;
+    let vfpDataAccessor: VfpDataAccessor | null = null
+    let vfpType: VfpType | null = null
     if (vfpTableData) {
         vfpDataAccessor = new VfpDataAccessor(vfpTableData)
         thpLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true)
-        wfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.WFR, true)
-        gfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.GFR, true)
-        alqLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.ALQ, true)
+        vfpType = vfpDataAccessor.getVfpType()
+        
+        if (vfpDataAccessor.isProdTable()) {
+            wfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.WFR, true)
+            gfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.GFR, true)
+            alqLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.ALQ, true)
+        }
     }
 
     return (
@@ -182,7 +187,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 multiple={true}
                             />
                         </Label>
-                        <Label text={wfrLabel}>
+                        {vfpDataAccessor?.isProdTable() && <div><Label text={wfrLabel}>
                             <Select
                                 options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.WFR))}
                                 value={selectedWfrIndicies?.map((value) => value.toString()) ?? []}
@@ -208,7 +213,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 size={Math.min(5, vfpDataAccessor?.getNumberOfValues(VfpParam.ALQ) ?? 5)}
                                 multiple={true}
                             />
-                        </Label>
+                        </Label></div>}
                     </div>
             </CollapsibleGroup>
             <CollapsibleGroup title="Pressure Option" expanded={true}>
@@ -223,14 +228,10 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             </CollapsibleGroup>
             <CollapsibleGroup title="Color By" expanded={true}>
                 <Dropdown
-                    options={[
-                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP },
-                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR, false) ?? "WFR", value: VfpParam.WFR },
-                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.GFR, false) ?? "GFR", value: VfpParam.GFR },
-                        { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.ALQ, false) ?? "ALQ", value: VfpParam.ALQ },
-                    ]}
+                    options={makeColorByOptions(vfpType, vfpDataAccessor)}
                     value={selectedColorBy ?? undefined}
                     onChange={handleColorByChange}
+                    
                 />
             </CollapsibleGroup>
         </div>
@@ -239,4 +240,16 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
 function makeFilterOptions(values: number[] | undefined): SelectOption[] {
     return values?.map((value, index) => ({ label: value.toString(), value: index.toString() })) ?? [];
+}
+
+function makeColorByOptions(vfpType: VfpType | null, vfpDataAccessor: VfpDataAccessor | null): SelectOption[] {
+    const options = [{ label: vfpDataAccessor?.getVfpParamLabel(VfpParam.THP, false) ?? "THP", value: VfpParam.THP }]
+    if (vfpType === VfpType.VFPPROD) {
+        options.push(...[
+            { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR, false) ?? "WFR", value: VfpParam.WFR },
+            { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.GFR, false) ?? "GFR", value: VfpParam.GFR },
+            { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.ALQ, false) ?? "ALQ", value: VfpParam.ALQ },
+        ])
+    }
+    return options
 }
