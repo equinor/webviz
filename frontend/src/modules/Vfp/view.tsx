@@ -58,7 +58,7 @@ export function View({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 selectedPressureOption,
                 selectedColorBy,
             )
-        } else if !(vfpDataAccessor.isProdTable()) {
+        if (vfpDataAccessor.isInjTable()) {
             data = vfpPlotBuilder.makeVfpInjTraces(
                 selectedThpIndices,
                 selectedPressureOption

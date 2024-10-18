@@ -3,15 +3,17 @@ import { VfpParam, VfpType } from "../types";
 
 export class VfpDataAccessor {
     private _vfpTable: VfpProdTable_api | VfpInjTable_api;
-    private _isProdTable: boolean;
 
     constructor(vfpTable: VfpProdTable_api | VfpInjTable_api) {
         this._vfpTable = vfpTable
-        this._isProdTable = isProdTable(this._vfpTable)
     }
 
     isProdTable(): boolean {
-        return this._isProdTable
+        return isProdTable(this._vfpTable)
+    }
+
+    isInjTable(): boolean {
+        return !isProdTable(this._vfpTable)
     }
 
     getTableNumber(): number {
@@ -161,7 +163,7 @@ export class VfpDataAccessor {
         if (vfpParam == VfpParam.THP) {
             return this._vfpTable.thpValues.length
         } 
-        if ("isProdTable" in this._vfpTable) { // This means that it is a VFPPROD table
+        if (isProdTable(this._vfpTable)) { // This means that it is a VFPPROD table
             if (vfpParam === VfpParam.WFR) {
                 return this._vfpTable.wfrValues.length
             } else if (vfpParam === VfpParam.GFR) {
@@ -174,6 +176,6 @@ export class VfpDataAccessor {
     }
 }
 
-export function isProdTable(vfpTable: VfpProdTable_api | VfpInjTable_api): boolean {
+export function isProdTable(vfpTable: VfpProdTable_api | VfpInjTable_api): vfpTable is VfpProdTable_api {
     return "isProdTable" in vfpTable
 }

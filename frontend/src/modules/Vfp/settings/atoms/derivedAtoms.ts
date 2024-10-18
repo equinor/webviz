@@ -19,6 +19,7 @@ import {
 import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
 import { PressureOption, VfpParam } from "../../types";
+import { isProdTable } from "@modules/Vfp/utils/VfpDataAccessor";
 
 export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);
@@ -94,7 +95,7 @@ export const selectedWfrIndicesAtom = atom<number[] | null>((get) => {
     if (vfpTable === undefined) {
         return null
     }
-    if (!("isProdTable" in vfpTable)) {
+    if (!(isProdTable(vfpTable))) {
         return null
     }
     const wfr_values = vfpTable.wfrValues ?? [];
@@ -113,7 +114,7 @@ export const selectedGfrIndicesAtom = atom<number[] | null>((get) => {
     if (vfpTable === undefined) {
         return null
     }
-    if (!("isProdTable" in vfpTable)) {
+    if (!(isProdTable(vfpTable))) {
         return null
     }
     const gfr_values = vfpTable.gfrValues ?? [];
@@ -132,7 +133,7 @@ export const selectedAlqIndicesAtom = atom<number[] | null>((get) => {
     if (vfpTable === undefined) {
         return null
     }
-    if (!("isProdTable" in vfpTable)) {
+    if (!(isProdTable(vfpTable))) {
         return null
     }
     const alq_values = vfpTable.alqValues ?? [];
@@ -163,7 +164,7 @@ export const selectedColorByAtom = atom<VfpParam>((get) => {
     if (userSelectedColorBy === null) {
         return VfpParam.THP
     }
-    if ("isInjTable" in vfpTable && ["WFR", "GFR", "ALQ"].includes(userSelectedColorBy)) {
+    if (!isProdTable(vfpTable) && ["WFR", "GFR", "ALQ"].includes(userSelectedColorBy)) {
         return VfpParam.THP
     }
     return userSelectedColorBy

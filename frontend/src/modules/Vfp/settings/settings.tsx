@@ -138,7 +138,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         thpLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.THP, true)
         vfpType = vfpDataAccessor.getVfpType()
         
-        if (vfpType == VfpType.VFPPROD) {
+        if (vfpDataAccessor.isProdTable()) {
             wfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.WFR, true)
             gfrLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.GFR, true)
             alqLabel = vfpDataAccessor.getVfpParamLabel(VfpParam.ALQ, true)
@@ -187,7 +187,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                                 multiple={true}
                             />
                         </Label>
-                        {vfpType === VfpType.VFPPROD && <div><Label text={wfrLabel}>
+                        {vfpDataAccessor?.isProdTable() && <div><Label text={wfrLabel}>
                             <Select
                                 options={makeFilterOptions(vfpDataAccessor?.getVfpParamValues(VfpParam.WFR))}
                                 value={selectedWfrIndicies?.map((value) => value.toString()) ?? []}
