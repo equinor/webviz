@@ -15,6 +15,12 @@ class ResponsePerfMetrics:
         if target_response_for_metrics is not None:
             self._headers = target_response_for_metrics.headers
 
+    def create_sub_metrics_object(self) -> "ResponsePerfMetrics":
+        sub_metrics = ResponsePerfMetrics(None)
+        sub_metrics._metrics_dict = self._metrics_dict
+        sub_metrics._headers = self._headers
+        return sub_metrics
+
     def set_metric(self, metric_name: str, duration_ms: int | float) -> None:
         int_duration_ms = int(duration_ms)
         self._metrics_dict[metric_name] = int_duration_ms

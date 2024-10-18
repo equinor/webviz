@@ -6,7 +6,8 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
+//import { useSurfaceDataQueryByAddress } from "@modules_shared/Surface";
+import { useDeltaSurfaceDataQueryByAddress } from "@modules_shared/Surface/queryHooks";
 import SubsurfaceViewer from "@webviz/subsurface-viewer";
 
 import { Interfaces } from "./interfaces";
@@ -17,7 +18,14 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "png", null, true);
-    const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
+    //const surfDataQuery = useSurfaceDataQueryByAddress(surfaceAddress, "float", null, true);
+
+    const surfAddrA = surfaceAddress;
+    const surfAddrB: any = surfaceAddress ? {...surfaceAddress} : null;
+    if (surfAddrB) {
+        surfAddrB.realizationNum += 1;
+    }
+    const surfDataQuery = useDeltaSurfaceDataQueryByAddress(surfAddrA, surfAddrB, "float", null, true);
 
     const isLoading = surfDataQuery.isFetching;
     statusWriter.setLoading(isLoading);
@@ -26,6 +34,15 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
     usePropagateApiErrorToStatusWriter(surfDataQuery, statusWriter);
 
     const surfData = surfDataQuery.data;
+
+    if (surfData?.valuesFloat32Arr) {
+        // Hack since MapLayer seems to freak out if all values are equal (probably chokes if min/max range is zero)
+        if (surfData.valuesFloat32Arr.every((v) => v === 0 || isNaN(v))) {
+            console.debug("All numeric values are zero, setting first value to 1");
+            const firstZeroVal = surfData.valuesFloat32Arr.indexOf(0);
+            surfData.valuesFloat32Arr[firstZeroVal] = 1;
+        }
+    }
 
     return (
         <div className="relative w-full h-full flex flex-col">
@@ -51,8 +68,8 @@ export function MapView(props: ModuleViewProps<Interfaces>): React.ReactNode {
                                 rotDeg: surfData.surface_def.rot_deg,
                             },
 
-                            contours: [0, 100],
-                            isContoursDepth: true,
+                            contours: false,
+                            isContoursDepth: false,
                             gridLines: false,
                             material: true,
                             smoothShading: true,
