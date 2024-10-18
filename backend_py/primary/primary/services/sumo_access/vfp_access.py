@@ -1,10 +1,8 @@
 import logging
-from io import BytesIO
 from typing import List
 
 import numpy as np
 import pyarrow as pa
-import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import Case
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
 
@@ -70,10 +68,6 @@ class VfpAccess:
             raise MultipleDataMatchesError(
                 f"Multiple VFP tables found with tagname: {tagname} and realization: {realization}", Service.SUMO
             )
-
-        # sumo_table = await table_collection.getitem_async(0)
-        # byte_stream: BytesIO = await sumo_table.blob_async
-        # pa_table: pa.Table = pq.read_table(byte_stream)
 
         pa_table: pa.Table = await table_collection[0].to_arrow_async()
 
