@@ -37,39 +37,6 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
         return this._contextDelegate.getSettings();
     }
 
-    private setAvailableSettingsValues() {
-        const settings = this.getDelegate().getSettings();
-        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
-        settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
-
-        if (!this._wellboreHeadersCache || !this._pickIdentifierCache) {
-            return;
-        }
-        const availableWellboreHeaders: WellboreHeader_api[] = this._wellboreHeadersCache;
-        this._contextDelegate.setAvailableValues(SettingType.SMDA_WELLBORE_HEADERS, availableWellboreHeaders);
-
-        const currentWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
-        let newWellboreHeaders = currentWellboreHeaders.filter((header) =>
-            availableWellboreHeaders.some((availableHeader) => availableHeader.wellboreUuid === header.wellboreUuid)
-        );
-        if (newWellboreHeaders.length === 0) {
-            newWellboreHeaders = availableWellboreHeaders;
-        }
-        if (!isEqual(currentWellboreHeaders, newWellboreHeaders)) {
-            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setValue(newWellboreHeaders);
-        }
-        const availablePickIdentifiers: string[] = this._pickIdentifierCache;
-        this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availablePickIdentifiers);
-
-        let currentPickIdentifier = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
-        if (!currentPickIdentifier || !availablePickIdentifiers.includes(currentPickIdentifier)) {
-            if (availablePickIdentifiers.length > 0) {
-                currentPickIdentifier = availablePickIdentifiers[0];
-                settings[SettingType.SURFACE_NAME].getDelegate().setValue(currentPickIdentifier);
-            }
-        }
-    }
-
     async fetchData(
         oldValues: DrilledWellborePicksSettings,
         newValues: DrilledWellborePicksSettings
@@ -82,9 +49,7 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
         }
 
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
-
         const settings = this.getDelegate().getSettings();
-
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
         const ensembleSet = workbenchSession.getEnsembleSet();
 
@@ -139,10 +104,9 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
                 settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
                 return false;
             }
+            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
+            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
         }
-
-        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
-        settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
 
         if (!this._wellboreHeadersCache || !this._pickIdentifierCache) {
             return false;

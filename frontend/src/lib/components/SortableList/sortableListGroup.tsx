@@ -160,9 +160,9 @@ function Header(props: HeaderProps): React.ReactNode {
                     {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
                 </DenseIconButton>
             )}
-            <div className="flex items-center gap-2 flex-grow">
+            <div className="flex items-center gap-2 flex-grow min-w-0">
                 {props.startAdornment}
-                <div className="flex-grow font-bold">{props.title}</div>
+                <div className="flex-grow font-bold min-w-0">{props.title}</div>
                 {props.endAdornment}
             </div>
         </div>

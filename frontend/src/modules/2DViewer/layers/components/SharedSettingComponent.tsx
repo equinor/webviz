@@ -31,7 +31,11 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
         <SortableListItem
             key={props.sharedSetting.getItemDelegate().getId()}
             id={props.sharedSetting.getItemDelegate().getId()}
-            title={<span className="font-bold">{props.sharedSetting.getItemDelegate().getName()}</span>}
+            title={
+                <div className="font-bold overflow-hidden text-ellipsis">
+                    {props.sharedSetting.getItemDelegate().getName()}
+                </div>
+            }
             startAdornment={
                 <div className="flex gap-1 items-center">
                     <DenseIconButton

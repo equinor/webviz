@@ -51,14 +51,16 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
             key={props.group.getItemDelegate().getId()}
             id={props.group.getItemDelegate().getId()}
             title={
-                <div className="flex gap-1 items-center relative">
+                <div className="flex gap-1 items-center relative min-w-0">
                     <div
                         className="w-2 h-5"
                         style={{
                             backgroundColor: color ?? undefined,
                         }}
                     />
-                    <EditName item={props.group} />
+                    <div className="flex-grow min-w-0">
+                        <EditName item={props.group} />
+                    </div>
                 </div>
             }
             contentStyle={{

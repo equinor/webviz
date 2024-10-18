@@ -93,9 +93,9 @@ function Header(props: HeaderProps): React.ReactNode {
             <div className={resolveClassNames("sortable-list-element-indicator hover:cursor-grab")}>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
-            <div className="flex items-center gap-2 flex-grow">
+            <div className="flex items-center gap-2 flex-grow min-w-0">
                 {props.startAdornment}
-                <div className="flex-grow">{props.title}</div>
+                <div className="flex-grow min-w-0">{props.title}</div>
                 {props.endAdornment}
             </div>
         </div>

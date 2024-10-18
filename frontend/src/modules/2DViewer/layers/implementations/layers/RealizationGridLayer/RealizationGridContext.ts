@@ -46,9 +46,7 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
 
     async fetchData(oldValues: RealizationGridSettings, newValues: RealizationGridSettings): Promise<boolean> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
-
         const settings = this.getDelegate().getSettings();
-
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
         const ensembleSet = workbenchSession.getEnsembleSet();
         const fieldIdentifier = this.getDelegate().getLayerManager().getGlobalSetting("fieldId");
@@ -83,6 +81,7 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
 
             settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(true);
             settings[SettingType.GRID_NAME].getDelegate().setLoadingState(true);
+            settings[SettingType.GRID_LAYER].getDelegate().setLoadingState(true);
             settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
 
             try {
@@ -104,15 +103,16 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
             } catch (e) {
                 settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(false);
                 settings[SettingType.GRID_NAME].getDelegate().setLoadingState(false);
+                settings[SettingType.GRID_LAYER].getDelegate().setLoadingState(false);
                 settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
                 return false;
             }
-        }
 
-        settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(false);
-        settings[SettingType.GRID_NAME].getDelegate().setLoadingState(false);
-        settings[SettingType.GRID_LAYER].getDelegate().setLoadingState(false);
-        settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+            settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(false);
+            settings[SettingType.GRID_NAME].getDelegate().setLoadingState(false);
+            settings[SettingType.GRID_LAYER].getDelegate().setLoadingState(false);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+        }
 
         if (!this._fetchDataCache) {
             return false;

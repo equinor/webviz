@@ -38,9 +38,6 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
 
         const settings = this.getDelegate().getSettings();
-
-        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(true);
-
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
         const ensembleSet = workbenchSession.getEnsembleSet();
         const fieldIdentifier = this.getDelegate().getLayerManager().getGlobalSetting("fieldId");
@@ -56,6 +53,7 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
         const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
+            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(true);
             this._fetchDataCache = null;
 
             let fieldIdentifier: string | null = null;
@@ -78,9 +76,8 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
                 settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
                 return false;
             }
+            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
         }
-
-        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
 
         if (!this._fetchDataCache) {
             return false;

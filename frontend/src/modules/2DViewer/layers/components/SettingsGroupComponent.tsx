@@ -49,7 +49,11 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
         <SortableListGroup
             key={props.group.getItemDelegate().getId()}
             id={props.group.getItemDelegate().getId()}
-            title={props.group.getItemDelegate().getName()}
+            title={
+                <div className="overflow-hidden text-ellipsis whitespace-nowrap min-w-0">
+                    {props.group.getItemDelegate().getName()}
+                </div>
+            }
             contentStyle={{
                 backgroundColor: color ?? undefined,
             }}

@@ -1,10 +1,12 @@
 import React from "react";
 
 import { View as DeckGlView } from "@deck.gl/core";
-import { ViewStatusWriter } from "@framework/StatusWriter";
+import { ViewContext } from "@framework/ModuleContext";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect2D, rectContainsPoint } from "@lib/utils/geometry";
+import { Interfaces } from "@modules/2DViewer/interfaces";
 import { LayerManager, LayerManagerTopic } from "@modules/2DViewer/layers/LayerManager";
 import { GroupDelegateTopic } from "@modules/2DViewer/layers/delegates/GroupDelegate";
 import { usePublishSubscribeTopicValue } from "@modules/2DViewer/layers/delegates/PublishSubscribeDelegate";
@@ -22,7 +24,7 @@ import { DeckGlLayerWithPosition, recursivelyMakeViewsAndLayers } from "../utils
 export type LayersWrapperProps = {
     layerManager: LayerManager;
     preferredViewLayout: PreferredViewLayout;
-    statusWriter: ViewStatusWriter;
+    viewContext: ViewContext<Interfaces>;
 };
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
@@ -30,6 +32,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
+    const statusWriter = useViewStatusWriter(props.viewContext);
 
     const groupDelegate = props.layerManager.getGroupDelegate();
 
@@ -124,7 +127,11 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     }
 
     numLoadingLayers = viewsAndLayers.numLoadingLayers;
-    props.statusWriter.setLoading(viewsAndLayers.numLoadingLayers > 0);
+    statusWriter.setLoading(viewsAndLayers.numLoadingLayers > 0);
+
+    for (const message of viewsAndLayers.errorMessages) {
+        statusWriter.addError(message);
+    }
 
     let bounds: [number, number, number, number] | undefined = undefined;
     if (prevBoundingBox) {

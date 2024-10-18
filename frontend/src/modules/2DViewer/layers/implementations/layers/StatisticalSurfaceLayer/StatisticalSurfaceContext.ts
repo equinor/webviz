@@ -65,6 +65,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._fetchDataCache = null;
 
+            settings[SettingType.SENSITIVITY].getDelegate().setLoadingState(true);
             settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(true);
             settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
             settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
@@ -81,17 +82,18 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
                     gcTime: CACHE_TIME,
                 });
             } catch (e) {
+                settings[SettingType.SENSITIVITY].getDelegate().setLoadingState(false);
                 settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
                 settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
                 settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
                 return false;
             }
-        }
 
-        settings[SettingType.SENSITIVITY].getDelegate().setLoadingState(false);
-        settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
-        settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
-        settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+            settings[SettingType.SENSITIVITY].getDelegate().setLoadingState(false);
+            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
+            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+        }
 
         if (!this._fetchDataCache) {
             return false;

@@ -1,4 +1,5 @@
 import { Layer as DeckGlLayer } from "@deck.gl/core";
+import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorScale } from "@modules/2DViewer/layers/ColorScale";
@@ -32,6 +33,7 @@ export type DeckGlView = {
 export type DeckGlViewsAndLayers = {
     views: DeckGlView[];
     layers: DeckGlLayerWithPosition[];
+    errorMessages: (StatusMessage | string)[];
     boundingBox: BoundingBox | null;
     colorScales: ColorScaleWithId[];
     numLoadingLayers: number;
@@ -41,6 +43,7 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
     const collectedViews: DeckGlView[] = [];
     const collectedLayers: DeckGlLayerWithPosition[] = [];
     const collectedColorScales: ColorScaleWithId[] = [];
+    const collectedErrorMessages: (StatusMessage | string)[] = [];
     let collectedNumLoadingLayers = 0;
     let globalBoundingBox: BoundingBox | null = null;
 
@@ -59,12 +62,11 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
         }
 
         if (instanceofGroup(child) && !(child instanceof DeltaSurface)) {
-            const { views, layers, boundingBox, colorScales, numLoadingLayers } = recursivelyMakeViewsAndLayers(
-                child,
-                numCollectedLayers + collectedLayers.length
-            );
+            const { views, layers, boundingBox, colorScales, numLoadingLayers, errorMessages } =
+                recursivelyMakeViewsAndLayers(child, numCollectedLayers + collectedLayers.length);
 
             collectedColorScales.push(...colorScales);
+            collectedErrorMessages.push(...errorMessages);
             collectedNumLoadingLayers += numLoadingLayers;
             maybeApplyBoundingBox(boundingBox);
 
@@ -90,6 +92,12 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
             }
 
             if (child.getLayerDelegate().getStatus() !== LayerStatus.SUCCESS) {
+                if (child.getLayerDelegate().getStatus() === LayerStatus.ERROR) {
+                    const error = child.getLayerDelegate().getError();
+                    if (error) {
+                        collectedErrorMessages.push(error);
+                    }
+                }
                 continue;
             }
 
@@ -114,6 +122,7 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
     return {
         views: collectedViews,
         layers: collectedLayers,
+        errorMessages: collectedErrorMessages,
         boundingBox: globalBoundingBox,
         colorScales: collectedColorScales,
         numLoadingLayers: collectedNumLoadingLayers,

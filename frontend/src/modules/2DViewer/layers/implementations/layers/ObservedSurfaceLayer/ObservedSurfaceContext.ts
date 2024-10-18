@@ -40,9 +40,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
 
     async fetchData(oldValues: ObservedSurfaceSettings, newValues: ObservedSurfaceSettings): Promise<boolean> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
-
         const settings = this.getDelegate().getSettings();
-
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
         const ensembleSet = workbenchSession.getEnsembleSet();
         const fieldIdentifier = this.getDelegate().getLayerManager().getGlobalSetting("fieldId");
@@ -80,11 +78,10 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
                 settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
                 return false;
             }
+            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
+            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
         }
-
-        settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
-        settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
-        settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
 
         if (!this._fetchDataCache) {
             return false;
