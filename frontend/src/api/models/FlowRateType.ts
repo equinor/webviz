@@ -2,7 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export enum VfpType {
-    VFPPROD = 'VFPPROD',
-    VFPINJ = 'VFPINJ',
+export enum FlowRateType {
+    OIL = 'OIL',
+    LIQ = 'LIQ',
+    GAS = 'GAS',
+    WG = 'WG',
+    TM = 'TM',
+    WAT = 'WAT',
 }
