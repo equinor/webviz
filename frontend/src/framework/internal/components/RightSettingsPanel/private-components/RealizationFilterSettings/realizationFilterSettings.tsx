@@ -137,11 +137,14 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
             // Run filtering
             realizationFilter.runFiltering();
+
+            // Reset the unsaved changes state
             resetHasUnsavedChangesMap[ensembleIdentString] = false;
         }
 
         setEnsembleIdentStringHasUnsavedChangesMap(resetHasUnsavedChangesMap);
         setDialogOpen(false);
+        props.onClose();
     }
 
     function handleDiscardClick(ensembleIdent: EnsembleIdent) {
@@ -167,27 +170,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     }
 
     function handleDiscardAllClick() {
-        // Discard all filter changes
-        // setEnsembleIdentStringToRealizationFilterSelectionMap(
-        //     ensembleSet.getEnsembleArr().reduce((acc, ensemble) => {
-        //         const ensembleIdentString = ensemble.getIdent().toString();
-        //         const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(
-        //             ensemble.getIdent()
-        //         );
-
-        //         acc[ensembleIdentString] = {
-        //             selectedRealizationNumbers: realizationFilter.getFilteredRealizations(),
-        //             realizationNumberSelections: realizationFilter.getRealizationNumberSelections(),
-        //             parameterIdentStringToValueSelectionReadonlyMap:
-        //                 realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
-        //             selectedFilterType: realizationFilter.getFilterType(),
-        //             includeOrExcludeFilter: realizationFilter.getIncludeOrExcludeFilter(),
-        //         };
-        //         return acc;
-        //     }, {} as { [ensembleIdentString: string]: EnsembleRealizationFilterSelections })
-        // );
-
-        // Reset the unsaved changes state
+        // Discard all filter changes - i.e. reset the unsaved changes state
         const resetSelectionsMap: { [ensembleIdentString: string]: EnsembleRealizationFilterSelections } = {};
         const resetHasUnsavedChangesMap: { [ensembleIdentString: string]: boolean } = {};
         for (const ensembleIdentString of Object.keys(ensembleIdentStringToRealizationFilterSelectionsMap)) {
@@ -205,10 +188,11 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             resetHasUnsavedChangesMap[ensembleIdentString] = false;
         }
 
-        setEnsembleIdentStringToRealizationFilterSelectionsMap(resetSelectionsMap);
+        // setEnsembleIdentStringToRealizationFilterSelectionsMap(resetSelectionsMap);
         setEnsembleIdentStringHasUnsavedChangesMap(resetHasUnsavedChangesMap);
 
         setDialogOpen(false);
+        props.onClose();
     }
 
     function areParameterValueSelectionMapsEqual(
@@ -226,26 +210,26 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         return areParameterIdentStringToValueSelectionReadonlyMapsEqual(firstMap, secondMap);
     }
 
-    function handleFilterChange(ensembleIdent: EnsembleIdent, selection: EnsembleRealizationFilterSelections) {
+    function handleFilterChange(ensembleIdent: EnsembleIdent, selections: EnsembleRealizationFilterSelections) {
         const ensembleIdentString = ensembleIdent.toString();
 
         // Register the filter changes in the map
         // NOTE: Check if this is sufficient enough - perhaps has to force update as reference is the same?
         setEnsembleIdentStringToRealizationFilterSelectionsMap({
             ...ensembleIdentStringToRealizationFilterSelectionsMap,
-            [ensembleIdentString]: selection,
+            [ensembleIdentString]: selections,
         });
 
         // Check if the filter changes are different from the original filter
         const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
         const hasUnsavedChanges =
-            !isEqual(selection.realizationNumberSelections, realizationFilter.getRealizationNumberSelections()) ||
+            !isEqual(selections.realizationNumberSelections, realizationFilter.getRealizationNumberSelections()) ||
             !areParameterValueSelectionMapsEqual(
-                selection.parameterIdentStringToValueSelectionReadonlyMap,
+                selections.parameterIdentStringToValueSelectionReadonlyMap,
                 realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()
             ) ||
-            selection.filterType !== realizationFilter.getFilterType() ||
-            selection.includeOrExcludeFilter !== realizationFilter.getIncludeOrExcludeFilter();
+            selections.filterType !== realizationFilter.getFilterType() ||
+            selections.includeOrExcludeFilter !== realizationFilter.getIncludeOrExcludeFilter();
 
         // Update the unsaved changes state
         setEnsembleIdentStringHasUnsavedChangesMap({
@@ -291,7 +275,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                                     key={ensembleIdent.toString()}
                                     ensembleName={ensemble.getCustomName() ?? ensemble.getDisplayName()}
                                     selections={selections}
-                                    hasUnsavedChanges={
+                                    hasUnsavedSelections={
                                         ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]
                                     }
                                     availableEnsembleRealizations={ensemble.getRealizations()}
@@ -300,7 +284,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                                     isAnotherFilterActive={isAnotherActive}
                                     onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
                                     onHeaderClick={() => handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent)}
-                                    onFilterChange={(newSelection) => handleFilterChange(ensembleIdent, newSelection)}
+                                    onFilterChange={(newSelections) => handleFilterChange(ensembleIdent, newSelections)}
                                     onApplyClick={() => handleApplyClick(ensembleIdent)}
                                     onDiscardClick={() => handleDiscardClick(ensembleIdent)}
                                 />

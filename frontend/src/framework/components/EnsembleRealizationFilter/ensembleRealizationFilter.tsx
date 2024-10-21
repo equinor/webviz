@@ -25,7 +25,6 @@ import { createBestSuggestedRealizationNumberSelections } from "./private-utils/
 import { createSmartNodeSelectorTagListFromParameterIdentStrings } from "./private-utils/smartNodeSelectorUtils";
 
 export type EnsembleRealizationFilterSelections = {
-    // hasUnsavedChanges: boolean;
     displayRealizationNumbers: readonly number[]; // Currently selected realization numbers (for visualization)
     realizationNumberSelections: readonly RealizationNumberSelection[] | null; // For ByRealizationNumberFilter
     parameterIdentStringToValueSelectionReadonlyMap: ReadonlyMap<string, ParameterValueSelection> | null; // For ByParameterValueFilter
@@ -35,16 +34,15 @@ export type EnsembleRealizationFilterSelections = {
 
 export type EnsembleRealizationFilterProps = {
     selections: EnsembleRealizationFilterSelections;
-    hasUnsavedChanges: boolean;
+    hasUnsavedSelections: boolean;
     ensembleName: string;
     availableEnsembleRealizations: readonly number[];
     ensembleParameters: EnsembleParameters;
     isActive: boolean;
     isAnotherFilterActive: boolean;
-    title?: string;
     onClick?: () => void;
     onHeaderClick?: () => void;
-    onFilterChange?: (newSelection: EnsembleRealizationFilterSelections) => void;
+    onFilterChange?: (newSelections: EnsembleRealizationFilterSelections) => void;
     onApplyClick?: () => void;
     onDiscardClick?: () => void;
 };
@@ -58,35 +56,43 @@ export type EnsembleRealizationFilterProps = {
 export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps> = (props) => {
     const [prevIsActive, setPrevIsActive] = React.useState<boolean>(props.isActive);
 
-    // If the tags are set to undefined, the tags will be reset to parameterIdentStringToValueSelectionReadonlyMap on next render
+    // States for handling initial realization number selections and smart node selector tags
+    // - When undefined, the initial value will be calculated on next render
+    const [initialRealizationNumberSelections, setInitialRealizationNumberSelections] = React.useState<
+        readonly RealizationNumberSelection[] | null | undefined
+    >(props.selections.realizationNumberSelections);
     const [selectedSmartNodeSelectorTags, setSelectedSmartNodeSelectorTags] = React.useState<string[] | undefined>(
         createSmartNodeSelectorTagListFromParameterIdentStrings([
             ...(props.selections.parameterIdentStringToValueSelectionReadonlyMap?.keys() ?? []),
         ])
     );
 
+    // Update initial realization number selection due to conditional rendering
+    let actualInitialRealizationNumberSelections = initialRealizationNumberSelections;
+    if (prevIsActive !== props.isActive) {
+        setPrevIsActive(props.isActive);
+
+        if (props.isActive && props.selections.filterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
+            // Due to conditional rendering, we have to ensure correct initial state when mounting realization number filter component
+            setInitialRealizationNumberSelections(props.selections.realizationNumberSelections);
+            actualInitialRealizationNumberSelections = props.selections.realizationNumberSelections;
+        }
+    }
+
+    // Reset the initial number selections to the current realization number selections when set to undefined
+    if (actualInitialRealizationNumberSelections === undefined) {
+        setInitialRealizationNumberSelections(props.selections.realizationNumberSelections);
+        actualInitialRealizationNumberSelections = props.selections.realizationNumberSelections;
+    }
+
     // Reset the tags to parameterIdentStringToValueSelectionReadonlyMap when set to undefined
-    let candidateSmartNodeSelectorTags = selectedSmartNodeSelectorTags;
-    if (candidateSmartNodeSelectorTags === undefined) {
+    let actualSmartNodeSelectorTags = selectedSmartNodeSelectorTags;
+    if (actualSmartNodeSelectorTags === undefined) {
         const newSmartNodeSelectorTags = createSmartNodeSelectorTagListFromParameterIdentStrings([
             ...(props.selections.parameterIdentStringToValueSelectionReadonlyMap?.keys() ?? []),
         ]);
         setSelectedSmartNodeSelectorTags(newSmartNodeSelectorTags);
-        candidateSmartNodeSelectorTags = newSmartNodeSelectorTags;
-    }
-    const actualSmartNodeSelectorTags: string[] = candidateSmartNodeSelectorTags;
-
-    const [initialRealizationNumberSelections, setInitialRealizationNumberSelections] = React.useState<
-        readonly RealizationNumberSelection[] | null
-    >(props.selections.realizationNumberSelections);
-
-    if (prevIsActive !== props.isActive) {
-        setPrevIsActive(props.isActive);
-
-        if (!prevIsActive && props.selections.filterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
-            // Due to conditional rendering, we have to ensure correct initial state when mounting realization number filter component
-            setInitialRealizationNumberSelections(props.selections.realizationNumberSelections);
-        }
+        actualSmartNodeSelectorTags = newSmartNodeSelectorTags;
     }
 
     function handleRealizationNumberFilterChanged(selection: ByRealizationNumberFilterSelection) {
@@ -94,6 +100,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             return;
         }
 
+        // Create realization number array to display based on current selection
         const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
             selection.realizationNumberSelections,
             props.availableEnsembleRealizations,
@@ -115,6 +122,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             return;
         }
 
+        // Create realization number array to display based on current selection
         const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
             selection.parameterIdentStringToValueSelectionMap,
             props.ensembleParameters,
@@ -133,10 +141,12 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             return;
         }
 
+        // Create realization number array to display based on current selection
         let realizationNumberArray: readonly number[] = [];
         if (newFilterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
-            // To ensure correct visualization when mounting realization number filter component
-            // setInitialRealizationNumberSelections(realizationNumberSelections);
+            // Reset initial value to be calculated next render to ensure correct visualization when
+            // mounting realization number filter component
+            setInitialRealizationNumberSelections(undefined);
 
             // Update realization numbers based on current selection
             realizationNumberArray = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
@@ -144,7 +154,6 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                 props.availableEnsembleRealizations,
                 props.selections.includeOrExcludeFilter
             );
-            setInitialRealizationNumberSelections(props.selections.realizationNumberSelections);
         } else if (newFilterType === RealizationFilterType.BY_PARAMETER_VALUES) {
             realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
                 props.selections.parameterIdentStringToValueSelectionReadonlyMap,
@@ -188,45 +197,19 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     }
 
     function handleApplyClick() {
+        // Reset states for initialization on next render
+        setSelectedSmartNodeSelectorTags(undefined);
+        setInitialRealizationNumberSelections(undefined);
+
         if (props.onApplyClick) {
             props.onApplyClick();
         }
     }
 
     function handleDiscardClick() {
-        // setSelectedFilterType(props.realizationFilter.getFilterType());
-        // setSelectedIncludeOrExcludeFilter(props.realizationFilter.getIncludeOrExcludeFilter());
-        // setInitialRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
-        // setRealizationNumberSelections(props.realizationFilter.getRealizationNumberSelections());
-        // setSelectedParameterIdentStringToValueSelectionReadonlyMap(
-        //     props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()
-        // );
-
-        // setSelectedSmartNodeSelectorTags(
-        //     createSmartNodeSelectorTagListFromParameterIdentStrings([
-        //         ...(props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()?.keys() ?? []),
-        //     ])
-        // );
-
-        // if (props.realizationFilter.getFilterType() === RealizationFilterType.BY_REALIZATION_NUMBER) {
-        //     // Update realization numbers based on current selection
-        //     const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
-        //         props.realizationFilter.getRealizationNumberSelections(),
-        //         props.realizationFilter.getAvailableEnsembleRealizations(),
-        //         props.realizationFilter.getIncludeOrExcludeFilter()
-        //     );
-        //     setSelectedRealizationNumbers(realizationNumberArray);
-        // } else if (props.realizationFilter.getFilterType() === RealizationFilterType.BY_PARAMETER_VALUES) {
-        //     const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
-        //         props.realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
-        //         props.realizationFilter.getEnsembleParameters(),
-        //         props.realizationFilter.getAvailableEnsembleRealizations()
-        //     );
-        //     setSelectedRealizationNumbers(realizationNumberArray);
-        // }
-
-        // Reset smart node selector tags to undefined, thus tags will be calculated on next render
+        // Reset states for initialization on next render
         setSelectedSmartNodeSelectorTags(undefined);
+        setInitialRealizationNumberSelections(undefined);
 
         if (props.onDiscardClick) {
             props.onDiscardClick();
@@ -252,13 +235,14 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                 "hover:opacity-75 transition-opacity duration-100": !props.isActive && props.isAnotherFilterActive,
                 "hover:outline-blue-400 hover:shadow-blue-400 hover:shadow-md":
                     !props.isActive && !props.isAnotherFilterActive,
-                "outline-orange-400 shadow-orange-400 shadow-lg": props.isActive && props.hasUnsavedChanges,
-                "outline-blue-400 shadow-blue-400 shadow-lg": props.isActive && !props.hasUnsavedChanges,
+                "outline-orange-400 shadow-orange-400 shadow-lg": props.isActive && props.hasUnsavedSelections,
+                "outline-blue-400 shadow-blue-400 shadow-lg": props.isActive && !props.hasUnsavedSelections,
                 "opacity-100": props.isActive || !props.isAnotherFilterActive,
-                "opacity-60 ": !props.isActive && props.isAnotherFilterActive && props.hasUnsavedChanges,
-                "opacity-30": !props.isActive && props.isAnotherFilterActive && !props.hasUnsavedChanges,
-                "outline-2 outline-orange-400 shadow-orange-400 shadow-lg": !props.isActive && props.hasUnsavedChanges,
-                "outline-2 outline-gray-300 shadow-gray-300 shadow-md": !props.isActive && !props.hasUnsavedChanges,
+                "opacity-60 ": !props.isActive && props.isAnotherFilterActive && props.hasUnsavedSelections,
+                "opacity-30": !props.isActive && props.isAnotherFilterActive && !props.hasUnsavedSelections,
+                "outline-2 outline-orange-400 shadow-orange-400 shadow-lg":
+                    !props.isActive && props.hasUnsavedSelections,
+                "outline-2 outline-gray-300 shadow-gray-300 shadow-md": !props.isActive && !props.hasUnsavedSelections,
             })}
             onClick={handleOnClick}
         >
@@ -277,12 +261,12 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     </div>
                     <div
                         className={resolveClassNames("flex items-center gap-1", {
-                            hidden: !props.hasUnsavedChanges,
+                            hidden: !props.hasUnsavedSelections,
                         })}
                     >
                         <Button
                             variant="contained"
-                            disabled={!props.hasUnsavedChanges}
+                            disabled={!props.hasUnsavedSelections}
                             size="small"
                             startIcon={<Check fontSize="small" />}
                             onClick={handleApplyClick}
@@ -290,7 +274,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         <Button
                             color="danger"
                             variant="contained"
-                            disabled={!props.hasUnsavedChanges}
+                            disabled={!props.hasUnsavedSelections}
                             size="small"
                             startIcon={<Clear fontSize="small" />}
                             onClick={handleDiscardClick}
@@ -330,7 +314,9 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                                     // Note: This is a conditional rendering based on the selected filter type, i.e. mount and unmount of component
                                     props.selections.filterType === RealizationFilterType.BY_REALIZATION_NUMBER && (
                                         <ByRealizationNumberFilter
-                                            initialRealizationNumberSelections={initialRealizationNumberSelections}
+                                            initialRealizationNumberSelections={
+                                                actualInitialRealizationNumberSelections
+                                            }
                                             realizationNumberSelections={props.selections.realizationNumberSelections}
                                             availableRealizationNumbers={props.availableEnsembleRealizations}
                                             selectedIncludeOrExcludeFilter={props.selections.includeOrExcludeFilter}
