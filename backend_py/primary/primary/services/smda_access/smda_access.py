@@ -45,15 +45,29 @@ class SmdaAccess:
     async def _smda_get_aggregation_request(self, endpoint: str, params: dict) -> dict:
         return await smda_get_aggregation_request(access_token=self._smda_token, endpoint=endpoint, params=params)
 
-    async def get_stratigraphic_units(self, strat_column_identifier: str) -> List[StratigraphicUnit]:
+    async def get_stratigraphic_units(
+        self,
+        strat_column_identifier: str,
+        wellbore_uuid: Optional[str] = None,
+        sort: Optional[list[str]] = None,
+    ) -> List[StratigraphicUnit]:
         """
-        Get stratigraphic units for a given stratigraphic column
+        Get stratigraphic units for a given stratigraphic column.
+        Can optionally include a wellbore uuid to futher filter the age
         """
 
         params = {
+            "_projection": data_model_to_projection_param(StratigraphicUnit),
             "strat_column_identifier": strat_column_identifier,
             "_sort": "strat_unit_level,top_age",
         }
+
+        # Add optional fields, if they exist
+        if wellbore_uuid:
+            params.update({"wellbore_uuid": wellbore_uuid})
+        if sort:
+            params.update({"_sort": ",".join(sort)})
+
         results = await self._smda_get_request(endpoint=SmdaEndpoints.STRAT_UNITS, params=params)
         if not results:
             raise NoDataError(f"No stratigraphic units found for {strat_column_identifier=}.", Service.SMDA)

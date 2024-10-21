@@ -1,3 +1,4 @@
+# type: ignore
 import logging
 from typing import List, Union
 
@@ -282,7 +283,11 @@ async def get_log_curve_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
-    log_curve_name:str = Query(description="Log curve name")
+    log_curve_name: str = Query(description="Log curve name or ID", deprecated=True),
+    source: schemas.WellLogCurveSourceEnum = Query(
+       description="Source to fetch well-logs from.",
+       default=schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG
+    )
     # fmt:on
 ) -> schemas.WellboreLogCurveData:
     """Get log curve data"""
@@ -291,11 +296,37 @@ async def get_log_curve_data(
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         raise NotImplementedError("DROGON log curve data not implemented")
 
-    well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+    if source == schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG:
+        well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+        log_curve = await well_access.get_log_curve_data(wellbore_uuid, log_curve_name)
 
-    log_curve = await well_access.get_log_curve_data(wellbore_uuid=wellbore_uuid, curve_name=log_curve_name)
+        return converters.convert_wellbore_log_curve_data_to_schema(log_curve)
 
-    return converters.convert_wellbore_log_curve_data_to_schema(log_curve)
+    if source == schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY:
+        geo_header_uuid = log_curve_name
+        # TODO: Remove "FIELD"
+        geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token(), "FIELD")
+
+        geo_header = await geol_access.get_geology_header(geo_header_uuid)
+        geo_data = await geol_access.get_wellbore_geology_data(wellbore_uuid, geo_header_uuid)
+
+        return converters.convert_geology_data_to_log_curve_schema(geo_header, geo_data)
+
+    if source == schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY:
+        # "Log curve name" in this context will be the column identifier
+        strat_col = log_curve_name
+
+        # TODO: Remove "Field"
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token(), "FIELD")
+        strat_units = await smda_access.get_stratigraphic_units(
+            strat_column_identifier=strat_col,
+            wellbore_uuid=wellbore_uuid,
+            sort=["entry_md", "strat_unit_level"],
+        )
+
+        return converters.convert_strat_unit_data_to_log_curve_schema(strat_units)
+
+    raise ValueError(f"Unknown source {source}")
 
 
 @router.get("/wellbore_geology_headers")

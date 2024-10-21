@@ -77,6 +77,12 @@ class StratigraphicUnit(BaseModel):
     color_b: int
     lithology_type: int | float | str = "unknown"
 
+    strat_column_identifier: str
+    strat_column_type: str | None
+    strat_unit_identifier: str
+    entry_md: float
+    exit_md: float
+
 
 class StratigraphicFeature(str, Enum):
     """The stratigraphic feature of a surface"""

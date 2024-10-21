@@ -1,3 +1,5 @@
+from typing import TypeVar, Optional
+
 from primary.services.smda_access.types import (
     WellboreHeader,
     WellboreTrajectory,
@@ -199,6 +201,170 @@ def convert_wellbore_log_curve_data_to_schema(
         indexUnit=wellbore_log_curve_data.index_unit,
         noDataValue=wellbore_log_curve_data.no_data_value,
     )
+
+
+def convert_geology_data_to_log_curve_schema(
+    geo_header: WellboreGeoHeader,
+    geo_data_entries: list[WellboreGeoData],
+) -> schemas.WellboreLogCurveData:
+    """Reduces a set of geo data entries and a geo data header into a combined well-log curve"""
+
+    if len(geo_data_entries) < 1:
+        raise ValueError("Expected at least one entry in geology data list")
+
+    index_min = float("inf")
+    index_max = float("-inf")
+
+    data_points: list[tuple[float, float | str | None]] = []
+    metadata_discrete: schemas.DiscreteMetaEntry = {}  # type: ignore[assignment]
+
+    for idx, geo_data in enumerate(geo_data_entries):
+        index_min = min(index_min, geo_data.top_depth_md)
+        index_max = max(index_max, geo_data.base_depth_md)
+
+        next_geo_data = __safe_index_get(idx + 1, geo_data_entries)
+
+        data_points.append((geo_data.top_depth_md, geo_data.code))
+
+        # If the curve is without any gaps, the top of the next pick will be the same as this picks base. Only add a "none" value if the curve reaches a gap
+        if next_geo_data is None or next_geo_data.top_depth_md != geo_data.base_depth_md:
+            data_points.append((geo_data.base_depth_md, None))
+
+        # TODO: Better structure with less subsurface-jank
+        color = (geo_data.color_r, geo_data.color_g, geo_data.color_b)
+        metadata_discrete.update({geo_data.identifier: (geo_data.code, color)})
+
+    return schemas.WellboreLogCurveData(
+        curveDescription="Generated - Derived from geology data entries",
+        name=geo_header.identifier,
+        logName=f"{geo_header.source}::{geo_header.identifier}",
+        indexMin=geo_header.md_min,
+        indexMax=geo_header.md_max,
+        unit="UNITLESS",
+        indexUnit=geo_header.md_unit,
+        dataPoints=data_points,
+        metadataDiscrete=metadata_discrete,
+        # These fields can't be derived in a meaningful way. Luckily, they shouldnt be needed for discrete curves anyways, soooooo
+        minCurveValue=0,
+        maxCurveValue=0,
+        noDataValue=None,
+        curveAlias=None,
+        curveUnitDesc=None,
+    )
+
+
+def convert_strat_unit_data_to_log_curve_schema(
+    strat_units: list[StratigraphicUnit],
+) -> schemas.WellboreLogCurveData:
+    if len(strat_units) < 1:
+        raise ValueError("Expected at least one entry in strat-unit list")
+
+    index_min = float("inf")
+    index_max = float("-inf")
+
+    data_points: list[tuple[float, float | str | None]] = []
+    metadata_discrete: schemas.DiscreteMetaEntry = {}  # type: ignore[assignment]
+
+    # The list of units has entries at different unit-levels, meaning some entries might be "inside" a different entry. Storing "parents" here to access them in later iterations
+    parent_units: list[StratigraphicUnit] = []
+
+    for idx, current_unit in enumerate(strat_units):
+        index_min = min(index_min, current_unit.entry_md)
+        index_max = max(index_max, current_unit.exit_md)
+
+        next_unit = __safe_index_get(idx + 1, strat_units)
+
+        unit_ident = current_unit.strat_unit_identifier
+        code = __get_code_for_string_data(unit_ident, metadata_discrete)
+        colors = (current_unit.color_r, current_unit.color_g, current_unit.color_b)
+
+        metadata_discrete.update({unit_ident: (code, colors)})
+
+        # The previous pick might have placed an exit entry where this one wants to enter. If so, remove the old one
+        # TODO: Figure out how to check next properly to avoid this
+        if data_points and data_points[-1][0] == current_unit.entry_md:
+            data_points.pop()
+
+        data_points.append((current_unit.entry_md, code))
+        # data_points.append([current_unit.exit_md, code])
+
+        if not next_unit:
+            # End of curve. Add a "None" entry to make it explicit.
+            # TODO: Could maybe forgo this if we make the well-log viewer itself resepct min-max values per-curve
+
+            # Get the exit_md furthest down the curve
+            last_exit = current_unit.exit_md
+            while parent_units:
+                parent = parent_units.pop()
+                last_exit = max(last_exit, parent.exit_md)
+
+            data_points.append((last_exit, None))
+            break
+
+        if current_unit.exit_md < next_unit.entry_md:
+            # This section isnt directly connected to the next, so the curve should return to the parent's value here
+            exit_unit = __get_strat_unit_at_exit(current_unit, parent_units)
+            exit_value = None
+
+            if exit_unit:
+                exit_value = __get_code_for_string_data(exit_unit.strat_unit_identifier, metadata_discrete)
+
+            data_points.append((current_unit.exit_md, exit_value))
+
+        if current_unit.strat_unit_level < next_unit.strat_unit_level:
+            parent_units.append(current_unit)
+
+        elif current_unit.strat_unit_level > next_unit.strat_unit_level:
+            parent_units.pop()
+
+    return schemas.WellboreLogCurveData(
+        curveDescription="Generated - Derived from stratigraphy unit entries",
+        name=strat_units[0].strat_column_type or "UNNAMED",
+        logName=f"{strat_units[0].strat_column_identifier}::{strat_units[0].strat_unit_identifier}",
+        indexMin=index_min,
+        indexMax=index_max,
+        unit="UNITLESS",
+        indexUnit="m",
+        dataPoints=data_points,
+        metadataDiscrete=metadata_discrete,
+        # These fields can't be derived in a meaningful way. Luckily, they shouldnt be needed for discrete curves in the WellLogViewer anyways, soooooo
+        minCurveValue=0,
+        maxCurveValue=0,
+        noDataValue=None,
+        curveAlias=None,
+        curveUnitDesc=None,
+    )
+
+
+Tdata = TypeVar("Tdata")
+
+
+# ? Should we make this a global utility? Might be useful for other people
+def __safe_index_get(index: int, arr: list[Tdata], default: Optional[Tdata] = None) -> Optional[Tdata]:
+    """Gets an item from a list, or returns default if index is out of range"""
+
+    try:
+        return arr[index]
+    except IndexError:
+        return default
+
+
+def __get_code_for_string_data(value: str, discrete_meta: schemas.DiscreteMetaEntry) -> int:
+    if value in discrete_meta.keys():
+        return discrete_meta[value][0]
+
+    return len(discrete_meta.keys()) + 1
+
+
+def __get_strat_unit_at_exit(
+    unit: StratigraphicUnit,
+    parent_units: list[StratigraphicUnit],
+) -> StratigraphicUnit | None:
+    for parent in parent_units:
+        if parent.exit_md > unit.exit_md:
+            return parent
+
+    return None
 
 
 # pylint: disable-next=missing-function-docstring

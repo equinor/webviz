@@ -1,6 +1,7 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, NewType
 from pydantic import BaseModel
+
 
 class StratigraphicColumn(BaseModel):
     """
@@ -136,13 +137,16 @@ class WellboreLogCurveHeader(BaseModel):
     curveUnit: str | None
 
 
+DiscreteMetaEntry = NewType("DiscreteMetaEntry", dict[str, tuple[int, tuple[int, int, int]]])
+
+
 class WellboreLogCurveData(BaseModel):
     name: str
     logName: str
     indexMin: float
     indexMax: float
-    minCurveValue: float
-    maxCurveValue: float
+    minCurveValue: float | None
+    maxCurveValue: float | None
     curveAlias: str | None
     curveDescription: str | None
     indexUnit: str
@@ -150,6 +154,8 @@ class WellboreLogCurveData(BaseModel):
     unit: str
     curveUnitDesc: str | None
     dataPoints: list[tuple[float, float | str | None]]
+    # ? Field is very specific for the well-log-viewer module, should we instead create a "standards" service to get curve styles and others like this?
+    metadataDiscrete: Optional[DiscreteMetaEntry] = None
 
 
 # pylint: disable-next=missing-class-docstring

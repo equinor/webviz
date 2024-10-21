@@ -15,6 +15,24 @@ class Endpoints(StrEnum):
 
 
 class GeologyAccess(SmdaAccess):
+    async def get_geology_header(self, header_uuid: str) -> WellboreGeoHeader:
+        """
+        Returns a single header for a geological feature.
+        """
+        timer = PerfTimer()
+        endpoint = Endpoints.GEOLOGY_HEADERS
+        params = {
+            "_projection": data_model_to_projection_param(WellboreGeoHeader),
+            "_sort": "geol_type,identifier",
+            "uuid": header_uuid,
+        }
+
+        result = await self._smda_get_request(endpoint=endpoint, params=params)
+        parsed_header = WellboreGeoHeader(**result[0])
+
+        print(f"TIME SMDA fetch wellbore geo headers took {timer.lap_s():.2f} seconds")
+        return parsed_header
+
     async def get_wellbore_geology_headers(self, wellbore_uuid: str) -> list[WellboreGeoHeader]:
         """
         Returns a list of all lithological and paleogeographical headers for a given wellbore

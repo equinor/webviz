@@ -7,8 +7,8 @@ export type WellboreLogCurveData = {
     logName: string;
     indexMin: number;
     indexMax: number;
-    minCurveValue: number;
-    maxCurveValue: number;
+    minCurveValue: (number | null);
+    maxCurveValue: (number | null);
     curveAlias: (string | null);
     curveDescription: (string | null);
     indexUnit: string;
@@ -16,5 +16,6 @@ export type WellboreLogCurveData = {
     unit: string;
     curveUnitDesc: (string | null);
     dataPoints: Array<Array<(number | string | null)>>;
+    metadataDiscrete: (Record<string, any[]> | null);
 };
 
