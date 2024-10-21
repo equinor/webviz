@@ -69,13 +69,16 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
     // Update initial realization number selection due to conditional rendering
     let actualInitialRealizationNumberSelections = initialRealizationNumberSelections;
+    let actualSmartNodeSelectorTags = selectedSmartNodeSelectorTags;
     if (prevIsActive !== props.isActive) {
         setPrevIsActive(props.isActive);
 
+        // Due to conditional rendering, we have to ensure correct initial state when mounting realization number filter component
         if (props.isActive && props.selections.filterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
-            // Due to conditional rendering, we have to ensure correct initial state when mounting realization number filter component
-            setInitialRealizationNumberSelections(props.selections.realizationNumberSelections);
-            actualInitialRealizationNumberSelections = props.selections.realizationNumberSelections;
+            actualInitialRealizationNumberSelections = undefined;
+        }
+        if (props.isActive && props.selections.filterType === RealizationFilterType.BY_PARAMETER_VALUES) {
+            actualSmartNodeSelectorTags = undefined;
         }
     }
 
@@ -86,7 +89,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     }
 
     // Reset the tags to parameterIdentStringToValueSelectionReadonlyMap when set to undefined
-    let actualSmartNodeSelectorTags = selectedSmartNodeSelectorTags;
+
     if (actualSmartNodeSelectorTags === undefined) {
         const newSmartNodeSelectorTags = createSmartNodeSelectorTagListFromParameterIdentStrings([
             ...(props.selections.parameterIdentStringToValueSelectionReadonlyMap?.keys() ?? []),
@@ -294,59 +297,52 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                             onRealizationNumberClick={handleRealizationNumberDisplayClick}
                         />
                     </div>
-                    <div className="flex"></div>
                     {props.isActive && (
-                        <>
-                            <div className="border border-lightgrey rounded-md shadow-md p-2">
-                                <Label text="Active Filter Type" wrapperClassName="border-b pb-2 mb-2">
-                                    <RadioGroup
-                                        value={props.selections.filterType}
-                                        options={Object.values(RealizationFilterType).map((filterType) => {
-                                            return {
-                                                label: RealizationFilterTypeStringMapping[filterType],
-                                                value: filterType,
-                                            };
-                                        })}
-                                        onChange={(_, value) => handleActiveFilterTypeChange(value)}
-                                    />
-                                </Label>
-                                {
-                                    // Note: This is a conditional rendering based on the selected filter type, i.e. mount and unmount of component
-                                    props.selections.filterType === RealizationFilterType.BY_REALIZATION_NUMBER && (
-                                        <ByRealizationNumberFilter
-                                            initialRealizationNumberSelections={
-                                                actualInitialRealizationNumberSelections
-                                            }
-                                            realizationNumberSelections={props.selections.realizationNumberSelections}
-                                            availableRealizationNumbers={props.availableEnsembleRealizations}
-                                            selectedIncludeOrExcludeFilter={props.selections.includeOrExcludeFilter}
-                                            disabled={
-                                                props.selections.filterType !==
-                                                RealizationFilterType.BY_REALIZATION_NUMBER
-                                            }
-                                            onFilterChange={handleRealizationNumberFilterChanged}
-                                        />
-                                    )
-                                }
-                                {
-                                    // Note: This is a conditional rendering based on the selected filter type, i.e. mount and unmount of component
-                                    props.selections.filterType === RealizationFilterType.BY_PARAMETER_VALUES && (
-                                        <ByParameterValueFilter
-                                            ensembleParameters={props.ensembleParameters}
-                                            selectedParameterIdentStringToValueSelectionReadonlyMap={
-                                                props.selections.parameterIdentStringToValueSelectionReadonlyMap
-                                            }
-                                            smartNodeSelectorTags={actualSmartNodeSelectorTags}
-                                            disabled={
-                                                props.selections.filterType !==
-                                                RealizationFilterType.BY_PARAMETER_VALUES
-                                            }
-                                            onFilterChange={handleParameterValueFilterChanged}
-                                        />
-                                    )
-                                }
+                        <div className="border border-lightgrey rounded-md shadow-md p-2">
+                            <Label text="Active Filter Type" wrapperClassName="border-b pb-2 mb-2">
+                                <RadioGroup
+                                    value={props.selections.filterType}
+                                    options={Object.values(RealizationFilterType).map((filterType) => {
+                                        return {
+                                            label: RealizationFilterTypeStringMapping[filterType],
+                                            value: filterType,
+                                        };
+                                    })}
+                                    onChange={(_, value) => handleActiveFilterTypeChange(value)}
+                                />
+                            </Label>
+                            <div
+                                className={resolveClassNames({
+                                    hidden: props.selections.filterType !== RealizationFilterType.BY_REALIZATION_NUMBER,
+                                })}
+                            >
+                                <ByRealizationNumberFilter
+                                    initialRealizationNumberSelections={actualInitialRealizationNumberSelections}
+                                    realizationNumberSelections={props.selections.realizationNumberSelections}
+                                    availableRealizationNumbers={props.availableEnsembleRealizations}
+                                    selectedIncludeOrExcludeFilter={props.selections.includeOrExcludeFilter}
+                                    disabled={
+                                        props.selections.filterType !== RealizationFilterType.BY_REALIZATION_NUMBER
+                                    }
+                                    onFilterChange={handleRealizationNumberFilterChanged}
+                                />
                             </div>
-                        </>
+                            <div
+                                className={resolveClassNames({
+                                    hidden: props.selections.filterType !== RealizationFilterType.BY_PARAMETER_VALUES,
+                                })}
+                            >
+                                <ByParameterValueFilter
+                                    ensembleParameters={props.ensembleParameters}
+                                    selectedParameterIdentStringToValueSelectionReadonlyMap={
+                                        props.selections.parameterIdentStringToValueSelectionReadonlyMap
+                                    }
+                                    smartNodeSelectorTags={actualSmartNodeSelectorTags}
+                                    disabled={props.selections.filterType !== RealizationFilterType.BY_PARAMETER_VALUES}
+                                    onFilterChange={handleParameterValueFilterChanged}
+                                />
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>
