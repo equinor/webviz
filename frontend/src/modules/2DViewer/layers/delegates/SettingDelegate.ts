@@ -14,6 +14,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
     private _availableValues: AvailableValuesType<TValue> = [] as AvailableValuesType<TValue>;
     private _overriddenValue: TValue | undefined = undefined;
     private _loading: boolean = false;
+    private _currentValueFromPersistence: TValue | null = null;
 
     constructor(value: TValue, owner: Setting<TValue>) {
         this._id = v4();
@@ -32,6 +33,11 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         if (this._overriddenValue !== undefined) {
             return this._overriddenValue;
         }
+
+        if (this._currentValueFromPersistence !== null) {
+            return this._currentValueFromPersistence;
+        }
+
         return this._value;
     }
 
@@ -39,10 +45,19 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return this._isValueValid;
     }
 
+    isPersistedValue(): boolean {
+        return this._currentValueFromPersistence !== null;
+    }
+
+    /*
+     * This method is used to set the value of the setting.
+     * It should only be called when a user is changing a setting.
+     */
     setValue(value: TValue): void {
         if (isEqual(this._value, value)) {
             return;
         }
+        this._currentValueFromPersistence = null;
         this._value = value;
 
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
@@ -94,34 +109,55 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return this._availableValues;
     }
 
-    private maybeFixupValue(value: TValue): TValue {
-        if (typeof value === "boolean") {
+    private maybeFixupValue(): void {
+        if (this.isPersistedValue()) {
+            return;
+        }
+        if (typeof this._value === "boolean") {
             this.setIsValueValid(true);
-            return value;
         }
         if (this._availableValues.length === 0) {
             this.setIsValueValid(false);
-            return value;
         }
-        if (this._availableValues.includes(value)) {
+        if (this._availableValues.includes(this._value)) {
             this.setIsValueValid(true);
-            return value;
         }
         this.setIsValueValid(true);
 
         if (this._owner.fixupValue) {
-            return this._owner.fixupValue(this._availableValues, value);
+            this._value = this._owner.fixupValue(this._availableValues, this._value);
         }
 
-        if (Array.isArray(value)) {
-            return [this._availableValues[0]] as TValue;
+        if (Array.isArray(this._value)) {
+            this._value = [this._availableValues[0]] as TValue;
         }
-        return this._availableValues[0] as TValue;
+        this._value = this._availableValues[0] as TValue;
+    }
+
+    private maybeResetPersistedValue(): void {
+        if (this._currentValueFromPersistence === null) {
+            return;
+        }
+
+        if (Array.isArray(this._currentValueFromPersistence)) {
+            const currentValueFromPersistence = this._currentValueFromPersistence as TValue[];
+            if (this._availableValues.every((value) => currentValueFromPersistence.includes(value as TValue))) {
+                this._value = this._currentValueFromPersistence;
+                this._currentValueFromPersistence = null;
+            }
+            return;
+        }
+
+        if (this._availableValues.includes(this._currentValueFromPersistence as TValue)) {
+            this._value = this._currentValueFromPersistence as TValue;
+            this._currentValueFromPersistence = null;
+        }
     }
 
     setAvailableValues(availableValues: AvailableValuesType<TValue>): void {
         this._availableValues = availableValues;
-        this.setValue(this.maybeFixupValue(this._value));
+        this.maybeFixupValue();
+        this.maybeResetPersistedValue();
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);
     }
 }
