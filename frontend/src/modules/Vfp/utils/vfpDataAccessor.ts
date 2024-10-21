@@ -152,7 +152,7 @@ export class VfpDataAccessor {
     }
 
     getVfpInjBhpValues(thpIndex: number) : number[] {
-        if(!(isProdTable(this._vfpTable))) {
+        if((isProdTable(this._vfpTable))) {
             throw Error("The getVfpInjBhpValues function is only valid for Injection VFP tables.")    
         }
         const nbFlowRates = this._vfpTable.flowRateValues.length
