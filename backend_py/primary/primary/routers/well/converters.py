@@ -2,6 +2,7 @@ from primary.services.smda_access.types import (
     WellboreHeader,
     WellboreTrajectory,
     WellborePick,
+    StratigraphicColumn,
     StratigraphicUnit,
     WellboreGeoHeader,
     WellboreGeoData,
@@ -32,6 +33,15 @@ def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.Well
         confidence=wellbore_pick.confidence,
         depthReferencePoint=wellbore_pick.depth_reference_point,
         mdUnit=wellbore_pick.md_unit,
+    )
+
+
+def convert_stratigraphic_column_to_schema(column: StratigraphicColumn) -> schemas.StratigraphicColumn:
+    return schemas.StratigraphicColumn(
+        stratColumnIdentifier=column.strat_column_identifier,
+        stratColumnAreaType=column.strat_column_area_type,
+        stratColumnStatus=column.strat_column_status,
+        stratColumnType=column.strat_column_type,
     )
 
 
@@ -152,21 +162,21 @@ def convert_wellbore_geo_header_to_well_log_header(
         source=schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY,
         sourceId=geo_header.uuid,
         curveType=utils.curve_type_from_header(geo_header),
-        logName="Geology",
+        logName=geo_header.source,
         curveName=geo_header.identifier,
         curveUnit="UNITLESS",
     )
 
 
-def convert_strat_unit_type_to_well_log_header(
-    strat_unit_type: str,
-) -> schemas.WellboreLogCurveHeader:
+def convert_strat_column_to_well_log_header(column: StratigraphicColumn) -> schemas.WellboreLogCurveHeader:
+    type_or_default = column.strat_column_type or "UNNAMED"
+
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY,
-        sourceId=strat_unit_type,
+        sourceId=column.strat_column_identifier,
         curveType=schemas.WellLogCurveTypeEnum.DISCRETE,
-        logName="Stratigraphy",
-        curveName=strat_unit_type[0].upper() + strat_unit_type[1:],
+        logName=column.strat_column_identifier,
+        curveName=type_or_default[0].upper() + type_or_default[1:],
         curveUnit="UNITLESS",
     )
 
@@ -210,6 +220,6 @@ def convert_wellbore_geo_data_to_schema(data: WellboreGeoData) -> schemas.Wellbo
         geolType=data.geol_type,
         geolGroup=data.geol_group,
         code=data.code,
-        color=(data.color_r, data.color_g, data.color_b),
-        mdRange=(data.top_depth_md, data.base_depth_md),
+        color=[data.color_r, data.color_g, data.color_b],
+        mdRange=[data.top_depth_md, data.base_depth_md],
     )

@@ -19,7 +19,6 @@ class GeologyAccess(SmdaAccess):
         """
         Returns a list of all lithological and paleogeographical headers for a given wellbore
         """
-
         timer = PerfTimer()
         endpoint = Endpoints.GEOLOGY_HEADERS
         params = {

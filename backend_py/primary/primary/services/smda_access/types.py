@@ -46,6 +46,17 @@ class WellboreHeader(BaseModel):
     wellbore_status: str | None
 
 
+class StratigraphicColumn(BaseModel):
+    """
+    Stratigraphic column from SMDA
+    """
+
+    strat_column_identifier: str
+    strat_column_area_type: str
+    strat_column_status: str
+    strat_column_type: str | None
+
+
 class StratigraphicUnit(BaseModel):
     """
     Stratigraphic unit from SMDA
@@ -89,6 +100,7 @@ class WellboreGeoHeader(BaseModel):
     geol_type: str
     md_min: float
     md_max: float
+    md_unit: str
     source: str
     # description: str | None
 

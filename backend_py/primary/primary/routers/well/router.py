@@ -14,6 +14,7 @@ from primary.services.ssdl_access.well_access import WellAccess as SsdlWellAcces
 
 from . import schemas
 from . import converters
+from .utils import is_drogon_wellbore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -62,6 +63,24 @@ async def get_well_trajectories(
         converters.convert_well_trajectory_to_schema(wellbore_trajectory)
         for wellbore_trajectory in wellbore_trajectories
     ]
+
+
+@router.get("/wellbore_stratigraphic_columns/")
+async def get_wellbore_stratigraphic_columns(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    wellbore_uuid: str = Query(description="Wellbore uuid"),
+) -> list[schemas.StratigraphicColumn]:
+
+    if is_drogon_wellbore(wellbore_uuid):
+        # Handle DROGON
+        well_access = DrogonSmdaAccess()
+    else:
+        # TODO: Handle field
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier="FIELD")
+
+    strat_columns = await well_access.get_stratigraphic_columns_for_wellbore(wellbore_uuid)
+
+    return [converters.convert_stratigraphic_column_to_schema(col) for col in strat_columns if col.strat_column_type]
 
 
 @router.get("/wellbore_pick_identifiers/")
@@ -250,14 +269,12 @@ async def __get_headers_from_smda_geology(
     return [converters.convert_wellbore_geo_header_to_well_log_header(header) for header in geo_headers]
 
 
-async def __get_headers_from_smda_stratigraghpy(
-    authenticated_user: AuthenticatedUser, wellbore_uuid: str
-) -> list[schemas.WellboreLogCurveHeader]:
+async def __get_headers_from_smda_stratigraghpy(authenticated_user: AuthenticatedUser, wellbore_uuid: str):
     # TODO fix field
     strat_access = SmdaAccess(authenticated_user.get_smda_access_token(), "FIELD")
-    unit_types = await strat_access.get_strat_unit_types_for_wellbore(wellbore_uuid)
+    strat_columns = await strat_access.get_stratigraphic_columns_for_wellbore(wellbore_uuid)
 
-    return [converters.convert_strat_unit_type_to_well_log_header(u_type) for u_type in unit_types]
+    return [converters.convert_strat_column_to_well_log_header(col) for col in strat_columns if col.strat_column_type]
 
 
 @router.get("/log_curve_data/")

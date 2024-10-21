@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { StratigraphicColumn } from '../models/StratigraphicColumn';
 import type { WellboreCasing } from '../models/WellboreCasing';
 import type { WellboreCompletion } from '../models/WellboreCompletion';
 import type { WellboreGeoData } from '../models/WellboreGeoData';
@@ -199,7 +200,8 @@ export class WellService {
     }
     /**
      * Get Wellbore Log Curve Headers
-     * Get all log curve headers for a single well bore
+     * Get all log curve headers for a single well bore.
+     * Logs are available from multiple sources, which can be specificed by the "sources" parameter.
      * @param wellboreUuid Wellbore uuid
      * @param sources Sources to fetch well-logs from.
      * @returns WellboreLogCurveHeader Successful Response
@@ -225,13 +227,15 @@ export class WellService {
      * Get Log Curve Data
      * Get log curve data
      * @param wellboreUuid Wellbore uuid
-     * @param logCurveName Log curve name
+     * @param logCurveName Log curve name or ID
+     * @param source Source to fetch well-logs from.
      * @returns WellboreLogCurveData Successful Response
      * @throws ApiError
      */
     public getLogCurveData(
         wellboreUuid: string,
         logCurveName: string,
+        source?: WellLogCurveSourceEnum,
     ): CancelablePromise<WellboreLogCurveData> {
         return this.httpRequest.request({
             method: 'GET',
@@ -239,6 +243,7 @@ export class WellService {
             query: {
                 'wellbore_uuid': wellboreUuid,
                 'log_curve_name': logCurveName,
+                'source': source,
             },
             errors: {
                 422: `Validation Error`,

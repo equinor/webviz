@@ -2,6 +2,16 @@ from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel
 
+class StratigraphicColumn(BaseModel):
+    """
+    Stratigraphic column from SMDA
+    """
+
+    stratColumnIdentifier: str
+    stratColumnAreaType: str
+    stratColumnStatus: str
+    stratColumnType: str | None
+
 
 class StratigraphicUnit(BaseModel):
     """

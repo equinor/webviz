@@ -8,9 +8,18 @@ from primary.services.service_exceptions import (
     NoDataError,
 )
 
-from .types import WellborePick, WellboreTrajectory, WellboreHeader, StratigraphicUnit, StratigraphicSurface
+from .types import (
+    WellborePick,
+    WellboreTrajectory,
+    WellboreHeader,
+    StratigraphicUnit,
+    StratigraphicSurface,
+    StratigraphicColumn,
+)
+from .utils.queries import data_model_to_projection_param
 from .stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 from ._smda_get_request import smda_get_request, smda_get_aggregation_request
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -18,6 +27,7 @@ LOGGER = logging.getLogger(__name__)
 class SmdaEndpoints:
     STRAT_UNITS = "strat-units"
     WELLBORE_STRATIGRAPHY = "wellbore-stratigraphy"
+    WELLBORE_STRAT_COLUMN = "wellbore-strat-columns"
     WELLBORE_SURVEY_HEADERS = "wellbore-survey-headers"
     WELLHEADERS = "wellheaders"
     WELLBORE_SURVEY_SAMPLES = "wellbore-survey-samples"
@@ -49,6 +59,32 @@ class SmdaAccess:
             raise NoDataError(f"No stratigraphic units found for {strat_column_identifier=}.", Service.SMDA)
         units = [StratigraphicUnit(**result) for result in results]
         return units
+
+    async def get_stratigraphic_columns_for_wellbore(self, wellbore_uuid: str) -> list[StratigraphicColumn]:
+        """Fetches a list of all stratigrapic columns avaialbe for a specific wellbore"""
+        endpoint = SmdaEndpoints.WELLBORE_STRAT_COLUMN
+        params = {
+            "_projection": data_model_to_projection_param(StratigraphicColumn),
+            "wellbore_uuid": wellbore_uuid,
+            # Sorting to facilitate deduping. Prioritize the most newly updated entry
+            "_sort": "strat_column_identifier,update_date",
+            "_order": "desc",
+        }
+
+        results = await self._smda_get_request(endpoint=endpoint, params=params)
+
+        # Returned columns are sometimes duplicated with all main fields as the same (atleast as far as I can see, only timestamps and uuid are different). We will dedupe the list by only picking the newest entry, which will be sorted to the top
+        seen_idents = set()
+        valid_data = []
+
+        for result in results:
+            column = StratigraphicColumn(**result)
+
+            if column.strat_column_identifier not in seen_idents:
+                seen_idents.add(column.strat_column_identifier)
+                valid_data.append(column)
+
+        return valid_data
 
     async def get_strat_unit_types_for_wellbore(self, wellbore_uuid: str) -> List[str]:
         """

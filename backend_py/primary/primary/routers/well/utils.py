@@ -3,6 +3,7 @@ from primary.services.ssdl_access.types import WellboreLogCurveHeader
 
 from . import schemas
 
+
 def curve_type_from_header(
     curve_header: WellboreLogCurveHeader | WellboreGeoHeader,
 ) -> schemas.WellLogCurveTypeEnum:
@@ -14,3 +15,7 @@ def curve_type_from_header(
         return schemas.WellLogCurveTypeEnum.DISCRETE
 
     return schemas.WellLogCurveTypeEnum.CONTINUOUS
+
+
+def is_drogon_wellbore(wellbore_uuid: str):
+    return wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]
