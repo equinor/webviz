@@ -107,7 +107,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
         setSelectedVectorNames(selection.selectedNodes);
-        setSelectedVectorTags(selection.selectedTags);
+        setSelectedVectorTags(selection.selectedTags.map((tag) => tag.text));
     }
 
     function handleFrequencySelectionChange(newFrequencyStr: string) {

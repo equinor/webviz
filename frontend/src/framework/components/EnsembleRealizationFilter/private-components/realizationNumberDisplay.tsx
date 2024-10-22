@@ -50,7 +50,7 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         const realizationDivSizeClass = isCompact ? "w-[9px] h-[9px]" : "w-[12px] h-[12px]";
 
         let rowElmCounter = 0;
-        let groupCounter = 0;
+        let rowCounter = 0;
         let rowElements: JSX.Element[] = [];
         for (const [index, realization] of allRealizationsInRange.entries()) {
             const isCurrentRealizationAvailable = props.availableRealizations.includes(realization);
@@ -77,17 +77,17 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
             );
             rowElements.push(realizationDiv);
 
-            // If the group is full (or last realization), add it to the main div elements and reset counter
+            // If the row is full (or last realization), add it to the main div elements and reset counter
             const isLastRealization = index === allRealizationsInRange.length - 1;
             if (++rowElmCounter === numRealizationPerRow || isLastRealization) {
-                const groupDiv = (
-                    <div key={`group-${groupCounter}`} className={resolveClassNames(`flex ${gapClass}`)}>
+                const rowDiv = (
+                    <div key={`row-${rowCounter}`} className={resolveClassNames(`flex ${gapClass}`)}>
                         {[...rowElements]}
                     </div>
                 );
-                mainDivElements.push(groupDiv);
+                mainDivElements.push(rowDiv);
                 rowElmCounter = 0;
-                groupCounter++;
+                rowCounter++;
             }
         }
         return <div className={resolveClassNames(`flex flex-col justify-start ${gapClass}`)}>{mainDivElements}</div>;

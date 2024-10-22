@@ -74,7 +74,7 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
     );
 
     function handleSmartNodeSelectorChange(selection: SmartNodeSelectorSelection) {
-        setSelectedTags(selection.selectedTags);
+        setSelectedTags(selection.selectedTags.map((tag) => tag.text));
         setSelectedNodes(selection.selectedNodes);
     }
 
