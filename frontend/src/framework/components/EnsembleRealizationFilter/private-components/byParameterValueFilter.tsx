@@ -39,6 +39,8 @@ export type ByParameterValueFilterProps = {
 };
 
 export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (props) => {
+    const { onFilterChange } = props;
+
     // Compare by reference (ensure if it is enough to compare by reference)
     const smartNodeSelectorTreeDataNodes = React.useMemo<TreeDataNode[]>(() => {
         const includeConstantParameters = false;
@@ -50,56 +52,64 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         );
     }, [props.ensembleParameters]);
 
-    function handleParameterNameSelectionChanged(selection: SmartNodeSelectorSelection) {
-        if (selection === null) {
-            return;
-        }
-
-        // Find new parameter ident strings that are not in the current map
-        const newMap = new Map(props.selectedParameterIdentStringToValueSelectionReadonlyMap);
-
-        // Get selected parameter ident strings
-        const selectedParameterIdentStrings = selection.selectedIds;
-
-        // Delete deselected parameter ident strings
-        const deselectedParameterIdentStrings = Array.from(newMap.keys()).filter(
-            (paramIdentString) => !selectedParameterIdentStrings.includes(paramIdentString)
-        );
-        for (const deselectedParameterIdentString of deselectedParameterIdentStrings) {
-            newMap.delete(deselectedParameterIdentString);
-        }
-
-        // Add new selected parameter ident strings
-        const newDiscreteValueSelection: Readonly<string[] | number[]> = [];
-        for (const parameterIdentString of selectedParameterIdentStrings) {
-            const parameter = props.ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
-            if (!parameter || newMap.has(parameterIdentString)) {
-                continue;
+    const handleParameterNameSelectionChanged = React.useCallback(
+        function handleParameterNameSelectionChanged(selection: SmartNodeSelectorSelection) {
+            if (selection === null) {
+                return;
             }
 
-            let newParameterValueSelection: ParameterValueSelection = newDiscreteValueSelection;
-            if (parameter.type === ParameterType.CONTINUOUS) {
-                const max = Math.max(...parameter.values);
-                const min = Math.min(...parameter.values);
-                const numberRange: Readonly<NumberRange> = { start: min, end: max };
-                newParameterValueSelection = numberRange;
+            console.debug(selection.selectedIds);
+            console.debug(selection.selectedNodes);
+
+            // Find new parameter ident strings that are not in the current map
+            const newMap = new Map(props.selectedParameterIdentStringToValueSelectionReadonlyMap);
+
+            // Get selected parameter ident strings
+            const selectedParameterIdentStrings = selection.selectedIds;
+
+            // Delete deselected parameter ident strings
+            const deselectedParameterIdentStrings = Array.from(newMap.keys()).filter(
+                (paramIdentString) => !selectedParameterIdentStrings.includes(paramIdentString)
+            );
+            for (const deselectedParameterIdentString of deselectedParameterIdentStrings) {
+                newMap.delete(deselectedParameterIdentString);
             }
 
-            // Update value selection with .set()
-            // - Do not use .get() and modify by reference, as .get() will return reference to source,
-            //   i.e. props.selectedParameterIdentStringToValueSelectionMap. Thus modifying the value
-            //   will modify the source, which is not allowed.
-            newMap.set(parameterIdentString, newParameterValueSelection);
-        }
+            // Add new selected parameter ident strings
+            const newDiscreteValueSelection: Readonly<string[] | number[]> = [];
+            for (const parameterIdentString of selectedParameterIdentStrings) {
+                const parameter = props.ensembleParameters.findParameter(
+                    ParameterIdent.fromString(parameterIdentString)
+                );
+                if (!parameter || newMap.has(parameterIdentString)) {
+                    continue;
+                }
 
-        const nonEmptyMap = newMap.size > 0 ? (newMap as ReadonlyMap<string, ParameterValueSelection>) : null;
+                let newParameterValueSelection: ParameterValueSelection = newDiscreteValueSelection;
+                if (parameter.type === ParameterType.CONTINUOUS) {
+                    const max = Math.max(...parameter.values);
+                    const min = Math.min(...parameter.values);
+                    const numberRange: Readonly<NumberRange> = { start: min, end: max };
+                    newParameterValueSelection = numberRange;
+                }
 
-        // Trigger filter change
-        props.onFilterChange({
-            parameterIdentStringToValueSelectionMap: nonEmptyMap,
-            smartNodeSelectorTags: selection.selectedTags,
-        });
-    }
+                // Update value selection with .set()
+                // - Do not use .get() and modify by reference, as .get() will return reference to source,
+                //   i.e. props.selectedParameterIdentStringToValueSelectionMap. Thus modifying the value
+                //   will modify the source, which is not allowed.
+                newMap.set(parameterIdentString, newParameterValueSelection);
+            }
+
+            const nonEmptyMap = newMap.size > 0 ? (newMap as ReadonlyMap<string, ParameterValueSelection>) : null;
+
+            // Trigger filter change
+            onFilterChange({
+                parameterIdentStringToValueSelectionMap: nonEmptyMap,
+                smartNodeSelectorTags: selection.selectedTags,
+            });
+        },
+        [onFilterChange, props.ensembleParameters, props.selectedParameterIdentStringToValueSelectionReadonlyMap]
+    );
 
     function setNewParameterValueSelectionAndTriggerOnChange(
         parameterIdentString: string,
