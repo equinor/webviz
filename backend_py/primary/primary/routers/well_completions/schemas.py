@@ -1,16 +1,15 @@
 from pydantic import BaseModel
 
-
-WellCompletionsAttributeType = str | int | bool
+from primary.services.sumo_access.well_completions_types import WellCompletionsAttributeType
 
 
 class Completions(BaseModel):
-    sorted_completion_date_indices: list[int]
+    sortedCompletionDateIndices: list[int]
     open: list[float]
     shut: list[float]
-    kh_mean: list[float]
-    kh_min: list[float]
-    kh_max: list[float]
+    khMean: list[float]
+    khMin: list[float]
+    khMax: list[float]
 
 
 class WellCompletionsWell(BaseModel):
@@ -39,5 +38,5 @@ class WellCompletionsData(BaseModel):
     version: str
     units: WellCompletionsUnits
     zones: list[WellCompletionsZone]
-    sorted_completion_dates: list[str]
+    sortedCompletionDates: list[str]
     wells: list[WellCompletionsWell]
