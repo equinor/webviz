@@ -13,6 +13,5 @@ export type WellboreHeader = {
     depthReferenceElevation: number;
     wellborePurpose: string;
     wellboreStatus: string;
-    slotIdentifier: string;
 };
 
