@@ -58,8 +58,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                 return;
             }
 
-            console.debug(selection.selectedIds);
-            console.debug(selection.selectedNodes);
+            console.debug(selection.selectedTags);
 
             // Find new parameter ident strings that are not in the current map
             const newMap = new Map(props.selectedParameterIdentStringToValueSelectionReadonlyMap);
@@ -105,7 +104,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             // Trigger filter change
             onFilterChange({
                 parameterIdentStringToValueSelectionMap: nonEmptyMap,
-                smartNodeSelectorTags: selection.selectedTags,
+                smartNodeSelectorTags: selection.selectedTags.map((tag) => tag.text),
             });
         },
         [onFilterChange, props.ensembleParameters, props.selectedParameterIdentStringToValueSelectionReadonlyMap]

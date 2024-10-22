@@ -21,8 +21,13 @@ export enum KeyEventType {
     KeyDown,
 }
 
+export type SmartNodeSelectorTag = {
+    text: string;
+    isValid: boolean;
+};
+
 export type SmartNodeSelectorSelection = {
-    selectedTags: string[];
+    selectedTags: SmartNodeSelectorTag[];
     selectedNodes: string[];
     selectedIds: string[];
 };
@@ -236,7 +241,6 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     }
 
     componentDidUpdate(prevProps: SmartNodeSelectorProps): void {
-        console.debug(this.props.selectedTags);
         if (
             (this.props.data && JSON.stringify(this.props.data) !== JSON.stringify(prevProps.data)) ||
             (this.props.delimiter && this.props.delimiter !== prevProps.delimiter)
@@ -955,13 +959,16 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
 
     protected updateSelectedTagsAndNodes(initialUpdate = false): void {
         const { onChange, maxNumSelectedNodes } = this.props;
-        const selectedTags: string[] = [];
+        const selectedTags: SmartNodeSelectorTag[] = [];
         const selectedNodes: string[] = [];
         const selectedIds: string[] = [];
         loop1: for (let i = 0; i < this.countTags(); i++) {
             const nodeSelection = this.nodeSelection(i);
             if (nodeSelection.getCompleteNodePathAsString() !== "") {
-                selectedTags.push(nodeSelection.getCompleteNodePathAsString());
+                selectedTags.push({
+                    text: nodeSelection.getCompleteNodePathAsString(),
+                    isValid: nodeSelection.isValid(),
+                });
             }
             if (nodeSelection.isValid() && !this.checkIfSelectionIsDuplicate(nodeSelection, i)) {
                 const matchedNodePaths = nodeSelection.exactlyMatchedNodePaths();
