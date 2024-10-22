@@ -105,6 +105,7 @@ class Grid3dAccess:
             bbox = get_bbox_from_sumo_grid_obj(grid_geometry)
 
             # Get the properties for the grid geometry
+            grid_geometry_name = grid_geometry_name if grid_geometry_name != "Geogrid" else ""
             property_info_arr = await self.get_properties_info_arr_async(grid_geometry_name, realization)
 
             grid_model_meta_arr.append(
@@ -118,12 +119,21 @@ class Grid3dAccess:
         self, grid3d_geometry_name: str, realization: int
     ) -> List[Grid3dPropertyInfo]:
         """Get metadata for grid properties belonging to a grid geometry"""
+
         grid3d_properties_collection: Grid3dPropertyCollection = Grid3dPropertyCollection(
             sumo=self._sumo_client, case_uuid=self._case_uuid, grid3d_geometry_name=grid3d_geometry_name
         )
-        grid3d_properties_collection_filtered = grid3d_properties_collection.filter(
-            iteration=self._iteration_name, realization=realization
-        )
+        if "TROLL" in grid3d_geometry_name:
+            query = grid3d_properties_collection._add_filter(
+                name=grid3d_geometry_name, iteration=self._iteration_name, realization=realization
+            )
+            grid3d_properties_collection_filtered = Grid3dPropertyCollection(
+                grid3d_geometry_name, self._sumo_client, self._case_uuid, query, None
+            )
+        else:
+            grid3d_properties_collection_filtered = grid3d_properties_collection.filter(
+                iteration=self._iteration_name, realization=realization
+            )
 
         properties_meta: List[Grid3dPropertyInfo] = []
         async for property_meta in grid3d_properties_collection_filtered:
@@ -136,7 +146,11 @@ class Grid3dAccess:
             if t_start and t_end:
                 iso_string_or_time_interval = f"{t_start}/{t_end}"
 
-            property_name = property_meta["data"]["name"]
+            property_name = (
+                property_meta["data"]["name"]
+                if not "TROLL" in grid3d_geometry_name
+                else property_meta["data"]["tagname"]
+            )
 
             grid3d_property_meta = Grid3dPropertyInfo(
                 property_name=property_name,
@@ -177,51 +191,6 @@ class Grid3dAccess:
                 return False
 
         return True
-
-    async def get_geometry_blob_id_async(self, grid3d_geometry_name: str, realization: int) -> str:
-        """Get the blob id of a grid geometry"""
-        grid_geometries_collection: Grid3dGeometryCollection = Grid3dGeometryCollection(
-            sumo=self._sumo_client, case_uuid=self._case_uuid
-        )
-        grid_geometry_as_collection = grid_geometries_collection.filter(
-            iteration=self._iteration_name,
-            name=grid3d_geometry_name,
-            aggregation=False,
-            realization=realization,
-        )
-        grid_geometry_name_as_arr = await grid_geometry_as_collection.names_async
-        if len(grid_geometry_name_as_arr) > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple grid geometries found in case={self._case_uuid}, iteration={self._iteration_name}, grid_geometry_name={grid3d_geometry_name}",
-                Service.SUMO,
-            )
-        grid_geometry = await grid_geometry_as_collection.getitem_async(0)
-        return grid_geometry.uuid
-
-    async def get_property_blob_id_async(self, grid3d_geometry_name: str, property_name: str, realization: int) -> str:
-        """Get the uuid of a grid property"""
-        grid3d_properties_collection: Grid3dPropertyCollection = Grid3dPropertyCollection(
-            sumo=self._sumo_client, case_uuid=self._case_uuid, grid3d_geometry_name=grid3d_geometry_name
-        )
-        grid_property_as_collection = grid3d_properties_collection.filter(
-            iteration=self._iteration_name,
-            name=property_name,
-            aggregation=False,
-            realization=realization,
-        )
-        grid_property_name_as_arr = await grid_property_as_collection.names_async
-        if len(grid_property_name_as_arr) == 0:
-            raise NoDataError(
-                f"No grid property with name {property_name} found in case={self._case_uuid}, iteration={self._iteration_name},realization={realization}, grid_geometry_name={grid3d_geometry_name}",
-                Service.SUMO,
-            )
-        if len(grid_property_name_as_arr) > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple grid properties with name {property_name} found in case={self._case_uuid}, iteration={self._iteration_name},realization={realization}, grid_geometry_name={grid3d_geometry_name}",
-                Service.SUMO,
-            )
-        grid_property = await grid_property_as_collection.getitem_async(0)
-        return grid_property.uuid
 
 
 def get_dimensions_from_sumo_grid_obj(grid_obj: Grid3dGeometry) -> Grid3dDimensions:
