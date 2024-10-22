@@ -74,6 +74,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                     realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
                 filterType: realizationFilter.getFilterType(),
                 includeOrExcludeFilter: realizationFilter.getIncludeOrExcludeFilter(),
+                hasInvalidParameterIdentString: false,
             };
         }
         setEnsembleIdentStringHasUnsavedChangesMap(updatedHasUnsavedChangesMap);
@@ -159,6 +160,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                     realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
                 filterType: realizationFilter.getFilterType(),
                 includeOrExcludeFilter: realizationFilter.getIncludeOrExcludeFilter(),
+                hasInvalidParameterIdentString: false,
             },
         });
 
@@ -184,6 +186,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                     realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
                 filterType: realizationFilter.getFilterType(),
                 includeOrExcludeFilter: realizationFilter.getIncludeOrExcludeFilter(),
+                hasInvalidParameterIdentString: false,
             };
             resetHasUnsavedChangesMap[ensembleIdentString] = false;
         }

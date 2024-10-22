@@ -20,6 +20,8 @@ import { SmartNodeSelector, SmartNodeSelectorSelection, TreeDataNode } from "@li
 import { TagPicker } from "@lib/components/TagPicker";
 import { Delete } from "@mui/icons-material";
 
+import { isEqual } from "lodash";
+
 import {
     createSmartNodeSelectorTagListFromParameterIdentStrings,
     createTreeDataNodeListFromParameters,
@@ -28,6 +30,7 @@ import {
 export type ByParameterValueFilterSelection = {
     parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection> | null;
     smartNodeSelectorTags: string[];
+    hasInvalidParameterIdentString: boolean;
 };
 
 export type ByParameterValueFilterProps = {
@@ -51,10 +54,6 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     }, [props.ensembleParameters]);
 
     function handleParameterNameSelectionChanged(selection: SmartNodeSelectorSelection) {
-        if (selection === null) {
-            return;
-        }
-
         // Find new parameter ident strings that are not in the current map
         const newMap = new Map(props.selectedParameterIdentStringToValueSelectionReadonlyMap);
 
@@ -94,10 +93,13 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
 
         const nonEmptyMap = newMap.size > 0 ? (newMap as ReadonlyMap<string, ParameterValueSelection>) : null;
 
+        const hasInvalidParameterIdentString = !isEqual(selection.selectedTags, selection.selectedNodes);
+
         // Trigger filter change
         props.onFilterChange({
             parameterIdentStringToValueSelectionMap: nonEmptyMap,
             smartNodeSelectorTags: selection.selectedTags,
+            hasInvalidParameterIdentString: hasInvalidParameterIdentString,
         });
     }
 
@@ -121,6 +123,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         props.onFilterChange({
             parameterIdentStringToValueSelectionMap: updatedMap as ReadonlyMap<string, ParameterValueSelection>,
             smartNodeSelectorTags: props.smartNodeSelectorTags,
+            hasInvalidParameterIdentString: false,
         });
     }
 
@@ -193,6 +196,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         props.onFilterChange({
             parameterIdentStringToValueSelectionMap: nonEmptyMap,
             smartNodeSelectorTags: newSmartNodeSelectorTags,
+            hasInvalidParameterIdentString:
+                nonEmptyMap === null ? false : newSmartNodeSelectorTags.some((tag) => !nonEmptyMap.has(tag)),
         });
     }
 
@@ -264,15 +269,20 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         parameterIdentString: string,
         valueSelection: ParameterValueSelection
     ): React.ReactNode {
+        const parameterIdent = ParameterIdent.fromString(parameterIdentString);
+        const displayParameterName = parameterIdent.groupName
+            ? `${parameterIdent.groupName}:${parameterIdent.name}`
+            : parameterIdent.name;
+
         return (
             <div key={parameterIdentString} className="flex-grow border border-lightgrey rounded-md p-2">
                 <div className="flex flex-col gap-2 ">
                     <div className="flex flex-row items-center gap-2">
                         <div
-                            title={`Parameter: ${parameterIdentString}`}
+                            title={`Parameter: ${displayParameterName}`}
                             className="flex-grow text-sm text-gray-500 leading-none overflow-hidden whitespace-nowrap text-ellipsis"
                         >
-                            {parameterIdentString}
+                            {displayParameterName}
                         </div>
                         <DenseIconButton
                             title="Remove parameter"
@@ -295,6 +305,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         );
     }
 
+    console.log(props.smartNodeSelectorTags);
+
     return (
         <div className="flex-grow flex-col gap-2">
             <Label text="Select parameters">
@@ -307,9 +319,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             </Label>
             {props.selectedParameterIdentStringToValueSelectionReadonlyMap &&
                 Array.from(props.selectedParameterIdentStringToValueSelectionReadonlyMap).map(
-                    ([parameterIdentString, valueSelection]) => {
-                        return createParameterValueSelectionRow(parameterIdentString, valueSelection);
-                    }
+                    ([parameterIdentString, valueSelection]) =>
+                        createParameterValueSelectionRow(parameterIdentString, valueSelection)
                 )}
         </div>
     );

@@ -37,6 +37,8 @@ function addParameterNodeToTreeDataNodeList(
 /**
  * Create a tree data node list for the SmartNodeSelector component form list of parameters.
  *
+ * The parameter ident string is used as the node id.
+ *
  * The parent nodes are created based on existing groups.
  * Parameters with no group are added to the parent node with name NON_GROUPED_PARENT_NODE.
  */

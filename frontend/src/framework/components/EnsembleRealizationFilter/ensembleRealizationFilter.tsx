@@ -13,7 +13,7 @@ import { Button } from "@lib/components/Button";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Check, Clear } from "@mui/icons-material";
+import { Check, Clear, Report } from "@mui/icons-material";
 
 import { ByParameterValueFilter, ByParameterValueFilterSelection } from "./private-components/byParameterValueFilter";
 import {
@@ -28,6 +28,7 @@ export type EnsembleRealizationFilterSelections = {
     displayRealizationNumbers: readonly number[]; // Currently selected realization numbers (for visualization)
     realizationNumberSelections: readonly RealizationNumberSelection[] | null; // For ByRealizationNumberFilter
     parameterIdentStringToValueSelectionReadonlyMap: ReadonlyMap<string, ParameterValueSelection> | null; // For ByParameterValueFilter
+    hasInvalidParameterIdentString: boolean; // If parameter value filter has invalid parameter tag selection
     filterType: RealizationFilterType;
     includeOrExcludeFilter: IncludeExcludeFilter;
 };
@@ -73,13 +74,11 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     if (prevIsActive !== props.isActive) {
         setPrevIsActive(props.isActive);
 
-        // Due to conditional rendering, we have to ensure correct initial state when mounting realization number filter component
-        if (props.isActive && props.selections.filterType === RealizationFilterType.BY_REALIZATION_NUMBER) {
-            actualInitialRealizationNumberSelections = undefined;
-        }
-        if (props.isActive && props.selections.filterType === RealizationFilterType.BY_PARAMETER_VALUES) {
-            actualSmartNodeSelectorTags = undefined;
-        }
+        // Due to conditional rendering, we have to ensure correct initial state when mounting filter type components
+        // if (props.isActive) {
+        //     actualInitialRealizationNumberSelections = undefined;
+        //     actualSmartNodeSelectorTags = undefined;
+        // }
     }
 
     // Reset the initial number selections to the current realization number selections when set to undefined
@@ -89,7 +88,6 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     }
 
     // Reset the tags to parameterIdentStringToValueSelectionReadonlyMap when set to undefined
-
     if (actualSmartNodeSelectorTags === undefined) {
         const newSmartNodeSelectorTags = createSmartNodeSelectorTagListFromParameterIdentStrings([
             ...(props.selections.parameterIdentStringToValueSelectionReadonlyMap?.keys() ?? []),
@@ -125,7 +123,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             return;
         }
 
-        // Create realization number array to display based on current selection
+        // Create realization number array to display based on current parameters
         const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
             selection.parameterIdentStringToValueSelectionMap,
             props.ensembleParameters,
@@ -136,6 +134,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             ...props.selections,
             displayRealizationNumbers: realizationNumberArray,
             parameterIdentStringToValueSelectionReadonlyMap: selection.parameterIdentStringToValueSelectionMap,
+            hasInvalidParameterIdentString: selection.hasInvalidParameterIdentString,
         });
     }
 
@@ -158,6 +157,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                 props.selections.includeOrExcludeFilter
             );
         } else if (newFilterType === RealizationFilterType.BY_PARAMETER_VALUES) {
+            // Create realization number array to display based on current parameters
             realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
                 props.selections.parameterIdentStringToValueSelectionReadonlyMap,
                 props.ensembleParameters,
@@ -238,8 +238,11 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                 "hover:opacity-75 transition-opacity duration-100": !props.isActive && props.isAnotherFilterActive,
                 "hover:outline-blue-400 hover:shadow-blue-400 hover:shadow-md":
                     !props.isActive && !props.isAnotherFilterActive,
-                "outline-orange-400 shadow-orange-400 shadow-lg": props.isActive && props.hasUnsavedSelections,
-                "outline-blue-400 shadow-blue-400 shadow-lg": props.isActive && !props.hasUnsavedSelections,
+                "outline-red-400 shadow-red-400 shadow-lg": props.selections.hasInvalidParameterIdentString,
+                "outline-orange-400 shadow-orange-400 shadow-lg":
+                    !props.selections.hasInvalidParameterIdentString && props.isActive && props.hasUnsavedSelections,
+                "outline-blue-400 shadow-blue-400 shadow-lg":
+                    !props.selections.hasInvalidParameterIdentString && props.isActive && !props.hasUnsavedSelections,
                 "opacity-100": props.isActive || !props.isAnotherFilterActive,
                 "opacity-60 ": !props.isActive && props.isAnotherFilterActive && props.hasUnsavedSelections,
                 "opacity-30": !props.isActive && props.isAnotherFilterActive && !props.hasUnsavedSelections,
@@ -263,8 +266,16 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         {props.ensembleName}
                     </div>
                     <div
+                        className={resolveClassNames("flex items-center gap-1 cursor-help", {
+                            hidden: !props.selections.hasInvalidParameterIdentString,
+                        })}
+                        title="Invalid parameter selection"
+                    >
+                        <Report fontSize="medium" color="error" />
+                    </div>
+                    <div
                         className={resolveClassNames("flex items-center gap-1", {
-                            hidden: !props.hasUnsavedSelections,
+                            hidden: props.selections.hasInvalidParameterIdentString || !props.hasUnsavedSelections,
                         })}
                     >
                         <Button
@@ -297,7 +308,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                             onRealizationNumberClick={handleRealizationNumberDisplayClick}
                         />
                     </div>
-                    {props.isActive && (
+                    <div className={resolveClassNames({ hidden: !props.isActive })}>
                         <div className="border border-lightgrey rounded-md shadow-md p-2">
                             <Label text="Active Filter Type" wrapperClassName="border-b pb-2 mb-2">
                                 <RadioGroup
@@ -343,7 +354,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                                 />
                             </div>
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </div>
