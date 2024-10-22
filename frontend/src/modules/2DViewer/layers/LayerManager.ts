@@ -4,11 +4,12 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
+import { View } from "./View";
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./delegates/PublishSubscribeDelegate";
 import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelegate";
-import { Group, Item } from "./interfaces";
+import { Group, Item, instanceofGroup, instanceofLayer } from "./interfaces";
 
 export enum LayerManagerTopic {
     ITEMS_CHANGED = "items-changed",
@@ -30,9 +31,33 @@ export type GlobalSettings = {
     fieldId: string | null;
 };
 
+export type SerializedView = {
+    type: "view";
+    name: string;
+    children: SerializedItem[];
+};
+
+export type SerializedLayer = {
+    type: "layer";
+    name: string;
+    className: string;
+    settings: {
+        [key: string]: string;
+    };
+};
+
+export type SerializedSettingsGroup = {
+    type: "settings-group";
+    children: SerializedItem[];
+};
+
+export type SerializedItem = {
+    id: string;
+} & (SerializedView | SerializedLayer | SerializedSettingsGroup);
+
 export type SerializedState = {
-    children: 
-}
+    items: SerializedItem[];
+};
 
 export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, LayerManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
@@ -135,6 +160,47 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     }
 
     serializeState(): SerializedState {
-        const siblings = this._groupDelegate.findChildren()
+        const recursivelySerialize = (item: Item): SerializedItem => {
+            if (instanceofGroup(item)) {
+                const children = item.getGroupDelegate().getChildren().map(recursivelySerialize);
+                if (item instanceof View) {
+                    return {
+                        id: item.getItemDelegate().getId(),
+                        type: "view",
+                        name: item.getItemDelegate().getName(),
+                        children,
+                    };
+                }
+                return {
+                    id: item.getItemDelegate().getId(),
+                    type: "settings-group",
+                    children,
+                };
+            }
+            if (instanceofLayer(item)) {
+                const settings = [];
+                for (const [key, setting] of Object.entries(
+                    item.getLayerDelegate().getSettingsContext().getDelegate().getSettings()
+                )) {
+                    settings.push({
+                        key,
+                        value: setting.getDelegate().getValue().toString(),
+                    });
+                }
+                return {
+                    id: item.getItemDelegate().getId(),
+                    type: "layer",
+                    className: item.constructor.name,
+                    name: item.getItemDelegate().getName(),
+                    settings,
+                };
+            }
+
+            throw new Error("Unknown item type");
+        };
+
+        return {
+            items: this._groupDelegate.getChildren().map(recursivelySerialize),
+        };
     }
 }

@@ -5,6 +5,7 @@ import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } f
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
+import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
@@ -260,6 +261,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     return (
         <div className="h-full flex flex-col gap-1">
+            <Button onClick={() => console.debug(layerManagerRef.current.serializeState())}>Serialize</Button>
             <CollapsibleGroup title="Field" expanded>
                 <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier} />
             </CollapsibleGroup>
