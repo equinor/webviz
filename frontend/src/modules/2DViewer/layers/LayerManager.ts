@@ -30,6 +30,10 @@ export type GlobalSettings = {
     fieldId: string | null;
 };
 
+export type SerializedState = {
+    children: 
+}
+
 export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, LayerManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
     private _workbenchSettings: WorkbenchSettings;
@@ -129,4 +133,6 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     beforeDestroy() {
         this._subscriptionsHandler.unsubscribeAll();
     }
+
+    serializeState():  {}
 }

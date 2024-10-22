@@ -30,6 +30,10 @@ export interface FetchDataFunction<TSettings extends Settings, TKey extends keyo
     (oldValues: { [K in TKey]: TSettings[K] }, newValues: { [K in TKey]: TSettings[K] }): void;
 }
 
+export type SettingsContextDelegateState<TSettings extends Settings, TKey extends keyof TSettings> = {
+    values: { [K in TKey]: TSettings[K] };
+};
+
 export class SettingsContextDelegate<TSettings extends Settings, TKey extends keyof TSettings = keyof TSettings>
     implements PublishSubscribe<SettingsContextDelegateTopic, SettingsContextDelegatePayloads>
 {
