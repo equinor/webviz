@@ -21,8 +21,13 @@ export enum KeyEventType {
     KeyDown,
 }
 
+export type SmartNodeSelectorTag = {
+    text: string;
+    isValid: boolean;
+};
+
 export type SmartNodeSelectorSelection = {
-    selectedTags: string[];
+    selectedTags: SmartNodeSelectorTag[];
     selectedNodes: string[];
     selectedIds: string[];
 };
@@ -266,14 +271,12 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     hasError: error !== undefined,
                     error: error || "",
                 },
-                () => {
-                    this.updateSelectedTagsAndNodes();
-                }
+                () => this.updateSelectedTagsAndNodes()
             );
         }
-        const selectedTags = this.state.nodeSelections
-            .filter((nodeSelection) => nodeSelection.isValid())
-            .map((nodeSelection) => nodeSelection.getCompleteNodePathAsString());
+        const selectedTags = this.state.nodeSelections.map((nodeSelection) =>
+            nodeSelection.getCompleteNodePathAsString()
+        );
         if (
             this.props.selectedTags &&
             JSON.stringify(this.props.selectedTags) !== JSON.stringify(selectedTags) &&
@@ -283,7 +286,8 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
             if (this.props.selectedTags !== undefined) {
                 for (const tag of this.props.selectedTags) {
                     const nodePath = tag.split(this.props.delimiter);
-                    nodeSelections.push(this.createNewNodeSelection(nodePath));
+                    const nodeSelection = this.createNewNodeSelection(nodePath);
+                    nodeSelections.push(nodeSelection);
                 }
             }
             if (nodeSelections.length < this.props.maxNumSelectedNodes || this.props.maxNumSelectedNodes === -1) {
@@ -331,6 +335,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     .current;
                 if (inputField) {
                     inputField.focus();
+                    this.state.currentTagIndex = index;
                     if (setSelection !== undefined) {
                         inputField.setSelectionRange(
                             setSelection === Direction.Left ? 0 : inputField.value.length,
@@ -549,12 +554,14 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                 callback: () => {
                     this.focusCurrentTag();
                     this.maybeShowSuggestions();
+                    this.noUserInputSelect = false;
                 },
             };
         } else {
             this.focusCurrentTag();
             struct.callback = () => {
                 this.maybeShowSuggestions();
+                this.noUserInputSelect = false;
             };
         }
         struct.suggestionsVisible = false;
@@ -952,29 +959,34 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
 
     protected updateSelectedTagsAndNodes(initialUpdate = false): void {
         const { onChange, maxNumSelectedNodes } = this.props;
-        const selectedTags: string[] = [];
+        const selectedTags: SmartNodeSelectorTag[] = [];
         const selectedNodes: string[] = [];
         const selectedIds: string[] = [];
         loop1: for (let i = 0; i < this.countTags(); i++) {
             const nodeSelection = this.nodeSelection(i);
             if (nodeSelection.getCompleteNodePathAsString() !== "") {
-                selectedTags.push(nodeSelection.getCompleteNodePathAsString());
+                selectedTags.push({
+                    text: nodeSelection.getCompleteNodePathAsString(),
+                    isValid: nodeSelection.isValid(),
+                });
             }
             if (nodeSelection.isValid() && !this.checkIfSelectionIsDuplicate(nodeSelection, i)) {
                 const matchedNodePaths = nodeSelection.exactlyMatchedNodePaths();
+                const matchedIds = nodeSelection.exactlyMatchedNodeIds();
                 for (let j = 0; j < matchedNodePaths.length; j++) {
                     if (selectedNodes.length >= maxNumSelectedNodes && maxNumSelectedNodes > 0) {
                         break loop1;
                     }
                     selectedNodes.push(matchedNodePaths[j]);
-                    selectedIds.push(nodeSelection.getId() || "");
+                    selectedIds.push(matchedIds[j][matchedIds[j].length - 1] ?? "");
                 }
             }
         }
         if (
             !this.selectedNodes ||
             selectedNodes.length !== this.selectedNodes.length ||
-            JSON.stringify(this.selectedNodes) !== JSON.stringify(selectedNodes)
+            JSON.stringify(this.selectedNodes) !== JSON.stringify(selectedNodes) ||
+            JSON.stringify(this.props.selectedTags) !== JSON.stringify(selectedTags)
         ) {
             if (!initialUpdate) {
                 this.updateFromWithin = true;

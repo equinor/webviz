@@ -55,6 +55,8 @@ export type EnsembleRealizationFilterProps = {
  * The selection creates a valid subset of realization numbers for the ensemble throughout the application.
  */
 export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps> = (props) => {
+    const { onFilterChange } = props;
+
     const [prevIsActive, setPrevIsActive] = React.useState<boolean>(props.isActive);
 
     // States for handling initial realization number selections and smart node selector tags
@@ -116,27 +118,35 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         });
     }
 
-    function handleParameterValueFilterChanged(selection: ByParameterValueFilterSelection) {
-        setSelectedSmartNodeSelectorTags(selection.smartNodeSelectorTags);
+    const handleParameterValueFilterChanged = React.useCallback(
+        function handleParameterValueFilterChanged(selection: ByParameterValueFilterSelection) {
+            setSelectedSmartNodeSelectorTags(selection.smartNodeSelectorTags);
 
-        if (!props.onFilterChange) {
-            return;
-        }
+            if (!onFilterChange) {
+                return;
+            }
 
-        // Create realization number array to display based on current parameters
-        const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
-            selection.parameterIdentStringToValueSelectionMap,
+            // Create realization number array to display based on current selection
+            const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
+                selection.parameterIdentStringToValueSelectionMap,
+                props.ensembleParameters,
+                props.availableEnsembleRealizations
+            );
+
+            onFilterChange({
+                ...props.selections,
+                displayRealizationNumbers: realizationNumberArray,
+                parameterIdentStringToValueSelectionReadonlyMap: selection.parameterIdentStringToValueSelectionMap,
+            });
+        },
+        [
+            onFilterChange,
             props.ensembleParameters,
-            props.availableEnsembleRealizations
-        );
-
-        props.onFilterChange({
-            ...props.selections,
-            displayRealizationNumbers: realizationNumberArray,
-            parameterIdentStringToValueSelectionReadonlyMap: selection.parameterIdentStringToValueSelectionMap,
-            hasInvalidParameterIdentString: selection.hasInvalidParameterIdentString,
-        });
-    }
+            props.availableEnsembleRealizations,
+            props.selections,
+            setSelectedSmartNodeSelectorTags,
+        ]
+    );
 
     function handleActiveFilterTypeChange(newFilterType: RealizationFilterType) {
         if (!props.onFilterChange) {
@@ -230,6 +240,8 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             props.onHeaderClick();
         }
     }
+
+    console.debug(actualSmartNodeSelectorTags);
 
     return (
         <div
