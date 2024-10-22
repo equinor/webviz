@@ -134,5 +134,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         this._subscriptionsHandler.unsubscribeAll();
     }
 
-    serializeState():  {}
+    serializeState(): SerializedState {
+        const siblings = this._groupDelegate.findChildren()
+    }
 }
