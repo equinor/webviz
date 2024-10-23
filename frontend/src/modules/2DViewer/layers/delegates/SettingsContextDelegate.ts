@@ -100,6 +100,8 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         } else {
             this._unsubscribeHandler.unsubscribe("global-settings");
         }
+
+        this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
     }
 
     private async fetchData(): Promise<void> {
@@ -165,7 +167,9 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         availableValues: AvailableValuesType<Exclude<TSettings[K], null>>
     ): void {
         this._availableSettingsValues[key] = availableValues;
-        this._settings[key].getDelegate().setAvailableValues(availableValues);
+        const settingDelegate = this._settings[key].getDelegate();
+        settingDelegate.setAvailableValues(availableValues);
+
         this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.AVAILABLE_SETTINGS_CHANGED);
 
         this.getLayerManager().publishTopic(LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED);
@@ -206,11 +210,17 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         return this._publishSubscribeHandler;
     }
 
-    serializeSettings(): SerializedSettingsState {
-        const serializedSettings: SerializedSettingsState = {};
+    serializeSettings(): SerializedSettingsState<TSettings> {
+        const serializedSettings: SerializedSettingsState<TSettings> = {} as SerializedSettingsState<TSettings>;
         for (const key in this._settings) {
             serializedSettings[key] = this._settings[key].getDelegate().serializeValue();
         }
         return serializedSettings;
+    }
+
+    deserializeSettings(serializedSettings: SerializedSettingsState<TSettings>): void {
+        for (const [key, value] of Object.entries(serializedSettings)) {
+            this._settings[key as TKey].getDelegate().deserializeValue(value);
+        }
     }
 }

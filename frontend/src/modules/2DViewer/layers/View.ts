@@ -29,4 +29,11 @@ export class View implements Group {
             children: this._groupDelegate.serializeChildren(),
         };
     }
+
+    deserializeState(serialized: SerializedView) {
+        this._itemDelegate.setName(serialized.name);
+        this._itemDelegate.setId(serialized.id);
+        this._groupDelegate.setColor(serialized.color);
+        this._groupDelegate.deserializeChildren(serialized.children);
+    }
 }

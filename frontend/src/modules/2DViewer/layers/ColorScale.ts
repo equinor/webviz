@@ -51,4 +51,11 @@ export class ColorScale implements Item {
             userDefinedBoundaries: this._areBoundariesUserDefined,
         };
     }
+
+    deserializeState(serialized: SerializedColorScale): void {
+        this._itemDelegate.setName(serialized.name);
+        this._itemDelegate.setId(serialized.id);
+        this._colorScale = ColorScaleImpl.fromSerialized(serialized.colorScale);
+        this._areBoundariesUserDefined = serialized.userDefinedBoundaries;
+    }
 }

@@ -1,4 +1,4 @@
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import { ColorPalette, ColorPaletteSerialization } from "@lib/utils/ColorPalette";
 
 export enum ColorScaleType {
     Discrete = "discrete",
@@ -51,7 +51,7 @@ export type ColorScaleOptions = {
 
 export type ColorScaleSerialization = {
     type: ColorScaleType;
-    colorPaletteId: string;
+    colorPalette: ColorPaletteSerialization;
     gradientType: ColorScaleGradientType;
     steps: number;
     min?: number;
@@ -292,12 +292,26 @@ export class ColorScale {
     serialize(): ColorScaleSerialization {
         return {
             type: this._type,
-            colorPaletteId: this._colorPalette.getId(),
+            colorPalette: this._colorPalette.serialize(),
             gradientType: this._gradientType,
             steps: this._steps,
             min: this._min,
             max: this._max,
             divMidPoint: this._divMidPoint,
         };
+    }
+
+    static fromSerialized(serialization: ColorScaleSerialization): ColorScale {
+        const colorPalette = ColorPalette.fromSerialized(serialization.colorPalette);
+
+        return new ColorScale({
+            type: serialization.type,
+            colorPalette,
+            gradientType: serialization.gradientType,
+            steps: serialization.steps,
+            min: serialization.min,
+            max: serialization.max,
+            divMidPoint: serialization.divMidPoint,
+        });
     }
 }

@@ -1,5 +1,6 @@
 import { SurfaceDataPng_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
@@ -105,9 +106,17 @@ export class ObservedSurfaceLayer
         return promise;
     }
 
-    serializeState(): SerializedLayer {
+    serializeState(): SerializedLayer<ObservedSurfaceSettings> {
         const id = this._itemDelegate.getId();
         const name = this._itemDelegate.getName();
         return this._layerDelegate.serializeState(id, name);
     }
+
+    deserializeState(serializedState: SerializedLayer<ObservedSurfaceSettings>): void {
+        this._itemDelegate.setId(serializedState.id);
+        this._itemDelegate.setName(serializedState.name);
+        this._layerDelegate.deserializeState(serializedState);
+    }
 }
+
+LayerRegistry.registerLayer(ObservedSurfaceLayer);

@@ -28,4 +28,10 @@ export class SettingsGroup implements Group {
             children: this._groupDelegate.serializeChildren(),
         };
     }
+
+    deserializeState(serialized: SerializedSettingsGroup) {
+        this._itemDelegate.setName(serialized.name);
+        this._itemDelegate.setId(serialized.id);
+        this._groupDelegate.deserializeChildren(serialized.children);
+    }
 }

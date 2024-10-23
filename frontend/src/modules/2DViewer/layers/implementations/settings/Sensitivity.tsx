@@ -2,6 +2,7 @@ import React from "react";
 
 import { Dropdown } from "@lib/components/Dropdown";
 
+import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
@@ -114,3 +115,5 @@ function fixupSensitivityCase(currentSensitivityCase: string | null, availableSe
 
     return currentSensitivityCase;
 }
+
+SettingRegistry.registerSetting(Sensitivity);

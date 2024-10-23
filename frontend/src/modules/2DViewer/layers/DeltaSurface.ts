@@ -2,12 +2,13 @@ import { GroupDelegate, GroupDelegateTopic } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { LayerDelegate } from "./delegates/LayerDelegate";
 import { SettingsContextDelegateTopic } from "./delegates/SettingsContextDelegate";
+import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelegate";
 import { Group, SerializedDeltaSurface, instanceofLayer } from "./interfaces";
 
 export class DeltaSurface implements Group {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
-    private _unsubscribeFuncs: (() => void)[] = [];
+    private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _childrenLayerDelegateSet: Set<LayerDelegate<any, any>> = new Set();
 
     constructor(name: string) {
@@ -20,15 +21,12 @@ export class DeltaSurface implements Group {
     }
 
     private handleChildrenChange(): void {
-        for (const unsubscribeFunc of this._unsubscribeFuncs) {
-            unsubscribeFunc();
-        }
+        this._unsubscribeHandler.unsubscribe("layer-delegates");
 
         for (const layerDelegate of this._childrenLayerDelegateSet) {
             layerDelegate.setIsSubordinated(false);
         }
 
-        this._unsubscribeFuncs = [];
         this._childrenLayerDelegateSet.clear();
 
         for (const child of this._groupDelegate.getChildren()) {
@@ -36,7 +34,8 @@ export class DeltaSurface implements Group {
                 child.getLayerDelegate().setIsSubordinated(true);
                 const layerDelegate = child.getLayerDelegate();
                 this._childrenLayerDelegateSet.add(layerDelegate);
-                this._unsubscribeFuncs.push(
+                this._unsubscribeHandler.registerUnsubscribeFunction(
+                    "layer-delegates",
                     layerDelegate
                         .getSettingsContext()
                         .getDelegate()

@@ -138,4 +138,13 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
             children: this._groupDelegate.serializeChildren(),
         };
     }
+
+    deserializeState(serializedState: SerializedLayerManager): void {
+        this._itemDelegate.setId(serializedState.id);
+        this._itemDelegate.setName(serializedState.name);
+        this._groupDelegate.deserializeChildren(serializedState.children);
+
+        this.publishTopic(LayerManagerTopic.ITEMS_CHANGED);
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+    }
 }

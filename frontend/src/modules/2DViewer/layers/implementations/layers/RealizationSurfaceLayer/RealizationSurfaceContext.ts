@@ -63,13 +63,6 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
                 .getRealizationFilterForEnsembleIdent(currentEnsembleIdent)
                 .getFilteredRealizations();
             this.getDelegate().setAvailableValues(SettingType.REALIZATION, [...realizations]);
-
-            const currentRealization = newValues[SettingType.REALIZATION];
-            if (currentRealization === null || !realizations.includes(currentRealization)) {
-                if (realizations.length > 0) {
-                    settings[SettingType.REALIZATION].getDelegate().setValue(realizations[0]);
-                }
-            }
         }
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {

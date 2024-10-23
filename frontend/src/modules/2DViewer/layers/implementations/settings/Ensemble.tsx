@@ -3,6 +3,7 @@ import React from "react";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 
+import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
@@ -26,6 +27,14 @@ export class Ensemble implements Setting<EnsembleIdent | null> {
         return this._delegate;
     }
 
+    serializeValue(value: EnsembleIdent | null): string {
+        return value?.toString() ?? "";
+    }
+
+    deserializeValue(serializedValue: string): EnsembleIdent | null {
+        return serializedValue !== "" ? EnsembleIdent.fromString(serializedValue) : null;
+    }
+
     makeComponent(): (props: SettingComponentProps<EnsembleIdent | null>) => React.ReactNode {
         return function Ensemble(props: SettingComponentProps<EnsembleIdent | null>) {
             const ensembles = props.workbenchSession
@@ -45,3 +54,5 @@ export class Ensemble implements Setting<EnsembleIdent | null> {
         };
     }
 }
+
+SettingRegistry.registerSetting(Ensemble);

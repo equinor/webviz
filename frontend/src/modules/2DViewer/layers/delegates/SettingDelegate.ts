@@ -49,6 +49,15 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return JSON.stringify(this.getValue());
     }
 
+    deserializeValue(serializedValue: string): void {
+        if (this._owner.deserializeValue) {
+            this._currentValueFromPersistence = this._owner.deserializeValue(serializedValue);
+            return;
+        }
+
+        this._currentValueFromPersistence = JSON.parse(serializedValue);
+    }
+
     isValueValid(): boolean {
         return this._isValueValid;
     }
@@ -121,19 +130,10 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         if (this.isPersistedValue()) {
             return;
         }
-        if (typeof this._value === "boolean") {
-            this.setIsValueValid(true);
-        }
-        if (this._availableValues.length === 0) {
-            this.setIsValueValid(false);
-        }
-        if (this._availableValues.includes(this._value)) {
-            this.setIsValueValid(true);
-        }
-        this.setIsValueValid(true);
 
         if (this._owner.fixupValue) {
             this._value = this._owner.fixupValue(this._availableValues, this._value);
+            this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
             return;
         }
 
@@ -141,6 +141,23 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             this._value = [this._availableValues[0]] as TValue;
         }
         this._value = this._availableValues[0] as TValue;
+        this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
+    }
+
+    private checkIfValueIsValid(): void {
+        if (typeof this._value === "boolean") {
+            this.setIsValueValid(true);
+            return;
+        }
+        if (this._availableValues.length === 0) {
+            this.setIsValueValid(false);
+            return;
+        }
+        if (this._availableValues.includes(this._value)) {
+            this.setIsValueValid(true);
+            return;
+        }
+        this.setIsValueValid(true);
     }
 
     private maybeResetPersistedValue(): void {
@@ -150,14 +167,14 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
 
         if (Array.isArray(this._currentValueFromPersistence)) {
             const currentValueFromPersistence = this._currentValueFromPersistence as TValue[];
-            if (this._availableValues.every((value) => currentValueFromPersistence.includes(value as TValue))) {
+            if (this._availableValues.every((value) => currentValueFromPersistence.some((el) => isEqual(el, value)))) {
                 this._value = this._currentValueFromPersistence;
                 this._currentValueFromPersistence = null;
             }
             return;
         }
 
-        if (this._availableValues.includes(this._currentValueFromPersistence as TValue)) {
+        if (this._availableValues.some((el) => isEqual(this._currentValueFromPersistence as TValue, el))) {
             this._value = this._currentValueFromPersistence as TValue;
             this._currentValueFromPersistence = null;
         }
@@ -167,6 +184,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         this._availableValues = availableValues;
         this.maybeFixupValue();
         this.maybeResetPersistedValue();
+        this.checkIfValueIsValid();
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);
     }
 }

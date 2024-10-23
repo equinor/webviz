@@ -62,6 +62,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
                 this.handleSettingsChange();
             })
         );
+
         this._coloringType = coloringType;
     }
 
@@ -307,12 +308,17 @@ export class LayerDelegate<TSettings extends Settings, TData>
         }
     }
 
-    serializeState(id: string, name: string): SerializedLayer {
+    serializeState(id: string, name: string): SerializedLayer<TSettings> {
         return {
             id,
-            type: "layer",
             name,
+            type: "layer",
+            layerClass: this._owner.constructor.name,
             settings: this._settingsContext.getDelegate().serializeSettings(),
         };
+    }
+
+    deserializeState(serializedLayer: SerializedLayer<TSettings>): void {
+        this._settingsContext.getDelegate().deserializeSettings(serializedLayer.settings);
     }
 }

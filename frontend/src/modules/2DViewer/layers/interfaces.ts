@@ -26,13 +26,12 @@ export interface SerializedItem {
     name: string;
 }
 
-export type SerializedSettingsState = {
-    [key: string]: string;
-};
+export type SerializedSettingsState<TSettings> = Record<keyof TSettings, string>;
 
-export interface SerializedLayer extends SerializedItem {
+export interface SerializedLayer<TSettings> extends SerializedItem {
     type: "layer";
-    settings: SerializedSettingsState;
+    layerClass: string;
+    settings: SerializedSettingsState<TSettings>;
 }
 
 export interface SerializedView extends SerializedItem {
@@ -55,6 +54,7 @@ export interface SerializedColorScale extends SerializedItem {
 export interface SerializedSharedSetting extends SerializedItem {
     type: "shared-setting";
     settingType: SettingType;
+    wrappedSettingClass: string;
     value: string;
 }
 
@@ -146,6 +146,7 @@ export interface Setting<TValue> {
     getDelegate(): SettingDelegate<TValue>;
     fixupValue?: (availableValues: AvailableValuesType<TValue>, currentValue: TValue) => TValue;
     serializeValue?: (value: TValue) => string;
+    deserializeValue?: (serializedValue: string) => TValue;
 }
 
 export enum SettingTopic {

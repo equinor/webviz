@@ -1,5 +1,6 @@
 import { WellboreTrajectory_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -102,9 +103,17 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         return promise;
     }
 
-    serializeState(): SerializedLayer {
+    serializeState(): SerializedLayer<DrilledWellTrajectoriesSettings> {
         const id = this._itemDelegate.getId();
         const name = this._itemDelegate.getName();
         return this._layerDelegate.serializeState(id, name);
     }
+
+    deserializeState(serializedState: SerializedLayer<DrilledWellTrajectoriesSettings>): void {
+        this._itemDelegate.setId(serializedState.id);
+        this._itemDelegate.setName(serializedState.name);
+        this._layerDelegate.deserializeState(serializedState);
+    }
 }
+
+LayerRegistry.registerLayer(DrilledWellTrajectoriesLayer);
