@@ -27,6 +27,8 @@ export type ByRealizationNumberFilterProps = {
 };
 
 export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps> = (props) => {
+    const { onFilterChange } = props;
+
     const [prevInitialRealizationNumberSelections, setPrevInitialRealizationNumberSelections] = React.useState<
         readonly RealizationNumberSelection[] | null
     >(props.initialRealizationNumberSelections ?? null);
@@ -68,30 +70,36 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
         setPrevRealizationNumberSelections(props.realizationNumberSelections);
     }
 
-    function handleIncludeExcludeFilterChange(newFilter: IncludeExcludeFilter) {
-        // Make selections from tags to ensure consistency with user interface
-        const newRealizationNumberSelections =
-            selectedRangeTags.length === 0
-                ? null
-                : makeRealizationNumberSelectionsFromRealizationPickerTags(selectedRangeTags);
+    const handleIncludeExcludeFilterChange = React.useCallback(
+        function handleIncludeExcludeFilterChange(newFilter: IncludeExcludeFilter) {
+            // Make selections from tags to ensure consistency with user interface
+            const newRealizationNumberSelections =
+                selectedRangeTags.length === 0
+                    ? null
+                    : makeRealizationNumberSelectionsFromRealizationPickerTags(selectedRangeTags);
 
-        props.onFilterChange({
-            realizationNumberSelections: newRealizationNumberSelections,
-            includeOrExcludeFilter: newFilter,
-        });
-    }
+            onFilterChange({
+                realizationNumberSelections: newRealizationNumberSelections,
+                includeOrExcludeFilter: newFilter,
+            });
+        },
+        [onFilterChange, selectedRangeTags]
+    );
 
-    function handleRealizationPickChange(newSelection: RealizationPickerSelection) {
-        const newRealizationNumberSelections =
-            newSelection.selectedRangeTags.length === 0
-                ? null
-                : makeRealizationNumberSelectionsFromRealizationPickerTags(newSelection.selectedRangeTags);
+    const handleRealizationPickChange = React.useCallback(
+        function handleRealizationPickChange(newSelection: RealizationPickerSelection) {
+            const newRealizationNumberSelections =
+                newSelection.selectedRangeTags.length === 0
+                    ? null
+                    : makeRealizationNumberSelectionsFromRealizationPickerTags(newSelection.selectedRangeTags);
 
-        props.onFilterChange({
-            realizationNumberSelections: newRealizationNumberSelections,
-            includeOrExcludeFilter: props.selectedIncludeOrExcludeFilter,
-        });
-    }
+            onFilterChange({
+                realizationNumberSelections: newRealizationNumberSelections,
+                includeOrExcludeFilter: props.selectedIncludeOrExcludeFilter,
+            });
+        },
+        [onFilterChange, props.selectedIncludeOrExcludeFilter]
+    );
 
     return (
         <div className="flex flex-col gap-2">
