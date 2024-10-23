@@ -11,7 +11,7 @@ import { DrilledWellborePicksContext } from "./DrilledWellborePicksContext";
 import { DrilledWellborePicksSettings } from "./types";
 
 import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
-import { BoundingBox, Layer } from "../../../interfaces";
+import { BoundingBox, Layer, SerializedLayer } from "../../../interfaces";
 
 export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSettings, WellborePick_api[]> {
     private _layerDelegate: LayerDelegate<DrilledWellborePicksSettings, WellborePick_api[]>;
@@ -102,5 +102,11 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
             });
 
         return promise;
+    }
+
+    serializeState(): SerializedLayer {
+        const id = this._itemDelegate.getId();
+        const name = this._itemDelegate.getName();
+        return this._layerDelegate.serializeState(id, name);
     }
 }

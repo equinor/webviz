@@ -2,7 +2,7 @@ import { GroupDelegate, GroupDelegateTopic } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { LayerDelegate } from "./delegates/LayerDelegate";
 import { SettingsContextDelegateTopic } from "./delegates/SettingsContextDelegate";
-import { Group, instanceofLayer } from "./interfaces";
+import { Group, SerializedDeltaSurface, instanceofLayer } from "./interfaces";
 
 export class DeltaSurface implements Group {
     private _itemDelegate: ItemDelegate;
@@ -60,5 +60,14 @@ export class DeltaSurface implements Group {
 
     getGroupDelegate(): GroupDelegate {
         return this._groupDelegate;
+    }
+
+    serializeState(): SerializedDeltaSurface {
+        return {
+            id: this._itemDelegate.getId(),
+            type: "delta-surface",
+            name: this._itemDelegate.getName(),
+            children: this.getGroupDelegate().serializeChildren(),
+        };
     }
 }

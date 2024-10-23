@@ -11,7 +11,7 @@ import { isEqual } from "lodash";
 import { RealizationPolygonsContext } from "./RealizationPolygonsContext";
 import { RealizationPolygonsSettings } from "./types";
 
-import { BoundingBox, Layer } from "../../../interfaces";
+import { BoundingBox, Layer, SerializedLayer } from "../../../interfaces";
 
 export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettings, PolygonData_api[]> {
     private _layerDelegate: LayerDelegate<RealizationPolygonsSettings, PolygonData_api[]>;
@@ -103,5 +103,11 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
         });
 
         return promise;
+    }
+
+    serializeState(): SerializedLayer {
+        const id = this._itemDelegate.getId();
+        const name = this._itemDelegate.getName();
+        return this._layerDelegate.serializeState(id, name);
     }
 }

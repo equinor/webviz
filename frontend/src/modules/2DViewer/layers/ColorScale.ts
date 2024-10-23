@@ -4,7 +4,7 @@ import { ColorScale as ColorScaleImpl } from "@lib/utils/ColorScale";
 
 import { LayerManagerTopic } from "./LayerManager";
 import { ItemDelegate } from "./delegates/ItemDelegate";
-import { Item } from "./interfaces";
+import { Item, SerializedColorScale } from "./interfaces";
 
 export class ColorScale implements Item {
     private _itemDelegate: ItemDelegate;
@@ -40,5 +40,15 @@ export class ColorScale implements Item {
     setAreBoundariesUserDefined(areBoundariesUserDefined: boolean): void {
         this._areBoundariesUserDefined = areBoundariesUserDefined;
         this.getItemDelegate().getLayerManager()?.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+    }
+
+    serializeState(): SerializedColorScale {
+        return {
+            type: "color-scale",
+            name: this._itemDelegate.getName(),
+            id: this._itemDelegate.getId(),
+            colorScale: this._colorScale.serialize(),
+            userDefinedBoundaries: this._areBoundariesUserDefined,
+        };
     }
 }

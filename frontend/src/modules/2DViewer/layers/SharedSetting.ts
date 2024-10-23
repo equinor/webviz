@@ -1,7 +1,7 @@
 import { LayerManager, LayerManagerTopic } from "./LayerManager";
 import { ItemDelegate, ItemDelegateTopic } from "./delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelegate";
-import { Item, Layer, Setting, SettingTopic, instanceofLayer } from "./interfaces";
+import { Item, Layer, SerializedSharedSetting, Setting, SettingTopic, instanceofLayer } from "./interfaces";
 
 export class SharedSetting implements Item {
     private _wrappedSetting: Setting<any>;
@@ -108,5 +108,15 @@ export class SharedSetting implements Item {
         }, [] as any[]);
 
         this._wrappedSetting.getDelegate().setAvailableValues(availableValues);
+    }
+
+    serializeState(): SerializedSharedSetting {
+        return {
+            id: this._itemDelegate.getId(),
+            name: this._itemDelegate.getName(),
+            type: "shared-setting",
+            settingType: this._wrappedSetting.getType(),
+            value: this._wrappedSetting.getDelegate().serializeValue(),
+        };
     }
 }

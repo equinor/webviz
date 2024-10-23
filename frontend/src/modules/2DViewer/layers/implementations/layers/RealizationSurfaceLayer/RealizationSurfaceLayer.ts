@@ -14,7 +14,7 @@ import { isEqual } from "lodash";
 import { RealizationSurfaceContext } from "./RealizationSurfaceContext";
 import { RealizationSurfaceSettings } from "./types";
 
-import { BoundingBox, Layer } from "../../../interfaces";
+import { BoundingBox, Layer, SerializedLayer } from "../../../interfaces";
 
 export class RealizationSurfaceLayer
     implements Layer<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
@@ -108,5 +108,11 @@ export class RealizationSurfaceLayer
             .then((data) => transformSurfaceData(data));
 
         return promise;
+    }
+
+    serializeState(): SerializedLayer {
+        const id = this._itemDelegate.getId();
+        const name = this._itemDelegate.getName();
+        return this._layerDelegate.serializeState(id, name);
     }
 }

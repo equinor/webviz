@@ -2,7 +2,7 @@ import { ItemDelegateTopic } from "./ItemDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 
 import { LayerManagerTopic } from "../LayerManager";
-import { Item, instanceofGroup, instanceofLayer } from "../interfaces";
+import { Item, SerializedItem, instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum GroupDelegateTopic {
     CHILDREN = "CHILDREN",
@@ -225,5 +225,9 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
 
     getPublishSubscribeHandler(): PublishSubscribeDelegate<GroupDelegateTopic> {
         return this._publishSubscribeHandler;
+    }
+
+    serializeChildren(): SerializedItem[] {
+        return this._children.map((child) => child.serializeState());
     }
 }

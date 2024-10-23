@@ -14,7 +14,7 @@ import { isEqual } from "lodash";
 import { StatisticalSurfaceContext } from "./StatisticalSurfaceContext";
 import { StatisticalSurfaceSettings } from "./types";
 
-import { BoundingBox, Layer } from "../../../interfaces";
+import { BoundingBox, Layer, SerializedLayer } from "../../../interfaces";
 
 export class StatisticalSurfaceLayer
     implements Layer<StatisticalSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
@@ -134,5 +134,11 @@ export class StatisticalSurfaceLayer
             .then((data) => transformSurfaceData(data));
 
         return promise;
+    }
+
+    serializeState(): SerializedLayer {
+        const id = this._itemDelegate.getId();
+        const name = this._itemDelegate.getName();
+        return this._layerDelegate.serializeState(id, name);
     }
 }

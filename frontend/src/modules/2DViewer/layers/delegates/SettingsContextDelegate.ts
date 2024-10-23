@@ -4,7 +4,14 @@ import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDe
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
-import { AvailableValuesType, Setting, SettingTopic, Settings, SettingsContext } from "../interfaces";
+import {
+    AvailableValuesType,
+    SerializedSettingsState,
+    Setting,
+    SettingTopic,
+    Settings,
+    SettingsContext,
+} from "../interfaces";
 
 export enum SettingsContextLoadingState {
     LOADING = "LOADING",
@@ -197,5 +204,13 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
 
     getPublishSubscribeHandler(): PublishSubscribeDelegate<SettingsContextDelegateTopic> {
         return this._publishSubscribeHandler;
+    }
+
+    serializeSettings(): SerializedSettingsState {
+        const serializedSettings: SerializedSettingsState = {};
+        for (const key in this._settings) {
+            serializedSettings[key] = this._settings[key].getDelegate().serializeValue();
+        }
+        return serializedSettings;
     }
 }

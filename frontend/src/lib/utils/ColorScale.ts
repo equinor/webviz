@@ -49,6 +49,16 @@ export type ColorScaleOptions = {
     divMidPoint?: number;
 };
 
+export type ColorScaleSerialization = {
+    type: ColorScaleType;
+    colorPaletteId: string;
+    gradientType: ColorScaleGradientType;
+    steps: number;
+    min?: number;
+    max?: number;
+    divMidPoint?: number;
+};
+
 export class ColorScale {
     private _colorPalette: ColorPalette;
     private _min: number;
@@ -277,5 +287,17 @@ export class ColorScale {
             max: this._max,
             divMidPoint: this._divMidPoint,
         });
+    }
+
+    serialize(): ColorScaleSerialization {
+        return {
+            type: this._type,
+            colorPaletteId: this._colorPalette.getId(),
+            gradientType: this._gradientType,
+            steps: this._steps,
+            min: this._min,
+            max: this._max,
+            divMidPoint: this._divMidPoint,
+        };
     }
 }

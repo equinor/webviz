@@ -1,5 +1,6 @@
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ColorScaleSerialization } from "@lib/utils/ColorScale";
 import { QueryClient } from "@tanstack/react-query";
 
 import { GlobalSettings } from "./LayerManager";
@@ -10,8 +11,66 @@ import { SettingDelegate } from "./delegates/SettingDelegate";
 import { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
 import { SettingType } from "./settingsTypes";
 
+export type SerializedType =
+    | "layer-manager"
+    | "view"
+    | "layer"
+    | "settings-group"
+    | "color-scale"
+    | "delta-surface"
+    | "shared-setting";
+
+export interface SerializedItem {
+    id: string;
+    type: SerializedType;
+    name: string;
+}
+
+export type SerializedSettingsState = {
+    [key: string]: string;
+};
+
+export interface SerializedLayer extends SerializedItem {
+    type: "layer";
+    settings: SerializedSettingsState;
+}
+
+export interface SerializedView extends SerializedItem {
+    type: "view";
+    color: string;
+    children: SerializedItem[];
+}
+
+export interface SerializedSettingsGroup extends SerializedItem {
+    type: "settings-group";
+    children: SerializedItem[];
+}
+
+export interface SerializedColorScale extends SerializedItem {
+    type: "color-scale";
+    colorScale: ColorScaleSerialization;
+    userDefinedBoundaries: boolean;
+}
+
+export interface SerializedSharedSetting extends SerializedItem {
+    type: "shared-setting";
+    settingType: SettingType;
+    value: string;
+}
+
+export interface SerializedLayerManager extends SerializedItem {
+    type: "layer-manager";
+    children: SerializedItem[];
+}
+
+export interface SerializedDeltaSurface extends SerializedItem {
+    type: "delta-surface";
+    children: SerializedItem[];
+}
+
 export interface Item {
     getItemDelegate(): ItemDelegate;
+    serializeState(): SerializedItem;
 }
 
 export function instanceofItem(item: any): item is Item {
@@ -86,6 +145,7 @@ export interface Setting<TValue> {
     makeComponent(): (props: SettingComponentProps<TValue>) => React.ReactNode;
     getDelegate(): SettingDelegate<TValue>;
     fixupValue?: (availableValues: AvailableValuesType<TValue>, currentValue: TValue) => TValue;
+    serializeValue?: (value: TValue) => string;
 }
 
 export enum SettingTopic {

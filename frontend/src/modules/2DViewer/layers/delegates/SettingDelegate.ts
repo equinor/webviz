@@ -41,6 +41,14 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return this._value;
     }
 
+    serializeValue(): string {
+        if (this._owner.serializeValue) {
+            return this._owner.serializeValue(this.getValue());
+        }
+
+        return JSON.stringify(this.getValue());
+    }
+
     isValueValid(): boolean {
         return this._isValueValid;
     }
