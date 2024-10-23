@@ -5,23 +5,28 @@ import {
     WellCompletionsZone_api,
 } from "@api";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { CompletionPlotData, PlotData, WellPlotData, Zone } from "@webviz/well-completions-plot";
+import {
+    CompletionPlotData,
+    PlotData,
+    SortDirection,
+    SortWellsBy,
+    WellPlotData,
+    Zone,
+    areCompletionsPlotDataValuesEqual,
+    createSortedWells,
+    createSortedWellsFromSequence,
+    createWellNameRegexMatcher,
+} from "@webviz/well-completions-plot";
 
-import { getRegexPredicate } from "./stringUtils";
+import { TimeAggregationSelection } from "../typesAndEnums";
 
 /**
  * Util methods for providing data result based on selected time aggregation
  */
-export enum TimeAggregationType {
-    None = "None",
-    Max = "Max",
-    Average = "Average",
-}
-
 export const TimeAggregationTypeFunction = {
-    [TimeAggregationType.None]: (arr: number[]): number => arr[arr.length - 1],
-    [TimeAggregationType.Max]: (arr: number[]): number => Math.max(...arr),
-    [TimeAggregationType.Average]: (arr: number[]): number => arr.reduce((a, b) => a + b) / arr.length,
+    [TimeAggregationSelection.NONE]: (arr: number[]): number => arr[arr.length - 1],
+    [TimeAggregationSelection.MAX]: (arr: number[]): number => Math.max(...arr),
+    [TimeAggregationSelection.AVERAGE]: (arr: number[]): number => arr.reduce((a, b) => a + b) / arr.length,
 };
 
 export class WellCompletionsDataAccessor {
@@ -37,38 +42,35 @@ export class WellCompletionsDataAccessor {
     private _data: WellCompletionsData_api | null;
     private _subzones: Zone[];
     private _wells: WellCompletionsWell_api[];
+    private _sortedCompletionDates: string[];
+    private _excludeWellText: string;
     private _searchWellText: string;
+    private _sortWellsBy: SortWellsBy | null;
+    private _sortDirection: SortDirection;
     private _hideZeroCompletions: boolean;
 
-    constructor() {
-        this._data = null;
-        this._subzones = [];
-        this._wells = [];
-        this._searchWellText = "";
-        this._hideZeroCompletions = false;
-    }
-
-    clearWellCompletionsData(): void {
-        // Do not clear search text and hide zero completions
-
-        this._data = null;
-        this._subzones = [];
-        this._wells = [];
-    }
-
-    parseWellCompletionsData(data: WellCompletionsData_api, stratigraphyColorSet: ColorSet): void {
+    constructor(data: WellCompletionsData_api, stratigraphyColorSet: ColorSet) {
         // TODO:
-        // - Filter wells when filter functionality is in place
         // - Filter subzones when filter functionality is in place
 
         this._data = data;
         this._wells = this._data.wells;
+        this._sortedCompletionDates = this._data.sortedCompletionDates;
+        this._excludeWellText = "";
+        this._searchWellText = "";
+        this._hideZeroCompletions = false;
+        this._sortWellsBy = null;
+        this._sortDirection = SortDirection.ASCENDING;
 
         // Extract all subzones
         this._subzones = [];
         this._data.zones.forEach((zone) =>
-            WellCompletionsDataAccessor.createLeafNodesAndAssignColor(zone, stratigraphyColorSet, this._subzones)
+            WellCompletionsDataAccessor.propagateSubzoneArray(zone, stratigraphyColorSet, this._subzones)
         );
+    }
+
+    setExcludeWellText(excludeWell: string): void {
+        this._excludeWellText = excludeWell;
     }
 
     setSearchWellText(searchWell: string): void {
@@ -79,56 +81,91 @@ export class WellCompletionsDataAccessor {
         this._hideZeroCompletions = hideZeroCompletions;
     }
 
-    getTimeSteps(): string[] {
-        if (!this._data) return [];
-        return this._data.timeSteps;
+    setSortWellsBy(sortWellsBy: SortWellsBy): void {
+        this._sortWellsBy = sortWellsBy;
+    }
+
+    setSortDirection(sortDirection: SortDirection): void {
+        this._sortDirection = sortDirection;
+    }
+
+    getSortedCompletionDates(): string[] {
+        return this._sortedCompletionDates;
+    }
+
+    private getValidIndexOf(dateIndex: number): number {
+        return this._sortedCompletionDates.findIndex((_, index) => index === dateIndex);
     }
 
     createPlotData(
-        timeStepSelection: string | [string, string],
-        timeAggregation: TimeAggregationType
+        completionDateIndexSelection: number | [number, number],
+        timeAggregation: TimeAggregationSelection
     ): PlotData | null {
-        // TODO: Consider removing function arguments, and use setter-methods for each argument and set to an attribute.
-        //       This would make it easier to modify/adjust single attributes and call "createPlotData" again.
         if (!this._data) return null;
 
-        let timeStepIndexRange: [number, number] | null = null;
-        if (typeof timeStepSelection === "string") {
-            const timeStepIndex = this._data.timeSteps.indexOf(timeStepSelection);
-            timeStepIndexRange = [timeStepIndex, timeStepIndex];
+        let dateIndexRange: [number, number] | null = null;
+        if (typeof completionDateIndexSelection === "number") {
+            const dateIndex = this.getValidIndexOf(completionDateIndexSelection);
+            dateIndexRange = [dateIndex, dateIndex];
         } else {
-            timeStepIndexRange = [
-                this._data.timeSteps.indexOf(timeStepSelection[0]),
-                this._data.timeSteps.indexOf(timeStepSelection[1]),
+            dateIndexRange = [
+                this.getValidIndexOf(completionDateIndexSelection[0]),
+                this.getValidIndexOf(completionDateIndexSelection[1]),
             ];
         }
-        if (timeStepIndexRange[0] === -1 || timeStepIndexRange[1] === -1) return null;
+        if (dateIndexRange[0] === -1 || dateIndexRange[1] === -1) return null;
 
-        // Filter wells based on search text
-        // TODO: Add filtering of attributes as well
-        const wellNameRegex = getRegexPredicate(this._searchWellText);
-        const filteredWells = this._searchWellText
-            ? Array.from(this._wells as WellCompletionsWell_api[]).filter((well) => wellNameRegex(well.name))
-            : this._wells;
+        // Filter wells based on exclude and search text
+        const wellNames = this._wells.map((well) => well.name);
+
+        // Exclude wells based on exclude text
+        let excludeWellNames: string[] = [];
+        if (this._excludeWellText) {
+            const excludeWellRegex = createWellNameRegexMatcher(this._excludeWellText);
+            excludeWellNames = wellNames.filter((name) => {
+                return excludeWellRegex(name);
+            });
+        }
+
+        // Include wells based on search text
+        let includeWellNames: string[] = wellNames;
+        if (this._searchWellText) {
+            const wellNameRegex = createWellNameRegexMatcher(this._searchWellText);
+            includeWellNames = wellNames.filter((name) => {
+                return wellNameRegex(name);
+            });
+        }
+
+        const filteredWells = this._wells.filter(
+            (well) => !excludeWellNames.includes(well.name) && includeWellNames.includes(well.name)
+        );
+
+        // TODO: Add filtering of well.attributes values when attribute information is available
 
         return WellCompletionsDataAccessor.computePlotData(
             this._subzones,
             filteredWells,
-            timeStepIndexRange,
+            dateIndexRange,
             timeAggregation,
+            this._sortWellsBy,
+            this._sortDirection,
             this._hideZeroCompletions,
             this._data?.units
         );
     }
 
-    private static findEarliestCompletionDateIndices(well: WellCompletionsWell_api, subzones: Zone[]): number {
+    private static findEarliestWellCompletionDateIndex(well: WellCompletionsWell_api, subzones: Zone[]): number {
         let earliestCompDateIndex = Number.POSITIVE_INFINITY;
         subzones.forEach((zone) => {
             if (zone.name in well.completions) {
                 const completion = well.completions[zone.name];
                 //Find the earliest date for the given completion
-                const earliestDate = completion.t.find((_, index) => completion.open[index] > 0);
-                if (earliestDate !== undefined) earliestCompDateIndex = Math.min(earliestCompDateIndex, earliestDate);
+                const earliestDate = completion.sortedCompletionDateIndices.find(
+                    (_, index) => completion.open[index] > 0
+                );
+                if (earliestDate !== undefined) {
+                    earliestCompDateIndex = Math.min(earliestCompDateIndex, earliestDate);
+                }
             }
         });
 
@@ -138,18 +175,22 @@ export class WellCompletionsDataAccessor {
     private static computePlotData(
         subzones: Zone[],
         wells: WellCompletionsWell_api[],
-        range: [number, number],
-        timeAggregation: TimeAggregationType,
+        dateIndexRange: [number, number],
+        timeAggregation: TimeAggregationSelection,
+        sortWellsBy: SortWellsBy | null,
+        sortDirection: SortDirection,
         hideZeroCompletions: boolean,
         units: WellCompletionsUnits_api
     ): PlotData {
         const wellPlotData: WellPlotData[] = [];
-        wells.forEach((well) => {
+
+        // Subzones must be sorted by increasing depth, i.e. from most shallow to deepest
+        for (const well of wells) {
             const completionsPlotData: CompletionPlotData[] = [];
-            const earliestCompDateIndex = this.findEarliestCompletionDateIndices(well, subzones);
-            let hasData = false;
+            const earliestCompDateIndex = this.findEarliestWellCompletionDateIndex(well, subzones);
+            let hasAtLeastOneOpenCompletion = false;
             subzones.forEach((zone, zoneIndex) => {
-                const length = range[1] - range[0] + 1;
+                const length = dateIndexRange[1] - dateIndexRange[0] + 1;
                 const openValues = Array(length).fill(0);
                 const shutValues = Array(length).fill(0);
                 const khMeanValues = Array(length).fill(0);
@@ -165,13 +206,13 @@ export class WellCompletionsDataAccessor {
                     let currentkhMinValue = 0;
                     let currentkhMaxValue = 0;
                     for (let rangeI = 0; rangeI < length; rangeI++) {
-                        const timeStep = rangeI + range[0];
-                        while (timeStep >= completion.t[index]) {
+                        const dateIndex = rangeI + dateIndexRange[0];
+                        while (dateIndex >= completion.sortedCompletionDateIndices[index]) {
                             currentOpenValue = completion.open[index];
                             currentShutValue = completion.shut[index];
-                            currentkhMeanValue = completion.kh_mean[index];
-                            currentkhMinValue = completion.kh_min[index];
-                            currentkhMaxValue = completion.kh_max[index];
+                            currentkhMeanValue = completion.khMean[index];
+                            currentkhMinValue = completion.khMin[index];
+                            currentkhMaxValue = completion.khMax[index];
                             index++;
                         }
                         openValues[rangeI] = currentOpenValue;
@@ -181,63 +222,89 @@ export class WellCompletionsDataAccessor {
                         khMaxValues[rangeI] = currentkhMaxValue;
                     }
                 }
-                const dFunction = TimeAggregationTypeFunction[timeAggregation];
-                const newCompletion = {
+                const aggregateValues = TimeAggregationTypeFunction[timeAggregation];
+                const zoneCompletion = {
                     zoneIndex,
-                    open: dFunction(openValues),
-                    shut: dFunction(shutValues),
-                    khMean: dFunction(khMeanValues),
-                    khMin: dFunction(khMinValues),
-                    khMax: dFunction(khMaxValues),
+                    open: aggregateValues(openValues),
+                    shut: aggregateValues(shutValues),
+                    khMean: aggregateValues(khMeanValues),
+                    khMin: aggregateValues(khMinValues),
+                    khMax: aggregateValues(khMaxValues),
                 };
-                if (newCompletion.open !== 0) hasData = true;
+
+                if (zoneCompletion.open !== 0) {
+                    hasAtLeastOneOpenCompletion = true;
+                }
+
                 //If value changed
                 if (
                     completionsPlotData.length === 0 ||
-                    !this.isCompletionValuesEqual(completionsPlotData[completionsPlotData.length - 1], newCompletion)
+                    !areCompletionsPlotDataValuesEqual(
+                        completionsPlotData[completionsPlotData.length - 1],
+                        zoneCompletion
+                    )
                 ) {
-                    completionsPlotData.push(newCompletion);
+                    completionsPlotData.push(zoneCompletion);
                 }
             });
-            if (!hideZeroCompletions || hasData) {
+            if (!hideZeroCompletions || hasAtLeastOneOpenCompletion) {
                 wellPlotData.push({
                     ...well,
                     completions: completionsPlotData,
                     earliestCompDateIndex: earliestCompDateIndex,
                 });
             }
-        });
+        }
+
+        // No sorting
+        if (sortWellsBy === null) {
+            return { stratigraphy: subzones, wells: wellPlotData, units: units };
+        }
+
+        // Sort wells based on selection
+        let sortedWells = null;
+        if (sortWellsBy === SortWellsBy.WELL_NAME) {
+            sortedWells = createSortedWells(wellPlotData, sortWellsBy, sortDirection);
+        } else {
+            // If not sorted by well name:
+            // - Perform selected sort, and then ensure sorted by ascending well name for the elements stated as equal in selected sort
+            const sortBySequence = new Map([
+                [sortWellsBy, sortDirection],
+                [SortWellsBy.WELL_NAME, SortDirection.ASCENDING],
+            ]);
+            sortedWells = createSortedWellsFromSequence(wellPlotData, sortBySequence);
+        }
+
         return {
             stratigraphy: subzones,
-            wells: wellPlotData,
+            wells: sortedWells,
             units: units,
         };
     }
 
-    private static isCompletionValuesEqual(completion1: CompletionPlotData, completion2: CompletionPlotData) {
-        return (
-            completion1.open === completion2.open &&
-            completion1.shut === completion2.shut &&
-            completion1.khMean === completion2.khMean &&
-            completion1.khMin === completion2.khMin &&
-            completion1.khMax === completion2.khMax
-        );
-    }
-
-    private static createLeafNodesAndAssignColor(
+    /**
+     * Recursively propagate subzones from the API to the Zone object
+     *
+     * The subzone is: leaf nodes with a color from the stratigraphyColorSet
+     *
+     * @param apiZone
+     * @param stratigraphyColorSet
+     * @param subzoneArray
+     */
+    private static propagateSubzoneArray(
         apiZone: WellCompletionsZone_api,
         stratigraphyColorSet: ColorSet,
-        leafNodes: Zone[]
+        subzoneArray: Zone[]
     ): void {
         const color =
-            leafNodes.length === 0 ? stratigraphyColorSet.getFirstColor() : stratigraphyColorSet.getNextColor();
+            subzoneArray.length === 0 ? stratigraphyColorSet.getFirstColor() : stratigraphyColorSet.getNextColor();
 
         // Depth-first search to find all leaf nodes
         if (!apiZone.subzones || apiZone.subzones.length === 0) {
-            leafNodes.push({ name: apiZone.name, color: color });
+            subzoneArray.push({ name: apiZone.name, color: color });
         } else {
             apiZone.subzones.forEach((apiSubZone) =>
-                WellCompletionsDataAccessor.createLeafNodesAndAssignColor(apiSubZone, stratigraphyColorSet, leafNodes)
+                WellCompletionsDataAccessor.propagateSubzoneArray(apiSubZone, stratigraphyColorSet, subzoneArray)
             );
         }
     }

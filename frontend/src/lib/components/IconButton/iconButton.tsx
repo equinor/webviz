@@ -8,7 +8,7 @@ import { BaseComponent } from "../BaseComponent";
 export type IconButtonProps = {
     children: React.ReactNode;
     size?: "small" | "medium" | "large";
-    color?: "primary" | "danger" | "success";
+    color?: "primary" | "danger" | "success" | "secondary";
 };
 
 export const IconButton = React.forwardRef(
@@ -26,6 +26,7 @@ export const IconButton = React.forwardRef(
                                     "text-indigo-600": color === "primary" || !color,
                                     "text-red-600": color === "danger",
                                     "text-green-600": color === "success",
+                                    "text-slate-600": color === "secondary",
                                 },
                                 "hover:bg-gray-300",
                                 "inline-flex",
