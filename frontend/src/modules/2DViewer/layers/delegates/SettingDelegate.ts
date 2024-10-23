@@ -134,6 +134,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
 
         if (this._owner.fixupValue) {
             this._value = this._owner.fixupValue(this._availableValues, this._value);
+            return;
         }
 
         if (Array.isArray(this._value)) {
