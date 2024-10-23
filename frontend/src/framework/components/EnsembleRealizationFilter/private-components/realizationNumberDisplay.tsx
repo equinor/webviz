@@ -61,7 +61,7 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
             }
             const realizationDiv = (
                 <div
-                    title={`real-${realization}`}
+                    title={isCurrentRealizationAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
                     key={realization}
                     className={resolveClassNames(
                         `${realizationDivSizeClass} rounded-full aspect-square flex justify-center items-center outline-blue-300 outline-2`,

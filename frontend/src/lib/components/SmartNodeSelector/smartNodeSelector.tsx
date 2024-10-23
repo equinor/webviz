@@ -335,7 +335,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     .current;
                 if (inputField) {
                     inputField.focus();
-                    this.state.currentTagIndex = index;
+                    this.updateState({ currentTagIndex: index });
                     if (setSelection !== undefined) {
                         inputField.setSelectionRange(
                             setSelection === Direction.Left ? 0 : inputField.value.length,
@@ -530,6 +530,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         callback?: () => void;
         forceUpdate?: boolean;
     }): void {
+        if (this.state.suggestionsVisible === false) return;
         if (this.suggestionTimer) clearTimeout(this.suggestionTimer);
         this.updateState({
             suggestionsVisible: false,
@@ -851,7 +852,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     protected clearAllTags(e: React.MouseEvent<HTMLButtonElement, globalThis.MouseEvent>): void {
         this.updateState({
             nodeSelections: [this.createNewNodeSelection()],
-            currentTagIndex: 0,
+            currentTagIndex: -1,
             suggestionsVisible: false,
             showAllSuggestions: false,
             callback: () => {

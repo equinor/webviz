@@ -9,8 +9,7 @@ import {
     EnsembleRealizationFilterSelections,
 } from "@framework/components/EnsembleRealizationFilter/ensembleRealizationFilter";
 import { Drawer } from "@framework/internal/components/Drawer";
-import { ParameterValueSelection } from "@framework/types/realizationFilterTypes";
-import { areParameterIdentStringToValueSelectionReadonlyMapsEqual } from "@framework/utils/realizationFilterTypesUtils";
+import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
 import { FilterAlt } from "@mui/icons-material";
@@ -74,7 +73,6 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                     realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
                 filterType: realizationFilter.getFilterType(),
                 includeOrExcludeFilter: realizationFilter.getIncludeOrExcludeFilter(),
-                hasInvalidParameterTag: false,
             };
         }
         setEnsembleIdentStringHasUnsavedChangesMap(updatedHasUnsavedChangesMap);
@@ -160,7 +158,6 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                     realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
                 filterType: realizationFilter.getFilterType(),
                 includeOrExcludeFilter: realizationFilter.getIncludeOrExcludeFilter(),
-                hasInvalidParameterTag: false,
             },
         });
 
@@ -186,7 +183,6 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                     realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
                 filterType: realizationFilter.getFilterType(),
                 includeOrExcludeFilter: realizationFilter.getIncludeOrExcludeFilter(),
-                hasInvalidParameterTag: false,
             };
             resetHasUnsavedChangesMap[ensembleIdentString] = false;
         }
@@ -196,21 +192,6 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
         setDialogOpen(false);
         props.onClose();
-    }
-
-    function areParameterValueSelectionMapsEqual(
-        firstMap: ReadonlyMap<string, ParameterValueSelection> | null,
-        secondMap: ReadonlyMap<string, ParameterValueSelection> | null
-    ): boolean {
-        if (firstMap === null && secondMap === null) {
-            return true;
-        }
-
-        if (firstMap === null || secondMap === null) {
-            return false;
-        }
-
-        return areParameterIdentStringToValueSelectionReadonlyMapsEqual(firstMap, secondMap);
     }
 
     function handleFilterChange(ensembleIdent: EnsembleIdent, selections: EnsembleRealizationFilterSelections) {
@@ -227,7 +208,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
         const hasUnsavedChanges =
             !isEqual(selections.realizationNumberSelections, realizationFilter.getRealizationNumberSelections()) ||
-            !areParameterValueSelectionMapsEqual(
+            !areParameterIdentStringToValueSelectionMapCandidatesEqual(
                 selections.parameterIdentStringToValueSelectionReadonlyMap,
                 realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()
             ) ||

@@ -12,32 +12,36 @@ import {
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
 } from "@framework/utils/realizationFilterTypesUtils";
+import { Button } from "@lib/components/Button";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { Label } from "@lib/components/Label";
 import { Slider } from "@lib/components/Slider";
 import { SmartNodeSelector, SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
-import { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
 import { TagPicker } from "@lib/components/TagPicker";
-import { Delete } from "@mui/icons-material";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { AddCircle, Delete } from "@mui/icons-material";
 
+import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";
 import { createTreeDataNodeListFromParameters } from "../private-utils/smartNodeSelectorUtils";
-
-export type ByParameterValueFilterSelection = {
-    parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection> | null;
-    smartNodeSelectorTags: SmartNodeSelectorTag[];
-};
 
 export type ByParameterValueFilterProps = {
     ensembleParameters: EnsembleParameters; // Should be stable object - both content and reference
     parameterIdentStringToValueSelectionReadonlyMap: ReadonlyMap<string, ParameterValueSelection> | null;
-    smartNodeSelectorTags: SmartNodeSelectorTag[];
     disabled: boolean;
-    onFilterChange: (selection: ByParameterValueFilterSelection) => void;
+    onFilterChange: (
+        newParameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection> | null
+    ) => void;
 };
 
 export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (props) => {
     const { onFilterChange } = props;
+
+    const [smartNodeSelectorSelection, setSmartNodeSelectorSelection] = React.useState<SmartNodeSelectorSelection>({
+        selectedIds: [],
+        selectedNodes: [],
+        selectedTags: [],
+    });
 
     // Compare by reference (ensure if it is enough to compare by reference)
     const smartNodeSelectorTreeDataNodes = React.useMemo<TreeDataNode[]>(() => {
@@ -50,31 +54,57 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         );
     }, [props.ensembleParameters]);
 
+    // Handle enable/disable of add button
+    // - If there are invalid tags, or no new selected parameters - disable the add button
+    const hasInvalidTags = smartNodeSelectorSelection.selectedTags.some((tag) => !tag.isValid);
+    const existingParameterIdentStrings = Array.from(
+        props.parameterIdentStringToValueSelectionReadonlyMap?.keys() ?? []
+    );
+    const hasNewParameters = smartNodeSelectorSelection.selectedIds.some(
+        (selectedId) => !existingParameterIdentStrings.includes(selectedId)
+    );
+    const isAddButtonDisabled = hasInvalidTags || !hasNewParameters;
+
+    // Button text for disabled state info
+    let candidateButtonText: string | null = null;
+    if (hasInvalidTags) {
+        candidateButtonText =
+            smartNodeSelectorSelection.selectedTags.length > 1 ? "Select valid parameters" : "Select valid parameter";
+    } else if (!hasNewParameters) {
+        candidateButtonText =
+            smartNodeSelectorSelection.selectedIds.length === 0
+                ? "No parameter to add"
+                : smartNodeSelectorSelection.selectedIds.length > 1
+                ? "Parameters already added"
+                : "Parameter already added";
+    }
+    const disabledButtonHelpText = candidateButtonText;
+
     const handleParameterNameSelectionChanged = React.useCallback(
         function handleParameterNameSelectionChanged(selection: SmartNodeSelectorSelection) {
-            console.log(selection.selectedTags);
+            setSmartNodeSelectorSelection(selection);
+        },
+        [setSmartNodeSelectorSelection]
+    );
 
+    const handleAddSelectedParametersClick = React.useCallback(
+        function handleAddSelectedParametersClick() {
             // Find new parameter ident strings that are not in the current map
             const newMap = new Map(props.parameterIdentStringToValueSelectionReadonlyMap);
 
             // Get selected parameter ident strings
-            const selectedParameterIdentStrings = selection.selectedIds;
+            const selectedParameterIdentStrings = smartNodeSelectorSelection.selectedIds;
 
-            // Delete deselected parameter ident strings
-            const deselectedParameterIdentStrings = Array.from(newMap.keys()).filter(
-                (paramIdentString) => !selectedParameterIdentStrings.includes(paramIdentString)
-            );
-            for (const deselectedParameterIdentString of deselectedParameterIdentStrings) {
-                newMap.delete(deselectedParameterIdentString);
-            }
+            // Find parameter ident strings not in the current map
+            const newParameterIdentStrings = selectedParameterIdentStrings.filter((elm) => !newMap.has(elm));
 
             // Add new selected parameter ident strings
             const newDiscreteValueSelection: Readonly<string[] | number[]> = [];
-            for (const parameterIdentString of selectedParameterIdentStrings) {
+            for (const parameterIdentString of newParameterIdentStrings) {
                 const parameter = props.ensembleParameters.findParameter(
                     ParameterIdent.fromString(parameterIdentString)
                 );
-                if (!parameter || newMap.has(parameterIdentString)) {
+                if (!parameter) {
                     continue;
                 }
 
@@ -96,114 +126,129 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             const nonEmptyMap = newMap.size > 0 ? (newMap as ReadonlyMap<string, ParameterValueSelection>) : null;
 
             // Trigger filter change
-            onFilterChange({
-                parameterIdentStringToValueSelectionMap: nonEmptyMap,
-                smartNodeSelectorTags: selection.selectedTags,
+            onFilterChange(nonEmptyMap);
+
+            // Clear SmartNodeSelector selection
+            setSmartNodeSelectorSelection({
+                selectedIds: [],
+                selectedNodes: [],
+                selectedTags: [],
             });
         },
-        [props.ensembleParameters, props.parameterIdentStringToValueSelectionReadonlyMap, onFilterChange]
+        [
+            props.ensembleParameters,
+            props.parameterIdentStringToValueSelectionReadonlyMap,
+            smartNodeSelectorSelection,
+            setSmartNodeSelectorSelection,
+            onFilterChange,
+        ]
     );
 
-    function setNewParameterValueSelectionAndTriggerOnChange(
-        parameterIdentString: string,
-        valueSelection: ParameterValueSelection
-    ) {
-        // Copy map - NOTE: This is not a deep copy
-        const updatedMap = new Map(props.parameterIdentStringToValueSelectionReadonlyMap);
-        if (!updatedMap.has(parameterIdentString)) {
-            throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
-        }
-
-        console.log("setNewParameterValueSelectionAndTriggerOnChange");
-
-        // Update value selection with .set()
-        // - Do not use .get() and modify by reference, as .get() will return reference to source,
-        //   i.e. props.selectedParameterIdentStringToValueSelectionMap. Thus modifying the value
-        //   will modify the source, which is not allowed.
-        updatedMap.set(parameterIdentString, valueSelection);
-
-        // Trigger filter change
-        props.onFilterChange({
-            parameterIdentStringToValueSelectionMap: updatedMap as ReadonlyMap<string, ParameterValueSelection>,
-            smartNodeSelectorTags: props.smartNodeSelectorTags,
-        });
-    }
-
-    function handleContinuousParameterValueRangeChange(parameterIdentString: string, valueSelection: number[]) {
-        if (valueSelection.length !== 2) {
-            throw new Error(`Value selection must have 2 values`);
-        }
-
-        const parameter = props.ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
-        if (!parameter) {
-            throw new Error(`Parameter ${parameterIdentString} not found`);
-        }
-        if (parameter.type !== ParameterType.CONTINUOUS) {
-            throw new Error(`Parameter ${parameterIdentString} is not of type continuous`);
-        }
-        if (
-            props.parameterIdentStringToValueSelectionReadonlyMap &&
-            !props.parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+    const setNewParameterValueSelectionAndTriggerOnChange = React.useCallback(
+        function setNewParameterValueSelectionAndTriggerOnChange(
+            parameterIdentString: string,
+            valueSelection: ParameterValueSelection
         ) {
-            throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
-        }
+            // Copy map - NOTE: This is not a deep copy
+            const updatedMap = new Map(props.parameterIdentStringToValueSelectionReadonlyMap);
+            if (!updatedMap.has(parameterIdentString)) {
+                throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
+            }
 
-        const newRangeSelection: Readonly<NumberRange> = { start: valueSelection[0], end: valueSelection[1] };
+            // Update value selection with .set()
+            // - Do not use .get() and modify by reference, as .get() will return reference to source,
+            //   i.e. props.selectedParameterIdentStringToValueSelectionMap. Thus modifying the value
+            //   will modify the source, which is not allowed.
+            updatedMap.set(parameterIdentString, valueSelection);
 
-        setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, newRangeSelection);
-    }
+            // Trigger filter change
+            onFilterChange(updatedMap as ReadonlyMap<string, ParameterValueSelection>);
+        },
+        [props.parameterIdentStringToValueSelectionReadonlyMap, onFilterChange]
+    );
 
-    function handleDiscreteParameterValueSelectionChange(
-        parameterIdentString: string,
-        valueSelection: string[] | number[]
-    ) {
-        const parameter = props.ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
-        if (!parameter) {
-            throw new Error(`Parameter ${parameterIdentString} not found`);
-        }
-        if (parameter.type !== ParameterType.DISCRETE) {
-            throw new Error(`Parameter ${parameterIdentString} is not of type discrete`);
-        }
-        if (
-            props.parameterIdentStringToValueSelectionReadonlyMap &&
-            !props.parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+    const handleContinuousParameterValueRangeChange = React.useCallback(
+        function handleContinuousParameterValueRangeChange(parameterIdentString: string, valueSelection: number[]) {
+            if (valueSelection.length !== 2) {
+                throw new Error(`Value selection must have 2 values`);
+            }
+
+            const parameter = props.ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
+            if (!parameter) {
+                throw new Error(`Parameter ${parameterIdentString} not found`);
+            }
+            if (parameter.type !== ParameterType.CONTINUOUS) {
+                throw new Error(`Parameter ${parameterIdentString} is not of type continuous`);
+            }
+            if (
+                props.parameterIdentStringToValueSelectionReadonlyMap &&
+                !props.parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+            ) {
+                throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
+            }
+
+            const newRangeSelection: Readonly<NumberRange> = { start: valueSelection[0], end: valueSelection[1] };
+
+            setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, newRangeSelection);
+        },
+        [
+            props.ensembleParameters,
+            props.parameterIdentStringToValueSelectionReadonlyMap,
+            setNewParameterValueSelectionAndTriggerOnChange,
+        ]
+    );
+
+    const handleDiscreteParameterValueSelectionChange = React.useCallback(
+        function handleDiscreteParameterValueSelectionChange(
+            parameterIdentString: string,
+            valueSelection: string[] | number[]
         ) {
-            throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
-        }
+            const parameter = props.ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
+            if (!parameter) {
+                throw new Error(`Parameter ${parameterIdentString} not found`);
+            }
+            if (parameter.type !== ParameterType.DISCRETE) {
+                throw new Error(`Parameter ${parameterIdentString} is not of type discrete`);
+            }
+            if (
+                props.parameterIdentStringToValueSelectionReadonlyMap &&
+                !props.parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+            ) {
+                throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
+            }
 
-        const newDiscreteValueSelection: Readonly<string[] | number[]> = valueSelection;
+            const newDiscreteValueSelection: Readonly<string[] | number[]> = valueSelection;
 
-        setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, newDiscreteValueSelection);
-    }
+            setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, newDiscreteValueSelection);
+        },
+        [
+            props.ensembleParameters,
+            props.parameterIdentStringToValueSelectionReadonlyMap,
+            setNewParameterValueSelectionAndTriggerOnChange,
+        ]
+    );
 
-    function handleRemoveButtonClick(parameterIdentString: string) {
-        if (
-            props.parameterIdentStringToValueSelectionReadonlyMap &&
-            !props.parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
-        ) {
-            throw new Error(`Parameter ${parameterIdentString} not found`);
-        }
+    const handleRemoveButtonClick = React.useCallback(
+        function handleRemoveButtonClick(parameterIdentString: string) {
+            if (
+                props.parameterIdentStringToValueSelectionReadonlyMap &&
+                !props.parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+            ) {
+                throw new Error(`Parameter ${parameterIdentString} not found`);
+            }
 
-        // Create a new map by selecting keys from the original map, excluding the specified key
-        // NOTE: This is not a deep copy
-        const newMap = new Map(props.parameterIdentStringToValueSelectionReadonlyMap);
-        newMap.delete(parameterIdentString);
+            // Create a new map by selecting keys from the original map, excluding the specified key
+            // NOTE: This is not a deep copy
+            const newMap = new Map(props.parameterIdentStringToValueSelectionReadonlyMap);
+            newMap.delete(parameterIdentString);
 
-        const nonEmptyMap = newMap.size > 0 ? (newMap as ReadonlyMap<string, ParameterValueSelection>) : null;
+            const nonEmptyMap = newMap.size > 0 ? (newMap as ReadonlyMap<string, ParameterValueSelection>) : null;
 
-        // Update selector tags
-        const parameterIdent = ParameterIdent.fromString(parameterIdentString);
-        const candidateTagText = parameterIdent.groupName
-            ? `${parameterIdent.groupName}:${parameterIdent.name}`
-            : parameterIdent.name;
-        const newSmartNodeSelectorTags = props.smartNodeSelectorTags.filter((tag) => tag.text !== candidateTagText);
-
-        // Trigger filter change
-        props.onFilterChange({
-            parameterIdentStringToValueSelectionMap: nonEmptyMap,
-            smartNodeSelectorTags: [],
-        });
-    }
+            // Trigger filter change
+            onFilterChange(nonEmptyMap);
+        },
+        [props.parameterIdentStringToValueSelectionReadonlyMap, onFilterChange]
+    );
 
     function createContinuousParameterValueRangeRow(
         parameterIdentString: string,
@@ -311,52 +356,42 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
 
     return (
         <div className="flex-grow flex-col gap-2">
-            <Label text="Select parameters">
-                <SmartNodeSelector
-                    data={smartNodeSelectorTreeDataNodes ?? []}
-                    selectedTags={props.smartNodeSelectorTags.map((tag) => tag.text)}
-                    onChange={handleParameterNameSelectionChanged}
-                    placeholder="Add parameter..."
-                />
+            <Label text="Select parameters to add">
+                <>
+                    <SmartNodeSelector
+                        data={smartNodeSelectorTreeDataNodes ?? []}
+                        selectedTags={smartNodeSelectorSelection.selectedTags.map((tag) => tag.text)}
+                        onChange={handleParameterNameSelectionChanged}
+                        placeholder="Select parameter to add..."
+                    />
+                    <div className="flex pb-2">
+                        <div className="flex flex-grow" />
+                        <div
+                            title={disabledButtonHelpText ?? undefined}
+                            className={resolveClassNames({ "cursor-help": isAddButtonDisabled })}
+                        >
+                            <Button
+                                size="medium"
+                                disabled={isAddButtonDisabled}
+                                endIcon={<AddCircle fontSize="small" />}
+                                onClick={handleAddSelectedParametersClick}
+                            >
+                                Add
+                            </Button>
+                        </div>
+                    </div>
+                </>
             </Label>
-            {props.parameterIdentStringToValueSelectionReadonlyMap &&
-                Array.from(props.parameterIdentStringToValueSelectionReadonlyMap).map(
-                    ([parameterIdentString, valueSelection]) =>
-                        createParameterValueSelectionRow(parameterIdentString, valueSelection)
-                )}
+            {props.parameterIdentStringToValueSelectionReadonlyMap && (
+                <Label text="Selected parameters">
+                    <>
+                        {Array.from(props.parameterIdentStringToValueSelectionReadonlyMap).map(
+                            ([parameterIdentString, valueSelection]) =>
+                                createParameterValueSelectionRow(parameterIdentString, valueSelection)
+                        )}
+                    </>
+                </Label>
+            )}
         </div>
     );
 };
-
-/**
- * Create a step size for a continuous value slider based on the min and max values.
- *
- * The step size is computed as a fraction of the range, and then rounded to a magnitude-adjusted value.
- */
-function createContinuousValueSliderStep(min: number, max: number): number {
-    const range = Math.abs(max - min);
-
-    // Determine the number of steps based on the magnitude of the range
-    const magnitude = Math.floor(Math.log10(range));
-
-    let numberOfSteps = 100;
-    let digitPrecision = 3;
-    if (magnitude < 1) {
-        numberOfSteps = 100;
-        digitPrecision = 4;
-    } else if (magnitude < 2) {
-        numberOfSteps = 100;
-    } else if (magnitude < 3) {
-        numberOfSteps = 1000;
-    } else {
-        numberOfSteps = 10000;
-    }
-
-    // Calculate the step size based on the number of steps
-    let stepSize = range / numberOfSteps;
-
-    // Reduce number of significant digits
-    stepSize = parseFloat(stepSize.toPrecision(digitPrecision));
-
-    return stepSize;
-}

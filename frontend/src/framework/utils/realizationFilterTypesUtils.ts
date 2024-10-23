@@ -84,6 +84,28 @@ export function areParameterIdentStringToValueSelectionReadonlyMapsEqual(
 }
 
 /**
+ * Check if two parameter ident string to value selection maps are equal.
+ *
+ * Allowing null for both maps.
+ *
+ * If both maps are null, they are considered equal.
+ */
+export function areParameterIdentStringToValueSelectionMapCandidatesEqual(
+    firstMap: ReadonlyMap<string, ParameterValueSelection> | null,
+    secondMap: ReadonlyMap<string, ParameterValueSelection> | null
+): boolean {
+    if (firstMap === null && secondMap === null) {
+        return true;
+    }
+
+    if (firstMap === null || secondMap === null) {
+        return false;
+    }
+
+    return areParameterIdentStringToValueSelectionReadonlyMapsEqual(firstMap, secondMap);
+}
+
+/**
  * Convert realization number selections to an array of realization numbers.
  */
 export function makeRealizationNumberArrayFromSelections(
