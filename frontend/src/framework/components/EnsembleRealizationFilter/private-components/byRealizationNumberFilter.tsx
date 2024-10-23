@@ -10,7 +10,7 @@ import { isEqual } from "lodash";
 import {
     makeRealizationNumberSelectionsFromRealizationPickerTags,
     makeRealizationPickerTagsFromRealizationNumberSelections,
-} from "../private-utils/conversionUtils";
+} from "../private-utils/realizationPickerUtils";
 
 export interface ByRealizationNumberFilterSelection {
     realizationNumberSelections: RealizationNumberSelection[] | null;
