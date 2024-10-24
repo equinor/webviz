@@ -25,9 +25,9 @@ describe("createBestSuggestedRealizationNumberSelections", () => {
     });
 
     test("should return ranges and single numbers correctly", () => {
-        const selectedRealizations = [1, 2, 4, 6, 7, 8, 9, 10, 12, 14];
+        const selectedRealizations = [1, 2, 4, 6, 8, 10, 12, 14];
         const validRealizations = [1, 2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16];
-        const expected: RealizationNumberSelection[] = [{ start: 1, end: 2 }, 4, { start: 6, end: 10 }, 12, 14];
+        const expected: RealizationNumberSelection[] = [{ start: 1, end: 4 }, 6, { start: 8, end: 10 }, 12, 14];
         const result = createBestSuggestedRealizationNumberSelections(selectedRealizations, validRealizations);
         expect(result).toEqual(expected);
     });
