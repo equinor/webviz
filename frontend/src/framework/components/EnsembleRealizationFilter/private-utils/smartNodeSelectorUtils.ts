@@ -9,7 +9,7 @@ const NON_GROUPED_PARENT_NODE = "Generic";
 /**
  * Add a parameter node to a tree data node list under a requested group node.
  */
-function addParameterNodeToTreeDataNodeList(
+export function addParameterNodeToTreeDataNodeList(
     treeDataNodeList: TreeDataNode[],
     parameterNode: TreeDataNode,
     groupNodeName: string

@@ -159,10 +159,10 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             );
         }
 
-        // TODO: If improved realization number selection algorithm is needed, provide as callback function
-        // if it needs realizationFilter info
+        // Create realization number selections based on the current selection and available realization numbers
         const newRealizationNumberSelections = createBestSuggestedRealizationNumberSelections(
-            candidateSelectedRealizationNumbers
+            candidateSelectedRealizationNumbers,
+            props.availableEnsembleRealizations
         );
 
         props.onFilterChange({
