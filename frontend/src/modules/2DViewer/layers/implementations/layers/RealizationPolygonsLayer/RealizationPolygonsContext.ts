@@ -38,7 +38,10 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
         return this._contextDelegate.getSettings();
     }
 
-    async fetchData(oldValues: RealizationPolygonsSettings, newValues: RealizationPolygonsSettings): Promise<boolean> {
+    async fetchData(
+        oldValues: Partial<RealizationPolygonsSettings>,
+        newValues: Partial<RealizationPolygonsSettings>
+    ): Promise<boolean> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
         const settings = this.getDelegate().getSettings();
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
@@ -53,9 +56,9 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
                 .map((ensemble) => ensemble.getIdent())
         );
 
-        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+        const currentEnsembleIdent = newValues[SettingType.ENSEMBLE];
 
-        if (currentEnsembleIdent !== null) {
+        if (currentEnsembleIdent) {
             const realizations = workbenchSession
                 .getRealizationFilterSet()
                 .getRealizationFilterForEnsembleIdent(currentEnsembleIdent)
@@ -100,7 +103,7 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
         );
         this._contextDelegate.setAvailableValues(SettingType.POLYGONS_ATTRIBUTE, availableAttributes);
 
-        const currentAttribute = settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().getValue();
+        const currentAttribute = newValues[SettingType.POLYGONS_ATTRIBUTE];
 
         const availablePolygonsName: string[] = [];
 

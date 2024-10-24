@@ -38,7 +38,10 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         return this._contextDelegate.getSettings();
     }
 
-    async fetchData(oldValues: ObservedSurfaceSettings, newValues: ObservedSurfaceSettings): Promise<boolean> {
+    async fetchData(
+        oldValues: Partial<ObservedSurfaceSettings>,
+        newValues: Partial<ObservedSurfaceSettings>
+    ): Promise<boolean> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
         const settings = this.getDelegate().getSettings();
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
@@ -53,7 +56,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
                 .map((ensemble) => ensemble.getIdent())
         );
 
-        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+        const currentEnsembleIdent = newValues[SettingType.ENSEMBLE];
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._fetchDataCache = null;
@@ -93,7 +96,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         );
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_ATTRIBUTE, availableAttributes);
 
-        const currentAttribute = settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().getValue();
+        const currentAttribute = newValues[SettingType.SURFACE_ATTRIBUTE];
         const availableSurfaceNames: string[] = [];
 
         if (currentAttribute) {
@@ -109,7 +112,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         }
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availableSurfaceNames);
 
-        const currentSurfaceName = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
+        const currentSurfaceName = newValues[SettingType.SURFACE_NAME];
 
         const availableTimeOrIntervals: string[] = [];
         if (currentAttribute && currentSurfaceName) {

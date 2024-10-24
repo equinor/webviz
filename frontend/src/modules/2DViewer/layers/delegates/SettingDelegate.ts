@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isArray, isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
@@ -113,6 +113,9 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             if (topic === SettingTopic.LOADING_STATE_CHANGED) {
                 return this._loading;
             }
+            if (topic === SettingTopic.PERSISTED_STATE_CHANGED) {
+                return this.isPersistedValue();
+            }
         };
 
         return snapshotGetter;
@@ -126,25 +129,38 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return this._availableValues;
     }
 
-    private maybeFixupValue(): void {
+    private maybeFixupValue(): boolean {
         if (this.isPersistedValue()) {
-            return;
+            return false;
         }
+
+        if (this._availableValues.length === 0) {
+            return false;
+        }
+
+        let candidate = this._value;
 
         if (this._owner.fixupValue) {
-            this._value = this._owner.fixupValue(this._availableValues, this._value);
-            this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
-            return;
+            candidate = this._owner.fixupValue(this._availableValues, this._value);
+        } else if (Array.isArray(this._value)) {
+            candidate = [this._availableValues[0]] as TValue;
+        } else {
+            candidate = this._availableValues[0] as TValue;
         }
 
-        if (Array.isArray(this._value)) {
-            this._value = [this._availableValues[0]] as TValue;
+        if (isEqual(candidate, this._value)) {
+            return false;
         }
-        this._value = this._availableValues[0] as TValue;
-        this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
+
+        this._value = candidate;
+        return true;
     }
 
     private checkIfValueIsValid(): void {
+        if (this._owner.isValueValid) {
+            this.setIsValueValid(this._owner.isValueValid(this._availableValues, this._value));
+            return;
+        }
         if (typeof this._value === "boolean") {
             this.setIsValueValid(true);
             return;
@@ -153,37 +169,53 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             this.setIsValueValid(false);
             return;
         }
-        if (this._availableValues.includes(this._value)) {
+        if (this._availableValues.some((el) => isEqual(el, this._value))) {
             this.setIsValueValid(true);
             return;
         }
-        this.setIsValueValid(true);
+        if (
+            isArray(this._value) &&
+            this._value.every((value) => this._availableValues.some((el) => isEqual(value, el)))
+        ) {
+            this.setIsValueValid(true);
+            return;
+        }
+        this.setIsValueValid(false);
     }
 
-    private maybeResetPersistedValue(): void {
+    private maybeResetPersistedValue(): boolean {
         if (this._currentValueFromPersistence === null) {
-            return;
+            return false;
         }
 
         if (Array.isArray(this._currentValueFromPersistence)) {
             const currentValueFromPersistence = this._currentValueFromPersistence as TValue[];
-            if (this._availableValues.every((value) => currentValueFromPersistence.some((el) => isEqual(el, value)))) {
+            if (currentValueFromPersistence.every((value) => this._availableValues.some((el) => isEqual(el, value)))) {
                 this._value = this._currentValueFromPersistence;
                 this._currentValueFromPersistence = null;
+                return true;
             }
-            return;
+            return false;
         }
 
         if (this._availableValues.some((el) => isEqual(this._currentValueFromPersistence as TValue, el))) {
-            this._value = this._currentValueFromPersistence as TValue;
+            this._value = this._currentValueFromPersistence;
             this._currentValueFromPersistence = null;
+            return true;
         }
+
+        return false;
     }
 
     setAvailableValues(availableValues: AvailableValuesType<TValue>): void {
+        if (isEqual(this._availableValues, availableValues)) {
+            return;
+        }
+
         this._availableValues = availableValues;
-        this.maybeFixupValue();
-        this.maybeResetPersistedValue();
+        if (this.maybeFixupValue() || this.maybeResetPersistedValue()) {
+            this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
+        }
         this.checkIfValueIsValid();
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);
     }

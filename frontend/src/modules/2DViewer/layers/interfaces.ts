@@ -100,7 +100,7 @@ export type BoundingBox = {
 };
 
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
-    (oldValues: { [K in TKey]: TSettings[K] }, newValues: { [K in TKey]: TSettings[K] }): Promise<boolean>;
+    (oldValues: { [K in TKey]?: TSettings[K] }, newValues: { [K in TKey]?: TSettings[K] }): Promise<boolean>;
 }
 
 export interface Layer<TSettings extends Settings, TData> extends Item {
@@ -145,6 +145,7 @@ export interface Setting<TValue> {
     makeComponent(): (props: SettingComponentProps<TValue>) => React.ReactNode;
     getDelegate(): SettingDelegate<TValue>;
     fixupValue?: (availableValues: AvailableValuesType<TValue>, currentValue: TValue) => TValue;
+    isValueValid?: (availableValues: AvailableValuesType<TValue>, value: TValue) => boolean;
     serializeValue?: (value: TValue) => string;
     deserializeValue?: (serializedValue: string) => TValue;
 }
@@ -155,6 +156,7 @@ export enum SettingTopic {
     AVAILABLE_VALUES_CHANGED = "AVAILABLE_VALUES_CHANGED",
     OVERRIDDEN_CHANGED = "OVERRIDDEN_CHANGED",
     LOADING_STATE_CHANGED = "LOADING_STATE_CHANGED",
+    PERSISTED_STATE_CHANGED = "PERSISTED_STATE_CHANGED",
 }
 
 export type SettingTopicPayloads<TValue> = {
@@ -163,6 +165,7 @@ export type SettingTopicPayloads<TValue> = {
     [SettingTopic.AVAILABLE_VALUES_CHANGED]: Exclude<TValue, null>[];
     [SettingTopic.OVERRIDDEN_CHANGED]: TValue | undefined;
     [SettingTopic.LOADING_STATE_CHANGED]: boolean;
+    [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
 };
 
 export type Settings = { [key in SettingType]?: unknown };

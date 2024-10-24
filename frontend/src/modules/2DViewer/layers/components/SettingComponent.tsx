@@ -1,6 +1,7 @@
 import React from "react";
 
 import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { Warning } from "@mui/icons-material";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
 import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
@@ -17,6 +18,10 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     );
     const value = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.VALUE_CHANGED);
     const isValid = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.VALIDITY_CHANGED);
+    const isPersisted = usePublishSubscribeTopicValue(
+        props.setting.getDelegate(),
+        SettingTopic.PERSISTED_STATE_CHANGED
+    );
     const availableValues = usePublishSubscribeTopicValue(
         props.setting.getDelegate(),
         SettingTopic.AVAILABLE_VALUES_CHANGED
@@ -38,17 +43,30 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
             <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
             <div className="p-0.5 px-2 w-full">
                 <PendingWrapper isPending={isLoading}>
-                    <componentRef.current
-                        onValueChange={handleValueChanged}
-                        value={value}
-                        isValueValid={isValid}
-                        isOverridden={overriddenValue !== undefined}
-                        overriddenValue={overriddenValue}
-                        availableValues={availableValues}
-                        globalSettings={globalSettings}
-                        workbenchSession={props.manager.getWorkbenchSession()}
-                        workbenchSettings={props.manager.getWorkbenchSettings()}
-                    />
+                    <div className="flex flex-col gap-1 min-w-0">
+                        <componentRef.current
+                            onValueChange={handleValueChanged}
+                            value={value}
+                            isValueValid={isValid}
+                            isOverridden={overriddenValue !== undefined}
+                            overriddenValue={overriddenValue}
+                            availableValues={availableValues}
+                            globalSettings={globalSettings}
+                            workbenchSession={props.manager.getWorkbenchSession()}
+                            workbenchSettings={props.manager.getWorkbenchSettings()}
+                        />
+                        {isPersisted && !isLoading && (
+                            <span
+                                className="text-xs flex items-center gap-1 text-orange-600"
+                                title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."
+                            >
+                                <Warning fontSize="inherit" />
+                                <span className="flex-grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                                    Persisted value not valid.
+                                </span>
+                            </span>
+                        )}
+                    </div>
                 </PendingWrapper>
             </div>
         </React.Fragment>

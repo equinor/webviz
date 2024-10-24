@@ -43,7 +43,10 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         return this._contextDelegate.getSettings();
     }
 
-    async fetchData(oldValues: StatisticalSurfaceSettings, newValues: StatisticalSurfaceSettings): Promise<boolean> {
+    async fetchData(
+        oldValues: Partial<StatisticalSurfaceSettings>,
+        newValues: Partial<StatisticalSurfaceSettings>
+    ): Promise<boolean> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
 
         const settings = this.getDelegate().getSettings();
@@ -60,7 +63,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
                 .map((ensemble) => ensemble.getIdent())
         );
 
-        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+        const currentEnsembleIdent = newValues[SettingType.ENSEMBLE];
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._fetchDataCache = null;
@@ -122,7 +125,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         );
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_ATTRIBUTE, availableAttributes);
 
-        const currentAttribute = settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().getValue();
+        const currentAttribute = newValues[SettingType.SURFACE_ATTRIBUTE];
         const availableSurfaceNames: string[] = [];
 
         if (currentAttribute) {
@@ -138,7 +141,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         }
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availableSurfaceNames);
 
-        const currentSurfaceName = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
+        const currentSurfaceName = newValues[SettingType.SURFACE_NAME];
 
         const availableTimeOrIntervals: string[] = [];
         if (currentAttribute && currentSurfaceName) {

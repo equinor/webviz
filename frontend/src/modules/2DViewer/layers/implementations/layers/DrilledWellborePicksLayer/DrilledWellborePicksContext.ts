@@ -38,8 +38,8 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
     }
 
     async fetchData(
-        oldValues: DrilledWellborePicksSettings,
-        newValues: DrilledWellborePicksSettings
+        oldValues: Partial<DrilledWellborePicksSettings>,
+        newValues: Partial<DrilledWellborePicksSettings>
     ): Promise<boolean> {
         if (
             isEqual(oldValues[SettingType.ENSEMBLE], newValues[SettingType.ENSEMBLE]) &&
@@ -58,7 +58,7 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
             ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent())
         );
 
-        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+        const currentEnsembleIdent = newValues[SettingType.ENSEMBLE];
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._wellboreHeadersCache = null;
