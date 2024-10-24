@@ -74,7 +74,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
             });
         } else {
             this._cancellationPending = false;
-            this._status = LayerStatus.INVALID_SETTINGS;
+            this.setStatus(LayerStatus.INVALID_SETTINGS);
         }
     }
 

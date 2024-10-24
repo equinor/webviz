@@ -77,6 +77,8 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         this._currentValueFromPersistence = null;
         this._value = value;
 
+        this.checkIfValueIsValid();
+
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
     }
 

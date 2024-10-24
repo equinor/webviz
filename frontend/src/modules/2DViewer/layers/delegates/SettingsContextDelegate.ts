@@ -6,6 +6,7 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
 import {
     AvailableValuesType,
+    FetchDataFunctionResult,
     SerializedSettingsState,
     Setting,
     SettingTopic,
@@ -111,15 +112,16 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
     }
 
-    private async fetchData(): Promise<void> {
+    private async fetchData(): Promise<FetchDataFunctionResult> {
         this.setLoadingState(SettingsContextLoadingState.LOADING);
         const values = this.getValues();
         const result = await this._parentContext.fetchData(this._cachedValues, values);
-        if (result) {
+        if (result === FetchDataFunctionResult.SUCCESS || result === FetchDataFunctionResult.NO_CHANGE) {
             this.setLoadingState(SettingsContextLoadingState.LOADED);
-        } else {
+        } else if (result === FetchDataFunctionResult.ERROR) {
             this.setLoadingState(SettingsContextLoadingState.FAILED);
         }
+        return result;
     }
 
     private setLoadingState(loadingState: SettingsContextLoadingState): void {
@@ -155,11 +157,12 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     private handleSettingsChanged() {
         const values = this.getValues();
         if (!isEqual(this._cachedValues, values)) {
-            this.fetchData().then(() => {
+            this.fetchData().then((result) => {
                 this._cachedValues = { ...values };
-                this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
-
-                this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+                if (result === FetchDataFunctionResult.SUCCESS) {
+                    this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
+                    this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+                }
             });
         }
     }

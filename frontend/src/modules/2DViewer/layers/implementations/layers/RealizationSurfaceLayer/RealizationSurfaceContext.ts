@@ -6,7 +6,7 @@ import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 
 import { RealizationSurfaceSettings } from "./types";
 
-import { SettingsContext } from "../../../interfaces";
+import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { Ensemble } from "../../settings/Ensemble";
 import { Realization } from "../../settings/Realization";
 import { SurfaceAttribute } from "../../settings/SurfaceAttribute";
@@ -40,7 +40,7 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
     async fetchData(
         oldValues: Partial<RealizationSurfaceSettings>,
         newValues: Partial<RealizationSurfaceSettings>
-    ): Promise<boolean> {
+    ): Promise<FetchDataFunctionResult> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
         const settings = this.getDelegate().getSettings();
         const fieldIdentifier = this.getDelegate().getLayerManager().getGlobalSetting("fieldId");
@@ -56,7 +56,7 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
         );
 
         if (!newValues[SettingType.ENSEMBLE]) {
-            return true;
+            return FetchDataFunctionResult.ERROR;
         }
 
         const realizations = workbenchSession
@@ -90,11 +90,11 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
             settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
             settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
             settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
-            return false;
+            return FetchDataFunctionResult.ERROR;
         }
 
         if (!fetchedData) {
-            return false;
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
 
         settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
@@ -151,7 +151,7 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
         }
         this._contextDelegate.setAvailableValues(SettingType.TIME_OR_INTERVAL, availableTimeOrIntervals);
 
-        return true;
+        return FetchDataFunctionResult.SUCCESS;
     }
 
     areCurrentSettingsValid(): boolean {

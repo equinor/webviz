@@ -99,8 +99,17 @@ export type BoundingBox = {
     z: [number, number];
 };
 
+export enum FetchDataFunctionResult {
+    SUCCESS = "SUCCESS",
+    IN_PROGRESS = "IN_PROGRESS",
+    ERROR = "ERROR",
+    NO_CHANGE = "NO_CHANGE",
+}
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
-    (oldValues: { [K in TKey]?: TSettings[K] }, newValues: { [K in TKey]?: TSettings[K] }): Promise<boolean>;
+    (
+        oldValues: { [K in TKey]?: TSettings[K] },
+        newValues: { [K in TKey]?: TSettings[K] }
+    ): Promise<FetchDataFunctionResult>;
 }
 
 export interface Layer<TSettings extends Settings, TData> extends Item {

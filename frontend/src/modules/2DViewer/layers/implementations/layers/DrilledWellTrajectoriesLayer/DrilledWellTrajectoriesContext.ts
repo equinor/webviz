@@ -6,7 +6,7 @@ import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 
 import { DrilledWellTrajectoriesSettings } from "./types";
 
-import { SettingsContext } from "../../../interfaces";
+import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { DrilledWellbores } from "../../settings/DrilledWellbores";
 import { Ensemble } from "../../settings/Ensemble";
 
@@ -34,7 +34,7 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
     async fetchData(
         oldValues: Partial<DrilledWellTrajectoriesSettings>,
         newValues: Partial<DrilledWellTrajectoriesSettings>
-    ): Promise<boolean> {
+    ): Promise<FetchDataFunctionResult> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
 
         const settings = this.getDelegate().getSettings();
@@ -54,7 +54,7 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
         const currentEnsembleIdent = newValues[SettingType.ENSEMBLE];
 
         if (!currentEnsembleIdent) {
-            return false;
+            return FetchDataFunctionResult.ERROR;
         }
 
         let fetchedData: WellboreHeader_api[] | null = null;
@@ -75,18 +75,18 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
             });
         } catch (e) {
             settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
-            return false;
+            return FetchDataFunctionResult.ERROR;
         }
 
         settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
 
         if (!fetchedData) {
-            return false;
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
         const availableWellboreHeaders: WellboreHeader_api[] = fetchedData;
         this._contextDelegate.setAvailableValues(SettingType.SMDA_WELLBORE_HEADERS, availableWellboreHeaders);
 
-        return true;
+        return FetchDataFunctionResult.SUCCESS;
     }
 
     areCurrentSettingsValid(): boolean {

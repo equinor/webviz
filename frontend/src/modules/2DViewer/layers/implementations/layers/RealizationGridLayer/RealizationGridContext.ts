@@ -6,7 +6,7 @@ import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 
 import { RealizationGridSettings } from "./types";
 
-import { SettingsContext } from "../../../interfaces";
+import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { Ensemble } from "../../settings/Ensemble";
 import { GridAttribute } from "../../settings/GridAttribute";
 import { GridLayer } from "../../settings/GridLayer";
@@ -44,7 +44,7 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
     async fetchData(
         oldValues: Partial<RealizationGridSettings>,
         newValues: Partial<RealizationGridSettings>
-    ): Promise<boolean> {
+    ): Promise<FetchDataFunctionResult> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
         const settings = this.getDelegate().getSettings();
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
@@ -97,11 +97,11 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
             settings[SettingType.GRID_NAME].getDelegate().setLoadingState(false);
             settings[SettingType.GRID_LAYER].getDelegate().setLoadingState(false);
             settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
-            return false;
+            return FetchDataFunctionResult.ERROR;
         }
 
         if (!fetchedData) {
-            return false;
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
 
         const availableGridNames: string[] = [];
@@ -150,7 +150,7 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
         settings[SettingType.GRID_LAYER].getDelegate().setLoadingState(false);
         settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
 
-        return true;
+        return FetchDataFunctionResult.SUCCESS;
     }
 
     areCurrentSettingsValid(): boolean {

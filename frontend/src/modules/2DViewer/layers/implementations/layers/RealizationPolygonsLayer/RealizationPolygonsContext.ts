@@ -8,7 +8,7 @@ import { isEqual } from "lodash";
 
 import { RealizationPolygonsSettings } from "./types";
 
-import { SettingsContext } from "../../../interfaces";
+import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { Ensemble } from "../../settings/Ensemble";
 import { PolygonsAttribute } from "../../settings/PolygonsAttribute";
 import { PolygonsName } from "../../settings/PolygonsName";
@@ -41,7 +41,7 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
     async fetchData(
         oldValues: Partial<RealizationPolygonsSettings>,
         newValues: Partial<RealizationPolygonsSettings>
-    ): Promise<boolean> {
+    ): Promise<FetchDataFunctionResult> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
         const settings = this.getDelegate().getSettings();
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
@@ -86,7 +86,7 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
             } catch (e) {
                 settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setLoadingState(false);
                 settings[SettingType.POLYGONS_NAME].getDelegate().setLoadingState(false);
-                return false;
+                return FetchDataFunctionResult.ERROR;
             }
 
             settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setLoadingState(false);
@@ -94,7 +94,7 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
         }
 
         if (!this._fetchDataCache) {
-            return false;
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
 
         const availableAttributes: string[] = [];
@@ -120,7 +120,7 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
         }
         this._contextDelegate.setAvailableValues(SettingType.POLYGONS_NAME, availablePolygonsName);
 
-        return true;
+        return FetchDataFunctionResult.SUCCESS;
     }
 
     areCurrentSettingsValid(): boolean {

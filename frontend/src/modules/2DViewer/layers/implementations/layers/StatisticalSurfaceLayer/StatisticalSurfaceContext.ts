@@ -8,7 +8,7 @@ import { isEqual } from "lodash";
 import { StatisticalSurfaceSettings } from "./types";
 
 import { SettingsContextDelegate } from "../../../delegates/SettingsContextDelegate";
-import { SettingsContext } from "../../../interfaces";
+import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { SettingType } from "../../../settingsTypes";
 import { Ensemble } from "../../settings/Ensemble";
 import { Sensitivity, SensitivityNameCasePair } from "../../settings/Sensitivity";
@@ -46,7 +46,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
     async fetchData(
         oldValues: Partial<StatisticalSurfaceSettings>,
         newValues: Partial<StatisticalSurfaceSettings>
-    ): Promise<boolean> {
+    ): Promise<FetchDataFunctionResult> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
 
         const settings = this.getDelegate().getSettings();
@@ -89,7 +89,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
                 settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
                 settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
                 settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
-                return false;
+                return FetchDataFunctionResult.ERROR;
             }
 
             settings[SettingType.SENSITIVITY].getDelegate().setLoadingState(false);
@@ -99,7 +99,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         }
 
         if (!this._fetchDataCache) {
-            return false;
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
 
         let currentEnsemble: FrameworkEnsemble | null = null;
@@ -170,7 +170,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         }
         this._contextDelegate.setAvailableValues(SettingType.TIME_OR_INTERVAL, availableTimeOrIntervals);
 
-        return true;
+        return FetchDataFunctionResult.SUCCESS;
     }
 
     areCurrentSettingsValid(): boolean {

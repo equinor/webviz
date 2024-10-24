@@ -8,7 +8,7 @@ import { isEqual } from "lodash";
 
 import { ObservedSurfaceSettings } from "./types";
 
-import { SettingsContext } from "../../../interfaces";
+import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { Ensemble } from "../../settings/Ensemble";
 import { SurfaceAttribute } from "../../settings/SurfaceAttribute";
 import { SurfaceName } from "../../settings/SurfaceName";
@@ -41,7 +41,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
     async fetchData(
         oldValues: Partial<ObservedSurfaceSettings>,
         newValues: Partial<ObservedSurfaceSettings>
-    ): Promise<boolean> {
+    ): Promise<FetchDataFunctionResult> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
         const settings = this.getDelegate().getSettings();
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
@@ -79,7 +79,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
                 settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
                 settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
                 settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
-                return false;
+                return FetchDataFunctionResult.ERROR;
             }
             settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
             settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
@@ -87,7 +87,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         }
 
         if (!this._fetchDataCache) {
-            return false;
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
 
         const availableAttributes: string[] = [];
@@ -139,7 +139,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         }
         this._contextDelegate.setAvailableValues(SettingType.TIME_OR_INTERVAL, availableTimeOrIntervals);
 
-        return true;
+        return FetchDataFunctionResult.SUCCESS;
     }
 
     areCurrentSettingsValid(): boolean {

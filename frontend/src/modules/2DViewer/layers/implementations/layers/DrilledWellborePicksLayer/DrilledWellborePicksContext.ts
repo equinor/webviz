@@ -8,7 +8,7 @@ import { isEqual } from "lodash";
 
 import { DrilledWellborePicksSettings } from "./types";
 
-import { SettingsContext } from "../../../interfaces";
+import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { DrilledWellbores } from "../../settings/DrilledWellbores";
 import { Ensemble } from "../../settings/Ensemble";
 import { SurfaceName } from "../../settings/SurfaceName";
@@ -40,12 +40,12 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
     async fetchData(
         oldValues: Partial<DrilledWellborePicksSettings>,
         newValues: Partial<DrilledWellborePicksSettings>
-    ): Promise<boolean> {
+    ): Promise<FetchDataFunctionResult> {
         if (
             isEqual(oldValues[SettingType.ENSEMBLE], newValues[SettingType.ENSEMBLE]) &&
             newValues[SettingType.ENSEMBLE] !== null
         ) {
-            return true;
+            return FetchDataFunctionResult.NO_CHANGE;
         }
 
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
@@ -102,14 +102,14 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
             } catch (error) {
                 settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
                 settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
-                return false;
+                return FetchDataFunctionResult.ERROR;
             }
             settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
             settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
         }
 
         if (!this._wellboreHeadersCache || !this._pickIdentifierCache) {
-            return false;
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
 
         const availableWellboreHeaders: WellboreHeader_api[] = this._wellboreHeadersCache;
@@ -118,7 +118,7 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
         const availablePickIdentifiers: string[] = this._pickIdentifierCache;
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availablePickIdentifiers);
 
-        return true;
+        return FetchDataFunctionResult.SUCCESS;
     }
 
     areCurrentSettingsValid(): boolean {
