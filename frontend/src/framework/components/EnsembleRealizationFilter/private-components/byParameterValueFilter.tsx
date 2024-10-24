@@ -18,12 +18,17 @@ import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/dens
 import { Label } from "@lib/components/Label";
 import { Slider } from "@lib/components/Slider";
 import { SmartNodeSelector, SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
 import { TagPicker } from "@lib/components/TagPicker";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { AddCircle, Delete } from "@mui/icons-material";
+import { AddCircle, Delete, Report } from "@mui/icons-material";
 
 import { createContinuousValueSliderStep } from "../private-utils/sliderUtils";
-import { createTreeDataNodeListFromParameters } from "../private-utils/smartNodeSelectorUtils";
+import {
+    createSmartNodeSelectorTagTextFromParameterIdentString,
+    createSmartNodeSelectorTagTextListFromParameterIdentStrings,
+    createTreeDataNodeListFromParameters,
+} from "../private-utils/smartNodeSelectorUtils";
 
 export type ByParameterValueFilterProps = {
     ensembleParameters: EnsembleParameters; // Should be stable object - both content and reference
@@ -53,32 +58,6 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             includeNodeDescription
         );
     }, [props.ensembleParameters]);
-
-    // Handle enable/disable of add button
-    // - If there are invalid tags, or no new selected parameters - disable the add button
-    const hasInvalidTags = smartNodeSelectorSelection.selectedTags.some((tag) => !tag.isValid);
-    const existingParameterIdentStrings = Array.from(
-        props.parameterIdentStringToValueSelectionReadonlyMap?.keys() ?? []
-    );
-    const hasNewParameters = smartNodeSelectorSelection.selectedIds.some(
-        (selectedId) => !existingParameterIdentStrings.includes(selectedId)
-    );
-    const isAddButtonDisabled = hasInvalidTags || !hasNewParameters;
-
-    // Button text for disabled state info
-    let candidateButtonText: string | null = null;
-    if (hasInvalidTags) {
-        candidateButtonText =
-            smartNodeSelectorSelection.selectedTags.length > 1 ? "Select valid parameters" : "Select valid parameter";
-    } else if (!hasNewParameters) {
-        candidateButtonText =
-            smartNodeSelectorSelection.selectedIds.length === 0
-                ? "No parameter to add"
-                : smartNodeSelectorSelection.selectedIds.length > 1
-                ? "Parameters already added"
-                : "Parameter already added";
-    }
-    const disabledButtonHelpText = candidateButtonText;
 
     const handleParameterNameSelectionChanged = React.useCallback(
         function handleParameterNameSelectionChanged(selection: SmartNodeSelectorSelection) {
@@ -318,10 +297,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         parameterIdentString: string,
         valueSelection: ParameterValueSelection
     ): React.ReactNode {
-        const parameterIdent = ParameterIdent.fromString(parameterIdentString);
-        const displayParameterName = parameterIdent.groupName
-            ? `${parameterIdent.groupName}:${parameterIdent.name}`
-            : parameterIdent.name;
+        const displayParameterName = createSmartNodeSelectorTagTextFromParameterIdentString(parameterIdentString);
 
         return (
             <div key={parameterIdentString} className="flex-grow border border-lightgrey rounded-md p-2">
@@ -354,6 +330,27 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         );
     }
 
+    // Handle enable/disable of add button
+
+    // Create info text and enable/disable states for icon and button
+    const invalidTags = smartNodeSelectorSelection.selectedTags.filter((tag) => !tag.isValid);
+    const existingParameterIdentStrings = Array.from(
+        props.parameterIdentStringToValueSelectionReadonlyMap?.keys() ?? []
+    );
+
+    // Text and disabled state for "Add button"
+    const { text: addButtonText, isDisabled: isAddButtonDisabled } = createAddButtonTextAndDisableState(
+        existingParameterIdentStrings,
+        smartNodeSelectorSelection.selectedIds,
+        invalidTags
+    );
+
+    // Text and visibility state for report/warning icon
+    const { text: reportIconText, isVisible: isReportIconVisible } = createReportIconTextAndVisibleState(
+        existingParameterIdentStrings,
+        smartNodeSelectorSelection.selectedIds
+    );
+
     return (
         <div className="flex-grow flex-col gap-2">
             <Label text="Select parameters to add">
@@ -362,22 +359,30 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                         data={smartNodeSelectorTreeDataNodes ?? []}
                         selectedTags={smartNodeSelectorSelection.selectedTags.map((tag) => tag.text)}
                         onChange={handleParameterNameSelectionChanged}
-                        placeholder="Select parameter to add..."
+                        placeholder="Add parameter..."
                     />
                     <div className="flex pb-2">
                         <div className="flex flex-grow" />
-                        <div
-                            title={disabledButtonHelpText ?? undefined}
-                            className={resolveClassNames({ "cursor-help": isAddButtonDisabled })}
-                        >
-                            <Button
-                                size="medium"
-                                disabled={isAddButtonDisabled}
-                                endIcon={<AddCircle fontSize="small" />}
-                                onClick={handleAddSelectedParametersClick}
-                            >
-                                Add
-                            </Button>
+                        <div className="flex-grow-0 flex items-center gap-2">
+                            <div className={resolveClassNames({ hidden: !isReportIconVisible })}>
+                                <Report
+                                    fontSize="medium"
+                                    titleAccess={reportIconText ?? undefined}
+                                    className={
+                                        "rounded-md px-0.5 py-0.5 border border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
+                                    }
+                                />
+                            </div>
+                            <div title={addButtonText ?? undefined}>
+                                <Button
+                                    size="medium"
+                                    disabled={isAddButtonDisabled}
+                                    endIcon={<AddCircle fontSize="small" />}
+                                    onClick={handleAddSelectedParametersClick}
+                                >
+                                    Add
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </>
@@ -395,3 +400,72 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         </div>
     );
 };
+
+/**
+ * Text and disabled state for add parameter button
+ *
+ * The button is disabled if:
+ *  - There are invalid tags
+ *  - There are no selected parameters
+ *  - All selected parameters are already added
+ */
+function createAddButtonTextAndDisableState(
+    existingParameterIdentStrings: string[],
+    selectedParameterIdentStrings: string[],
+    invalidTags: SmartNodeSelectorTag[]
+): { text: string | null; isDisabled: boolean } {
+    if (invalidTags.length === 1) {
+        return { text: "Invalid parameter selected", isDisabled: true };
+    }
+    if (invalidTags.length > 1) {
+        return { text: "Invalid parameters selected", isDisabled: true };
+    }
+    if (selectedParameterIdentStrings.length === 0) {
+        return { text: "No parameter to add", isDisabled: true };
+    }
+
+    const newParameterIdentStrings = selectedParameterIdentStrings.filter(
+        (selectedId) => !existingParameterIdentStrings.includes(selectedId)
+    );
+    if (newParameterIdentStrings.length === 0 && selectedParameterIdentStrings.length === 1) {
+        return { text: "Parameter already added", isDisabled: true };
+    }
+    if (newParameterIdentStrings.length === 0 && selectedParameterIdentStrings.length > 1) {
+        return { text: "Parameters already added", isDisabled: true };
+    }
+    if (newParameterIdentStrings.length === selectedParameterIdentStrings.length) {
+        const text = newParameterIdentStrings.length === 1 ? "Add parameter" : "Add parameters";
+        return { text, isDisabled: false };
+    }
+
+    // Some selected parameters are already added
+    const newParameterTags = createSmartNodeSelectorTagTextListFromParameterIdentStrings(newParameterIdentStrings);
+    if (newParameterTags.length === 1) {
+        return { text: "Add parameter:\n" + newParameterTags[0], isDisabled: false };
+    }
+    return { text: "Add parameters:\n" + newParameterTags.join("\n"), isDisabled: false };
+}
+
+/**
+ * Text and visible state for report icon
+ *
+ * The icon is visible if one or more selected parameters are already added
+ */
+function createReportIconTextAndVisibleState(
+    existingParameterIdentStrings: string[],
+    selectedParameterIdentStrings: string[]
+): { text: string | null; isVisible: boolean } {
+    const alreadySelectedParameterIdentStrings = selectedParameterIdentStrings.filter((selectedId) =>
+        existingParameterIdentStrings.includes(selectedId)
+    );
+    const alreadySelectedParameterTagTexts = createSmartNodeSelectorTagTextListFromParameterIdentStrings(
+        alreadySelectedParameterIdentStrings
+    );
+    if (alreadySelectedParameterTagTexts.length === 1 && selectedParameterIdentStrings.length > 1) {
+        return { text: `Parameter already added:\n${alreadySelectedParameterTagTexts[0]}`, isVisible: true };
+    }
+    if (alreadySelectedParameterTagTexts.length > 1) {
+        return { text: `Parameters already added:\n${alreadySelectedParameterTagTexts.join("\n")}`, isVisible: true };
+    }
+    return { text: null, isVisible: false };
+}

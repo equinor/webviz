@@ -90,19 +90,19 @@ export function createSmartNodeSelectorTagListFromParameterList(parameters: Para
 }
 
 /**
+ * Create a tree date node for the SmartNodeSelector component from a parameter ident string.
+ */
+export function createSmartNodeSelectorTagTextFromParameterIdentString(parameterIdentString: string): string {
+    const parameterIdent = ParameterIdent.fromString(parameterIdentString);
+    if (!parameterIdent.groupName) {
+        return `${NON_GROUPED_PARENT_NODE}:${parameterIdent.name}`;
+    }
+    return `${parameterIdent.groupName}:${parameterIdent.name}`;
+}
+
+/**
  * Create a tree data node list for the SmartNodeSelector component from a list of parameter ident strings.
  */
-export function createSmartNodeSelectorTagListFromParameterIdentStrings(parameterIdentStrings: string[]): string[] {
-    const tags: string[] = [];
-
-    for (const parameterIdentString of parameterIdentStrings) {
-        const parameterIdent = ParameterIdent.fromString(parameterIdentString);
-        if (!parameterIdent.groupName) {
-            tags.push(`${NON_GROUPED_PARENT_NODE}:${parameterIdent.name}`);
-        } else {
-            tags.push(`${parameterIdent.groupName}:${parameterIdent.name}`);
-        }
-    }
-
-    return tags;
+export function createSmartNodeSelectorTagTextListFromParameterIdentStrings(parameterIdentStrings: string[]): string[] {
+    return parameterIdentStrings.map((elm) => createSmartNodeSelectorTagTextFromParameterIdentString(elm));
 }
