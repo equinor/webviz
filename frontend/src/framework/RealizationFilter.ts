@@ -66,14 +66,6 @@ export class RealizationFilter {
         this._parameterIdentStringToValueSelectionMap = null;
     }
 
-    getAvailableEnsembleRealizations(): readonly number[] {
-        return this._assignedEnsemble.getRealizations();
-    }
-
-    getEnsembleParameters(): EnsembleParameters {
-        return this._assignedEnsemble.getParameters();
-    }
-
     getAssignedEnsembleIdent(): EnsembleIdent {
         return this._assignedEnsemble.getIdent();
     }
