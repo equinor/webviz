@@ -109,46 +109,52 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
 
         const availableSurfaceNames: string[] = [];
 
-        if (currentAttribute) {
-            availableSurfaceNames.push(
-                ...Array.from(
-                    new Set(
-                        fetchedData.surfaces
-                            .filter((surface) => surface.attribute_name === currentAttribute)
-                            .map((el) => el.name)
-                    )
-                )
-            );
+        if (!currentAttribute) {
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
+
+        availableSurfaceNames.push(
+            ...Array.from(
+                new Set(
+                    fetchedData.surfaces
+                        .filter((surface) => surface.attribute_name === currentAttribute)
+                        .map((el) => el.name)
+                )
+            )
+        );
+
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availableSurfaceNames);
 
         const currentSurfaceName = newValues[SettingType.SURFACE_NAME];
 
-        const availableTimeOrIntervals: string[] = [];
-        if (currentAttribute && currentSurfaceName) {
-            const availableTimeTypes: SurfaceTimeType_api[] = [];
-            availableTimeTypes.push(
-                ...Array.from(
-                    new Set(
-                        fetchedData.surfaces
-                            .filter(
-                                (surface) =>
-                                    surface.attribute_name === currentAttribute && surface.name === currentSurfaceName
-                            )
-                            .map((el) => el.time_type)
-                    )
-                )
-            );
-            if (availableTimeTypes.includes(SurfaceTimeType_api.NO_TIME)) {
-                availableTimeOrIntervals.push(SurfaceTimeType_api.NO_TIME);
-            }
-            if (availableTimeTypes.includes(SurfaceTimeType_api.TIME_POINT)) {
-                availableTimeOrIntervals.push(...fetchedData.time_points_iso_str);
-            }
-            if (availableTimeTypes.includes(SurfaceTimeType_api.INTERVAL)) {
-                availableTimeOrIntervals.push(...fetchedData.time_intervals_iso_str);
-            }
+        if (!currentSurfaceName) {
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
+
+        const availableTimeOrIntervals: string[] = [];
+        const availableTimeTypes: SurfaceTimeType_api[] = [];
+        availableTimeTypes.push(
+            ...Array.from(
+                new Set(
+                    fetchedData.surfaces
+                        .filter(
+                            (surface) =>
+                                surface.attribute_name === currentAttribute && surface.name === currentSurfaceName
+                        )
+                        .map((el) => el.time_type)
+                )
+            )
+        );
+        if (availableTimeTypes.includes(SurfaceTimeType_api.NO_TIME)) {
+            availableTimeOrIntervals.push(SurfaceTimeType_api.NO_TIME);
+        }
+        if (availableTimeTypes.includes(SurfaceTimeType_api.TIME_POINT)) {
+            availableTimeOrIntervals.push(...fetchedData.time_points_iso_str);
+        }
+        if (availableTimeTypes.includes(SurfaceTimeType_api.INTERVAL)) {
+            availableTimeOrIntervals.push(...fetchedData.time_intervals_iso_str);
+        }
+
         this._contextDelegate.setAvailableValues(SettingType.TIME_OR_INTERVAL, availableTimeOrIntervals);
 
         return FetchDataFunctionResult.SUCCESS;

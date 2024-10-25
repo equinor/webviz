@@ -26,7 +26,7 @@ import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 
 import { ColorScale } from "../layers/ColorScale";
 import { DeltaSurface } from "../layers/DeltaSurface";
-import { LayerManager } from "../layers/LayerManager";
+import { LayerManager, LayerManagerTopic } from "../layers/LayerManager";
 import { SettingsGroup } from "../layers/SettingsGroup";
 import { SharedSetting } from "../layers/SharedSetting";
 import { View } from "../layers/View";
@@ -75,8 +75,14 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         function onMountEffect() {
             const layerManagerCurrent = layerManagerRef.current;
             setLayerManager(layerManagerCurrent);
+            applyPersistedLayerManagerState();
+
+            const unsubscribe = layerManagerCurrent
+                .getPublishSubscribeHandler()
+                .subscribe(LayerManagerTopic.LAYER_DATA_REVISION, persistLayerManagerState);
 
             return function onUnmountEffect() {
+                unsubscribe();
                 layerManagerCurrent.beforeDestroy();
             };
         },
@@ -260,12 +266,12 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         layerManagerRef.current.updateGlobalSetting("fieldId", fieldId);
     }
 
-    function handleSerialize() {
+    function persistLayerManagerState() {
         window.localStorage.setItem("layerManager", JSON.stringify(layerManagerRef.current.serializeState()));
         console.debug(layerManagerRef.current.serializeState());
     }
 
-    function handleDeserialize() {
+    function applyPersistedLayerManagerState() {
         layerManagerRef.current.getGroupDelegate().clearChildren();
         const serializedLayerManager = window.localStorage.getItem("layerManager");
         if (serializedLayerManager) {
@@ -279,8 +285,6 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     return (
         <div className="h-full flex flex-col gap-1">
-            <Button onClick={handleSerialize}>Serialize</Button>
-            <Button onClick={handleDeserialize}>Deserialize</Button>
             <CollapsibleGroup title="Field" expanded>
                 <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier} />
             </CollapsibleGroup>
