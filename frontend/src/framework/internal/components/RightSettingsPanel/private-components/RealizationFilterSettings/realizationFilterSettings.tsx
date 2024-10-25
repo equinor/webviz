@@ -187,7 +187,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             resetHasUnsavedChangesMap[ensembleIdentString] = false;
         }
 
-        // setEnsembleIdentStringToRealizationFilterSelectionsMap(resetSelectionsMap);
+        setEnsembleIdentStringToRealizationFilterSelectionsMap(resetSelectionsMap);
         setEnsembleIdentStringHasUnsavedChangesMap(resetHasUnsavedChangesMap);
 
         setDialogOpen(false);
@@ -198,7 +198,6 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         const ensembleIdentString = ensembleIdent.toString();
 
         // Register the filter changes in the map
-        // NOTE: Check if this is sufficient enough - perhaps has to force update as reference is the same?
         setEnsembleIdentStringToRealizationFilterSelectionsMap({
             ...ensembleIdentStringToRealizationFilterSelectionsMap,
             [ensembleIdentString]: selections,

@@ -48,7 +48,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         selectedTags: [],
     });
 
-    // Compare by reference (ensure if it is enough to compare by reference)
+    // Compare by reference - ensembleParameters should be stable object
     const smartNodeSelectorTreeDataNodes = React.useMemo<TreeDataNode[]>(() => {
         const includeConstantParameters = false;
         const includeNodeDescription = false; // Node description and name seems to be the same, i.e. duplicate information
@@ -69,6 +69,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     const handleAddSelectedParametersClick = React.useCallback(
         function handleAddSelectedParametersClick() {
             // Find new parameter ident strings that are not in the current map
+            // NOTE: This is not a deep copy
             const newMap = new Map(props.parameterIdentStringToValueSelectionReadonlyMap);
 
             // Get selected parameter ident strings
@@ -128,7 +129,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             parameterIdentString: string,
             valueSelection: ParameterValueSelection
         ) {
-            // Copy map - NOTE: This is not a deep copy
+            // Update existing map
+            // NOTE: This is not a deep copy
             const updatedMap = new Map(props.parameterIdentStringToValueSelectionReadonlyMap);
             if (!updatedMap.has(parameterIdentString)) {
                 throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
@@ -329,8 +331,6 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             </div>
         );
     }
-
-    // Handle enable/disable of add button
 
     // Create info text and enable/disable states for icon and button
     const invalidTags = smartNodeSelectorSelection.selectedTags.filter((tag) => !tag.isValid);

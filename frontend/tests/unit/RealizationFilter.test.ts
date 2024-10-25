@@ -38,7 +38,7 @@ const SECOND_PARAMETER: Parameter = {
     isConstant: false,
     isLogarithmic: false,
     realizations: FIRST_ENSEMBLE_REALIZATIONS,
-    values: [10, 10, 20, 20, 20, 30, 30, 30, 30, 40, 40],
+    values: [10, 10, 20, 25, 20, 30, 30, 30, 30, 40, 40],
 };
 
 const FIRST_ENSEMBLE = new Ensemble(
@@ -74,7 +74,7 @@ describe("Test functionality of Realization Filter class", () => {
         expect(realizationFilter.getIncludeOrExcludeFilter()).toBe(IncludeExcludeFilter.EXCLUDE_FILTER);
     });
 
-    test("Test set/get realization index selections", () => {
+    test("Test set/get realization number selections", () => {
         const realizationFilter = new RealizationFilter(FIRST_ENSEMBLE);
 
         expect(realizationFilter.getRealizationNumberSelections()).toBeNull();
@@ -268,7 +268,7 @@ describe("Test functionality of Realization Filter class", () => {
         ).toString();
 
         const valueRange1: Readonly<NumberRange> = { start: 0, end: 2 };
-        const valueRange2: Readonly<NumberRange> = { start: 10, end: 20 };
+        const valueRange2: Readonly<NumberRange> = { start: 10, end: 25 };
 
         const parameterValueSelectionMap1 = new Map<string, ParameterValueSelection>();
         parameterValueSelectionMap1.set(parameterIdentString1, valueRange1);
@@ -291,16 +291,17 @@ describe("Test functionality of Realization Filter class", () => {
         expect(result).toEqual([1, 2, 3, 4, 5]);
 
         // Union of two parameter value selections
+        const newValueRange2: Readonly<NumberRange> = { start: 0, end: 20 }; // Excludes realization 4 due to value of 25 for parameter 2
         const combinedParameterValueSelectionMap = new Map<string, ParameterValueSelection>();
         combinedParameterValueSelectionMap.set(parameterIdentString1, valueRange1);
-        combinedParameterValueSelectionMap.set(parameterIdentString2, valueRange2);
+        combinedParameterValueSelectionMap.set(parameterIdentString2, newValueRange2);
 
         result = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
             combinedParameterValueSelectionMap,
             validEnsembleParameters,
             validRealizations
         );
-        expect(result).toEqual([1, 2, 3, 4, 5]);
+        expect(result).toEqual([1, 2, 3, 5]);
     });
 
     test("Test getRealizationNumbersFromParameterValueRange", () => {
@@ -428,12 +429,21 @@ describe("Test functionality of Realization Filter class", () => {
         // Test discrete parameter with numbers and string value selection
         expect(() => {
             RealizationFilter.validateParameterAndValueSelection(discreteParameterWithNumbers, ["a", "b"]);
-        }).toThrowError("Parameter discreteParamNumbers is discrete with number values, but value selection is string");
+        }).toThrowError(
+            "Parameter discreteParamNumbers is discrete with number values, but value selection is strings"
+        );
+
+        // Test discrete parameter with strings and invalid value selection
+        expect(() => {
+            RealizationFilter.validateParameterAndValueSelection(discreteParameterWithStrings, { start: 1, end: 2 });
+        }).toThrowError("Parameter discreteParamStrings is discrete, but value selection is not an array");
 
         // Test discrete parameter with strings and number value selection
         expect(() => {
             RealizationFilter.validateParameterAndValueSelection(discreteParameterWithStrings, [1, 2]);
-        }).toThrowError("Parameter discreteParamStrings is discrete with string values, but value selection is number");
+        }).toThrowError(
+            "Parameter discreteParamStrings is discrete with string values, but value selection is numbers"
+        );
 
         // Test valid continuous parameter value selection
         expect(() => {

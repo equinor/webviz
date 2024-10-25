@@ -24,7 +24,7 @@ import { RealizationNumberDisplay } from "./private-components/realizationNumber
 import { createBestSuggestedRealizationNumberSelections } from "./private-utils/conversionUtils";
 
 export type EnsembleRealizationFilterSelections = {
-    displayRealizationNumbers: readonly number[]; // Currently selected realization numbers (for visualization)
+    displayRealizationNumbers: readonly number[]; // For RealizationNumberDisplay
     realizationNumberSelections: readonly RealizationNumberSelection[] | null; // For ByRealizationNumberFilter
     parameterIdentStringToValueSelectionReadonlyMap: ReadonlyMap<string, ParameterValueSelection> | null; // For ByParameterValueFilter
     filterType: RealizationFilterType;
@@ -53,7 +53,7 @@ export type EnsembleRealizationFilterProps = {
  * The selection creates a valid subset of realization numbers for the ensemble throughout the application.
  */
 export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps> = (props) => {
-    const { onFilterChange } = props;
+    const { onClick, onHeaderClick, onFilterChange, onApplyClick, onDiscardClick } = props;
 
     // States for handling initial realization number selections and smart node selector tags
     // - When undefined, the initial value will be calculated on next render
@@ -71,7 +71,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     }
 
     function handleRealizationNumberFilterChanged(selection: ByRealizationNumberFilterSelection) {
-        if (!props.onFilterChange) {
+        if (!onFilterChange) {
             return;
         }
 
@@ -82,7 +82,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             selection.includeOrExcludeFilter
         );
 
-        props.onFilterChange({
+        onFilterChange({
             ...props.selections,
             displayRealizationNumbers: realizationNumberArray,
             realizationNumberSelections: selection.realizationNumberSelections,
@@ -146,7 +146,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     }
 
     function handleRealizationNumberDisplayClick(displayRealizationNumbers: readonly number[]) {
-        if (!props.onFilterChange) {
+        if (!onFilterChange) {
             return;
         }
 
@@ -165,7 +165,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             props.availableEnsembleRealizations
         );
 
-        props.onFilterChange({
+        onFilterChange({
             ...props.selections,
             displayRealizationNumbers: displayRealizationNumbers,
             realizationNumberSelections: newRealizationNumberSelections,
@@ -176,8 +176,8 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         // Reset states for initialization on next render
         setInitialRealizationNumberSelections(undefined);
 
-        if (props.onApplyClick) {
-            props.onApplyClick();
+        if (onApplyClick) {
+            onApplyClick();
         }
     }
 
@@ -185,20 +185,20 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         // Reset states for initialization on next render
         setInitialRealizationNumberSelections(undefined);
 
-        if (props.onDiscardClick) {
-            props.onDiscardClick();
+        if (onDiscardClick) {
+            onDiscardClick();
         }
     }
 
     function handleOnClick() {
-        if (props.onClick && !props.isActive) {
-            props.onClick();
+        if (onClick && !props.isActive) {
+            onClick();
         }
     }
 
     function handleHeaderOnClick() {
-        if (props.onHeaderClick && props.isActive) {
-            props.onHeaderClick();
+        if (onHeaderClick && props.isActive) {
+            onHeaderClick();
         }
     }
 

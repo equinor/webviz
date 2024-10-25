@@ -340,7 +340,7 @@ export class RealizationFilter {
             // Using !isValueSelectionAnArrayOfNumber, as isValueSelectionAnArrayOfString(valueSelection) is true
             // for empty array
             throw new Error(
-                `Parameter ${parameter.name} is discrete with number values, but value selection is string`
+                `Parameter ${parameter.name} is discrete with number values, but value selection is strings`
             );
         }
         if (
@@ -351,7 +351,7 @@ export class RealizationFilter {
             // Using !isValueSelectionAnArrayOfString, as isValueSelectionAnArrayOfNumber(valueSelection) is true
             // for empty array
             throw new Error(
-                `Parameter ${parameter.name} is discrete with string values, but value selection is number`
+                `Parameter ${parameter.name} is discrete with string values, but value selection is numbers`
             );
         }
     }
