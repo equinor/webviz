@@ -83,16 +83,25 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
     }
 
     setIsValueValid(isValueValid: boolean): void {
+        if (this._isValueValid === isValueValid) {
+            return;
+        }
         this._isValueValid = isValueValid;
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALIDITY_CHANGED);
     }
 
     setLoadingState(loading: boolean): void {
+        if (this._loading === loading) {
+            return;
+        }
         this._loading = loading;
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.LOADING_STATE_CHANGED);
     }
 
     setOverriddenValue(overriddenValue: TValue | undefined): void {
+        if (isEqual(this._overriddenValue, overriddenValue)) {
+            return;
+        }
         this._overriddenValue = overriddenValue;
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.OVERRIDDEN_CHANGED);
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
