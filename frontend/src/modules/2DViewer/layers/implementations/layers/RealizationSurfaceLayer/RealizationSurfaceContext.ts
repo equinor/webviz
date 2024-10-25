@@ -6,7 +6,7 @@ import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 
 import { RealizationSurfaceSettings } from "./types";
 
-import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
+import { DefineDependenciesArgs, FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { Ensemble } from "../../settings/Ensemble";
 import { Realization } from "../../settings/Realization";
 import { SurfaceAttribute } from "../../settings/SurfaceAttribute";
@@ -169,5 +169,125 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
             settings[SettingType.ENSEMBLE].getDelegate().getValue() !== null &&
             settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue() !== null
         );
+    }
+
+    defineDependencies({
+        dep,
+        availableSettingsUpdater,
+        workbenchSession,
+        queryClient,
+    }: DefineDependenciesArgs<RealizationSurfaceSettings>) {
+        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const ensembleSet = workbenchSession.getEnsembleSet();
+
+            const ensembleIdents = ensembleSet
+                .getEnsembleArr()
+                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .map((ensemble) => ensemble.getIdent());
+
+            return ensembleIdents;
+        });
+
+        availableSettingsUpdater(SettingType.REALIZATION, ({ getSetting }) => {
+            const ensembleIdent = getSetting(SettingType.ENSEMBLE);
+
+            if (!ensembleIdent) {
+                return [];
+            }
+
+            const realizations = workbenchSession
+                .getRealizationFilterSet()
+                .getRealizationFilterForEnsembleIdent(ensembleIdent)
+                .getFilteredRealizations();
+
+            return [...realizations];
+        });
+
+        const fetchedData = dep(async ({ getSetting }) => {
+            const ensembleIdent = getSetting(SettingType.ENSEMBLE);
+
+            try {
+                const data = await queryClient.fetchQuery({
+                    queryKey: ["getRealizationSurfacesMetadata", ensembleIdent],
+                    queryFn: () =>
+                        apiService.surface.getRealizationSurfacesMetadata(
+                            ensembleIdent?.getCaseUuid() ?? "",
+                            ensembleIdent?.getEnsembleName() ?? ""
+                        ),
+                    staleTime: STALE_TIME,
+                    gcTime: CACHE_TIME,
+                });
+                return data;
+            } catch (e) {
+                return null;
+            }
+        });
+
+        availableSettingsUpdater(SettingType.SURFACE_ATTRIBUTE, ({ getDep }) => {
+            const data = getDep(fetchedData);
+
+            if (!data) {
+                return [];
+            }
+
+            const availableAttributes = [
+                ...Array.from(new Set(data.surfaces.map((surface) => surface.attribute_name))),
+            ];
+
+            return availableAttributes;
+        });
+
+        availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getDep, getSetting }) => {
+            const attribute = getSetting(SettingType.SURFACE_ATTRIBUTE);
+            const data = getDep(fetchedData);
+
+            if (!attribute || !data) {
+                return [];
+            }
+
+            const availableSurfaceNames = [
+                ...Array.from(
+                    new Set(
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
+                    )
+                ),
+            ];
+
+            return availableSurfaceNames;
+        });
+
+        availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getSetting, getDep }) => {
+            const attribute = getSetting(SettingType.SURFACE_ATTRIBUTE);
+            const surfaceName = getSetting(SettingType.SURFACE_NAME);
+            const data = getDep(fetchedData);
+
+            if (!attribute || !surfaceName || !data) {
+                return [];
+            }
+
+            const availableTimeOrIntervals: string[] = [];
+            const availableTimeTypes = [
+                ...Array.from(
+                    new Set(
+                        data.surfaces
+                            .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
+                            .map((el) => el.time_type)
+                    )
+                ),
+            ];
+
+            if (availableTimeTypes.includes(SurfaceTimeType_api.NO_TIME)) {
+                availableTimeOrIntervals.push(SurfaceTimeType_api.NO_TIME);
+            }
+            if (availableTimeTypes.includes(SurfaceTimeType_api.TIME_POINT)) {
+                availableTimeOrIntervals.push(...data.time_points_iso_str);
+            }
+            if (availableTimeTypes.includes(SurfaceTimeType_api.INTERVAL)) {
+                availableTimeOrIntervals.push(...data.time_intervals_iso_str);
+            }
+
+            return availableTimeOrIntervals;
+        });
     }
 }

@@ -3,6 +3,7 @@ import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorScaleSerialization } from "@lib/utils/ColorScale";
 import { QueryClient } from "@tanstack/react-query";
 
+import { Dependency } from "./Dependency";
 import { GlobalSettings } from "./LayerManager";
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
@@ -128,10 +129,36 @@ export function instanceofLayer(item: Item): item is Layer<Settings, any> {
     );
 }
 
+export interface GetDep {
+    <TDep>(dep: Dependency<TDep>): Awaited<TDep>;
+}
+
+export interface DefineDependenciesArgs<TSettings extends Settings, TKey extends keyof TSettings = keyof TSettings> {
+    availableSettingsUpdater: <T>(
+        settingName: TKey,
+        update: (args: {
+            getSetting: <T extends TKey>(settingName: T) => TSettings[T];
+            getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
+            getDep: GetDep;
+        }) => T
+    ) => Dependency<T>;
+    dep: <T>(
+        update: (args: {
+            getSetting: <T extends TKey>(settingName: T) => TSettings[T];
+            getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
+            getDep: <TDep>(dep: Dependency<TDep>) => TDep;
+        }) => T
+    ) => Dependency<T>;
+    workbenchSession: WorkbenchSession;
+    workbenchSettings: WorkbenchSettings;
+    queryClient: QueryClient;
+}
+
 export interface SettingsContext<TSettings extends Settings, TKey extends keyof TSettings = keyof TSettings> {
     getDelegate(): SettingsContextDelegate<TSettings, TKey>;
     fetchData: FetchDataFunction<TSettings, TKey>;
     areCurrentSettingsValid(): boolean;
+    defineDependencies(args: DefineDependenciesArgs<TSettings>): void;
 }
 
 export type AvailableValuesType<TValue> = TValue extends Array<unknown> ? TValue : Array<TValue>;
