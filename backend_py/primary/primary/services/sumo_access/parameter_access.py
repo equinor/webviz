@@ -149,9 +149,10 @@ def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[En
             )
     return ensemble_parameters
 
+
 def _is_discrete_column(column_type: pa.DataType) -> bool:
     """Check if a column is discrete
-    
+
     Discrete parameter is defined as a parameter that is either a string or an integer
     """
     return (
@@ -161,6 +162,7 @@ def _is_discrete_column(column_type: pa.DataType) -> bool:
         or column_type == pa.int16()
         or column_type == pa.int8()
     )
+
 
 def _parameter_name_and_group_name_to_parameter_str(parameter_name: str, group_name: Optional[str]) -> str:
     """Convert a parameter name and group name to a parameter string"""
