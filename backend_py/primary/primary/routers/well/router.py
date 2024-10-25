@@ -308,12 +308,20 @@ async def get_log_curve_data(
         return converters.convert_wellbore_log_curve_data_to_schema(log_curve)
 
     if source == schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY:
-        geo_header_uuid = log_curve_name
+        header_source, header_ident = log_curve_name.split("::", 1)
+
         # TODO: Remove "FIELD"
         geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token(), "FIELD")
 
-        geo_header = await geol_access.get_geology_header(geo_header_uuid)
-        geo_data = await geol_access.get_wellbore_geology_data(wellbore_uuid, geo_header_uuid)
+        geo_headers = await geol_access.get_wellbore_geology_headers(wellbore_uuid)
+        geo_headers = [h for h in geo_headers if h.identifier == header_ident and h.source == header_source]
+
+        if not geo_headers:
+            raise ValueError("Could not find matching geology header")
+
+        geo_header = geo_headers[0]
+
+        geo_data = await geol_access.get_wellbore_geology_data(wellbore_uuid, geo_header.uuid)
 
         return converters.convert_geology_data_to_log_curve_schema(geo_header, geo_data)
 

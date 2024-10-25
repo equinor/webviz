@@ -148,7 +148,7 @@ def convert_wellbore_log_curve_header_to_schema(curve_header: WellboreLogCurveHe
 
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG,
-        sourceId=f"{curve_header.log_name}::{curve_header.curve_name}",
+        sourceId=utils.make_unique_source_identifier(curve_header),
         curveType=utils.curve_type_from_header(curve_header),
         logName=curve_header.log_name,
         curveName=curve_header.curve_name,
@@ -162,10 +162,10 @@ def convert_wellbore_geo_header_to_well_log_header(
 
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY,
-        sourceId=geo_header.uuid,
+        sourceId=utils.make_unique_source_identifier(geo_header),
         curveType=utils.curve_type_from_header(geo_header),
         # ! We forcing a unique log name, since each computed curve has a distinc sampling rate
-        logName=f"{geo_header.source}::{geo_header.identifier}",
+        logName=utils.make_unique_source_identifier(geo_header),
         curveName=geo_header.identifier,
         curveUnit="UNITLESS",
     )
@@ -176,10 +176,10 @@ def convert_strat_column_to_well_log_header(column: StratigraphicColumn) -> sche
 
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY,
-        sourceId=column.strat_column_identifier,
+        sourceId=utils.make_unique_source_identifier(column),
         curveType=utils.curve_type_from_header(column),
         # ! We forcing a unique log name, since each computed curve has a distinc sampling rate
-        logName=f"{column.strat_column_identifier}::{type_or_default}",
+        logName=utils.make_unique_source_identifier(column),
         curveName=type_or_default,
         curveUnit="UNITLESS",
     )
@@ -243,7 +243,7 @@ def convert_geology_data_to_log_curve_schema(
         curveDescription="Generated - Derived from geology data entries",
         name=geo_header.identifier,
         # ! We ensure a unique log-name since each curve has a distinc sampling rate
-        logName=f"{geo_header.source}::{geo_header.identifier}",
+        logName=utils.make_unique_source_identifier(geo_header),
         indexMin=geo_header.md_min,
         indexMax=geo_header.md_max,
         unit="UNITLESS",
@@ -327,7 +327,7 @@ def convert_strat_unit_data_to_log_curve_schema(
         curveDescription="COMPUTED - Derived from stratigraphy unit entries",
         name=strat_units[0].strat_column_type or "UNNAMED",
         # ! We ensure a unique log-name since each curve has a distinc sampling rate
-        logName=f"{strat_units[0].strat_column_identifier}::{strat_units[0].strat_column_type}",
+        logName=utils.make_unique_source_identifier(strat_units[0]),
         indexMin=index_min,
         indexMax=index_max,
         unit="UNITLESS",
