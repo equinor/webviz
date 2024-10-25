@@ -11,7 +11,7 @@ import {
     createSmartNodeSelectorTagTextFromParameterIdentString,
     createSmartNodeSelectorTagTextListFromParameterIdentStrings,
     createTreeDataNodeListFromParameters,
-} from "../../src/framework/components/EnsembleRealizationFilter/private-utils/smartNodeSelectorUtils";
+} from "../../src/framework/internal/components/EnsembleRealizationFilter/private-utils/smartNodeSelectorUtils";
 
 describe("createSmartNodeSelectorTagListFromParameterList", () => {
     const param1: Parameter = {

@@ -3,7 +3,7 @@ import {
     makeRealizationNumberSelectionsFromRealizationPickerTags,
     makeRealizationPickerTagFromRealizationNumberSelection,
     makeRealizationPickerTagsFromRealizationNumberSelections,
-} from "@framework/components/EnsembleRealizationFilter/private-utils/realizationPickerUtils";
+} from "@framework/internal/components/EnsembleRealizationFilter/private-utils/realizationPickerUtils";
 import { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 
 import { describe, expect, test } from "vitest";

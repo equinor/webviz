@@ -4,11 +4,11 @@ import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
+import { Drawer } from "@framework/internal/components/Drawer";
 import {
     EnsembleRealizationFilter,
     EnsembleRealizationFilterSelections,
-} from "@framework/components/EnsembleRealizationFilter/ensembleRealizationFilter";
-import { Drawer } from "@framework/internal/components/Drawer";
+} from "@framework/internal/components/EnsembleRealizationFilter";
 import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";

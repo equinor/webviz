@@ -1,4 +1,4 @@
-import { createBestSuggestedRealizationNumberSelections } from "@framework/components/EnsembleRealizationFilter/private-utils/conversionUtils";
+import { createBestSuggestedRealizationNumberSelections } from "@framework/internal/components/EnsembleRealizationFilter/private-utils/conversionUtils";
 import { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 
 import { describe, expect, test } from "vitest";
