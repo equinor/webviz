@@ -169,6 +169,10 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             return false;
         }
 
+        if (movedItem instanceof View && destinationItem instanceof View) {
+            return false;
+        }
+
         if (destinationItem instanceof DeltaSurface) {
             if (
                 instanceofLayer(movedItem) &&
