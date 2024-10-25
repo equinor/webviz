@@ -33,10 +33,9 @@ export function DenseIconButton(props: DenseIconButtonProps): React.ReactNode {
 
     return (
         <button
-            className={resolveClassNames(
-                "p-1 text-sm rounded flex gap-1 items-center focus:outline focus:outline-1 hover:text-gray-900 text-gray-600",
-                colorScheme
-            )}
+            className={resolveClassNames("p-1 text-sm rounded flex gap-1 items-center text-gray-600", {
+                [colorScheme + "focus:outline focus:outline-1 hover:text-gray-900"]: !props.disabled,
+            })}
             disabled={props.disabled}
             onClick={handleClick}
             title={props.title}
