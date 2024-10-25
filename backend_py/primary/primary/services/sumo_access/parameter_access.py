@@ -140,7 +140,7 @@ def parameter_table_to_ensemble_parameters(parameter_table: pa.Table) -> List[En
                     name=parameter_name,
                     group_name=f"LOG10_{group_name}" if is_logarithmic else group_name,
                     is_logarithmic=is_logarithmic,
-                    is_numerical=not _is_discrete_column(parameter_table.schema.field(table_column_name).type),
+                    is_discrete=_is_discrete_column(parameter_table.schema.field(table_column_name).type),
                     is_constant=len(set(parameter_table[table_column_name])) == 1,
                     descriptive_name=parameter_name,
                     values=parameter_table[table_column_name].to_numpy().tolist(),
