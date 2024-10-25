@@ -1,5 +1,6 @@
 import { WellborePick_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
@@ -11,7 +12,7 @@ import { DrilledWellborePicksContext } from "./DrilledWellborePicksContext";
 import { DrilledWellborePicksSettings } from "./types";
 
 import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
-import { BoundingBox, Layer } from "../../../interfaces";
+import { BoundingBox, Layer, SerializedLayer } from "../../../interfaces";
 
 export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSettings, WellborePick_api[]> {
     private _layerDelegate: LayerDelegate<DrilledWellborePicksSettings, WellborePick_api[]>;
@@ -103,4 +104,18 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
 
         return promise;
     }
+
+    serializeState(): SerializedLayer<DrilledWellborePicksSettings> {
+        const id = this._itemDelegate.getId();
+        const name = this._itemDelegate.getName();
+        return this._layerDelegate.serializeState(id, name);
+    }
+
+    deserializeState(serializedState: SerializedLayer<DrilledWellborePicksSettings>): void {
+        this._itemDelegate.setId(serializedState.id);
+        this._itemDelegate.setName(serializedState.name);
+        this._layerDelegate.deserializeState(serializedState);
+    }
 }
+
+LayerRegistry.registerLayer(DrilledWellborePicksLayer);

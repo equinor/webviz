@@ -1,8 +1,9 @@
 import { ItemDelegateTopic } from "./ItemDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 
+import { DeserializationFactory } from "../DeserializationFactory";
 import { LayerManagerTopic } from "../LayerManager";
-import { Item, instanceofGroup, instanceofLayer } from "../interfaces";
+import { Item, SerializedItem, instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum GroupDelegateTopic {
     CHILDREN = "CHILDREN",
@@ -41,7 +42,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
         this._publishSubscribeHandler.notifySubscribers(GroupDelegateTopic.TREE_REVISION_NUMBER);
     }
 
-    private takeOwnershipOfChild(child: Item) {
+    protected takeOwnershipOfChild(child: Item) {
         const layerManager = this._owner?.getItemDelegate().getLayerManager() ?? null;
 
         child.getItemDelegate().setParentGroup(this);
@@ -60,6 +61,10 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
             );
         }
         if (instanceofGroup(child)) {
+            for (const grandchild of child.getGroupDelegate().getChildren()) {
+                child.getGroupDelegate().takeOwnershipOfChild(grandchild);
+            }
+
             subscriptionSet.add(
                 child
                     .getGroupDelegate()
@@ -132,6 +137,15 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
     removeChild(child: Item) {
         this._children = this._children.filter((c) => c !== child);
         this.disposeOwnershipOfChild(child);
+    }
+
+    clearChildren() {
+        for (const child of this._children) {
+            this.disposeOwnershipOfChild(child);
+        }
+        this._children = [];
+        this._publishSubscribeHandler.notifySubscribers(GroupDelegateTopic.CHILDREN);
+        this.incrementTreeRevisionNumber();
     }
 
     moveChild(child: Item, index: number) {
@@ -225,5 +239,16 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
 
     getPublishSubscribeHandler(): PublishSubscribeDelegate<GroupDelegateTopic> {
         return this._publishSubscribeHandler;
+    }
+
+    serializeChildren(): SerializedItem[] {
+        return this._children.map((child) => child.serializeState());
+    }
+
+    deserializeChildren(children: SerializedItem[]) {
+        for (const child of children) {
+            const item = DeserializationFactory.makeItem(child);
+            this.appendChild(item);
+        }
     }
 }

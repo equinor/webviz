@@ -8,7 +8,7 @@ import { isEqual } from "lodash";
 
 import { ObservedSurfaceSettings } from "./types";
 
-import { SettingsContext } from "../../../interfaces";
+import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { Ensemble } from "../../settings/Ensemble";
 import { SurfaceAttribute } from "../../settings/SurfaceAttribute";
 import { SurfaceName } from "../../settings/SurfaceName";
@@ -38,7 +38,10 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         return this._contextDelegate.getSettings();
     }
 
-    async fetchData(oldValues: ObservedSurfaceSettings, newValues: ObservedSurfaceSettings): Promise<boolean> {
+    async fetchData(
+        oldValues: Partial<ObservedSurfaceSettings>,
+        newValues: Partial<ObservedSurfaceSettings>
+    ): Promise<FetchDataFunctionResult> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
         const settings = this.getDelegate().getSettings();
         const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
@@ -53,7 +56,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
                 .map((ensemble) => ensemble.getIdent())
         );
 
-        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+        const currentEnsembleIdent = newValues[SettingType.ENSEMBLE];
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._fetchDataCache = null;
@@ -76,7 +79,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
                 settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
                 settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
                 settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
-                return false;
+                return FetchDataFunctionResult.ERROR;
             }
             settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
             settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
@@ -84,7 +87,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         }
 
         if (!this._fetchDataCache) {
-            return false;
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
 
         const availableAttributes: string[] = [];
@@ -93,7 +96,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         );
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_ATTRIBUTE, availableAttributes);
 
-        const currentAttribute = settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().getValue();
+        const currentAttribute = newValues[SettingType.SURFACE_ATTRIBUTE];
         const availableSurfaceNames: string[] = [];
 
         if (currentAttribute) {
@@ -109,7 +112,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         }
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availableSurfaceNames);
 
-        const currentSurfaceName = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
+        const currentSurfaceName = newValues[SettingType.SURFACE_NAME];
 
         const availableTimeOrIntervals: string[] = [];
         if (currentAttribute && currentSurfaceName) {
@@ -136,7 +139,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         }
         this._contextDelegate.setAvailableValues(SettingType.TIME_OR_INTERVAL, availableTimeOrIntervals);
 
-        return true;
+        return FetchDataFunctionResult.SUCCESS;
     }
 
     areCurrentSettingsValid(): boolean {

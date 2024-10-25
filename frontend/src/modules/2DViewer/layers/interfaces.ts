@@ -1,5 +1,6 @@
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ColorScaleSerialization } from "@lib/utils/ColorScale";
 import { QueryClient } from "@tanstack/react-query";
 
 import { GlobalSettings } from "./LayerManager";
@@ -10,8 +11,66 @@ import { SettingDelegate } from "./delegates/SettingDelegate";
 import { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
 import { SettingType } from "./settingsTypes";
 
+export type SerializedType =
+    | "layer-manager"
+    | "view"
+    | "layer"
+    | "settings-group"
+    | "color-scale"
+    | "delta-surface"
+    | "shared-setting";
+
+export interface SerializedItem {
+    id: string;
+    type: SerializedType;
+    name: string;
+}
+
+export type SerializedSettingsState<TSettings> = Record<keyof TSettings, string>;
+
+export interface SerializedLayer<TSettings> extends SerializedItem {
+    type: "layer";
+    layerClass: string;
+    settings: SerializedSettingsState<TSettings>;
+}
+
+export interface SerializedView extends SerializedItem {
+    type: "view";
+    color: string;
+    children: SerializedItem[];
+}
+
+export interface SerializedSettingsGroup extends SerializedItem {
+    type: "settings-group";
+    children: SerializedItem[];
+}
+
+export interface SerializedColorScale extends SerializedItem {
+    type: "color-scale";
+    colorScale: ColorScaleSerialization;
+    userDefinedBoundaries: boolean;
+}
+
+export interface SerializedSharedSetting extends SerializedItem {
+    type: "shared-setting";
+    settingType: SettingType;
+    wrappedSettingClass: string;
+    value: string;
+}
+
+export interface SerializedLayerManager extends SerializedItem {
+    type: "layer-manager";
+    children: SerializedItem[];
+}
+
+export interface SerializedDeltaSurface extends SerializedItem {
+    type: "delta-surface";
+    children: SerializedItem[];
+}
+
 export interface Item {
     getItemDelegate(): ItemDelegate;
+    serializeState(): SerializedItem;
 }
 
 export function instanceofItem(item: any): item is Item {
@@ -40,8 +99,17 @@ export type BoundingBox = {
     z: [number, number];
 };
 
+export enum FetchDataFunctionResult {
+    SUCCESS = "SUCCESS",
+    IN_PROGRESS = "IN_PROGRESS",
+    ERROR = "ERROR",
+    NO_CHANGE = "NO_CHANGE",
+}
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
-    (oldValues: { [K in TKey]: TSettings[K] }, newValues: { [K in TKey]: TSettings[K] }): Promise<boolean>;
+    (
+        oldValues: { [K in TKey]?: TSettings[K] },
+        newValues: { [K in TKey]?: TSettings[K] }
+    ): Promise<FetchDataFunctionResult>;
 }
 
 export interface Layer<TSettings extends Settings, TData> extends Item {
@@ -86,6 +154,9 @@ export interface Setting<TValue> {
     makeComponent(): (props: SettingComponentProps<TValue>) => React.ReactNode;
     getDelegate(): SettingDelegate<TValue>;
     fixupValue?: (availableValues: AvailableValuesType<TValue>, currentValue: TValue) => TValue;
+    isValueValid?: (availableValues: AvailableValuesType<TValue>, value: TValue) => boolean;
+    serializeValue?: (value: TValue) => string;
+    deserializeValue?: (serializedValue: string) => TValue;
 }
 
 export enum SettingTopic {
@@ -94,6 +165,7 @@ export enum SettingTopic {
     AVAILABLE_VALUES_CHANGED = "AVAILABLE_VALUES_CHANGED",
     OVERRIDDEN_CHANGED = "OVERRIDDEN_CHANGED",
     LOADING_STATE_CHANGED = "LOADING_STATE_CHANGED",
+    PERSISTED_STATE_CHANGED = "PERSISTED_STATE_CHANGED",
 }
 
 export type SettingTopicPayloads<TValue> = {
@@ -102,6 +174,7 @@ export type SettingTopicPayloads<TValue> = {
     [SettingTopic.AVAILABLE_VALUES_CHANGED]: Exclude<TValue, null>[];
     [SettingTopic.OVERRIDDEN_CHANGED]: TValue | undefined;
     [SettingTopic.LOADING_STATE_CHANGED]: boolean;
+    [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
 };
 
 export type Settings = { [key in SettingType]?: unknown };

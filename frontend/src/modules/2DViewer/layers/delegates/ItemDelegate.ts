@@ -33,6 +33,10 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
         this._name = name;
     }
 
+    setId(id: string): void {
+        this._id = id;
+    }
+
     getId(): string {
         return this._id;
     }

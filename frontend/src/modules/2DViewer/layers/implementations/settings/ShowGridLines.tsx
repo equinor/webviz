@@ -2,6 +2,7 @@ import React, { ChangeEvent } from "react";
 
 import { Switch } from "@lib/components/Switch";
 
+import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
@@ -37,3 +38,5 @@ export class ShowGridLines implements Setting<ValueType> {
         };
     }
 }
+
+SettingRegistry.registerSetting(ShowGridLines);

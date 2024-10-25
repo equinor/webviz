@@ -260,12 +260,27 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         layerManagerRef.current.updateGlobalSetting("fieldId", fieldId);
     }
 
+    function handleSerialize() {
+        window.localStorage.setItem("layerManager", JSON.stringify(layerManagerRef.current.serializeState()));
+        console.debug(layerManagerRef.current.serializeState());
+    }
+
+    function handleDeserialize() {
+        layerManagerRef.current.getGroupDelegate().clearChildren();
+        const serializedLayerManager = window.localStorage.getItem("layerManager");
+        if (serializedLayerManager) {
+            console.debug(JSON.parse(serializedLayerManager));
+            layerManagerRef.current.deserializeState(JSON.parse(serializedLayerManager));
+        }
+    }
+
     const hasView = groupDelegate.getDescendantItems((item) => item instanceof View).length > 0;
     const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
 
     return (
         <div className="h-full flex flex-col gap-1">
-            <Button onClick={() => console.debug(layerManagerRef.current.serializeState())}>Serialize</Button>
+            <Button onClick={handleSerialize}>Serialize</Button>
+            <Button onClick={handleDeserialize}>Deserialize</Button>
             <CollapsibleGroup title="Field" expanded>
                 <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier} />
             </CollapsibleGroup>

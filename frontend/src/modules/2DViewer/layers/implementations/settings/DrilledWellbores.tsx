@@ -3,6 +3,7 @@ import React from "react";
 import { WellboreHeader_api } from "@api";
 import { Select, SelectOption } from "@lib/components/Select";
 
+import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
@@ -93,3 +94,5 @@ export function WellboreHeaderSelector(props: WellboreHeaderSelectorProps): Reac
         />
     );
 }
+
+SettingRegistry.registerSetting(DrilledWellbores);

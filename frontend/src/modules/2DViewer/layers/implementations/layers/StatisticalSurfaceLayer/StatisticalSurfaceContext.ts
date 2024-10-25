@@ -8,7 +8,7 @@ import { isEqual } from "lodash";
 import { StatisticalSurfaceSettings } from "./types";
 
 import { SettingsContextDelegate } from "../../../delegates/SettingsContextDelegate";
-import { SettingsContext } from "../../../interfaces";
+import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { SettingType } from "../../../settingsTypes";
 import { Ensemble } from "../../settings/Ensemble";
 import { Sensitivity, SensitivityNameCasePair } from "../../settings/Sensitivity";
@@ -43,7 +43,10 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         return this._contextDelegate.getSettings();
     }
 
-    async fetchData(oldValues: StatisticalSurfaceSettings, newValues: StatisticalSurfaceSettings): Promise<boolean> {
+    async fetchData(
+        oldValues: Partial<StatisticalSurfaceSettings>,
+        newValues: Partial<StatisticalSurfaceSettings>
+    ): Promise<FetchDataFunctionResult> {
         const queryClient = this.getDelegate().getLayerManager().getQueryClient();
 
         const settings = this.getDelegate().getSettings();
@@ -60,7 +63,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
                 .map((ensemble) => ensemble.getIdent())
         );
 
-        const currentEnsembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
+        const currentEnsembleIdent = newValues[SettingType.ENSEMBLE];
 
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._fetchDataCache = null;
@@ -86,7 +89,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
                 settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
                 settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
                 settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
-                return false;
+                return FetchDataFunctionResult.ERROR;
             }
 
             settings[SettingType.SENSITIVITY].getDelegate().setLoadingState(false);
@@ -96,7 +99,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         }
 
         if (!this._fetchDataCache) {
-            return false;
+            return FetchDataFunctionResult.IN_PROGRESS;
         }
 
         let currentEnsemble: FrameworkEnsemble | null = null;
@@ -122,7 +125,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         );
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_ATTRIBUTE, availableAttributes);
 
-        const currentAttribute = settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().getValue();
+        const currentAttribute = newValues[SettingType.SURFACE_ATTRIBUTE];
         const availableSurfaceNames: string[] = [];
 
         if (currentAttribute) {
@@ -138,7 +141,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         }
         this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availableSurfaceNames);
 
-        const currentSurfaceName = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
+        const currentSurfaceName = newValues[SettingType.SURFACE_NAME];
 
         const availableTimeOrIntervals: string[] = [];
         if (currentAttribute && currentSurfaceName) {
@@ -167,7 +170,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         }
         this._contextDelegate.setAvailableValues(SettingType.TIME_OR_INTERVAL, availableTimeOrIntervals);
 
-        return true;
+        return FetchDataFunctionResult.SUCCESS;
     }
 
     areCurrentSettingsValid(): boolean {

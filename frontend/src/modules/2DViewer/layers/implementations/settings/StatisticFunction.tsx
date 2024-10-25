@@ -3,6 +3,7 @@ import React from "react";
 import { SurfaceStatisticFunction_api } from "@api";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
+import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
@@ -50,3 +51,5 @@ export class StatisticFunction implements Setting<SurfaceStatisticFunction_api> 
         };
     }
 }
+
+SettingRegistry.registerSetting(StatisticFunction);

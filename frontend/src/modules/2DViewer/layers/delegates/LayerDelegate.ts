@@ -9,7 +9,7 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
 import { SharedSetting } from "../SharedSetting";
-import { BoundingBox, Layer, LayerStatus, Settings, SettingsContext } from "../interfaces";
+import { BoundingBox, Layer, LayerStatus, SerializedLayer, Settings, SettingsContext } from "../interfaces";
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -62,6 +62,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
                 this.handleSettingsChange();
             })
         );
+
         this._coloringType = coloringType;
     }
 
@@ -73,7 +74,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
             });
         } else {
             this._cancellationPending = false;
-            this._status = LayerStatus.INVALID_SETTINGS;
+            this.setStatus(LayerStatus.INVALID_SETTINGS);
         }
     }
 
@@ -305,5 +306,19 @@ export class LayerDelegate<TSettings extends Settings, TData>
             }
             this.setStatus(LayerStatus.ERROR);
         }
+    }
+
+    serializeState(id: string, name: string): SerializedLayer<TSettings> {
+        return {
+            id,
+            name,
+            type: "layer",
+            layerClass: this._owner.constructor.name,
+            settings: this._settingsContext.getDelegate().serializeSettings(),
+        };
+    }
+
+    deserializeState(serializedLayer: SerializedLayer<TSettings>): void {
+        this._settingsContext.getDelegate().deserializeSettings(serializedLayer.settings);
     }
 }

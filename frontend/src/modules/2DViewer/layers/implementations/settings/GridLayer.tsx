@@ -2,6 +2,7 @@ import React from "react";
 
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
+import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
@@ -25,6 +26,25 @@ export class GridLayer implements Setting<ValueType> {
 
     getDelegate(): SettingDelegate<ValueType> {
         return this._delegate;
+    }
+
+    isValueValid(availableValues: null[] | number[], value: ValueType): boolean {
+        if (value === null) {
+            return false;
+        }
+
+        if (availableValues.length < 3) {
+            return false;
+        }
+
+        const min = 0;
+        const max = availableValues[2];
+
+        if (max === null) {
+            return false;
+        }
+
+        return value >= min && value <= max;
     }
 
     fixupValue(availableValues: null[] | number[], currentValue: ValueType): ValueType {
@@ -77,3 +97,5 @@ export class GridLayer implements Setting<ValueType> {
         };
     }
 }
+
+SettingRegistry.registerSetting(GridLayer);

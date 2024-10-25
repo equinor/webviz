@@ -1,5 +1,6 @@
 import { SurfaceDataPng_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
@@ -14,7 +15,7 @@ import { isEqual } from "lodash";
 import { RealizationSurfaceContext } from "./RealizationSurfaceContext";
 import { RealizationSurfaceSettings } from "./types";
 
-import { BoundingBox, Layer } from "../../../interfaces";
+import { BoundingBox, Layer, SerializedLayer } from "../../../interfaces";
 
 export class RealizationSurfaceLayer
     implements Layer<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
@@ -109,4 +110,18 @@ export class RealizationSurfaceLayer
 
         return promise;
     }
+
+    serializeState(): SerializedLayer<RealizationSurfaceSettings> {
+        const id = this._itemDelegate.getId();
+        const name = this._itemDelegate.getName();
+        return this._layerDelegate.serializeState(id, name);
+    }
+
+    deserializeState(serializedState: SerializedLayer<RealizationSurfaceSettings>): void {
+        this._itemDelegate.setId(serializedState.id);
+        this._itemDelegate.setName(serializedState.name);
+        this._layerDelegate.deserializeState(serializedState);
+    }
 }
+
+LayerRegistry.registerLayer(RealizationSurfaceLayer);

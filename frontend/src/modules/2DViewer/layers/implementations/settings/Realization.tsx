@@ -2,6 +2,7 @@ import React from "react";
 
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
+import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
@@ -50,3 +51,5 @@ export class Realization implements Setting<number | null> {
         };
     }
 }
+
+SettingRegistry.registerSetting(Realization);

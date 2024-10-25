@@ -1,5 +1,6 @@
 import { PolygonData_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
@@ -11,7 +12,7 @@ import { isEqual } from "lodash";
 import { RealizationPolygonsContext } from "./RealizationPolygonsContext";
 import { RealizationPolygonsSettings } from "./types";
 
-import { BoundingBox, Layer } from "../../../interfaces";
+import { BoundingBox, Layer, SerializedLayer } from "../../../interfaces";
 
 export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettings, PolygonData_api[]> {
     private _layerDelegate: LayerDelegate<RealizationPolygonsSettings, PolygonData_api[]>;
@@ -104,4 +105,18 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
 
         return promise;
     }
+
+    serializeState(): SerializedLayer<RealizationPolygonsSettings> {
+        const id = this._itemDelegate.getId();
+        const name = this._itemDelegate.getName();
+        return this._layerDelegate.serializeState(id, name);
+    }
+
+    deserializeState(serializedState: SerializedLayer<RealizationPolygonsSettings>): void {
+        this._itemDelegate.setId(serializedState.id);
+        this._itemDelegate.setName(serializedState.name);
+        this._layerDelegate.deserializeState(serializedState);
+    }
 }
+
+LayerRegistry.registerLayer(RealizationPolygonsLayer);
