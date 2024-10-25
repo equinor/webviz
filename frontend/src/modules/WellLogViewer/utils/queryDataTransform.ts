@@ -8,7 +8,6 @@ import {
     WellLogCurve,
     WellLogDataRow,
     WellLogHeader,
-    WellLogMetadataDiscrete,
     WellLogSet,
 } from "@webviz/well-log-viewer/dist/components/WellLogTypes";
 import { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogView";
@@ -17,7 +16,7 @@ import _ from "lodash";
 
 import { COLOR_TABLES } from "./logViewerColors";
 
-import { BaseAgnosticSourceData } from "../view/queries/wellLogQueries";
+import { getUniqueCurveNameForCurveData } from "../settings/components/_shared/strings";
 
 export const MAIN_AXIS_CURVE: WellLogCurve = {
     name: "RKB",
@@ -33,27 +32,39 @@ export const SECONDARY_AXIS_CURVE: WellLogCurve = {
     valueType: "float",
 };
 
+const DATA_ROW_HEAD = Object.freeze([MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE]);
+// Sometime rows data-points are very close to each other. This is likely due to rounding errors. To avoid weird holes in the graphs, we round the index values to this value to ensure close rows are joined together
+const DATA_ROW_PRESICION = 3;
+
 export function createWellLogSets(
-    curveDataSets: BaseAgnosticSourceData[][],
+    curveDataSets: WellboreLogCurveData_api[][],
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
+    nonUniqueCurveNames?: Set<string>,
     padDataWithEmptyRows = false
 ): WellLogSet[] {
     return curveDataSets.map((curveSet) => {
         return {
             header: createLogHeader(curveSet, wellboreTrajectory),
-            ...createLogCurvesAndData(curveSet, wellboreTrajectory, referenceSystem, padDataWithEmptyRows),
+            ...createLogCurvesAndData(
+                curveSet,
+                wellboreTrajectory,
+                referenceSystem,
+                nonUniqueCurveNames,
+                padDataWithEmptyRows
+            ),
         };
     });
 }
 
 function createLogCurvesAndData(
-    curveData: BaseAgnosticSourceData[],
+    curveData: WellboreLogCurveData_api[],
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
-    padDataWithEmptyRows: boolean
+    nonUniqueCurveNames?: Set<string>,
+    padDataWithEmptyRows?: boolean
 ): Pick<WellLogSet, "curves" | "data" | "metadata_discrete"> {
-    const curves: WellLogSet["curves"] = [MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE];
+    const curves: WellLogSet["curves"] = [...DATA_ROW_HEAD];
     const discreteMeta: WellLogSet["metadata_discrete"] = {};
 
     // We add 2 since each row also includes the MD and TVD axis curves
@@ -67,17 +78,33 @@ function createLogCurvesAndData(
     curveData.forEach((curve, curveIndex) => {
         if (curve.indexMin < minCurveMd) minCurveMd = curve.indexMin;
         if (curve.indexMax > maxCurveMd) maxCurveMd = curve.indexMax;
-        if (curve._discreteMetaData) _.set(discreteMeta, curve.name, curve._discreteMetaData);
+        if (curve.metadataDiscrete)
+            _.set(discreteMeta, getUniqueCurveNameForCurveData(curve, nonUniqueCurveNames), {
+                attributes: ["code", "color"],
+                objects: curve.metadataDiscrete,
+            });
 
-        curves.push(apiCurveToLogCurve(curve));
-        curve.dataPoints.forEach(([scaleIdx, entry, ...restData]) => {
+        curves.push(apiCurveToLogCurve(curve, nonUniqueCurveNames));
+
+        curve.dataPoints.forEach(([scaleIdx, actualEntry, ...restData], idx) => {
+            // ! Hack to fix subsurface graph weirdly prioritizing the PREVIOUS entry
+            // To make it look correct, we essentially offset the entire graph by one.
+            // Go back to using the actual entry once that's fixed
+            let entry;
+            if (curve.metadataDiscrete) entry = curve.dataPoints[idx - 1]?.[1] ?? null;
+            else entry = actualEntry;
+
             if (!scaleIdx) return console.warn("Unexpected null for scale entry");
             if (typeof scaleIdx === "string") throw new Error("Scale index value cannot be a string");
             if (restData.length) console.warn("Multi-dimensional data not supported, using first value only");
 
+            scaleIdx = _.round(scaleIdx, DATA_ROW_PRESICION);
+
             maybeInjectDataRow(rowAcc, scaleIdx, rowLength, referenceSystem);
 
-            rowAcc[scaleIdx][curveIndex + 2] = entry === curve.noDataValue ? null : entry;
+            const valueIsEmpty = entry === "" || entry === curve.noDataValue;
+
+            rowAcc[scaleIdx][curveIndex + 2] = valueIsEmpty ? null : entry;
         });
     });
 
@@ -96,40 +123,18 @@ function createLogCurvesAndData(
     };
 }
 
-export function createWellLog(
-    curveData: BaseAgnosticSourceData[],
-    wellboreTrajectory: WellboreTrajectory_api,
-    referenceSystem: IntersectionReferenceSystem,
-    padDataWithEmptyRows = false
-): WellLogSet {
-    const header = createLogHeader(curveData, wellboreTrajectory);
-
-    // TODO: these all seperately iterate over the curve data list, so should probably just combine them into a single reduce method to optimize
-    // ! Important: Always make sure that the data row and curve arrays are in the same order!
-    const curves = createLogCurves(curveData);
-    const data = createLogData(curveData, wellboreTrajectory, referenceSystem, padDataWithEmptyRows);
-    const metadataDiscrete = curveData.reduce((acc, curve) => {
-        if (curve._discreteMetaData) {
-            return _.set(acc, curve.name, curve._discreteMetaData);
-        } else return acc;
-    }, {} as Record<string, WellLogMetadataDiscrete>);
-
-    return { header, curves, data, metadata_discrete: metadataDiscrete };
-}
-
-function createLogCurves(curveData: WellboreLogCurveData_api[]): WellLogCurve[] {
-    return [MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE, ...curveData.map(apiCurveToLogCurve)];
-}
-
-function apiCurveToLogCurve(curve: WellboreLogCurveData_api): WellLogCurve {
+function apiCurveToLogCurve(curve: WellboreLogCurveData_api, nonUniqueCurveNames?: Set<string>): WellLogCurve {
     const firstValue = curve.dataPoints[0]?.[1];
 
+    let valueType = typeof firstValue as string;
+    if (valueType === "string") valueType = "integer";
+
     return {
-        name: curve.name,
+        name: getUniqueCurveNameForCurveData(curve, nonUniqueCurveNames),
         // ! The Well Log JSON format does *technically* support multiple dimensions, but the subsurface component does not
         // dimensions: curve.dataPoints[0].length - 1,
         dimensions: 1,
-        valueType: firstValue === null ? "unknown" : typeof firstValue,
+        valueType,
         // ? if this is just gonna be the meter in depth for all of them
         unit: curve.unit,
         description: curve.curveDescription,
@@ -138,47 +143,8 @@ function apiCurveToLogCurve(curve: WellboreLogCurveData_api): WellLogCurve {
     };
 }
 
-type SafeWellLogDataRow = [number, ...(WellLogDataRow | [])];
+type SafeWellLogDataRow = [number, ...WellLogDataRow];
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
-
-function createLogData(
-    curveData: WellboreLogCurveData_api[],
-    wellboreTrajectory: WellboreTrajectory_api,
-    referenceSystem: IntersectionReferenceSystem,
-    padWithEmptyRows: boolean
-): SafeWellLogDataRow[] {
-    // We add 2 since each row also includes the MD and TVD axis curves
-    const rowLength = curveData.length + 2;
-    const rowAcc: DataRowAccumulatorMap = {};
-
-    let minCurveMd = Number.MAX_VALUE;
-    let maxCurveMd = Number.MIN_VALUE;
-
-    curveData.forEach((curve, curveIndex) => {
-        if (curve.indexMin < minCurveMd) minCurveMd = curve.indexMin;
-        if (curve.indexMax > maxCurveMd) maxCurveMd = curve.indexMax;
-
-        curve.dataPoints.forEach(([scaleIdx, entry, ...restData]) => {
-            if (!scaleIdx) return console.warn("Unexpected null for scale entry");
-            if (typeof scaleIdx === "string") throw new Error("Scale index value cannot be a string");
-            if (restData.length) console.warn("Multi-dimensional data not supported, using first value only");
-
-            maybeInjectDataRow(rowAcc, scaleIdx, rowLength, referenceSystem);
-
-            rowAcc[scaleIdx][curveIndex + 2] = entry === curve.noDataValue ? null : entry;
-        });
-    });
-
-    if (padWithEmptyRows) {
-        wellboreTrajectory.mdArr.forEach((mdValue) => {
-            if (mdValue <= maxCurveMd && mdValue >= minCurveMd) return;
-
-            maybeInjectDataRow(rowAcc, mdValue, rowLength, referenceSystem);
-        });
-    }
-
-    return _.sortBy(Object.values(rowAcc), "0");
-}
 
 function maybeInjectDataRow(
     rowAcc: DataRowAccumulatorMap,
@@ -194,7 +160,7 @@ function maybeInjectDataRow(
 }
 
 function createLogHeader(
-    curveData: BaseAgnosticSourceData[],
+    curveData: WellboreLogCurveData_api[],
     wellboreTrajectory: WellboreTrajectory_api
 ): WellLogHeader {
     // TODO: Might want more data from https://api.equinor.com/api-details#api=equinor-subsurfacedata-api-v3&operation=get-api-v-api-version-welllog-wellboreuuid, which provides:

@@ -5,6 +5,7 @@ import { WellLogCurveTypeEnum_api } from "@api";
 import { OptionalExceptFor } from "@lib/utils/typing";
 import {
     Template,
+    TemplatePlot,
     TemplatePlotType,
     TemplateTrack,
 } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
@@ -14,7 +15,8 @@ import { v4 } from "uuid";
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "./logViewerColors";
 import { MAIN_AXIS_CURVE } from "./queryDataTransform";
 
-import { TemplatePlotConfig } from "../types";
+import { getUniqueCurveNameForPlotConfig } from "../settings/components/_shared/strings";
+import { TemplatePlotConfig, TemplateTrackConfig } from "../types";
 
 export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
 
@@ -29,12 +31,18 @@ export function plotIsDiscrete(plotConfig: TemplatePlotConfig): boolean {
     return _curveHeader?.curveType === WellLogCurveTypeEnum_api.DISCRETE;
 }
 
-export function createLogTemplate(templateTrackConfigs: TemplateTrack[]): Template {
+export function createLogTemplate(templateTracks: TemplateTrackConfig[], nonUniqueNames?: Set<string>): Template {
     return {
         // AFAIK, this name is not show anywhere
         name: "Well log viewer",
         scale: { primary: MAIN_AXIS_CURVE.name, allowSecondary: true },
-        tracks: templateTrackConfigs,
+        tracks: templateTracks.map<TemplateTrack>((track) => ({
+            ...track,
+            plots: track.plots.map((plot) => ({
+                ...plot,
+                name: getUniqueCurveNameForPlotConfig(plot, nonUniqueNames),
+            })) as TemplatePlot[],
+        })),
     };
 }
 

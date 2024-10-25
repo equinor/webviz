@@ -40,6 +40,8 @@ export const wellLogCurveHeadersQueryAtom = atomWithQuery((get) => {
         WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY,
     ];
 
+    // TODO: Runs a bit slow like this, seperate to 3 distinct queries for better paralellization and caching
+
     return {
         queryKey: ["getWellboreLogCurveHeaders", wellboreId],
         queryFn: () => apiService.well.getWellboreLogCurveHeaders(wellboreId ?? "", sources),

@@ -164,7 +164,8 @@ def convert_wellbore_geo_header_to_well_log_header(
         source=schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY,
         sourceId=geo_header.uuid,
         curveType=utils.curve_type_from_header(geo_header),
-        logName=geo_header.source,
+        # ! We forcing a unique log name, since each computed curve has a distinc sampling rate
+        logName=f"{geo_header.source}::{geo_header.identifier}",
         curveName=geo_header.identifier,
         curveUnit="UNITLESS",
     )
@@ -176,9 +177,10 @@ def convert_strat_column_to_well_log_header(column: StratigraphicColumn) -> sche
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY,
         sourceId=column.strat_column_identifier,
-        curveType=schemas.WellLogCurveTypeEnum.DISCRETE,
-        logName=column.strat_column_identifier,
-        curveName=type_or_default[0].upper() + type_or_default[1:],
+        curveType=utils.curve_type_from_header(column),
+        # ! We forcing a unique log name, since each computed curve has a distinc sampling rate
+        logName=f"{column.strat_column_identifier}::{type_or_default}",
+        curveName=type_or_default,
         curveUnit="UNITLESS",
     )
 
@@ -186,6 +188,8 @@ def convert_strat_column_to_well_log_header(column: StratigraphicColumn) -> sche
 def convert_wellbore_log_curve_data_to_schema(
     wellbore_log_curve_data: WellboreLogCurveData,
 ) -> schemas.WellboreLogCurveData:
+    metadata_discrete = utils.get_discrete_metadata_for_well_log_curve(wellbore_log_curve_data)
+
     return schemas.WellboreLogCurveData(
         name=wellbore_log_curve_data.name,
         logName=wellbore_log_curve_data.log_name,
@@ -200,6 +204,7 @@ def convert_wellbore_log_curve_data_to_schema(
         curveDescription=wellbore_log_curve_data.curve_description,
         indexUnit=wellbore_log_curve_data.index_unit,
         noDataValue=wellbore_log_curve_data.no_data_value,
+        metadataDiscrete=metadata_discrete,
     )
 
 
@@ -237,6 +242,7 @@ def convert_geology_data_to_log_curve_schema(
     return schemas.WellboreLogCurveData(
         curveDescription="Generated - Derived from geology data entries",
         name=geo_header.identifier,
+        # ! We ensure a unique log-name since each curve has a distinc sampling rate
         logName=f"{geo_header.source}::{geo_header.identifier}",
         indexMin=geo_header.md_min,
         indexMax=geo_header.md_max,
@@ -314,13 +320,14 @@ def convert_strat_unit_data_to_log_curve_schema(
         if current_unit.strat_unit_level < next_unit.strat_unit_level:
             parent_units.append(current_unit)
 
-        elif current_unit.strat_unit_level > next_unit.strat_unit_level:
+        elif current_unit.strat_unit_level > next_unit.strat_unit_level and parent_units:
             parent_units.pop()
 
     return schemas.WellboreLogCurveData(
-        curveDescription="Generated - Derived from stratigraphy unit entries",
+        curveDescription="COMPUTED - Derived from stratigraphy unit entries",
         name=strat_units[0].strat_column_type or "UNNAMED",
-        logName=f"{strat_units[0].strat_column_identifier}::{strat_units[0].strat_unit_identifier}",
+        # ! We ensure a unique log-name since each curve has a distinc sampling rate
+        logName=f"{strat_units[0].strat_column_identifier}::{strat_units[0].strat_column_type}",
         indexMin=index_min,
         indexMax=index_max,
         unit="UNITLESS",

@@ -15,7 +15,7 @@ import { TrackSettingFragmentProps } from "./private-components/TrackSettings";
 
 import { availableDiscreteCurvesAtom, availableFlagCurvesAtom } from "../../atoms/derivedAtoms";
 import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";
-import { curveSourceToText } from "../_shared/strings";
+import { curveSourceToText, simplifyLogName } from "../_shared/strings";
 
 const DEFAULT_SOURCE = WellLogCurveSourceEnum_api.SMDA_GEOLOGY;
 
@@ -27,8 +27,8 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
 
     const [activeSource, setActiveSource] = React.useState(currentCurveHeader?.source ?? DEFAULT_SOURCE);
 
-    const categoryId = React.useId();
-    const selectId = React.useId();
+    const categorySelectId = React.useId();
+    const curveSelectId = React.useId();
 
     const curveHeadersQuery = useAtomValue(wellLogCurveHeadersQueryAtom);
     const curveHeadersError = usePropagateApiErrorToStatusWriter(curveHeadersQuery, props.statusWriter);
@@ -45,10 +45,12 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
         .map((source) => ({ value: source, label: curveSourceToText(source) }))
         .value() as DropdownOption<WellLogCurveSourceEnum_api>[];
 
-    const selectOptions = makeCurveOptions(activeSource, availableCurveHeaders);
+    const headersForCategory = availableCurveHeaders.filter((header) => activeSource === header.source);
 
-    const handleGeoHeaderSelect = React.useCallback(
-        function handleGeoHeaderSelect([choice]: string[]) {
+    const selectOptions = makeCurveOptions(activeSource, headersForCategory);
+
+    const handleCurveHeaderSelect = React.useCallback(
+        function handleCurveHeaderSelect([choice]: string[]) {
             const chosenOption = availableCurveHeaders.find(
                 ({ source, sourceId }) => source === activeSource && sourceId === choice
             );
@@ -64,21 +66,21 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
 
     return (
         <>
-            <label htmlFor={categoryId}>Type</label>
+            <label htmlFor={categorySelectId}>Type</label>
 
             <PendingWrapper isPending={curveHeadersQuery.isPending} errorMessage={curveHeadersError ?? ""}>
-                <Dropdown id={categoryId} value={activeSource} options={categories} onChange={setActiveSource} />
+                <Dropdown id={categorySelectId} value={activeSource} options={categories} onChange={setActiveSource} />
             </PendingWrapper>
 
             <div className="col-span-2">
-                <label htmlFor={selectId}>Curve</label>
+                <label htmlFor={curveSelectId}>Curve</label>
                 <PendingWrapper isPending={curveHeadersQuery.isPending} errorMessage={curveHeadersError ?? ""}>
                     <Select
-                        id={selectId}
+                        id={curveSelectId}
                         value={currentCurveHeader?.sourceId ? [currentCurveHeader.sourceId] : []}
                         options={selectOptions}
                         size={Math.max(Math.min(6, selectOptions.length), 2)}
-                        onChange={handleGeoHeaderSelect}
+                        onChange={handleCurveHeaderSelect}
                     />
                 </PendingWrapper>
             </div>
@@ -94,8 +96,16 @@ function makeCurveOptions(
         .filter(["source", chosenSource])
         .map((header): SelectOption => {
             return {
-                label: header.curveName,
+                label: _.startCase(header.curveName),
                 value: header.sourceId,
+                adornment: (
+                    <span
+                        className="order-1 text-[0.75rem] flex-shrink-[9999] overflow-hidden leading-tight block bg-gray-400 px-1 py-0.5 rounded text-white text-ellipsis whitespace-nowrap w-auto "
+                        title={header.logName}
+                    >
+                        {simplifyLogName(header.logName, 12)}
+                    </span>
+                ),
             };
         })
         .value();

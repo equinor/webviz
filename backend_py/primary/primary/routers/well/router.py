@@ -283,7 +283,7 @@ async def get_log_curve_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
-    log_curve_name: str = Query(description="Log curve name or ID", deprecated=True),
+    log_curve_name: str = Query(description="Log curve name or ID"),
     source: schemas.WellLogCurveSourceEnum = Query(
        description="Source to fetch well-logs from.",
        default=schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG
@@ -297,8 +297,13 @@ async def get_log_curve_data(
         raise NotImplementedError("DROGON log curve data not implemented")
 
     if source == schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG:
+        # if people use the source-ID from recieved headers, this the log_curve_name param is in the shape of <log_name>::<curve_name>
+        curve_name = log_curve_name
+        if "::" in curve_name:
+            curve_name = curve_name.split("::", 1)[1]
+
         well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
-        log_curve = await well_access.get_log_curve_data(wellbore_uuid, log_curve_name)
+        log_curve = await well_access.get_log_curve_data(wellbore_uuid, curve_name)
 
         return converters.convert_wellbore_log_curve_data_to_schema(log_curve)
 

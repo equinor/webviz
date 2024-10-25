@@ -32,10 +32,7 @@ export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
     );
 
     return (
-        <div
-            className="pl-3 p-2 grid gap-x-2 gap-y-3 items-center text-sm"
-            style={{ gridTemplateColumns: "auto minmax(0, 1fr)" }}
-        >
+        <div className="pl-3 p-2 grid grid-cols-2 gap-x-2 gap-y-3 items-center text-sm">
             <label htmlFor="trackTitle">Track title</label>
             <Input
                 id="trackTitle"
