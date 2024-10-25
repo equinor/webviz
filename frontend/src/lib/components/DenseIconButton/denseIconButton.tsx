@@ -19,6 +19,7 @@ export type DenseIconButtonProps = {
     colorScheme?: DenseIconButtonColorScheme;
     children: React.ReactNode;
     title?: string;
+    disabled?: boolean;
 };
 
 export function DenseIconButton(props: DenseIconButtonProps): React.ReactNode {
@@ -36,6 +37,7 @@ export function DenseIconButton(props: DenseIconButtonProps): React.ReactNode {
                 "p-1 text-sm rounded flex gap-1 items-center focus:outline focus:outline-1 hover:text-gray-900 text-gray-600",
                 colorScheme
             )}
+            disabled={props.disabled}
             onClick={handleClick}
             title={props.title}
         >
