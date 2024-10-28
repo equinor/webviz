@@ -41,7 +41,7 @@ async def get_parameter_names_and_description(
             name=parameter.name,
             descriptive_name=parameter.descriptive_name,
             group_name=parameter.group_name,
-            is_numerical=parameter.is_numerical,
+            is_discrete=parameter.is_discrete,
         )
         for parameter in parameters
     ]
