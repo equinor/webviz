@@ -1,12 +1,15 @@
 import React from "react";
 
 import { WellLogCurveSourceEnum_api, WellboreLogCurveHeader_api } from "@api";
+import { Checkbox } from "@lib/components/Checkbox";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select, SelectOption } from "@lib/components/Select";
 import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { ArrowDownward } from "@mui/icons-material";
 
 import { useAtomValue } from "jotai";
 import _ from "lodash";
@@ -25,10 +28,14 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
 
     const currentCurveHeader = currentPlot?._curveHeader;
 
-    const [activeSource, setActiveSource] = React.useState(currentCurveHeader?.source ?? DEFAULT_SOURCE);
+    const showLinesCheckId = React.useId();
+    const showLabelsCheckId = React.useId();
+    const labelRotationId = React.useId();
 
     const categorySelectId = React.useId();
     const curveSelectId = React.useId();
+
+    const [activeSource, setActiveSource] = React.useState(currentCurveHeader?.source ?? DEFAULT_SOURCE);
 
     const curveHeadersQuery = useAtomValue(wellLogCurveHeadersQueryAtom);
     const curveHeadersError = usePropagateApiErrorToStatusWriter(curveHeadersQuery, props.statusWriter);
@@ -51,21 +58,67 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
 
     const handleCurveHeaderSelect = React.useCallback(
         function handleCurveHeaderSelect([choice]: string[]) {
-            const chosenOption = availableCurveHeaders.find(
+            const chosenHeader = availableCurveHeaders.find(
                 ({ source, sourceId }) => source === activeSource && sourceId === choice
             );
 
-            if (!chosenOption) return console.warn(`Selected value '${choice}' not found`);
+            if (!chosenHeader) return console.warn(`Selected value '${choice}' not found`);
 
-            const newTrackPlot = makePlotConfigForChoice(chosenOption);
+            const newTrackPlot = makeTrackPlot({
+                ...currentPlot,
+                name: chosenHeader.curveName,
+                _curveHeader: chosenHeader,
+            });
 
             onFieldChange({ plots: [newTrackPlot] });
         },
-        [availableCurveHeaders, onFieldChange, activeSource]
+        [availableCurveHeaders, onFieldChange, activeSource, currentPlot]
+    );
+
+    const handlePlotSettingsChange = React.useCallback(
+        function handlePlotSettingsChange(changes: Partial<TemplatePlotConfig>) {
+            const newPlot = makeTrackPlot({ ...currentPlot, ...changes });
+
+            onFieldChange({ plots: [newPlot] });
+        },
+        [currentPlot, onFieldChange]
     );
 
     return (
         <>
+            <label htmlFor={showLinesCheckId}>Show lines</label>
+            <Checkbox
+                id={showLinesCheckId}
+                checked={currentPlot.showLines ?? true}
+                onChange={(e) => handlePlotSettingsChange({ showLines: e.target.checked })}
+            />
+
+            <label htmlFor={showLabelsCheckId}>Show labels</label>
+            <Checkbox
+                id={showLabelsCheckId}
+                checked={currentPlot.showLabels ?? true}
+                onChange={(e) => handlePlotSettingsChange({ showLabels: e.target.checked })}
+            />
+
+            <label htmlFor={labelRotationId}>Label direction</label>
+
+            <RadioGroup
+                disabled={!(currentPlot.showLabels ?? true)}
+                direction="horizontal"
+                value={currentPlot.labelRotation ?? 0}
+                options={[
+                    {
+                        label: <ArrowDownward titleAccess="Downwards" fontSize="inherit" />,
+                        value: 0,
+                    },
+                    {
+                        label: <ArrowDownward titleAccess="Rightwards" className="-rotate-90" fontSize="inherit" />,
+                        value: 270,
+                    },
+                ]}
+                onChange={(_e, v) => handlePlotSettingsChange({ labelRotation: v })}
+            />
+
             <label htmlFor={categorySelectId}>Type</label>
 
             <PendingWrapper isPending={curveHeadersQuery.isPending} errorMessage={curveHeadersError ?? ""}>
@@ -109,37 +162,4 @@ function makeCurveOptions(
             };
         })
         .value();
-}
-
-function makePlotConfigForChoice(chosenHeader: WellboreLogCurveHeader_api): TemplatePlotConfig {
-    const settings: Parameters<typeof makeTrackPlot>[0] = {
-        _curveHeader: chosenHeader,
-        name: chosenHeader.curveName,
-        type: "stacked",
-    };
-
-    switch (chosenHeader.source) {
-        case WellLogCurveSourceEnum_api.SMDA_GEOLOGY:
-            settings.showLines = false;
-            break;
-        case WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY:
-        case WellLogCurveSourceEnum_api.SSDL_WELL_LOG:
-            settings.showLines = true;
-            break;
-
-        default:
-            throw new Error(`Unsupported source choice '${chosenHeader.source}'`);
-    }
-
-    return makeTrackPlot(settings);
-}
-
-function shortenGeoSourceName(sourceName: string, maxLength = 10) {
-    // ! Unsure what sources there are, but this one seems to show up alot
-    if (sourceName === "OpenWorks R5000") return "OpenWorks";
-    // Fallback to ellipse for other long names
-    // TODO: Generalized shortening that doesn't truncate unless absolutely neccessary?
-    else if (sourceName.length > maxLength) return sourceName.substring(0, 9) + "…";
-    // Fallback to name in all other cases
-    else return sourceName;
 }

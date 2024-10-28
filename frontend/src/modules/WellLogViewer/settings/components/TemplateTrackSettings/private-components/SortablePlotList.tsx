@@ -118,20 +118,35 @@ function SortablePlotItem(props: SortablePlotItemProps) {
     const secondCurveNeeded = props.plot.type === "differential";
     const endAdornment = <PlotItemEndAdornment {...props} />;
 
-    const handlePlotSelectChange = React.useCallback(
-        function handlePlotSelectChange(choice: string) {
+    const getHeaderForPlotChoice = React.useCallback(
+        function getHeaderForPlotChoice(choice: string) {
             const selectedOption = props.curveHeaderOptions.find(({ value }) => value === choice);
-            if (!selectedOption) return;
-
-            const selectedHeader = selectedOption._curveHeader;
-
-            onPlotUpdate(props.plot, {
-                _key: props.plot._key,
-                _curveHeader: selectedHeader,
-                name: selectedHeader.curveName,
-            });
+            return selectedOption?._curveHeader;
         },
-        [onPlotUpdate, props.curveHeaderOptions, props.plot]
+        [props.curveHeaderOptions]
+    );
+
+    const handlePlotSelectChange = React.useCallback(
+        function handlePlotSelectChange(choice: string, isSecondaryCurve?: boolean) {
+            const selectedHeader = getHeaderForPlotChoice(choice);
+
+            if (!selectedHeader) return;
+
+            if (isSecondaryCurve) {
+                onPlotUpdate(props.plot, {
+                    _key: props.plot._key,
+                    _curveHeader2: selectedHeader,
+                    name2: selectedHeader.curveName,
+                });
+            } else {
+                onPlotUpdate(props.plot, {
+                    _key: props.plot._key,
+                    _curveHeader: selectedHeader,
+                    name: selectedHeader.curveName,
+                });
+            }
+        },
+        [getHeaderForPlotChoice, onPlotUpdate, props.plot]
     );
 
     const plotForm = (
@@ -148,7 +163,12 @@ function SortablePlotItem(props: SortablePlotItemProps) {
                     <DenseIconButton
                         title="Swap curves"
                         onClick={() =>
-                            props.onPlotUpdate(props.plot, { name: props.plot.name2, name2: props.plot.name })
+                            props.onPlotUpdate(props.plot, {
+                                name: props.plot.name2,
+                                name2: props.plot.name,
+                                _curveHeader: props.plot._curveHeader2,
+                                _curveHeader2: props.plot._curveHeader,
+                            })
                         }
                     >
                         <SwapHoriz fontSize="inherit" />
@@ -156,9 +176,9 @@ function SortablePlotItem(props: SortablePlotItemProps) {
 
                     <Dropdown
                         placeholder="Select 2nd curve"
-                        value={props.plot.name2}
+                        value={props.plot._curveHeader2?.sourceId}
                         options={props.curveHeaderOptions}
-                        onChange={(v) => props.onPlotUpdate(props.plot, { name2: v })}
+                        onChange={(v) => handlePlotSelectChange(v, true)}
                     />
                 </>
             )}

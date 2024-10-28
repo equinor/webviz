@@ -124,7 +124,11 @@ export const requiredCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
     return _.chain(templateTracks)
         .flatMap<TemplatePlotConfig>("plots")
         .filter("_isValid") // Implies that curveheader is no longer null
-        .map(({ _curveHeader }) => _curveHeader as WellboreLogCurveHeader_api)
+        .flatMap(({ _curveHeader, _curveHeader2 }) => {
+            if (!_curveHeader) return [];
+            if (!_curveHeader2) return [_curveHeader];
+            else return [_curveHeader, _curveHeader2];
+        })
         .uniqBy(({ source, sourceId, logName }) => source + sourceId + logName)
         .value();
 });

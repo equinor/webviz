@@ -8,6 +8,7 @@ import { SelectOption } from "@lib/components/Select";
 import { SortableList } from "@lib/components/SortableList";
 import { arrayMove } from "@lib/utils/arrays";
 import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { configToJsonDataBlob, jsonFileToTrackConfigs } from "@modules/WellLogViewer/utils/settingsImport";
 import { Dropdown, MenuButton } from "@mui/base";
 import { FileDownload, FileUpload, MoreVert } from "@mui/icons-material";
@@ -159,12 +160,18 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
 }
 
 function createNewConfig(title: string, type: TemplateTrackConfig["_type"]): TemplateTrackConfig {
+    let plots = [] as ReturnType<typeof makeTrackPlot>[];
+
+    if (type === WellLogCurveTypeEnum_api.DISCRETE) {
+        plots = [makeTrackPlot({ _curveHeader: null, type: "stacked" })];
+    }
+
     return {
         _key: v4(),
         _type: type,
-        plots: [],
         scale: "linear",
         width: 3,
         title,
+        plots,
     };
 }
