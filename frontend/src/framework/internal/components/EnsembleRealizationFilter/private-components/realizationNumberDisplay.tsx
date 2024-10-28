@@ -9,7 +9,7 @@ export type RealizationNumberDisplayProps = {
     selectedRealizations: readonly number[];
     availableRealizations: readonly number[];
     showAsCompact?: boolean;
-    disableInteraction: boolean;
+    disableOnClick: boolean;
     onRealizationNumberClick: (selectedRealizations: readonly number[]) => void;
 };
 export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> = (props) => {
@@ -27,7 +27,7 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
     }
 
     function handleRealizationElementClick(realization: number) {
-        if (props.disableInteraction) {
+        if (props.disableOnClick) {
             return;
         }
         if (!props.selectedRealizations.includes(realization)) {
@@ -55,7 +55,7 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
         for (const [index, realization] of allRealizationsInRange.entries()) {
             const isCurrentRealizationAvailable = props.availableRealizations.includes(realization);
             const isRealizationSelected = props.selectedRealizations.includes(realization);
-            const isClickDisabled = props.disableInteraction || !isCurrentRealizationAvailable;
+            const isClickDisabled = props.disableOnClick || !isCurrentRealizationAvailable;
             if (rowElmCounter === 0) {
                 rowElements = [];
             }
@@ -64,12 +64,13 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
                     title={isCurrentRealizationAvailable ? `real-${realization}` : `real-${realization} (unavailable)`}
                     key={realization}
                     className={resolveClassNames(
-                        `${realizationDivSizeClass} rounded-full aspect-square flex justify-center items-center outline-blue-300 outline-2`,
+                        `${realizationDivSizeClass} rounded-full aspect-square flex justify-center items-center hover:outline outline-blue-300 outline-2`,
                         {
                             "bg-green-600": isRealizationSelected,
                             "bg-gray-400": !isRealizationSelected && isCurrentRealizationAvailable,
-                            "bg-gray-300 cursor-not-allowed": !isRealizationSelected && !isCurrentRealizationAvailable,
-                            "cursor-pointer hover:outline": !isClickDisabled,
+                            "bg-gray-300": !isRealizationSelected && !isCurrentRealizationAvailable,
+                            "cursor-pointer": !props.disableOnClick && isCurrentRealizationAvailable,
+                            "cursor-not-allowed": !props.disableOnClick && !isCurrentRealizationAvailable,
                         }
                     )}
                     onClick={isClickDisabled ? undefined : () => handleRealizationElementClick(realization)}

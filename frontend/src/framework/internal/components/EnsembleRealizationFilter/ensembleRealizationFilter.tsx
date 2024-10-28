@@ -172,6 +172,18 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         });
     }
 
+    function handleBodyOnClickCapture(e: React.MouseEvent<HTMLDivElement, MouseEvent>) {
+        // Capture click event on the body to prevent drilling down to child elements when filter is inactive
+        if (props.isActive) {
+            return;
+        }
+
+        e.stopPropagation();
+        if (onClick) {
+            onClick();
+        }
+    }
+
     function handleApplyClick() {
         // Reset states for initialization on next render
         setInitialRealizationNumberSelections(undefined);
@@ -190,15 +202,12 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         }
     }
 
-    function handleOnClick() {
-        if (onClick && !props.isActive) {
-            onClick();
-        }
-    }
-
     function handleHeaderOnClick() {
-        if (onHeaderClick && props.isActive) {
+        if (props.isActive && onHeaderClick) {
             onHeaderClick();
+        }
+        if (!props.isActive && onClick) {
+            onClick();
         }
     }
 
@@ -218,50 +227,47 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     !props.isActive && props.hasUnsavedSelections,
                 "outline-2 outline-gray-300 shadow-gray-300 shadow-md": !props.isActive && !props.hasUnsavedSelections,
             })}
-            onClick={handleOnClick}
         >
-            <div
-                className={resolveClassNames({
-                    "pointer-events-none": !props.isActive,
-                })}
-            >
-                <div className={`flex justify-center items-center p-2 rounded-md bg-slate-100 h-12 cursor-pointer`}>
-                    <div
-                        className="font-bold flex-grow text-sm overflow-ellipsis overflow-hidden whitespace-nowrap"
-                        title={`Ensemble: ${props.ensembleName}`}
-                        onClick={handleHeaderOnClick}
-                    >
-                        {props.ensembleName}
-                    </div>
-                    <div
-                        className={resolveClassNames("flex items-center gap-1", {
-                            hidden: !props.hasUnsavedSelections,
-                        })}
-                    >
-                        <Button
-                            variant="contained"
-                            disabled={!props.hasUnsavedSelections}
-                            size="small"
-                            startIcon={<Check fontSize="small" />}
-                            onClick={handleApplyClick}
-                        />
-                        <Button
-                            color="danger"
-                            variant="contained"
-                            disabled={!props.hasUnsavedSelections}
-                            size="small"
-                            startIcon={<Clear fontSize="small" />}
-                            onClick={handleDiscardClick}
-                        />
-                    </div>
+            <div className={`flex justify-center items-center p-2 rounded-md bg-slate-100 h-12 cursor-pointer`}>
+                <div
+                    className="font-bold flex-grow text-sm overflow-ellipsis overflow-hidden whitespace-nowrap"
+                    title={`Ensemble: ${props.ensembleName}`}
+                    onClick={handleHeaderOnClick}
+                >
+                    {props.ensembleName}
                 </div>
+                <div
+                    className={resolveClassNames("flex items-center gap-1", {
+                        hidden: !props.hasUnsavedSelections,
+                    })}
+                >
+                    <Button
+                        title="Apply changes"
+                        variant="contained"
+                        disabled={!props.hasUnsavedSelections}
+                        size="small"
+                        startIcon={<Check fontSize="small" />}
+                        onClick={handleApplyClick}
+                    />
+                    <Button
+                        title="Discard changes"
+                        color="danger"
+                        variant="contained"
+                        disabled={!props.hasUnsavedSelections}
+                        size="small"
+                        startIcon={<Clear fontSize="small" />}
+                        onClick={handleDiscardClick}
+                    />
+                </div>
+            </div>
+            <div onClickCapture={handleBodyOnClickCapture}>
                 <div className="flex flex-col gap-2 p-2">
                     <div className="border border-lightgrey p-2 rounded-md">
                         <RealizationNumberDisplay
                             selectedRealizations={props.selections.displayRealizationNumbers}
                             availableRealizations={props.availableEnsembleRealizations}
                             showAsCompact={!props.isActive}
-                            disableInteraction={
+                            disableOnClick={
                                 props.selections.filterType !== RealizationFilterType.BY_REALIZATION_NUMBER ||
                                 !props.isActive
                             }
@@ -272,7 +278,6 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                         <div className="border border-lightgrey rounded-md shadow-md p-2">
                             <Label text="Active Filter Type" wrapperClassName="border-b pb-2 mb-2">
                                 <RadioGroup
-                                    // key={`activeFilterType-${props.ensembleName}`}
                                     value={props.selections.filterType}
                                     options={Object.values(RealizationFilterType).map((filterType) => {
                                         return {
