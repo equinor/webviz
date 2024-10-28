@@ -8,7 +8,7 @@
 export type EnsembleParameter = {
     name: string;
     is_logarithmic: boolean;
-    is_numerical: boolean;
+    is_discrete: boolean;
     is_constant: boolean;
     group_name: (string | null);
     descriptive_name: (string | null);

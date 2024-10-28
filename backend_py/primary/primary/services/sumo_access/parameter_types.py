@@ -9,7 +9,7 @@ class EnsembleParameter(BaseModel):
 
     name: str
     is_logarithmic: bool
-    is_numerical: bool
+    is_discrete: bool  # values are string or integer
     is_constant: bool  # all values are equal
     group_name: Optional[str] = None
     descriptive_name: Optional[str] = None
