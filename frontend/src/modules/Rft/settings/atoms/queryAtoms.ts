@@ -2,7 +2,6 @@ import { apiService } from "@framework/ApiService";
 
 import { atomWithQuery } from "jotai-tanstack-query";
 
-import { validRealizationNumbersAtom } from "./baseAtoms";
 import {
     selectedEnsembleIdentAtom,
     selectedRftResponseNameAtom,

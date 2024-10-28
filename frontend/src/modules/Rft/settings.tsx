@@ -3,23 +3,18 @@ import React from "react";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
-import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { isEqual, set } from "lodash";
+import { useAtomValue, useSetAtom } from "jotai";
 
 import { Interfaces } from "./interfaces";
-import { useRftTableDefinition } from "./queryHooks";
 import {
-    rftWellAddressAtom,
     userSelectedEnsembleIdentAtom,
     userSelectedResponseNameAtom,
     userSelectedRftTimestampsUtcMsAtom,

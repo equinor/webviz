@@ -1,9 +1,7 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
-import { RftWellAddress } from "@modules/Rft/typesAndEnums";
 
 import { atom } from "jotai";
-import { isEqual } from "lodash";
 
 function areEnsembleIdentsEqual(a: EnsembleIdent | null, b: EnsembleIdent | null) {
     if (a === null) {
@@ -17,4 +15,3 @@ export const validRealizationNumbersAtom = atom<number[] | null>(null);
 export const userSelectedResponseNameAtom = atom<string | null>(null);
 export const userSelectedWellNameAtom = atom<string | null>(null);
 export const userSelectedRftTimestampsUtcMsAtom = atom<number | null>(null);
-export const rftWellAddressAtom = atom<RftWellAddress | null>(null);
