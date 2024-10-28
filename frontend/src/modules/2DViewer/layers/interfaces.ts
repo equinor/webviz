@@ -129,26 +129,30 @@ export function instanceofLayer(item: Item): item is Layer<Settings, any> {
     );
 }
 
-export interface GetDep {
-    <TDep>(dep: Dependency<TDep>): Awaited<TDep>;
+export interface GetDep<TSettings extends Settings, TKey extends keyof TSettings> {
+    <TDep>(dep: Dependency<TDep, TSettings, TKey>): Awaited<TDep> | null;
 }
 
-export interface DefineDependenciesArgs<TSettings extends Settings, TKey extends keyof TSettings = keyof TSettings> {
-    availableSettingsUpdater: <T>(
+export interface UpdateFunc<TReturnValue, TSettings extends Settings, TKey extends keyof TSettings> {
+    (args: {
+        getSetting: <K extends TKey>(settingName: K) => TSettings[K];
+        getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
+        getDep: GetDep<TSettings, TKey>;
+    }): TReturnValue;
+}
+
+export interface DefineDependenciesArgs<TSettings extends Settings, TKey extends keyof TSettings> {
+    availableSettingsUpdater: (
         settingName: TKey,
-        update: (args: {
-            getSetting: <T extends TKey>(settingName: T) => TSettings[T];
-            getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-            getDep: GetDep;
-        }) => T
-    ) => Dependency<T>;
+        update: UpdateFunc<AvailableValuesType<Exclude<TSettings[TKey], null>>, TSettings, TKey>
+    ) => Dependency<AvailableValuesType<Exclude<TSettings[TKey], null>>, TSettings, TKey>;
     dep: <T>(
         update: (args: {
             getSetting: <T extends TKey>(settingName: T) => TSettings[T];
             getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-            getDep: <TDep>(dep: Dependency<TDep>) => TDep;
+            getDep: <TDep>(dep: Dependency<TDep, TSettings, TKey>) => TDep | null;
         }) => T
-    ) => Dependency<T>;
+    ) => Dependency<T, TSettings, TKey>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     queryClient: QueryClient;
@@ -158,7 +162,7 @@ export interface SettingsContext<TSettings extends Settings, TKey extends keyof 
     getDelegate(): SettingsContextDelegate<TSettings, TKey>;
     fetchData: FetchDataFunction<TSettings, TKey>;
     areCurrentSettingsValid(): boolean;
-    defineDependencies(args: DefineDependenciesArgs<TSettings>): void;
+    defineDependencies(args: DefineDependenciesArgs<TSettings, TKey>): void;
 }
 
 export type AvailableValuesType<TValue> = TValue extends Array<unknown> ? TValue : Array<TValue>;
@@ -204,4 +208,4 @@ export type SettingTopicPayloads<TValue> = {
     [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
 };
 
-export type Settings = { [key in SettingType]?: unknown };
+export type Settings = { [key in SettingType]?: any };

@@ -176,7 +176,7 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
         availableSettingsUpdater,
         workbenchSession,
         queryClient,
-    }: DefineDependenciesArgs<RealizationSurfaceSettings>) {
+    }: DefineDependenciesArgs<RealizationSurfaceSettings, keyof RealizationSurfaceSettings>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembleSet = workbenchSession.getEnsembleSet();

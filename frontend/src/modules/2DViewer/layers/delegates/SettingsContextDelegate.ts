@@ -3,7 +3,8 @@ import { isEqual } from "lodash";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
-import { LayerManager, LayerManagerTopic } from "../LayerManager";
+import { Dependency } from "../Dependency";
+import { GlobalSettings, LayerManager, LayerManagerTopic } from "../LayerManager";
 import {
     AvailableValuesType,
     FetchDataFunctionResult,
@@ -12,6 +13,7 @@ import {
     SettingTopic,
     Settings,
     SettingsContext,
+    UpdateFunc,
 } from "../interfaces";
 
 export enum SettingsContextLoadingState {
@@ -98,13 +100,16 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             for (const key in this._settings) {
                 settings[key] = this._settings[key].getDelegate().getValue();
             }
-            this._parentContext.fetchData(this._cachedValues, this.getValues());
+            // this._parentContext.fetchData(this._cachedValues, this.getValues());
+            /*
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "global-settings",
                 layerManager.getPublishSubscribeHandler().subscribe(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED, () => {
                     this.fetchData();
                 })
             );
+            */
+            this.createDependencies();
         } else {
             this._unsubscribeHandler.unsubscribe("global-settings");
         }
@@ -155,6 +160,9 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     }
 
     private handleSettingsChanged() {
+        this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
+        this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+        return;
         const values = this.getValues();
         if (!isEqual(this._cachedValues, values)) {
             this.fetchData().then((result) => {
@@ -212,6 +220,90 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     deserializeSettings(serializedSettings: SerializedSettingsState<TSettings>): void {
         for (const [key, value] of Object.entries(serializedSettings)) {
             this._settings[key as TKey].getDelegate().deserializeValue(value);
+        }
+    }
+
+    createDependencies(): void {
+        const makeSettingGetter = <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => {
+            const handleChange = (): void => {
+                handler(this._settings[key].getDelegate().getValue());
+            };
+            this._settings[key]
+                .getDelegate()
+                .getPublishSubscribeHandler()
+                .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(handleChange);
+
+            return handleChange;
+        };
+
+        const makeGlobalSettingGetter = <K extends keyof GlobalSettings>(
+            key: K,
+            handler: (value: GlobalSettings[K]) => void
+        ) => {
+            const handleChange = (): void => {
+                handler(this.getLayerManager.bind(this)().getGlobalSetting(key));
+            };
+            this.getLayerManager()
+                .getPublishSubscribeHandler()
+                .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED)(handleChange);
+
+            return handleChange;
+        };
+
+        const availableSettingsUpdater = <K extends TKey>(
+            settingKey: K,
+            updateFunc: UpdateFunc<AvailableValuesType<Exclude<TSettings[K], null>>, TSettings, K>
+        ): Dependency<AvailableValuesType<Exclude<TSettings[K], null>>, TSettings, K> => {
+            const dependency = new Dependency<AvailableValuesType<Exclude<TSettings[K], null>>, TSettings, K>(
+                this as unknown as SettingsContextDelegate<TSettings, K>,
+                updateFunc,
+                makeSettingGetter,
+                makeGlobalSettingGetter
+            );
+
+            dependency.subscribe((availableValues: AvailableValuesType<Exclude<TSettings[K], null>>) => {
+                if (availableValues === null) {
+                    return;
+                }
+                this.setAvailableValues(settingKey, availableValues);
+            });
+
+            dependency.subscribeLoading((loading: boolean) => {
+                this._settings[settingKey].getDelegate().setLoadingState(loading);
+            });
+
+            dependency.callUpdateFunc();
+
+            return dependency;
+        };
+
+        const dep = <T>(
+            update: (args: {
+                getSetting: <T extends TKey>(settingName: T) => TSettings[T];
+                getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
+                getDep: <TDep>(dep: Dependency<TDep, TSettings, TKey>) => TDep | null;
+            }) => T
+        ) => {
+            const dependency = new Dependency<T, TSettings, TKey>(
+                this as unknown as SettingsContextDelegate<TSettings, TKey>,
+                update,
+                makeSettingGetter,
+                makeGlobalSettingGetter
+            );
+
+            dependency.callUpdateFunc();
+
+            return dependency;
+        };
+
+        if (this._parentContext.defineDependencies) {
+            this._parentContext.defineDependencies({
+                availableSettingsUpdater,
+                dep,
+                workbenchSession: this.getLayerManager().getWorkbenchSession(),
+                workbenchSettings: this.getLayerManager().getWorkbenchSettings(),
+                queryClient: this.getLayerManager().getQueryClient(),
+            });
         }
     }
 }
