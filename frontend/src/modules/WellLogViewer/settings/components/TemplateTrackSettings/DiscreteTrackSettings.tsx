@@ -119,7 +119,7 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
                 onChange={(_e, v) => handlePlotSettingsChange({ labelRotation: v })}
             />
 
-            <label htmlFor={categorySelectId}>Type</label>
+            <label htmlFor={categorySelectId}>Source</label>
 
             <PendingWrapper isPending={curveHeadersQuery.isPending} errorMessage={curveHeadersError ?? ""}>
                 <Dropdown id={categorySelectId} value={activeSource} options={categories} onChange={setActiveSource} />

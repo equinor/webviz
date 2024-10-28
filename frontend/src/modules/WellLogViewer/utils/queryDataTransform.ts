@@ -43,7 +43,7 @@ export function createWellLogSets(
     nonUniqueCurveNames?: Set<string>,
     padDataWithEmptyRows = false
 ): WellLogSet[] {
-    return curveDataSets.map((curveSet) => {
+    const wellLogsSets = curveDataSets.map((curveSet) => {
         return {
             header: createLogHeader(curveSet, wellboreTrajectory),
             ...createLogCurvesAndData(
@@ -55,6 +55,21 @@ export function createWellLogSets(
             ),
         };
     });
+
+    // The well-log viewer always picks the axis from the first log set in the collection. Adding a dedicated set for the axis to guarantee that it's always visible
+    const axisSet: WellLogSet = {
+        header: {
+            name: "Axis set",
+        },
+        curves: [...DATA_ROW_HEAD],
+        data: wellboreTrajectory.mdArr.reduce<WellLogDataRow[]>((acc, mdValue) => {
+            const tvdValue = referenceSystem.project(mdValue)[1] ?? null;
+
+            return [...acc, [mdValue, tvdValue]];
+        }, []),
+    };
+
+    return [axisSet, ...wellLogsSets];
 }
 
 function createLogCurvesAndData(
