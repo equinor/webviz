@@ -15,8 +15,7 @@ import { WellPickProps } from "@webviz/well-log-viewer/dist/components/WellLogVi
 import _ from "lodash";
 
 import { COLOR_TABLES } from "./logViewerColors";
-
-import { getUniqueCurveNameForCurveData } from "../settings/components/_shared/strings";
+import { getUniqueCurveNameForCurveData } from "./strings";
 
 export const MAIN_AXIS_CURVE: WellLogCurve = {
     name: "RKB",

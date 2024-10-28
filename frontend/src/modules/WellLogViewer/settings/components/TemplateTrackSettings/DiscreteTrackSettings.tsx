@@ -16,9 +16,9 @@ import _ from "lodash";
 
 import { TrackSettingFragmentProps } from "./private-components/TrackSettings";
 
+import { curveSourceToText, simplifyLogName } from "../../../utils/strings";
 import { availableDiscreteCurvesAtom, availableFlagCurvesAtom } from "../../atoms/derivedAtoms";
 import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";
-import { curveSourceToText, simplifyLogName } from "../_shared/strings";
 
 const DEFAULT_SOURCE = WellLogCurveSourceEnum_api.SMDA_GEOLOGY;
 

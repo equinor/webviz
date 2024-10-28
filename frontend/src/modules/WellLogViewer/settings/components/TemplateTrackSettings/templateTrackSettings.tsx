@@ -7,6 +7,7 @@ import { MenuItem } from "@lib/components/MenuItem";
 import { SelectOption } from "@lib/components/Select";
 import { SortableList } from "@lib/components/SortableList";
 import { arrayMove } from "@lib/utils/arrays";
+import { TrackIcon } from "@modules/WellLogViewer/_shared/components/icons";
 import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { configToJsonDataBlob, jsonFileToTrackConfigs } from "@modules/WellLogViewer/utils/settingsImport";
@@ -20,7 +21,6 @@ import { SortableTrackItem } from "./private-components/SortableTrackItem";
 
 import { logViewerTrackConfigs } from "../../atoms/persistedAtoms";
 import { AddItemButton } from "../AddItemButton";
-import { TrackIcon } from "../_shared/icons";
 
 interface TemplateTrackSettingsProps {
     statusWriter: SettingsStatusWriter;

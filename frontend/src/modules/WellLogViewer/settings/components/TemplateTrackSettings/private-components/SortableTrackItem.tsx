@@ -4,12 +4,11 @@ import { SettingsStatusWriter } from "@framework/StatusWriter";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
+import { TrackIcon } from "@modules/WellLogViewer/_shared/components/icons";
 import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { Delete, ExpandLess, ExpandMore, Settings, Warning } from "@mui/icons-material";
 
 import { TrackSettings } from "./TrackSettings";
-
-import { TrackIcon } from "../../_shared/icons";
 
 export type CurveTrackItemProps = {
     trackConfig: TemplateTrackConfig;

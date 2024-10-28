@@ -14,8 +14,8 @@ import { v4 } from "uuid";
 
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "./logViewerColors";
 import { MAIN_AXIS_CURVE } from "./queryDataTransform";
+import { getUniqueCurveNameForPlotConfig } from "./strings";
 
-import { getUniqueCurveNameForPlotConfig } from "../settings/components/_shared/strings";
 import { TemplatePlotConfig, TemplateTrackConfig } from "../types";
 
 export const DEFAULT_MAX_VISIBLE_TRACKS = 5;

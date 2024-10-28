@@ -1,7 +1,6 @@
 import { StratigraphicUnit_api, WellLogCurveTypeEnum_api, WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
 
 import { atom } from "jotai";
@@ -49,7 +48,7 @@ export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) 
     return availableWellboreHeaders.find((wh) => wh.wellboreUuid === selectedWellboreId) ?? availableWellboreHeaders[0];
 });
 
-export const selectedWellborePicksAtom = atom<WellPicksLayerData>((get) => {
+export const selectedWellborePicksAtom = atom<TransformFormationDataResult>((get) => {
     const wellborePicks = get(availableWellPicksAtom);
     const selectedUnitPicks = get(userSelectedUnitWellpicksAtom);
     const selectedNonUnitPicks = get(userSelectedNonUnitWellpicksAtom);
@@ -123,12 +122,9 @@ export const requiredCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
 
     return _.chain(templateTracks)
         .flatMap<TemplatePlotConfig>("plots")
-        .filter("_isValid") // Implies that curveheader is no longer null
-        .flatMap(({ _curveHeader, _curveHeader2 }) => {
-            if (!_curveHeader) return [];
-            if (!_curveHeader2) return [_curveHeader];
-            else return [_curveHeader, _curveHeader2];
-        })
+        .filter("_isValid") // Do not bother with invalid configs
+        .flatMap(({ _curveHeader, _curveHeader2 }) => [_curveHeader, _curveHeader2])
+        .filter((header): header is WellboreLogCurveHeader_api => !!header)
         .uniqBy(({ source, sourceId, logName }) => source + sourceId + logName)
         .value();
 });

@@ -12,6 +12,7 @@ export type TemplatePlotConfig = Partial<TemplatePlot> & {
     // This is used as the value for dropdowns. Even if the curvename is supposed to be unique,  In some rare cases, the curvename is duplicated across different well-logs.
     // The source of the fields data
     _curveHeader: WellboreLogCurveHeader_api | null;
+    _curveHeader2?: WellboreLogCurveHeader_api | null;
 };
 
 /**
