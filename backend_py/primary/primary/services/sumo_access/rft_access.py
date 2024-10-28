@@ -14,7 +14,6 @@ from primary.services.service_exceptions import (
     NoDataError,
     InvalidDataError,
     MultipleDataMatchesError,
-    InvalidParameterError,
 )
 
 from ._helpers import create_sumo_client, create_sumo_case_async
