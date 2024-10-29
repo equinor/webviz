@@ -48,9 +48,17 @@ function infoToReadoutItem(infos: Info[], iTrack: number, templateTracks: Templa
     }
 }
 
+const CURVE_NAME_OVERRIDES: Record<string, string> = {
+    RKB: "MD (RKB)",
+    MSL: "TVD (MSL)",
+};
+
 function curveInfoToReadoutInfo(info: Info): InfoItem {
+    let name = info.name ?? "";
+    name = CURVE_NAME_OVERRIDES[name] ?? name;
+
     return {
-        name: info.name ?? "",
+        name,
         value: info.value,
         unit: info.units ?? "",
         adornment: <div className="w-2 h-2 rounded-full" style={{ background: info.color }} />,

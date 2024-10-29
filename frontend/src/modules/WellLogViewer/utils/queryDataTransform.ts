@@ -17,14 +17,14 @@ import _ from "lodash";
 import { COLOR_TABLES } from "./logViewerColors";
 
 export const MAIN_AXIS_CURVE: WellLogCurve = {
-    name: "MD",
+    name: "RKB",
     unit: "M",
     dimensions: 1,
     valueType: "float",
 };
 
 export const SECONDARY_AXIS_CURVE: WellLogCurve = {
-    name: "DVER",
+    name: "MSL",
     unit: "M",
     dimensions: 1,
     valueType: "float",
@@ -169,6 +169,7 @@ export function createLogViewerWellpicks(wellborePicks: WellPicksLayerData): Wel
             ],
             data: wellpickData,
         },
+        md: MAIN_AXIS_CURVE.name,
         name: "PICK",
         color: "Stratigraphy",
         // TODO: Color table should be generated form workbench settings

@@ -23,13 +23,13 @@ import { createLogTemplate } from "../utils/logViewerTemplate";
 import { createLogViewerWellpicks, createWellLog } from "../utils/queryDataTransform";
 
 const AXIS_MNEMOS = {
-    md: ["DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],
-    tvd: ["TVD", "TVDSS", "DVER", "TVD_MSL"],
+    md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],
+    tvd: ["MSL", "TVD", "TVDSS", "DVER", "TVD_MSL"],
     time: ["TIME"],
 };
 
 const AXIS_TITLES = {
-    md: "DEPTH",
+    md: "MD",
     tvd: "TVD",
     time: "TIME",
 };
