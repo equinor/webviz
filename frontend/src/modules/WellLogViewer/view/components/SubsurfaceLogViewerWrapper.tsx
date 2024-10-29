@@ -40,7 +40,7 @@ type GlobalHoverMd = GlobalTopicDefinitions["global.hoverMd"];
 export type SubsurfaceLogViewerWrapperProps = {
     // Data
     wellboreHeader: WellboreHeader_api | null;
-    curveData: WellboreLogCurveData_api[][];
+    curveData: WellboreLogCurveData_api[];
     trajectoryData: WellboreTrajectory_api;
     intersectionReferenceSystem: IntersectionReferenceSystem;
     wellpicks: WellPicksLayerData;

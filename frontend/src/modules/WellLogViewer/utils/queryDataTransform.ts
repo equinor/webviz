@@ -36,39 +36,52 @@ const DATA_ROW_HEAD = Object.freeze([MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE]);
 const DATA_ROW_PRESICION = 3;
 
 export function createWellLogSets(
-    curveDataSets: WellboreLogCurveData_api[][],
+    curveData: WellboreLogCurveData_api[],
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
     nonUniqueCurveNames?: Set<string>,
     padDataWithEmptyRows = false
 ): WellLogSet[] {
-    const wellLogsSets = curveDataSets.map((curveSet) => {
-        return {
-            header: createLogHeader(curveSet, wellboreTrajectory),
-            ...createLogCurvesAndData(
-                curveSet,
-                wellboreTrajectory,
-                referenceSystem,
-                nonUniqueCurveNames,
-                padDataWithEmptyRows
-            ),
-        };
+    // According to the well-log JSON format, each curve should be grouped together in their respective log
+    const curvesByLogName = _.groupBy(curveData, "logName");
+
+    const wellLogsSets = Object.entries(curvesByLogName).map(([logName, curveSet]) => {
+        const { curves, data, metadata_discrete } = createLogCurvesAndData(
+            curveSet,
+            wellboreTrajectory,
+            referenceSystem,
+            nonUniqueCurveNames,
+            padDataWithEmptyRows
+        );
+
+        const header = createLogHeader(logName, data, wellboreTrajectory);
+
+        return { header, curves, data, metadata_discrete };
     });
 
-    // The well-log viewer always picks the axis from the first log set in the collection. Adding a dedicated set for the axis to guarantee that it's always visible
-    const axisSet: WellLogSet = {
-        header: {
-            name: "Axis set",
-        },
-        curves: [...DATA_ROW_HEAD],
-        data: wellboreTrajectory.mdArr.reduce<WellLogDataRow[]>((acc, mdValue) => {
-            const tvdValue = referenceSystem.project(mdValue)[1] ?? null;
+    // The well-log viewer always picks the axis from the first log set in the collection. Adding a dedicated set for only the axes, so we always have a full set to show from.
 
-            return [...acc, [mdValue, tvdValue]];
-        }, []),
-    };
+    const axisOnlyLog = makeAxisOnlyLog(wellboreTrajectory, referenceSystem);
 
-    return [axisSet, ...wellLogsSets];
+    return [axisOnlyLog, ...wellLogsSets];
+}
+
+type SafeWellLogDataRow = [number, ...WellLogDataRow];
+type LogCurveAndDataResult = { data: SafeWellLogDataRow[] } & Pick<WellLogSet, "curves" | "metadata_discrete">;
+
+function makeAxisOnlyLog(
+    wellboreTrajectory: WellboreTrajectory_api,
+    referenceSystem: IntersectionReferenceSystem
+): WellLogSet {
+    const data = wellboreTrajectory.mdArr.reduce<SafeWellLogDataRow[]>((acc, mdValue) => {
+        const tvdValue = referenceSystem.project(mdValue)[1] ?? null;
+
+        return [...acc, [mdValue, tvdValue]];
+    }, []);
+
+    const header = createLogHeader("Log axes", data, wellboreTrajectory);
+
+    return { header, data, curves: [...DATA_ROW_HEAD] };
 }
 
 function createLogCurvesAndData(
@@ -77,7 +90,7 @@ function createLogCurvesAndData(
     referenceSystem: IntersectionReferenceSystem,
     nonUniqueCurveNames?: Set<string>,
     padDataWithEmptyRows?: boolean
-): Pick<WellLogSet, "curves" | "data" | "metadata_discrete"> {
+): LogCurveAndDataResult {
     const curves: WellLogSet["curves"] = [...DATA_ROW_HEAD];
     const discreteMeta: WellLogSet["metadata_discrete"] = {};
 
@@ -157,7 +170,6 @@ function apiCurveToLogCurve(curve: WellboreLogCurveData_api, nonUniqueCurveNames
     };
 }
 
-type SafeWellLogDataRow = [number, ...WellLogDataRow];
 type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
 
 function maybeInjectDataRow(
@@ -169,12 +181,13 @@ function maybeInjectDataRow(
     if (!rowAcc[targetMdValue]) {
         rowAcc[targetMdValue] = Array(rowLength).fill(null) as SafeWellLogDataRow;
         rowAcc[targetMdValue][0] = targetMdValue;
-        rowAcc[targetMdValue][1] = referenceSystem.project(targetMdValue)[1] ?? 0;
+        rowAcc[targetMdValue][1] = referenceSystem.project(targetMdValue)[1] ?? null;
     }
 }
 
 function createLogHeader(
-    curveData: WellboreLogCurveData_api[],
+    logName: string,
+    data: SafeWellLogDataRow[],
     wellboreTrajectory: WellboreTrajectory_api
 ): WellLogHeader {
     // TODO: Might want more data from https://api.equinor.com/api-details#api=equinor-subsurfacedata-api-v3&operation=get-api-v-api-version-welllog-wellboreuuid, which provides:
@@ -194,18 +207,10 @@ function createLogHeader(
     */
 
     return {
-        name: curveData[0].logName,
+        name: logName,
         wellbore: wellboreTrajectory.uniqueWellboreIdentifier,
-        ...getDerivedLogHeaderValues(wellboreTrajectory),
-    };
-}
-
-type PartialHeader = Pick<WellLogHeader, "startIndex" | "endIndex" | "step">;
-
-function getDerivedLogHeaderValues(wellboreTrajectory: WellboreTrajectory_api): PartialHeader {
-    return {
-        startIndex: wellboreTrajectory.mdArr[0] ?? 0,
-        endIndex: wellboreTrajectory.mdArr[wellboreTrajectory.mdArr.length - 1] ?? 4000,
+        startIndex: data[0]?.[0],
+        endIndex: data.at(-1)?.[0],
         // Unsure if this one is even used?
         step: 1,
     };

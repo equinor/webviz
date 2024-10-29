@@ -66,7 +66,6 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
 
             const newTrackPlot = makeTrackPlot({
                 ...currentPlot,
-                name: chosenHeader.curveName,
                 _curveHeader: chosenHeader,
             });
 

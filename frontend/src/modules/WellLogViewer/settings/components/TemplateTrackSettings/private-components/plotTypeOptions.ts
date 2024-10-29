@@ -10,6 +10,7 @@ export const PLOT_TYPE_OPTIONS: PlotDropdownOption[] = [
     { value: "gradientfill", label: "Gradientfill" },
     // TODO: Type requires two named curves, ensure the flow for that is good
     { value: "differential", label: "Differential" },
+
     // This one is completely different; requires "discrete" metadata
     // { value: "stacked", label: "Stacked" },
 ];

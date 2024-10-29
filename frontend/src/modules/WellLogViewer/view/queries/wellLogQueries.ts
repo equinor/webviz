@@ -22,11 +22,7 @@ export function useLogCurveDataQueries(wellboreUuid: string, curves: WellboreLog
             enabled: Boolean(wellboreUuid && source && sourceId),
             ...DEFAULT_OPTIONS,
         })),
-        combine(results) {
-            return mergeResults(results, function chunkDataByLogName(data) {
-                return _.chain(data).groupBy("logName").values().value();
-            });
-        },
+        combine: mergeResults,
     });
 }
 
