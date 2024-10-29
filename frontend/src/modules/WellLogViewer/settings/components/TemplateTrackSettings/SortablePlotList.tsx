@@ -152,15 +152,23 @@ function SortablePlotItem(props: SortablePlotItemProps) {
                         title="Swap curves"
                         aria-label="Swap curves"
                         className="rounded hover:bg-slate-300 text-base block px-1 -mx-1"
-                        onClick={() => handlePlotChange({ name: props.plot.name2, name2: props.plot.name })}
+                        onClick={() =>
+                            handlePlotChange({
+                                _logAndName: props.plot._logAndName2,
+                                _logAndName2: props.plot._logAndName,
+                                name: props.plot.name2,
+                                name2: props.plot.name,
+                            })
+                        }
                     >
                         <SwapHoriz fontSize="inherit" />
                     </button>
                     <Dropdown
                         placeholder="Select 2nd curve"
-                        value={props.plot.name2}
+                        value={props.plot._logAndName2}
                         options={props.curveHeaderOptions}
-                        onChange={(v) => handlePlotChange({ name2: v })}
+                        // @ts-expect-error onChange is typed for a completely normal string, but we're using a formatted one
+                        onChange={(v) => handlePlotChange({ _logAndName2: v, name2: v.split("::")[1] })}
                     />
                 </>
             )}
