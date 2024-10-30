@@ -8,6 +8,7 @@ import {
     userSelectedEnsembleIdentAtom,
     userSelectedResponseNameAtom,
     userSelectedRftTimestampsUtcMsAtom,
+    userSelectedWellNameAtom,
 } from "./baseAtoms";
 import { rftTableDefinitionAtom } from "./queryAtoms";
 
@@ -51,7 +52,7 @@ export const availableRftWellNamesAtom = atom<string[]>((get) => {
 
 export const selectedRftWellNameAtom = atom<string | null>((get) => {
     const availableRftWellNames = get(availableRftWellNamesAtom);
-    const userSelectedWellName = get(userSelectedResponseNameAtom);
+    const userSelectedWellName = get(userSelectedWellNameAtom);
     return fixupSelectedOrFirstValue(userSelectedWellName, availableRftWellNames);
 });
 

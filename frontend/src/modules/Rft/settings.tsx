@@ -18,6 +18,7 @@ import {
     userSelectedEnsembleIdentAtom,
     userSelectedResponseNameAtom,
     userSelectedRftTimestampsUtcMsAtom,
+    userSelectedWellNameAtom,
     validRealizationNumbersAtom,
 } from "./settings/atoms/baseAtoms";
 import {
@@ -62,7 +63,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     const availableRftWellNames = useAtomValue(availableRftWellNamesAtom);
     const selectedRftWellName = useAtomValue(selectedRftWellNameAtom);
-    const setUserSelectedRftWellName = useSetAtom(userSelectedResponseNameAtom);
+    const setUserSelectedRftWellName = useSetAtom(userSelectedWellNameAtom);
 
     const availableTimeStampsUtcMs = useAtomValue(availableRftTimestampsUtcMsAtom);
     const selectedRftTimestampsUtcMs = useAtomValue(selectedRftTimestampsUtcMsAtom);
