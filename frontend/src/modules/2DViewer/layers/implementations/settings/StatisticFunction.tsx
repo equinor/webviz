@@ -26,6 +26,10 @@ export class StatisticFunction implements Setting<SurfaceStatisticFunction_api> 
         return this._delegate;
     }
 
+    isValueValid(): boolean {
+        return true;
+    }
+
     makeComponent(): (props: SettingComponentProps<SurfaceStatisticFunction_api>) => React.ReactNode {
         const itemArr: DropdownOption[] = [
             { value: SurfaceStatisticFunction_api.MEAN, label: "Mean" },

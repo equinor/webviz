@@ -1,4 +1,4 @@
-import { isEqual } from "lodash";
+import { isArray, isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
@@ -36,6 +36,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
     }
 
     isValueValid(): boolean {
+        this.checkIfValueIsValid();
         return this._isValueValid;
     }
 
@@ -96,18 +97,14 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
 
     private maybeFixupValue(value: TValue): TValue {
         if (typeof value === "boolean") {
-            this.setIsValueValid(true);
             return value;
         }
         if (this._availableValues.length === 0) {
-            this.setIsValueValid(false);
             return value;
         }
         if (this._availableValues.includes(value)) {
-            this.setIsValueValid(true);
             return value;
         }
-        this.setIsValueValid(true);
 
         if (this._owner.fixupValue) {
             return this._owner.fixupValue(this._availableValues, value);
@@ -119,9 +116,37 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return this._availableValues[0] as TValue;
     }
 
+    private checkIfValueIsValid(): void {
+        if (this._owner.isValueValid) {
+            this.setIsValueValid(this._owner.isValueValid(this._availableValues, this._value));
+            return;
+        }
+        if (typeof this._value === "boolean") {
+            this.setIsValueValid(true);
+            return;
+        }
+        if (this._availableValues.length === 0) {
+            this.setIsValueValid(false);
+            return;
+        }
+        if (this._availableValues.some((el) => isEqual(el, this._value))) {
+            this.setIsValueValid(true);
+            return;
+        }
+        if (
+            isArray(this._value) &&
+            this._value.every((value) => this._availableValues.some((el) => isEqual(value, el)))
+        ) {
+            this.setIsValueValid(true);
+            return;
+        }
+        this.setIsValueValid(false);
+    }
+
     setAvailableValues(availableValues: AvailableValuesType<TValue>): void {
         this._availableValues = availableValues;
         this.setValue(this.maybeFixupValue(this._value));
+        this.checkIfValueIsValid();
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);
     }
 }
