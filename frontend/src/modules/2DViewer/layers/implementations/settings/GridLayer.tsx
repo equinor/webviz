@@ -27,6 +27,25 @@ export class GridLayer implements Setting<ValueType> {
         return this._delegate;
     }
 
+    isValueValid(availableValues: null[] | number[], value: ValueType): boolean {
+        if (value === null) {
+            return false;
+        }
+
+        if (availableValues.length < 3) {
+            return false;
+        }
+
+        const min = 0;
+        const max = availableValues[2];
+
+        if (max === null) {
+            return false;
+        }
+
+        return value >= min && value <= max;
+    }
+
     fixupValue(availableValues: null[] | number[], currentValue: ValueType): ValueType {
         if (availableValues.length < 3) {
             return null;

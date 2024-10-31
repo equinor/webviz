@@ -23,6 +23,10 @@ export class ShowGridLines implements Setting<ValueType> {
         return "Show grid lines";
     }
 
+    isValueValid(): boolean {
+        return true;
+    }
+
     getDelegate(): SettingDelegate<ValueType> {
         return this._delegate;
     }
