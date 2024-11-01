@@ -107,7 +107,7 @@ export interface ModuleOptions {
     description?: string;
     channelDefinitions?: ChannelDefinition[];
     channelReceiverDefinitions?: ChannelReceiverDefinition[];
-    onUnloadInstanceFunc?: OnInstanceUnloadFunc;
+    onInstanceUnloadFunc?: OnInstanceUnloadFunc;
 }
 
 export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
@@ -130,7 +130,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _workbench: Workbench | null = null;
     private _syncableSettingKeys: SyncSettingKey[];
     private _drawPreviewFunc: DrawPreviewFunc | null;
-    private _onUnloadInstanceFunc: OnInstanceUnloadFunc | null;
+    private _onInstanceUnloadFunc: OnInstanceUnloadFunc | null;
     private _description: string | null;
     private _channelDefinitions: ChannelDefinition[] | null;
     private _channelReceiverDefinitions: ChannelReceiverDefinition[] | null;
@@ -147,7 +147,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
         this.settingsFC = () => <div>Not defined</div>;
         this._syncableSettingKeys = options.syncableSettingKeys ?? [];
         this._drawPreviewFunc = options.drawPreviewFunc ?? null;
-        this._onUnloadInstanceFunc = options.onUnloadInstanceFunc ?? null;
+        this._onInstanceUnloadFunc = options.onInstanceUnloadFunc ?? null;
         this._description = options.description ?? null;
         this._channelDefinitions = options.channelDefinitions ?? null;
         this._channelReceiverDefinitions = options.channelReceiverDefinitions ?? null;
@@ -248,7 +248,7 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
     }
 
     onInstanceUnload(instanceId: string) {
-        this._onUnloadInstanceFunc?.(instanceId);
+        this._onInstanceUnloadFunc?.(instanceId);
     }
 
     private setImportState(state: ImportState): void {
