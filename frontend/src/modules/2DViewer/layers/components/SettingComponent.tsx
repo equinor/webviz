@@ -1,6 +1,7 @@
 import React from "react";
 
 import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Warning } from "@mui/icons-material";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
@@ -44,17 +45,19 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
             <div className="p-0.5 px-2 w-full">
                 <PendingWrapper isPending={isLoading}>
                     <div className="flex flex-col gap-1 min-w-0">
-                        <componentRef.current
-                            onValueChange={handleValueChanged}
-                            value={value}
-                            isValueValid={isValid}
-                            isOverridden={overriddenValue !== undefined}
-                            overriddenValue={overriddenValue}
-                            availableValues={availableValues}
-                            globalSettings={globalSettings}
-                            workbenchSession={props.manager.getWorkbenchSession()}
-                            workbenchSettings={props.manager.getWorkbenchSettings()}
-                        />
+                        <div className={resolveClassNames({ "outline outline-red-500 outline-1": !isValid })}>
+                            <componentRef.current
+                                onValueChange={handleValueChanged}
+                                value={value}
+                                isValueValid={isValid}
+                                isOverridden={overriddenValue !== undefined}
+                                overriddenValue={overriddenValue}
+                                availableValues={availableValues}
+                                globalSettings={globalSettings}
+                                workbenchSession={props.manager.getWorkbenchSession()}
+                                workbenchSettings={props.manager.getWorkbenchSettings()}
+                            />
+                        </div>
                         {isPersisted && !isLoading && (
                             <span
                                 className="text-xs flex items-center gap-1 text-orange-600"

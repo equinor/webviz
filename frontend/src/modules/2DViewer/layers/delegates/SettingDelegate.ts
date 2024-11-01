@@ -224,10 +224,14 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         }
 
         this._availableValues = availableValues;
+        let valueChanged = false;
         if (this.maybeFixupValue() || this.maybeResetPersistedValue()) {
-            this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
+            valueChanged = true;
         }
         this.checkIfValueIsValid();
+        if (valueChanged) {
+            this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
+        }
         this._publishSubscribeHandler.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);
     }
 }

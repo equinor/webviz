@@ -204,20 +204,30 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
             return [...realizations];
         });
 
-        const fetchedData = dep(async ({ getSetting }) => {
+        const fetchedData = dep(async ({ getSetting, abortSignal }) => {
             const ensembleIdent = getSetting(SettingType.ENSEMBLE);
+
+            if (!ensembleIdent) {
+                return null;
+            }
 
             try {
                 const data = await queryClient.fetchQuery({
                     queryKey: ["getRealizationSurfacesMetadata", ensembleIdent],
-                    queryFn: () =>
-                        apiService.surface.getRealizationSurfacesMetadata(
+                    queryFn: () => {
+                        const promise = apiService.surface.getRealizationSurfacesMetadata(
                             ensembleIdent?.getCaseUuid() ?? "",
                             ensembleIdent?.getEnsembleName() ?? ""
-                        ),
+                        );
+                        abortSignal.addEventListener("abort", () => {
+                            promise.cancel();
+                        });
+                        return promise;
+                    },
                     staleTime: STALE_TIME,
                     gcTime: CACHE_TIME,
                 });
+
                 return data;
             } catch (e) {
                 return null;

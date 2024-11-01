@@ -138,6 +138,7 @@ export interface UpdateFunc<TReturnValue, TSettings extends Settings, TKey exten
         getSetting: <K extends TKey>(settingName: K) => TSettings[K];
         getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
         getDep: GetDep<TSettings, TKey>;
+        abortSignal: AbortSignal;
     }): TReturnValue;
 }
 
@@ -151,6 +152,7 @@ export interface DefineDependenciesArgs<TSettings extends Settings, TKey extends
             getSetting: <T extends TKey>(settingName: T) => TSettings[T];
             getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
             getDep: <TDep>(dep: Dependency<TDep, TSettings, TKey>) => TDep | null;
+            abortSignal: AbortSignal;
         }) => T
     ) => Dependency<T, TSettings, TKey>;
     workbenchSession: WorkbenchSession;

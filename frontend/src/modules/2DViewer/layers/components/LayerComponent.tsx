@@ -136,7 +136,14 @@ function EndActions(props: EndActionProps): React.ReactNode {
         }
         if (status === LayerStatus.INVALID_SETTINGS) {
             return (
-                <div title="Invalid settings">
+                <div
+                    title={`Invalid settings: ${props.layer
+                        .getLayerDelegate()
+                        .getSettingsContext()
+                        .getDelegate()
+                        .getInvalidSettings()
+                        .join(", ")}`}
+                >
                     <Block className="text-red-700 p-0.5" fontSize="small" />
                 </div>
             );

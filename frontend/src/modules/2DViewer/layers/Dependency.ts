@@ -20,6 +20,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     private _cachedGlobalSettingsMap: Map<string, any> = new Map();
     private _cachedDependenciesMap: Map<Dependency<any, TSettings, any>, any> = new Map();
     private _cachedValue: Awaited<TReturnValue> | null = null;
+    private _abortController: AbortController | null = null;
 
     constructor(
         contextDelegate: SettingsContextDelegate<TSettings, TKey>,
@@ -115,11 +116,17 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     }
 
     async callUpdateFunc() {
+        if (this._abortController) {
+            this._abortController.abort();
+        }
+
+        this._abortController = new AbortController();
         this.setLoadingState(true);
         const newValue = await this._updateFunc({
             getSetting: this.getSetting,
             getGlobalSetting: this.getGlobalSetting,
             getDep: this.getDep,
+            abortSignal: this._abortController.signal,
         });
 
         if (!isEqual(newValue, this._cachedValue)) {
