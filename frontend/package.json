@@ -29,6 +29,7 @@
         "@types/geojson": "^7946.0.14",
         "@webviz/group-tree-plot": "^1.1.14",
         "@webviz/subsurface-viewer": "^0.25.2",
+        "@webviz/well-log-viewer": "^1.12.7",
         "@webviz/well-completions-plot": "^1.5.11",
         "animate.css": "^4.1.1",
         "axios": "^1.6.5",
