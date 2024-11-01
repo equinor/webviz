@@ -7,4 +7,4 @@ class EnsembleParameterDescription(BaseModel):
     name: str
     group_name: Optional[str] = None
     descriptive_name: Optional[str] = None
-    is_numerical: bool
+    is_discrete: bool

@@ -2,7 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export enum VfpType {
-    VFPPROD = 'VFPPROD',
-    VFPINJ = 'VFPINJ',
-}
+export type RftWellInfo = {
+    well_name: string;
+    timestamps_utc_ms: Array<number>;
+};
+

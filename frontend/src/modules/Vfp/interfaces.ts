@@ -12,10 +12,10 @@ import { vfpTableQueryAtom } from "./settings/atoms/queryAtoms";
 import { PressureOption } from "./types";
 import { selectedColorByAtom } from "./settings/atoms/derivedAtoms";
 import { UseQueryResult } from "@tanstack/react-query";
-import { VfpProdTable_api } from "@api";
+import { VfpProdTable_api, VfpInjTable_api } from "@api";
 
 type SettingsToViewInterface = {
-    vfpDataQuery: UseQueryResult<VfpProdTable_api, Error>;
+    vfpDataQuery: UseQueryResult<VfpProdTable_api | VfpInjTable_api, Error>;
     selectedThpIndices: number[] | null;
     selectedWfrIndices: number[] | null;
     selectedGfrIndices: number[] | null;

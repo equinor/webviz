@@ -19,6 +19,7 @@ import {
 import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
 import { PressureOption, VfpParam } from "../../types";
+import { isProdTable } from "@modules/Vfp/utils/vfpTableClassifier";
 
 export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);
@@ -75,7 +76,7 @@ export const selectedVfpTableNameAtom = atom<string | null>((get) => {
 
 export const selectedThpIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
-    const thp_values = vfpTable?.thp_values ?? [];
+    const thp_values = vfpTable?.thpValues ?? [];
     const userSelectedThpIndicies = get(userSelectedThpIndicesAtom);
 
     if (thp_values.length === 0) {
@@ -90,46 +91,58 @@ export const selectedThpIndicesAtom = atom<number[] | null>((get) => {
 
 export const selectedWfrIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
-    const wfr_values = vfpTable?.wfr_values ?? [];
     const userSelectedWfrIndicies = get(userSelectedWfrIndicesAtom);
-
+    if (vfpTable === undefined) {
+        return null
+    }
+    if (!(isProdTable(vfpTable))) {
+        return null
+    }
+    const wfr_values = vfpTable.wfrValues ?? [];
     if (wfr_values.length === 0) {
         return null;
     }
     if (!userSelectedWfrIndicies) {
         return [0];
-    }
-
+    } 
     return userSelectedWfrIndicies;
 });
 
 export const selectedGfrIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
-    const wfr_values = vfpTable?.gfr_values ?? [];
     const userSelectedGfrIndicies = get(userSelectedGfrIndicesAtom);
-
-    if (wfr_values.length === 0) {
+    if (vfpTable === undefined) {
+        return null
+    }
+    if (!(isProdTable(vfpTable))) {
+        return null
+    }
+    const gfr_values = vfpTable.gfrValues ?? [];
+    if (gfr_values.length === 0) {
         return null;
     }
     if (!userSelectedGfrIndicies) {
         return [0];
     }
-
     return userSelectedGfrIndicies;
 });
 
 export const selectedAlqIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
-    const wfr_values = vfpTable?.alq_values ?? [];
     const userSelectedAlqIndicies = get(userSelectedAlqIndicesAtom);
-
-    if (wfr_values.length === 0) {
+    if (vfpTable === undefined) {
+        return null
+    }
+    if (!(isProdTable(vfpTable))) {
+        return null
+    }
+    const alq_values = vfpTable.alqValues ?? [];
+    if (alq_values.length === 0) {
         return null;
     }
     if (!userSelectedAlqIndicies) {
         return [0];
     }
-
     return userSelectedAlqIndicies;
 });
 
@@ -143,9 +156,15 @@ export const selectedPressureOptionAtom = atom<PressureOption>((get) => {
 });
 
 export const selectedColorByAtom = atom<VfpParam>((get) => {
+    const vfpTable = get(vfpTableQueryAtom).data;
     const userSelectedColorBy = get(userSelectedColorByAtom);
-
+    if (vfpTable === undefined) {
+        return VfpParam.THP
+    }
     if (userSelectedColorBy === null) {
+        return VfpParam.THP
+    }
+    if (!isProdTable(vfpTable) && ["WFR", "GFR", "ALQ"].includes(userSelectedColorBy)) {
         return VfpParam.THP
     }
     return userSelectedColorBy

@@ -9,10 +9,20 @@ import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import Case, TableCollection
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
+from primary.services.service_exceptions import (
+    Service,
+    NoDataError,
+    InvalidDataError,
+    MultipleDataMatchesError,
+)
+
 from ._helpers import create_sumo_client, create_sumo_case_async
-from .rft_types import RftInfo, RftRealizationData
+from .rft_types import RftTableDefinition, RftWellInfo, RftRealizationData
 
 LOGGER = logging.getLogger(__name__)
+
+
+ALLOWED_RFT_RESPONSE_NAMES = ["PRESSURE", "SGAS", "SWAT", "SOIL"]
 
 
 class RftAccess:
@@ -26,18 +36,24 @@ class RftAccess:
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return RftAccess(case=case, iteration_name=iteration_name)
 
-    async def get_rft_info(self) -> list[RftInfo]:
-        table = await get_concatenated_rft_table(self._case, self._iteration_name, column_names=["PRESSURE"])
-        rft_well_infos: list[RftInfo] = []
+    async def get_rft_info(self) -> RftTableDefinition:
+        rft_table_collection = await get_rft_table_collection(self._case, self._iteration_name, column_name=None)
+
+        columns = await rft_table_collection.columns_async
+        available_response_names = [col for col in columns if col in ALLOWED_RFT_RESPONSE_NAMES]
+        table = await get_concatenated_rft_table(
+            self._case, self._iteration_name, column_names=available_response_names
+        )
+        rft_well_infos: list[RftWellInfo] = []
         well_names = table["WELL"].unique().tolist()
 
         for well_name in well_names:
             well_table = table.filter(pc.equal(table["WELL"], well_name))
             timestamps_utc_ms = sorted(list(set(well_table["DATE"].to_numpy().astype(int).tolist())))
 
-            rft_well_infos.append(RftInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
+            rft_well_infos.append(RftWellInfo(well_name=well_name, timestamps_utc_ms=timestamps_utc_ms))
 
-        return rft_well_infos
+        return RftTableDefinition(response_names=available_response_names, well_infos=rft_well_infos)
 
     async def get_rft_well_realization_data(
         self,
@@ -112,7 +128,10 @@ async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, colum
     if await rft_table_collection.length_async() == 0:
         return None
     if await rft_table_collection.length_async() > 1:
-        raise ValueError(f"Multiple tables found for vector {column_name=}")
+        raise MultipleDataMatchesError(
+            f"Multiple rft tables found in case={case}, iteration={iteration_name}: {column_name=}",
+            Service.SUMO,
+        )
 
     sumo_table = await rft_table_collection.getitem_async(0)
     # print(f"{sumo_table.format=}")
@@ -129,26 +148,29 @@ async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, colum
 
     # Verify that we got the expected columns
     if not "DATE" in table.column_names:
-        raise ValueError("Table does not contain a DATE column")
+        raise InvalidDataError("Table does not contain a DATE column", Service.SUMO)
+
     if not "REAL" in table.column_names:
-        raise ValueError("Table does not contain a REAL column")
+        raise InvalidDataError("Table does not contain a REAL column", Service.SUMO)
     if not column_name in table.column_names:
-        raise ValueError(f"Table does not contain a {column_name} column")
+        raise InvalidDataError(f"Table does not contain a {column_name} column", Service.SUMO)
     if table.num_columns != 4:
-        raise ValueError("Table should contain exactly 4 columns")
+        raise InvalidDataError("Table should contain exactly 4 columns", Service.SUMO)
 
     # Verify that we got the expected columns
     if sorted(table.column_names) != sorted(["DATE", "REAL", "WELL", column_name]):
-        raise ValueError(f"Unexpected columns in table {table.column_names=}")
+        raise InvalidDataError(f"Unexpected columns in table {table.column_names=}", Service.SUMO)
 
     # Verify that the column datatypes are as we expect
     schema = table.schema
     if schema.field("DATE").type != pa.timestamp("ms"):
-        raise ValueError(f"Unexpected type for DATE column {schema.field('DATE').type=}")
+        raise InvalidDataError(f"Unexpected type for DATE column {schema.field('DATE').type=}", Service.SUMO)
     if schema.field("REAL").type != pa.int16():
-        raise ValueError(f"Unexpected type for REAL column {schema.field('REAL').type=}")
+        raise InvalidDataError(f"Unexpected type for REAL column {schema.field('REAL').type=}", Service.SUMO)
     if schema.field(column_name).type != pa.float32():
-        raise ValueError(f"Unexpected type for {column_name} column {schema.field(column_name).type=}")
+        raise InvalidDataError(
+            f"Unexpected type for {column_name} column {schema.field(column_name).type=}", Service.SUMO
+        )
 
     LOGGER.debug(
         f"Loaded arrow table from Sumo in: {timer.elapsed_ms()}ms ("
@@ -170,7 +192,6 @@ async def get_rft_table_collection(
         iteration=iteration_name,
     )
     table_names = await rft_table_collection.names_async
-    print(table_names)
     rft_table_collection = case.tables.filter(
         aggregation="collection",
         tagname="rft",
@@ -179,8 +200,13 @@ async def get_rft_table_collection(
     )
     table_names = await rft_table_collection.names_async
     if len(table_names) == 0:
-        raise ValueError("No rft table collections found")
+        raise NoDataError(
+            f"No rft table collections found in case={case.uuid}, iteration={iteration_name}", Service.SUMO
+        )
     if len(table_names) == 1:
         return rft_table_collection
 
-    raise ValueError(f"Multiple rft table collections found: {table_names}. Expected only one.")
+    raise MultipleDataMatchesError(
+        f"Multiple rft table collections found in case={case.uuid}, iteration={iteration_name}: {table_names=}",
+        Service.SUMO,
+    )

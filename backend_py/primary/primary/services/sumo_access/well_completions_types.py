@@ -1,28 +1,27 @@
-from typing import Dict, List, Optional, Union
 from pydantic import BaseModel
 
 
-WellCompletionsAttributeType = Union[str, int, bool]
+WellCompletionsAttributeType = str | int | bool
 
 
 class Completions(BaseModel):
-    t: List[int]
-    open: List[float]
-    shut: List[float]
-    kh_mean: List[float]
-    kh_min: List[float]
-    kh_max: List[float]
+    sorted_completion_date_indices: list[int]
+    open: list[float]
+    shut: list[float]
+    kh_mean: list[float]
+    kh_min: list[float]
+    kh_max: list[float]
 
 
 class WellCompletionsWell(BaseModel):
     name: str
-    attributes: Dict[str, WellCompletionsAttributeType]
-    completions: Dict[str, Completions]
+    attributes: dict[str, WellCompletionsAttributeType]
+    completions: dict[str, Completions]
 
 
 class WellCompletionsZone(BaseModel):
     name: str
-    subzones: Optional[List["WellCompletionsZone"]] = None
+    subzones: list["WellCompletionsZone"] | None = None
 
 
 class WellCompletionsUnitInfo(BaseModel):
@@ -39,6 +38,6 @@ class WellCompletionsData(BaseModel):
 
     version: str
     units: WellCompletionsUnits
-    zones: List[WellCompletionsZone]
-    timeSteps: List[str]
-    wells: List[WellCompletionsWell]
+    zones: list[WellCompletionsZone]
+    sorted_completion_dates: list[str]
+    wells: list[WellCompletionsWell]

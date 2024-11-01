@@ -8,26 +8,23 @@ from primary.services.sumo_access.rft_access import RftAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 
 from . import schemas
+from . import converters
 
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 
 
-@router.get("/rft_info")
-async def get_rft_info(
+@router.get("/table_definition")
+async def get_table_definition(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
-) -> list[schemas.RftInfo]:
+) -> schemas.RftTableDefinition:
     access = await RftAccess.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    rft_well_list = await access.get_rft_info()
+    rft_table_def = await access.get_rft_info()
 
-    ret_rft_well_list: list[schemas.RftInfo] = []
-    for rftinfo in rft_well_list:
-        ret_rft_well_list.append(schemas.RftInfo.model_validate(rftinfo.model_dump()))
-
-    return ret_rft_well_list
+    return converters.to_api_table_definition(rft_table_def)
 
 
 @router.get("/realization_data")
