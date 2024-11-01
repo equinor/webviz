@@ -168,6 +168,7 @@ export function Settings(): React.ReactNode {
             <Label text="Atom text">
                 <Input value={atomText} onChange={handleAtomTextChange} />
             </Label>
+
             <div className="h-96">
                 <SortableList contentWhenEmpty="No items" onItemMoved={handleItemMove}>
                     {makeChildren(items)}
