@@ -7,7 +7,7 @@ import { SortableList } from "@lib/components/SortableList/sortableList";
 
 import { useAtom } from "jotai";
 
-import { persistentTextSettingAtom, textAtom } from "./atoms";
+import { textAtom } from "./atoms";
 
 type Item = {
     id: string;
@@ -90,8 +90,6 @@ export function Settings(): React.ReactNode {
         },
     ]);
 
-    const [persistentText, setPersistentText] = useAtom(persistentTextSettingAtom);
-
     function handleAtomTextChange(event: React.ChangeEvent<HTMLInputElement>) {
         setAtomText(event.target.value);
     }
@@ -171,11 +169,7 @@ export function Settings(): React.ReactNode {
                 <Input value={atomText} onChange={handleAtomTextChange} />
             </Label>
 
-            <Label text="Persistent atom text">
-                <Input value={persistentText} onChange={({ target }) => setPersistentText(target.value)} />
-            </Label>
-
-        <div className="h-96">
+            <div className="h-96">
                 <SortableList contentWhenEmpty="No items" onItemMoved={handleItemMove}>
                     {makeChildren(items)}
                 </SortableList>
