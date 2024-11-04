@@ -182,8 +182,12 @@ export class Workbench {
     }
 
     removeModuleInstance(moduleInstanceId: string): void {
-        const manager = this.getModuleInstance(moduleInstanceId)?.getChannelManager();
-        if (manager) {
+        const moduleInstance = this.getModuleInstance(moduleInstanceId);
+
+        if (moduleInstance) {
+            const manager = moduleInstance.getChannelManager();
+
+            moduleInstance.unload();
             manager.unregisterAllChannels();
             manager.unregisterAllReceivers();
         }

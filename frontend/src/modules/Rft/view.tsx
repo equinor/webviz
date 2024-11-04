@@ -3,47 +3,53 @@ import Plot from "react-plotly.js";
 
 import { RftRealizationData_api } from "@api";
 import { ModuleViewProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
+import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
+import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
+import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { PlotData } from "plotly.js";
 
 import { Interfaces } from "./interfaces";
-import { useRftRealizationData } from "./queryHooks";
 
 export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
-    const rftWellAddress = viewContext.useSettingsToViewInterfaceValue("rftWellAddress");
-    const rftRealizationDataQuery = useRftRealizationData(
-        rftWellAddress?.caseUuid,
-        rftWellAddress?.ensembleName,
-        rftWellAddress?.wellName,
-        rftWellAddress?.responseName,
-        undefined,
-        rftWellAddress?.realizationNums
-    );
-    const timePoint = rftWellAddress?.timePoint;
 
-    const realizationDataForTimePoint: RftRealizationData_api[] = [];
-    if (rftRealizationDataQuery.data && timePoint) {
-        rftRealizationDataQuery.data.forEach((realizationData) => {
-            if (realizationData.timestamp_utc_ms === timePoint) {
-                realizationDataForTimePoint.push(realizationData);
-            }
+    const rftDataQuery = viewContext.useSettingsToViewInterfaceValue("rftDataQuery");
+    const realizationNums = viewContext.useSettingsToViewInterfaceValue("realizationNums");
+    const responseName = viewContext.useSettingsToViewInterfaceValue("responseName");
+    const wellName = viewContext.useSettingsToViewInterfaceValue("wellName");
+    const timeStampUtcMs = viewContext.useSettingsToViewInterfaceValue("timeStampsUtcMs");
+
+    const statusWriter = useViewStatusWriter(viewContext);
+    const statusError = usePropagateApiErrorToStatusWriter(rftDataQuery, statusWriter);
+
+    let content = null;
+
+    if (rftDataQuery.isFetching) {
+        content = (
+            <ContentMessage type={ContentMessageType.INFO}>
+                <CircularProgress />
+            </ContentMessage>
+        );
+    } else if (statusError !== null) {
+        content = <div className="w-full h-full flex justify-center items-center">{statusError}</div>;
+    } else if (rftDataQuery.isError || rftDataQuery.data === undefined) {
+        content = <div className="w-full h-full flex justify-center items-center">Could not load RFT data</div>;
+    } else {
+        const filteredRftData = rftDataQuery.data.filter((realizationData) =>
+            realizationNums?.includes(realizationData.realization)
+        );
+        const [minValue, maxValue] = getResponseValueRange(filteredRftData);
+        const plotData: Partial<PlotData>[] = [];
+        filteredRftData.forEach((realizationData) => {
+            plotData.push(createRftRealizationTrace(realizationData));
         });
-    }
-    const [minValue, maxValue] = getResponseValueRange(rftRealizationDataQuery.data ?? null);
-    const plotData: Partial<PlotData>[] = [];
-    realizationDataForTimePoint.forEach((realizationData) => {
-        plotData.push(createRftRealizationTrace(realizationData));
-    });
-    const title =
-        rftWellAddress && timePoint
-            ? `RFT for ${rftWellAddress.wellName}, ${timestampUtcMsToCompactIsoString(timePoint)}`
-            : "";
-    return (
-        <div className="w-full h-full" ref={wrapperDivRef}>
+        const title = `RFT for ${wellName}, ${timeStampUtcMs && timestampUtcMsToCompactIsoString(timeStampUtcMs)}`;
+        content = (
             <Plot
                 key={plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
                 data={plotData}
@@ -51,11 +57,16 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
                     title,
                     height: wrapperDivSize.height,
                     width: wrapperDivSize.width,
-                    xaxis: { range: [minValue, maxValue], title: "Pressure" },
+                    xaxis: { range: [minValue, maxValue], title: responseName ?? "" },
                     yaxis: { autorange: "reversed", title: "Depth" },
                 }}
                 config={{ scrollZoom: true }}
             />
+        );
+    }
+    return (
+        <div className="w-full h-full" ref={wrapperDivRef}>
+            {content}
         </div>
     );
 };

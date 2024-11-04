@@ -14,9 +14,14 @@ class RftSumoTableSchema(BaseModel):
     column_names: list[str]
 
 
-class RftInfo(BaseModel):
+class RftWellInfo(BaseModel):
     well_name: str
     timestamps_utc_ms: list[int]
+
+
+class RftTableDefinition(BaseModel):
+    response_names: list[str]
+    well_infos: list[RftWellInfo]
 
 
 class RftRealizationData(BaseModel):
