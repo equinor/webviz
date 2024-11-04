@@ -20,5 +20,5 @@ export type NumberRange = { start: number; end: number };
 export type RealizationNumberSelection = NumberRange | number;
 
 export type ContinuousParameterValueSelection = Readonly<NumberRange>;
-export type DiscreteParameterValueSelection = Readonly<string[] | number[]>;
+export type DiscreteParameterValueSelection = readonly string[] | readonly number[];
 export type ParameterValueSelection = ContinuousParameterValueSelection | DiscreteParameterValueSelection;

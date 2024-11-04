@@ -6,9 +6,8 @@ import {
     NumberRange,
     ParameterValueSelection,
 } from "@framework/types/realizationFilterTypes";
+import { isArrayOfNumbers, isArrayOfStrings } from "@framework/utils/arrayUtils";
 import {
-    isArrayOfNumbers,
-    isArrayOfStrings,
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
 } from "@framework/utils/realizationFilterTypesUtils";
@@ -40,7 +39,7 @@ export type ByParameterValueFilterProps = {
 };
 
 export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (props) => {
-    const { onFilterChange } = props;
+    const { ensembleParameters, parameterIdentStringToValueSelectionReadonlyMap, onFilterChange } = props;
 
     const [smartNodeSelectorSelection, setSmartNodeSelectorSelection] = React.useState<SmartNodeSelectorSelection>({
         selectedIds: [],
@@ -53,11 +52,11 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         const includeConstantParameters = false;
         const includeNodeDescription = false; // Node description and name seems to be the same, i.e. duplicate information
         return createTreeDataNodeListFromParameters(
-            props.ensembleParameters.getParameterArr(),
+            ensembleParameters.getParameterArr(),
             includeConstantParameters,
             includeNodeDescription
         );
-    }, [props.ensembleParameters]);
+    }, [ensembleParameters]);
 
     const handleParameterNameSelectionChanged = React.useCallback(
         function handleParameterNameSelectionChanged(selection: SmartNodeSelectorSelection) {
@@ -70,7 +69,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         function handleAddSelectedParametersClick() {
             // Find new parameter ident strings that are not in the current map
             // NOTE: This is not a deep copy
-            const newMap = new Map(props.parameterIdentStringToValueSelectionReadonlyMap);
+            const newMap = new Map(parameterIdentStringToValueSelectionReadonlyMap);
 
             // Get selected parameter ident strings
             const selectedParameterIdentStrings = smartNodeSelectorSelection.selectedIds;
@@ -81,9 +80,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             // Add new selected parameter ident strings
             const newDiscreteValueSelection: Readonly<string[] | number[]> = [];
             for (const parameterIdentString of newParameterIdentStrings) {
-                const parameter = props.ensembleParameters.findParameter(
-                    ParameterIdent.fromString(parameterIdentString)
-                );
+                const parameter = ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
                 if (!parameter) {
                     continue;
                 }
@@ -98,7 +95,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
 
                 // Update value selection with .set()
                 // - Do not use .get() and modify by reference, as .get() will return reference to source,
-                //   i.e. props.selectedParameterIdentStringToValueSelectionMap. Thus modifying the value
+                //   i.e. parameterIdentStringToValueSelectionReadonlyMap. Thus modifying the value
                 //   will modify the source, which is not allowed.
                 newMap.set(parameterIdentString, newParameterValueSelection);
             }
@@ -116,8 +113,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             });
         },
         [
-            props.ensembleParameters,
-            props.parameterIdentStringToValueSelectionReadonlyMap,
+            ensembleParameters,
+            parameterIdentStringToValueSelectionReadonlyMap,
             smartNodeSelectorSelection,
             setSmartNodeSelectorSelection,
             onFilterChange,
@@ -131,21 +128,21 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         ) {
             // Update existing map
             // NOTE: This is not a deep copy
-            const updatedMap = new Map(props.parameterIdentStringToValueSelectionReadonlyMap);
+            const updatedMap = new Map(parameterIdentStringToValueSelectionReadonlyMap);
             if (!updatedMap.has(parameterIdentString)) {
                 throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
             }
 
             // Update value selection with .set()
             // - Do not use .get() and modify by reference, as .get() will return reference to source,
-            //   i.e. props.selectedParameterIdentStringToValueSelectionMap. Thus modifying the value
+            //   i.e. parameterIdentStringToValueSelectionReadonlyMap. Thus modifying the value
             //   will modify the source, which is not allowed.
             updatedMap.set(parameterIdentString, valueSelection);
 
             // Trigger filter change
             onFilterChange(updatedMap as ReadonlyMap<string, ParameterValueSelection>);
         },
-        [props.parameterIdentStringToValueSelectionReadonlyMap, onFilterChange]
+        [parameterIdentStringToValueSelectionReadonlyMap, onFilterChange]
     );
 
     const handleContinuousParameterValueRangeChange = React.useCallback(
@@ -154,7 +151,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                 throw new Error(`Value selection must have 2 values`);
             }
 
-            const parameter = props.ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
+            const parameter = ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
             if (!parameter) {
                 throw new Error(`Parameter ${parameterIdentString} not found`);
             }
@@ -162,8 +159,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                 throw new Error(`Parameter ${parameterIdentString} is not of type continuous`);
             }
             if (
-                props.parameterIdentStringToValueSelectionReadonlyMap &&
-                !props.parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+                parameterIdentStringToValueSelectionReadonlyMap &&
+                !parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
             ) {
                 throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
             }
@@ -173,8 +170,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, newRangeSelection);
         },
         [
-            props.ensembleParameters,
-            props.parameterIdentStringToValueSelectionReadonlyMap,
+            ensembleParameters,
+            parameterIdentStringToValueSelectionReadonlyMap,
             setNewParameterValueSelectionAndTriggerOnChange,
         ]
     );
@@ -184,7 +181,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             parameterIdentString: string,
             valueSelection: string[] | number[]
         ) {
-            const parameter = props.ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
+            const parameter = ensembleParameters.findParameter(ParameterIdent.fromString(parameterIdentString));
             if (!parameter) {
                 throw new Error(`Parameter ${parameterIdentString} not found`);
             }
@@ -192,8 +189,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                 throw new Error(`Parameter ${parameterIdentString} is not of type discrete`);
             }
             if (
-                props.parameterIdentStringToValueSelectionReadonlyMap &&
-                !props.parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+                parameterIdentStringToValueSelectionReadonlyMap &&
+                !parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
             ) {
                 throw new Error(`Edited Parameter ident string ${parameterIdentString} not found in map`);
             }
@@ -203,8 +200,8 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             setNewParameterValueSelectionAndTriggerOnChange(parameterIdentString, newDiscreteValueSelection);
         },
         [
-            props.ensembleParameters,
-            props.parameterIdentStringToValueSelectionReadonlyMap,
+            ensembleParameters,
+            parameterIdentStringToValueSelectionReadonlyMap,
             setNewParameterValueSelectionAndTriggerOnChange,
         ]
     );
@@ -212,15 +209,15 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     const handleRemoveButtonClick = React.useCallback(
         function handleRemoveButtonClick(parameterIdentString: string) {
             if (
-                props.parameterIdentStringToValueSelectionReadonlyMap &&
-                !props.parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
+                parameterIdentStringToValueSelectionReadonlyMap &&
+                !parameterIdentStringToValueSelectionReadonlyMap.has(parameterIdentString)
             ) {
                 throw new Error(`Parameter ${parameterIdentString} not found`);
             }
 
             // Create a new map by selecting keys from the original map, excluding the specified key
             // NOTE: This is not a deep copy
-            const newMap = new Map(props.parameterIdentStringToValueSelectionReadonlyMap);
+            const newMap = new Map(parameterIdentStringToValueSelectionReadonlyMap);
             newMap.delete(parameterIdentString);
 
             const nonEmptyMap = newMap.size > 0 ? (newMap as ReadonlyMap<string, ParameterValueSelection>) : null;
@@ -228,7 +225,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
             // Trigger filter change
             onFilterChange(nonEmptyMap);
         },
-        [props.parameterIdentStringToValueSelectionReadonlyMap, onFilterChange]
+        [parameterIdentStringToValueSelectionReadonlyMap, onFilterChange]
     );
 
     function createContinuousParameterValueRangeRow(
@@ -236,7 +233,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         valueSelection: Readonly<NumberRange>
     ): React.ReactNode {
         const parameterIdent = ParameterIdent.fromString(parameterIdentString);
-        const parameterMinMax = props.ensembleParameters.getContinuousParameterMinMax(parameterIdent);
+        const parameterMinMax = ensembleParameters.getContinuousParameterMinMax(parameterIdent);
 
         return (
             <Slider
@@ -259,7 +256,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         valueSelection: DiscreteParameterValueSelection
     ): React.ReactNode {
         const parameterIdent = ParameterIdent.fromString(parameterIdentString);
-        const parameter = props.ensembleParameters.getParameter(parameterIdent);
+        const parameter = ensembleParameters.getParameter(parameterIdent);
         if (!parameter) {
             throw new Error(`Parameter ${parameterIdentString} not found`);
         }
@@ -334,9 +331,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
 
     // Create info text and enable/disable states for icon and button
     const invalidTags = smartNodeSelectorSelection.selectedTags.filter((tag) => !tag.isValid);
-    const existingParameterIdentStrings = Array.from(
-        props.parameterIdentStringToValueSelectionReadonlyMap?.keys() ?? []
-    );
+    const existingParameterIdentStrings = Array.from(parameterIdentStringToValueSelectionReadonlyMap?.keys() ?? []);
 
     // Text and disabled state for "Add button"
     const { text: addButtonText, isDisabled: isAddButtonDisabled } = createAddButtonTextAndDisableState(
@@ -353,44 +348,51 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
 
     return (
         <div className="flex-grow flex-col gap-2">
-            <Label text="Select parameters to add">
-                <>
-                    <SmartNodeSelector
-                        data={smartNodeSelectorTreeDataNodes ?? []}
-                        selectedTags={smartNodeSelectorSelection.selectedTags.map((tag) => tag.text)}
-                        onChange={handleParameterNameSelectionChanged}
-                        placeholder="Add parameter..."
-                    />
-                    <div className="flex pb-2">
-                        <div className="flex flex-grow" />
-                        <div className="flex-grow-0 flex items-center gap-2">
-                            <div className={resolveClassNames({ hidden: !isReportIconVisible })}>
-                                <Report
-                                    fontSize="medium"
-                                    titleAccess={reportIconText ?? undefined}
-                                    className={
-                                        "rounded-md px-0.5 py-0.5 border border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
-                                    }
-                                />
-                            </div>
-                            <div title={addButtonText ?? undefined}>
-                                <Button
-                                    size="medium"
-                                    disabled={isAddButtonDisabled}
-                                    endIcon={<AddCircle fontSize="small" />}
-                                    onClick={handleAddSelectedParametersClick}
-                                >
-                                    Add
-                                </Button>
-                            </div>
-                        </div>
+            <div className="flex flex-col pb-2">
+                <div className="flex items-center gap-2 h-8">
+                    <div
+                        className={resolveClassNames(
+                            "text-sm text-gray-500 leading-none overflow-hidden whitespace-nowrap text-ellipsis"
+                        )}
+                    >
+                        {"Select parameters to add"}
                     </div>
-                </>
-            </Label>
-            {props.parameterIdentStringToValueSelectionReadonlyMap && (
+                    <div className={resolveClassNames({ hidden: !isReportIconVisible })}>
+                        <Report
+                            fontSize="medium"
+                            titleAccess={reportIconText ?? undefined}
+                            className={
+                                "rounded-md px-0.25 py-0.25 border border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
+                            }
+                        />
+                    </div>
+                </div>
+                <div className="flex p-1 gap-1 items-center overflow-x-scroll">
+                    <div className="flex-grow">
+                        <SmartNodeSelector
+                            data={smartNodeSelectorTreeDataNodes ?? []}
+                            selectedTags={smartNodeSelectorSelection.selectedTags.map((tag) => tag.text)}
+                            onChange={handleParameterNameSelectionChanged}
+                            placeholder="Add parameter..."
+                            caseInsensitiveMatching={true}
+                        />
+                    </div>
+                    <div className="flex-grow-0" title={addButtonText ?? undefined}>
+                        <Button
+                            variant="contained"
+                            disabled={isAddButtonDisabled}
+                            endIcon={<AddCircle />}
+                            onClick={handleAddSelectedParametersClick}
+                        >
+                            Add
+                        </Button>
+                    </div>
+                </div>
+            </div>
+            {parameterIdentStringToValueSelectionReadonlyMap && (
                 <Label text="Selected parameters">
                     <>
-                        {Array.from(props.parameterIdentStringToValueSelectionReadonlyMap).map(
+                        {Array.from(parameterIdentStringToValueSelectionReadonlyMap).map(
                             ([parameterIdentString, valueSelection]) =>
                                 createParameterValueSelectionRow(parameterIdentString, valueSelection)
                         )}
@@ -461,7 +463,7 @@ function createReportIconTextAndVisibleState(
     const alreadySelectedParameterTagTexts = createSmartNodeSelectorTagTextListFromParameterIdentStrings(
         alreadySelectedParameterIdentStrings
     );
-    if (alreadySelectedParameterTagTexts.length === 1 && selectedParameterIdentStrings.length > 1) {
+    if (alreadySelectedParameterTagTexts.length === 1 && selectedParameterIdentStrings.length >= 1) {
         return { text: `Parameter already added:\n${alreadySelectedParameterTagTexts[0]}`, isVisible: true };
     }
     if (alreadySelectedParameterTagTexts.length > 1) {

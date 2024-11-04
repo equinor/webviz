@@ -1,13 +1,7 @@
-import {
-    DiscreteParameterValueSelection,
-    ParameterValueSelection,
-    RealizationNumberSelection,
-} from "@framework/types/realizationFilterTypes";
+import { ParameterValueSelection, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 import {
     areParameterIdentStringToValueSelectionMapCandidatesEqual,
     areParameterIdentStringToValueSelectionReadonlyMapsEqual,
-    isArrayOfNumbers,
-    isArrayOfStrings,
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
     makeRealizationNumberArrayFromSelections,
@@ -66,60 +60,6 @@ describe("isValueSelectionAnArrayOfNumber", () => {
     test("should return false for NumberRange", () => {
         const valueSelection: ParameterValueSelection = { start: 1, end: 2 };
         expect(isValueSelectionAnArrayOfNumber(valueSelection)).toBe(false);
-    });
-});
-
-describe("isArrayOfStrings", () => {
-    test("should return true for an array of strings", () => {
-        const discreteValues: DiscreteParameterValueSelection = ["value1", "value2"];
-        expect(isArrayOfStrings(discreteValues)).toBe(true);
-    });
-
-    test("should return false for an array of numbers", () => {
-        const discreteValues: DiscreteParameterValueSelection = [1, 2, 3];
-        expect(isArrayOfStrings(discreteValues)).toBe(false);
-    });
-
-    test("should return true for an empty array", () => {
-        const discreteValues: DiscreteParameterValueSelection = [];
-        expect(isArrayOfStrings(discreteValues)).toBe(true);
-    });
-
-    test("should return false for a single number", () => {
-        const discreteValues: DiscreteParameterValueSelection = [1];
-        expect(isArrayOfStrings(discreteValues)).toBe(false);
-    });
-
-    test("should return true for a single string", () => {
-        const discreteValues: DiscreteParameterValueSelection = ["value1"];
-        expect(isArrayOfStrings(discreteValues)).toBe(true);
-    });
-});
-
-describe("isArrayOfNumbers", () => {
-    test("should return true for an array of numbers", () => {
-        const discreteValues: DiscreteParameterValueSelection = [1, 2, 3];
-        expect(isArrayOfNumbers(discreteValues)).toBe(true);
-    });
-
-    test("should return false for an array of strings", () => {
-        const discreteValues: DiscreteParameterValueSelection = ["value1", "value2"];
-        expect(isArrayOfNumbers(discreteValues)).toBe(false);
-    });
-
-    test("should return true for an empty array", () => {
-        const discreteValues: DiscreteParameterValueSelection = [];
-        expect(isArrayOfNumbers(discreteValues)).toBe(true);
-    });
-
-    test("should return true for a single number", () => {
-        const discreteValues: DiscreteParameterValueSelection = [1];
-        expect(isArrayOfNumbers(discreteValues)).toBe(true);
-    });
-
-    test("should return false for a single string", () => {
-        const discreteValues: DiscreteParameterValueSelection = ["value1"];
-        expect(isArrayOfNumbers(discreteValues)).toBe(false);
     });
 });
 

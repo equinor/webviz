@@ -1,10 +1,24 @@
 import {
-    DiscreteParameterValueSelection,
+    NumberRange,
     ParameterValueSelection,
     RealizationNumberSelection,
 } from "@framework/types/realizationFilterTypes";
 
-import { isEqual } from "lodash";
+import { isEqual, range } from "lodash";
+
+import { isArrayOfNumbers, isArrayOfStrings } from "./arrayUtils";
+
+/**
+ * Check if value selection is a number range
+ */
+export function isValueSelectionANumberRange(
+    valueSelection: ParameterValueSelection
+): valueSelection is Readonly<NumberRange> {
+    if (typeof valueSelection === "object" && valueSelection !== null) {
+        return "start" in valueSelection && "end" in valueSelection;
+    }
+    return false;
+}
 
 /**
  * Check if parameter value selection is an array of strings.
@@ -12,7 +26,7 @@ import { isEqual } from "lodash";
 export function isValueSelectionAnArrayOfString(
     valueSelection: ParameterValueSelection
 ): valueSelection is readonly string[] {
-    if (Array.isArray(valueSelection) && isArrayOfStrings(valueSelection)) {
+    if (!isValueSelectionANumberRange(valueSelection) && isArrayOfStrings(valueSelection)) {
         return true;
     }
     return false;
@@ -28,34 +42,6 @@ export function isValueSelectionAnArrayOfNumber(
         return true;
     }
     return false;
-}
-
-/**
- * Check if array of discrete parameter values is an array of strings.
- *
- * DiscreteParameterValueSelection is a union type of string[] and number[].
- */
-export function isArrayOfStrings(discreteValues: DiscreteParameterValueSelection): discreteValues is readonly string[] {
-    if (discreteValues.length === 0) {
-        return true;
-    }
-
-    // Check first element only for efficiency, as input is string[] | number[]
-    return typeof discreteValues[0] === "string";
-}
-
-/**
- * Check if array of discrete parameter values is an array of numbers.
- *
- * DiscreteParameterValueSelection is a union type of string[] and number[].
- */
-export function isArrayOfNumbers(discreteValues: DiscreteParameterValueSelection): discreteValues is readonly number[] {
-    if (discreteValues.length === 0) {
-        return true;
-    }
-
-    // Check first element only for efficiency, as input is string[] | number[]
-    return typeof discreteValues[0] === "number";
 }
 
 /**
@@ -118,9 +104,8 @@ export function makeRealizationNumberArrayFromSelections(
         if (typeof selection === "number") {
             realizationNumbers.push(selection);
         } else {
-            realizationNumbers.push(
-                ...Array.from({ length: selection.end - selection.start + 1 }, (_, i) => selection.start + i)
-            );
+            const realizationNumbersInRange = range(selection.start, selection.end + 1);
+            realizationNumbers.push(...realizationNumbersInRange);
         }
     }
 

@@ -18,9 +18,8 @@ import {
     RealizationFilterType,
     RealizationNumberSelection,
 } from "./types/realizationFilterTypes";
+import { isArrayOfNumbers, isArrayOfStrings } from "./utils/arrayUtils";
 import {
-    isArrayOfNumbers,
-    isArrayOfStrings,
     isValueSelectionAnArrayOfNumber,
     isValueSelectionAnArrayOfString,
     makeRealizationNumberArrayFromSelections,
@@ -221,7 +220,6 @@ export class RealizationFilter {
                         valueSelection
                     );
                 } else if (parameter.type === ParameterType.CONTINUOUS && !isValueSelectionArray) {
-                    valueSelection;
                     // Run continuous parameter filtering
                     realizationsFromValueSelection = this.getRealizationNumbersFromParameterValueRange(
                         parameter,
