@@ -2,8 +2,11 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type RftInfo = {
-    well_name: string;
-    timestamps_utc_ms: Array<number>;
-};
-
+export enum FlowRateType {
+    OIL = 'OIL',
+    LIQ = 'LIQ',
+    GAS = 'GAS',
+    WG = 'WG',
+    TM = 'TM',
+    WAT = 'WAT',
+}

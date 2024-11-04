@@ -28,6 +28,7 @@ import {
     WellborepathLayer,
     WellborepathLayerOptions,
 } from "@equinor/esv-intersection";
+import { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScale } from "@lib/utils/ColorScale";
 import { fuzzyCompare } from "@lib/utils/fuzzyCompare";
@@ -116,8 +117,6 @@ export type Bounds = {
     x: [number, number];
     y: [number, number];
 };
-
-export type Viewport = [number, number, number];
 
 export type ZoomTransform = { x: number; y: number; k: number };
 
