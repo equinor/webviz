@@ -30,7 +30,7 @@ in the following folders are changed:
 ./backend/src
 ```
 
-If other files are changed through the host operativey system,
+If other files are changed through the host operating system,
 e.g. typically when a new dependency is added, the relevant component needs to be rebuilt. I.e.
 `docker-compose up --build frontend` or `docker-compose up --build backend`.
 
