@@ -303,6 +303,12 @@ export class TreeNodeSelection {
         return this._treeData.findNodes(this._nodePath, MatchType.fullMatch).nodePaths;
     }
 
+    exactlyMatchedNodeIds(): (string | undefined)[][] {
+        return this._treeData
+            .findNodes(this._nodePath, MatchType.fullMatch)
+            .metaData.map((el) => el.map((meta) => meta.id));
+    }
+
     countExactlyMatchedNodePaths(): number {
         return this.exactlyMatchedNodePaths().length;
     }
