@@ -68,6 +68,16 @@ export class LayerDelegate<TSettings extends Settings, TData>
         );
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
+            "settings-context",
+            this._settingsContext
+                .getDelegate()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingsContextDelegateTopic.LOADING_STATE_CHANGED)(() => {
+                this.handleSettingsLoadingStateChange();
+            })
+        );
+
+        this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
             layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(() => {
                 this.handleSharedSettingsChanged();
@@ -84,13 +94,18 @@ export class LayerDelegate<TSettings extends Settings, TData>
         );
     }
 
-    handleSettingsChange(): void {
-        this._cancellationPending = true;
+    handleSettingsLoadingStateChange(): void {
         if (!this._settingsContext.getDelegate().areAllSettingsLoaded()) {
             this.setStatus(LayerStatus.LOADING);
             return;
+        } else {
+            this.handleSettingsChange();
         }
-        if (this._settingsContext.getDelegate().isAnyPersistedSettingNotValid()) {
+    }
+
+    handleSettingsChange(): void {
+        this._cancellationPending = true;
+        if (this._settingsContext.getDelegate().isSomePersistedSettingNotValid()) {
             this.setStatus(LayerStatus.INVALID_SETTINGS);
             return;
         }

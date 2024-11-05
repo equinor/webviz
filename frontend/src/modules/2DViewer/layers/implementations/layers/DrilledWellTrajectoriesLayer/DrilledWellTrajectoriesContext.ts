@@ -90,11 +90,7 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
         return FetchDataFunctionResult.SUCCESS;
     }
 
-    areCurrentSettingsValid(): boolean {
-        const settings = this.getDelegate().getSettings();
-        return (
-            settings[SettingType.ENSEMBLE].getDelegate().getValue() !== null &&
-            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue().length > 0
-        );
+    areCurrentSettingsValid(settings: DrilledWellTrajectoriesSettings): boolean {
+        return settings[SettingType.ENSEMBLE] !== null && settings[SettingType.SMDA_WELLBORE_HEADERS].length > 0;
     }
 }

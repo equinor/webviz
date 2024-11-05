@@ -88,7 +88,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.layer.getLayerDelegate(), LayerDelegateTopic.STATUS);
     const settingsLoadingState = usePublishSubscribeTopicValue(
         props.layer.getLayerDelegate().getSettingsContext().getDelegate(),
-        SettingsContextDelegateTopic.LOADING_STATE
+        SettingsContextDelegateTopic.LOADING_STATE_CHANGED
     );
     const isSubordinated = usePublishSubscribeTopicValue(
         props.layer.getLayerDelegate(),

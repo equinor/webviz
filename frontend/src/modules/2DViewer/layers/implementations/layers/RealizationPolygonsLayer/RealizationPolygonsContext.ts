@@ -9,7 +9,7 @@ import { isEqual } from "lodash";
 
 import { RealizationPolygonsSettings } from "./types";
 
-import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
+import { DefineDependenciesArgs, FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { Ensemble } from "../../settings/Ensemble";
 import { PolygonsAttribute } from "../../settings/PolygonsAttribute";
 import { PolygonsName } from "../../settings/PolygonsName";
@@ -38,6 +38,10 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
     getSettings() {
         return this._contextDelegate.getSettings();
     }
+
+    defineDependencies(
+        args: DefineDependenciesArgs<RealizationPolygonsSettings, keyof RealizationPolygonsSettings>
+    ): void {}
 
     async fetchData(
         oldValues: Partial<RealizationPolygonsSettings>,
@@ -124,13 +128,12 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
         return FetchDataFunctionResult.SUCCESS;
     }
 
-    areCurrentSettingsValid(): boolean {
-        const settings = this.getDelegate().getSettings();
+    areCurrentSettingsValid(settings: RealizationPolygonsSettings): boolean {
         return (
-            settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().getValue() !== null &&
-            settings[SettingType.POLYGONS_NAME].getDelegate().getValue() !== null &&
-            settings[SettingType.REALIZATION].getDelegate().getValue() !== null &&
-            settings[SettingType.ENSEMBLE].getDelegate().getValue() !== null
+            settings[SettingType.POLYGONS_ATTRIBUTE] !== null &&
+            settings[SettingType.POLYGONS_NAME] !== null &&
+            settings[SettingType.REALIZATION] !== null &&
+            settings[SettingType.ENSEMBLE] !== null
         );
     }
 }

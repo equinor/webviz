@@ -1,5 +1,3 @@
-import { isEqual } from "lodash";
-
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 import { SettingTopic } from "./SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
@@ -8,7 +6,6 @@ import { Dependency } from "../Dependency";
 import { GlobalSettings, LayerManager, LayerManagerTopic } from "../LayerManager";
 import {
     AvailableValuesType,
-    FetchDataFunctionResult,
     SerializedSettingsState,
     Setting,
     Settings,
@@ -25,15 +22,15 @@ export enum SettingsContextLoadingState {
 export enum SettingsContextDelegateTopic {
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
     REFETCH_REQUIRED = "REFETCH_REQUIRED",
-    LOADING_STATE = "LOADING_STATE_CHANGED",
     LAYER_MANAGER_CHANGED = "LAYER_MANAGER_CHANGED",
+    LOADING_STATE_CHANGED = "LOADING_STATE_CHANGED",
 }
 
 export type SettingsContextDelegatePayloads = {
     [SettingsContextDelegateTopic.SETTINGS_CHANGED]: void;
     [SettingsContextDelegateTopic.REFETCH_REQUIRED]: void;
-    [SettingsContextDelegateTopic.LOADING_STATE]: boolean;
     [SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED]: void;
+    [SettingsContextDelegateTopic.LOADING_STATE_CHANGED]: SettingsContextLoadingState;
 };
 
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
@@ -50,11 +47,10 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     private _parentContext: SettingsContext<TSettings, TKey>;
     private _layerManager: LayerManager;
     private _settings: { [K in TKey]: Setting<TSettings[K]> } = {} as { [K in TKey]: Setting<TSettings[K]> };
-    private _cachedValues: { [K in TKey]?: TSettings[K] } = {} as { [K in TKey]?: TSettings[K] };
     private _overriddenSettings: { [K in TKey]: TSettings[K] } = {} as { [K in TKey]: TSettings[K] };
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegateTopic>();
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
-    private _loadingStatus: SettingsContextLoadingState = SettingsContextLoadingState.LOADED;
+    private _loadingState: SettingsContextLoadingState = SettingsContextLoadingState.LOADING;
 
     constructor(
         context: SettingsContext<TSettings, TKey>,
@@ -80,13 +76,12 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
                     .getDelegate()
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(SettingTopic.LOADING_STATE_CHANGED)(() => {
-                    this.handleSettingsChanged();
+                    this.handleSettingsLoadingStateChanged();
                 })
             );
         }
 
         this._settings = settings;
-        this._cachedValues = { ...this.getValues() };
 
         this.createDependencies();
     }
@@ -108,27 +103,6 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         return settings;
     }
 
-    private async fetchData(): Promise<FetchDataFunctionResult> {
-        this.setLoadingState(SettingsContextLoadingState.LOADING);
-        const values = this.getValues();
-        const result = await this._parentContext.fetchData(this._cachedValues, values);
-        if (result === FetchDataFunctionResult.SUCCESS || result === FetchDataFunctionResult.NO_CHANGE) {
-            this.setLoadingState(SettingsContextLoadingState.LOADED);
-        } else if (result === FetchDataFunctionResult.ERROR) {
-            this.setLoadingState(SettingsContextLoadingState.FAILED);
-        }
-        return result;
-    }
-
-    private setLoadingState(loadingState: SettingsContextLoadingState): void {
-        this._loadingStatus = loadingState;
-        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE);
-    }
-
-    getLoadingState(): SettingsContextLoadingState {
-        return this._loadingStatus;
-    }
-
     setOverriddenSettings(overriddenSettings: { [K in TKey]: TSettings[K] }): void {
         this._overriddenSettings = overriddenSettings;
         for (const key in this._settings) {
@@ -147,7 +121,16 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             }
         }
 
-        return this._parentContext.areCurrentSettingsValid();
+        if (!this._parentContext.areCurrentSettingsValid) {
+            return true;
+        }
+
+        const settings: TSettings = {} as TSettings;
+        for (const key in this._settings) {
+            settings[key] = this._settings[key].getDelegate().getValue();
+        }
+
+        return this._parentContext.areCurrentSettingsValid(settings);
     }
 
     areAllSettingsLoaded(): boolean {
@@ -162,7 +145,10 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
 
     areAllSettingsInitialized(): boolean {
         for (const key in this._settings) {
-            if (!this._settings[key].getDelegate().getIsInitialized()) {
+            if (
+                !this._settings[key].getDelegate().getIsInitialized() ||
+                this._settings[key].getDelegate().isPersistedValue()
+            ) {
                 return false;
             }
         }
@@ -170,11 +156,13 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         return true;
     }
 
-    isAnyPersistedSettingNotValid(): boolean {
+    isSomePersistedSettingNotValid(): boolean {
         for (const key in this._settings) {
             if (
+                !this._settings[key].getDelegate().getIsLoading() &&
                 this._settings[key].getDelegate().isPersistedValue() &&
-                !this._settings[key].getDelegate().isValueValid()
+                !this._settings[key].getDelegate().isValueValid() &&
+                this._settings[key].getDelegate().getIsInitialized()
             ) {
                 return true;
             }
@@ -194,20 +182,29 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         return invalidSettings;
     }
 
+    private setLoadingState(loadingState: SettingsContextLoadingState) {
+        this._loadingState = loadingState;
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE_CHANGED);
+    }
+
     private handleSettingsChanged() {
         this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
         this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
-        return;
-        const values = this.getValues();
-        if (!isEqual(this._cachedValues, values)) {
-            this.fetchData().then((result) => {
-                this._cachedValues = { ...values };
-                if (result === FetchDataFunctionResult.SUCCESS) {
-                    this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
-                    this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
-                }
-            });
+
+        if (this.areCurrentSettingsValid()) {
+            this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.REFETCH_REQUIRED);
         }
+    }
+
+    private handleSettingsLoadingStateChanged() {
+        for (const key in this._settings) {
+            if (this._settings[key].getDelegate().getIsLoading()) {
+                this.setLoadingState(SettingsContextLoadingState.LOADING);
+                return;
+            }
+        }
+
+        this.setLoadingState(SettingsContextLoadingState.LOADED);
     }
 
     setAvailableValues<K extends TKey>(
@@ -232,11 +229,11 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             if (topic === SettingsContextDelegateTopic.REFETCH_REQUIRED) {
                 return;
             }
-            if (topic === SettingsContextDelegateTopic.LOADING_STATE) {
-                return this._loadingStatus;
-            }
             if (topic === SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED) {
                 return;
+            }
+            if (topic === SettingsContextDelegateTopic.LOADING_STATE_CHANGED) {
+                return this._loadingState;
             }
         };
 

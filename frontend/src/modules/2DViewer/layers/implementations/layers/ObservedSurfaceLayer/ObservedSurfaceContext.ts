@@ -144,13 +144,12 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         return FetchDataFunctionResult.SUCCESS;
     }
 
-    areCurrentSettingsValid(): boolean {
-        const settings = this.getDelegate().getSettings();
+    areCurrentSettingsValid(settings: ObservedSurfaceSettings): boolean {
         return (
-            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().getValue() !== null &&
-            settings[SettingType.SURFACE_NAME].getDelegate().getValue() !== null &&
-            settings[SettingType.ENSEMBLE].getDelegate().getValue() !== null &&
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue() !== null
+            settings[SettingType.SURFACE_ATTRIBUTE] !== null &&
+            settings[SettingType.SURFACE_NAME] !== null &&
+            settings[SettingType.ENSEMBLE] !== null &&
+            settings[SettingType.TIME_OR_INTERVAL] !== null
         );
     }
 }

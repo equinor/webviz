@@ -6,7 +6,7 @@ import { Settings, UpdateFunc } from "./interfaces";
 
 export class Dependency<TReturnValue, TSettings extends Settings, TKey extends keyof TSettings> {
     private _updateFunc: UpdateFunc<TReturnValue, TSettings, TKey>;
-    private _dependencies: Set<(value: TReturnValue) => void> = new Set();
+    private _dependencies: Set<(value: Awaited<TReturnValue>) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean) => void> = new Set();
 
     private _contextDelegate: SettingsContextDelegate<TSettings, TKey>;
@@ -45,7 +45,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         return this._cachedValue;
     }
 
-    subscribe(callback: (value: TReturnValue) => void): () => void {
+    subscribe(callback: (value: Awaited<TReturnValue>) => void): () => void {
         this._dependencies.add(callback);
 
         return () => {
@@ -121,19 +121,30 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         }
 
         this._abortController = new AbortController();
+
         this.setLoadingState(true);
-        const newValue = await this._updateFunc({
-            getLocalSetting: this.getLocalSetting,
-            getGlobalSetting: this.getGlobalSetting,
-            getHelperDependency: this.getHelperDependency,
-            abortSignal: this._abortController.signal,
-        });
+
+        let newValue: Awaited<TReturnValue> | null = null;
+        try {
+            newValue = await this._updateFunc({
+                getLocalSetting: this.getLocalSetting,
+                getGlobalSetting: this.getGlobalSetting,
+                getHelperDependency: this.getHelperDependency,
+                abortSignal: this._abortController.signal,
+            });
+        } catch (e: any) {
+            return;
+        }
+
+        if (newValue === null) {
+            return;
+        }
 
         if (!isEqual(newValue, this._cachedValue)) {
             this._cachedValue = newValue;
-            this._dependencies.forEach((callback) => {
+            for (const callback of this._dependencies) {
                 callback(newValue);
-            });
+            }
         }
 
         this.setLoadingState(false);

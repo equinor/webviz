@@ -154,13 +154,12 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
         return FetchDataFunctionResult.SUCCESS;
     }
 
-    areCurrentSettingsValid(): boolean {
-        const settings = this.getDelegate().getSettings();
+    areCurrentSettingsValid(settings: RealizationGridSettings): boolean {
         return (
-            settings[SettingType.GRID_ATTRIBUTE].getDelegate().getValue() !== null &&
-            settings[SettingType.GRID_NAME].getDelegate().getValue() !== null &&
-            settings[SettingType.ENSEMBLE].getDelegate().getValue() !== null &&
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue() !== null
+            settings[SettingType.GRID_ATTRIBUTE] !== null &&
+            settings[SettingType.GRID_NAME] !== null &&
+            settings[SettingType.ENSEMBLE] !== null &&
+            settings[SettingType.TIME_OR_INTERVAL] !== null
         );
     }
 }

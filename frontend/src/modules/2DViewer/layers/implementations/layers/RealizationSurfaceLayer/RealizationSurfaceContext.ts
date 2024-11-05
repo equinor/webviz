@@ -1,13 +1,14 @@
-import { SurfaceMetaSet_api, SurfaceTimeType_api } from "@api";
+import { SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
+import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/utils";
 
 import { RealizationSurfaceSettings } from "./types";
 
-import { DefineDependenciesArgs, FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
+import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
 import { Ensemble } from "../../settings/Ensemble";
 import { Realization } from "../../settings/Realization";
 import { SurfaceAttribute } from "../../settings/SurfaceAttribute";
@@ -36,140 +37,6 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
 
     getSettings() {
         return this._contextDelegate.getSettings();
-    }
-
-    async fetchData(
-        oldValues: Partial<RealizationSurfaceSettings>,
-        newValues: Partial<RealizationSurfaceSettings>
-    ): Promise<FetchDataFunctionResult> {
-        const queryClient = this.getDelegate().getLayerManager().getQueryClient();
-        const settings = this.getDelegate().getSettings();
-        const fieldIdentifier = this.getDelegate().getLayerManager().getGlobalSetting("fieldId");
-        const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
-        const ensembleSet = workbenchSession.getEnsembleSet();
-
-        this.getDelegate().setAvailableValues(
-            SettingType.ENSEMBLE,
-            ensembleSet
-                .getEnsembleArr()
-                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent())
-        );
-
-        if (!newValues[SettingType.ENSEMBLE]) {
-            return FetchDataFunctionResult.ERROR;
-        }
-
-        const realizations = workbenchSession
-            .getRealizationFilterSet()
-            .getRealizationFilterForEnsembleIdent(newValues.ensemble)
-            .getFilteredRealizations();
-        this.getDelegate().setAvailableValues(SettingType.REALIZATION, [...realizations]);
-
-        let fetchedData: SurfaceMetaSet_api | null = null;
-
-        settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setIsLoading(true);
-        settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(true);
-        settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(true);
-
-        try {
-            fetchedData = await queryClient.fetchQuery({
-                queryKey: [
-                    "getRealizationSurfacesMetadata",
-                    newValues[SettingType.ENSEMBLE],
-                    newValues[SettingType.REALIZATION],
-                ],
-                queryFn: () =>
-                    apiService.surface.getRealizationSurfacesMetadata(
-                        newValues[SettingType.ENSEMBLE]?.getCaseUuid() ?? "",
-                        newValues[SettingType.ENSEMBLE]?.getEnsembleName() ?? ""
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
-            });
-        } catch (e) {
-            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setIsLoading(false);
-            settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(false);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(false);
-            return FetchDataFunctionResult.ERROR;
-        }
-
-        if (!fetchedData) {
-            return FetchDataFunctionResult.IN_PROGRESS;
-        }
-
-        settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setIsLoading(false);
-        settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(false);
-        settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(false);
-
-        const availableAttributes: string[] = [];
-        availableAttributes.push(...Array.from(new Set(fetchedData.surfaces.map((surface) => surface.attribute_name))));
-        this._contextDelegate.setAvailableValues(SettingType.SURFACE_ATTRIBUTE, availableAttributes);
-
-        const currentAttribute = newValues[SettingType.SURFACE_ATTRIBUTE];
-
-        const availableSurfaceNames: string[] = [];
-
-        if (!currentAttribute) {
-            return FetchDataFunctionResult.IN_PROGRESS;
-        }
-
-        availableSurfaceNames.push(
-            ...Array.from(
-                new Set(
-                    fetchedData.surfaces
-                        .filter((surface) => surface.attribute_name === currentAttribute)
-                        .map((el) => el.name)
-                )
-            )
-        );
-
-        this._contextDelegate.setAvailableValues(SettingType.SURFACE_NAME, availableSurfaceNames);
-
-        const currentSurfaceName = newValues[SettingType.SURFACE_NAME];
-
-        if (!currentSurfaceName) {
-            return FetchDataFunctionResult.IN_PROGRESS;
-        }
-
-        const availableTimeOrIntervals: string[] = [];
-        const availableTimeTypes: SurfaceTimeType_api[] = [];
-        availableTimeTypes.push(
-            ...Array.from(
-                new Set(
-                    fetchedData.surfaces
-                        .filter(
-                            (surface) =>
-                                surface.attribute_name === currentAttribute && surface.name === currentSurfaceName
-                        )
-                        .map((el) => el.time_type)
-                )
-            )
-        );
-        if (availableTimeTypes.includes(SurfaceTimeType_api.NO_TIME)) {
-            availableTimeOrIntervals.push(SurfaceTimeType_api.NO_TIME);
-        }
-        if (availableTimeTypes.includes(SurfaceTimeType_api.TIME_POINT)) {
-            availableTimeOrIntervals.push(...fetchedData.time_points_iso_str);
-        }
-        if (availableTimeTypes.includes(SurfaceTimeType_api.INTERVAL)) {
-            availableTimeOrIntervals.push(...fetchedData.time_intervals_iso_str);
-        }
-
-        this._contextDelegate.setAvailableValues(SettingType.TIME_OR_INTERVAL, availableTimeOrIntervals);
-
-        return FetchDataFunctionResult.SUCCESS;
-    }
-
-    areCurrentSettingsValid(): boolean {
-        const settings = this.getDelegate().getSettings();
-        return (
-            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().getValue() !== null &&
-            settings[SettingType.SURFACE_NAME].getDelegate().getValue() !== null &&
-            settings[SettingType.REALIZATION].getDelegate().getValue() !== null &&
-            settings[SettingType.ENSEMBLE].getDelegate().getValue() !== null &&
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue() !== null
-        );
     }
 
     defineDependencies({
@@ -205,38 +72,30 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
             return [...realizations];
         });
 
-        const fetchedData = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+        const realizationSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
 
             if (!ensembleIdent) {
                 return null;
             }
 
-            try {
-                const data = await queryClient.fetchQuery({
-                    queryKey: ["getRealizationSurfacesMetadata", ensembleIdent],
-                    queryFn: () => {
-                        const promise = apiService.surface.getRealizationSurfacesMetadata(
-                            ensembleIdent?.getCaseUuid() ?? "",
-                            ensembleIdent?.getEnsembleName() ?? ""
-                        );
-                        abortSignal.addEventListener("abort", () => {
-                            promise.cancel();
-                        });
-                        return promise;
-                    },
-                    staleTime: STALE_TIME,
-                    gcTime: CACHE_TIME,
-                });
-
-                return data;
-            } catch (e) {
-                return null;
-            }
+            return await queryClient.fetchQuery({
+                queryKey: ["getRealizationSurfacesMetadata", ensembleIdent],
+                queryFn: () =>
+                    cancelPromiseOnAbort(
+                        apiService.surface.getRealizationSurfacesMetadata(
+                            ensembleIdent.getCaseUuid(),
+                            ensembleIdent.getEnsembleName()
+                        ),
+                        abortSignal
+                    ),
+                staleTime: STALE_TIME,
+                gcTime: CACHE_TIME,
+            });
         });
 
         availableSettingsUpdater(SettingType.SURFACE_ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(fetchedData);
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!data) {
                 return [];
@@ -251,7 +110,7 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
 
         availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
-            const data = getHelperDependency(fetchedData);
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!attribute || !data) {
                 return [];
@@ -268,42 +127,37 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
             return availableSurfaceNames;
         });
 
-        availableSettingsUpdater(
-            SettingType.TIME_OR_INTERVAL,
-            ({ getLocalSetting: getSetting, getHelperDependency }) => {
-                const attribute = getSetting(SettingType.SURFACE_ATTRIBUTE);
-                const surfaceName = getSetting(SettingType.SURFACE_NAME);
-                const data = getHelperDependency(fetchedData);
+        availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+            const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
+            const surfaceName = getLocalSetting(SettingType.SURFACE_NAME);
+            const data = getHelperDependency(realizationSurfaceMetadataDep);
 
-                if (!attribute || !surfaceName || !data) {
-                    return [];
-                }
-
-                const availableTimeOrIntervals: string[] = [];
-                const availableTimeTypes = [
-                    ...Array.from(
-                        new Set(
-                            data.surfaces
-                                .filter(
-                                    (surface) => surface.attribute_name === attribute && surface.name === surfaceName
-                                )
-                                .map((el) => el.time_type)
-                        )
-                    ),
-                ];
-
-                if (availableTimeTypes.includes(SurfaceTimeType_api.NO_TIME)) {
-                    availableTimeOrIntervals.push(SurfaceTimeType_api.NO_TIME);
-                }
-                if (availableTimeTypes.includes(SurfaceTimeType_api.TIME_POINT)) {
-                    availableTimeOrIntervals.push(...data.time_points_iso_str);
-                }
-                if (availableTimeTypes.includes(SurfaceTimeType_api.INTERVAL)) {
-                    availableTimeOrIntervals.push(...data.time_intervals_iso_str);
-                }
-
-                return availableTimeOrIntervals;
+            if (!attribute || !surfaceName || !data) {
+                return [];
             }
-        );
+
+            const availableTimeOrIntervals: string[] = [];
+            const availableTimeTypes = [
+                ...Array.from(
+                    new Set(
+                        data.surfaces
+                            .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
+                            .map((el) => el.time_type)
+                    )
+                ),
+            ];
+
+            if (availableTimeTypes.includes(SurfaceTimeType_api.NO_TIME)) {
+                availableTimeOrIntervals.push(SurfaceTimeType_api.NO_TIME);
+            }
+            if (availableTimeTypes.includes(SurfaceTimeType_api.TIME_POINT)) {
+                availableTimeOrIntervals.push(...data.time_points_iso_str);
+            }
+            if (availableTimeTypes.includes(SurfaceTimeType_api.INTERVAL)) {
+                availableTimeOrIntervals.push(...data.time_intervals_iso_str);
+            }
+
+            return availableTimeOrIntervals;
+        });
     }
 }

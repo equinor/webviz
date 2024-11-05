@@ -162,12 +162,12 @@ export interface DefineDependenciesArgs<TSettings extends Settings, TKey extends
 
 export interface SettingsContext<TSettings extends Settings, TKey extends keyof TSettings = keyof TSettings> {
     getDelegate(): SettingsContextDelegate<TSettings, TKey>;
-    fetchData: FetchDataFunction<TSettings, TKey>;
-    areCurrentSettingsValid(): boolean;
+    areCurrentSettingsValid?: (settings: TSettings) => boolean;
     defineDependencies(args: DefineDependenciesArgs<TSettings, TKey>): void;
 }
 
 export type AvailableValuesType<TValue> = TValue extends Array<unknown> ? TValue : Array<TValue>;
+export type PossiblyUndefined<TSettings> = { [K in keyof TSettings]?: TSettings[K] };
 
 export type SettingComponentProps<TValue> = {
     onValueChange: (newValue: TValue) => void;

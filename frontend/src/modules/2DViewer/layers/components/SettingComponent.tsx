@@ -33,8 +33,8 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     const isInitialized = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.INIT_STATE_CHANGED);
     const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
 
-    let actuallyLoading = isLoading && !isInitialized;
-    if (isPersisted && !isValid && isInitialized) {
+    let actuallyLoading = isLoading || !isInitialized;
+    if (isPersisted && !isValid) {
         actuallyLoading = false;
     }
 
