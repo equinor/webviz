@@ -213,31 +213,40 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
 
     return (
         <div
-            className={resolveClassNames("outline mb-4 rounded-md", {
+            className={resolveClassNames("rounded-md", {
                 "cursor-pointer": !props.isActive,
-                "hover:opacity-75 transition-opacity duration-100": !props.isActive && props.isAnotherFilterActive,
-                "hover:outline-blue-400 hover:shadow-blue-400 hover:shadow-md":
-                    !props.isActive && !props.isAnotherFilterActive,
-                "outline-orange-400 shadow-orange-400 shadow-lg": props.isActive && props.hasUnsavedSelections,
-                "outline-blue-400 shadow-blue-400 shadow-lg": props.isActive && !props.hasUnsavedSelections,
-                "opacity-100": props.isActive || !props.isAnotherFilterActive,
-                "opacity-60 ": !props.isActive && props.isAnotherFilterActive && props.hasUnsavedSelections,
-                "opacity-30": !props.isActive && props.isAnotherFilterActive && !props.hasUnsavedSelections,
-                "outline-2 outline-orange-400 shadow-orange-400 shadow-lg":
-                    !props.isActive && props.hasUnsavedSelections,
-                "outline-2 outline-gray-300 shadow-gray-300 shadow-md": !props.isActive && !props.hasUnsavedSelections,
+                "ring ring-opacity-100 shadow-lg": props.isActive,
+                "ring-2 ring-opacity-50": !props.isActive && props.isAnotherFilterActive,
+                "ring-2 ring-opacity-100": !props.isActive && !props.isAnotherFilterActive,
+                "ring-orange-400 shadow-orange-400": props.hasUnsavedSelections,
+                "ring-blue-400 shadow-blue-400": !props.hasUnsavedSelections && props.isActive,
+                "ring-gray-300 shadow-gray-300 ": !props.hasUnsavedSelections && !props.isActive,
+                "hover:ring-blue-400 hover:shadow-blue-400 hover:shadow-md":
+                    !props.hasUnsavedSelections && !props.isActive && !props.isAnotherFilterActive,
+                "hover:shadow-blue-400 hover:shadow-lg shadow-md":
+                    props.hasUnsavedSelections && !props.isActive && !props.isAnotherFilterActive,
+                "group hover:shadow-md hover:ring-opacity-75 transition-opacity duration-100":
+                    !props.isActive && props.isAnotherFilterActive,
             })}
+            title={!props.isActive ? "Click to open filter" : undefined}
         >
-            <div className={`flex justify-center items-center p-2 rounded-md bg-slate-100 h-12 cursor-pointer`}>
+            <div className="flex justify-center items-center bg-slate-100 h-12 rounded-tl-md rounded-tr-md">
                 <div
-                    className="font-bold flex-grow text-sm overflow-ellipsis overflow-hidden whitespace-nowrap"
-                    title={`Ensemble: ${props.ensembleName}`}
+                    className={resolveClassNames(
+                        "flex-grow h-full pl-2 flex items-center cursor-pointer font-bold text-sm overflow-ellipsis overflow-hidden whitespace-nowrap",
+                        {
+                            "pr-2": !props.hasUnsavedSelections,
+                            "opacity-20 group-hover:opacity-75 transition-opacity duration-100":
+                                !props.isActive && props.isAnotherFilterActive,
+                        }
+                    )}
+                    title={props.isActive ? `Ensemble: ${props.ensembleName}` : undefined}
                     onClick={handleHeaderOnClick}
                 >
                     {props.ensembleName}
                 </div>
                 <div
-                    className={resolveClassNames("flex items-center gap-1", {
+                    className={resolveClassNames("flex h-full items-center gap-1 pr-2", {
                         hidden: !props.hasUnsavedSelections,
                     })}
                 >
@@ -260,7 +269,13 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                     />
                 </div>
             </div>
-            <div onClickCapture={handleBodyOnClickCapture}>
+            <div
+                className={resolveClassNames({
+                    "opacity-20 group-hover:opacity-75 transition-opacity duration-100":
+                        !props.isActive && props.isAnotherFilterActive,
+                })}
+                onClickCapture={handleBodyOnClickCapture}
+            >
                 <div className="flex flex-col gap-2 p-2">
                     <div className="border border-lightgrey p-2 rounded-md">
                         <RealizationNumberDisplay
