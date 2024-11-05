@@ -29,7 +29,7 @@ export class StatisticalSurfaceLayer
         this._layerDelegate = new LayerDelegate(
             this,
             layerManager,
-            new StatisticalSurfaceContext(),
+            new StatisticalSurfaceContext(layerManager),
             LayerColoringType.COLORSCALE
         );
     }
