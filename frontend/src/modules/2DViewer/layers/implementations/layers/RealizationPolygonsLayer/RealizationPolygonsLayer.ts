@@ -1,5 +1,6 @@
 import { PolygonData_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
@@ -18,9 +19,14 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
     private _layerDelegate: LayerDelegate<RealizationPolygonsSettings, PolygonData_api[]>;
     private _itemDelegate: ItemDelegate;
 
-    constructor() {
-        this._itemDelegate = new ItemDelegate("Realization Polygons");
-        this._layerDelegate = new LayerDelegate(this, new RealizationPolygonsContext(), LayerColoringType.NONE);
+    constructor(layerManager: LayerManager) {
+        this._itemDelegate = new ItemDelegate("Realization Polygons", layerManager);
+        this._layerDelegate = new LayerDelegate(
+            this,
+            layerManager,
+            new RealizationPolygonsContext(layerManager),
+            LayerColoringType.NONE
+        );
     }
 
     getSettingsContext() {

@@ -33,10 +33,10 @@ export class LayerDelegate<TSettings extends Settings, TData>
 {
     private _owner: Layer<TSettings, TData>;
     private _settingsContext: SettingsContext<TSettings>;
-    private _layerManager: LayerManager | null = null;
+    private _layerManager: LayerManager;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _cancellationPending: boolean = false;
-    private _publishSubscribeHandler = new PublishSubscribeDelegate<LayerDelegateTopic>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerDelegateTopic>();
     private _queryKeys: unknown[][] = [];
     private _status: LayerStatus = LayerStatus.IDLE;
     private _data: TData | null = null;
@@ -48,26 +48,56 @@ export class LayerDelegate<TSettings extends Settings, TData>
 
     constructor(
         owner: Layer<TSettings, TData>,
+        layerManager: LayerManager,
         settingsContext: SettingsContext<TSettings>,
         coloringType: LayerColoringType
     ) {
         this._owner = owner;
+        this._layerManager = layerManager;
         this._settingsContext = settingsContext;
+        this._coloringType = coloringType;
+
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "settings-context",
             this._settingsContext
                 .getDelegate()
-                .getPublishSubscribeHandler()
+                .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
                 this.handleSettingsChange();
             })
         );
 
-        this._coloringType = coloringType;
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "layer-manager",
+            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(() => {
+                this.handleSharedSettingsChanged();
+            })
+        );
+
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "layer-manager",
+            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.SETTINGS_CHANGED)(
+                () => {
+                    this.handleSharedSettingsChanged();
+                }
+            )
+        );
     }
 
     handleSettingsChange(): void {
         this._cancellationPending = true;
+        if (!this._settingsContext.getDelegate().areAllSettingsLoaded()) {
+            this.setStatus(LayerStatus.LOADING);
+            return;
+        }
+        if (this._settingsContext.getDelegate().isAnyPersistedSettingNotValid()) {
+            this.setStatus(LayerStatus.INVALID_SETTINGS);
+            return;
+        }
+        if (!this._settingsContext.getDelegate().areAllSettingsInitialized()) {
+            this.setStatus(LayerStatus.LOADING);
+            return;
+        }
         if (this._settingsContext.getDelegate().areCurrentSettingsValid()) {
             this.maybeCancelQuery().then(() => {
                 this.maybeRefetchData();
@@ -108,7 +138,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
 
     setIsSubordinated(isSubordinated: boolean): void {
         this._isSubordinated = isSubordinated;
-        this._publishSubscribeHandler.notifySubscribers(LayerDelegateTopic.SUBORDINATED);
+        this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.SUBORDINATED);
     }
 
     private invalidateBoundingBox(): void {
@@ -121,38 +151,6 @@ export class LayerDelegate<TSettings extends Settings, TData>
 
     getValueRange(): [number, number] | null {
         return this._valueRange;
-    }
-
-    setLayerManager(layerManager: LayerManager | null): void {
-        if (this._layerManager === layerManager) {
-            return;
-        }
-
-        this._layerManager = layerManager;
-        this._settingsContext.getDelegate().setLayerManager(layerManager);
-
-        if (layerManager) {
-            const unsubscribeFunc1 = layerManager
-                .getPublishSubscribeHandler()
-                .makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(() => {
-                this.handleSharedSettingsChanged();
-            });
-
-            const unsubscribeFunc2 = layerManager
-                .getPublishSubscribeHandler()
-                .makeSubscriberFunction(LayerManagerTopic.SETTINGS_CHANGED)(() => {
-                this.handleSharedSettingsChanged();
-            });
-
-            this._unsubscribeHandler.registerUnsubscribeFunction("layer-manager", unsubscribeFunc1);
-            this._unsubscribeHandler.registerUnsubscribeFunction("layer-manager", unsubscribeFunc2);
-
-            if (this._settingsContext.getDelegate().areCurrentSettingsValid()) {
-                this.maybeRefetchData();
-            }
-        } else {
-            this._unsubscribeHandler.unsubscribe("layer-manager");
-        }
     }
 
     handleSharedSettingsChanged(): void {
@@ -175,9 +173,6 @@ export class LayerDelegate<TSettings extends Settings, TData>
     }
 
     getLayerManager(): LayerManager {
-        if (this._layerManager === null) {
-            throw new Error("LayerManager not set");
-        }
         return this._layerManager;
     }
 
@@ -197,8 +192,8 @@ export class LayerDelegate<TSettings extends Settings, TData>
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeDelegate<LayerDelegateTopic> {
-        return this._publishSubscribeHandler;
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<LayerDelegateTopic> {
+        return this._publishSubscribeDelegate;
     }
 
     getError(): StatusMessage | string | null {
@@ -221,7 +216,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
     private setStatus(status: LayerStatus): void {
         this._status = status;
         this._layerManager?.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
-        this._publishSubscribeHandler.notifySubscribers(LayerDelegateTopic.STATUS);
+        this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.STATUS);
     }
 
     private getQueryClient(): QueryClient | null {
@@ -291,7 +286,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
                 );
             }
             this._queryKeys = [];
-            this._publishSubscribeHandler.notifySubscribers(LayerDelegateTopic.DATA);
+            this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.DATA);
             this.setStatus(LayerStatus.SUCCESS);
         } catch (error: any) {
             if (error.constructor?.name === "CancelledError") {

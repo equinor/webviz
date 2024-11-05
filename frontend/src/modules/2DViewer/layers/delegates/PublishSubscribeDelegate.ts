@@ -4,21 +4,11 @@ export type TopicPayloads<TTopic extends string> = Record<TTopic, any>;
 
 export interface PublishSubscribe<TTopic extends string, TTopicPayloads extends TopicPayloads<TTopic>> {
     makeSnapshotGetter<T extends TTopic>(topic: T): () => TTopicPayloads[T];
-    getPublishSubscribeHandler(): PublishSubscribeDelegate<TTopic>;
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<TTopic>;
 }
 
 export class PublishSubscribeDelegate<TTopic extends string> {
     private _subscribers = new Map<TTopic, Set<() => void>>();
-
-    subscribe(topic: TTopic, subscriber: () => void): () => void {
-        const subscribers = this._subscribers.get(topic) ?? new Set();
-        subscribers.add(subscriber);
-        this._subscribers.set(topic, subscribers);
-
-        return () => {
-            subscribers.delete(subscriber);
-        };
-    }
 
     notifySubscribers(topic: TTopic): void {
         const subscribers = this._subscribers.get(topic);
@@ -48,7 +38,7 @@ export function usePublishSubscribeTopicValue<TTopic extends string, TTopicPaylo
     topic: TTopic
 ): TTopicPayloads[TTopic] {
     const value = React.useSyncExternalStore<TTopicPayloads[TTopic]>(
-        publishSubscribe.getPublishSubscribeHandler().makeSubscriberFunction(topic),
+        publishSubscribe.getPublishSubscribeDelegate().makeSubscriberFunction(topic),
         publishSubscribe.makeSnapshotGetter(topic)
     );
 

@@ -129,29 +129,29 @@ export function instanceofLayer(item: Item): item is Layer<Settings, any> {
     );
 }
 
-export interface GetDep<TSettings extends Settings, TKey extends keyof TSettings> {
+export interface GetHelperDependency<TSettings extends Settings, TKey extends keyof TSettings> {
     <TDep>(dep: Dependency<TDep, TSettings, TKey>): Awaited<TDep> | null;
 }
 
 export interface UpdateFunc<TReturnValue, TSettings extends Settings, TKey extends keyof TSettings> {
     (args: {
-        getSetting: <K extends TKey>(settingName: K) => TSettings[K];
+        getLocalSetting: <K extends TKey>(settingName: K) => TSettings[K];
         getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-        getDep: GetDep<TSettings, TKey>;
+        getHelperDependency: GetHelperDependency<TSettings, TKey>;
         abortSignal: AbortSignal;
     }): TReturnValue;
 }
 
-export interface DefineDependenciesArgs<TSettings extends Settings, TKey extends keyof TSettings> {
+export interface DefineDependenciesArgs<TSettings extends Settings, TKey extends keyof TSettings = keyof TSettings> {
     availableSettingsUpdater: (
         settingName: TKey,
         update: UpdateFunc<AvailableValuesType<Exclude<TSettings[TKey], null>>, TSettings, TKey>
     ) => Dependency<AvailableValuesType<Exclude<TSettings[TKey], null>>, TSettings, TKey>;
-    dep: <T>(
+    helperDependency: <T>(
         update: (args: {
-            getSetting: <T extends TKey>(settingName: T) => TSettings[T];
+            getLocalSetting: <T extends TKey>(settingName: T) => TSettings[T];
             getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-            getDep: <TDep>(dep: Dependency<TDep, TSettings, TKey>) => TDep | null;
+            getHelperDependency: <TDep>(helperDependency: Dependency<TDep, TSettings, TKey>) => TDep | null;
             abortSignal: AbortSignal;
         }) => T
     ) => Dependency<T, TSettings, TKey>;
@@ -191,23 +191,5 @@ export interface Setting<TValue> {
     serializeValue?: (value: TValue) => string;
     deserializeValue?: (serializedValue: string) => TValue;
 }
-
-export enum SettingTopic {
-    VALUE_CHANGED = "VALUE_CHANGED",
-    VALIDITY_CHANGED = "VALIDITY_CHANGED",
-    AVAILABLE_VALUES_CHANGED = "AVAILABLE_VALUES_CHANGED",
-    OVERRIDDEN_CHANGED = "OVERRIDDEN_CHANGED",
-    LOADING_STATE_CHANGED = "LOADING_STATE_CHANGED",
-    PERSISTED_STATE_CHANGED = "PERSISTED_STATE_CHANGED",
-}
-
-export type SettingTopicPayloads<TValue> = {
-    [SettingTopic.VALUE_CHANGED]: TValue;
-    [SettingTopic.VALIDITY_CHANGED]: boolean;
-    [SettingTopic.AVAILABLE_VALUES_CHANGED]: Exclude<TValue, null>[];
-    [SettingTopic.OVERRIDDEN_CHANGED]: TValue | undefined;
-    [SettingTopic.LOADING_STATE_CHANGED]: boolean;
-    [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
-};
 
 export type Settings = { [key in SettingType]?: any };

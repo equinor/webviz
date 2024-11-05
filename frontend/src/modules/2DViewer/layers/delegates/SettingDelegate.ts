@@ -3,17 +3,38 @@ import { v4 } from "uuid";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 
-import { AvailableValuesType, Setting, SettingTopic, SettingTopicPayloads } from "../interfaces";
+import { AvailableValuesType, Setting } from "../interfaces";
+
+export enum SettingTopic {
+    VALUE_CHANGED = "VALUE_CHANGED",
+    VALIDITY_CHANGED = "VALIDITY_CHANGED",
+    AVAILABLE_VALUES_CHANGED = "AVAILABLE_VALUES_CHANGED",
+    OVERRIDDEN_CHANGED = "OVERRIDDEN_CHANGED",
+    LOADING_STATE_CHANGED = "LOADING_STATE_CHANGED",
+    INIT_STATE_CHANGED = "INIT_STATE_CHANGED",
+    PERSISTED_STATE_CHANGED = "PERSISTED_STATE_CHANGED",
+}
+
+export type SettingTopicPayloads<TValue> = {
+    [SettingTopic.VALUE_CHANGED]: TValue;
+    [SettingTopic.VALIDITY_CHANGED]: boolean;
+    [SettingTopic.AVAILABLE_VALUES_CHANGED]: Exclude<TValue, null>[];
+    [SettingTopic.OVERRIDDEN_CHANGED]: TValue | undefined;
+    [SettingTopic.LOADING_STATE_CHANGED]: boolean;
+    [SettingTopic.INIT_STATE_CHANGED]: boolean;
+    [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
+};
 
 export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, SettingTopicPayloads<TValue>> {
     private _id: string;
     private _owner: Setting<TValue>;
     private _value: TValue;
     private _isValueValid: boolean = false;
-    private _publishSubscribeHandler = new PublishSubscribeDelegate<SettingTopic>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopic>();
     private _availableValues: AvailableValuesType<TValue> = [] as AvailableValuesType<TValue>;
     private _overriddenValue: TValue | undefined = undefined;
     private _loading: boolean = false;
+    private _initialized: boolean = false;
     private _currentValueFromPersistence: TValue | null = null;
 
     constructor(value: TValue, owner: Setting<TValue>) {
@@ -79,7 +100,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
 
         this.checkIfValueIsValid();
 
-        this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
     }
 
     setIsValueValid(isValueValid: boolean): void {
@@ -87,15 +108,31 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             return;
         }
         this._isValueValid = isValueValid;
-        this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALIDITY_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALIDITY_CHANGED);
     }
 
-    setLoadingState(loading: boolean): void {
+    setIsLoading(loading: boolean): void {
         if (this._loading === loading) {
             return;
         }
         this._loading = loading;
-        this._publishSubscribeHandler.notifySubscribers(SettingTopic.LOADING_STATE_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.LOADING_STATE_CHANGED);
+    }
+
+    setInitialized(): void {
+        if (this._initialized) {
+            return;
+        }
+        this._initialized = true;
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INIT_STATE_CHANGED);
+    }
+
+    getIsInitialized(): boolean {
+        return this._initialized;
+    }
+
+    getIsLoading(): boolean {
+        return this._loading;
     }
 
     setOverriddenValue(overriddenValue: TValue | undefined): void {
@@ -103,8 +140,8 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             return;
         }
         this._overriddenValue = overriddenValue;
-        this._publishSubscribeHandler.notifySubscribers(SettingTopic.OVERRIDDEN_CHANGED);
-        this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
     }
 
     makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TValue>[T] {
@@ -127,13 +164,16 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             if (topic === SettingTopic.PERSISTED_STATE_CHANGED) {
                 return this.isPersistedValue();
             }
+            if (topic === SettingTopic.INIT_STATE_CHANGED) {
+                return this._initialized;
+            }
         };
 
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeDelegate<SettingTopic> {
-        return this._publishSubscribeHandler;
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SettingTopic> {
+        return this._publishSubscribeDelegate;
     }
 
     getAvailableValues(): AvailableValuesType<TValue> {
@@ -223,15 +263,18 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             return;
         }
 
+        this.setInitialized();
+
         this._availableValues = availableValues;
         let valueChanged = false;
         if (this.maybeFixupValue() || this.maybeResetPersistedValue()) {
             valueChanged = true;
         }
+        const prevIsValid = this._isValueValid;
         this.checkIfValueIsValid();
-        if (valueChanged) {
-            this._publishSubscribeHandler.notifySubscribers(SettingTopic.VALUE_CHANGED);
+        if (valueChanged || this._isValueValid !== prevIsValid) {
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
         }
-        this._publishSubscribeHandler.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);
     }
 }

@@ -1,5 +1,6 @@
 import { SurfaceDataPng_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
@@ -23,9 +24,14 @@ export class ObservedSurfaceLayer
     private _layerDelegate: LayerDelegate<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>;
     private _itemDelegate: ItemDelegate;
 
-    constructor() {
-        this._itemDelegate = new ItemDelegate("Observed Surface");
-        this._layerDelegate = new LayerDelegate(this, new ObservedSurfaceContext(), LayerColoringType.COLORSCALE);
+    constructor(layerManager: LayerManager) {
+        this._itemDelegate = new ItemDelegate("Observed Surface", layerManager);
+        this._layerDelegate = new LayerDelegate(
+            this,
+            layerManager,
+            new ObservedSurfaceContext(layerManager),
+            LayerColoringType.COLORSCALE
+        );
     }
 
     getSettingsContext() {

@@ -1,5 +1,6 @@
 import { WellboreTrajectory_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
@@ -17,9 +18,14 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
     private _layerDelegate: LayerDelegate<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]>;
     private _itemDelegate: ItemDelegate;
 
-    constructor() {
-        this._itemDelegate = new ItemDelegate("Drilled Wellbore trajectories");
-        this._layerDelegate = new LayerDelegate(this, new DrilledWellTrajectoriesContext(), LayerColoringType.NONE);
+    constructor(layerManager: LayerManager) {
+        this._itemDelegate = new ItemDelegate("Drilled Wellbore trajectories", layerManager);
+        this._layerDelegate = new LayerDelegate(
+            this,
+            layerManager,
+            new DrilledWellTrajectoriesContext(),
+            LayerColoringType.NONE
+        );
     }
 
     getSettingsContext() {

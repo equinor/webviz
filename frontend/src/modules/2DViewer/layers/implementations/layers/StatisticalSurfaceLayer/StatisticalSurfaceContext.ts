@@ -1,6 +1,7 @@
 import { SurfaceMetaSet_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { Ensemble as FrameworkEnsemble } from "@framework/Ensemble";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 
 import { isEqual } from "lodash";
@@ -21,11 +22,11 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
     private _contextDelegate: SettingsContextDelegate<StatisticalSurfaceSettings>;
     private _fetchDataCache: SurfaceMetaSet_api | null = null;
 
-    constructor() {
+    constructor(layerManager: LayerManager) {
         this._contextDelegate = new SettingsContextDelegate<
             StatisticalSurfaceSettings,
             keyof StatisticalSurfaceSettings
-        >(this, {
+        >(this, layerManager, {
             [SettingType.ENSEMBLE]: new Ensemble(),
             [SettingType.STATISTIC_FUNCTION]: new StatisticFunction(),
             [SettingType.SENSITIVITY]: new Sensitivity(),
@@ -68,10 +69,10 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._fetchDataCache = null;
 
-            settings[SettingType.SENSITIVITY].getDelegate().setLoadingState(true);
-            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(true);
-            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
+            settings[SettingType.SENSITIVITY].getDelegate().setIsLoading(true);
+            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setIsLoading(true);
+            settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(true);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(true);
 
             try {
                 this._fetchDataCache = await queryClient.fetchQuery({
@@ -85,17 +86,17 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
                     gcTime: CACHE_TIME,
                 });
             } catch (e) {
-                settings[SettingType.SENSITIVITY].getDelegate().setLoadingState(false);
-                settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
-                settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
-                settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+                settings[SettingType.SENSITIVITY].getDelegate().setIsLoading(false);
+                settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setIsLoading(false);
+                settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(false);
+                settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(false);
                 return FetchDataFunctionResult.ERROR;
             }
 
-            settings[SettingType.SENSITIVITY].getDelegate().setLoadingState(false);
-            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
-            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+            settings[SettingType.SENSITIVITY].getDelegate().setIsLoading(false);
+            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setIsLoading(false);
+            settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(false);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(false);
         }
 
         if (!this._fetchDataCache) {

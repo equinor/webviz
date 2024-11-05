@@ -6,7 +6,8 @@ import { Warning } from "@mui/icons-material";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
 import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
-import { Setting, SettingComponentProps as SettingComponentPropsInterface, SettingTopic } from "../interfaces";
+import { SettingTopic } from "../delegates/SettingDelegate";
+import { Setting, SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";
 
 export type SettingComponentProps<TValue> = {
     setting: Setting<TValue>;
@@ -29,7 +30,13 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     );
     const overriddenValue = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.OVERRIDDEN_CHANGED);
     const isLoading = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.LOADING_STATE_CHANGED);
+    const isInitialized = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.INIT_STATE_CHANGED);
     const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+
+    let actuallyLoading = isLoading && !isInitialized;
+    if (isPersisted && !isValid && isInitialized) {
+        actuallyLoading = false;
+    }
 
     function handleValueChanged(newValue: TValue) {
         props.setting.getDelegate().setValue(newValue);
@@ -43,9 +50,13 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
         <React.Fragment key={props.setting.getDelegate().getId()}>
             <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
             <div className="p-0.5 px-2 w-full">
-                <PendingWrapper isPending={isLoading}>
+                <PendingWrapper isPending={actuallyLoading}>
                     <div className="flex flex-col gap-1 min-w-0">
-                        <div className={resolveClassNames({ "outline outline-red-500 outline-1": !isValid })}>
+                        <div
+                            className={resolveClassNames({
+                                "outline outline-red-500 outline-1": !isValid && isInitialized,
+                            })}
+                        >
                             <componentRef.current
                                 onValueChange={handleValueChanged}
                                 value={value}
@@ -58,7 +69,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
                                 workbenchSettings={props.manager.getWorkbenchSettings()}
                             />
                         </div>
-                        {isPersisted && !isLoading && (
+                        {isPersisted && !isLoading && isInitialized && (
                             <span
                                 className="text-xs flex items-center gap-1 text-orange-600"
                                 title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."

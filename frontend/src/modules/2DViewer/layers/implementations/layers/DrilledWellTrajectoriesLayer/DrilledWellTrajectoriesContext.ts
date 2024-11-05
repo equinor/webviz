@@ -1,5 +1,6 @@
 import { WellboreHeader_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
@@ -13,11 +14,11 @@ import { Ensemble } from "../../settings/Ensemble";
 export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWellTrajectoriesSettings> {
     private _contextDelegate: SettingsContextDelegate<DrilledWellTrajectoriesSettings>;
 
-    constructor() {
+    constructor(layerManager: LayerManager) {
         this._contextDelegate = new SettingsContextDelegate<
             DrilledWellTrajectoriesSettings,
             keyof DrilledWellTrajectoriesSettings
-        >(this, {
+        >(this, layerManager, {
             [SettingType.ENSEMBLE]: new Ensemble(),
             [SettingType.SMDA_WELLBORE_HEADERS]: new DrilledWellbores(),
         });
@@ -64,7 +65,7 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
             fieldIdentifier = ensemble.getFieldIdentifier();
         }
 
-        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(true);
+        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setIsLoading(true);
 
         try {
             fetchedData = await queryClient.fetchQuery({
@@ -74,11 +75,11 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
                 gcTime: CACHE_TIME,
             });
         } catch (e) {
-            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
+            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setIsLoading(false);
             return FetchDataFunctionResult.ERROR;
         }
 
-        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
+        settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setIsLoading(false);
 
         if (!fetchedData) {
             return FetchDataFunctionResult.IN_PROGRESS;

@@ -1,3 +1,4 @@
+import { LayerManager } from "./LayerManager";
 import { GroupDelegate, GroupDelegateTopic } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { LayerDelegate } from "./delegates/LayerDelegate";
@@ -11,13 +12,20 @@ export class DeltaSurface implements Group {
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _childrenLayerDelegateSet: Set<LayerDelegate<any, any>> = new Set();
 
-    constructor(name: string) {
+    constructor(name: string, layerManager: LayerManager) {
         this._groupDelegate = new GroupDelegate(this);
-        this._groupDelegate.getPublishSubscribeHandler().subscribe(GroupDelegateTopic.CHILDREN, () => {
-            this.handleChildrenChange();
-        });
+
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "children",
+            this._groupDelegate.getPublishSubscribeDelegate().makeSubscriberFunction(GroupDelegateTopic.CHILDREN)(
+                () => {
+                    this.handleChildrenChange();
+                }
+            )
+        );
+
         this._groupDelegate.setColor("rgb(220, 210, 180)");
-        this._itemDelegate = new ItemDelegate(name);
+        this._itemDelegate = new ItemDelegate(name, layerManager);
     }
 
     private handleChildrenChange(): void {
@@ -34,15 +42,16 @@ export class DeltaSurface implements Group {
                 child.getLayerDelegate().setIsSubordinated(true);
                 const layerDelegate = child.getLayerDelegate();
                 this._childrenLayerDelegateSet.add(layerDelegate);
+
                 this._unsubscribeHandler.registerUnsubscribeFunction(
                     "layer-delegates",
                     layerDelegate
                         .getSettingsContext()
                         .getDelegate()
-                        .getPublishSubscribeHandler()
-                        .subscribe(SettingsContextDelegateTopic.SETTINGS_CHANGED, () => {
-                            this.handleSettingsChange();
-                        })
+                        .getPublishSubscribeDelegate()
+                        .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
+                        this.handleSettingsChange();
+                    })
                 );
             }
         }

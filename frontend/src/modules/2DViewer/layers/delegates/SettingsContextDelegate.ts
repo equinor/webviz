@@ -1,6 +1,7 @@
 import { isEqual } from "lodash";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
+import { SettingTopic } from "./SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { Dependency } from "../Dependency";
@@ -10,7 +11,6 @@ import {
     FetchDataFunctionResult,
     SerializedSettingsState,
     Setting,
-    SettingTopic,
     Settings,
     SettingsContext,
     UpdateFunc,
@@ -48,24 +48,38 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     implements PublishSubscribe<SettingsContextDelegateTopic, SettingsContextDelegatePayloads>
 {
     private _parentContext: SettingsContext<TSettings, TKey>;
-    private _layerManager: LayerManager | null = null;
+    private _layerManager: LayerManager;
     private _settings: { [K in TKey]: Setting<TSettings[K]> } = {} as { [K in TKey]: Setting<TSettings[K]> };
     private _cachedValues: { [K in TKey]?: TSettings[K] } = {} as { [K in TKey]?: TSettings[K] };
     private _overriddenSettings: { [K in TKey]: TSettings[K] } = {} as { [K in TKey]: TSettings[K] };
-    private _publishSubscribeHandler = new PublishSubscribeDelegate<SettingsContextDelegateTopic>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegateTopic>();
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _loadingStatus: SettingsContextLoadingState = SettingsContextLoadingState.LOADED;
 
-    constructor(context: SettingsContext<TSettings, TKey>, settings: { [K in TKey]: Setting<TSettings[K]> }) {
+    constructor(
+        context: SettingsContext<TSettings, TKey>,
+        layerManager: LayerManager,
+        settings: { [K in TKey]: Setting<TSettings[K]> }
+    ) {
         this._parentContext = context;
+        this._layerManager = layerManager;
 
         for (const key in settings) {
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "settings",
                 settings[key]
                     .getDelegate()
-                    .getPublishSubscribeHandler()
+                    .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
+                    this.handleSettingsChanged();
+                })
+            );
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "settings",
+                settings[key]
+                    .getDelegate()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(SettingTopic.LOADING_STATE_CHANGED)(() => {
                     this.handleSettingsChanged();
                 })
             );
@@ -73,12 +87,11 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
 
         this._settings = settings;
         this._cachedValues = { ...this.getValues() };
+
+        this.createDependencies();
     }
 
     getLayerManager(): LayerManager {
-        if (!this._layerManager) {
-            throw new Error("LayerManager not set");
-        }
         return this._layerManager;
     }
 
@@ -95,32 +108,6 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         return settings;
     }
 
-    setLayerManager(layerManager: LayerManager | null): void {
-        this._layerManager = layerManager;
-        if (layerManager) {
-            this.createDependencies();
-
-            const settings: { [K in TKey]: TSettings[K] } = {} as { [K in TKey]: TSettings[K] };
-            for (const key in this._settings) {
-                settings[key] = this._settings[key].getDelegate().getValue();
-            }
-            // this._parentContext.fetchData(this._cachedValues, this.getValues());
-            /*
-            this._unsubscribeHandler.registerUnsubscribeFunction(
-                "global-settings",
-                layerManager.getPublishSubscribeHandler().subscribe(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED, () => {
-                    this.fetchData();
-                })
-            );
-            */
-        } else {
-            this._unsubscribeHandler.unsubscribe("global-settings");
-        }
-
-        this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
-        this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED);
-    }
-
     private async fetchData(): Promise<FetchDataFunctionResult> {
         this.setLoadingState(SettingsContextLoadingState.LOADING);
         const values = this.getValues();
@@ -135,7 +122,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
 
     private setLoadingState(loadingState: SettingsContextLoadingState): void {
         this._loadingStatus = loadingState;
-        this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE);
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE);
     }
 
     getLoadingState(): SettingsContextLoadingState {
@@ -163,6 +150,39 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         return this._parentContext.areCurrentSettingsValid();
     }
 
+    areAllSettingsLoaded(): boolean {
+        for (const key in this._settings) {
+            if (this._settings[key].getDelegate().getIsLoading()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    areAllSettingsInitialized(): boolean {
+        for (const key in this._settings) {
+            if (!this._settings[key].getDelegate().getIsInitialized()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    isAnyPersistedSettingNotValid(): boolean {
+        for (const key in this._settings) {
+            if (
+                this._settings[key].getDelegate().isPersistedValue() &&
+                !this._settings[key].getDelegate().isValueValid()
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     getInvalidSettings(): string[] {
         const invalidSettings: string[] = [];
         for (const key in this._settings) {
@@ -175,7 +195,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     }
 
     private handleSettingsChanged() {
-        this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
         this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
         return;
         const values = this.getValues();
@@ -183,7 +203,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             this.fetchData().then((result) => {
                 this._cachedValues = { ...values };
                 if (result === FetchDataFunctionResult.SUCCESS) {
-                    this._publishSubscribeHandler.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
+                    this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
                     this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
                 }
             });
@@ -223,8 +243,8 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeDelegate<SettingsContextDelegateTopic> {
-        return this._publishSubscribeHandler;
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SettingsContextDelegateTopic> {
+        return this._publishSubscribeDelegate;
     }
 
     serializeSettings(): SerializedSettingsState<TSettings> {
@@ -248,10 +268,10 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             };
             this._settings[key]
                 .getDelegate()
-                .getPublishSubscribeHandler()
+                .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(handleChange);
 
-            this.getPublishSubscribeHandler().makeSubscriberFunction(
+            this.getPublishSubscribeDelegate().makeSubscriberFunction(
                 SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED
             )(handleChange);
 
@@ -266,7 +286,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
                 handler(this.getLayerManager.bind(this)().getGlobalSetting(key));
             };
             this.getLayerManager()
-                .getPublishSubscribeHandler()
+                .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED)(handleChange);
 
             return handleChange;
@@ -291,7 +311,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             });
 
             dependency.subscribeLoading((loading: boolean) => {
-                this._settings[settingKey].getDelegate().setLoadingState(loading);
+                this._settings[settingKey].getDelegate().setIsLoading(loading);
             });
 
             dependency.callUpdateFunc();
@@ -299,11 +319,11 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             return dependency;
         };
 
-        const dep = <T>(
+        const helperDependency = <T>(
             update: (args: {
-                getSetting: <T extends TKey>(settingName: T) => TSettings[T];
+                getLocalSetting: <T extends TKey>(settingName: T) => TSettings[T];
                 getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-                getDep: <TDep>(dep: Dependency<TDep, TSettings, TKey>) => TDep | null;
+                getHelperDependency: <TDep>(dep: Dependency<TDep, TSettings, TKey>) => TDep | null;
                 abortSignal: AbortSignal;
             }) => T
         ) => {
@@ -322,7 +342,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         if (this._parentContext.defineDependencies) {
             this._parentContext.defineDependencies({
                 availableSettingsUpdater,
-                dep,
+                helperDependency,
                 workbenchSession: this.getLayerManager().getWorkbenchSession(),
                 workbenchSettings: this.getLayerManager().getWorkbenchSettings(),
                 queryClient: this.getLayerManager().getQueryClient(),

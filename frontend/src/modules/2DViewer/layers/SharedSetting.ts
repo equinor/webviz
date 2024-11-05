@@ -1,60 +1,54 @@
 import { LayerManager, LayerManagerTopic } from "./LayerManager";
-import { ItemDelegate, ItemDelegateTopic } from "./delegates/ItemDelegate";
+import { ItemDelegate } from "./delegates/ItemDelegate";
+import { SettingTopic } from "./delegates/SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelegate";
-import { Item, Layer, SerializedSharedSetting, Setting, SettingTopic, instanceofLayer } from "./interfaces";
+import { Item, Layer, SerializedSharedSetting, Setting, instanceofLayer } from "./interfaces";
 
 export class SharedSetting implements Item {
     private _wrappedSetting: Setting<any>;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _itemDelegate: ItemDelegate;
 
-    constructor(wrappedSetting: Setting<any>) {
+    constructor(wrappedSetting: Setting<any>, layerManager: LayerManager) {
         this._wrappedSetting = wrappedSetting;
-        this._wrappedSetting
-            .getDelegate()
-            .getPublishSubscribeHandler()
-            .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
-            this.publishValueChange();
-        });
-        this._itemDelegate = new ItemDelegate(wrappedSetting.getLabel());
-        this._itemDelegate.getPublishSubscribeHandler().makeSubscriberFunction(ItemDelegateTopic.LAYER_MANAGER)(() => {
-            this.handleLayerManagerChange(this._itemDelegate.getLayerManager());
-        });
+
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "setting",
+            this._wrappedSetting
+                .getDelegate()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
+                this.publishValueChange();
+            })
+        );
+        this._itemDelegate = new ItemDelegate(wrappedSetting.getLabel(), layerManager);
+
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "layer-manager",
+            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(() => {
+                this.makeIntersectionOfAvailableValues();
+            })
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "layer-manager",
+            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.SETTINGS_CHANGED)(
+                () => {
+                    this.makeIntersectionOfAvailableValues();
+                }
+            )
+        );
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "layer-manager",
+            layerManager
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED)(() => {
+                this.makeIntersectionOfAvailableValues();
+            })
+        );
     }
 
     getItemDelegate(): ItemDelegate {
         return this._itemDelegate;
-    }
-
-    handleLayerManagerChange(layerManager: LayerManager | null): void {
-        if (layerManager) {
-            this._unsubscribeHandler.registerUnsubscribeFunction(
-                "layer-manager",
-                layerManager.getPublishSubscribeHandler().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(
-                    () => {
-                        this.makeIntersectionOfAvailableValues();
-                    }
-                )
-            );
-            this._unsubscribeHandler.registerUnsubscribeFunction(
-                "layer-manager",
-                layerManager.getPublishSubscribeHandler().makeSubscriberFunction(LayerManagerTopic.SETTINGS_CHANGED)(
-                    () => {
-                        this.makeIntersectionOfAvailableValues();
-                    }
-                )
-            );
-            this._unsubscribeHandler.registerUnsubscribeFunction(
-                "layer-manager",
-                layerManager
-                    .getPublishSubscribeHandler()
-                    .makeSubscriberFunction(LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED)(() => {
-                    this.makeIntersectionOfAvailableValues();
-                })
-            );
-        } else {
-            this._unsubscribeHandler.unsubscribe("layer-manager");
-        }
     }
 
     publishValueChange(): void {

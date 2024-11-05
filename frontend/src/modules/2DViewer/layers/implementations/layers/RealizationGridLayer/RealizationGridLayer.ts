@@ -1,4 +1,5 @@
 import { apiService } from "@framework/ApiService";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
@@ -38,9 +39,14 @@ export class RealizationGridLayer
     >;
     private _itemDelegate: ItemDelegate;
 
-    constructor() {
-        this._itemDelegate = new ItemDelegate("Realization Grid layer");
-        this._layerDelegate = new LayerDelegate(this, new RealizationGridContext(), LayerColoringType.COLORSCALE);
+    constructor(layerManager: LayerManager) {
+        this._itemDelegate = new ItemDelegate("Realization Grid layer", layerManager);
+        this._layerDelegate = new LayerDelegate(
+            this,
+            layerManager,
+            new RealizationGridContext(layerManager),
+            LayerColoringType.COLORSCALE
+        );
     }
 
     getSettingsContext() {

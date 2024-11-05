@@ -1,5 +1,6 @@
 import { WellborePick_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
@@ -18,9 +19,14 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
     private _layerDelegate: LayerDelegate<DrilledWellborePicksSettings, WellborePick_api[]>;
     private _itemDelegate: ItemDelegate;
 
-    constructor() {
-        this._itemDelegate = new ItemDelegate("Drilled Wellbore picks");
-        this._layerDelegate = new LayerDelegate(this, new DrilledWellborePicksContext(), LayerColoringType.NONE);
+    constructor(layerManager: LayerManager) {
+        this._itemDelegate = new ItemDelegate("Drilled Wellbore picks", layerManager);
+        this._layerDelegate = new LayerDelegate(
+            this,
+            layerManager,
+            new DrilledWellborePicksContext(layerManager),
+            LayerColoringType.NONE
+        );
     }
 
     getSettingsContext() {

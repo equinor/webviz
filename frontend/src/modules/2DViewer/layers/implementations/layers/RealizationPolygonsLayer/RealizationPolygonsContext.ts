@@ -1,5 +1,6 @@
 import { PolygonsMeta_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
@@ -18,11 +19,11 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
     private _contextDelegate: SettingsContextDelegate<RealizationPolygonsSettings>;
     private _fetchDataCache: PolygonsMeta_api[] | null = null;
 
-    constructor() {
+    constructor(layerManager: LayerManager) {
         this._contextDelegate = new SettingsContextDelegate<
             RealizationPolygonsSettings,
             keyof RealizationPolygonsSettings
-        >(this, {
+        >(this, layerManager, {
             [SettingType.ENSEMBLE]: new Ensemble(),
             [SettingType.REALIZATION]: new Realization(),
             [SettingType.POLYGONS_ATTRIBUTE]: new PolygonsAttribute(),
@@ -69,8 +70,8 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._fetchDataCache = null;
 
-            settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setLoadingState(true);
-            settings[SettingType.POLYGONS_NAME].getDelegate().setLoadingState(true);
+            settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setIsLoading(true);
+            settings[SettingType.POLYGONS_NAME].getDelegate().setIsLoading(true);
 
             try {
                 this._fetchDataCache = await queryClient.fetchQuery({
@@ -84,13 +85,13 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
                     gcTime: CACHE_TIME,
                 });
             } catch (e) {
-                settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setLoadingState(false);
-                settings[SettingType.POLYGONS_NAME].getDelegate().setLoadingState(false);
+                settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setIsLoading(false);
+                settings[SettingType.POLYGONS_NAME].getDelegate().setIsLoading(false);
                 return FetchDataFunctionResult.ERROR;
             }
 
-            settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setLoadingState(false);
-            settings[SettingType.POLYGONS_NAME].getDelegate().setLoadingState(false);
+            settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setIsLoading(false);
+            settings[SettingType.POLYGONS_NAME].getDelegate().setIsLoading(false);
         }
 
         if (!this._fetchDataCache) {

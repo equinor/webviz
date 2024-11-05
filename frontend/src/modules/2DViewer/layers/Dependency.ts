@@ -37,8 +37,8 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         this._makeGlobalSettingGetter = makeGlobalSettingGetter;
 
         this.getGlobalSetting = this.getGlobalSetting.bind(this);
-        this.getSetting = this.getSetting.bind(this);
-        this.getDep = this.getDep.bind(this);
+        this.getLocalSetting = this.getLocalSetting.bind(this);
+        this.getHelperDependency = this.getHelperDependency.bind(this);
     }
 
     getValue(): Awaited<TReturnValue> | null {
@@ -61,7 +61,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         };
     }
 
-    private getSetting<K extends TKey>(settingName: K): TSettings[K] {
+    private getLocalSetting<K extends TKey>(settingName: K): TSettings[K] {
         if (this._cachedSettingsMap.has(settingName as string)) {
             return this._cachedSettingsMap.get(settingName as string);
         }
@@ -93,7 +93,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         return this._contextDelegate.getLayerManager().getGlobalSetting(settingName);
     }
 
-    private getDep<TDep>(dep: Dependency<TDep, TSettings, TKey>): Awaited<TDep> | null {
+    private getHelperDependency<TDep>(dep: Dependency<TDep, TSettings, TKey>): Awaited<TDep> | null {
         if (this._cachedDependenciesMap.has(dep)) {
             return this._cachedDependenciesMap.get(dep);
         }
@@ -123,9 +123,9 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         this._abortController = new AbortController();
         this.setLoadingState(true);
         const newValue = await this._updateFunc({
-            getSetting: this.getSetting,
+            getLocalSetting: this.getLocalSetting,
             getGlobalSetting: this.getGlobalSetting,
-            getDep: this.getDep,
+            getHelperDependency: this.getHelperDependency,
             abortSignal: this._abortController.signal,
         });
 
@@ -135,6 +135,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
                 callback(newValue);
             });
         }
+
         this.setLoadingState(false);
     }
 }

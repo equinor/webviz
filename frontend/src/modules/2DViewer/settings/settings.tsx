@@ -5,7 +5,6 @@ import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } f
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
-import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
@@ -78,8 +77,8 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             applyPersistedLayerManagerState();
 
             const unsubscribe = layerManagerCurrent
-                .getPublishSubscribeHandler()
-                .subscribe(LayerManagerTopic.LAYER_DATA_REVISION, persistLayerManagerState);
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(LayerManagerTopic.LAYER_DATA_REVISION)(persistLayerManagerState);
 
             return function onUnmountEffect() {
                 unsubscribe();
@@ -102,6 +101,8 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             groupDelegate = group.getGroupDelegate();
         }
 
+        const layerManager = layerManagerRef.current;
+
         const numSharedSettings = groupDelegate.findChildren((item) => {
             return item instanceof SharedSetting;
         }).length;
@@ -111,53 +112,53 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
         switch (identifier) {
             case "view":
                 groupDelegate.appendChild(
-                    new View(numViews > 0 ? `View (${numViews})` : "View", colorSet.getNextColor())
+                    new View(numViews > 0 ? `View (${numViews})` : "View", layerManager, colorSet.getNextColor())
                 );
                 return;
             case "delta-surface":
-                groupDelegate.insertChild(new DeltaSurface("Delta surface"), numSharedSettings);
+                groupDelegate.insertChild(new DeltaSurface("Delta surface", layerManager), numSharedSettings);
                 return;
             case "settings-group":
-                groupDelegate.insertChild(new SettingsGroup("Settings group"), numSharedSettings);
+                groupDelegate.insertChild(new SettingsGroup("Settings group", layerManager), numSharedSettings);
                 return;
             case "color-scale":
-                groupDelegate.prependChild(new ColorScale("Color scale"));
+                groupDelegate.prependChild(new ColorScale("Color scale", layerManager));
                 return;
             case "observed-surface":
-                groupDelegate.insertChild(new ObservedSurfaceLayer(), numSharedSettings);
+                groupDelegate.insertChild(new ObservedSurfaceLayer(layerManager), numSharedSettings);
                 return;
             case "statistical-surface":
-                groupDelegate.insertChild(new StatisticalSurfaceLayer(), numSharedSettings);
+                groupDelegate.insertChild(new StatisticalSurfaceLayer(layerManager), numSharedSettings);
                 return;
             case "realization-surface":
-                groupDelegate.insertChild(new RealizationSurfaceLayer(), numSharedSettings);
+                groupDelegate.insertChild(new RealizationSurfaceLayer(layerManager), numSharedSettings);
                 return;
             case "realization-polygons":
-                groupDelegate.insertChild(new RealizationPolygonsLayer(), numSharedSettings);
+                groupDelegate.insertChild(new RealizationPolygonsLayer(layerManager), numSharedSettings);
                 return;
             case "drilled-wellbore-trajectories":
-                groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(), numSharedSettings);
+                groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(layerManager), numSharedSettings);
                 return;
             case "drilled-wellbore-picks":
-                groupDelegate.insertChild(new DrilledWellborePicksLayer(), numSharedSettings);
+                groupDelegate.insertChild(new DrilledWellborePicksLayer(layerManager), numSharedSettings);
                 return;
             case "realization-grid":
-                groupDelegate.insertChild(new RealizationGridLayer(), numSharedSettings);
+                groupDelegate.insertChild(new RealizationGridLayer(layerManager), numSharedSettings);
                 return;
             case "ensemble":
-                groupDelegate.prependChild(new SharedSetting(new Ensemble()));
+                groupDelegate.prependChild(new SharedSetting(new Ensemble(), layerManager));
                 return;
             case "realization":
-                groupDelegate.prependChild(new SharedSetting(new Realization()));
+                groupDelegate.prependChild(new SharedSetting(new Realization(), layerManager));
                 return;
             case "surface-name":
-                groupDelegate.prependChild(new SharedSetting(new SurfaceName()));
+                groupDelegate.prependChild(new SharedSetting(new SurfaceName(), layerManager));
                 return;
             case "surface-attribute":
-                groupDelegate.prependChild(new SharedSetting(new SurfaceAttribute()));
+                groupDelegate.prependChild(new SharedSetting(new SurfaceAttribute(), layerManager));
                 return;
             case "Date":
-                groupDelegate.prependChild(new SharedSetting(new TimeOrInterval()));
+                groupDelegate.prependChild(new SharedSetting(new TimeOrInterval(), layerManager));
                 return;
         }
     }

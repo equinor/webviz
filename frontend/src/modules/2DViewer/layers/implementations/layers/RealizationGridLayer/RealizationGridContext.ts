@@ -18,9 +18,10 @@ import { TimeOrInterval } from "../../settings/TimeOrInterval";
 export class RealizationGridContext implements SettingsContext<RealizationGridSettings> {
     private _contextDelegate: SettingsContextDelegate<RealizationGridSettings>;
 
-    constructor() {
+    constructor(layerManager: LayerManager) {
         this._contextDelegate = new SettingsContextDelegate<RealizationGridSettings, keyof RealizationGridSettings>(
             this,
+            layerManager,
             {
                 [SettingType.ENSEMBLE]: new Ensemble(),
                 [SettingType.REALIZATION]: new Realization(),
@@ -71,10 +72,10 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
 
         let fetchedData: Grid3dInfo_api[] | null = null;
 
-        settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(true);
-        settings[SettingType.GRID_NAME].getDelegate().setLoadingState(true);
-        settings[SettingType.GRID_LAYER].getDelegate().setLoadingState(true);
-        settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
+        settings[SettingType.GRID_ATTRIBUTE].getDelegate().setIsLoading(true);
+        settings[SettingType.GRID_NAME].getDelegate().setIsLoading(true);
+        settings[SettingType.GRID_LAYER].getDelegate().setIsLoading(true);
+        settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(true);
 
         try {
             fetchedData = await queryClient.fetchQuery({
@@ -93,10 +94,10 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
                 gcTime: CACHE_TIME,
             });
         } catch (e) {
-            settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(false);
-            settings[SettingType.GRID_NAME].getDelegate().setLoadingState(false);
-            settings[SettingType.GRID_LAYER].getDelegate().setLoadingState(false);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+            settings[SettingType.GRID_ATTRIBUTE].getDelegate().setIsLoading(false);
+            settings[SettingType.GRID_NAME].getDelegate().setIsLoading(false);
+            settings[SettingType.GRID_LAYER].getDelegate().setIsLoading(false);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(false);
             return FetchDataFunctionResult.ERROR;
         }
 
@@ -145,10 +146,10 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
         }
         this._contextDelegate.setAvailableValues(SettingType.TIME_OR_INTERVAL, availableTimeOrIntervals);
 
-        settings[SettingType.GRID_ATTRIBUTE].getDelegate().setLoadingState(false);
-        settings[SettingType.GRID_NAME].getDelegate().setLoadingState(false);
-        settings[SettingType.GRID_LAYER].getDelegate().setLoadingState(false);
-        settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+        settings[SettingType.GRID_ATTRIBUTE].getDelegate().setIsLoading(false);
+        settings[SettingType.GRID_NAME].getDelegate().setIsLoading(false);
+        settings[SettingType.GRID_LAYER].getDelegate().setIsLoading(false);
+        settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(false);
 
         return FetchDataFunctionResult.SUCCESS;
     }

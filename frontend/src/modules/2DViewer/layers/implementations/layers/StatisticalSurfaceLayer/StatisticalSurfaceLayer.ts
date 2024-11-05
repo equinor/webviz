@@ -1,5 +1,6 @@
 import { SurfaceDataPng_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
@@ -23,9 +24,14 @@ export class StatisticalSurfaceLayer
     private _itemDelegate: ItemDelegate;
     private _layerDelegate: LayerDelegate<StatisticalSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>;
 
-    constructor() {
-        this._itemDelegate = new ItemDelegate("Statistical Surface");
-        this._layerDelegate = new LayerDelegate(this, new StatisticalSurfaceContext(), LayerColoringType.COLORSCALE);
+    constructor(layerManager: LayerManager) {
+        this._itemDelegate = new ItemDelegate("Statistical Surface", layerManager);
+        this._layerDelegate = new LayerDelegate(
+            this,
+            layerManager,
+            new StatisticalSurfaceContext(),
+            LayerColoringType.COLORSCALE
+        );
     }
 
     getSettingsContext() {

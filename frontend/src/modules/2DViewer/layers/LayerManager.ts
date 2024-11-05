@@ -4,7 +4,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { GroupDelegate } from "./delegates/GroupDelegate";
+import { GroupDelegate, GroupDelegateTopic } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./delegates/PublishSubscribeDelegate";
 import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelegate";
@@ -35,7 +35,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     private _workbenchSettings: WorkbenchSettings;
     private _groupDelegate: GroupDelegate;
     private _queryClient: QueryClient;
-    private _publishSubscribeHandler = new PublishSubscribeDelegate<LayerManagerTopic>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerManagerTopic>();
     private _itemDelegate: ItemDelegate;
     private _layerDataRevision: number = 0;
     private _globalSettings: GlobalSettings = {
@@ -47,14 +47,22 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         this._workbenchSession = workbenchSession;
         this._workbenchSettings = workbenchSettings;
         this._queryClient = queryClient;
-        this._itemDelegate = new ItemDelegate("LayerManager");
-        this._itemDelegate.setLayerManager(this);
+        this._itemDelegate = new ItemDelegate("LayerManager", this);
         this._groupDelegate = new GroupDelegate(this);
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
-            this._workbenchSession.subscribe(WorkbenchSessionEvent.EnsembleSetChanged, () =>
-                this.handleEnsembleSetChanged()
+            this._workbenchSession.subscribe(
+                WorkbenchSessionEvent.EnsembleSetChanged,
+                this.handleEnsembleSetChanged.bind(this)
             )
+        );
+        this._subscriptionsHandler.registerUnsubscribeFunction(
+            "groupDelegate",
+            this._groupDelegate
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
+                this.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+            })
         );
     }
 
@@ -73,7 +81,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     updateGlobalSetting<T extends keyof GlobalSettings>(key: T, value: GlobalSettings[T]): void {
         if (!isEqual(this._globalSettings[key], value)) {
             this._globalSettings[key] = value;
-            this._publishSubscribeHandler.notifySubscribers(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+            this._publishSubscribeDelegate.notifySubscribers(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
         }
     }
 
@@ -85,7 +93,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         if (topic === LayerManagerTopic.LAYER_DATA_REVISION) {
             this._layerDataRevision++;
         }
-        this._publishSubscribeHandler.notifySubscribers(topic);
+        this._publishSubscribeDelegate.notifySubscribers(topic);
     }
 
     getWorkbenchSession(): WorkbenchSession {
@@ -122,8 +130,8 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeDelegate<LayerManagerTopic> {
-        return this._publishSubscribeHandler;
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<LayerManagerTopic> {
+        return this._publishSubscribeDelegate;
     }
 
     beforeDestroy() {

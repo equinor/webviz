@@ -1,5 +1,6 @@
 import { WellboreHeader_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
@@ -8,7 +9,7 @@ import { isEqual } from "lodash";
 
 import { DrilledWellborePicksSettings } from "./types";
 
-import { FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
+import { DefineDependenciesArgs, FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
 import { DrilledWellbores } from "../../settings/DrilledWellbores";
 import { Ensemble } from "../../settings/Ensemble";
 import { SurfaceName } from "../../settings/SurfaceName";
@@ -18,11 +19,11 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
     private _wellboreHeadersCache: WellboreHeader_api[] | null = null;
     private _pickIdentifierCache: string[] | null = null;
 
-    constructor() {
+    constructor(layerManager: LayerManager) {
         this._contextDelegate = new SettingsContextDelegate<
             DrilledWellborePicksSettings,
             keyof DrilledWellborePicksSettings
-        >(this, {
+        >(this, layerManager, {
             [SettingType.ENSEMBLE]: new Ensemble(),
             [SettingType.SMDA_WELLBORE_HEADERS]: new DrilledWellbores(),
             [SettingType.SURFACE_NAME]: new SurfaceName(),
@@ -63,8 +64,8 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._wellboreHeadersCache = null;
 
-            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(true);
-            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
+            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setIsLoading(true);
+            settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(true);
 
             let fieldIdentifier: string | null = null;
             let stratColumnIdentiier: string | null = null;
@@ -100,12 +101,12 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
                 this._wellboreHeadersCache = wellboreHeaders;
                 this._pickIdentifierCache = pickIdentifiers;
             } catch (error) {
-                settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
-                settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
+                settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setIsLoading(false);
+                settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(false);
                 return FetchDataFunctionResult.ERROR;
             }
-            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setLoadingState(false);
-            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
+            settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().setIsLoading(false);
+            settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(false);
         }
 
         if (!this._wellboreHeadersCache || !this._pickIdentifierCache) {
@@ -128,5 +129,100 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
             settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue().length > 0 &&
             settings[SettingType.SURFACE_NAME].getDelegate().getValue() !== null
         );
+    }
+
+    defineDependencies({
+        helperDependency,
+        availableSettingsUpdater,
+        workbenchSession,
+        queryClient,
+    }: DefineDependenciesArgs<DrilledWellborePicksSettings>) {
+        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const ensembleSet = workbenchSession.getEnsembleSet();
+
+            const ensembleIdents = ensembleSet
+                .getEnsembleArr()
+                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .map((ensemble) => ensemble.getIdent());
+
+            return ensembleIdents;
+        });
+
+        const fetchedData = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
+            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+
+            if (!ensembleIdent) {
+                return null;
+            }
+
+            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+
+            if (!ensemble) {
+                return null;
+            }
+
+            const fieldIdentifier = ensemble.getFieldIdentifier();
+            const stratColumnIdentifier = ensemble.getStratigraphicColumnIdentifier();
+
+            const wellboreHeadersPromise = queryClient.fetchQuery({
+                queryKey: ["getDrilledWellboreHeaders", fieldIdentifier ?? ""],
+                queryFn: () => {
+                    const promise = apiService.well.getDrilledWellboreHeaders(fieldIdentifier ?? "");
+                    abortSignal.addEventListener("abort", () => promise.cancel());
+                    return promise;
+                },
+                staleTime: STALE_TIME,
+                gcTime: CACHE_TIME,
+            });
+
+            const pickStratigraphyPromise = queryClient.fetchQuery({
+                queryKey: ["getPickStratigraphy", fieldIdentifier ?? "", stratColumnIdentifier ?? ""],
+                queryFn: () => {
+                    const promise = apiService.well.getWellborePickIdentifiers(
+                        fieldIdentifier ?? "",
+                        stratColumnIdentifier ?? ""
+                    );
+                    abortSignal.addEventListener("abort", () => promise.cancel());
+                    return promise;
+                },
+                staleTime: STALE_TIME,
+                gcTime: CACHE_TIME,
+            });
+
+            try {
+                const [wellboreHeaders, pickIdentifiers] = await Promise.all([
+                    wellboreHeadersPromise,
+                    pickStratigraphyPromise,
+                ]);
+
+                return { wellboreHeaders, pickIdentifiers };
+            } catch (error) {
+                return null;
+            }
+        });
+
+        availableSettingsUpdater(SettingType.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+            const fetchedDataValue = getHelperDependency(fetchedData);
+
+            if (!fetchedDataValue) {
+                return [];
+            }
+
+            const wellboreHeaders: WellboreHeader_api[] = fetchedDataValue.wellboreHeaders;
+            return wellboreHeaders;
+        });
+
+        availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency }) => {
+            const fetchedDataValue = getHelperDependency(fetchedData);
+
+            if (!fetchedDataValue) {
+                return [];
+            }
+
+            const pickIdentifiers: string[] = fetchedDataValue.pickIdentifiers;
+            return pickIdentifiers;
+        });
     }
 }

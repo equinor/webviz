@@ -1,5 +1,6 @@
 import { SurfaceMetaSet_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
@@ -18,9 +19,10 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
     private _contextDelegate: SettingsContextDelegate<ObservedSurfaceSettings>;
     private _fetchDataCache: SurfaceMetaSet_api | null = null;
 
-    constructor() {
+    constructor(layerManager: LayerManager) {
         this._contextDelegate = new SettingsContextDelegate<ObservedSurfaceSettings, keyof ObservedSurfaceSettings>(
             this,
+            layerManager,
             {
                 [SettingType.ENSEMBLE]: new Ensemble(),
                 [SettingType.SURFACE_ATTRIBUTE]: new SurfaceAttribute(),
@@ -61,9 +63,9 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
             this._fetchDataCache = null;
 
-            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(true);
-            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(true);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(true);
+            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setIsLoading(true);
+            settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(true);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(true);
 
             try {
                 this._fetchDataCache = await queryClient.fetchQuery({
@@ -76,14 +78,14 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
                     gcTime: CACHE_TIME,
                 });
             } catch (e) {
-                settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
-                settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
-                settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+                settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setIsLoading(false);
+                settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(false);
+                settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(false);
                 return FetchDataFunctionResult.ERROR;
             }
-            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setLoadingState(false);
-            settings[SettingType.SURFACE_NAME].getDelegate().setLoadingState(false);
-            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setLoadingState(false);
+            settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().setIsLoading(false);
+            settings[SettingType.SURFACE_NAME].getDelegate().setIsLoading(false);
+            settings[SettingType.TIME_OR_INTERVAL].getDelegate().setIsLoading(false);
         }
 
         if (!this._fetchDataCache) {

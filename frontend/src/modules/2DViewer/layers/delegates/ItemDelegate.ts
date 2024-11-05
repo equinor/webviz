@@ -9,14 +9,12 @@ export enum ItemDelegateTopic {
     NAME = "NAME",
     VISIBILITY = "VISIBILITY",
     EXPANDED = "EXPANDED",
-    LAYER_MANAGER = "LAYER_MANAGER",
 }
 
 export type ItemDelegatePayloads = {
     [ItemDelegateTopic.NAME]: string;
     [ItemDelegateTopic.VISIBILITY]: boolean;
     [ItemDelegateTopic.EXPANDED]: boolean;
-    [ItemDelegateTopic.LAYER_MANAGER]: LayerManager;
 };
 
 export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDelegatePayloads> {
@@ -25,12 +23,13 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
     private _visible: boolean = true;
     private _expanded: boolean = true;
     private _parentGroup: GroupDelegate | null = null;
-    private _layerManager: LayerManager | null = null;
-    private _publishSubscribeHandler = new PublishSubscribeDelegate<ItemDelegateTopic>();
+    private _layerManager: LayerManager;
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<ItemDelegateTopic>();
 
-    constructor(name: string) {
+    constructor(name: string, layerManager: LayerManager) {
         this._id = v4();
         this._name = name;
+        this._layerManager = layerManager;
     }
 
     setId(id: string): void {
@@ -47,7 +46,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
 
     setName(name: string): void {
         this._name = name;
-        this._publishSubscribeHandler.notifySubscribers(ItemDelegateTopic.NAME);
+        this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.NAME);
         if (this._layerManager) {
             this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
         }
@@ -61,12 +60,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
         this._parentGroup = parentGroup;
     }
 
-    setLayerManager(layerManager: LayerManager | null): void {
-        this._layerManager = layerManager;
-        this._publishSubscribeHandler.notifySubscribers(ItemDelegateTopic.LAYER_MANAGER);
-    }
-
-    getLayerManager(): LayerManager | null {
+    getLayerManager(): LayerManager {
         return this._layerManager;
     }
 
@@ -76,7 +70,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
 
     setIsVisible(visible: boolean): void {
         this._visible = visible;
-        this._publishSubscribeHandler.notifySubscribers(ItemDelegateTopic.VISIBILITY);
+        this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.VISIBILITY);
         if (this._layerManager) {
             this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
         }
@@ -88,7 +82,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
 
     setIsExpanded(expanded: boolean): void {
         this._expanded = expanded;
-        this._publishSubscribeHandler.notifySubscribers(ItemDelegateTopic.EXPANDED);
+        this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.EXPANDED);
     }
 
     makeSnapshotGetter<T extends ItemDelegateTopic>(topic: T): () => ItemDelegatePayloads[T] {
@@ -102,14 +96,11 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
             if (topic === ItemDelegateTopic.EXPANDED) {
                 return this._expanded;
             }
-            if (topic === ItemDelegateTopic.LAYER_MANAGER) {
-                return this._layerManager;
-            }
         };
         return snapshotGetter;
     }
 
-    getPublishSubscribeHandler(): PublishSubscribeDelegate<ItemDelegateTopic> {
-        return this._publishSubscribeHandler;
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<ItemDelegateTopic> {
+        return this._publishSubscribeDelegate;
     }
 }
