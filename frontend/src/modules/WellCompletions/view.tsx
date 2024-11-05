@@ -3,6 +3,7 @@ import React from "react";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
+import { DisclaimerWrapper } from "@lib/components/DisclaimerWrapper";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 import { ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { WellCompletionsPlot } from "@webviz/well-completions-plot";
@@ -21,7 +22,10 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
     statusWriter.setLoading(dataLoadingStatus === DataLoadingStatus.LOADING);
 
     return (
-        <div className="w-full h-full">
+        <DisclaimerWrapper
+            disclaimerText="Zones/Layers are out of order in visualization while waiting for relevant metadata in SUMO"
+            hoverText="The module awaits relevant metadata in SUMO"
+        >
             {!plotData ? (
                 dataLoadingStatus === DataLoadingStatus.ERROR ? (
                     <ContentError>Error loading well completions data</ContentError>
@@ -39,6 +43,6 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
                     plotData={plotData}
                 />
             )}
-        </div>
+        </DisclaimerWrapper>
     );
 };
