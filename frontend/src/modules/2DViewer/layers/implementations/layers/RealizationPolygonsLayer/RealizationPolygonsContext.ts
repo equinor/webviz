@@ -4,6 +4,7 @@ import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
+import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/utils";
 
 import { isEqual } from "lodash";
 
@@ -39,101 +40,92 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
         return this._contextDelegate.getSettings();
     }
 
-    defineDependencies(
-        args: DefineDependenciesArgs<RealizationPolygonsSettings, keyof RealizationPolygonsSettings>
-    ): void {}
+    defineDependencies({
+        helperDependency,
+        availableSettingsUpdater,
+        workbenchSession,
+        queryClient,
+    }: DefineDependenciesArgs<RealizationPolygonsSettings>) {
+        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const ensembleSet = workbenchSession.getEnsembleSet();
 
-    async fetchData(
-        oldValues: Partial<RealizationPolygonsSettings>,
-        newValues: Partial<RealizationPolygonsSettings>
-    ): Promise<FetchDataFunctionResult> {
-        const queryClient = this.getDelegate().getLayerManager().getQueryClient();
-        const settings = this.getDelegate().getSettings();
-        const workbenchSession = this.getDelegate().getLayerManager().getWorkbenchSession();
-        const ensembleSet = workbenchSession.getEnsembleSet();
-        const fieldIdentifier = this.getDelegate().getLayerManager().getGlobalSetting("fieldId");
-
-        this.getDelegate().setAvailableValues(
-            SettingType.ENSEMBLE,
-            ensembleSet
+            const ensembleIdents = ensembleSet
                 .getEnsembleArr()
                 .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
-                .map((ensemble) => ensemble.getIdent())
-        );
+                .map((ensemble) => ensemble.getIdent());
 
-        const currentEnsembleIdent = newValues[SettingType.ENSEMBLE];
+            return ensembleIdents;
+        });
 
-        if (currentEnsembleIdent) {
-            const realizations = workbenchSession
-                .getRealizationFilterSet()
-                .getRealizationFilterForEnsembleIdent(currentEnsembleIdent)
-                .getFilteredRealizations();
-            this.getDelegate().setAvailableValues(SettingType.REALIZATION, [...realizations]);
-        }
+        availableSettingsUpdater(SettingType.REALIZATION, ({ getLocalSetting }) => {
+            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
 
-        if (!isEqual(oldValues[SettingType.ENSEMBLE], currentEnsembleIdent)) {
-            this._fetchDataCache = null;
-
-            settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setIsLoading(true);
-            settings[SettingType.POLYGONS_NAME].getDelegate().setIsLoading(true);
-
-            try {
-                this._fetchDataCache = await queryClient.fetchQuery({
-                    queryKey: ["getPolygonsDirectory", newValues[SettingType.ENSEMBLE]],
-                    queryFn: () =>
-                        apiService.polygons.getPolygonsDirectory(
-                            newValues[SettingType.ENSEMBLE]?.getCaseUuid() ?? "",
-                            newValues[SettingType.ENSEMBLE]?.getEnsembleName() ?? ""
-                        ),
-                    staleTime: STALE_TIME,
-                    gcTime: CACHE_TIME,
-                });
-            } catch (e) {
-                settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setIsLoading(false);
-                settings[SettingType.POLYGONS_NAME].getDelegate().setIsLoading(false);
-                return FetchDataFunctionResult.ERROR;
+            if (!ensembleIdent) {
+                return [];
             }
 
-            settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().setIsLoading(false);
-            settings[SettingType.POLYGONS_NAME].getDelegate().setIsLoading(false);
-        }
+            const realizations = workbenchSession
+                .getRealizationFilterSet()
+                .getRealizationFilterForEnsembleIdent(ensembleIdent)
+                .getFilteredRealizations();
 
-        if (!this._fetchDataCache) {
-            return FetchDataFunctionResult.IN_PROGRESS;
-        }
+            return [...realizations];
+        });
 
-        const availableAttributes: string[] = [];
-        availableAttributes.push(
-            ...Array.from(new Set(this._fetchDataCache.map((polygonsMeta) => polygonsMeta.attribute_name)))
-        );
-        this._contextDelegate.setAvailableValues(SettingType.POLYGONS_ATTRIBUTE, availableAttributes);
+        const realizationPolygonsMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
 
-        const currentAttribute = newValues[SettingType.POLYGONS_ATTRIBUTE];
+            if (!ensembleIdent) {
+                return null;
+            }
 
-        const availablePolygonsName: string[] = [];
+            return await queryClient.fetchQuery({
+                queryKey: ["getRealizationPolygonsMetadata", ensembleIdent],
+                queryFn: () =>
+                    cancelPromiseOnAbort(
+                        apiService.polygons.getPolygonsDirectory(
+                            ensembleIdent.getCaseUuid(),
+                            ensembleIdent.getEnsembleName()
+                        ),
+                        abortSignal
+                    ),
+                staleTime: STALE_TIME,
+                gcTime: CACHE_TIME,
+            });
+        });
 
-        if (currentAttribute) {
-            availablePolygonsName.push(
+        availableSettingsUpdater(SettingType.POLYGONS_ATTRIBUTE, ({ getHelperDependency }) => {
+            const data = getHelperDependency(realizationPolygonsMetadataDep);
+
+            if (!data) {
+                return [];
+            }
+
+            const availableAttributes = [
+                ...Array.from(new Set(data.map((polygonsMeta) => polygonsMeta.attribute_name))),
+            ];
+
+            return availableAttributes;
+        });
+
+        availableSettingsUpdater(SettingType.POLYGONS_NAME, ({ getHelperDependency, getLocalSetting }) => {
+            const attribute = getLocalSetting(SettingType.POLYGONS_ATTRIBUTE);
+            const data = getHelperDependency(realizationPolygonsMetadataDep);
+
+            if (!attribute || !data) {
+                return [];
+            }
+
+            const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        this._fetchDataCache
-                            .filter((polygonsMeta) => polygonsMeta.attribute_name === currentAttribute)
-                            .map((el) => el.name)
+                        data.filter((polygonsMeta) => polygonsMeta.attribute_name === attribute).map((el) => el.name)
                     )
-                )
-            );
-        }
-        this._contextDelegate.setAvailableValues(SettingType.POLYGONS_NAME, availablePolygonsName);
+                ),
+            ];
 
-        return FetchDataFunctionResult.SUCCESS;
-    }
-
-    areCurrentSettingsValid(settings: RealizationPolygonsSettings): boolean {
-        return (
-            settings[SettingType.POLYGONS_ATTRIBUTE] !== null &&
-            settings[SettingType.POLYGONS_NAME] !== null &&
-            settings[SettingType.REALIZATION] !== null &&
-            settings[SettingType.ENSEMBLE] !== null
-        );
+            return availableSurfaceNames;
+        });
     }
 }
