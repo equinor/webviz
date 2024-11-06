@@ -69,7 +69,7 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
             expanded={isExpanded}
             startAdornment={<VisibilityToggle item={props.group} />}
             endAdornment={<>{makeEndAdornment()}</>}
-            contentWhenEmpty={<EmptyContent>Drag a layer inside to add it to this group.</EmptyContent>}
+            contentWhenEmpty={<EmptyContent>Drag a layer inside to add it to this view.</EmptyContent>}
         >
             {children.map((child: Item) => makeComponent(child, props.actions, props.onActionClick))}
         </SortableListGroup>

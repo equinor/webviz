@@ -331,4 +331,9 @@ export class LayerDelegate<TSettings extends Settings, TData>
     deserializeState(serializedLayer: SerializedLayer<TSettings>): void {
         this._settingsContext.getDelegate().deserializeSettings(serializedLayer.settings);
     }
+
+    beforeDestroy(): void {
+        this._settingsContext.getDelegate().beforeDestroy();
+        this._unsubscribeHandler.unsubscribeAll();
+    }
 }

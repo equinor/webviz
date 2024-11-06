@@ -2,7 +2,7 @@ import React from "react";
 
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Warning } from "@mui/icons-material";
+import { Link, Warning } from "@mui/icons-material";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
 import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
@@ -34,7 +34,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
 
     let actuallyLoading = isLoading || !isInitialized;
-    if (isPersisted && !isValid) {
+    if (!isLoading && isPersisted && !isValid) {
         actuallyLoading = false;
     }
 
@@ -43,7 +43,15 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     }
 
     if (overriddenValue !== undefined) {
-        return null;
+        return (
+            <React.Fragment key={props.setting.getDelegate().getId()}>
+                <div className="p-0.5 px-2 w-32 flex items-center gap-2 text-teal-600">
+                    {props.setting.getLabel()}
+                    <Link fontSize="inherit" titleAccess="This settings is controlled by a shared setting" />
+                </div>
+                <div className="p-0.5 px-2 w-full flex items-center h-8">{overriddenValue}</div>
+            </React.Fragment>
+        );
     }
 
     return (
@@ -54,7 +62,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
                     <div className="flex flex-col gap-1 min-w-0">
                         <div
                             className={resolveClassNames({
-                                "outline outline-red-500 outline-1": !isValid && isInitialized,
+                                "outline outline-red-500 outline-1": !isValid && isInitialized && !isLoading,
                             })}
                         >
                             <componentRef.current

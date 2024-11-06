@@ -68,6 +68,7 @@ type ActionProps = {
 
 function Actions(props: ActionProps): React.ReactNode {
     function handleRemove() {
+        props.sharedSetting.beforeDestroy();
         const parentGroup = props.sharedSetting.getItemDelegate().getParentGroup();
         if (parentGroup) {
             parentGroup.removeChild(props.sharedSetting);
@@ -79,7 +80,7 @@ function Actions(props: ActionProps): React.ReactNode {
             <DenseIconButton
                 onClick={handleRemove}
                 title="Remove layer group"
-                colorScheme={DenseIconButtonColorScheme.WARNING}
+                colorScheme={DenseIconButtonColorScheme.DANGER}
             >
                 <Delete fontSize="inherit" />
             </DenseIconButton>

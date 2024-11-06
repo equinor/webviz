@@ -6,7 +6,7 @@ import { Settings, UpdateFunc } from "./interfaces";
 
 export class Dependency<TReturnValue, TSettings extends Settings, TKey extends keyof TSettings> {
     private _updateFunc: UpdateFunc<TReturnValue, TSettings, TKey>;
-    private _dependencies: Set<(value: Awaited<TReturnValue>) => void> = new Set();
+    private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean) => void> = new Set();
 
     private _contextDelegate: SettingsContextDelegate<TSettings, TKey>;
@@ -45,7 +45,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         return this._cachedValue;
     }
 
-    subscribe(callback: (value: Awaited<TReturnValue>) => void): () => void {
+    subscribe(callback: (value: Awaited<TReturnValue> | null) => void): () => void {
         this._dependencies.add(callback);
 
         return () => {
@@ -71,7 +71,11 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
             this.callUpdateFunc();
         });
 
-        return this._contextDelegate.getSettings()[settingName].getDelegate().getValue();
+        this._cachedSettingsMap.set(
+            settingName as string,
+            this._contextDelegate.getSettings()[settingName].getDelegate().getValue()
+        );
+        return this._cachedSettingsMap.get(settingName as string);
     }
 
     private setLoadingState(loading: boolean) {
@@ -90,7 +94,11 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
             this.callUpdateFunc();
         });
 
-        return this._contextDelegate.getLayerManager().getGlobalSetting(settingName);
+        this._cachedGlobalSettingsMap.set(
+            settingName as string,
+            this._contextDelegate.getLayerManager().getGlobalSetting(settingName)
+        );
+        return this._cachedGlobalSettingsMap.get(settingName as string);
     }
 
     private getHelperDependency<TDep>(dep: Dependency<TDep, TSettings, TKey>): Awaited<TDep> | null {
@@ -117,7 +125,9 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
 
     async callUpdateFunc() {
         if (this._abortController) {
+            console.debug("Aborting previous request");
             this._abortController.abort();
+            this._abortController = null;
         }
 
         this._abortController = new AbortController();
@@ -133,13 +143,21 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
                 abortSignal: this._abortController.signal,
             });
         } catch (e: any) {
+            if (e.name !== "AbortError") {
+                this.applyNewValue(null);
+            }
             return;
         }
 
         if (newValue === null) {
+            this.setLoadingState(false);
             return;
         }
 
+        this.applyNewValue(newValue);
+    }
+
+    applyNewValue(newValue: Awaited<TReturnValue> | null) {
         if (!isEqual(newValue, this._cachedValue)) {
             this._cachedValue = newValue;
             for (const callback of this._dependencies) {

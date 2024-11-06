@@ -120,4 +120,8 @@ export class SharedSetting implements Item {
         this._itemDelegate.setName(serialized.name);
         this._wrappedSetting.getDelegate().deserializeValue(serialized.value);
     }
+
+    beforeDestroy(): void {
+        this._unsubscribeHandler.unsubscribeAll();
+    }
 }

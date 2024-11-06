@@ -62,6 +62,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                 this.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+                this.publishTopic(LayerManagerTopic.ITEMS_CHANGED);
             })
         );
     }

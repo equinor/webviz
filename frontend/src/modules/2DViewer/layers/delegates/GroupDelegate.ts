@@ -2,7 +2,6 @@ import { ItemDelegateTopic } from "./ItemDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 
 import { DeserializationFactory } from "../DeserializationFactory";
-import { LayerManagerTopic } from "../LayerManager";
 import { Item, SerializedItem, instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum GroupDelegateTopic {
@@ -84,13 +83,10 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
         this._subscriptions.set(child.getItemDelegate().getId(), subscriptionSet);
 
         this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.CHILDREN);
-        this.notifyManagerOfItemChange();
         this.incrementTreeRevisionNumber();
     }
 
     private disposeOwnershipOfChild(child: Item) {
-        child.getItemDelegate().setParentGroup(null);
-
         if (instanceofGroup(child)) {
             const unsubscribeFuncs = this._subscriptions.get(child.getItemDelegate().getId());
             if (unsubscribeFuncs) {
@@ -99,19 +95,9 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
                 }
             }
         }
+        child.getItemDelegate().setParentGroup(null);
 
         this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.CHILDREN);
-        this.notifyManagerOfItemChange();
-        this.incrementTreeRevisionNumber();
-    }
-
-    private notifyManagerOfItemChange() {
-        const layerManager = this._owner?.getItemDelegate().getLayerManager();
-
-        if (!layerManager) {
-            return;
-        }
-        layerManager.publishTopic(LayerManagerTopic.ITEMS_CHANGED);
     }
 
     prependChild(child: Item) {
@@ -132,6 +118,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
     removeChild(child: Item) {
         this._children = this._children.filter((c) => c !== child);
         this.disposeOwnershipOfChild(child);
+        this.incrementTreeRevisionNumber();
     }
 
     clearChildren() {
@@ -153,6 +140,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
 
         this._children = [...this._children.slice(0, index), child, ...this._children.slice(index)];
         this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.CHILDREN);
+        this.incrementTreeRevisionNumber();
     }
 
     getChildren() {

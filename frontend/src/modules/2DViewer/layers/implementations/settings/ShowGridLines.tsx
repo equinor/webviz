@@ -13,7 +13,7 @@ export class ShowGridLines implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
-        this._delegate = new SettingDelegate<ValueType>(false, this);
+        this._delegate = new SettingDelegate<ValueType>(false, this, true);
     }
 
     getType(): SettingType {

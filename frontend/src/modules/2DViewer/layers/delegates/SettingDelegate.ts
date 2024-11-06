@@ -36,13 +36,18 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
     private _loading: boolean = false;
     private _initialized: boolean = false;
     private _currentValueFromPersistence: TValue | null = null;
+    private _isStatic: boolean;
 
-    constructor(value: TValue, owner: Setting<TValue>) {
+    constructor(value: TValue, owner: Setting<TValue>, isStatic: boolean = false) {
         this._id = v4();
         this._owner = owner;
         this._value = value;
         if (typeof value === "boolean") {
             this._isValueValid = true;
+        }
+        this._isStatic = isStatic;
+        if (isStatic) {
+            this.setInitialized();
         }
     }
 
@@ -60,6 +65,10 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         }
 
         return this._value;
+    }
+
+    isStatic(): boolean {
+        return this._isStatic;
     }
 
     serializeValue(): string {
@@ -234,8 +243,17 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         this.setIsValueValid(false);
     }
 
-    private maybeResetPersistedValue(): boolean {
+    maybeResetPersistedValue(): boolean {
         if (this._currentValueFromPersistence === null) {
+            return false;
+        }
+
+        if (this._owner.isValueValid) {
+            if (this._owner.isValueValid(this._availableValues, this._currentValueFromPersistence)) {
+                this._value = this._currentValueFromPersistence;
+                this._currentValueFromPersistence = null;
+                return true;
+            }
             return false;
         }
 
@@ -259,7 +277,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
     }
 
     setAvailableValues(availableValues: AvailableValuesType<TValue>): void {
-        if (isEqual(this._availableValues, availableValues)) {
+        if (isEqual(this._availableValues, availableValues) && this._initialized) {
             return;
         }
 
@@ -273,6 +291,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         const prevIsValid = this._isValueValid;
         this.checkIfValueIsValid();
         if (valueChanged || this._isValueValid !== prevIsValid) {
+            this.setInitialized();
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
         }
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);

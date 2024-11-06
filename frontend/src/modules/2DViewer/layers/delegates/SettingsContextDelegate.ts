@@ -245,7 +245,11 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
 
     deserializeSettings(serializedSettings: SerializedSettingsState<TSettings>): void {
         for (const [key, value] of Object.entries(serializedSettings)) {
-            this._settings[key as TKey].getDelegate().deserializeValue(value);
+            const settingDelegate = this._settings[key as TKey].getDelegate();
+            settingDelegate.deserializeValue(value);
+            if (settingDelegate.isStatic()) {
+                settingDelegate.maybeResetPersistedValue();
+            }
         }
     }
 
@@ -258,10 +262,6 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
                 .getDelegate()
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(handleChange);
-
-            this.getPublishSubscribeDelegate().makeSubscriberFunction(
-                SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED
-            )(handleChange);
 
             return handleChange;
         };
@@ -291,8 +291,9 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
                 makeGlobalSettingGetter
             );
 
-            dependency.subscribe((availableValues: AvailableValuesType<Exclude<TSettings[K], null>>) => {
+            dependency.subscribe((availableValues: AvailableValuesType<Exclude<TSettings[K], null>> | null) => {
                 if (availableValues === null) {
+                    this.setAvailableValues(settingKey, [] as AvailableValuesType<Exclude<TSettings[K], null>>);
                     return;
                 }
                 this.setAvailableValues(settingKey, availableValues);
@@ -336,5 +337,9 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
                 queryClient: this.getLayerManager().getQueryClient(),
             });
         }
+    }
+
+    beforeDestroy(): void {
+        this._unsubscribeHandler.unsubscribeAll();
     }
 }
