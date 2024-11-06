@@ -23,7 +23,7 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         this._layerDelegate = new LayerDelegate(
             this,
             layerManager,
-            new DrilledWellTrajectoriesContext(),
+            new DrilledWellTrajectoriesContext(layerManager),
             LayerColoringType.NONE
         );
     }

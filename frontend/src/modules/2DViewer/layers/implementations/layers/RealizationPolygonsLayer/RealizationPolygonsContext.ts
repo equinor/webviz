@@ -6,11 +6,9 @@ import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants"
 import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/utils";
 
-import { isEqual } from "lodash";
-
 import { RealizationPolygonsSettings } from "./types";
 
-import { DefineDependenciesArgs, FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
+import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
 import { Ensemble } from "../../settings/Ensemble";
 import { PolygonsAttribute } from "../../settings/PolygonsAttribute";
 import { PolygonsName } from "../../settings/PolygonsName";

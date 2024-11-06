@@ -1,4 +1,3 @@
-import { Grid3dInfo_api, Grid3dPropertyInfo_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
@@ -8,7 +7,7 @@ import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/utils";
 
 import { RealizationGridSettings } from "./types";
 
-import { DefineDependenciesArgs, FetchDataFunctionResult, SettingsContext } from "../../../interfaces";
+import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
 import { Ensemble } from "../../settings/Ensemble";
 import { GridAttribute } from "../../settings/GridAttribute";
 import { GridLayer } from "../../settings/GridLayer";
