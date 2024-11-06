@@ -21,14 +21,12 @@ export enum SettingsContextLoadingState {
 
 export enum SettingsContextDelegateTopic {
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
-    REFETCH_REQUIRED = "REFETCH_REQUIRED",
     LAYER_MANAGER_CHANGED = "LAYER_MANAGER_CHANGED",
     LOADING_STATE_CHANGED = "LOADING_STATE_CHANGED",
 }
 
 export type SettingsContextDelegatePayloads = {
     [SettingsContextDelegateTopic.SETTINGS_CHANGED]: void;
-    [SettingsContextDelegateTopic.REFETCH_REQUIRED]: void;
     [SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED]: void;
     [SettingsContextDelegateTopic.LOADING_STATE_CHANGED]: SettingsContextLoadingState;
 };
@@ -190,10 +188,6 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     private handleSettingsChanged() {
         this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
         this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
-
-        if (this.areCurrentSettingsValid()) {
-            this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.REFETCH_REQUIRED);
-        }
     }
 
     private handleSettingsLoadingStateChanged() {
@@ -224,9 +218,6 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     makeSnapshotGetter<T extends SettingsContextDelegateTopic>(topic: T): () => SettingsContextDelegatePayloads[T] {
         const snapshotGetter = (): any => {
             if (topic === SettingsContextDelegateTopic.SETTINGS_CHANGED) {
-                return;
-            }
-            if (topic === SettingsContextDelegateTopic.REFETCH_REQUIRED) {
                 return;
             }
             if (topic === SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED) {

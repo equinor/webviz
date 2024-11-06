@@ -1,6 +1,7 @@
 import React from "react";
 
 import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Delete, ExpandLess, ExpandMore, Link } from "@mui/icons-material";
@@ -75,7 +76,11 @@ function Actions(props: ActionProps): React.ReactNode {
 
     return (
         <>
-            <DenseIconButton onClick={handleRemove} title="Remove layer group">
+            <DenseIconButton
+                onClick={handleRemove}
+                title="Remove layer group"
+                colorScheme={DenseIconButtonColorScheme.WARNING}
+            >
                 <Delete fontSize="inherit" />
             </DenseIconButton>
         </>
