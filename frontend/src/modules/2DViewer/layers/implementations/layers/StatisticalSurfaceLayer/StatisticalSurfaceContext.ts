@@ -48,17 +48,7 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<StatisticalSurfaceSettings>) {
-        availableSettingsUpdater(SettingType.STATISTIC_FUNCTION, () => {
-            return [
-                SurfaceStatisticFunction_api.MEAN,
-                SurfaceStatisticFunction_api.STD,
-                SurfaceStatisticFunction_api.MIN,
-                SurfaceStatisticFunction_api.MAX,
-                SurfaceStatisticFunction_api.P10,
-                SurfaceStatisticFunction_api.P90,
-                SurfaceStatisticFunction_api.P50,
-            ];
-        });
+        availableSettingsUpdater(SettingType.STATISTIC_FUNCTION, () => Object.values(SurfaceStatisticFunction_api));
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembleSet = workbenchSession.getEnsembleSet();
