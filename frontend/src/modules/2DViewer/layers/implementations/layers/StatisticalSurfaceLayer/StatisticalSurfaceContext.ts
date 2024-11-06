@@ -1,6 +1,5 @@
-import { SurfaceMetaSet_api, SurfaceStatisticFunction_api, SurfaceTimeType_api } from "@api";
+import { SurfaceStatisticFunction_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { Ensemble as FrameworkEnsemble } from "@framework/Ensemble";
 import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/utils";
