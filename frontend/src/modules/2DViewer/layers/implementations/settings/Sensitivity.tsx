@@ -4,7 +4,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps } from "../../interfaces";
+import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
 
 export type SensitivityNameCasePair = {
@@ -29,6 +29,25 @@ export class Sensitivity implements Setting<SensitivityNameCasePair | null> {
 
     getDelegate(): SettingDelegate<SensitivityNameCasePair | null> {
         return this._delegate;
+    }
+
+    isValueValid(
+        availableValues: AvailableValuesType<SensitivityNameCasePair | null>,
+        value: SensitivityNameCasePair | null
+    ): boolean {
+        if (availableValues.length === 0) {
+            return true;
+        }
+        if (!value) {
+            return false;
+        }
+        return availableValues
+            .filter((el) => el !== null)
+            .some(
+                (sensitivity) =>
+                    sensitivity?.sensitivityName === value.sensitivityName &&
+                    sensitivity?.sensitivityCase === value.sensitivityCase
+            );
     }
 
     makeComponent(): (props: SettingComponentProps<SensitivityNameCasePair | null>) => React.ReactNode {
@@ -87,7 +106,7 @@ export class Sensitivity implements Setting<SensitivityNameCasePair | null> {
                     sensitivityCase: selectedValue,
                 });
             }
-            if (!props.value) {
+            if (props.availableValues.length === 0) {
                 return "No sensitivities available";
             }
             return (
