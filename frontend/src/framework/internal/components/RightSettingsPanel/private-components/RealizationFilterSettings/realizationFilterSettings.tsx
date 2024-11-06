@@ -27,6 +27,7 @@ export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: ()
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
     const drawerContent = useGuiValue(guiMessageBroker, GuiState.RightDrawerContent);
+    const rightSettingsPanelWidth = useGuiValue(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
     const [, setNumberOfUnsavedRealizationFilters] = useGuiState(
@@ -46,6 +47,13 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     ] = React.useState<{
         [ensembleIdentString: string]: EnsembleRealizationFilterSelections;
     }>({});
+
+    // Set no active filter if the settings panel is closed
+    let actualActiveFilterEnsembleIdent = activeFilterEnsembleIdent;
+    if (rightSettingsPanelWidth < 5 && activeFilterEnsembleIdent !== null) {
+        setActiveFilterEnsembleIdent(null);
+        actualActiveFilterEnsembleIdent = null;
+    }
 
     // Create new maps if ensembles are added or removed
     const ensembleIdentStrings = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent().toString());
@@ -177,22 +185,13 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             }
         }
 
-        function handleRealizationFilterSettingsNotVisible() {
-            setActiveFilterEnsembleIdent(null);
-        }
-
         const removeUnsavedChangesActionHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.UnsavedRealizationFilterSettingsAction,
             handleUnsavedChangesAction
         );
-        const removeRealizationFilterSettingsNotVisibleHandler = guiMessageBroker.subscribeToEvent(
-            GuiEvent.RealizationFilterSettingsNotVisible,
-            handleRealizationFilterSettingsNotVisible
-        );
 
         return () => {
             removeUnsavedChangesActionHandler();
-            removeRealizationFilterSettingsNotVisibleHandler();
         };
     }, [guiMessageBroker, handleApplyAllClick, handleDiscardAllClick]);
 
@@ -313,8 +312,9 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                         {ensembleSet.getEnsembleArr().map((ensemble) => {
                             const ensembleIdent = ensemble.getIdent();
                             const isActive =
-                                activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
-                            const isAnotherActive = !isActive && activeFilterEnsembleIdent !== null;
+                                actualActiveFilterEnsembleIdent !== null &&
+                                actualActiveFilterEnsembleIdent.equals(ensembleIdent);
+                            const isAnotherActive = !isActive && actualActiveFilterEnsembleIdent !== null;
 
                             const selections =
                                 ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];

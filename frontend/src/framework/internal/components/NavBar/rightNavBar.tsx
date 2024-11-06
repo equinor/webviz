@@ -1,6 +1,6 @@
 import React from "react";
 
-import { GuiEvent, GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
+import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
@@ -31,20 +31,12 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
 
     function handleRealizationFilterClick() {
         ensureSettingsPanelIsVisible();
-        handleSetDrawerContent(RightDrawerContent.RealizationFilterSettings);
+        setDrawerContent(RightDrawerContent.RealizationFilterSettings);
     }
 
     function handleModuleInstanceLogClick() {
         ensureSettingsPanelIsVisible();
-        handleSetDrawerContent(RightDrawerContent.ModuleInstanceLog);
-    }
-
-    function handleSetDrawerContent(content: RightDrawerContent) {
-        if (content !== RightDrawerContent.RealizationFilterSettings) {
-            guiMessageBroker.publishEvent(GuiEvent.RealizationFilterSettingsNotVisible);
-        }
-
-        setDrawerContent(content);
+        setDrawerContent(RightDrawerContent.ModuleInstanceLog);
     }
 
     return (
@@ -68,7 +60,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                     )}
                 >
                     {numberOfUnsavedRealizationFilters !== 0 ? (
-                        <Badge badgeContent="!">
+                        <Badge badgeContent="!" color="bg-orange-500">
                             <FilterAlt fontSize="small" className="w-5 h-5 mr-2" />
                         </Badge>
                     ) : (

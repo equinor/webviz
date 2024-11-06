@@ -21,12 +21,12 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
     );
 
     function handleOnClose() {
-        if (numberOfUnsavedRealizationFilters === 0) {
-            setRightSettingsPanelWidth(0);
+        if (numberOfUnsavedRealizationFilters !== 0) {
+            setDialogOpen(true);
             return;
         }
 
-        setDialogOpen(true);
+        setRightSettingsPanelWidth(0);
     }
 
     function handleDialogSaveClick() {

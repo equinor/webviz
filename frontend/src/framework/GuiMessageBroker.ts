@@ -47,7 +47,6 @@ export enum GuiEvent {
     DataChannelNodeHover = "dataChannelNodeHover",
     DataChannelNodeUnhover = "dataChannelNodeUnhover",
     UnsavedRealizationFilterSettingsAction = "unsavedRealizationFilterSettingsAction",
-    RealizationFilterSettingsNotVisible = "realizationFilterSettingsNotVisible",
 }
 
 export type GuiEventPayloads = {
