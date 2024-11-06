@@ -63,12 +63,12 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
                         "w-full",
                         "h-10",
                         drawerContent === RightDrawerContent.RealizationFilterSettings && rightSettingsPanelWidth > 0
-                            ? "text-blue-600"
+                            ? "text-cyan-600"
                             : "!text-slate-800"
                     )}
                 >
                     {numberOfUnsavedRealizationFilters !== 0 ? (
-                        <Badge badgeContent="!" color="bg-blue-400">
+                        <Badge badgeContent="!">
                             <FilterAlt fontSize="small" className="w-5 h-5 mr-2" />
                         </Badge>
                     ) : (
