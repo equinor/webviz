@@ -43,13 +43,18 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     }
 
     if (overriddenValue !== undefined) {
+        const valueAsString = props.setting
+            .getDelegate()
+            .valueToString(overriddenValue, props.manager.getWorkbenchSession(), props.manager.getWorkbenchSettings());
         return (
             <React.Fragment key={props.setting.getDelegate().getId()}>
                 <div className="p-0.5 px-2 w-32 flex items-center gap-2 text-teal-600">
-                    {props.setting.getLabel()}
-                    <Link fontSize="inherit" titleAccess="This settings is controlled by a shared setting" />
+                    <span>{props.setting.getLabel()}</span>
+                    <span className="text-base mb-1">
+                        <Link fontSize="inherit" titleAccess="This settings is controlled by a shared setting" />
+                    </span>
                 </div>
-                <div className="p-0.5 px-2 w-full flex items-center h-8">{overriddenValue}</div>
+                <div className="p-0.5 px-2 w-full flex items-center h-8">{isValid ? valueAsString : "-"}</div>
             </React.Fragment>
         );
     }
@@ -62,7 +67,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
                     <div className="flex flex-col gap-1 min-w-0">
                         <div
                             className={resolveClassNames({
-                                "outline outline-red-500 outline-1": !isValid && isInitialized && !isLoading,
+                                "outline outline-red-500 outline-1": !isValid && !actuallyLoading,
                             })}
                         >
                             <componentRef.current

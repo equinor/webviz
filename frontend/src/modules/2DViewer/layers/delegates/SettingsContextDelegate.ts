@@ -65,7 +65,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
                     .getDelegate()
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
-                    this.handleSettingsChanged();
+                    this.handleSettingChanged();
                 })
             );
             this._unsubscribeHandler.registerUnsubscribeFunction(
@@ -185,9 +185,21 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE_CHANGED);
     }
 
-    private handleSettingsChanged() {
-        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
+    private handleSettingChanged() {
         this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+
+        if (!this.areAllSettingsLoaded() || !this.areAllSettingsInitialized()) {
+            this.setLoadingState(SettingsContextLoadingState.LOADING);
+            return;
+        }
+
+        if (this.isSomePersistedSettingNotValid() || !this.areCurrentSettingsValid()) {
+            this.setLoadingState(SettingsContextLoadingState.FAILED);
+            return;
+        }
+
+        this.setLoadingState(SettingsContextLoadingState.LOADED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
     }
 
     private handleSettingsLoadingStateChanged() {
@@ -299,11 +311,15 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
                 this.setAvailableValues(settingKey, availableValues);
             });
 
-            dependency.subscribeLoading((loading: boolean) => {
+            dependency.subscribeLoading((loading: boolean, hasDependencies: boolean) => {
                 this._settings[settingKey].getDelegate().setIsLoading(loading);
+
+                if (!hasDependencies) {
+                    this.handleSettingChanged();
+                }
             });
 
-            dependency.callUpdateFunc();
+            dependency.initialize();
 
             return dependency;
         };
@@ -323,7 +339,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
                 makeGlobalSettingGetter
             );
 
-            dependency.callUpdateFunc();
+            dependency.initialize();
 
             return dependency;
         };

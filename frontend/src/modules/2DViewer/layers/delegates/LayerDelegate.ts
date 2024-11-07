@@ -1,7 +1,7 @@
 import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, isCancelledError } from "@tanstack/react-query";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
@@ -9,7 +9,7 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
 import { SharedSetting } from "../SharedSetting";
-import { BoundingBox, Layer, LayerStatus, SerializedLayer, Settings, SettingsContext } from "../interfaces";
+import { BoundingBox, Layer, SerializedLayer, Settings, SettingsContext } from "../interfaces";
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -21,6 +21,13 @@ export enum LayerColoringType {
     NONE = "NONE",
     COLORSCALE = "COLORSCALE",
     COLORSET = "COLORSET",
+}
+
+export enum LayerStatus {
+    IDLE = "IDLE",
+    LOADING = "LOADING",
+    ERROR = "ERROR",
+    SUCCESS = "SUCCESS",
 }
 
 export type LayerDelegatePayloads<TData> = {
@@ -68,25 +75,8 @@ export class LayerDelegate<TSettings extends Settings, TData>
         );
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
-            "settings-context",
-            this._settingsContext
-                .getDelegate()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(SettingsContextDelegateTopic.LOADING_STATE_CHANGED)(() => {
-                this.handleSettingsLoadingStateChange();
-            })
-        );
-
-        this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
-            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(() => {
-                this.handleSharedSettingsChanged();
-            })
-        );
-
-        this._unsubscribeHandler.registerUnsubscribeFunction(
-            "layer-manager",
-            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.SETTINGS_CHANGED)(
+            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.LAYER_DATA_REVISION)(
                 () => {
                     this.handleSharedSettingsChanged();
                 }
@@ -94,33 +84,11 @@ export class LayerDelegate<TSettings extends Settings, TData>
         );
     }
 
-    handleSettingsLoadingStateChange(): void {
-        if (!this._settingsContext.getDelegate().areAllSettingsLoaded()) {
-            this.setStatus(LayerStatus.LOADING);
-            return;
-        } else {
-            this.handleSettingsChange();
-        }
-    }
-
     handleSettingsChange(): void {
         this._cancellationPending = true;
-        if (this._settingsContext.getDelegate().isSomePersistedSettingNotValid()) {
-            this.setStatus(LayerStatus.INVALID_SETTINGS);
-            return;
-        }
-        if (!this._settingsContext.getDelegate().areAllSettingsInitialized()) {
-            this.setStatus(LayerStatus.LOADING);
-            return;
-        }
-        if (this._settingsContext.getDelegate().areCurrentSettingsValid()) {
-            this.maybeCancelQuery().then(() => {
-                this.maybeRefetchData();
-            });
-        } else {
-            this._cancellationPending = false;
-            this.setStatus(LayerStatus.INVALID_SETTINGS);
-        }
+        this.maybeCancelQuery().then(() => {
+            this.maybeRefetchData();
+        });
     }
 
     registerQueryKey(queryKey: unknown[]): void {
@@ -304,8 +272,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
             this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.DATA);
             this.setStatus(LayerStatus.SUCCESS);
         } catch (error: any) {
-            if (error.constructor?.name === "CancelledError") {
-                this.setStatus(LayerStatus.IDLE);
+            if (isCancelledError(error)) {
                 return;
             }
             const apiError = ApiErrorHelper.fromError(error);

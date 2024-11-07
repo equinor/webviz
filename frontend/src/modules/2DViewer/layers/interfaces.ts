@@ -86,14 +86,6 @@ export function instanceofGroup(item: Item): item is Group {
     return (item as Group).getItemDelegate !== undefined && (item as Group).getGroupDelegate !== undefined;
 }
 
-export enum LayerStatus {
-    IDLE = "IDLE",
-    LOADING = "LOADING",
-    ERROR = "ERROR",
-    SUCCESS = "SUCCESS",
-    INVALID_SETTINGS = "INVALID_SETTINGS",
-}
-
 export type BoundingBox = {
     x: [number, number];
     y: [number, number];
@@ -181,6 +173,12 @@ export type SettingComponentProps<TValue> = {
     globalSettings: GlobalSettings;
 };
 
+export type ValueToStringArgs<TValue> = {
+    value: TValue;
+    workbenchSession: WorkbenchSession;
+    workbenchSettings: WorkbenchSettings;
+};
+
 export interface Setting<TValue> {
     getType(): SettingType;
     getLabel(): string;
@@ -190,6 +188,7 @@ export interface Setting<TValue> {
     isValueValid?: (availableValues: AvailableValuesType<TValue>, value: TValue) => boolean;
     serializeValue?: (value: TValue) => string;
     deserializeValue?: (serializedValue: string) => TValue;
+    valueToString?: (args: ValueToStringArgs<TValue>) => string;
 }
 
 export type Settings = { [key in SettingType]?: any };

@@ -2,6 +2,8 @@ import { ItemDelegateTopic } from "./ItemDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 
 import { DeserializationFactory } from "../DeserializationFactory";
+import { LayerManagerTopic } from "../LayerManager";
+import { SharedSetting } from "../SharedSetting";
 import { Item, SerializedItem, instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum GroupDelegateTopic {
@@ -56,6 +58,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
                 })
             );
         }
+
         if (instanceofGroup(child)) {
             /*
             for (const grandchild of child.getGroupDelegate().getChildren()) {
@@ -80,6 +83,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
                 })
             );
         }
+
         this._subscriptions.set(child.getItemDelegate().getId(), subscriptionSet);
 
         this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.CHILDREN);
@@ -95,7 +99,12 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
                 }
             }
         }
+
         child.getItemDelegate().setParentGroup(null);
+
+        if (child instanceof SharedSetting) {
+            this._owner?.getItemDelegate().getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+        }
 
         this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.CHILDREN);
     }

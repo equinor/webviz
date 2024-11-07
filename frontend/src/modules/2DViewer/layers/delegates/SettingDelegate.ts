@@ -1,3 +1,6 @@
+import { WorkbenchSession } from "@framework/WorkbenchSession";
+import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+
 import { isArray, isEqual } from "lodash";
 import { v4 } from "uuid";
 
@@ -144,12 +147,45 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return this._loading;
     }
 
+    valueToString(value: TValue, workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings): string {
+        if (this._owner.valueToString) {
+            return this._owner.valueToString({ value, workbenchSession, workbenchSettings });
+        }
+
+        if (typeof value === "boolean") {
+            return value ? "true" : "false";
+        }
+
+        if (typeof value === "string") {
+            return value;
+        }
+
+        if (typeof value === "number") {
+            return value.toString();
+        }
+
+        return "Value has no string representation";
+    }
+
     setOverriddenValue(overriddenValue: TValue | undefined): void {
         if (isEqual(this._overriddenValue, overriddenValue)) {
             return;
         }
+
+        const prevValue = this._overriddenValue;
         this._overriddenValue = overriddenValue;
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_CHANGED);
+
+        this.checkIfValueIsValid();
+
+        if (prevValue === undefined && overriddenValue !== undefined && isEqual(this._value, overriddenValue)) {
+            return;
+        }
+
+        if (prevValue !== undefined && overriddenValue === undefined && isEqual(this._value, prevValue)) {
+            return;
+        }
+
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
     }
 
@@ -217,11 +253,13 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
     }
 
     private checkIfValueIsValid(): void {
+        const value = this.getValue();
+
         if (this._owner.isValueValid) {
-            this.setIsValueValid(this._owner.isValueValid(this._availableValues, this._value));
+            this.setIsValueValid(this._owner.isValueValid(this._availableValues, value));
             return;
         }
-        if (typeof this._value === "boolean") {
+        if (typeof value === "boolean") {
             this.setIsValueValid(true);
             return;
         }
@@ -229,14 +267,11 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             this.setIsValueValid(false);
             return;
         }
-        if (this._availableValues.some((el) => isEqual(el, this._value))) {
+        if (this._availableValues.some((el) => isEqual(el, value))) {
             this.setIsValueValid(true);
             return;
         }
-        if (
-            isArray(this._value) &&
-            this._value.every((value) => this._availableValues.some((el) => isEqual(value, el)))
-        ) {
+        if (isArray(value) && value.every((value) => this._availableValues.some((el) => isEqual(value, el)))) {
             this.setIsValueValid(true);
             return;
         }
@@ -284,12 +319,13 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         this.setInitialized();
 
         this._availableValues = availableValues;
+        this.checkIfValueIsValid();
         let valueChanged = false;
-        if (this.maybeFixupValue() || this.maybeResetPersistedValue()) {
+        if ((!this._isValueValid && this.maybeFixupValue()) || this.maybeResetPersistedValue()) {
             valueChanged = true;
+            this.checkIfValueIsValid();
         }
         const prevIsValid = this._isValueValid;
-        this.checkIfValueIsValid();
         if (valueChanged || this._isValueValid !== prevIsValid) {
             this.setInitialized();
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);

@@ -65,7 +65,7 @@ export class SharedSetting implements Item {
     private makeIntersectionOfAvailableValues(): void {
         const parentGroup = this._itemDelegate.getParentGroup();
         if (!parentGroup) {
-            throw new Error("Parent group not set");
+            return;
         }
 
         const layersAndSharedSettings = parentGroup.getDescendantItems(

@@ -1,3 +1,5 @@
+import { isCancelledError } from "@tanstack/react-query";
+
 import { isEqual } from "lodash";
 
 import { GlobalSettings } from "./LayerManager";
@@ -7,7 +9,7 @@ import { Settings, UpdateFunc } from "./interfaces";
 export class Dependency<TReturnValue, TSettings extends Settings, TKey extends keyof TSettings> {
     private _updateFunc: UpdateFunc<TReturnValue, TSettings, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
-    private _loadingDependencies: Set<(loading: boolean) => void> = new Set();
+    private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
 
     private _contextDelegate: SettingsContextDelegate<TSettings, TKey>;
 
@@ -21,6 +23,9 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     private _cachedDependenciesMap: Map<Dependency<any, TSettings, any>, any> = new Map();
     private _cachedValue: Awaited<TReturnValue> | null = null;
     private _abortController: AbortController | null = null;
+    private _isInitialized = false;
+    private _numParentDependencies = 0;
+    private _numChildDependencies = 0;
 
     constructor(
         contextDelegate: SettingsContextDelegate<TSettings, TKey>,
@@ -41,19 +46,30 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         this.getHelperDependency = this.getHelperDependency.bind(this);
     }
 
+    hasChildDependencies(): boolean {
+        return this._numChildDependencies > 0;
+    }
+
     getValue(): Awaited<TReturnValue> | null {
         return this._cachedValue;
     }
 
-    subscribe(callback: (value: Awaited<TReturnValue> | null) => void): () => void {
+    subscribe(callback: (value: Awaited<TReturnValue> | null) => void, childDependency: boolean = false): () => void {
         this._dependencies.add(callback);
+
+        if (childDependency) {
+            this._numChildDependencies++;
+        }
 
         return () => {
             this._dependencies.delete(callback);
+            if (childDependency) {
+                this._numChildDependencies--;
+            }
         };
     }
 
-    subscribeLoading(callback: (loading: boolean) => void): () => void {
+    subscribeLoading(callback: (loading: boolean, hasDependencies: boolean) => void): () => void {
         this._loadingDependencies.add(callback);
 
         return () => {
@@ -62,6 +78,10 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     }
 
     private getLocalSetting<K extends TKey>(settingName: K): TSettings[K] {
+        if (!this._isInitialized) {
+            this._numParentDependencies++;
+        }
+
         if (this._cachedSettingsMap.has(settingName as string)) {
             return this._cachedSettingsMap.get(settingName as string);
         }
@@ -80,7 +100,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
 
     private setLoadingState(loading: boolean) {
         this._loadingDependencies.forEach((callback) => {
-            callback(loading);
+            callback(loading, this.hasChildDependencies());
         });
     }
 
@@ -102,30 +122,55 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     }
 
     private getHelperDependency<TDep>(dep: Dependency<TDep, TSettings, TKey>): Awaited<TDep> | null {
+        if (!this._isInitialized) {
+            this._numParentDependencies++;
+        }
+
         if (this._cachedDependenciesMap.has(dep)) {
             return this._cachedDependenciesMap.get(dep);
         }
 
         const value = dep.getValue();
         this._cachedDependenciesMap.set(dep, value);
+
         dep.subscribe((newValue) => {
             this._cachedDependenciesMap.set(dep, newValue);
             this.callUpdateFunc();
-        });
+        }, true);
+
         dep.subscribeLoading((loading) => {
             if (loading) {
                 this.setLoadingState(true);
-            } else {
-                this.setLoadingState(false);
             }
+            // Not subscribing to loading state false as it will
+            // be set when this dependency is updated
+            // #Waterfall
         });
 
         return value;
     }
 
+    async initialize() {
+        this._abortController = new AbortController();
+
+        // Establishing subscriptions
+        await this._updateFunc({
+            getLocalSetting: this.getLocalSetting,
+            getGlobalSetting: this.getGlobalSetting,
+            getHelperDependency: this.getHelperDependency,
+            abortSignal: this._abortController.signal,
+        });
+
+        // If there are no dependencies, we can call the update function
+        if (this._numParentDependencies === 0) {
+            await this.callUpdateFunc();
+        }
+
+        this._isInitialized = true;
+    }
+
     async callUpdateFunc() {
         if (this._abortController) {
-            console.debug("Aborting previous request");
             this._abortController.abort();
             this._abortController = null;
         }
@@ -143,14 +188,10 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
                 abortSignal: this._abortController.signal,
             });
         } catch (e: any) {
-            if (e.name !== "AbortError") {
+            if (!isCancelledError(e)) {
                 this.applyNewValue(null);
+                return;
             }
-            return;
-        }
-
-        if (newValue === null) {
-            this.setLoadingState(false);
             return;
         }
 
@@ -158,13 +199,12 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     }
 
     applyNewValue(newValue: Awaited<TReturnValue> | null) {
-        if (!isEqual(newValue, this._cachedValue)) {
+        if (!isEqual(newValue, this._cachedValue) || newValue === null) {
             this._cachedValue = newValue;
             for (const callback of this._dependencies) {
                 callback(newValue);
             }
         }
-
         this.setLoadingState(false);
     }
 }

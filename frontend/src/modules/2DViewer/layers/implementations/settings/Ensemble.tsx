@@ -5,7 +5,7 @@ import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps } from "../../interfaces";
+import { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
 
 export class Ensemble implements Setting<EnsembleIdent | null> {
@@ -52,6 +52,15 @@ export class Ensemble implements Setting<EnsembleIdent | null> {
                 />
             );
         };
+    }
+
+    valueToString(args: ValueToStringArgs<EnsembleIdent | null>): string {
+        const { value, workbenchSession } = args;
+        if (value === null) {
+            return "-";
+        }
+
+        return workbenchSession.getEnsembleSet().findEnsemble(value)?.getDisplayName() ?? "-";
     }
 }
 

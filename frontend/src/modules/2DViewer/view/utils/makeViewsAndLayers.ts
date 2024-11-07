@@ -5,14 +5,8 @@ import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorScale } from "@modules/2DViewer/layers/ColorScale";
 import { DeltaSurface } from "@modules/2DViewer/layers/DeltaSurface";
 import { View } from "@modules/2DViewer/layers/View";
-import {
-    BoundingBox,
-    Group,
-    Layer,
-    LayerStatus,
-    instanceofGroup,
-    instanceofLayer,
-} from "@modules/2DViewer/layers/interfaces";
+import { LayerStatus } from "@modules/2DViewer/layers/delegates/LayerDelegate";
+import { BoundingBox, Group, Layer, instanceofGroup, instanceofLayer } from "@modules/2DViewer/layers/interfaces";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 

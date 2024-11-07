@@ -13,10 +13,10 @@ import { SettingComponent } from "./SettingComponent";
 import { VisibilityToggle } from "./VisibilityToggle";
 
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
-import { LayerDelegateTopic } from "../delegates/LayerDelegate";
+import { LayerDelegateTopic, LayerStatus } from "../delegates/LayerDelegate";
 import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
 import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../delegates/SettingsContextDelegate";
-import { Layer, LayerStatus, Setting } from "../interfaces";
+import { Layer, Setting } from "../interfaces";
 
 export type LayerComponentProps = {
     layer: Layer<any, any>;
@@ -86,7 +86,7 @@ type EndActionProps = {
 
 function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.layer.getLayerDelegate(), LayerDelegateTopic.STATUS);
-    const settingsLoadingState = usePublishSubscribeTopicValue(
+    const settingsStatus = usePublishSubscribeTopicValue(
         props.layer.getLayerDelegate().getSettingsContext().getDelegate(),
         SettingsContextDelegateTopic.LOADING_STATE_CHANGED
     );
@@ -103,7 +103,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
                 </div>
             );
         }
-        if (status === LayerStatus.LOADING || settingsLoadingState === SettingsContextLoadingState.LOADING) {
+        if (status === LayerStatus.LOADING) {
             return (
                 <div title="Loading">
                     <CircularProgress size="extra-small" />
@@ -134,7 +134,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
                 </div>
             );
         }
-        if (status === LayerStatus.INVALID_SETTINGS) {
+        if (settingsStatus === SettingsContextLoadingState.FAILED) {
             return (
                 <div
                     title={`Invalid settings: ${props.layer
