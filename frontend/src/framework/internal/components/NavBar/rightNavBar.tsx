@@ -25,7 +25,7 @@ export const RightNavBar: React.FC<RightNavBarProps> = (props) => {
 
     function ensureSettingsPanelIsVisible() {
         if (rightSettingsPanelWidth <= 5) {
-            setRightSettingsPanelWidth(15);
+            setRightSettingsPanelWidth(30);
         }
     }
 
