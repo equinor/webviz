@@ -2,7 +2,7 @@ from enum import Enum
 import logging
 from io import BytesIO
 import asyncio
-from typing import List, Optional, Dict, Sequence
+from typing import List, Optional, Dict, Sequence, Any
 from dataclasses import dataclass
 from fmu.sumo.explorer.objects import Case, TableCollection
 import polars as pl
@@ -77,7 +77,12 @@ class RelPermAccess:
             self._case._sumo, self._case_uuid, self._iteration_name, table_name
         )
         single_realization_blob_id = realization_blob_ids[0]
-        return await self.fetch_realization_table(single_realization_blob_id)
+        res = await self.fetch_realization_table(single_realization_blob_id)
+        blob = BytesIO(res.content)
+        real_df = pl.read_parquet(blob)
+        # Add realization id to the dataframe
+        real_df = real_df.with_columns(pl.lit(single_realization_blob_id.realization_id).alias("REAL"))
+        return real_df
 
     async def get_relperm_table(
         self,
@@ -91,8 +96,16 @@ class RelPermAccess:
         perf_metrics.record_lap("get_relperm_realization_table_blob_uuids")
 
         tasks = [asyncio.create_task(self.fetch_realization_table(table)) for table in realization_blob_ids]
-        realization_tables = await asyncio.gather(*tasks)
+
+        realization_tables_res = await asyncio.gather(*tasks)
         perf_metrics.record_lap("fetch_realization_tables")
+        realization_tables = []
+        for res, realization_blob_id in zip(realization_tables_res, realization_blob_ids):
+            blob = BytesIO(res.content)
+            real_df = pl.read_parquet(blob)
+            # Add realization id to the dataframe
+            real_df = real_df.with_columns(pl.lit(realization_blob_id.realization_id).alias("REAL"))
+            realization_tables.append(real_df)
 
         table = pl.concat(realization_tables)
         perf_metrics.record_lap("concat_realization_tables")
@@ -100,13 +113,9 @@ class RelPermAccess:
         LOGGER.debug(f"RelPermAccess.get_relperm_table: {perf_metrics.to_string()}")
         return table
 
-    async def fetch_realization_table(self, realization_blob_id: RealizationBlobid) -> pl.DataFrame:
+    async def fetch_realization_table(self, realization_blob_id: RealizationBlobid) -> Any:
         res = await self._case._sumo.get_async(f"/objects('{realization_blob_id.blob_name}')/blob")
-        blob = BytesIO(res.content)
-        real_df = pl.read_parquet(blob)
-        # Add realization id to the dataframe
-        real_df = real_df.with_columns(pl.lit(realization_blob_id.realization_id).alias("REAL"))
-        return real_df
+        return res
 
 
 def has_required_relperm_table_columns(table_name: str, column_names: List[str]) -> bool:
