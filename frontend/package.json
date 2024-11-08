@@ -63,7 +63,7 @@
         "@vitejs/plugin-react": "^4.2.1",
         "@vitest/coverage-istanbul": "^1.1.3",
         "autoprefixer": "^10.4.13",
-        "dependency-cruiser": "^13.1.0",
+        "dependency-cruiser": "^14.0.0",
         "eslint": "^8.40.0",
         "eslint-config-prettier": "^8.6.0",
         "eslint-plugin-import": "^2.27.5",
@@ -79,6 +79,6 @@
         "typescript": "^5.3.3",
         "vite": "^5.0.12",
         "vite-plugin-checker": "^0.6.0",
-        "vitest": "^1.1.3"
+        "vitest": "^2.1.0"
     }
 }
