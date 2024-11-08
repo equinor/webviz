@@ -211,23 +211,26 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         }
     }
 
+    const activeStyleClasses = {
+        "ring ring-opacity-100 shadow-lg": true,
+        "ring-blue-400 shadow-blue-400": !props.hasUnsavedSelections,
+        "ring-orange-400 shadow-orange-400": props.hasUnsavedSelections,
+    };
+    const inactiveStyleClasses = {
+        "cursor-pointer ring-2": true,
+        "ring-opacity-100": !props.isAnotherFilterActive,
+        "ring-opacity-50 group hover:shadow-md hover:ring-opacity-75 transition-opacity": props.isAnotherFilterActive,
+        "ring-gray-300 shadow-gray-300 ": !props.hasUnsavedSelections,
+        "ring-orange-400 shadow-orange-400": props.hasUnsavedSelections,
+        "hover:shadow-blue-400 hover:shadow-lg shadow-md": !props.isAnotherFilterActive && props.hasUnsavedSelections,
+        "hover:ring-blue-400 hover:shadow-blue-400 hover:shadow-md":
+            !props.isAnotherFilterActive && !props.hasUnsavedSelections,
+    };
+    const mainDivStyleClasses = props.isActive ? activeStyleClasses : inactiveStyleClasses;
+
     return (
         <div
-            className={resolveClassNames("rounded-md", {
-                "cursor-pointer": !props.isActive,
-                "ring ring-opacity-100 shadow-lg": props.isActive,
-                "ring-2 ring-opacity-50": !props.isActive && props.isAnotherFilterActive,
-                "ring-2 ring-opacity-100": !props.isActive && !props.isAnotherFilterActive,
-                "ring-orange-400 shadow-orange-400": props.hasUnsavedSelections,
-                "ring-blue-400 shadow-blue-400": !props.hasUnsavedSelections && props.isActive,
-                "ring-gray-300 shadow-gray-300 ": !props.hasUnsavedSelections && !props.isActive,
-                "hover:ring-blue-400 hover:shadow-blue-400 hover:shadow-md":
-                    !props.hasUnsavedSelections && !props.isActive && !props.isAnotherFilterActive,
-                "hover:shadow-blue-400 hover:shadow-lg shadow-md":
-                    props.hasUnsavedSelections && !props.isActive && !props.isAnotherFilterActive,
-                "group hover:shadow-md hover:ring-opacity-75 transition-opacity duration-100":
-                    !props.isActive && props.isAnotherFilterActive,
-            })}
+            className={resolveClassNames("rounded-md", mainDivStyleClasses)}
             title={!props.isActive ? "Click to open filter" : undefined}
         >
             <div className="flex justify-center items-center bg-slate-100 h-12 rounded-tl-md rounded-tr-md">

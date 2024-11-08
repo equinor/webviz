@@ -56,28 +56,26 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
         <div className="bg-white border-r-2 z-50 flex flex-col w-full h-full">
             <RealizationFilterSettings workbench={props.workbench} onClose={handleOnClose} />
             <ModuleInstanceLog workbench={props.workbench} onClose={handleOnClose} />
-            {
-                <Dialog
-                    open={dialogOpen}
-                    onClose={handleDialogCloseClick}
-                    title="Unsaved changes - Realization filter"
-                    modal={true}
-                    showCloseCross={true}
-                    actions={
-                        <div className="flex gap-4">
-                            <Button onClick={handleDialogSaveClick} color="primary">
-                                Save
-                            </Button>
-                            <Button onClick={handleDialogDiscardClick} color="danger">
-                                Discard
-                            </Button>
-                        </div>
-                    }
-                >
-                    You have unsaved realization filter changes which are not applied to their respective ensemble yet.
-                    Do you want to save the changes?
-                </Dialog>
-            }
+            <Dialog
+                open={dialogOpen}
+                onClose={handleDialogCloseClick}
+                title="Unsaved changes - Realization filter"
+                modal={true}
+                showCloseCross={true}
+                actions={
+                    <div className="flex gap-4">
+                        <Button onClick={handleDialogSaveClick} color="primary">
+                            Save
+                        </Button>
+                        <Button onClick={handleDialogDiscardClick} color="danger">
+                            Discard
+                        </Button>
+                    </div>
+                }
+            >
+                You have unsaved realization filter changes which are not applied to their respective ensemble yet. Do
+                you want to save the changes?
+            </Dialog>
         </div>
     );
 };
