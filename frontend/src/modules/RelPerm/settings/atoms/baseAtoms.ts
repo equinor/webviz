@@ -1,6 +1,6 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
-import { ColorBy } from "@modules/RelPerm/typesAndEnums";
+import { ColorBy, VisualizationType } from "@modules/RelPerm/typesAndEnums";
 
 import { atom } from "jotai";
 import { isEqual } from "lodash";
@@ -19,3 +19,4 @@ export const userSelectedSaturationAxisAtom = atom<string | null>(null);
 export const userSelectedSatNumsAtom = atomWithCompare<number[]>([], isEqual);
 export const userSelectedRelPermCurveNamesAtom = atom<string[] | null>(null);
 export const selectedColorByAtom = atom<ColorBy>(ColorBy.ENSEMBLE);
+export const selectedVisualizationTypeAtom = atom<VisualizationType>(VisualizationType.STATISTICAL_FANCHART);

@@ -3,9 +3,14 @@ import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponen
 import { UseQueryResult } from "@tanstack/react-query";
 
 import { validRealizationNumbersAtom } from "./settings/atoms/baseAtoms";
+import { selectedVisualizationTypeAtom } from "./settings/atoms/baseAtoms";
 import { relPermDataQueryAtom } from "./settings/atoms/queryAtoms";
+import { VisualizationType } from "./typesAndEnums";
 
-type SettingsToViewInterface = { relPermDataQuery: UseQueryResult<RelPermRealizationData_api[], Error> };
+type SettingsToViewInterface = {
+    relPermDataQuery: UseQueryResult<RelPermRealizationData_api[], Error>;
+    visualizationType: VisualizationType;
+};
 export type Interfaces = {
     settingsToView: SettingsToViewInterface;
 };
@@ -13,5 +18,8 @@ export type Interfaces = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     relPermDataQuery: (get) => {
         return get(relPermDataQueryAtom);
+    },
+    visualizationType: (get) => {
+        return get(selectedVisualizationTypeAtom);
     },
 };

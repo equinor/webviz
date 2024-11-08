@@ -4,8 +4,7 @@ export enum ColorBy {
     SATNUM = "satnum",
 }
 
-export const COLOR_BY_TO_DISPLAY_NAME: Record<ColorBy, string> = {
-    [ColorBy.ENSEMBLE]: "Ensemble",
-    [ColorBy.CURVE]: "Curve",
-    [ColorBy.SATNUM]: "Satnum",
-};
+export enum VisualizationType {
+    STATISTICAL_FANCHART = "statisticalFanchart",
+    INDIVIDUAL_REALIZATIONS = "individualRealizations",
+}

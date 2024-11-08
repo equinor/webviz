@@ -14,11 +14,11 @@ import { Select, SelectOption } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { set } from "lodash";
 
 import { Interfaces } from "./interfaces";
 import {
     selectedColorByAtom,
+    selectedVisualizationTypeAtom,
     userSelectedEnsembleIdentAtom,
     userSelectedRelPermCurveNamesAtom,
     userSelectedSatNumsAtom,
@@ -38,7 +38,7 @@ import {
     selectedSatNumsAtom,
 } from "./settings/atoms/derivedAtoms";
 import { relPermTableInfoQueryAtom, relPermTableNamesQueryAtom } from "./settings/atoms/queryAtoms";
-import { ColorBy } from "./typesAndEnums";
+import { ColorBy, VisualizationType } from "./typesAndEnums";
 
 //Helpers to populate dropdowns
 const stringToOptions = (strings: string[]): SelectOption[] => {
@@ -58,7 +58,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     setValidRealizationNumbersAtom(validRealizations);
 
     const [selectedColorBy, setSelectedColorBy] = useAtom(selectedColorByAtom);
-
+    const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
     const relPermTableNamesQuery = useAtomValue(relPermTableNamesQueryAtom);
     const relPermTableInfoQuery = useAtomValue(relPermTableInfoQueryAtom);
     const availableRelPermTableNames = useAtomValue(availableRelPermTableNamesAtom);
@@ -110,6 +110,13 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         //     setSelectedPvtNums([selectedMultiPvtNums[0]]);
         // }
     }
+    function handleVisualizationTypeChange(
+        _: React.ChangeEvent<HTMLInputElement>,
+        visualizationType: VisualizationType
+    ) {
+        setSelectedVisualizationType(visualizationType);
+    }
+
     return (
         <div>
             <CollapsibleGroup expanded={true} title="Ensembles">
@@ -169,6 +176,16 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                         onChange={handleSatNumsChange}
                         size={10}
                         multiple={selectedColorBy === ColorBy.SATNUM}
+                    />
+                </CollapsibleGroup>
+                <CollapsibleGroup expanded={true} title="Visualization type">
+                    <RadioGroup
+                        options={[
+                            { label: "Statistical Fanchart", value: VisualizationType.STATISTICAL_FANCHART },
+                            { label: "Individual Realizations", value: VisualizationType.INDIVIDUAL_REALIZATIONS },
+                        ]}
+                        value={selectedVisualizationType}
+                        onChange={handleVisualizationTypeChange}
                     />
                 </CollapsibleGroup>
             </PendingWrapper>
