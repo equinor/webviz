@@ -54,7 +54,7 @@ export class SharedSetting implements Item {
     publishValueChange(): void {
         const layerManager = this._itemDelegate.getLayerManager();
         if (layerManager) {
-            layerManager.publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+            layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
         }
     }
 
