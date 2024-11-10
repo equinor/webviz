@@ -99,8 +99,9 @@ export const RealizationNumberDisplay: React.FC<RealizationNumberDisplayProps> =
     const nonCompactWidthAndHeightPx = 12;
 
     // Find the number of realizations that can fit in a row based on non-compact size, as factor of 5
-    const candidateNumberOfRealizationsPerRow = Math.floor(
-        divSize.width / (nonCompactWidthAndHeightPx + nonCompactGapPx)
+    const candidateNumberOfRealizationsPerRow = Math.max(
+        5,
+        Math.floor(divSize.width / (nonCompactWidthAndHeightPx + nonCompactGapPx))
     );
     const remainder = candidateNumberOfRealizationsPerRow % 5;
     const newNumberOfRealizationsPerRow =
