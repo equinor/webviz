@@ -80,7 +80,10 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const selectedWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
-        const selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
+        let selectedWellboreUuids: string[] = [];
+        if (selectedWellboreHeaders) {
+            selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
+        }
         const selectedPickIdentifier = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
         let fieldIdentifier: string | null = null;
         if (ensembleIdent) {

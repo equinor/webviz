@@ -34,7 +34,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
     private _value: TValue;
     private _isValueValid: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopic>();
-    private _availableValues: AvailableValuesType<TValue> = [] as AvailableValuesType<TValue>;
+    private _availableValues: AvailableValuesType<TValue> = [] as unknown as AvailableValuesType<TValue>;
     private _overriddenValue: TValue | undefined = undefined;
     private _loading: boolean = false;
     private _initialized: boolean = false;
@@ -175,6 +175,10 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         const prevValue = this._overriddenValue;
         this._overriddenValue = overriddenValue;
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_CHANGED);
+
+        if (this._overriddenValue === undefined) {
+            this.maybeFixupValue();
+        }
 
         this.checkIfValueIsValid();
 

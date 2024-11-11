@@ -135,4 +135,4 @@ function fixupSensitivityCase(currentSensitivityCase: string | null, availableSe
     return currentSensitivityCase;
 }
 
-SettingRegistry.registerSetting(Sensitivity);
+SettingRegistry.registerSetting(Sensitivity as unknown as new () => Setting<SensitivityNameCasePair | null>);

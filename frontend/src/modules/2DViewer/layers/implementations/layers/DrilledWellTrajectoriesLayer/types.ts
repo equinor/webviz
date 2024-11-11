@@ -4,5 +4,5 @@ import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 
 export type DrilledWellTrajectoriesSettings = {
     [SettingType.ENSEMBLE]: EnsembleIdent | null;
-    [SettingType.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[];
+    [SettingType.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
 };

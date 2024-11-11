@@ -1,4 +1,10 @@
-import { WorkbenchSession, WorkbenchSessionEvent } from "@framework/WorkbenchSession";
+import { Ensemble } from "@framework/Ensemble";
+import {
+    EnsembleRealizationFilterFunction,
+    WorkbenchSession,
+    WorkbenchSessionEvent,
+    createEnsembleRealizationFilterFuncForWorkbenchSession,
+} from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -11,11 +17,11 @@ import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelega
 import { Group, Item, SerializedLayerManager } from "./interfaces";
 
 export enum LayerManagerTopic {
-    ITEMS_CHANGED = "items-changed",
-    SETTINGS_CHANGED = "settings-changed",
-    AVAILABLE_SETTINGS_CHANGED = "available-settings-changed",
-    LAYER_DATA_REVISION = "layer-data-changed",
-    GLOBAL_SETTINGS_CHANGED = "global-settings-changed",
+    ITEMS_CHANGED = "ITEMS_CHANGED",
+    SETTINGS_CHANGED = "SETTINGS_CHANGED",
+    AVAILABLE_SETTINGS_CHANGED = "AVAILABLE_SETTINGS_CHANGED",
+    LAYER_DATA_REVISION = "LAYER_DATA_REVISION",
+    GLOBAL_SETTINGS_CHANGED = "GLOBAL_SETTINGS_CHANGED",
 }
 
 export type LayerManagerTopicPayload = {
@@ -28,6 +34,8 @@ export type LayerManagerTopicPayload = {
 
 export type GlobalSettings = {
     fieldId: string | null;
+    ensembles: readonly Ensemble[];
+    realizationFilterFunction: EnsembleRealizationFilterFunction;
 };
 
 export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, LayerManagerTopicPayload> {
@@ -38,10 +46,9 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerManagerTopic>();
     private _itemDelegate: ItemDelegate;
     private _layerDataRevision: number = 0;
-    private _globalSettings: GlobalSettings = {
-        fieldId: null,
-    };
+    private _globalSettings: GlobalSettings;
     private _subscriptionsHandler = new UnsubscribeHandlerDelegate();
+    private _deserializing = false;
 
     constructor(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings, queryClient: QueryClient) {
         this._workbenchSession = workbenchSession;
@@ -49,11 +56,21 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         this._queryClient = queryClient;
         this._itemDelegate = new ItemDelegate("LayerManager", this);
         this._groupDelegate = new GroupDelegate(this);
+
+        this._globalSettings = this.initializeGlobalSettings();
+
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession.subscribe(
                 WorkbenchSessionEvent.EnsembleSetChanged,
                 this.handleEnsembleSetChanged.bind(this)
+            )
+        );
+        this._subscriptionsHandler.registerUnsubscribeFunction(
+            "workbenchSession",
+            this._workbenchSession.subscribe(
+                WorkbenchSessionEvent.RealizationFilterSetChanged,
+                this.handleRealizationFilterSetChanged.bind(this)
             )
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
@@ -67,7 +84,27 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         );
     }
 
+    private initializeGlobalSettings(): GlobalSettings {
+        const ensembles = this._workbenchSession.getEnsembleSet().getEnsembleArr();
+        return {
+            fieldId: null,
+            ensembles,
+            realizationFilterFunction: createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
+        };
+    }
+
+    private handleRealizationFilterSetChanged() {
+        this._globalSettings.realizationFilterFunction = createEnsembleRealizationFilterFuncForWorkbenchSession(
+            this._workbenchSession
+        );
+
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+    }
+
     private handleEnsembleSetChanged() {
+        const ensembles = this._workbenchSession.getEnsembleSet().getEnsembleArr();
+        this._globalSettings.ensembles = ensembles;
+
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
     }
 
@@ -80,10 +117,12 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     }
 
     updateGlobalSetting<T extends keyof GlobalSettings>(key: T, value: GlobalSettings[T]): void {
-        if (!isEqual(this._globalSettings[key], value)) {
-            this._globalSettings[key] = value;
-            this._publishSubscribeDelegate.notifySubscribers(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+        if (isEqual(this._globalSettings[key], value)) {
+            return;
         }
+
+        this._globalSettings[key] = value;
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
     }
 
     getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] {
@@ -91,6 +130,10 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     }
 
     publishTopic(topic: LayerManagerTopic): void {
+        if (this._deserializing) {
+            return;
+        }
+
         if (topic === LayerManagerTopic.LAYER_DATA_REVISION) {
             this._layerDataRevision++;
         }
@@ -149,9 +192,11 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     }
 
     deserializeState(serializedState: SerializedLayerManager): void {
+        this._deserializing = true;
         this._itemDelegate.setId(serializedState.id);
         this._itemDelegate.setName(serializedState.name);
         this._groupDelegate.deserializeChildren(serializedState.children);
+        this._deserializing = false;
 
         this.publishTopic(LayerManagerTopic.ITEMS_CHANGED);
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);

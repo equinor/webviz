@@ -83,7 +83,11 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const selectedWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
-        const selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
+        let selectedWellboreUuids: string[] = [];
+        if (selectedWellboreHeaders) {
+            selectedWellboreHeaders.map((header) => header.wellboreUuid);
+        }
+
         let fieldIdentifier: string | null = null;
         if (ensembleIdent) {
             const ensemble = ensembleSet.findEnsemble(ensembleIdent);

@@ -6,6 +6,7 @@ import { Dependency } from "../Dependency";
 import { GlobalSettings, LayerManager, LayerManagerTopic } from "../LayerManager";
 import {
     AvailableValuesType,
+    EachAvailableValuesType,
     SerializedSettingsState,
     Setting,
     Settings,
@@ -181,12 +182,16 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     }
 
     private setLoadingState(loadingState: SettingsContextLoadingState) {
+        if (this._loadingState === loadingState) {
+            return;
+        }
+
         this._loadingState = loadingState;
         this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE_CHANGED);
     }
 
     private handleSettingChanged() {
-        this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+        // this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
 
         if (!this.areAllSettingsLoaded() || !this.areAllSettingsInitialized()) {
             this.setLoadingState(SettingsContextLoadingState.LOADING);
@@ -213,10 +218,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         this.setLoadingState(SettingsContextLoadingState.LOADED);
     }
 
-    setAvailableValues<K extends TKey>(
-        key: K,
-        availableValues: AvailableValuesType<Exclude<TSettings[K], null>>
-    ): void {
+    setAvailableValues<K extends TKey>(key: K, availableValues: AvailableValuesType<TSettings[K]>): void {
         const settingDelegate = this._settings[key].getDelegate();
         settingDelegate.setAvailableValues(availableValues);
 
@@ -294,18 +296,18 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
 
         const availableSettingsUpdater = <K extends TKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<AvailableValuesType<Exclude<TSettings[K], null>>, TSettings, K>
-        ): Dependency<AvailableValuesType<Exclude<TSettings[K], null>>, TSettings, K> => {
-            const dependency = new Dependency<AvailableValuesType<Exclude<TSettings[K], null>>, TSettings, K>(
+            updateFunc: UpdateFunc<EachAvailableValuesType<TSettings[K]>, TSettings, K>
+        ): Dependency<EachAvailableValuesType<TSettings[K]>, TSettings, K> => {
+            const dependency = new Dependency<EachAvailableValuesType<TSettings[K]>, TSettings, K>(
                 this as unknown as SettingsContextDelegate<TSettings, K>,
                 updateFunc,
                 makeSettingGetter,
                 makeGlobalSettingGetter
             );
 
-            dependency.subscribe((availableValues: AvailableValuesType<Exclude<TSettings[K], null>> | null) => {
+            dependency.subscribe((availableValues: AvailableValuesType<TSettings[K]> | null) => {
                 if (availableValues === null) {
-                    this.setAvailableValues(settingKey, [] as AvailableValuesType<Exclude<TSettings[K], null>>);
+                    this.setAvailableValues(settingKey, [] as unknown as AvailableValuesType<TSettings[K]>);
                     return;
                 }
                 this.setAvailableValues(settingKey, availableValues);

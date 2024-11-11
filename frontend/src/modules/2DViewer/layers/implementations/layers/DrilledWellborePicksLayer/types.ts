@@ -4,6 +4,6 @@ import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 
 export type DrilledWellborePicksSettings = {
     [SettingType.ENSEMBLE]: EnsembleIdent | null;
-    [SettingType.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[];
+    [SettingType.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
     [SettingType.SURFACE_NAME]: string | null;
 };

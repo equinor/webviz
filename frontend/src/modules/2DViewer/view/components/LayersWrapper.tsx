@@ -8,7 +8,6 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect2D, rectContainsPoint } from "@lib/utils/geometry";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { LayerManager, LayerManagerTopic } from "@modules/2DViewer/layers/LayerManager";
-import { GroupDelegateTopic } from "@modules/2DViewer/layers/delegates/GroupDelegate";
 import { usePublishSubscribeTopicValue } from "@modules/2DViewer/layers/delegates/PublishSubscribeDelegate";
 import { BoundingBox } from "@modules/2DViewer/layers/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
@@ -37,8 +36,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const groupDelegate = props.layerManager.getGroupDelegate();
 
     usePublishSubscribeTopicValue(props.layerManager, LayerManagerTopic.LAYER_DATA_REVISION);
-
-    usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.TREE_REVISION_NUMBER);
 
     const viewports: ViewportType[] = [];
     const viewerLayers: DeckGlLayerWithPosition[] = [];

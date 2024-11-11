@@ -1,3 +1,4 @@
+import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import { GroupDelegate } from "./GroupDelegate";
@@ -45,6 +46,10 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
     }
 
     setName(name: string): void {
+        if (isEqual(this._name, name)) {
+            return;
+        }
+
         this._name = name;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.NAME);
         if (this._layerManager) {
@@ -69,6 +74,10 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
     }
 
     setIsVisible(visible: boolean): void {
+        if (isEqual(this._visible, visible)) {
+            return;
+        }
+
         this._visible = visible;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.VISIBILITY);
         if (this._layerManager) {
@@ -81,6 +90,10 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
     }
 
     setIsExpanded(expanded: boolean): void {
+        if (isEqual(this._expanded, expanded)) {
+            return;
+        }
+
         this._expanded = expanded;
         this._publishSubscribeDelegate.notifySubscribers(ItemDelegateTopic.EXPANDED);
     }

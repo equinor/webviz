@@ -25,6 +25,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<GroupDelegateTopic>();
     private _subscriptions: Map<string, Set<() => void>> = new Map();
     private _treeRevisionNumber: number = 0;
+    private _deserializing = false;
 
     constructor(owner: Item | null) {
         this._owner = owner;
@@ -40,7 +41,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
 
     private incrementTreeRevisionNumber() {
         this._treeRevisionNumber++;
-        this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.TREE_REVISION_NUMBER);
+        this.publishTopic(GroupDelegateTopic.TREE_REVISION_NUMBER);
     }
 
     protected takeOwnershipOfChild(child: Item) {
@@ -54,26 +55,12 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
                     .getItemDelegate()
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(ItemDelegateTopic.EXPANDED)(() => {
-                    this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
+                    this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
                 })
             );
         }
 
         if (instanceofGroup(child)) {
-            /*
-            for (const grandchild of child.getGroupDelegate().getChildren()) {
-                child.getGroupDelegate().takeOwnershipOfChild(grandchild);
-            }
-                */
-
-            subscriptionSet.add(
-                child
-                    .getGroupDelegate()
-                    .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(GroupDelegateTopic.CHILDREN)(() => {
-                    this.incrementTreeRevisionNumber();
-                })
-            );
             subscriptionSet.add(
                 child
                     .getGroupDelegate()
@@ -86,8 +73,15 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
 
         this._subscriptions.set(child.getItemDelegate().getId(), subscriptionSet);
 
-        this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.CHILDREN);
+        this.publishTopic(GroupDelegateTopic.CHILDREN);
         this.incrementTreeRevisionNumber();
+    }
+
+    private publishTopic(topic: GroupDelegateTopic) {
+        if (this._deserializing) {
+            return;
+        }
+        this._publishSubscribeDelegate.notifySubscribers(topic);
     }
 
     private disposeOwnershipOfChild(child: Item) {
@@ -106,7 +100,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
             this._owner?.getItemDelegate().getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
         }
 
-        this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.CHILDREN);
+        this.publishTopic(GroupDelegateTopic.CHILDREN);
     }
 
     prependChild(child: Item) {
@@ -135,7 +129,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
             this.disposeOwnershipOfChild(child);
         }
         this._children = [];
-        this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.CHILDREN);
+        this.publishTopic(GroupDelegateTopic.CHILDREN);
         this.incrementTreeRevisionNumber();
     }
 
@@ -148,7 +142,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
         this._children = [...this._children.slice(0, currentIndex), ...this._children.slice(currentIndex + 1)];
 
         this._children = [...this._children.slice(0, index), child, ...this._children.slice(index)];
-        this._publishSubscribeDelegate.notifySubscribers(GroupDelegateTopic.CHILDREN);
+        this.publishTopic(GroupDelegateTopic.CHILDREN);
         this.incrementTreeRevisionNumber();
     }
 
@@ -242,10 +236,12 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
             throw new Error("Owner not set");
         }
 
+        this._deserializing = true;
         const factory = new DeserializationFactory(this._owner.getItemDelegate().getLayerManager());
         for (const child of children) {
             const item = factory.makeItem(child);
             this.appendChild(item);
         }
+        this._deserializing = false;
     }
 }

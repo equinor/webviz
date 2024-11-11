@@ -137,8 +137,8 @@ export interface UpdateFunc<TReturnValue, TSettings extends Settings, TKey exten
 export interface DefineDependenciesArgs<TSettings extends Settings, TKey extends keyof TSettings = keyof TSettings> {
     availableSettingsUpdater: (
         settingName: TKey,
-        update: UpdateFunc<AvailableValuesType<Exclude<TSettings[TKey], null>>, TSettings, TKey>
-    ) => Dependency<AvailableValuesType<Exclude<TSettings[TKey], null>>, TSettings, TKey>;
+        update: UpdateFunc<EachAvailableValuesType<TSettings[TKey]>, TSettings, TKey>
+    ) => Dependency<EachAvailableValuesType<TSettings[TKey]>, TSettings, TKey>;
     helperDependency: <T>(
         update: (args: {
             getLocalSetting: <T extends TKey>(settingName: T) => TSettings[T];
@@ -158,8 +158,11 @@ export interface SettingsContext<TSettings extends Settings, TKey extends keyof 
     defineDependencies(args: DefineDependenciesArgs<TSettings, TKey>): void;
 }
 
-export type AvailableValuesType<TValue> = TValue extends Array<unknown> ? TValue : Array<TValue>;
+export type AvailableValuesType<TValue> = Exclude<TValue, null> extends Array<infer V>
+    ? Array<V>
+    : Array<Exclude<TValue, null>>;
 export type PossiblyUndefined<TSettings> = { [K in keyof TSettings]?: TSettings[K] };
+export type EachAvailableValuesType<T> = T extends any ? AvailableValuesType<T> : never;
 
 export type SettingComponentProps<TValue> = {
     onValueChange: (newValue: TValue) => void;
@@ -167,7 +170,7 @@ export type SettingComponentProps<TValue> = {
     isValueValid: boolean;
     overriddenValue: TValue | null;
     isOverridden: boolean;
-    availableValues: AvailableValuesType<Exclude<TValue, null>>;
+    availableValues: AvailableValuesType<TValue>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     globalSettings: GlobalSettings;

@@ -50,10 +50,9 @@ export class StatisticalSurfaceContext implements SettingsContext<StatisticalSur
         availableSettingsUpdater(SettingType.STATISTIC_FUNCTION, () => Object.values(SurfaceStatisticFunction_api));
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensembles = getGlobalSetting("ensembles");
 
-            const ensembleIdents = ensembleSet
-                .getEnsembleArr()
+            const ensembleIdents = ensembles
                 .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
                 .map((ensemble) => ensemble.getIdent());
 

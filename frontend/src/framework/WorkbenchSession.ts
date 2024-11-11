@@ -77,7 +77,7 @@ export class WorkbenchSession {
     }
 }
 
-function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {
+export function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {
     return function ensembleRealizationFilterFunc(ensembleIdent: EnsembleIdent): readonly number[] {
         const realizationFilterSet = workbenchSession.getRealizationFilterSet();
         const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);

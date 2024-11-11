@@ -1,4 +1,3 @@
-import { WellboreHeader_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
@@ -41,10 +40,9 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
     }: DefineDependenciesArgs<DrilledWellTrajectoriesSettings>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensembles = getGlobalSetting("ensembles");
 
-            const ensembleIdents = ensembleSet
-                .getEnsembleArr()
+            const ensembleIdents = ensembles
                 .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
                 .map((ensemble) => ensemble.getIdent());
 

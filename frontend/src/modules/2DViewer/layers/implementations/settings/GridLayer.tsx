@@ -4,7 +4,7 @@ import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps } from "../../interfaces";
+import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
 
 type ValueType = number | null;
@@ -13,7 +13,7 @@ export class GridLayer implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
-        this._delegate = new SettingDelegate<ValueType | null>(null, this);
+        this._delegate = new SettingDelegate<ValueType>(null, this);
     }
 
     getType(): SettingType {
@@ -28,7 +28,7 @@ export class GridLayer implements Setting<ValueType> {
         return this._delegate;
     }
 
-    isValueValid(availableValues: null[] | number[], value: ValueType): boolean {
+    isValueValid(availableValues: AvailableValuesType<ValueType>, value: ValueType): boolean {
         if (value === null) {
             return false;
         }
@@ -47,7 +47,7 @@ export class GridLayer implements Setting<ValueType> {
         return value >= min && value <= max;
     }
 
-    fixupValue(availableValues: null[] | number[], currentValue: ValueType): ValueType {
+    fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
         if (availableValues.length < 3) {
             return null;
         }
@@ -98,4 +98,4 @@ export class GridLayer implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(GridLayer);
+SettingRegistry.registerSetting(GridLayer as unknown as new () => Setting<any>);

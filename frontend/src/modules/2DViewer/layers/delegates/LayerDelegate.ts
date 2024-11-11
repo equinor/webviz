@@ -120,6 +120,9 @@ export class LayerDelegate<TSettings extends Settings, TData>
     }
 
     setIsSubordinated(isSubordinated: boolean): void {
+        if (this._isSubordinated === isSubordinated) {
+            return;
+        }
         this._isSubordinated = isSubordinated;
         this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.SUBORDINATED);
     }
@@ -197,6 +200,10 @@ export class LayerDelegate<TSettings extends Settings, TData>
     }
 
     private setStatus(status: LayerStatus): void {
+        if (this._status === status) {
+            return;
+        }
+
         this._status = status;
         this._layerManager?.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
         this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.STATUS);

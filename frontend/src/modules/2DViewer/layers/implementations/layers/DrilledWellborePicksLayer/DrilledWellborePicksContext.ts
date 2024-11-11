@@ -1,4 +1,3 @@
-import { WellboreHeader_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
@@ -15,8 +14,6 @@ import { SurfaceName } from "../../settings/SurfaceName";
 
 export class DrilledWellborePicksContext implements SettingsContext<DrilledWellborePicksSettings> {
     private _contextDelegate: SettingsContextDelegate<DrilledWellborePicksSettings>;
-    private _wellboreHeadersCache: WellboreHeader_api[] | null = null;
-    private _pickIdentifierCache: string[] | null = null;
 
     constructor(layerManager: LayerManager) {
         this._contextDelegate = new SettingsContextDelegate<
@@ -40,7 +37,8 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
     areCurrentSettingsValid(settings: DrilledWellborePicksSettings): boolean {
         return (
             settings[SettingType.ENSEMBLE] !== null &&
-            settings[SettingType.SMDA_WELLBORE_HEADERS]?.length > 0 &&
+            settings[SettingType.SMDA_WELLBORE_HEADERS] !== null &&
+            settings[SettingType.SMDA_WELLBORE_HEADERS].length > 0 &&
             settings[SettingType.SURFACE_NAME] !== null
         );
     }
@@ -53,10 +51,9 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
     }: DefineDependenciesArgs<DrilledWellborePicksSettings>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensembles = getGlobalSetting("ensembles");
 
-            const ensembleIdents = ensembleSet
-                .getEnsembleArr()
+            const ensembleIdents = ensembles
                 .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
                 .map((ensemble) => ensemble.getIdent());
 

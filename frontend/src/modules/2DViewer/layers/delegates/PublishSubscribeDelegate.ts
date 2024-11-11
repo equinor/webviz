@@ -12,6 +12,7 @@ export class PublishSubscribeDelegate<TTopic extends string> {
 
     notifySubscribers(topic: TTopic): void {
         const subscribers = this._subscribers.get(topic);
+        console.debug(topic);
         if (subscribers) {
             subscribers.forEach((subscriber) => subscriber());
         }

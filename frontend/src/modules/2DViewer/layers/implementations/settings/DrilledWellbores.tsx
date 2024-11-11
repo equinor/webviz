@@ -1,18 +1,22 @@
 import React from "react";
 
 import { WellboreHeader_api } from "@api";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Select, SelectOption } from "@lib/components/Select";
+import { Deselect, SelectAll } from "@mui/icons-material";
 
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps } from "../../interfaces";
+import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
 import { SettingType } from "../../settingsTypes";
 
-export class DrilledWellbores implements Setting<WellboreHeader_api[]> {
-    private _delegate: SettingDelegate<WellboreHeader_api[]>;
+type ValueType = WellboreHeader_api[] | null;
+
+export class DrilledWellbores implements Setting<ValueType> {
+    private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
-        this._delegate = new SettingDelegate<WellboreHeader_api[]>([], this);
+        this._delegate = new SettingDelegate<ValueType>(null, this);
     }
 
     getType(): SettingType {
@@ -23,11 +27,15 @@ export class DrilledWellbores implements Setting<WellboreHeader_api[]> {
         return "Drilled wellbores";
     }
 
-    getDelegate(): SettingDelegate<WellboreHeader_api[]> {
+    getDelegate(): SettingDelegate<ValueType> {
         return this._delegate;
     }
 
-    fixupValue(availableValues: WellboreHeader_api[], currentValue: WellboreHeader_api[]): WellboreHeader_api[] {
+    fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
+        if (!currentValue) {
+            return availableValues;
+        }
+
         const matchingValues = currentValue.filter((value) =>
             availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid)
         );
@@ -37,32 +45,53 @@ export class DrilledWellbores implements Setting<WellboreHeader_api[]> {
         return matchingValues;
     }
 
-    makeComponent(): (props: SettingComponentProps<WellboreHeader_api[]>) => React.ReactNode {
-        return function DrilledWellbores(props: SettingComponentProps<WellboreHeader_api[]>) {
+    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
+        return function DrilledWellbores(props: SettingComponentProps<ValueType>) {
             const options: SelectOption[] = props.availableValues.map((ident) => ({
                 value: ident.wellboreUuid,
                 label: ident.uniqueWellboreIdentifier,
             }));
 
-            const handleChange = (selectedUuids: string[]) => {
+            function handleChange(selectedUuids: string[]) {
                 const selectedWellbores = props.availableValues.filter((ident) =>
                     selectedUuids.includes(ident.wellboreUuid)
                 );
                 props.onValueChange(selectedWellbores);
-            };
+            }
 
-            const selectedValues = props.value.map((ident) => ident.wellboreUuid);
+            function selectAll() {
+                const allUuids = props.availableValues.map((ident) => ident.wellboreUuid);
+                handleChange(allUuids);
+            }
+
+            function selectNone() {
+                handleChange([]);
+            }
+
+            const selectedValues = props.value?.map((ident) => ident.wellboreUuid) ?? [];
 
             return (
-                <Select
-                    filter
-                    options={options}
-                    value={selectedValues}
-                    onChange={handleChange}
-                    disabled={props.isOverridden}
-                    multiple={true}
-                    size={5}
-                />
+                <div className="flex flex-col gap-1 mt-1">
+                    <div className="flex items-center gap-2">
+                        <DenseIconButton onClick={selectAll} title="Select all">
+                            <SelectAll fontSize="inherit" />
+                            Select all
+                        </DenseIconButton>
+                        <DenseIconButton onClick={selectNone} title="Clear selection">
+                            <Deselect fontSize="inherit" />
+                            Clear selection
+                        </DenseIconButton>
+                    </div>
+                    <Select
+                        filter
+                        options={options}
+                        value={selectedValues}
+                        onChange={handleChange}
+                        disabled={props.isOverridden}
+                        multiple={true}
+                        size={5}
+                    />
+                </div>
             );
         };
     }
@@ -95,4 +124,4 @@ export function WellboreHeaderSelector(props: WellboreHeaderSelectorProps): Reac
     );
 }
 
-SettingRegistry.registerSetting(DrilledWellbores);
+SettingRegistry.registerSetting(DrilledWellbores as unknown as new () => Setting<any>);

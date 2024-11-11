@@ -47,27 +47,24 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
     }: DefineDependenciesArgs<RealizationSurfaceSettings>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensembles = getGlobalSetting("ensembles");
 
-            const ensembleIdents = ensembleSet
-                .getEnsembleArr()
+            const ensembleIdents = ensembles
                 .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
                 .map((ensemble) => ensemble.getIdent());
 
             return ensembleIdents;
         });
 
-        availableSettingsUpdater(SettingType.REALIZATION, ({ getLocalSetting }) => {
+        availableSettingsUpdater(SettingType.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
             const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
             if (!ensembleIdent) {
                 return [];
             }
 
-            const realizations = workbenchSession
-                .getRealizationFilterSet()
-                .getRealizationFilterForEnsembleIdent(ensembleIdent)
-                .getFilteredRealizations();
+            const realizations = realizationFilterFunc(ensembleIdent);
 
             return [...realizations];
         });
