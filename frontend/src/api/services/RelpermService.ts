@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { RelPermRealizationData } from '../models/RelPermRealizationData';
 import type { RelPermTableInfo } from '../models/RelPermTableInfo';
+import type { SaturationRealizationData } from '../models/SaturationRealizationData';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class RelpermService {
@@ -58,27 +58,62 @@ export class RelpermService {
         });
     }
     /**
-     * Get Saturation And Curve Data
+     * Get Realizations Curve Data
      * @param caseUuid Sumo case uuid
      * @param ensembleName Ensemble name
      * @param tableName Table name
      * @param saturationAxisName Saturation axis name
      * @param curveNames Curve names
      * @param satnums Satnums
-     * @returns RelPermRealizationData Successful Response
+     * @returns SaturationRealizationData Successful Response
      * @throws ApiError
      */
-    public getSaturationAndCurveData(
+    public getRealizationsCurveData(
         caseUuid: string,
         ensembleName: string,
         tableName: string,
         saturationAxisName: string,
         curveNames: Array<string>,
         satnums: Array<number>,
-    ): CancelablePromise<Array<RelPermRealizationData>> {
+    ): CancelablePromise<Array<SaturationRealizationData>> {
         return this.httpRequest.request({
             method: 'GET',
-            url: '/relperm/saturation_and_curve_data',
+            url: '/relperm/realizations_curve_data',
+            query: {
+                'case_uuid': caseUuid,
+                'ensemble_name': ensembleName,
+                'table_name': tableName,
+                'saturation_axis_name': saturationAxisName,
+                'curve_names': curveNames,
+                'satnums': satnums,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Statistical Curve Data
+     * @param caseUuid Sumo case uuid
+     * @param ensembleName Ensemble name
+     * @param tableName Table name
+     * @param saturationAxisName Saturation axis name
+     * @param curveNames Curve names
+     * @param satnums Satnums
+     * @returns SaturationRealizationData Successful Response
+     * @throws ApiError
+     */
+    public getStatisticalCurveData(
+        caseUuid: string,
+        ensembleName: string,
+        tableName: string,
+        saturationAxisName: string,
+        curveNames: Array<string>,
+        satnums: Array<number>,
+    ): CancelablePromise<Array<SaturationRealizationData>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/relperm/statistical_curve_data',
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,

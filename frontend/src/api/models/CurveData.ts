@@ -2,8 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type RelPermSatNumData = {
-    satnum: number;
-    relperm_curves_data: Array<Array<number>>;
+export type CurveData = {
+    curve_name: string;
+    curve_values: Array<number>;
+    unit: (string | null);
 };
 

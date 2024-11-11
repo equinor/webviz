@@ -1,7 +1,8 @@
 from primary.services.relperm_assembler.relperm_assembler import (
     RelPermTableInfo,
     RelPermSaturationAxis,
-    RelPermRealizationData,
+    SaturationRealizationData,
+    CurveData,
 )
 
 from . import schemas
@@ -25,13 +26,23 @@ def to_api_relperm_saturation_axis(axis: RelPermSaturationAxis) -> schemas.RelPe
     )
 
 
-def to_api_relperm_ensemble_data(data: RelPermRealizationData) -> schemas.RelPermRealizationData:
+def to_api_relperm_realization_data(data: SaturationRealizationData) -> schemas.SaturationRealizationData:
 
-    return schemas.RelPermRealizationData(
-        saturation_axis_data=data.saturation_axis_data,
+    return schemas.SaturationRealizationData(
+        saturation_axis_data=schemas.CurveData(
+            curve_name=data.saturation_axis_data.curve_name,
+            curve_values=data.saturation_axis_data.curve_values,
+            unit=data.saturation_axis_data.unit,
+        ),
         satnum_data=[
-            schemas.RelPermSatNumData(satnum=satnum_data.satnum, relperm_curves_data=satnum_data.relperm_curves_data)
+            schemas.RelPermRealizationDataForSaturation(
+                saturation_number=satnum_data.saturation_number,
+                relperm_curve_data=[
+                    schemas.CurveData(curve_name=curve.curve_name, curve_values=curve.curve_values)
+                    for curve in satnum_data.relperm_curve_data
+                ],
+            )
             for satnum_data in data.satnum_data
         ],
-        realization=data.realization,
+        realization_id=data.realization_id,
     )

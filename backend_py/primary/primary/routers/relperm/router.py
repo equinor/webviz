@@ -44,8 +44,8 @@ async def get_table_info(
     return converters.to_api_relperm_table_info(relperm_table_info)
 
 
-@router.get("/saturation_and_curve_data")
-async def get_saturation_and_curve_data(
+@router.get("/realizations_curve_data")
+async def get_realizations_curve_data(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
@@ -53,12 +53,32 @@ async def get_saturation_and_curve_data(
     saturation_axis_name: Annotated[str, Query(description="Saturation axis name")],
     curve_names: Annotated[List[str], Query(description="Curve names")],
     satnums: Annotated[List[int], Query(description="Satnums")],
-) -> List[schemas.RelPermRealizationData]:
+) -> List[schemas.SaturationRealizationData]:
 
     access = await RelPermAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     assembler = RelPermAssembler(access)
-    relperm_data = await assembler.get_relperm_ensemble_data(table_name, saturation_axis_name, curve_names, satnums)
+    relperm_data = await assembler.get_relperm_realization_data(table_name, saturation_axis_name, curve_names, satnums)
 
-    return [converters.to_api_relperm_ensemble_data(data) for data in relperm_data]
+    return [converters.to_api_relperm_realization_data(data) for data in relperm_data]
+
+
+@router.get("/statistical_curve_data")
+async def get_statistical_curve_data(
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    table_name: Annotated[str, Query(description="Table name")],
+    saturation_axis_name: Annotated[str, Query(description="Saturation axis name")],
+    curve_names: Annotated[List[str], Query(description="Curve names")],
+    satnums: Annotated[List[int], Query(description="Satnums")],
+) -> List[schemas.SaturationRealizationData]:
+
+    access = await RelPermAccess.from_case_uuid_async(
+        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
+    )
+    assembler = RelPermAssembler(access)
+    relperm_data = await assembler.get_relperm_realization_data(table_name, saturation_axis_name, curve_names, satnums)
+
+    return [converters.to_api_relperm_realization_data(data) for data in relperm_data]

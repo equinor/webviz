@@ -15,7 +15,6 @@ import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePr
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { Interfaces } from "./interfaces";
 import {
     selectedColorByAtom,
     selectedVisualizationTypeAtom,
@@ -25,7 +24,7 @@ import {
     userSelectedSaturationAxisAtom,
     userSelectedTableNameAtom,
     validRealizationNumbersAtom,
-} from "./settings/atoms/baseAtoms";
+} from "./atoms/baseAtoms";
 import {
     availableRelPermCurveNamesAtom,
     availableRelPermSaturationAxesAtom,
@@ -36,9 +35,11 @@ import {
     selectedRelPermSaturationAxisAtom,
     selectedRelPermTableNameAtom,
     selectedSatNumsAtom,
-} from "./settings/atoms/derivedAtoms";
-import { relPermTableInfoQueryAtom, relPermTableNamesQueryAtom } from "./settings/atoms/queryAtoms";
-import { ColorBy, VisualizationType } from "./typesAndEnums";
+} from "./atoms/derivedAtoms";
+import { relPermTableInfoQueryAtom, relPermTableNamesQueryAtom } from "./atoms/queryAtoms";
+
+import { Interfaces } from "../interfaces";
+import { ColorBy, VisualizationType } from "../typesAndEnums";
 
 //Helpers to populate dropdowns
 const stringToOptions = (strings: string[]): SelectOption[] => {

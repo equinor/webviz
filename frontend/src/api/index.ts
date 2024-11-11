@@ -26,6 +26,7 @@ export type { BoundingBox2d as BoundingBox2d_api } from './models/BoundingBox2d'
 export type { BoundingBox3d as BoundingBox3d_api } from './models/BoundingBox3d';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';
+export type { CurveData as CurveData_api } from './models/CurveData';
 export type { DatedTree as DatedTree_api } from './models/DatedTree';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
 export type { EnsembleInfo as EnsembleInfo_api } from './models/EnsembleInfo';
@@ -68,8 +69,7 @@ export { PolygonsAttributeType as PolygonsAttributeType_api } from './models/Pol
 export type { PolygonsMeta as PolygonsMeta_api } from './models/PolygonsMeta';
 export type { PolylineIntersection as PolylineIntersection_api } from './models/PolylineIntersection';
 export type { PvtData as PvtData_api } from './models/PvtData';
-export type { RelPermRealizationData as RelPermRealizationData_api } from './models/RelPermRealizationData';
-export type { RelPermSatNumData as RelPermSatNumData_api } from './models/RelPermSatNumData';
+export type { RelPermRealizationDataForSaturation as RelPermRealizationDataForSaturation_api } from './models/RelPermRealizationDataForSaturation';
 export type { RelPermSaturationAxis as RelPermSaturationAxis_api } from './models/RelPermSaturationAxis';
 export type { RelPermTableInfo as RelPermTableInfo_api } from './models/RelPermTableInfo';
 export type { RepeatedTableColumnData as RepeatedTableColumnData_api } from './models/RepeatedTableColumnData';
@@ -78,6 +78,7 @@ export type { RftObservations as RftObservations_api } from './models/RftObserva
 export type { RftRealizationData as RftRealizationData_api } from './models/RftRealizationData';
 export type { RftTableDefinition as RftTableDefinition_api } from './models/RftTableDefinition';
 export type { RftWellInfo as RftWellInfo_api } from './models/RftWellInfo';
+export type { SaturationRealizationData as SaturationRealizationData_api } from './models/SaturationRealizationData';
 export type { SeismicCubeMeta as SeismicCubeMeta_api } from './models/SeismicCubeMeta';
 export type { SeismicFenceData as SeismicFenceData_api } from './models/SeismicFenceData';
 export type { SeismicFencePolyline as SeismicFencePolyline_api } from './models/SeismicFencePolyline';

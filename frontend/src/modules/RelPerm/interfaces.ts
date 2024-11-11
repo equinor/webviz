@@ -1,14 +1,25 @@
-import { RelPermRealizationData_api, RftRealizationData_api } from "@api";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { UseQueryResult } from "@tanstack/react-query";
 
-import { validRealizationNumbersAtom } from "./settings/atoms/baseAtoms";
+import { selectedColorByAtom, validRealizationNumbersAtom } from "./settings/atoms/baseAtoms";
 import { selectedVisualizationTypeAtom } from "./settings/atoms/baseAtoms";
-import { relPermDataQueryAtom } from "./settings/atoms/queryAtoms";
-import { VisualizationType } from "./typesAndEnums";
+import {
+    selectedEnsembleIdentAtom,
+    selectedRelPermCurveNamesAtom,
+    selectedRelPermSaturationAxisAtom,
+    selectedRelPermTableNameAtom,
+    selectedSatNumsAtom,
+} from "./settings/atoms/derivedAtoms";
+import { ColorBy, VisualizationType } from "./typesAndEnums";
 
-type SettingsToViewInterface = {
-    relPermDataQuery: UseQueryResult<RelPermRealizationData_api[], Error>;
+export type SettingsToViewInterface = {
+    ensembleIdent: EnsembleIdent | null;
+    realizationNumbers: number[] | null;
+    tableName: string | null;
+    saturationAxis: string | null;
+    satNums: number[];
+    relPermCurveNames: string[] | null;
+    colorBy: ColorBy;
     visualizationType: VisualizationType;
 };
 export type Interfaces = {
@@ -16,8 +27,26 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
-    relPermDataQuery: (get) => {
-        return get(relPermDataQueryAtom);
+    ensembleIdent: (get) => {
+        return get(selectedEnsembleIdentAtom);
+    },
+    realizationNumbers: (get) => {
+        return get(validRealizationNumbersAtom);
+    },
+    tableName: (get) => {
+        return get(selectedRelPermTableNameAtom);
+    },
+    saturationAxis: (get) => {
+        return get(selectedRelPermSaturationAxisAtom);
+    },
+    satNums: (get) => {
+        return get(selectedSatNumsAtom);
+    },
+    relPermCurveNames: (get) => {
+        return get(selectedRelPermCurveNamesAtom);
+    },
+    colorBy: (get) => {
+        return get(selectedColorByAtom);
     },
     visualizationType: (get) => {
         return get(selectedVisualizationTypeAtom);

@@ -43,16 +43,50 @@ class RelPermTableInfo:
 
 
 @dataclass
-class RelPermSatNumData:
-    satnum: int
-    relperm_curves_data: List[List[float]]
+class CurveData:
+    curve_name: str
+    curve_values: List[float]
+    unit: str | None = None
 
 
 @dataclass
-class RelPermRealizationData:
-    saturation_axis_data: List[float]
-    satnum_data: List[RelPermSatNumData]
-    realization: int
+class RelPermRealizationDataForSaturation:
+    saturation_number: int
+    relperm_curve_data: List[CurveData]
+
+
+@dataclass
+class SaturationRealizationData:
+    saturation_axis_data: CurveData
+    satnum_data: List[RelPermRealizationDataForSaturation]
+    realization_id: int
+
+
+class Statistic(str, Enum):
+    """
+    Definition of possible statistics for a result column in an inplace volumetrics table
+    """
+
+    MEAN = "mean"
+    STD_DEV = "stddev"
+    MAX = "max"
+    MIN = "min"
+    P10 = "p10"
+    P90 = "p90"
+
+
+@dataclass
+class SaturationStatisticalData:
+    saturation_axis_data: CurveData
+    satnum_data: List[RelPermRealizationDataForSaturation]
+    statistics: Statistic
+
+
+@dataclass
+class RealizationCurveData:
+    curve_name: str
+    curve_values: np.ndarray
+    realization_id: int
 
 
 class RelPermAssembler:
@@ -71,9 +105,80 @@ class RelPermAssembler:
             table_name=relperm_table_name, saturation_axes=saturation_infos, satnums=sorted(satnums)
         )
 
-    async def get_relperm_ensemble_data(
+    # async def get_relperm_realization_data(
+    #     self, relperm_table_name: str, saturation_axis_name: str, curve_names: List[str], satnums: List[int]
+    # ) -> List[SaturationRealizationData]:
+    #     realizations_table: pl.DataFrame = await self._relperm_access.get_relperm_table(relperm_table_name)
+    #     table_columns = realizations_table.columns
+
+    #     if saturation_axis_name not in table_columns:
+    #         raise NoDataError(
+    #             f"Saturation axis {saturation_axis_name} not found in table {relperm_table_name}",
+    #             Service.GENERAL,
+    #         )
+
+    #     for curve_name in curve_names:
+    #         if curve_name not in table_columns:
+    #             raise NoDataError(
+    #                 f"Curve {curve_name} not found in saturation axis {saturation_axis_name} in table {relperm_table_name}",
+    #                 Service.GENERAL,
+    #             )
+
+    #     columns_to_use = [saturation_axis_name] + curve_names + ["REAL", "SATNUM"]
+    #     filtered_table = (
+    #         realizations_table.select(columns_to_use)
+    #         .filter((realizations_table["SATNUM"].cast(pl.Int32).is_in(satnums)))
+    #         .drop_nulls()
+    #         .sort(saturation_axis_name)
+    #     )
+    #     # shared_saturation_axis = np.linspace(0, 1, 100)
+    #     real_data: List[SaturationRealizationData] = []
+    #     for _real, real_table in filtered_table.group_by("REAL"):
+    #         satnum_data = []
+    #         for _satnum, satnum_table in real_table.group_by("SATNUM"):
+    #             sorted_satnum_table = satnum_table.sort(saturation_axis_name)
+    #             # original_saturation = sorted_satnum_table[saturation_axis_name].to_numpy()
+
+    #             # Interpolate to get shared axis
+    #             # interpolated_curves = []
+    #             # for curve_name in curve_names:
+    #             #     original_values = sorted_satnum_table[curve_name]
+
+    #             #     interpolator = interp1d(
+    #             #         original_saturation,
+    #             #         original_values,
+    #             #         kind="cubic",
+    #             #         bounds_error=False,
+    #             #         fill_value=(original_values[0], original_values[-1]),
+    #             #     )
+
+    #             # # Interpolate to shared axis
+    #             # interpolated_values = interpolator(shared_saturation_axis)
+    #             # interpolated_curves.append(interpolated_values.tolist())
+    #             satnum_data.append(
+    #                 RelPermRealizationDataForSaturation(
+    #                     saturation_number=sorted_satnum_table["SATNUM"][0],
+    #                     relperm_curve_data=[
+    #                         CurveData(curve_values=sorted_satnum_table[curve_name].to_list(), curve_name=curve_name)
+    #                         for curve_name in curve_names
+    #                     ],
+    #                 )
+    #             )
+    #         real_data.append(
+    #             SaturationRealizationData(
+    #                 saturation_axis_data=CurveData(
+    #                     curve_values=sorted_satnum_table[saturation_axis_name].to_list(),
+    #                     curve_name=saturation_axis_name,
+    #                 ),
+    #                 satnum_data=satnum_data,
+    #                 realization_id=sorted_satnum_table["REAL"][0],
+    #             )
+    #         )
+    #     return real_data
+
+    async def get_relperm_realization_data(
         self, relperm_table_name: str, saturation_axis_name: str, curve_names: List[str], satnums: List[int]
-    ) -> List[RelPermRealizationData]:
+    ) -> List[SaturationRealizationData]:
         realizations_table: pl.DataFrame = await self._relperm_access.get_relperm_table(relperm_table_name)
         table_columns = realizations_table.columns
 
@@ -98,43 +203,61 @@ class RelPermAssembler:
             .sort(saturation_axis_name)
         )
         shared_saturation_axis = np.linspace(0, 1, 100)
-        real_data: List[RelPermRealizationData] = []
+        real_data: List[SaturationRealizationData] = []
         for _real, real_table in filtered_table.group_by("REAL"):
             satnum_data = []
+            realization = real_table["REAL"][0]
             for _satnum, satnum_table in real_table.group_by("SATNUM"):
-                table_to = satnum_table.sort(saturation_axis_name)
-                original_saturation = table_to[saturation_axis_name].to_numpy()
+                sorted_satnum_table = satnum_table.sort(saturation_axis_name)
+                original_saturation = sorted_satnum_table[saturation_axis_name].to_numpy()
+                saturation_number = sorted_satnum_table["SATNUM"][0]
 
                 # Interpolate to get shared axis
-                interpolated_curves = []
+                interpolated_curves: dict = {}
+
                 for curve_name in curve_names:
-                    original_values = table_to[curve_name]
+                    original_values = sorted_satnum_table[curve_name]
 
-                    interpolator = interp1d(
-                        original_saturation,
-                        original_values,
-                        kind="cubic",
-                        bounds_error=False,
-                        fill_value=(original_values[0], original_values[-1]),
+                    interpolated_curve = interpolate_curve_values_to_shared_axis(
+                        original_saturation, original_values.to_numpy(), shared_saturation_axis
                     )
+                    interpolated_curves[curve_name] = interpolated_curve
 
-                # Interpolate to shared axis
-                interpolated_values = interpolator(shared_saturation_axis)
-                interpolated_curves.append(interpolated_values.tolist())
                 satnum_data.append(
-                    RelPermSatNumData(
-                        satnum=table_to["SATNUM"][0],
-                        relperm_curves_data=[table_to[curve_name].to_list() for curve_name in curve_names],
+                    RelPermRealizationDataForSaturation(
+                        saturation_number=saturation_number,
+                        relperm_curve_data=[
+                            CurveData(curve_values=interpolated_curves[curve_name], curve_name=curve_name)
+                            for curve_name in curve_names
+                        ],
                     )
                 )
             real_data.append(
-                RelPermRealizationData(
-                    saturation_axis_data=table_to[saturation_axis_name].to_list(),
+                SaturationRealizationData(
+                    saturation_axis_data=CurveData(
+                        curve_values=shared_saturation_axis.tolist(),
+                        curve_name=saturation_axis_name,
+                    ),
                     satnum_data=satnum_data,
-                    realization=table_to["REAL"][0],
+                    realization_id=sorted_satnum_table["REAL"][0],
                 )
             )
         return real_data
+
+
+def interpolate_curve_values_to_shared_axis(
+    original_axis_values: np.ndarray, original_curve_values: np.ndarray, shared_axis_values: np.ndarray
+) -> np.ndarray:
+    interpolator = interp1d(
+        original_axis_values,
+        original_curve_values,
+        kind="cubic",
+        bounds_error=False,
+        fill_value=np.nan,
+    )
+
+    interpolated_values = interpolator(shared_axis_values)
+    return interpolated_values
 
 
 def extract_keywords_from_relperm_table(relperm_table: pl.DataFrame) -> List[str]:

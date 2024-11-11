@@ -10,40 +10,38 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
+import { useAtomValue } from "jotai";
 import { PlotData } from "plotly.js";
 
-import { Interfaces } from "./interfaces";
+import { relPermRealizationDataQueryAtom, relPermStatisticalDataQueryAtom } from "./atoms/queryAtoms";
+
+import { Interfaces } from "../interfaces";
 
 export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const relPermDataQuery = viewContext.useSettingsToViewInterfaceValue("relPermDataQuery");
-    //     const realizationNums = viewContext.useSettingsToViewInterfaceValue("realizationNums");
-    //     const responseName = viewContext.useSettingsToViewInterfaceValue("responseName");
-    //     const wellName = viewContext.useSettingsToViewInterfaceValue("wellName");
-    //     const timeStampUtcMs = viewContext.useSettingsToViewInterfaceValue("timeStampsUtcMs");
+    const visualizationType = viewContext.useSettingsToViewInterfaceValue("visualizationType");
+    const relPermRealizationsDataQuery = useAtomValue(relPermRealizationDataQueryAtom);
+    const relPermStatisticalDataQuery = useAtomValue(relPermStatisticalDataQueryAtom);
 
     const statusWriter = useViewStatusWriter(viewContext);
-    const statusError = usePropagateApiErrorToStatusWriter(relPermDataQuery, statusWriter);
+    const statusErrorRealizations = usePropagateApiErrorToStatusWriter(relPermRealizationsDataQuery, statusWriter);
+    const statusErrorStatistical = usePropagateApiErrorToStatusWriter(relPermStatisticalDataQuery, statusWriter);
 
     let content = null;
 
-    if (relPermDataQuery.isFetching) {
+    if (relPermRealizationsDataQuery.isFetching) {
         content = (
             <ContentMessage type={ContentMessageType.INFO}>
                 <CircularProgress />
             </ContentMessage>
         );
-    } else if (statusError !== null) {
-        content = <div className="w-full h-full flex justify-center items-center">{statusError}</div>;
-    } else if (relPermDataQuery.isError || relPermDataQuery.data === undefined) {
+    } else if (statusErrorRealizations !== null) {
+        content = <div className="w-full h-full flex justify-center items-center">{statusErrorRealizations}</div>;
+    } else if (relPermRealizationsDataQuery.isError || relPermRealizationsDataQuery.data === undefined) {
         content = <div className="w-full h-full flex justify-center items-center">Could not load RFT data</div>;
     } else {
-        //         const filteredRftData = rftDataQuery.data.filter((realizationData) =>
-        //             realizationNums?.includes(realizationData.realization)
-        //         );
-        //         const [minValue, maxValue] = getResponseValueRange(filteredRftData);
         const plotData: Partial<PlotData>[] = [];
         const colors = [
             "red",
@@ -72,22 +70,22 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
         ];
 
         let totalPoints = 0;
-        relPermDataQuery.data.forEach((realizationData) => {
+        relPermRealizationsDataQuery.data.forEach((realizationData) => {
             realizationData.satnum_data.forEach((satNumData) => {
-                satNumData.relperm_curves_data.forEach((curveData) => {
-                    totalPoints += curveData.length;
+                satNumData.relperm_curve_data.forEach((curveData) => {
+                    totalPoints += curveData.curve_values.length;
                 });
             });
         });
         const useGl: boolean = totalPoints > 1000;
-        relPermDataQuery.data.forEach((realizationData) => {
+        relPermRealizationsDataQuery.data.forEach((realizationData) => {
             realizationData.satnum_data.forEach((satNumData, idx) => {
-                satNumData.relperm_curves_data.forEach((curveData) => {
+                satNumData.relperm_curve_data.forEach((curveData) => {
                     plotData.push(
                         createRelPermRealizationTrace(
-                            realizationData.realization,
-                            realizationData.saturation_axis_data,
-                            curveData,
+                            realizationData.realization_id,
+                            realizationData.saturation_axis_data.curve_values,
+                            curveData.curve_values,
                             colors[idx],
                             useGl
                         )
@@ -130,11 +128,15 @@ function createRelPermRealizationTrace(
         y: curveValues,
 
         type: useGl ? "scattergl" : "scatter",
-        mode: "lines",
+        mode: "markers+lines",
         showlegend: false,
         line: {
             color: color,
-            width: 2,
+            width: 1,
+        },
+        marker: {
+            color: "blue",
+            size: 5,
         },
     };
     return trace;

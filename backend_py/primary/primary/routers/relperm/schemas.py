@@ -15,12 +15,18 @@ class RelPermTableInfo(BaseModel):
     satnums: List[int]
 
 
-class RelPermSatNumData(BaseModel):
-    satnum: int
-    relperm_curves_data: List[List[float]]
+class CurveData(BaseModel):
+    curve_name: str
+    curve_values: List[float]
+    unit: str | None = None
 
 
-class RelPermRealizationData(BaseModel):
-    saturation_axis_data: List[float]
-    satnum_data: List[RelPermSatNumData]
-    realization: int
+class RelPermRealizationDataForSaturation(BaseModel):
+    saturation_number: int
+    relperm_curve_data: List[CurveData]
+
+
+class SaturationRealizationData(BaseModel):
+    saturation_axis_data: CurveData
+    satnum_data: List[RelPermRealizationDataForSaturation]
+    realization_id: int

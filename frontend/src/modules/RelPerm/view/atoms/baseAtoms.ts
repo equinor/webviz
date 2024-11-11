@@ -11,13 +11,12 @@ function areEnsembleIdentsEqual(a: EnsembleIdent | null, b: EnsembleIdent | null
     }
     return a.equals(b);
 }
+
+export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>(null);
+export const selectedRealizationNumbersAtom = atom<number[] | null>(null);
+export const selectedTableNameAtom = atom<string | null>(null);
+export const selectedSaturationAxisAtom = atom<string | null>(null);
+export const selectedSatNumsAtom = atomWithCompare<number[]>([], isEqual);
+export const selectedRelPermCurveNamesAtom = atom<string[] | null>(null);
 export const selectedColorByAtom = atom<ColorBy>(ColorBy.ENSEMBLE);
 export const selectedVisualizationTypeAtom = atom<VisualizationType>(VisualizationType.STATISTICAL_FANCHART);
-
-export const userSelectedEnsembleIdentAtom = atomWithCompare<EnsembleIdent | null>(null, areEnsembleIdentsEqual);
-export const validRealizationNumbersAtom = atom<number[] | null>(null);
-
-export const userSelectedTableNameAtom = atom<string | null>(null);
-export const userSelectedSaturationAxisAtom = atom<string | null>(null);
-export const userSelectedSatNumsAtom = atomWithCompare<number[]>([], isEqual);
-export const userSelectedRelPermCurveNamesAtom = atom<string[] | null>(null);
