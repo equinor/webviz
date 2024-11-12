@@ -115,15 +115,11 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
     }
 
     serializeState(): SerializedLayer<DrilledWellborePicksSettings> {
-        const id = this._itemDelegate.getId();
-        const name = this._itemDelegate.getName();
-        return this._layerDelegate.serializeState(id, name);
+        return this._layerDelegate.serializeState();
     }
 
-    deserializeState(serializedState: SerializedLayer<DrilledWellborePicksSettings>): void {
-        this._itemDelegate.setId(serializedState.id);
-        this._itemDelegate.setName(serializedState.name);
-        this._layerDelegate.deserializeState(serializedState);
+    deserializeState(state: SerializedLayer<DrilledWellborePicksSettings>): void {
+        this._layerDelegate.deserializeState(state);
     }
 }
 

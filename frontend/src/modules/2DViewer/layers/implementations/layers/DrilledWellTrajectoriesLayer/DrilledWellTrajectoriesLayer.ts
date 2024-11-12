@@ -85,7 +85,7 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         const selectedWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
         let selectedWellboreUuids: string[] = [];
         if (selectedWellboreHeaders) {
-            selectedWellboreHeaders.map((header) => header.wellboreUuid);
+            selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
         }
 
         let fieldIdentifier: string | null = null;
@@ -114,14 +114,10 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
     }
 
     serializeState(): SerializedLayer<DrilledWellTrajectoriesSettings> {
-        const id = this._itemDelegate.getId();
-        const name = this._itemDelegate.getName();
-        return this._layerDelegate.serializeState(id, name);
+        return this._layerDelegate.serializeState();
     }
 
     deserializeState(serializedState: SerializedLayer<DrilledWellTrajectoriesSettings>): void {
-        this._itemDelegate.setId(serializedState.id);
-        this._itemDelegate.setName(serializedState.name);
         this._layerDelegate.deserializeState(serializedState);
     }
 }

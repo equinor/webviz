@@ -5,6 +5,7 @@ import { GroupDelegate } from "./GroupDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
+import { SerializedItem } from "../interfaces";
 
 export enum ItemDelegateTopic {
     NAME = "NAME",
@@ -29,8 +30,25 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
 
     constructor(name: string, layerManager: LayerManager) {
         this._id = v4();
-        this._name = name;
         this._layerManager = layerManager;
+        this._name = this.makeUniqueName(name);
+    }
+
+    private makeUniqueName(candidate: string): string {
+        const groupDelegate = this._layerManager?.getGroupDelegate();
+        if (!groupDelegate) {
+            return candidate;
+        }
+        const existingNames = groupDelegate
+            .getDescendantItems(() => true)
+            .map((item) => item.getItemDelegate().getName());
+        let uniqueName = candidate;
+        let counter = 1;
+        while (existingNames.includes(uniqueName)) {
+            uniqueName = `${candidate} (${counter})`;
+            counter++;
+        }
+        return uniqueName;
     }
 
     setId(id: string): void {
@@ -115,5 +133,21 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
 
     getPublishSubscribeDelegate(): PublishSubscribeDelegate<ItemDelegateTopic> {
         return this._publishSubscribeDelegate;
+    }
+
+    serializeState(): Omit<SerializedItem, "type"> {
+        return {
+            id: this._id,
+            name: this._name,
+            visible: this._visible,
+            expanded: this._expanded,
+        };
+    }
+
+    deserializeState(state: Omit<SerializedItem, "type">): void {
+        this._id = state.id;
+        this._name = state.name;
+        this._visible = state.visible;
+        this._expanded = state.expanded;
     }
 }

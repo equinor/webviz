@@ -23,17 +23,15 @@ export class View implements Group {
 
     serializeState(): SerializedView {
         return {
-            id: this._itemDelegate.getId(),
+            ...this._itemDelegate.serializeState(),
             type: "view",
             color: this._groupDelegate.getColor() ?? "",
-            name: this._itemDelegate.getName(),
             children: this._groupDelegate.serializeChildren(),
         };
     }
 
     deserializeState(serialized: SerializedView) {
-        this._itemDelegate.setName(serialized.name);
-        this._itemDelegate.setId(serialized.id);
+        this._itemDelegate.deserializeState(serialized);
         this._groupDelegate.setColor(serialized.color);
         this._groupDelegate.deserializeChildren(serialized.children);
     }

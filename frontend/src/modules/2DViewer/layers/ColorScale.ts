@@ -44,17 +44,15 @@ export class ColorScale implements Item {
 
     serializeState(): SerializedColorScale {
         return {
+            ...this._itemDelegate.serializeState(),
             type: "color-scale",
-            name: this._itemDelegate.getName(),
-            id: this._itemDelegate.getId(),
             colorScale: this._colorScale.serialize(),
             userDefinedBoundaries: this._areBoundariesUserDefined,
         };
     }
 
     deserializeState(serialized: SerializedColorScale): void {
-        this._itemDelegate.setName(serialized.name);
-        this._itemDelegate.setId(serialized.id);
+        this._itemDelegate.deserializeState(serialized);
         this._colorScale = ColorScaleImpl.fromSerialized(serialized.colorScale);
         this._areBoundariesUserDefined = serialized.userDefinedBoundaries;
     }

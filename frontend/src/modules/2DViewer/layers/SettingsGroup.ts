@@ -23,16 +23,14 @@ export class SettingsGroup implements Group {
 
     serializeState(): SerializedSettingsGroup {
         return {
+            ...this._itemDelegate.serializeState(),
             type: "settings-group",
-            name: this._itemDelegate.getName(),
-            id: this._itemDelegate.getId(),
             children: this._groupDelegate.serializeChildren(),
         };
     }
 
     deserializeState(serialized: SerializedSettingsGroup) {
-        this._itemDelegate.setName(serialized.name);
-        this._itemDelegate.setId(serialized.id);
+        this._itemDelegate.deserializeState(serialized);
         this._groupDelegate.deserializeChildren(serialized.children);
     }
 }

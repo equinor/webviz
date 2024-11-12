@@ -47,10 +47,14 @@ export class DrilledWellbores implements Setting<ValueType> {
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
         return function DrilledWellbores(props: SettingComponentProps<ValueType>) {
-            const options: SelectOption[] = props.availableValues.map((ident) => ({
-                value: ident.wellboreUuid,
-                label: ident.uniqueWellboreIdentifier,
-            }));
+            const options: SelectOption[] = React.useMemo(
+                () =>
+                    props.availableValues.map((ident) => ({
+                        value: ident.wellboreUuid,
+                        label: ident.uniqueWellboreIdentifier,
+                    })),
+                [props.availableValues]
+            );
 
             function handleChange(selectedUuids: string[]) {
                 const selectedWellbores = props.availableValues.filter((ident) =>
@@ -68,7 +72,10 @@ export class DrilledWellbores implements Setting<ValueType> {
                 handleChange([]);
             }
 
-            const selectedValues = props.value?.map((ident) => ident.wellboreUuid) ?? [];
+            const selectedValues = React.useMemo(
+                () => props.value?.map((ident) => ident.wellboreUuid) ?? [],
+                [props.value]
+            );
 
             return (
                 <div className="flex flex-col gap-1 mt-1">

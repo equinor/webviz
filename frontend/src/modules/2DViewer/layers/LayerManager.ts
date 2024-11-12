@@ -183,9 +183,9 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     }
 
     serializeState(): SerializedLayerManager {
+        const itemState = this._itemDelegate.serializeState();
         return {
-            id: this._itemDelegate.getId(),
-            name: this._itemDelegate.getName(),
+            ...itemState,
             type: "layer-manager",
             children: this._groupDelegate.serializeChildren(),
         };
@@ -193,8 +193,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
 
     deserializeState(serializedState: SerializedLayerManager): void {
         this._deserializing = true;
-        this._itemDelegate.setId(serializedState.id);
-        this._itemDelegate.setName(serializedState.name);
+        this._itemDelegate.deserializeState(serializedState);
         this._groupDelegate.deserializeChildren(serializedState.children);
         this._deserializing = false;
 

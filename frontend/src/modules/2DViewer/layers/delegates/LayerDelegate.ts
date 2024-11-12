@@ -292,10 +292,10 @@ export class LayerDelegate<TSettings extends Settings, TData>
         }
     }
 
-    serializeState(id: string, name: string): SerializedLayer<TSettings> {
+    serializeState(): SerializedLayer<TSettings> {
+        const itemState = this._owner.getItemDelegate().serializeState();
         return {
-            id,
-            name,
+            ...itemState,
             type: "layer",
             layerClass: this._owner.constructor.name,
             settings: this._settingsContext.getDelegate().serializeSettings(),
@@ -303,6 +303,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
     }
 
     deserializeState(serializedLayer: SerializedLayer<TSettings>): void {
+        this._owner.getItemDelegate().deserializeState(serializedLayer);
         this._settingsContext.getDelegate().deserializeSettings(serializedLayer.settings);
     }
 

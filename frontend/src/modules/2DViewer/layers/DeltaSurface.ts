@@ -70,11 +70,15 @@ export class DeltaSurface implements Group {
         return this._groupDelegate;
     }
 
+    deserializeState(serialized: SerializedDeltaSurface): void {
+        this._itemDelegate.deserializeState(serialized);
+        this._groupDelegate.deserializeChildren(serialized.children);
+    }
+
     serializeState(): SerializedDeltaSurface {
         return {
-            id: this._itemDelegate.getId(),
+            ...this._itemDelegate.serializeState(),
             type: "delta-surface",
-            name: this._itemDelegate.getName(),
             children: this.getGroupDelegate().serializeChildren(),
         };
     }

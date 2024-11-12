@@ -144,14 +144,10 @@ export class StatisticalSurfaceLayer
     }
 
     serializeState(): SerializedLayer<StatisticalSurfaceSettings> {
-        const id = this._itemDelegate.getId();
-        const name = this._itemDelegate.getName();
-        return this._layerDelegate.serializeState(id, name);
+        return this._layerDelegate.serializeState();
     }
 
     deserializeState(serializedState: SerializedLayer<StatisticalSurfaceSettings>): void {
-        this._itemDelegate.setId(serializedState.id);
-        this._itemDelegate.setName(serializedState.name);
         this._layerDelegate.deserializeState(serializedState);
     }
 }

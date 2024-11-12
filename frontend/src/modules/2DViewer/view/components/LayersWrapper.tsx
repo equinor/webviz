@@ -33,14 +33,12 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const mainDivSize = useElementSize(mainDivRef);
     const statusWriter = useViewStatusWriter(props.viewContext);
 
-    const groupDelegate = props.layerManager.getGroupDelegate();
-
     usePublishSubscribeTopicValue(props.layerManager, LayerManagerTopic.LAYER_DATA_REVISION);
 
     const viewports: ViewportType[] = [];
     const viewerLayers: DeckGlLayerWithPosition[] = [];
     const viewportAnnotations: React.ReactNode[] = [];
-    const colorScales: ColorScaleWithId[] = [];
+    const globalColorScales: ColorScaleWithId[] = [];
 
     const views: ViewsType = {
         layout: [1, 1],
@@ -65,7 +63,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     views.layout = [numCols, numRows];
 
     viewerLayers.push(...viewsAndLayers.layers);
-    colorScales.push(...viewsAndLayers.colorScales);
+    globalColorScales.push(...viewsAndLayers.colorScales);
     const globalLayerIds = viewsAndLayers.layers.map((layer) => layer.layer.id);
 
     for (const view of viewsAndLayers.views) {
@@ -81,6 +79,11 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             /* @ts-expect-error */
             <DeckGlView key={view.id} id={view.id}>
+                <ColorLegendsContainer
+                    colorScales={[...view.colorScales, ...globalColorScales]}
+                    height={((mainDivSize.height / 3) * 2) / numCols - 20}
+                    position="left"
+                />
                 <div className="font-bold text-lg flex gap-2 justify-center items-center">
                     <div className="flex gap-2 items-center bg-white p-2 backdrop-blur bg-opacity-50 rounded">
                         <div
@@ -141,11 +144,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
             <PendingWrapper isPending={numLoadingLayers > 0}>
                 <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                    <ColorLegendsContainer
-                        colorScales={colorScales}
-                        height={mainDivSize.height / 2 - 50}
-                        position="left"
-                    />
                     <ReadoutWrapper
                         views={views}
                         viewportAnnotations={viewportAnnotations}

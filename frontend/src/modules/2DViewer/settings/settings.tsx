@@ -12,6 +12,7 @@ import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { LayerManagerComponent } from "./components/layerManagerComponent";
 
 import { LayerManager, LayerManagerTopic } from "../layers/LayerManager";
+import { GroupDelegateTopic } from "../layers/delegates/GroupDelegate";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const [layerManager, setLayerManager] = useAtom(layerManagerAtom);
@@ -37,20 +38,26 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 window.localStorage.setItem("layerManager", JSON.stringify(newLayerManager.serializeState()));
             }
 
-            const unsubscribe = newLayerManager
+            const unsubscribeDataRev = newLayerManager
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(LayerManagerTopic.LAYER_DATA_REVISION)(persistLayerManagerState);
 
+            const unsubscribeExpands = newLayerManager
+                .getGroupDelegate()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistLayerManagerState);
+
             return function onUnmountEffect() {
                 newLayerManager.beforeDestroy();
-                unsubscribe();
+                unsubscribeDataRev();
+                unsubscribeExpands();
             };
         },
         [setLayerManager, props.workbenchSession, props.workbenchSettings, queryClient]
     );
 
     React.useEffect(
-        function onFieldIdentifierChanged() {
+        function onFieldIdentifierChangedEffect() {
             if (!layerManager) {
                 return;
             }

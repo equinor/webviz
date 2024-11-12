@@ -106,8 +106,7 @@ export class SharedSetting implements Item {
 
     serializeState(): SerializedSharedSetting {
         return {
-            id: this._itemDelegate.getId(),
-            name: this._itemDelegate.getName(),
+            ...this._itemDelegate.serializeState(),
             type: "shared-setting",
             wrappedSettingClass: this._wrappedSetting.constructor.name,
             settingType: this._wrappedSetting.getType(),
@@ -116,8 +115,7 @@ export class SharedSetting implements Item {
     }
 
     deserializeState(serialized: SerializedSharedSetting): void {
-        this._itemDelegate.setId(serialized.id);
-        this._itemDelegate.setName(serialized.name);
+        this._itemDelegate.deserializeState(serialized);
         this._wrappedSetting.getDelegate().deserializeValue(serialized.value);
     }
 

@@ -22,6 +22,7 @@ export type DeckGlView = {
     color: string | null;
     name: string;
     layers: DeckGlLayerWithPosition[];
+    colorScales: ColorScaleWithId[];
 };
 
 export type DeckGlViewsAndLayers = {
@@ -59,7 +60,6 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
             const { views, layers, boundingBox, colorScales, numLoadingLayers, errorMessages } =
                 recursivelyMakeViewsAndLayers(child, numCollectedLayers + collectedLayers.length);
 
-            collectedColorScales.push(...colorScales);
             collectedErrorMessages.push(...errorMessages);
             collectedNumLoadingLayers += numLoadingLayers;
             maybeApplyBoundingBox(boundingBox);
@@ -70,6 +70,7 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
                     color: child.getGroupDelegate().getColor(),
                     name: child.getItemDelegate().getName(),
                     layers: layers,
+                    colorScales,
                 };
 
                 collectedViews.push(view);

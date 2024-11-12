@@ -19,7 +19,7 @@ const TEXT_STYLE: React.CSSProperties = {
     fontSize: "11px",
     stroke: "#fff",
     paintOrder: "stroke",
-    strokeWidth: "6px",
+    strokeWidth: "5px",
     strokeLinecap: "round",
     strokeLinejoin: "round",
     fontWeight: 800,
@@ -279,7 +279,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                     x={props.left - props.totalHeight / 2}
                     y={props.top + PREFERENCES.offset + props.totalHeight / 2}
                     width={props.totalHeight}
-                    height={10}
+                    height={12}
                 />
             </clipPath>
             <rect

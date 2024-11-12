@@ -25,6 +25,8 @@ export interface SerializedItem {
     id: string;
     type: SerializedType;
     name: string;
+    expanded: boolean;
+    visible: boolean;
 }
 
 export type SerializedSettingsState<TSettings> = Record<keyof TSettings, string>;
@@ -72,6 +74,7 @@ export interface SerializedDeltaSurface extends SerializedItem {
 export interface Item {
     getItemDelegate(): ItemDelegate;
     serializeState(): SerializedItem;
+    deserializeState(serialized: SerializedItem): void;
 }
 
 export function instanceofItem(item: any): item is Item {

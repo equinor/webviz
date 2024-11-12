@@ -1,5 +1,6 @@
 import { ItemDelegateTopic } from "./ItemDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
+import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { DeserializationFactory } from "../DeserializationFactory";
 import { LayerManagerTopic } from "../LayerManager";
@@ -23,7 +24,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
     private _color: string | null = null;
     private _children: Item[] = [];
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<GroupDelegateTopic>();
-    private _subscriptions: Map<string, Set<() => void>> = new Map();
+    private _unsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _treeRevisionNumber: number = 0;
     private _deserializing = false;
 
@@ -47,10 +48,11 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
     protected takeOwnershipOfChild(child: Item) {
         child.getItemDelegate().setParentGroup(this);
 
-        const subscriptionSet = new Set<() => void>();
+        this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
 
         if (instanceofLayer(child)) {
-            subscriptionSet.add(
+            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
+                child.getItemDelegate().getId(),
                 child
                     .getItemDelegate()
                     .getPublishSubscribeDelegate()
@@ -61,7 +63,8 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
         }
 
         if (instanceofGroup(child)) {
-            subscriptionSet.add(
+            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
+                child.getItemDelegate().getId(),
                 child
                     .getGroupDelegate()
                     .getPublishSubscribeDelegate()
@@ -69,9 +72,16 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
                     this.incrementTreeRevisionNumber();
                 })
             );
+            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
+                child.getItemDelegate().getId(),
+                child
+                    .getGroupDelegate()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(() => {
+                    this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
+                })
+            );
         }
-
-        this._subscriptions.set(child.getItemDelegate().getId(), subscriptionSet);
 
         this.publishTopic(GroupDelegateTopic.CHILDREN);
         this.incrementTreeRevisionNumber();
@@ -85,15 +95,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
     }
 
     private disposeOwnershipOfChild(child: Item) {
-        if (instanceofGroup(child)) {
-            const unsubscribeFuncs = this._subscriptions.get(child.getItemDelegate().getId());
-            if (unsubscribeFuncs) {
-                for (const unsubscribeFunc of unsubscribeFuncs) {
-                    unsubscribeFunc();
-                }
-            }
-        }
-
+        this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
         child.getItemDelegate().setParentGroup(null);
 
         if (child instanceof SharedSetting) {
