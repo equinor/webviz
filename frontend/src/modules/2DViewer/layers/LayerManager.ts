@@ -22,6 +22,7 @@ export enum LayerManagerTopic {
     AVAILABLE_SETTINGS_CHANGED = "AVAILABLE_SETTINGS_CHANGED",
     LAYER_DATA_REVISION = "LAYER_DATA_REVISION",
     GLOBAL_SETTINGS_CHANGED = "GLOBAL_SETTINGS_CHANGED",
+    SHARED_SETTINGS_CHANGED = "SHARED_SETTINGS_CHANGED",
 }
 
 export type LayerManagerTopicPayload = {
@@ -30,6 +31,7 @@ export type LayerManagerTopicPayload = {
     [LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED]: void;
     [LayerManagerTopic.LAYER_DATA_REVISION]: number;
     [LayerManagerTopic.GLOBAL_SETTINGS_CHANGED]: void;
+    [LayerManagerTopic.SHARED_SETTINGS_CHANGED]: void;
 };
 
 export type GlobalSettings = {
@@ -137,6 +139,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         if (topic === LayerManagerTopic.LAYER_DATA_REVISION) {
             this._layerDataRevision++;
         }
+
         this._publishSubscribeDelegate.notifySubscribers(topic);
     }
 
@@ -168,6 +171,9 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
             }
             if (topic === LayerManagerTopic.GLOBAL_SETTINGS_CHANGED) {
                 return this._globalSettings;
+            }
+            if (topic === LayerManagerTopic.SHARED_SETTINGS_CHANGED) {
+                return;
             }
         };
 

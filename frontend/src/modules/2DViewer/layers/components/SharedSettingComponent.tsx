@@ -56,7 +56,7 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
                     hidden: !isExpanded,
                 })}
             >
-                <SettingComponent setting={props.sharedSetting.getWrappedSetting()} manager={manager} />
+                <SettingComponent setting={props.sharedSetting.getWrappedSetting()} manager={manager} sharedSetting />
             </div>
         </SortableListItem>
     );

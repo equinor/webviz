@@ -55,9 +55,9 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
         }
 
         const bbox: BoundingBox = {
-            x: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
-            y: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
-            z: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
+            x: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
+            y: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
+            z: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
         };
 
         for (const trajectory of data) {

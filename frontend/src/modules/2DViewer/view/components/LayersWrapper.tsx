@@ -5,7 +5,7 @@ import { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Rect2D, rectContainsPoint } from "@lib/utils/geometry";
+import { Rect2D, outerRectContainsInnerRect } from "@lib/utils/geometry";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { LayerManager, LayerManagerTopic } from "@modules/2DViewer/layers/LayerManager";
 import { usePublishSubscribeTopicValue } from "@modules/2DViewer/layers/delegates/PublishSubscribeDelegate";
@@ -34,6 +34,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     usePublishSubscribeTopicValue(props.layerManager, LayerManagerTopic.LAYER_DATA_REVISION);
+    console.debug("rerendered");
 
     const viewports: ViewportType[] = [];
     const viewerLayers: DeckGlLayerWithPosition[] = [];
@@ -113,12 +114,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 height: viewsAndLayers.boundingBox.y[1] - viewsAndLayers.boundingBox.y[0],
             };
 
-            if (
-                !(
-                    rectContainsPoint(oldBoundingRect, newBoundingRect) ||
-                    rectContainsPoint(newBoundingRect, oldBoundingRect)
-                )
-            ) {
+            if (!outerRectContainsInnerRect(oldBoundingRect, newBoundingRect)) {
                 setPrevBoundingBox(viewsAndLayers.boundingBox);
             }
         } else {

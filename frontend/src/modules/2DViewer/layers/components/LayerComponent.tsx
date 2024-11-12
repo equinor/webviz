@@ -30,7 +30,14 @@ export function LayerComponent(props: LayerComponentProps): React.ReactNode {
         if (!manager) {
             return null;
         }
-        return <SettingComponent key={setting.getDelegate().getId()} setting={setting} manager={manager} />;
+        return (
+            <SettingComponent
+                key={setting.getDelegate().getId()}
+                setting={setting}
+                manager={manager}
+                sharedSetting={false}
+            />
+        );
     }
 
     function makeSettings(settings: Record<string, Setting<any>>): React.ReactNode[] {

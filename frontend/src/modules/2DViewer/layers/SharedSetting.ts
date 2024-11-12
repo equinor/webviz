@@ -54,7 +54,7 @@ export class SharedSetting implements Item {
     publishValueChange(): void {
         const layerManager = this._itemDelegate.getLayerManager();
         if (layerManager) {
-            layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+            layerManager.publishTopic(LayerManagerTopic.SHARED_SETTINGS_CHANGED);
         }
     }
 
@@ -71,17 +71,24 @@ export class SharedSetting implements Item {
         const layersAndSharedSettings = parentGroup.getDescendantItems(
             (item) => instanceofLayer(item) || item instanceof SharedSetting
         ) as Layer<any, any>[];
+        let noSettingLoadingOrUninitialized = true;
+        let index = 0;
         const availableValues = layersAndSharedSettings.reduce((acc, item) => {
             if (instanceofLayer(item)) {
                 const setting = item.getLayerDelegate().getSettingsContext().getDelegate().getSettings()[
                     this._wrappedSetting.getType()
                 ];
                 if (setting) {
-                    if (acc.length === 0) {
+                    noSettingLoadingOrUninitialized =
+                        noSettingLoadingOrUninitialized &&
+                        !setting.getDelegate().getIsLoading() &&
+                        setting.getDelegate().getIsInitialized();
+                    if (index === 0) {
                         acc.push(...setting.getDelegate().getAvailableValues());
                     } else {
                         acc = acc.filter((value) => setting.getDelegate().getAvailableValues().includes(value));
                     }
+                    index++;
                 }
             }
             if (
@@ -91,15 +98,23 @@ export class SharedSetting implements Item {
             ) {
                 const setting = item.getWrappedSetting();
                 if (setting) {
-                    if (acc.length === 0) {
+                    if (index === 0) {
                         acc.push(...setting.getDelegate().getAvailableValues());
                     } else {
                         acc = acc.filter((value) => setting.getDelegate().getAvailableValues().includes(value));
                     }
+                    index++;
                 }
             }
             return acc;
         }, [] as any[]);
+
+        if (!noSettingLoadingOrUninitialized) {
+            this._wrappedSetting.getDelegate().setIsLoading(true);
+            return;
+        }
+
+        this._wrappedSetting.getDelegate().setIsLoading(false);
 
         this._wrappedSetting.getDelegate().setAvailableValues(availableValues);
     }

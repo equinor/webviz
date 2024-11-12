@@ -76,11 +76,18 @@ export class LayerDelegate<TSettings extends Settings, TData>
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
-            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.LAYER_DATA_REVISION)(
-                () => {
-                    this.handleSharedSettingsChanged();
-                }
-            )
+            layerManager
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(LayerManagerTopic.SHARED_SETTINGS_CHANGED)(() => {
+                this.handleSharedSettingsChanged();
+            })
+        );
+
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "layer-manager",
+            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(() => {
+                this.handleSharedSettingsChanged();
+            })
         );
     }
 
@@ -148,10 +155,18 @@ export class LayerDelegate<TSettings extends Settings, TData>
             const overriddenSettings: { [K in keyof TSettings]: TSettings[K] } = {} as {
                 [K in keyof TSettings]: TSettings[K];
             };
-            for (const setting of sharedSettings) {
-                const type = setting.getWrappedSetting().getType();
-                if (this._settingsContext.getDelegate().getSettings()[type] && overriddenSettings[type] === undefined) {
-                    overriddenSettings[type] = setting.getWrappedSetting().getDelegate().getValue();
+            for (const sharedSetting of sharedSettings) {
+                const type = sharedSetting.getWrappedSetting().getType();
+                const setting = this._settingsContext.getDelegate().getSettings()[type];
+                if (setting && overriddenSettings[type] === undefined) {
+                    if (
+                        sharedSetting.getWrappedSetting().getDelegate().getIsInitialized() &&
+                        sharedSetting.getWrappedSetting().getDelegate().isValueValid()
+                    ) {
+                        overriddenSettings[type] = sharedSetting.getWrappedSetting().getDelegate().getValue();
+                    } else {
+                        overriddenSettings[type] = null;
+                    }
                 }
             }
             this._settingsContext.getDelegate().setOverriddenSettings(overriddenSettings);
@@ -205,7 +220,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
         }
 
         this._status = status;
-        this._layerManager?.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+        this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
         this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.STATUS);
     }
 
@@ -277,6 +292,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
             }
             this._queryKeys = [];
             this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.DATA);
+            this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
             this.setStatus(LayerStatus.SUCCESS);
         } catch (error: any) {
             if (isCancelledError(error)) {

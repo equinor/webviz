@@ -12,6 +12,7 @@ import { Setting, SettingComponentProps as SettingComponentPropsInterface } from
 export type SettingComponentProps<TValue> = {
     setting: Setting<TValue>;
     manager: LayerManager;
+    sharedSetting: boolean;
 };
 
 export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): React.ReactNode {
@@ -42,6 +43,15 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
         props.setting.getDelegate().setValue(newValue);
     }
 
+    if (props.sharedSetting && availableValues.length === 0 && isInitialized) {
+        return (
+            <React.Fragment key={props.setting.getDelegate().getId()}>
+                <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
+                <div className="p-0.5 px-2 w-full italic h-8 flex items-center text-orange-600">Empty intersection</div>
+            </React.Fragment>
+        );
+    }
+
     if (overriddenValue !== undefined) {
         const valueAsString = props.setting
             .getDelegate()
@@ -54,7 +64,9 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
                         <Link fontSize="inherit" titleAccess="This settings is controlled by a shared setting" />
                     </span>
                 </div>
-                <div className="p-0.5 px-2 w-full flex items-center h-8">{isValid ? valueAsString : "-"}</div>
+                <div className="p-0.5 px-2 w-full flex items-center h-8">
+                    {isValid ? valueAsString : <i className="text-orange-600">No valid shared setting value</i>}
+                </div>
             </React.Fragment>
         );
     }
