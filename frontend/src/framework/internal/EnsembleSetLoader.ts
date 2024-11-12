@@ -136,7 +136,18 @@ function buildParameterArrFromApiResponse(apiParameterArr: EnsembleParameter_api
     const retParameterArr: Parameter[] = [];
 
     for (const apiPar of apiParameterArr) {
-        if (apiPar.is_numerical) {
+        if (apiPar.is_discrete) {
+            const retPar: DiscreteParameter = {
+                type: ParameterType.DISCRETE,
+                name: apiPar.name,
+                groupName: apiPar.group_name,
+                description: apiPar.descriptive_name,
+                isConstant: apiPar.is_constant,
+                realizations: apiPar.realizations,
+                values: apiPar.values,
+            };
+            retParameterArr.push(retPar);
+        } else {
             const retPar: ContinuousParameter = {
                 type: ParameterType.CONTINUOUS,
                 name: apiPar.name,
@@ -146,17 +157,6 @@ function buildParameterArrFromApiResponse(apiParameterArr: EnsembleParameter_api
                 isLogarithmic: apiPar.is_logarithmic,
                 realizations: apiPar.realizations,
                 values: apiPar.values as number[],
-            };
-            retParameterArr.push(retPar);
-        } else {
-            const retPar: DiscreteParameter = {
-                type: ParameterType.DISCRETE,
-                name: apiPar.name,
-                groupName: apiPar.group_name,
-                description: apiPar.descriptive_name,
-                isConstant: apiPar.is_constant,
-                realizations: apiPar.realizations,
-                values: apiPar.values,
             };
             retParameterArr.push(retPar);
         }
