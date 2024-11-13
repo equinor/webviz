@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
-import { layerManagerAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
+import { layerManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { LayerManagerComponent } from "./components/layerManagerComponent";
 
@@ -23,37 +23,92 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
 
     const fieldIdentifier = useAtomValue(selectedFieldIdentifierAtom);
     const setFieldIdentifier = useSetAtom(userSelectedFieldIdentifierAtom);
+    const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
+
+    const persistState = React.useCallback(
+        function persistLayerManagerState() {
+            if (!layerManager) {
+                return;
+            }
+
+            const serializedState = {
+                layerManager: layerManager.serializeState(),
+                fieldIdentifier,
+                preferredViewLayout,
+            };
+            window.localStorage.setItem(
+                `${props.settingsContext.getInstanceIdString()}-settings`,
+                JSON.stringify(serializedState)
+            );
+        },
+        [layerManager, fieldIdentifier, preferredViewLayout, props.settingsContext]
+    );
+
+    const applyPersistedState = React.useCallback(
+        function applyPersistedState(layerManager: LayerManager) {
+            const serializedState = window.localStorage.getItem(
+                `${props.settingsContext.getInstanceIdString()}-settings`
+            );
+            if (!serializedState) {
+                return;
+            }
+
+            const parsedState = JSON.parse(serializedState);
+            if (parsedState.fieldIdentifier) {
+                setFieldIdentifier(parsedState.fieldIdentifier);
+            }
+            if (parsedState.preferredViewLayout) {
+                setPreferredViewLayout(parsedState.preferredViewLayout);
+            }
+
+            if (parsedState.layerManager) {
+                if (!layerManager) {
+                    return;
+                }
+                layerManager.deserializeState(parsedState.layerManager);
+            }
+        },
+        [setFieldIdentifier, setPreferredViewLayout, props.settingsContext]
+    );
 
     React.useEffect(
         function onMountEffect() {
             const newLayerManager = new LayerManager(props.workbenchSession, props.workbenchSettings, queryClient);
             setLayerManager(newLayerManager);
 
-            const serializedState = window.localStorage.getItem("layerManager");
-            if (serializedState) {
-                newLayerManager.deserializeState(JSON.parse(serializedState));
-            }
-
-            function persistLayerManagerState() {
-                window.localStorage.setItem("layerManager", JSON.stringify(newLayerManager.serializeState()));
-            }
-
-            const unsubscribeDataRev = newLayerManager
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(LayerManagerTopic.LAYER_DATA_REVISION)(persistLayerManagerState);
-
-            const unsubscribeExpands = newLayerManager
-                .getGroupDelegate()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistLayerManagerState);
+            applyPersistedState(newLayerManager);
 
             return function onUnmountEffect() {
                 newLayerManager.beforeDestroy();
+            };
+        },
+        [setLayerManager, props.workbenchSession, props.workbenchSettings, queryClient, applyPersistedState]
+    );
+
+    React.useEffect(
+        function onLayerManagerChangeEffect() {
+            if (!layerManager) {
+                return;
+            }
+
+            persistState();
+
+            const unsubscribeDataRev = layerManager
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(LayerManagerTopic.LAYER_DATA_REVISION)(persistState);
+
+            const unsubscribeExpands = layerManager
+                .getGroupDelegate()
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(persistState);
+
+            return function onUnmountEffect() {
+                layerManager.beforeDestroy();
                 unsubscribeDataRev();
                 unsubscribeExpands();
             };
         },
-        [setLayerManager, props.workbenchSession, props.workbenchSettings, queryClient]
+        [layerManager, props.workbenchSession, props.workbenchSettings, persistState]
     );
 
     React.useEffect(
