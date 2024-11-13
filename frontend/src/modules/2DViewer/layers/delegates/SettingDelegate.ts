@@ -267,8 +267,6 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             return;
         }
 
-        this.setInitialized();
-
         this._availableValues = availableValues;
         this.checkIfValueIsValid();
         let valueChanged = false;
@@ -276,9 +274,9 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             valueChanged = true;
             this.checkIfValueIsValid();
         }
+        this.setInitialized();
         const prevIsValid = this._isValueValid;
         if (valueChanged || this._isValueValid !== prevIsValid) {
-            this.setInitialized();
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
         }
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);

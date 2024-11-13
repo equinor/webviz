@@ -42,7 +42,6 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
-        workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<RealizationSurfaceSettings>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
