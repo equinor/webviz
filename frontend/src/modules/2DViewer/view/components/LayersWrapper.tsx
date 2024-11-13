@@ -35,7 +35,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
 
     usePublishSubscribeTopicValue(props.layerManager, LayerManagerTopic.LAYER_DATA_REVISION);
-    console.debug("rerendered");
 
     const viewports: ViewportType[] = [];
     const viewerLayers: DeckGlLayerWithPosition[] = [];

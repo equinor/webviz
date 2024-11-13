@@ -161,10 +161,15 @@ export interface SettingsContext<TSettings extends Settings, TKey extends keyof 
     defineDependencies(args: DefineDependenciesArgs<TSettings, TKey>): void;
 }
 
+// Required when making "AvailableValuesType" for all settings in an object ("TSettings")
+export type EachAvailableValuesType<T> = T extends any ? AvailableValuesType<T> : never;
+
+// Returns an array of "TValue" if the "TValue" itself is not already an array
 export type AvailableValuesType<TValue> = RemoveUnknownFromArray<MakeArrayIfNotArray<TValue>>;
+
+// "MakeArrayIfNotArray<T>" yields "unknown[] | any[]" for "T = any"  - we don't want "unknown[]"
 type RemoveUnknownFromArray<T> = T extends unknown[] | any[] ? any[] : T;
 type MakeArrayIfNotArray<T> = Exclude<T, null> extends Array<infer V> ? Array<V> : Array<Exclude<T, null>>;
-export type EachAvailableValuesType<T> = T extends any ? AvailableValuesType<T> : never;
 
 export type SettingComponentProps<TValue> = {
     onValueChange: (newValue: TValue) => void;
