@@ -21,12 +21,13 @@ class CurveData(BaseModel):
     unit: str | None = None
 
 
+class RealizationCurveData(BaseModel):
+    curve_name: str
+    curve_values: List[float]
+    realization_id: int
+
+
 class RelPermRealizationDataForSaturation(BaseModel):
     saturation_number: int
-    relperm_curve_data: List[CurveData]
-
-
-class SaturationRealizationData(BaseModel):
     saturation_axis_data: CurveData
-    satnum_data: List[RelPermRealizationDataForSaturation]
-    realization_id: int
+    relperm_curve_data: List[RealizationCurveData]

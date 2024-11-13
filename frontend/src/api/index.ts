@@ -69,6 +69,7 @@ export { PolygonsAttributeType as PolygonsAttributeType_api } from './models/Pol
 export type { PolygonsMeta as PolygonsMeta_api } from './models/PolygonsMeta';
 export type { PolylineIntersection as PolylineIntersection_api } from './models/PolylineIntersection';
 export type { PvtData as PvtData_api } from './models/PvtData';
+export type { RealizationCurveData as RealizationCurveData_api } from './models/RealizationCurveData';
 export type { RelPermRealizationDataForSaturation as RelPermRealizationDataForSaturation_api } from './models/RelPermRealizationDataForSaturation';
 export type { RelPermSaturationAxis as RelPermSaturationAxis_api } from './models/RelPermSaturationAxis';
 export type { RelPermTableInfo as RelPermTableInfo_api } from './models/RelPermTableInfo';
@@ -78,7 +79,6 @@ export type { RftObservations as RftObservations_api } from './models/RftObserva
 export type { RftRealizationData as RftRealizationData_api } from './models/RftRealizationData';
 export type { RftTableDefinition as RftTableDefinition_api } from './models/RftTableDefinition';
 export type { RftWellInfo as RftWellInfo_api } from './models/RftWellInfo';
-export type { SaturationRealizationData as SaturationRealizationData_api } from './models/SaturationRealizationData';
 export type { SeismicCubeMeta as SeismicCubeMeta_api } from './models/SeismicCubeMeta';
 export type { SeismicFenceData as SeismicFenceData_api } from './models/SeismicFenceData';
 export type { SeismicFencePolyline as SeismicFencePolyline_api } from './models/SeismicFencePolyline';

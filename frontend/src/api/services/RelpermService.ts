@@ -2,8 +2,8 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { RelPermRealizationDataForSaturation } from '../models/RelPermRealizationDataForSaturation';
 import type { RelPermTableInfo } from '../models/RelPermTableInfo';
-import type { SaturationRealizationData } from '../models/SaturationRealizationData';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 export class RelpermService {
@@ -65,7 +65,7 @@ export class RelpermService {
      * @param saturationAxisName Saturation axis name
      * @param curveNames Curve names
      * @param satnums Satnums
-     * @returns SaturationRealizationData Successful Response
+     * @returns RelPermRealizationDataForSaturation Successful Response
      * @throws ApiError
      */
     public getRealizationsCurveData(
@@ -75,7 +75,7 @@ export class RelpermService {
         saturationAxisName: string,
         curveNames: Array<string>,
         satnums: Array<number>,
-    ): CancelablePromise<Array<SaturationRealizationData>> {
+    ): CancelablePromise<RelPermRealizationDataForSaturation> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/relperm/realizations_curve_data',
@@ -100,7 +100,7 @@ export class RelpermService {
      * @param saturationAxisName Saturation axis name
      * @param curveNames Curve names
      * @param satnums Satnums
-     * @returns SaturationRealizationData Successful Response
+     * @returns RelPermRealizationDataForSaturation Successful Response
      * @throws ApiError
      */
     public getStatisticalCurveData(
@@ -110,7 +110,7 @@ export class RelpermService {
         saturationAxisName: string,
         curveNames: Array<string>,
         satnums: Array<number>,
-    ): CancelablePromise<Array<SaturationRealizationData>> {
+    ): CancelablePromise<RelPermRealizationDataForSaturation> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/relperm/statistical_curve_data',

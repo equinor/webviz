@@ -9,6 +9,7 @@ import { CircularProgress } from "@lib/components/CircularProgress";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { ConstructionOutlined } from "@mui/icons-material";
 
 import { useAtomValue } from "jotai";
 import { PlotData } from "plotly.js";
@@ -70,30 +71,27 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
         ];
 
         let totalPoints = 0;
-        relPermRealizationsDataQuery.data.forEach((realizationData) => {
-            realizationData.satnum_data.forEach((satNumData) => {
-                satNumData.relperm_curve_data.forEach((curveData) => {
-                    totalPoints += curveData.curve_values.length;
-                });
-            });
+        relPermRealizationsDataQuery.data.relperm_curve_data.forEach((realizationData) => {
+            totalPoints += realizationData.curve_values.length;
         });
+
         const useGl: boolean = totalPoints > 1000;
-        relPermRealizationsDataQuery.data.forEach((realizationData) => {
-            realizationData.satnum_data.forEach((satNumData, idx) => {
-                satNumData.relperm_curve_data.forEach((curveData) => {
-                    plotData.push(
-                        createRelPermRealizationTrace(
-                            realizationData.realization_id,
-                            realizationData.saturation_axis_data.curve_values,
-                            curveData.curve_values,
-                            colors[idx],
-                            useGl
-                        )
-                    );
-                });
-            });
+        const curveNames = new Set(relPermRealizationsDataQuery.data.relperm_curve_data.map((data) => data.curve_name));
+
+        relPermRealizationsDataQuery.data.relperm_curve_data.forEach((realizationData) => {
+            plotData.push(
+                createRelPermRealizationTrace(
+                    realizationData.realization_id,
+                    relPermRealizationsDataQuery.data.saturation_axis_data.curve_values,
+                    realizationData.curve_values,
+                    colors[Array.from(curveNames).indexOf(realizationData.curve_name)],
+                    useGl
+                )
+            );
         });
+
         //         const title = `RFT for ${wellName}, ${timeStampUtcMs && timestampUtcMsToCompactIsoString(timeStampUtcMs)}`;
+        console.log(plotData);
         content = (
             <Plot
                 key={plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
@@ -127,8 +125,8 @@ function createRelPermRealizationTrace(
         x: saturationValues,
         y: curveValues,
 
-        type: useGl ? "scattergl" : "scatter",
-        mode: "markers+lines",
+        type: useGl ? "scatter" : "scatter",
+        mode: "lines+markers",
         showlegend: false,
         line: {
             color: color,
