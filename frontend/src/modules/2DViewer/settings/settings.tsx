@@ -1,6 +1,7 @@
 import React from "react";
 
 import { ModuleSettingsProps } from "@framework/Module";
+import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { useQueryClient } from "@tanstack/react-query";
@@ -15,14 +16,13 @@ import { LayerManager, LayerManagerTopic } from "../layers/LayerManager";
 import { GroupDelegateTopic } from "../layers/delegates/GroupDelegate";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
-    const [layerManager, setLayerManager] = useAtom(layerManagerAtom);
-
+    const ensembleSet = useEnsembleSet(props.workbenchSession);
     const queryClient = useQueryClient();
+
+    const [layerManager, setLayerManager] = useAtom(layerManagerAtom);
 
     const fieldIdentifier = useAtomValue(selectedFieldIdentifierAtom);
     const setFieldIdentifier = useSetAtom(userSelectedFieldIdentifierAtom);
-
-    const ensembleSet = props.workbenchSession.getEnsembleSet();
 
     React.useEffect(
         function onMountEffect() {

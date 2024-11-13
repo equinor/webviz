@@ -66,13 +66,6 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
         this._textData = textData;
     }
 
-    shouldUpdateState(
-        params: UpdateParameters<Layer<WellBorePicksLayerProps & Required<CompositeLayerProps>>>
-    ): boolean {
-        // console.debug(params.context.viewport.zoom);
-        return false;
-    }
-
     renderLayers() {
         const fontSize = 16;
         const sizeMinPixels = 16;

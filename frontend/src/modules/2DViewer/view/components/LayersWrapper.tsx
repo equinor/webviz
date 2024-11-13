@@ -18,6 +18,7 @@ import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
+import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
 import { DeckGlLayerWithPosition, recursivelyMakeViewsAndLayers } from "../utils/makeViewsAndLayers";
 
 export type LayersWrapperProps = {
@@ -72,7 +73,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             id: view.id,
             name: view.name,
             isSync: true,
-            layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id)],
+            layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id), "placeholder"],
         });
         viewerLayers.push(...view.layers);
 
@@ -135,6 +136,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     }
 
     const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);
+    layers.push(new PlaceholderLayer({ id: "placeholder" }));
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
