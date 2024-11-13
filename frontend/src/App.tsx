@@ -2,7 +2,7 @@ import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
 import { GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
-import { LayoutElement, Workbench } from "@framework/Workbench";
+import { LayoutElement, UserDeltaEnsembleSetting, Workbench } from "@framework/Workbench";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
@@ -85,11 +85,14 @@ function App() {
             setIsMounted(true);
 
             const storedEnsembleIdents = workbench.maybeLoadEnsembleSettingsFromLocalStorage();
+            const storedDeltaEnsembles: UserDeltaEnsembleSetting[] = []; // TODO: Store list of delta ensembles in local storage?
             if (storedEnsembleIdents) {
                 setInitAppState(InitAppState.LoadingEnsembles);
-                workbench.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).finally(() => {
-                    initApp();
-                });
+                workbench
+                    .loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents, storedDeltaEnsembles)
+                    .finally(() => {
+                        initApp();
+                    });
             } else {
                 initApp();
             }

@@ -7,7 +7,7 @@ const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
 export const vectorListQueriesAtom = atomWithQueries((get) => {
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).ensembleIdents;
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         return () => ({

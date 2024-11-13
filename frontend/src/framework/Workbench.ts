@@ -27,6 +27,13 @@ export type LayoutElement = {
     relWidth: number;
 };
 
+export type UserDeltaEnsembleSetting = {
+    firstEnsembleIdent: EnsembleIdent;
+    secondEnsembleIdent: EnsembleIdent;
+    customName: string | null;
+    color: string;
+};
+
 export type UserEnsembleSetting = {
     ensembleIdent: EnsembleIdent;
     customName: string | null;
@@ -228,13 +235,18 @@ export class Workbench {
 
     async loadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
-        userEnsembleSettings: UserEnsembleSetting[]
+        userEnsembleSettings: UserEnsembleSetting[],
+        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[]
     ): Promise<void> {
         this.storeEnsembleSetInLocalStorage(userEnsembleSettings);
 
         console.debug("loadAndSetupEnsembleSetInSession - starting load");
         this._workbenchSession.setEnsembleSetLoadingState(true);
-        const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(queryClient, userEnsembleSettings);
+        const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(
+            queryClient,
+            userEnsembleSettings,
+            userDeltaEnsembleSettings
+        );
         console.debug("loadAndSetupEnsembleSetInSession - loading done");
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         this._workbenchSession.setEnsembleSetLoadingState(false);

@@ -5,6 +5,7 @@ import {
     interfaceColorByParameterAtom,
     parameterIdentAtom,
     resampleFrequencyAtom,
+    selectedDeltaEnsemblesAtom,
     selectedEnsemblesAtom,
     showObservationsAtom,
     vectorSpecificationsAtom,
@@ -39,5 +40,9 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     (getInterfaceValue, setAtomValue) => {
         const selectedEnsembles = getInterfaceValue("selectedEnsembles");
         setAtomValue(selectedEnsemblesAtom, selectedEnsembles);
+    },
+    (getInterfaceValue, setAtomValue) => {
+        const selectedDeltaEnsembles = getInterfaceValue("selectedDeltaEnsembles");
+        setAtomValue(selectedDeltaEnsemblesAtom, selectedDeltaEnsembles);
     },
 ];

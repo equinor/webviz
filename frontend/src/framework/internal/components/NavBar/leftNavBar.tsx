@@ -7,7 +7,10 @@ import { UserEnsembleSetting, Workbench, WorkbenchEvents } from "@framework/Work
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
-import { EnsembleItem } from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
+import {
+    DeltaEnsembleItem,
+    EnsembleItem,
+} from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -30,6 +33,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
     const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<EnsembleItem[]>([]);
+    const [newCreatedDeltaEnsembles, setNewCreatedDeltaEnsembles] = React.useState<DeltaEnsembleItem[]>([]);
     const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
     const [collapsed, setCollapsed] = React.useState<boolean>(localStorage.getItem("navBarCollapsed") === "true");
     const [prevIsAppInitialized, setPrevIsAppInitialized] = React.useState<boolean>(false);
@@ -125,14 +129,27 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         customName: ens.getCustomName(),
     }));
 
-    function loadAndSetupEnsembles(ensembleItems: EnsembleItem[]): Promise<void> {
+    function loadAndSetupEnsembles(
+        ensembleItems: EnsembleItem[],
+        createdDeltaEnsembles: DeltaEnsembleItem[]
+    ): Promise<void> {
         setNewSelectedEnsembles(ensembleItems);
+        setNewCreatedDeltaEnsembles(createdDeltaEnsembles);
         const ensembleSettings: UserEnsembleSetting[] = ensembleItems.map((ens) => ({
             ensembleIdent: new EnsembleIdent(ens.caseUuid, ens.ensembleName),
             customName: ens.customName,
             color: ens.color,
         }));
-        return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, ensembleSettings);
+        const deltaEnsembleSettings = createdDeltaEnsembles.map((deltaEns) => ({
+            firstEnsembleIdent: new EnsembleIdent(deltaEns.firstEnsemble.caseUuid, deltaEns.firstEnsemble.ensembleName),
+            secondEnsembleIdent: new EnsembleIdent(
+                deltaEns.secondEnsemble.caseUuid,
+                deltaEns.secondEnsemble.ensembleName
+            ),
+            customName: deltaEns.customName,
+            color: deltaEns.color,
+        }));
+        return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, ensembleSettings, deltaEnsembleSettings);
     }
 
     let fixedSelectedEnsembles = selectedEnsembles;
@@ -270,6 +287,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <SelectEnsemblesDialog
                     loadAndSetupEnsembles={loadAndSetupEnsembles}
                     selectedEnsembles={fixedSelectedEnsembles}
+                    createdDeltaEnsembles={newCreatedDeltaEnsembles}
                     onClose={handleEnsembleDialogClose}
                     colorSet={colorSet}
                 />

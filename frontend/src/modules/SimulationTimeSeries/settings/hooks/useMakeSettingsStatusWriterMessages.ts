@@ -44,13 +44,13 @@ export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatus
     }
 
     // Note: selectedVectorNames is not updated until vectorSelectorData is updated and VectorSelector triggers onChange
-    if (selectedEnsembleIdents.length === 1) {
+    if (selectedEnsembleIdents.ensembleIdents.length === 1) {
         // If single ensemble is selected and no vectors exist, selectedVectorNames is empty as no vectors are valid
         // in the VectorSelector. Then utilizing selectedVectorTags for status message
         const vectorNames = selectedVectorNames.length > 0 ? selectedVectorNames : selectedVectorTags;
-        validateVectorNamesInEnsemble(vectorNames, selectedEnsembleIdents[0]);
+        validateVectorNamesInEnsemble(vectorNames, selectedEnsembleIdents.ensembleIdents[0]);
     }
-    for (const ensembleIdent of selectedEnsembleIdents) {
+    for (const ensembleIdent of selectedEnsembleIdents.ensembleIdents) {
         validateVectorNamesInEnsemble(selectedVectorNames, ensembleIdent);
     }
 }

@@ -1,8 +1,9 @@
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { fixupDeltaEnsembleIdents, fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
 
 import { atom } from "jotai";
@@ -29,20 +30,27 @@ export const statisticsTypeAtom = atom<StatisticsType>((get) => {
     return StatisticsType.INDIVIDUAL;
 });
 
-export const selectedEnsembleIdentsAtom = atom<EnsembleIdent[]>((get) => {
+export const selectedEnsembleIdentsAtom = atom<{
+    ensembleIdents: EnsembleIdent[];
+    deltaEnsembleIdents: EnsembleIdent[];
+}>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
     const newSelectedEnsembleIdents = selectedEnsembleIdents.filter((ensemble) => ensembleSet.hasEnsemble(ensemble));
+    const newSelectedDeltaEnsembleIdents = selectedEnsembleIdents.filter((ensemble) =>
+        ensembleSet.hasDeltaEnsemble(ensemble)
+    );
 
     const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
+    const validatedDeltaEnsembleIdents = fixupDeltaEnsembleIdents(newSelectedDeltaEnsembleIdents, ensembleSet);
 
-    return validatedEnsembleIdents ?? [];
+    return { ensembleIdents: validatedEnsembleIdents ?? [], deltaEnsembleIdents: validatedDeltaEnsembleIdents ?? [] };
 });
 
-export const selectedEnsemblesAtom = atom((get) => {
+export const selectedEnsemblesAtom = atom<Ensemble[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).ensembleIdents;
 
     const selectedEnsembles: Ensemble[] = [];
 
@@ -56,9 +64,23 @@ export const selectedEnsemblesAtom = atom((get) => {
     return selectedEnsembles;
 });
 
+export const selectedDeltaEnsemblesAtom = atom<DeltaEnsemble[]>((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const selectedDeltaEnsembleIdents = get(selectedEnsembleIdentsAtom).deltaEnsembleIdents;
+
+    const selectedDeltaEnsembles: DeltaEnsemble[] = [];
+    for (const ensembleIdent of selectedDeltaEnsembleIdents) {
+        const ensemble = ensembleSet.findDeltaEnsemble(ensembleIdent);
+        if (ensemble) {
+            selectedDeltaEnsembles.push(ensemble);
+        }
+    }
+    return selectedDeltaEnsembles;
+});
+
 export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).ensembleIdents;
 
     const continuousAndNonConstantParametersUnion: Parameter[] = [];
 
@@ -114,9 +136,9 @@ export const vectorSelectorDataAtom = atom((get) => {
     return createVectorSelectorDataFromVectors(availableVectorNames);
 });
 
-export const ensembleVectorListsHelperAtom = atom((get) => {
+export const ensembleVectorListsHelperAtom = atom<EnsembleVectorListsHelper>((get) => {
     const vectorListQueries = get(vectorListQueriesAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).ensembleIdents;
 
     return new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
 });
@@ -124,7 +146,7 @@ export const ensembleVectorListsHelperAtom = atom((get) => {
 export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const ensembleVectorListsHelper = get(ensembleVectorListsHelperAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom).ensembleIdents;
     const selectedVectorNames = get(selectedVectorNamesAtom);
 
     const vectorSpecifications: VectorSpec[] = [];

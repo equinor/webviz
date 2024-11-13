@@ -250,7 +250,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
             <CollapsibleGroup expanded={true} title="Ensembles">
                 <EnsembleSelect
                     ensembleSet={ensembleSet}
-                    value={selectedEnsembleIdents}
+                    value={[...selectedEnsembleIdents.ensembleIdents, ...selectedEnsembleIdents.deltaEnsembleIdents]}
+                    allowDeltaEnsembles={true}
                     size={5}
                     onChange={handleEnsembleSelectChange}
                 />

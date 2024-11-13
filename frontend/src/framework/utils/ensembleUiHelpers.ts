@@ -43,6 +43,22 @@ export function fixupEnsembleIdent(
 
     return ensembleSet.getEnsembleArr()[0].getIdent();
 }
+export function fixupDeltaEnsembleIdent(
+    currIdent: EnsembleIdent | null,
+    ensembleSet: EnsembleSet | null
+): EnsembleIdent | null {
+    if (!ensembleSet?.hasAnyDeltaEnsembles()) {
+        return null;
+    }
+
+    if (currIdent) {
+        if (ensembleSet.hasDeltaEnsemble(currIdent)) {
+            return currIdent;
+        }
+    }
+
+    return ensembleSet.getDeltaEnsembleArr()[0].getIdent();
+}
 
 /**
  * Validates the the EnsembleIdents specified in currIdents against the contents of the
@@ -67,4 +83,18 @@ export function fixupEnsembleIdents(
     }
 
     return currIdents.filter((currIdent) => ensembleSet.hasEnsemble(currIdent));
+}
+export function fixupDeltaEnsembleIdents(
+    currIdents: EnsembleIdent[] | null,
+    ensembleSet: EnsembleSet | null
+): EnsembleIdent[] | null {
+    if (!ensembleSet?.hasAnyDeltaEnsembles()) {
+        return null;
+    }
+
+    if (currIdents === null || currIdents.length === 0) {
+        return [ensembleSet.getDeltaEnsembleArr()[0].getIdent()];
+    }
+
+    return currIdents.filter((currIdent) => ensembleSet.hasDeltaEnsemble(currIdent));
 }

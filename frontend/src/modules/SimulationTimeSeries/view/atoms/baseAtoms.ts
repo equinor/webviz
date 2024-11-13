@@ -1,4 +1,5 @@
 import { Frequency_api } from "@api";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { Ensemble } from "@framework/Ensemble";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import { VectorSpec, VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
@@ -13,3 +14,4 @@ export const showObservationsAtom = atom<boolean>(true);
 export const interfaceColorByParameterAtom = atom<boolean>(false);
 export const parameterIdentAtom = atom<ParameterIdent | null>(null);
 export const selectedEnsemblesAtom = atom<Ensemble[]>([]);
+export const selectedDeltaEnsemblesAtom = atom<DeltaEnsemble[]>([]);
