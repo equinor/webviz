@@ -13,7 +13,7 @@ export function VisibilityToggle(props: VisibilityToggleProps): React.ReactNode 
     const isVisible = usePublishSubscribeTopicValue(props.item.getItemDelegate(), ItemDelegateTopic.VISIBILITY);
 
     function handleToggleLayerVisibility() {
-        props.item.getItemDelegate().setIsVisible(!isVisible);
+        props.item.getItemDelegate().setVisible(!isVisible);
     }
 
     return (

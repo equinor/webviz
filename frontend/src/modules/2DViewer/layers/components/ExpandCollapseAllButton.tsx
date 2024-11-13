@@ -13,14 +13,14 @@ export function ExpandCollapseAllButton(props: ExpandCollapseAllButtonProps): Re
     function expandAllChildren() {
         const descendants = props.group.getGroupDelegate().getDescendantItems(() => true);
         for (const child of descendants) {
-            child.getItemDelegate().setIsExpanded(true);
+            child.getItemDelegate().setExpanded(true);
         }
     }
 
     function collapseAllChildren() {
         const descendants = props.group.getGroupDelegate().getDescendantItems(() => true);
         for (const child of descendants) {
-            child.getItemDelegate().setIsExpanded(false);
+            child.getItemDelegate().setExpanded(false);
         }
     }
 

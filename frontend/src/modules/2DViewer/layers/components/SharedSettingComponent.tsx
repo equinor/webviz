@@ -25,7 +25,7 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
     }
 
     function handleToggleExpanded() {
-        props.sharedSetting.getItemDelegate().setIsExpanded(!isExpanded);
+        props.sharedSetting.getItemDelegate().setExpanded(!isExpanded);
     }
 
     return (

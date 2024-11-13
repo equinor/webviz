@@ -115,7 +115,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
     }
 
-    setIsValueValid(isValueValid: boolean): void {
+    setValueValid(isValueValid: boolean): void {
         if (this._isValueValid === isValueValid) {
             return;
         }
@@ -123,7 +123,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALIDITY_CHANGED);
     }
 
-    setIsLoading(loading: boolean): void {
+    setLoading(loading: boolean): void {
         if (this._loading === loading) {
             return;
         }
@@ -139,11 +139,11 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.INIT_STATE_CHANGED);
     }
 
-    getIsInitialized(): boolean {
+    isInitialized(): boolean {
         return this._initialized;
     }
 
-    getIsLoading(): boolean {
+    isLoading(): boolean {
         return this._loading;
     }
 
@@ -229,59 +229,6 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return this._availableValues;
     }
 
-    private maybeFixupValue(): boolean {
-        if (this.isPersistedValue()) {
-            return false;
-        }
-
-        if (this._availableValues.length === 0) {
-            return false;
-        }
-
-        let candidate = this._value;
-
-        if (this._owner.fixupValue) {
-            candidate = this._owner.fixupValue(this._availableValues, this._value);
-        } else if (Array.isArray(this._value)) {
-            candidate = [this._availableValues[0]] as TValue;
-        } else {
-            candidate = this._availableValues[0] as TValue;
-        }
-
-        if (isEqual(candidate, this._value)) {
-            return false;
-        }
-
-        this._value = candidate;
-        return true;
-    }
-
-    private checkIfValueIsValid(): void {
-        const value = this.getValue();
-
-        if (this._owner.isValueValid) {
-            this.setIsValueValid(this._owner.isValueValid(this._availableValues, value));
-            return;
-        }
-        if (typeof value === "boolean") {
-            this.setIsValueValid(true);
-            return;
-        }
-        if (this._availableValues.length === 0) {
-            this.setIsValueValid(false);
-            return;
-        }
-        if (this._availableValues.some((el) => isEqual(el, value))) {
-            this.setIsValueValid(true);
-            return;
-        }
-        if (isArray(value) && value.every((value) => this._availableValues.some((el) => isEqual(value, el)))) {
-            this.setIsValueValid(true);
-            return;
-        }
-        this.setIsValueValid(false);
-    }
-
     maybeResetPersistedValue(): boolean {
         if (this._currentValueFromPersistence === null) {
             return false;
@@ -335,5 +282,58 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
         }
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.AVAILABLE_VALUES_CHANGED);
+    }
+
+    private maybeFixupValue(): boolean {
+        if (this.isPersistedValue()) {
+            return false;
+        }
+
+        if (this._availableValues.length === 0) {
+            return false;
+        }
+
+        let candidate = this._value;
+
+        if (this._owner.fixupValue) {
+            candidate = this._owner.fixupValue(this._availableValues, this._value);
+        } else if (Array.isArray(this._value)) {
+            candidate = [this._availableValues[0]] as TValue;
+        } else {
+            candidate = this._availableValues[0] as TValue;
+        }
+
+        if (isEqual(candidate, this._value)) {
+            return false;
+        }
+
+        this._value = candidate;
+        return true;
+    }
+
+    private checkIfValueIsValid(): void {
+        const value = this.getValue();
+
+        if (this._owner.isValueValid) {
+            this.setValueValid(this._owner.isValueValid(this._availableValues, value));
+            return;
+        }
+        if (typeof value === "boolean") {
+            this.setValueValid(true);
+            return;
+        }
+        if (this._availableValues.length === 0) {
+            this.setValueValid(false);
+            return;
+        }
+        if (this._availableValues.some((el) => isEqual(el, value))) {
+            this.setValueValid(true);
+            return;
+        }
+        if (isArray(value) && value.every((value) => this._availableValues.some((el) => isEqual(value, el)))) {
+            this.setValueValid(true);
+            return;
+        }
+        this.setValueValid(false);
     }
 }

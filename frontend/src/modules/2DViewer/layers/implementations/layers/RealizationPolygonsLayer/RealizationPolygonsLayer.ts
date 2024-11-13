@@ -4,8 +4,8 @@ import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
+import { SettingType } from "@modules/2DViewer/layers/implementations/settings/settingsTypes";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
-import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";

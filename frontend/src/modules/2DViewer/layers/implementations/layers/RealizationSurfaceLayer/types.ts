@@ -1,6 +1,6 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 
-import { SettingType } from "../../../settingsTypes";
+import { SettingType } from "../../settings/settingsTypes";
 
 export type RealizationSurfaceSettings = {
     [SettingType.ENSEMBLE]: EnsembleIdent | null;

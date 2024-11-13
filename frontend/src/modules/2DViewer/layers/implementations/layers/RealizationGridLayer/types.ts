@@ -1,5 +1,5 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
+import { SettingType } from "@modules/2DViewer/layers/implementations/settings/settingsTypes";
 
 export type RealizationGridSettings = {
     [SettingType.ENSEMBLE]: EnsembleIdent | null;

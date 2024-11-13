@@ -10,7 +10,7 @@ import { ItemDelegate } from "./delegates/ItemDelegate";
 import { LayerDelegate } from "./delegates/LayerDelegate";
 import { SettingDelegate } from "./delegates/SettingDelegate";
 import { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
-import { SettingType } from "./settingsTypes";
+import { SettingType } from "./implementations/settings/settingsTypes";
 
 export type SerializedType =
     | "layer-manager"
@@ -161,10 +161,9 @@ export interface SettingsContext<TSettings extends Settings, TKey extends keyof 
     defineDependencies(args: DefineDependenciesArgs<TSettings, TKey>): void;
 }
 
-export type AvailableValuesType<TValue> = Exclude<TValue, null> extends Array<infer V>
-    ? Array<V>
-    : Array<Exclude<TValue, null>>;
-export type PossiblyUndefined<TSettings> = { [K in keyof TSettings]?: TSettings[K] };
+export type AvailableValuesType<TValue> = RemoveUnknownFromArray<MakeArrayIfNotArray<TValue>>;
+type RemoveUnknownFromArray<T> = T extends unknown[] | any[] ? any[] : T;
+type MakeArrayIfNotArray<T> = Exclude<T, null> extends Array<infer V> ? Array<V> : Array<Exclude<T, null>>;
 export type EachAvailableValuesType<T> = T extends any ? AvailableValuesType<T> : never;
 
 export type SettingComponentProps<TValue> = {

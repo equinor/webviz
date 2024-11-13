@@ -3,10 +3,11 @@ import React from "react";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 
+import { SettingType } from "./settingsTypes";
+
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
-import { SettingType } from "../../settingsTypes";
 
 export class Ensemble implements Setting<EnsembleIdent | null> {
     private _delegate: SettingDelegate<EnsembleIdent | null>;

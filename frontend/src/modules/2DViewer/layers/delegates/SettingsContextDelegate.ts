@@ -134,7 +134,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
 
     areAllSettingsLoaded(): boolean {
         for (const key in this._settings) {
-            if (this._settings[key].getDelegate().getIsLoading()) {
+            if (this._settings[key].getDelegate().isLoading()) {
                 return false;
             }
         }
@@ -145,7 +145,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     areAllSettingsInitialized(): boolean {
         for (const key in this._settings) {
             if (
-                !this._settings[key].getDelegate().getIsInitialized() ||
+                !this._settings[key].getDelegate().isInitialized() ||
                 this._settings[key].getDelegate().isPersistedValue()
             ) {
                 return false;
@@ -158,10 +158,10 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     isSomePersistedSettingNotValid(): boolean {
         for (const key in this._settings) {
             if (
-                !this._settings[key].getDelegate().getIsLoading() &&
+                !this._settings[key].getDelegate().isLoading() &&
                 this._settings[key].getDelegate().isPersistedValue() &&
                 !this._settings[key].getDelegate().isValueValid() &&
-                this._settings[key].getDelegate().getIsInitialized()
+                this._settings[key].getDelegate().isInitialized()
             ) {
                 return true;
             }
@@ -179,43 +179,6 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         }
 
         return invalidSettings;
-    }
-
-    private setLoadingState(loadingState: SettingsContextLoadingState) {
-        if (this._loadingState === loadingState) {
-            return;
-        }
-
-        this._loadingState = loadingState;
-        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE_CHANGED);
-    }
-
-    private handleSettingChanged() {
-        // this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
-
-        if (!this.areAllSettingsLoaded() || !this.areAllSettingsInitialized()) {
-            this.setLoadingState(SettingsContextLoadingState.LOADING);
-            return;
-        }
-
-        if (this.isSomePersistedSettingNotValid() || !this.areCurrentSettingsValid()) {
-            this.setLoadingState(SettingsContextLoadingState.FAILED);
-            return;
-        }
-
-        this.setLoadingState(SettingsContextLoadingState.LOADED);
-        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
-    }
-
-    private handleSettingsLoadingStateChanged() {
-        for (const key in this._settings) {
-            if (this._settings[key].getDelegate().getIsLoading()) {
-                this.setLoadingState(SettingsContextLoadingState.LOADING);
-                return;
-            }
-        }
-
-        this.setLoadingState(SettingsContextLoadingState.LOADED);
     }
 
     setAvailableValues<K extends TKey>(key: K, availableValues: AvailableValuesType<TSettings[K]>): void {
@@ -314,7 +277,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             });
 
             dependency.subscribeLoading((loading: boolean, hasDependencies: boolean) => {
-                this._settings[settingKey].getDelegate().setIsLoading(loading);
+                this._settings[settingKey].getDelegate().setLoading(loading);
 
                 if (!hasDependencies) {
                     this.handleSettingChanged();
@@ -359,5 +322,42 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
 
     beforeDestroy(): void {
         this._unsubscribeHandler.unsubscribeAll();
+    }
+
+    private setLoadingState(loadingState: SettingsContextLoadingState) {
+        if (this._loadingState === loadingState) {
+            return;
+        }
+
+        this._loadingState = loadingState;
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE_CHANGED);
+    }
+
+    private handleSettingChanged() {
+        // this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+
+        if (!this.areAllSettingsLoaded() || !this.areAllSettingsInitialized()) {
+            this.setLoadingState(SettingsContextLoadingState.LOADING);
+            return;
+        }
+
+        if (this.isSomePersistedSettingNotValid() || !this.areCurrentSettingsValid()) {
+            this.setLoadingState(SettingsContextLoadingState.FAILED);
+            return;
+        }
+
+        this.setLoadingState(SettingsContextLoadingState.LOADED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.SETTINGS_CHANGED);
+    }
+
+    private handleSettingsLoadingStateChanged() {
+        for (const key in this._settings) {
+            if (this._settings[key].getDelegate().isLoading()) {
+                this.setLoadingState(SettingsContextLoadingState.LOADING);
+                return;
+            }
+        }
+
+        this.setLoadingState(SettingsContextLoadingState.LOADED);
     }
 }

@@ -2,10 +2,11 @@ import React, { ChangeEvent } from "react";
 
 import { Switch } from "@lib/components/Switch";
 
+import { SettingType } from "./settingsTypes";
+
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
-import { SettingType } from "../../settingsTypes";
 
 type ValueType = boolean;
 

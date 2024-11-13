@@ -5,10 +5,11 @@ import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Select, SelectOption } from "@lib/components/Select";
 import { Deselect, SelectAll } from "@mui/icons-material";
 
+import { SettingType } from "./settingsTypes";
+
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
-import { SettingType } from "../../settingsTypes";
 
 type ValueType = WellboreHeader_api[] | null;
 
@@ -131,4 +132,4 @@ export function WellboreHeaderSelector(props: WellboreHeaderSelectorProps): Reac
     );
 }
 
-SettingRegistry.registerSetting(DrilledWellbores as unknown as new () => Setting<any>);
+SettingRegistry.registerSetting(DrilledWellbores);

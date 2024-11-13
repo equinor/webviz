@@ -2,10 +2,11 @@ import React from "react";
 
 import { Dropdown } from "@lib/components/Dropdown";
 
+import { SettingType } from "./settingsTypes";
+
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
-import { SettingType } from "../../settingsTypes";
 
 export type SensitivityNameCasePair = {
     sensitivityName: string;

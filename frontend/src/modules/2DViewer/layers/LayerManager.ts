@@ -86,30 +86,6 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         );
     }
 
-    private initializeGlobalSettings(): GlobalSettings {
-        const ensembles = this._workbenchSession.getEnsembleSet().getEnsembleArr();
-        return {
-            fieldId: null,
-            ensembles,
-            realizationFilterFunction: createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
-        };
-    }
-
-    private handleRealizationFilterSetChanged() {
-        this._globalSettings.realizationFilterFunction = createEnsembleRealizationFilterFuncForWorkbenchSession(
-            this._workbenchSession
-        );
-
-        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
-    }
-
-    private handleEnsembleSetChanged() {
-        const ensembles = this._workbenchSession.getEnsembleSet().getEnsembleArr();
-        this._globalSettings.ensembles = ensembles;
-
-        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
-    }
-
     getItemDelegate(): ItemDelegate {
         return this._itemDelegate;
     }
@@ -204,6 +180,30 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         this._deserializing = false;
 
         this.publishTopic(LayerManagerTopic.ITEMS_CHANGED);
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+    }
+
+    private initializeGlobalSettings(): GlobalSettings {
+        const ensembles = this._workbenchSession.getEnsembleSet().getEnsembleArr();
+        return {
+            fieldId: null,
+            ensembles,
+            realizationFilterFunction: createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
+        };
+    }
+
+    private handleRealizationFilterSetChanged() {
+        this._globalSettings.realizationFilterFunction = createEnsembleRealizationFilterFuncForWorkbenchSession(
+            this._workbenchSession
+        );
+
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+    }
+
+    private handleEnsembleSetChanged() {
+        const ensembles = this._workbenchSession.getEnsembleSet().getEnsembleArr();
+        this._globalSettings.ensembles = ensembles;
+
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
     }
 }

@@ -2,8 +2,8 @@ import { apiService } from "@framework/ApiService";
 import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/LayerRegistry";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
+import { SettingType } from "@modules/2DViewer/layers/implementations/settings/settingsTypes";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
-import { SettingType } from "@modules/2DViewer/layers/settingsTypes";
 import {
     GridMappedProperty_trans,
     GridSurface_trans,

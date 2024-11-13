@@ -44,7 +44,7 @@ export function ColorScaleComponent(props: ColorScaleComponentProps): React.Reac
     }
 
     function handleToggleExpanded(): void {
-        props.colorScale.getItemDelegate().setIsExpanded(!isExpanded);
+        props.colorScale.getItemDelegate().setExpanded(!isExpanded);
     }
 
     return (

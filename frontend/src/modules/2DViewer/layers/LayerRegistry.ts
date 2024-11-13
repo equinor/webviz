@@ -4,9 +4,6 @@ import { Layer } from "./interfaces";
 export class LayerRegistry {
     private static _registeredLayers: Map<string, { new (layerManager: LayerManager): Layer<any, any> }> = new Map();
 
-    /* eslint-disable-next-line @typescript-eslint/no-empty-function */
-    private constructor() {}
-
     static registerLayer(ctor: { new (layerManager: LayerManager): Layer<any, any> }): void {
         this._registeredLayers.set(ctor.name, ctor);
     }

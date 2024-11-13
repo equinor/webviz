@@ -34,23 +34,6 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
         this._name = this.makeUniqueName(name);
     }
 
-    private makeUniqueName(candidate: string): string {
-        const groupDelegate = this._layerManager?.getGroupDelegate();
-        if (!groupDelegate) {
-            return candidate;
-        }
-        const existingNames = groupDelegate
-            .getDescendantItems(() => true)
-            .map((item) => item.getItemDelegate().getName());
-        let uniqueName = candidate;
-        let counter = 1;
-        while (existingNames.includes(uniqueName)) {
-            uniqueName = `${candidate} (${counter})`;
-            counter++;
-        }
-        return uniqueName;
-    }
-
     setId(id: string): void {
         this._id = id;
     }
@@ -91,7 +74,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
         return this._visible;
     }
 
-    setIsVisible(visible: boolean): void {
+    setVisible(visible: boolean): void {
         if (isEqual(this._visible, visible)) {
             return;
         }
@@ -107,7 +90,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
         return this._expanded;
     }
 
-    setIsExpanded(expanded: boolean): void {
+    setExpanded(expanded: boolean): void {
         if (isEqual(this._expanded, expanded)) {
             return;
         }
@@ -149,5 +132,22 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
         this._name = state.name;
         this._visible = state.visible;
         this._expanded = state.expanded;
+    }
+
+    private makeUniqueName(candidate: string): string {
+        const groupDelegate = this._layerManager?.getGroupDelegate();
+        if (!groupDelegate) {
+            return candidate;
+        }
+        const existingNames = groupDelegate
+            .getDescendantItems(() => true)
+            .map((item) => item.getItemDelegate().getName());
+        let uniqueName = candidate;
+        let counter = 1;
+        while (existingNames.includes(uniqueName)) {
+            uniqueName = `${candidate} (${counter})`;
+            counter++;
+        }
+        return uniqueName;
     }
 }

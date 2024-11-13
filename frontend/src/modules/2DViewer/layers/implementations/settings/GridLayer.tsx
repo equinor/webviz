@@ -2,10 +2,11 @@ import React from "react";
 
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
+import { SettingType } from "./settingsTypes";
+
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
-import { SettingType } from "../../settingsTypes";
 
 type ValueType = number | null;
 
@@ -98,4 +99,4 @@ export class GridLayer implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(GridLayer as unknown as new () => Setting<any>);
+SettingRegistry.registerSetting(GridLayer);

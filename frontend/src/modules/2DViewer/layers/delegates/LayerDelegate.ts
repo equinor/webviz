@@ -122,7 +122,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
         return this._coloringType;
     }
 
-    getIsSubordinated(): boolean {
+    isSubordinated(): boolean {
         return this._isSubordinated;
     }
 
@@ -132,14 +132,6 @@ export class LayerDelegate<TSettings extends Settings, TData>
         }
         this._isSubordinated = isSubordinated;
         this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.SUBORDINATED);
-    }
-
-    private invalidateBoundingBox(): void {
-        this._boundingBox = null;
-    }
-
-    private invalidateValueRange(): void {
-        this._valueRange = null;
     }
 
     getValueRange(): [number, number] | null {
@@ -160,7 +152,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
                 const setting = this._settingsContext.getDelegate().getSettings()[type];
                 if (setting && overriddenSettings[type] === undefined) {
                     if (
-                        sharedSetting.getWrappedSetting().getDelegate().getIsInitialized() &&
+                        sharedSetting.getWrappedSetting().getDelegate().isInitialized() &&
                         sharedSetting.getWrappedSetting().getDelegate().isValueValid()
                     ) {
                         overriddenSettings[type] = sharedSetting.getWrappedSetting().getDelegate().getValue();
@@ -212,50 +204,6 @@ export class LayerDelegate<TSettings extends Settings, TData>
             ...this._error,
             message: `${name}: ${this._error.message}`,
         };
-    }
-
-    private setStatus(status: LayerStatus): void {
-        if (this._status === status) {
-            return;
-        }
-
-        this._status = status;
-        this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
-        this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.STATUS);
-    }
-
-    private getQueryClient(): QueryClient | null {
-        return this._layerManager?.getQueryClient() ?? null;
-    }
-
-    private async maybeCancelQuery(): Promise<void> {
-        const queryClient = this.getQueryClient();
-
-        if (!queryClient) {
-            return;
-        }
-
-        if (this._queryKeys.length > 0) {
-            for (const queryKey of this._queryKeys) {
-                await queryClient.cancelQueries(
-                    {
-                        queryKey,
-                        exact: true,
-                        fetchStatus: "fetching",
-                        type: "active",
-                    },
-                    {
-                        silent: true,
-                        revert: true,
-                    }
-                );
-                await queryClient.invalidateQueries({ queryKey });
-                queryClient.removeQueries({ queryKey });
-            }
-            this._queryKeys = [];
-        }
-
-        this._cancellationPending = false;
     }
 
     async maybeRefetchData(): Promise<void> {
@@ -326,5 +274,57 @@ export class LayerDelegate<TSettings extends Settings, TData>
     beforeDestroy(): void {
         this._settingsContext.getDelegate().beforeDestroy();
         this._unsubscribeHandler.unsubscribeAll();
+    }
+
+    private setStatus(status: LayerStatus): void {
+        if (this._status === status) {
+            return;
+        }
+
+        this._status = status;
+        this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
+        this._publishSubscribeDelegate.notifySubscribers(LayerDelegateTopic.STATUS);
+    }
+
+    private getQueryClient(): QueryClient | null {
+        return this._layerManager?.getQueryClient() ?? null;
+    }
+
+    private invalidateBoundingBox(): void {
+        this._boundingBox = null;
+    }
+
+    private invalidateValueRange(): void {
+        this._valueRange = null;
+    }
+
+    private async maybeCancelQuery(): Promise<void> {
+        const queryClient = this.getQueryClient();
+
+        if (!queryClient) {
+            return;
+        }
+
+        if (this._queryKeys.length > 0) {
+            for (const queryKey of this._queryKeys) {
+                await queryClient.cancelQueries(
+                    {
+                        queryKey,
+                        exact: true,
+                        fetchStatus: "fetching",
+                        type: "active",
+                    },
+                    {
+                        silent: true,
+                        revert: true,
+                    }
+                );
+                await queryClient.invalidateQueries({ queryKey });
+                queryClient.removeQueries({ queryKey });
+            }
+            this._queryKeys = [];
+        }
+
+        this._cancellationPending = false;
     }
 }

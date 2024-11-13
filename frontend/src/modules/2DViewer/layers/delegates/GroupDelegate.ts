@@ -40,71 +40,6 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
         this._color = color;
     }
 
-    private incrementTreeRevisionNumber() {
-        this._treeRevisionNumber++;
-        this.publishTopic(GroupDelegateTopic.TREE_REVISION_NUMBER);
-    }
-
-    protected takeOwnershipOfChild(child: Item) {
-        child.getItemDelegate().setParentGroup(this);
-
-        this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
-
-        if (instanceofLayer(child)) {
-            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
-                child.getItemDelegate().getId(),
-                child
-                    .getItemDelegate()
-                    .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(ItemDelegateTopic.EXPANDED)(() => {
-                    this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
-                })
-            );
-        }
-
-        if (instanceofGroup(child)) {
-            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
-                child.getItemDelegate().getId(),
-                child
-                    .getGroupDelegate()
-                    .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
-                    this.incrementTreeRevisionNumber();
-                })
-            );
-            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
-                child.getItemDelegate().getId(),
-                child
-                    .getGroupDelegate()
-                    .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(() => {
-                    this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
-                })
-            );
-        }
-
-        this.publishTopic(GroupDelegateTopic.CHILDREN);
-        this.incrementTreeRevisionNumber();
-    }
-
-    private publishTopic(topic: GroupDelegateTopic) {
-        if (this._deserializing) {
-            return;
-        }
-        this._publishSubscribeDelegate.notifySubscribers(topic);
-    }
-
-    private disposeOwnershipOfChild(child: Item) {
-        this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
-        child.getItemDelegate().setParentGroup(null);
-
-        if (child instanceof SharedSetting) {
-            this._owner?.getItemDelegate().getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
-        }
-
-        this.publishTopic(GroupDelegateTopic.CHILDREN);
-    }
-
     prependChild(child: Item) {
         this._children = [child, ...this._children];
         this.takeOwnershipOfChild(child);
@@ -245,5 +180,70 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
             this.appendChild(item);
         }
         this._deserializing = false;
+    }
+
+    private incrementTreeRevisionNumber() {
+        this._treeRevisionNumber++;
+        this.publishTopic(GroupDelegateTopic.TREE_REVISION_NUMBER);
+    }
+
+    private takeOwnershipOfChild(child: Item) {
+        child.getItemDelegate().setParentGroup(this);
+
+        this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
+
+        if (instanceofLayer(child)) {
+            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
+                child.getItemDelegate().getId(),
+                child
+                    .getItemDelegate()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(ItemDelegateTopic.EXPANDED)(() => {
+                    this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
+                })
+            );
+        }
+
+        if (instanceofGroup(child)) {
+            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
+                child.getItemDelegate().getId(),
+                child
+                    .getGroupDelegate()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
+                    this.incrementTreeRevisionNumber();
+                })
+            );
+            this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
+                child.getItemDelegate().getId(),
+                child
+                    .getGroupDelegate()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(() => {
+                    this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
+                })
+            );
+        }
+
+        this.publishTopic(GroupDelegateTopic.CHILDREN);
+        this.incrementTreeRevisionNumber();
+    }
+
+    private publishTopic(topic: GroupDelegateTopic) {
+        if (this._deserializing) {
+            return;
+        }
+        this._publishSubscribeDelegate.notifySubscribers(topic);
+    }
+
+    private disposeOwnershipOfChild(child: Item) {
+        this._unsubscribeHandlerDelegate.unsubscribe(child.getItemDelegate().getId());
+        child.getItemDelegate().setParentGroup(null);
+
+        if (child instanceof SharedSetting) {
+            this._owner?.getItemDelegate().getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
+        }
+
+        this.publishTopic(GroupDelegateTopic.CHILDREN);
     }
 }

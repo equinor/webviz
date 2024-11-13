@@ -75,7 +75,7 @@ function StartActions(props: StartActionProps): React.ReactNode {
     const isExpanded = usePublishSubscribeTopicValue(props.layer.getItemDelegate(), ItemDelegateTopic.EXPANDED);
 
     function handleToggleExpanded() {
-        props.layer.getItemDelegate().setIsExpanded(!isExpanded);
+        props.layer.getItemDelegate().setExpanded(!isExpanded);
     }
     return (
         <div className="flex items-center">

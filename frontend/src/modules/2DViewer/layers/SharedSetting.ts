@@ -81,8 +81,8 @@ export class SharedSetting implements Item {
                 if (setting) {
                     noSettingLoadingOrUninitialized =
                         noSettingLoadingOrUninitialized &&
-                        !setting.getDelegate().getIsLoading() &&
-                        setting.getDelegate().getIsInitialized();
+                        !setting.getDelegate().isLoading() &&
+                        setting.getDelegate().isInitialized();
                     if (index === 0) {
                         acc.push(...setting.getDelegate().getAvailableValues());
                     } else {
@@ -110,11 +110,11 @@ export class SharedSetting implements Item {
         }, [] as any[]);
 
         if (!noSettingLoadingOrUninitialized) {
-            this._wrappedSetting.getDelegate().setIsLoading(true);
+            this._wrappedSetting.getDelegate().setLoading(true);
             return;
         }
 
-        this._wrappedSetting.getDelegate().setIsLoading(false);
+        this._wrappedSetting.getDelegate().setLoading(false);
 
         this._wrappedSetting.getDelegate().setAvailableValues(availableValues);
     }

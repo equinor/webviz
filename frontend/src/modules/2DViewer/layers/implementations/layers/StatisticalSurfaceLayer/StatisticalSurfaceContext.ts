@@ -8,13 +8,13 @@ import { StatisticalSurfaceSettings } from "./types";
 
 import { SettingsContextDelegate } from "../../../delegates/SettingsContextDelegate";
 import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
-import { SettingType } from "../../../settingsTypes";
 import { Ensemble } from "../../settings/Ensemble";
 import { Sensitivity, SensitivityNameCasePair } from "../../settings/Sensitivity";
 import { StatisticFunction } from "../../settings/StatisticFunction";
 import { SurfaceAttribute } from "../../settings/SurfaceAttribute";
 import { SurfaceName } from "../../settings/SurfaceName";
 import { TimeOrInterval } from "../../settings/TimeOrInterval";
+import { SettingType } from "../../settings/settingsTypes";
 
 export class StatisticalSurfaceContext implements SettingsContext<StatisticalSurfaceSettings> {
     private _contextDelegate: SettingsContextDelegate<StatisticalSurfaceSettings>;
