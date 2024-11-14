@@ -99,9 +99,9 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     }
 
     private setLoadingState(loading: boolean) {
-        this._loadingDependencies.forEach((callback) => {
+        for (const callback of this._loadingDependencies) {
             callback(loading, this.hasChildDependencies());
-        });
+        }
     }
 
     private getGlobalSetting<K extends keyof GlobalSettings>(settingName: K): GlobalSettings[K] {
@@ -199,12 +199,12 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     }
 
     applyNewValue(newValue: Awaited<TReturnValue> | null) {
+        this.setLoadingState(false);
         if (!isEqual(newValue, this._cachedValue) || newValue === null) {
             this._cachedValue = newValue;
             for (const callback of this._dependencies) {
                 callback(newValue);
             }
         }
-        this.setLoadingState(false);
     }
 }

@@ -231,14 +231,27 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
     }
 
     createDependencies(): void {
+        this._unsubscribeHandler.unsubscribe("dependencies");
+
         const makeSettingGetter = <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => {
             const handleChange = (): void => {
                 handler(this._settings[key].getDelegate().getValue());
             };
-            this._settings[key]
-                .getDelegate()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(handleChange);
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "dependencies",
+                this._settings[key]
+                    .getDelegate()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(handleChange)
+            );
+
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "dependencies",
+                this._settings[key]
+                    .getDelegate()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(SettingTopic.PERSISTED_STATE_CHANGED)(handleChange)
+            );
 
             return handleChange;
         };
@@ -250,9 +263,12 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             const handleChange = (): void => {
                 handler(this.getLayerManager.bind(this)().getGlobalSetting(key));
             };
-            this.getLayerManager()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED)(handleChange);
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "dependencies",
+                this.getLayerManager()
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED)(handleChange)
+            );
 
             return handleChange;
         };

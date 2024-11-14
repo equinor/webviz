@@ -7,7 +7,7 @@ import { SettingType } from "./settingsTypes";
 
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps } from "../../interfaces";
+import { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
 
 type ValueType = string | null;
 
@@ -49,6 +49,14 @@ export class TimeOrInterval implements Setting<ValueType> {
                 />
             );
         };
+    }
+
+    valueToString(args: ValueToStringArgs<ValueType>): string {
+        const { value } = args;
+        if (value === null) {
+            return "-";
+        }
+        return timeTypeToLabel(value);
     }
 }
 

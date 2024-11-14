@@ -68,50 +68,27 @@ export class SharedSetting implements Item {
             return;
         }
 
-        const layersAndSharedSettings = parentGroup.getDescendantItems(
-            (item) => instanceofLayer(item) || item instanceof SharedSetting
-        ) as Layer<any, any>[];
-        let noSettingLoadingOrUninitialized = true;
+        const layers = parentGroup.getDescendantItems((item) => instanceofLayer(item)) as Layer<any, any>[];
         let index = 0;
-        const availableValues = layersAndSharedSettings.reduce((acc, item) => {
-            if (instanceofLayer(item)) {
-                const setting = item.getLayerDelegate().getSettingsContext().getDelegate().getSettings()[
-                    this._wrappedSetting.getType()
-                ];
-                if (setting) {
-                    noSettingLoadingOrUninitialized =
-                        noSettingLoadingOrUninitialized &&
-                        !setting.getDelegate().isLoading() &&
-                        setting.getDelegate().isInitialized();
-                    if (index === 0) {
-                        acc.push(...setting.getDelegate().getAvailableValues());
-                    } else {
-                        acc = acc.filter((value) => setting.getDelegate().getAvailableValues().includes(value));
-                    }
-                    index++;
+        let availableValues: any[] = [];
+        for (const item of layers) {
+            const setting = item.getLayerDelegate().getSettingsContext().getDelegate().getSettings()[
+                this._wrappedSetting.getType()
+            ];
+            if (setting) {
+                if (setting.getDelegate().isLoading()) {
+                    this._wrappedSetting.getDelegate().setLoading(true);
+                    return;
                 }
-            }
-            if (
-                item instanceof SharedSetting &&
-                item.getItemDelegate().getId() !== this._itemDelegate.getId() &&
-                item.getWrappedSetting().getType() === this._wrappedSetting.getType()
-            ) {
-                const setting = item.getWrappedSetting();
-                if (setting) {
-                    if (index === 0) {
-                        acc.push(...setting.getDelegate().getAvailableValues());
-                    } else {
-                        acc = acc.filter((value) => setting.getDelegate().getAvailableValues().includes(value));
-                    }
-                    index++;
+                if (index === 0) {
+                    availableValues.push(...setting.getDelegate().getAvailableValues());
+                } else {
+                    availableValues = availableValues.filter((value) =>
+                        setting.getDelegate().getAvailableValues().includes(value)
+                    );
                 }
+                index++;
             }
-            return acc;
-        }, [] as any[]);
-
-        if (!noSettingLoadingOrUninitialized) {
-            this._wrappedSetting.getDelegate().setLoading(true);
-            return;
         }
 
         this._wrappedSetting.getDelegate().setLoading(false);
