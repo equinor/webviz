@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Callable
+from typing import List, Callable, Dict
 import logging
 from dataclasses import dataclass
 import numpy as np
@@ -72,8 +72,7 @@ class Statistic(str, Enum):
 @dataclass
 class StatisticalCurveData:
     curve_name: str
-    curve_values: List[float]
-    statistics: Statistic
+    curve_values: Dict[Statistic, List[float]]
 
 
 @dataclass
@@ -84,8 +83,9 @@ class RelPermRealizationDataForSaturation:
 
 
 @dataclass
-class SaturationStatisticalData:
+class RelPermStatisticalDataForSaturation:
     saturation_axis_data: CurveData
+    saturation_number: int
     relperm_curve_data: List[StatisticalCurveData]
 
 
@@ -218,12 +218,8 @@ class RelPermAssembler:
                 real_data.append(
                     RealizationCurveData(curve_name=curve_name, curve_values=curve_values, realization_id=realization)
                 )
-        test = await self.get_relperm_statistics_data(
-            relperm_table_name=relperm_table_name,
-            saturation_axis_name=saturation_axis_name,
-            curve_names=curve_names,
-            satnums=satnums,
-        )
+        test = await self.get_relperm_statistics_data(relperm_table_name, saturation_axis_name, curve_names, satnums)
+        print(test)
         return RelPermRealizationDataForSaturation(
             saturation_axis_data=CurveData(
                 curve_values=shared_saturation_axis.tolist(),
@@ -235,7 +231,7 @@ class RelPermAssembler:
 
     async def get_relperm_statistics_data(
         self, relperm_table_name: str, saturation_axis_name: str, curve_names: List[str], satnums: List[int]
-    ) -> None:
+    ) -> RelPermStatisticalDataForSaturation:
         realizations_table: pl.DataFrame = await self._relperm_access.get_relperm_table(relperm_table_name)
         satnum = satnums[0]
         table_columns = realizations_table.columns
@@ -273,12 +269,33 @@ class RelPermAssembler:
             Statistic.P90,
         ]
         statistic_aggregation_expressions = _create_statistic_aggregation_expressions(curve_names, requested_statistics)
-        per_group_statistical_df = (
+        statistical_df = (
             interpolated_realizations_table.select([saturation_axis_name] + curve_names)
             .group_by(saturation_axis_name)
             .agg(statistic_aggregation_expressions)
+            .drop_nulls()
+            .sort(saturation_axis_name)
         )
-        print(per_group_statistical_df)
+
+        available_statistic_column_names = statistical_df.columns
+        statistical_curve_data = []
+        for curve_name in curve_names:
+            stat_curve_values: Dict[Statistic, List[float]] = {}
+            for statistic in requested_statistics:
+                statistic_column_name = f"{curve_name}_{statistic}"
+                if statistic_column_name not in available_statistic_column_names:
+                    raise ValueError(f"Column {statistic_column_name} not found in statistical table")
+                curve_values = statistical_df[statistic_column_name].to_list()
+                stat_curve_values[statistic] = curve_values
+            statistical_curve_data.append(StatisticalCurveData(curve_name=curve_name, curve_values=stat_curve_values))
+        return RelPermStatisticalDataForSaturation(
+            saturation_axis_data=CurveData(
+                curve_values=statistical_df[saturation_axis_name].to_list(),
+                curve_name=saturation_axis_name,
+            ),
+            saturation_number=satnum,
+            relperm_curve_data=statistical_curve_data,
+        )
 
 
 def _get_statistical_function_expression(statistic: Statistic) -> Callable[[pl.Expr], pl.Expr] | None:

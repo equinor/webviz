@@ -72,6 +72,7 @@ export type { PvtData as PvtData_api } from './models/PvtData';
 export type { RealizationCurveData as RealizationCurveData_api } from './models/RealizationCurveData';
 export type { RelPermRealizationDataForSaturation as RelPermRealizationDataForSaturation_api } from './models/RelPermRealizationDataForSaturation';
 export type { RelPermSaturationAxis as RelPermSaturationAxis_api } from './models/RelPermSaturationAxis';
+export type { RelPermStatisticalDataForSaturation as RelPermStatisticalDataForSaturation_api } from './models/RelPermStatisticalDataForSaturation';
 export type { RelPermTableInfo as RelPermTableInfo_api } from './models/RelPermTableInfo';
 export type { RepeatedTableColumnData as RepeatedTableColumnData_api } from './models/RepeatedTableColumnData';
 export type { RftObservation as RftObservation_api } from './models/RftObservation';
@@ -83,6 +84,8 @@ export type { SeismicCubeMeta as SeismicCubeMeta_api } from './models/SeismicCub
 export type { SeismicFenceData as SeismicFenceData_api } from './models/SeismicFenceData';
 export type { SeismicFencePolyline as SeismicFencePolyline_api } from './models/SeismicFencePolyline';
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
+export { Statistic as Statistic_api } from './models/Statistic';
+export type { StatisticalCurveData as StatisticalCurveData_api } from './models/StatisticalCurveData';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
 export type { StratigraphicUnit as StratigraphicUnit_api } from './models/StratigraphicUnit';

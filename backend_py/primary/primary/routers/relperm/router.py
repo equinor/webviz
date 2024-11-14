@@ -73,12 +73,12 @@ async def get_statistical_curve_data(
     saturation_axis_name: Annotated[str, Query(description="Saturation axis name")],
     curve_names: Annotated[List[str], Query(description="Curve names")],
     satnums: Annotated[List[int], Query(description="Satnums")],
-) -> schemas.RelPermRealizationDataForSaturation:
+) -> schemas.RelPermStatisticalDataForSaturation:
 
     access = await RelPermAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     assembler = RelPermAssembler(access)
-    relperm_data = await assembler.get_relperm_realization_data(table_name, saturation_axis_name, curve_names, satnums)
+    relperm_data = await assembler.get_relperm_statistics_data(table_name, saturation_axis_name, curve_names, satnums)
 
-    return converters.to_api_relperm_realization_data(relperm_data)
+    return converters.to_api_relperm_statistical_data(relperm_data)
