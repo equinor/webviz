@@ -1,6 +1,7 @@
 import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
 import { ModuleSettingsProps } from "@framework/Module";
@@ -104,7 +105,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         setUserSelectedParameterIdentStr(null);
     }
 
-    function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
+    function handleEnsembleSelectChange(ensembleIdentArr: (EnsembleIdent | DeltaEnsembleIdent)[]) {
         setUserSelectedEnsembleIdents(ensembleIdentArr);
     }
 
@@ -250,7 +251,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
             <CollapsibleGroup expanded={true} title="Ensembles">
                 <EnsembleSelect
                     ensembleSet={ensembleSet}
-                    value={[...selectedEnsembleIdents.ensembleIdents, ...selectedEnsembleIdents.deltaEnsembleIdents]}
+                    value={selectedEnsembleIdents}
                     allowDeltaEnsembles={true}
                     size={5}
                     onChange={handleEnsembleSelectChange}

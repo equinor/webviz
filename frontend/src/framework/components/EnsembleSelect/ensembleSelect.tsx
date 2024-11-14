@@ -1,36 +1,67 @@
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet } from "@framework/EnsembleSet";
+import { EnsembleSet, EnsembleType } from "@framework/EnsembleSet";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Select, SelectOption, SelectProps } from "@lib/components/Select";
 
-type EnsembleSelectProps = {
+// Overload for EnsembleSelect with DeltaEnsembleIdent
+export type EnsembleSelectWithDeltaEnsemblesProps = {
     ensembleSet: EnsembleSet;
+    multiple?: boolean;
+    allowDeltaEnsembles: true;
+    value: (EnsembleIdent | DeltaEnsembleIdent)[];
+    onChange: (ensembleIdentArr: (EnsembleIdent | DeltaEnsembleIdent)[]) => void;
+} & Omit<SelectProps<string>, "options" | "value" | "onChange">;
+
+// Overload for EnsembleSelect without DeltaEnsembleIdent
+export type EnsembleSelectWithoutDeltaEnsemblesProps = {
+    ensembleSet: EnsembleSet;
+    multiple?: boolean;
+    allowDeltaEnsembles?: false | undefined;
     value: EnsembleIdent[];
-    allowDeltaEnsembles?: boolean;
     onChange: (ensembleIdentArr: EnsembleIdent[]) => void;
 } & Omit<SelectProps<string>, "options" | "value" | "onChange">;
 
-export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
+export function EnsembleSelect(props: EnsembleSelectWithDeltaEnsemblesProps): JSX.Element;
+export function EnsembleSelect(props: EnsembleSelectWithoutDeltaEnsemblesProps): JSX.Element;
+export function EnsembleSelect(
+    props: EnsembleSelectWithDeltaEnsemblesProps | EnsembleSelectWithoutDeltaEnsemblesProps
+): JSX.Element {
     const { ensembleSet, value, allowDeltaEnsembles, onChange, multiple, ...rest } = props;
 
     function handleSelectionChanged(selectedEnsembleIdentStrArr: string[]) {
-        const identArr: EnsembleIdent[] = [];
+        const identArr: (EnsembleIdent | DeltaEnsembleIdent)[] = [];
         for (const identStr of selectedEnsembleIdentStrArr) {
             const foundEnsemble = ensembleSet.findEnsembleByIdentString(identStr);
-            if (foundEnsemble) {
+            if (foundEnsemble !== null && (allowDeltaEnsembles || foundEnsemble instanceof Ensemble)) {
                 identArr.push(foundEnsemble.getIdent());
             }
         }
 
+        // Filter to match the correct return type before calling onChange
+        if (!allowDeltaEnsembles) {
+            const validIdentArr = identArr.filter((ident) => ident instanceof EnsembleIdent) as EnsembleIdent[];
+            onChange(validIdentArr);
+            return;
+        }
         onChange(identArr);
     }
 
     const optionsArr: SelectOption[] = [];
-    optionsArr.push(...createEnsembleSelectOptions(ensembleSet.getEnsembleArr()));
-    if (allowDeltaEnsembles) {
-        optionsArr.push(...createEnsembleSelectOptions(ensembleSet.getDeltaEnsembleArr()));
+    const ensembleArr = allowDeltaEnsembles
+        ? ensembleSet.getEnsembleArr(EnsembleType.ALL)
+        : ensembleSet.getEnsembleArr(EnsembleType.REGULAR);
+    for (const ens of ensembleArr) {
+        optionsArr.push({
+            value: ens.getIdent().toString(),
+            label: ens.getDisplayName(),
+            adornment: (
+                <span className="w-5">
+                    <ColorTile color={ens.getColor()} />
+                </span>
+            ),
+        });
     }
 
     const selectedArr: string[] = [];
@@ -49,20 +80,4 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
             {...rest}
         />
     );
-}
-
-function createEnsembleSelectOptions(ensembleArr: readonly Ensemble[] | readonly DeltaEnsemble[]): SelectOption[] {
-    const optionsArr: SelectOption[] = [];
-    for (const ens of ensembleArr) {
-        optionsArr.push({
-            value: ens.getIdent().toString(),
-            label: ens.getDisplayName(),
-            adornment: (
-                <span className="w-5">
-                    <ColorTile color={ens.getColor()} />
-                </span>
-            ),
-        });
-    }
-    return optionsArr;
 }

@@ -1,72 +1,84 @@
 import { DeltaEnsemble } from "./DeltaEnsemble";
+import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { Ensemble } from "./Ensemble";
 import { EnsembleIdent } from "./EnsembleIdent";
+import { EnsembleTypeSet } from "./EnsembleTypeSet";
 
+export enum EnsembleType {
+    ALL = "all",
+    REGULAR = "regular",
+    DELTA = "delta",
+}
 export class EnsembleSet {
-    private _ensembleArr: Ensemble[];
-    private _deltaEnsembleArr: DeltaEnsemble[];
+    private _regularEnsembleSet: EnsembleTypeSet<EnsembleIdent, Ensemble>;
+    private _deltaEnsembleSet: EnsembleTypeSet<DeltaEnsembleIdent, DeltaEnsemble>;
 
     constructor(ensembles: Ensemble[], deltaEnsembles: DeltaEnsemble[] = []) {
-        this._ensembleArr = ensembles;
-        this._deltaEnsembleArr = deltaEnsembles;
+        this._regularEnsembleSet = new EnsembleTypeSet<EnsembleIdent, Ensemble>(ensembles);
+        this._deltaEnsembleSet = new EnsembleTypeSet<DeltaEnsembleIdent, DeltaEnsemble>(deltaEnsembles);
     }
 
-    /**
-     * Returns true if there is at least one ensemble in the set.
-     */
-    hasAnyEnsembles(): boolean {
-        return this._ensembleArr.length > 0;
-    }
-
-    hasAnyDeltaEnsembles(): boolean {
-        return this._deltaEnsembleArr.length > 0;
-    }
-
-    hasEnsemble(ensembleIdent: EnsembleIdent): boolean {
-        return this.findEnsemble(ensembleIdent) !== null;
-    }
-
-    hasDeltaEnsemble(ensembleIdent: EnsembleIdent): boolean {
-        return this.findDeltaEnsemble(ensembleIdent) !== null;
-    }
-
-    findEnsemble(ensembleIdent: EnsembleIdent): Ensemble | null {
-        return this._ensembleArr.find((ens) => ens.getIdent().equals(ensembleIdent)) ?? null;
-    }
-
-    findDeltaEnsemble(ensembleIdent: EnsembleIdent): DeltaEnsemble | null {
-        return this._deltaEnsembleArr.find((ens) => ens.getIdent().equals(ensembleIdent)) ?? null;
-    }
-
-    findEnsembleByIdentString(ensembleIdentString: string): Ensemble | null {
-        try {
-            const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
-            return this.findEnsemble(ensembleIdent);
-        } catch {
-            return null;
+    hasAnyEnsembles(type?: EnsembleType): boolean {
+        if (type === EnsembleType.ALL) {
+            return this._regularEnsembleSet.hasAnyEnsembles() || this._deltaEnsembleSet.hasAnyEnsembles();
         }
-    }
-
-    findDeltaEnsembleByIdentString(ensembleIdentString: string): DeltaEnsemble | null {
-        try {
-            const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
-            return this.findDeltaEnsemble(ensembleIdent);
-        } catch {
-            return null;
+        if (type === EnsembleType.DELTA) {
+            return this._deltaEnsembleSet.hasAnyEnsembles();
         }
+
+        // Regular or undefined
+        return this._regularEnsembleSet.hasAnyEnsembles();
     }
 
-    getEnsembleArr(): readonly Ensemble[] {
-        return this._ensembleArr;
+    hasEnsemble(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent): boolean {
+        if (ensembleIdent instanceof EnsembleIdent) {
+            return this._regularEnsembleSet.findEnsemble(ensembleIdent) !== null;
+        }
+        if (ensembleIdent instanceof DeltaEnsembleIdent) {
+            return this._deltaEnsembleSet.findEnsemble(ensembleIdent) !== null;
+        }
+        return false;
     }
 
-    getDeltaEnsembleArr(): readonly DeltaEnsemble[] {
-        return this._deltaEnsembleArr;
+    findEnsemble(ensembleIdent: EnsembleIdent): Ensemble | null;
+    findEnsemble(ensembleIdent: DeltaEnsembleIdent): DeltaEnsemble | null;
+    findEnsemble(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent): Ensemble | DeltaEnsemble | null;
+    findEnsemble(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent): Ensemble | DeltaEnsemble | null {
+        if (ensembleIdent instanceof EnsembleIdent) {
+            return this._regularEnsembleSet.findEnsemble(ensembleIdent);
+        }
+        if (ensembleIdent instanceof DeltaEnsembleIdent) {
+            return this._deltaEnsembleSet.findEnsemble(ensembleIdent);
+        }
+        return null;
     }
 
-    // Temporary helper method
-    findCaseName(ensembleIdent: EnsembleIdent): string {
-        const foundEnsemble = this.findEnsemble(ensembleIdent);
-        return foundEnsemble?.getCaseName() ?? "";
+    getEnsembleArr(type?: EnsembleType.REGULAR): readonly Ensemble[];
+    getEnsembleArr(type: EnsembleType.DELTA): readonly DeltaEnsemble[];
+    getEnsembleArr(type: EnsembleType.ALL): readonly (Ensemble | DeltaEnsemble)[];
+    getEnsembleArr(
+        type: EnsembleType | undefined = undefined
+    ): readonly Ensemble[] | readonly DeltaEnsemble[] | readonly (Ensemble | DeltaEnsemble)[] {
+        if (type === EnsembleType.ALL) {
+            return [...this._regularEnsembleSet.getEnsembleArr(), ...this._deltaEnsembleSet.getEnsembleArr()];
+        }
+        if (type === EnsembleType.DELTA) {
+            return this._deltaEnsembleSet.getEnsembleArr();
+        }
+
+        // Regular or undefined
+        return this._regularEnsembleSet.getEnsembleArr();
+    }
+
+    findEnsembleByIdentString(ensembleIdentString: string): Ensemble | DeltaEnsemble | null {
+        if (EnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
+            const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+            return this._regularEnsembleSet.findEnsemble(ensembleIdent);
+        }
+        if (DeltaEnsembleIdent.isValidDeltaEnsembleIdentString(ensembleIdentString)) {
+            const deltaEnsembleIdent = DeltaEnsembleIdent.fromString(ensembleIdentString);
+            return this._deltaEnsembleSet.findEnsemble(deltaEnsembleIdent);
+        }
+        return null;
     }
 }

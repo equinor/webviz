@@ -1,7 +1,9 @@
 import { v4 } from "uuid";
 
+import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { Ensemble } from "./Ensemble";
 import { EnsembleIdent } from "./EnsembleIdent";
+import { EnsembleInterface } from "./EnsembleInterface";
 import { EnsembleParameters } from "./EnsembleParameters";
 import { EnsembleSensitivities } from "./EnsembleSensitivities";
 
@@ -10,8 +12,12 @@ export enum DeltaEnsembleElement {
     SECOND = "second",
 }
 
-export class DeltaEnsemble {
-    private _deltaEnsembleIdent: EnsembleIdent;
+function createDeltaEnsembleName(firstEnsembleName: string, secondEnsembleName: string): string {
+    return `(${firstEnsembleName}) - (${secondEnsembleName})`;
+}
+
+export class DeltaEnsemble implements EnsembleInterface {
+    private _deltaEnsembleIdent: DeltaEnsembleIdent;
     private _firstEnsemble: Ensemble;
     private _secondEnsemble: Ensemble;
     private _color: string;
@@ -22,12 +28,12 @@ export class DeltaEnsemble {
     private _sensitivities: EnsembleSensitivities | null;
 
     constructor(firstEnsemble: Ensemble, secondEnsemble: Ensemble, color: string, customName: string | null = null) {
-        // NOTE: Delta ensembles are created using two ensembles, thus adding v4() to ensure uniqueness
-        const _deltaEnsembleCaseUuid =
-            firstEnsemble.getIdent().getCaseUuid() + secondEnsemble.getIdent().getCaseUuid() + v4();
-        const _deltaEnsembleName =
-            `${firstEnsemble.getIdent().getEnsembleName()} - ${secondEnsemble.getIdent().getEnsembleName()}` + v4();
-        this._deltaEnsembleIdent = new EnsembleIdent(_deltaEnsembleCaseUuid, _deltaEnsembleName);
+        const deltaEnsembleCaseUuid = v4();
+        const deltaEnsembleName = createDeltaEnsembleName(
+            firstEnsemble.getIdent().getEnsembleName(),
+            secondEnsemble.getIdent().getEnsembleName()
+        );
+        this._deltaEnsembleIdent = new DeltaEnsembleIdent(deltaEnsembleCaseUuid, deltaEnsembleName);
 
         this._firstEnsemble = firstEnsemble;
         this._secondEnsemble = secondEnsemble;
@@ -47,9 +53,45 @@ export class DeltaEnsemble {
         this._sensitivities = null;
     }
 
-    getIdent(): EnsembleIdent {
+    // *** Interface methods ***
+
+    getIdent(): DeltaEnsembleIdent {
         return this._deltaEnsembleIdent;
     }
+
+    getDisplayName(): string {
+        if (this._customName) {
+            return this._customName;
+        }
+
+        return `${this._firstEnsemble.getDisplayName()} - ${this._secondEnsemble.getDisplayName()}`;
+    }
+
+    getEnsembleName(): string {
+        return this._deltaEnsembleIdent.getEnsembleName();
+    }
+
+    getRealizations(): readonly number[] {
+        return this._realizationsArr;
+    }
+
+    getRealizationCount(): number {
+        return this._realizationsArr.length;
+    }
+
+    getMaxRealizationNumber(): number | undefined {
+        return this._realizationsArr[this._realizationsArr.length - 1];
+    }
+
+    getColor(): string {
+        return this._color;
+    }
+
+    getCustomName(): string | null {
+        return this._customName;
+    }
+
+    // *** Custom methods ***
 
     getEnsembleIdentByElement(element: DeltaEnsembleElement): EnsembleIdent {
         if (element === DeltaEnsembleElement.FIRST) {
@@ -81,35 +123,11 @@ export class DeltaEnsemble {
         throw new Error("Unhandled element type");
     }
 
-    getDisplayName(): string {
-        if (this._customName) {
-            return this._customName;
-        }
-
-        return `${this._firstEnsemble.getDisplayName()} - ${this._secondEnsemble.getDisplayName()}`;
-    }
-
-    getRealizations(): readonly number[] {
-        return this._realizationsArr;
-    }
-
     getRealizationsByElement(element: DeltaEnsembleElement): readonly number[] {
         if (element === DeltaEnsembleElement.FIRST) {
             return this._firstEnsemble.getRealizations();
         } else {
             return this._secondEnsemble.getRealizations();
         }
-    }
-
-    getRealizationsCount(): number {
-        return this._realizationsArr.length;
-    }
-
-    getColor(): string {
-        return this._color;
-    }
-
-    getCustomName(): string | null {
-        return this._customName;
     }
 }

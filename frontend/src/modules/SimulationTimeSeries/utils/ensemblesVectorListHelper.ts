@@ -9,12 +9,12 @@ export class EnsembleVectorListsHelper {
     private _ensembleIdents: EnsembleIdent[];
     private _queries: UseQueryResult<VectorDescription_api[]>[];
 
-    constructor(ensembles: EnsembleIdent[], vectorListQueryResults: UseQueryResult<VectorDescription_api[]>[]) {
-        if (ensembles.length !== vectorListQueryResults.length) {
+    constructor(ensembleIdents: EnsembleIdent[], vectorListQueryResults: UseQueryResult<VectorDescription_api[]>[]) {
+        if (ensembleIdents.length !== vectorListQueryResults.length) {
             throw new Error("Number of ensembles and vector list query results must be equal");
         }
 
-        this._ensembleIdents = ensembles;
+        this._ensembleIdents = ensembleIdents;
         this._queries = vectorListQueryResults;
     }
 
@@ -45,12 +45,12 @@ export class EnsembleVectorListsHelper {
 
     /**
      *
-     * @param ensemble - EnsembleIdent to check
+     * @param ensembleIdent - EnsembleIdent to check
      * @param vector - Vector name to look for
      * @returns
      */
-    isVectorInEnsemble(ensemble: EnsembleIdent, vector: string): boolean {
-        const index = this._ensembleIdents.indexOf(ensemble);
+    isVectorInEnsemble(ensembleIdent: EnsembleIdent, vector: string): boolean {
+        const index = this._ensembleIdents.findIndex((ident) => ident.equals(ensembleIdent));
 
         if (index === -1 || !this._queries[index].data) return false;
 
@@ -59,14 +59,14 @@ export class EnsembleVectorListsHelper {
 
     /**
      *
-     * @param ensemble - EnsembleIdent to check
+     * @param ensembleIdent - EnsembleIdent to check
      * @param vector - Vector name to look for
      * @returns
      */
-    hasHistoricalVector(ensemble: EnsembleIdent, vector: string): boolean {
-        if (!this.isVectorInEnsemble(ensemble, vector)) return false;
+    hasHistoricalVector(ensembleIdent: EnsembleIdent, vector: string): boolean {
+        if (!this.isVectorInEnsemble(ensembleIdent, vector)) return false;
 
-        const index = this._ensembleIdents.indexOf(ensemble);
+        const index = this._ensembleIdents.findIndex((ident) => ident.equals(ensembleIdent));
         if (index === -1 || !this._queries[index].data) return false;
 
         return this._queries[index].data?.some((vec) => vec.name === vector && vec.has_historical) ?? false;

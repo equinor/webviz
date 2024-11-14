@@ -1,3 +1,4 @@
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { SettingsStatusWriter } from "@framework/StatusWriter";
@@ -29,7 +30,10 @@ export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatus
     }
 
     // Set warning for vector names not existing in a selected ensemble
-    function validateVectorNamesInEnsemble(vectorNames: string[], ensembleIdent: EnsembleIdent) {
+    function validateVectorNamesInEnsemble(vectorNames: string[], ensembleIdent: EnsembleIdent | DeltaEnsembleIdent) {
+        if (ensembleIdent instanceof DeltaEnsembleIdent) {
+            return;
+        }
         const existingVectors = vectorNames.filter((vector) =>
             ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)
         );
@@ -44,13 +48,13 @@ export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatus
     }
 
     // Note: selectedVectorNames is not updated until vectorSelectorData is updated and VectorSelector triggers onChange
-    if (selectedEnsembleIdents.ensembleIdents.length === 1) {
+    if (selectedEnsembleIdents.length === 1) {
         // If single ensemble is selected and no vectors exist, selectedVectorNames is empty as no vectors are valid
         // in the VectorSelector. Then utilizing selectedVectorTags for status message
         const vectorNames = selectedVectorNames.length > 0 ? selectedVectorNames : selectedVectorTags;
-        validateVectorNamesInEnsemble(vectorNames, selectedEnsembleIdents.ensembleIdents[0]);
+        validateVectorNamesInEnsemble(vectorNames, selectedEnsembleIdents[0]);
     }
-    for (const ensembleIdent of selectedEnsembleIdents.ensembleIdents) {
+    for (const ensembleIdent of selectedEnsembleIdents) {
         validateVectorNamesInEnsemble(selectedVectorNames, ensembleIdent);
     }
 }

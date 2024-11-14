@@ -1,4 +1,5 @@
 import { FluidZone_api, InplaceVolumetricStatistic_api } from "@api";
+import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { TableHeading, TableRow } from "@lib/components/Table/table";
@@ -190,7 +191,7 @@ function formatEnsembleIdent(value: string | number | null, ensembleSet: Ensembl
         return "-";
     }
     const ensemble = ensembleSet.findEnsembleByIdentString(value.toString());
-    if (ensemble) {
+    if (ensemble && ensemble instanceof Ensemble) {
         return makeDistinguishableEnsembleDisplayName(
             EnsembleIdent.fromString(value.toString()),
             ensembleSet.getEnsembleArr()

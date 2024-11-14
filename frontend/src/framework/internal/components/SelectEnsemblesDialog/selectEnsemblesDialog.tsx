@@ -30,10 +30,11 @@ import { LoadingOverlay } from "../LoadingOverlay";
 
 const CASE_UUID_ENSEMBLE_NAME_SEPARATOR = "~&&~";
 
-type DeltaEnsembleInternalItem = {
-    firstEnsemble: EnsembleItem | null;
-    secondEnsemble: EnsembleItem | null;
-    uuid: string; // Not a real caseUuid, but a unique identifier for the delta ensemble
+// Internal type before applying created delta ensemble externally
+type InternalDeltaEnsembleItem = {
+    firstEnsemble: EnsembleItem | null; // Allows null
+    secondEnsemble: EnsembleItem | null; // Allows null
+    uuid: string;
     color: string;
     customName: string | null;
 };
@@ -90,14 +91,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [isLoadingEnsembles, setIsLoadingEnsembles] = React.useState<boolean>(false);
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
-    const [newlyCreatedDeltaEnsembles, setNewlyCreatedDeltaEnsembles] = React.useState<DeltaEnsembleInternalItem[]>([]);
+    const [newlyCreatedDeltaEnsembles, setNewlyCreatedDeltaEnsembles] = React.useState<InternalDeltaEnsembleItem[]>([]);
     const [casesFilteringOptions, setCasesFilteringOptions] = React.useState<CaseFilterSettings>({
         keep: !(readInitialStateFromLocalStorage("showKeepCases") === "false"),
         onlyMyCases: readInitialStateFromLocalStorage("showOnlyMyCases") === "true",
         users: [],
     });
 
-    const [deltaEnsembles, setDeltaEnsembles] = React.useState<DeltaEnsembleInternalItem[]>([]);
+    const [deltaEnsembles, setDeltaEnsembles] = React.useState<InternalDeltaEnsembleItem[]>([]);
 
     const { userInfo } = useAuthProvider();
 
@@ -285,7 +286,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         const secondEnsemble =
             newlySelectedEnsembles.length === 1 ? newlySelectedEnsembles[0] : newlySelectedEnsembles[1];
 
-        const newDeltaEnsemble: DeltaEnsembleInternalItem = {
+        const newDeltaEnsemble: InternalDeltaEnsembleItem = {
             firstEnsemble: {
                 caseUuid: firstEnsemble.caseUuid,
                 caseName: firstEnsemble.caseName,

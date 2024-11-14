@@ -1,8 +1,9 @@
 import { EnsembleIdent } from "./EnsembleIdent";
+import { EnsembleInterface } from "./EnsembleInterface";
 import { EnsembleParameters, Parameter } from "./EnsembleParameters";
 import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
 
-export class Ensemble {
+export class Ensemble implements EnsembleInterface {
     private _ensembleIdent: EnsembleIdent;
     private _fieldIdentifier: string;
     private _caseName: string;
