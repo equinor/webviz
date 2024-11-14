@@ -38,10 +38,9 @@ export class Ensemble implements Setting<EnsembleIdent | null> {
 
     makeComponent(): (props: SettingComponentProps<EnsembleIdent | null>) => React.ReactNode {
         return function Ensemble(props: SettingComponentProps<EnsembleIdent | null>) {
-            const ensembles = props.workbenchSession
-                .getEnsembleSet()
-                .getEnsembleArr()
-                .filter((ensemble) => props.availableValues.includes(ensemble.getIdent()));
+            const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
+                props.availableValues.includes(ensemble.getIdent())
+            );
 
             return (
                 <EnsembleDropdown
