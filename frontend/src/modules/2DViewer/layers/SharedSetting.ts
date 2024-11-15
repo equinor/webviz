@@ -94,6 +94,7 @@ export class SharedSetting implements Item {
         this._wrappedSetting.getDelegate().setLoading(false);
 
         this._wrappedSetting.getDelegate().setAvailableValues(availableValues);
+        this.publishValueChange();
     }
 
     serializeState(): SerializedSharedSetting {
