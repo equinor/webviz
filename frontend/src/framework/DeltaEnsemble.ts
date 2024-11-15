@@ -103,26 +103,6 @@ export class DeltaEnsemble implements EnsembleInterface {
         throw new Error("Unhandled element type");
     }
 
-    getCaseUuidByElement(element: DeltaEnsembleElement): string {
-        if (element === DeltaEnsembleElement.FIRST) {
-            return this._firstEnsemble.getCaseUuid();
-        }
-        if (element === DeltaEnsembleElement.SECOND) {
-            return this._secondEnsemble.getCaseUuid();
-        }
-        throw new Error("Unhandled element type");
-    }
-
-    getCaseNameByElement(element: DeltaEnsembleElement): string {
-        if (element === DeltaEnsembleElement.FIRST) {
-            return this._firstEnsemble.getCaseName();
-        }
-        if (element === DeltaEnsembleElement.SECOND) {
-            return this._secondEnsemble.getCaseName();
-        }
-        throw new Error("Unhandled element type");
-    }
-
     getRealizationsByElement(element: DeltaEnsembleElement): readonly number[] {
         if (element === DeltaEnsembleElement.FIRST) {
             return this._firstEnsemble.getRealizations();

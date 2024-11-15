@@ -30,18 +30,23 @@ import { LoadingOverlay } from "../LoadingOverlay";
 
 const CASE_UUID_ENSEMBLE_NAME_SEPARATOR = "~&&~";
 
+export type DeltaEnsembleBaseItem = {
+    caseUuid: string;
+    ensembleName: string;
+};
+
 // Internal type before applying created delta ensemble externally
 type InternalDeltaEnsembleItem = {
-    firstEnsemble: EnsembleItem | null; // Allows null
-    secondEnsemble: EnsembleItem | null; // Allows null
+    firstEnsemble: DeltaEnsembleBaseItem | null; // Allows null
+    secondEnsemble: DeltaEnsembleBaseItem | null; // Allows null
     uuid: string;
     color: string;
     customName: string | null;
 };
 
 export type DeltaEnsembleItem = {
-    firstEnsemble: EnsembleItem;
-    secondEnsemble: EnsembleItem;
+    firstEnsemble: DeltaEnsembleBaseItem;
+    secondEnsemble: DeltaEnsembleBaseItem;
     uuid: string;
     color: string;
     customName: string | null;
@@ -91,7 +96,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const [isLoadingEnsembles, setIsLoadingEnsembles] = React.useState<boolean>(false);
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
     const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
-    const [newlyCreatedDeltaEnsembles, setNewlyCreatedDeltaEnsembles] = React.useState<InternalDeltaEnsembleItem[]>([]);
     const [casesFilteringOptions, setCasesFilteringOptions] = React.useState<CaseFilterSettings>({
         keep: !(readInitialStateFromLocalStorage("showKeepCases") === "false"),
         onlyMyCases: readInitialStateFromLocalStorage("showOnlyMyCases") === "true",
@@ -99,6 +103,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     });
 
     const [deltaEnsembles, setDeltaEnsembles] = React.useState<InternalDeltaEnsembleItem[]>([]);
+    // const [newlyCreatedDeltaEnsembles, setNewlyCreatedDeltaEnsembles] = React.useState<InternalDeltaEnsembleItem[]>(
+    //     props.createdDeltaEnsembles
+    // );
 
     const { userInfo } = useAuthProvider();
 
@@ -106,14 +113,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setNewlySelectedEnsembles(props.selectedEnsembles);
 
         // TODO: Verify that firstEnsemble and secondEnsemble are among props.selectedEnsembles?
-        setNewlyCreatedDeltaEnsembles(props.createdDeltaEnsembles);
-    }, [props.selectedEnsembles, props.createdDeltaEnsembles]);
+        // setNewlyCreatedDeltaEnsembles(props.createdDeltaEnsembles);
+    }, [props.selectedEnsembles]);
 
     React.useLayoutEffect(() => {
         setDeltaEnsembles(
             props.createdDeltaEnsembles.map((elm) => ({
                 firstEnsemble: elm.firstEnsemble,
-                secondEnsemble: elm.firstEnsemble,
+                secondEnsemble: elm.secondEnsemble,
                 uuid: elm.uuid,
                 color: elm.color,
                 customName: elm.customName,
@@ -226,16 +233,13 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setDeltaEnsembles((prev) =>
             prev.map((elm) => {
                 if (elm.uuid === deltaEnsembleUuid) {
+                    const newFirstEnsemble: DeltaEnsembleBaseItem = {
+                        caseUuid: firstEnsemble.caseUuid,
+                        ensembleName: firstEnsemble.ensembleName,
+                    };
                     return {
                         ...elm,
-                        firstEnsemble: {
-                            caseUuid: firstEnsemble.caseUuid,
-                            caseName: firstEnsemble.caseName,
-                            ensembleName: firstEnsemble.ensembleName,
-                            customName: firstEnsemble.customName,
-                            color: firstEnsemble.color,
-                        },
-                        // ensembleName: createDeltaEnsembleName(firstEnsemble, e.secondEnsemble),
+                        firstEnsemble: newFirstEnsemble,
                     };
                 }
                 return elm;
@@ -260,16 +264,13 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setDeltaEnsembles((prev) =>
             prev.map((elm) => {
                 if (elm.uuid === deltaEnsembleUuid) {
+                    const newSecondEnsemble: DeltaEnsembleBaseItem = {
+                        caseUuid: secondEnsemble.caseUuid,
+                        ensembleName: secondEnsemble.ensembleName,
+                    };
                     return {
                         ...elm,
-                        secondEnsemble: {
-                            caseUuid: secondEnsemble.caseUuid,
-                            caseName: secondEnsemble.caseName,
-                            ensembleName: secondEnsemble.ensembleName,
-                            customName: secondEnsemble.customName,
-                            color: secondEnsemble.color,
-                        },
-                        // ensembleName: createDeltaEnsembleName(secondEnsemble, e.item.secondEnsemble),
+                        secondEnsemble: newSecondEnsemble,
                     };
                 }
                 return elm;
@@ -289,20 +290,13 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         const newDeltaEnsemble: InternalDeltaEnsembleItem = {
             firstEnsemble: {
                 caseUuid: firstEnsemble.caseUuid,
-                caseName: firstEnsemble.caseName,
                 ensembleName: firstEnsemble.ensembleName,
-                customName: firstEnsemble.customName,
-                color: firstEnsemble.color,
             },
             secondEnsemble: {
                 caseUuid: secondEnsemble.caseUuid,
-                caseName: secondEnsemble.caseName,
                 ensembleName: secondEnsemble.ensembleName,
-                customName: secondEnsemble.customName,
-                color: secondEnsemble.color,
             },
             uuid: v4(),
-            // ensembleName: createDeltaEnsembleName(firstEnsemble, secondEnsemble),
             color: tryToFindUnusedColor(),
             customName: null,
         };
@@ -399,11 +393,29 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             });
     }
 
-    function checkHasInvalidDeltaEnsembles(): boolean {
+    function hasAnyDeltaEnsemblesChanged(): boolean {
+        if (props.createdDeltaEnsembles.length !== deltaEnsembles.length) {
+            return true;
+        }
+
+        const isContentEqual = props.createdDeltaEnsembles.every((elm, idx) => {
+            const internalDeltaEnsemble = deltaEnsembles[idx];
+            return (
+                elm.uuid === internalDeltaEnsemble.uuid &&
+                elm.color === internalDeltaEnsemble.color &&
+                elm.customName === internalDeltaEnsemble.customName &&
+                isEqual(elm.firstEnsemble, internalDeltaEnsemble.firstEnsemble) &&
+                isEqual(elm.secondEnsemble, internalDeltaEnsemble.secondEnsemble)
+            );
+        });
+        return !isContentEqual;
+    }
+
+    function areAnyDeltaEnsemblesInvalid(): boolean {
         return deltaEnsembles.some((elm) => !elm.firstEnsemble || !elm.secondEnsemble);
     }
 
-    function checkIfAnyChanges(): boolean {
+    function hasAnyEnsembleChanged(): boolean {
         return !isEqual(props.selectedEnsembles, newlySelectedEnsembles);
     }
 
@@ -517,13 +529,21 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         <Button
                             onClick={handleClose}
                             color="danger"
-                            disabled={!checkIfAnyChanges() || isLoadingEnsembles || checkHasInvalidDeltaEnsembles()}
+                            disabled={
+                                isLoadingEnsembles ||
+                                areAnyDeltaEnsemblesInvalid() ||
+                                !(hasAnyEnsembleChanged() || hasAnyDeltaEnsemblesChanged())
+                            }
                         >
                             Discard changes
                         </Button>
                         <Button
                             onClick={handleApplyEnsembleSelection}
-                            disabled={!checkIfAnyChanges() || isLoadingEnsembles || checkHasInvalidDeltaEnsembles()}
+                            disabled={
+                                isLoadingEnsembles ||
+                                areAnyDeltaEnsemblesInvalid() ||
+                                !(hasAnyEnsembleChanged() || hasAnyDeltaEnsemblesChanged())
+                            }
                             startIcon={makeApplyButtonStartIcon()}
                         >
                             {isLoadingEnsembles ? "Loading ensembles..." : "Apply"}
@@ -758,7 +778,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                     <Dropdown
                                                         options={newlySelectedEnsembles.map((elm) => {
                                                             return {
-                                                                value: createCaseUuidAndEnsembleNameString(elm),
+                                                                value: createCaseUuidAndEnsembleNameString(
+                                                                    elm.caseUuid,
+                                                                    elm.ensembleName
+                                                                ),
                                                                 label:
                                                                     elm.customName ??
                                                                     `${elm.ensembleName} (${elm.caseName})`,
@@ -766,7 +789,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                         })}
                                                         value={
                                                             elm.firstEnsemble
-                                                                ? createCaseUuidAndEnsembleNameString(elm.firstEnsemble)
+                                                                ? createCaseUuidAndEnsembleNameString(
+                                                                      elm.firstEnsemble.caseUuid,
+                                                                      elm.firstEnsemble.ensembleName
+                                                                  )
                                                                 : undefined
                                                         }
                                                         onChange={(newCaseUuidAndEnsembleNameString) => {
@@ -781,7 +807,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                     <Dropdown
                                                         options={newlySelectedEnsembles.map((elm) => {
                                                             return {
-                                                                value: createCaseUuidAndEnsembleNameString(elm),
+                                                                value: createCaseUuidAndEnsembleNameString(
+                                                                    elm.caseUuid,
+                                                                    elm.ensembleName
+                                                                ),
                                                                 label:
                                                                     elm.customName ??
                                                                     `${elm.ensembleName} (${elm.caseName})`,
@@ -790,7 +819,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                         value={
                                                             elm.secondEnsemble
                                                                 ? createCaseUuidAndEnsembleNameString(
-                                                                      elm.secondEnsemble
+                                                                      elm.secondEnsemble.caseUuid,
+                                                                      elm.secondEnsemble.ensembleName
                                                                   )
                                                                 : undefined
                                                         }
@@ -839,8 +869,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     );
 };
 
-function createCaseUuidAndEnsembleNameString(ensembleItem: EnsembleItem): string {
-    return `${ensembleItem.caseUuid}${CASE_UUID_ENSEMBLE_NAME_SEPARATOR}${ensembleItem.ensembleName}`;
+function createCaseUuidAndEnsembleNameString(caseUuid: string, ensembleName: string): string {
+    return `${caseUuid}${CASE_UUID_ENSEMBLE_NAME_SEPARATOR}${ensembleName}`;
 }
 
 function createCaseUuidAndEnsembleNameFromString(caseUuidAndEnsembleNameString: string): {
@@ -853,20 +883,4 @@ function createCaseUuidAndEnsembleNameFromString(caseUuidAndEnsembleNameString: 
     }
 
     return { caseUuid, ensembleName };
-}
-
-function createDeltaEnsembleName(firstEnsemble: EnsembleItem | null, secondEnsemble: EnsembleItem | null): string {
-    if (firstEnsemble !== null && secondEnsemble !== null) {
-        return `${firstEnsemble.ensembleName} (${firstEnsemble.caseName}) - ${secondEnsemble.ensembleName} (${secondEnsemble.caseName})`;
-    }
-
-    if (firstEnsemble !== null) {
-        return `${firstEnsemble.ensembleName} (${firstEnsemble.caseName}) - UNKNOWN`;
-    }
-
-    if (secondEnsemble !== null) {
-        return `UNKNOWN - ${secondEnsemble.ensembleName} (${secondEnsemble.caseName})`;
-    }
-
-    return "UNKNOWN - UNKNOWN";
 }

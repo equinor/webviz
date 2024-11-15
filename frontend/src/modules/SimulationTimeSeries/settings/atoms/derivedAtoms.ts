@@ -4,6 +4,7 @@ import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
 
@@ -153,9 +154,7 @@ export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
 
     const vectorSpecifications: VectorSpec[] = [];
 
-    const regularEnsembleIdents = selectedEnsembleIdents.filter(
-        (ensembleIdent) => ensembleIdent instanceof EnsembleIdent
-    ) as EnsembleIdent[];
+    const regularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, EnsembleIdent);
     for (const ensembleIdent of regularEnsembleIdents) {
         for (const vectorName of selectedVectorNames) {
             if (!ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vectorName)) {
