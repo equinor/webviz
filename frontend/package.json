@@ -64,7 +64,7 @@
         "@vitest/coverage-istanbul": "^1.1.3",
         "autoprefixer": "^10.4.13",
         "dependency-cruiser": "^13.1.0",
-        "eslint": "^8.40.0",
+        "eslint": "^9.15.0",
         "eslint-config-prettier": "^8.6.0",
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-prettier": "^4.2.1",
