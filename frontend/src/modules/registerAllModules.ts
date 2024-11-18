@@ -1,5 +1,6 @@
 import { isDevMode } from "@lib/utils/devMode";
 
+import "./2DViewer/registerModule";
 import "./3DViewer/registerModule";
 import "./DistributionPlot/registerModule";
 import "./FlowNetwork/registerModule";
@@ -14,9 +15,8 @@ import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./SubsurfaceMap/registerModule";
 import "./TornadoChart/registerModule";
-import "./WellCompletions/registerModule";
 import "./Vfp/registerModule";
-
+import "./WellCompletions/registerModule";
 
 if (isDevMode()) {
     await import("./MyModule/registerModule");
