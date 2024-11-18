@@ -6,6 +6,7 @@ export class Ensemble {
     private _ensembleIdent: EnsembleIdent;
     private _fieldIdentifier: string;
     private _caseName: string;
+    private _stratigraphic_column_identifier: string;
     private _realizationsArr: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
@@ -17,6 +18,7 @@ export class Ensemble {
         caseUuid: string,
         caseName: string,
         ensembleName: string,
+        stratigraphic_column_identifier: string,
         realizationsArr: number[],
         parameterArr: Parameter[],
         sensitivityArr: Sensitivity[] | null,
@@ -26,6 +28,7 @@ export class Ensemble {
         this._ensembleIdent = new EnsembleIdent(caseUuid, ensembleName);
         this._fieldIdentifier = fieldIdentifier;
         this._caseName = caseName;
+        this._stratigraphic_column_identifier = stratigraphic_column_identifier;
         this._realizationsArr = Array.from(realizationsArr).sort((a, b) => a - b);
         this._parameters = new EnsembleParameters(parameterArr);
         this._color = color;
@@ -43,6 +46,10 @@ export class Ensemble {
 
     getFieldIdentifier(): string {
         return this._fieldIdentifier;
+    }
+
+    getStratigraphicColumnIdentifier(): string {
+        return this._stratigraphic_column_identifier;
     }
 
     getDisplayName(): string {

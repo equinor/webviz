@@ -164,3 +164,18 @@ class SurfaceRealizationSampleValues(BaseModel):
 class PointSetXY(BaseModel):
     x_points: list[float]
     y_points: list[float]
+
+
+class StratigraphicUnit(BaseModel):
+    identifier: str
+    top: str
+    base: str
+    stratUnitLevel: int
+    stratUnitType: str
+    topAge: int | float
+    baseAge: int | float
+    stratUnitParent: str | None
+    colorR: int
+    colorG: int
+    colorB: int
+    lithologyType: int | float | str = "unknown"

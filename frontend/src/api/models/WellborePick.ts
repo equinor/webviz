@@ -15,6 +15,7 @@ export type WellborePick = {
     md: number;
     mdMsl: number;
     uniqueWellboreIdentifier: string;
+    wellboreUuid: string;
     pickIdentifier: string;
     confidence: (string | null);
     depthReferencePoint: string;
