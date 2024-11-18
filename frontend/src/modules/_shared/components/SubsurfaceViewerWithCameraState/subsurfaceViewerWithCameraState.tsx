@@ -11,6 +11,7 @@ export type SubsurfaceViewerWithCameraStateProps = SubsurfaceViewerProps & {
 };
 
 export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCameraStateProps): React.ReactNode {
+    const [prevTriggerHome, setPrevTriggerHome] = React.useState<number | undefined>(0);
     const [prevBounds, setPrevBounds] = React.useState<[number, number, number, number] | undefined>(undefined);
     const [prevCameraPosition, setPrevCameraPosition] = React.useState<ViewStateType | undefined>(undefined);
     const [cameraPosition, setCameraPosition] = React.useState<ViewStateType | undefined>(undefined);
@@ -18,6 +19,13 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
     if (!isEqual(props.bounds, prevBounds)) {
         setPrevBounds(props.bounds);
         setCameraPosition(undefined);
+    }
+
+    if (props.triggerHome !== prevTriggerHome) {
+        setPrevTriggerHome(props.triggerHome);
+        if (props.triggerHome) {
+            setCameraPosition(undefined);
+        }
     }
 
     if (!isEqual(props.cameraPosition, prevCameraPosition)) {
