@@ -9,7 +9,7 @@ from . import schemas
 
 def surface_to_float32_array(values: np.ndarray) -> List[float]:
     values = values.astype(np.float32)
-    values.fill_value = np.nan
+    np.ma.set_fill_value(values, np.nan)
     values = np.ma.filled(values)
 
     # Rotate 90 deg left.
@@ -45,6 +45,6 @@ def to_api_surface_data(
         property_value_min=property_values.min(),
         property_value_max=property_values.max(),
         rot_deg=xtgeo_surf.rotation,
-        mesh_data=orjson.dumps(float32_mesh),  # pylint: disable=maybe-no-member
-        property_data=orjson.dumps(float32_property),  # pylint: disable=maybe-no-member
+        mesh_data=orjson.dumps(float32_mesh).decode("utf-8"),  # pylint: disable=maybe-no-member
+        property_data=orjson.dumps(float32_property).decode("utf-8"),  # pylint: disable=maybe-no-member
     )

@@ -8,7 +8,7 @@ from ._drogon_well_data import get_drogon_well_trajectories, get_drogon_well_hea
 
 
 class SmdaAccess:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     # type: ignore
