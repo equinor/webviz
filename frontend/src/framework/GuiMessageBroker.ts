@@ -4,6 +4,8 @@ import { isDevMode } from "@lib/utils/devMode";
 import { Size2D } from "@lib/utils/geometry";
 import { Vec2 } from "@lib/utils/vec2";
 
+import { UnsavedChangesAction } from "./types/unsavedChangesAction";
+
 export enum LeftDrawerContent {
     ModuleSettings = "ModuleSettings",
     ModulesList = "ModulesList",
@@ -27,6 +29,7 @@ export enum GuiState {
     EditDataChannelConnections = "editDataChannelConnections",
     RightSettingsPanelWidthInPercent = "rightSettingsPanelWidthInPercent",
     AppInitialized = "appInitialized",
+    NumberOfUnsavedRealizationFilters = "numberOfUnsavedRealizationFilters",
 }
 
 export enum GuiEvent {
@@ -43,6 +46,7 @@ export enum GuiEvent {
     DataChannelConnectionsChange = "dataChannelConnectionsChange",
     DataChannelNodeHover = "dataChannelNodeHover",
     DataChannelNodeUnhover = "dataChannelNodeUnhover",
+    UnsavedRealizationFilterSettingsAction = "unsavedRealizationFilterSettingsAction",
 }
 
 export type GuiEventPayloads = {
@@ -75,6 +79,9 @@ export type GuiEventPayloads = {
     [GuiEvent.DataChannelNodeHover]: {
         connectionAllowed: boolean;
     };
+    [GuiEvent.UnsavedRealizationFilterSettingsAction]: {
+        action: UnsavedChangesAction;
+    };
 };
 
 type GuiStateValueTypes = {
@@ -87,6 +94,7 @@ type GuiStateValueTypes = {
     [GuiState.EditDataChannelConnections]: boolean;
     [GuiState.RightSettingsPanelWidthInPercent]: number;
     [GuiState.AppInitialized]: boolean;
+    [GuiState.NumberOfUnsavedRealizationFilters]: number;
 };
 
 const defaultStates: Map<GuiState, any> = new Map();
@@ -98,12 +106,14 @@ defaultStates.set(GuiState.DataChannelConnectionLayerVisible, false);
 defaultStates.set(GuiState.DevToolsVisible, isDevMode());
 defaultStates.set(GuiState.RightSettingsPanelWidthInPercent, 0);
 defaultStates.set(GuiState.AppInitialized, false);
+defaultStates.set(GuiState.NumberOfUnsavedRealizationFilters, 0);
 
 const persistentStates: GuiState[] = [
     GuiState.LeftSettingsPanelWidthInPercent,
     GuiState.DevToolsVisible,
     GuiState.RightSettingsPanelWidthInPercent,
     GuiState.RightDrawerContent,
+    GuiState.NumberOfUnsavedRealizationFilters,
 ];
 
 export class GuiMessageBroker {
