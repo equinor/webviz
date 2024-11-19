@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Layer } from "@deck.gl/core/typed";
+import { Layer } from "@deck.gl/core";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
