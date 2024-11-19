@@ -8,6 +8,7 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
 import { InterfaceTypes } from "./interfaces";
+import { preview } from "./preview";
 import { clearStorageForInstance } from "./settings/atoms/persistedAtoms";
 
 export const MODULE_NAME = "WellLogViewer";
@@ -20,6 +21,7 @@ ModuleRegistry.registerModule<InterfaceTypes>({
     moduleName: MODULE_NAME,
     defaultTitle: MODULE_TITLE,
     description: MODULE_DESCRIPTION,
+    preview,
 
     category: ModuleCategory.MAIN,
     devState: ModuleDevState.DEV,
