@@ -3,12 +3,8 @@ import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { Ensemble } from "./Ensemble";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleTypeSet } from "./EnsembleTypeSet";
+import { EnsembleType } from "./types/ensembleType";
 
-export enum EnsembleType {
-    ALL = "all",
-    REGULAR = "regular",
-    DELTA = "delta",
-}
 export class EnsembleSet {
     private _regularEnsembleSet: EnsembleTypeSet<EnsembleIdent, Ensemble>;
     private _deltaEnsembleSet: EnsembleTypeSet<DeltaEnsembleIdent, DeltaEnsemble>;
@@ -18,6 +14,12 @@ export class EnsembleSet {
         this._deltaEnsembleSet = new EnsembleTypeSet<DeltaEnsembleIdent, DeltaEnsemble>(deltaEnsembles);
     }
 
+    /**
+     * Returns true if there are any ensembles in the set.
+     *
+     * @param type - The type of ensembles to check for. If not provided, checks for regular ensembles (backward compatible).
+     * @returns True if there are any ensembles in the set.
+     */
     hasAnyEnsembles(type?: EnsembleType): boolean {
         if (type === EnsembleType.ALL) {
             return this._regularEnsembleSet.hasAnyEnsembles() || this._deltaEnsembleSet.hasAnyEnsembles();
@@ -30,6 +32,12 @@ export class EnsembleSet {
         return this._regularEnsembleSet.hasAnyEnsembles();
     }
 
+    /**
+     * Returns true if the ensemble set has the given ensemble ident.
+     *
+     * @param ensembleIdent - The ensemble ident to check for, can be either a regular or delta ensemble ident.
+     * @returns True if the ensemble set has the given ensemble ident.
+     */
     hasEnsemble(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent): boolean {
         if (ensembleIdent instanceof EnsembleIdent) {
             return this._regularEnsembleSet.findEnsemble(ensembleIdent) !== null;

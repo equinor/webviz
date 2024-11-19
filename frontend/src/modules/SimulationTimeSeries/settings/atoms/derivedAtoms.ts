@@ -45,13 +45,14 @@ export const selectedEnsembleIdentsAtom = atom<(EnsembleIdent | DeltaEnsembleIde
 export const selectedEnsemblesAtom = atom<Ensemble[]>((get) => {
     // NOTE: Used for view and color by parameter, i.e. not for delta ensembles yet!
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const allSelectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+
+    const selectedEnsembleIdents = filterEnsembleIdentsByType(allSelectedEnsembleIdents, EnsembleIdent);
 
     const selectedEnsembles: Ensemble[] = [];
-
     for (const ensembleIdent of selectedEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-        if (ensemble && ensemble instanceof Ensemble) {
+        if (ensemble) {
             selectedEnsembles.push(ensemble);
         }
     }
@@ -61,14 +62,12 @@ export const selectedEnsemblesAtom = atom<Ensemble[]>((get) => {
 
 export const selectedDeltaEnsemblesAtom = atom<DeltaEnsemble[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedDeltaEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+
+    const selectedDeltaEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, DeltaEnsembleIdent);
 
     const selectedDeltaEnsembles: DeltaEnsemble[] = [];
     for (const ensembleIdent of selectedDeltaEnsembleIdents) {
-        if (ensembleIdent instanceof EnsembleIdent) {
-            continue;
-        }
-
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (ensemble) {
             selectedDeltaEnsembles.push(ensemble);
@@ -139,11 +138,7 @@ export const ensembleVectorListsHelperAtom = atom<EnsembleVectorListsHelper>((ge
     const vectorListQueries = get(vectorListQueriesAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
-    const regularEnsembleIdents = selectedEnsembleIdents.filter(
-        (ensembleIdent) => ensembleIdent instanceof EnsembleIdent
-    ) as EnsembleIdent[];
-
-    return new EnsembleVectorListsHelper(regularEnsembleIdents, vectorListQueries);
+    return new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
 });
 
 export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
@@ -153,16 +148,14 @@ export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
     const selectedVectorNames = get(selectedVectorNamesAtom);
 
     const vectorSpecifications: VectorSpec[] = [];
-
-    const regularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, EnsembleIdent);
-    for (const ensembleIdent of regularEnsembleIdents) {
+    for (const ensembleIdent of selectedEnsembleIdents) {
         for (const vectorName of selectedVectorNames) {
             if (!ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vectorName)) {
                 continue;
             }
 
             vectorSpecifications.push({
-                ensembleIdent,
+                ensembleIdent: ensembleIdent,
                 color: ensembleSet.findEnsemble(ensembleIdent)?.getColor() ?? null,
                 vectorName,
                 hasHistoricalVector: ensembleVectorListsHelper.hasHistoricalVector(ensembleIdent, vectorName),

@@ -3,7 +3,6 @@ import React from "react";
 import WebvizLogo from "@assets/webviz.svg";
 import { DeltaEnsembleElement } from "@framework/DeltaEnsemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleType } from "@framework/EnsembleSet";
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { UserEnsembleSetting, Workbench, WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
@@ -14,6 +13,7 @@ import {
     DeltaEnsembleItem,
     EnsembleItem,
 } from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
+import { EnsembleType } from "@framework/types/ensembleType";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";

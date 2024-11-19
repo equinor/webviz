@@ -12,10 +12,6 @@ export enum DeltaEnsembleElement {
     SECOND = "second",
 }
 
-function createDeltaEnsembleName(firstEnsembleName: string, secondEnsembleName: string): string {
-    return `(${firstEnsembleName}) - (${secondEnsembleName})`;
-}
-
 export class DeltaEnsemble implements EnsembleInterface {
     private _deltaEnsembleIdent: DeltaEnsembleIdent;
     private _firstEnsemble: Ensemble;
@@ -29,11 +25,11 @@ export class DeltaEnsemble implements EnsembleInterface {
 
     constructor(firstEnsemble: Ensemble, secondEnsemble: Ensemble, color: string, customName: string | null = null) {
         const deltaEnsembleCaseUuid = v4();
-        const deltaEnsembleName = createDeltaEnsembleName(
-            firstEnsemble.getIdent().getEnsembleName(),
-            secondEnsemble.getIdent().getEnsembleName()
+        this._deltaEnsembleIdent = new DeltaEnsembleIdent(
+            deltaEnsembleCaseUuid,
+            firstEnsemble.getIdent(),
+            secondEnsemble.getIdent()
         );
-        this._deltaEnsembleIdent = new DeltaEnsembleIdent(deltaEnsembleCaseUuid, deltaEnsembleName);
 
         this._firstEnsemble = firstEnsemble;
         this._secondEnsemble = secondEnsemble;

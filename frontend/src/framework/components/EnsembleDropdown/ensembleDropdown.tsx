@@ -1,7 +1,8 @@
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet, EnsembleType } from "@framework/EnsembleSet";
+import { EnsembleSet } from "@framework/EnsembleSet";
+import { EnsembleType } from "@framework/types/ensembleType";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdown";
 

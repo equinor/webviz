@@ -48,6 +48,48 @@ async def get_vector_list(
     return ret_arr
 
 
+@router.get("/delta_ensemble_vector_list/")
+async def get_delta_ensemble_vector_list(
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    first_case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    first_ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    second_case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    second_ensemble_name: Annotated[str, Query(description="Ensemble name")],
+) -> list[schemas.VectorDescription]:
+    """Get list of all vectors for a delta ensemble based on all vectors in a given Sumo ensemble, excluding any historical vectors"""
+
+    perf_metrics = ResponsePerfMetrics(response)
+
+    first_access = SummaryAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), first_case_uuid, first_ensemble_name
+    )
+    second_access = SummaryAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), second_case_uuid, second_ensemble_name
+    )
+    perf_metrics.record_lap("get-access")
+
+    # Make parallel requests?
+    first_vector_info_arr = await first_access.get_available_vectors_async()
+    second_vector_info_arr = await second_access.get_available_vectors_async()
+    perf_metrics.record_lap("get-available-vectors")
+
+    # Create intersection of vector names
+    vector_names = {vi.name for vi in first_vector_info_arr}
+    vector_names.intersection_update({vi.name for vi in second_vector_info_arr})
+    perf_metrics.record_lap("create-vectors-names-intersection")
+
+    ret_arr: list[schemas.VectorDescription] = [
+        schemas.VectorDescription(name=vi, descriptive_name=vi, has_historical=False) for vi in vector_names
+    ]
+
+    perf_metrics.record_lap("convert-data-to-schema")
+
+    LOGGER.info(f"Got delta ensemble vector list in: {perf_metrics.to_string()}")
+
+    return ret_arr
+
+
 @router.get("/realizations_vector_data/")
 async def get_realizations_vector_data(
     # fmt:off

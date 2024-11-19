@@ -15,3 +15,12 @@ export function filterEnsembleIdentsByType<T extends EnsembleIdentInterface<any>
 ): T[] {
     return ensembleIdents.filter((ensembleIdent) => ensembleIdent instanceof type) as T[];
 }
+
+/**
+ * Generates a regex pattern for a UUID.
+ *
+ * @returns A string that represents a regex pattern for a UUID
+ */
+export function uuidRegexString(): string {
+    return "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}";
+}

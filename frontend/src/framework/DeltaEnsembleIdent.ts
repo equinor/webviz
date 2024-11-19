@@ -1,43 +1,67 @@
+import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleIdentInterface } from "./EnsembleIdentInterface";
+import { uuidRegexString } from "./utils/ensembleIdentUtils";
 
 export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleIdent> {
     private _uuid: string;
     private _ensembleName: string;
+    private _firstEnsembleIdent: EnsembleIdent;
+    private _secondEnsembleIdent: EnsembleIdent;
 
-    constructor(uuid: string, ensembleName: string) {
+    constructor(uuid: string, firstEnsembleIdent: EnsembleIdent, secondEnsembleIdent: EnsembleIdent) {
         this._uuid = uuid;
-        this._ensembleName = ensembleName;
+        this._ensembleName = `(${firstEnsembleIdent.getEnsembleName()}) - (${secondEnsembleIdent.getEnsembleName()})`;
+        this._firstEnsembleIdent = firstEnsembleIdent;
+        this._secondEnsembleIdent = secondEnsembleIdent;
     }
 
-    static fromUuidAndName(uuid: string, ensembleName: string): DeltaEnsembleIdent {
-        return new DeltaEnsembleIdent(uuid, ensembleName);
-    }
-
-    static uuidAndEnsembleNameToString(uuid: string, ensembleName: string): string {
-        return `${uuid}~@@~${ensembleName}`;
+    static uuidAndEnsembleIdentStringsToString(
+        uuid: string,
+        firstEnsembleIdentString: string,
+        secondEnsembleIdentString: string
+    ): string {
+        return `${uuid}~@@~${firstEnsembleIdentString}~@@~${secondEnsembleIdentString}`;
     }
 
     static isValidDeltaEnsembleIdentString(deltaEnsembleIdentString: string): boolean {
         const regex = DeltaEnsembleIdent.getDeltaEnsembleIdentRegex();
         const result = regex.exec(deltaEnsembleIdentString);
-        const testResult = !!result && !!result.groups && !!result.groups.uuid && !!result.groups.ensembleName;
-        return testResult;
+        return (
+            !!result &&
+            !!result.groups &&
+            !!result.groups.uuid &&
+            !!result.groups.firstEnsembleIdentString &&
+            !!result.groups.secondEnsembleIdentString
+        );
     }
 
     static fromString(deltaEnsembleIdentString: string): DeltaEnsembleIdent {
         const regex = DeltaEnsembleIdent.getDeltaEnsembleIdentRegex();
         const result = regex.exec(deltaEnsembleIdentString);
-        if (!result || !result.groups || !result.groups.uuid || !result.groups.ensembleName) {
+        if (
+            !result ||
+            !result.groups ||
+            !result.groups.uuid ||
+            !result.groups.firstEnsembleIdentString ||
+            !result.groups.secondEnsembleIdentString
+        ) {
             throw new Error(`Invalid ensemble ident: ${deltaEnsembleIdentString}`);
         }
 
-        const { uuid, ensembleName } = result.groups;
+        const { uuid, firstEnsembleIdentString, secondEnsembleIdentString } = result.groups;
 
-        return new DeltaEnsembleIdent(uuid, ensembleName);
+        return new DeltaEnsembleIdent(
+            uuid,
+            EnsembleIdent.fromString(firstEnsembleIdentString),
+            EnsembleIdent.fromString(secondEnsembleIdentString)
+        );
     }
 
     private static getDeltaEnsembleIdentRegex(): RegExp {
-        return /^(?<uuid>[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12})~@@~(?<ensembleName>.*)$/;
+        const ensembleIdentRegexString = EnsembleIdent.getEnsembleIdentRegex().source;
+        return new RegExp(
+            `^(?<uuid>${uuidRegexString()})~@@~(?<firstEnsembleIdentString>${ensembleIdentRegexString})~@@~(?<secondEnsembleIdentString>${ensembleIdentRegexString})$`
+        );
     }
 
     getUuid(): string {
@@ -49,7 +73,11 @@ export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleI
     }
 
     toString(): string {
-        return DeltaEnsembleIdent.uuidAndEnsembleNameToString(this._uuid, this._ensembleName);
+        return DeltaEnsembleIdent.uuidAndEnsembleIdentStringsToString(
+            this._uuid,
+            this._firstEnsembleIdent.toString(),
+            this._secondEnsembleIdent.toString()
+        );
     }
 
     equals(otherIdent: DeltaEnsembleIdent | null): boolean {

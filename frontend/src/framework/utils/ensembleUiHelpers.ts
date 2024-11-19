@@ -1,6 +1,8 @@
+import { EnsembleType } from "@framework/types/ensembleType";
+
 import { DeltaEnsembleIdent } from "../DeltaEnsembleIdent";
 import { EnsembleIdent } from "../EnsembleIdent";
-import { EnsembleSet, EnsembleType } from "../EnsembleSet";
+import { EnsembleSet } from "../EnsembleSet";
 
 export function maybeAssignFirstSyncedEnsemble(
     currIdent: EnsembleIdent | null,

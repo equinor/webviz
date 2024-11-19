@@ -39,6 +39,36 @@ export class TimeseriesService {
         });
     }
     /**
+     * Get Delta Ensemble Vector List
+     * Get list of all vectors for a delta ensemble based on all vectors in a given Sumo ensemble, excluding any historical vectors
+     * @param firstCaseUuid Sumo case uuid
+     * @param firstEnsembleName Ensemble name
+     * @param secondCaseUuid Sumo case uuid
+     * @param secondEnsembleName Ensemble name
+     * @returns VectorDescription Successful Response
+     * @throws ApiError
+     */
+    public getDeltaEnsembleVectorList(
+        firstCaseUuid: string,
+        firstEnsembleName: string,
+        secondCaseUuid: string,
+        secondEnsembleName: string,
+    ): CancelablePromise<Array<VectorDescription>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/timeseries/delta_ensemble_vector_list/',
+            query: {
+                'first_case_uuid': firstCaseUuid,
+                'first_ensemble_name': firstEnsembleName,
+                'second_case_uuid': secondCaseUuid,
+                'second_ensemble_name': secondEnsembleName,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
      * Get Realizations Vector Data
      * Get vector data per realization
      * @param caseUuid Sumo case uuid

@@ -1,4 +1,5 @@
 import { EnsembleIdentInterface } from "./EnsembleIdentInterface";
+import { uuidRegexString } from "./utils/ensembleIdentUtils";
 
 export class EnsembleIdent implements EnsembleIdentInterface<EnsembleIdent> {
     private _caseUuid: string;
@@ -35,8 +36,8 @@ export class EnsembleIdent implements EnsembleIdentInterface<EnsembleIdent> {
         return new EnsembleIdent(caseUuid, ensembleName);
     }
 
-    private static getEnsembleIdentRegex(): RegExp {
-        return /^(?<caseUuid>[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12})::(?<ensembleName>.*)$/;
+    static getEnsembleIdentRegex(): RegExp {
+        return new RegExp(`^(?<caseUuid>${uuidRegexString()})::(?<ensembleName>.*)$`);
     }
 
     getCaseUuid(): string {
