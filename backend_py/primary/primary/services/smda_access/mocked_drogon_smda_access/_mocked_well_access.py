@@ -1,7 +1,6 @@
-from typing import List, Optional
+from typing import List
 
 from ..types import WellborePick, WellboreTrajectory, WellboreHeader
-
 from ._mocked_wellbore_picks import mocked_wellbore_picks
 
 
@@ -19,11 +18,7 @@ class WellAccess:
             well_picks = [pick for pick in mocked_wellbore_picks if pick.unique_wellbore_identifier == "55/33-1"]
         return well_picks
 
-    # type: ignore
-    # pylint: disable=unused-argument
-    async def get_field_wellbore_trajectories(
-        self, field_identifier: str, unique_wellbore_identifiers: Optional[List[str]] = None
-    ) -> List[WellboreTrajectory]:
+    async def get_field_wellbore_trajectories(self, field_identifier: str) -> List[WellboreTrajectory]:
         """Get all Drogon trajectories"""
         return [
             WellboreTrajectory(
