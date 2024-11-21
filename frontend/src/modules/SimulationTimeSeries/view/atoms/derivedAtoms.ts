@@ -1,3 +1,5 @@
+import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 import { atom } from "jotai";
@@ -75,7 +77,15 @@ export const loadedVectorSpecificationsAndHistoricalDataAtom = atom((get) => {
     const historicalVectorDataQueries = get(historicalVectorDataQueriesAtom);
     const vectorSpecifications = get(vectorSpecificationsAtom);
 
-    return createLoadedVectorSpecificationAndDataArray(vectorSpecifications, historicalVectorDataQueries);
+    // TODO: Should get the vector specifications from the historical data queries instead of the vector specifications atom
+    const regularEnsembleVectorSpecifications = vectorSpecifications.filter((elm) =>
+        isEnsembleIdentOfType(elm.ensembleIdent, EnsembleIdent)
+    );
+
+    return createLoadedVectorSpecificationAndDataArray(
+        regularEnsembleVectorSpecifications,
+        historicalVectorDataQueries
+    );
 });
 
 export const activeTimestampUtcMsAtom = atom<number | null>((get) => {

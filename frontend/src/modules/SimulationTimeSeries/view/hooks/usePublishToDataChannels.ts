@@ -1,5 +1,7 @@
 import { ChannelContentDefinition } from "@framework/DataChannelTypes";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ViewContext } from "@framework/ModuleContext";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { useAtomValue } from "jotai";
@@ -21,10 +23,15 @@ export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
 
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
-    const contents: ChannelContentDefinition[] = loadedVectorSpecificationsAndRealizationData.map((el) => ({
+    // Only publish regular ensemble data to the time series channel
+    const validVectorSpecificationsAndRealizationData = loadedVectorSpecificationsAndRealizationData.filter((el) =>
+        isEnsembleIdentOfType(el.vectorSpecification.ensembleIdent, EnsembleIdent)
+    );
+
+    const contents: ChannelContentDefinition[] = validVectorSpecificationsAndRealizationData.map((el) => ({
         contentIdString: `${el.vectorSpecification.vectorName}-::-${el.vectorSpecification.ensembleIdent}`,
         displayName: `${el.vectorSpecification.vectorName} (${makeEnsembleDisplayName(
-            el.vectorSpecification.ensembleIdent
+            el.vectorSpecification.ensembleIdent as EnsembleIdent // TODO: Should not need cast here, fix type?
         )})`,
         dataGenerator: makeVectorGroupDataGenerator(
             el.vectorSpecification,

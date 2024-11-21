@@ -4,7 +4,9 @@ import {
     VectorRealizationData_api,
     VectorStatisticData_api,
 } from "@api";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
@@ -45,14 +47,14 @@ export class SubplotBuilder {
     private _subplotOwner: SubplotOwner;
 
     private _addedVectorsLegendTracker: string[] = [];
-    private _addedEnsemblesLegendTracker: EnsembleIdent[] = [];
+    private _addedEnsemblesLegendTracker: (EnsembleIdent | DeltaEnsembleIdent)[] = [];
 
-    private _uniqueEnsembleIdents: EnsembleIdent[] = [];
+    private _uniqueEnsembleIdents: (EnsembleIdent | DeltaEnsembleIdent)[] = [];
     private _uniqueVectorNames: string[] = [];
 
     private _vectorHexColors: HexColorMap = {};
 
-    private _makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string;
+    private _makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent | DeltaEnsembleIdent) => string;
 
     private _hasRealizationsTracesColoredByParameter = false;
     private _hasHistoryTraces = false;
@@ -79,7 +81,7 @@ export class SubplotBuilder {
     constructor(
         subplotOwner: SubplotOwner,
         selectedVectorSpecifications: VectorSpec[],
-        makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string,
+        makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent | DeltaEnsembleIdent) => string,
         colorSet: ColorSet,
         width: number,
         height: number,
@@ -288,6 +290,8 @@ export class SubplotBuilder {
             if (subplotIndex === -1) continue;
 
             const ensembleIdent = elm.vectorSpecification.ensembleIdent;
+            if (!isEnsembleIdentOfType(ensembleIdent, EnsembleIdent)) continue;
+
             const hasParameterForEnsemble = this._ensemblesParameterColoring.hasParameterForEnsemble(ensembleIdent);
 
             // Add traces for each realization with color based on parameter value

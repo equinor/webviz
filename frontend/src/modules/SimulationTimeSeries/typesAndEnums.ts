@@ -1,7 +1,6 @@
 import { Frequency_api, StatisticFunction_api, SummaryVectorObservations_api } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleType } from "@framework/types/ensembleType";
 
 /**
  * Definition of ensemble vector observation data
@@ -28,65 +27,12 @@ export type VectorObservationsQueriesResult = {
     ensembleVectorObservationDataMap: EnsembleVectorObservationDataMap;
 };
 
-// function isRegularEnsembleVectorSpec(
-//     vectorSpec: RegularEnsembleVectorSpec | DeltaEnsembleVectorSpec
-// ): vectorSpec is RegularEnsembleVectorSpec {
-//     return vectorSpec.ensembleIdent instanceof EnsembleIdent;
-// }
-
-// export function getVectorSpecsByEnsembleType(
-//     vectorSpecifications: VectorSpec[],
-//     ensembleType: EnsembleType.REGULAR
-// ): RegularEnsembleVectorSpec[];
-// export function getVectorSpecsByEnsembleType(
-//     vectorSpecifications: VectorSpec[],
-//     ensembleType: EnsembleType.DELTA
-// ): DeltaEnsembleVectorSpec[];
-// export function getVectorSpecsByEnsembleType(
-//     vectorSpecifications: VectorSpec[],
-//     ensembleType: EnsembleType.REGULAR | EnsembleType.DELTA
-// ): RegularEnsembleVectorSpec[] | DeltaEnsembleVectorSpec[] {
-//     if (ensembleType === EnsembleType.REGULAR) {
-//         const regularEnsembleVectorSpecs: RegularEnsembleVectorSpec[] = [];
-//         for (const spec of vectorSpecifications) {
-//             if (spec.ensembleIdent instanceof EnsembleIdent) {
-//                 regularEnsembleVectorSpecs.push(spec as RegularEnsembleVectorSpec);
-//             }
-//         }
-//         return regularEnsembleVectorSpecs;
-//     }
-
-//     const deltaEnsembleVectorSpecs: DeltaEnsembleVectorSpec[] = [];
-//     for (const spec of vectorSpecifications) {
-//         if (spec.ensembleIdent instanceof DeltaEnsembleIdent) {
-//             deltaEnsembleVectorSpecs.push(spec as DeltaEnsembleVectorSpec);
-//         }
-//     }
-//     return deltaEnsembleVectorSpecs;
-// }
-
 export interface VectorSpec {
     ensembleIdent: EnsembleIdent | DeltaEnsembleIdent;
     color: string | null;
     vectorName: string;
     hasHistoricalVector: boolean;
 }
-
-// export type VectorSpec = RegularEnsembleVectorSpec | DeltaEnsembleVectorSpec;
-
-// export interface RegularEnsembleVectorSpec {
-//     ensembleIdent: EnsembleIdent;
-//     color: string | null;
-//     vectorName: string;
-//     hasHistoricalVector: boolean;
-// }
-
-// export interface DeltaEnsembleVectorSpec {
-//     ensembleIdent: DeltaEnsembleIdent;
-//     color: string | null;
-//     vectorName: string;
-//     hasHistoricalVector: boolean;
-// }
 
 export enum VisualizationMode {
     INDIVIDUAL_REALIZATIONS = "IndividualRealizations",

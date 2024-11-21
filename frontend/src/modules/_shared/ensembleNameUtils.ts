@@ -1,9 +1,9 @@
-import { Ensemble } from "@framework/Ensemble";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { EnsembleIdentInterface } from "@framework/EnsembleIdentInterface";
+import { EnsembleInterface } from "@framework/EnsembleInterface";
 
 export function makeDistinguishableEnsembleDisplayName(
-    ensembleIdent: EnsembleIdent,
-    allEnsembles: readonly Ensemble[]
+    ensembleIdent: EnsembleIdentInterface<any>,
+    allEnsembles: readonly EnsembleInterface[]
 ): string {
     const ensemble = allEnsembles.find((ensemble) => ensemble.getIdent().equals(ensembleIdent));
 

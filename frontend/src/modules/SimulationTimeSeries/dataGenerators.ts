@@ -1,6 +1,7 @@
 import { VectorRealizationData_api } from "@api";
 import { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { VectorSpec } from "./typesAndEnums";
@@ -27,7 +28,9 @@ export function makeVectorGroupDataGenerator(
                 vec.vectorSpecification.vectorName === vectorSpecification.vectorName &&
                 vec.vectorSpecification.ensembleIdent.equals(vectorSpecification.ensembleIdent)
         );
-        if (vector) {
+
+        // TODO: Should not need isEnsembleIdentOfType here, pass filtered and valid data outside
+        if (vector && isEnsembleIdentOfType(vector.vectorSpecification.ensembleIdent, EnsembleIdent)) {
             let unit = "";
             vector.data.forEach((el) => {
                 unit = simulationUnitReformat(el.unit);

@@ -1,6 +1,6 @@
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleIdentInterface } from "./EnsembleIdentInterface";
-import { uuidRegexString } from "./utils/ensembleIdentUtils";
+import { ensembleIdentUuidRegexString } from "./utils/ensembleIdentUtils";
 
 export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleIdent> {
     private _uuid: string;
@@ -30,8 +30,10 @@ export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleI
             !!result &&
             !!result.groups &&
             !!result.groups.uuid &&
-            !!result.groups.firstEnsembleIdentString &&
-            !!result.groups.secondEnsembleIdentString
+            !!result.groups.firstCaseUuid &&
+            !!result.groups.firstEnsembleName &&
+            !!result.groups.secondCaseUuid &&
+            !!result.groups.secondEnsembleName
         );
     }
 
@@ -42,25 +44,33 @@ export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleI
             !result ||
             !result.groups ||
             !result.groups.uuid ||
-            !result.groups.firstEnsembleIdentString ||
-            !result.groups.secondEnsembleIdentString
+            !result.groups.firstCaseUuid ||
+            !result.groups.firstEnsembleName ||
+            !result.groups.secondCaseUuid ||
+            !result.groups.secondEnsembleName
         ) {
             throw new Error(`Invalid ensemble ident: ${deltaEnsembleIdentString}`);
         }
 
-        const { uuid, firstEnsembleIdentString, secondEnsembleIdentString } = result.groups;
+        const { uuid, firstCaseUuid, firstEnsembleName, secondCaseUuid, secondEnsembleName } = result.groups;
 
         return new DeltaEnsembleIdent(
             uuid,
-            EnsembleIdent.fromString(firstEnsembleIdentString),
-            EnsembleIdent.fromString(secondEnsembleIdentString)
+            new EnsembleIdent(firstCaseUuid, firstEnsembleName),
+            new EnsembleIdent(secondCaseUuid, secondEnsembleName)
         );
     }
 
     private static getDeltaEnsembleIdentRegex(): RegExp {
-        const ensembleIdentRegexString = EnsembleIdent.getEnsembleIdentRegex().source;
+        const ensembleIdentRegexString = EnsembleIdent.getEnsembleIdentRegexStringWithoutAnchors();
+        const firstEnsembleIdentRegexString = ensembleIdentRegexString
+            .replace("caseUuid", "firstCaseUuid")
+            .replace("ensembleName", "firstEnsembleName");
+        const secondEnsembleIdentRegexString = ensembleIdentRegexString
+            .replace("caseUuid", "secondCaseUuid")
+            .replace("ensembleName", "secondEnsembleName");
         return new RegExp(
-            `^(?<uuid>${uuidRegexString()})~@@~(?<firstEnsembleIdentString>${ensembleIdentRegexString})~@@~(?<secondEnsembleIdentString>${ensembleIdentRegexString})$`
+            `^(?<uuid>${ensembleIdentUuidRegexString()})~@@~${firstEnsembleIdentRegexString}~@@~${secondEnsembleIdentRegexString}$`
         );
     }
 
@@ -72,6 +82,14 @@ export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleI
         return this._ensembleName;
     }
 
+    getFirstEnsembleIdent(): EnsembleIdent {
+        return this._firstEnsembleIdent;
+    }
+
+    getSecondEnsembleIdent(): EnsembleIdent {
+        return this._secondEnsembleIdent;
+    }
+
     toString(): string {
         return DeltaEnsembleIdent.uuidAndEnsembleIdentStringsToString(
             this._uuid,
@@ -80,8 +98,8 @@ export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleI
         );
     }
 
-    equals(otherIdent: DeltaEnsembleIdent | null): boolean {
-        if (!otherIdent) {
+    equals(otherIdent: EnsembleIdentInterface<any> | null): boolean {
+        if (!otherIdent || !(otherIdent instanceof DeltaEnsembleIdent)) {
             return false;
         }
         if (otherIdent === this) {

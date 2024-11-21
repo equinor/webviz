@@ -1,5 +1,5 @@
 import { EnsembleIdentInterface } from "./EnsembleIdentInterface";
-import { uuidRegexString } from "./utils/ensembleIdentUtils";
+import { ensembleIdentUuidRegexString } from "./utils/ensembleIdentUtils";
 
 export class EnsembleIdent implements EnsembleIdentInterface<EnsembleIdent> {
     private _caseUuid: string;
@@ -36,8 +36,22 @@ export class EnsembleIdent implements EnsembleIdentInterface<EnsembleIdent> {
         return new EnsembleIdent(caseUuid, ensembleName);
     }
 
+    /**
+     * Get regex string for an ensemble ident without the start and end anchors.
+     *
+     * @returns Regular expression string for ensemble ident, without the start and end anchors
+     */
+    static getEnsembleIdentRegexStringWithoutAnchors(): string {
+        return `(?<caseUuid>${ensembleIdentUuidRegexString()})::(?<ensembleName>.*)`;
+    }
+
+    /**
+     * Get regex for an ensemble ident.
+     *
+     * @returns Regular expression for ensemble ident
+     */
     static getEnsembleIdentRegex(): RegExp {
-        return new RegExp(`^(?<caseUuid>${uuidRegexString()})::(?<ensembleName>.*)$`);
+        return new RegExp(`^${this.getEnsembleIdentRegexStringWithoutAnchors()}$`);
     }
 
     getCaseUuid(): string {
@@ -52,8 +66,8 @@ export class EnsembleIdent implements EnsembleIdentInterface<EnsembleIdent> {
         return EnsembleIdent.caseUuidAndEnsembleNameToString(this._caseUuid, this._ensembleName);
     }
 
-    equals(otherIdent: EnsembleIdent | null): boolean {
-        if (!otherIdent) {
+    equals(otherIdent: EnsembleIdentInterface<any> | null): boolean {
+        if (!otherIdent || !(otherIdent instanceof EnsembleIdent)) {
             return false;
         }
         if (otherIdent === this) {

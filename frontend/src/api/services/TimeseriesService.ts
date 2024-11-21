@@ -102,6 +102,45 @@ export class TimeseriesService {
         });
     }
     /**
+     * Get Delta Ensemble Realizations Vector Data
+     * Get vector data per realization
+     * @param firstCaseUuid Sumo case uuid
+     * @param firstEnsembleName Ensemble name
+     * @param secondCaseUuid Sumo case uuid
+     * @param secondEnsembleName Ensemble name
+     * @param vectorName Name of the vector
+     * @param resamplingFrequency Resampling frequency. If not specified, raw data without resampling wil be returned.
+     * @param realizations Optional list of realizations to include. If not specified, all realizations will be returned.
+     * @returns VectorRealizationData Successful Response
+     * @throws ApiError
+     */
+    public getDeltaEnsembleRealizationsVectorData(
+        firstCaseUuid: string,
+        firstEnsembleName: string,
+        secondCaseUuid: string,
+        secondEnsembleName: string,
+        vectorName: string,
+        resamplingFrequency?: (Frequency | null),
+        realizations?: (Array<number> | null),
+    ): CancelablePromise<Array<VectorRealizationData>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/timeseries/delta_ensemble_realizations_vector_data/',
+            query: {
+                'first_case_uuid': firstCaseUuid,
+                'first_ensemble_name': firstEnsembleName,
+                'second_case_uuid': secondCaseUuid,
+                'second_ensemble_name': secondEnsembleName,
+                'vector_name': vectorName,
+                'resampling_frequency': resamplingFrequency,
+                'realizations': realizations,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
      * Get Timestamps List
      * Get the intersection of available timestamps.
      * Note that when resampling_frequency is None, the pure intersection of the
@@ -188,6 +227,48 @@ export class TimeseriesService {
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
+                'vector_name': vectorName,
+                'resampling_frequency': resamplingFrequency,
+                'statistic_functions': statisticFunctions,
+                'realizations': realizations,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Delta Ensemble Statistical Vector Data
+     * Get statistical vector data for an ensemble
+     * @param firstCaseUuid Sumo case uuid
+     * @param firstEnsembleName Ensemble name
+     * @param secondCaseUuid Sumo case uuid
+     * @param secondEnsembleName Ensemble name
+     * @param vectorName Name of the vector
+     * @param resamplingFrequency Resampling frequency
+     * @param statisticFunctions Optional list of statistics to calculate. If not specified, all statistics will be calculated.
+     * @param realizations Optional list of realizations to include. If not specified, all realizations will be included.
+     * @returns VectorStatisticData Successful Response
+     * @throws ApiError
+     */
+    public getDeltaEnsembleStatisticalVectorData(
+        firstCaseUuid: string,
+        firstEnsembleName: string,
+        secondCaseUuid: string,
+        secondEnsembleName: string,
+        vectorName: string,
+        resamplingFrequency: Frequency,
+        statisticFunctions?: (Array<StatisticFunction> | null),
+        realizations?: (Array<number> | null),
+    ): CancelablePromise<VectorStatisticData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/timeseries/delta_ensemble_statistical_vector_data/',
+            query: {
+                'first_case_uuid': firstCaseUuid,
+                'first_ensemble_name': firstEnsembleName,
+                'second_case_uuid': secondCaseUuid,
+                'second_ensemble_name': secondEnsembleName,
                 'vector_name': vectorName,
                 'resampling_frequency': resamplingFrequency,
                 'statistic_functions': statisticFunctions,
