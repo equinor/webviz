@@ -11,9 +11,12 @@ from primary.services.summary_vector_statistics import compute_vector_statistics
 from primary.services.sumo_access.generic_types import EnsembleScalarResponse
 from primary.services.sumo_access.parameter_access import ParameterAccess
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
+from primary.services.sumo_access.summary_types import VectorMetadata
 from primary.services.utils.authenticated_user import AuthenticatedUser
+from primary.services.utils.timeseries_helpers import create_delta_vector_table
 
 from . import converters, schemas
+import asyncio
 
 LOGGER = logging.getLogger(__name__)
 
@@ -69,9 +72,11 @@ async def get_delta_ensemble_vector_list(
     )
     perf_metrics.record_lap("get-access")
 
-    # NOTE: Make parallel requests?
-    first_vector_info_arr = await first_access.get_available_vectors_async()
-    second_vector_info_arr = await second_access.get_available_vectors_async()
+    # Get vectors parallel
+    first_vector_info_arr, second_vector_info_arr = await asyncio.gather(
+        first_access.get_available_vectors_async(),
+        second_access.get_available_vectors_async(),
+    )
     perf_metrics.record_lap("get-available-vectors")
 
     # Create intersection of vector names
@@ -161,22 +166,47 @@ async def get_delta_ensemble_realizations_vector_data(
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
 
-    # NOTE: Make parallel requests?
-    first_sumo_vec_arr = await first_access.get_vector_async(
-        vector_name=vector_name,
-        resampling_frequency=sumo_freq,
-        realizations=realizations,
-    )
-    second_sumo_vec_arr = await second_access.get_vector_async(
-        vector_name=vector_name,
-        resampling_frequency=sumo_freq,
-        realizations=realizations,
+    # Get tables parallel
+    # - Resampled data is assumed to be s.t. dates/timestamps are comparable between ensembles and cases, i.e. timestamps
+    #   for a resampling of a daily vector in both ensembles should be the same
+    (first_vector_table_pa, first_metadata), (second_vector_table_pa, _) = await asyncio.gather(
+        first_access.get_vector_table_async(
+            vector_name=vector_name,
+            resampling_frequency=sumo_freq,
+            realizations=realizations,
+        ),
+        second_access.get_vector_table_async(
+            vector_name=vector_name,
+            resampling_frequency=sumo_freq,
+            realizations=realizations,
+        ),
     )
     perf_metrics.record_lap("get-vector")
 
-    # TODO: Create delta ensemble data
+    # Create delta ensemble data
+    delta_table = create_delta_vector_table(first_vector_table_pa, second_vector_table_pa, vector_name)
+    perf_metrics.record_lap("calc-delta-vector")
+
+    # TODO: Fix correct metadata for delta vector
+    delta_vector_metadata = VectorMetadata(
+        name=first_metadata.name,
+        unit=first_metadata.unit,
+        is_total=first_metadata.is_total,
+        is_rate=first_metadata.is_rate,
+        is_historical=first_metadata.is_historical,
+        keyword=first_metadata.keyword,
+        wgname=first_metadata.wgname,
+        get_num=first_metadata.get_num,
+    )
+
+    # TODO: Consider moving this from SummaryAccess to a helper function/util?
+    delta_vector_arr = SummaryAccess.create_realization_vector_list_from_vector_table_and_metadata(
+        delta_table, vector_name, delta_vector_metadata
+    )
+    perf_metrics.record_lap("create-delta-vector-arr")
+
     ret_arr: list[schemas.VectorRealizationData] = []
-    for vec in first_sumo_vec_arr:
+    for vec in delta_vector_arr:
         ret_arr.append(
             schemas.VectorRealizationData(
                 realization=vec.realization,
@@ -312,27 +342,47 @@ async def get_delta_ensemble_statistical_vector_data(
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
 
-    # NOTE: Make parallel requests?
-    first_vector_table, first_vector_metadata = await first_access.get_vector_table_async(
-        vector_name=vector_name,
-        resampling_frequency=service_freq,
-        realizations=realizations,
+    # Get tables parallel
+    # - Resampled data is assumed to be s.t. dates/timestamps are comparable between ensembles and cases, i.e. timestamps
+    #   for a resampling of a daily vector in both ensembles should be the same
+    (first_vector_table_pa, first_metadata), (second_vector_table_pa, _) = await asyncio.gather(
+        first_access.get_vector_table_async(
+            vector_name=vector_name,
+            resampling_frequency=service_freq,
+            realizations=realizations,
+        ),
+        second_access.get_vector_table_async(
+            vector_name=vector_name,
+            resampling_frequency=service_freq,
+            realizations=realizations,
+        ),
     )
-    second_vector_table, second_vector_metadata = await second_access.get_vector_table_async(
-        vector_name=vector_name,
-        resampling_frequency=service_freq,
-        realizations=realizations,
-    )
-    perf_metrics.record_lap("get-table")
+    perf_metrics.record_lap("get-vector")
 
-    statistics = compute_vector_statistics(first_vector_table, vector_name, service_stat_funcs_to_compute)
+    # Create delta ensemble data
+    delta_table = create_delta_vector_table(first_vector_table_pa, second_vector_table_pa, vector_name)
+    perf_metrics.record_lap("calc-delta-vector")
+
+    statistics = compute_vector_statistics(delta_table, vector_name, service_stat_funcs_to_compute)
     if not statistics:
         raise HTTPException(status_code=404, detail="Could not compute statistics")
-    perf_metrics.record_lap("calc-stat")
+    perf_metrics.record_lap("calc-delta-vector-stat")
 
-    ret_data: schemas.VectorStatisticData = converters.to_api_vector_statistic_data(statistics, first_vector_metadata)
+    # TODO: Fix correct metadata for delta vector
+    delta_vector_metadata = VectorMetadata(
+        name=first_metadata.name,
+        unit=first_metadata.unit,
+        is_total=first_metadata.is_total,
+        is_rate=first_metadata.is_rate,
+        is_historical=first_metadata.is_historical,
+        keyword=first_metadata.keyword,
+        wgname=first_metadata.wgname,
+        get_num=first_metadata.get_num,
+    )
 
-    LOGGER.info(f"Loaded and computed statistical summary data in: {perf_metrics.to_string()}")
+    ret_data: schemas.VectorStatisticData = converters.to_api_vector_statistic_data(statistics, delta_vector_metadata)
+
+    LOGGER.info(f"Loaded and computed delta ensemble statistical summary data in: {perf_metrics.to_string()}")
 
     return ret_data
 

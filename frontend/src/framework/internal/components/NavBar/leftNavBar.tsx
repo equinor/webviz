@@ -216,7 +216,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     onClick={handleEnsembleClick}
                     className="w-full !text-slate-800 h-10"
                     startIcon={
-                        selectedEnsembles.length === 0 && !loadingEnsembleSet ? (
+                        selectedEnsembles.length === 0 && createdDeltaEnsembles.length === 0 && !loadingEnsembleSet ? (
                             <List fontSize="small" className="w-5 h-5 mr-2" />
                         ) : (
                             <Badge
@@ -226,7 +226,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                                     loadingEnsembleSet ? (
                                         <CircularProgress size="extra-small" color="inherit" />
                                     ) : (
-                                        selectedEnsembles.length
+                                        selectedEnsembles.length + createdDeltaEnsembles.length
                                     )
                                 }
                             >

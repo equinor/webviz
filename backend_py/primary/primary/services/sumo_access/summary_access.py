@@ -159,6 +159,23 @@ class SummaryAccess:
     ) -> List[RealizationVector]:
         table, vector_metadata = await self.get_vector_table_async(vector_name, resampling_frequency, realizations)
 
+        return self.create_realization_vector_list_from_vector_table_and_metadata(table, vector_name, vector_metadata)
+
+    @staticmethod
+    def create_realization_vector_list_from_vector_table_and_metadata(
+        table: pa.Table, vector_name: str, vector_metadata: VectorMetadata
+    ) -> List[RealizationVector]:
+        """
+        Create RealizationVector instances from the provided table and metadata.
+
+        Assuming table with columns DATE, REAL, and the vector column. Where the vector column if of type float32.
+        """
+        # Verify that columns are as we expect
+        expected_columns = {"DATE", "REAL", vector_name}
+        if set(table.column_names) != expected_columns:
+            unexpected_columns = set(table.column_names) - expected_columns
+            raise InvalidDataError(f"Unexpected columns in table {unexpected_columns}", Service.SUMO)
+
         real_arr_np = table.column("REAL").to_numpy()
         unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
 
