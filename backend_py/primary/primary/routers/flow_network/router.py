@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from primary.auth.auth_helper import AuthHelper
-from primary.services.group_tree_assembler.group_tree_assembler import GroupTreeAssembler
+from primary.services.flow_network_assembler.flow_network_assembler import GroupTreeAssembler
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.group_tree_types import TreeModeOptions, NodeType
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
