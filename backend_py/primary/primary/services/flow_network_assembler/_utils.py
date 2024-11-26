@@ -1,8 +1,6 @@
 import logging
 
 
-from enum import StrEnum
-
 from primary.services.sumo_access.group_tree_types import DataType, EdgeOrNode, TreeType
 from ._group_tree_dataframe_model import GroupTreeDataframeModel
 
@@ -112,7 +110,7 @@ def compute_all_group_vectors(group_tree_model: GroupTreeDataframeModel) -> set[
 
     res = set()
     for data_type in all_data_types:
-        res |= compute_tree_well_vectors(group_tree_model, data_type)
+        res |= compute_tree_group_vectors(group_tree_model, data_type)
 
     return res
 

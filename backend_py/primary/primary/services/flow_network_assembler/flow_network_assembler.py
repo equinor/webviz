@@ -160,7 +160,7 @@ class FlowNetworkAssembler:
         missing_sumvecs = check_sumvecs - self._all_vectors
         if len(missing_sumvecs) > 0:
             str_missing_sumvecs = ", ".join(missing_sumvecs)
-            raise ValueError("Missing summary vectors for the GroupTree plugin: " f"{str_missing_sumvecs}.")
+            raise ValueError("Missing summary vectors for the GroupTree plugin: ", f"{str_missing_sumvecs}.")
 
     async def _initialize_all_vectors_list_async(self) -> None:
         vector_info_arr = await self._summary_access.get_available_vectors_async()
@@ -467,7 +467,9 @@ def _create_flow_network_summary_vectors_info(
 
         for datatype in datatypes:
             sumvec_name = _utils.create_sumvec_from_datatype_nodename_and_keyword(datatype, nodename, keyword)
+
             edge_or_node = _utils.get_tree_element_for_data_type(datatype)
+
             all_sumvecs.add(sumvec_name)
             if edge_or_node == EdgeOrNode.EDGE:
                 edge_sumvecs.add(sumvec_name)
