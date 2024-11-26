@@ -23,7 +23,7 @@ export type { BoundingBox2d as BoundingBox2d_api } from './models/BoundingBox2d'
 export type { BoundingBox3d as BoundingBox3d_api } from './models/BoundingBox3d';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';
-export type { DatedTree as DatedTree_api } from './models/DatedTree';
+export type { DatedFlowNetwork as DatedFlowNetwork_api } from './models/DatedFlowNetwork';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
 export type { EnsembleInfo as EnsembleInfo_api } from './models/EnsembleInfo';
 export type { EnsembleParameter as EnsembleParameter_api } from './models/EnsembleParameter';
@@ -33,6 +33,8 @@ export type { EnsembleSensitivity as EnsembleSensitivity_api } from './models/En
 export type { EnsembleSensitivityCase as EnsembleSensitivityCase_api } from './models/EnsembleSensitivityCase';
 export type { FenceMeshSection as FenceMeshSection_api } from './models/FenceMeshSection';
 export type { FieldInfo as FieldInfo_api } from './models/FieldInfo';
+export type { FlowNetworkData as FlowNetworkData_api } from './models/FlowNetworkData';
+export type { FlowNetworkMetadata as FlowNetworkMetadata_api } from './models/FlowNetworkMetadata';
 export { FlowRateType as FlowRateType_api } from './models/FlowRateType';
 export { FluidZone as FluidZone_api } from './models/FluidZone';
 export { Frequency as Frequency_api } from './models/Frequency';
@@ -45,8 +47,6 @@ export type { Grid3dMappedProperty as Grid3dMappedProperty_api } from './models/
 export type { Grid3dPropertyInfo as Grid3dPropertyInfo_api } from './models/Grid3dPropertyInfo';
 export type { Grid3dZone as Grid3dZone_api } from './models/Grid3dZone';
 export type { GridDimensions as GridDimensions_api } from './models/GridDimensions';
-export type { GroupTreeData as GroupTreeData_api } from './models/GroupTreeData';
-export type { GroupTreeMetadata as GroupTreeMetadata_api } from './models/GroupTreeMetadata';
 export type { HTTPValidationError as HTTPValidationError_api } from './models/HTTPValidationError';
 export type { InplaceStatisticalVolumetricTableData as InplaceStatisticalVolumetricTableData_api } from './models/InplaceStatisticalVolumetricTableData';
 export type { InplaceStatisticalVolumetricTableDataPerFluidSelection as InplaceStatisticalVolumetricTableDataPerFluidSelection_api } from './models/InplaceStatisticalVolumetricTableDataPerFluidSelection';
@@ -57,6 +57,7 @@ export type { InplaceVolumetricsTableDefinition as InplaceVolumetricsTableDefini
 export { InplaceVolumetricStatistic as InplaceVolumetricStatistic_api } from './models/InplaceVolumetricStatistic';
 export type { InplaceVolumetricTableData as InplaceVolumetricTableData_api } from './models/InplaceVolumetricTableData';
 export type { InplaceVolumetricTableDataPerFluidSelection as InplaceVolumetricTableDataPerFluidSelection_api } from './models/InplaceVolumetricTableDataPerFluidSelection';
+export { NetworkNode as NetworkNode_api } from './models/NetworkNode';
 export { NodeType as NodeType_api } from './models/NodeType';
 export type { Observations as Observations_api } from './models/Observations';
 export type { PointSetXY as PointSetXY_api } from './models/PointSetXY';
@@ -95,7 +96,6 @@ export type { TableColumnData as TableColumnData_api } from './models/TableColum
 export type { TableColumnStatisticalData as TableColumnStatisticalData_api } from './models/TableColumnStatisticalData';
 export { TabType as TabType_api } from './models/TabType';
 export type { THP as THP_api } from './models/THP';
-export { TreeNode as TreeNode_api } from './models/TreeNode';
 export { UnitType as UnitType_api } from './models/UnitType';
 export type { UserInfo as UserInfo_api } from './models/UserInfo';
 export type { ValidationError as ValidationError_api } from './models/ValidationError';
@@ -124,9 +124,9 @@ export { WFR as WFR_api } from './models/WFR';
 
 export { DefaultService } from './services/DefaultService';
 export { ExploreService } from './services/ExploreService';
+export { FlowNetworkService } from './services/FlowNetworkService';
 export { GraphService } from './services/GraphService';
 export { Grid3DService } from './services/Grid3DService';
-export { GroupTreeService } from './services/GroupTreeService';
 export { InplaceVolumetricsService } from './services/InplaceVolumetricsService';
 export { ObservationsService } from './services/ObservationsService';
 export { ParametersService } from './services/ParametersService';

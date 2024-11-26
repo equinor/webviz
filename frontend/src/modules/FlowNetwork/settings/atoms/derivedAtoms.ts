@@ -13,12 +13,12 @@ import {
     userSelectedRealizationNumberAtom,
     validRealizationNumbersAtom,
 } from "./baseAtoms";
-import { realizationGroupTreeQueryAtom } from "./queryAtoms";
+import { realizationFlowNetworkQueryAtom } from "./queryAtoms";
 
 import { QueryStatus } from "../../types";
 
-export const groupTreeQueryResultAtom = atom((get) => {
-    return get(realizationGroupTreeQueryAtom);
+export const flowNetworkQueryResultAtom = atom((get) => {
+    return get(realizationFlowNetworkQueryAtom);
 });
 
 export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
@@ -49,24 +49,24 @@ export const selectedRealizationNumberAtom = atom<number | null>((get) => {
 });
 
 export const queryStatusAtom = atom<QueryStatus>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
-    if (groupTreeQueryResult.isFetching) {
+    if (flowNetworkQueryResult.isFetching) {
         return QueryStatus.Loading;
     }
-    if (groupTreeQueryResult.isError) {
+    if (flowNetworkQueryResult.isError) {
         return QueryStatus.Error;
     }
     return QueryStatus.Idle;
 });
 
 export const availableDateTimesAtom = atom<string[]>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
-    if (!groupTreeQueryResult.data) return [];
+    if (!flowNetworkQueryResult.data) return [];
 
     const dateTimes = new Set<string>();
-    groupTreeQueryResult.data.dated_trees.forEach((datedTree) => {
+    flowNetworkQueryResult.data.dated_trees.forEach((datedTree) => {
         datedTree.dates.forEach((date) => {
             dateTimes.add(date);
         });
@@ -90,9 +90,9 @@ export const selectedDateTimeAtom = atom<string | null>((get) => {
 });
 
 export const edgeMetadataListAtom = atom<EdgeMetadata[]>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
-    const data = groupTreeQueryResult.data;
+    const data = flowNetworkQueryResult.data;
     if (!data) {
         return [];
     }
@@ -116,9 +116,9 @@ export const selectedEdgeKeyAtom = atom<string | null>((get) => {
 });
 
 export const nodeMetadataListAtom = atom<NodeMetadata[]>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
-    const data = groupTreeQueryResult.data;
+    const data = flowNetworkQueryResult.data;
     if (!data) {
         return [];
     }
@@ -142,9 +142,9 @@ export const selectedNodeKeyAtom = atom<string | null>((get) => {
 });
 
 export const datedTreesAtom = atom<DatedTree[]>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
-    const data = groupTreeQueryResult.data;
+    const data = flowNetworkQueryResult.data;
     if (!data) {
         return [];
     }
