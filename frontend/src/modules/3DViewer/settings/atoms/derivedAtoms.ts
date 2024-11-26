@@ -1,6 +1,6 @@
 import { Grid3dDimensions_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
 
@@ -67,22 +67,14 @@ export const selectedCustomIntersectionPolylineIdAtom = atom((get) => {
 });
 
 export const availableRealizationsAtom = atom((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
 
     if (selectedEnsembleIdent === null) {
         return [];
     }
 
-    let ensembleRealizationFilterFunction = get(EnsembleRealizationFilterFunctionAtom);
-
-    if (ensembleRealizationFilterFunction === null) {
-        ensembleRealizationFilterFunction = (ensembleIdent: EnsembleIdent) => {
-            return ensembleSet.findEnsemble(ensembleIdent)?.getRealizations() ?? [];
-        };
-    }
-
-    return ensembleRealizationFilterFunction(selectedEnsembleIdent);
+    const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    return validEnsembleRealizationsFunction(selectedEnsembleIdent);
 });
 
 export const selectedRealizationAtom = atom((get) => {

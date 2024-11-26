@@ -87,6 +87,14 @@ export class DeltaEnsemble implements EnsembleInterface {
         return this._customName;
     }
 
+    getParameters(): EnsembleParameters {
+        return this._parameters;
+    }
+
+    getSensitivities(): EnsembleSensitivities | null {
+        return this._sensitivities;
+    }
+
     // *** Custom methods ***
 
     getEnsembleIdentByElement(element: DeltaEnsembleElement): EnsembleIdent {

@@ -1,8 +1,10 @@
 import { isEqual } from "lodash";
 
+import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilter } from "./RealizationFilter";
+import { EnsembleType } from "./types/ensembleType";
 
 export class RealizationFilterSet {
     // Map of ensembleIdent string to RealizationFilter
@@ -17,14 +19,23 @@ export class RealizationFilterSet {
     synchronizeWithEnsembleSet(ensembleSet: EnsembleSet): void {
         // Remove filters for ensembles that are no longer in the ensemble set
         for (const ensembleIdentString of this._ensembleIdentStringRealizationFilterMap.keys()) {
-            const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+            let ensembleIdent = null;
+            if (EnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
+                ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+            } else if (DeltaEnsembleIdent.isValidDeltaEnsembleIdentString(ensembleIdentString)) {
+                ensembleIdent = DeltaEnsembleIdent.fromString(ensembleIdentString);
+            }
+            if (!ensembleIdent) {
+                throw new Error(`Invalid ensemble ident string: ${ensembleIdentString}`);
+            }
+
             if (!ensembleSet.hasEnsemble(ensembleIdent)) {
                 this._ensembleIdentStringRealizationFilterMap.delete(ensembleIdentString);
             }
         }
 
         // Add filters for ensembles that are new to the ensemble set
-        for (const ensemble of ensembleSet.getEnsembleArr()) {
+        for (const ensemble of ensembleSet.getEnsembleArr(EnsembleType.ALL)) {
             const ensembleIdentString = ensemble.getIdent().toString();
             const isEnsembleInMap = this._ensembleIdentStringRealizationFilterMap.has(ensembleIdentString);
             if (!isEnsembleInMap) {
@@ -36,7 +47,7 @@ export class RealizationFilterSet {
     /**
      * Get filter for ensembleIdent
      */
-    getRealizationFilterForEnsembleIdent(ensembleIdent: EnsembleIdent): RealizationFilter {
+    getRealizationFilterForEnsembleIdent(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent): RealizationFilter {
         const filter = this._ensembleIdentStringRealizationFilterMap.get(ensembleIdent.toString());
         if (filter === undefined) {
             throw new Error(

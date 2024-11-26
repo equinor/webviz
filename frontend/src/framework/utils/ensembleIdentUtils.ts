@@ -1,3 +1,5 @@
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleIdentInterface } from "@framework/EnsembleIdentInterface";
 
 /**
@@ -46,4 +48,20 @@ export function ensembleIdentRegexStringWithoutAnchors(
     ensembleNameNamedGroup: string
 ): string {
     return `(?<${caseUuidNamedGroup}>${ensembleIdentUuidRegexString()})::(?<${ensembleNameNamedGroup}>.*)`;
+}
+
+/**
+ * Get ensemble ident from string
+ * @param ensembleIdentString
+ * @returns
+ */
+export function getEnsembleIdentFromString(ensembleIdentString: string): EnsembleIdent | DeltaEnsembleIdent | null {
+    let ensembleIdent = null;
+    if (EnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
+        ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+    } else if (DeltaEnsembleIdent.isValidDeltaEnsembleIdentString(ensembleIdentString)) {
+        ensembleIdent = DeltaEnsembleIdent.fromString(ensembleIdentString);
+    }
+
+    return ensembleIdent;
 }

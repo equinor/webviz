@@ -1,5 +1,7 @@
 import { isEqual } from "lodash";
 
+import { DeltaEnsemble } from "./DeltaEnsemble";
+import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { Ensemble } from "./Ensemble";
 import { EnsembleIdent } from "./EnsembleIdent";
 import {
@@ -37,7 +39,7 @@ import {
  * such as the ensemble ident and realization numbers.
  */
 export class RealizationFilter {
-    private _assignedEnsemble: Ensemble;
+    private _assignedEnsemble: Ensemble | DeltaEnsemble;
     private _includeExcludeFilter: IncludeExcludeFilter;
     private _filterType: RealizationFilterType;
 
@@ -52,7 +54,7 @@ export class RealizationFilter {
     private _filteredRealizations: readonly number[];
 
     constructor(
-        assignedEnsemble: Ensemble,
+        assignedEnsemble: Ensemble | DeltaEnsemble,
         initialIncludeExcludeFilter = IncludeExcludeFilter.INCLUDE_FILTER,
         initialFilterType = RealizationFilterType.BY_REALIZATION_NUMBER
     ) {
@@ -65,7 +67,7 @@ export class RealizationFilter {
         this._parameterIdentStringToValueSelectionMap = null;
     }
 
-    getAssignedEnsembleIdent(): EnsembleIdent {
+    getAssignedEnsembleIdent(): EnsembleIdent | DeltaEnsembleIdent {
         return this._assignedEnsemble.getIdent();
     }
 

@@ -1,7 +1,7 @@
 import { Frequency_api, Observations_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { EnsembleVectorObservationDataMap, VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
@@ -18,7 +18,6 @@ const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
 export const vectorDataQueriesAtom = atomWithQueries((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
     const vectorSpecifications = get(vectorSpecificationsAtom);
     const resampleFrequency = get(resampleFrequencyAtom);
     const visualizationMode = get(visualizationModeAtom);
@@ -29,6 +28,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
         visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS;
 
     const queries = vectorSpecifications.map((item) => {
+        // Regular Ensemble
         if (isEnsembleIdentOfType(item.ensembleIdent, EnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
             const vectorSpecification = {
@@ -64,12 +64,8 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
             });
         }
 
-        const deltaEnsemble = ensembleSet.findEnsemble(item.ensembleIdent);
-        if (!deltaEnsemble) {
-            throw new Error(`Delta ensemble not found for: ${item.ensembleIdent.toString()}`);
-        }
-
-        const realizations = [...deltaEnsemble.getRealizations()];
+        // Delta Ensemble
+        const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
         const vectorSpecification = { ...item, ensembleIdent: item.ensembleIdent };
         return () => ({
             queryKey: [
@@ -112,7 +108,6 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
 });
 
 export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
     const vectorSpecifications = get(vectorSpecificationsAtom);
     const resampleFrequency = get(resampleFrequencyAtom);
     const visualizationMode = get(visualizationModeAtom);
@@ -124,6 +119,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
         visualizationMode === VisualizationMode.STATISTICS_AND_REALIZATIONS;
 
     const queries = vectorSpecifications.map((item) => {
+        // Regular Ensemble
         if (isEnsembleIdentOfType(item.ensembleIdent, EnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
             const vectorSpecification = {
@@ -159,12 +155,8 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
             });
         }
 
-        const deltaEnsemble = ensembleSet.findEnsemble(item.ensembleIdent);
-        if (!deltaEnsemble) {
-            throw new Error(`Delta ensemble not found for: ${item.ensembleIdent.toString()}`);
-        }
-
-        const realizations = [...deltaEnsemble.getRealizations()];
+        // Delta Ensemble
+        const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
         const vectorSpecification = { ...item, ensembleIdent: item.ensembleIdent };
         return () => ({
             queryKey: [
@@ -192,6 +184,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
             gcTime: CACHE_TIME,
             enabled: !!(
                 enabled &&
+                resampleFrequency &&
                 vectorSpecification.vectorName &&
                 vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getCaseUuid() &&
                 vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getEnsembleName() &&

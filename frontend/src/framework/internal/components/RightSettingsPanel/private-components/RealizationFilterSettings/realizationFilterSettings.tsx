@@ -1,5 +1,6 @@
 import React from "react";
 
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import {
     GuiEvent,
@@ -16,7 +17,9 @@ import {
     EnsembleRealizationFilter,
     EnsembleRealizationFilterSelections,
 } from "@framework/internal/components/EnsembleRealizationFilter";
+import { EnsembleType } from "@framework/types/ensembleType";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
+import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
 import { countTrueValues } from "@framework/utils/objectUtils";
 import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
 import { FilterAlt } from "@mui/icons-material";
@@ -36,7 +39,9 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         GuiState.NumberOfUnsavedRealizationFilters
     );
 
-    const [activeFilterEnsembleIdent, setActiveFilterEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const [activeFilterEnsembleIdent, setActiveFilterEnsembleIdent] = React.useState<
+        EnsembleIdent | DeltaEnsembleIdent | null
+    >(null);
 
     // Maps for keeping track of unsaved changes and filter selections
     const [ensembleIdentStringHasUnsavedChangesMap, setEnsembleIdentStringHasUnsavedChangesMap] = React.useState<{
@@ -55,7 +60,9 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     }
 
     // Create new maps if ensembles are added or removed
-    const ensembleIdentStrings = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent().toString());
+    const ensembleIdentStrings = ensembleSet
+        .getEnsembleArr(EnsembleType.ALL)
+        .map((ensemble) => ensemble.getIdent().toString());
     if (!isEqual(ensembleIdentStrings, Object.keys(ensembleIdentStringToRealizationFilterSelectionsMap))) {
         // Create new maps with the new ensemble ident strings
         const updatedHasUnsavedChangesMap: { [ensembleIdentString: string]: boolean } = {
@@ -79,7 +86,11 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 continue;
             }
 
-            const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+            const ensembleIdent = getEnsembleIdentFromString(ensembleIdentString);
+            if (!ensembleIdent) {
+                throw new Error(`Invalid ensemble ident: ${ensembleIdentString}`);
+            }
+
             const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
 
             updatedHasUnsavedChangesMap[ensembleIdentString] = false;
@@ -102,7 +113,11 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             // Apply all the unsaved changes state and reset the unsaved changes state
             const resetHasUnsavedChangesMap: { [ensembleIdentString: string]: boolean } = {};
             for (const ensembleIdentString in ensembleIdentStringToRealizationFilterSelectionsMap) {
-                const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+                const ensembleIdent = getEnsembleIdentFromString(ensembleIdentString);
+                if (!ensembleIdent) {
+                    throw new Error(`Invalid ensemble ident: ${ensembleIdentString}`);
+                }
+
                 const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
                 const selections = ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
 
@@ -123,11 +138,15 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
             setEnsembleIdentStringHasUnsavedChangesMap(resetHasUnsavedChangesMap);
             setNumberOfUnsavedRealizationFilters(0);
+
+            // Notify subscribers of change.
+            props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
         },
         [
             ensembleIdentStringToRealizationFilterSelectionsMap,
             realizationFilterSet,
             setNumberOfUnsavedRealizationFilters,
+            props.workbench,
         ]
     );
 
@@ -137,7 +156,11 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             const resetSelectionsMap: { [ensembleIdentString: string]: EnsembleRealizationFilterSelections } = {};
             const resetHasUnsavedChangesMap: { [ensembleIdentString: string]: boolean } = {};
             for (const ensembleIdentString in ensembleIdentStringToRealizationFilterSelectionsMap) {
-                const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+                const ensembleIdent = getEnsembleIdentFromString(ensembleIdentString);
+                if (!ensembleIdent) {
+                    throw new Error(`Invalid ensemble ident: ${ensembleIdentString}`);
+                }
+
                 const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
 
                 resetSelectionsMap[ensembleIdentString] = {
@@ -189,7 +212,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         props.onClose();
     }
 
-    function handleApplyClick(ensembleIdent: EnsembleIdent) {
+    function handleApplyClick(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent) {
         const ensembleIdentString = ensembleIdent.toString();
         const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
         const selections = ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdentString];
@@ -214,7 +237,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
     }
 
-    function handleDiscardClick(ensembleIdent: EnsembleIdent) {
+    function handleDiscardClick(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent) {
         const ensembleIdentString = ensembleIdent.toString();
         const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
         setEnsembleIdentStringToRealizationFilterSelectionsMap({
@@ -235,7 +258,10 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setNumberOfUnsavedRealizationFilters(countTrueValues(newHasUnsavedChangesMap));
     }
 
-    function handleFilterChange(ensembleIdent: EnsembleIdent, selections: EnsembleRealizationFilterSelections) {
+    function handleFilterChange(
+        ensembleIdent: EnsembleIdent | DeltaEnsembleIdent,
+        selections: EnsembleRealizationFilterSelections
+    ) {
         const ensembleIdentString = ensembleIdent.toString();
 
         // Register the filter changes in the map
@@ -264,11 +290,11 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         setNumberOfUnsavedRealizationFilters(countTrueValues(newHasUnsavedChangesMap));
     }
 
-    function handleSetActiveEnsembleRealizationFilter(ensembleIdent: EnsembleIdent) {
+    function handleSetActiveEnsembleRealizationFilter(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent) {
         setActiveFilterEnsembleIdent(ensembleIdent);
     }
 
-    function handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent: EnsembleIdent) {
+    function handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent) {
         if (activeFilterEnsembleIdent?.equals(ensembleIdent)) {
             setActiveFilterEnsembleIdent(null);
         }
@@ -284,7 +310,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             >
                 <div className="flex flex-col p-2 gap-4 overflow-y-auto">
                     <div className="flex-grow space-y-4">
-                        {ensembleSet.getEnsembleArr().map((ensemble) => {
+                        {ensembleSet.getEnsembleArr(EnsembleType.ALL).map((ensemble) => {
                             const ensembleIdent = ensemble.getIdent();
                             const isActive =
                                 activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
