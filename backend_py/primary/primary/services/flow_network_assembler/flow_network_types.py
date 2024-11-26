@@ -1,7 +1,5 @@
-from pydantic import BaseModel
-
-
 from typing import Dict, List, Literal
+from pydantic import BaseModel
 
 
 class NetworkNode(BaseModel):

@@ -205,7 +205,6 @@ class FlowNetworkAssembler:
         # Get all vectors of interest existing in the summary data
         vectors_of_interest = _utils.get_all_vectors_of_interest_for_tree(group_tree_df_model)
         vectors_of_interest = vectors_of_interest & self._all_vectors
-        # TODO: do we need to return to a list?
 
         # Has any water injection or gas injection vectors among vectors of interest
         has_wi_vectors = False
@@ -886,8 +885,8 @@ def _get_data_for_summary_vector_info(
     """Extracts and formats whatever data is available for a given summary vector. If the name is not present in the summary, a list of NaN values is given instead"""
     if sumvec_name in summary_col_set:
         return smry_for_grouptree_sorted_by_date[sumvec_name].to_numpy().round(2)
-    else:
-        return list([np.nan] * number_of_dates)
+
+    return list([np.nan] * number_of_dates)
 
 
 def _is_valid_node_type(node_classification: NodeClassification, valid_node_types: set[NodeType]) -> bool:

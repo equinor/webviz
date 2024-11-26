@@ -157,7 +157,7 @@ def create_sumvec_from_datatype_nodename_and_keyword(
     try:
         if keyword == "WELSPECS":
             datatype_ecl = WELL_DATATYPE_VECTOR_MAP[datatype]
-        elif keyword in TreeType._member_names_:
+        elif keyword in [t.value for t in TreeType]:
             datatype_ecl = GROUPTYPE_DATATYPE_VECTORS_MAP[TreeType[keyword]][datatype]
     except KeyError as exc:
         error = (

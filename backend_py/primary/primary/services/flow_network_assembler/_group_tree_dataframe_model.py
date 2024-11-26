@@ -171,7 +171,7 @@ class GroupTreeDataframeModel:
         current_parents = [terminal_node]
         while len(current_parents) > 0:
             # Find all indexes matching the current parents
-            children_indices = set([i for i, x in enumerate(parents_array) if x in current_parents])
+            children_indices = {i for i, x in enumerate(parents_array) if x in current_parents}
 
             # Find all children of the current parents
             children = nodes_array[list(children_indices)]
