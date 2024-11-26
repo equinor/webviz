@@ -1,8 +1,4 @@
-from typing import List
 from enum import Enum
-from primary.services.sumo_access.group_tree_types import DatedTree, GroupTreeMetadata
-
-from pydantic import BaseModel
 
 
 class Frequency(str, Enum):
@@ -26,9 +22,3 @@ class NodeType(str, Enum):
     PROD = "prod"
     INJ = "inj"
     OTHER = "other"
-
-
-class GroupTreeData(BaseModel):
-    edge_metadata_list: List[GroupTreeMetadata]
-    node_metadata_list: List[GroupTreeMetadata]
-    dated_trees: List[DatedTree]
