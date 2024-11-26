@@ -109,7 +109,7 @@ export class TimeseriesService {
      * @param secondCaseUuid Sumo case uuid
      * @param secondEnsembleName Ensemble name
      * @param vectorName Name of the vector
-     * @param resamplingFrequency Resampling frequency. If not specified, raw data without resampling wil be returned.
+     * @param resamplingFrequency Resampling frequency
      * @param realizations Optional list of realizations to include. If not specified, all realizations will be returned.
      * @returns VectorRealizationData Successful Response
      * @throws ApiError
@@ -120,7 +120,7 @@ export class TimeseriesService {
         secondCaseUuid: string,
         secondEnsembleName: string,
         vectorName: string,
-        resamplingFrequency?: (Frequency | null),
+        resamplingFrequency: Frequency,
         realizations?: (Array<number> | null),
     ): CancelablePromise<Array<VectorRealizationData>> {
         return this.httpRequest.request({
