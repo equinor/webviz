@@ -1,6 +1,6 @@
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleIdentInterface } from "./EnsembleIdentInterface";
-import { ensembleIdentUuidRegexString } from "./utils/ensembleIdentUtils";
+import { ensembleIdentRegexStringWithoutAnchors, ensembleIdentUuidRegexString } from "./utils/ensembleIdentUtils";
 
 export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleIdent> {
     private _uuid: string;
@@ -62,13 +62,14 @@ export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleI
     }
 
     private static getDeltaEnsembleIdentRegex(): RegExp {
-        const ensembleIdentRegexString = EnsembleIdent.getEnsembleIdentRegexStringWithoutAnchors();
-        const firstEnsembleIdentRegexString = ensembleIdentRegexString
-            .replace("caseUuid", "firstCaseUuid")
-            .replace("ensembleName", "firstEnsembleName");
-        const secondEnsembleIdentRegexString = ensembleIdentRegexString
-            .replace("caseUuid", "secondCaseUuid")
-            .replace("ensembleName", "secondEnsembleName");
+        const firstEnsembleIdentRegexString = ensembleIdentRegexStringWithoutAnchors(
+            "firstCaseUuid",
+            "firstEnsembleName"
+        );
+        const secondEnsembleIdentRegexString = ensembleIdentRegexStringWithoutAnchors(
+            "secondCaseUuid",
+            "secondEnsembleName"
+        );
         return new RegExp(
             `^(?<uuid>${ensembleIdentUuidRegexString()})~@@~${firstEnsembleIdentRegexString}~@@~${secondEnsembleIdentRegexString}$`
         );

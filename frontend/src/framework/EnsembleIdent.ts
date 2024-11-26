@@ -1,5 +1,5 @@
 import { EnsembleIdentInterface } from "./EnsembleIdentInterface";
-import { ensembleIdentUuidRegexString } from "./utils/ensembleIdentUtils";
+import { ensembleIdentRegexStringWithoutAnchors } from "./utils/ensembleIdentUtils";
 
 export class EnsembleIdent implements EnsembleIdentInterface<EnsembleIdent> {
     private _caseUuid: string;
@@ -37,21 +37,12 @@ export class EnsembleIdent implements EnsembleIdentInterface<EnsembleIdent> {
     }
 
     /**
-     * Get regex string for an ensemble ident without the start and end anchors.
-     *
-     * @returns Regular expression string for ensemble ident, without the start and end anchors
-     */
-    static getEnsembleIdentRegexStringWithoutAnchors(): string {
-        return `(?<caseUuid>${ensembleIdentUuidRegexString()})::(?<ensembleName>.*)`;
-    }
-
-    /**
      * Get regex for an ensemble ident.
      *
      * @returns Regular expression for ensemble ident
      */
     static getEnsembleIdentRegex(): RegExp {
-        return new RegExp(`^${this.getEnsembleIdentRegexStringWithoutAnchors()}$`);
+        return new RegExp(`^${ensembleIdentRegexStringWithoutAnchors("caseUuid", "ensembleName")}$`);
     }
 
     getCaseUuid(): string {

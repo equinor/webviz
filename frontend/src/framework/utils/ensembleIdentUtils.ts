@@ -34,3 +34,16 @@ export function filterEnsembleIdentsByType<T extends EnsembleIdentInterface<any>
 export function ensembleIdentUuidRegexString(): string {
     return "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}";
 }
+
+/**
+ * Generates a regex pattern for an ensemble ident with named groups for case uuid and ensemble name, and without the start and end anchors.
+ * @param caseUuidNamedGroup
+ * @param ensembleNameNamedGroup
+ * @returns A string that represents a regex pattern for an ensemble ident with named groups for case uuid and ensemble name, and without the start and end anchors
+ */
+export function ensembleIdentRegexStringWithoutAnchors(
+    caseUuidNamedGroup: string,
+    ensembleNameNamedGroup: string
+): string {
+    return `(?<${caseUuidNamedGroup}>${ensembleIdentUuidRegexString()})::(?<${ensembleNameNamedGroup}>.*)`;
+}
