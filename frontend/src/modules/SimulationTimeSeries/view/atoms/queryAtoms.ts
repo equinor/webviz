@@ -89,13 +89,14 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                     vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getCaseUuid(),
                     vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getEnsembleName(),
                     vectorSpecification.vectorName ?? "",
-                    resampleFrequency,
+                    resampleFrequency ?? Frequency_api.YEARLY,
                     realizations
                 ),
             staleTime: STALE_TIME,
             gcTime: CACHE_TIME,
             enabled: !!(
                 enabled &&
+                resampleFrequency &&
                 vectorSpecification.vectorName &&
                 vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getCaseUuid() &&
                 vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getEnsembleName() &&

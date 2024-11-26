@@ -9,7 +9,7 @@ import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
-import { loadEnsembleSetMetadataFromBackend } from "./internal/EnsembleSetLoader";
+import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
 import { WorkbenchSessionPrivate } from "./internal/WorkbenchSessionPrivate";
@@ -250,7 +250,7 @@ export class Workbench {
 
         console.debug("loadAndSetupEnsembleSetInSession - starting load");
         this._workbenchSession.setEnsembleSetLoadingState(true);
-        const newEnsembleSet = await loadEnsembleSetMetadataFromBackend(
+        const newEnsembleSet = await loadMetadataFromBackendAndCreateEnsembleSet(
             queryClient,
             userEnsembleSettings,
             userDeltaEnsembleSettings

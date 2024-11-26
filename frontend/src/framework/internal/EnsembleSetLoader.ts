@@ -10,14 +10,133 @@ import { ContinuousParameter, DiscreteParameter, Parameter, ParameterType } from
 import { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 
-export async function loadEnsembleSetMetadataFromBackend(
+type EnsembleApiData = {
+    ensembleDetails: EnsembleDetails_api;
+    parameters: EnsembleParameter_api[];
+    sensitivities: EnsembleSensitivity_api[];
+};
+type EnsembleIdentStringToApiDataMap = {
+    [ensembleIdentString: string]: EnsembleApiData;
+};
+
+export async function loadMetadataFromBackendAndCreateEnsembleSet(
     queryClient: QueryClient,
     userEnsembleSettings: UserEnsembleSetting[],
     userDeltaEnsembleSettings: UserDeltaEnsembleSetting[]
 ): Promise<EnsembleSet> {
+    // Get ensemble idents to load
     const ensembleIdentsToLoad: EnsembleIdent[] = userEnsembleSettings.map((setting) => setting.ensembleIdent);
+    for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
+        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.firstEnsembleIdent)) {
+            ensembleIdentsToLoad.push(deltaEnsembleSetting.firstEnsembleIdent);
+        }
+        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.secondEnsembleIdent)) {
+            ensembleIdentsToLoad.push(deltaEnsembleSetting.secondEnsembleIdent);
+        }
+    }
 
-    console.debug("loadEnsembleSetMetadataFromBackend", ensembleIdentsToLoad);
+    // Fetch from back-end
+    const ensembleIdentStringToApiDataMap = await loadEnsembleIdentStringToApiDataMapFromBackend(
+        queryClient,
+        ensembleIdentsToLoad
+    );
+
+    // Create regular ensembles
+    const outEnsembleArr: Ensemble[] = [];
+    for (const ensembleSetting of userEnsembleSettings) {
+        const ensembleIdentString = ensembleSetting.ensembleIdent.toString();
+        const ensembleApiData = ensembleIdentStringToApiDataMap[ensembleIdentString];
+        if (!ensembleApiData) {
+            console.error("Error fetching ensemble data, dropping ensemble:", ensembleSetting.ensembleIdent.toString());
+            continue;
+        }
+
+        const parameterArr = buildParameterArrFromApiResponse(ensembleApiData.parameters);
+        const sensitivityArr = buildSensitivityArrFromApiResponse(ensembleApiData.sensitivities);
+        outEnsembleArr.push(
+            new Ensemble(
+                ensembleApiData.ensembleDetails.field_identifier,
+                ensembleApiData.ensembleDetails.case_uuid,
+                ensembleApiData.ensembleDetails.case_name,
+                ensembleApiData.ensembleDetails.name,
+                ensembleApiData.ensembleDetails.realizations,
+                parameterArr,
+                sensitivityArr,
+                ensembleSetting.color,
+                ensembleSetting.customName
+            )
+        );
+    }
+
+    // Create delta ensembles
+    // - Delta ensembles does not support parameters and sensitivities yet
+    const outDeltaEnsembleArr: DeltaEnsemble[] = [];
+    const emptyParameterArr: Parameter[] = [];
+    const nullSensitiveArr = null;
+    const emptyColor = "";
+    for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
+        const firstEnsembleIdentString = deltaEnsembleSetting.firstEnsembleIdent.toString();
+        const secondEnsembleIdentString = deltaEnsembleSetting.secondEnsembleIdent.toString();
+
+        const firstEnsembleApiData = ensembleIdentStringToApiDataMap[firstEnsembleIdentString];
+        const secondEnsembleApiData = ensembleIdentStringToApiDataMap[secondEnsembleIdentString];
+        if (!firstEnsembleApiData || !secondEnsembleApiData) {
+            console.error(
+                "Error fetching delta ensemble data, dropping delta ensemble:",
+                deltaEnsembleSetting.customName ?? `${firstEnsembleIdentString} - ${secondEnsembleIdentString}`
+            );
+            continue;
+        }
+
+        const firstEnsembleCustomName =
+            userEnsembleSettings.find((elm) => elm.ensembleIdent.toString() === firstEnsembleIdentString)?.customName ??
+            null;
+        const secondEnsembleCustomName =
+            userEnsembleSettings.find((elm) => elm.ensembleIdent.toString() === secondEnsembleIdentString)
+                ?.customName ?? null;
+
+        const firstEnsemble = new Ensemble(
+            firstEnsembleApiData.ensembleDetails.field_identifier,
+            firstEnsembleApiData.ensembleDetails.case_uuid,
+            firstEnsembleApiData.ensembleDetails.case_name,
+            firstEnsembleApiData.ensembleDetails.name,
+            firstEnsembleApiData.ensembleDetails.realizations,
+            emptyParameterArr,
+            nullSensitiveArr,
+            emptyColor,
+            firstEnsembleCustomName
+        );
+
+        const secondEnsemble = new Ensemble(
+            secondEnsembleApiData.ensembleDetails.field_identifier,
+            secondEnsembleApiData.ensembleDetails.case_uuid,
+            secondEnsembleApiData.ensembleDetails.case_name,
+            secondEnsembleApiData.ensembleDetails.name,
+            secondEnsembleApiData.ensembleDetails.realizations,
+            emptyParameterArr,
+            nullSensitiveArr,
+            emptyColor,
+            secondEnsembleCustomName
+        );
+
+        outDeltaEnsembleArr.push(
+            new DeltaEnsemble(
+                firstEnsemble,
+                secondEnsemble,
+                deltaEnsembleSetting.color,
+                deltaEnsembleSetting.customName
+            )
+        );
+    }
+
+    return new EnsembleSet(outEnsembleArr, outDeltaEnsembleArr);
+}
+
+async function loadEnsembleIdentStringToApiDataMapFromBackend(
+    queryClient: QueryClient,
+    ensembleIdents: EnsembleIdent[]
+): Promise<EnsembleIdentStringToApiDataMap> {
+    console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
 
     const STALE_TIME = 5 * 60 * 1000;
     const CACHE_TIME = 5 * 60 * 1000;
@@ -26,7 +145,7 @@ export async function loadEnsembleSetMetadataFromBackend(
     const parametersPromiseArr: Promise<EnsembleParameter_api[]>[] = [];
     const sensitivitiesPromiseArr: Promise<EnsembleSensitivity_api[]>[] = [];
 
-    for (const ensembleIdent of ensembleIdentsToLoad) {
+    for (const ensembleIdent of ensembleIdents) {
         const caseUuid = ensembleIdent.getCaseUuid();
         const ensembleName = ensembleIdent.getEnsembleName();
 
@@ -56,177 +175,50 @@ export async function loadEnsembleSetMetadataFromBackend(
     }
     console.debug(`Issued ${ensembleDetailsPromiseArr.length} promise(s)`);
 
-    const outEnsembleArr: Ensemble[] = [];
-
     const ensembleDetailsOutcomeArr = await Promise.allSettled(ensembleDetailsPromiseArr);
     const parametersOutcomeArr = await Promise.allSettled(parametersPromiseArr);
     const sensitivitiesOutcomeArr = await Promise.allSettled(sensitivitiesPromiseArr);
 
+    const resMap: EnsembleIdentStringToApiDataMap = {};
     for (let i = 0; i < ensembleDetailsOutcomeArr.length; i++) {
         const ensembleDetailsOutcome = ensembleDetailsOutcomeArr[i];
         console.debug(`ensembleDetailsOutcome[${i}]:`, ensembleDetailsOutcome.status);
         if (ensembleDetailsOutcome.status === "rejected") {
-            console.error("Error fetching ensemble details, dropping ensemble:", ensembleIdentsToLoad[i].toString());
+            console.error("Error fetching ensemble details, dropping ensemble:", ensembleIdents[i].toString());
             continue;
         }
 
         const ensembleDetails: EnsembleDetails_api = ensembleDetailsOutcome.value;
         if (
-            ensembleDetails.case_uuid !== ensembleIdentsToLoad[i].getCaseUuid() ||
-            ensembleDetails.name !== ensembleIdentsToLoad[i].getEnsembleName()
+            ensembleDetails.case_uuid !== ensembleIdents[i].getCaseUuid() ||
+            ensembleDetails.name !== ensembleIdents[i].getEnsembleName()
         ) {
-            console.error("Got mismatched data from backend, dropping ensemble:", ensembleIdentsToLoad[i].toString());
+            console.error("Got mismatched data from backend, dropping ensemble:", ensembleIdents[i].toString());
             continue;
         }
 
         const parametersOutcome = parametersOutcomeArr[i];
         console.debug(`parametersOutcome[${i}]:`, parametersOutcome.status);
-        let parameterArr: Parameter[] = [];
+        let parameterArr: EnsembleParameter_api[] = [];
         if (parametersOutcome.status === "fulfilled") {
-            parameterArr = buildParameterArrFromApiResponse(parametersOutcome.value);
+            parameterArr = parametersOutcome.value;
         }
 
         const sensitivitiesOutcome = sensitivitiesOutcomeArr[i];
         console.debug(`sensitivitiesOutcome[${i}]:`, sensitivitiesOutcome.status);
-        let sensitivityArr: Sensitivity[] | null = null;
+        let sensitivityArr: EnsembleSensitivity_api[] = [];
         if (sensitivitiesOutcome.status === "fulfilled") {
-            sensitivityArr = buildSensitivityArrFromApiResponse(sensitivitiesOutcome.value);
+            sensitivityArr = sensitivitiesOutcome.value;
         }
 
-        outEnsembleArr.push(
-            new Ensemble(
-                ensembleDetails.field_identifier,
-                ensembleDetails.case_uuid,
-                ensembleDetails.case_name,
-                ensembleDetails.name,
-                ensembleDetails.realizations,
-                parameterArr,
-                sensitivityArr,
-                userEnsembleSettings[i].color,
-                userEnsembleSettings[i].customName
-            )
-        );
+        resMap[ensembleIdents[i].toString()] = {
+            ensembleDetails: ensembleDetails,
+            parameters: parameterArr,
+            sensitivities: sensitivityArr,
+        };
     }
 
-    // TEMPORARY: Load delta ensembles after loading ensembles
-    const ensembleIdentsToLoadForDeltaEnsembles: EnsembleIdent[] = [];
-    for (const elm of userDeltaEnsembleSettings) {
-        if (!ensembleIdentsToLoadForDeltaEnsembles.includes(elm.firstEnsembleIdent)) {
-            ensembleIdentsToLoadForDeltaEnsembles.push(elm.firstEnsembleIdent);
-        }
-        if (!ensembleIdentsToLoadForDeltaEnsembles.includes(elm.secondEnsembleIdent)) {
-            ensembleIdentsToLoadForDeltaEnsembles.push(elm.secondEnsembleIdent);
-        }
-    }
-
-    console.debug("loadDeltaEnsembleMetadataFromBackend", ensembleIdentsToLoad);
-
-    const deltaEnsembleDetailsPromiseArr: Promise<EnsembleDetails_api>[] = [];
-    for (const ensembleIdent of ensembleIdentsToLoadForDeltaEnsembles) {
-        const caseUuid = ensembleIdent.getCaseUuid();
-        const ensembleName = ensembleIdent.getEnsembleName();
-
-        const ensembleDetailsPromise = queryClient.fetchQuery({
-            queryKey: ["getEnsembleDetails", caseUuid, ensembleName],
-            queryFn: () => apiService.explore.getEnsembleDetails(caseUuid, ensembleName),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
-        });
-
-        deltaEnsembleDetailsPromiseArr.push(ensembleDetailsPromise);
-    }
-    console.debug(`Issued ${deltaEnsembleDetailsPromiseArr.length} promise(s)`);
-
-    const outDeltaEnsembleArr: DeltaEnsemble[] = [];
-
-    const deltaEnsembleDetailsOutcomeArr = await Promise.allSettled(deltaEnsembleDetailsPromiseArr);
-    for (const userDeltaEnsembleSetting of userDeltaEnsembleSettings) {
-        const firstEnsembleIdent = userDeltaEnsembleSetting.firstEnsembleIdent;
-        const secondEnsembleIdent = userDeltaEnsembleSetting.secondEnsembleIdent;
-        const color = userDeltaEnsembleSetting.color;
-        const customName = userDeltaEnsembleSetting.customName;
-
-        let firstEnsembleDetails: EnsembleDetails_api | null = null;
-        let secondEnsembleDetails: EnsembleDetails_api | null = null;
-        for (const elm of deltaEnsembleDetailsOutcomeArr) {
-            if (elm.status === "rejected") {
-                continue;
-            }
-            const ensembleDetails: EnsembleDetails_api = elm.value;
-            if (
-                firstEnsembleDetails === null &&
-                ensembleDetails.case_uuid === firstEnsembleIdent.getCaseUuid() &&
-                ensembleDetails.name === firstEnsembleIdent.getEnsembleName()
-            ) {
-                firstEnsembleDetails = elm.value;
-            }
-
-            if (
-                secondEnsembleDetails === null &&
-                ensembleDetails.case_uuid === secondEnsembleIdent.getCaseUuid() &&
-                ensembleDetails.name === secondEnsembleIdent.getEnsembleName()
-            ) {
-                secondEnsembleDetails = elm.value;
-            }
-
-            if (firstEnsembleDetails !== null && secondEnsembleDetails !== null) {
-                break;
-            }
-        }
-
-        if (!firstEnsembleDetails || !secondEnsembleDetails) {
-            const errorText =
-                !firstEnsembleDetails && !secondEnsembleDetails
-                    ? "first and second"
-                    : !firstEnsembleDetails
-                    ? "first"
-                    : "second";
-
-            console.error(
-                `Error fetching ${errorText} ensemble details, dropping delta ensemble: `,
-                userDeltaEnsembleSetting.customName ??
-                    `${userDeltaEnsembleSetting.firstEnsembleIdent.toString()} - ${userDeltaEnsembleSetting.secondEnsembleIdent.toString()}`
-            );
-            continue;
-        }
-
-        const firstEnsemble = new Ensemble(
-            firstEnsembleDetails.field_identifier,
-            firstEnsembleDetails.case_uuid,
-            firstEnsembleDetails.case_name,
-            firstEnsembleDetails.name,
-            firstEnsembleDetails.realizations,
-            [],
-            null,
-            "", // TODO: Add color support? Perhaps not necessary per ensemble for delta ensembles
-            null // TODO: Add custom name support
-        );
-
-        const secondEnsemble = new Ensemble(
-            secondEnsembleDetails.field_identifier,
-            secondEnsembleDetails.case_uuid,
-            secondEnsembleDetails.case_name,
-            secondEnsembleDetails.name,
-            secondEnsembleDetails.realizations,
-            [],
-            null,
-            "",
-            null
-        );
-
-        // Only add delta ensemble from already loaded ensembles?
-        // NOTE: not necessary, should probably be the ensemble dialogs responsibility
-        // const firstEnsemble = outEnsembleArr.find((ens) => ens.getIdent().equals(firstEnsembleIdent));
-        // const secondEnsemble = outEnsembleArr.find((ens) => ens.getIdent().equals(secondEnsembleIdent));
-
-        // if (firstEnsemble && secondEnsemble) {
-        //     outDeltaEnsembleArr.push(new DeltaEnsemble(firstEnsemble, secondEnsemble, color, customName));
-        // }
-
-        outDeltaEnsembleArr.push(new DeltaEnsemble(firstEnsemble, secondEnsemble, color, customName));
-    }
-
-    return new EnsembleSet(outEnsembleArr, outDeltaEnsembleArr);
+    return resMap;
 }
 
 function buildSensitivityArrFromApiResponse(apiSensitivityArr: EnsembleSensitivity_api[]): Sensitivity[] {
