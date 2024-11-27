@@ -13,7 +13,6 @@ import {
     DeltaEnsembleItem,
     EnsembleItem,
 } from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
-import { EnsembleType } from "@framework/types/ensembleType";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -52,7 +51,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const isAppInitialized = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.AppInitialized);
 
     if (isAppInitialized !== prevIsAppInitialized && !loadingEnsembleSet) {
-        setEnsembleDialogOpen(ensembleSet.getEnsembleArr().length === 0);
+        setEnsembleDialogOpen(ensembleSet.getEnsembleArray().length === 0);
         setPrevIsAppInitialized(isAppInitialized);
     }
 
@@ -147,7 +146,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, ensembleSettings, deltaEnsembleSettings);
     }
 
-    const selectedEnsembles: EnsembleItem[] = ensembleSet.getEnsembleArr(EnsembleType.REGULAR).map((ens) => ({
+    const selectedEnsembles: EnsembleItem[] = ensembleSet.getEnsembleArray().map((ens) => ({
         caseUuid: ens.getCaseUuid(),
         caseName: ens.getCaseName(),
         ensembleName: ens.getEnsembleName(),
@@ -160,7 +159,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         fixedSelectedEnsembles = newSelectedEnsembles;
     }
 
-    const createdDeltaEnsembles: DeltaEnsembleItem[] = ensembleSet.getEnsembleArr(EnsembleType.DELTA).map((ens) => {
+    const createdDeltaEnsembles: DeltaEnsembleItem[] = ensembleSet.getDeltaEnsembleArray().map((ens) => {
         const firstEnsemble: DeltaEnsembleBaseItem = {
             caseUuid: ens.getEnsembleIdentByElement(DeltaEnsembleElement.FIRST).getCaseUuid(),
             ensembleName: ens.getEnsembleIdentByElement(DeltaEnsembleElement.FIRST).getEnsembleName(),

@@ -2,7 +2,6 @@ import React from "react";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
-import { Ensemble } from "./Ensemble";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilterSet } from "./RealizationFilterSet";
@@ -140,15 +139,6 @@ export function useEnsembleSet(workbenchSession: WorkbenchSession): EnsembleSet 
     );
 
     return storedEnsembleSet;
-}
-
-export function useFirstEnsembleInEnsembleSet(workbenchSession: WorkbenchSession): Ensemble | null {
-    const ensembleSet = useEnsembleSet(workbenchSession);
-    if (!ensembleSet.hasAnyEnsembles()) {
-        return null;
-    }
-
-    return ensembleSet.getEnsembleArr()[0];
 }
 
 export function useIsEnsembleSetLoading(workbenchSession: WorkbenchSession): boolean {

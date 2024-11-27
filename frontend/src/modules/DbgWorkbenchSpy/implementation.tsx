@@ -80,7 +80,7 @@ function makeTableRow(label: string, value: any, updatedTS?: string) {
 }
 
 function makeEnsembleSetTable(ensembleSet: EnsembleSet) {
-    const ensembleArr = ensembleSet.getEnsembleArr();
+    const ensembleArr = ensembleSet.getEnsembleArray();
     return (
         <table>
             <tbody>

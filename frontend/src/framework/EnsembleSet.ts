@@ -3,7 +3,6 @@ import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { Ensemble } from "./Ensemble";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleTypeSet } from "./EnsembleTypeSet";
-import { EnsembleType } from "./types/ensembleType";
 
 export class EnsembleSet {
     private _regularEnsembleSet: EnsembleTypeSet<EnsembleIdent, Ensemble>;
@@ -15,21 +14,51 @@ export class EnsembleSet {
     }
 
     /**
-     * Returns true if there are any ensembles in the set.
-     *
-     * @param type - The type of ensembles to check for. If not provided, checks for regular ensembles (backward compatible).
-     * @returns True if there are any ensembles in the set.
+     * Returns true if there are any regular ensembles in the set.
+     * @returns True if there are any regular ensembles in the set.
      */
-    hasAnyEnsembles(type?: EnsembleType): boolean {
-        if (type === EnsembleType.ALL) {
-            return this._regularEnsembleSet.hasAnyEnsembles() || this._deltaEnsembleSet.hasAnyEnsembles();
-        }
-        if (type === EnsembleType.DELTA) {
-            return this._deltaEnsembleSet.hasAnyEnsembles();
-        }
-
-        // Regular or undefined
+    hasAnyEnsembles(): boolean {
         return this._regularEnsembleSet.hasAnyEnsembles();
+    }
+
+    /**
+     * Returns true if there are any delta ensembles in the set.
+     * @returns True if there are any delta ensembles in the set.
+     */
+    hasAnyDeltaEnsembles(): boolean {
+        return this._deltaEnsembleSet.hasAnyEnsembles();
+    }
+
+    /**
+     * Returns true if there are any regular or delta ensembles in the set.
+     * @returns True if there are any regular or delta ensembles in the set.
+     */
+    hasAnyEnsemblesOrDeltaEnsembles(): boolean {
+        return this.hasAnyEnsembles() || this.hasAnyDeltaEnsembles();
+    }
+
+    /**
+     * Get an array of all regular ensembles in the set.
+     * @returns An array of all regular ensembles in the set.
+     */
+    getEnsembleArray(): readonly Ensemble[] {
+        return this._regularEnsembleSet.getEnsembleArray();
+    }
+
+    /**
+     * Get an array of all delta ensembles in the set.
+     * @returns An array of all delta ensembles in the set.
+     */
+    getDeltaEnsembleArray(): readonly DeltaEnsemble[] {
+        return this._deltaEnsembleSet.getEnsembleArray();
+    }
+
+    /**
+     * Get an array of all ensembles in the set.
+     * @returns An array of all ensembles in the set.
+     */
+    getAllEnsembleTypesArray(): readonly (Ensemble | DeltaEnsemble)[] {
+        return [...this._regularEnsembleSet.getEnsembleArray(), ...this._deltaEnsembleSet.getEnsembleArray()];
     }
 
     /**
@@ -59,23 +88,6 @@ export class EnsembleSet {
             return this._deltaEnsembleSet.findEnsemble(ensembleIdent);
         }
         return null;
-    }
-
-    getEnsembleArr(type?: EnsembleType.REGULAR): readonly Ensemble[];
-    getEnsembleArr(type: EnsembleType.DELTA): readonly DeltaEnsemble[];
-    getEnsembleArr(type: EnsembleType.ALL): readonly (Ensemble | DeltaEnsemble)[];
-    getEnsembleArr(
-        type: EnsembleType | undefined = undefined
-    ): readonly Ensemble[] | readonly DeltaEnsemble[] | readonly (Ensemble | DeltaEnsemble)[] {
-        if (type === EnsembleType.ALL) {
-            return [...this._regularEnsembleSet.getEnsembleArr(), ...this._deltaEnsembleSet.getEnsembleArr()];
-        }
-        if (type === EnsembleType.DELTA) {
-            return this._deltaEnsembleSet.getEnsembleArr();
-        }
-
-        // Regular or undefined
-        return this._regularEnsembleSet.getEnsembleArr();
     }
 
     findEnsembleByIdentString(ensembleIdentString: string): Ensemble | DeltaEnsemble | null {

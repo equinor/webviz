@@ -57,7 +57,7 @@ export function usePublishToDataChannels(
         const ensembleCollection = table.splitByColumn(SourceIdentifier.ENSEMBLE);
         for (const [ensembleIdentStr, ensembleTable] of ensembleCollection.getCollectionMap()) {
             const ensembleIdent = EnsembleIdent.fromString(ensembleIdentStr.toString());
-            const ensembleName = makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArr());
+            const ensembleName = makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArray());
 
             const tableCollection = ensembleTable.splitByColumn(SourceIdentifier.TABLE_NAME);
             for (const [tableName, table] of tableCollection.getCollectionMap()) {

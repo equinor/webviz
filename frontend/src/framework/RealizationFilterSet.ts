@@ -4,7 +4,6 @@ import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilter } from "./RealizationFilter";
-import { EnsembleType } from "./types/ensembleType";
 
 export class RealizationFilterSet {
     // Map of ensembleIdent string to RealizationFilter
@@ -35,7 +34,7 @@ export class RealizationFilterSet {
         }
 
         // Add filters for ensembles that are new to the ensemble set
-        for (const ensemble of ensembleSet.getEnsembleArr(EnsembleType.ALL)) {
+        for (const ensemble of ensembleSet.getAllEnsembleTypesArray()) {
             const ensembleIdentString = ensemble.getIdent().toString();
             const isEnsembleInMap = this._ensembleIdentStringRealizationFilterMap.has(ensembleIdentString);
             if (!isEnsembleInMap) {

@@ -17,9 +17,7 @@ import {
     EnsembleRealizationFilter,
     EnsembleRealizationFilterSelections,
 } from "@framework/internal/components/EnsembleRealizationFilter";
-import { EnsembleType } from "@framework/types/ensembleType";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
-import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
 import { countTrueValues } from "@framework/utils/objectUtils";
 import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
 import { FilterAlt } from "@mui/icons-material";
@@ -61,7 +59,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
     // Create new maps if ensembles are added or removed
     const ensembleIdentStrings = ensembleSet
-        .getEnsembleArr(EnsembleType.ALL)
+        .getAllEnsembleTypesArray()
         .map((ensemble) => ensemble.getIdent().toString());
     if (!isEqual(ensembleIdentStrings, Object.keys(ensembleIdentStringToRealizationFilterSelectionsMap))) {
         // Create new maps with the new ensemble ident strings
@@ -310,7 +308,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             >
                 <div className="flex flex-col p-2 gap-4 overflow-y-auto">
                     <div className="flex-grow space-y-4">
-                        {ensembleSet.getEnsembleArr(EnsembleType.ALL).map((ensemble) => {
+                        {ensembleSet.getAllEnsembleTypesArray().map((ensemble) => {
                             const ensembleIdent = ensemble.getIdent();
                             const isActive =
                                 activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
@@ -348,3 +346,19 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         </div>
     );
 };
+
+/**
+ * Get ensemble ident from string
+ * @param ensembleIdentString
+ * @returns EnsembleIdent | DeltaEnsembleIdent | null
+ */
+export function getEnsembleIdentFromString(ensembleIdentString: string): EnsembleIdent | DeltaEnsembleIdent | null {
+    let ensembleIdent = null;
+    if (EnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
+        ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+    } else if (DeltaEnsembleIdent.isValidDeltaEnsembleIdentString(ensembleIdentString)) {
+        ensembleIdent = DeltaEnsembleIdent.fromString(ensembleIdentString);
+    }
+
+    return ensembleIdent;
+}

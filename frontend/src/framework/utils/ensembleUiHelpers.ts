@@ -1,5 +1,3 @@
-import { EnsembleType } from "@framework/types/ensembleType";
-
 import { DeltaEnsembleIdent } from "../DeltaEnsembleIdent";
 import { EnsembleIdent } from "../EnsembleIdent";
 import { EnsembleSet } from "../EnsembleSet";
@@ -57,10 +55,10 @@ export function fixupEnsembleIdent(
     }
 
     if (currIdent instanceof DeltaEnsembleIdent) {
-        return ensembleSet.getEnsembleArr(EnsembleType.DELTA)[0].getIdent();
+        return ensembleSet.getDeltaEnsembleArray()[0].getIdent();
     }
 
-    return ensembleSet.getEnsembleArr()[0].getIdent();
+    return ensembleSet.getEnsembleArray()[0].getIdent();
 }
 
 /**
@@ -94,7 +92,7 @@ export function fixupEnsembleIdents(
     }
 
     if (currIdents === null || currIdents.length === 0) {
-        return [ensembleSet.getEnsembleArr()[0].getIdent()];
+        return [ensembleSet.getEnsembleArray()[0].getIdent()];
     }
 
     return currIdents.filter((currIdent) => {

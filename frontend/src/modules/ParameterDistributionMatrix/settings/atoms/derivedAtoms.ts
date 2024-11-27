@@ -15,8 +15,8 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
     let computedEnsembleIdents = userSelectedEnsembleIdents.filter((el) => ensembleSet.hasEnsemble(el));
-    if (computedEnsembleIdents.length === 0 && ensembleSet.getEnsembleArr().length > 0) {
-        computedEnsembleIdents = [ensembleSet.getEnsembleArr()[0].getIdent()];
+    if (computedEnsembleIdents.length === 0 && ensembleSet.getEnsembleArray().length > 0) {
+        computedEnsembleIdents = [ensembleSet.getEnsembleArray()[0].getIdent()];
     }
 
     return computedEnsembleIdents;

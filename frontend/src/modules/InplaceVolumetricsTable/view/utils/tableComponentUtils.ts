@@ -194,7 +194,7 @@ function formatEnsembleIdent(value: string | number | null, ensembleSet: Ensembl
     if (ensemble && ensemble instanceof Ensemble) {
         return makeDistinguishableEnsembleDisplayName(
             EnsembleIdent.fromString(value.toString()),
-            ensembleSet.getEnsembleArr()
+            ensembleSet.getEnsembleArray()
         );
     }
     return value.toString();

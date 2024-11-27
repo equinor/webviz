@@ -24,7 +24,7 @@ export function makeFormatLabelFunction(
             const ensembleIdent = EnsembleIdent.fromString(value.toString());
             const ensemble = ensembleSet.findEnsemble(ensembleIdent);
             if (ensemble) {
-                return makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArr());
+                return makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArray());
             }
         }
         return value.toString();
@@ -85,7 +85,7 @@ export function makePlotData(
                 const ensemble = ensembleSet.findEnsemble(ensembleIdent);
                 if (ensemble) {
                     color = ensemble.getColor();
-                    title = makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArr());
+                    title = makeDistinguishableEnsembleDisplayName(ensembleIdent, ensembleSet.getEnsembleArray());
                 }
             }
 

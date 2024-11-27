@@ -23,7 +23,7 @@ export const filteredEnsembleSetAtom = atom((get) => {
         return ensembleSet;
     }
 
-    return new EnsembleSet(ensembleSet.getEnsembleArr().filter((el) => el.getFieldIdentifier() === fieldIdentifier));
+    return new EnsembleSet(ensembleSet.getEnsembleArray().filter((el) => el.getFieldIdentifier() === fieldIdentifier));
 });
 
 export const selectedFieldIdentifierAtom = atom((get) => {
@@ -31,7 +31,7 @@ export const selectedFieldIdentifierAtom = atom((get) => {
     const selectedFieldIdentifier = get(userSelectedFieldIdentifierAtom);
 
     if (selectedFieldIdentifier === null) {
-        return ensembleSet.getEnsembleArr()[0]?.getFieldIdentifier() || null;
+        return ensembleSet.getEnsembleArray()[0]?.getFieldIdentifier() || null;
     }
 
     return selectedFieldIdentifier;
@@ -65,7 +65,7 @@ export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
     const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
 
     if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
-        return ensembleSet.getEnsembleArr()[0]?.getIdent() || null;
+        return ensembleSet.getEnsembleArray()[0]?.getIdent() || null;
     }
 
     return userSelectedEnsembleIdent;

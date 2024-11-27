@@ -32,6 +32,6 @@ export const selectedVectorAtom = atom<string | null>((get) => {
 
 export const ensembleSetDependentAtom = atom<EnsembleIdent | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const firstEnsemble = ensembleSet.getEnsembleArr()[0];
+    const firstEnsemble = ensembleSet.getEnsembleArray()[0];
     return firstEnsemble?.getIdent() ?? null;
 });

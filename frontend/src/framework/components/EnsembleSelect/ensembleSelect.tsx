@@ -2,7 +2,6 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
-import { EnsembleType } from "@framework/types/ensembleType";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Select, SelectOption, SelectProps } from "@lib/components/Select";
 
@@ -12,7 +11,7 @@ export type EnsembleSelectWithDeltaEnsemblesProps = {
     multiple?: boolean;
     allowDeltaEnsembles: true;
     value: (EnsembleIdent | DeltaEnsembleIdent)[];
-    onChange: (ensembleIdentArr: (EnsembleIdent | DeltaEnsembleIdent)[]) => void;
+    onChange: (ensembleIdentArray: (EnsembleIdent | DeltaEnsembleIdent)[]) => void;
 } & Omit<SelectProps<string>, "options" | "value" | "onChange">;
 
 // Overload for EnsembleSelect without DeltaEnsembleIdent
@@ -21,7 +20,7 @@ export type EnsembleSelectWithoutDeltaEnsemblesProps = {
     multiple?: boolean;
     allowDeltaEnsembles?: false | undefined;
     value: EnsembleIdent[];
-    onChange: (ensembleIdentArr: EnsembleIdent[]) => void;
+    onChange: (ensembleIdentArray: EnsembleIdent[]) => void;
 } & Omit<SelectProps<string>, "options" | "value" | "onChange">;
 
 export function EnsembleSelect(props: EnsembleSelectWithDeltaEnsemblesProps): JSX.Element;
@@ -31,30 +30,28 @@ export function EnsembleSelect(
 ): JSX.Element {
     const { ensembleSet, value, allowDeltaEnsembles, onChange, multiple, ...rest } = props;
 
-    function handleSelectionChanged(selectedEnsembleIdentStrArr: string[]) {
-        const identArr: (EnsembleIdent | DeltaEnsembleIdent)[] = [];
-        for (const identStr of selectedEnsembleIdentStrArr) {
+    function handleSelectionChanged(selectedEnsembleIdentStrArray: string[]) {
+        const identArray: (EnsembleIdent | DeltaEnsembleIdent)[] = [];
+        for (const identStr of selectedEnsembleIdentStrArray) {
             const foundEnsemble = ensembleSet.findEnsembleByIdentString(identStr);
             if (foundEnsemble !== null && (allowDeltaEnsembles || foundEnsemble instanceof Ensemble)) {
-                identArr.push(foundEnsemble.getIdent());
+                identArray.push(foundEnsemble.getIdent());
             }
         }
 
         // Filter to match the correct return type before calling onChange
         if (!allowDeltaEnsembles) {
-            const validIdentArr = identArr.filter((ident) => ident instanceof EnsembleIdent) as EnsembleIdent[];
-            onChange(validIdentArr);
+            const validIdentArray = identArray.filter((ident) => ident instanceof EnsembleIdent) as EnsembleIdent[];
+            onChange(validIdentArray);
             return;
         }
-        onChange(identArr);
+        onChange(identArray);
     }
 
-    const optionsArr: SelectOption[] = [];
-    const ensembleArr = allowDeltaEnsembles
-        ? ensembleSet.getEnsembleArr(EnsembleType.ALL)
-        : ensembleSet.getEnsembleArr(EnsembleType.REGULAR);
-    for (const ens of ensembleArr) {
-        optionsArr.push({
+    const optionsArray: SelectOption[] = [];
+    const ensembleArray = allowDeltaEnsembles ? ensembleSet.getAllEnsembleTypesArray() : ensembleSet.getEnsembleArray();
+    for (const ens of ensembleArray) {
+        optionsArray.push({
             value: ens.getIdent().toString(),
             label: ens.getDisplayName(),
             adornment: (
@@ -65,17 +62,17 @@ export function EnsembleSelect(
         });
     }
 
-    const selectedArr: string[] = [];
+    const selectedArray: string[] = [];
     for (const ident of value) {
-        selectedArr.push(ident.toString());
+        selectedArray.push(ident.toString());
     }
 
     const isMultiple = multiple ?? true;
 
     return (
         <Select
-            options={optionsArr}
-            value={selectedArr}
+            options={optionsArray}
+            value={selectedArray}
             onChange={handleSelectionChanged}
             multiple={isMultiple}
             {...rest}

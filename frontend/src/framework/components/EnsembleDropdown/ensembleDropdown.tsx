@@ -2,7 +2,6 @@ import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
-import { EnsembleType } from "@framework/types/ensembleType";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdown";
 
@@ -46,12 +45,10 @@ export function EnsembleDropdown(
         onChange(foundEnsemble.getIdent());
     }
 
-    const optionsArr: DropdownOption[] = [];
-    const ensembleArr = allowDeltaEnsembles
-        ? ensembleSet.getEnsembleArr(EnsembleType.ALL)
-        : ensembleSet.getEnsembleArr(EnsembleType.REGULAR);
-    for (const ens of ensembleArr) {
-        optionsArr.push({
+    const optionsArray: DropdownOption[] = [];
+    const ensembleArray = allowDeltaEnsembles ? ensembleSet.getAllEnsembleTypesArray() : ensembleSet.getEnsembleArray();
+    for (const ens of ensembleArray) {
+        optionsArray.push({
             value: ens.getIdent().toString(),
             label: ens.getDisplayName(),
             adornment: (
@@ -62,5 +59,5 @@ export function EnsembleDropdown(
         });
     }
 
-    return <Dropdown options={optionsArr} value={value?.toString()} onChange={handleSelectionChanged} {...rest} />;
+    return <Dropdown options={optionsArray} value={value?.toString()} onChange={handleSelectionChanged} {...rest} />;
 }

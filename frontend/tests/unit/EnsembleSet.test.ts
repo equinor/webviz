@@ -4,7 +4,7 @@ import { EnsembleSet } from "@framework/EnsembleSet";
 
 import { describe, expect, test } from "vitest";
 
-const ensembleArr = [
+const ensembleArray = [
     new Ensemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", [], [], null, ""),
     new Ensemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", [], [], null, ""),
     new Ensemble("DROGON", "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", [], [], null, ""),
@@ -14,12 +14,12 @@ describe("EnsembleSet tests", () => {
     test("access empty EnsembleSet", () => {
         const ensSet = new EnsembleSet([]);
         expect(ensSet.hasAnyEnsembles()).toBe(false);
-        expect(ensSet.getEnsembleArr().length).toBe(0);
+        expect(ensSet.getEnsembleArray().length).toBe(0);
         expect(ensSet.findEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBeNull();
     });
 
     test("has by EnsembleIdent", () => {
-        const ensSet = new EnsembleSet(ensembleArr);
+        const ensSet = new EnsembleSet(ensembleArray);
         expect(ensSet.hasAnyEnsembles()).toBe(true);
         expect(ensSet.hasEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBe(true);
         expect(ensSet.hasEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens99"))).toBe(false);
@@ -27,7 +27,7 @@ describe("EnsembleSet tests", () => {
     });
 
     test("find by EnsembleIdent", () => {
-        const ensSet = new EnsembleSet(ensembleArr);
+        const ensSet = new EnsembleSet(ensembleArray);
         expect(ensSet.hasAnyEnsembles()).toBe(true);
         expect(ensSet.findEnsemble(new EnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))).toBeInstanceOf(
             Ensemble
@@ -37,7 +37,7 @@ describe("EnsembleSet tests", () => {
     });
 
     test("find by EnsembleIdentString", () => {
-        const ensSet = new EnsembleSet(ensembleArr);
+        const ensSet = new EnsembleSet(ensembleArray);
         expect(ensSet.hasAnyEnsembles()).toBe(true);
         expect(ensSet.findEnsembleByIdentString("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa::ens1")).toBeInstanceOf(Ensemble);
         expect(ensSet.findEnsembleByIdentString("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa::ens99")).toBeNull();
@@ -45,7 +45,7 @@ describe("EnsembleSet tests", () => {
     });
 
     test("find by EnsembleIdentString containing invalid UUID", () => {
-        const ensSet = new EnsembleSet(ensembleArr);
+        const ensSet = new EnsembleSet(ensembleArray);
         expect(ensSet.findEnsembleByIdentString("")).toBeNull();
         expect(ensSet.findEnsembleByIdentString("")).toBeNull();
         expect(ensSet.findEnsembleByIdentString("QQQQQQQQ-aaaa-4444-aaaa-aaaaaaaaaaaa::ens99")).toBeNull();

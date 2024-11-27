@@ -7,7 +7,7 @@ export class Ensemble implements EnsembleInterface {
     private _ensembleIdent: EnsembleIdent;
     private _fieldIdentifier: string;
     private _caseName: string;
-    private _realizationsArr: number[];
+    private _realizationsArray: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
     private _color: string;
@@ -18,23 +18,23 @@ export class Ensemble implements EnsembleInterface {
         caseUuid: string,
         caseName: string,
         ensembleName: string,
-        realizationsArr: number[],
-        parameterArr: Parameter[],
-        sensitivityArr: Sensitivity[] | null,
+        realizationsArray: number[],
+        parameterArray: Parameter[],
+        sensitivityArray: Sensitivity[] | null,
         color: string,
         customName: string | null = null
     ) {
         this._ensembleIdent = new EnsembleIdent(caseUuid, ensembleName);
         this._fieldIdentifier = fieldIdentifier;
         this._caseName = caseName;
-        this._realizationsArr = Array.from(realizationsArr).sort((a, b) => a - b);
-        this._parameters = new EnsembleParameters(parameterArr);
+        this._realizationsArray = Array.from(realizationsArray).sort((a, b) => a - b);
+        this._parameters = new EnsembleParameters(parameterArray);
         this._color = color;
         this._customName = customName;
 
         this._sensitivities = null;
-        if (sensitivityArr && sensitivityArr.length > 0) {
-            this._sensitivities = new EnsembleSensitivities(sensitivityArr);
+        if (sensitivityArray && sensitivityArray.length > 0) {
+            this._sensitivities = new EnsembleSensitivities(sensitivityArray);
         }
     }
 
@@ -66,19 +66,19 @@ export class Ensemble implements EnsembleInterface {
     }
 
     getRealizations(): readonly number[] {
-        return this._realizationsArr;
+        return this._realizationsArray;
     }
 
     getRealizationCount(): number {
-        return this._realizationsArr.length;
+        return this._realizationsArray.length;
     }
 
     getMaxRealizationNumber(): number | undefined {
-        if (this._realizationsArr.length == 0) {
+        if (this._realizationsArray.length == 0) {
             return undefined;
         }
 
-        return this._realizationsArr[this._realizationsArr.length - 1];
+        return this._realizationsArray[this._realizationsArray.length - 1];
     }
 
     getParameters(): EnsembleParameters {

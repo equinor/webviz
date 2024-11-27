@@ -24,7 +24,7 @@ export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
     const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
 
     if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
-        return ensembleSet.getEnsembleArr()[0]?.getIdent() || null;
+        return ensembleSet.getEnsembleArray()[0]?.getIdent() || null;
     }
 
     return userSelectedEnsembleIdent;

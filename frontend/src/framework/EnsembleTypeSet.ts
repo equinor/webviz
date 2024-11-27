@@ -2,14 +2,14 @@ import { EnsembleIdentInterface } from "./EnsembleIdentInterface";
 import { EnsembleInterface } from "./EnsembleInterface";
 
 export class EnsembleTypeSet<TEnsembleIdent extends EnsembleIdentInterface<any>, TEnsemble extends EnsembleInterface> {
-    private _ensembleTypeArr: TEnsemble[];
+    private _ensembleTypeArray: TEnsemble[];
 
-    constructor(ensembles: TEnsemble[]) {
-        this._ensembleTypeArr = ensembles;
+    constructor(ensembleArray: TEnsemble[]) {
+        this._ensembleTypeArray = ensembleArray;
     }
 
     hasAnyEnsembles(): boolean {
-        return this._ensembleTypeArr.length > 0;
+        return this._ensembleTypeArray.length > 0;
     }
 
     hasEnsemble(ensembleIdent: TEnsembleIdent): boolean {
@@ -17,10 +17,10 @@ export class EnsembleTypeSet<TEnsembleIdent extends EnsembleIdentInterface<any>,
     }
 
     findEnsemble(ensembleIdent: TEnsembleIdent): TEnsemble | null {
-        return this._ensembleTypeArr.find((ens) => ens.getIdent().equals(ensembleIdent)) ?? null;
+        return this._ensembleTypeArray.find((ens) => ens.getIdent().equals(ensembleIdent)) ?? null;
     }
 
-    getEnsembleArr(): readonly TEnsemble[] {
-        return this._ensembleTypeArr;
+    getEnsembleArray(): readonly TEnsemble[] {
+        return this._ensembleTypeArray;
     }
 }

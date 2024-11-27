@@ -105,8 +105,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         setUserSelectedParameterIdentStr(null);
     }
 
-    function handleEnsembleSelectChange(ensembleIdentArr: (EnsembleIdent | DeltaEnsembleIdent)[]) {
-        setUserSelectedEnsembleIdents(ensembleIdentArr);
+    function handleEnsembleSelectChange(ensembleIdentArray: (EnsembleIdent | DeltaEnsembleIdent)[]) {
+        setUserSelectedEnsembleIdents(ensembleIdentArray);
     }
 
     function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {

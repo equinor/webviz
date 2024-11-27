@@ -19,7 +19,7 @@ export class DeltaEnsemble implements EnsembleInterface {
     private _color: string;
     private _customName: string | null;
 
-    private _realizationsArr: readonly number[];
+    private _realizationsArray: readonly number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
 
@@ -40,7 +40,7 @@ export class DeltaEnsemble implements EnsembleInterface {
         const realizationIntersection = this._firstEnsemble
             .getRealizations()
             .filter((realization) => this._secondEnsemble.getRealizations().includes(realization));
-        this._realizationsArr = Array.from(realizationIntersection).sort((a, b) => a - b);
+        this._realizationsArray = Array.from(realizationIntersection).sort((a, b) => a - b);
 
         // TODO:
         // - How to handle parameters and sensitivities?
@@ -68,15 +68,15 @@ export class DeltaEnsemble implements EnsembleInterface {
     }
 
     getRealizations(): readonly number[] {
-        return this._realizationsArr;
+        return this._realizationsArray;
     }
 
     getRealizationCount(): number {
-        return this._realizationsArr.length;
+        return this._realizationsArray.length;
     }
 
     getMaxRealizationNumber(): number | undefined {
-        return this._realizationsArr[this._realizationsArr.length - 1];
+        return this._realizationsArray[this._realizationsArray.length - 1];
     }
 
     getColor(): string {
