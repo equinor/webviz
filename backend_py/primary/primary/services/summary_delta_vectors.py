@@ -4,7 +4,7 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import numpy as np
 
-from .utils.summary_vector_table_helpers import validate_summary_vector_table
+from .utils.summary_vector_table_helpers import validate_summary_vector_table_pa
 
 
 @dataclass
@@ -29,8 +29,8 @@ def create_delta_vector_table(
 
     `Note`: Pre-processing of DATE-columns, e.g. resampling, should be done before calling this function.
     """
-    validate_summary_vector_table(first_vector_table, vector_name)
-    validate_summary_vector_table(second_vector_table, vector_name)
+    validate_summary_vector_table_pa(first_vector_table, vector_name)
+    validate_summary_vector_table_pa(second_vector_table, vector_name)
 
     joined_vector_table = first_vector_table.join(
         second_vector_table, keys=["DATE", "REAL"], join_type="inner", right_suffix="_second"
@@ -56,7 +56,7 @@ def create_realization_delta_vector_list(
     """
     Create a list of RealizationDeltaVector from the delta vector table.
     """
-    validate_summary_vector_table(delta_vector_table, vector_name)
+    validate_summary_vector_table_pa(delta_vector_table, vector_name)
 
     real_arr_np = delta_vector_table.column("REAL").to_numpy()
     unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
