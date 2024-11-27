@@ -1,15 +1,14 @@
 import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
-import { DeltaEnsembleElement } from "@framework/DeltaEnsemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { UserEnsembleSetting, Workbench, WorkbenchEvents } from "@framework/Workbench";
+import { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench, WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import {
-    DeltaEnsembleBaseItem,
+    DeltaEnsembleElementItem,
     DeltaEnsembleItem,
     EnsembleItem,
 } from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
@@ -134,11 +133,14 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             customName: ens.customName,
             color: ens.color,
         }));
-        const deltaEnsembleSettings = createdDeltaEnsembles.map((deltaEns) => ({
-            firstEnsembleIdent: new EnsembleIdent(deltaEns.firstEnsemble.caseUuid, deltaEns.firstEnsemble.ensembleName),
-            secondEnsembleIdent: new EnsembleIdent(
-                deltaEns.secondEnsemble.caseUuid,
-                deltaEns.secondEnsemble.ensembleName
+        const deltaEnsembleSettings: UserDeltaEnsembleSetting[] = createdDeltaEnsembles.map((deltaEns) => ({
+            compareEnsembleIdent: new EnsembleIdent(
+                deltaEns.compareEnsemble.caseUuid,
+                deltaEns.compareEnsemble.ensembleName
+            ),
+            referenceEnsembleIdent: new EnsembleIdent(
+                deltaEns.referenceEnsemble.caseUuid,
+                deltaEns.referenceEnsemble.ensembleName
             ),
             customName: deltaEns.customName,
             color: deltaEns.color,
@@ -159,22 +161,22 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         fixedSelectedEnsembles = newSelectedEnsembles;
     }
 
-    const createdDeltaEnsembles: DeltaEnsembleItem[] = ensembleSet.getDeltaEnsembleArray().map((ens) => {
-        const firstEnsemble: DeltaEnsembleBaseItem = {
-            caseUuid: ens.getEnsembleIdentByElement(DeltaEnsembleElement.FIRST).getCaseUuid(),
-            ensembleName: ens.getEnsembleIdentByElement(DeltaEnsembleElement.FIRST).getEnsembleName(),
+    const createdDeltaEnsembles: DeltaEnsembleItem[] = ensembleSet.getDeltaEnsembleArray().map((deltaEns) => {
+        const compareEnsemble: DeltaEnsembleElementItem = {
+            caseUuid: deltaEns.getCompareEnsembleIdent().getCaseUuid(),
+            ensembleName: deltaEns.getCompareEnsembleIdent().getEnsembleName(),
         };
-        const secondEnsemble: DeltaEnsembleBaseItem = {
-            caseUuid: ens.getEnsembleIdentByElement(DeltaEnsembleElement.SECOND).getCaseUuid(),
-            ensembleName: ens.getEnsembleIdentByElement(DeltaEnsembleElement.SECOND).getEnsembleName(),
+        const referenceEnsemble: DeltaEnsembleElementItem = {
+            caseUuid: deltaEns.getReferenceEnsembleIdent().getCaseUuid(),
+            ensembleName: deltaEns.getReferenceEnsembleIdent().getEnsembleName(),
         };
 
         const deltaEnsembleItem: DeltaEnsembleItem = {
-            firstEnsemble: firstEnsemble,
-            secondEnsemble: secondEnsemble,
-            uuid: ens.getIdent().getUuid(),
-            color: ens.getColor(),
-            customName: ens.getCustomName(),
+            compareEnsemble: compareEnsemble,
+            referenceEnsemble: referenceEnsemble,
+            uuid: deltaEns.getIdent().getUuid(),
+            color: deltaEns.getColor(),
+            customName: deltaEns.getCustomName(),
         };
         return deltaEnsembleItem;
     });

@@ -27,11 +27,11 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     // Get ensemble idents to load
     const ensembleIdentsToLoad: EnsembleIdent[] = userEnsembleSettings.map((setting) => setting.ensembleIdent);
     for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
-        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.firstEnsembleIdent)) {
-            ensembleIdentsToLoad.push(deltaEnsembleSetting.firstEnsembleIdent);
+        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.compareEnsembleIdent)) {
+            ensembleIdentsToLoad.push(deltaEnsembleSetting.compareEnsembleIdent);
         }
-        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.secondEnsembleIdent)) {
-            ensembleIdentsToLoad.push(deltaEnsembleSetting.secondEnsembleIdent);
+        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.referenceEnsembleIdent)) {
+            ensembleIdentsToLoad.push(deltaEnsembleSetting.referenceEnsembleIdent);
         }
     }
 
@@ -75,54 +75,54 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     const nullSensitiveArray = null;
     const emptyColor = "";
     for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
-        const firstEnsembleIdentString = deltaEnsembleSetting.firstEnsembleIdent.toString();
-        const secondEnsembleIdentString = deltaEnsembleSetting.secondEnsembleIdent.toString();
+        const compareEnsembleIdentString = deltaEnsembleSetting.compareEnsembleIdent.toString();
+        const referenceEnsembleIdentString = deltaEnsembleSetting.referenceEnsembleIdent.toString();
 
-        const firstEnsembleApiData = ensembleIdentStringToApiDataMap[firstEnsembleIdentString];
-        const secondEnsembleApiData = ensembleIdentStringToApiDataMap[secondEnsembleIdentString];
-        if (!firstEnsembleApiData || !secondEnsembleApiData) {
+        const compareEnsembleApiData = ensembleIdentStringToApiDataMap[compareEnsembleIdentString];
+        const referenceEnsembleApiData = ensembleIdentStringToApiDataMap[referenceEnsembleIdentString];
+        if (!compareEnsembleApiData || !referenceEnsembleApiData) {
             console.error(
                 "Error fetching delta ensemble data, dropping delta ensemble:",
-                deltaEnsembleSetting.customName ?? `${firstEnsembleIdentString} - ${secondEnsembleIdentString}`
+                deltaEnsembleSetting.customName ?? `${compareEnsembleIdentString} - ${referenceEnsembleIdentString}`
             );
             continue;
         }
 
-        const firstEnsembleCustomName =
-            userEnsembleSettings.find((elm) => elm.ensembleIdent.toString() === firstEnsembleIdentString)?.customName ??
-            null;
-        const secondEnsembleCustomName =
-            userEnsembleSettings.find((elm) => elm.ensembleIdent.toString() === secondEnsembleIdentString)
+        const compareEnsembleCustomName =
+            userEnsembleSettings.find((elm) => elm.ensembleIdent.toString() === compareEnsembleIdentString)
+                ?.customName ?? null;
+        const referenceEnsembleCustomName =
+            userEnsembleSettings.find((elm) => elm.ensembleIdent.toString() === referenceEnsembleIdentString)
                 ?.customName ?? null;
 
-        const firstEnsemble = new Ensemble(
-            firstEnsembleApiData.ensembleDetails.field_identifier,
-            firstEnsembleApiData.ensembleDetails.case_uuid,
-            firstEnsembleApiData.ensembleDetails.case_name,
-            firstEnsembleApiData.ensembleDetails.name,
-            firstEnsembleApiData.ensembleDetails.realizations,
+        const compareEnsemble = new Ensemble(
+            compareEnsembleApiData.ensembleDetails.field_identifier,
+            compareEnsembleApiData.ensembleDetails.case_uuid,
+            compareEnsembleApiData.ensembleDetails.case_name,
+            compareEnsembleApiData.ensembleDetails.name,
+            compareEnsembleApiData.ensembleDetails.realizations,
             emptyParameterArray,
             nullSensitiveArray,
             emptyColor,
-            firstEnsembleCustomName
+            compareEnsembleCustomName
         );
 
-        const secondEnsemble = new Ensemble(
-            secondEnsembleApiData.ensembleDetails.field_identifier,
-            secondEnsembleApiData.ensembleDetails.case_uuid,
-            secondEnsembleApiData.ensembleDetails.case_name,
-            secondEnsembleApiData.ensembleDetails.name,
-            secondEnsembleApiData.ensembleDetails.realizations,
+        const referenceEnsemble = new Ensemble(
+            referenceEnsembleApiData.ensembleDetails.field_identifier,
+            referenceEnsembleApiData.ensembleDetails.case_uuid,
+            referenceEnsembleApiData.ensembleDetails.case_name,
+            referenceEnsembleApiData.ensembleDetails.name,
+            referenceEnsembleApiData.ensembleDetails.realizations,
             emptyParameterArray,
             nullSensitiveArray,
             emptyColor,
-            secondEnsembleCustomName
+            referenceEnsembleCustomName
         );
 
         outDeltaEnsembleArray.push(
             new DeltaEnsemble(
-                firstEnsemble,
-                secondEnsemble,
+                compareEnsemble,
+                referenceEnsemble,
                 deltaEnsembleSetting.color,
                 deltaEnsembleSetting.customName
             )

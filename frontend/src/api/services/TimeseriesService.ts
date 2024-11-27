@@ -41,27 +41,31 @@ export class TimeseriesService {
     /**
      * Get Delta Ensemble Vector List
      * Get list of all vectors for a delta ensemble based on all vectors in a given Sumo ensemble, excluding any historical vectors
-     * @param firstCaseUuid Sumo case uuid
-     * @param firstEnsembleName Ensemble name
-     * @param secondCaseUuid Sumo case uuid
-     * @param secondEnsembleName Ensemble name
+     *
+     * Definition:
+     *
+     * delta_ensemble = compare_ensemble - reference_ensemble
+     * @param compareCaseUuid Sumo case uuid for compare ensemble
+     * @param compareEnsembleName Compare ensemble name
+     * @param referenceCaseUuid Sumo case uuid for reference ensemble
+     * @param referenceEnsembleName Reference ensemble name
      * @returns VectorDescription Successful Response
      * @throws ApiError
      */
     public getDeltaEnsembleVectorList(
-        firstCaseUuid: string,
-        firstEnsembleName: string,
-        secondCaseUuid: string,
-        secondEnsembleName: string,
+        compareCaseUuid: string,
+        compareEnsembleName: string,
+        referenceCaseUuid: string,
+        referenceEnsembleName: string,
     ): CancelablePromise<Array<VectorDescription>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/timeseries/delta_ensemble_vector_list/',
             query: {
-                'first_case_uuid': firstCaseUuid,
-                'first_ensemble_name': firstEnsembleName,
-                'second_case_uuid': secondCaseUuid,
-                'second_ensemble_name': secondEnsembleName,
+                'compare_case_uuid': compareCaseUuid,
+                'compare_ensemble_name': compareEnsembleName,
+                'reference_case_uuid': referenceCaseUuid,
+                'reference_ensemble_name': referenceEnsembleName,
             },
             errors: {
                 422: `Validation Error`,
@@ -104,10 +108,14 @@ export class TimeseriesService {
     /**
      * Get Delta Ensemble Realizations Vector Data
      * Get vector data per realization
-     * @param firstCaseUuid Sumo case uuid
-     * @param firstEnsembleName Ensemble name
-     * @param secondCaseUuid Sumo case uuid
-     * @param secondEnsembleName Ensemble name
+     *
+     * Definition:
+     *
+     * delta_ensemble = compare_ensemble - reference_ensemble
+     * @param compareCaseUuid Sumo case uuid for compare ensemble
+     * @param compareEnsembleName Compare ensemble name
+     * @param referenceCaseUuid Sumo case uuid for reference ensemble
+     * @param referenceEnsembleName Reference ensemble name
      * @param vectorName Name of the vector
      * @param resamplingFrequency Resampling frequency
      * @param realizations Optional list of realizations to include. If not specified, all realizations will be returned.
@@ -115,10 +123,10 @@ export class TimeseriesService {
      * @throws ApiError
      */
     public getDeltaEnsembleRealizationsVectorData(
-        firstCaseUuid: string,
-        firstEnsembleName: string,
-        secondCaseUuid: string,
-        secondEnsembleName: string,
+        compareCaseUuid: string,
+        compareEnsembleName: string,
+        referenceCaseUuid: string,
+        referenceEnsembleName: string,
         vectorName: string,
         resamplingFrequency: Frequency,
         realizations?: (Array<number> | null),
@@ -127,10 +135,10 @@ export class TimeseriesService {
             method: 'GET',
             url: '/timeseries/delta_ensemble_realizations_vector_data/',
             query: {
-                'first_case_uuid': firstCaseUuid,
-                'first_ensemble_name': firstEnsembleName,
-                'second_case_uuid': secondCaseUuid,
-                'second_ensemble_name': secondEnsembleName,
+                'compare_case_uuid': compareCaseUuid,
+                'compare_ensemble_name': compareEnsembleName,
+                'reference_case_uuid': referenceCaseUuid,
+                'reference_ensemble_name': referenceEnsembleName,
                 'vector_name': vectorName,
                 'resampling_frequency': resamplingFrequency,
                 'realizations': realizations,
@@ -240,10 +248,14 @@ export class TimeseriesService {
     /**
      * Get Delta Ensemble Statistical Vector Data
      * Get statistical vector data for an ensemble
-     * @param firstCaseUuid Sumo case uuid
-     * @param firstEnsembleName Ensemble name
-     * @param secondCaseUuid Sumo case uuid
-     * @param secondEnsembleName Ensemble name
+     *
+     * Definition:
+     *
+     * delta_ensemble = compare_ensemble - reference_ensemble
+     * @param compareCaseUuid Sumo case uuid for compare ensemble
+     * @param compareEnsembleName Compare ensemble name
+     * @param referenceCaseUuid Sumo case uuid for reference ensemble
+     * @param referenceEnsembleName Reference ensemble name
      * @param vectorName Name of the vector
      * @param resamplingFrequency Resampling frequency
      * @param statisticFunctions Optional list of statistics to calculate. If not specified, all statistics will be calculated.
@@ -252,10 +264,10 @@ export class TimeseriesService {
      * @throws ApiError
      */
     public getDeltaEnsembleStatisticalVectorData(
-        firstCaseUuid: string,
-        firstEnsembleName: string,
-        secondCaseUuid: string,
-        secondEnsembleName: string,
+        compareCaseUuid: string,
+        compareEnsembleName: string,
+        referenceCaseUuid: string,
+        referenceEnsembleName: string,
         vectorName: string,
         resamplingFrequency: Frequency,
         statisticFunctions?: (Array<StatisticFunction> | null),
@@ -265,10 +277,10 @@ export class TimeseriesService {
             method: 'GET',
             url: '/timeseries/delta_ensemble_statistical_vector_data/',
             query: {
-                'first_case_uuid': firstCaseUuid,
-                'first_ensemble_name': firstEnsembleName,
-                'second_case_uuid': secondCaseUuid,
-                'second_ensemble_name': secondEnsembleName,
+                'compare_case_uuid': compareCaseUuid,
+                'compare_ensemble_name': compareEnsembleName,
+                'reference_case_uuid': referenceCaseUuid,
+                'reference_ensemble_name': referenceEnsembleName,
                 'vector_name': vectorName,
                 'resampling_frequency': resamplingFrequency,
                 'statistic_functions': statisticFunctions,

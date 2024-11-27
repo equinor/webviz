@@ -7,15 +7,20 @@ import { EnsembleInterface } from "./EnsembleInterface";
 import { EnsembleParameters } from "./EnsembleParameters";
 import { EnsembleSensitivities } from "./EnsembleSensitivities";
 
-export enum DeltaEnsembleElement {
-    FIRST = "first",
-    SECOND = "second",
-}
-
+/**
+ * Delta ensemble class.
+ *
+ * Delta ensemble is a special ensemble that represents the difference between two ensembles.
+ *
+ * Definition:
+ *
+ *      DeltaEnsemble = CompareEnsemble - ReferenceEnsemble
+ *
+ */
 export class DeltaEnsemble implements EnsembleInterface {
     private _deltaEnsembleIdent: DeltaEnsembleIdent;
-    private _firstEnsemble: Ensemble;
-    private _secondEnsemble: Ensemble;
+    private _compareEnsemble: Ensemble;
+    private _referenceEnsemble: Ensemble;
     private _color: string;
     private _customName: string | null;
 
@@ -23,23 +28,28 @@ export class DeltaEnsemble implements EnsembleInterface {
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
 
-    constructor(firstEnsemble: Ensemble, secondEnsemble: Ensemble, color: string, customName: string | null = null) {
+    constructor(
+        compareEnsemble: Ensemble,
+        referenceEnsemble: Ensemble,
+        color: string,
+        customName: string | null = null
+    ) {
         const deltaEnsembleCaseUuid = v4();
         this._deltaEnsembleIdent = new DeltaEnsembleIdent(
             deltaEnsembleCaseUuid,
-            firstEnsemble.getIdent(),
-            secondEnsemble.getIdent()
+            compareEnsemble.getIdent(),
+            referenceEnsemble.getIdent()
         );
 
-        this._firstEnsemble = firstEnsemble;
-        this._secondEnsemble = secondEnsemble;
+        this._compareEnsemble = compareEnsemble;
+        this._referenceEnsemble = referenceEnsemble;
         this._color = color;
         this._customName = customName;
 
         // Intersection of realizations
-        const realizationIntersection = this._firstEnsemble
+        const realizationIntersection = this._compareEnsemble
             .getRealizations()
-            .filter((realization) => this._secondEnsemble.getRealizations().includes(realization));
+            .filter((realization) => this._referenceEnsemble.getRealizations().includes(realization));
         this._realizationsArray = Array.from(realizationIntersection).sort((a, b) => a - b);
 
         // TODO:
@@ -60,7 +70,7 @@ export class DeltaEnsemble implements EnsembleInterface {
             return this._customName;
         }
 
-        return `${this._firstEnsemble.getDisplayName()} - ${this._secondEnsemble.getDisplayName()}`;
+        return `${this._compareEnsemble.getDisplayName()} - ${this._referenceEnsemble.getDisplayName()}`;
     }
 
     getEnsembleName(): string {
@@ -97,21 +107,19 @@ export class DeltaEnsemble implements EnsembleInterface {
 
     // *** Custom methods ***
 
-    getEnsembleIdentByElement(element: DeltaEnsembleElement): EnsembleIdent {
-        if (element === DeltaEnsembleElement.FIRST) {
-            return this._firstEnsemble.getIdent();
-        }
-        if (element === DeltaEnsembleElement.SECOND) {
-            return this._secondEnsemble.getIdent();
-        }
-        throw new Error("Unhandled element type");
+    getCompareEnsembleIdent(): EnsembleIdent {
+        return this._compareEnsemble.getIdent();
     }
 
-    getRealizationsByElement(element: DeltaEnsembleElement): readonly number[] {
-        if (element === DeltaEnsembleElement.FIRST) {
-            return this._firstEnsemble.getRealizations();
-        } else {
-            return this._secondEnsemble.getRealizations();
-        }
+    getReferenceEnsembleIdent(): EnsembleIdent {
+        return this._referenceEnsemble.getIdent();
+    }
+
+    getCompareEnsembleRealizations(): readonly number[] {
+        return this._compareEnsemble.getRealizations();
+    }
+
+    getReferenceEnsembleRealizations(): readonly number[] {
+        return this._referenceEnsemble.getRealizations();
     }
 }

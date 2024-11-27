@@ -70,20 +70,20 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
         return () => ({
             queryKey: [
                 "getDeltaEnsembleRealizationsVectorData",
-                vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getCaseUuid(),
-                vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getEnsembleName(),
-                vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getCaseUuid(),
-                vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getEnsembleName(),
+                vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getCaseUuid(),
+                vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getEnsembleName(),
+                vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid(),
+                vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
                 vectorSpecification.vectorName,
                 resampleFrequency,
                 realizations,
             ],
             queryFn: () =>
                 apiService.timeseries.getDeltaEnsembleRealizationsVectorData(
-                    vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getCaseUuid(),
-                    vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getEnsembleName(),
-                    vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getCaseUuid(),
-                    vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getEnsembleName(),
+                    vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getCaseUuid(),
+                    vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getEnsembleName(),
+                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid(),
+                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
                     vectorSpecification.vectorName ?? "",
                     resampleFrequency ?? Frequency_api.YEARLY,
                     realizations
@@ -94,10 +94,10 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                 enabled &&
                 resampleFrequency &&
                 vectorSpecification.vectorName &&
-                vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getCaseUuid() &&
-                vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getEnsembleName() &&
-                vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getCaseUuid() &&
-                vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getEnsembleName()
+                vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getCaseUuid() &&
+                vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getEnsembleName() &&
+                vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid() &&
+                vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName()
             ),
         });
     });
@@ -161,20 +161,20 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
         return () => ({
             queryKey: [
                 "getDeltaEnsembleStatisticalVectorData",
-                vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getCaseUuid(),
-                vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getEnsembleName(),
-                vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getCaseUuid(),
-                vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getEnsembleName(),
+                vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getCaseUuid(),
+                vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getEnsembleName(),
+                vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid(),
+                vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
                 vectorSpecification.vectorName,
                 resampleFrequency,
                 realizations,
             ],
             queryFn: () =>
                 apiService.timeseries.getDeltaEnsembleStatisticalVectorData(
-                    vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getCaseUuid(),
-                    vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getEnsembleName(),
-                    vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getCaseUuid(),
-                    vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getEnsembleName(),
+                    vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getCaseUuid(),
+                    vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getEnsembleName(),
+                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid(),
+                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
                     vectorSpecification.vectorName ?? "",
                     resampleFrequency ?? Frequency_api.MONTHLY,
                     undefined,
@@ -186,10 +186,10 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                 enabled &&
                 resampleFrequency &&
                 vectorSpecification.vectorName &&
-                vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getCaseUuid() &&
-                vectorSpecification.ensembleIdent.getFirstEnsembleIdent().getEnsembleName() &&
-                vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getCaseUuid() &&
-                vectorSpecification.ensembleIdent.getSecondEnsembleIdent().getEnsembleName()
+                vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getCaseUuid() &&
+                vectorSpecification.ensembleIdent.getCompareEnsembleIdent().getEnsembleName() &&
+                vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid() &&
+                vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName()
             ),
         });
     });

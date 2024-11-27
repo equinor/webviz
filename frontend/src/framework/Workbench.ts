@@ -34,22 +34,22 @@ export type UserEnsembleSetting = {
 };
 
 export type UserDeltaEnsembleSetting = {
-    firstEnsembleIdent: EnsembleIdent;
-    secondEnsembleIdent: EnsembleIdent;
+    compareEnsembleIdent: EnsembleIdent;
+    referenceEnsembleIdent: EnsembleIdent;
     customName: string | null;
     color: string;
 };
 
 export type StoredUserEnsembleSetting = {
     ensembleIdent: string;
-    customName: string;
+    customName: string | null;
     color: string;
 };
 
 export type StoredUserDeltaEnsembleSetting = {
-    firstEnsembleIdent: string;
-    secondEnsembleIdent: string;
-    customName: string;
+    compareEnsembleIdent: string;
+    referenceEnsembleIdent: string;
+    customName: string | null;
     color: string;
 };
 
@@ -262,7 +262,7 @@ export class Workbench {
     }
 
     private storeEnsembleSetInLocalStorage(ensemblesToStore: UserEnsembleSetting[]): void {
-        const ensembleIdentsToStore = ensemblesToStore.map((el) => ({
+        const ensembleIdentsToStore: StoredUserEnsembleSetting[] = ensemblesToStore.map((el) => ({
             ...el,
             ensembleIdent: el.ensembleIdent.toString(),
         }));
@@ -270,10 +270,10 @@ export class Workbench {
     }
 
     private storeDeltaEnsembleSetInLocalStorage(ensemblesToStore: UserDeltaEnsembleSetting[]): void {
-        const deltaEnsembleIdentsToStore = ensemblesToStore.map((el) => ({
+        const deltaEnsembleIdentsToStore: StoredUserDeltaEnsembleSetting[] = ensemblesToStore.map((el) => ({
             ...el,
-            firstEnsembleIdent: el.firstEnsembleIdent.toString(),
-            secondEnsembleIdent: el.secondEnsembleIdent.toString(),
+            compareEnsembleIdent: el.compareEnsembleIdent.toString(),
+            referenceEnsembleIdent: el.referenceEnsembleIdent.toString(),
         }));
         localStorage.setItem("userDeltaEnsembleSettings", JSON.stringify(deltaEnsembleIdentsToStore));
     }
@@ -283,7 +283,7 @@ export class Workbench {
         if (!ensembleSettingsString) return null;
 
         const ensembleIdents = JSON.parse(ensembleSettingsString) as StoredUserEnsembleSetting[];
-        const ensembleIdentsParsed = ensembleIdents.map((el) => ({
+        const ensembleIdentsParsed: UserEnsembleSetting[] = ensembleIdents.map((el) => ({
             ...el,
             ensembleIdent: EnsembleIdent.fromString(el.ensembleIdent),
         }));
@@ -296,10 +296,10 @@ export class Workbench {
         if (!deltaEnsembleSettingsString) return null;
 
         const deltaEnsembleIdents = JSON.parse(deltaEnsembleSettingsString) as StoredUserDeltaEnsembleSetting[];
-        const deltaEnsembleIdentsParsed = deltaEnsembleIdents.map((el) => ({
+        const deltaEnsembleIdentsParsed: UserDeltaEnsembleSetting[] = deltaEnsembleIdents.map((el) => ({
             ...el,
-            firstEnsembleIdent: EnsembleIdent.fromString(el.firstEnsembleIdent),
-            secondEnsembleIdent: EnsembleIdent.fromString(el.secondEnsembleIdent),
+            compareEnsembleIdent: EnsembleIdent.fromString(el.compareEnsembleIdent),
+            referenceEnsembleIdent: EnsembleIdent.fromString(el.referenceEnsembleIdent),
         }));
 
         return deltaEnsembleIdentsParsed;

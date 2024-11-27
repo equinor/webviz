@@ -18,7 +18,7 @@ import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Add, Check, Remove } from "@mui/icons-material";
+import { Add, Check, Info, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
@@ -30,23 +30,24 @@ import { LoadingOverlay } from "../LoadingOverlay";
 
 const CASE_UUID_ENSEMBLE_NAME_SEPARATOR = "~&&~";
 
-export type DeltaEnsembleBaseItem = {
+// Ensemble element item for a delta ensemble
+export type DeltaEnsembleElementItem = {
     caseUuid: string;
     ensembleName: string;
 };
 
 // Internal type before applying created delta ensemble externally
 type InternalDeltaEnsembleItem = {
-    firstEnsemble: DeltaEnsembleBaseItem | null; // Allows null
-    secondEnsemble: DeltaEnsembleBaseItem | null; // Allows null
+    compareEnsemble: DeltaEnsembleElementItem | null; // Allows null
+    referenceEnsemble: DeltaEnsembleElementItem | null; // Allows null
     uuid: string;
     color: string;
     customName: string | null;
 };
 
 export type DeltaEnsembleItem = {
-    firstEnsemble: DeltaEnsembleBaseItem;
-    secondEnsemble: DeltaEnsembleBaseItem;
+    compareEnsemble: DeltaEnsembleElementItem;
+    referenceEnsemble: DeltaEnsembleElementItem;
     uuid: string;
     color: string;
     customName: string | null;
@@ -103,24 +104,18 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     });
 
     const [deltaEnsembles, setDeltaEnsembles] = React.useState<InternalDeltaEnsembleItem[]>([]);
-    // const [newlyCreatedDeltaEnsembles, setNewlyCreatedDeltaEnsembles] = React.useState<InternalDeltaEnsembleItem[]>(
-    //     props.createdDeltaEnsembles
-    // );
 
     const { userInfo } = useAuthProvider();
 
     React.useLayoutEffect(() => {
         setNewlySelectedEnsembles(props.selectedEnsembles);
-
-        // TODO: Verify that firstEnsemble and secondEnsemble are among props.selectedEnsembles?
-        // setNewlyCreatedDeltaEnsembles(props.createdDeltaEnsembles);
     }, [props.selectedEnsembles]);
 
     React.useLayoutEffect(() => {
         setDeltaEnsembles(
             props.createdDeltaEnsembles.map((elm) => ({
-                firstEnsemble: elm.firstEnsemble,
-                secondEnsemble: elm.secondEnsemble,
+                compareEnsemble: elm.compareEnsemble,
+                referenceEnsemble: elm.referenceEnsemble,
                 uuid: elm.uuid,
                 color: elm.color,
                 customName: elm.customName,
@@ -216,30 +211,30 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return props.colorSet.getColor(newlySelectedEnsembles.length);
     }
 
-    function handleDeltaEnsembleFirstEnsembleChange(
+    function handleDeltaEnsembleCompareEnsembleChange(
         deltaEnsembleUuid: string,
         newCaseUuidAndEnsembleNameString: string
     ) {
-        const { caseUuid: newFirstEnsembleCaseUuid, ensembleName: newFirstEnsembleEnsembleName } =
+        const { caseUuid: newCompareEnsembleCaseUuid, ensembleName: newCompareEnsembleEnsembleName } =
             createCaseUuidAndEnsembleNameFromString(newCaseUuidAndEnsembleNameString);
 
-        const firstEnsemble = newlySelectedEnsembles.find(
-            (elm) => elm.caseUuid === newFirstEnsembleCaseUuid && elm.ensembleName === newFirstEnsembleEnsembleName
+        const compareEnsemble = newlySelectedEnsembles.find(
+            (elm) => elm.caseUuid === newCompareEnsembleCaseUuid && elm.ensembleName === newCompareEnsembleEnsembleName
         );
-        if (!firstEnsemble) {
+        if (!compareEnsemble) {
             return;
         }
 
         setDeltaEnsembles((prev) =>
             prev.map((elm) => {
                 if (elm.uuid === deltaEnsembleUuid) {
-                    const newFirstEnsemble: DeltaEnsembleBaseItem = {
-                        caseUuid: firstEnsemble.caseUuid,
-                        ensembleName: firstEnsemble.ensembleName,
+                    const newCompareEnsemble: DeltaEnsembleElementItem = {
+                        caseUuid: compareEnsemble.caseUuid,
+                        ensembleName: compareEnsemble.ensembleName,
                     };
                     return {
                         ...elm,
-                        firstEnsemble: newFirstEnsemble,
+                        compareEnsemble: newCompareEnsemble,
                     };
                 }
                 return elm;
@@ -247,30 +242,30 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         );
     }
 
-    function handleDeltaEnsembleSecondEnsembleChange(
+    function handleDeltaEnsembleReferenceEnsembleChange(
         deltaEnsembleUuid: string,
         newCaseUuidAndEnsembleNameString: string
     ) {
-        const { caseUuid: newSecondEnsembleCaseUuid, ensembleName: newSecondEnsembleEnsembleName } =
+        const { caseUuid: newReferenceEnsembleCaseUuid, ensembleName: newReferenceEnsembleEnsembleName } =
             createCaseUuidAndEnsembleNameFromString(newCaseUuidAndEnsembleNameString);
 
-        const secondEnsemble = newlySelectedEnsembles.find(
-            (e) => e.caseUuid === newSecondEnsembleCaseUuid && e.ensembleName === newSecondEnsembleEnsembleName
+        const referenceEnsemble = newlySelectedEnsembles.find(
+            (e) => e.caseUuid === newReferenceEnsembleCaseUuid && e.ensembleName === newReferenceEnsembleEnsembleName
         );
-        if (!secondEnsemble) {
+        if (!referenceEnsemble) {
             return;
         }
 
         setDeltaEnsembles((prev) =>
             prev.map((elm) => {
                 if (elm.uuid === deltaEnsembleUuid) {
-                    const newSecondEnsemble: DeltaEnsembleBaseItem = {
-                        caseUuid: secondEnsemble.caseUuid,
-                        ensembleName: secondEnsemble.ensembleName,
+                    const newReferenceEnsemble: DeltaEnsembleElementItem = {
+                        caseUuid: referenceEnsemble.caseUuid,
+                        ensembleName: referenceEnsemble.ensembleName,
                     };
                     return {
                         ...elm,
-                        secondEnsemble: newSecondEnsemble,
+                        referenceEnsemble: newReferenceEnsemble,
                     };
                 }
                 return elm;
@@ -283,18 +278,18 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             return;
         }
 
-        const firstEnsemble = newlySelectedEnsembles[0];
-        const secondEnsemble =
+        const compareEnsemble = newlySelectedEnsembles[0];
+        const referenceEnsemble =
             newlySelectedEnsembles.length === 1 ? newlySelectedEnsembles[0] : newlySelectedEnsembles[1];
 
         const newDeltaEnsemble: InternalDeltaEnsembleItem = {
-            firstEnsemble: {
-                caseUuid: firstEnsemble.caseUuid,
-                ensembleName: firstEnsemble.ensembleName,
+            compareEnsemble: {
+                caseUuid: compareEnsemble.caseUuid,
+                ensembleName: compareEnsemble.ensembleName,
             },
-            secondEnsemble: {
-                caseUuid: secondEnsemble.caseUuid,
-                ensembleName: secondEnsemble.ensembleName,
+            referenceEnsemble: {
+                caseUuid: referenceEnsemble.caseUuid,
+                ensembleName: referenceEnsemble.ensembleName,
             },
             uuid: v4(),
             color: tryToFindUnusedColor(),
@@ -333,18 +328,18 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         const newDeltaEnsembles = [...deltaEnsembles];
         for (const elm of deltaEnsembles) {
             if (
-                elm.firstEnsemble &&
-                elm.firstEnsemble.caseUuid === caseUuid &&
-                elm.firstEnsemble.ensembleName === ensembleName
+                elm.compareEnsemble &&
+                elm.compareEnsemble.caseUuid === caseUuid &&
+                elm.compareEnsemble.ensembleName === ensembleName
             ) {
-                elm.firstEnsemble = null;
+                elm.compareEnsemble = null;
             }
             if (
-                elm.secondEnsemble &&
-                elm.secondEnsemble.caseUuid === caseUuid &&
-                elm.secondEnsemble.ensembleName === ensembleName
+                elm.referenceEnsemble &&
+                elm.referenceEnsemble.caseUuid === caseUuid &&
+                elm.referenceEnsemble.ensembleName === ensembleName
             ) {
-                elm.secondEnsemble = null;
+                elm.referenceEnsemble = null;
             }
         }
         setDeltaEnsembles(newDeltaEnsembles);
@@ -364,18 +359,18 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }
 
     function handleApplyEnsembleSelection() {
-        if (deltaEnsembles.some((elm) => !elm.firstEnsemble || !elm.secondEnsemble)) {
+        if (deltaEnsembles.some((elm) => !elm.compareEnsemble || !elm.referenceEnsemble)) {
             return;
         }
 
         const validDeltaEnsembles: DeltaEnsembleItem[] = [];
         for (const deltaEnsemble of deltaEnsembles) {
-            if (!deltaEnsemble.firstEnsemble || !deltaEnsemble.secondEnsemble) {
+            if (!deltaEnsemble.compareEnsemble || !deltaEnsemble.referenceEnsemble) {
                 continue;
             }
             validDeltaEnsembles.push({
-                firstEnsemble: deltaEnsemble.firstEnsemble,
-                secondEnsemble: deltaEnsemble.secondEnsemble,
+                compareEnsemble: deltaEnsemble.compareEnsemble,
+                referenceEnsemble: deltaEnsemble.referenceEnsemble,
                 uuid: deltaEnsemble.uuid,
                 color: deltaEnsemble.color,
                 customName: deltaEnsemble.customName,
@@ -404,15 +399,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 elm.uuid === internalDeltaEnsemble.uuid &&
                 elm.color === internalDeltaEnsemble.color &&
                 elm.customName === internalDeltaEnsemble.customName &&
-                isEqual(elm.firstEnsemble, internalDeltaEnsemble.firstEnsemble) &&
-                isEqual(elm.secondEnsemble, internalDeltaEnsemble.secondEnsemble)
+                isEqual(elm.compareEnsemble, internalDeltaEnsemble.compareEnsemble) &&
+                isEqual(elm.referenceEnsemble, internalDeltaEnsemble.referenceEnsemble)
             );
         });
         return !isContentEqual;
     }
 
     function areAnyDeltaEnsemblesInvalid(): boolean {
-        return deltaEnsembles.some((elm) => !elm.firstEnsemble || !elm.secondEnsemble);
+        return deltaEnsembles.some((elm) => !elm.compareEnsemble || !elm.referenceEnsemble);
     }
 
     function hasAnyEnsembleChanged(): boolean {
@@ -717,7 +712,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 </IconButton>
                             </Label> */}
                         <div className="flex-shrink flex flex-row">
-                            <div className="pr-2">Delta Ensembles</div>
+                            <Info
+                                fontSize="medium"
+                                titleAccess={`"Delta Ensemble" = "Compare Ensemble" - "Reference Ensemble"`}
+                                className={
+                                    // "rounded-md px-0.25 py-0.25 border border-transparent text-indigo-600 bg-white hover:text-indigo-700 cursor-help"
+                                    "rounded-md px-0.25 py-0.25 border border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
+                                }
+                            />
+                            <div className="pl-2 pr-2">Delta Ensembles</div>
                             <IconButton
                                 title="New delta ensemble"
                                 onClick={handleAddDeltaEnsemble}
@@ -732,15 +735,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     <tr>
                                         <th className="w-20 text-left p-2 bg-slate-300">Color</th>
                                         <th className="min-w-1/3 text-left p-2 bg-slate-300">Custom name</th>
-                                        <th className="min-w-1/3 text-left p-2 bg-slate-300">Ensemble A</th>
-                                        <th className="min-w-1/4 text-left p-2 bg-slate-300">Ensemble B</th>
+                                        <th className="min-w-1/3 text-left p-2 bg-slate-300">Compare Ensemble</th>
+                                        <th className="min-w-1/4 text-left p-2 bg-slate-300">Reference Ensemble</th>
                                         <th className="w-20 text-left p-2 bg-slate-300">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="overflow-y-auto w-full">
                                     {deltaEnsembles.map((elm) => {
                                         const isDeltaEnsembleValid =
-                                            elm.firstEnsemble !== null && elm.secondEnsemble !== null;
+                                            elm.compareEnsemble !== null && elm.referenceEnsemble !== null;
                                         return (
                                             <tr
                                                 key={elm.uuid}
@@ -788,15 +791,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                             };
                                                         })}
                                                         value={
-                                                            elm.firstEnsemble
+                                                            elm.compareEnsemble
                                                                 ? createCaseUuidAndEnsembleNameString(
-                                                                      elm.firstEnsemble.caseUuid,
-                                                                      elm.firstEnsemble.ensembleName
+                                                                      elm.compareEnsemble.caseUuid,
+                                                                      elm.compareEnsemble.ensembleName
                                                                   )
                                                                 : undefined
                                                         }
                                                         onChange={(newCaseUuidAndEnsembleNameString) => {
-                                                            handleDeltaEnsembleFirstEnsembleChange(
+                                                            handleDeltaEnsembleCompareEnsembleChange(
                                                                 elm.uuid,
                                                                 newCaseUuidAndEnsembleNameString
                                                             );
@@ -817,15 +820,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                             };
                                                         })}
                                                         value={
-                                                            elm.secondEnsemble
+                                                            elm.referenceEnsemble
                                                                 ? createCaseUuidAndEnsembleNameString(
-                                                                      elm.secondEnsemble.caseUuid,
-                                                                      elm.secondEnsemble.ensembleName
+                                                                      elm.referenceEnsemble.caseUuid,
+                                                                      elm.referenceEnsemble.ensembleName
                                                                   )
                                                                 : undefined
                                                         }
                                                         onChange={(value) => {
-                                                            handleDeltaEnsembleSecondEnsembleChange(elm.uuid, value);
+                                                            handleDeltaEnsembleReferenceEnsembleChange(elm.uuid, value);
                                                         }}
                                                     />
                                                 </td>

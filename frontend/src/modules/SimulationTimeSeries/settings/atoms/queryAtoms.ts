@@ -1,5 +1,5 @@
 import { apiService } from "@framework/ApiService";
-import { DeltaEnsemble, DeltaEnsembleElement } from "@framework/DeltaEnsemble";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
@@ -48,17 +48,17 @@ export const deltaEnsembleVectorListQueriesAtom = atomWithQueries((get) => {
     const queries = Object.entries(deltaEnsembleIdentStringAndEnsembleObject).map((elm) => {
         const deltaEnsembleIdentString = elm[0];
         const deltaEnsemble = elm[1];
-        const firstIdent = deltaEnsemble.getEnsembleIdentByElement(DeltaEnsembleElement.FIRST);
-        const secondIdent = deltaEnsemble.getEnsembleIdentByElement(DeltaEnsembleElement.SECOND);
+        const compareEnsembleIdent = deltaEnsemble.getCompareEnsembleIdent();
+        const referenceEnsembleIdent = deltaEnsemble.getReferenceEnsembleIdent();
 
         return () => ({
             queryKey: ["ensembles", deltaEnsembleIdentString],
             queryFn: () =>
                 apiService.timeseries.getDeltaEnsembleVectorList(
-                    firstIdent.getCaseUuid(),
-                    firstIdent.getEnsembleName(),
-                    secondIdent.getCaseUuid(),
-                    secondIdent.getEnsembleName()
+                    compareEnsembleIdent.getCaseUuid(),
+                    compareEnsembleIdent.getEnsembleName(),
+                    referenceEnsembleIdent.getCaseUuid(),
+                    referenceEnsembleIdent.getEnsembleName()
                 ),
             staleTime: STALE_TIME,
             gcTime: CACHE_TIME,

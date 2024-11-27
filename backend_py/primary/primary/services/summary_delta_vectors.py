@@ -17,10 +17,14 @@ class RealizationDeltaVector:
 
 
 def create_delta_vector_table(
-    first_vector_table: pa.Table, second_vector_table: pa.Table, vector_name: str
+    compare_vector_table: pa.Table, reference_vector_table: pa.Table, vector_name: str
 ) -> pa.Table:
     """
     Create a table with delta values of the requested vector name between the two input tables.
+
+    Definition:
+
+        delta_vector = compare_vector - reference_vector
 
     Performs "inner join". Only obtain matching index ["DATE", "REAL"] - i.e "DATE"-"REAL" combination
     present in only one vector is neglected.
@@ -29,14 +33,14 @@ def create_delta_vector_table(
 
     `Note`: Pre-processing of DATE-columns, e.g. resampling, should be done before calling this function.
     """
-    validate_summary_vector_table_pa(first_vector_table, vector_name)
-    validate_summary_vector_table_pa(second_vector_table, vector_name)
+    validate_summary_vector_table_pa(compare_vector_table, vector_name)
+    validate_summary_vector_table_pa(reference_vector_table, vector_name)
 
-    joined_vector_table = first_vector_table.join(
-        second_vector_table, keys=["DATE", "REAL"], join_type="inner", right_suffix="_second"
+    joined_vector_table = compare_vector_table.join(
+        reference_vector_table, keys=["DATE", "REAL"], join_type="inner", right_suffix="_reference"
     )
     delta_vector = pc.subtract(
-        joined_vector_table.column(vector_name), joined_vector_table.column(f"{vector_name}_second")
+        joined_vector_table.column(vector_name), joined_vector_table.column(f"{vector_name}_reference")
     )
 
     delta_table = pa.table(
