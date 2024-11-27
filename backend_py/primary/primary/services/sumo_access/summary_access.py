@@ -11,8 +11,12 @@ from fmu.sumo.explorer.explorer import SumoClient
 from fmu.sumo.explorer.objects import TableCollection, Table
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from primary.services.utils.arrow_helpers import sort_table_on_real_then_date, is_date_column_monotonically_increasing
-from primary.services.utils.arrow_helpers import find_first_non_increasing_date_pair
+from primary.services.utils.arrow_helpers import (
+    find_first_non_increasing_date_pair,
+    sort_table_on_real_then_date,
+    is_date_column_monotonically_increasing,
+)
+from primary.services.utils.summary_vector_table_helpers import validate_summary_vector_table
 from primary.services.service_exceptions import (
     Service,
     NoDataError,
@@ -160,10 +164,7 @@ class SummaryAccess:
         table, vector_metadata = await self.get_vector_table_async(vector_name, resampling_frequency, realizations)
 
         # Verify that columns are as we expect
-        expected_columns = {"DATE", "REAL", vector_name}
-        if set(table.column_names) != expected_columns:
-            unexpected_columns = set(table.column_names) - expected_columns
-            raise InvalidDataError(f"Unexpected columns in table {unexpected_columns}", Service.SUMO)
+        validate_summary_vector_table(table, vector_name, Service.SUMO)
 
         real_arr_np = table.column("REAL").to_numpy()
         unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
