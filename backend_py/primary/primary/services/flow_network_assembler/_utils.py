@@ -1,8 +1,10 @@
 import logging
+import pandas as pd
 
 
 from primary.services.sumo_access.group_tree_types import DataType, EdgeOrNode, TreeType
 from ._group_tree_dataframe_model import GroupTreeDataframeModel
+from .flow_network_types import NodeClassification, SummaryVectorInfo, TreeClassification, NodeSummaryVectorsInfo
 
 
 LOGGER = logging.getLogger(__name__)
@@ -189,3 +191,64 @@ def get_data_label(datatype: DataType) -> str:
     if label is None:
         raise ValueError(f"Label for datatype {datatype.value} not implemented.")
     return label
+
+
+def get_sumvecs_for_node_row(
+    node_row: pd.Series,
+    node_classifications: dict[str, NodeClassification],
+    tree_classification: TreeClassification,
+) -> tuple[NodeSummaryVectorsInfo, set[str], set[str]]:
+    nodename = node_row["CHILD"]
+    keyword = node_row["KEYWORD"]
+
+    if not isinstance(nodename, str) or not isinstance(keyword, str):
+        raise ValueError("Nodename and keyword must be strings")
+
+    node_classification = node_classifications[nodename]
+
+    datatypes = _compute_datatypes_for_row(nodename, keyword, node_classification, tree_classification)
+
+    node_vectors_info = NodeSummaryVectorsInfo(SMRY_INFO={})
+    all_sumvecs = set()
+    edge_sumvecs = set()
+
+    for datatype in datatypes:
+        sumvec_name = create_sumvec_from_datatype_nodename_and_keyword(datatype, nodename, keyword)
+        edge_or_node = get_tree_element_for_data_type(datatype)
+
+        all_sumvecs.add(sumvec_name)
+
+        if edge_or_node == EdgeOrNode.EDGE:
+            edge_sumvecs.add(sumvec_name)
+
+        node_vectors_info.SMRY_INFO[sumvec_name] = SummaryVectorInfo(DATATYPE=datatype, EDGE_NODE=edge_or_node)
+
+    return (node_vectors_info, all_sumvecs, edge_sumvecs)
+
+
+def _compute_datatypes_for_row(
+    node_name: str,
+    node_keyword: str,
+    node_classification: NodeClassification,
+    tree_classification: TreeClassification,
+) -> list[DataType]:
+
+    is_prod = node_classification.IS_PROD
+    is_inj = node_classification.IS_INJ
+    is_terminal = node_name == tree_classification.TERMINAL_NODE
+    is_wellspec = node_keyword == "WELSPECS"
+
+    datatypes = [DataType.PRESSURE]
+
+    if is_wellspec:
+        datatypes += [DataType.BHP, DataType.WMCTL]
+
+    if not is_terminal:
+        if is_prod:
+            datatypes += [DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE]
+        if is_inj and tree_classification.HAS_WATER_INJ:
+            datatypes.append(DataType.WATERINJRATE)
+        if is_inj and tree_classification.HAS_GAS_INJ:
+            datatypes.append(DataType.GASINJRATE)
+
+    return datatypes
