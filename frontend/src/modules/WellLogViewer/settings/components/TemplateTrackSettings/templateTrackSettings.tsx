@@ -6,7 +6,7 @@ import { MenuItem } from "@lib/components/MenuItem";
 import { SortableList } from "@lib/components/SortableList";
 import { arrayMove } from "@lib/utils/arrays";
 import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
-import { transformToTrackConfigs } from "@modules/WellLogViewer/utils/logViewerTemplate";
+import { configToJsonDataBlob, jsonFileToTrackConfigs } from "@modules/WellLogViewer/utils/settingsImport";
 import { Dropdown, MenuButton } from "@mui/base";
 import { FileDownload, FileUpload, MoreVert } from "@mui/icons-material";
 
@@ -66,28 +66,15 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
         [setTrackConfigs, trackConfigs]
     );
 
-    const encodedConfigJsonUrl = React.useMemo(
-        function generateConfigJsonDataString() {
-            if (trackConfigs.length === 0) return null;
-
-            const configJSON = JSON.stringify(trackConfigs);
-            return `data:text/json;charset=utf-8,${encodeURIComponent(configJSON)}`;
-        },
-        [trackConfigs]
-    );
+    const encodedConfigJsonUrl = React.useMemo(() => configToJsonDataBlob(trackConfigs), [trackConfigs]);
 
     const handleConfigJsonImport = React.useCallback(
         async function readUploadedFile(evt: React.ChangeEvent<HTMLInputElement>) {
             const file = evt.target.files?.item(0);
-
             if (!file) return console.warn("No file given");
-            if (file.type !== "application/json") return window.alert("Invalid file extension");
 
             try {
-                const fileData = await file.text();
-
-                const parsedData = JSON.parse(fileData);
-                const newConfig = transformToTrackConfigs(parsedData);
+                const newConfig = await jsonFileToTrackConfigs(file);
 
                 setTrackConfigs(newConfig);
             } catch (error) {

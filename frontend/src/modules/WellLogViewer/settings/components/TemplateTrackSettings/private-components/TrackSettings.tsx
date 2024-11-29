@@ -1,10 +1,9 @@
 import React from "react";
 
-import { Dropdown } from "@lib/components/Dropdown";
+import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
-import { PLOT_SCALE_OPTIONS } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { TemplatePlotScaleTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
@@ -16,7 +15,14 @@ import { CurveTrackItemProps } from "./SortableTrackItem";
 import { wellLogCurveHeadersQueryAtom } from "../../../atoms/queryAtoms";
 
 export type TrackSettingsProps = CurveTrackItemProps;
+
 type ConfigChanges = Partial<Pick<TemplateTrackConfig, "width" | "plots" | "scale" | "title">>;
+type TemplatePlotScaleOption = DropdownOption<TemplatePlotScaleTypes>;
+
+const PLOT_SCALE_OPTIONS: TemplatePlotScaleOption[] = [
+    { label: "Linear", value: "linear" },
+    { label: "Logaritmic", value: "log" },
+];
 
 const INPUT_DEBOUNCE_TIME = 500;
 

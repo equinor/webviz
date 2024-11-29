@@ -18,9 +18,9 @@ import { isEqual } from "lodash";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
-import { InterfaceTypes } from "../interfaces";
-import { createLogTemplate } from "../utils/logViewerTemplate";
-import { createLogViewerWellpicks, createWellLog } from "../utils/queryDataTransform";
+import { InterfaceTypes } from "../../interfaces";
+import { createLogTemplate } from "../../utils/logViewerTemplate";
+import { createLogViewerWellpicks, createWellLog } from "../../utils/queryDataTransform";
 
 const AXIS_MNEMOS = {
     md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],

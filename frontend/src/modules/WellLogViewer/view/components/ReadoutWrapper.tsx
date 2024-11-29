@@ -6,7 +6,7 @@ import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTe
 
 import _ from "lodash";
 
-import { DEFAULT_MAX_VISIBLE_TRACKS } from "../utils/logViewerTemplate";
+import { DEFAULT_MAX_VISIBLE_TRACKS } from "../../utils/logViewerTemplate";
 
 export type ReadoutWrapperProps = {
     templateTracks: TemplateTrack[];

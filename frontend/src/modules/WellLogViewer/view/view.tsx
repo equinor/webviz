@@ -12,9 +12,9 @@ import { CircularProgress } from "@mui/material";
 
 import { useAtomValue } from "jotai";
 
-import { SubsurfaceLogViewerWrapper } from "./SubsurfaceLogViewerWrapper";
 import { intersectionReferenceSystemAtom } from "./atoms/derivedAtoms";
 import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
+import { SubsurfaceLogViewerWrapper } from "./components/SubsurfaceLogViewerWrapper";
 import { useCurveDataQueries } from "./queries/wellLogQueries";
 
 import { InterfaceTypes } from "../interfaces";
