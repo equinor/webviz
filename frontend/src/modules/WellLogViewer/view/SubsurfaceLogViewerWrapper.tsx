@@ -62,19 +62,23 @@ function useGloballySyncedMd(
     const instanceId = viewContext.getInstanceIdString();
     const wellboreUuid = wellboreHeader?.wellboreUuid ?? "";
 
-    const lastRecievedChange = React.useRef<GlobalHoverMd>(null);
+    const lastReceivedChange = React.useRef<GlobalHoverMd>(null);
 
-    const handleGlobalValueChange = React.useCallback(
-        (newValue: GlobalHoverMd) => {
-            if (!isEqual(lastRecievedChange, newValue)) {
-                lastRecievedChange.current = newValue;
+    React.useEffect(
+        function registerMdHoverSubscriber() {
+            function handleGlobalValueChange(newValue: GlobalHoverMd) {
+                if (!isEqual(lastReceivedChange, newValue)) {
+                    lastReceivedChange.current = newValue;
 
-                if (newValue?.wellboreUuid === wellboreUuid) {
-                    wellLogController?.selectContent([newValue.md, undefined]);
+                    if (newValue?.wellboreUuid === wellboreUuid) {
+                        wellLogController?.selectContent([newValue.md, undefined]);
+                    }
                 }
             }
+
+            return workbenchServices.subscribe("global.hoverMd", handleGlobalValueChange, instanceId);
         },
-        [wellLogController, wellboreUuid]
+        [instanceId, wellboreUuid, workbenchServices, wellLogController]
     );
 
     const broadcastGlobalMdChange = React.useCallback(
@@ -85,10 +89,6 @@ function useGloballySyncedMd(
         },
         [instanceId, wellboreUuid, workbenchServices]
     );
-
-    React.useEffect(() => {
-        return workbenchServices.subscribe("global.hoverMd", handleGlobalValueChange, instanceId);
-    }, [handleGlobalValueChange, instanceId, workbenchServices]);
 
     return broadcastGlobalMdChange;
 }
@@ -104,17 +104,14 @@ function useGloballySyncedVerticalScale(
     const verticalSyncActive = syncableSettingKeys.includes(SyncSettingKey.VERTICAL_SCALE);
 
     // Cannot use the SyncHelper utility here, since we want to avoid a re-render and instead propagate the change via the well log controller
-    const handleGlobalVertScaleChange = React.useCallback(
-        (newScale: number | null) => {
+    React.useEffect(() => {
+        function handleGlobalVertScaleChange(newScale: number | null) {
             if (newScale === null || newScale < 1) return;
             if (!wellLogController) return console.warn("No well log controller set");
 
             wellLogController.zoomContent(newScale);
-        },
-        [wellLogController]
-    );
+        }
 
-    React.useEffect(() => {
         if (verticalSyncActive) {
             const unsubscribe = workbenchServices.subscribe(
                 "global.syncValue.verticalScale",
@@ -124,7 +121,7 @@ function useGloballySyncedVerticalScale(
 
             return unsubscribe;
         }
-    }, [workbenchServices, verticalSyncActive, syncableSettingKeys, moduleInstanceId, handleGlobalVertScaleChange]);
+    }, [workbenchServices, wellLogController, verticalSyncActive, syncableSettingKeys, moduleInstanceId]);
 
     const broadcastVerticalScaleChange = React.useCallback(
         (newScale: number | null) => {
@@ -259,7 +256,11 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
                 onContentRescale={handleContentRescale}
                 onInfoFilled={handleInfoFilled}
             />
-            {showReadoutBox && <ReadoutWrapper templateTracks={props.templateTracks} wellLogReadout={wellLogReadout} />}
+            <ReadoutWrapper
+                templateTracks={props.templateTracks}
+                wellLogReadout={wellLogReadout}
+                hide={!showReadoutBox}
+            />
         </div>
     );
 }

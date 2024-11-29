@@ -15,7 +15,6 @@ export const MODULE_NAME = "WellLogViewer";
 const MODULE_TITLE = "Well log Viewer";
 // TODO: Better description
 const MODULE_DESCRIPTION = "Well log Viewer";
-// TODO: preview Icon
 
 ModuleRegistry.registerModule<InterfaceTypes>({
     moduleName: MODULE_NAME,

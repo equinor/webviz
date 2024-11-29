@@ -6,7 +6,7 @@ import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTe
 import {
     allSelectedWellLogCurvesAtom,
     selectedFieldIdentifierAtom,
-    selectedWellboreAtom,
+    selectedWellboreHeaderAtom,
     selectedWellborePicksAtom,
     wellLogTemplateTracks,
 } from "./settings/atoms/derivedAtoms";
@@ -28,7 +28,7 @@ export type SettingsToViewInterface = {
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     selectedField: (get) => get(selectedFieldIdentifierAtom),
-    wellboreHeader: (get) => get(selectedWellboreAtom),
+    wellboreHeader: (get) => get(selectedWellboreHeaderAtom),
     templateTracks: (get) => get(wellLogTemplateTracks),
     requiredDataCurves: (get) => get(allSelectedWellLogCurvesAtom),
     viewerHorizontal: (get) => get(viewerHorizontalAtom),

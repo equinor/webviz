@@ -1,3 +1,4 @@
+import { WellborePicksAndStratigraphicUnits_api } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
 import { apiService } from "@framework/ApiService";
 import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
@@ -5,7 +6,7 @@ import { WellPicksLayerData } from "@modules/Intersection/utils/layers/Wellpicks
 import { atomWithQuery } from "jotai-tanstack-query";
 import _ from "lodash";
 
-import { selectedEnsembleSetAtom, selectedFieldIdentifierAtom, selectedWellboreAtom } from "./derivedAtoms";
+import { selectedEnsembleSetAtom, selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./derivedAtoms";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -31,7 +32,7 @@ export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
 
 */
 export const wellLogCurveHeadersQueryAtom = atomWithQuery((get) => {
-    const wellboreId = get(selectedWellboreAtom)?.wellboreUuid;
+    const wellboreId = get(selectedWellboreHeaderAtom)?.wellboreUuid;
 
     return {
         queryKey: ["getWellboreLogCurveHeaders", wellboreId],
@@ -41,18 +42,17 @@ export const wellLogCurveHeadersQueryAtom = atomWithQuery((get) => {
     };
 });
 
-export const wellborePicksAndStratigraphyQueryAtom = atomWithQuery<WellPicksLayerData>((get) => {
+export const wellborePicksAndStratigraphyQueryAtom = atomWithQuery((get) => {
     const selectedEnsemble = get(selectedEnsembleSetAtom);
 
-    const wellboreId = get(selectedWellboreAtom)?.wellboreUuid ?? "";
+    const wellboreId = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
     const caseId = selectedEnsemble?.getIdent()?.getCaseUuid() ?? "";
 
     return {
         queryKey: ["getWellborePicksAndStratigraphicUnits", wellboreId, caseId],
         enabled: Boolean(caseId && wellboreId),
-        queryFn: async () => {
-            const data = await apiService.well.getWellborePicksAndStratigraphicUnits(caseId, wellboreId);
-
+        queryFn: () => apiService.well.getWellborePicksAndStratigraphicUnits(caseId, wellboreId),
+        select(data: WellborePicksAndStratigraphicUnits_api): WellPicksLayerData {
             const transformedData = transformFormationData(data.wellbore_picks, data.stratigraphic_units as any);
 
             // ! Sometimes the transformation data returns duplicate entries, filtering them out

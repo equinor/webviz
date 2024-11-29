@@ -3,6 +3,7 @@ import React from "react";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
+import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { PLOT_SCALE_OPTIONS } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { TemplatePlotScaleTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
@@ -12,11 +13,10 @@ import { useAtomValue } from "jotai";
 import { SortablePlotList } from "./SortablePlotList";
 import { CurveTrackItemProps } from "./SortableTrackItem";
 
-import { TemplateTrackConfig } from "../../atoms/persistedAtoms";
 import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";
 
 export type TrackSettingsProps = CurveTrackItemProps;
-type ConfigChanges = Pick<Partial<TemplateTrackConfig>, "width" | "plots" | "scale" | "title">;
+type ConfigChanges = Partial<Pick<TemplateTrackConfig, "width" | "plots" | "scale" | "title">>;
 
 const INPUT_DEBOUNCE_TIME = 500;
 
@@ -58,14 +58,14 @@ export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
             />
 
             <label htmlFor="trackScale">Scale</label>
-            <Dropdown
+            <Dropdown<TemplatePlotScaleTypes>
                 id="trackScale"
-                value={props.trackConfig.scale ?? ""}
+                value={props.trackConfig.scale}
                 options={PLOT_SCALE_OPTIONS}
                 filter={false}
                 onChange={(val) => {
                     if (!val) updateTrackConfig({ scale: undefined });
-                    else updateTrackConfig({ scale: val as TemplatePlotScaleTypes });
+                    else updateTrackConfig({ scale: val });
                 }}
             />
 

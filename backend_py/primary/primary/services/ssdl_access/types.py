@@ -64,4 +64,11 @@ class WellboreLogCurveData(BaseModel):
     no_data_value: float | None
     unit: str
     curve_unit_desc: str | None
+
+    # This field has weird casing. This is just how SSDL has decided to return this object, so we leave it as is to make model validation 
     DataPoints: list[list[float | None]]
+
+    @property
+    def data_points(self) -> list[list[float | None]]:
+        # Utility property to  "DataPoint" with proper casing
+        return self.DataPoints

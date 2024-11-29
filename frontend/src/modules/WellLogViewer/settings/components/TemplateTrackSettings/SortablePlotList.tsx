@@ -1,11 +1,13 @@
 import React from "react";
 
 import { WellboreLogCurveHeader_api } from "@api";
-import { arrayMove } from "@framework/utils/arrays";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { SortableList, SortableListItem } from "@lib/components/SortableList";
 import { ColorSet } from "@lib/utils/ColorSet";
+import { arrayMove } from "@lib/utils/arrays";
+import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { CURVE_COLOR_PALETTE } from "@modules/WellLogViewer/utils/logViewerColors";
 import { PLOT_TYPE_OPTIONS, makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { Delete, SwapHoriz, Warning } from "@mui/icons-material";
@@ -14,8 +16,7 @@ import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellL
 import { useAtomValue } from "jotai";
 import _ from "lodash";
 
-import { allSelectedWellLogCurvesAtom } from "../../atoms/derivedAtoms";
-import { TemplatePlotConfig } from "../../atoms/persistedAtoms";
+import { missingCurvesAtom } from "../../atoms/derivedAtoms";
 import { AddItemButton } from "../AddItemButton";
 
 export type SortablePlotListProps = {
@@ -25,17 +26,15 @@ export type SortablePlotListProps = {
 };
 
 export function SortablePlotList(props: SortablePlotListProps): React.ReactNode {
-    const allSelectedWellLogCurves = useAtomValue(allSelectedWellLogCurvesAtom);
-
     const { onUpdatePlots } = props;
 
     const curveHeaderOptions = makeCurveNameOptions(props.availableCurveHeaders);
+    const missingCurves = useAtomValue(missingCurvesAtom);
 
-    // If the current selection does not exist, keep it in the selection, with a warning. This can happen when the user is importing a config, or swapping between wellbores
-    allSelectedWellLogCurves.forEach((curveName) => {
-        if (!curveHeaderOptions.some(({ value }) => value.endsWith("::" + curveName))) {
-            curveHeaderOptions.push(makeMissingCurveOption(curveName));
-        }
+    missingCurves.forEach((curveName) => {
+        // If the current selection does not exist, keep it in the dropdown options, but with a warning.
+        // This can happen when the user is importing a config, or swapping between wellbores.
+        curveHeaderOptions.push(makeMissingCurveOption(curveName));
     });
 
     // TODO, do an offsett or something, so they dont always start on the same color?
@@ -76,11 +75,7 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
             destinationId: string | null,
             newPosition: number
         ) {
-            // Skip update if the item was moved above or below itself, as this means no actual move happened
-            // TODO: This should probably be checked inside SortableList
             const currentPosition = props.plots.findIndex((p) => p.name === movedItemId);
-            if (currentPosition === newPosition || currentPosition + 1 === newPosition) return;
-
             const newTrackCfg = arrayMove(props.plots, currentPosition, newPosition);
 
             onUpdatePlots(newTrackCfg);
@@ -89,7 +84,7 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
     );
 
     return (
-        <div className="">
+        <div>
             <Label text="Plots" position="left" wrapperClassName="!justify-between" labelClassName="!mb-0">
                 <AddItemButton buttonText="Add plot" options={PLOT_TYPE_OPTIONS} onOptionClicked={addPlot} />
             </Label>
@@ -111,7 +106,7 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 
 type SortablePlotItemProps = {
     plot: TemplatePlotConfig;
-    curveHeaderOptions: DropdownOption[];
+    curveHeaderOptions: CurveDropdownOption[];
     onPlotUpdate: (plot: TemplatePlotConfig) => void;
     onDeletePlot: (plot: TemplatePlotConfig) => void;
 };
@@ -138,7 +133,6 @@ function SortablePlotItem(props: SortablePlotItemProps) {
                 placeholder="Select a curve"
                 value={props.plot._logAndName}
                 options={props.curveHeaderOptions}
-                // @ts-expect-error onChange is typed for a completely normal string, but we're using a formatted one
                 onChange={(v) => handlePlotChange({ _logAndName: v, name: v.split("::")[1] })}
             />
         </>
@@ -148,10 +142,8 @@ function SortablePlotItem(props: SortablePlotItemProps) {
         <>
             {secondCurveNeeded && (
                 <>
-                    <button
+                    <DenseIconButton
                         title="Swap curves"
-                        aria-label="Swap curves"
-                        className="rounded hover:bg-slate-300 text-base block px-1 -mx-1"
                         onClick={() =>
                             handlePlotChange({
                                 _logAndName: props.plot._logAndName2,
@@ -162,12 +154,12 @@ function SortablePlotItem(props: SortablePlotItemProps) {
                         }
                     >
                         <SwapHoriz fontSize="inherit" />
-                    </button>
+                    </DenseIconButton>
+
                     <Dropdown
                         placeholder="Select 2nd curve"
                         value={props.plot._logAndName2}
                         options={props.curveHeaderOptions}
-                        // @ts-expect-error onChange is typed for a completely normal string, but we're using a formatted one
                         onChange={(v) => handlePlotChange({ _logAndName2: v, name2: v.split("::")[1] })}
                     />
                 </>
@@ -192,16 +184,20 @@ function SortablePlotItem(props: SortablePlotItemProps) {
 
     return <SortableListItem id={props.plot._id} title={title} endAdornment={endAdornment} />;
 }
+
+// It's my understanding that the STAT logs are the main curves users' would care about, so sorting them to the top first
 function sortStatLogsToTop(o: WellboreLogCurveHeader_api) {
     if (o.logName.startsWith("STAT_")) return 0;
     else return 1;
 }
 
-function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): DropdownOption[] {
-    // It's my understanding that the STAT logs are the main curves users' would care about, so sorting them to the top first
+// The select value string needs a specific pattern
+type CurveDropdownOption = { value: TemplatePlotConfig["_logAndName"] } & DropdownOption;
+
+function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): CurveDropdownOption[] {
     return _.chain(curveHeaders)
         .sortBy([sortStatLogsToTop, "logName", "curveName"])
-        .map((curveHeader): DropdownOption => {
+        .map<CurveDropdownOption>((curveHeader) => {
             return {
                 // ... surely they wont have log-names with :: in them, RIGHT?
                 value: `${curveHeader.logName}::${curveHeader.curveName}`,
@@ -213,10 +209,10 @@ function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): Dropd
 }
 
 // Helper method to show a missing curve as a disabled option
-function makeMissingCurveOption(curveAndLogName: string): DropdownOption {
+function makeMissingCurveOption(curveName: string): CurveDropdownOption {
     return {
-        label: curveAndLogName.split("::")[0],
-        value: curveAndLogName,
+        label: curveName,
+        value: `${curveName}::n/a`,
         group: "Unavailable curves!",
         disabled: true,
         adornment: (

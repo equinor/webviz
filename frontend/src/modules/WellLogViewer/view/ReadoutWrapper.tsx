@@ -15,9 +15,11 @@ export type ReadoutWrapperProps = {
 };
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
+    if (props.hide) return null;
+    // This means that the log-viewer has no visible tracks
     if (_.maxBy(props.wellLogReadout, "iTrack")?.iTrack === -1) return null;
 
-    const readoutItems = props.hide ? [] : parseWellLogReadout(props.wellLogReadout, props.templateTracks);
+    const readoutItems = parseWellLogReadout(props.wellLogReadout, props.templateTracks);
 
     return <ReadoutBox maxNumItems={DEFAULT_MAX_VISIBLE_TRACKS + 1} readoutItems={readoutItems} noLabelColor />;
 }

@@ -11,7 +11,7 @@ export const intersectionReferenceSystemAtom = atom<IntersectionReferenceSystem 
 
     if (wellboreTrajectoryQuery.isPending || wellboreTrajectoryQuery.isError) return null;
 
-    const systemPath = trajectoryToRefferenceSystemPath(wellboreTrajectoryQuery.data);
+    const systemPath = trajectoryToReferenceSystemPath(wellboreTrajectoryQuery.data);
     const offset = wellboreTrajectoryQuery.data.mdArr[0];
 
     const referenceSystem = new IntersectionReferenceSystem(systemPath);
@@ -21,7 +21,7 @@ export const intersectionReferenceSystemAtom = atom<IntersectionReferenceSystem 
     return referenceSystem;
 });
 
-function trajectoryToRefferenceSystemPath(trajectory: WellboreTrajectory_api): number[][] {
+function trajectoryToReferenceSystemPath(trajectory: WellboreTrajectory_api): number[][] {
     return _.zipWith(trajectory.eastingArr, trajectory.northingArr, trajectory.tvdMslArr, (easting, northing, tvd) => {
         return [easting, northing, tvd];
     });

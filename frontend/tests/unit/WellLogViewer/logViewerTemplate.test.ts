@@ -1,4 +1,4 @@
-import { TemplatePlotConfig } from "@modules/WellLogViewer/settings/atoms/persistedAtoms";
+import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "@modules/WellLogViewer/utils/logViewerColors";
 import {
     PLOT_TYPE_OPTIONS,

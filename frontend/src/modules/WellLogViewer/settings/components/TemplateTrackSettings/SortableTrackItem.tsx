@@ -1,12 +1,13 @@
 import React from "react";
 
 import { SettingsStatusWriter } from "@framework/StatusWriter";
+import { DenseIconButton } from "@lib/components/DenseIconButton";
+import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
+import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { Delete, ExpandLess, ExpandMore, Settings, Warning } from "@mui/icons-material";
 
 import { TrackSettings } from "./TrackSettings";
-
-import { TemplateTrackConfig } from "../../atoms/persistedAtoms";
 
 export type CurveTrackItemProps = {
     trackConfig: TemplateTrackConfig;
@@ -52,21 +53,18 @@ function ListItemEndAdornment(props: ListItemEndAdornmentProps) {
                 </span>
             )}
 
-            <button
-                className=" hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded"
-                title="Open track config"
-                onClick={props.toggleExpanded}
-            >
+            <DenseIconButton title="Open track config" onClick={props.toggleExpanded}>
                 <Settings fontSize="inherit" />
                 {props.isExpanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
-            </button>
-            <button
-                className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded text-xs text-red-800"
+            </DenseIconButton>
+
+            <DenseIconButton
                 title="Remove Track"
+                colorScheme={DenseIconButtonColorScheme.DANGER}
                 onClick={props.onDeleteTrack}
             >
-                <Delete fontSize="inherit" />
-            </button>
+                <Delete className="text-red-800" fontSize="inherit" />
+            </DenseIconButton>
         </>
     );
 }

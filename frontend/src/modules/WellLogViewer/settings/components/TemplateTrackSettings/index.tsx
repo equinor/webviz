@@ -1,11 +1,11 @@
 import React from "react";
 
 import { SettingsStatusWriter } from "@framework/StatusWriter";
-import { arrayMove } from "@framework/utils/arrays";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
-// import { MenuItem } from "@lib/components/MenuItem";
 import { SortableList } from "@lib/components/SortableList";
+import { arrayMove } from "@lib/utils/arrays";
+import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { transformToTrackConfigs } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { Dropdown, MenuButton } from "@mui/base";
 import { FileDownload, FileUpload, MoreVert } from "@mui/icons-material";
@@ -15,7 +15,7 @@ import { v4 } from "uuid";
 
 import { SortableTrackItem } from "./SortableTrackItem";
 
-import { TemplateTrackConfig, logViewerTrackConfigs } from "../../atoms/persistedAtoms";
+import { logViewerTrackConfigs } from "../../atoms/persistedAtoms";
 import { AddItemButton } from "../AddItemButton";
 
 interface TemplateTrackSettingsProps {
@@ -58,11 +58,7 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
             destinationId: string | null,
             newPosition: number
         ) {
-            // Skip update if the item was moved above or below itself, as this means no actual move happened
-            // TODO: This should probably be checked inside SortableList
             const currentPosition = trackConfigs.findIndex((cfg) => cfg._id === movedItemId);
-            if (currentPosition === newPosition || currentPosition + 1 === newPosition) return;
-
             const newTrackCfg = arrayMove(trackConfigs, currentPosition, newPosition);
 
             setTrackConfigs(newTrackCfg);
@@ -85,7 +81,7 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
             const file = evt.target.files?.item(0);
 
             if (!file) return console.warn("No file given");
-            if (file.type !== "application/json") return console.warn("Invalid file extension");
+            if (file.type !== "application/json") return window.alert("Invalid file extension");
 
             try {
                 const fileData = await file.text();
@@ -95,15 +91,20 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
 
                 setTrackConfigs(newConfig);
             } catch (error) {
-                console.error(error);
                 console.warn("Invalid JSON content");
+                console.error(error);
+                let errorMsg = "Unkown error";
+                if (typeof error === "string") errorMsg = "error";
+                if (error instanceof Error) errorMsg = error.message;
+
+                window.alert("Invalid JSON content\n\n" + errorMsg);
             }
         },
         [setTrackConfigs]
     );
 
     return (
-        <div className="h-full  [&_>_div]:!flex-grow-0">
+        <div className="h-full">
             <div className="flex bg-slate-100 p-2 items-center border-b border-gray-300">
                 <input
                     ref={jsonImportInputRef}
@@ -121,23 +122,6 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
                         <MoreVert fontSize="inherit" />
                     </MenuButton>
                     <Menu anchorOrigin="bottom-end" className="text-sm">
-                        {/* No idea why this wouldnt play along with Typescript
-                        <MenuItem
-                            slots={{
-                                root: MenuItemLinkSlot,
-                            }}
-                            slotProps={{
-                                root: {
-                                    // @ts-expect-error I can't seem to overwrite the type for this, but the href is passed as expected
-                                    href: encodedConfigJsonUrl,
-                                    download: "well-log-plot-config.json",
-                                },
-                            }}
-                        >
-                            <FileDownload fontSize="inherit" /> Export JSON
-                        </MenuItem>
-                        */}
-
                         <MenuItem disabled={!encodedConfigJsonUrl}>
                             <a
                                 className="-mx-4 -my-2 px-4 py-2 flex items-center gap-2"

@@ -14,10 +14,11 @@ import { v4 } from "uuid";
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "./logViewerColors";
 import { MAIN_AXIS_CURVE } from "./queryDataTransform";
 
-import { TemplatePlotConfig, TemplateTrackConfig } from "../settings/atoms/persistedAtoms";
+import { TemplateTrackConfig } from "../types";
+import { TemplatePlotConfig } from "../types";
 
-type PlotDropdownOption = DropdownOption & { value: TemplatePlotTypes };
-type TemplatePlotScaleOption = DropdownOption & { value: TemplatePlotScaleTypes };
+type PlotDropdownOption = DropdownOption<TemplatePlotTypes>;
+type TemplatePlotScaleOption = DropdownOption<TemplatePlotScaleTypes>;
 
 export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
 

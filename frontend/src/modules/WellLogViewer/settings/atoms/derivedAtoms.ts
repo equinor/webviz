@@ -4,7 +4,7 @@ import { WellPicksLayerData } from "@modules/Intersection/utils/layers/Wellpicks
 import { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { atom } from "jotai";
-import _, { Dictionary } from "lodash";
+import _ from "lodash";
 
 import {
     userSelectedFieldIdentifierAtom,
@@ -23,24 +23,28 @@ export const selectedEnsembleSetAtom = atom((get) => {
     const ensembleSetArr = get(EnsembleSetAtom).getEnsembleArr();
     const selectedFieldId = get(userSelectedFieldIdentifierAtom);
 
-    if (ensembleSetArr.length < 1) {
+    if (!ensembleSetArr.length) {
         return null;
-    } else {
-        const selectedEnsemble = ensembleSetArr.find((e) => e.getFieldIdentifier() === selectedFieldId);
-
-        return selectedEnsemble ?? ensembleSetArr[0];
     }
+
+    const selectedEnsemble = ensembleSetArr.find((e) => e.getFieldIdentifier() === selectedFieldId);
+
+    return selectedEnsemble ?? ensembleSetArr[0];
 });
 
 export const selectedFieldIdentifierAtom = atom((get) => {
     return get(selectedEnsembleSetAtom)?.getFieldIdentifier() ?? null;
 });
 
-export const selectedWellboreAtom = atom<WellboreHeader_api | null>((get) => {
+export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) => {
     const availableWellboreHeaders = get(drilledWellboreHeadersQueryAtom)?.data;
     const selectedWellboreId = get(userSelectedWellboreUuidAtom);
 
-    return getSelectedWellboreHeader(selectedWellboreId, availableWellboreHeaders);
+    if (!availableWellboreHeaders?.length) {
+        return null;
+    }
+
+    return availableWellboreHeaders.find((wh) => wh.wellboreUuid === selectedWellboreId) ?? availableWellboreHeaders[0];
 });
 
 export const selectedWellborePicksAtom = atom<WellPicksLayerData>((get) => {
@@ -59,7 +63,7 @@ export const selectedWellborePicksAtom = atom<WellPicksLayerData>((get) => {
     }
 });
 
-export const groupedCurveHeadersAtom = atom<Dictionary<WellboreLogCurveHeader_api[]>>((get) => {
+export const groupedCurveHeadersAtom = atom<Record<string, WellboreLogCurveHeader_api[]>>((get) => {
     const logCurveHeaders = get(wellLogCurveHeadersQueryAtom)?.data ?? [];
 
     return _.groupBy(logCurveHeaders, "logName");
@@ -91,17 +95,23 @@ export const allSelectedWellLogCurvesAtom = atom<string[]>((get) => {
     return curveNames;
 });
 
-function getSelectedWellboreHeader(
-    currentId: string | null,
-    wellboreHeaderSet: WellboreHeader_api[] | null | undefined
-): WellboreHeader_api | null {
-    if (!wellboreHeaderSet || wellboreHeaderSet.length < 1) {
-        return null;
-    }
+/**
+ * Returns a list of all user-selected curves that have no available curve-header
+ */
+export const missingCurvesAtom = atom<string[]>((get) => {
+    const allSelectedWellLogCurves = get(allSelectedWellLogCurvesAtom);
+    const curveHeadersQuery = get(wellLogCurveHeadersQueryAtom);
 
-    if (!currentId) {
-        return wellboreHeaderSet[0];
-    }
+    // While loading, assume all curves are "available" (since they *most likely* are)
+    if (!curveHeadersQuery.data) return [];
 
-    return wellboreHeaderSet.find((wh) => wh.wellboreUuid === currentId) ?? wellboreHeaderSet[0];
-}
+    const missingNames: string[] = [];
+
+    allSelectedWellLogCurves.forEach((selectedName) => {
+        if (!curveHeadersQuery.data.some(({ curveName }) => curveName === selectedName)) {
+            missingNames.push(selectedName);
+        }
+    });
+
+    return missingNames;
+});

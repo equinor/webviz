@@ -21,7 +21,9 @@ export function WellpickSelect(props: WellpickSelectProps): React.ReactNode {
         function handleChangeUnitPicks(value: string[]) {
             if (!onUnitPicksChange) return;
 
-            return _.isEqual(value, props.selectedUnitPicks) ? onUnitPicksChange([]) : onUnitPicksChange(value);
+            // Allow the user to de-select if they click the already chosen value
+            const newVal = _.isEqual(value, props.selectedUnitPicks) ? [] : value;
+            onUnitPicksChange(newVal);
         },
         [onUnitPicksChange, props.selectedUnitPicks]
     );

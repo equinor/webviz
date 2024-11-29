@@ -6,7 +6,7 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
-import { IntersectionType } from "@framework/types/intersection";
+import { Intersection, IntersectionType } from "@framework/types/intersection";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -14,15 +14,15 @@ import { Select, SelectOption } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtomValue, useSetAtom } from "jotai";
+import _ from "lodash";
 
 import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
-import { selectedFieldIdentifierAtom, selectedWellboreAtom } from "./atoms/derivedAtoms";
+import { selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./atoms/derivedAtoms";
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
 import { ViewerSettings } from "./components/ViewerSettings";
 
 import { InterfaceTypes } from "../interfaces";
-import { useTrackedGlobalValue } from "../utils/hooks";
 
 function useSyncedWellboreSetting(
     syncHelper: SyncSettingsHelper
@@ -30,11 +30,15 @@ function useSyncedWellboreSetting(
     const localSetSelectedWellboreHeader = useSetAtom(userSelectedWellboreUuidAtom);
     // Global syncronization
     const globalIntersection = syncHelper.useValue(SyncSettingKey.INTERSECTION, "global.syncValue.intersection");
-    useTrackedGlobalValue(globalIntersection, () => {
+    const [prevGlobalIntersection, setPrevGlobalIntersection] = React.useState<Intersection | null>(null);
+
+    if (!_.isEqual(prevGlobalIntersection, globalIntersection)) {
+        setPrevGlobalIntersection(globalIntersection);
+
         if (globalIntersection?.type === IntersectionType.WELLBORE) {
             localSetSelectedWellboreHeader(globalIntersection.uuid);
         }
-    });
+    }
 
     function setSelectedWellboreHeader(wellboreUuid: string | null) {
         localSetSelectedWellboreHeader(wellboreUuid);
@@ -45,7 +49,7 @@ function useSyncedWellboreSetting(
         });
     }
     // Leave AFTER checking global, othwise the select menu will highlight the wrong value
-    const selectedWellboreHeader = useAtomValue(selectedWellboreAtom);
+    const selectedWellboreHeader = useAtomValue(selectedWellboreHeaderAtom);
 
     return [selectedWellboreHeader, setSelectedWellboreHeader];
 }
@@ -77,7 +81,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     const wellboreHeadersErrorStatus = usePropagateApiErrorToStatusWriter(wellboreHeaders, statusWriter) ?? "";
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full gap-1">
             <CollapsibleGroup title="Wellbore" expanded>
                 <Label text="Field">
                     <FieldDropdown value={selectedField} ensembleSet={ensembleSet} onChange={setSelectedField} />
@@ -97,14 +101,9 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
                 </Label>
             </CollapsibleGroup>
 
-            {/* Spacer to slightly seperate the two collapsible items */}
-            <div className="my-1" />
-
             <CollapsibleGroup title="Well Log settings" expanded>
                 <ViewerSettings statusWriter={statusWriter} />
             </CollapsibleGroup>
-
-            <div className="my-1" />
 
             <TemplateTrackSettings statusWriter={statusWriter} />
         </div>
