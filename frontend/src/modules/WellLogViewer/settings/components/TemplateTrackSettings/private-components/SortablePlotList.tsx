@@ -16,8 +16,8 @@ import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellL
 import { useAtomValue } from "jotai";
 import _ from "lodash";
 
-import { missingCurvesAtom } from "../../atoms/derivedAtoms";
-import { AddItemButton } from "../AddItemButton";
+import { missingCurvesAtom } from "../../../atoms/derivedAtoms";
+import { AddItemButton } from "../../AddItemButton";
 
 export type SortablePlotListProps = {
     availableCurveHeaders: WellboreLogCurveHeader_api[];

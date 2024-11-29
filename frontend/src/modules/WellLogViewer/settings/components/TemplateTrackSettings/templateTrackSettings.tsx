@@ -13,7 +13,7 @@ import { FileDownload, FileUpload, MoreVert } from "@mui/icons-material";
 import { useAtom } from "jotai";
 import { v4 } from "uuid";
 
-import { SortableTrackItem } from "./SortableTrackItem";
+import { SortableTrackItem } from "./private-components/SortableTrackItem";
 
 import { logViewerTrackConfigs } from "../../atoms/persistedAtoms";
 import { AddItemButton } from "../AddItemButton";

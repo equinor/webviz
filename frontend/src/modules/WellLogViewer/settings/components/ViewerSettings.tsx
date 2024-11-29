@@ -8,10 +8,11 @@ import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePr
 
 import { useAtom, useAtomValue } from "jotai";
 
-import { userSelectedNonUnitWellpicksAtom, userSelectedUnitWellpicksAtom } from "../../atoms/baseAtoms";
-import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "../../atoms/persistedAtoms";
-import { wellborePicksAndStratigraphyQueryAtom } from "../../atoms/queryAtoms";
-import { WellpickSelect } from "../WellpickSelect";
+import { WellpickSelect } from "./WellpickSelect";
+
+import { userSelectedNonUnitWellpicksAtom, userSelectedUnitWellpicksAtom } from "../atoms/baseAtoms";
+import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "../atoms/persistedAtoms";
+import { wellborePicksAndStratigraphyQueryAtom } from "../atoms/queryAtoms";
 
 export type ViewerSettingsProps = {
     statusWriter: SettingsStatusWriter;

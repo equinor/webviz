@@ -13,7 +13,7 @@ import { useAtomValue } from "jotai";
 import { SortablePlotList } from "./SortablePlotList";
 import { CurveTrackItemProps } from "./SortableTrackItem";
 
-import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";
+import { wellLogCurveHeadersQueryAtom } from "../../../atoms/queryAtoms";
 
 export type TrackSettingsProps = CurveTrackItemProps;
 type ConfigChanges = Partial<Pick<TemplateTrackConfig, "width" | "plots" | "scale" | "title">>;
