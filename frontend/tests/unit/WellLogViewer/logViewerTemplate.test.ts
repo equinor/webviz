@@ -1,20 +1,34 @@
-import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
+import { PLOT_TYPE_OPTIONS } from "@modules/WellLogViewer/settings/components/TemplateTrackSettings/private-components/SortablePlotList";
+import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "@modules/WellLogViewer/utils/logViewerColors";
 import {
-    PLOT_TYPE_OPTIONS,
     createLogTemplate,
     isCompositePlotType,
     isValidPlot,
     makeTrackPlot,
 } from "@modules/WellLogViewer/utils/logViewerTemplate";
-import { transformToTrackConfigs } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { MAIN_AXIS_CURVE } from "@modules/WellLogViewer/utils/queryDataTransform";
+import { configToJsonDataBlob, jsonFileToTrackConfigs } from "@modules/WellLogViewer/utils/settingsImport";
 import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { describe, expect, test } from "vitest";
 
 // These plot types are "simple", and only require name and color
 const SIMPLE_PLOT_TYPES = ["line", "linestep", "dot", "area"] as TemplatePlotTypes[];
+
+class MockFile {
+    private fauxData: any;
+    public type: string;
+
+    constructor(obj: any, fileType = "application/json") {
+        this.fauxData = JSON.stringify(obj);
+        this.type = fileType;
+    }
+
+    async text() {
+        return this.fauxData;
+    }
+}
 
 describe("makeTrackPlot tests", () => {
     test("should be invalid if no name is provided", () => {
@@ -241,9 +255,31 @@ describe("Other utilities", () => {
     });
 });
 
-describe("transformToTrackConfigs tests", () => {
-    test("should transform an array of objects to an array of TemplateTrackConfig objects", () => {
-        const input = [
+describe("settings import export tests", () => {
+    test("should export a list of configs as a data-blob url", () => {
+        const input: TemplateTrackConfig[] = [
+            {
+                _id: "test",
+                title: "test-track",
+                plots: [],
+            },
+        ];
+
+        // Empty list should give null
+        const result = configToJsonDataBlob(input);
+        expect(result).toMatch(/^data:text\/json/);
+    });
+
+    test("should export a list of configs an empty config list as null", () => {
+        const input: TemplateTrackConfig[] = [];
+
+        // Empty list should give null
+        const result = configToJsonDataBlob(input);
+        expect(result).toBe(null);
+    });
+
+    test("should import an array of unkown objects as an array of TemplateTrackConfig objects", async () => {
+        const input = new MockFile([
             {
                 title: "Track 1",
                 plots: [{ name: "Curve 1", type: "line", color: "#123456" }],
@@ -252,59 +288,88 @@ describe("transformToTrackConfigs tests", () => {
                 title: "Track 2",
                 plots: [{ name: "Curve 2", type: "dot", color: "#654321" }],
             },
-        ];
+        ]);
 
-        const result = transformToTrackConfigs(input);
+        const result = await jsonFileToTrackConfigs(input as unknown as File);
 
+        // const result = jsonFileToTrackConfigs(input);
         expect(result).toHaveLength(2);
-        result.forEach((trackConfig, index) => {
-            expect(trackConfig).toMatchObject({
-                title: input[index].title,
-                plots: input[index].plots.map((plot) => ({
-                    ...plot,
+
+        expect(result[0]).toMatchObject({
+            title: "Track 1",
+            plots: [
+                {
                     _id: expect.any(String),
                     _isValid: true,
-                })),
-            });
+                    name: "Curve 1",
+                    type: "line",
+                },
+            ],
+        });
+
+        expect(result[1]).toMatchObject({
+            title: "Track 2",
+            plots: [
+                {
+                    _id: expect.any(String),
+                    _isValid: true,
+                    name: "Curve 2",
+                    type: "dot",
+                },
+            ],
         });
     });
 
-    test("should generate a new _id if not provided", () => {
-        const input = [
+    test("should generate a new _id if not provided", async () => {
+        const input = new MockFile([
             {
                 title: "Track 1",
                 plots: [{ name: "Curve 1", type: "line", color: "#123456" }],
             },
-        ];
+        ]);
 
-        const result = transformToTrackConfigs(input);
+        const result = await jsonFileToTrackConfigs(input as unknown as File);
 
         expect(result[0]._id).toBeDefined();
         expect(result[0]._id).toHaveLength(36); // UUID length
     });
 
-    test("should retain the provided _id if available", () => {
-        const input = [
+    test("should retain the provided _id if available", async () => {
+        const input = new MockFile([
             {
                 title: "Track 1",
                 _id: "existing-id",
                 plots: [{ name: "Curve 1", type: "line", color: "#123456" }],
             },
-        ];
+        ]);
 
-        const result = transformToTrackConfigs(input);
+        const result = await jsonFileToTrackConfigs(input as unknown as File);
 
         expect(result[0]._id).toBe("existing-id");
     });
 
-    test("should throw an error if required track fields are missing", () => {
-        const input = [{ plots: [] }];
+    test("should throw an error if required track fields are missing", async () => {
+        const input = new MockFile([{ plots: [] }]);
 
-        expect(() => transformToTrackConfigs(input)).toThrow("Missing required fields");
+        await expect(jsonFileToTrackConfigs(input as unknown as File)).rejects.toThrow("Missing required fields");
     });
 
-    test('should mark invalid plots with "_valid: false"', () => {
-        const input = [
+    test("should throw an error if file has wrong file-type", async () => {
+        const input = new MockFile(
+            [
+                {
+                    title: "Track 1",
+                    plots: [{ name: "Curve 1", type: "line", color: "#123456" }],
+                },
+            ],
+            "text/plain"
+        );
+
+        await expect(jsonFileToTrackConfigs(input as unknown as File)).rejects.toThrow("Invalid file extension");
+    });
+
+    test('should mark invalid plots with "_valid: false"', async () => {
+        const input = new MockFile([
             {
                 title: "Track 1",
                 plots: [
@@ -312,17 +377,10 @@ describe("transformToTrackConfigs tests", () => {
                     { name: "Curve 2", type: "differential", color: "#654321" },
                 ],
             },
-        ];
-
-        const result = transformToTrackConfigs(input);
-
-        expect(result).toMatchObject([
-            {
-                plots: input[0].plots.map(() => ({
-                    _isValid: false,
-                })),
-            },
         ]);
+
+        const result = await jsonFileToTrackConfigs(input as unknown as File);
+        expect(result).toMatchObject([{ plots: [{ _isValid: false }, { _isValid: false }] }]);
     });
 
     describe("isValidPlot tests", () => {
