@@ -1,15 +1,19 @@
 import { VectorRealizationData_api } from "@api";
 import { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { VectorSpec } from "./typesAndEnums";
 
+// As of now, the publish to data channels only supports regular ensembles
+export interface RegularEnsembleVectorSpec extends VectorSpec {
+    ensembleIdent: EnsembleIdent;
+}
+
 export function makeVectorGroupDataGenerator(
-    vectorSpecification: VectorSpec,
-    vectorSpecificationsAndRealizationData: {
-        vectorSpecification: VectorSpec;
+    regularEnsembleVectorSpecification: RegularEnsembleVectorSpec,
+    regularEnsembleVectorSpecificationsAndRealizationData: {
+        vectorSpecification: RegularEnsembleVectorSpec;
         data: VectorRealizationData_api[];
     }[],
     activeTimestampUtcMs: number,
@@ -23,14 +27,13 @@ export function makeVectorGroupDataGenerator(
             displayString: "",
         };
 
-        const vector = vectorSpecificationsAndRealizationData.find(
+        const vector = regularEnsembleVectorSpecificationsAndRealizationData.find(
             (vec) =>
-                vec.vectorSpecification.vectorName === vectorSpecification.vectorName &&
-                vec.vectorSpecification.ensembleIdent.equals(vectorSpecification.ensembleIdent)
+                vec.vectorSpecification.vectorName === regularEnsembleVectorSpecification.vectorName &&
+                vec.vectorSpecification.ensembleIdent.equals(regularEnsembleVectorSpecification.ensembleIdent)
         );
 
-        // TODO: Should not need isEnsembleIdentOfType here, pass filtered and valid data outside
-        if (vector && isEnsembleIdentOfType(vector.vectorSpecification.ensembleIdent, EnsembleIdent)) {
+        if (vector) {
             let unit = "";
             vector.data.forEach((el) => {
                 unit = simulationUnitReformat(el.unit);

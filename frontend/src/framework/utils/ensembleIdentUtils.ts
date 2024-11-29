@@ -11,7 +11,7 @@ export function isEnsembleIdentOfType<T extends EnsembleIdentInterface<any>>(
 }
 
 /**
- * Creates a new array of ensemble idents that are of the specified type.
+ * Creates a new array of ensemble idents only containing the specified type.
  *
  * A list of classes implementing EnsembleIdentInterface, and a type are passed as arguments.
  *

@@ -13,6 +13,7 @@ import {
     vectorSpecificationsAtom,
     visualizationModeAtom,
 } from "./baseAtoms";
+import { regularEnsembleVectorSpecificationsAtom } from "./derivedAtoms";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -199,13 +200,10 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
     };
 });
 
-export const historicalVectorDataQueriesAtom = atomWithQueries((get) => {
-    const vectorSpecifications = get(vectorSpecificationsAtom);
+export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((get) => {
     const resampleFrequency = get(resampleFrequencyAtom);
+    const regularEnsembleVectorSpecifications = get(regularEnsembleVectorSpecificationsAtom);
 
-    const regularEnsembleVectorSpecifications = vectorSpecifications.filter((elm) =>
-        isEnsembleIdentOfType(elm.ensembleIdent, EnsembleIdent)
-    );
     const enabled = regularEnsembleVectorSpecifications.some((elm) => elm.hasHistoricalVector);
 
     const queries = regularEnsembleVectorSpecifications.map((item) => {
@@ -240,10 +238,8 @@ export const historicalVectorDataQueriesAtom = atomWithQueries((get) => {
         });
     });
 
-    // TODO: Should also include the vector specifications used for the queries
     return {
         queries,
-        // vectorSpecifications: regularEnsembleVectorSpecifications,
     };
 });
 

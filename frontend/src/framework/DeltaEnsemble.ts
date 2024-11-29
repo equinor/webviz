@@ -10,7 +10,7 @@ import { EnsembleSensitivities } from "./EnsembleSensitivities";
 /**
  * Delta ensemble class.
  *
- * Delta ensemble is a special ensemble that represents the difference between two ensembles.
+ * Delta ensemble is a user created ensemble defined as the difference between two ensembles.
  *
  * Definition:
  *
@@ -52,9 +52,9 @@ export class DeltaEnsemble implements EnsembleInterface {
             .filter((realization) => this._referenceEnsemble.getRealizations().includes(realization));
         this._realizationsArray = Array.from(realizationIntersection).sort((a, b) => a - b);
 
-        // TODO:
-        // - How to handle parameters and sensitivities?
-        // - Intersection or union? How to handle parameter values?
+        // For future implementation:
+        // - Decide how to handle parameters and sensitivities.
+        // - Note: Intersection or union? How to handle parameter values?
         this._parameters = new EnsembleParameters([]);
         this._sensitivities = null;
     }

@@ -3,10 +3,12 @@ import { EnsembleIdentInterface } from "./EnsembleIdentInterface";
 import { ensembleIdentRegexStringWithoutAnchors, ensembleIdentUuidRegexString } from "./utils/ensembleIdentUtils";
 
 /**
- * Represents a delta ensemble ident
+ * Delta ensemble ident class.
  *
- * Holds ensemble idents of the two ensembles used to define a delta ensemble:
- * compareEnsembleIdent and referenceEnsembleIdent for easy usage in the framework.
+ * DeltaEnsembleIdent is the ensemble ident for a delta ensemble.
+ *
+ * The class holds the ensemble idents of the two ensembles used to define the delta ensemble,
+ * i.e. compareEnsembleIdent and referenceEnsembleIdent, for easy usage in the framework.
  *
  * Definition:
  *

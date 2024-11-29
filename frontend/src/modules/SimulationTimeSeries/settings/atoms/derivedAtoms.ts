@@ -80,12 +80,17 @@ export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((ge
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
+    // Does not support parameters for delta ensembles yet
+    const hasAnyDeltaEnsembles = filterEnsembleIdentsByType(selectedEnsembleIdents, DeltaEnsembleIdent).length > 0;
+    if (hasAnyDeltaEnsembles) {
+        return [];
+    }
+
     const continuousAndNonConstantParametersUnion: Parameter[] = [];
-
-    for (const ensembleIdent of selectedEnsembleIdents) {
+    const regularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, EnsembleIdent);
+    for (const ensembleIdent of regularEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
-        if (!ensemble || !(ensemble instanceof Ensemble)) {
+        if (!ensemble) {
             continue;
         }
 

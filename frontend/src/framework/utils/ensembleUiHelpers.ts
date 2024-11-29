@@ -44,17 +44,16 @@ export function fixupEnsembleIdent(
     currIdent: EnsembleIdent | DeltaEnsembleIdent | null,
     ensembleSet: EnsembleSet | null
 ): (EnsembleIdent | DeltaEnsembleIdent) | null {
-    if (!ensembleSet?.hasAnyEnsembles()) {
+    if (!ensembleSet?.hasAnyEnsemblesOrDeltaEnsembles()) {
         return null;
     }
 
-    if (currIdent) {
-        if (ensembleSet.hasEnsemble(currIdent)) {
-            return currIdent;
-        }
+    if (currIdent && ensembleSet.hasEnsemble(currIdent)) {
+        return currIdent;
     }
 
-    if (currIdent instanceof DeltaEnsembleIdent) {
+    // If requesting delta ensemble, or no regular ensembles are available
+    if (currIdent instanceof DeltaEnsembleIdent || !ensembleSet.hasAnyEnsembles()) {
         return ensembleSet.getDeltaEnsembleArray()[0].getIdent();
     }
 
@@ -87,12 +86,16 @@ export function fixupEnsembleIdents(
     currIdents: (EnsembleIdent | DeltaEnsembleIdent)[] | null,
     ensembleSet: EnsembleSet | null
 ): (EnsembleIdent | DeltaEnsembleIdent)[] | null {
-    if (!ensembleSet?.hasAnyEnsembles()) {
+    if (!ensembleSet?.hasAnyEnsemblesOrDeltaEnsembles()) {
         return null;
     }
 
     if (currIdents === null || currIdents.length === 0) {
-        return [ensembleSet.getEnsembleArray()[0].getIdent()];
+        // Provide first regular ensemble ident by default
+        if (ensembleSet.hasAnyEnsembles()) {
+            return [ensembleSet.getEnsembleArray()[0].getIdent()];
+        }
+        return [ensembleSet.getDeltaEnsembleArray()[0].getIdent()];
     }
 
     return currIdents.filter((currIdent) => {

@@ -5,6 +5,8 @@ import { UseQueryResult } from "@tanstack/react-query";
 
 /**
  * Helper class for working with ensembles and corresponding vector list query results
+ *
+ * Assuming that the order of ensembles and queries is the same
  */
 export class EnsembleVectorListsHelper {
     private _ensembleIdents: (EnsembleIdent | DeltaEnsembleIdent)[];
@@ -99,13 +101,7 @@ export class EnsembleVectorListsHelper {
      */
     private findIndexOfEnsembleIdent(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent): number {
         return this._ensembleIdents.findIndex((ident) => {
-            if (ensembleIdent instanceof EnsembleIdent && ident instanceof EnsembleIdent) {
-                return ident.equals(ensembleIdent);
-            }
-            if (ensembleIdent instanceof DeltaEnsembleIdent && ident instanceof DeltaEnsembleIdent) {
-                return ident.equals(ensembleIdent);
-            }
-            return false;
+            return ident.equals(ensembleIdent);
         });
     }
 }

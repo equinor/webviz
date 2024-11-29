@@ -1,3 +1,4 @@
+import { VectorRealizationData_api } from "@api";
 import { ChannelContentDefinition } from "@framework/DataChannelTypes";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ViewContext } from "@framework/ModuleContext";
@@ -9,7 +10,7 @@ import { useAtomValue } from "jotai";
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 import { ChannelIds } from "../../channelDefs";
-import { makeVectorGroupDataGenerator } from "../../dataGenerators";
+import { RegularEnsembleVectorSpec, makeVectorGroupDataGenerator } from "../../dataGenerators";
 import {
     activeTimestampUtcMsAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
@@ -24,26 +25,45 @@ export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
     const makeEnsembleDisplayName = useMakeEnsembleDisplayNameFunc(viewContext);
 
     // Only publish regular ensemble data to the time series channel
-    const validVectorSpecificationsAndRealizationData = loadedVectorSpecificationsAndRealizationData.filter((el) =>
-        isEnsembleIdentOfType(el.vectorSpecification.ensembleIdent, EnsembleIdent)
-    );
+    const regularEnsembleVectorSpecificationsAndRealizationData: {
+        vectorSpecification: RegularEnsembleVectorSpec;
+        data: VectorRealizationData_api[];
+    }[] = [];
+    for (const elm of loadedVectorSpecificationsAndRealizationData) {
+        if (!isEnsembleIdentOfType(elm.vectorSpecification.ensembleIdent, EnsembleIdent)) {
+            continue;
+        }
 
-    const contents: ChannelContentDefinition[] = validVectorSpecificationsAndRealizationData.map((el) => ({
-        contentIdString: `${el.vectorSpecification.vectorName}-::-${el.vectorSpecification.ensembleIdent}`,
-        displayName: `${el.vectorSpecification.vectorName} (${makeEnsembleDisplayName(
-            el.vectorSpecification.ensembleIdent as EnsembleIdent // TODO: Should not need cast here, fix type?
-        )})`,
-        dataGenerator: makeVectorGroupDataGenerator(
-            el.vectorSpecification,
-            loadedVectorSpecificationsAndRealizationData,
-            activeTimestampUtcMs ?? 0,
-            makeEnsembleDisplayName
-        ),
-    }));
+        const regularEnsembleVectorSpec: RegularEnsembleVectorSpec = {
+            ...elm.vectorSpecification,
+            ensembleIdent: elm.vectorSpecification.ensembleIdent,
+        };
+
+        regularEnsembleVectorSpecificationsAndRealizationData.push({
+            vectorSpecification: regularEnsembleVectorSpec,
+            data: elm.data,
+        });
+    }
+
+    const contents: ChannelContentDefinition[] = [];
+    for (const elm of regularEnsembleVectorSpecificationsAndRealizationData) {
+        contents.push({
+            contentIdString: `${elm.vectorSpecification.vectorName}-::-${elm.vectorSpecification.ensembleIdent}`,
+            displayName: `${elm.vectorSpecification.vectorName} (${makeEnsembleDisplayName(
+                elm.vectorSpecification.ensembleIdent
+            )})`,
+            dataGenerator: makeVectorGroupDataGenerator(
+                elm.vectorSpecification,
+                regularEnsembleVectorSpecificationsAndRealizationData,
+                activeTimestampUtcMs ?? 0,
+                makeEnsembleDisplayName
+            ),
+        });
+    }
 
     viewContext.usePublishChannelContents({
         channelIdString: ChannelIds.TIME_SERIES,
-        dependencies: [loadedVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
+        dependencies: [regularEnsembleVectorSpecificationsAndRealizationData, activeTimestampUtcMs],
         enabled: !isQueryFetching,
         contents,
     });

@@ -1,19 +1,11 @@
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
-import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 import { atom } from "jotai";
 
+import { userSelectedActiveTimestampUtcMsAtom, vectorSpecificationsAtom } from "./baseAtoms";
 import {
-    interfaceColorByParameterAtom,
-    parameterIdentAtom,
-    selectedEnsemblesAtom,
-    userSelectedActiveTimestampUtcMsAtom,
-    vectorSpecificationsAtom,
-    visualizationModeAtom,
-} from "./baseAtoms";
-import {
-    historicalVectorDataQueriesAtom,
+    regularEnsembleHistoricalVectorDataQueriesAtom,
     vectorDataQueriesAtom,
     vectorObservationsQueriesAtom,
     vectorStatisticsQueriesAtom,
@@ -24,7 +16,7 @@ import { createLoadedVectorSpecificationAndDataArray } from "../utils/vectorSpec
 export const queryIsFetchingAtom = atom((get) => {
     const vectorDataQueries = get(vectorDataQueriesAtom);
     const vectorStatisticsQueries = get(vectorStatisticsQueriesAtom);
-    const historicalVectorDataQueries = get(historicalVectorDataQueriesAtom);
+    const historicalVectorDataQueries = get(regularEnsembleHistoricalVectorDataQueriesAtom);
     const vectorObservationsQueries = get(vectorObservationsQueriesAtom);
 
     const vectorDataIsFetching = vectorDataQueries.some((query) => query.isFetching);
@@ -41,6 +33,12 @@ export const queryIsFetchingAtom = atom((get) => {
     return isFetching;
 });
 
+export const regularEnsembleVectorSpecificationsAtom = atom((get) => {
+    const vectorSpecifications = get(vectorSpecificationsAtom);
+
+    return vectorSpecifications.filter((elm) => isEnsembleIdentOfType(elm.ensembleIdent, EnsembleIdent));
+});
+
 export const realizationsQueryHasErrorAtom = atom((get) => {
     const vectorDataQueries = get(vectorDataQueriesAtom);
 
@@ -54,9 +52,9 @@ export const statisticsQueryHasErrorAtom = atom((get) => {
 });
 
 export const historicalDataQueryHasErrorAtom = atom((get) => {
-    const historicalVectorDataQueries = get(historicalVectorDataQueriesAtom);
+    const historicalVectorDataQueries = get(regularEnsembleHistoricalVectorDataQueriesAtom);
 
-    return historicalVectorDataQueries.some((query) => query.isError);
+    return historicalVectorDataQueries.some((elm) => elm.isError);
 });
 
 export const loadedVectorSpecificationsAndRealizationDataAtom = atom((get) => {
@@ -73,18 +71,13 @@ export const loadedVectorSpecificationsAndStatisticsDataAtom = atom((get) => {
     return createLoadedVectorSpecificationAndDataArray(vectorSpecifications, vectorStatisticsQueries);
 });
 
-export const loadedVectorSpecificationsAndHistoricalDataAtom = atom((get) => {
-    const historicalVectorDataQueries = get(historicalVectorDataQueriesAtom);
-    const vectorSpecifications = get(vectorSpecificationsAtom);
-
-    // TODO: Should get the vector specifications from the historical data queries instead of the vector specifications atom
-    const regularEnsembleVectorSpecifications = vectorSpecifications.filter((elm) =>
-        isEnsembleIdentOfType(elm.ensembleIdent, EnsembleIdent)
-    );
+export const loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom = atom((get) => {
+    const regularEnsembleVectorSpecifications = get(regularEnsembleVectorSpecificationsAtom);
+    const regularEnsembleHistoricalVectorDataQueries = get(regularEnsembleHistoricalVectorDataQueriesAtom);
 
     return createLoadedVectorSpecificationAndDataArray(
         regularEnsembleVectorSpecifications,
-        historicalVectorDataQueries
+        regularEnsembleHistoricalVectorDataQueries
     );
 });
 
@@ -104,18 +97,4 @@ export const activeTimestampUtcMsAtom = atom<number | null>((get) => {
     }
 
     return userSelectedActiveTimestampUtcMs;
-});
-
-export const colorByParameterAtom = atom<boolean>((get) => {
-    const colorRealizationsByParameter = get(interfaceColorByParameterAtom);
-    const visualizationMode = get(visualizationModeAtom);
-    const parameterIdent = get(parameterIdentAtom);
-    const selectedEnsembles = get(selectedEnsemblesAtom);
-
-    return (
-        colorRealizationsByParameter &&
-        visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS &&
-        parameterIdent !== null &&
-        selectedEnsembles.some((ensemble) => ensemble.getParameters().hasParameter(parameterIdent))
-    );
 });
