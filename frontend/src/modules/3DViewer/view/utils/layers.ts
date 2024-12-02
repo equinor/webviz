@@ -1,5 +1,5 @@
 import { BoundingBox3d_api, WellboreTrajectory_api } from "@api";
-import { Layer } from "@deck.gl/core/typed";
+import { Layer } from "@deck.gl/core";
 import { ColorScale } from "@lib/utils/ColorScale";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { AxesLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
