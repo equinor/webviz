@@ -1,247 +1,324 @@
 import React from "react";
 
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
 import {
-    IncludeExcludeFilter,
-    IncludeExcludeFilterEnumToStringMapping,
-    RealizationFilter,
-    RealizationFilterType,
-    RealizationFilterTypeStringMapping,
-    RealizationIndexSelection,
-} from "@framework/RealizationFilter";
+    GuiEvent,
+    GuiEventPayloads,
+    GuiState,
+    RightDrawerContent,
+    useGuiState,
+    useGuiValue,
+} from "@framework/GuiMessageBroker";
 import { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { RealizationPicker, RealizationPickerSelection } from "@framework/components/RealizationPicker";
-import { Button } from "@lib/components/Button";
-import { Dialog } from "@lib/components/Dialog";
-import { Dropdown } from "@lib/components/Dropdown";
-import { Label } from "@lib/components/Label";
-import { RadioGroup } from "@lib/components/RadioGroup";
-import { Check, FilterAlt as FilterIcon } from "@mui/icons-material";
+import { Drawer } from "@framework/internal/components/Drawer";
+import {
+    EnsembleRealizationFilter,
+    EnsembleRealizationFilterSelections,
+} from "@framework/internal/components/EnsembleRealizationFilter";
+import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
+import { countTrueValues } from "@framework/utils/objectUtils";
+import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
+import { FilterAlt } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
-import {
-    makeRealizationIndexSelectionsFromRealizationPickerTags,
-    makeRealizationPickerTagsFromRealizationIndexSelections,
-} from "./utils/dataTypeConversion";
-
-import { Drawer } from "../../../Drawer";
-
-type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
+export type RealizationFilterSettingsProps = { workbench: Workbench; onClose: () => void };
 
 export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps> = (props) => {
-    const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.RightDrawerContent);
-
-    const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
-    const [candidateEnsembleIdent, setCandidateEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
-    const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
-    const [realizationIndexSelections, setRealizationIndexSelections] = React.useState<
-        readonly RealizationIndexSelection[] | null
-    >(null);
-    const [selectedRealizationFilter, setSelectedRealizationFilter] = React.useState<RealizationFilter | null>(null);
-    const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>([]);
-    const [selectedIncludeOrExcludeFiltering, setSelectedIncludeOrExcludeFiltering] =
-        React.useState<IncludeExcludeFilter>(IncludeExcludeFilter.INCLUDE_FILTER);
-    const [selectedFilterType, setSelectedFilterType] = React.useState<RealizationFilterType>(
-        RealizationFilterType.REALIZATION_INDEX
-    );
-
+    const guiMessageBroker = props.workbench.getGuiMessageBroker();
+    const drawerContent = useGuiValue(guiMessageBroker, GuiState.RightDrawerContent);
+    const rightSettingsPanelWidth = useGuiValue(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
+    const [, setNumberOfUnsavedRealizationFilters] = useGuiState(
+        guiMessageBroker,
+        GuiState.NumberOfUnsavedRealizationFilters
+    );
 
-    const hasUnsavedChanges = !selectedRealizationFilter
-        ? false
-        : !isEqual(realizationIndexSelections, selectedRealizationFilter.getRealizationIndexSelections()) ||
-          selectedFilterType !== selectedRealizationFilter.getFilterType() ||
-          selectedIncludeOrExcludeFiltering !== selectedRealizationFilter.getIncludeOrExcludeFilter();
+    const [activeFilterEnsembleIdent, setActiveFilterEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
 
-    function setStatesFromEnsembleIdent(ensembleIdent: EnsembleIdent | null) {
-        if (ensembleIdent === null) {
-            setSelectedRealizationFilter(null);
-            setRealizationIndexSelections(null);
-            setSelectedRangeTags([]);
-            setSelectedFilterType(RealizationFilterType.REALIZATION_INDEX);
-            return;
+    // Maps for keeping track of unsaved changes and filter selections
+    const [ensembleIdentStringHasUnsavedChangesMap, setEnsembleIdentStringHasUnsavedChangesMap] = React.useState<{
+        [ensembleIdentString: string]: boolean;
+    }>({});
+    const [
+        ensembleIdentStringToRealizationFilterSelectionsMap,
+        setEnsembleIdentStringToRealizationFilterSelectionsMap,
+    ] = React.useState<{
+        [ensembleIdentString: string]: EnsembleRealizationFilterSelections;
+    }>({});
+
+    // Set no active filter if the settings panel is closed
+    if (rightSettingsPanelWidth < 5 && activeFilterEnsembleIdent !== null) {
+        setActiveFilterEnsembleIdent(null);
+    }
+
+    // Create new maps if ensembles are added or removed
+    const ensembleIdentStrings = ensembleSet.getEnsembleArr().map((ensemble) => ensemble.getIdent().toString());
+    if (!isEqual(ensembleIdentStrings, Object.keys(ensembleIdentStringToRealizationFilterSelectionsMap))) {
+        // Create new maps with the new ensemble ident strings
+        const updatedHasUnsavedChangesMap: { [ensembleIdentString: string]: boolean } = {
+            ...ensembleIdentStringHasUnsavedChangesMap,
+        };
+        const updatedSelectionsMap: { [ensembleIdentString: string]: EnsembleRealizationFilterSelections } = {
+            ...ensembleIdentStringToRealizationFilterSelectionsMap,
+        };
+
+        // Delete non-existing ensemble ident strings
+        for (const ensembleIdentString of Object.keys(ensembleIdentStringToRealizationFilterSelectionsMap)) {
+            if (!ensembleIdentStrings.includes(ensembleIdentString)) {
+                delete updatedHasUnsavedChangesMap[ensembleIdentString];
+                delete updatedSelectionsMap[ensembleIdentString];
+            }
         }
 
-        const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
-        const realizationIndexSelection = realizationFilter.getRealizationIndexSelections();
+        for (const ensembleIdentString of ensembleIdentStrings) {
+            if (ensembleIdentString in updatedSelectionsMap) {
+                // Skip if already exists
+                continue;
+            }
 
-        setSelectedRealizationFilter(realizationFilter);
-        setRealizationIndexSelections(realizationIndexSelection);
-        setSelectedRangeTags(makeRealizationPickerTagsFromRealizationIndexSelections(realizationIndexSelection));
-        setSelectedFilterType(realizationFilter.getFilterType());
-        setSelectedIncludeOrExcludeFiltering(realizationFilter.getIncludeOrExcludeFilter());
+            const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+            const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
+
+            updatedHasUnsavedChangesMap[ensembleIdentString] = false;
+            updatedSelectionsMap[ensembleIdentString] = {
+                displayRealizationNumbers: realizationFilter.getFilteredRealizations(),
+                realizationNumberSelections: realizationFilter.getRealizationNumberSelections(),
+                parameterIdentStringToValueSelectionReadonlyMap:
+                    realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
+                filterType: realizationFilter.getFilterType(),
+                includeOrExcludeFilter: realizationFilter.getIncludeOrExcludeFilter(),
+            };
+        }
+        setEnsembleIdentStringHasUnsavedChangesMap(updatedHasUnsavedChangesMap);
+        setEnsembleIdentStringToRealizationFilterSelectionsMap(updatedSelectionsMap);
+        setNumberOfUnsavedRealizationFilters(countTrueValues(updatedHasUnsavedChangesMap));
     }
 
-    function handleSelectedEnsembleChange(newValue: string | undefined) {
-        const ensembleIdent = newValue ? EnsembleIdent.fromString(newValue) : null;
-        setCandidateEnsembleIdent(ensembleIdent);
-        if (hasUnsavedChanges) {
-            setDialogOpen(true);
-            return;
+    const handleApplyAllClick = React.useCallback(
+        function handleApplyAllClick() {
+            // Apply all the unsaved changes state and reset the unsaved changes state
+            const resetHasUnsavedChangesMap: { [ensembleIdentString: string]: boolean } = {};
+            for (const ensembleIdentString in ensembleIdentStringToRealizationFilterSelectionsMap) {
+                const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+                const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
+                const selections = ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
+
+                // Apply the filter changes
+                realizationFilter.setFilterType(selections.filterType);
+                realizationFilter.setIncludeOrExcludeFilter(selections.includeOrExcludeFilter);
+                realizationFilter.setRealizationNumberSelections(selections.realizationNumberSelections);
+                realizationFilter.setParameterIdentStringToValueSelectionReadonlyMap(
+                    selections.parameterIdentStringToValueSelectionReadonlyMap
+                );
+
+                // Run filtering
+                realizationFilter.runFiltering();
+
+                // Reset the unsaved changes state
+                resetHasUnsavedChangesMap[ensembleIdentString] = false;
+            }
+
+            setEnsembleIdentStringHasUnsavedChangesMap(resetHasUnsavedChangesMap);
+            setNumberOfUnsavedRealizationFilters(0);
+        },
+        [
+            ensembleIdentStringToRealizationFilterSelectionsMap,
+            realizationFilterSet,
+            setNumberOfUnsavedRealizationFilters,
+        ]
+    );
+
+    const handleDiscardAllClick = React.useCallback(
+        function handleDiscardAllClick() {
+            // Discard all filter changes - i.e. reset the unsaved changes state
+            const resetSelectionsMap: { [ensembleIdentString: string]: EnsembleRealizationFilterSelections } = {};
+            const resetHasUnsavedChangesMap: { [ensembleIdentString: string]: boolean } = {};
+            for (const ensembleIdentString in ensembleIdentStringToRealizationFilterSelectionsMap) {
+                const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+                const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
+
+                resetSelectionsMap[ensembleIdentString] = {
+                    displayRealizationNumbers: realizationFilter.getFilteredRealizations(),
+                    realizationNumberSelections: realizationFilter.getRealizationNumberSelections(),
+                    parameterIdentStringToValueSelectionReadonlyMap:
+                        realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
+                    filterType: realizationFilter.getFilterType(),
+                    includeOrExcludeFilter: realizationFilter.getIncludeOrExcludeFilter(),
+                };
+                resetHasUnsavedChangesMap[ensembleIdentString] = false;
+            }
+
+            setEnsembleIdentStringToRealizationFilterSelectionsMap(resetSelectionsMap);
+            setEnsembleIdentStringHasUnsavedChangesMap(resetHasUnsavedChangesMap);
+            setNumberOfUnsavedRealizationFilters(0);
+        },
+        [
+            ensembleIdentStringToRealizationFilterSelectionsMap,
+            realizationFilterSet,
+            setNumberOfUnsavedRealizationFilters,
+        ]
+    );
+
+    React.useEffect(() => {
+        function handleUnsavedChangesAction(
+            payload: GuiEventPayloads[GuiEvent.UnsavedRealizationFilterSettingsAction]
+        ) {
+            if (payload.action === UnsavedChangesAction.Save) {
+                handleApplyAllClick();
+                setActiveFilterEnsembleIdent(null);
+            } else if (payload.action === UnsavedChangesAction.Discard) {
+                handleDiscardAllClick();
+                setActiveFilterEnsembleIdent(null);
+            }
         }
 
-        setStatesFromEnsembleIdent(ensembleIdent);
-    }
+        const removeUnsavedChangesActionHandler = guiMessageBroker.subscribeToEvent(
+            GuiEvent.UnsavedRealizationFilterSettingsAction,
+            handleUnsavedChangesAction
+        );
 
-    function handleRealizationPickChange(newSelection: RealizationPickerSelection) {
-        const realizationIndexSelection =
-            newSelection.selectedRangeTags.length === 0
-                ? null
-                : makeRealizationIndexSelectionsFromRealizationPickerTags(newSelection.selectedRangeTags);
-
-        setSelectedRangeTags(newSelection.selectedRangeTags);
-        setRealizationIndexSelections(realizationIndexSelection);
-    }
-
-    function handleDiscardChangesClick() {
-        if (!selectedRealizationFilter) return;
-
-        const realizationIndexSelections = selectedRealizationFilter.getRealizationIndexSelections();
-        setRealizationIndexSelections(realizationIndexSelections);
-        setSelectedRangeTags(makeRealizationPickerTagsFromRealizationIndexSelections(realizationIndexSelections));
-        setSelectedFilterType(selectedRealizationFilter.getFilterType());
-        setSelectedIncludeOrExcludeFiltering(selectedRealizationFilter.getIncludeOrExcludeFilter());
-    }
-
-    function handleApplyButtonClick() {
-        saveSelectionsToSelectedFilterAndNotifySubscribers();
-
-        // Force update to reflect changes in UI, as states are not updated.
-        forceUpdate();
-    }
-
-    function handleDoNotSaveClick() {
-        setStatesFromEnsembleIdent(candidateEnsembleIdent);
-        setDialogOpen(false);
-    }
-
-    function handleDoSaveClick() {
-        saveSelectionsToSelectedFilterAndNotifySubscribers();
-
-        setStatesFromEnsembleIdent(candidateEnsembleIdent);
-        setDialogOpen(false);
-    }
-
-    function saveSelectionsToSelectedFilterAndNotifySubscribers() {
-        if (!selectedRealizationFilter || !hasUnsavedChanges) return;
-
-        selectedRealizationFilter.setFilterType(selectedFilterType);
-        selectedRealizationFilter.setIncludeOrExcludeFilter(selectedIncludeOrExcludeFiltering);
-        selectedRealizationFilter.setRealizationIndexSelections(realizationIndexSelections);
-
-        // Notify subscribers of change.
-        props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
-    }
+        return () => {
+            removeUnsavedChangesActionHandler();
+        };
+    }, [guiMessageBroker, handleApplyAllClick, handleDiscardAllClick]);
 
     function handleFilterSettingsClose() {
         props.onClose();
     }
 
+    function handleApplyClick(ensembleIdent: EnsembleIdent) {
+        const ensembleIdentString = ensembleIdent.toString();
+        const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
+        const selections = ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdentString];
+
+        // Apply the filter changes
+        realizationFilter.setFilterType(selections.filterType);
+        realizationFilter.setIncludeOrExcludeFilter(selections.includeOrExcludeFilter);
+        realizationFilter.setRealizationNumberSelections(selections.realizationNumberSelections);
+        realizationFilter.setParameterIdentStringToValueSelectionReadonlyMap(
+            selections.parameterIdentStringToValueSelectionReadonlyMap
+        );
+
+        // Run filtering
+        realizationFilter.runFiltering();
+
+        // Reset the unsaved changes state
+        const newHasUnsavedChangesMap = { ...ensembleIdentStringHasUnsavedChangesMap, [ensembleIdentString]: false };
+        setEnsembleIdentStringHasUnsavedChangesMap(newHasUnsavedChangesMap);
+        setNumberOfUnsavedRealizationFilters(countTrueValues(newHasUnsavedChangesMap));
+
+        // Notify subscribers of change.
+        props.workbench.getWorkbenchSession().notifyAboutEnsembleRealizationFilterChange();
+    }
+
+    function handleDiscardClick(ensembleIdent: EnsembleIdent) {
+        const ensembleIdentString = ensembleIdent.toString();
+        const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
+        setEnsembleIdentStringToRealizationFilterSelectionsMap({
+            ...ensembleIdentStringToRealizationFilterSelectionsMap,
+            [ensembleIdentString]: {
+                displayRealizationNumbers: realizationFilter.getFilteredRealizations(),
+                realizationNumberSelections: realizationFilter.getRealizationNumberSelections(),
+                parameterIdentStringToValueSelectionReadonlyMap:
+                    realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
+                filterType: realizationFilter.getFilterType(),
+                includeOrExcludeFilter: realizationFilter.getIncludeOrExcludeFilter(),
+            },
+        });
+
+        // Reset the unsaved changes state
+        const newHasUnsavedChangesMap = { ...ensembleIdentStringHasUnsavedChangesMap, [ensembleIdentString]: false };
+        setEnsembleIdentStringHasUnsavedChangesMap(newHasUnsavedChangesMap);
+        setNumberOfUnsavedRealizationFilters(countTrueValues(newHasUnsavedChangesMap));
+    }
+
+    function handleFilterChange(ensembleIdent: EnsembleIdent, selections: EnsembleRealizationFilterSelections) {
+        const ensembleIdentString = ensembleIdent.toString();
+
+        // Register the filter changes in the map
+        setEnsembleIdentStringToRealizationFilterSelectionsMap({
+            ...ensembleIdentStringToRealizationFilterSelectionsMap,
+            [ensembleIdentString]: selections,
+        });
+
+        // Check if the filter changes are different from the original filter
+        const realizationFilter = realizationFilterSet.getRealizationFilterForEnsembleIdent(ensembleIdent);
+        const hasUnsavedChanges =
+            !isEqual(selections.realizationNumberSelections, realizationFilter.getRealizationNumberSelections()) ||
+            !areParameterIdentStringToValueSelectionMapCandidatesEqual(
+                selections.parameterIdentStringToValueSelectionReadonlyMap,
+                realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()
+            ) ||
+            selections.filterType !== realizationFilter.getFilterType() ||
+            selections.includeOrExcludeFilter !== realizationFilter.getIncludeOrExcludeFilter();
+
+        // Update the unsaved changes state
+        const newHasUnsavedChangesMap = {
+            ...ensembleIdentStringHasUnsavedChangesMap,
+            [ensembleIdentString]: hasUnsavedChanges,
+        };
+        setEnsembleIdentStringHasUnsavedChangesMap(newHasUnsavedChangesMap);
+        setNumberOfUnsavedRealizationFilters(countTrueValues(newHasUnsavedChangesMap));
+    }
+
+    function handleSetActiveEnsembleRealizationFilter(ensembleIdent: EnsembleIdent) {
+        setActiveFilterEnsembleIdent(ensembleIdent);
+    }
+
+    function handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent: EnsembleIdent) {
+        if (activeFilterEnsembleIdent?.equals(ensembleIdent)) {
+            setActiveFilterEnsembleIdent(null);
+        }
+    }
+
     return (
-        <Drawer
-            title="Realization Filter"
-            icon={<FilterIcon />}
-            visible={drawerContent === RightDrawerContent.RealizationFilterSettings}
-            onClose={handleFilterSettingsClose}
-        >
-            <div className="flex flex-col p-2 gap-4 overflow-y-auto">
-                <Label text="Ensemble">
-                    <Dropdown
-                        value={selectedRealizationFilter?.getAssignedEnsembleIdent().toString() ?? undefined}
-                        options={ensembleSet.getEnsembleArr().map((elm) => {
-                            return { value: elm.getIdent().toString(), label: elm.getDisplayName() };
+        <div className={`w-full ${drawerContent === RightDrawerContent.RealizationFilterSettings ? "h-full" : "h-0"}`}>
+            <Drawer
+                title="Realization Filter"
+                icon={<FilterAlt />}
+                visible={drawerContent === RightDrawerContent.RealizationFilterSettings}
+                onClose={handleFilterSettingsClose}
+            >
+                <div className="flex flex-col p-2 gap-4 overflow-y-auto">
+                    <div className="flex-grow space-y-4">
+                        {ensembleSet.getEnsembleArr().map((ensemble) => {
+                            const ensembleIdent = ensemble.getIdent();
+                            const isActive =
+                                activeFilterEnsembleIdent !== null && activeFilterEnsembleIdent.equals(ensembleIdent);
+                            const isAnotherActive = !isActive && activeFilterEnsembleIdent !== null;
+
+                            const selections =
+                                ensembleIdentStringToRealizationFilterSelectionsMap[ensembleIdent.toString()];
+
+                            if (!selections) {
+                                return null;
+                            }
+                            return (
+                                <EnsembleRealizationFilter
+                                    key={ensembleIdent.toString()}
+                                    ensembleName={ensemble.getCustomName() ?? ensemble.getDisplayName()}
+                                    selections={selections}
+                                    hasUnsavedSelections={
+                                        ensembleIdentStringHasUnsavedChangesMap[ensembleIdent.toString()]
+                                    }
+                                    availableEnsembleRealizations={ensemble.getRealizations()}
+                                    ensembleParameters={ensemble.getParameters()}
+                                    isActive={isActive}
+                                    isAnotherFilterActive={isAnotherActive}
+                                    onClick={() => handleSetActiveEnsembleRealizationFilter(ensembleIdent)}
+                                    onHeaderClick={() => handleOnEnsembleRealizationFilterHeaderClick(ensembleIdent)}
+                                    onFilterChange={(newSelections) => handleFilterChange(ensembleIdent, newSelections)}
+                                    onApplyClick={() => handleApplyClick(ensembleIdent)}
+                                    onDiscardClick={() => handleDiscardClick(ensembleIdent)}
+                                />
+                            );
                         })}
-                        onChange={handleSelectedEnsembleChange}
-                    />
-                </Label>
-                <Label text="Active Filter Type">
-                    <RadioGroup
-                        value={selectedFilterType}
-                        options={[
-                            {
-                                label: RealizationFilterTypeStringMapping[RealizationFilterType.REALIZATION_INDEX],
-                                value: RealizationFilterType.REALIZATION_INDEX,
-                            },
-                        ]}
-                        onChange={(_, value: string | number) => setSelectedFilterType(value as RealizationFilterType)}
-                    />
-                </Label>
-                <Label text="Filtering Option">
-                    <RadioGroup
-                        value={selectedIncludeOrExcludeFiltering}
-                        options={[
-                            {
-                                label: IncludeExcludeFilterEnumToStringMapping[IncludeExcludeFilter.INCLUDE_FILTER],
-                                value: IncludeExcludeFilter.INCLUDE_FILTER,
-                            },
-                            {
-                                label: IncludeExcludeFilterEnumToStringMapping[IncludeExcludeFilter.EXCLUDE_FILTER],
-                                value: IncludeExcludeFilter.EXCLUDE_FILTER,
-                            },
-                        ]}
-                        onChange={(_, value: string | number) =>
-                            setSelectedIncludeOrExcludeFiltering(value as IncludeExcludeFilter)
-                        }
-                    ></RadioGroup>
-                </Label>
-                <Label text="Realizations by index">
-                    <RealizationPicker
-                        selectedRangeTags={selectedRangeTags}
-                        validRealizations={
-                            selectedRealizationFilter
-                                ? ensembleSet
-                                      .findEnsemble(selectedRealizationFilter.getAssignedEnsembleIdent())
-                                      ?.getRealizations()
-                                : []
-                        }
-                        debounceTimeMs={500}
-                        onChange={handleRealizationPickChange}
-                        disabled={
-                            !selectedRealizationFilter || selectedFilterType !== RealizationFilterType.REALIZATION_INDEX
-                        }
-                    />
-                </Label>
-                <div className="flex gap-4">
-                    <Button
-                        color="danger"
-                        variant="contained"
-                        disabled={!selectedRealizationFilter || !hasUnsavedChanges}
-                        onClick={handleDiscardChangesClick}
-                    >
-                        Discard changes
-                    </Button>
-                    <Button
-                        variant="contained"
-                        disabled={!selectedRealizationFilter || !hasUnsavedChanges}
-                        startIcon={<Check fontSize="small" />}
-                        onClick={handleApplyButtonClick}
-                    >
-                        Apply
-                    </Button>
+                    </div>
                 </div>
-                {
-                    <Dialog
-                        open={dialogOpen}
-                        onClose={() => setDialogOpen(false)}
-                        title="Unsaved changes"
-                        modal
-                        actions={
-                            <div className="flex gap-4">
-                                <Button onClick={handleDoNotSaveClick} color="danger">
-                                    No, don&apos;t save
-                                </Button>
-                                <Button onClick={handleDoSaveClick}>Yes, save</Button>
-                            </div>
-                        }
-                    >
-                        You have unsaved changes which will be lost. Do you want to save changes?
-                    </Dialog>
-                }
-            </div>
-        </Drawer>
+            </Drawer>
+        </div>
     );
 };

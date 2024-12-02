@@ -29,7 +29,7 @@ export const Drawer: React.FC<DrawerProps> = (props) => {
                     </div>
                 )}
             </div>
-            <div className="flex-grow flex flex-col">
+            <div className="flex-grow flex flex-col h-auto">
                 {props.showFilter && (
                     <div className="p-2 bg-slate-50">
                         <Input

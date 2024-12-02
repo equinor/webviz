@@ -1,7 +1,7 @@
 import React, { useId } from "react";
 
-import { Layer, PickingInfo } from "@deck.gl/core/typed";
-import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers/typed";
+import { Layer, PickingInfo } from "@deck.gl/core";
+import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
 import { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
 import { Button } from "@lib/components/Button";
 import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
@@ -640,6 +640,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 }}
                 getTooltip={makeTooltip}
                 verticalScale={verticalScale}
+                pickingRadius={10}
             />
             <div className="absolute bottom-0 right-0 z-30 bg-white bg-opacity-50 p-2 pointer-events-none">
                 {makeHelperText()}

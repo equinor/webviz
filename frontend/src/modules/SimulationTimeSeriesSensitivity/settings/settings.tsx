@@ -148,7 +148,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     }
     function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
         setSelectedVectorName(selection.selectedNodes[0] ?? null);
-        setSelectedVectorTag(selection.selectedTags[0] ?? null);
+        setSelectedVectorTag(selection.selectedTags[0]?.text ?? null);
     }
     function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
         setShowHistorical(event.target.checked);
