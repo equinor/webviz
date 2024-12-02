@@ -16,7 +16,6 @@ from primary.services.utils.arrow_helpers import (
     sort_table_on_real_then_date,
     is_date_column_monotonically_increasing,
 )
-from primary.services.utils.summary_vector_table_helpers import validate_summary_vector_table_pa
 from primary.services.service_exceptions import (
     Service,
     NoDataError,
@@ -162,9 +161,6 @@ class SummaryAccess:
         realizations: Optional[Sequence[int]],
     ) -> List[RealizationVector]:
         table, vector_metadata = await self.get_vector_table_async(vector_name, resampling_frequency, realizations)
-
-        # Verify that columns are as we expect
-        validate_summary_vector_table_pa(table, vector_name, Service.SUMO)
 
         real_arr_np = table.column("REAL").to_numpy()
         unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
