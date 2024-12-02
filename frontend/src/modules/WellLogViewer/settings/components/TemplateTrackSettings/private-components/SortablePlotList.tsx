@@ -16,6 +16,8 @@ import { TemplatePlotTypes } from "@webviz/well-log-viewer/dist/components/WellL
 import { useAtomValue } from "jotai";
 import _ from "lodash";
 
+import { PLOT_TYPE_OPTIONS } from "./plotTypeOptions";
+
 import { missingCurvesAtom } from "../../../atoms/derivedAtoms";
 import { AddItemButton } from "../../AddItemButton";
 
@@ -24,21 +26,6 @@ export type SortablePlotListProps = {
     plots: TemplatePlotConfig[];
     onUpdatePlots: (plots: TemplatePlotConfig[]) => void;
 };
-
-type PlotDropdownOption = DropdownOption<TemplatePlotTypes>;
-
-export const PLOT_TYPE_OPTIONS: PlotDropdownOption[] = [
-    { value: "line", label: "Line" },
-    { value: "linestep", label: "Linestep" },
-    { value: "dot", label: "Dot" },
-    { value: "area", label: "Area" },
-    { value: "gradientfill", label: "Gradientfill" },
-    // TODO: Type requires two named curves, ensure the flow for that is good
-    { value: "differential", label: "Differential" },
-
-    // This one is completely different; requires "discrete" metadata
-    // { value: "stacked", label: "Stacked" },
-];
 
 export function SortablePlotList(props: SortablePlotListProps): React.ReactNode {
     const { onUpdatePlots } = props;

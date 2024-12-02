@@ -1,4 +1,4 @@
-import { PLOT_TYPE_OPTIONS } from "@modules/WellLogViewer/settings/components/TemplateTrackSettings/private-components/SortablePlotList";
+import { PLOT_TYPE_OPTIONS } from "@modules/WellLogViewer/settings/components/TemplateTrackSettings/private-components/plotTypeOptions";
 import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "@modules/WellLogViewer/utils/logViewerColors";
 import {
