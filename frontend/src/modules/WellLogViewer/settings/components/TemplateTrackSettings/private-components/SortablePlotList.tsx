@@ -130,17 +130,14 @@ function SortablePlotItem(props: SortablePlotItemProps) {
     const { onPlotUpdate } = props;
     const secondCurveNeeded = props.plot.type === "differential";
 
-    const handlePlotChange = React.useCallback(
-        function handlePlotChange(changes: Partial<TemplatePlotConfig>) {
-            const newPlot = makeTrackPlot({
-                ...props.plot,
-                ...changes,
-            });
+    function handlePlotChange(changes: Partial<TemplatePlotConfig>) {
+        const newPlot = makeTrackPlot({
+            ...props.plot,
+            ...changes,
+        });
 
-            onPlotUpdate(newPlot);
-        },
-        [props.plot, onPlotUpdate]
-    );
+        onPlotUpdate(newPlot);
+    }
 
     const title = (
         <>

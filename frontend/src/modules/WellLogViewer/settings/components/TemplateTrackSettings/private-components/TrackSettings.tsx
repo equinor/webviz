@@ -32,12 +32,9 @@ export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
     const curveHeadersQuery = useAtomValue(wellLogCurveHeadersQueryAtom);
     const curveHeadersErrorStatus = usePropagateApiErrorToStatusWriter(curveHeadersQuery, props.statusWriter) ?? "";
 
-    const updateTrackConfig = React.useCallback(
-        function updateTrackConfig(configChanges: ConfigChanges) {
-            onUpdateTrack({ ...props.trackConfig, ...configChanges });
-        },
-        [props.trackConfig, onUpdateTrack]
-    );
+    function updateTrackConfig(configChanges: ConfigChanges) {
+        onUpdateTrack({ ...props.trackConfig, ...configChanges });
+    }
 
     return (
         <div

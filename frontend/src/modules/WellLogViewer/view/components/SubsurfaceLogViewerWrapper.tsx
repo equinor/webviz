@@ -3,7 +3,6 @@ import React from "react";
 import { WellboreHeader_api, WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ModuleViewProps } from "@framework/Module";
-import { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -53,15 +52,12 @@ export type SubsurfaceLogViewerWrapperProps = {
     moduleProps: ModuleViewProps<InterfaceTypes>;
 };
 
-function useGloballySyncedMd(
-    wellboreHeader: WellboreHeader_api | null,
-    wellLogController: WellLogController | null,
+function useSubscribeToGlobalHoverMdChange(
     workbenchServices: WorkbenchServices,
-    viewContext: ViewContext<InterfaceTypes>
+    wellLogController: WellLogController | null,
+    instanceId: string,
+    wellboreUuid: string
 ) {
-    const instanceId = viewContext.getInstanceIdString();
-    const wellboreUuid = wellboreHeader?.wellboreUuid ?? "";
-
     const lastReceivedChange = React.useRef<GlobalHoverMd>(null);
 
     React.useEffect(
@@ -80,7 +76,13 @@ function useGloballySyncedMd(
         },
         [instanceId, wellboreUuid, workbenchServices, wellLogController]
     );
+}
 
+function useCreateGlobalHoverMdBroadcast(
+    workbenchServices: WorkbenchServices,
+    instanceId: string,
+    wellboreUuid: string
+) {
     const broadcastGlobalMdChange = React.useCallback(
         (newMd: number | null) => {
             const payload: GlobalHoverMd = newMd ? { wellboreUuid, md: newMd } : null;
@@ -93,14 +95,12 @@ function useGloballySyncedMd(
     return broadcastGlobalMdChange;
 }
 
-function useGloballySyncedVerticalScale(
-    wellLogController: WellLogController | null,
+function useSubscribeToGlobalVerticalScaleChange(
     workbenchServices: WorkbenchServices,
-    viewContext: ViewContext<InterfaceTypes>
+    wellLogController: WellLogController | null,
+    syncableSettingKeys: SyncSettingKey[],
+    instanceId: string
 ) {
-    // TODO: This value DOES NOT update properly when you ENABLE the setting. So something else needs to trigger a re-render
-    const syncableSettingKeys = viewContext.useSyncedSettingKeys();
-    const moduleInstanceId = viewContext.getInstanceIdString();
     const verticalSyncActive = syncableSettingKeys.includes(SyncSettingKey.VERTICAL_SCALE);
 
     // Cannot use the SyncHelper utility here, since we want to avoid a re-render and instead propagate the change via the well log controller
@@ -116,20 +116,29 @@ function useGloballySyncedVerticalScale(
             const unsubscribe = workbenchServices.subscribe(
                 "global.syncValue.verticalScale",
                 handleGlobalVertScaleChange,
-                moduleInstanceId
+                instanceId
             );
 
             return unsubscribe;
         }
-    }, [workbenchServices, wellLogController, verticalSyncActive, syncableSettingKeys, moduleInstanceId]);
+    }, [workbenchServices, wellLogController, verticalSyncActive, syncableSettingKeys, instanceId]);
+}
+
+function useCreateGlobalVerticalScaleBroadcast(
+    workbenchServices: WorkbenchServices,
+    syncableSettingKeys: SyncSettingKey[],
+    instanceId: string
+) {
+    // TODO: This value DOES NOT update properly when you ENABLE the setting. So something else needs to trigger a re-render
+    const verticalSyncActive = syncableSettingKeys.includes(SyncSettingKey.VERTICAL_SCALE);
 
     const broadcastVerticalScaleChange = React.useCallback(
         (newScale: number | null) => {
             if (!verticalSyncActive || newScale === null) return;
 
-            workbenchServices.publishGlobalData("global.syncValue.verticalScale", newScale, moduleInstanceId);
+            workbenchServices.publishGlobalData("global.syncValue.verticalScale", newScale, instanceId);
         },
-        [workbenchServices, moduleInstanceId, verticalSyncActive]
+        [workbenchServices, instanceId, verticalSyncActive]
     );
 
     return broadcastVerticalScaleChange;
@@ -166,18 +175,29 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     });
     const colorTables = React.useMemo(() => createContinuousColorScaleForMap(colorScale), [colorScale]);
 
-    // Global value syncronization
-    const broadcastGlobalMdChange = useGloballySyncedMd(
-        props.wellboreHeader,
-        wellLogController,
+    const instanceId = props.moduleProps.viewContext.getInstanceIdString();
+    const syncableSettingKeys = props.moduleProps.viewContext.useSyncedSettingKeys();
+    const wellboreUuid = props.wellboreHeader?.wellboreUuid ?? "";
+
+    // Set up global hover md synchronization
+    useSubscribeToGlobalHoverMdChange(props.moduleProps.workbenchServices, wellLogController, instanceId, wellboreUuid);
+    const broadcastGlobalMdChange = useCreateGlobalHoverMdBroadcast(
         props.moduleProps.workbenchServices,
-        props.moduleProps.viewContext
+        instanceId,
+        wellboreUuid
     );
 
-    const broadcastVerticalScaleChange = useGloballySyncedVerticalScale(
-        wellLogController,
+    // Set up global vertical scale synchronization
+    useSubscribeToGlobalVerticalScaleChange(
         props.moduleProps.workbenchServices,
-        props.moduleProps.viewContext
+        wellLogController,
+        syncableSettingKeys,
+        instanceId
+    );
+    const broadcastVerticalScaleChange = useCreateGlobalVerticalScaleBroadcast(
+        props.moduleProps.workbenchServices,
+        syncableSettingKeys,
+        instanceId
     );
 
     const handleMouseOut = React.useCallback(

@@ -6,7 +6,11 @@ import { WellPicksLayerData } from "@modules/Intersection/utils/layers/Wellpicks
 import { atomWithQuery } from "jotai-tanstack-query";
 import _ from "lodash";
 
-import { selectedEnsembleSetAtom, selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./derivedAtoms";
+import {
+    firstEnsembleInSelectedFieldAtom,
+    selectedFieldIdentifierAtom,
+    selectedWellboreHeaderAtom,
+} from "./derivedAtoms";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -43,7 +47,7 @@ export const wellLogCurveHeadersQueryAtom = atomWithQuery((get) => {
 });
 
 export const wellborePicksAndStratigraphyQueryAtom = atomWithQuery((get) => {
-    const selectedEnsemble = get(selectedEnsembleSetAtom);
+    const selectedEnsemble = get(firstEnsembleInSelectedFieldAtom);
 
     const wellboreId = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
     const caseId = selectedEnsemble?.getIdent()?.getCaseUuid() ?? "";

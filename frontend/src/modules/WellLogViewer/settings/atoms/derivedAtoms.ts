@@ -19,9 +19,9 @@ import {
     wellborePicksAndStratigraphyQueryAtom,
 } from "./queryAtoms";
 
-export const selectedEnsembleSetAtom = atom((get) => {
-    const ensembleSetArr = get(EnsembleSetAtom).getEnsembleArr();
+export const firstEnsembleInSelectedFieldAtom = atom((get) => {
     const selectedFieldId = get(userSelectedFieldIdentifierAtom);
+    const ensembleSetArr = get(EnsembleSetAtom).getEnsembleArr();
 
     if (!ensembleSetArr.length) {
         return null;
@@ -33,7 +33,7 @@ export const selectedEnsembleSetAtom = atom((get) => {
 });
 
 export const selectedFieldIdentifierAtom = atom((get) => {
-    return get(selectedEnsembleSetAtom)?.getFieldIdentifier() ?? null;
+    return get(firstEnsembleInSelectedFieldAtom)?.getFieldIdentifier() ?? null;
 });
 
 export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) => {
