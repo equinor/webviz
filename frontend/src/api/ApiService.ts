@@ -15,6 +15,7 @@ import { ObservationsService } from './services/ObservationsService';
 import { ParametersService } from './services/ParametersService';
 import { PolygonsService } from './services/PolygonsService';
 import { PvtService } from './services/PvtService';
+import { RelpermService } from './services/RelpermService';
 import { RftService } from './services/RftService';
 import { SeismicService } from './services/SeismicService';
 import { SurfaceService } from './services/SurfaceService';
@@ -34,6 +35,7 @@ export class ApiService {
     public readonly parameters: ParametersService;
     public readonly polygons: PolygonsService;
     public readonly pvt: PvtService;
+    public readonly relperm: RelpermService;
     public readonly rft: RftService;
     public readonly seismic: SeismicService;
     public readonly surface: SurfaceService;
@@ -64,6 +66,7 @@ export class ApiService {
         this.parameters = new ParametersService(this.request);
         this.polygons = new PolygonsService(this.request);
         this.pvt = new PvtService(this.request);
+        this.relperm = new RelpermService(this.request);
         this.rft = new RftService(this.request);
         this.seismic = new SeismicService(this.request);
         this.surface = new SurfaceService(this.request);

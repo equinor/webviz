@@ -23,6 +23,7 @@ export type { BoundingBox2d as BoundingBox2d_api } from './models/BoundingBox2d'
 export type { BoundingBox3d as BoundingBox3d_api } from './models/BoundingBox3d';
 export type { CaseInfo as CaseInfo_api } from './models/CaseInfo';
 export type { Completions as Completions_api } from './models/Completions';
+export type { CurveData as CurveData_api } from './models/CurveData';
 export type { DatedTree as DatedTree_api } from './models/DatedTree';
 export type { EnsembleDetails as EnsembleDetails_api } from './models/EnsembleDetails';
 export type { EnsembleInfo as EnsembleInfo_api } from './models/EnsembleInfo';
@@ -65,6 +66,11 @@ export { PolygonsAttributeType as PolygonsAttributeType_api } from './models/Pol
 export type { PolygonsMeta as PolygonsMeta_api } from './models/PolygonsMeta';
 export type { PolylineIntersection as PolylineIntersection_api } from './models/PolylineIntersection';
 export type { PvtData as PvtData_api } from './models/PvtData';
+export type { RealizationCurveData as RealizationCurveData_api } from './models/RealizationCurveData';
+export type { RelPermRealizationDataForSaturation as RelPermRealizationDataForSaturation_api } from './models/RelPermRealizationDataForSaturation';
+export type { RelPermSaturationAxis as RelPermSaturationAxis_api } from './models/RelPermSaturationAxis';
+export type { RelPermStatisticalDataForSaturation as RelPermStatisticalDataForSaturation_api } from './models/RelPermStatisticalDataForSaturation';
+export type { RelPermTableInfo as RelPermTableInfo_api } from './models/RelPermTableInfo';
 export type { RepeatedTableColumnData as RepeatedTableColumnData_api } from './models/RepeatedTableColumnData';
 export type { RftObservation as RftObservation_api } from './models/RftObservation';
 export type { RftObservations as RftObservations_api } from './models/RftObservations';
@@ -75,6 +81,8 @@ export type { SeismicCubeMeta as SeismicCubeMeta_api } from './models/SeismicCub
 export type { SeismicFenceData as SeismicFenceData_api } from './models/SeismicFenceData';
 export type { SeismicFencePolyline as SeismicFencePolyline_api } from './models/SeismicFencePolyline';
 export { SensitivityType as SensitivityType_api } from './models/SensitivityType';
+export { Statistic as Statistic_api } from './models/Statistic';
+export type { StatisticalCurveData as StatisticalCurveData_api } from './models/StatisticalCurveData';
 export { StatisticFunction as StatisticFunction_api } from './models/StatisticFunction';
 export type { StatisticValueObject as StatisticValueObject_api } from './models/StatisticValueObject';
 export type { StratigraphicUnit as StratigraphicUnit_api } from './models/StratigraphicUnit';
@@ -132,6 +140,7 @@ export { ObservationsService } from './services/ObservationsService';
 export { ParametersService } from './services/ParametersService';
 export { PolygonsService } from './services/PolygonsService';
 export { PvtService } from './services/PvtService';
+export { RelpermService } from './services/RelpermService';
 export { RftService } from './services/RftService';
 export { SeismicService } from './services/SeismicService';
 export { SurfaceService } from './services/SurfaceService';

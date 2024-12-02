@@ -9,14 +9,14 @@ import "./Intersection/registerModule";
 import "./Map/registerModule";
 import "./ParameterDistributionMatrix/registerModule";
 import "./Pvt/registerModule";
+import "./RelPerm/registerModule";
 import "./Rft/registerModule";
 import "./SimulationTimeSeries/registerModule";
 import "./SimulationTimeSeriesSensitivity/registerModule";
 import "./SubsurfaceMap/registerModule";
 import "./TornadoChart/registerModule";
-import "./WellCompletions/registerModule";
 import "./Vfp/registerModule";
-
+import "./WellCompletions/registerModule";
 
 if (isDevMode()) {
     await import("./MyModule/registerModule");
