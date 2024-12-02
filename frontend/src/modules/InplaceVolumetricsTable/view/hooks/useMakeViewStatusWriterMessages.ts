@@ -44,7 +44,7 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) 
     // Due to no throw in back-end for missing/non-existing result for specific tables, we should compare
     // the retrieved result columns with the requested columns
     for (const tableData of activeQueriesResult.tablesData) {
-        // Per unique volumetric table (EnsembleIdent, tableName) we have a query result
+        // Per unique volumetric table (RegularEnsembleIdent, tableName) we have a query result
         const queryData = tableData.data;
 
         // Result columns across all fluid selections

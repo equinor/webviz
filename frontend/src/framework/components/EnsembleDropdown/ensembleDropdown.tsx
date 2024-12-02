@@ -1,7 +1,7 @@
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdown";
 
@@ -9,16 +9,16 @@ import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdow
 export type EnsembleDropdownWithDeltaEnsemblesProps = {
     ensembleSet: EnsembleSet;
     allowDeltaEnsembles: true;
-    value: EnsembleIdent | DeltaEnsembleIdent | null;
-    onChange: (ensembleIdent: EnsembleIdent | DeltaEnsembleIdent | null) => void;
+    value: RegularEnsembleIdent | DeltaEnsembleIdent | null;
+    onChange: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null) => void;
 } & Omit<DropdownProps<string>, "options" | "value" | "onChange">;
 
 // Overload for EnsembleDropdown without DeltaEnsembleIdent
 export type EnsembleDropdownWithoutDeltaEnsemblesProps = {
     ensembleSet: EnsembleSet;
     allowDeltaEnsembles?: false | undefined;
-    value: EnsembleIdent | null;
-    onChange: (ensembleIdent: EnsembleIdent | null) => void;
+    value: RegularEnsembleIdent | null;
+    onChange: (ensembleIdent: RegularEnsembleIdent | null) => void;
 } & Omit<DropdownProps<string>, "options" | "value" | "onChange">;
 
 export function EnsembleDropdown(props: EnsembleDropdownWithDeltaEnsemblesProps): JSX.Element;
@@ -46,7 +46,7 @@ export function EnsembleDropdown(
     }
 
     const optionsArray: DropdownOption[] = [];
-    const ensembleArray = allowDeltaEnsembles ? ensembleSet.getAllEnsembleTypesArray() : ensembleSet.getEnsembleArray();
+    const ensembleArray = allowDeltaEnsembles ? ensembleSet.getEnsembleArray() : ensembleSet.getRegularEnsembleArray();
     for (const ens of ensembleArray) {
         optionsArray.push({
             value: ens.getIdent().toString(),

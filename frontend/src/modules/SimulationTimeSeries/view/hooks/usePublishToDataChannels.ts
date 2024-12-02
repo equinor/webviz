@@ -1,7 +1,7 @@
 import { VectorRealizationData_api } from "@api";
 import { ChannelContentDefinition } from "@framework/DataChannelTypes";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ViewContext } from "@framework/ModuleContext";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
@@ -30,7 +30,7 @@ export function usePublishToDataChannels(viewContext: ViewContext<Interfaces>) {
         data: VectorRealizationData_api[];
     }[] = [];
     for (const elm of loadedVectorSpecificationsAndRealizationData) {
-        if (!isEnsembleIdentOfType(elm.vectorSpecification.ensembleIdent, EnsembleIdent)) {
+        if (!isEnsembleIdentOfType(elm.vectorSpecification.ensembleIdent, RegularEnsembleIdent)) {
             continue;
         }
 

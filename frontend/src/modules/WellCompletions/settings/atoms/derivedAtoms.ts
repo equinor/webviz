@@ -1,5 +1,5 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { DataLoadingStatus, TimeAggregationSelection } from "@modules/WellCompletions/typesAndEnums";
 import { WellCompletionsDataAccessor } from "@modules/WellCompletions/utils/wellCompletionsDataAccessor";
 import { PlotData } from "@webviz/well-completions-plot";
@@ -22,7 +22,7 @@ import {
 } from "./baseAtoms";
 import { wellCompletionsQueryAtom } from "./queryAtoms";
 
-export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
+export const selectedEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
     const syncedEnsembleIdents = get(syncedEnsembleIdentsAtom);
     const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
     const ensembleSet = get(EnsembleSetAtom);
@@ -31,7 +31,7 @@ export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
         return syncedEnsembleIdents[0];
     }
     if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
-        return ensembleSet.getEnsembleArray()[0]?.getIdent() || null;
+        return ensembleSet.getRegularEnsembleArray()[0]?.getIdent() || null;
     }
     return userSelectedEnsembleIdent;
 });

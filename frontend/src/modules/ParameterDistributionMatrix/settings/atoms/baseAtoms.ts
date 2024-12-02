@@ -1,11 +1,11 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { ParameterDistributionPlotType } from "@modules/ParameterDistributionMatrix/typesAndEnums";
 
 import { atom } from "jotai";
 
-function areEnsembleIdentListsEqual(a: EnsembleIdent[], b: EnsembleIdent[]) {
+function areEnsembleIdentListsEqual(a: RegularEnsembleIdent[], b: RegularEnsembleIdent[]) {
     if (a.length !== b.length) {
         return false;
     }
@@ -23,6 +23,6 @@ export const selectedVisualizationTypeAtom = atom<ParameterDistributionPlotType>
 export const showIndividualRealizationValuesAtom = atom<boolean>(false);
 export const showPercentilesAndMeanLinesAtom = atom<boolean>(false);
 
-export const userSelectedEnsembleIdentsAtom = atomWithCompare<EnsembleIdent[]>([], areEnsembleIdentListsEqual);
+export const userSelectedEnsembleIdentsAtom = atomWithCompare<RegularEnsembleIdent[]>([], areEnsembleIdentListsEqual);
 export const userSelectedParameterIdentsAtom = atom<ParameterIdent[]>([]);
 export const showConstantParametersAtom = atom<boolean>(false);

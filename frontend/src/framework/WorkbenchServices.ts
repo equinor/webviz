@@ -2,7 +2,7 @@ import React from "react";
 
 import { isEqual } from "lodash";
 
-import { EnsembleIdent } from "./EnsembleIdent";
+import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import { Workbench } from "./Workbench";
 import { InplaceVolumetricsFilter } from "./types/inplaceVolumetricsFilter";
 import { Intersection } from "./types/intersection";
@@ -22,7 +22,7 @@ export type GlobalTopicDefinitions = {
     "global.hoverRegion": { regionName: string } | null;
     "global.hoverFacies": { faciesName: string } | null;
 
-    "global.syncValue.ensembles": EnsembleIdent[];
+    "global.syncValue.ensembles": RegularEnsembleIdent[];
     "global.syncValue.date": { timeOrInterval: string };
     "global.syncValue.timeSeries": { vectorName: string };
     "global.syncValue.surface": { name: string; attribute: string };

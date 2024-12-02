@@ -1,4 +1,4 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 
 import { atom } from "jotai";
@@ -36,7 +36,7 @@ export const queryIsFetchingAtom = atom((get) => {
 export const regularEnsembleVectorSpecificationsAtom = atom((get) => {
     const vectorSpecifications = get(vectorSpecificationsAtom);
 
-    return vectorSpecifications.filter((elm) => isEnsembleIdentOfType(elm.ensembleIdent, EnsembleIdent));
+    return vectorSpecifications.filter((elm) => isEnsembleIdentOfType(elm.ensembleIdent, RegularEnsembleIdent));
 });
 
 export const realizationsQueryHasErrorAtom = atom((get) => {

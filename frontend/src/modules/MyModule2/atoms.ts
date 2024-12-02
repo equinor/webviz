@@ -1,12 +1,12 @@
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";
 
 export const textAtom = atom<string>("I am an atom with text!");
-export const selectedEnsembleAtom = atom<EnsembleIdent | null>(null);
+export const selectedEnsembleAtom = atom<RegularEnsembleIdent | null>(null);
 export const vectorsAtom = atomWithQuery((get) => ({
     queryKey: ["ensembles", get(selectedEnsembleAtom)?.toString()],
     queryFn: () =>
@@ -30,8 +30,8 @@ export const selectedVectorAtom = atom<string | null>((get) => {
     return vectors.data?.at(0)?.name ?? null;
 });
 
-export const ensembleSetDependentAtom = atom<EnsembleIdent | null>((get) => {
+export const ensembleSetDependentAtom = atom<RegularEnsembleIdent | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const firstEnsemble = ensembleSet.getEnsembleArray()[0];
+    const firstEnsemble = ensembleSet.getRegularEnsembleArray()[0];
     return firstEnsemble?.getIdent() ?? null;
 });

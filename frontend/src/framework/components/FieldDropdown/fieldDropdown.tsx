@@ -15,7 +15,7 @@ export function FieldDropdown(props: FieldDropdownProps): JSX.Element {
     }
 
     const optionsArray: DropdownOption[] = [];
-    for (const ens of ensembleSet.getEnsembleArray()) {
+    for (const ens of ensembleSet.getRegularEnsembleArray()) {
         const fieldIdentifier = ens.getFieldIdentifier();
         if (optionsArray.some((option) => option.value === fieldIdentifier.toString())) {
             continue;

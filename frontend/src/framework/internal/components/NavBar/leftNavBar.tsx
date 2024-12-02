@@ -1,8 +1,8 @@
 import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench, WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
@@ -129,16 +129,16 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         setNewSelectedEnsembles(ensembleItems);
         setNewCreatedDeltaEnsembles(createdDeltaEnsembles);
         const ensembleSettings: UserEnsembleSetting[] = ensembleItems.map((ens) => ({
-            ensembleIdent: new EnsembleIdent(ens.caseUuid, ens.ensembleName),
+            ensembleIdent: new RegularEnsembleIdent(ens.caseUuid, ens.ensembleName),
             customName: ens.customName,
             color: ens.color,
         }));
         const deltaEnsembleSettings: UserDeltaEnsembleSetting[] = createdDeltaEnsembles.map((deltaEns) => ({
-            compareEnsembleIdent: new EnsembleIdent(
+            compareEnsembleIdent: new RegularEnsembleIdent(
                 deltaEns.compareEnsemble.caseUuid,
                 deltaEns.compareEnsemble.ensembleName
             ),
-            referenceEnsembleIdent: new EnsembleIdent(
+            referenceEnsembleIdent: new RegularEnsembleIdent(
                 deltaEns.referenceEnsemble.caseUuid,
                 deltaEns.referenceEnsemble.ensembleName
             ),
@@ -148,7 +148,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, ensembleSettings, deltaEnsembleSettings);
     }
 
-    const selectedEnsembles: EnsembleItem[] = ensembleSet.getEnsembleArray().map((ens) => ({
+    const selectedEnsembles: EnsembleItem[] = ensembleSet.getRegularEnsembleArray().map((ens) => ({
         caseUuid: ens.getCaseUuid(),
         caseName: ens.getCaseName(),
         ensembleName: ens.getEnsembleName(),

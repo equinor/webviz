@@ -1,11 +1,10 @@
 import { v4 } from "uuid";
 
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
-import { Ensemble } from "./Ensemble";
-import { EnsembleIdent } from "./EnsembleIdent";
-import { EnsembleInterface } from "./EnsembleInterface";
 import { EnsembleParameters } from "./EnsembleParameters";
 import { EnsembleSensitivities } from "./EnsembleSensitivities";
+import { RegularEnsemble } from "./RegularEnsemble";
+import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
 /**
  * Delta ensemble class.
@@ -17,10 +16,10 @@ import { EnsembleSensitivities } from "./EnsembleSensitivities";
  *      DeltaEnsemble = CompareEnsemble - ReferenceEnsemble
  *
  */
-export class DeltaEnsemble implements EnsembleInterface {
+export class DeltaEnsemble {
     private _deltaEnsembleIdent: DeltaEnsembleIdent;
-    private _compareEnsemble: Ensemble;
-    private _referenceEnsemble: Ensemble;
+    private _compareEnsemble: RegularEnsemble;
+    private _referenceEnsemble: RegularEnsemble;
     private _color: string;
     private _customName: string | null;
 
@@ -29,8 +28,8 @@ export class DeltaEnsemble implements EnsembleInterface {
     private _sensitivities: EnsembleSensitivities | null;
 
     constructor(
-        compareEnsemble: Ensemble,
-        referenceEnsemble: Ensemble,
+        compareEnsemble: RegularEnsemble,
+        referenceEnsemble: RegularEnsemble,
         color: string,
         customName: string | null = null
     ) {
@@ -58,8 +57,6 @@ export class DeltaEnsemble implements EnsembleInterface {
         this._parameters = new EnsembleParameters([]);
         this._sensitivities = null;
     }
-
-    // *** Interface methods ***
 
     getIdent(): DeltaEnsembleIdent {
         return this._deltaEnsembleIdent;
@@ -105,13 +102,11 @@ export class DeltaEnsemble implements EnsembleInterface {
         return this._sensitivities;
     }
 
-    // *** Custom methods ***
-
-    getCompareEnsembleIdent(): EnsembleIdent {
+    getCompareEnsembleIdent(): RegularEnsembleIdent {
         return this._compareEnsemble.getIdent();
     }
 
-    getReferenceEnsembleIdent(): EnsembleIdent {
+    getReferenceEnsembleIdent(): RegularEnsembleIdent {
         return this._referenceEnsemble.getIdent();
     }
 

@@ -1,5 +1,4 @@
-import { EnsembleIdent } from "./EnsembleIdent";
-import { EnsembleIdentInterface } from "./EnsembleIdentInterface";
+import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import { ensembleIdentRegexStringWithoutAnchors, ensembleIdentUuidRegexString } from "./utils/ensembleIdentUtils";
 
 /**
@@ -15,13 +14,22 @@ import { ensembleIdentRegexStringWithoutAnchors, ensembleIdentUuidRegexString } 
  *      DeltaEnsemble = CompareEnsemble - ReferenceEnsemble
  *
  */
-export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleIdent> {
+export class DeltaEnsembleIdent {
     private _uuid: string;
     private _ensembleName: string;
-    private _compareEnsembleIdent: EnsembleIdent;
-    private _referenceEnsembleIdent: EnsembleIdent;
+    private _compareEnsembleIdent: RegularEnsembleIdent;
+    private _referenceEnsembleIdent: RegularEnsembleIdent;
 
-    constructor(uuid: string, compareEnsembleIdent: EnsembleIdent, referenceEnsembleIdent: EnsembleIdent) {
+    constructor(
+        uuid: string,
+        compareEnsembleIdent: RegularEnsembleIdent,
+        referenceEnsembleIdent: RegularEnsembleIdent
+    ) {
+        const uuidRegex = new RegExp(ensembleIdentUuidRegexString());
+        if (!uuidRegex.exec(uuid)) {
+            throw new Error(`Invalid uuid: ${uuid}`);
+        }
+
         this._uuid = uuid;
         this._ensembleName = `(${compareEnsembleIdent.getEnsembleName()}) - (${referenceEnsembleIdent.getEnsembleName()})`;
         this._compareEnsembleIdent = compareEnsembleIdent;
@@ -69,8 +77,8 @@ export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleI
 
         return new DeltaEnsembleIdent(
             uuid,
-            new EnsembleIdent(compareCaseUuid, compareEnsembleName),
-            new EnsembleIdent(referenceCaseUuid, referenceEnsembleName)
+            new RegularEnsembleIdent(compareCaseUuid, compareEnsembleName),
+            new RegularEnsembleIdent(referenceCaseUuid, referenceEnsembleName)
         );
     }
 
@@ -96,11 +104,11 @@ export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleI
         return this._ensembleName;
     }
 
-    getCompareEnsembleIdent(): EnsembleIdent {
+    getCompareEnsembleIdent(): RegularEnsembleIdent {
         return this._compareEnsembleIdent;
     }
 
-    getReferenceEnsembleIdent(): EnsembleIdent {
+    getReferenceEnsembleIdent(): RegularEnsembleIdent {
         return this._referenceEnsembleIdent;
     }
 
@@ -112,7 +120,7 @@ export class DeltaEnsembleIdent implements EnsembleIdentInterface<DeltaEnsembleI
         );
     }
 
-    equals(otherIdent: EnsembleIdentInterface<any> | null): boolean {
+    equals(otherIdent: any | null): boolean {
         if (!otherIdent || !(otherIdent instanceof DeltaEnsembleIdent)) {
             return false;
         }

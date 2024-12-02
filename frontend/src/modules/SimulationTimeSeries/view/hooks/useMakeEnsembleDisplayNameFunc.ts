@@ -1,17 +1,17 @@
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ViewContext } from "@framework/ModuleContext";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 export function useMakeEnsembleDisplayNameFunc(
     viewContext: ViewContext<Interfaces>
-): (ensembleIdent: EnsembleIdent | DeltaEnsembleIdent) => string {
-    const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedEnsembles");
+): (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string {
+    const selectedRegularEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedRegularEnsembles");
     const selectedDeltaEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedDeltaEnsembles");
-    const allSelectedEnsembles = [...selectedEnsembles, ...selectedDeltaEnsembles];
+    const allSelectedEnsembles = [...selectedRegularEnsembles, ...selectedDeltaEnsembles];
 
-    return function makeEnsembleDisplayName(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent): string {
+    return function makeEnsembleDisplayName(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): string {
         return makeDistinguishableEnsembleDisplayName(ensembleIdent, allSelectedEnsembles);
     };
 }

@@ -1,7 +1,7 @@
 import { Frequency_api, Observations_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { EnsembleVectorObservationDataMap, VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
@@ -30,7 +30,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
 
     const queries = vectorSpecifications.map((item) => {
         // Regular Ensemble
-        if (isEnsembleIdentOfType(item.ensembleIdent, EnsembleIdent)) {
+        if (isEnsembleIdentOfType(item.ensembleIdent, RegularEnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
             const vectorSpecification = {
                 ...item,
@@ -121,7 +121,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
 
     const queries = vectorSpecifications.map((item) => {
         // Regular Ensemble
-        if (isEnsembleIdentOfType(item.ensembleIdent, EnsembleIdent)) {
+        if (isEnsembleIdentOfType(item.ensembleIdent, RegularEnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
             const vectorSpecification = {
                 ...item,
@@ -209,7 +209,7 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
     const queries = regularEnsembleVectorSpecifications.map((item) => {
         const vectorSpecification = {
             ...item,
-            ensembleIdent: item.ensembleIdent as EnsembleIdent,
+            ensembleIdent: item.ensembleIdent as RegularEnsembleIdent,
         };
 
         return () => ({
@@ -250,8 +250,8 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
     const uniqueEnsembleIdents = [
         ...new Set(
             vectorSpecifications
-                ?.filter((item) => item.ensembleIdent instanceof EnsembleIdent)
-                .map((item) => item.ensembleIdent as EnsembleIdent) ?? []
+                ?.filter((item) => item.ensembleIdent instanceof RegularEnsembleIdent)
+                .map((item) => item.ensembleIdent as RegularEnsembleIdent) ?? []
         ),
     ];
 

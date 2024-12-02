@@ -1,13 +1,13 @@
 import { VectorRealizationData_api } from "@api";
 import { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { VectorSpec } from "./typesAndEnums";
 
 // As of now, the publish to data channels only supports regular ensembles
 export interface RegularEnsembleVectorSpec extends VectorSpec {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
 }
 
 export function makeVectorGroupDataGenerator(
@@ -17,7 +17,7 @@ export function makeVectorGroupDataGenerator(
         data: VectorRealizationData_api[];
     }[],
     activeTimestampUtcMs: number,
-    makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent) => string
+    makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) => string
 ): DataGenerator {
     return () => {
         const data: { key: number; value: number }[] = [];

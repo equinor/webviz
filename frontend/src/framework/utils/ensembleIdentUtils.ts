@@ -1,10 +1,11 @@
-import { EnsembleIdentInterface } from "@framework/EnsembleIdentInterface";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 /**
  * Check if provided EnsembleIdentInterface implementation is of specified type
  */
-export function isEnsembleIdentOfType<T extends EnsembleIdentInterface<any>>(
-    ensembleIdent: EnsembleIdentInterface<any>,
+export function isEnsembleIdentOfType<T extends RegularEnsembleIdent | DeltaEnsembleIdent>(
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,
     type: new (...args: any[]) => T
 ): ensembleIdent is T {
     return ensembleIdent instanceof type;
@@ -19,8 +20,8 @@ export function isEnsembleIdentOfType<T extends EnsembleIdentInterface<any>>(
  * @param type - The type of the ensemble idents to filter
  * @returns A new array of ensemble idents that are of the specified type
  */
-export function filterEnsembleIdentsByType<T extends EnsembleIdentInterface<any>>(
-    ensembleIdents: EnsembleIdentInterface<any>[],
+export function filterEnsembleIdentsByType<T extends RegularEnsembleIdent | DeltaEnsembleIdent>(
+    ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
     type: new (...args: any[]) => T
 ): T[] {
     return ensembleIdents.filter((ensembleIdent) => isEnsembleIdentOfType(ensembleIdent, type)) as T[];

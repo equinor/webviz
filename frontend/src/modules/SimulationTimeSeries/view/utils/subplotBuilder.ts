@@ -5,7 +5,7 @@ import {
     VectorStatisticData_api,
 } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { ColorSet } from "@lib/utils/ColorSet";
@@ -47,14 +47,14 @@ export class SubplotBuilder {
     private _subplotOwner: SubplotOwner;
 
     private _addedVectorsLegendTracker: string[] = [];
-    private _addedEnsemblesLegendTracker: (EnsembleIdent | DeltaEnsembleIdent)[] = [];
+    private _addedEnsemblesLegendTracker: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
 
-    private _uniqueEnsembleIdents: (EnsembleIdent | DeltaEnsembleIdent)[] = [];
+    private _uniqueEnsembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
     private _uniqueVectorNames: string[] = [];
 
     private _vectorHexColors: HexColorMap = {};
 
-    private _makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent | DeltaEnsembleIdent) => string;
+    private _makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string;
 
     private _hasRealizationsTracesColoredByParameter = false;
     private _hasHistoryTraces = false;
@@ -81,7 +81,7 @@ export class SubplotBuilder {
     constructor(
         subplotOwner: SubplotOwner,
         selectedVectorSpecifications: VectorSpec[],
-        makeEnsembleDisplayName: (ensembleIdent: EnsembleIdent | DeltaEnsembleIdent) => string,
+        makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string,
         colorSet: ColorSet,
         width: number,
         height: number,
@@ -290,7 +290,7 @@ export class SubplotBuilder {
             if (subplotIndex === -1) continue;
 
             const ensembleIdent = elm.vectorSpecification.ensembleIdent;
-            if (!isEnsembleIdentOfType(ensembleIdent, EnsembleIdent)) continue;
+            if (!isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent)) continue;
 
             const hasParameterForEnsemble = this._ensemblesParameterColoring.hasParameterForEnsemble(ensembleIdent);
 

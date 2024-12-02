@@ -1,7 +1,7 @@
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { Ensemble } from "@framework/Ensemble";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Select, SelectOption, SelectProps } from "@lib/components/Select";
 
@@ -10,8 +10,8 @@ export type EnsembleSelectWithDeltaEnsemblesProps = {
     ensembleSet: EnsembleSet;
     multiple?: boolean;
     allowDeltaEnsembles: true;
-    value: (EnsembleIdent | DeltaEnsembleIdent)[];
-    onChange: (ensembleIdentArray: (EnsembleIdent | DeltaEnsembleIdent)[]) => void;
+    value: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
+    onChange: (ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) => void;
 } & Omit<SelectProps<string>, "options" | "value" | "onChange">;
 
 // Overload for EnsembleSelect without DeltaEnsembleIdent
@@ -19,8 +19,8 @@ export type EnsembleSelectWithoutDeltaEnsemblesProps = {
     ensembleSet: EnsembleSet;
     multiple?: boolean;
     allowDeltaEnsembles?: false | undefined;
-    value: EnsembleIdent[];
-    onChange: (ensembleIdentArray: EnsembleIdent[]) => void;
+    value: RegularEnsembleIdent[];
+    onChange: (ensembleIdentArray: RegularEnsembleIdent[]) => void;
 } & Omit<SelectProps<string>, "options" | "value" | "onChange">;
 
 export function EnsembleSelect(props: EnsembleSelectWithDeltaEnsemblesProps): JSX.Element;
@@ -31,17 +31,19 @@ export function EnsembleSelect(
     const { ensembleSet, value, allowDeltaEnsembles, onChange, multiple, ...rest } = props;
 
     function handleSelectionChanged(selectedEnsembleIdentStrArray: string[]) {
-        const identArray: (EnsembleIdent | DeltaEnsembleIdent)[] = [];
+        const identArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
         for (const identStr of selectedEnsembleIdentStrArray) {
             const foundEnsemble = ensembleSet.findEnsembleByIdentString(identStr);
-            if (foundEnsemble !== null && (allowDeltaEnsembles || foundEnsemble instanceof Ensemble)) {
+            if (foundEnsemble !== null && (allowDeltaEnsembles || foundEnsemble instanceof RegularEnsemble)) {
                 identArray.push(foundEnsemble.getIdent());
             }
         }
 
         // Filter to match the correct return type before calling onChange
         if (!allowDeltaEnsembles) {
-            const validIdentArray = identArray.filter((ident) => ident instanceof EnsembleIdent) as EnsembleIdent[];
+            const validIdentArray = identArray.filter(
+                (ident) => ident instanceof RegularEnsembleIdent
+            ) as RegularEnsembleIdent[];
             onChange(validIdentArray);
             return;
         }
@@ -49,7 +51,7 @@ export function EnsembleSelect(
     }
 
     const optionsArray: SelectOption[] = [];
-    const ensembleArray = allowDeltaEnsembles ? ensembleSet.getAllEnsembleTypesArray() : ensembleSet.getEnsembleArray();
+    const ensembleArray = allowDeltaEnsembles ? ensembleSet.getEnsembleArray() : ensembleSet.getRegularEnsembleArray();
     for (const ens of ensembleArray) {
         optionsArray.push({
             value: ens.getIdent().toString(),

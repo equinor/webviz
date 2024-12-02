@@ -31,10 +31,10 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
     if (!userSelectedEnsembleIdents) {
-        if (ensembleSet.getEnsembleArray().length === 0) {
+        if (ensembleSet.getRegularEnsembleArray().length === 0) {
             return [];
         }
-        return [ensembleSet.getEnsembleArray()[0].getIdent()];
+        return [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
     }
 
     const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>

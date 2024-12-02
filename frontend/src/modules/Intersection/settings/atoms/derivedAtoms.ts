@@ -1,6 +1,6 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import { LayerManager } from "@modules/Intersection/utils/layers/LayerManager";
 
@@ -23,7 +23,9 @@ export const filteredEnsembleSetAtom = atom((get) => {
         return ensembleSet;
     }
 
-    return new EnsembleSet(ensembleSet.getEnsembleArray().filter((el) => el.getFieldIdentifier() === fieldIdentifier));
+    return new EnsembleSet(
+        ensembleSet.getRegularEnsembleArray().filter((el) => el.getFieldIdentifier() === fieldIdentifier)
+    );
 });
 
 export const selectedFieldIdentifierAtom = atom((get) => {
@@ -31,7 +33,7 @@ export const selectedFieldIdentifierAtom = atom((get) => {
     const selectedFieldIdentifier = get(userSelectedFieldIdentifierAtom);
 
     if (selectedFieldIdentifier === null) {
-        return ensembleSet.getEnsembleArray()[0]?.getFieldIdentifier() || null;
+        return ensembleSet.getRegularEnsembleArray()[0]?.getFieldIdentifier() || null;
     }
 
     return selectedFieldIdentifier;
@@ -60,12 +62,12 @@ export const selectedCustomIntersectionPolylineIdAtom = atom((get) => {
     return userSelectedCustomIntersectionPolylineId;
 });
 
-export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
+export const selectedEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
 
     if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
-        return ensembleSet.getEnsembleArray()[0]?.getIdent() || null;
+        return ensembleSet.getRegularEnsembleArray()[0]?.getIdent() || null;
     }
 
     return userSelectedEnsembleIdent;

@@ -1,12 +1,12 @@
 import { QueryClient } from "@tanstack/react-query";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
-import { EnsembleIdent } from "./EnsembleIdent";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
+import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import { Template } from "./TemplateRegistry";
 import { WorkbenchServices } from "./WorkbenchServices";
 import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
@@ -28,14 +28,14 @@ export type LayoutElement = {
 };
 
 export type UserEnsembleSetting = {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
     customName: string | null;
     color: string;
 };
 
 export type UserDeltaEnsembleSetting = {
-    compareEnsembleIdent: EnsembleIdent;
-    referenceEnsembleIdent: EnsembleIdent;
+    compareEnsembleIdent: RegularEnsembleIdent;
+    referenceEnsembleIdent: RegularEnsembleIdent;
     customName: string | null;
     color: string;
 };
@@ -285,7 +285,7 @@ export class Workbench {
         const ensembleIdents = JSON.parse(ensembleSettingsString) as StoredUserEnsembleSetting[];
         const ensembleIdentsParsed: UserEnsembleSetting[] = ensembleIdents.map((el) => ({
             ...el,
-            ensembleIdent: EnsembleIdent.fromString(el.ensembleIdent),
+            ensembleIdent: RegularEnsembleIdent.fromString(el.ensembleIdent),
         }));
 
         return ensembleIdentsParsed;
@@ -298,8 +298,8 @@ export class Workbench {
         const deltaEnsembleIdents = JSON.parse(deltaEnsembleSettingsString) as StoredUserDeltaEnsembleSetting[];
         const deltaEnsembleIdentsParsed: UserDeltaEnsembleSetting[] = deltaEnsembleIdents.map((el) => ({
             ...el,
-            compareEnsembleIdent: EnsembleIdent.fromString(el.compareEnsembleIdent),
-            referenceEnsembleIdent: EnsembleIdent.fromString(el.referenceEnsembleIdent),
+            compareEnsembleIdent: RegularEnsembleIdent.fromString(el.compareEnsembleIdent),
+            referenceEnsembleIdent: RegularEnsembleIdent.fromString(el.referenceEnsembleIdent),
         }));
 
         return deltaEnsembleIdentsParsed;

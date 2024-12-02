@@ -1,4 +1,4 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { IntersectionType } from "@framework/types/intersection";
 import { ColorScale } from "@lib/utils/ColorScale";
@@ -29,7 +29,7 @@ export type SettingsToViewInterface = {
     intersectionType: IntersectionType;
     seismicColorScale: ColorScale | null;
     showSeismic: boolean;
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     selectedCustomIntersectionPolylineId: string | null;
     layerManager: LayerManager;
     wellboreHeader: WellboreHeader | null;

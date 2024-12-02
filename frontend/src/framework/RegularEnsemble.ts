@@ -1,10 +1,9 @@
-import { EnsembleIdent } from "./EnsembleIdent";
-import { EnsembleInterface } from "./EnsembleInterface";
 import { EnsembleParameters, Parameter } from "./EnsembleParameters";
 import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
+import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
-export class Ensemble implements EnsembleInterface {
-    private _ensembleIdent: EnsembleIdent;
+export class RegularEnsemble {
+    private _ensembleIdent: RegularEnsembleIdent;
     private _fieldIdentifier: string;
     private _caseName: string;
     private _realizationsArray: number[];
@@ -24,7 +23,7 @@ export class Ensemble implements EnsembleInterface {
         color: string,
         customName: string | null = null
     ) {
-        this._ensembleIdent = new EnsembleIdent(caseUuid, ensembleName);
+        this._ensembleIdent = new RegularEnsembleIdent(caseUuid, ensembleName);
         this._fieldIdentifier = fieldIdentifier;
         this._caseName = caseName;
         this._realizationsArray = Array.from(realizationsArray).sort((a, b) => a - b);
@@ -38,7 +37,7 @@ export class Ensemble implements EnsembleInterface {
         }
     }
 
-    getIdent(): EnsembleIdent {
+    getIdent(): RegularEnsembleIdent {
         return this._ensembleIdent;
     }
 

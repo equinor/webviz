@@ -1,9 +1,9 @@
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { Ensemble } from "@framework/Ensemble";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
@@ -32,7 +32,7 @@ export const statisticsTypeAtom = atom<StatisticsType>((get) => {
     return StatisticsType.INDIVIDUAL;
 });
 
-export const selectedEnsembleIdentsAtom = atom<(EnsembleIdent | DeltaEnsembleIdent)[]>((get) => {
+export const selectedEnsembleIdentsAtom = atom<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
@@ -42,14 +42,14 @@ export const selectedEnsembleIdentsAtom = atom<(EnsembleIdent | DeltaEnsembleIde
     return validatedEnsembleIdents ?? [];
 });
 
-export const selectedEnsemblesAtom = atom<Ensemble[]>((get) => {
+export const selectedRegularEnsemblesAtom = atom<RegularEnsemble[]>((get) => {
     // NOTE: Used for view and color by parameter, i.e. not for delta ensembles yet!
     const ensembleSet = get(EnsembleSetAtom);
     const allSelectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
-    const selectedEnsembleIdents = filterEnsembleIdentsByType(allSelectedEnsembleIdents, EnsembleIdent);
+    const selectedEnsembleIdents = filterEnsembleIdentsByType(allSelectedEnsembleIdents, RegularEnsembleIdent);
 
-    const selectedEnsembles: Ensemble[] = [];
+    const selectedEnsembles: RegularEnsemble[] = [];
     for (const ensembleIdent of selectedEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (ensemble) {
@@ -87,7 +87,7 @@ export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((ge
     }
 
     const continuousAndNonConstantParametersUnion: Parameter[] = [];
-    const regularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, EnsembleIdent);
+    const regularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, RegularEnsembleIdent);
     for (const ensembleIdent of regularEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (!ensemble) {

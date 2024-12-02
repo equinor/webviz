@@ -1,6 +1,6 @@
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 
@@ -15,7 +15,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         // Regular Ensemble
-        if (isEnsembleIdentOfType(ensembleIdent, EnsembleIdent)) {
+        if (isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent)) {
             return () => ({
                 queryKey: ["getVectorList", ensembleIdent.toString()],
                 queryFn: () =>

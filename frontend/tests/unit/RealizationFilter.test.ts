@@ -1,4 +1,3 @@
-import { Ensemble } from "@framework/Ensemble";
 import {
     ContinuousParameter,
     DiscreteParameter,
@@ -8,6 +7,7 @@ import {
     ParameterType,
 } from "@framework/EnsembleParameters";
 import { RealizationFilter } from "@framework/RealizationFilter";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 import {
     IncludeExcludeFilter,
     NumberRange,
@@ -41,9 +41,9 @@ const SECOND_PARAMETER: Parameter = {
     values: [10, 10, 20, 25, 20, 30, 30, 30, 30, 40, 40],
 };
 
-const FIRST_ENSEMBLE = new Ensemble(
+const FIRST_ENSEMBLE = new RegularEnsemble(
     "DROGON",
-    "First ensemble UUID",
+    "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
     "First case",
     "First ensemble",
     FIRST_ENSEMBLE_REALIZATIONS,

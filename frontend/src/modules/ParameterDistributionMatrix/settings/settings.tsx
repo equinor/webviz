@@ -1,6 +1,6 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { Checkbox } from "@lib/components/Checkbox";
@@ -47,7 +47,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     );
     const [showPercentilesAndMeanLines, setShowPercentilesAndMeanLines] = useAtom(showPercentilesAndMeanLinesAtom);
 
-    function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
+    function handleEnsembleSelectionChange(ensembleIdents: RegularEnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
     }
 

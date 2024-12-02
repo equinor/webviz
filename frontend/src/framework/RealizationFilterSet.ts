@@ -1,9 +1,9 @@
 import { isEqual } from "lodash";
 
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
-import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilter } from "./RealizationFilter";
+import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
 export class RealizationFilterSet {
     // Map of ensembleIdent string to RealizationFilter
@@ -19,8 +19,8 @@ export class RealizationFilterSet {
         // Remove filters for ensembles that are no longer in the ensemble set
         for (const ensembleIdentString of this._ensembleIdentStringRealizationFilterMap.keys()) {
             let ensembleIdent = null;
-            if (EnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
-                ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);
+            if (RegularEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
+                ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
             } else if (DeltaEnsembleIdent.isValidDeltaEnsembleIdentString(ensembleIdentString)) {
                 ensembleIdent = DeltaEnsembleIdent.fromString(ensembleIdentString);
             }
@@ -34,7 +34,7 @@ export class RealizationFilterSet {
         }
 
         // Add filters for ensembles that are new to the ensemble set
-        for (const ensemble of ensembleSet.getAllEnsembleTypesArray()) {
+        for (const ensemble of ensembleSet.getEnsembleArray()) {
             const ensembleIdentString = ensemble.getIdent().toString();
             const isEnsembleInMap = this._ensembleIdentStringRealizationFilterMap.has(ensembleIdentString);
             if (!isEnsembleInMap) {
@@ -46,7 +46,7 @@ export class RealizationFilterSet {
     /**
      * Get filter for ensembleIdent
      */
-    getRealizationFilterForEnsembleIdent(ensembleIdent: EnsembleIdent | DeltaEnsembleIdent): RealizationFilter {
+    getRealizationFilterForEnsembleIdent(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): RealizationFilter {
         const filter = this._ensembleIdentStringRealizationFilterMap.get(ensembleIdent.toString());
         if (filter === undefined) {
             throw new Error(

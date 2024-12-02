@@ -2,9 +2,9 @@ import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
@@ -105,7 +105,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         setUserSelectedParameterIdentStr(null);
     }
 
-    function handleEnsembleSelectChange(ensembleIdentArray: (EnsembleIdent | DeltaEnsembleIdent)[]) {
+    function handleEnsembleSelectChange(ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) {
         setUserSelectedEnsembleIdents(ensembleIdentArray);
     }
 

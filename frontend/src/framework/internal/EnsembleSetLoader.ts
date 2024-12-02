@@ -4,11 +4,11 @@ import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
 import { QueryClient } from "@tanstack/react-query";
 
-import { Ensemble } from "../Ensemble";
-import { EnsembleIdent } from "../EnsembleIdent";
 import { ContinuousParameter, DiscreteParameter, Parameter, ParameterType } from "../EnsembleParameters";
 import { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
+import { RegularEnsemble } from "../RegularEnsemble";
+import { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;
@@ -25,7 +25,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     userDeltaEnsembleSettings: UserDeltaEnsembleSetting[]
 ): Promise<EnsembleSet> {
     // Get ensemble idents to load
-    const ensembleIdentsToLoad: EnsembleIdent[] = userEnsembleSettings.map((setting) => setting.ensembleIdent);
+    const ensembleIdentsToLoad: RegularEnsembleIdent[] = userEnsembleSettings.map((setting) => setting.ensembleIdent);
     for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
         if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.compareEnsembleIdent)) {
             ensembleIdentsToLoad.push(deltaEnsembleSetting.compareEnsembleIdent);
@@ -42,7 +42,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
     );
 
     // Create regular ensembles
-    const outEnsembleArray: Ensemble[] = [];
+    const outEnsembleArray: RegularEnsemble[] = [];
     for (const ensembleSetting of userEnsembleSettings) {
         const ensembleIdentString = ensembleSetting.ensembleIdent.toString();
         const ensembleApiData = ensembleIdentStringToApiDataMap[ensembleIdentString];
@@ -54,7 +54,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         const parameterArray = buildParameterArrFromApiResponse(ensembleApiData.parameters);
         const sensitivityArray = buildSensitivityArrFromApiResponse(ensembleApiData.sensitivities);
         outEnsembleArray.push(
-            new Ensemble(
+            new RegularEnsemble(
                 ensembleApiData.ensembleDetails.field_identifier,
                 ensembleApiData.ensembleDetails.case_uuid,
                 ensembleApiData.ensembleDetails.case_name,
@@ -95,7 +95,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
             userEnsembleSettings.find((elm) => elm.ensembleIdent.toString() === referenceEnsembleIdentString)
                 ?.customName ?? null;
 
-        const compareEnsemble = new Ensemble(
+        const compareEnsemble = new RegularEnsemble(
             compareEnsembleApiData.ensembleDetails.field_identifier,
             compareEnsembleApiData.ensembleDetails.case_uuid,
             compareEnsembleApiData.ensembleDetails.case_name,
@@ -107,7 +107,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
             compareEnsembleCustomName
         );
 
-        const referenceEnsemble = new Ensemble(
+        const referenceEnsemble = new RegularEnsemble(
             referenceEnsembleApiData.ensembleDetails.field_identifier,
             referenceEnsembleApiData.ensembleDetails.case_uuid,
             referenceEnsembleApiData.ensembleDetails.case_name,
@@ -134,7 +134,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 
 async function loadEnsembleIdentStringToApiDataMapFromBackend(
     queryClient: QueryClient,
-    ensembleIdents: EnsembleIdent[]
+    ensembleIdents: RegularEnsembleIdent[]
 ): Promise<EnsembleIdentStringToApiDataMap> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
 

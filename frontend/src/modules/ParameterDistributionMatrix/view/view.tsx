@@ -1,9 +1,9 @@
 import React from "react";
 
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { ModuleViewProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleRealizationFilterFunction, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
@@ -51,7 +51,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
 
 function makeParameterDataArr(
     ensembleSet: EnsembleSet,
-    ensembleIdents: EnsembleIdent[],
+    ensembleIdents: RegularEnsembleIdent[],
     parameterIdents: ParameterIdent[],
     filterEnsembleRealizations: EnsembleRealizationFilterFunction
 ): ParameterDataArr[] {
