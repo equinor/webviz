@@ -1,4 +1,8 @@
-from enum import Enum
+from enum import Enum, StrEnum
+from typing import List
+
+from pydantic import BaseModel, ConfigDict
+from primary.services.flow_network_assembler.flow_network_types import DatedFlowNetwork, FlowNetworkMetadata
 
 
 class Frequency(str, Enum):
@@ -18,7 +22,16 @@ class StatOption(str, Enum):
     MAX = "MAX"
 
 
-class NodeType(str, Enum):
+# ! Copy of the flow network service NodeType enum
+class NodeType(StrEnum):
     PROD = "prod"
     INJ = "inj"
     OTHER = "other"
+
+
+class FlowNetworkData(BaseModel):
+    model_config = ConfigDict(revalidate_instances="always")
+
+    edge_metadata_list: List[FlowNetworkMetadata]
+    node_metadata_list: List[FlowNetworkMetadata]
+    dated_trees: List[DatedFlowNetwork]

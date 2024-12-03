@@ -1,4 +1,3 @@
-from enum import StrEnum
 import logging
 import asyncio
 from typing import Dict, List, Optional, Tuple, Literal
@@ -15,12 +14,7 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
-from primary.services.sumo_access.group_tree_types import (
-    DataType,
-    EdgeOrNode,
-    NetworkModeOptions,
-    TreeType,
-)
+from primary.services.sumo_access.group_tree_types import TreeType
 
 from . import _utils
 from ._group_tree_dataframe_model import (
@@ -28,24 +22,22 @@ from ._group_tree_dataframe_model import (
 )
 
 from .flow_network_types import (
+    DataType,
     DatedFlowNetwork,
+    EdgeOrNode,
     FlowNetworkMetadata,
-    NetworkNode,
     FlowNetworkSummaryVectorsInfo,
-    NodeSummaryVectorsInfo,
-    StaticNodeWorkingData,
+    NetworkModeOptions,
+    NetworkNode,
     NodeClassification,
-    TreeClassification,
+    NodeSummaryVectorsInfo,
+    NodeType,
+    StaticNodeWorkingData,
+    NetworkClassification,
 )
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-class NodeType(StrEnum):
-    PROD = "prod"
-    INJ = "inj"
-    OTHER = "other"
 
 
 @dataclass
@@ -84,6 +76,17 @@ class _PerformanceTimes:
             f"Create node classifications in: {self.create_node_classifications}ms, "
             f"Create group tree summary vectors info in: {self.create_network_summary_vectors_info}ms"
         )
+
+
+@dataclass
+class _FlatNetworkNodeData:
+    """
+    Utility class when assembling trees. A "flat" network node contains name of its parent node, and
+    its node data which is a NetworkNode with a empty children array.
+    """
+
+    parent_name: str
+    node_without_children: NetworkNode
 
 
 # Should probably aim to reduce this, but that's out of scope for my current task, so leaving it as is. It was like this when I got here >:I
@@ -134,8 +137,8 @@ class FlowNetworkAssembler:
 
         self._performance_times = _PerformanceTimes()
 
-        # Store tree details in data class to make it easier to feed it to the various helpers
-        self._tree_classification = TreeClassification(
+        # Store network details in data class to make it easier to feed it to the various helpers
+        self._network_classification = NetworkClassification(
             HAS_GAS_INJ=False, HAS_WATER_INJ=False, TERMINAL_NODE=terminal_node
         )
 
@@ -148,7 +151,7 @@ class FlowNetworkAssembler:
         missing_sumvecs = check_sumvecs - self._all_vectors_safe
         if len(missing_sumvecs) > 0:
             str_missing_sumvecs = ", ".join(missing_sumvecs)
-            raise ValueError("Missing summary vectors for the GroupTree plugin: ", f"{str_missing_sumvecs}.")
+            raise ValueError("Missing summary vectors for the FlowNetwork plugin: ", f"{str_missing_sumvecs}.")
 
     async def _initialize_group_tree_df_async(self) -> None:
         """Get group tree data from Sumo, and store it in a helper model class"""
@@ -169,7 +172,7 @@ class FlowNetworkAssembler:
 
         # Create filtered group tree df from model
         self._filtered_group_tree_df = self._group_tree_df_model.create_filtered_dataframe(
-            terminal_node=self._tree_classification.TERMINAL_NODE,
+            terminal_node=self._network_classification.TERMINAL_NODE,
             excl_well_startswith=self._excl_well_startswith,
             excl_well_endswith=self._excl_well_endswith,
         )
@@ -226,13 +229,15 @@ class FlowNetworkAssembler:
         available_vectors = self._all_vectors_safe
         group_tree_df_model = self._group_tree_df_model_safe
 
-        # Get well status vectors
-        tree_wstat_vectors = _utils.compute_tree_well_vectors(group_tree_df_model, DataType.WELL_STATUS)
-
-        # Ensure "WSTAT" vectors expected for group tree exist among summary vectors
+        # Compute the well status vectors ("WSTAT") that we expect to be available
+        tree_wstat_vectors = _utils.compute_tree_well_vectors(
+            group_tree_df_model.group_tree_wells, DataType.WELL_STATUS
+        )
         self._verify_that_sumvecs_exists(tree_wstat_vectors)
 
-        vectors_of_interest = _utils.get_all_vectors_of_interest_for_tree(group_tree_df_model)
+        vectors_of_interest = _utils.get_all_vectors_of_interest_for_tree(
+            group_tree_df_model.group_tree_wells, group_tree_df_model.group_tree_groups
+        )
         vectors_of_interest = vectors_of_interest & available_vectors
 
         self._verify_neccessary_injection_vectors(vectors_of_interest)
@@ -256,29 +261,33 @@ class FlowNetworkAssembler:
         self._init_injection_states(node_classifications, single_realization_vectors_table, vectors_table_column_names)
 
         # Get nodes with summary vectors and their metadata, and all summary vectors, and edge summary vectors
-        network_summary_vectors_info = self._init_and_verify_network_summary_info(
+        network_summary_vectors_info = self._create_and_verify_network_summary_info(
             node_classifications, vectors_table_column_names
         )
 
-        self._init_node_static_working_data(node_classifications, network_summary_vectors_info)
+        self._init_node_static_working_data(
+            node_classifications, network_summary_vectors_info.node_summary_vectors_info_dict
+        )
         self._init_sorted_summary_table(
-            single_realization_vectors_table, vectors_table_column_names, network_summary_vectors_info
+            single_realization_vectors_table,
+            vectors_table_column_names,
+            network_summary_vectors_info.all_summary_vectors,
         )
 
         self._performance_times.log_sumo_download_times()
         self._performance_times.log_structure_init_times()
 
-    async def create_dated_trees_and_metadata_lists(
+    async def create_dated_networks_and_metadata_lists(
         self,
     ) -> Tuple[List[DatedFlowNetwork], List[FlowNetworkMetadata], List[FlowNetworkMetadata]]:
         """
-        This method creates the dated trees and metadata lists for the single realization dataset.
+        This method creates date flow networks and metadata lists for a single realization dataset.
 
-        It does not create new data structures, but access the already fetched and initialized data for the single realization.
+        It does not create new data structures, but access the already fetched and initialized data for the realization.
         Data structures are chosen and tested for optimized access and performance.
         """
         if self._network_mode != NetworkModeOptions.SINGLE_REAL:
-            raise ValueError("Tree mode must be SINGLE_REAL to create a single realization dataset")
+            raise ValueError("Network mode must be SINGLE_REAL to create a single realization dataset")
 
         if self._smry_table_sorted_by_date is None:
             raise ValueError("Summary dataframe sorted by date has not been initialized")
@@ -286,26 +295,26 @@ class FlowNetworkAssembler:
         if self._node_static_working_data is None:
             raise ValueError("Static working data for nodes has not been initialized")
 
-        dated_tree_list = _create_dated_networks(
+        dated_network_list = _create_dated_networks(
             self._smry_table_sorted_by_date,
             self._filtered_group_tree_df_safe,
             self._node_static_working_data,
             self._node_types,
-            self._tree_classification.TERMINAL_NODE,
+            self._network_classification.TERMINAL_NODE,
         )
 
         return (
-            dated_tree_list,
+            dated_network_list,
             self._get_edge_options(self._node_types),
             [
-                FlowNetworkMetadata(key=datatype.value, label=_utils.get_data_label(datatype))
+                FlowNetworkMetadata(key=datatype.value, label=_utils.get_label_for_datatype(datatype))
                 for datatype in [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
             ],
         )
 
     def _get_edge_options(self, node_types: set[NodeType]) -> List[FlowNetworkMetadata]:
         """Returns a list with edge node options for the dropdown
-        menu in the GroupTree component.
+        menu in the Flow Network module.
 
         The output list has the format:
         [
@@ -316,18 +325,22 @@ class FlowNetworkAssembler:
         options: List[FlowNetworkMetadata] = []
         if NodeType.PROD in node_types:
             for rate in [DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE]:
-                options.append(FlowNetworkMetadata(key=rate.value, label=_utils.get_data_label(rate)))
-        if NodeType.INJ in node_types and self._tree_classification.HAS_WATER_INJ:
+                options.append(FlowNetworkMetadata(key=rate.value, label=_utils.get_label_for_datatype(rate)))
+        if NodeType.INJ in node_types and self._network_classification.HAS_WATER_INJ:
             options.append(
-                FlowNetworkMetadata(key=DataType.WATERINJRATE.value, label=_utils.get_data_label(DataType.WATERINJRATE))
+                FlowNetworkMetadata(
+                    key=DataType.WATERINJRATE.value, label=_utils.get_label_for_datatype(DataType.WATERINJRATE)
+                )
             )
-        if NodeType.INJ in node_types and self._tree_classification.HAS_GAS_INJ:
+        if NodeType.INJ in node_types and self._network_classification.HAS_GAS_INJ:
             options.append(
-                FlowNetworkMetadata(key=DataType.GASINJRATE.value, label=_utils.get_data_label(DataType.GASINJRATE))
+                FlowNetworkMetadata(
+                    key=DataType.GASINJRATE.value, label=_utils.get_label_for_datatype(DataType.GASINJRATE)
+                )
             )
         if options:
             return options
-        return [FlowNetworkMetadata(key=DataType.OILRATE.value, label=_utils.get_data_label(DataType.OILRATE))]
+        return [FlowNetworkMetadata(key=DataType.OILRATE.value, label=_utils.get_label_for_datatype(DataType.OILRATE))]
 
     def _verify_neccessary_injection_vectors(self, vectors_of_interest: set[str]) -> None:
         # Has any water injection or gas injection vectors among vectors of interest
@@ -379,17 +392,17 @@ class FlowNetworkAssembler:
         vector_table: pa.Table,
         vector_column_names: list[str],
     ) -> None:
-        terminal_node_name = self._tree_classification.TERMINAL_NODE
+        terminal_node_name = self._network_classification.TERMINAL_NODE
 
         if terminal_node_name in node_classifications:
             is_inj_in_grouptree = node_classifications[terminal_node_name].IS_INJ
             if is_inj_in_grouptree and "FWIR" in vector_column_names:
-                self._tree_classification.HAS_WATER_INJ = pc.sum(vector_table["FWIR"]).as_py() > 0
+                self._network_classification.HAS_WATER_INJ = pc.sum(vector_table["FWIR"]).as_py() > 0
 
             if is_inj_in_grouptree and "FGIR" in vector_column_names:
-                self._tree_classification.HAS_GAS_INJ = pc.sum(vector_table["FGIR"]).as_py() > 0
+                self._network_classification.HAS_GAS_INJ = pc.sum(vector_table["FGIR"]).as_py() > 0
 
-    def _init_and_verify_network_summary_info(
+    def _create_and_verify_network_summary_info(
         self,
         node_classifications: Dict[str, NodeClassification],
         vector_column_names: list[str],
@@ -402,7 +415,7 @@ class FlowNetworkAssembler:
         # Check if all edges is subset of initialized single realization vectors column names
         if not network_summary_vectors_info.edge_summary_vectors.issubset(vector_column_names):
             missing_sumvecs = network_summary_vectors_info.edge_summary_vectors - set(vector_column_names)
-            raise ValueError(f"Missing summary vectors for edges in the GroupTree: {', '.join(missing_sumvecs)}.")
+            raise ValueError(f"Missing summary vectors for edges in the flow network: {', '.join(missing_sumvecs)}.")
 
         # Expect all dictionaries to have the same keys
         if set(network_summary_vectors_info.node_summary_vectors_info_dict.keys()) != set(node_classifications.keys()):
@@ -413,14 +426,16 @@ class FlowNetworkAssembler:
         return network_summary_vectors_info
 
     def _init_node_static_working_data(
-        self, node_classifications: Dict[str, NodeClassification], network_summary_info: FlowNetworkSummaryVectorsInfo
+        self,
+        node_classifications: Dict[str, NodeClassification],
+        node_summary_vectors_info_dict: dict[str, NodeSummaryVectorsInfo],
     ) -> None:
         # Create static working data for each node
         filtered_group_tree_df = self._filtered_group_tree_df_safe
         node_static_working_data: Dict[str, StaticNodeWorkingData] = {}
 
         for node_name, node_classification in node_classifications.items():
-            node_summary_vectors_info = network_summary_info.node_summary_vectors_info_dict[node_name].SMRY_INFO
+            node_summary_vectors_info = node_summary_vectors_info_dict[node_name].SMRY_INFO
             node_static_working_data[node_name] = StaticNodeWorkingData(
                 node_name=node_name,
                 node_classification=node_classification,
@@ -439,10 +454,10 @@ class FlowNetworkAssembler:
         self,
         vector_data_table: pa.Table,
         vector_column_names: list[str],
-        network_summary_info: FlowNetworkSummaryVectorsInfo,
+        all_summary_vectors: set[str],
     ) -> None:
         # Find group tree vectors existing in summary data
-        valid_summary_vectors = [vec for vec in network_summary_info.all_summary_vectors if vec in vector_column_names]
+        valid_summary_vectors = [vec for vec in all_summary_vectors if vec in vector_column_names]
 
         columns_of_interest = list(valid_summary_vectors) + ["DATE"]
         self._smry_table_sorted_by_date = vector_data_table.select(columns_of_interest).sort_by("DATE")
@@ -475,16 +490,17 @@ class FlowNetworkAssembler:
         all_sumvecs: set[str] = set()
         edge_sumvecs: set[str] = set()
 
-        group_tree_df = self._filtered_group_tree_df_safe
+        group_tree_df_unique = self._filtered_group_tree_df_safe.drop_duplicates(subset=["CHILD", "KEYWORD"])
 
-        unique_nodes = group_tree_df.drop_duplicates(subset=["CHILD", "KEYWORD"])[["CHILD", "KEYWORD"]]
+        node_names = group_tree_df_unique["CHILD"].to_numpy()
+        node_keywords = group_tree_df_unique["KEYWORD"].to_numpy()
 
-        for _, node_row in unique_nodes.iterrows():
-            (node_vectors_info, all_node_sumvecs, node_edge_sumvecs) = _utils.get_sumvecs_for_node_row(
-                node_row, node_classification_dict, self._tree_classification
+        for name, keyword in zip(node_names, node_keywords):
+            (node_vectors_info, all_node_sumvecs, node_edge_sumvecs) = _utils.get_node_sumvecs_for_name_and_keyword(
+                name, keyword, node_classification_dict, self._network_classification
             )
 
-            node_sumvecs_info_dict[node_row["CHILD"]] = node_vectors_info
+            node_sumvecs_info_dict[name] = node_vectors_info
             all_sumvecs |= all_node_sumvecs
             edge_sumvecs |= node_edge_sumvecs
 
@@ -503,7 +519,7 @@ def _create_node_classification_dict(
     """
     Create dictionary with node name as key, and corresponding classification as value.
 
-    The nodes are classified without considering the dates of the group trees. Thereby the classification
+    The nodes are classified without considering the dates of the flow networks. Thereby the classification
     is given across all dates.
 
     The states are found for the leaf nodes, and then the parent nodes are classified based on the leaf nodes. "Bottom-up" approach.
@@ -527,6 +543,7 @@ def _create_node_classification_dict(
     node_name_ndarray = nodes_df["CHILD"].to_numpy()
     node_keyword_ndarray = nodes_df["KEYWORD"].to_numpy()
 
+    # ? This check is uneccessary, no?
     if len(node_parent_ndarray) != len(node_name_ndarray) or len(node_name_ndarray) != len(node_keyword_ndarray):
         raise ValueError("Length of node names, parent names and keywords must be equal.")
 
@@ -534,16 +551,12 @@ def _create_node_classification_dict(
     leaf_node_list: List[str] = []
     leaf_node_keyword_list: List[str] = []
     leaf_node_parent_list: List[str] = []
-    for i, node_name in enumerate(node_name_ndarray):
 
-        is_leaf_node = np.count_nonzero(node_parent_ndarray == node_name) == 0
-        if is_leaf_node:
+    for parent, node_name, keyword in zip(node_parent_ndarray, node_name_ndarray, node_keyword_ndarray):
+        if not np.any(node_parent_ndarray == node_name):
             leaf_node_list.append(node_name)
-            leaf_node_keyword_list.append(node_keyword_ndarray[i])
-            leaf_node_parent_list.append(node_parent_ndarray[i])
-
-    if len(leaf_node_list) != len(leaf_node_keyword_list) or len(leaf_node_list) != len(leaf_node_parent_list):
-        raise ValueError("Length of leaf node names, keyword and parent names must be equal.")
+            leaf_node_keyword_list.append(keyword)
+            leaf_node_parent_list.append(parent)
 
     is_leafnode_time_ms = timer.lap_ms()
 
@@ -579,7 +592,7 @@ def _build_node_classifications_upwards(
     # Initial node classifications are leaf nodes
     node_classifications: Dict[str, NodeClassification] = leaf_node_classification_map
 
-    # Build tree node classifications bottom up
+    # Build network node classifications bottom up
     current_parent_nodes = set(leaf_node_parent_list)
     node_name_list: List[str] = node_name_ndarray.tolist()
     while len(current_parent_nodes) > 0:
@@ -706,24 +719,23 @@ def _create_dated_networks(
     """
     Create a list of static flow networks with summary data, based on the group trees and resampled summary data.
 
-    The summary data should be valid for the time span of the group tree.
+    The summary data should be valid for the time span of the network's summary data.
 
     The node structure for a dated network in the list is static. The summary data for each node in the dated network is given by
-    by the time span where thea associated group tree is valid (from date of the tree to the next tree).
+    the time span where the associated network is valid (from date of the network to the next network).
 
     `Arguments`:
     - `smry_sorted_by_date`. pa.Table - Summary data table sorted by date. Expected columns: [DATE, summary_vector_1, ... , summary_vector_n]
     - `group_tree_df`: Dataframe with group tree for dates - expected columns: [KEYWORD, CHILD, PARENT], optional column: [VFP_TABLE]
-    - `node_static_working_data_dict`: Dictionary with node name as key and its static work data for building group trees
+    - `node_static_working_data_dict`: Dictionary with node name as key and its static work data for building flow networks
     - `valid_node_types`: Set of node types to include from the group tree
     - `terminal_node`: Name of the terminal node in the group tree
 
     `Returns`:
-    A list of dated trees with recursive node structure and summary data for each node in the tree.
+    A list of dated networks with recursive node structure and summary data for each node in the tree.
     """
     dated_networks: List[DatedFlowNetwork] = []
 
-    # loop trees
     timer = PerfTimer()
 
     # Group the group tree data by date
@@ -811,7 +823,7 @@ def _create_dated_network(
     - smry_for_grouptree_sorted_by_date: Summary data for time span defined from the group tree at date to the next group tree date. The summary data is
     sorted by date, which implies unique dates, ordered by date. Thereby each node or edge is a column in the summary dataframe.
     - number_of_dates_in_smry: Number of unique dates in the summary data df. To be used for filling missing data - i.e. num rows of smry_sorted_by_date
-    - node_static_working_data_dict: Dictionary with node name as key and its static work data for building group tree
+    - node_static_working_data_dict: Dictionary with node name as key and its static work data for building networks
     - valid_node_types: Set of valid node types for the group tree
     - terminal_node: Name of the terminal node in the group tree
 
@@ -820,7 +832,48 @@ def _create_dated_network(
     """
     # Dictionary of node name, with info about parent nodename RecursiveTreeNode with empty child array
     # I.e. iterate over rows in df (better than recursive search)
-    nodes_dict: Dict[str, Tuple[str, NetworkNode]] = {}
+    nodes_dict = _create_flat_network_nodes_map(
+        grouptree_at_date,
+        node_static_working_data_dict,
+        valid_node_types,
+        smry_for_grouptree_sorted_by_date,
+        number_of_dates_in_smry,
+    )
+
+    terminal_node_elm = nodes_dict.get(terminal_node)
+
+    if terminal_node_elm is None:
+        date_str = grouptree_date.strftime("%Y-%m-%d")
+        raise ValueError(f"No terminal node {terminal_node} found in group tree at date {date_str}")
+
+    # Iterate over the nodes dict and add children to the nodes by looking at the parent name
+    # Operates by reference, so each node is updated in the dict
+    for _node_name, flat_node_data in nodes_dict.items():
+        parent_name = flat_node_data.parent_name
+        if parent_name in nodes_dict:
+            nodes_dict[parent_name].node_without_children.children.append(flat_node_data.node_without_children)
+
+    # The terminal node is the final network
+    result = nodes_dict[terminal_node].node_without_children
+
+    return result
+
+
+def _create_flat_network_nodes_map(
+    grouptree_at_date: pd.DataFrame,
+    node_static_working_data_dict: Dict[str, StaticNodeWorkingData],
+    valid_node_types: set[NodeType],
+    smry_for_grouptree_sorted_by_date: pa.Table,
+    number_of_dates_in_smry: int,
+) -> Dict[str, _FlatNetworkNodeData]:
+    """
+    Creates a map with node names and their respective flat network node data.
+
+    The network nodes are created flat, i.e. non-recursively. This implies nodes without children.
+    Thereby the flat network node data contains info of parent node to assemble recursive structure
+    after data fetching
+    """
+    nodes_dict: Dict[str, _FlatNetworkNodeData] = {}
 
     # Extract columns as numpy arrays for index access resulting in faster processing
     # NOTE: Expect all columns to be 1D arrays and present in the dataframe
@@ -828,19 +881,16 @@ def _create_dated_network(
     parent_names = grouptree_at_date["PARENT"].to_numpy()
     keywords = grouptree_at_date["KEYWORD"].to_numpy()
 
-    if len(node_names) != len(parent_names) or len(node_names) != len(keywords):
-        raise ValueError("Length of node_names, parent_names and keywords must be the same")
+    # Extract the names of all summary columns once
+    smry_columns_set = set(smry_for_grouptree_sorted_by_date.column_names)
 
     # Create edge label for nodes
     edge_labels = [""] * len(node_names)
     if "VFP_TABLE" in grouptree_at_date.columns:
         edge_labels = _create_edge_label_list_from_vfp_table_column(grouptree_at_date["VFP_TABLE"])
 
-    # Extract names once
-    smry_columns_set = set(smry_for_grouptree_sorted_by_date.column_names)
-
-    # Iterate over every row in the grouptree dataframe to create the tree nodes
-    for i, node_name in enumerate(node_names):
+    # Iterate over every row in the grouptree dataframe to create the network nodes
+    for node_name, parent_name, node_keyword, edge_label in zip(node_names, parent_names, keywords, edge_labels):
         if node_name in nodes_dict:
             continue
 
@@ -853,93 +903,17 @@ def _create_dated_network(
 
         network_node = _create_network_node(
             node_name,
-            keywords[i],
-            edge_labels[i],
+            node_keyword,
+            edge_label,
             node_static_working_data,
             smry_columns_set,
             smry_for_grouptree_sorted_by_date,
             number_of_dates_in_smry,
         )
 
-        # parent list has matching indices
-        parent_name = parent_names[i]
-        nodes_dict[node_name] = (parent_name, network_node)
+        nodes_dict[node_name] = _FlatNetworkNodeData(parent_name=parent_name, node_without_children=network_node)
 
-    # Add children to the nodes, start with terminal node
-    # ! Mutates nodes_dict
-    _apped_children(nodes_dict, terminal_node, grouptree_date)
-
-    # Terminal node is the dated tree
-    result = nodes_dict[terminal_node][1]
-
-    return result
-
-
-def _create_network_node(
-    node_name: str,
-    keyword: str,
-    edge_label: str,
-    working_data: StaticNodeWorkingData,
-    smry_columns_set: set,
-    smry_for_grouptree_sorted_by_date: pa.Table,
-    number_of_dates_in_smry: int,
-) -> NetworkNode:
-    # Find working data for the node
-
-    node_type: Literal["Well", "Group"] = "Well" if keyword == "WELSPECS" else "Group"
-    edge_data: Dict[str, List[float]] = {}
-    node_data: Dict[str, List[float]] = {}
-
-    # Each row in summary data is a unique date
-    summary_vector_info = working_data.node_summary_vectors_info
-    for sumvec, info in summary_vector_info.items():
-        datatype = info.DATATYPE
-
-        data = _get_data_for_summary_vector_info(
-            sumvec, smry_columns_set, smry_for_grouptree_sorted_by_date, number_of_dates_in_smry
-        )
-
-        if info.EDGE_NODE == EdgeOrNode.EDGE:
-            edge_data[datatype] = data
-        else:
-            node_data[datatype] = data
-
-    # children = [], and are added below after each node is created, to prevent recursive search
-    return NetworkNode(
-        node_label=node_name,
-        node_type=node_type,
-        edge_label=edge_label,
-        edge_data=edge_data,
-        node_data=node_data,
-        children=[],
-    )
-
-
-def _apped_children(
-    nodes_dict: dict[str, Tuple[str, NetworkNode]],
-    terminal_node: str,
-    grouptree_date: pd.Timestamp,
-) -> None:
-    terminal_node_elm = nodes_dict.get(terminal_node)
-    if terminal_node_elm is None:
-        date_str = grouptree_date.strftime("%Y-%m-%d")
-        raise ValueError(f"No terminal node {terminal_node} found in group tree at date {date_str}")
-
-    # Iterate over the nodes dict and add children to the nodes by looking at the parent name
-    # Operates by reference, so each node is updated in the dict
-    for _node_name, (parent_name, node) in nodes_dict.items():
-        if parent_name in nodes_dict:
-            nodes_dict[parent_name][1].children.append(node)
-
-
-def _get_data_for_summary_vector_info(
-    sumvec_name: str, summary_col_set: set, smry_for_grouptree_sorted_by_date: pa.Table, number_of_dates: int
-) -> list[float]:
-    """Extracts and formats whatever data is available for a given summary vector. If the name is not present in the summary, a list of NaN values is given instead"""
-    if sumvec_name in summary_col_set:
-        return smry_for_grouptree_sorted_by_date[sumvec_name].to_numpy().round(2)
-
-    return list([np.nan] * number_of_dates)
+    return nodes_dict
 
 
 def _is_valid_node_type(node_classification: NodeClassification, valid_node_types: set[NodeType]) -> bool:
@@ -970,3 +944,45 @@ def _create_edge_label_list_from_vfp_table_column(vfp_table_column: pd.Series) -
             edge_labels.append(f"VFP {int(vfp_nb)}")
 
     return edge_labels
+
+
+def _create_network_node(
+    node_name: str,
+    keyword: str,
+    edge_label: str,
+    working_data: StaticNodeWorkingData,
+    smry_columns_set: set,
+    smry_for_grouptree_sorted_by_date: pa.Table,
+    number_of_dates_in_smry: int,
+) -> NetworkNode:
+    # Find working data for the node
+
+    node_type: Literal["Well", "Group"] = "Well" if keyword == "WELSPECS" else "Group"
+    edge_data: Dict[str, List[float]] = {}
+    node_data: Dict[str, List[float]] = {}
+
+    # Each row in summary data is a unique date
+    summary_vector_info = working_data.node_summary_vectors_info
+    for sumvec, info in summary_vector_info.items():
+        datatype = info.DATATYPE
+
+        data = (
+            smry_for_grouptree_sorted_by_date[sumvec].to_numpy().round(2)
+            if sumvec in smry_columns_set
+            else list([np.nan] * number_of_dates_in_smry)
+        )
+
+        if info.EDGE_NODE == EdgeOrNode.EDGE:
+            edge_data[datatype] = data
+        else:
+            node_data[datatype] = data
+
+    # children = [], and are added below after each node is created, to prevent recursive search
+    return NetworkNode(
+        node_label=node_name,
+        node_type=node_type,
+        edge_label=edge_label,
+        edge_data=edge_data,
+        node_data=node_data,
+        children=[],
+    )

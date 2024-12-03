@@ -2,11 +2,10 @@ import logging
 from fastapi import APIRouter, Depends, Query
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 from primary.auth.auth_helper import AuthHelper
-from primary.services.flow_network_assembler.flow_network_assembler import NodeType
+
 from primary.services.flow_network_assembler.flow_network_assembler import FlowNetworkAssembler
-from primary.services.flow_network_assembler.flow_network_types import FlowNetworkData
+from primary.services.flow_network_assembler.flow_network_types import NetworkModeOptions, NodeType
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
-from primary.services.sumo_access.group_tree_types import NetworkModeOptions
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 
@@ -27,7 +26,7 @@ async def get_realization_flow_network(
     resampling_frequency: schemas.Frequency = Query(description="Resampling frequency"),
     node_type_set: set[schemas.NodeType] = Query(description="Node types"),
     # fmt:on
-) -> FlowNetworkData:
+) -> schemas.FlowNetworkData:
     timer = PerfTimer()
 
     group_tree_access = await GroupTreeAccess.from_case_uuid_async(
@@ -58,7 +57,7 @@ async def get_realization_flow_network(
         dated_trees,
         edge_metadata,
         node_metadata,
-    ) = await network_assembler.create_dated_trees_and_metadata_lists()
+    ) = await network_assembler.create_dated_networks_and_metadata_lists()
     create_data_time_ms = timer.lap_ms()
 
     LOGGER.info(
@@ -66,4 +65,6 @@ async def get_realization_flow_network(
         f"(initialize={initialize_time_ms}ms, create group tree={create_data_time_ms}ms)"
     )
 
-    return FlowNetworkData(edge_metadata_list=edge_metadata, node_metadata_list=node_metadata, dated_trees=dated_trees)
+    return schemas.FlowNetworkData(
+        edge_metadata_list=edge_metadata, node_metadata_list=node_metadata, dated_trees=dated_trees
+    )

@@ -1,10 +1,14 @@
 import logging
-import pandas as pd
 
-
-from primary.services.sumo_access.group_tree_types import DataType, EdgeOrNode, TreeType
-from ._group_tree_dataframe_model import GroupTreeDataframeModel
-from .flow_network_types import NodeClassification, SummaryVectorInfo, TreeClassification, NodeSummaryVectorsInfo
+from primary.services.sumo_access.group_tree_types import TreeType
+from .flow_network_types import (
+    NodeClassification,
+    SummaryVectorInfo,
+    NetworkClassification,
+    NodeSummaryVectorsInfo,
+    EdgeOrNode,
+    DataType,
+)
 
 
 LOGGER = logging.getLogger(__name__)
@@ -62,7 +66,7 @@ DATATYPE_LABEL_MAP = {
 }
 
 
-def compute_tree_well_vectors(group_tree_model: GroupTreeDataframeModel, data_type: DataType) -> set[str]:
+def compute_tree_well_vectors(group_tree_wells: list[str], data_type: DataType) -> set[str]:
     """Given a vector type (WSTAT, WOPT, etc), returns a list of full summary vector names for each well in a group tree model; e.g. "WSTAT:A1", "WSTAT:A2", etc. Returns an empty array (and logs a warning) if the datatype has no vector"""
 
     vector_name = WELL_DATATYPE_VECTOR_MAP.get(data_type)
@@ -71,53 +75,49 @@ def compute_tree_well_vectors(group_tree_model: GroupTreeDataframeModel, data_ty
         LOGGER.warning("No recognized well vector for type %s", data_type)
         return set()
 
-    return {f"{vector_name}:{well}" for well in group_tree_model.group_tree_wells}
+    return {f"{vector_name}:{well}" for well in group_tree_wells}
 
 
-def compute_tree_group_vectors(group_tree_model: GroupTreeDataframeModel, data_type: DataType) -> set[str]:
+def compute_tree_group_vectors(group_tree_groups: list[str], data_type: DataType) -> set[str]:
     """Given a vector type (GOPR, GGIR, etc), returns a list of full summary vector names for each group in a group tree model. Returns an empty array (and logs a warning) if the datatype has no vector"""
     grup_tree_vectors = GROUPTYPE_DATATYPE_VECTORS_MAP[TreeType.GRUPTREE]
     bran_prop_vectors = GROUPTYPE_DATATYPE_VECTORS_MAP[TreeType.BRANPROP]
 
     v_name_grup = grup_tree_vectors.get(data_type)
     v_name_bran = bran_prop_vectors.get(data_type)
+    v_names = [v for v in (v_name_grup, v_name_bran) if v is not None]
 
-    # Arguably excessive to check both, since they both have the same data-types. Keeping it as two checks just incase the maps diverge down-the-line
-    if v_name_grup is None and v_name_bran is None:
+    if len(v_names) == 0:
         LOGGER.warning("No recognized group vectors for type %s", data_type)
         return set()
 
-    return {
-        f"{v_name}:{group}"
-        for v_name in (v_name_grup, v_name_bran)
-        if v_name is not None
-        for group in group_tree_model.group_tree_groups
-    }
+    # Nested loop to create all possible combinations
+    return {f"{v_name}:{group}" for v_name in v_names for group in group_tree_groups}
 
 
-def compute_all_well_vectors(group_tree_model: GroupTreeDataframeModel) -> set[str]:
+def compute_all_well_vectors(group_tree_wells: list[str]) -> set[str]:
     data_types = WELL_DATATYPE_VECTOR_MAP.keys()
 
     res = set()
     for data_type in data_types:
-        res |= compute_tree_well_vectors(group_tree_model, data_type)
+        res |= compute_tree_well_vectors(group_tree_wells, data_type)
 
     return res
 
 
-def compute_all_group_vectors(group_tree_model: GroupTreeDataframeModel) -> set[str]:
+def compute_all_group_vectors(group_tree_groups: list[str]) -> set[str]:
     grup_data_types = GROUPTYPE_DATATYPE_VECTORS_MAP[TreeType.GRUPTREE].keys()
     bran_data_types = GROUPTYPE_DATATYPE_VECTORS_MAP[TreeType.BRANPROP].keys()
     all_data_types = set(grup_data_types) | set(bran_data_types)
 
     res = set()
     for data_type in all_data_types:
-        res |= compute_tree_group_vectors(group_tree_model, data_type)
+        res |= compute_tree_group_vectors(group_tree_groups, data_type)
 
     return res
 
 
-def get_all_vectors_of_interest_for_tree(group_tree_model: GroupTreeDataframeModel) -> set[str]:
+def get_all_vectors_of_interest_for_tree(group_tree_wells: list[str], group_tree_groups: list[str]) -> set[str]:
     """
     Create a list of vectors based on the possible combinations of vector datatypes and vector nodes
     for a group tree
@@ -130,13 +130,12 @@ def get_all_vectors_of_interest_for_tree(group_tree_model: GroupTreeDataframeMod
     # Find all summary vectors with field vectors
     field_vectors = set(FIELD_DATATYPE_VECTOR_MAP.values())
     # Find all summary vectors with group tree wells
-    well_vectors = compute_all_well_vectors(group_tree_model)
+    well_vectors = compute_all_well_vectors(group_tree_wells)
     # Find all summary vectors with group tree groups
-    group_vectors = compute_all_group_vectors(group_tree_model)
+    group_vectors = compute_all_group_vectors(group_tree_groups)
 
     all_vectors = field_vectors | well_vectors | group_vectors
 
-    # Ensure non duplicated vectors
     return all_vectors
 
 
@@ -185,7 +184,7 @@ def get_tree_element_for_data_type(data_type: DataType) -> EdgeOrNode:
     raise ValueError(f"Data type {data_type.value} not implemented.")
 
 
-def get_data_label(datatype: DataType) -> str:
+def get_label_for_datatype(datatype: DataType) -> str:
     """Returns a more readable label for the summary datatypes"""
     label = DATATYPE_LABEL_MAP.get(datatype)
     if label is None:
@@ -193,27 +192,27 @@ def get_data_label(datatype: DataType) -> str:
     return label
 
 
-def get_sumvecs_for_node_row(
-    node_row: pd.Series,
+def get_node_sumvecs_for_name_and_keyword(
+    node_name: str,
+    node_keyword: str,
     node_classifications: dict[str, NodeClassification],
-    tree_classification: TreeClassification,
+    tree_classification: NetworkClassification,
 ) -> tuple[NodeSummaryVectorsInfo, set[str], set[str]]:
-    nodename = node_row["CHILD"]
-    keyword = node_row["KEYWORD"]
-
-    if not isinstance(nodename, str) or not isinstance(keyword, str):
+    if not isinstance(node_name, str) or not isinstance(node_keyword, str):
         raise ValueError("Nodename and keyword must be strings")
 
-    node_classification = node_classifications[nodename]
+    node_classification = node_classifications[node_name]
 
-    datatypes = _compute_datatypes_for_row(nodename, keyword, node_classification, tree_classification)
+    datatypes = _compute_datatypes_for_name_and_keyword(
+        node_name, node_keyword, node_classification, tree_classification
+    )
 
     node_vectors_info = NodeSummaryVectorsInfo(SMRY_INFO={})
     all_sumvecs = set()
     edge_sumvecs = set()
 
     for datatype in datatypes:
-        sumvec_name = create_sumvec_from_datatype_nodename_and_keyword(datatype, nodename, keyword)
+        sumvec_name = create_sumvec_from_datatype_nodename_and_keyword(datatype, node_name, node_keyword)
         edge_or_node = get_tree_element_for_data_type(datatype)
 
         all_sumvecs.add(sumvec_name)
@@ -226,11 +225,11 @@ def get_sumvecs_for_node_row(
     return (node_vectors_info, all_sumvecs, edge_sumvecs)
 
 
-def _compute_datatypes_for_row(
+def _compute_datatypes_for_name_and_keyword(
     node_name: str,
     node_keyword: str,
     node_classification: NodeClassification,
-    tree_classification: TreeClassification,
+    tree_classification: NetworkClassification,
 ) -> list[DataType]:
 
     is_prod = node_classification.IS_PROD
