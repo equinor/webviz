@@ -13,7 +13,7 @@ from primary.services.summary_delta_vectors import (
 VECTOR_TABLE_SCHEMA = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16()), ("vector", pa.float32())])
 
 
-def test_create_delta_vector_table():
+def test_create_delta_vector_table() -> None:
     # Create sample data for compare_vector_table
     compare_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 2, 2], "vector": [10.0, 20.0, 30.0, 40.0]}
     compare_vector_table = pa.table(compare_data, schema=VECTOR_TABLE_SCHEMA)
@@ -33,7 +33,7 @@ def test_create_delta_vector_table():
     assert result_table.equals(expected_delta_table)
 
 
-def test_create_delta_vector_table_with_missing_dates():
+def test_create_delta_vector_table_with_missing_dates() -> None:
     # Create sample data for compare_vector_table
     compare_data = {"DATE": [1, 2, 4], "REAL": [1, 1, 2], "vector": [10.0, 20.0, 40.0]}
     compare_vector_table = pa.table(compare_data, schema=VECTOR_TABLE_SCHEMA)
@@ -53,7 +53,7 @@ def test_create_delta_vector_table_with_missing_dates():
     assert result_table.equals(expected_delta_table)
 
 
-def test_create_delta_vector_table_with_different_reals():
+def test_create_delta_vector_table_with_different_reals() -> None:
     # Create sample data for compare_vector_table
     compare_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 2, 3], "vector": [10.0, 20.0, 30.0, 40.0]}
     compare_vector_table = pa.table(compare_data, schema=VECTOR_TABLE_SCHEMA)
@@ -73,7 +73,7 @@ def test_create_delta_vector_table_with_different_reals():
     assert result_table.equals(expected_delta_table)
 
 
-def test_create_realization_delta_vector_list():
+def test_create_realization_delta_vector_list() -> None:
     # Create sample data for delta_vector_table
     delta_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 2, 2], "vector": [5.0, 10.0, 15.0, 20.0]}
     delta_vector_table = pa.table(delta_data, schema=VECTOR_TABLE_SCHEMA)
@@ -91,7 +91,7 @@ def test_create_realization_delta_vector_list():
     assert result == expected_result
 
 
-def test_create_realization_delta_vector_list_with_single_real():
+def test_create_realization_delta_vector_list_with_single_real() -> None:
     # Create sample data for delta_vector_table
     delta_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 1, 1], "vector": [5.0, 10.0, 15.0, 20.0]}
     delta_vector_table = pa.table(delta_data, schema=VECTOR_TABLE_SCHEMA)
@@ -110,12 +110,12 @@ def test_create_realization_delta_vector_list_with_single_real():
     assert result == expected_result
 
 
-def test_create_realization_delta_vector_list_with_empty_table():
+def test_create_realization_delta_vector_list_with_empty_table() -> None:
     # Create an empty delta_vector_table
     delta_vector_table = pa.table({"DATE": [], "REAL": [], "vector": []}, schema=VECTOR_TABLE_SCHEMA)
 
     # Expected result
-    expected_result = []
+    expected_result: list[RealizationDeltaVector] = []
 
     # Call the function
     result = create_realization_delta_vector_list(delta_vector_table, "vector", is_rate=True, unit="unit")
@@ -124,7 +124,7 @@ def test_create_realization_delta_vector_list_with_empty_table():
     assert result == expected_result
 
 
-def test_validate_summary_vector_table_pa_valid():
+def test_validate_summary_vector_table_pa_valid() -> None:
     vector_name = "VECTOR"
     data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0]}
     schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16()), (vector_name, pa.float32())])
@@ -135,7 +135,7 @@ def test_validate_summary_vector_table_pa_valid():
         pytest.fail("validate_summary_vector_table_pa raised InvalidDataError unexpectedly!")
 
 
-def test_validate_summary_vector_table_pa_missing_column():
+def test_validate_summary_vector_table_pa_missing_column() -> None:
     vector_name = "VECTOR"
     data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6]}
     schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16())])
@@ -144,7 +144,7 @@ def test_validate_summary_vector_table_pa_missing_column():
         _validate_summary_vector_table_pa(table, vector_name)
 
 
-def test_validate_summary_vector_table_pa_unexpected_column():
+def test_validate_summary_vector_table_pa_unexpected_column() -> None:
     vector_name = "VECTOR"
     data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0], "EXTRA": [10.0, 11.0, 12.0]}
     schema = pa.schema(
@@ -155,7 +155,7 @@ def test_validate_summary_vector_table_pa_unexpected_column():
         _validate_summary_vector_table_pa(table, vector_name)
 
 
-def test_validate_summary_vector_table_pa_invalid_date_type():
+def test_validate_summary_vector_table_pa_invalid_date_type() -> None:
     vector_name = "VECTOR"
     data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0]}
     schema = pa.schema([("DATE", pa.int32()), ("REAL", pa.int16()), (vector_name, pa.float32())])
@@ -164,7 +164,7 @@ def test_validate_summary_vector_table_pa_invalid_date_type():
         _validate_summary_vector_table_pa(table, vector_name)
 
 
-def test_validate_summary_vector_table_pa_invalid_real_type():
+def test_validate_summary_vector_table_pa_invalid_real_type() -> None:
     vector_name = "VECTOR"
     data = {"DATE": [1, 2, 3], "REAL": [4.0, 5.0, 6.0], vector_name: [7.0, 8.0, 9.0]}
     schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.float32()), (vector_name, pa.float32())])
@@ -173,7 +173,7 @@ def test_validate_summary_vector_table_pa_invalid_real_type():
         _validate_summary_vector_table_pa(table, vector_name)
 
 
-def test_validate_summary_vector_table_pa_invalid_vector_type():
+def test_validate_summary_vector_table_pa_invalid_vector_type() -> None:
     vector_name = "VECTOR"
     data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7, 8, 9]}
     schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16()), (vector_name, pa.int32())])
@@ -182,7 +182,7 @@ def test_validate_summary_vector_table_pa_invalid_vector_type():
         _validate_summary_vector_table_pa(table, vector_name)
 
 
-def test_validate_summary_vector_table_pa_sumo_service():
+def test_validate_summary_vector_table_pa_sumo_service() -> None:
     vector_name = "VECTOR"
     data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6]}
     schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16())])
