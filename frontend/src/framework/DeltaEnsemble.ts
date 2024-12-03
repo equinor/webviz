@@ -1,5 +1,3 @@
-import { v4 } from "uuid";
-
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { EnsembleParameters } from "./EnsembleParameters";
 import { EnsembleSensitivities } from "./EnsembleSensitivities";
@@ -33,12 +31,7 @@ export class DeltaEnsemble {
         color: string,
         customName: string | null = null
     ) {
-        const deltaEnsembleCaseUuid = v4();
-        this._deltaEnsembleIdent = new DeltaEnsembleIdent(
-            deltaEnsembleCaseUuid,
-            compareEnsemble.getIdent(),
-            referenceEnsemble.getIdent()
-        );
+        this._deltaEnsembleIdent = new DeltaEnsembleIdent(compareEnsemble.getIdent(), referenceEnsemble.getIdent());
 
         this._compareEnsemble = compareEnsemble;
         this._referenceEnsemble = referenceEnsemble;

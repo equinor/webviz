@@ -40,7 +40,7 @@ export type DeltaEnsembleElementItem = {
 type InternalDeltaEnsembleItem = {
     compareEnsemble: DeltaEnsembleElementItem | null; // Allows null
     referenceEnsemble: DeltaEnsembleElementItem | null; // Allows null
-    uuid: string;
+    uuid: string; // To allow for equal compare and reference ensembles during editing in the dialog
     color: string;
     customName: string | null;
 };
@@ -48,7 +48,6 @@ type InternalDeltaEnsembleItem = {
 export type DeltaEnsembleItem = {
     compareEnsemble: DeltaEnsembleElementItem;
     referenceEnsemble: DeltaEnsembleElementItem;
-    uuid: string;
     color: string;
     customName: string | null;
 };
@@ -116,7 +115,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             props.createdDeltaEnsembles.map((elm) => ({
                 compareEnsemble: elm.compareEnsemble,
                 referenceEnsemble: elm.referenceEnsemble,
-                uuid: elm.uuid,
+                uuid: v4(),
                 color: elm.color,
                 customName: elm.customName,
             }))
@@ -368,10 +367,21 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             if (!deltaEnsemble.compareEnsemble || !deltaEnsemble.referenceEnsemble) {
                 continue;
             }
+
+            // Ensure no duplicate delta ensembles
+            if (
+                validDeltaEnsembles.some(
+                    (elm) =>
+                        isEqual(elm.compareEnsemble, deltaEnsemble.compareEnsemble) &&
+                        isEqual(elm.referenceEnsemble, deltaEnsemble.referenceEnsemble)
+                )
+            ) {
+                continue;
+            }
+
             validDeltaEnsembles.push({
                 compareEnsemble: deltaEnsemble.compareEnsemble,
                 referenceEnsemble: deltaEnsemble.referenceEnsemble,
-                uuid: deltaEnsemble.uuid,
                 color: deltaEnsemble.color,
                 customName: deltaEnsemble.customName,
             });
@@ -396,7 +406,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         const isContentEqual = props.createdDeltaEnsembles.every((elm, idx) => {
             const internalDeltaEnsemble = deltaEnsembles[idx];
             return (
-                elm.uuid === internalDeltaEnsemble.uuid &&
                 elm.color === internalDeltaEnsemble.color &&
                 elm.customName === internalDeltaEnsemble.customName &&
                 isEqual(elm.compareEnsemble, internalDeltaEnsemble.compareEnsemble) &&
@@ -408,6 +417,21 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function areAnyDeltaEnsemblesInvalid(): boolean {
         return deltaEnsembles.some((elm) => !elm.compareEnsemble || !elm.referenceEnsemble);
+    }
+
+    function hasDuplicateDeltaEnsembles(): boolean {
+        const uniqueDeltaEnsembles = new Set<string>();
+        for (const elm of deltaEnsembles) {
+            if (!elm.compareEnsemble || !elm.referenceEnsemble) {
+                continue;
+            }
+            const key = `${elm.compareEnsemble.caseUuid}~&&~${elm.compareEnsemble.ensembleName}~&&~${elm.referenceEnsemble.caseUuid}~&&~${elm.referenceEnsemble.ensembleName}`;
+            if (uniqueDeltaEnsembles.has(key)) {
+                return true;
+            }
+            uniqueDeltaEnsembles.add(key);
+        }
+        return false;
     }
 
     function hasAnyEnsembleChanged(): boolean {
@@ -532,17 +556,20 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         >
                             Discard changes
                         </Button>
-                        <Button
-                            onClick={handleApplyEnsembleSelection}
-                            disabled={
-                                isLoadingEnsembles ||
-                                areAnyDeltaEnsemblesInvalid() ||
-                                !(hasAnyEnsembleChanged() || hasAnyDeltaEnsemblesChanged())
-                            }
-                            startIcon={makeApplyButtonStartIcon()}
-                        >
-                            {isLoadingEnsembles ? "Loading ensembles..." : "Apply"}
-                        </Button>
+                        <div title={hasDuplicateDeltaEnsembles() ? "Duplicate Delta Ensembles" : ""}>
+                            <Button
+                                onClick={handleApplyEnsembleSelection}
+                                disabled={
+                                    isLoadingEnsembles ||
+                                    areAnyDeltaEnsemblesInvalid() ||
+                                    hasDuplicateDeltaEnsembles() ||
+                                    !(hasAnyEnsembleChanged() || hasAnyDeltaEnsemblesChanged())
+                                }
+                                startIcon={makeApplyButtonStartIcon()}
+                            >
+                                {isLoadingEnsembles ? "Loading ensembles..." : "Apply"}
+                            </Button>
+                        </div>
                     </div>
                 }
                 showCloseCross
@@ -702,15 +729,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 </tbody>
                             </table>
                         </div>
-                        {/* <Label text="Delta Ensembles" position="left">
-                                <IconButton
-                                    title="Add delta ensemble"
-                                    onClick={handleAddDeltaEnsemble}
-                                    disabled={newlySelectedEnsembles.length < 1}
-                                >
-                                    <Add />
-                                </IconButton>
-                            </Label> */}
                         <div className="flex-shrink flex flex-row">
                             <Info
                                 fontSize="medium"
@@ -744,6 +762,16 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                     {deltaEnsembles.map((elm) => {
                                         const isDeltaEnsembleValid =
                                             elm.compareEnsemble !== null && elm.referenceEnsemble !== null;
+                                        const isDuplicateDeltaEnsemble =
+                                            deltaEnsembles.filter(
+                                                (e) =>
+                                                    e.compareEnsemble?.caseUuid === elm.compareEnsemble?.caseUuid &&
+                                                    e.compareEnsemble?.ensembleName ===
+                                                        elm.compareEnsemble?.ensembleName &&
+                                                    e.referenceEnsemble?.caseUuid === elm.referenceEnsemble?.caseUuid &&
+                                                    e.referenceEnsemble?.ensembleName ===
+                                                        elm.referenceEnsemble?.ensembleName
+                                            ).length > 1;
                                         return (
                                             <tr
                                                 key={elm.uuid}
@@ -751,9 +779,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                     "align-center ",
 
                                                     {
-                                                        "hover:bg-slate-100 odd:bg-slate-50": isDeltaEnsembleValid,
-                                                        "hover:bg-red-50 odd:bg-red-200 even:bg-red-300 border-red-500":
+                                                        "hover:bg-red-50 odd:bg-red-200 even:bg-red-300":
                                                             !isDeltaEnsembleValid,
+                                                        "hover:bg-slate-100 odd:bg-slate-50": isDeltaEnsembleValid,
+
+                                                        "hover:bg-blue-50 odd:bg-blue-200 even:bg-blue-300":
+                                                            isDeltaEnsembleValid && isDuplicateDeltaEnsemble,
                                                     }
                                                 )}
                                             >

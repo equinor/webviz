@@ -79,7 +79,7 @@ export class EnsembleSet {
     /**
      * Find an ensemble in the set by its ensemble ident.
      *
-     * @param ensembleIdent
+     * @param ensembleIdent - The ensemble ident to search for.
      * @returns The ensemble if found, otherwise null.
      */
     findEnsemble(ensembleIdent: RegularEnsembleIdent): RegularEnsemble | null;

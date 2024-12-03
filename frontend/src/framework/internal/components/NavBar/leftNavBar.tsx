@@ -174,7 +174,6 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         const deltaEnsembleItem: DeltaEnsembleItem = {
             compareEnsemble: compareEnsemble,
             referenceEnsemble: referenceEnsemble,
-            uuid: deltaEns.getIdent().getUuid(),
             color: deltaEns.getColor(),
             customName: deltaEns.getCustomName(),
         };
