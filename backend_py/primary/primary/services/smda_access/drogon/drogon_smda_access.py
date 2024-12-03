@@ -8,10 +8,12 @@ from ._drogon_well_data import get_drogon_well_trajectories, get_drogon_well_hea
 
 
 class SmdaAccess:
+    """Drogon SMDA access class containing methods to get mocked Drogon data
+    disable-unused-argument needed to keep the same method signature as the SMDA access class"""
+
     def __init__(self) -> None:
         pass
 
-    # type: ignore
     # pylint: disable=unused-argument
     async def get_stratigraphic_units(self, stratigraphic_column_identifier: str) -> List[StratigraphicUnit]:
         return get_drogon_strat_units()
@@ -27,7 +29,6 @@ class SmdaAccess:
             return [traj for traj in all_well_trajs if traj.wellbore_uuid in wellbore_uuids]
         return all_well_trajs
 
-    # type: ignore
     # pylint: disable=unused-argument
     async def get_wellbore_picks_for_wellbore(
         self, wellbore_uuid: str, obs_no: Optional[int] = None
@@ -36,7 +37,6 @@ class SmdaAccess:
         well_picks = [pick for pick in get_drogon_well_picks() if pick.wellbore_uuid == wellbore_uuid]
         return well_picks
 
-    # type: ignore
     # pylint: disable=unused-argument
     async def get_wellbore_picks_for_pick_identifier(
         self,

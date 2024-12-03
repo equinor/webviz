@@ -84,12 +84,20 @@ class SmdaAccess:
 
         wellbore_headers_results = await self._smda_get_request(endpoint=SmdaEndpoints.WELLHEADERS, params=params)
 
+        # Create a dictionary to map unique wellbore identifiers to wellbore headers for faster lookup
+        wellbore_headers_dict = {
+            wellbore_header["unique_wellbore_identifier"]: wellbore_header
+            for wellbore_header in wellbore_headers_results
+        }
+
+        # Iterate over the survey headers and update the information from wellbore headers if available
         for survey_header in survey_header_results:
-            for wellbore_header in wellbore_headers_results:
-                if survey_header["unique_wellbore_identifier"] == wellbore_header["unique_wellbore_identifier"]:
-                    survey_header["wellbore_purpose"] = wellbore_header.get("wellbore_purpose")
-                    survey_header["wellbore_status"] = wellbore_header.get("wellbore_status")
-                    break
+            unique_id = survey_header["unique_wellbore_identifier"]
+
+            wellbore_header = wellbore_headers_dict.get(unique_id)
+            if wellbore_header:
+                survey_header["wellbore_purpose"] = wellbore_header.get("wellbore_purpose")
+                survey_header["wellbore_status"] = wellbore_header.get("wellbore_status")
 
         return [WellboreHeader(**result) for result in survey_header_results]
 

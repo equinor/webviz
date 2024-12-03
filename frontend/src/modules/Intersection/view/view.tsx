@@ -84,10 +84,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     React.useEffect(
         function handleTitleChange() {
-            let fieldName = "";
-            if (fieldIdentifier) {
-                fieldName = fieldIdentifier;
-            }
+            const fieldName = fieldIdentifier ?? "";
 
             props.viewContext.setInstanceTitle(
                 `${wellboreHeader?.identifier ?? "Intersection"}
