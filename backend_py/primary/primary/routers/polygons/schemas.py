@@ -20,6 +20,7 @@ class PolygonsAttributeType(str, Enum):
     PINCHOUT = "pinchout"  # Values are pinchouts
     SUBCROP = "subcrop"  # Values are subcrops
     FAULT_LINES = "fault_lines"  # Values are fault lines
+    NAMED_AREA = "named_area"  # Values are named areas, e.g. CCS containment polygons
 
 
 class PolygonsMeta(BaseModel):

@@ -22,7 +22,7 @@ export const fieldWellboreTrajectoriesQueryAtom = atomWithQuery((get) => {
 
     return {
         queryKey: ["getFieldWellboreTrajectories", fieldIdentifier ?? ""],
-        queryFn: () => apiService.well.getFieldWellTrajectories(fieldIdentifier ?? ""),
+        queryFn: () => apiService.well.getWellTrajectories(fieldIdentifier ?? ""),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
         enabled: Boolean(fieldIdentifier),
