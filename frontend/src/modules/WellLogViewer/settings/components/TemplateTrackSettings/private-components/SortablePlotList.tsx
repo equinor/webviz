@@ -27,6 +27,9 @@ export type SortablePlotListProps = {
     onUpdatePlots: (plots: TemplatePlotConfig[]) => void;
 };
 
+// TODO, do an offsett or something, so they dont always start on the same color?
+const colorSet = new ColorSet(CURVE_COLOR_PALETTE);
+
 export function SortablePlotList(props: SortablePlotListProps): React.ReactNode {
     const { onUpdatePlots } = props;
 
@@ -39,14 +42,11 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
         curveHeaderOptions.push(makeMissingCurveOption(curveName));
     });
 
-    // TODO, do an offsett or something, so they dont always start on the same color?
-    const colorSet = React.useRef<ColorSet>(new ColorSet(CURVE_COLOR_PALETTE));
-
     const addPlot = React.useCallback(
-        function addPlot(plotType: string) {
+        function addPlot(plotType: TemplatePlotTypes) {
             const plotConfig: TemplatePlotConfig = makeTrackPlot({
-                color: colorSet.current.getNextColor(),
-                type: plotType as TemplatePlotTypes,
+                color: colorSet.getNextColor(),
+                type: plotType,
             });
 
             onUpdatePlots([...props.plots, plotConfig]);
@@ -167,7 +167,7 @@ function SortablePlotItem(props: SortablePlotItemProps) {
                 <Dropdown
                     value={props.plot.type}
                     options={PLOT_TYPE_OPTIONS}
-                    onChange={(v) => handlePlotChange({ type: v as TemplatePlotTypes })}
+                    onChange={(v) => handlePlotChange({ type: v })}
                 />
             </div>
 
@@ -191,7 +191,7 @@ function sortStatLogsToTop(o: WellboreLogCurveHeader_api) {
 }
 
 // The select value string needs a specific pattern
-type CurveDropdownOption = { value: TemplatePlotConfig["_logAndName"] } & DropdownOption;
+type CurveDropdownOption = DropdownOption<TemplatePlotConfig["_logAndName"]>;
 
 function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): CurveDropdownOption[] {
     return _.chain(curveHeaders)

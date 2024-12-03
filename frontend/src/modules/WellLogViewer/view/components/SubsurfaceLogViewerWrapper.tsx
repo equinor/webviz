@@ -78,7 +78,7 @@ function useSubscribeToGlobalHoverMdChange(
     );
 }
 
-function useCreateGlobalHoverMdBroadcast(
+function useCreateGlobalHoverMdBroadcastFunc(
     workbenchServices: WorkbenchServices,
     instanceId: string,
     wellboreUuid: string
@@ -124,7 +124,7 @@ function useSubscribeToGlobalVerticalScaleChange(
     }, [workbenchServices, wellLogController, verticalSyncActive, syncableSettingKeys, instanceId]);
 }
 
-function useCreateGlobalVerticalScaleBroadcast(
+function useCreateGlobalVerticalScaleBroadcastFunc(
     workbenchServices: WorkbenchServices,
     syncableSettingKeys: SyncSettingKey[],
     instanceId: string
@@ -181,7 +181,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
 
     // Set up global hover md synchronization
     useSubscribeToGlobalHoverMdChange(props.moduleProps.workbenchServices, wellLogController, instanceId, wellboreUuid);
-    const broadcastGlobalMdChange = useCreateGlobalHoverMdBroadcast(
+    const broadcastGlobalMdChange = useCreateGlobalHoverMdBroadcastFunc(
         props.moduleProps.workbenchServices,
         instanceId,
         wellboreUuid
@@ -194,7 +194,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         syncableSettingKeys,
         instanceId
     );
-    const broadcastVerticalScaleChange = useCreateGlobalVerticalScaleBroadcast(
+    const broadcastVerticalScaleChange = useCreateGlobalVerticalScaleBroadcastFunc(
         props.moduleProps.workbenchServices,
         syncableSettingKeys,
         instanceId

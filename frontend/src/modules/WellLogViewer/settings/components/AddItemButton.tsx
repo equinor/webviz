@@ -6,21 +6,21 @@ import { SelectOption } from "@lib/components/Select";
 import { Button, Dropdown, MenuButton } from "@mui/base";
 import { Add, ArrowDropDown } from "@mui/icons-material";
 
-export type AddItemButtonProps = {
+export type AddItemButtonProps<TValue> = {
     buttonText: string;
-    options?: SelectOption[];
+    options?: SelectOption<TValue>[];
     onAddClicked?: () => void;
-    onOptionClicked?: (value: SelectOption["value"]) => void;
+    onOptionClicked?: (value: TValue) => void;
 };
 
 /**
  * Generic add-button, for the top of  sortable-lists. Uses a dropdown if there's more than 1 available options
  */
-export function AddItemButton(props: AddItemButtonProps): React.ReactNode {
+export function AddItemButton<TValue>(props: AddItemButtonProps<TValue>): React.ReactNode {
     const { onOptionClicked, onAddClicked } = props;
 
     const handleOptionClicked = React.useCallback(
-        function handleOptionClicked(item: SelectOption) {
+        function handleOptionClicked(item: SelectOption<TValue>) {
             if (onOptionClicked) onOptionClicked(item.value);
         },
         [onOptionClicked]
@@ -42,7 +42,11 @@ export function AddItemButton(props: AddItemButtonProps): React.ReactNode {
 
             <Menu className="text-sm p-1 max-h-96 overflow-auto" anchorOrigin="bottom-end">
                 {props.options.map((entry) => (
-                    <MenuItem key={entry.value} className="text-sm p-0.5" onClick={() => handleOptionClicked(entry)}>
+                    <MenuItem
+                        key={String(entry.value)}
+                        className="text-sm p-0.5"
+                        onClick={() => handleOptionClicked(entry)}
+                    >
                         {entry.label}
                     </MenuItem>
                 ))}
