@@ -65,7 +65,7 @@ class WellboreLogCurveData(BaseModel):
     unit: str
     curve_unit_desc: str | None
 
-    # This field has weird casing. This is just how SSDL has decided to return this object, so we leave it as is to make model validation 
+    # This field has weird casing. This is just how SSDL has decided to return this object, so we leave it as is to make model validation
     DataPoints: list[list[float | None]]
 
     @property
