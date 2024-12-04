@@ -51,10 +51,12 @@ class WellAccess:
         endpoint = f"WellLog/{wellbore_uuid}"
         ssdl_data = await ssdl_get_request(access_token=self._ssdl_token, endpoint=endpoint, params=None)
         try:
-            result = [types.WellboreLogCurveHeader.model_validate(log_curve) for log_curve in ssdl_data]
+            # This endpoint is a bit weird, and MIGHT return duplicates which, as far as I can tell, are the exact same. Using a set to drop duplicates. See data model for comparator
+            result_set = {types.WellboreLogCurveHeader.model_validate(log_curve) for log_curve in ssdl_data}
+
         except ValidationError as error:
             raise InvalidDataError(f"Invalid log curve headers for wellbore {wellbore_uuid}", Service.SSDL) from error
-        return result
+        return list(result_set)
 
     async def get_log_curve_headers_for_field(self, field_uuid: str) -> List[types.WellboreLogCurveHeader]:
         endpoint = f"WellLog/field/{field_uuid}"

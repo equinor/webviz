@@ -1,3 +1,4 @@
+from typing import Any
 from pydantic import BaseModel
 
 
@@ -34,18 +35,40 @@ class WellborePerforation(BaseModel):
 
 
 class WellboreLogCurveHeader(BaseModel):
-    log_name: str
+    log_name: str | None
     curve_name: str
-    curve_unit: str
+    curve_unit: str | None
+
+    # Defining a hash-function to facilitate usage in Sets
+    def __hash__(self) -> int:
+        # No globally unique field, but curve-name should be unique (per wellbore)
+        return hash(self.curve_name + (self.log_name or "N/A"))
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, WellboreLogCurveHeader):
+            # delegate to the other item in the comparison
+            return NotImplemented
+
+        return (self.curve_name, self.log_name) == (other.curve_name, other.log_name)
 
 
 class WellboreLogCurveData(BaseModel):
+    name: str
     index_min: float
     index_max: float
     min_curve_value: float
     max_curve_value: float
-    DataPoints: list[list[float | None]]
-    curve_alias: str
-    curve_description: str
+    curve_alias: str | None
+    curve_description: str | None
     index_unit: str
-    no_data_value: float
+    no_data_value: float | None
+    unit: str
+    curve_unit_desc: str | None
+
+    # This field has weird casing. This is just how SSDL has decided to return this object, so we leave it as is to make model validation
+    DataPoints: list[list[float | None]]
+
+    @property
+    def data_points(self) -> list[list[float | None]]:
+        # Utility property to  "DataPoint" with proper casing
+        return self.DataPoints
