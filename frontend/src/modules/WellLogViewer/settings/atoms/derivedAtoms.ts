@@ -1,4 +1,5 @@
 import { WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
+import { transformFormationData } from "@equinor/esv-intersection";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
@@ -16,8 +17,14 @@ import { logViewerTrackConfigs } from "./persistedAtoms";
 import {
     drilledWellboreHeadersQueryAtom,
     wellLogCurveHeadersQueryAtom,
-    wellborePicksAndStratigraphyQueryAtom,
+    wellborePicksQueryAtom,
+    wellboreStratigraphicUnitsQueryAtom,
 } from "./queryAtoms";
+
+/**
+ * Exposing the return type of esv-intersection's transformFormationData, since they don't export that anywhere
+ */
+export type TransformFormationDataResult = ReturnType<typeof transformFormationData>;
 
 export const firstEnsembleInSelectedFieldAtom = atom((get) => {
     const selectedFieldId = get(userSelectedFieldIdentifierAtom);
@@ -47,8 +54,22 @@ export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) 
     return availableWellboreHeaders.find((wh) => wh.wellboreUuid === selectedWellboreId) ?? availableWellboreHeaders[0];
 });
 
+export const availableWellPicksAtom = atom<TransformFormationDataResult>((get) => {
+    const wellborePicks = get(wellborePicksQueryAtom).data;
+    const wellboreStratUnits = get(wellboreStratigraphicUnitsQueryAtom).data;
+
+    if (!wellborePicks || !wellboreStratUnits) return { nonUnitPicks: [], unitPicks: [] };
+
+    const transformedPickData = transformFormationData(wellborePicks, wellboreStratUnits as any);
+
+    return {
+        nonUnitPicks: _.uniqBy(transformedPickData.nonUnitPicks, "identifier"),
+        unitPicks: _.uniqBy(transformedPickData.unitPicks, "name"),
+    };
+});
+
 export const selectedWellborePicksAtom = atom<WellPicksLayerData>((get) => {
-    const wellborePicks = get(wellborePicksAndStratigraphyQueryAtom)?.data;
+    const wellborePicks = get(availableWellPicksAtom);
     const selectedUnitPicks = get(userSelectedUnitWellpicksAtom);
     const selectedNonUnitPicks = get(userSelectedNonUnitWellpicksAtom);
 

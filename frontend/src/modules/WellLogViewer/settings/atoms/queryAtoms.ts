@@ -1,10 +1,6 @@
-import { WellborePicksAndStratigraphicUnits_api } from "@api";
-import { transformFormationData } from "@equinor/esv-intersection";
 import { apiService } from "@framework/ApiService";
-import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 
 import { atomWithQuery } from "jotai-tanstack-query";
-import _ from "lodash";
 
 import {
     firstEnsembleInSelectedFieldAtom,
@@ -46,25 +42,28 @@ export const wellLogCurveHeadersQueryAtom = atomWithQuery((get) => {
     };
 });
 
-export const wellborePicksAndStratigraphyQueryAtom = atomWithQuery((get) => {
-    const selectedEnsemble = get(firstEnsembleInSelectedFieldAtom);
-
-    const wellboreId = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
-    const caseId = selectedEnsemble?.getIdent()?.getCaseUuid() ?? "";
+export const wellborePicksQueryAtom = atomWithQuery((get) => {
+    const selectedFieldIdent = get(selectedFieldIdentifierAtom) ?? "";
+    const selectedWellboreUuid = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
 
     return {
-        queryKey: ["getWellborePicksAndStratigraphicUnits", wellboreId, caseId],
-        enabled: Boolean(caseId && wellboreId),
-        queryFn: () => apiService.well.getWellborePicksAndStratigraphicUnits(caseId, wellboreId),
-        select(data: WellborePicksAndStratigraphicUnits_api): WellPicksLayerData {
-            const transformedData = transformFormationData(data.wellbore_picks, data.stratigraphic_units as any);
+        queryKey: ["getWellborePicksForWellbore", selectedFieldIdent, selectedWellboreUuid],
+        enabled: Boolean(selectedFieldIdent && selectedWellboreUuid),
+        queryFn: () => apiService.well.getWellborePicksForWellbore(selectedFieldIdent, selectedWellboreUuid),
+        ...SHARED_QUERY_OPTS,
+    };
+});
 
-            // ! Sometimes the transformation data returns duplicate entries, filtering them out
-            return {
-                nonUnitPicks: _.uniqBy(transformedData.nonUnitPicks, "identifier"),
-                unitPicks: _.uniqBy(transformedData.unitPicks, "name"),
-            };
-        },
+export const wellboreStratigraphicUnitsQueryAtom = atomWithQuery((get) => {
+    // Stratigraphic column will be computed based on the case uuid
+    // TODO: Should make it a user-selected ensemble instead, at some point
+    const selectedEnsemble = get(firstEnsembleInSelectedFieldAtom);
+    const caseUuid = selectedEnsemble?.getCaseUuid() ?? "";
+
+    return {
+        queryKey: ["getWellborePicksForWellbore", caseUuid],
+        enabled: Boolean(caseUuid),
+        queryFn: () => apiService.surface.getStratigraphicUnits(caseUuid),
         ...SHARED_QUERY_OPTS,
     };
 });

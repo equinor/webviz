@@ -11,8 +11,9 @@ import { useAtom, useAtomValue } from "jotai";
 import { WellpickSelect } from "./WellpickSelect";
 
 import { userSelectedNonUnitWellpicksAtom, userSelectedUnitWellpicksAtom } from "../atoms/baseAtoms";
+import { availableWellPicksAtom } from "../atoms/derivedAtoms";
 import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "../atoms/persistedAtoms";
-import { wellborePicksAndStratigraphyQueryAtom } from "../atoms/queryAtoms";
+import { wellborePicksQueryAtom, wellboreStratigraphicUnitsQueryAtom } from "../atoms/queryAtoms";
 
 export type ViewerSettingsProps = {
     statusWriter: SettingsStatusWriter;
@@ -24,9 +25,8 @@ export function ViewerSettings(props: ViewerSettingsProps): React.ReactNode {
     const [padWithEmptyRows, setPadWithEmptyRows] = useAtom(padDataWithEmptyRowsAtom);
 
     // Wellpick selection
-    const borePicksAndStratQuery = useAtomValue(wellborePicksAndStratigraphyQueryAtom);
-    const availableWellPicks = borePicksAndStratQuery.data ?? { nonUnitPicks: [], unitPicks: [] };
-    const wellpickErrorMsg = usePropagateApiErrorToStatusWriter(borePicksAndStratQuery, props.statusWriter) ?? "";
+    const availableWellPicks = useAtomValue(availableWellPicksAtom);
+    const wellPickQueryState = useGetWellpickQueryState(props.statusWriter);
 
     const [selectedNonUnitPicks, setSelectedNonUnitPicks] = useAtom(userSelectedNonUnitWellpicksAtom);
     const [selectedUnitPicks, setSelectedUnitPicks] = useAtom(userSelectedUnitWellpicksAtom);
@@ -43,7 +43,7 @@ export function ViewerSettings(props: ViewerSettingsProps): React.ReactNode {
             </Label>
 
             <Label text="Well picks">
-                <PendingWrapper isPending={borePicksAndStratQuery.isPending} errorMessage={wellpickErrorMsg}>
+                <PendingWrapper isPending={wellPickQueryState.anyLoading} errorMessage={wellPickQueryState.errorMsg}>
                     <WellpickSelect
                         availableWellpicks={availableWellPicks}
                         selectedNonUnitPicks={selectedNonUnitPicks}
@@ -55,4 +55,18 @@ export function ViewerSettings(props: ViewerSettingsProps): React.ReactNode {
             </Label>
         </div>
     );
+}
+
+// As `availableWellpicks` is computed based on two separate queries, we need to check loading states and error messages of both.
+function useGetWellpickQueryState(statusWriter: SettingsStatusWriter): { anyLoading: boolean; errorMsg: string } {
+    const wellpicksQuery = useAtomValue(wellborePicksQueryAtom);
+    const stratUnitQuery = useAtomValue(wellboreStratigraphicUnitsQueryAtom);
+
+    const pickQueryError = usePropagateApiErrorToStatusWriter(wellpicksQuery, statusWriter);
+    const unitQueryError = usePropagateApiErrorToStatusWriter(stratUnitQuery, statusWriter);
+
+    return {
+        anyLoading: wellpicksQuery.isLoading || stratUnitQuery.isLoading,
+        errorMsg: pickQueryError ?? unitQueryError ?? "",
+    };
 }
