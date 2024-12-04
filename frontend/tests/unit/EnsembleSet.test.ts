@@ -5,17 +5,17 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { describe, expect, test } from "vitest";
 
-const ensembleArray = [
+const regularEnsembleArray = [
     new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", [], [], null, ""),
     new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", [], [], null, ""),
     new RegularEnsemble("DROGON", "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", [], [], null, ""),
 ];
 
 const deltaEnsembleArray = [
-    new DeltaEnsemble(ensembleArray[0], ensembleArray[1], "", null),
-    new DeltaEnsemble(ensembleArray[0], ensembleArray[2], "", null),
+    new DeltaEnsemble(regularEnsembleArray[0], regularEnsembleArray[1], "", null),
+    new DeltaEnsemble(regularEnsembleArray[0], regularEnsembleArray[2], "", null),
 ];
-const nonExistingDeltaEnsemble = new DeltaEnsemble(ensembleArray[1], ensembleArray[2], "", null);
+const nonExistingDeltaEnsemble = new DeltaEnsemble(regularEnsembleArray[1], regularEnsembleArray[2], "", null);
 
 describe("EnsembleSet tests", () => {
     test("access empty EnsembleSet", () => {
@@ -32,7 +32,7 @@ describe("EnsembleSet tests", () => {
     });
 
     test("has any regular ensembles", () => {
-        const ensSet = new EnsembleSet(ensembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray);
         expect(ensSet.hasAnyRegularEnsembles()).toBe(true);
         expect(ensSet.hasAnyDeltaEnsembles()).toBe(false);
         expect(ensSet.hasAnyEnsembles()).toBe(true);
@@ -46,17 +46,17 @@ describe("EnsembleSet tests", () => {
     });
 
     test("has any regular ensembles or delta ensembles", () => {
-        const ensSet = new EnsembleSet(ensembleArray, deltaEnsembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray, deltaEnsembleArray);
         expect(ensSet.hasAnyRegularEnsembles()).toBe(true);
         expect(ensSet.hasAnyDeltaEnsembles()).toBe(true);
         expect(ensSet.hasAnyEnsembles()).toBe(true);
     });
 
     test("get regular ensembles", () => {
-        const ensSet = new EnsembleSet(ensembleArray);
-        expect(ensSet.getRegularEnsembleArray()).toEqual(ensembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray);
+        expect(ensSet.getRegularEnsembleArray()).toEqual(regularEnsembleArray);
         expect(ensSet.getDeltaEnsembleArray().length).toBe(0);
-        expect(ensSet.getEnsembleArray()).toEqual(ensembleArray);
+        expect(ensSet.getEnsembleArray()).toEqual(regularEnsembleArray);
     });
 
     test("get delta ensembles", () => {
@@ -67,14 +67,14 @@ describe("EnsembleSet tests", () => {
     });
 
     test("get regular ensembles and delta ensembles", () => {
-        const ensSet = new EnsembleSet(ensembleArray, deltaEnsembleArray);
-        expect(ensSet.getRegularEnsembleArray()).toEqual(ensembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray, deltaEnsembleArray);
+        expect(ensSet.getRegularEnsembleArray()).toEqual(regularEnsembleArray);
         expect(ensSet.getDeltaEnsembleArray()).toEqual(deltaEnsembleArray);
-        expect(ensSet.getEnsembleArray()).toEqual([...ensembleArray, ...deltaEnsembleArray]);
+        expect(ensSet.getEnsembleArray()).toEqual([...regularEnsembleArray, ...deltaEnsembleArray]);
     });
 
     test("has by RegularEnsembleIdent", () => {
-        const ensSet = new EnsembleSet(ensembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray);
         expect(ensSet.hasAnyRegularEnsembles()).toBe(true);
         expect(ensSet.hasAnyDeltaEnsembles()).toBe(false);
         expect(ensSet.hasAnyEnsembles()).toBe(true);
@@ -88,7 +88,7 @@ describe("EnsembleSet tests", () => {
     });
 
     test("has by DeltaEnsembleIdent", () => {
-        const ensSet = new EnsembleSet(ensembleArray, deltaEnsembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray, deltaEnsembleArray);
         expect(ensSet.hasAnyRegularEnsembles()).toBe(true);
         expect(ensSet.hasAnyDeltaEnsembles()).toBe(true);
         expect(ensSet.hasAnyEnsembles()).toBe(true);
@@ -98,7 +98,7 @@ describe("EnsembleSet tests", () => {
     });
 
     test("find by RegularEnsembleIdent", () => {
-        const ensSet = new EnsembleSet(ensembleArray, deltaEnsembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray, deltaEnsembleArray);
         expect(ensSet.hasAnyRegularEnsembles()).toBe(true);
         expect(
             ensSet.findEnsemble(new RegularEnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "ens1"))
@@ -112,7 +112,7 @@ describe("EnsembleSet tests", () => {
     });
 
     test("find by EnsembleIdentString", () => {
-        const ensSet = new EnsembleSet(ensembleArray, deltaEnsembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray, deltaEnsembleArray);
         expect(ensSet.hasAnyRegularEnsembles()).toBe(true);
         expect(ensSet.findEnsembleByIdentString("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa::ens1")).toBeInstanceOf(
             RegularEnsemble
@@ -122,7 +122,7 @@ describe("EnsembleSet tests", () => {
     });
 
     test("find by DeltaEnsembleIdent", () => {
-        const ensSet = new EnsembleSet(ensembleArray, deltaEnsembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray, deltaEnsembleArray);
         expect(ensSet.hasAnyRegularEnsembles()).toBe(true);
         expect(ensSet.findEnsemble(deltaEnsembleArray[0].getIdent())).toBeInstanceOf(DeltaEnsemble);
         expect(ensSet.findEnsemble(deltaEnsembleArray[1].getIdent())).toBeInstanceOf(DeltaEnsemble);
@@ -130,7 +130,7 @@ describe("EnsembleSet tests", () => {
     });
 
     test("find by DeltaEnsembleIdentString", () => {
-        const ensSet = new EnsembleSet(ensembleArray, deltaEnsembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray, deltaEnsembleArray);
         expect(ensSet.hasAnyDeltaEnsembles()).toBe(true);
         const firstString = deltaEnsembleArray[0].getIdent().toString();
         const secondString = deltaEnsembleArray[1].getIdent().toString();
@@ -141,7 +141,7 @@ describe("EnsembleSet tests", () => {
     });
 
     test("find by EnsembleIdentString containing invalid UUID", () => {
-        const ensSet = new EnsembleSet(ensembleArray, deltaEnsembleArray);
+        const ensSet = new EnsembleSet(regularEnsembleArray, deltaEnsembleArray);
         expect(ensSet.findEnsembleByIdentString("")).toBeNull();
         expect(ensSet.findEnsembleByIdentString("")).toBeNull();
         expect(ensSet.findEnsembleByIdentString("QQQQQQQQ-aaaa-4444-aaaa-aaaaaaaaaaaa::ens99")).toBeNull();
