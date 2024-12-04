@@ -1,4 +1,4 @@
-import React, { useId } from "react";
+import React from "react";
 
 import { Layer, PickingInfo } from "@deck.gl/core";
 import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
