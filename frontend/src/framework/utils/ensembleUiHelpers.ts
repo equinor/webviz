@@ -52,12 +52,18 @@ export function fixupEnsembleIdent(
         return currIdent;
     }
 
-    // If requesting delta ensemble, or no regular ensembles are available
-    if (currIdent instanceof DeltaEnsembleIdent || !ensembleSet.hasAnyRegularEnsembles()) {
-        return ensembleSet.getDeltaEnsembleArray()[0].getIdent();
+    const regularEnsembles = ensembleSet.getRegularEnsembleArray();
+    const deltaEnsembles = ensembleSet.getDeltaEnsembleArray();
+
+    if (currIdent instanceof RegularEnsembleIdent && regularEnsembles.length > 0) {
+        return regularEnsembles[0].getIdent();
     }
 
-    return ensembleSet.getRegularEnsembleArray()[0].getIdent();
+    if (currIdent instanceof DeltaEnsembleIdent && deltaEnsembles.length > 0) {
+        return deltaEnsembles[0].getIdent();
+    }
+
+    return regularEnsembles.length > 0 ? regularEnsembles[0].getIdent() : deltaEnsembles[0].getIdent();
 }
 
 /**
