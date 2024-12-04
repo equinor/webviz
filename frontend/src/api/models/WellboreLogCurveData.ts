@@ -3,14 +3,17 @@
 /* tslint:disable */
 /* eslint-disable */
 export type WellboreLogCurveData = {
+    name: string;
     indexMin: number;
     indexMax: number;
     minCurveValue: number;
     maxCurveValue: number;
-    dataPoints: Array<Array<(number | null)>>;
-    curveAlias: string;
-    curveDescription: string;
+    curveAlias: (string | null);
+    curveDescription: (string | null);
     indexUnit: string;
-    noDataValue: number;
+    noDataValue: (number | null);
+    unit: string;
+    curveUnitDesc: (string | null);
+    dataPoints: Array<Array<(number | null)>>;
 };
 
