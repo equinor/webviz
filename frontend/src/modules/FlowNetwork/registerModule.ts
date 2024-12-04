@@ -7,7 +7,7 @@ import { preview } from "./preview";
 
 export const MODULE_NAME = "FlowNetwork";
 
-const description = "Visualizes dated group trees over time.";
+const description = "Visualizes dated flow networks over time.";
 
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,

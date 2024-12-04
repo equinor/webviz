@@ -8,7 +8,7 @@ import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom } from "./deri
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
-export const realizationGroupTreeQueryAtom = atomWithQuery((get) => {
+export const realizationFlowNetworkQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
     const selectedRealizationNumber = get(selectedRealizationNumberAtom);
     const selectedResamplingFrequency = get(selectedResamplingFrequencyAtom);
@@ -16,7 +16,7 @@ export const realizationGroupTreeQueryAtom = atomWithQuery((get) => {
 
     const query = {
         queryKey: [
-            "getGroupTreeData",
+            "getRealizationFlowNetwork",
             selectedEnsembleIdent?.getCaseUuid(),
             selectedEnsembleIdent?.getEnsembleName(),
             selectedRealizationNumber,
@@ -24,7 +24,7 @@ export const realizationGroupTreeQueryAtom = atomWithQuery((get) => {
             Array.from(selectedNodeTypes),
         ],
         queryFn: () =>
-            apiService.groupTree.getRealizationGroupTreeData(
+            apiService.flowNetwork.getRealizationFlowNetwork(
                 selectedEnsembleIdent?.getCaseUuid() ?? "",
                 selectedEnsembleIdent?.getEnsembleName() ?? "",
                 selectedRealizationNumber ?? 0,
