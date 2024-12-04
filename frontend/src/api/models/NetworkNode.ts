@@ -2,15 +2,15 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TreeNode = {
-    node_type: TreeNode.node_type;
+export type NetworkNode = {
+    node_type: NetworkNode.node_type;
     node_label: string;
     edge_label: string;
     node_data: Record<string, Array<number>>;
     edge_data: Record<string, Array<number>>;
-    children: Array<TreeNode>;
+    children: Array<NetworkNode>;
 };
-export namespace TreeNode {
+export namespace NetworkNode {
     export enum node_type {
         GROUP = 'Group',
         WELL = 'Well',

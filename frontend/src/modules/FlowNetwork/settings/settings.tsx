@@ -30,7 +30,7 @@ import {
 import {
     availableDateTimesAtom,
     edgeMetadataListAtom,
-    groupTreeQueryResultAtom,
+    flowNetworkQueryResultAtom,
     nodeMetadataListAtom,
     selectedDateTimeAtom,
     selectedEdgeKeyAtom,
@@ -68,9 +68,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedDateTime = useAtomValue(selectedDateTimeAtom);
     const setUserSelectedDateTime = useSetAtom(userSelectedDateTimeAtom);
 
-    const groupTreeQueryResult = useAtomValue(groupTreeQueryResultAtom);
+    const FlowNetworkQueryResult = useAtomValue(flowNetworkQueryResultAtom);
 
-    usePropagateApiErrorToStatusWriter(groupTreeQueryResult, statusWriter);
+    usePropagateApiErrorToStatusWriter(FlowNetworkQueryResult, statusWriter);
 
     const setValidRealizationNumbersAtom = useSetAtom(validRealizationNumbersAtom);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
@@ -184,9 +184,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Edge, node and date selections">
                 <QueryStateWrapper
-                    queryResult={groupTreeQueryResult}
+                    queryResult={FlowNetworkQueryResult}
                     loadingComponent={<CircularProgress />}
-                    errorComponent={"Could not load group tree data"}
+                    errorComponent={"Could not load flow network data"}
                 >
                     <div className="flex flex-col gap-2">
                         <Label text="Edge options">
