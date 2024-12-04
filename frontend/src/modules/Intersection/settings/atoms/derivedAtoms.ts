@@ -1,4 +1,3 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
@@ -9,7 +8,6 @@ import { queryClientAtom } from "jotai-tanstack-query";
 
 import {
     userSelectedCustomIntersectionPolylineIdAtom,
-    userSelectedEnsembleIdentAtom,
     userSelectedFieldIdentifierAtom,
     userSelectedWellboreUuidAtom,
 } from "./baseAtoms";
@@ -58,17 +56,6 @@ export const selectedCustomIntersectionPolylineIdAtom = atom((get) => {
     }
 
     return userSelectedCustomIntersectionPolylineId;
-});
-
-export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
-    const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
-
-    if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
-        return ensembleSet.getEnsembleArr()[0]?.getIdent() || null;
-    }
-
-    return userSelectedEnsembleIdent;
 });
 
 export const selectedWellboreAtom = atom((get) => {

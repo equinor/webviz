@@ -12,6 +12,7 @@ const CACHE_TIME = 60 * 1000;
 
 export type WellpicksLayerSettings = {
     wellboreUuid: string | null;
+    fieldIdentifier: string | null;
     ensembleIdent: EnsembleIdent | null;
     filterPicks: boolean;
     selectedUnitPicks: string[];
@@ -23,6 +24,7 @@ export type WellPicksLayerData = ReturnType<typeof transformFormationData>;
 export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksLayerData> {
     constructor(name: string) {
         const defaultSettings = {
+            fieldIdentifier: null,
             ensembleIdent: null,
             wellboreUuid: null,
             filterPicks: false,
@@ -33,7 +35,11 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
     }
 
     protected areSettingsValid(): boolean {
-        return this._settings.ensembleIdent !== null && this._settings.wellboreUuid !== null;
+        return (
+            this._settings.fieldIdentifier !== null &&
+            this._settings.ensembleIdent !== null &&
+            this._settings.wellboreUuid !== null
+        );
     }
 
     protected doSettingsChangesRequireDataRefetch(
@@ -42,6 +48,7 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
     ): boolean {
         return (
             prevSettings.wellboreUuid !== newSettings.wellboreUuid ||
+            !isEqual(prevSettings.fieldIdentifier, newSettings.fieldIdentifier) ||
             !isEqual(prevSettings.ensembleIdent, newSettings.ensembleIdent)
         );
     }
@@ -67,23 +74,32 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
     protected async fetchData(queryClient: QueryClient): Promise<WellPicksLayerData> {
         const queryKey = [
             "getWellborePicksAndStratigraphicUnits",
-            this._settings.ensembleIdent?.getCaseUuid(),
+            this._settings.fieldIdentifier,
             this._settings.wellboreUuid,
         ];
         this.registerQueryKey(queryKey);
 
-        return queryClient
-            .fetchQuery({
-                queryKey,
-                queryFn: () =>
-                    apiService.well.getWellborePicksAndStratigraphicUnits(
-                        this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                        this._settings.wellboreUuid ?? ""
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
-            })
-            .then((data) => transformFormationData(data.wellbore_picks, data.stratigraphic_units as any));
+        const wellborePicksPromise = queryClient.fetchQuery({
+            queryKey,
+            queryFn: () =>
+                apiService.well.getWellborePicksForWellbore(
+                    this._settings.fieldIdentifier ?? "",
+                    this._settings.wellboreUuid ?? ""
+                ),
+            staleTime: STALE_TIME,
+            gcTime: CACHE_TIME,
+        });
+
+        const stratigraphicUnitsPromise = queryClient.fetchQuery({
+            queryKey: ["getStratigraphicUnits", this._settings.ensembleIdent?.getCaseUuid()],
+            queryFn: () => apiService.surface.getStratigraphicUnits(this._settings.ensembleIdent?.getCaseUuid() ?? ""),
+            staleTime: STALE_TIME,
+            gcTime: CACHE_TIME,
+        });
+
+        return Promise.all([wellborePicksPromise, stratigraphicUnitsPromise]).then(
+            ([wellborePicks, stratigraphicUnits]) => transformFormationData(wellborePicks, stratigraphicUnits as any)
+        );
     }
 }
 
