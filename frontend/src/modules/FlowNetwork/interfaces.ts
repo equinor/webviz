@@ -1,8 +1,8 @@
+import { DatedFlowNetwork_api, FlowNetworkMetadata_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { DatedTree, EdgeMetadata, NodeMetadata } from "@webviz/group-tree-plot";
 
 import {
-    datedTreesAtom,
+    datedNetworksAtom,
     edgeMetadataListAtom,
     nodeMetadataListAtom,
     queryStatusAtom,
@@ -13,9 +13,9 @@ import {
 import { QueryStatus } from "./types";
 
 type SettingsToViewInterface = {
-    edgeMetadataList: EdgeMetadata[];
-    nodeMetadataList: NodeMetadata[];
-    datedTrees: DatedTree[];
+    edgeMetadataList: FlowNetworkMetadata_api[];
+    nodeMetadataList: FlowNetworkMetadata_api[];
+    datedNetworks: DatedFlowNetwork_api[];
     selectedEdgeKey: string; // | null;
     selectedNodeKey: string; // | null;
     selectedDateTime: string; // | null;
@@ -33,8 +33,8 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     nodeMetadataList: (get) => {
         return get(nodeMetadataListAtom);
     },
-    datedTrees: (get) => {
-        return get(datedTreesAtom);
+    datedNetworks: (get) => {
+        return get(datedNetworksAtom);
     },
     selectedEdgeKey: (get) => {
         return get(selectedEdgeKeyAtom) ?? "";

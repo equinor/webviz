@@ -1,5 +1,4 @@
 from enum import Enum, StrEnum
-from typing import List
 
 from pydantic import BaseModel, ConfigDict
 from primary.services.flow_network_assembler.flow_network_types import DatedFlowNetwork, FlowNetworkMetadata
@@ -32,6 +31,6 @@ class NodeType(StrEnum):
 class FlowNetworkData(BaseModel):
     model_config = ConfigDict(revalidate_instances="always")
 
-    edge_metadata_list: List[FlowNetworkMetadata]
-    node_metadata_list: List[FlowNetworkMetadata]
-    dated_trees: List[DatedFlowNetwork]
+    edgeMetadataList: list[FlowNetworkMetadata]
+    nodeMetadataList: list[FlowNetworkMetadata]
+    datedNetworks: list[DatedFlowNetwork]

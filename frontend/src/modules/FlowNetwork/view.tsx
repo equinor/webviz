@@ -1,8 +1,10 @@
+import React from "react";
+
 import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
-import { GroupTreePlot } from "@webviz/group-tree-plot";
+import { DatedTree, EdgeMetadata, GroupTreePlot, NodeMetadata } from "@webviz/group-tree-plot";
 
 import { Interfaces } from "./interfaces";
 import { QueryStatus } from "./types";
@@ -10,7 +12,7 @@ import { QueryStatus } from "./types";
 export function View({ viewContext }: ModuleViewProps<Interfaces>) {
     const edgeMetadataList = viewContext.useSettingsToViewInterfaceValue("edgeMetadataList");
     const nodeMetadataList = viewContext.useSettingsToViewInterfaceValue("nodeMetadataList");
-    const datedTrees = viewContext.useSettingsToViewInterfaceValue("datedTrees");
+    const datedNetworks = viewContext.useSettingsToViewInterfaceValue("datedNetworks");
     const selectedEdgeKey = viewContext.useSettingsToViewInterfaceValue("selectedEdgeKey");
     const selectedNodeKey = viewContext.useSettingsToViewInterfaceValue("selectedNodeKey");
     const selectedDateTime = viewContext.useSettingsToViewInterfaceValue("selectedDateTime");
@@ -18,6 +20,24 @@ export function View({ viewContext }: ModuleViewProps<Interfaces>) {
 
     const statusWriter = useViewStatusWriter(viewContext);
     statusWriter.setLoading(queryStatus === QueryStatus.Loading);
+
+    // Convert datedNetworks to datedTrees
+    const datedTrees: DatedTree[] = React.useMemo(() => {
+        return datedNetworks.map((datedNetwork) => {
+            return {
+                dates: datedNetwork.dates,
+                tree: datedNetwork.network,
+            };
+        });
+    }, [datedNetworks]);
+
+    // Convert metadata lists to front-end format
+    const convertedEdgeMetadataList: EdgeMetadata[] = React.useMemo(() => {
+        return edgeMetadataList.map((elm) => ({ key: elm.key, label: elm.label }));
+    }, [edgeMetadataList]);
+    const convertedNodeMetadataList: NodeMetadata[] = React.useMemo(() => {
+        return nodeMetadataList.map((elm) => ({ key: elm.key, label: elm.label }));
+    }, [nodeMetadataList]);
 
     return (
         <div className="w-full h-full">
@@ -30,8 +50,8 @@ export function View({ viewContext }: ModuleViewProps<Interfaces>) {
             ) : (
                 <GroupTreePlot
                     id="test_id"
-                    edgeMetadataList={edgeMetadataList}
-                    nodeMetadataList={nodeMetadataList}
+                    edgeMetadataList={convertedEdgeMetadataList}
+                    nodeMetadataList={convertedNodeMetadataList}
                     datedTrees={datedTrees}
                     selectedEdgeKey={selectedEdgeKey}
                     selectedNodeKey={selectedNodeKey}

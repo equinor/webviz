@@ -1,7 +1,7 @@
+import { DatedFlowNetwork_api, FlowNetworkMetadata_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
-import { DatedTree, EdgeMetadata, NodeMetadata } from "@webviz/group-tree-plot";
 
 import { atom } from "jotai";
 
@@ -66,8 +66,8 @@ export const availableDateTimesAtom = atom<string[]>((get) => {
     if (!flowNetworkQueryResult.data) return [];
 
     const dateTimes = new Set<string>();
-    flowNetworkQueryResult.data.dated_trees.forEach((datedTree) => {
-        datedTree.dates.forEach((date) => {
+    flowNetworkQueryResult.data.datedNetworks.forEach((datedNetwork) => {
+        datedNetwork.dates.forEach((date) => {
             dateTimes.add(date);
         });
     });
@@ -89,7 +89,7 @@ export const selectedDateTimeAtom = atom<string | null>((get) => {
     return userSelectedDateTime;
 });
 
-export const edgeMetadataListAtom = atom<EdgeMetadata[]>((get) => {
+export const edgeMetadataListAtom = atom<FlowNetworkMetadata_api[]>((get) => {
     const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
     const data = flowNetworkQueryResult.data;
@@ -97,7 +97,7 @@ export const edgeMetadataListAtom = atom<EdgeMetadata[]>((get) => {
         return [];
     }
 
-    return data.edge_metadata_list.map((elm) => ({ key: elm.key, label: elm.label }));
+    return data.edgeMetadataList;
 });
 
 export const selectedEdgeKeyAtom = atom<string | null>((get) => {
@@ -115,7 +115,7 @@ export const selectedEdgeKeyAtom = atom<string | null>((get) => {
     return userSelectedEdgeKey;
 });
 
-export const nodeMetadataListAtom = atom<NodeMetadata[]>((get) => {
+export const nodeMetadataListAtom = atom<FlowNetworkMetadata_api[]>((get) => {
     const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
     const data = flowNetworkQueryResult.data;
@@ -123,7 +123,7 @@ export const nodeMetadataListAtom = atom<NodeMetadata[]>((get) => {
         return [];
     }
 
-    return data.node_metadata_list.map((elm) => ({ key: elm.key, label: elm.label }));
+    return data.nodeMetadataList;
 });
 
 export const selectedNodeKeyAtom = atom<string | null>((get) => {
@@ -141,7 +141,7 @@ export const selectedNodeKeyAtom = atom<string | null>((get) => {
     return userSelectedNodeKey;
 });
 
-export const datedTreesAtom = atom<DatedTree[]>((get) => {
+export const datedNetworksAtom = atom<DatedFlowNetwork_api[]>((get) => {
     const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
     const data = flowNetworkQueryResult.data;
@@ -149,5 +149,5 @@ export const datedTreesAtom = atom<DatedTree[]>((get) => {
         return [];
     }
 
-    return data.dated_trees;
+    return data.datedNetworks;
 });

@@ -79,6 +79,19 @@ class NodeSummaryVectorsInfo:
 
 
 @dataclass
+class CategorizedNodeSummaryVectors:
+    """
+    Categorized summary vectors for a node in the network.
+
+    - all_summary_vectors - All summary vectors present in the node
+    - edge_summary_vectors - Summary vectors used for edges in the node
+    """
+
+    all_summary_vectors: set[str]  # All summary vectors for node
+    edge_summary_vectors: set[str]  # All summary vectors for node used for edges
+
+
+@dataclass
 class FlowNetworkSummaryVectorsInfo:
     """
     Dataclass to hold summary vectors info for the flow network.
@@ -107,7 +120,7 @@ class StaticNodeWorkingData:
     node_summary_vectors_info: dict[str, SummaryVectorInfo]
 
 
-# ! Explicitly using a pydantict model to avoid unneccessary re-computations when converting from service results to API schema-payload
+# ! Explicitly using a pydantict model to avoid unnecessary re-computations when converting from service results to API schema-payload
 class NetworkNode(BaseModel):
     node_type: Literal["Group", "Well"]
     node_label: str
@@ -120,8 +133,7 @@ class NetworkNode(BaseModel):
 @dataclass
 class DatedFlowNetwork:
     dates: list[str]
-    # NOTE: This should likely be changed to "network", but that would require rewrites all the way to the subsurface component.
-    tree: NetworkNode
+    network: NetworkNode
 
 
 @dataclass

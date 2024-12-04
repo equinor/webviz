@@ -2,6 +2,7 @@ import logging
 
 from primary.services.sumo_access.group_tree_types import TreeType
 from .flow_network_types import (
+    CategorizedNodeSummaryVectors,
     NodeClassification,
     SummaryVectorInfo,
     NetworkClassification,
@@ -139,21 +140,21 @@ def get_all_vectors_of_interest_for_tree(group_tree_wells: list[str], group_tree
     return all_vectors
 
 
-def create_sumvec_from_datatype_nodename_and_keyword(
+def create_sumvec_from_datatype_node_name_and_keyword(
     datatype: DataType,
-    nodename: str,
+    node_name: str,
     keyword: str,
 ) -> str:
     """Returns the correct summary vector for a given
     * datatype: oilrate, gasrate etc
-    * nodename: FIELD, well name or group name in Eclipse network
+    * node_name: FIELD, well name or group name in Eclipse network
     * keyword: GRUPTREE, BRANPROP or WELSPECS
     """
 
-    if nodename == "FIELD":
+    if node_name == "FIELD":
         datatype_ecl = FIELD_DATATYPE_VECTOR_MAP[datatype]
         if datatype == "pressure":
-            return f"{datatype_ecl}:{nodename}"
+            return f"{datatype_ecl}:{node_name}"
         return datatype_ecl
     try:
         if keyword == "WELSPECS":
@@ -163,10 +164,10 @@ def create_sumvec_from_datatype_nodename_and_keyword(
     except KeyError as exc:
         error = (
             f"Summary vector not found for eclipse keyword: {keyword}, "
-            f"data type: {datatype.value} and node name: {nodename}. "
+            f"data type: {datatype.value} and node name: {node_name}. "
         )
         raise KeyError(error) from exc
-    return f"{datatype_ecl}:{nodename}"
+    return f"{datatype_ecl}:{node_name}"
 
 
 def get_tree_element_for_data_type(data_type: DataType) -> EdgeOrNode:
@@ -192,18 +193,18 @@ def get_label_for_datatype(datatype: DataType) -> str:
     return label
 
 
-def get_node_sumvecs_for_name_and_keyword(
+def get_node_vectors_info_and_categorized_node_summary_vectors_from_name_and_keyword(
     node_name: str,
     node_keyword: str,
     node_classifications: dict[str, NodeClassification],
     tree_classification: NetworkClassification,
-) -> tuple[NodeSummaryVectorsInfo, set[str], set[str]]:
+) -> tuple[NodeSummaryVectorsInfo, CategorizedNodeSummaryVectors]:
     if not isinstance(node_name, str) or not isinstance(node_keyword, str):
         raise ValueError("Nodename and keyword must be strings")
 
     node_classification = node_classifications[node_name]
 
-    datatypes = _compute_datatypes_for_name_and_keyword(
+    datatypes = _compute_node_datatypes_for_name_and_keyword(
         node_name, node_keyword, node_classification, tree_classification
     )
 
@@ -212,7 +213,7 @@ def get_node_sumvecs_for_name_and_keyword(
     edge_sumvecs = set()
 
     for datatype in datatypes:
-        sumvec_name = create_sumvec_from_datatype_nodename_and_keyword(datatype, node_name, node_keyword)
+        sumvec_name = create_sumvec_from_datatype_node_name_and_keyword(datatype, node_name, node_keyword)
         edge_or_node = get_tree_element_for_data_type(datatype)
 
         all_sumvecs.add(sumvec_name)
@@ -222,10 +223,13 @@ def get_node_sumvecs_for_name_and_keyword(
 
         node_vectors_info.SMRY_INFO[sumvec_name] = SummaryVectorInfo(DATATYPE=datatype, EDGE_NODE=edge_or_node)
 
-    return (node_vectors_info, all_sumvecs, edge_sumvecs)
+    return (
+        node_vectors_info,
+        CategorizedNodeSummaryVectors(all_summary_vectors=all_sumvecs, edge_summary_vectors=edge_sumvecs),
+    )
 
 
-def _compute_datatypes_for_name_and_keyword(
+def _compute_node_datatypes_for_name_and_keyword(
     node_name: str,
     node_keyword: str,
     node_classification: NodeClassification,

@@ -5,6 +5,6 @@
 import type { NetworkNode } from './NetworkNode';
 export type DatedFlowNetwork = {
     dates: Array<string>;
-    tree: NetworkNode;
+    network: NetworkNode;
 };
 

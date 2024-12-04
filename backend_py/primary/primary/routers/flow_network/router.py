@@ -54,7 +54,7 @@ async def get_realization_flow_network(
     initialize_time_ms = timer.lap_ms()
 
     (
-        dated_trees,
+        dated_networks,
         edge_metadata,
         node_metadata,
     ) = await network_assembler.create_dated_networks_and_metadata_lists()
@@ -66,5 +66,5 @@ async def get_realization_flow_network(
     )
 
     return schemas.FlowNetworkData(
-        edge_metadata_list=edge_metadata, node_metadata_list=node_metadata, dated_trees=dated_trees
+        edgeMetadataList=edge_metadata, nodeMetadataList=node_metadata, datedNetworks=dated_networks
     )
