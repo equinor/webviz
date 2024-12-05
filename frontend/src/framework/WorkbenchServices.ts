@@ -1,5 +1,7 @@
 import React from "react";
 
+import { Point2D, Point3D } from "@webviz/subsurface-viewer";
+
 import { isEqual } from "lodash";
 
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
@@ -27,7 +29,7 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.timeSeries": { vectorName: string };
     "global.syncValue.surface": { name: string; attribute: string };
     "global.syncValue.cameraPositionMap": {
-        target: number[];
+        target: Point2D | Point3D | undefined;
         zoom: number;
         rotationX: number;
         rotationOrbit: number;

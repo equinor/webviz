@@ -6,7 +6,9 @@ from primary.services.smda_access.stratigraphy_utils import (
     sort_stratigraphic_units_by_hierarchy,
 )
 from primary.services.smda_access.types import StratigraphicUnit, StratigraphicSurface, StratigraphicFeature
-from primary.services.smda_access.mocked_drogon_smda_access._mocked_stratigraphy_access import DROGON_STRAT_UNITS
+from primary.services.smda_access.drogon._drogon_strat_units import get_drogon_strat_units
+
+DROGON_STRAT_UNITS = get_drogon_strat_units()
 
 
 @pytest.mark.parametrize(

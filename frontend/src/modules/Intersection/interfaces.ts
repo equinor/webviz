@@ -1,4 +1,3 @@
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { IntersectionType } from "@framework/types/intersection";
 import { ColorScale } from "@lib/utils/ColorScale";
@@ -15,13 +14,14 @@ import {
 import {
     layerManagerAtom,
     selectedCustomIntersectionPolylineIdAtom,
-    selectedEnsembleIdentAtom,
+    selectedFieldIdentifierAtom,
     selectedWellboreAtom,
 } from "./settings/atoms/derivedAtoms";
 import { WellboreHeader } from "./typesAndEnums";
 import { LayerManager } from "./utils/layers/LayerManager";
 
 export type SettingsToViewInterface = {
+    fieldIdentifier: string | null;
     showGridlines: boolean;
     gridLayer: number;
     zFactor: number;
@@ -29,7 +29,6 @@ export type SettingsToViewInterface = {
     intersectionType: IntersectionType;
     seismicColorScale: ColorScale | null;
     showSeismic: boolean;
-    ensembleIdent: RegularEnsembleIdent | null;
     selectedCustomIntersectionPolylineId: string | null;
     layerManager: LayerManager;
     wellboreHeader: WellboreHeader | null;
@@ -40,6 +39,9 @@ export type Interfaces = {
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
+    fieldIdentifier: (get) => {
+        return get(selectedFieldIdentifierAtom);
+    },
     showGridlines: (get) => {
         return get(showGridlinesAtom);
     },
@@ -60,9 +62,6 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     },
     showSeismic: (get) => {
         return get(showSeismicAtom);
-    },
-    ensembleIdent: (get) => {
-        return get(selectedEnsembleIdentAtom);
     },
     selectedCustomIntersectionPolylineId: (get) => {
         return get(selectedCustomIntersectionPolylineIdAtom);

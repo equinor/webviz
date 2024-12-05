@@ -19,6 +19,7 @@ def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.Well
         md=wellbore_pick.md,
         mdMsl=wellbore_pick.md_msl,
         uniqueWellboreIdentifier=wellbore_pick.unique_wellbore_identifier,
+        wellboreUuid=wellbore_pick.wellbore_uuid,
         pickIdentifier=wellbore_pick.pick_identifier,
         confidence=wellbore_pick.confidence,
         depthReferencePoint=wellbore_pick.depth_reference_point,
@@ -57,6 +58,8 @@ def convert_wellbore_header_to_schema(
         wellNorthing=drilled_wellbore_header.well_northing,
         depthReferencePoint=drilled_wellbore_header.depth_reference_point,
         depthReferenceElevation=drilled_wellbore_header.depth_reference_elevation,
+        wellborePurpose=(drilled_wellbore_header.wellbore_purpose if drilled_wellbore_header.wellbore_purpose else ""),
+        wellboreStatus=drilled_wellbore_header.wellbore_status if drilled_wellbore_header.wellbore_status else "",
     )
 
 
@@ -120,6 +123,9 @@ def convert_wellbore_perforation_to_schema(
 def convert_wellbore_log_curve_header_to_schema(
     wellbore_log_curve_header: WellboreLogCurveHeader,
 ) -> schemas.WellboreLogCurveHeader:
+    if wellbore_log_curve_header.log_name is None:
+        raise AttributeError("Missing log name is not allowed")
+
     return schemas.WellboreLogCurveHeader(
         logName=wellbore_log_curve_header.log_name,
         curveName=wellbore_log_curve_header.curve_name,
@@ -131,6 +137,9 @@ def convert_wellbore_log_curve_data_to_schema(
     wellbore_log_curve_data: WellboreLogCurveData,
 ) -> schemas.WellboreLogCurveData:
     return schemas.WellboreLogCurveData(
+        name=wellbore_log_curve_data.name,
+        unit=wellbore_log_curve_data.unit,
+        curveUnitDesc=wellbore_log_curve_data.curve_unit_desc,
         indexMin=wellbore_log_curve_data.index_min,
         indexMax=wellbore_log_curve_data.index_max,
         minCurveValue=wellbore_log_curve_data.min_curve_value,

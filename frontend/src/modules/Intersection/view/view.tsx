@@ -27,7 +27,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const statusWriter = useViewStatusWriter(props.viewContext);
     const ensembleSet = useEnsembleSet(props.workbenchSession);
 
-    const ensembleIdent = props.viewContext.useSettingsToViewInterfaceValue("ensembleIdent");
+    const fieldIdentifier = props.viewContext.useSettingsToViewInterfaceValue("fieldIdentifier");
     const intersectionReferenceSystem = useAtomValue(intersectionReferenceSystemAtom);
     const wellboreHeader = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
     const wellboreTrajectoryQuery = useAtomValue(wellboreTrajectoryQueryAtom);
@@ -72,30 +72,26 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             for (const layer of layers) {
                 if (isWellpicksLayer(layer)) {
                     layer.maybeUpdateSettings({
-                        ensembleIdent,
+                        fieldIdentifier,
                         wellboreUuid: intersectionType === IntersectionType.WELLBORE ? wellbore?.uuid : null,
                     });
                     layer.maybeRefetchData();
                 }
             }
         },
-        [layers, wellbore, ensembleIdent, intersectionType]
+        [layers, wellbore, fieldIdentifier, intersectionType]
     );
 
     React.useEffect(
         function handleTitleChange() {
-            let ensembleName = "";
-            if (ensembleIdent) {
-                const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-                ensembleName = ensemble?.getDisplayName() ?? "";
-            }
+            const fieldName = fieldIdentifier ?? "";
 
             props.viewContext.setInstanceTitle(
                 `${wellboreHeader?.identifier ?? "Intersection"}
-            (${ensembleName})`
+            (${fieldName})`
             );
         },
-        [ensembleSet, ensembleIdent, wellboreHeader?.identifier, props.viewContext]
+        [ensembleSet, fieldIdentifier, wellboreHeader?.identifier, props.viewContext]
     );
 
     // Status messages

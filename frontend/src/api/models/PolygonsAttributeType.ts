@@ -17,4 +17,5 @@ export enum PolygonsAttributeType {
     PINCHOUT = 'pinchout',
     SUBCROP = 'subcrop',
     FAULT_LINES = 'fault_lines',
+    NAMED_AREA = 'named_area',
 }
