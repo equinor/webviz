@@ -6,9 +6,9 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { describe, expect, test } from "vitest";
 
 const regularEnsembleArray = [
-    new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "sc1", "ens1", [], [], null, ""),
-    new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "sc2", "ens2", [], [], null, ""),
-    new RegularEnsemble("DROGON", "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "sc3", "ens1", [], [], null, ""),
+    new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", "sc1", [], [], null, ""),
+    new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", "sc2", [], [], null, ""),
+    new RegularEnsemble("DROGON", "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", "sc3", [], [], null, ""),
 ];
 
 const deltaEnsembleArray = [
