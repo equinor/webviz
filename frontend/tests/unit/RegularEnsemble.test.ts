@@ -9,6 +9,7 @@ describe("RegularEnsemble", () => {
     const caseUuid = "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa";
     const caseName = "case1";
     const ensembleName = "ensemble1";
+    const stratigraphicColumnIdentifier = "stratigraphicColumn1";
     const realizationsArray = [5, 1, 2];
     const parameterArray: Parameter[] = [
         {
@@ -31,6 +32,7 @@ describe("RegularEnsemble", () => {
         caseUuid,
         caseName,
         ensembleName,
+        stratigraphicColumnIdentifier,
         realizationsArray,
         parameterArray,
         sensitivityArray,
@@ -44,6 +46,10 @@ describe("RegularEnsemble", () => {
 
     test("should return the correct field identifier", () => {
         expect(TEST_ENSEMBLE.getFieldIdentifier()).toBe(fieldIdentifier);
+    });
+
+    test("should return the correct stratigraphic column identifier", () => {
+        expect(TEST_ENSEMBLE.getStratigraphicColumnIdentifier()).toBe(stratigraphicColumnIdentifier);
     });
 
     test("should return the correct display name", () => {
@@ -103,6 +109,7 @@ describe("RegularEnsemble", () => {
             caseUuid,
             caseName,
             ensembleName,
+            stratigraphicColumnIdentifier,
             realizationsArray,
             parameterArray,
             sensitivityArray,

@@ -12,6 +12,7 @@ describe("DeltaEnsemble", () => {
         "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
         "case1",
         "ensemble1",
+        "stratigraphicColumn1",
         [1, 2, 3, 4],
         [
             {
@@ -35,6 +36,7 @@ describe("DeltaEnsemble", () => {
         "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa",
         "case2",
         "ensemble2",
+        "stratigraphicColumn2",
         [3, 4, 5, 6],
         [
             {

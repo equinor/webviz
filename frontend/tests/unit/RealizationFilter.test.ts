@@ -46,7 +46,7 @@ const FIRST_ENSEMBLE = new RegularEnsemble(
     "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
     "First case",
     "First ensemble",
-    "DROGON_HAS_NO_STRAT_COLUMN",
+    "firstStratigraphicColumn",
     FIRST_ENSEMBLE_REALIZATIONS,
     [FIRST_PARAMETER, SECOND_PARAMETER],
     null,

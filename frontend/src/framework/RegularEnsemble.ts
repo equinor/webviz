@@ -6,6 +6,7 @@ export class RegularEnsemble {
     private _ensembleIdent: RegularEnsembleIdent;
     private _fieldIdentifier: string;
     private _caseName: string;
+    private _stratigraphicColumnIdentifier: string;
     private _realizationsArray: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
@@ -17,6 +18,7 @@ export class RegularEnsemble {
         caseUuid: string,
         caseName: string,
         ensembleName: string,
+        stratigraphicColumnIdentifier: string,
         realizationsArray: number[],
         parameterArray: Parameter[],
         sensitivityArray: Sensitivity[] | null,
@@ -26,6 +28,7 @@ export class RegularEnsemble {
         this._ensembleIdent = new RegularEnsembleIdent(caseUuid, ensembleName);
         this._fieldIdentifier = fieldIdentifier;
         this._caseName = caseName;
+        this._stratigraphicColumnIdentifier = stratigraphicColumnIdentifier;
         this._realizationsArray = Array.from(realizationsArray).sort((a, b) => a - b);
         this._parameters = new EnsembleParameters(parameterArray);
         this._color = color;
@@ -43,6 +46,10 @@ export class RegularEnsemble {
 
     getFieldIdentifier(): string {
         return this._fieldIdentifier;
+    }
+
+    getStratigraphicColumnIdentifier(): string {
+        return this._stratigraphicColumnIdentifier;
     }
 
     getDisplayName(): string {

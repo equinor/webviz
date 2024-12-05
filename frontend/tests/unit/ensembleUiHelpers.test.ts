@@ -8,9 +8,9 @@ import { fixupEnsembleIdent, fixupEnsembleIdents } from "@framework/utils/ensemb
 import { describe, expect, test } from "vitest";
 
 const ensembleArray = [
-    new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", [], [], null, ""),
-    new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", [], [], null, ""),
-    new RegularEnsemble("DROGON", "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", [], [], null, ""),
+    new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens1", "sc1", [], [], null, ""),
+    new RegularEnsemble("DROGON", "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "case1", "ens2", "sc2", [], [], null, ""),
+    new RegularEnsemble("DROGON", "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "case2", "ens1", "sc3", [], [], null, ""),
 ];
 
 const deltaEnsembleArray = [
