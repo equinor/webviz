@@ -1,6 +1,6 @@
 import { InplaceVolumetricsTableDefinition_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { QueryObserverResult } from "@tanstack/query-core";
 
@@ -11,7 +11,7 @@ const CACHE_TIME = 60 * 1000;
 
 export type TableDefinitionsQueryResult = {
     data: {
-        ensembleIdent: EnsembleIdent;
+        ensembleIdent: RegularEnsembleIdent;
         tableDefinitions: InplaceVolumetricsTableDefinition_api[];
     }[];
     isLoading: boolean;

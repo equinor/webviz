@@ -1,5 +1,5 @@
 import { SurfaceStatisticFunction_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { SurfaceAddressType } from "./surfaceAddress";
 import { ObservedSurfaceAddress, RealizationSurfaceAddress, StatisticalSurfaceAddress } from "./surfaceAddress";
@@ -22,7 +22,7 @@ export class SurfaceAddressBuilder {
         return this;
     }
 
-    withEnsembleIdent(ensembleIdent: EnsembleIdent): this {
+    withEnsembleIdent(ensembleIdent: RegularEnsembleIdent): this {
         this._caseUuid = ensembleIdent.getCaseUuid();
         this._ensemble = ensembleIdent.getEnsembleName();
         return this;

@@ -1,8 +1,8 @@
 import React from "react";
 
 import { Frequency_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -37,7 +37,7 @@ import { Interfaces } from "../interfaces";
 export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<RegularEnsembleIdent | null>(null);
     const [selectedVectorName, setSelectedVectorName] = React.useState<string | null>(null);
     const [selectedVectorTag, setSelectedVectorTag] = React.useState<string | null>(null);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
@@ -132,7 +132,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         [computedEnsembleIdent, computedVectorName, hasComputedVectorName, hasHistoricalVector, setVectorSpec]
     );
 
-    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);

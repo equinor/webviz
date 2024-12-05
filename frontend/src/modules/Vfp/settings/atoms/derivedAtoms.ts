@@ -1,6 +1,7 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
+import { isProdTable } from "@modules/Vfp/utils/vfpTableClassifier";
 
 import { atom } from "jotai";
 
@@ -19,7 +20,6 @@ import {
 import { vfpTableNamesQueryAtom, vfpTableQueryAtom } from "./queryAtoms";
 
 import { PressureOption, VfpParam } from "../../types";
-import { isProdTable } from "@modules/Vfp/utils/vfpTableClassifier";
 
 export const vfpTableNamesQueryResultAtom = atom((get) => {
     return get(vfpTableNamesQueryAtom);
@@ -30,7 +30,7 @@ export const availableVfpTableNamesAtom = atom<string[]>((get) => {
     return vfpTableNamesQueryResult.data?.map((item) => item) ?? [];
 });
 
-export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
+export const selectedEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
 
@@ -93,10 +93,10 @@ export const selectedWfrIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
     const userSelectedWfrIndicies = get(userSelectedWfrIndicesAtom);
     if (vfpTable === undefined) {
-        return null
+        return null;
     }
-    if (!(isProdTable(vfpTable))) {
-        return null
+    if (!isProdTable(vfpTable)) {
+        return null;
     }
     const wfr_values = vfpTable.wfrValues ?? [];
     if (wfr_values.length === 0) {
@@ -104,7 +104,7 @@ export const selectedWfrIndicesAtom = atom<number[] | null>((get) => {
     }
     if (!userSelectedWfrIndicies) {
         return [0];
-    } 
+    }
     return userSelectedWfrIndicies;
 });
 
@@ -112,10 +112,10 @@ export const selectedGfrIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
     const userSelectedGfrIndicies = get(userSelectedGfrIndicesAtom);
     if (vfpTable === undefined) {
-        return null
+        return null;
     }
-    if (!(isProdTable(vfpTable))) {
-        return null
+    if (!isProdTable(vfpTable)) {
+        return null;
     }
     const gfr_values = vfpTable.gfrValues ?? [];
     if (gfr_values.length === 0) {
@@ -131,10 +131,10 @@ export const selectedAlqIndicesAtom = atom<number[] | null>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
     const userSelectedAlqIndicies = get(userSelectedAlqIndicesAtom);
     if (vfpTable === undefined) {
-        return null
+        return null;
     }
-    if (!(isProdTable(vfpTable))) {
-        return null
+    if (!isProdTable(vfpTable)) {
+        return null;
     }
     const alq_values = vfpTable.alqValues ?? [];
     if (alq_values.length === 0) {
@@ -159,13 +159,13 @@ export const selectedColorByAtom = atom<VfpParam>((get) => {
     const vfpTable = get(vfpTableQueryAtom).data;
     const userSelectedColorBy = get(userSelectedColorByAtom);
     if (vfpTable === undefined) {
-        return VfpParam.THP
+        return VfpParam.THP;
     }
     if (userSelectedColorBy === null) {
-        return VfpParam.THP
+        return VfpParam.THP;
     }
     if (!isProdTable(vfpTable) && ["WFR", "GFR", "ALQ"].includes(userSelectedColorBy)) {
-        return VfpParam.THP
+        return VfpParam.THP;
     }
-    return userSelectedColorBy
+    return userSelectedColorBy;
 });

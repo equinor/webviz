@@ -1,7 +1,10 @@
-import { Ensemble } from "@framework/Ensemble";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
 
@@ -29,23 +32,24 @@ export const statisticsTypeAtom = atom<StatisticsType>((get) => {
     return StatisticsType.INDIVIDUAL;
 });
 
-export const selectedEnsembleIdentsAtom = atom<EnsembleIdent[]>((get) => {
+export const selectedEnsembleIdentsAtom = atom<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
     const newSelectedEnsembleIdents = selectedEnsembleIdents.filter((ensemble) => ensembleSet.hasEnsemble(ensemble));
-
     const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
 
     return validatedEnsembleIdents ?? [];
 });
 
-export const selectedEnsemblesAtom = atom((get) => {
+export const selectedRegularEnsemblesAtom = atom<RegularEnsemble[]>((get) => {
+    // NOTE: Used for view and color by parameter, i.e. not for delta ensembles yet!
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const allSelectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
-    const selectedEnsembles: Ensemble[] = [];
+    const selectedEnsembleIdents = filterEnsembleIdentsByType(allSelectedEnsembleIdents, RegularEnsembleIdent);
 
+    const selectedEnsembles: RegularEnsemble[] = [];
     for (const ensembleIdent of selectedEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
         if (ensemble) {
@@ -56,15 +60,36 @@ export const selectedEnsemblesAtom = atom((get) => {
     return selectedEnsembles;
 });
 
+export const selectedDeltaEnsemblesAtom = atom<DeltaEnsemble[]>((get) => {
+    const ensembleSet = get(EnsembleSetAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+
+    const selectedDeltaEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, DeltaEnsembleIdent);
+
+    const selectedDeltaEnsembles: DeltaEnsemble[] = [];
+    for (const ensembleIdent of selectedDeltaEnsembleIdents) {
+        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+        if (ensemble) {
+            selectedDeltaEnsembles.push(ensemble);
+        }
+    }
+    return selectedDeltaEnsembles;
+});
+
 export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
+    // Does not support parameters for delta ensembles yet
+    const hasAnyDeltaEnsembles = filterEnsembleIdentsByType(selectedEnsembleIdents, DeltaEnsembleIdent).length > 0;
+    if (hasAnyDeltaEnsembles) {
+        return [];
+    }
+
     const continuousAndNonConstantParametersUnion: Parameter[] = [];
-
-    for (const ensembleIdent of selectedEnsembleIdents) {
+    const regularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, RegularEnsembleIdent);
+    for (const ensembleIdent of regularEnsembleIdents) {
         const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-
         if (!ensemble) {
             continue;
         }
@@ -114,7 +139,7 @@ export const vectorSelectorDataAtom = atom((get) => {
     return createVectorSelectorDataFromVectors(availableVectorNames);
 });
 
-export const ensembleVectorListsHelperAtom = atom((get) => {
+export const ensembleVectorListsHelperAtom = atom<EnsembleVectorListsHelper>((get) => {
     const vectorListQueries = get(vectorListQueriesAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
@@ -128,7 +153,6 @@ export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
     const selectedVectorNames = get(selectedVectorNamesAtom);
 
     const vectorSpecifications: VectorSpec[] = [];
-
     for (const ensembleIdent of selectedEnsembleIdents) {
         for (const vectorName of selectedVectorNames) {
             if (!ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vectorName)) {
@@ -136,7 +160,7 @@ export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
             }
 
             vectorSpecifications.push({
-                ensembleIdent,
+                ensembleIdent: ensembleIdent,
                 color: ensembleSet.findEnsemble(ensembleIdent)?.getColor() ?? null,
                 vectorName,
                 hasHistoricalVector: ensembleVectorListsHelper.hasHistoricalVector(ensembleIdent, vectorName),

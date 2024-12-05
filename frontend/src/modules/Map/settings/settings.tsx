@@ -1,8 +1,8 @@
 import React from "react";
 
 import { SurfaceStatisticFunction_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -34,7 +34,7 @@ const SurfaceTimeTypeEnumToStringMapping = {
 //-----------------------------------------------------------------------------------------------------------
 export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<RegularEnsembleIdent | null>(null);
     const [timeType, setTimeType] = React.useState<SurfaceTimeType>(SurfaceTimeType.None);
 
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
@@ -128,7 +128,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
         setSurfaceAddress(surfaceAddress);
     });
 
-    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
         console.debug("handleEnsembleSelectionChange()");
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {

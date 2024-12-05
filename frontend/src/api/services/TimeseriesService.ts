@@ -39,6 +39,40 @@ export class TimeseriesService {
         });
     }
     /**
+     * Get Delta Ensemble Vector List
+     * Get list of all vectors for a delta ensemble based on all vectors in a given Sumo ensemble, excluding any historical vectors
+     *
+     * Definition:
+     *
+     * delta_ensemble = compare_ensemble - reference_ensemble
+     * @param compareCaseUuid Sumo case uuid for compare ensemble
+     * @param compareEnsembleName Compare ensemble name
+     * @param referenceCaseUuid Sumo case uuid for reference ensemble
+     * @param referenceEnsembleName Reference ensemble name
+     * @returns VectorDescription Successful Response
+     * @throws ApiError
+     */
+    public getDeltaEnsembleVectorList(
+        compareCaseUuid: string,
+        compareEnsembleName: string,
+        referenceCaseUuid: string,
+        referenceEnsembleName: string,
+    ): CancelablePromise<Array<VectorDescription>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/timeseries/delta_ensemble_vector_list/',
+            query: {
+                'compare_case_uuid': compareCaseUuid,
+                'compare_ensemble_name': compareEnsembleName,
+                'reference_case_uuid': referenceCaseUuid,
+                'reference_ensemble_name': referenceEnsembleName,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
      * Get Realizations Vector Data
      * Get vector data per realization
      * @param caseUuid Sumo case uuid
@@ -62,6 +96,49 @@ export class TimeseriesService {
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
+                'vector_name': vectorName,
+                'resampling_frequency': resamplingFrequency,
+                'realizations': realizations,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Delta Ensemble Realizations Vector Data
+     * Get vector data per realization
+     *
+     * Definition:
+     *
+     * delta_ensemble = compare_ensemble - reference_ensemble
+     * @param compareCaseUuid Sumo case uuid for compare ensemble
+     * @param compareEnsembleName Compare ensemble name
+     * @param referenceCaseUuid Sumo case uuid for reference ensemble
+     * @param referenceEnsembleName Reference ensemble name
+     * @param vectorName Name of the vector
+     * @param resamplingFrequency Resampling frequency
+     * @param realizations Optional list of realizations to include. If not specified, all realizations will be returned.
+     * @returns VectorRealizationData Successful Response
+     * @throws ApiError
+     */
+    public getDeltaEnsembleRealizationsVectorData(
+        compareCaseUuid: string,
+        compareEnsembleName: string,
+        referenceCaseUuid: string,
+        referenceEnsembleName: string,
+        vectorName: string,
+        resamplingFrequency: Frequency,
+        realizations?: (Array<number> | null),
+    ): CancelablePromise<Array<VectorRealizationData>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/timeseries/delta_ensemble_realizations_vector_data/',
+            query: {
+                'compare_case_uuid': compareCaseUuid,
+                'compare_ensemble_name': compareEnsembleName,
+                'reference_case_uuid': referenceCaseUuid,
+                'reference_ensemble_name': referenceEnsembleName,
                 'vector_name': vectorName,
                 'resampling_frequency': resamplingFrequency,
                 'realizations': realizations,
@@ -158,6 +235,52 @@ export class TimeseriesService {
             query: {
                 'case_uuid': caseUuid,
                 'ensemble_name': ensembleName,
+                'vector_name': vectorName,
+                'resampling_frequency': resamplingFrequency,
+                'statistic_functions': statisticFunctions,
+                'realizations': realizations,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Delta Ensemble Statistical Vector Data
+     * Get statistical vector data for an ensemble
+     *
+     * Definition:
+     *
+     * delta_ensemble = compare_ensemble - reference_ensemble
+     * @param compareCaseUuid Sumo case uuid for compare ensemble
+     * @param compareEnsembleName Compare ensemble name
+     * @param referenceCaseUuid Sumo case uuid for reference ensemble
+     * @param referenceEnsembleName Reference ensemble name
+     * @param vectorName Name of the vector
+     * @param resamplingFrequency Resampling frequency
+     * @param statisticFunctions Optional list of statistics to calculate. If not specified, all statistics will be calculated.
+     * @param realizations Optional list of realizations to include. If not specified, all realizations will be included.
+     * @returns VectorStatisticData Successful Response
+     * @throws ApiError
+     */
+    public getDeltaEnsembleStatisticalVectorData(
+        compareCaseUuid: string,
+        compareEnsembleName: string,
+        referenceCaseUuid: string,
+        referenceEnsembleName: string,
+        vectorName: string,
+        resamplingFrequency: Frequency,
+        statisticFunctions?: (Array<StatisticFunction> | null),
+        realizations?: (Array<number> | null),
+    ): CancelablePromise<VectorStatisticData> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/timeseries/delta_ensemble_statistical_vector_data/',
+            query: {
+                'compare_case_uuid': compareCaseUuid,
+                'compare_ensemble_name': compareEnsembleName,
+                'reference_case_uuid': referenceCaseUuid,
+                'reference_ensemble_name': referenceEnsembleName,
                 'vector_name': vectorName,
                 'resampling_frequency': resamplingFrequency,
                 'statistic_functions': statisticFunctions,
