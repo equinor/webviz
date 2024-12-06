@@ -167,6 +167,12 @@ class PointSetXY(BaseModel):
 
 
 class StratigraphicUnit(BaseModel):
+    """
+    Stratigraphic unit from SMDA
+
+    Camel case attributes needed for esvIntersection component in front-end
+    """
+
     identifier: str
     top: str
     base: str
