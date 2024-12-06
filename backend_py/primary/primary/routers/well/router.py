@@ -7,6 +7,7 @@ from primary.services.smda_access.drogon import DrogonSmdaAccess
 from primary.services.smda_access import SmdaAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
+from primary.utils.drogon import is_drogon_identifier
 
 from primary.services.ssdl_access.well_access import WellAccess as SsdlWellAccess
 
@@ -27,7 +28,7 @@ async def get_drilled_wellbore_headers(
 ) -> List[schemas.WellboreHeader]:
     """Get wellbore headers for all wells in the field"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+    if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
     else:
@@ -48,7 +49,7 @@ async def get_well_trajectories(
 ) -> List[schemas.WellboreTrajectory]:
     """Get well trajectories for field"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+    if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
     else:
@@ -72,7 +73,8 @@ async def get_wellbore_pick_identifiers(
 ) -> List[str]:
     """Get wellbore pick identifiers for field and stratigraphic column"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+
+    if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
 
@@ -95,7 +97,7 @@ async def get_wellbore_picks_for_pick_identifier(
 ) -> List[schemas.WellborePick]:
     """Get wellbore picks for field and pick identifier"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+    if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
 
@@ -116,7 +118,7 @@ async def get_wellbore_picks_for_wellbore(
 ) -> List[schemas.WellborePick]:
     """Get wellbore picks for field and pick identifier"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
 
@@ -137,7 +139,7 @@ async def get_wellbore_completions(
     """Get well bore completions for a single well bore"""
 
     # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         return []
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
@@ -159,7 +161,7 @@ async def get_wellbore_casings(
     """Get well bore casings for a single well bore"""
 
     # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         return []
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
@@ -179,7 +181,7 @@ async def get_wellbore_perforations(
     """Get well bore casing for a single well bore"""
 
     # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         return []
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
@@ -202,7 +204,7 @@ async def get_wellbore_log_curve_headers(
     """Get all log curve headers for a single well bore"""
 
     # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         return []
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
@@ -228,7 +230,7 @@ async def get_log_curve_data(
     """Get log curve data"""
 
     # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         raise NotImplementedError("DROGON log curve data not implemented")
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
