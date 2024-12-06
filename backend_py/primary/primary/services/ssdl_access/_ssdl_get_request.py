@@ -16,7 +16,7 @@ from primary.services.service_exceptions import (
 LOGGER = logging.getLogger(__name__)
 
 
-async def fetch_from_ssdl(access_token: str, endpoint: str, params: Optional[dict] = None) -> List[dict]:
+async def ssdl_get_request(access_token: str, endpoint: str, params: Optional[dict] = None) -> List[dict]:
     """
     Generic GET request to SSDL API.
     Uses `next` pagination to get all results.

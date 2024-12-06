@@ -270,6 +270,14 @@ function ColorScaleSetter(props: ColorScaleSetterProps): React.ReactNode {
         setPrevDivMidPoint(props.divMidPoint);
     }
 
+    if (divMidPoint < min) {
+        setDivMidPoint(min);
+    }
+
+    if (divMidPoint > max) {
+        setDivMidPoint(max);
+    }
+
     const handleMinMaxDivMidPointChange = React.useCallback(function handleMinMaxDivMidPointChange(
         min: number,
         max: number,

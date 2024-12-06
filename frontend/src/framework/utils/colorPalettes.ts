@@ -86,7 +86,7 @@ export const defaultContinuousSequentialColorPalettes = [
 export const defaultContinuousDivergingColorPalettes = [
     new ColorPalette({
         name: "Red to Blue",
-        colors: ["#b2182b", "#ef8a62", "#fddbc7", "#f8f6e9", "#d1e5f0", "#67a9cf", "#2166ac"],
+        colors: ["#b2182b", "#ef8a62", "#fddbc7", "#fff", "#d1e5f0", "#67a9cf", "#2166ac"],
         id: "red-to-blue",
     }),
     new ColorPalette({

@@ -424,7 +424,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
                 </div>
                 {makeDevState(props.module.getDevState())}
                 <div className="text-xs mt-2">{props.module.getDescription()}</div>
-                <div className="text-xs mt-2 flex gap-2 text-bold">{makeDataTags()}</div>
+                <div className="text-xs mt-2 flex gap-2 text-bold flex-wrap">{makeDataTags()}</div>
             </div>
         </div>
     );
