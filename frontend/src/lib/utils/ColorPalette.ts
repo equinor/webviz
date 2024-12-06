@@ -12,6 +12,12 @@ export type ColorPaletteOptions = {
     id: string;
 };
 
+export type ColorPaletteSerialization = {
+    name: string;
+    colors: string[];
+    id: string;
+};
+
 export class ColorPalette {
     private _id: string;
     private _name: string;
@@ -122,5 +128,21 @@ export class ColorPalette {
             .join(", ")})`;
 
         return gradient;
+    }
+
+    serialize(): ColorPaletteSerialization {
+        return {
+            name: this._name,
+            colors: this.getColors(),
+            id: this._id,
+        };
+    }
+
+    static fromSerialized(serialized: ColorPaletteSerialization): ColorPalette {
+        return new ColorPalette({
+            name: serialized.name,
+            colors: serialized.colors,
+            id: serialized.id,
+        });
     }
 }
