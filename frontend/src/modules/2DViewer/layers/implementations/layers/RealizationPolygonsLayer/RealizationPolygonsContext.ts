@@ -41,7 +41,6 @@ export class RealizationPolygonsContext implements SettingsContext<RealizationPo
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
-        workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<RealizationPolygonsSettings>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {

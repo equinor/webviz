@@ -53,10 +53,10 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
     getSettings() {
         return this._contextDelegate.getSettings();
     }
+
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
-        workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<RealizationGridSettings>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
