@@ -137,7 +137,7 @@ function createMapImageLayer(
         id: id,
         name: name,
         image: `data:image/png;base64,${layerData.png_image_base64}`,
-        bounds: _calcBoundsForRotationAroundUpperLeftCorner(layerData.surface_def),
+        bounds: calcBoundsForRotationAroundUpperLeftCorner(layerData.surface_def),
         rotDeg: layerData.surface_def.rot_deg,
         valueRange: [layerData.value_min, layerData.value_max],
         colorMapRange: [layerData.value_min, layerData.value_max],
@@ -149,7 +149,7 @@ function createMapImageLayer(
     });
 }
 
-function _calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
+function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;
     const height = (surfDef.npoints_y - 1) * surfDef.inc_y;
     const orgRotPoint: Vec2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y };
@@ -177,7 +177,6 @@ function createPolygonsLayer(polygonsData: PolygonData_api[], id: string): GeoJs
     return new GeoJsonLayer({
         id: id,
         data: data,
-        // opacity: 0.5,
         filled: false,
         lineWidthMinPixels: 2,
         parameters: {
@@ -294,10 +293,10 @@ export function wellTrajectoryToGeojson(
     return geometryCollection;
 }
 
-function zipCoords(x_arr: number[], y_arr: number[], z_arr: number[]): number[][] {
+function zipCoords(xArr: number[], yArr: number[], zArr: number[]): number[][] {
     const coords: number[][] = [];
-    for (let i = 0; i < x_arr.length; i++) {
-        coords.push([x_arr[i], y_arr[i], -z_arr[i]]);
+    for (let i = 0; i < xArr.length; i++) {
+        coords.push([xArr[i], yArr[i], -zArr[i]]);
     }
 
     return coords;
@@ -316,7 +315,6 @@ export function makeGrid3DLayer(
     gridParameterData: GridMappedProperty_trans,
     showGridLines: boolean,
     colorScale?: ColorScaleWithName
-    // colorScale: ColorScale
 ): WorkingGrid3dLayer {
     const offsetXyz = [gridSurfaceData.origin_utm_x, gridSurfaceData.origin_utm_y, 0];
     const pointsNumberArray = gridSurfaceData.pointsFloat32Arr.map((val, i) => val + offsetXyz[i % 3]);
