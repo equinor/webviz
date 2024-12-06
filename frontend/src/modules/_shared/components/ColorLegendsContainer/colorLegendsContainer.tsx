@@ -4,7 +4,7 @@ import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/C
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
 
-const PREFERENCES = {
+const STYLE_CONSTANTS = {
     lineWidth: 6,
     lineColor: "#555",
     textGap: 6,
@@ -36,7 +36,7 @@ function makeMarkers(
 ): React.ReactNode[] {
     const sectionHeight = Math.abs(sectionBottom - sectionTop);
 
-    const minMarkerHeight = PREFERENCES.fontSize + 4 * PREFERENCES.textGap;
+    const minMarkerHeight = STYLE_CONSTANTS.fontSize + 4 * STYLE_CONSTANTS.textGap;
     const maxNumMarkers = Math.floor(sectionHeight / minMarkerHeight);
 
     // Odd number of markers makes sure the midpoint in each section is shown which is preferable
@@ -57,16 +57,16 @@ function makeMarkers(
                 key={`${sectionTop}-${i}-marker`}
                 x1={left}
                 y1={globalY + 1}
-                x2={left + PREFERENCES.lineWidth}
+                x2={left + STYLE_CONSTANTS.lineWidth}
                 y2={globalY + 1}
-                stroke={PREFERENCES.lineColor}
+                stroke={STYLE_CONSTANTS.lineColor}
                 strokeWidth="1"
             />
         );
         markers.push(
             <text
                 key={`${sectionTop}-${i}-text`}
-                x={left + PREFERENCES.lineWidth + PREFERENCES.textGap}
+                x={left + STYLE_CONSTANTS.lineWidth + STYLE_CONSTANTS.textGap}
                 y={globalY + 4}
                 fontSize="10"
                 style={TEXT_STYLE}
@@ -81,7 +81,7 @@ function makeMarkers(
 }
 
 function makeDiscreteMarkers(colorScale: ColorScale, left: number, top: number, barHeight: number): React.ReactNode[] {
-    const minMarkerHeight = PREFERENCES.fontSize + 2 * PREFERENCES.textGap;
+    const minMarkerHeight = STYLE_CONSTANTS.fontSize + 2 * STYLE_CONSTANTS.textGap;
 
     const numSteps = colorScale.getNumSteps();
     let markerDistance = barHeight / numSteps;
@@ -108,16 +108,16 @@ function makeDiscreteMarkers(colorScale: ColorScale, left: number, top: number, 
                 key={`${top}-${i}-marker`}
                 x1={left}
                 y1={globalY + 1}
-                x2={left + PREFERENCES.lineWidth}
+                x2={left + STYLE_CONSTANTS.lineWidth}
                 y2={globalY + 1}
-                stroke={PREFERENCES.lineColor}
+                stroke={STYLE_CONSTANTS.lineColor}
                 strokeWidth="1"
             />
         );
         markers.push(
             <text
                 key={`${top}-${i}-text`}
-                x={left + PREFERENCES.lineWidth + PREFERENCES.textGap}
+                x={left + STYLE_CONSTANTS.lineWidth + STYLE_CONSTANTS.textGap}
                 y={globalY + 4}
                 fontSize="10"
                 style={TEXT_STYLE}
@@ -142,22 +142,22 @@ type ColorLegendProps = {
 };
 
 function ColorLegend(props: ColorLegendProps): React.ReactNode {
-    const barHeight = props.totalHeight - PREFERENCES.offset;
+    const barHeight = props.totalHeight - STYLE_CONSTANTS.offset;
 
-    const barStartPosition = props.left + PREFERENCES.nameLabelWidth + PREFERENCES.textGap;
+    const barStartPosition = props.left + STYLE_CONSTANTS.nameLabelWidth + STYLE_CONSTANTS.textGap;
     const lineMarkerStartPosition = barStartPosition + props.barWidth;
-    const lineMarkerEndPosition = lineMarkerStartPosition + PREFERENCES.lineWidth;
-    const textStartPosition = lineMarkerStartPosition + PREFERENCES.lineWidth + PREFERENCES.textGap;
+    const lineMarkerEndPosition = lineMarkerStartPosition + STYLE_CONSTANTS.lineWidth;
+    const textStartPosition = lineMarkerStartPosition + STYLE_CONSTANTS.lineWidth + STYLE_CONSTANTS.textGap;
 
     const markers: React.ReactNode[] = [];
     markers.push(
         <line
             key="max-marker"
             x1={lineMarkerStartPosition}
-            y1={props.top + PREFERENCES.offset}
+            y1={props.top + STYLE_CONSTANTS.offset}
             x2={lineMarkerEndPosition}
-            y2={props.top + PREFERENCES.offset}
-            stroke={PREFERENCES.lineColor}
+            y2={props.top + STYLE_CONSTANTS.offset}
+            stroke={STYLE_CONSTANTS.lineColor}
             strokeWidth="1"
         />
     );
@@ -165,7 +165,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
         <text
             key="max-text"
             x={textStartPosition}
-            y={props.top + PREFERENCES.offset + 3}
+            y={props.top + STYLE_CONSTANTS.offset + 3}
             fontSize="10"
             style={TEXT_STYLE}
         >
@@ -175,7 +175,12 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
 
     if (props.colorScale.getType() === ColorScaleType.Discrete) {
         markers.push(
-            makeDiscreteMarkers(props.colorScale, lineMarkerStartPosition, props.top + PREFERENCES.offset, barHeight)
+            makeDiscreteMarkers(
+                props.colorScale,
+                lineMarkerStartPosition,
+                props.top + STYLE_CONSTANTS.offset,
+                barHeight
+            )
         );
     } else {
         if (props.colorScale.getGradientType() === ColorScaleGradientType.Diverging) {
@@ -187,9 +192,9 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             markers.push(
                 makeMarkers(
                     props.colorScale,
-                    props.top + PREFERENCES.offset,
-                    props.top + PREFERENCES.offset,
-                    props.top + PREFERENCES.offset + barHeight * relY,
+                    props.top + STYLE_CONSTANTS.offset,
+                    props.top + STYLE_CONSTANTS.offset,
+                    props.top + STYLE_CONSTANTS.offset + barHeight * relY,
                     lineMarkerStartPosition,
                     barHeight
                 )
@@ -199,10 +204,10 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                 <line
                     key="mid-marker"
                     x1={lineMarkerStartPosition}
-                    y1={props.top + relY * barHeight + PREFERENCES.offset}
+                    y1={props.top + relY * barHeight + STYLE_CONSTANTS.offset}
                     x2={lineMarkerEndPosition}
-                    y2={props.top + relY * barHeight + PREFERENCES.offset}
-                    stroke={PREFERENCES.lineColor}
+                    y2={props.top + relY * barHeight + STYLE_CONSTANTS.offset}
+                    stroke={STYLE_CONSTANTS.lineColor}
                     strokeWidth="2"
                 />
             );
@@ -212,12 +217,12 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                     x={
                         props.left +
                         props.barWidth +
-                        PREFERENCES.lineWidth +
-                        PREFERENCES.textGap +
-                        PREFERENCES.nameLabelWidth +
-                        PREFERENCES.textGap
+                        STYLE_CONSTANTS.lineWidth +
+                        STYLE_CONSTANTS.textGap +
+                        STYLE_CONSTANTS.nameLabelWidth +
+                        STYLE_CONSTANTS.textGap
                     }
-                    y={props.top + relY * barHeight + PREFERENCES.offset + 3}
+                    y={props.top + relY * barHeight + STYLE_CONSTANTS.offset + 3}
                     fontSize="10"
                     style={TEXT_STYLE}
                 >
@@ -228,9 +233,9 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             markers.push(
                 makeMarkers(
                     props.colorScale,
-                    props.top + PREFERENCES.offset,
-                    props.top + relY * barHeight + PREFERENCES.offset,
-                    props.top + PREFERENCES.offset + barHeight,
+                    props.top + STYLE_CONSTANTS.offset,
+                    props.top + relY * barHeight + STYLE_CONSTANTS.offset,
+                    props.top + STYLE_CONSTANTS.offset + barHeight,
                     lineMarkerStartPosition,
                     barHeight
                 )
@@ -239,9 +244,9 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             markers.push(
                 makeMarkers(
                     props.colorScale,
-                    props.top + PREFERENCES.offset,
-                    props.top + PREFERENCES.offset,
-                    props.top + PREFERENCES.offset + barHeight,
+                    props.top + STYLE_CONSTANTS.offset,
+                    props.top + STYLE_CONSTANTS.offset,
+                    props.top + STYLE_CONSTANTS.offset + barHeight,
                     lineMarkerStartPosition,
                     barHeight
                 )
@@ -253,10 +258,10 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
         <line
             key="min-marker"
             x1={lineMarkerStartPosition}
-            y1={props.top + PREFERENCES.offset + barHeight}
+            y1={props.top + STYLE_CONSTANTS.offset + barHeight}
             x2={lineMarkerEndPosition}
-            y2={props.top + PREFERENCES.offset + barHeight}
-            stroke={PREFERENCES.lineColor}
+            y2={props.top + STYLE_CONSTANTS.offset + barHeight}
+            stroke={STYLE_CONSTANTS.lineColor}
             strokeWidth="1"
         />
     );
@@ -264,7 +269,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
         <text
             key="min-text"
             x={textStartPosition}
-            y={props.top + PREFERENCES.offset + barHeight + 3}
+            y={props.top + STYLE_CONSTANTS.offset + barHeight + 3}
             fontSize="10"
             style={TEXT_STYLE}
         >
@@ -277,7 +282,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             <clipPath id={`clip-${props.id}`}>
                 <rect
                     x={props.left - props.totalHeight / 2}
-                    y={props.top + PREFERENCES.offset + props.totalHeight / 2}
+                    y={props.top + STYLE_CONSTANTS.offset + props.totalHeight / 2}
                     width={props.totalHeight}
                     height={12}
                 />
@@ -285,7 +290,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             <rect
                 key={props.id}
                 x={barStartPosition}
-                y={props.top + PREFERENCES.offset}
+                y={props.top + STYLE_CONSTANTS.offset}
                 width={props.barWidth}
                 rx="4"
                 height={barHeight}
@@ -294,14 +299,14 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             />
             <text
                 x={props.left + 2}
-                y={props.top + PREFERENCES.offset + props.totalHeight / 2 + 6}
+                y={props.top + STYLE_CONSTANTS.offset + props.totalHeight / 2 + 6}
                 width={props.totalHeight}
                 height={10}
                 fontSize="10"
                 textAnchor="middle"
                 dominantBaseline="central"
                 alignmentBaseline="baseline"
-                transform={`rotate(270, ${props.left}, ${props.top + PREFERENCES.offset + props.totalHeight / 2})`}
+                transform={`rotate(270, ${props.left}, ${props.top + STYLE_CONSTANTS.offset + props.totalHeight / 2})`}
                 style={TEXT_STYLE}
                 clipPath={`url(#clip-${props.id})`}
             >
@@ -329,11 +334,11 @@ export function ColorLegendsContainer(props: ColorLegendsContainerProps): React.
     }
 
     const width = Math.max(5, Math.min(10, 120 / props.colorScales.length));
-    const minHeight = Math.min(60 + 2 * PREFERENCES.offset, props.height);
+    const minHeight = Math.min(60 + 2 * STYLE_CONSTANTS.offset, props.height);
 
     const numRows = Math.min(Math.floor(props.height / minHeight), props.colorScales.length);
     const numCols = Math.ceil(props.colorScales.length / numRows);
-    const height = Math.max(minHeight, props.height / numRows - (numRows - 1) * PREFERENCES.legendGap);
+    const height = Math.max(minHeight, props.height / numRows - (numRows - 1) * STYLE_CONSTANTS.legendGap);
 
     function makeLegends(): React.ReactNode[] {
         const legends: React.ReactNode[] = [];
@@ -344,15 +349,15 @@ export function ColorLegendsContainer(props: ColorLegendsContainerProps): React.
                     break;
                 }
                 const { id, colorScale } = props.colorScales[index++];
-                const top = row * (height + 2 * PREFERENCES.offset) + row * PREFERENCES.legendGap;
+                const top = row * (height + 2 * STYLE_CONSTANTS.offset) + row * STYLE_CONSTANTS.legendGap;
                 const left =
                     col *
                     (width +
-                        PREFERENCES.legendGap +
-                        PREFERENCES.lineWidth +
-                        PREFERENCES.textGap +
-                        PREFERENCES.textWidth +
-                        PREFERENCES.nameLabelWidth);
+                        STYLE_CONSTANTS.legendGap +
+                        STYLE_CONSTANTS.lineWidth +
+                        STYLE_CONSTANTS.textGap +
+                        STYLE_CONSTANTS.textWidth +
+                        STYLE_CONSTANTS.nameLabelWidth);
 
                 legends.push(
                     <ColorLegend
@@ -379,14 +384,14 @@ export function ColorLegendsContainer(props: ColorLegendsContainerProps): React.
         >
             <svg
                 style={{
-                    height: numRows * (height + 2 * PREFERENCES.offset) + (numRows - 1) * PREFERENCES.legendGap,
+                    height: numRows * (height + 2 * STYLE_CONSTANTS.offset) + (numRows - 1) * STYLE_CONSTANTS.legendGap,
                     width:
                         numCols *
                         (width +
-                            PREFERENCES.legendGap +
-                            PREFERENCES.lineWidth +
-                            PREFERENCES.textGap +
-                            PREFERENCES.textWidth),
+                            STYLE_CONSTANTS.legendGap +
+                            STYLE_CONSTANTS.lineWidth +
+                            STYLE_CONSTANTS.textGap +
+                            STYLE_CONSTANTS.textWidth),
                 }}
                 version="1.1"
                 xmlns="http://www.w3.org/2000/svg"

@@ -30,33 +30,29 @@ export function WellboreSelector(props: WellboreSelectorProps): React.ReactNode 
     });
     React.useEffect(() => {
         onSelectedWellboreUuidsChange(
-            props.wellboreHeaders
-                .filter((header) => selectedWellborePurposes.includes(header.wellborePurpose))
-                .filter((header) => selectedWellboreStatuses.includes(header.wellboreStatus))
-                // .filter((header) => props.selectedWellboreUuids.includes(header.wellboreUuid))
-                .map((header) => header.wellboreUuid)
+            filterWellboreHeaders(props.wellboreHeaders, selectedWellboreStatuses, selectedWellborePurposes).map(
+                (header) => header.wellboreUuid
+            )
         );
     }, [selectedWellborePurposes, selectedWellboreStatuses, onSelectedWellboreUuidsChange, props.wellboreHeaders]);
 
     function handleSelectAll() {
         props.onSelectedWellboreUuidsChange(
-            props.wellboreHeaders
-                .filter((header) => selectedWellborePurposes.includes(header.wellborePurpose))
-                .filter((header) => selectedWellboreStatuses.includes(header.wellboreStatus))
-                .map((header) => header.wellboreUuid)
+            filterWellboreHeaders(props.wellboreHeaders, selectedWellboreStatuses, selectedWellborePurposes).map(
+                (header) => header.wellboreUuid
+            )
         );
     }
     function handleUnselectAll() {
         props.onSelectedWellboreUuidsChange([]);
     }
     function makeWellHeadersOptions(): SelectOption[] {
-        return props.wellboreHeaders
-            .filter((header) => selectedWellboreStatuses.includes(header.wellboreStatus))
-            .filter((header) => selectedWellborePurposes.includes(header.wellborePurpose))
-            .map((wellHeader) => ({
+        return filterWellboreHeaders(props.wellboreHeaders, selectedWellboreStatuses, selectedWellborePurposes).map(
+            (wellHeader) => ({
                 label: wellHeader.uniqueWellboreIdentifier,
                 value: wellHeader.wellboreUuid,
-            }));
+            })
+        );
     }
 
     return (
@@ -133,4 +129,14 @@ function makeWellboreStatusOptions(wellHeaders: WellboreHeader_api[]): SelectOpt
         label: status,
         value: status,
     }));
+}
+
+function filterWellboreHeaders(
+    wellHeaders: WellboreHeader_api[],
+    selectedWellboreStatuses: string[],
+    selectedWellborePurposes: string[]
+): WellboreHeader_api[] {
+    return wellHeaders
+        .filter((header) => selectedWellboreStatuses.includes(header.wellboreStatus))
+        .filter((header) => selectedWellborePurposes.includes(header.wellborePurpose));
 }
