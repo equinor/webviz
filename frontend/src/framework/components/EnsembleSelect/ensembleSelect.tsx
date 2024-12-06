@@ -1,31 +1,36 @@
+import React from "react";
+
+import { Ensemble } from "@framework/Ensemble";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleSet } from "@framework/EnsembleSet";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Select, SelectOption, SelectProps } from "@lib/components/Select";
 
 type EnsembleSelectProps = {
-    ensembleSet: EnsembleSet;
+    ensembles: readonly Ensemble[];
     value: EnsembleIdent[];
     onChange: (ensembleIdentArr: EnsembleIdent[]) => void;
 } & Omit<SelectProps<string>, "options" | "value" | "onChange">;
 
-export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
-    const { ensembleSet, value, onChange, multiple, ...rest } = props;
+export function EnsembleSelect(props: EnsembleSelectProps): React.ReactNode {
+    const { ensembles, value, onChange, multiple, ...rest } = props;
 
-    function handleSelectionChanged(selectedEnsembleIdentStrArr: string[]) {
-        const identArr: EnsembleIdent[] = [];
-        for (const identStr of selectedEnsembleIdentStrArr) {
-            const foundEnsemble = ensembleSet.findEnsembleByIdentString(identStr);
-            if (foundEnsemble) {
-                identArr.push(foundEnsemble.getIdent());
+    const handleSelectionChange = React.useCallback(
+        function handleSelectionChanged(selectedEnsembleIdentStrArr: string[]) {
+            const identArr: EnsembleIdent[] = [];
+            for (const identStr of selectedEnsembleIdentStrArr) {
+                const foundEnsemble = ensembles.find((ens) => ens.getIdent().toString() === identStr);
+                if (foundEnsemble) {
+                    identArr.push(foundEnsemble.getIdent());
+                }
             }
-        }
 
-        onChange(identArr);
-    }
+            onChange(identArr);
+        },
+        [ensembles, onChange]
+    );
 
     const optionsArr: SelectOption[] = [];
-    for (const ens of ensembleSet.getEnsembleArr()) {
+    for (const ens of ensembles) {
         optionsArr.push({
             value: ens.getIdent().toString(),
             label: ens.getDisplayName(),
@@ -48,7 +53,7 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
         <Select
             options={optionsArr}
             value={selectedArr}
-            onChange={handleSelectionChanged}
+            onChange={handleSelectionChange}
             multiple={isMultiple}
             {...rest}
         />

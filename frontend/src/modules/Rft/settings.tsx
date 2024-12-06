@@ -1,5 +1,3 @@
-import React from "react";
-
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
@@ -88,7 +86,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         <div>
             <CollapsibleGroup expanded={true} title="Ensembles">
                 <EnsembleDropdown
-                    ensembleSet={ensembleSet}
+                    ensembles={ensembleSet.getEnsembleArr()}
                     value={selectedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />
