@@ -24,9 +24,8 @@ class SmdaEndpoints:
 
 
 class SmdaAccess:
-    def __init__(self, access_token: str, field_identifier: str):
+    def __init__(self, access_token: str):
         self._smda_token = access_token
-        self._field_identifier = field_identifier
 
     async def _smda_get_request(self, endpoint: str, params: dict) -> List[dict]:
         return await smda_get_request(access_token=self._smda_token, endpoint=endpoint, params=params)
@@ -46,7 +45,7 @@ class SmdaAccess:
         units = [StratigraphicUnit(**result) for result in results]
         return units
 
-    async def get_wellbore_headers(self) -> List[WellboreHeader]:
+    async def get_wellbore_headers(self, field_identifier: str) -> List[WellboreHeader]:
         """
         Get wellbore header information for all wellbores in a field.
         We need the wellbores with actual survey data, so we must use the wellbore-survey-headers endpoint.
@@ -65,7 +64,7 @@ class SmdaAccess:
         params = {
             "_projection": ",".join(projection),
             "_sort": "unique_wellbore_identifier",
-            "field_identifier": self._field_identifier,
+            "field_identifier": field_identifier,
         }
 
         survey_header_results = await self._smda_get_request(
@@ -73,13 +72,13 @@ class SmdaAccess:
         )
 
         if not survey_header_results:
-            raise NoDataError(f"No wellbore headers found for {self._field_identifier=}.", Service.SMDA)
+            raise NoDataError(f"No wellbore headers found for {field_identifier=}.", Service.SMDA)
 
         projection = ["unique_wellbore_identifier", "wellbore_purpose", "wellbore_status"]
         params = {
             "_projection": ",".join(projection),
             "_sort": "unique_wellbore_identifier",
-            "field_identifier": self._field_identifier,
+            "field_identifier": field_identifier,
         }
 
         wellbore_headers_results = await self._smda_get_request(endpoint=SmdaEndpoints.WELLHEADERS, params=params)
@@ -101,14 +100,16 @@ class SmdaAccess:
 
         return [WellboreHeader(**result) for result in survey_header_results]
 
-    async def get_wellbore_trajectories(self, wellbore_uuids: Optional[List[str]] = None) -> List[WellboreTrajectory]:
+    async def get_wellbore_trajectories(
+        self, field_identifier: str, wellbore_uuids: Optional[List[str]] = None
+    ) -> List[WellboreTrajectory]:
         """
         Get wellbore trajectories (survey samples) for all wells in a field, optionally with a subset of wellbores.
         """
         params = {
             "_projection": "wellbore_uuid, unique_wellbore_identifier,easting,northing,tvd_msl,md",
             "_sort": "unique_wellbore_identifier,md",
-            "field_identifier": self._field_identifier,
+            "field_identifier": field_identifier,
         }
         if wellbore_uuids:
             params["wellbore_uuid"] = ", ".join(wellbore_uuids)
@@ -116,9 +117,7 @@ class SmdaAccess:
         result = await self._smda_get_request(endpoint=SmdaEndpoints.WELLBORE_SURVEY_SAMPLES, params=params)
 
         if not result:
-            raise NoDataError(
-                f"No wellbore surveys found for {self._field_identifier}, {wellbore_uuids=}.", Service.SMDA
-            )
+            raise NoDataError(f"No wellbore surveys found for {field_identifier=}, {wellbore_uuids=}.", Service.SMDA)
 
         # Convert the result to polars for processing
         resultdf = pl.DataFrame(result)
@@ -198,6 +197,7 @@ class SmdaAccess:
 
     async def get_wellbore_picks_for_pick_identifier(
         self,
+        field_identifier: str,
         pick_identifier: str,
         interpreter: str = "STAT",
         obs_no: Optional[int] = None,
@@ -208,7 +208,7 @@ class SmdaAccess:
         """
         params = {
             "_sort": "unique_wellbore_identifier,md",
-            "field_identifier": self._field_identifier,
+            "field_identifier": field_identifier,
             "pick_identifier": pick_identifier,
             "interpreter": interpreter,
         }
@@ -218,7 +218,7 @@ class SmdaAccess:
         results = await self._smda_get_request(endpoint=SmdaEndpoints.WELLBORE_PICKS, params=params)
         if not results:
             raise NoDataError(
-                f"No wellbore picks found for {self._field_identifier=}, {pick_identifier=}, {interpreter=}, {obs_no=}.",
+                f"No wellbore picks found for {field_identifier=}, {pick_identifier=}, {interpreter=}, {obs_no=}.",
                 Service.SMDA,
             )
         picks: List[WellborePick] = []

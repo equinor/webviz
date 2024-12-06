@@ -43,13 +43,12 @@ export const wellLogCurveHeadersQueryAtom = atomWithQuery((get) => {
 });
 
 export const wellborePicksQueryAtom = atomWithQuery((get) => {
-    const selectedFieldIdent = get(selectedFieldIdentifierAtom) ?? "";
     const selectedWellboreUuid = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
 
     return {
-        queryKey: ["getWellborePicksForWellbore", selectedFieldIdent, selectedWellboreUuid],
-        enabled: Boolean(selectedFieldIdent && selectedWellboreUuid),
-        queryFn: () => apiService.well.getWellborePicksForWellbore(selectedFieldIdent, selectedWellboreUuid),
+        queryKey: ["getWellborePicksForWellbore", selectedWellboreUuid],
+        enabled: Boolean(selectedWellboreUuid),
+        queryFn: () => apiService.well.getWellborePicksForWellbore(selectedWellboreUuid),
         ...SHARED_QUERY_OPTS,
     };
 });
@@ -61,7 +60,7 @@ export const wellboreStratigraphicUnitsQueryAtom = atomWithQuery((get) => {
     const caseUuid = selectedEnsemble?.getCaseUuid() ?? "";
 
     return {
-        queryKey: ["getWellborePicksForWellbore", caseUuid],
+        queryKey: ["getStratigraphicUnits", caseUuid],
         enabled: Boolean(caseUuid),
         queryFn: () => apiService.surface.getStratigraphicUnits(caseUuid),
         ...SHARED_QUERY_OPTS,

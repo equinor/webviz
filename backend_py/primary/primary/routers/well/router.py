@@ -31,9 +31,9 @@ async def get_drilled_wellbore_headers(
         # Handle DROGON
         well_access = DrogonSmdaAccess()
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
-    wellbore_headers = await well_access.get_wellbore_headers()
+    wellbore_headers = await well_access.get_wellbore_headers(field_identifier)
 
     return [converters.convert_wellbore_header_to_schema(wellbore_header) for wellbore_header in wellbore_headers]
 
@@ -52,9 +52,12 @@ async def get_well_trajectories(
         # Handle DROGON
         well_access = DrogonSmdaAccess()
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
-    wellbore_trajectories = await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
+    wellbore_trajectories = await well_access.get_wellbore_trajectories(
+        field_identifier=field_identifier,
+        wellbore_uuids=wellbore_uuids,
+    )
 
     return [
         converters.convert_well_trajectory_to_schema(wellbore_trajectory)
@@ -66,18 +69,17 @@ async def get_well_trajectories(
 async def get_wellbore_pick_identifiers(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    field_identifier: str = Query(description="Official field identifier"),
     strat_column_identifier: str = Query(description="Stratigraphic column identifier")
     # fmt:on
 ) -> List[str]:
     """Get wellbore pick identifiers for field and stratigraphic column"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+    if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
         # Handle DROGON
         well_access = DrogonSmdaAccess()
 
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
     wellbore_picks = await well_access.get_wellbore_pick_identifiers_in_stratigraphic_column(
         strat_column_identifier=strat_column_identifier
@@ -100,9 +102,12 @@ async def get_wellbore_picks_for_pick_identifier(
         well_access = DrogonSmdaAccess()
 
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
-    wellbore_picks = await well_access.get_wellbore_picks_for_pick_identifier(pick_identifier=pick_identifier)
+    wellbore_picks = await well_access.get_wellbore_picks_for_pick_identifier(
+        field_identifier=field_identifier,
+        pick_identifier=pick_identifier,
+    )
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
 
 
@@ -110,18 +115,17 @@ async def get_wellbore_picks_for_pick_identifier(
 async def get_wellbore_picks_for_wellbore(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    field_identifier: str = Query(description="Official field identifier"),
     wellbore_uuid: str = Query(description="Wellbore uuid")
     # fmt:on
 ) -> List[schemas.WellborePick]:
     """Get wellbore picks for field and pick identifier"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         # Handle DROGON
         well_access = DrogonSmdaAccess()
 
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
     wellbore_picks = await well_access.get_wellbore_picks_for_wellbore(wellbore_uuid=wellbore_uuid)
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]

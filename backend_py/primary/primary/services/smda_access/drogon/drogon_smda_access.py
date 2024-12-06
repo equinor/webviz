@@ -18,11 +18,14 @@ class SmdaAccess:
     async def get_stratigraphic_units(self, stratigraphic_column_identifier: str) -> List[StratigraphicUnit]:
         return get_drogon_strat_units()
 
-    async def get_wellbore_headers(self) -> List[WellboreHeader]:
+    # pylint: disable=unused-argument
+    async def get_wellbore_headers(self, field_identififer: str) -> List[WellboreHeader]:
         """Get Drogon wellbore headers"""
         return get_drogon_well_headers()
 
-    async def get_wellbore_trajectories(self, wellbore_uuids: Optional[List[str]] = None) -> List[WellboreTrajectory]:
+    async def get_wellbore_trajectories(
+        self, field_identifier: str, wellbore_uuids: Optional[List[str]] = None
+    ) -> List[WellboreTrajectory]:
         """Get all Drogon trajectories"""
         all_well_trajs = get_drogon_well_trajectories()
         if wellbore_uuids:
@@ -40,6 +43,7 @@ class SmdaAccess:
     # pylint: disable=unused-argument
     async def get_wellbore_picks_for_pick_identifier(
         self,
+        field_identifier: str,
         pick_identifier: str,
         interpreter: str = "STAT",
         obs_no: Optional[int] = None,
