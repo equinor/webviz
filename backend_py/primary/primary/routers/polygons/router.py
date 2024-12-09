@@ -35,14 +35,13 @@ async def get_polygons_directory(
     polygons_dir = await access.get_polygons_directory_async()
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    field_identifiers = await case_inspector.get_field_identifiers_async()
     strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     smda_access: Union[SmdaAccess, DrogonSmdaAccess]
 
     if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         smda_access = DrogonSmdaAccess()
     else:
-        smda_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifiers[0])
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
     strat_units = await smda_access.get_stratigraphic_units(strat_column_identifier)
     sorted_stratigraphic_surfaces = sort_stratigraphic_names_by_hierarchy(strat_units)
 
