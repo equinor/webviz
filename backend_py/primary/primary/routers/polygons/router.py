@@ -11,6 +11,7 @@ from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_n
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.polygons_access import PolygonsAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
+from primary.utils.drogon import is_drogon_identifier
 
 from . import converters, schemas
 
@@ -38,7 +39,7 @@ async def get_polygons_directory(
     strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     smda_access: Union[SmdaAccess, DrogonSmdaAccess]
 
-    if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
+    if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         smda_access = DrogonSmdaAccess()
     else:
         smda_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifiers[0])
