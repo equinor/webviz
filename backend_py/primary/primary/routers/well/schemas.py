@@ -2,27 +2,6 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class StratigraphicUnit(BaseModel):
-    """
-    Stratigraphic unit from SMDA
-
-    Camel case attributes needed for esvIntersection component in front-end
-    """
-
-    identifier: str
-    top: str
-    base: str
-    stratUnitLevel: int
-    stratUnitType: str
-    topAge: int | float
-    baseAge: int | float
-    stratUnitParent: Optional[str] = None
-    colorR: int
-    colorG: int
-    colorB: int
-    lithologyType: int | float | str = "unknown"
-
-
 class WellboreHeader(BaseModel):
     wellboreUuid: str
     uniqueWellboreIdentifier: str
@@ -64,11 +43,6 @@ class WellborePick(BaseModel):
     confidence: Optional[str] = None
     depthReferencePoint: str
     mdUnit: str
-
-
-class WellborePicksAndStratigraphicUnits(BaseModel):
-    wellbore_picks: List[WellborePick] = []
-    stratigraphic_units: List[StratigraphicUnit] = []
 
 
 class WellboreCompletion(BaseModel):
