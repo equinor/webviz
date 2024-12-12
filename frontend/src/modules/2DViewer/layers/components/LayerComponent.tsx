@@ -8,7 +8,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { EditName } from "./EditName";
-import { RemoveButton } from "./RemoveButton";
+import { RemoveItemButton } from "./RemoveItemButton";
 import { SettingComponent } from "./SettingComponent";
 import { VisibilityToggle } from "./VisibilityToggle";
 
@@ -161,7 +161,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
     return (
         <>
             {makeStatus()}
-            <RemoveButton item={props.layer} />
+            <RemoveItemButton item={props.layer} />
         </>
     );
 }

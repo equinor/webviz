@@ -5,12 +5,13 @@ import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorScale } from "@modules/2DViewer/layers/ColorScale";
 import { DeltaSurface } from "@modules/2DViewer/layers/DeltaSurface";
 import { View } from "@modules/2DViewer/layers/View";
-import { LayerStatus } from "@modules/2DViewer/layers/delegates/LayerDelegate";
-import { BoundingBox, Group, Layer, instanceofGroup, instanceofLayer } from "@modules/2DViewer/layers/interfaces";
+import { GroupDelegate } from "@modules/2DViewer/layers/delegates/GroupDelegate";
+import { LayerColoringType, LayerStatus } from "@modules/2DViewer/layers/delegates/LayerDelegate";
+import { BoundingBox, Layer, instanceofGroup, instanceofLayer } from "@modules/2DViewer/layers/interfaces";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
-import { makeLayer } from "./layerFactory";
+import { makeDeckGlLayer } from "./layerFactory";
 
 export type DeckGlLayerWithPosition = {
     layer: DeckGlLayer;
@@ -34,7 +35,10 @@ export type DeckGlViewsAndLayers = {
     numLoadingLayers: number;
 };
 
-export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: number = 0): DeckGlViewsAndLayers {
+export function recursivelyMakeViewsAndLayers(
+    groupDelegate: GroupDelegate,
+    numCollectedLayers: number = 0
+): DeckGlViewsAndLayers {
     const collectedViews: DeckGlView[] = [];
     const collectedLayers: DeckGlLayerWithPosition[] = [];
     const collectedColorScales: ColorScaleWithId[] = [];
@@ -42,7 +46,7 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
     let collectedNumLoadingLayers = 0;
     let globalBoundingBox: BoundingBox | null = null;
 
-    const children = group.getGroupDelegate().getChildren();
+    const children = groupDelegate.getChildren();
 
     const maybeApplyBoundingBox = (boundingBox: BoundingBox | null) => {
         if (boundingBox) {
@@ -58,7 +62,7 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
 
         if (instanceofGroup(child) && !(child instanceof DeltaSurface)) {
             const { views, layers, boundingBox, colorScales, numLoadingLayers, errorMessages } =
-                recursivelyMakeViewsAndLayers(child, numCollectedLayers + collectedLayers.length);
+                recursivelyMakeViewsAndLayers(child.getGroupDelegate(), numCollectedLayers + collectedLayers.length);
 
             collectedErrorMessages.push(...errorMessages);
             collectedNumLoadingLayers += numLoadingLayers;
@@ -98,7 +102,7 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
 
             const colorScale = findColorScale(child);
 
-            const layer = makeLayer(child, colorScale?.colorScale ?? undefined);
+            const layer = makeDeckGlLayer(child, colorScale?.colorScale ?? undefined);
 
             if (!layer) {
                 continue;
@@ -125,7 +129,7 @@ export function recursivelyMakeViewsAndLayers(group: Group, numCollectedLayers: 
 }
 
 function findColorScale(layer: Layer<any, any>): { id: string; colorScale: ColorScaleWithName } | null {
-    if (layer.getLayerDelegate().getColoringType() !== "COLORSCALE") {
+    if (layer.getLayerDelegate().getColoringType() !== LayerColoringType.COLORSCALE) {
         return null;
     }
 

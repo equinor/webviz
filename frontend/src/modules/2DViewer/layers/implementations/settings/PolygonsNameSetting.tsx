@@ -10,7 +10,7 @@ import { Setting, SettingComponentProps } from "../../interfaces";
 
 type ValueType = string | null;
 
-export class GridName implements Setting<ValueType> {
+export class PolygonsNameSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -18,11 +18,11 @@ export class GridName implements Setting<ValueType> {
     }
 
     getType(): SettingType {
-        return SettingType.GRID_NAME;
+        return SettingType.POLYGONS_NAME;
     }
 
     getLabel(): string {
-        return "Grid name";
+        return "Polygons name";
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -30,7 +30,7 @@ export class GridName implements Setting<ValueType> {
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType>) {
+        return function FaultPolygons(props: SettingComponentProps<ValueType>) {
             const options: DropdownOption[] = props.availableValues.map((value) => {
                 return {
                     value: value.toString(),
@@ -51,4 +51,4 @@ export class GridName implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(GridName);
+SettingRegistry.registerSetting(PolygonsNameSetting);

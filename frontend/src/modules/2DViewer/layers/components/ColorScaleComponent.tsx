@@ -9,7 +9,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import { RemoveButton } from "./RemoveButton";
+import { RemoveItemButton } from "./RemoveItemButton";
 
 import { ColorScale } from "../ColorScale";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
@@ -63,7 +63,7 @@ export function ColorScaleComponent(props: ColorScaleComponentProps): React.Reac
                     <Icon data={color_palette} size={16} />
                 </div>
             }
-            endAdornment={<RemoveButton item={props.colorScale} />}
+            endAdornment={<RemoveItemButton item={props.colorScale} />}
         >
             <div className={resolveClassNames("p-2 text-sm border", { hidden: !isExpanded })}>
                 {makeColorScaleSelector()}

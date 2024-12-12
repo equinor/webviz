@@ -10,7 +10,7 @@ import { AvailableValuesType, Setting, SettingComponentProps } from "../../inter
 
 type ValueType = number | null;
 
-export class GridLayer implements Setting<ValueType> {
+export class GridLayerSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -99,4 +99,4 @@ export class GridLayer implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(GridLayer);
+SettingRegistry.registerSetting(GridLayerSetting);

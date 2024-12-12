@@ -2,7 +2,7 @@ import { LayerManager, LayerManagerTopic } from "./LayerManager";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { SettingTopic } from "./delegates/SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelegate";
-import { Item, Layer, SerializedSharedSetting, Setting, instanceofLayer } from "./interfaces";
+import { Item, Layer, SerializedSharedSetting, SerializedType, Setting, instanceofLayer } from "./interfaces";
 
 export class SharedSetting implements Item {
     private _wrappedSetting: Setting<any>;
@@ -100,7 +100,7 @@ export class SharedSetting implements Item {
     serializeState(): SerializedSharedSetting {
         return {
             ...this._itemDelegate.serializeState(),
-            type: "shared-setting",
+            type: SerializedType.SHARED_SETTING,
             wrappedSettingClass: this._wrappedSetting.constructor.name,
             settingType: this._wrappedSetting.getType(),
             value: this._wrappedSetting.getDelegate().serializeValue(),

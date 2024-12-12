@@ -4,7 +4,7 @@ import { ColorScale as ColorScaleImpl } from "@lib/utils/ColorScale";
 
 import { LayerManager, LayerManagerTopic } from "./LayerManager";
 import { ItemDelegate } from "./delegates/ItemDelegate";
-import { Item, SerializedColorScale } from "./interfaces";
+import { Item, SerializedColorScale, SerializedType } from "./interfaces";
 
 export class ColorScale implements Item {
     private _itemDelegate: ItemDelegate;
@@ -45,7 +45,7 @@ export class ColorScale implements Item {
     serializeState(): SerializedColorScale {
         return {
             ...this._itemDelegate.serializeState(),
-            type: "color-scale",
+            type: SerializedType.COLOR_SCALE,
             colorScale: this._colorScale.serialize(),
             userDefinedBoundaries: this._areBoundariesUserDefined,
         };

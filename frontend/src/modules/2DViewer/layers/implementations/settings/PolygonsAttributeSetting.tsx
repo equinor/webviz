@@ -10,7 +10,7 @@ import { Setting, SettingComponentProps } from "../../interfaces";
 
 type ValueType = string | null;
 
-export class SurfaceName implements Setting<ValueType> {
+export class PolygonsAttributeSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -18,11 +18,11 @@ export class SurfaceName implements Setting<ValueType> {
     }
 
     getType(): SettingType {
-        return SettingType.SURFACE_NAME;
+        return SettingType.POLYGONS_ATTRIBUTE;
     }
 
     getLabel(): string {
-        return "Surface name";
+        return "Polygons attribute";
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -51,4 +51,4 @@ export class SurfaceName implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(SurfaceName);
+SettingRegistry.registerSetting(PolygonsAttributeSetting);

@@ -4,9 +4,9 @@ import { EditName } from "./EditName";
 import { EmptyContent } from "./EmptyContent";
 import { ExpandCollapseAllButton } from "./ExpandCollapseAllButton";
 import { LayersActionGroup, LayersActions } from "./LayersActions";
-import { RemoveButton } from "./RemoveButton";
+import { RemoveItemButton } from "./RemoveItemButton";
 import { VisibilityToggle } from "./VisibilityToggle";
-import { makeComponent } from "./utils";
+import { makeSortableListItemComponent } from "./utils";
 
 import { GroupDelegateTopic } from "../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
@@ -42,7 +42,7 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
             );
         }
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
-        adornments.push(<RemoveButton key="remove" item={props.group} />);
+        adornments.push(<RemoveItemButton key="remove" item={props.group} />);
         return adornments;
     }
 
@@ -71,7 +71,7 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
             endAdornment={<>{makeEndAdornment()}</>}
             contentWhenEmpty={<EmptyContent>Drag a layer inside to add it to this view.</EmptyContent>}
         >
-            {children.map((child: Item) => makeComponent(child, props.actions, props.onActionClick))}
+            {children.map((child: Item) => makeSortableListItemComponent(child, props.actions, props.onActionClick))}
         </SortableListGroup>
     );
 }

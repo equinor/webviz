@@ -10,7 +10,7 @@ import { Setting, SettingComponentProps } from "../../interfaces";
 
 type ValueType = string | null;
 
-export class SurfaceAttribute implements Setting<ValueType> {
+export class GridNameSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -18,11 +18,11 @@ export class SurfaceAttribute implements Setting<ValueType> {
     }
 
     getType(): SettingType {
-        return SettingType.SURFACE_ATTRIBUTE;
+        return SettingType.GRID_NAME;
     }
 
     getLabel(): string {
-        return "Surface attribute";
+        return "Grid name";
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -51,4 +51,4 @@ export class SurfaceAttribute implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(SurfaceAttribute);
+SettingRegistry.registerSetting(GridNameSetting);

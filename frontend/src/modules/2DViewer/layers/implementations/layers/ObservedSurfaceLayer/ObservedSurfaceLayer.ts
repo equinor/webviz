@@ -12,7 +12,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { ObservedSurfaceContext } from "./ObservedSurfaceContext";
+import { ObservedSurfaceSettingsContext } from "./ObservedSurfaceSettingsContext";
 import { ObservedSurfaceSettings } from "./types";
 
 import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
@@ -29,7 +29,7 @@ export class ObservedSurfaceLayer
         this._layerDelegate = new LayerDelegate(
             this,
             layerManager,
-            new ObservedSurfaceContext(layerManager),
+            new ObservedSurfaceSettingsContext(layerManager),
             LayerColoringType.COLORSCALE
         );
     }
@@ -75,7 +75,7 @@ export class ObservedSurfaceLayer
         return [data.value_min, data.value_max];
     }
 
-    fechData(queryClient: QueryClient): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    fetchData(queryClient: QueryClient): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 

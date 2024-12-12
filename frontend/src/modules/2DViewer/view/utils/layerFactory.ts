@@ -22,7 +22,7 @@ import { Layer as LayerInterface } from "../../layers/interfaces";
 import { AdvancedWellsLayer } from "../customDeckGlLayers/AdvancedWellsLayer";
 import { WellBorePickLayerData, WellborePicksLayer } from "../customDeckGlLayers/WellborePicksLayer";
 
-export function makeLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
+export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
     const data = layer.getLayerDelegate().getData();
 
     if (colorScale === undefined) {
@@ -101,32 +101,6 @@ function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string):
     });
 }
 
-/*
-function createMapFloatLayer(layerData: SurfaceDataFloat_trans, id: string): MapLayer {
-    return new MapLayer({
-        id: id,
-        meshData: layerData.valuesFloat32Arr,
-        typedArraySupport: true,
-        frame: {
-            origin: [layerData.surface_def.origin_utm_x, layerData.surface_def.origin_utm_y],
-            count: [layerData.surface_def.npoints_x, layerData.surface_def.npoints_y],
-            increment: [layerData.surface_def.inc_x, layerData.surface_def.inc_y],
-            rotDeg: layerData.surface_def.rot_deg,
-        },
-        contours: [0, 100],
-        isContoursDepth: true,
-        gridLines: false,
-        material: true,
-        smoothShading: true,
-        colorMapName: "Physics",
-        parameters: {
-            depthTest: false,
-        },
-        depthTest: false,
-    });
-}
-*/
-
 function createMapImageLayer(
     layerData: SurfaceDataPng_api,
     id: string,
@@ -198,7 +172,7 @@ function polygonsToGeojson(polygons: PolygonData_api): Feature<Geometry, GeoJson
     return data;
 }
 
-export function makeWellsLayer(
+function makeWellsLayer(
     fieldWellboreTrajectoriesData: WellboreTrajectory_api[],
     id: string,
     selectedWellboreUuid: string | null
@@ -251,7 +225,7 @@ export function makeWellsLayer(
     return wellsLayer;
 }
 
-export function wellTrajectoryToGeojson(
+function wellTrajectoryToGeojson(
     wellTrajectory: WellboreTrajectory_api,
     selectedWellboreUuid: string | null
 ): Record<string, unknown> {
@@ -309,7 +283,7 @@ type WorkingGrid3dLayer = {
     ZIncreasingDownwards: boolean;
 } & Layer;
 
-export function makeGrid3DLayer(
+function makeGrid3DLayer(
     id: string,
     gridSurfaceData: GridSurface_trans,
     gridParameterData: GridMappedProperty_trans,

@@ -13,7 +13,7 @@ export type SensitivityNameCasePair = {
     sensitivityCase: string;
 };
 
-export class Sensitivity implements Setting<SensitivityNameCasePair | null> {
+export class SensitivitySetting implements Setting<SensitivityNameCasePair | null> {
     private _delegate: SettingDelegate<SensitivityNameCasePair | null>;
 
     constructor() {
@@ -136,4 +136,4 @@ function fixupSensitivityCase(currentSensitivityCase: string | null, availableSe
     return currentSensitivityCase;
 }
 
-SettingRegistry.registerSetting(Sensitivity as unknown as new () => Setting<SensitivityNameCasePair | null>);
+SettingRegistry.registerSetting(SensitivitySetting);

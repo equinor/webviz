@@ -13,7 +13,7 @@ import { AvailableValuesType, Setting, SettingComponentProps } from "../../inter
 
 type ValueType = WellboreHeader_api[] | null;
 
-export class DrilledWellbores implements Setting<ValueType> {
+export class DrilledWellboresSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -105,31 +105,4 @@ export class DrilledWellbores implements Setting<ValueType> {
     }
 }
 
-type WellboreHeaderSelectorProps = {
-    wellboreHeaders: WellboreHeader_api[];
-    selectedWellboreUuids: string[];
-    onChange: (selectedWellboreUuids: string[]) => void;
-};
-
-export function WellboreHeaderSelector(props: WellboreHeaderSelectorProps): React.ReactNode {
-    const options: SelectOption[] = props.wellboreHeaders.map((ident) => ({
-        value: ident.wellboreUuid,
-        label: ident.uniqueWellboreIdentifier,
-    }));
-
-    const handleChange = (selectedUuids: string[]) => {
-        props.onChange(selectedUuids);
-    };
-
-    return (
-        <Select
-            options={options}
-            value={props.selectedWellboreUuids}
-            onChange={handleChange}
-            multiple={true}
-            size={10}
-        />
-    );
-}
-
-SettingRegistry.registerSetting(DrilledWellbores);
+SettingRegistry.registerSetting(DrilledWellboresSetting);

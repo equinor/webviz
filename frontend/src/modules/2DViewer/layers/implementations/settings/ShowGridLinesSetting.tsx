@@ -10,7 +10,7 @@ import { Setting, SettingComponentProps } from "../../interfaces";
 
 type ValueType = boolean;
 
-export class ShowGridLines implements Setting<ValueType> {
+export class ShowGridLinesSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -44,4 +44,4 @@ export class ShowGridLines implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(ShowGridLines);
+SettingRegistry.registerSetting(ShowGridLinesSetting);

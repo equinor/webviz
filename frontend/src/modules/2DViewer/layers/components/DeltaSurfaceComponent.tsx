@@ -4,9 +4,9 @@ import { EditName } from "./EditName";
 import { EmptyContent } from "./EmptyContent";
 import { ExpandCollapseAllButton } from "./ExpandCollapseAllButton";
 import { LayersActionGroup, LayersActions } from "./LayersActions";
-import { RemoveButton } from "./RemoveButton";
+import { RemoveItemButton } from "./RemoveItemButton";
 import { VisibilityToggle } from "./VisibilityToggle";
-import { makeComponent } from "./utils";
+import { makeSortableListItemComponent } from "./utils";
 
 import { DeltaSurface } from "../DeltaSurface";
 import { GroupDelegateTopic } from "../delegates/GroupDelegate";
@@ -46,7 +46,7 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
             );
         }
         adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.deltaSurface} />);
-        adornment.push(<RemoveButton key="remove" item={props.deltaSurface} />);
+        adornment.push(<RemoveItemButton key="remove" item={props.deltaSurface} />);
         return adornment;
     }
 
@@ -72,7 +72,7 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
             }
             expanded={isExpanded}
         >
-            {children.map((child: Item) => makeComponent(child, props.actions, props.onActionClick))}
+            {children.map((child: Item) => makeSortableListItemComponent(child, props.actions, props.onActionClick))}
         </SortableListGroup>
     );
 }

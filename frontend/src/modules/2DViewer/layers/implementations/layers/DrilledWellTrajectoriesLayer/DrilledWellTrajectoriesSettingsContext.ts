@@ -8,10 +8,10 @@ import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/utils";
 import { DrilledWellTrajectoriesSettings } from "./types";
 
 import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
-import { DrilledWellbores } from "../../settings/DrilledWellbores";
-import { Ensemble } from "../../settings/Ensemble";
+import { DrilledWellboresSetting } from "../../settings/DrilledWellboresSetting";
+import { EnsembleSetting } from "../../settings/EnsembleSetting";
 
-export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWellTrajectoriesSettings> {
+export class DrilledWellTrajectoriesSettingsContext implements SettingsContext<DrilledWellTrajectoriesSettings> {
     private _contextDelegate: SettingsContextDelegate<DrilledWellTrajectoriesSettings>;
 
     constructor(layerManager: LayerManager) {
@@ -19,8 +19,8 @@ export class DrilledWellTrajectoriesContext implements SettingsContext<DrilledWe
             DrilledWellTrajectoriesSettings,
             keyof DrilledWellTrajectoriesSettings
         >(this, layerManager, {
-            [SettingType.ENSEMBLE]: new Ensemble(),
-            [SettingType.SMDA_WELLBORE_HEADERS]: new DrilledWellbores(),
+            [SettingType.ENSEMBLE]: new EnsembleSetting(),
+            [SettingType.SMDA_WELLBORE_HEADERS]: new DrilledWellboresSetting(),
         });
     }
 

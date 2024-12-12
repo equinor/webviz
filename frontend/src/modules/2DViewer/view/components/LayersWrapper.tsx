@@ -13,7 +13,7 @@ import { BoundingBox } from "@modules/2DViewer/layers/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
-import { ViewportType } from "@webviz/subsurface-viewer";
+import { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
 import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
@@ -52,7 +52,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     let numLoadingLayers = 0;
 
-    const viewsAndLayers = recursivelyMakeViewsAndLayers(props.layerManager);
+    const viewsAndLayers = recursivelyMakeViewsAndLayers(props.layerManager.getGroupDelegate());
 
     numCols = Math.ceil(Math.sqrt(viewsAndLayers.views.length));
     numRows = Math.ceil(viewsAndLayers.views.length / numCols);
@@ -129,7 +129,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         statusWriter.addError(message);
     }
 
-    let bounds: [number, number, number, number] | undefined = undefined;
+    let bounds: BoundingBox2D | undefined = undefined;
     if (prevBoundingBox) {
         bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
     }

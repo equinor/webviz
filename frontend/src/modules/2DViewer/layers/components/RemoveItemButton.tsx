@@ -4,11 +4,11 @@ import { Delete } from "@mui/icons-material";
 
 import { Item, instanceofLayer } from "../interfaces";
 
-export type RemoveButtonProps = {
+export type RemoveItemButtonProps = {
     item: Item;
 };
 
-export function RemoveButton(props: RemoveButtonProps): React.ReactNode {
+export function RemoveItemButton(props: RemoveItemButtonProps): React.ReactNode {
     function handleRemove() {
         const parentGroup = props.item.getItemDelegate().getParentGroup();
         if (parentGroup) {

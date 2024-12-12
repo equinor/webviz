@@ -1,7 +1,7 @@
 import { LayerManager } from "./LayerManager";
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
-import { Group, SerializedSettingsGroup } from "./interfaces";
+import { Group, SerializedSettingsGroup, SerializedType } from "./interfaces";
 
 export class SettingsGroup implements Group {
     private _itemDelegate: ItemDelegate;
@@ -24,7 +24,7 @@ export class SettingsGroup implements Group {
     serializeState(): SerializedSettingsGroup {
         return {
             ...this._itemDelegate.serializeState(),
-            type: "settings-group",
+            type: SerializedType.SETTINGS_GROUP,
             children: this._groupDelegate.serializeChildren(),
         };
     }

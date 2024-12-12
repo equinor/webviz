@@ -19,6 +19,10 @@ export type ItemDelegatePayloads = {
     [ItemDelegateTopic.EXPANDED]: boolean;
 };
 
+/*
+ * The ItemDelegate class is responsible for managing the basic properties of an item.
+ * It provides methods for setting and getting the id, parent group, name, visibility, and expansion state of the item.
+ */
 export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDelegatePayloads> {
     private _id: string;
     private _name: string;

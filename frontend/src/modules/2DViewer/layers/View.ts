@@ -1,7 +1,7 @@
 import { LayerManager } from "./LayerManager";
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
-import { Group, SerializedView } from "./interfaces";
+import { Group, SerializedType, SerializedView } from "./interfaces";
 
 export class View implements Group {
     private _itemDelegate: ItemDelegate;
@@ -24,7 +24,7 @@ export class View implements Group {
     serializeState(): SerializedView {
         return {
             ...this._itemDelegate.serializeState(),
-            type: "view",
+            type: SerializedType.VIEW,
             color: this._groupDelegate.getColor() ?? "",
             children: this._groupDelegate.serializeChildren(),
         };

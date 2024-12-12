@@ -9,7 +9,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { DrilledWellborePicksContext } from "./DrilledWellborePicksContext";
+import { DrilledWellborePicksSettingsContext } from "./DrilledWellborePicksSettingsContext";
 import { DrilledWellborePicksSettings } from "./types";
 
 import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
@@ -24,7 +24,7 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
         this._layerDelegate = new LayerDelegate(
             this,
             layerManager,
-            new DrilledWellborePicksContext(layerManager),
+            new DrilledWellborePicksSettingsContext(layerManager),
             LayerColoringType.NONE
         );
     }
@@ -74,7 +74,7 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
         return bbox;
     }
 
-    fechData(queryClient: QueryClient): Promise<WellborePick_api[]> {
+    fetchData(queryClient: QueryClient): Promise<WellborePick_api[]> {
         const workbenchSession = this.getSettingsContext().getDelegate().getLayerManager().getWorkbenchSession();
         const ensembleSet = workbenchSession.getEnsembleSet();
         const settings = this.getSettingsContext().getDelegate().getSettings();

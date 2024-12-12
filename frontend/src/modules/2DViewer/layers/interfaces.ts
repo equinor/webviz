@@ -12,14 +12,15 @@ import { SettingDelegate } from "./delegates/SettingDelegate";
 import { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
 import { SettingType } from "./implementations/settings/settingsTypes";
 
-export type SerializedType =
-    | "layer-manager"
-    | "view"
-    | "layer"
-    | "settings-group"
-    | "color-scale"
-    | "delta-surface"
-    | "shared-setting";
+export enum SerializedType {
+    LAYER_MANAGER = "layer-manager",
+    VIEW = "view",
+    LAYER = "layer",
+    SETTINGS_GROUP = "settings-group",
+    COLOR_SCALE = "color-scale",
+    DELTA_SURFACE = "delta-surface",
+    SHARED_SETTING = "shared-setting",
+}
 
 export interface SerializedItem {
     id: string;
@@ -32,42 +33,42 @@ export interface SerializedItem {
 export type SerializedSettingsState<TSettings> = Record<keyof TSettings, string>;
 
 export interface SerializedLayer<TSettings> extends SerializedItem {
-    type: "layer";
+    type: SerializedType.LAYER;
     layerClass: string;
     settings: SerializedSettingsState<TSettings>;
 }
 
 export interface SerializedView extends SerializedItem {
-    type: "view";
+    type: SerializedType.VIEW;
     color: string;
     children: SerializedItem[];
 }
 
 export interface SerializedSettingsGroup extends SerializedItem {
-    type: "settings-group";
+    type: SerializedType.SETTINGS_GROUP;
     children: SerializedItem[];
 }
 
 export interface SerializedColorScale extends SerializedItem {
-    type: "color-scale";
+    type: SerializedType.COLOR_SCALE;
     colorScale: ColorScaleSerialization;
     userDefinedBoundaries: boolean;
 }
 
 export interface SerializedSharedSetting extends SerializedItem {
-    type: "shared-setting";
+    type: SerializedType.SHARED_SETTING;
     settingType: SettingType;
     wrappedSettingClass: string;
     value: string;
 }
 
 export interface SerializedLayerManager extends SerializedItem {
-    type: "layer-manager";
+    type: SerializedType.LAYER_MANAGER;
     children: SerializedItem[];
 }
 
 export interface SerializedDeltaSurface extends SerializedItem {
-    type: "delta-surface";
+    type: SerializedType.DELTA_SURFACE;
     children: SerializedItem[];
 }
 
@@ -111,7 +112,7 @@ export interface FetchDataFunction<TSettings extends Settings, TKey extends keyo
 export interface Layer<TSettings extends Settings, TData> extends Item {
     getLayerDelegate(): LayerDelegate<TSettings, TData>;
     doSettingsChangesRequireDataRefetch(prevSettings: TSettings, newSettings: TSettings): boolean;
-    fechData(queryClient: QueryClient): Promise<TData>;
+    fetchData(queryClient: QueryClient): Promise<TData>;
     makeBoundingBox?(): BoundingBox | null;
     makeValueRange?(): [number, number] | null;
 }
@@ -120,7 +121,7 @@ export function instanceofLayer(item: Item): item is Layer<Settings, any> {
     return (
         (item as Layer<Settings, any>).getItemDelegate !== undefined &&
         (item as Layer<Settings, any>).doSettingsChangesRequireDataRefetch !== undefined &&
-        (item as Layer<Settings, any>).fechData !== undefined
+        (item as Layer<Settings, any>).fetchData !== undefined
     );
 }
 

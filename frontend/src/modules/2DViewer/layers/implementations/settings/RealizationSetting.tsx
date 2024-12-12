@@ -8,41 +8,43 @@ import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
 
-type ValueType = string | null;
-
-export class PolygonsName implements Setting<ValueType> {
-    private _delegate: SettingDelegate<ValueType>;
+export class RealizationSetting implements Setting<number | null> {
+    private _delegate: SettingDelegate<number | null>;
 
     constructor() {
-        this._delegate = new SettingDelegate<ValueType | null>(null, this);
+        this._delegate = new SettingDelegate<number | null>(null, this);
     }
 
     getType(): SettingType {
-        return SettingType.POLYGONS_NAME;
+        return SettingType.REALIZATION;
     }
 
     getLabel(): string {
-        return "Polygons name";
+        return "Realization";
     }
 
-    getDelegate(): SettingDelegate<ValueType> {
+    getDelegate(): SettingDelegate<number | null> {
         return this._delegate;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function FaultPolygons(props: SettingComponentProps<ValueType>) {
+    makeComponent(): (props: SettingComponentProps<number | null>) => React.ReactNode {
+        return function Realization(props: SettingComponentProps<number | null>) {
+            function handleSelectionChange(selectedValue: string) {
+                const newValue = parseInt(selectedValue);
+                props.onValueChange(newValue);
+            }
+
             const options: DropdownOption[] = props.availableValues.map((value) => {
                 return {
                     value: value.toString(),
                     label: value === null ? "None" : value.toString(),
                 };
             });
-
             return (
                 <Dropdown
                     options={options}
                     value={!props.isOverridden ? props.value?.toString() : props.overriddenValue?.toString()}
-                    onChange={props.onValueChange}
+                    onChange={handleSelectionChange}
                     disabled={props.isOverridden}
                     showArrows
                 />
@@ -51,4 +53,4 @@ export class PolygonsName implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(PolygonsName);
+SettingRegistry.registerSetting(RealizationSetting);

@@ -28,6 +28,12 @@ export type SettingTopicPayloads<TValue> = {
     [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
 };
 
+/*
+ * The SettingDelegate class is responsible for managing a setting.
+ *
+ * It provides a method for setting available values, which are used to validate the setting value or applying a fixup if the value is invalid.
+ * It provides methods for setting and getting the value and its states, checking if the value is valid, and setting the value as overridden or persisted.
+ */
 export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, SettingTopicPayloads<TValue>> {
     private _id: string;
     private _owner: Setting<TValue>;

@@ -4,8 +4,8 @@ import { SettingsApplications } from "@mui/icons-material";
 import { EmptyContent } from "./EmptyContent";
 import { ExpandCollapseAllButton } from "./ExpandCollapseAllButton";
 import { LayersActionGroup, LayersActions } from "./LayersActions";
-import { RemoveButton } from "./RemoveButton";
-import { makeComponent } from "./utils";
+import { RemoveItemButton } from "./RemoveItemButton";
+import { makeSortableListItemComponent } from "./utils";
 
 import { GroupDelegateTopic } from "../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
@@ -41,7 +41,7 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
             );
         }
         adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
-        adornment.push(<RemoveButton key="remove" item={props.group} />);
+        adornment.push(<RemoveItemButton key="remove" item={props.group} />);
         return adornment;
     }
 
@@ -67,7 +67,7 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
             }
             expanded={isExpanded}
         >
-            {children.map((child: Item) => makeComponent(child, props.actions, props.onActionClick))}
+            {children.map((child: Item) => makeSortableListItemComponent(child, props.actions, props.onActionClick))}
         </SortableListGroup>
     );
 }

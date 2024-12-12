@@ -8,15 +8,15 @@ import { cancelQueryOnAbort } from "@modules/2DViewer/layers/utils";
 import { RealizationGridSettings } from "./types";
 
 import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
-import { Ensemble } from "../../settings/Ensemble";
-import { GridAttribute } from "../../settings/GridAttribute";
-import { GridLayer } from "../../settings/GridLayer";
-import { GridName } from "../../settings/GridName";
-import { Realization } from "../../settings/Realization";
-import { ShowGridLines } from "../../settings/ShowGridLines";
-import { TimeOrInterval } from "../../settings/TimeOrInterval";
+import { EnsembleSetting } from "../../settings/EnsembleSetting";
+import { GridAttributeSetting } from "../../settings/GridAttributeSetting";
+import { GridLayerSetting } from "../../settings/GridLayerSetting";
+import { GridNameSetting } from "../../settings/GridNameSetting";
+import { RealizationSetting } from "../../settings/RealizationSetting";
+import { ShowGridLinesSetting } from "../../settings/ShowGridLinesSetting";
+import { TimeOrIntervalSetting } from "../../settings/TimeOrIntervalSetting";
 
-export class RealizationGridContext implements SettingsContext<RealizationGridSettings> {
+export class RealizationGridSettingsContext implements SettingsContext<RealizationGridSettings> {
     private _contextDelegate: SettingsContextDelegate<RealizationGridSettings>;
 
     constructor(layerManager: LayerManager) {
@@ -24,13 +24,13 @@ export class RealizationGridContext implements SettingsContext<RealizationGridSe
             this,
             layerManager,
             {
-                [SettingType.ENSEMBLE]: new Ensemble(),
-                [SettingType.REALIZATION]: new Realization(),
-                [SettingType.GRID_NAME]: new GridName(),
-                [SettingType.GRID_ATTRIBUTE]: new GridAttribute(),
-                [SettingType.GRID_LAYER]: new GridLayer(),
-                [SettingType.TIME_OR_INTERVAL]: new TimeOrInterval(),
-                [SettingType.SHOW_GRID_LINES]: new ShowGridLines(),
+                [SettingType.ENSEMBLE]: new EnsembleSetting(),
+                [SettingType.REALIZATION]: new RealizationSetting(),
+                [SettingType.GRID_NAME]: new GridNameSetting(),
+                [SettingType.GRID_ATTRIBUTE]: new GridAttributeSetting(),
+                [SettingType.GRID_LAYER]: new GridLayerSetting(),
+                [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
+                [SettingType.SHOW_GRID_LINES]: new ShowGridLinesSetting(),
             }
         );
     }

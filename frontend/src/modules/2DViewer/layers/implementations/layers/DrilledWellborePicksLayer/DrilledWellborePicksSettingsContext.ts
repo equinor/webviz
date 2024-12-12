@@ -8,11 +8,11 @@ import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/utils";
 import { DrilledWellborePicksSettings } from "./types";
 
 import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
-import { DrilledWellbores } from "../../settings/DrilledWellbores";
-import { Ensemble } from "../../settings/Ensemble";
-import { SurfaceName } from "../../settings/SurfaceName";
+import { DrilledWellboresSetting } from "../../settings/DrilledWellboresSetting";
+import { EnsembleSetting } from "../../settings/EnsembleSetting";
+import { SurfaceNameSetting } from "../../settings/SurfaceNameSetting";
 
-export class DrilledWellborePicksContext implements SettingsContext<DrilledWellborePicksSettings> {
+export class DrilledWellborePicksSettingsContext implements SettingsContext<DrilledWellborePicksSettings> {
     private _contextDelegate: SettingsContextDelegate<DrilledWellborePicksSettings>;
 
     constructor(layerManager: LayerManager) {
@@ -20,9 +20,9 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
             DrilledWellborePicksSettings,
             keyof DrilledWellborePicksSettings
         >(this, layerManager, {
-            [SettingType.ENSEMBLE]: new Ensemble(),
-            [SettingType.SMDA_WELLBORE_HEADERS]: new DrilledWellbores(),
-            [SettingType.SURFACE_NAME]: new SurfaceName(),
+            [SettingType.ENSEMBLE]: new EnsembleSetting(),
+            [SettingType.SMDA_WELLBORE_HEADERS]: new DrilledWellboresSetting(),
+            [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),
         });
     }
 
@@ -99,14 +99,13 @@ export class DrilledWellborePicksContext implements SettingsContext<DrilledWellb
                 return null;
             }
 
-            const fieldIdentifier = ensemble.getFieldIdentifier();
             const stratColumnIdentifier = ensemble.getStratigraphicColumnIdentifier();
 
             return await queryClient.fetchQuery({
-                queryKey: ["getPickStratigraphy", fieldIdentifier, stratColumnIdentifier],
+                queryKey: ["getPickStratigraphy", stratColumnIdentifier],
                 queryFn: () =>
                     cancelPromiseOnAbort(
-                        apiService.well.getWellborePickIdentifiers(fieldIdentifier, stratColumnIdentifier),
+                        apiService.well.getWellborePickIdentifiers(stratColumnIdentifier),
                         abortSignal
                     ),
                 staleTime: STALE_TIME,

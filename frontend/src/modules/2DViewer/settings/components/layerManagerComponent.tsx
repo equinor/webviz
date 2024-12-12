@@ -19,7 +19,7 @@ import { SharedSetting } from "@modules/2DViewer/layers/SharedSetting";
 import { View } from "@modules/2DViewer/layers/View";
 import { ExpandCollapseAllButton } from "@modules/2DViewer/layers/components/ExpandCollapseAllButton";
 import { LayersActionGroup, LayersActions } from "@modules/2DViewer/layers/components/LayersActions";
-import { makeComponent } from "@modules/2DViewer/layers/components/utils";
+import { makeSortableListItemComponent } from "@modules/2DViewer/layers/components/utils";
 import { GroupDelegateTopic } from "@modules/2DViewer/layers/delegates/GroupDelegate";
 import { usePublishSubscribeTopicValue } from "@modules/2DViewer/layers/delegates/PublishSubscribeDelegate";
 import { DrilledWellTrajectoriesLayer } from "@modules/2DViewer/layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
@@ -29,11 +29,11 @@ import { RealizationGridLayer } from "@modules/2DViewer/layers/implementations/l
 import { RealizationPolygonsLayer } from "@modules/2DViewer/layers/implementations/layers/RealizationPolygonsLayer/RealizationPolygonsLayer";
 import { RealizationSurfaceLayer } from "@modules/2DViewer/layers/implementations/layers/RealizationSurfaceLayer/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/layers/implementations/layers/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
-import { Ensemble } from "@modules/2DViewer/layers/implementations/settings/Ensemble";
-import { Realization } from "@modules/2DViewer/layers/implementations/settings/Realization";
-import { SurfaceAttribute } from "@modules/2DViewer/layers/implementations/settings/SurfaceAttribute";
-import { SurfaceName } from "@modules/2DViewer/layers/implementations/settings/SurfaceName";
-import { TimeOrInterval } from "@modules/2DViewer/layers/implementations/settings/TimeOrInterval";
+import { EnsembleSetting } from "@modules/2DViewer/layers/implementations/settings/EnsembleSetting";
+import { RealizationSetting } from "@modules/2DViewer/layers/implementations/settings/RealizationSetting";
+import { SurfaceAttributeSetting } from "@modules/2DViewer/layers/implementations/settings/SurfaceAttributeSetting";
+import { SurfaceNameSetting } from "@modules/2DViewer/layers/implementations/settings/SurfaceNameSetting";
+import { TimeOrIntervalSetting } from "@modules/2DViewer/layers/implementations/settings/TimeOrIntervalSetting";
 import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/2DViewer/layers/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { Dropdown } from "@mui/base";
@@ -116,19 +116,19 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
                 groupDelegate.insertChild(new RealizationGridLayer(props.layerManager), numSharedSettings);
                 return;
             case "ensemble":
-                groupDelegate.prependChild(new SharedSetting(new Ensemble(), props.layerManager));
+                groupDelegate.prependChild(new SharedSetting(new EnsembleSetting(), props.layerManager));
                 return;
             case "realization":
-                groupDelegate.prependChild(new SharedSetting(new Realization(), props.layerManager));
+                groupDelegate.prependChild(new SharedSetting(new RealizationSetting(), props.layerManager));
                 return;
             case "surface-name":
-                groupDelegate.prependChild(new SharedSetting(new SurfaceName(), props.layerManager));
+                groupDelegate.prependChild(new SharedSetting(new SurfaceNameSetting(), props.layerManager));
                 return;
             case "surface-attribute":
-                groupDelegate.prependChild(new SharedSetting(new SurfaceAttribute(), props.layerManager));
+                groupDelegate.prependChild(new SharedSetting(new SurfaceAttributeSetting(), props.layerManager));
                 return;
             case "Date":
-                groupDelegate.prependChild(new SharedSetting(new TimeOrInterval(), props.layerManager));
+                groupDelegate.prependChild(new SharedSetting(new TimeOrIntervalSetting(), props.layerManager));
                 return;
         }
     }
@@ -276,7 +276,9 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
                             </div>
                         }
                     >
-                        {items.map((item: Item) => makeComponent(item, LAYER_ACTIONS, handleLayerAction))}
+                        {items.map((item: Item) =>
+                            makeSortableListItemComponent(item, LAYER_ACTIONS, handleLayerAction)
+                        )}
                     </SortableList>
                 </div>
             </div>

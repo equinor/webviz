@@ -19,6 +19,11 @@ export type GroupDelegateTopicPayloads = {
     [GroupDelegateTopic.CHILDREN_EXPANSION_STATES]: { [id: string]: boolean };
 };
 
+/*
+ * The GroupDelegate class is responsible for managing the children of a group item.
+ * It provides methods for adding, removing, and moving children, as well as for serializing and deserializing children.
+ * The class also provides methods for finding children and descendants based on a predicate.
+ */
 export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, GroupDelegateTopicPayloads> {
     private _owner: Item | null;
     private _color: string | null = null;

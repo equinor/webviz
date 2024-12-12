@@ -10,7 +10,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { RealizationPolygonsContext } from "./RealizationPolygonsContext";
+import { RealizationPolygonsSettingsContext } from "./RealizationPolygonsSettingsContext";
 import { RealizationPolygonsSettings } from "./types";
 
 import { BoundingBox, Layer, SerializedLayer } from "../../../interfaces";
@@ -24,7 +24,7 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
         this._layerDelegate = new LayerDelegate(
             this,
             layerManager,
-            new RealizationPolygonsContext(layerManager),
+            new RealizationPolygonsSettingsContext(layerManager),
             LayerColoringType.NONE
         );
     }
@@ -78,7 +78,7 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
         return bbox;
     }
 
-    fechData(queryClient: QueryClient): Promise<PolygonData_api[]> {
+    fetchData(queryClient: QueryClient): Promise<PolygonData_api[]> {
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const realizationNum = settings[SettingType.REALIZATION].getDelegate().getValue();

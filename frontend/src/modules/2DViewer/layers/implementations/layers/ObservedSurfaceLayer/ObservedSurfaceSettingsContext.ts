@@ -6,69 +6,56 @@ import { SettingType } from "@modules/2DViewer/layers/implementations/settings/s
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/utils";
 
-import { RealizationSurfaceSettings } from "./types";
+import { ObservedSurfaceSettings } from "./types";
 
 import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
-import { Ensemble } from "../../settings/Ensemble";
-import { Realization } from "../../settings/Realization";
-import { SurfaceAttribute } from "../../settings/SurfaceAttribute";
-import { SurfaceName } from "../../settings/SurfaceName";
-import { TimeOrInterval } from "../../settings/TimeOrInterval";
+import { EnsembleSetting } from "../../settings/EnsembleSetting";
+import { SurfaceAttributeSetting } from "../../settings/SurfaceAttributeSetting";
+import { SurfaceNameSetting } from "../../settings/SurfaceNameSetting";
+import { TimeOrIntervalSetting } from "../../settings/TimeOrIntervalSetting";
 
-export class RealizationSurfaceContext implements SettingsContext<RealizationSurfaceSettings> {
-    private _contextDelegate: SettingsContextDelegate<RealizationSurfaceSettings>;
+export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedSurfaceSettings> {
+    private _contextDelegate: SettingsContextDelegate<ObservedSurfaceSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<
-            RealizationSurfaceSettings,
-            keyof RealizationSurfaceSettings
-        >(this, layerManager, {
-            [SettingType.ENSEMBLE]: new Ensemble(),
-            [SettingType.REALIZATION]: new Realization(),
-            [SettingType.SURFACE_ATTRIBUTE]: new SurfaceAttribute(),
-            [SettingType.SURFACE_NAME]: new SurfaceName(),
-            [SettingType.TIME_OR_INTERVAL]: new TimeOrInterval(),
-        });
+        this._contextDelegate = new SettingsContextDelegate<ObservedSurfaceSettings, keyof ObservedSurfaceSettings>(
+            this,
+            layerManager,
+            {
+                [SettingType.ENSEMBLE]: new EnsembleSetting(),
+                [SettingType.SURFACE_ATTRIBUTE]: new SurfaceAttributeSetting(),
+                [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),
+                [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
+            }
+        );
     }
 
-    getDelegate(): SettingsContextDelegate<RealizationSurfaceSettings> {
+    getDelegate(): SettingsContextDelegate<ObservedSurfaceSettings> {
         return this._contextDelegate;
     }
 
     getSettings() {
         return this._contextDelegate.getSettings();
     }
-
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        workbenchSession,
         queryClient,
-    }: DefineDependenciesArgs<RealizationSurfaceSettings>) {
+    }: DefineDependenciesArgs<ObservedSurfaceSettings>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembles = getGlobalSetting("ensembles");
+            const ensembleSet = workbenchSession.getEnsembleSet();
 
-            const ensembleIdents = ensembles
+            const ensembleIdents = ensembleSet
+                .getEnsembleArr()
                 .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
                 .map((ensemble) => ensemble.getIdent());
 
             return ensembleIdents;
         });
 
-        availableSettingsUpdater(SettingType.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
-            const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
-
-            if (!ensembleIdent) {
-                return [];
-            }
-
-            const realizations = realizationFilterFunc(ensembleIdent);
-
-            return [...realizations];
-        });
-
-        const realizationSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+        const observedSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
 
             if (!ensembleIdent) {
@@ -76,13 +63,10 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
             }
 
             return await queryClient.fetchQuery({
-                queryKey: ["getRealizationSurfacesMetadata", ensembleIdent],
+                queryKey: ["getObservedSurfacesMetadata", ensembleIdent.getCaseUuid()],
                 queryFn: () =>
                     cancelPromiseOnAbort(
-                        apiService.surface.getRealizationSurfacesMetadata(
-                            ensembleIdent.getCaseUuid(),
-                            ensembleIdent.getEnsembleName()
-                        ),
+                        apiService.surface.getObservedSurfacesMetadata(ensembleIdent.getCaseUuid()),
                         abortSignal
                     ),
                 staleTime: STALE_TIME,
@@ -91,7 +75,7 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
         });
 
         availableSettingsUpdater(SettingType.SURFACE_ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(realizationSurfaceMetadataDep);
+            const data = getHelperDependency(observedSurfaceMetadataDep);
 
             if (!data) {
                 return [];
@@ -106,7 +90,7 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
 
         availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
-            const data = getHelperDependency(realizationSurfaceMetadataDep);
+            const data = getHelperDependency(observedSurfaceMetadataDep);
 
             if (!attribute || !data) {
                 return [];
@@ -126,7 +110,7 @@ export class RealizationSurfaceContext implements SettingsContext<RealizationSur
         availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
             const surfaceName = getLocalSetting(SettingType.SURFACE_NAME);
-            const data = getHelperDependency(realizationSurfaceMetadataDep);
+            const data = getHelperDependency(observedSurfaceMetadataDep);
 
             if (!attribute || !surfaceName || !data) {
                 return [];

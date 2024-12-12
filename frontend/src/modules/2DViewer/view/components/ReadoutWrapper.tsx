@@ -2,7 +2,7 @@ import React from "react";
 
 import { Layer as DeckGlLayer } from "@deck.gl/core";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
-import { LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
+import { BoundingBox2D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
@@ -11,7 +11,7 @@ export type ReadooutWrapperProps = {
     views: ViewsType;
     viewportAnnotations: React.ReactNode[];
     layers: DeckGlLayer[];
-    bounds?: [number, number, number, number];
+    bounds?: BoundingBox2D;
 };
 
 export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {

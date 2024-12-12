@@ -14,7 +14,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { RealizationGridContext } from "./RealizationGridContext";
+import { RealizationGridSettingsContext } from "./RealizationGridSettingsContext";
 import { RealizationGridSettings } from "./types";
 
 import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
@@ -44,7 +44,7 @@ export class RealizationGridLayer
         this._layerDelegate = new LayerDelegate(
             this,
             layerManager,
-            new RealizationGridContext(layerManager),
+            new RealizationGridSettingsContext(layerManager),
             LayerColoringType.COLORSCALE
         );
     }
@@ -102,7 +102,7 @@ export class RealizationGridLayer
         return [data.gridParameterData.min_grid_prop_value, data.gridParameterData.max_grid_prop_value];
     }
 
-    fechData(queryClient: QueryClient): Promise<{
+    fetchData(queryClient: QueryClient): Promise<{
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
     }> {

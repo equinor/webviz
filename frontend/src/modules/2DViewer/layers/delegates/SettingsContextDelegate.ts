@@ -40,6 +40,15 @@ export type SettingsContextDelegateState<TSettings extends Settings, TKey extend
     values: { [K in TKey]: TSettings[K] };
 };
 
+/*
+ * The SettingsContextDelegate class is responsible for giving the settings of a layer a common context as
+ * many settings are interdependent.
+ *
+ * It creates a dependency graph for all settings and implements dependencies between both themselves and global settings.
+ * It also takes care of overriding settings that are set by shared settings.
+ * It also takes care of notifying its subscribers (e.g. the respective layer delegate) when the settings change.
+ *
+ */
 export class SettingsContextDelegate<TSettings extends Settings, TKey extends keyof TSettings = keyof TSettings>
     implements PublishSubscribe<SettingsContextDelegateTopic, SettingsContextDelegatePayloads>
 {

@@ -4,7 +4,7 @@ import { ItemDelegate } from "./delegates/ItemDelegate";
 import { LayerDelegate } from "./delegates/LayerDelegate";
 import { SettingsContextDelegateTopic } from "./delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelegate";
-import { Group, SerializedDeltaSurface, instanceofLayer } from "./interfaces";
+import { Group, SerializedDeltaSurface, SerializedType, instanceofLayer } from "./interfaces";
 
 export class DeltaSurface implements Group {
     private _itemDelegate: ItemDelegate;
@@ -59,7 +59,6 @@ export class DeltaSurface implements Group {
 
     private handleSettingsChange(): void {
         console.debug("Settings changed - would refetch data");
-        // Fetch data
     }
 
     getItemDelegate(): ItemDelegate {
@@ -78,7 +77,7 @@ export class DeltaSurface implements Group {
     serializeState(): SerializedDeltaSurface {
         return {
             ...this._itemDelegate.serializeState(),
-            type: "delta-surface",
+            type: SerializedType.DELTA_SURFACE,
             children: this.getGroupDelegate().serializeChildren(),
         };
     }

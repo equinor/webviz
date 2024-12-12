@@ -8,7 +8,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { DrilledWellTrajectoriesContext } from "./DrilledWellTrajectoriesContext";
+import { DrilledWellTrajectoriesSettingsContext } from "./DrilledWellTrajectoriesSettingsContext";
 import { DrilledWellTrajectoriesSettings } from "./types";
 
 import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
@@ -23,7 +23,7 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         this._layerDelegate = new LayerDelegate(
             this,
             layerManager,
-            new DrilledWellTrajectoriesContext(layerManager),
+            new DrilledWellTrajectoriesSettingsContext(layerManager),
             LayerColoringType.NONE
         );
     }
@@ -77,7 +77,7 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         return bbox;
     }
 
-    fechData(queryClient: QueryClient): Promise<WellboreTrajectory_api[]> {
+    fetchData(queryClient: QueryClient): Promise<WellboreTrajectory_api[]> {
         const workbenchSession = this.getSettingsContext().getDelegate().getLayerManager().getWorkbenchSession();
         const ensembleSet = workbenchSession.getEnsembleSet();
         const settings = this.getSettingsContext().getDelegate().getSettings();

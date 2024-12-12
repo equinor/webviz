@@ -1,17 +1,16 @@
 import React from "react";
 
-import { SurfaceTimeType_api } from "@api";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
 import { SettingType } from "./settingsTypes";
 
 import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
+import { Setting, SettingComponentProps } from "../../interfaces";
 
 type ValueType = string | null;
 
-export class TimeOrInterval implements Setting<ValueType> {
+export class GridAttributeSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -19,11 +18,11 @@ export class TimeOrInterval implements Setting<ValueType> {
     }
 
     getType(): SettingType {
-        return SettingType.TIME_OR_INTERVAL;
+        return SettingType.GRID_ATTRIBUTE;
     }
 
     getLabel(): string {
-        return "Date";
+        return "Grid attribute";
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -35,7 +34,7 @@ export class TimeOrInterval implements Setting<ValueType> {
             const options: DropdownOption[] = props.availableValues.map((value) => {
                 return {
                     value: value.toString(),
-                    label: timeTypeToLabel(value),
+                    label: value === null ? "None" : value.toString(),
                 };
             });
 
@@ -50,35 +49,6 @@ export class TimeOrInterval implements Setting<ValueType> {
             );
         };
     }
-
-    valueToString(args: ValueToStringArgs<ValueType>): string {
-        const { value } = args;
-        if (value === null) {
-            return "-";
-        }
-        return timeTypeToLabel(value);
-    }
 }
 
-function timeTypeToLabel(input: string): string {
-    if (input === SurfaceTimeType_api.NO_TIME) {
-        return "Initial / No date";
-    }
-    const [start, end] = input.split("/");
-    if (end) {
-        return isoIntervalStringToDateLabel(start, end);
-    }
-    return isoStringToDateLabel(start);
-}
-function isoStringToDateLabel(isoDatestring: string): string {
-    const date = isoDatestring.split("T")[0];
-    return `${date}`;
-}
-
-function isoIntervalStringToDateLabel(startIsoDateString: string, endIsoDateString: string): string {
-    const startDate = startIsoDateString.split("T")[0];
-    const endDate = endIsoDateString.split("T")[0];
-    return `${startDate}/${endDate}`;
-}
-
-SettingRegistry.registerSetting(TimeOrInterval);
+SettingRegistry.registerSetting(GridAttributeSetting);

@@ -1,4 +1,3 @@
-import { PolygonsMeta_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
@@ -9,24 +8,23 @@ import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/utils";
 import { RealizationPolygonsSettings } from "./types";
 
 import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
-import { Ensemble } from "../../settings/Ensemble";
-import { PolygonsAttribute } from "../../settings/PolygonsAttribute";
-import { PolygonsName } from "../../settings/PolygonsName";
-import { Realization } from "../../settings/Realization";
+import { EnsembleSetting } from "../../settings/EnsembleSetting";
+import { PolygonsAttributeSetting } from "../../settings/PolygonsAttributeSetting";
+import { PolygonsNameSetting } from "../../settings/PolygonsNameSetting";
+import { RealizationSetting } from "../../settings/RealizationSetting";
 
-export class RealizationPolygonsContext implements SettingsContext<RealizationPolygonsSettings> {
+export class RealizationPolygonsSettingsContext implements SettingsContext<RealizationPolygonsSettings> {
     private _contextDelegate: SettingsContextDelegate<RealizationPolygonsSettings>;
-    private _fetchDataCache: PolygonsMeta_api[] | null = null;
 
     constructor(layerManager: LayerManager) {
         this._contextDelegate = new SettingsContextDelegate<
             RealizationPolygonsSettings,
             keyof RealizationPolygonsSettings
         >(this, layerManager, {
-            [SettingType.ENSEMBLE]: new Ensemble(),
-            [SettingType.REALIZATION]: new Realization(),
-            [SettingType.POLYGONS_ATTRIBUTE]: new PolygonsAttribute(),
-            [SettingType.POLYGONS_NAME]: new PolygonsName(),
+            [SettingType.ENSEMBLE]: new EnsembleSetting(),
+            [SettingType.REALIZATION]: new RealizationSetting(),
+            [SettingType.POLYGONS_ATTRIBUTE]: new PolygonsAttributeSetting(),
+            [SettingType.POLYGONS_NAME]: new PolygonsNameSetting(),
         });
     }
 

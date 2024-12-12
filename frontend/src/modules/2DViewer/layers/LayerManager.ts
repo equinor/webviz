@@ -14,7 +14,7 @@ import { GroupDelegate, GroupDelegateTopic } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "./delegates/PublishSubscribeDelegate";
 import { UnsubscribeHandlerDelegate } from "./delegates/UnsubscribeHandlerDelegate";
-import { Group, Item, SerializedLayerManager } from "./interfaces";
+import { Group, Item, SerializedLayerManager, SerializedType } from "./interfaces";
 
 export enum LayerManagerTopic {
     ITEMS_CHANGED = "ITEMS_CHANGED",
@@ -39,6 +39,16 @@ export type GlobalSettings = {
     ensembles: readonly Ensemble[];
     realizationFilterFunction: EnsembleRealizationFilterFunction;
 };
+
+/*
+ * The LayerManager class is responsible for managing all items (layers, views, settings, etc.).
+ * It is the main ancestor of all items and provides a way to subscribe/publish messages to all descendants.
+ * Moreover, it is responsible for managing the global settings coming from the framework (e.g. ensembles, fieldId).
+ * It also holds the revision number of the layer data, which is used to notify subscribers when any layer data changes.
+ * This makes it possible to update the GUI accordingly.
+ * The LayerManager class is also responsible for serializing/deserializing the state of itself and all its descendants.
+ * It does also serve as a provider of the QueryClient and WorkbenchSession.
+ */
 
 export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, LayerManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
@@ -168,7 +178,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         const itemState = this._itemDelegate.serializeState();
         return {
             ...itemState,
-            type: "layer-manager",
+            type: SerializedType.LAYER_MANAGER,
             children: this._groupDelegate.serializeChildren(),
         };
     }

@@ -76,7 +76,6 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                 this.getSubLayerProps({
                     id: "points",
                     data: this._pointsData ?? undefined,
-                    // pointType: 'circle+text',
                     filled: true,
                     lineWidthMinPixels: 5,
                     lineWidthMaxPixels: 5,
@@ -89,8 +88,6 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                     pickable: true,
                     getText: (d: Feature) => d.properties?.wellBoreUwi,
                     getLineColor: [50, 50, 50],
-                    // extensions: [new CollisionFilterExtension()],
-                    // collisionGroup: "wellbore-picks",
                 })
             ),
 
@@ -98,7 +95,6 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                 this.getSubLayerProps({
                     id: "text",
                     data: this._textData,
-                    // depthTest: true,
                     pickable: true,
                     getColor: [255, 255, 255],
                     fontWeight: 800,
@@ -118,17 +114,6 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                     getTextAnchor: "middle",
                     getPosition: (d: TextLayerData) => d.coordinates,
                     getText: (d: TextLayerData) => d.name,
-                    // maxWidth: 64 * 12,
-                    /*
-                    // extensions: [new CollisionFilterExtension()],
-                    collisionGroup: "wellbore-picks",
-
-                    collisionTestProps: {
-                        sizeScale: fontSize,
-                        sizeMaxPixels: sizeMaxPixels * 2,
-                        sizeMinPixels: sizeMinPixels * 2,
-                    },
-                    */
                 })
             ),
         ];

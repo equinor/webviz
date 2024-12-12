@@ -9,7 +9,7 @@ import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
 
-export class StatisticFunction implements Setting<SurfaceStatisticFunction_api> {
+export class StatisticFunctionSetting implements Setting<SurfaceStatisticFunction_api> {
     private _delegate: SettingDelegate<SurfaceStatisticFunction_api>;
 
     constructor() {
@@ -57,4 +57,4 @@ export class StatisticFunction implements Setting<SurfaceStatisticFunction_api> 
     }
 }
 
-SettingRegistry.registerSetting(StatisticFunction);
+SettingRegistry.registerSetting(StatisticFunctionSetting);

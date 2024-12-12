@@ -9,7 +9,7 @@ import { SettingRegistry } from "../../SettingRegistry";
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
 
-export class Ensemble implements Setting<EnsembleIdent | null> {
+export class EnsembleSetting implements Setting<EnsembleIdent | null> {
     private _delegate: SettingDelegate<EnsembleIdent | null>;
 
     constructor() {
@@ -64,4 +64,4 @@ export class Ensemble implements Setting<EnsembleIdent | null> {
     }
 }
 
-SettingRegistry.registerSetting(Ensemble);
+SettingRegistry.registerSetting(EnsembleSetting);

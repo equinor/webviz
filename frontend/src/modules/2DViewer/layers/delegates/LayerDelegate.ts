@@ -9,7 +9,7 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { LayerManager, LayerManagerTopic } from "../LayerManager";
 import { SharedSetting } from "../SharedSetting";
-import { BoundingBox, Layer, SerializedLayer, Settings, SettingsContext } from "../interfaces";
+import { BoundingBox, Layer, SerializedLayer, SerializedType, Settings, SettingsContext } from "../interfaces";
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -35,6 +35,12 @@ export type LayerDelegatePayloads<TData> = {
     [LayerDelegateTopic.DATA]: TData;
     [LayerDelegateTopic.SUBORDINATED]: boolean;
 };
+
+/*
+ * The LayerDelegate class is responsible for managing the state of a layer.
+ * It is responsible for (re-)fetching the data whenever changes to settings make it necessary.
+ * It also manages the status of the layer (loading, success, error).
+ */
 export class LayerDelegate<TSettings extends Settings, TData>
     implements PublishSubscribe<LayerDelegateTopic, LayerDelegatePayloads<TData>>
 {
@@ -226,7 +232,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
         this.invalidateValueRange();
 
         try {
-            this._data = await this._owner.fechData(queryClient);
+            this._data = await this._owner.fetchData(queryClient);
             if (this._owner.makeBoundingBox) {
                 this._boundingBox = this._owner.makeBoundingBox();
             }
@@ -260,7 +266,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
         const itemState = this._owner.getItemDelegate().serializeState();
         return {
             ...itemState,
-            type: "layer",
+            type: SerializedType.LAYER,
             layerClass: this._owner.constructor.name,
             settings: this._settingsContext.getDelegate().serializeSettings(),
         };

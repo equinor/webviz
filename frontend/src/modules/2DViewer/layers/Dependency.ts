@@ -6,6 +6,17 @@ import { GlobalSettings } from "./LayerManager";
 import { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
 import { Settings, UpdateFunc } from "./interfaces";
 
+/*
+ * Dependency class is used to represent a node in the dependency graph of a layer settings context.
+ * It can be compared to an atom in Jotai.
+ *
+ * It can subscribe to both changes in settings (local and global) and other dependencies.
+ * Its value is calculated by an update function that is provided during initialization.
+ * The update function is called whenever any of the dependencies change.
+ * All entities that this dependency depends on are cached such that they are only updated when they change,
+ * not when they are accessed.
+ * The dependency can be subscribed to, and will notify its subscribers whenever its value changes.
+ */
 export class Dependency<TReturnValue, TSettings extends Settings, TKey extends keyof TSettings> {
     private _updateFunc: UpdateFunc<TReturnValue, TSettings, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
@@ -169,7 +180,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         this._isInitialized = true;
     }
 
-    async callUpdateFunc() {
+    private async callUpdateFunc() {
         if (this._abortController) {
             this._abortController.abort();
             this._abortController = null;
@@ -198,7 +209,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         this.applyNewValue(newValue);
     }
 
-    applyNewValue(newValue: Awaited<TReturnValue> | null) {
+    private applyNewValue(newValue: Awaited<TReturnValue> | null) {
         this.setLoadingState(false);
         if (!isEqual(newValue, this._cachedValue) || newValue === null) {
             this._cachedValue = newValue;

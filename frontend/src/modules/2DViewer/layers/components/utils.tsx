@@ -1,5 +1,3 @@
-import { SortableListItemProps } from "@lib/components/SortableList";
-
 import { ColorScaleComponent } from "./ColorScaleComponent";
 import { DeltaSurfaceComponent } from "./DeltaSurfaceComponent";
 import { LayerComponent } from "./LayerComponent";
@@ -13,45 +11,45 @@ import { DeltaSurface } from "../DeltaSurface";
 import { SettingsGroup } from "../SettingsGroup";
 import { SharedSetting } from "../SharedSetting";
 import { View } from "../View";
-import { Group, Item, instanceofGroup, instanceofLayer } from "../interfaces";
+import { Group, Item, instanceofLayer } from "../interfaces";
 
-export function makeComponent(
+export function makeSortableListItemComponent(
     item: Item,
     layerActions?: LayersActionGroup[],
     onActionClick?: (identifier: string, group: Group) => void
-): React.ReactElement<SortableListItemProps> {
+): React.ReactElement {
     if (instanceofLayer(item)) {
         return <LayerComponent key={item.getItemDelegate().getId()} layer={item} />;
     }
-    if (instanceofGroup(item)) {
-        if (item instanceof SettingsGroup) {
-            return (
-                <SettingsGroupComponent
-                    key={item.getItemDelegate().getId()}
-                    group={item}
-                    actions={layerActions}
-                    onActionClick={onActionClick}
-                />
-            );
-        } else if (item instanceof View) {
-            return (
-                <ViewComponent
-                    key={item.getItemDelegate().getId()}
-                    group={item}
-                    actions={layerActions ? filterAwayViewActions(layerActions) : undefined}
-                    onActionClick={onActionClick}
-                />
-            );
-        } else if (item instanceof DeltaSurface) {
-            return (
-                <DeltaSurfaceComponent
-                    key={item.getItemDelegate().getId()}
-                    deltaSurface={item}
-                    actions={layerActions ? filterAwayNonSurfaceActions(layerActions) : undefined}
-                    onActionClick={onActionClick}
-                />
-            );
-        }
+    if (item instanceof SettingsGroup) {
+        return (
+            <SettingsGroupComponent
+                key={item.getItemDelegate().getId()}
+                group={item}
+                actions={layerActions}
+                onActionClick={onActionClick}
+            />
+        );
+    }
+    if (item instanceof View) {
+        return (
+            <ViewComponent
+                key={item.getItemDelegate().getId()}
+                group={item}
+                actions={layerActions ? filterAwayViewActions(layerActions) : undefined}
+                onActionClick={onActionClick}
+            />
+        );
+    }
+    if (item instanceof DeltaSurface) {
+        return (
+            <DeltaSurfaceComponent
+                key={item.getItemDelegate().getId()}
+                deltaSurface={item}
+                actions={layerActions ? filterAwayNonSurfaceActions(layerActions) : undefined}
+                onActionClick={onActionClick}
+            />
+        );
     }
     if (item instanceof SharedSetting) {
         return <SharedSettingComponent key={item.getItemDelegate().getId()} sharedSetting={item} />;
@@ -59,7 +57,8 @@ export function makeComponent(
     if (item instanceof ColorScale) {
         return <ColorScaleComponent key={item.getItemDelegate().getId()} colorScale={item} />;
     }
-    throw new Error("Not implemented");
+
+    throw new Error(`Unsupported item type: ${item.constructor.name}`);
 }
 
 function filterAwayViewActions(actions: LayersActionGroup[]): LayersActionGroup[] {

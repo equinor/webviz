@@ -1,62 +1,89 @@
-import { SurfaceMetaSet_api, SurfaceTimeType_api } from "@api";
+import { SurfaceStatisticFunction_api, SurfaceTimeType_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
-import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
-import { SettingType } from "@modules/2DViewer/layers/implementations/settings/settingsTypes";
 import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/queryConstants";
 import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/utils";
 
-import { ObservedSurfaceSettings } from "./types";
+import { StatisticalSurfaceSettings } from "./types";
 
+import { SettingsContextDelegate } from "../../../delegates/SettingsContextDelegate";
 import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
-import { Ensemble } from "../../settings/Ensemble";
-import { SurfaceAttribute } from "../../settings/SurfaceAttribute";
-import { SurfaceName } from "../../settings/SurfaceName";
-import { TimeOrInterval } from "../../settings/TimeOrInterval";
+import { EnsembleSetting } from "../../settings/EnsembleSetting";
+import { SensitivityNameCasePair, SensitivitySetting } from "../../settings/SensitivitySetting";
+import { StatisticFunctionSetting } from "../../settings/StatisticFunctionSetting";
+import { SurfaceAttributeSetting } from "../../settings/SurfaceAttributeSetting";
+import { SurfaceNameSetting } from "../../settings/SurfaceNameSetting";
+import { TimeOrIntervalSetting } from "../../settings/TimeOrIntervalSetting";
+import { SettingType } from "../../settings/settingsTypes";
 
-export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSettings> {
-    private _contextDelegate: SettingsContextDelegate<ObservedSurfaceSettings>;
-    private _fetchDataCache: SurfaceMetaSet_api | null = null;
+export class StatisticalSurfaceSettingsContext implements SettingsContext<StatisticalSurfaceSettings> {
+    private _contextDelegate: SettingsContextDelegate<StatisticalSurfaceSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<ObservedSurfaceSettings, keyof ObservedSurfaceSettings>(
-            this,
-            layerManager,
-            {
-                [SettingType.ENSEMBLE]: new Ensemble(),
-                [SettingType.SURFACE_ATTRIBUTE]: new SurfaceAttribute(),
-                [SettingType.SURFACE_NAME]: new SurfaceName(),
-                [SettingType.TIME_OR_INTERVAL]: new TimeOrInterval(),
-            }
-        );
+        this._contextDelegate = new SettingsContextDelegate<
+            StatisticalSurfaceSettings,
+            keyof StatisticalSurfaceSettings
+        >(this, layerManager, {
+            [SettingType.ENSEMBLE]: new EnsembleSetting(),
+            [SettingType.STATISTIC_FUNCTION]: new StatisticFunctionSetting(),
+            [SettingType.SENSITIVITY]: new SensitivitySetting(),
+            [SettingType.SURFACE_ATTRIBUTE]: new SurfaceAttributeSetting(),
+            [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),
+            [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
+        });
     }
 
-    getDelegate(): SettingsContextDelegate<ObservedSurfaceSettings> {
+    getDelegate(): SettingsContextDelegate<StatisticalSurfaceSettings> {
         return this._contextDelegate;
     }
 
     getSettings() {
         return this._contextDelegate.getSettings();
     }
+
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
         workbenchSession,
         queryClient,
-    }: DefineDependenciesArgs<ObservedSurfaceSettings>) {
+    }: DefineDependenciesArgs<StatisticalSurfaceSettings>) {
+        availableSettingsUpdater(SettingType.STATISTIC_FUNCTION, () => Object.values(SurfaceStatisticFunction_api));
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
-            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensembles = getGlobalSetting("ensembles");
 
-            const ensembleIdents = ensembleSet
-                .getEnsembleArr()
+            const ensembleIdents = ensembles
                 .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
                 .map((ensemble) => ensemble.getIdent());
 
             return ensembleIdents;
         });
+        availableSettingsUpdater(SettingType.SENSITIVITY, ({ getLocalSetting }) => {
+            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
 
-        const observedSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+            if (!ensembleIdent) {
+                return [];
+            }
+
+            const ensembleSet = workbenchSession.getEnsembleSet();
+            const currentEnsemble = ensembleSet.findEnsemble(ensembleIdent);
+            const sensitivities = currentEnsemble?.getSensitivities()?.getSensitivityArr() ?? [];
+            if (sensitivities.length === 0) {
+                return [];
+            }
+            const availableSensitivityPairs: SensitivityNameCasePair[] = [];
+            sensitivities.map((sensitivity) =>
+                sensitivity.cases.map((sensitivityCase) => {
+                    availableSensitivityPairs.push({
+                        sensitivityName: sensitivity.name,
+                        sensitivityCase: sensitivityCase.name,
+                    });
+                })
+            );
+            return availableSensitivityPairs;
+        });
+
+        const surfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
 
             if (!ensembleIdent) {
@@ -64,10 +91,13 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
             }
 
             return await queryClient.fetchQuery({
-                queryKey: ["getObservedSurfacesMetadata", ensembleIdent.getCaseUuid()],
+                queryKey: ["getRealizationSurfacesMetadata", ensembleIdent],
                 queryFn: () =>
                     cancelPromiseOnAbort(
-                        apiService.surface.getObservedSurfacesMetadata(ensembleIdent.getCaseUuid()),
+                        apiService.surface.getRealizationSurfacesMetadata(
+                            ensembleIdent.getCaseUuid(),
+                            ensembleIdent.getEnsembleName()
+                        ),
                         abortSignal
                     ),
                 staleTime: STALE_TIME,
@@ -76,7 +106,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         });
 
         availableSettingsUpdater(SettingType.SURFACE_ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(observedSurfaceMetadataDep);
+            const data = getHelperDependency(surfaceMetadataDep);
 
             if (!data) {
                 return [];
@@ -88,10 +118,9 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
 
             return availableAttributes;
         });
-
         availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
             const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
-            const data = getHelperDependency(observedSurfaceMetadataDep);
+            const data = getHelperDependency(surfaceMetadataDep);
 
             if (!attribute || !data) {
                 return [];
@@ -111,7 +140,7 @@ export class ObservedSurfaceContext implements SettingsContext<ObservedSurfaceSe
         availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
             const surfaceName = getLocalSetting(SettingType.SURFACE_NAME);
-            const data = getHelperDependency(observedSurfaceMetadataDep);
+            const data = getHelperDependency(surfaceMetadataDep);
 
             if (!attribute || !surfaceName || !data) {
                 return [];

@@ -13,7 +13,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { RealizationSurfaceContext } from "./RealizationSurfaceContext";
+import { RealizationSurfaceSettingsContext } from "./RealizationSurfaceSettingsContext";
 import { RealizationSurfaceSettings } from "./types";
 
 import { BoundingBox, Layer, SerializedLayer } from "../../../interfaces";
@@ -29,7 +29,7 @@ export class RealizationSurfaceLayer
         this._layerDelegate = new LayerDelegate(
             this,
             layerManager,
-            new RealizationSurfaceContext(layerManager),
+            new RealizationSurfaceSettingsContext(layerManager),
             LayerColoringType.COLORSCALE
         );
     }
@@ -75,7 +75,7 @@ export class RealizationSurfaceLayer
         return [data.value_min, data.value_max];
     }
 
-    fechData(queryClient: QueryClient): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    fetchData(queryClient: QueryClient): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 

@@ -2,7 +2,7 @@ import { SurfaceStatisticFunction_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { SettingType } from "@modules/2DViewer/layers/implementations/settings/settingsTypes";
 
-import { SensitivityNameCasePair } from "../../settings/Sensitivity";
+import { SensitivityNameCasePair } from "../../settings/SensitivitySetting";
 
 export type StatisticalSurfaceSettings = {
     [SettingType.ENSEMBLE]: EnsembleIdent | null;
