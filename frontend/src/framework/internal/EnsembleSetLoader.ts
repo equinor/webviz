@@ -96,31 +96,44 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
             userEnsembleSettings.find((elm) => elm.ensembleIdent.toString() === referenceEnsembleIdentString)
                 ?.customName ?? null;
 
-        const compareEnsemble = new RegularEnsemble(
-            compareEnsembleApiData.ensembleDetails.field_identifier,
-            compareEnsembleApiData.ensembleDetails.case_uuid,
-            compareEnsembleApiData.ensembleDetails.case_name,
-            compareEnsembleApiData.ensembleDetails.name,
-            compareEnsembleApiData.ensembleDetails.stratigraphic_column_identifier,
-            compareEnsembleApiData.ensembleDetails.realizations,
-            emptyParameterArray,
-            nullSensitiveArray,
-            emptyColor,
-            compareEnsembleCustomName
+        // Look for existing regular ensembles
+        const existingCompareEnsemble = outEnsembleArray.find((elm) =>
+            elm.getIdent().equals(deltaEnsembleSetting.compareEnsembleIdent)
+        );
+        const existingReferenceEnsemble = outEnsembleArray.find((elm) =>
+            elm.getIdent().equals(deltaEnsembleSetting.referenceEnsembleIdent)
         );
 
-        const referenceEnsemble = new RegularEnsemble(
-            referenceEnsembleApiData.ensembleDetails.field_identifier,
-            referenceEnsembleApiData.ensembleDetails.case_uuid,
-            referenceEnsembleApiData.ensembleDetails.case_name,
-            referenceEnsembleApiData.ensembleDetails.name,
-            compareEnsembleApiData.ensembleDetails.stratigraphic_column_identifier,
-            referenceEnsembleApiData.ensembleDetails.realizations,
-            emptyParameterArray,
-            nullSensitiveArray,
-            emptyColor,
-            referenceEnsembleCustomName
-        );
+        // Create delta ensemble
+        const compareEnsemble = existingCompareEnsemble
+            ? existingCompareEnsemble
+            : new RegularEnsemble(
+                  compareEnsembleApiData.ensembleDetails.field_identifier,
+                  compareEnsembleApiData.ensembleDetails.case_uuid,
+                  compareEnsembleApiData.ensembleDetails.case_name,
+                  compareEnsembleApiData.ensembleDetails.name,
+                  compareEnsembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                  compareEnsembleApiData.ensembleDetails.realizations,
+                  emptyParameterArray,
+                  nullSensitiveArray,
+                  emptyColor,
+                  compareEnsembleCustomName
+              );
+
+        const referenceEnsemble = existingReferenceEnsemble
+            ? existingReferenceEnsemble
+            : new RegularEnsemble(
+                  referenceEnsembleApiData.ensembleDetails.field_identifier,
+                  referenceEnsembleApiData.ensembleDetails.case_uuid,
+                  referenceEnsembleApiData.ensembleDetails.case_name,
+                  referenceEnsembleApiData.ensembleDetails.name,
+                  compareEnsembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                  referenceEnsembleApiData.ensembleDetails.realizations,
+                  emptyParameterArray,
+                  nullSensitiveArray,
+                  emptyColor,
+                  referenceEnsembleCustomName
+              );
 
         outDeltaEnsembleArray.push(
             new DeltaEnsemble(

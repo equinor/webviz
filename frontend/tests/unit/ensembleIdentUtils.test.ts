@@ -1,7 +1,8 @@
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import {
-    ensembleIdentRegexStringWithoutAnchors,
+    areEnsembleIdentListsEqual,
+    areEnsembleIdentsEqual,
     ensembleIdentUuidRegexString,
     filterEnsembleIdentsByType,
     isEnsembleIdentOfType,
@@ -28,6 +29,88 @@ describe("isEnsembleIdentOfType", () => {
         new RegularEnsembleIdent("33333333-aaaa-4444-aaaa-aaaaaaaaaaaa", "compare-ensemble-name"),
         new RegularEnsembleIdent("44444444-aaaa-4444-aaaa-aaaaaaaaaaaa", "reference-ensemble-name")
     );
+
+    test("should return true when both ensemble idents are null", () => {
+        const result = areEnsembleIdentsEqual(null, null);
+        expect(result).toBe(true);
+    });
+
+    test("should return false when one ensemble ident is null", () => {
+        const result1 = areEnsembleIdentsEqual(REGULAR_ENSEMBLE_IDENT_1, null);
+        const result2 = areEnsembleIdentsEqual(null, REGULAR_ENSEMBLE_IDENT_1);
+        expect(result1).toBe(false);
+        expect(result2).toBe(false);
+    });
+
+    test("should return true when both ensemble idents are equal", () => {
+        const result = areEnsembleIdentsEqual(REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_1);
+        expect(result).toBe(true);
+    });
+
+    test("should return false when both ensemble idents are not equal", () => {
+        const result = areEnsembleIdentsEqual(REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2);
+        expect(result).toBe(false);
+    });
+
+    test("should return true when both delta ensemble idents are equal", () => {
+        const result = areEnsembleIdentsEqual(DELTA_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_1);
+        expect(result).toBe(true);
+    });
+
+    test("should return false when both delta ensemble idents are not equal", () => {
+        const result = areEnsembleIdentsEqual(DELTA_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_2);
+        expect(result).toBe(false);
+    });
+
+    test("should return true when both lists are empty", () => {
+        const result = areEnsembleIdentListsEqual([], []);
+        expect(result).toBe(true);
+    });
+
+    test("should return false when lists have different lengths", () => {
+        const result = areEnsembleIdentListsEqual([REGULAR_ENSEMBLE_IDENT_1], []);
+        expect(result).toBe(false);
+    });
+
+    test("should return true when both lists have the same RegularEnsembleIdent instances", () => {
+        const result = areEnsembleIdentListsEqual(
+            [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2],
+            [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2]
+        );
+        expect(result).toBe(true);
+    });
+
+    test("should return false when lists have different RegularEnsembleIdent instances", () => {
+        const result = areEnsembleIdentListsEqual(
+            [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2],
+            [REGULAR_ENSEMBLE_IDENT_2, REGULAR_ENSEMBLE_IDENT_1]
+        );
+        expect(result).toBe(false);
+    });
+
+    test("should return true when both lists have the same DeltaEnsembleIdent instances", () => {
+        const result = areEnsembleIdentListsEqual(
+            [DELTA_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_2],
+            [DELTA_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_2]
+        );
+        expect(result).toBe(true);
+    });
+
+    test("should return false when lists have different DeltaEnsembleIdent instances", () => {
+        const result = areEnsembleIdentListsEqual(
+            [DELTA_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_2],
+            [DELTA_ENSEMBLE_IDENT_2, DELTA_ENSEMBLE_IDENT_1]
+        );
+        expect(result).toBe(false);
+    });
+
+    test("should return false when lists have different types of EnsembleIdent instances", () => {
+        const result = areEnsembleIdentListsEqual(
+            [REGULAR_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_1],
+            [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2]
+        );
+        expect(result).toBe(false);
+    });
 
     test("should return true for RegularEnsembleIdent type", () => {
         const result = isEnsembleIdentOfType(REGULAR_ENSEMBLE_IDENT_1, RegularEnsembleIdent);
@@ -112,55 +195,5 @@ describe("isEnsembleIdentOfType", () => {
         invalidUuids.forEach((uuid) => {
             expect(regex.test(uuid)).toBe(false);
         });
-    });
-
-    test("should return a valid regex pattern with named groups", () => {
-        const caseUuidNamedGroup = "caseUuid";
-        const ensembleNameNamedGroup = "ensembleName";
-        const regexString = ensembleIdentRegexStringWithoutAnchors(caseUuidNamedGroup, ensembleNameNamedGroup);
-        const regex = new RegExp(regexString);
-
-        const validString = "123e4567-e89b-12d3-a456-426614174000::some-ensemble-name";
-        const match = regex.exec(validString);
-
-        expect(match?.groups?.[caseUuidNamedGroup]).toBe("123e4567-e89b-12d3-a456-426614174000");
-        expect(match?.groups?.[ensembleNameNamedGroup]).toBe("some-ensemble-name");
-    });
-
-    test("should not match invalid UUID in the string", () => {
-        const caseUuidNamedGroup = "caseUuid";
-        const ensembleNameNamedGroup = "ensembleName";
-        const regexString = ensembleIdentRegexStringWithoutAnchors(caseUuidNamedGroup, ensembleNameNamedGroup);
-        const regex = new RegExp(regexString);
-
-        const invalidString = "123e4567-e89b-12d3-a456-42661417400::some-ensemble-name"; // invalid UUID
-        const match = regex.exec(invalidString);
-
-        expect(match).toBeNull();
-    });
-
-    test("should not match string without '::' separator", () => {
-        const caseUuidNamedGroup = "caseUuid";
-        const ensembleNameNamedGroup = "ensembleName";
-        const regexString = ensembleIdentRegexStringWithoutAnchors(caseUuidNamedGroup, ensembleNameNamedGroup);
-        const regex = new RegExp(regexString);
-
-        const invalidString = "123e4567-e89b-12d3-a456-426614174000-some-ensemble-name"; // missing '::'
-        const match = regex.exec(invalidString);
-
-        expect(match).toBeNull();
-    });
-
-    test("should match string with any ensemble name", () => {
-        const caseUuidNamedGroup = "caseUuid";
-        const ensembleNameNamedGroup = "ensembleName";
-        const regexString = ensembleIdentRegexStringWithoutAnchors(caseUuidNamedGroup, ensembleNameNamedGroup);
-        const regex = new RegExp(regexString);
-
-        const validString = "123e4567-e89b-12d3-a456-426614174000::any-ensemble-name";
-        const match = regex.exec(validString);
-
-        expect(match?.groups?.[caseUuidNamedGroup]).toBe("123e4567-e89b-12d3-a456-426614174000");
-        expect(match?.groups?.[ensembleNameNamedGroup]).toBe("any-ensemble-name");
     });
 });

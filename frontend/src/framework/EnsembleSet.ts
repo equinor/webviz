@@ -2,6 +2,7 @@ import { DeltaEnsemble } from "./DeltaEnsemble";
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { RegularEnsemble } from "./RegularEnsemble";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+import { isEnsembleIdentOfType } from "./utils/ensembleIdentUtils";
 
 export class EnsembleSet {
     private _regularEnsembleArray: RegularEnsemble[];
@@ -67,13 +68,24 @@ export class EnsembleSet {
      * @returns True if the ensemble set has the given ensemble ident.
      */
     hasEnsemble(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): boolean {
-        if (ensembleIdent instanceof RegularEnsembleIdent) {
-            return this.findEnsemble(ensembleIdent) !== null;
+        return this.findEnsemble(ensembleIdent) !== null;
+    }
+
+    /**
+     * Get an ensemble in the set by its ensemble ident
+     *
+     * @param ensembleIdent - The ensemble ident to search for.
+     * @returns The ensemble if found. Throws an error if the ensemble is not found.
+     */
+    getEnsemble(ensembleIdent: RegularEnsembleIdent): RegularEnsemble;
+    getEnsemble(ensembleIdent: DeltaEnsembleIdent): DeltaEnsemble;
+    getEnsemble(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): RegularEnsemble | DeltaEnsemble;
+    getEnsemble(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): RegularEnsemble | DeltaEnsemble {
+        const ensemble = this.findEnsemble(ensembleIdent);
+        if (!ensemble) {
+            throw new Error(`Ensemble not found in EnsembleSet: ${ensembleIdent.toString()}`);
         }
-        if (ensembleIdent instanceof DeltaEnsembleIdent) {
-            return this.findEnsemble(ensembleIdent) !== null;
-        }
-        return false;
+        return ensemble;
     }
 
     /**
@@ -86,10 +98,10 @@ export class EnsembleSet {
     findEnsemble(ensembleIdent: DeltaEnsembleIdent): DeltaEnsemble | null;
     findEnsemble(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): RegularEnsemble | DeltaEnsemble | null;
     findEnsemble(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): RegularEnsemble | DeltaEnsemble | null {
-        if (ensembleIdent instanceof RegularEnsembleIdent) {
+        if (isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent)) {
             return this._regularEnsembleArray.find((ens) => ens.getIdent().equals(ensembleIdent)) ?? null;
         }
-        if (ensembleIdent instanceof DeltaEnsembleIdent) {
+        if (isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent)) {
             return this._deltaEnsembleArray.find((ens) => ens.getIdent().equals(ensembleIdent)) ?? null;
         }
         return null;
@@ -106,7 +118,7 @@ export class EnsembleSet {
             const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
             return this.findEnsemble(ensembleIdent);
         }
-        if (DeltaEnsembleIdent.isValidDeltaEnsembleIdentString(ensembleIdentString)) {
+        if (DeltaEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
             const deltaEnsembleIdent = DeltaEnsembleIdent.fromString(ensembleIdentString);
             return this.findEnsemble(deltaEnsembleIdent);
         }

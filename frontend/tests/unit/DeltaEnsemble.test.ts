@@ -120,12 +120,4 @@ describe("DeltaEnsemble", () => {
     test("should return the correct reference ensemble ident", () => {
         expect(DELTA_ENSEMBLE.getReferenceEnsembleIdent().equals(REFERENCE_ENSEMBLE.getIdent())).toBe(true);
     });
-
-    test("should return the correct compare ensemble realizations", () => {
-        expect(DELTA_ENSEMBLE.getCompareEnsembleRealizations()).toEqual([1, 2, 3, 4]);
-    });
-
-    test("should return the correct reference ensemble realizations", () => {
-        expect(DELTA_ENSEMBLE.getReferenceEnsembleRealizations()).toEqual([3, 4, 5, 6]);
-    });
 });

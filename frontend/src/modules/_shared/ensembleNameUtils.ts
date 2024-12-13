@@ -9,21 +9,19 @@ export function makeDistinguishableEnsembleDisplayName(
 ): string {
     const ensemble = allEnsembles.find((ensemble) => ensemble.getIdent().equals(ensembleIdent));
 
-    if (ensemble) {
-        const customName = ensemble.getCustomName();
-        if (customName) {
-            return customName;
-        }
-    }
-
-    const ensembleNameCount = allEnsembles.filter(
-        (ensemble) => ensemble.getEnsembleName() === ensembleIdent.getEnsembleName()
-    ).length;
-    if (ensembleNameCount === 1) {
+    if (!ensemble) {
         return ensembleIdent.getEnsembleName();
     }
 
-    if (!ensemble) {
+    const customName = ensemble.getCustomName();
+    if (customName) {
+        return customName;
+    }
+
+    const ensembleNameCount = allEnsembles.filter(
+        (elm) => elm.getEnsembleName() === ensembleIdent.getEnsembleName()
+    ).length;
+    if (ensembleNameCount === 1) {
         return ensembleIdent.getEnsembleName();
     }
 

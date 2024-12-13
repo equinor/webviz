@@ -1,15 +1,9 @@
 import { Frequency_api, NodeType_api } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
+import { areEnsembleIdentsEqual } from "@framework/utils/ensembleIdentUtils";
 
 import { atom } from "jotai";
-
-function areEnsembleIdentsEqual(a: RegularEnsembleIdent | null, b: RegularEnsembleIdent | null) {
-    if (a === null) {
-        return b === null;
-    }
-    return a.equals(b);
-}
 
 export const selectedResamplingFrequencyAtom = atom<Frequency_api>(Frequency_api.YEARLY);
 

@@ -2,6 +2,7 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Select, SelectOption, SelectProps } from "@lib/components/Select";
 
@@ -34,16 +35,14 @@ export function EnsembleSelect(
         const identArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
         for (const identStr of selectedEnsembleIdentStrArray) {
             const foundEnsemble = ensembleSet.findEnsembleByIdentString(identStr);
-            if (foundEnsemble !== null && (allowDeltaEnsembles || foundEnsemble instanceof RegularEnsemble)) {
+            if (foundEnsemble && (allowDeltaEnsembles || foundEnsemble instanceof RegularEnsemble)) {
                 identArray.push(foundEnsemble.getIdent());
             }
         }
 
         // Filter to match the correct return type before calling onChange
         if (!allowDeltaEnsembles) {
-            const validIdentArray = identArray.filter(
-                (ident) => ident instanceof RegularEnsembleIdent
-            ) as RegularEnsembleIdent[];
+            const validIdentArray = identArray.filter((ident) => isEnsembleIdentOfType(ident, RegularEnsembleIdent));
             onChange(validIdentArray);
             return;
         }

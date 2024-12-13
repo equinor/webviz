@@ -26,13 +26,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
         }
 
         // Delta Ensemble
-        const deltaEnsemble = ensembleSet.findEnsemble(ensembleIdent);
-        if (!deltaEnsemble) {
-            throw new Error(
-                `Delta ensemble not found in application EnsembleSet for ensembleIdent: ${ensembleIdent.toString()}`
-            );
-        }
-
+        const deltaEnsemble = ensembleSet.getEnsemble(ensembleIdent);
         const compareEnsembleIdent = deltaEnsemble.getCompareEnsembleIdent();
         const referenceEnsembleIdent = deltaEnsemble.getReferenceEnsembleIdent();
 

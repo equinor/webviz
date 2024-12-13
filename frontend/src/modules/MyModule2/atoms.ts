@@ -1,4 +1,5 @@
 import { apiService } from "@framework/ApiService";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
@@ -30,8 +31,8 @@ export const selectedVectorAtom = atom<string | null>((get) => {
     return vectors.data?.at(0)?.name ?? null;
 });
 
-export const ensembleSetDependentAtom = atom<RegularEnsembleIdent | null>((get) => {
+export const ensembleSetDependentAtom = atom<RegularEnsembleIdent | DeltaEnsembleIdent | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const firstEnsemble = ensembleSet.getRegularEnsembleArray()[0];
+    const firstEnsemble = ensembleSet.getEnsembleArray()[0];
     return firstEnsemble?.getIdent() ?? null;
 });

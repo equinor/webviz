@@ -34,9 +34,6 @@ export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatus
         vectorNames: string[],
         ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent
     ) {
-        if (ensembleIdent instanceof DeltaEnsembleIdent) {
-            return;
-        }
         const existingVectors = vectorNames.filter((vector) =>
             ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)
         );

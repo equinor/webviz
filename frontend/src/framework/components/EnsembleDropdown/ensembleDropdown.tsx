@@ -30,15 +30,11 @@ export function EnsembleDropdown(
 
     function handleSelectionChanged(selectedEnsembleIdentStr: string) {
         const foundEnsemble = ensembleSet.findEnsembleByIdentString(selectedEnsembleIdentStr);
-        if (foundEnsemble === null) {
-            onChange(null);
-            return;
-        }
-        if (allowDeltaEnsembles) {
+        if (foundEnsemble && allowDeltaEnsembles) {
             onChange(foundEnsemble.getIdent());
             return;
         }
-        if (foundEnsemble instanceof DeltaEnsemble) {
+        if (!foundEnsemble || foundEnsemble instanceof DeltaEnsemble) {
             onChange(null);
             return;
         }

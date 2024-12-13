@@ -11,14 +11,6 @@ describe("RegularEnsembleIdent", () => {
         expect(ensembleIdent.getEnsembleName()).toBe(ensembleName);
     });
 
-    test("from case uuid and ensemble name should return a new instance", () => {
-        const caseUuid = "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa";
-        const ensembleName = "testEnsemble";
-        const ensembleIdent = RegularEnsembleIdent.fromCaseUuidAndEnsembleName(caseUuid, ensembleName);
-        expect(ensembleIdent.getCaseUuid()).toBe(caseUuid);
-        expect(ensembleIdent.getEnsembleName()).toBe(ensembleName);
-    });
-
     test("should create an instance from a string", () => {
         const caseUuid = "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa";
         const ensembleName = "testEnsemble";

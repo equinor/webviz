@@ -247,13 +247,13 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
     const showObservations = get(showObservationsAtom);
     const vectorSpecifications = get(vectorSpecificationsAtom);
 
-    const uniqueEnsembleIdents = [
-        ...new Set(
-            vectorSpecifications
-                ?.filter((item) => item.ensembleIdent instanceof RegularEnsembleIdent)
-                .map((item) => item.ensembleIdent as RegularEnsembleIdent) ?? []
-        ),
-    ];
+    const uniqueEnsembleIdents: RegularEnsembleIdent[] = [];
+    for (const { ensembleIdent } of vectorSpecifications) {
+        const isAlreadyAdded = uniqueEnsembleIdents.some((elm) => elm.equals(ensembleIdent));
+        if (!isAlreadyAdded && isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent)) {
+            uniqueEnsembleIdents.push(ensembleIdent);
+        }
+    }
 
     const queries = uniqueEnsembleIdents.map((item) => {
         return () => ({

@@ -2,6 +2,37 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 /**
+ * Check if two ensemble idents are equal.
+ */
+export function areEnsembleIdentsEqual(
+    a: RegularEnsembleIdent | DeltaEnsembleIdent | null,
+    b: RegularEnsembleIdent | DeltaEnsembleIdent | null
+): boolean {
+    if (a === null) {
+        return b === null;
+    }
+    return a.equals(b);
+}
+
+/**
+ * Check if two lists of ensemble idents are equal.
+ */
+export function areEnsembleIdentListsEqual(
+    a: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
+    b: (RegularEnsembleIdent | DeltaEnsembleIdent)[]
+): boolean {
+    if (a.length !== b.length) {
+        return false;
+    }
+    for (let i = 0; i < a.length; i++) {
+        if (!a[i].equals(b[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
  * Check if provided EnsembleIdentInterface implementation is of specified type
  */
 export function isEnsembleIdentOfType<T extends RegularEnsembleIdent | DeltaEnsembleIdent>(
@@ -34,17 +65,4 @@ export function filterEnsembleIdentsByType<T extends RegularEnsembleIdent | Delt
  */
 export function ensembleIdentUuidRegexString(): string {
     return "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}";
-}
-
-/**
- * Generates a regex pattern for an ensemble ident with named groups for case uuid and ensemble name, and without the start and end anchors.
- * @param caseUuidNamedGroup
- * @param ensembleNameNamedGroup
- * @returns A string that represents a regex pattern for an ensemble ident with named groups for case uuid and ensemble name, and without the start and end anchors
- */
-export function ensembleIdentRegexStringWithoutAnchors(
-    caseUuidNamedGroup: string,
-    ensembleNameNamedGroup: string
-): string {
-    return `(?<${caseUuidNamedGroup}>${ensembleIdentUuidRegexString()})::(?<${ensembleNameNamedGroup}>.*)`;
 }

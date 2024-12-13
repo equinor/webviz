@@ -19,14 +19,12 @@ describe("DeltaEnsembleIdent", () => {
         expect(deltaEnsembleIdent.getReferenceEnsembleIdent()).toBe(referenceEnsembleIdent);
         expect(deltaEnsembleIdent.getEnsembleName()).toBe("(compare-ensemble-name) - (reference-ensemble-name)");
     });
-    test("should convert uuid and ensemble ident strings to a single string", () => {
-        const compareEnsembleIdentString = compareEnsembleIdent.toString();
-        const referenceEnsembleIdentString = referenceEnsembleIdent.toString();
-        const result = DeltaEnsembleIdent.uuidAndEnsembleIdentStringsToString(
-            compareEnsembleIdentString,
-            referenceEnsembleIdentString
+    test("should convert compare and reference ensemble idents to a string", () => {
+        const result = DeltaEnsembleIdent.compareEnsembleIdentAndReferenceEnsembleIdentToString(
+            compareEnsembleIdent,
+            referenceEnsembleIdent
         );
-        expect(result).toBe(`~@@~${compareEnsembleIdentString}~@@~${referenceEnsembleIdentString}~@@~`);
+        expect(result).toBe(`~@@~${compareEnsembleIdent.toString()}~@@~${referenceEnsembleIdent.toString()}~@@~`);
     });
 
     test("should get ensemble ident string matching uuid and ensembles string with separator", () => {
@@ -54,14 +52,14 @@ describe("DeltaEnsembleIdent", () => {
     test("should validate a correct DeltaEnsembleIdent string", () => {
         const deltaEnsembleIdent = new DeltaEnsembleIdent(compareEnsembleIdent, referenceEnsembleIdent);
         const deltaEnsembleIdentString = deltaEnsembleIdent.toString();
-        expect(DeltaEnsembleIdent.isValidDeltaEnsembleIdentString(deltaEnsembleIdentString)).toBe(true);
+        expect(DeltaEnsembleIdent.isValidEnsembleIdentString(deltaEnsembleIdentString)).toBe(true);
     });
 
     test("should invalidate an incorrect DeltaEnsembleIdent string", () => {
         const invalidString = "invalid-string";
         const regularEnsembleString = compareEnsembleIdent.toString();
-        expect(DeltaEnsembleIdent.isValidDeltaEnsembleIdentString(invalidString)).toBe(false);
-        expect(DeltaEnsembleIdent.isValidDeltaEnsembleIdentString(regularEnsembleString)).toBe(false);
+        expect(DeltaEnsembleIdent.isValidEnsembleIdentString(invalidString)).toBe(false);
+        expect(DeltaEnsembleIdent.isValidEnsembleIdentString(regularEnsembleString)).toBe(false);
     });
 
     test("should correctly compare two DeltaEnsembleIdent instances", () => {

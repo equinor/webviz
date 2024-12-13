@@ -60,7 +60,7 @@ export class DeltaEnsemble {
             return this._customName;
         }
 
-        return `${this._compareEnsemble.getDisplayName()} - ${this._referenceEnsemble.getDisplayName()}`;
+        return `(${this._compareEnsemble.getDisplayName()}) - (${this._referenceEnsemble.getDisplayName()})`;
     }
 
     getEnsembleName(): string {
@@ -101,13 +101,5 @@ export class DeltaEnsemble {
 
     getReferenceEnsembleIdent(): RegularEnsembleIdent {
         return this._referenceEnsemble.getIdent();
-    }
-
-    getCompareEnsembleRealizations(): readonly number[] {
-        return this._compareEnsemble.getRealizations();
-    }
-
-    getReferenceEnsembleRealizations(): readonly number[] {
-        return this._referenceEnsemble.getRealizations();
     }
 }

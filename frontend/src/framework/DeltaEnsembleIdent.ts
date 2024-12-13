@@ -1,5 +1,5 @@
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import { ensembleIdentRegexStringWithoutAnchors } from "./utils/ensembleIdentUtils";
+import { ensembleIdentUuidRegexString, isEnsembleIdentOfType } from "./utils/ensembleIdentUtils";
 
 /**
  * Delta ensemble ident class.
@@ -25,16 +25,22 @@ export class DeltaEnsembleIdent {
         this._referenceEnsembleIdent = referenceEnsembleIdent;
     }
 
-    static uuidAndEnsembleIdentStringsToString(
-        compareEnsembleIdentString: string,
-        referenceEnsembleIdentString: string
+    static compareEnsembleIdentAndReferenceEnsembleIdentToString(
+        compareEnsembleIdent: RegularEnsembleIdent,
+        referenceEnsembleIdent: RegularEnsembleIdent
     ): string {
-        return `~@@~${compareEnsembleIdentString}~@@~${referenceEnsembleIdentString}~@@~`;
+        return `~@@~${compareEnsembleIdent.toString()}~@@~${referenceEnsembleIdent.toString()}~@@~`;
     }
 
-    static isValidDeltaEnsembleIdentString(deltaEnsembleIdentString: string): boolean {
-        const regex = DeltaEnsembleIdent.getDeltaEnsembleIdentRegex();
-        const result = regex.exec(deltaEnsembleIdentString);
+    private static getEnsembleIdentRegex(): RegExp {
+        const compareEnsembleIdentRegexString = `(?<compareCaseUuid>${ensembleIdentUuidRegexString()})::(?<compareEnsembleName>.*)`;
+        const referenceEnsembleIdentRegexString = `(?<referenceCaseUuid>${ensembleIdentUuidRegexString()})::(?<referenceEnsembleName>.*)`;
+        return new RegExp(`^~@@~${compareEnsembleIdentRegexString}~@@~${referenceEnsembleIdentRegexString}~@@~$`);
+    }
+
+    static isValidEnsembleIdentString(ensembleIdentString: string): boolean {
+        const regex = DeltaEnsembleIdent.getEnsembleIdentRegex();
+        const result = regex.exec(ensembleIdentString);
         return (
             !!result &&
             !!result.groups &&
@@ -45,9 +51,9 @@ export class DeltaEnsembleIdent {
         );
     }
 
-    static fromString(deltaEnsembleIdentString: string): DeltaEnsembleIdent {
-        const regex = DeltaEnsembleIdent.getDeltaEnsembleIdentRegex();
-        const result = regex.exec(deltaEnsembleIdentString);
+    static fromString(ensembleIdentString: string): DeltaEnsembleIdent {
+        const regex = DeltaEnsembleIdent.getEnsembleIdentRegex();
+        const result = regex.exec(ensembleIdentString);
         if (
             !result ||
             !result.groups ||
@@ -56,7 +62,7 @@ export class DeltaEnsembleIdent {
             !result.groups.referenceCaseUuid ||
             !result.groups.referenceEnsembleName
         ) {
-            throw new Error(`Invalid ensemble ident: ${deltaEnsembleIdentString}`);
+            throw new Error(`Invalid ensemble ident: ${ensembleIdentString}`);
         }
 
         const { compareCaseUuid, compareEnsembleName, referenceCaseUuid, referenceEnsembleName } = result.groups;
@@ -65,18 +71,6 @@ export class DeltaEnsembleIdent {
             new RegularEnsembleIdent(compareCaseUuid, compareEnsembleName),
             new RegularEnsembleIdent(referenceCaseUuid, referenceEnsembleName)
         );
-    }
-
-    private static getDeltaEnsembleIdentRegex(): RegExp {
-        const compareEnsembleIdentRegexString = ensembleIdentRegexStringWithoutAnchors(
-            "compareCaseUuid",
-            "compareEnsembleName"
-        );
-        const referenceEnsembleIdentRegexString = ensembleIdentRegexStringWithoutAnchors(
-            "referenceCaseUuid",
-            "referenceEnsembleName"
-        );
-        return new RegExp(`^~@@~${compareEnsembleIdentRegexString}~@@~${referenceEnsembleIdentRegexString}~@@~$`);
     }
 
     getEnsembleName(): string {
@@ -92,14 +86,14 @@ export class DeltaEnsembleIdent {
     }
 
     toString(): string {
-        return DeltaEnsembleIdent.uuidAndEnsembleIdentStringsToString(
-            this._compareEnsembleIdent.toString(),
-            this._referenceEnsembleIdent.toString()
+        return DeltaEnsembleIdent.compareEnsembleIdentAndReferenceEnsembleIdentToString(
+            this._compareEnsembleIdent,
+            this._referenceEnsembleIdent
         );
     }
 
     equals(otherIdent: any | null): boolean {
-        if (!otherIdent || !(otherIdent instanceof DeltaEnsembleIdent)) {
+        if (!otherIdent || !isEnsembleIdentOfType(otherIdent, DeltaEnsembleIdent)) {
             return false;
         }
         if (otherIdent === this) {

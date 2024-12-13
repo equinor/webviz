@@ -19,7 +19,7 @@ export class RealizationFilterSet {
             let ensembleIdent = null;
             if (RegularEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
                 ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
-            } else if (DeltaEnsembleIdent.isValidDeltaEnsembleIdentString(ensembleIdentString)) {
+            } else if (DeltaEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
                 ensembleIdent = DeltaEnsembleIdent.fromString(ensembleIdentString);
             }
             if (!ensembleIdent) {

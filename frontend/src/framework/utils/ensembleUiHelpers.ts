@@ -1,3 +1,5 @@
+import { isEnsembleIdentOfType } from "./ensembleIdentUtils";
+
 import { DeltaEnsembleIdent } from "../DeltaEnsembleIdent";
 import { EnsembleSet } from "../EnsembleSet";
 import { RegularEnsembleIdent } from "../RegularEnsembleIdent";
@@ -55,15 +57,19 @@ export function fixupEnsembleIdent(
     const regularEnsembles = ensembleSet.getRegularEnsembleArray();
     const deltaEnsembles = ensembleSet.getDeltaEnsembleArray();
 
-    if (currIdent instanceof RegularEnsembleIdent && regularEnsembles.length > 0) {
+    if (currIdent && isEnsembleIdentOfType(currIdent, RegularEnsembleIdent) && regularEnsembles.length > 0) {
         return regularEnsembles[0].getIdent();
     }
 
-    if (currIdent instanceof DeltaEnsembleIdent && deltaEnsembles.length > 0) {
+    if (currIdent && isEnsembleIdentOfType(currIdent, DeltaEnsembleIdent) && deltaEnsembles.length > 0) {
         return deltaEnsembles[0].getIdent();
     }
 
-    return regularEnsembles.length > 0 ? regularEnsembles[0].getIdent() : deltaEnsembles[0].getIdent();
+    return regularEnsembles.length > 0
+        ? regularEnsembles[0].getIdent()
+        : deltaEnsembles.length > 0
+        ? deltaEnsembles[0].getIdent()
+        : null;
 }
 
 /**
@@ -101,7 +107,10 @@ export function fixupEnsembleIdents(
         if (ensembleSet.hasAnyRegularEnsembles()) {
             return [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
         }
-        return [ensembleSet.getDeltaEnsembleArray()[0].getIdent()];
+        if (ensembleSet.hasAnyDeltaEnsembles()) {
+            return [ensembleSet.getDeltaEnsembleArray()[0].getIdent()];
+        }
+        return [];
     }
 
     return currIdents.filter((currIdent) => {

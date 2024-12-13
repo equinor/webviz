@@ -3,6 +3,7 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
+import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 
 import { atom } from "jotai";
 import { isEqual } from "lodash";
@@ -28,7 +29,7 @@ export const statisticsSelectionAtom = atom<StatisticsSelection>({
 
 export const userSelectedEnsembleIdentsAtom = atomWithCompare<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>(
     [],
-    isEqual
+    areEnsembleIdentListsEqual
 );
 
 export const selectedVectorNamesAtom = atomWithCompare<string[]>([], isEqual);
