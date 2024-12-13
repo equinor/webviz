@@ -17,6 +17,7 @@ from primary.auth.auth_helper import AuthHelper
 from primary.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from primary.services.surface_query_service.surface_query_service import RealizationSampleResult
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
+from primary.utils.drogon import is_drogon_identifier
 
 from . import converters
 from . import schemas
@@ -319,15 +320,14 @@ async def _get_stratigraphic_units_for_case_async(
     perf_metrics = PerfMetrics()
 
     case_inspector = CaseInspector.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
-    field_identifiers = await case_inspector.get_field_identifiers_async()
     strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     perf_metrics.record_lap("get-strat-ident")
 
     smda_access: SmdaAccess | DrogonSmdaAccess
-    if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
+    if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         smda_access = DrogonSmdaAccess()
     else:
-        smda_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifiers[0])
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
     strat_units = await smda_access.get_stratigraphic_units(strat_column_identifier)
     perf_metrics.record_lap("get-strat-units")

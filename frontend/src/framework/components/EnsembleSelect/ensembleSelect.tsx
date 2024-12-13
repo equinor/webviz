@@ -38,7 +38,6 @@ export function EnsembleSelect(
             if (foundEnsemble && (allowDeltaEnsembles || foundEnsemble instanceof RegularEnsemble)) {
                 identArray.push(foundEnsemble.getIdent());
             }
-        }
 
         // Filter to match the correct return type before calling onChange
         if (!allowDeltaEnsembles) {

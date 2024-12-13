@@ -72,20 +72,12 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
     }
 
     protected async fetchData(queryClient: QueryClient): Promise<WellPicksLayerData> {
-        const queryKey = [
-            "getWellborePicksAndStratigraphicUnits",
-            this._settings.fieldIdentifier,
-            this._settings.wellboreUuid,
-        ];
+        const queryKey = ["getWellborePicksAndStratigraphicUnits", this._settings.wellboreUuid];
         this.registerQueryKey(queryKey);
 
         const wellborePicksPromise = queryClient.fetchQuery({
             queryKey,
-            queryFn: () =>
-                apiService.well.getWellborePicksForWellbore(
-                    this._settings.fieldIdentifier ?? "",
-                    this._settings.wellboreUuid ?? ""
-                ),
+            queryFn: () => apiService.well.getWellborePicksForWellbore(this._settings.wellboreUuid ?? ""),
             staleTime: STALE_TIME,
             gcTime: CACHE_TIME,
         });

@@ -492,7 +492,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             <CollapsibleGroup expanded={true} title="Ensemble and realization">
                 <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
                     <EnsembleDropdown
-                        ensembleSet={ensembleSet}
+                        ensembles={ensembleSet.getEnsembleArr()}
                         value={computedEnsembleIdent ? computedEnsembleIdent : null}
                         onChange={handleEnsembleSelectionChange}
                     />

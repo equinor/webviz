@@ -256,7 +256,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                 <div className="flex flex-col gap-2">
                     <Label text="Ensemble">
                         <EnsembleDropdown
-                            ensembleSet={ensembleSet}
+                            ensembles={ensembleSet.getEnsembleArr()}
                             value={selectedEnsembleIdent}
                             onChange={handleEnsembleSelectionChange}
                             showArrows
