@@ -198,7 +198,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                 <div className="table-cell">
                     <EnsembleDropdown
                         value={props.layer.getSettings().ensembleIdent}
-                        ensembles={props.ensembleSet.getEnsembleArr()}
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         onChange={handleEnsembleChange}
                         debounceTimeMs={600}
                     />

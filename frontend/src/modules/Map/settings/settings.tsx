@@ -227,7 +227,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                 labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
             >
                 <EnsembleDropdown
-                    ensembles={ensembleSet.getEnsembleArr()}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />

@@ -228,7 +228,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
         <>
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
-                    ensembles={props.ensembleSet.getEnsembleArr()}
+                    ensembles={props.ensembleSet.getRegularEnsembleArray()}
                     value={ensembleIdents}
                     onChange={handleEnsembleIdentsChange}
                     size={5}

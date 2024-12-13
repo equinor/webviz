@@ -250,7 +250,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Ensembles">
                 <EnsembleSelect
-                    ensembles={ensembleSet.getEnsembleArr()}
+                    ensembles={ensembleSet.getEnsembleArray()}
                     value={selectedEnsembleIdents}
                     allowDeltaEnsembles={true}
                     size={5}

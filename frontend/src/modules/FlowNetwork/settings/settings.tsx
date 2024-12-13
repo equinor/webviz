@@ -142,7 +142,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Ensemble">
                 <EnsembleDropdown
-                    ensembles={ensembleSet.getEnsembleArr()}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />

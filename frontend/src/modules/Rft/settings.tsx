@@ -88,7 +88,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         <div>
             <CollapsibleGroup expanded={true} title="Ensembles">
                 <EnsembleDropdown
-                    ensembles={ensembleSet.getEnsembleArr()}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />

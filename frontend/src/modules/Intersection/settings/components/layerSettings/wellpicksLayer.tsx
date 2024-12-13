@@ -87,7 +87,7 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
                 <div className="table-cell">
                     <EnsembleDropdown
                         value={props.layer.getSettings().ensembleIdent}
-                        ensembles={props.ensembleSet.getEnsembleArr()}
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         onChange={handleEnsembleChange}
                         debounceTimeMs={600}
                     />

@@ -126,7 +126,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
-                    ensembles={ensembleSet.getEnsembleArr()}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     onChange={handleEnsembleSelectionChange}
                     value={selectedEnsembleIdents}
                     size={5}
