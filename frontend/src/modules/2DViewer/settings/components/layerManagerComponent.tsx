@@ -8,37 +8,31 @@ import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
-import { IsMoveAllowedArgs, SortableList } from "@lib/components/SortableList";
-import { useElementSize } from "@lib/hooks/useElementSize";
-import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { ColorScale } from "@modules/2DViewer/layers/ColorScale";
-import { DeltaSurface } from "@modules/2DViewer/layers/DeltaSurface";
-import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
-import { SettingsGroup } from "@modules/2DViewer/layers/SettingsGroup";
-import { SharedSetting } from "@modules/2DViewer/layers/SharedSetting";
-import { View } from "@modules/2DViewer/layers/View";
-import { ExpandCollapseAllButton } from "@modules/2DViewer/layers/components/ExpandCollapseAllButton";
-import { LayersActionGroup, LayersActions } from "@modules/2DViewer/layers/components/LayersActions";
-import { makeSortableListItemComponent } from "@modules/2DViewer/layers/components/utils";
-import { GroupDelegateTopic } from "@modules/2DViewer/layers/delegates/GroupDelegate";
-import { usePublishSubscribeTopicValue } from "@modules/2DViewer/layers/delegates/PublishSubscribeDelegate";
-import { DrilledWellTrajectoriesLayer } from "@modules/2DViewer/layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
-import { DrilledWellborePicksLayer } from "@modules/2DViewer/layers/implementations/layers/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
-import { ObservedSurfaceLayer } from "@modules/2DViewer/layers/implementations/layers/ObservedSurfaceLayer/ObservedSurfaceLayer";
-import { RealizationGridLayer } from "@modules/2DViewer/layers/implementations/layers/RealizationGridLayer/RealizationGridLayer";
-import { RealizationPolygonsLayer } from "@modules/2DViewer/layers/implementations/layers/RealizationPolygonsLayer/RealizationPolygonsLayer";
-import { RealizationSurfaceLayer } from "@modules/2DViewer/layers/implementations/layers/RealizationSurfaceLayer/RealizationSurfaceLayer";
-import { StatisticalSurfaceLayer } from "@modules/2DViewer/layers/implementations/layers/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
-import { EnsembleSetting } from "@modules/2DViewer/layers/implementations/settings/EnsembleSetting";
-import { RealizationSetting } from "@modules/2DViewer/layers/implementations/settings/RealizationSetting";
-import { SurfaceAttributeSetting } from "@modules/2DViewer/layers/implementations/settings/SurfaceAttributeSetting";
-import { SurfaceNameSetting } from "@modules/2DViewer/layers/implementations/settings/SurfaceNameSetting";
-import { TimeOrIntervalSetting } from "@modules/2DViewer/layers/implementations/settings/TimeOrIntervalSetting";
+import { LayersActionGroup } from "@modules/2DViewer/layers/LayersActions";
+import { GroupDelegate } from "@modules/2DViewer/layers/delegates/GroupDelegate";
+import { ColorScale } from "@modules/2DViewer/layers/framework/ColorScale/ColorScale";
+import { DeltaSurface } from "@modules/2DViewer/layers/framework/DeltaSurface/DeltaSurface";
+import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
+import { LayerManagerComponent } from "@modules/2DViewer/layers/framework/LayerManager/LayerManagerComponent";
+import { SettingsGroup } from "@modules/2DViewer/layers/framework/SettingsGroup/SettingsGroup";
+import { SharedSetting } from "@modules/2DViewer/layers/framework/SharedSetting/SharedSetting";
+import { View } from "@modules/2DViewer/layers/framework/View/View";
 import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/2DViewer/layers/interfaces";
+import { DrilledWellTrajectoriesLayer } from "@modules/2DViewer/layers/layers/implementations/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "@modules/2DViewer/layers/layers/implementations/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
+import { ObservedSurfaceLayer } from "@modules/2DViewer/layers/layers/implementations/ObservedSurfaceLayer/ObservedSurfaceLayer";
+import { RealizationGridLayer } from "@modules/2DViewer/layers/layers/implementations/RealizationGridLayer/RealizationGridLayer";
+import { RealizationPolygonsLayer } from "@modules/2DViewer/layers/layers/implementations/RealizationPolygonsLayer/RealizationPolygonsLayer";
+import { RealizationSurfaceLayer } from "@modules/2DViewer/layers/layers/implementations/RealizationSurfaceLayer/RealizationSurfaceLayer";
+import { StatisticalSurfaceLayer } from "@modules/2DViewer/layers/layers/implementations/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
+import { EnsembleSetting } from "@modules/2DViewer/layers/settings/implementations/EnsembleSetting";
+import { RealizationSetting } from "@modules/2DViewer/layers/settings/implementations/RealizationSetting";
+import { SurfaceAttributeSetting } from "@modules/2DViewer/layers/settings/implementations/SurfaceAttributeSetting";
+import { SurfaceNameSetting } from "@modules/2DViewer/layers/settings/implementations/SurfaceNameSetting";
+import { TimeOrIntervalSetting } from "@modules/2DViewer/layers/settings/implementations/TimeOrIntervalSetting";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { Dropdown } from "@mui/base";
 import {
-    Add,
     Check,
     Panorama,
     SettingsApplications,
@@ -51,28 +45,20 @@ import { useAtom } from "jotai";
 
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
-export type LayerManagerComponentProps = {
+export type LayerManagerComponentWrapperProps = {
     layerManager: LayerManager;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
 };
 
-export function LayerManagerComponent(props: LayerManagerComponentProps): React.ReactNode {
-    const layerListRef = React.useRef<HTMLDivElement>(null);
+export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapperProps): React.ReactNode {
     const colorSet = props.workbenchSettings.useColorSet();
-    const layerListSize = useElementSize(layerListRef);
 
     const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
 
     const groupDelegate = props.layerManager.getGroupDelegate();
-    const items = usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
-    function handleLayerAction(identifier: string, group?: Group) {
-        let groupDelegate = props.layerManager.getGroupDelegate();
-        if (group) {
-            groupDelegate = group.getGroupDelegate();
-        }
-
+    function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
         const numSharedSettings = groupDelegate.findChildren((item) => {
             return item instanceof SharedSetting;
         }).length;
@@ -133,24 +119,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
         }
     }
 
-    function checkIfItemMoveAllowed(args: IsMoveAllowedArgs): boolean {
-        const movedItem = groupDelegate.findDescendantById(args.movedItemId);
-        if (!movedItem) {
-            return false;
-        }
-
-        const destinationItem = args.destinationId
-            ? groupDelegate.findDescendantById(args.destinationId)
-            : props.layerManager;
-
-        if (!destinationItem || !instanceofGroup(destinationItem)) {
-            return false;
-        }
-
-        if (movedItem instanceof View && destinationItem instanceof View) {
-            return false;
-        }
-
+    function checkIfItemMoveAllowed(movedItem: Item, destinationItem: Group): boolean {
         if (destinationItem instanceof DeltaSurface) {
             if (
                 instanceofLayer(movedItem) &&
@@ -172,117 +141,41 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
             }
         }
 
-        const numSharedSettingsAndColorScales =
-            destinationItem.getGroupDelegate().findChildren((item) => {
-                return item instanceof SharedSetting || item instanceof ColorScale;
-            }).length ?? 0;
-
-        if (!(movedItem instanceof SharedSetting || movedItem instanceof ColorScale)) {
-            if (args.position < numSharedSettingsAndColorScales) {
-                return false;
-            }
-        } else {
-            if (args.originId === args.destinationId) {
-                if (args.position >= numSharedSettingsAndColorScales) {
-                    return false;
-                }
-            } else {
-                if (args.position > numSharedSettingsAndColorScales) {
-                    return false;
-                }
-            }
-        }
-
         return true;
-    }
-
-    function handleItemMoved(
-        movedItemId: string,
-        originId: string | null,
-        destinationId: string | null,
-        position: number
-    ) {
-        const movedItem = groupDelegate.findDescendantById(movedItemId);
-        if (!movedItem) {
-            return;
-        }
-
-        let origin = props.layerManager.getGroupDelegate();
-        if (originId) {
-            const candidate = groupDelegate.findDescendantById(originId);
-            if (candidate && instanceofGroup(candidate)) {
-                origin = candidate.getGroupDelegate();
-            }
-        }
-
-        let destination = props.layerManager.getGroupDelegate();
-        if (destinationId) {
-            const candidate = groupDelegate.findDescendantById(destinationId);
-            if (candidate && instanceofGroup(candidate)) {
-                destination = candidate.getGroupDelegate();
-            }
-        }
-
-        if (origin === destination) {
-            origin.moveChild(movedItem, position);
-            return;
-        }
-
-        origin.removeChild(movedItem);
-        destination.insertChild(movedItem, position);
     }
 
     const hasView = groupDelegate.getDescendantItems((item) => item instanceof View).length > 0;
     const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
 
     return (
-        <div className="flex-grow flex flex-col min-h-0">
-            <div className="w-full flex-grow flex flex-col min-h-0" ref={layerListRef}>
-                <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
-                    <div className="flex-grow font-bold text-sm">Layers</div>
-                    <LayersActions layersActionGroups={adjustedLayerActions} onActionClick={handleLayerAction} />
-                    <ExpandCollapseAllButton group={props.layerManager} />
-                    <Dropdown>
-                        <MenuButton label="Settings">
-                            <SettingsIcon fontSize="inherit" />
-                        </MenuButton>
-                        <Menu>
-                            <MenuHeading>Preferred view layout</MenuHeading>
-                            <ViewLayoutMenuItem
-                                checked={preferredViewLayout === PreferredViewLayout.HORIZONTAL}
-                                onClick={() => setPreferredViewLayout(PreferredViewLayout.HORIZONTAL)}
-                            >
-                                <ViewColumnOutlined fontSize="inherit" /> Horizontal
-                            </ViewLayoutMenuItem>
-                            <ViewLayoutMenuItem
-                                checked={preferredViewLayout === PreferredViewLayout.VERTICAL}
-                                onClick={() => setPreferredViewLayout(PreferredViewLayout.VERTICAL)}
-                            >
-                                <TableRowsOutlined fontSize="inherit" /> Vertical
-                            </ViewLayoutMenuItem>
-                        </Menu>
-                    </Dropdown>
-                </div>
-                <div
-                    className="w-full flex-grow flex flex-col relative"
-                    style={{ height: layerListSize.height - convertRemToPixels(12) }}
-                >
-                    <SortableList
-                        onItemMoved={handleItemMoved}
-                        isMoveAllowed={checkIfItemMoveAllowed}
-                        contentWhenEmpty={
-                            <div className="flex -mt-1 justify-center text-sm items-center gap-1 h-40">
-                                Click on <Add fontSize="inherit" /> to add a layer.
-                            </div>
-                        }
-                    >
-                        {items.map((item: Item) =>
-                            makeSortableListItemComponent(item, LAYER_ACTIONS, handleLayerAction)
-                        )}
-                    </SortableList>
-                </div>
-            </div>
-        </div>
+        <LayerManagerComponent
+            layerManager={props.layerManager}
+            additionalHeaderComponents={
+                <Dropdown>
+                    <MenuButton label="Settings">
+                        <SettingsIcon fontSize="inherit" />
+                    </MenuButton>
+                    <Menu>
+                        <MenuHeading>Preferred view layout</MenuHeading>
+                        <ViewLayoutMenuItem
+                            checked={preferredViewLayout === PreferredViewLayout.HORIZONTAL}
+                            onClick={() => setPreferredViewLayout(PreferredViewLayout.HORIZONTAL)}
+                        >
+                            <ViewColumnOutlined fontSize="inherit" /> Horizontal
+                        </ViewLayoutMenuItem>
+                        <ViewLayoutMenuItem
+                            checked={preferredViewLayout === PreferredViewLayout.VERTICAL}
+                            onClick={() => setPreferredViewLayout(PreferredViewLayout.VERTICAL)}
+                        >
+                            <TableRowsOutlined fontSize="inherit" /> Vertical
+                        </ViewLayoutMenuItem>
+                    </Menu>
+                </Dropdown>
+            }
+            layerActions={adjustedLayerActions}
+            onLayerAction={handleLayerAction}
+            isMoveAllowed={checkIfItemMoveAllowed}
+        />
     );
 }
 
@@ -335,13 +228,6 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 icon: <SettingsApplications fontSize="small" />,
                 label: "Settings group",
             },
-            /*
-            {
-                identifier: "delta-surface",
-                icon: <Difference fontSize="small" />,
-                label: "Delta Surface",
-            },
-            */
         ],
     },
     {

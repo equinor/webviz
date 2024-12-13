@@ -10,10 +10,10 @@ import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import { layerManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
-import { LayerManagerComponent } from "./components/layerManagerComponent";
+import { LayerManagerComponentWrapper } from "./components/layerManagerComponent";
 
-import { LayerManager, LayerManagerTopic } from "../layers/LayerManager";
 import { GroupDelegateTopic } from "../layers/delegates/GroupDelegate";
+import { LayerManager, LayerManagerTopic } from "../layers/framework/LayerManager/LayerManager";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -135,7 +135,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 <FieldDropdown ensembleSet={ensembleSet} onChange={handleFieldChange} value={fieldIdentifier} />
             </CollapsibleGroup>
             {layerManager && (
-                <LayerManagerComponent
+                <LayerManagerComponentWrapper
                     layerManager={layerManager}
                     workbenchSession={props.workbenchSession}
                     workbenchSettings={props.workbenchSettings}

@@ -7,8 +7,8 @@ import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDe
 import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
-import { LayerManager, LayerManagerTopic } from "../LayerManager";
-import { SharedSetting } from "../SharedSetting";
+import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { BoundingBox, Layer, SerializedLayer, SerializedType, Settings, SettingsContext } from "../interfaces";
 
 export enum LayerDelegateTopic {

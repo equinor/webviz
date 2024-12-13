@@ -11,14 +11,14 @@ import { ColormapLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewe
 import { Rgb, parse } from "culori";
 import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
-import { DrilledWellTrajectoriesLayer } from "../../layers/implementations/layers/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
-import { DrilledWellborePicksLayer } from "../../layers/implementations/layers/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
-import { ObservedSurfaceLayer } from "../../layers/implementations/layers/ObservedSurfaceLayer/ObservedSurfaceLayer";
-import { RealizationGridLayer } from "../../layers/implementations/layers/RealizationGridLayer/RealizationGridLayer";
-import { RealizationPolygonsLayer } from "../../layers/implementations/layers/RealizationPolygonsLayer/RealizationPolygonsLayer";
-import { RealizationSurfaceLayer } from "../../layers/implementations/layers/RealizationSurfaceLayer/RealizationSurfaceLayer";
-import { StatisticalSurfaceLayer } from "../../layers/implementations/layers/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
 import { Layer as LayerInterface } from "../../layers/interfaces";
+import { DrilledWellTrajectoriesLayer } from "../../layers/layers/implementations/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "../../layers/layers/implementations/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
+import { ObservedSurfaceLayer } from "../../layers/layers/implementations/ObservedSurfaceLayer/ObservedSurfaceLayer";
+import { RealizationGridLayer } from "../../layers/layers/implementations/RealizationGridLayer/RealizationGridLayer";
+import { RealizationPolygonsLayer } from "../../layers/layers/implementations/RealizationPolygonsLayer/RealizationPolygonsLayer";
+import { RealizationSurfaceLayer } from "../../layers/layers/implementations/RealizationSurfaceLayer/RealizationSurfaceLayer";
+import { StatisticalSurfaceLayer } from "../../layers/layers/implementations/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
 import { AdvancedWellsLayer } from "../customDeckGlLayers/AdvancedWellsLayer";
 import { WellBorePickLayerData, WellborePicksLayer } from "../customDeckGlLayers/WellborePicksLayer";
 

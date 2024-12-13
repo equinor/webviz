@@ -3,14 +3,14 @@ import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorScaleSerialization } from "@lib/utils/ColorScale";
 import { QueryClient } from "@tanstack/react-query";
 
-import { Dependency } from "./Dependency";
-import { GlobalSettings } from "./LayerManager";
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { LayerDelegate } from "./delegates/LayerDelegate";
 import { SettingDelegate } from "./delegates/SettingDelegate";
 import { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
-import { SettingType } from "./implementations/settings/settingsTypes";
+import { Dependency } from "./delegates/_utils/Dependency";
+import { GlobalSettings } from "./framework/LayerManager/LayerManager";
+import { SettingType } from "./settings/settingsTypes";
 
 export enum SerializedType {
     LAYER_MANAGER = "layer-manager",

@@ -1,4 +1,4 @@
-import { LayerManager } from "@modules/2DViewer/layers/LayerManager";
+import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 
 import { atom } from "jotai";
