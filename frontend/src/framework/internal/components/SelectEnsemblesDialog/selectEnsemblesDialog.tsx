@@ -556,7 +556,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         >
                             Discard changes
                         </Button>
-                        <div title={hasDuplicateDeltaEnsembles() ? "Duplicate Delta Ensembles" : ""}>
+                        <div title={hasDuplicateDeltaEnsembles() ? "Duplicate Delta Ensembles (blue rows)" : ""}>
                             <Button
                                 onClick={handleApplyEnsembleSelection}
                                 disabled={
@@ -657,7 +657,6 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         </div>
                     </div>
                     <div className="flex flex-col flex-grow max-h-full gap-4 p-4">
-                        {/* <Label text="Selected Ensembles">{<></>}</Label> */}
                         <div className="flex-shrink">Selected Ensembles</div>
                         <div className="flex-1 overflow-auto">
                             <table className="w-full border border-collapse table-fixed text-sm">
@@ -732,9 +731,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         <div className="flex-shrink flex flex-row">
                             <Info
                                 fontSize="medium"
-                                titleAccess={`"Delta Ensemble" = "Compare Ensemble" - "Reference Ensemble"`}
+                                titleAccess={`Create delta ensemble using selected ensembles:\n\n"Delta Ensemble" = "Compare Ensemble" - "Reference Ensemble"`}
                                 className={
-                                    // "rounded-md px-0.25 py-0.25 border border-transparent text-indigo-600 bg-white hover:text-indigo-700 cursor-help"
                                     "rounded-md px-0.25 py-0.25 border border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
                                 }
                             />
@@ -781,10 +779,10 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                     {
                                                         "hover:bg-red-50 odd:bg-red-200 even:bg-red-300":
                                                             !isDeltaEnsembleValid,
-                                                        "hover:bg-slate-100 odd:bg-slate-50": isDeltaEnsembleValid,
-
                                                         "hover:bg-blue-50 odd:bg-blue-200 even:bg-blue-300":
                                                             isDeltaEnsembleValid && isDuplicateDeltaEnsemble,
+                                                        "hover:bg-slate-100 odd:bg-slate-50":
+                                                            isDeltaEnsembleValid && !isDuplicateDeltaEnsemble,
                                                     }
                                                 )}
                                             >
