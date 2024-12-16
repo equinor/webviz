@@ -79,7 +79,7 @@ export class WorkbenchSession {
     }
 }
 
-function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {
+export function createEnsembleRealizationFilterFuncForWorkbenchSession(workbenchSession: WorkbenchSession) {
     return function ensembleRealizationFilterFunc(
         ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent
     ): readonly number[] {
