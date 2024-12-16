@@ -73,7 +73,7 @@ describe("DeltaEnsemble", () => {
         // Use display name of compare and reference ensemble if no custom name is provided
         const DeltaEnsembleWithoutCustomName = new DeltaEnsemble(COMPARE_ENSEMBLE, REFERENCE_ENSEMBLE, "red");
         expect(DeltaEnsembleWithoutCustomName.getDisplayName()).toBe(
-            "Custom Name First Ensemble - Custom Name Second Ensemble"
+            "(Custom Name First Ensemble) - (Custom Name Second Ensemble)"
         );
     });
 

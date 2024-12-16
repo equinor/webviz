@@ -28,7 +28,7 @@ import { UserAvatar } from "./private-components/userAvatar";
 
 import { LoadingOverlay } from "../LoadingOverlay";
 
-const CASE_UUID_ENSEMBLE_NAME_SEPARATOR = "~&&~";
+const CASE_UUID_ENSEMBLE_NAME_SEPARATOR = "~@@~";
 
 // Ensemble element item for a delta ensemble
 export type DeltaEnsembleElementItem = {
