@@ -103,7 +103,7 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
             .fetchQuery({
                 queryKey,
                 queryFn: () => apiService.well.getWellTrajectories(fieldIdentifier ?? ""),
-                staleTime: 1800000, // TODO
+                staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
                 gcTime: 1800000,
             })
             .then((response: WellboreTrajectory_api[]) => {
