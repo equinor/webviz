@@ -1,7 +1,7 @@
 import { DatedFlowNetwork_api, FlowNetworkMetadata_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
+import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 
 import { atom } from "jotai";
 
@@ -25,7 +25,7 @@ export const selectedEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get)
     const ensembleSet = get(EnsembleSetAtom);
     const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
 
-    const validEnsembleIdent = fixupEnsembleIdent(userSelectedEnsembleIdent, ensembleSet);
+    const validEnsembleIdent = fixupRegularEnsembleIdent(userSelectedEnsembleIdent, ensembleSet);
     return validEnsembleIdent;
 });
 

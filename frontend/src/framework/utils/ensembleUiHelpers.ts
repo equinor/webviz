@@ -1,5 +1,3 @@
-import { isEnsembleIdentOfType } from "./ensembleIdentUtils";
-
 import { DeltaEnsembleIdent } from "../DeltaEnsembleIdent";
 import { EnsembleSet } from "../EnsembleSet";
 import { RegularEnsembleIdent } from "../RegularEnsembleIdent";
@@ -31,21 +29,9 @@ export function maybeAssignFirstSyncedEnsemble(
  * means that you can compare the references (fixedIdent !== currIdent) to detect any changes.
  */
 export function fixupEnsembleIdent(
-    currIdent: RegularEnsembleIdent | null,
-    ensembleSet: EnsembleSet | null
-): RegularEnsembleIdent | null;
-export function fixupEnsembleIdent(
-    currIdent: DeltaEnsembleIdent | null,
-    ensembleSet: EnsembleSet | null
-): DeltaEnsembleIdent | null;
-export function fixupEnsembleIdent(
     currIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null,
     ensembleSet: EnsembleSet | null
-): (RegularEnsembleIdent | DeltaEnsembleIdent) | null;
-export function fixupEnsembleIdent(
-    currIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null,
-    ensembleSet: EnsembleSet | null
-): (RegularEnsembleIdent | DeltaEnsembleIdent) | null {
+): RegularEnsembleIdent | DeltaEnsembleIdent | null {
     if (!ensembleSet?.hasAnyEnsembles()) {
         return null;
     }
@@ -54,46 +40,45 @@ export function fixupEnsembleIdent(
         return currIdent;
     }
 
-    const regularEnsembles = ensembleSet.getRegularEnsembleArray();
-    const deltaEnsembles = ensembleSet.getDeltaEnsembleArray();
-
-    if (currIdent && isEnsembleIdentOfType(currIdent, RegularEnsembleIdent) && regularEnsembles.length > 0) {
-        return regularEnsembles[0].getIdent();
-    }
-
-    if (currIdent && isEnsembleIdentOfType(currIdent, DeltaEnsembleIdent) && deltaEnsembles.length > 0) {
-        return deltaEnsembles[0].getIdent();
-    }
-
-    return regularEnsembles.length > 0
-        ? regularEnsembles[0].getIdent()
-        : deltaEnsembles.length > 0
-        ? deltaEnsembles[0].getIdent()
-        : null;
+    return ensembleSet.getEnsembleArray()[0].getIdent();
 }
 
 /**
- * Validates the the EnsembleIdents or DeltaEnsembleIdents specified in currIdents against the
- * contents of the EnsembleSet and fixes the value if it isn't valid.
+ * Validates the the RegularEnsembleIdent specified in currIdent against the contents of the
+ * EnsembleSet and fixes the value if it isn't valid.
+ *
+ * Returns null if specified EnsembleSet does not contain any regular ensembles.
+ *
+ * Note that if the specified RegularEnsembleIdents is valid, this function will always return
+ * a reference to the exact same object that was passed in currIdent. This means that you can
+ * compare the references (fixedIdent !== currIdent) to detect any changes.
+ */
+export function fixupRegularEnsembleIdent(
+    currIdent: RegularEnsembleIdent | null,
+    ensembleSet: EnsembleSet | null
+): RegularEnsembleIdent | null {
+    if (!ensembleSet?.hasAnyRegularEnsembles()) {
+        return null;
+    }
+
+    if (currIdent && ensembleSet.hasEnsemble(currIdent)) {
+        return currIdent;
+    }
+
+    return ensembleSet.getRegularEnsembleArray()[0].getIdent();
+}
+
+/**
+ * Validates the the RegularEnsembleIdents or DeltaEnsembleIdents specified in currIdents
+ * against the contents of the EnsembleSet and fixes the value if it isn't valid.
  *
  * Returns null if an empty EnsembleSet is specified.
  *
- * Note that if the specified EnsembleIdents and DeltaEnsembleIdents are valid, this function
- * will always return a reference to the exact same object that was passed in currIdent. This
- * means that you can compare the references (fixedIdent !== currIdent) to detect any changes.
+ * Note that if the specified RegularEnsembleIdents and DeltaEnsembleIdents are valid, this
+ * function will always return a reference to the exact same object that was passed in
+ * currIdent. This means that you can compare the references (fixedIdent !== currIdent) to
+ * detect any changes.
  */
-export function fixupEnsembleIdents(
-    currIdents: RegularEnsembleIdent[] | null,
-    ensembleSet: EnsembleSet | null
-): RegularEnsembleIdent[] | null;
-export function fixupEnsembleIdents(
-    currIdents: DeltaEnsembleIdent[] | null,
-    ensembleSet: EnsembleSet | null
-): DeltaEnsembleIdent[] | null;
-export function fixupEnsembleIdents(
-    currIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null,
-    ensembleSet: EnsembleSet | null
-): (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null;
 export function fixupEnsembleIdents(
     currIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null,
     ensembleSet: EnsembleSet | null
@@ -103,17 +88,33 @@ export function fixupEnsembleIdents(
     }
 
     if (currIdents === null || currIdents.length === 0) {
-        // Provide first regular ensemble ident by default
-        if (ensembleSet.hasAnyRegularEnsembles()) {
-            return [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
-        }
-        if (ensembleSet.hasAnyDeltaEnsembles()) {
-            return [ensembleSet.getDeltaEnsembleArray()[0].getIdent()];
-        }
-        return [];
+        return [ensembleSet.getEnsembleArray()[0].getIdent()];
     }
 
-    return currIdents.filter((currIdent) => {
-        return ensembleSet.hasEnsemble(currIdent);
-    });
+    return currIdents.filter((currIdent) => ensembleSet.hasEnsemble(currIdent));
+}
+
+/**
+ * Validates the the RegularEnsembleIdents specified in currIdents against the contents of the
+ * EnsembleSet and fixes the value if it isn't valid.
+ *
+ * Returns null if an empty EnsembleSet is specified.
+ *
+ * Note that if the specified RegularEnsembleIdents are valid, this function will always return
+ * a reference to the exact same object that was passed in currIdent. This means that you can
+ * compare the references (fixedIdent !== currIdent) to detect any changes.
+ */
+export function fixupRegularEnsembleIdents(
+    currIdents: RegularEnsembleIdent[] | null,
+    ensembleSet: EnsembleSet | null
+): RegularEnsembleIdent[] | null {
+    if (!ensembleSet?.hasAnyRegularEnsembles()) {
+        return null;
+    }
+
+    if (currIdents === null || currIdents.length === 0) {
+        return [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
+    }
+
+    return currIdents.filter((currIdent) => ensembleSet.hasEnsemble(currIdent));
 }
