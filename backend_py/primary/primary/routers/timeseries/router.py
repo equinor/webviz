@@ -63,10 +63,10 @@ async def get_realizations_vector_data(
     # fmt:on
 ) -> list[schemas.VectorRealizationData]:
     """Get vector data per realization"""
-    
+
     perf_metrics = ResponsePerfMetrics(response)
 
-    realizations: list[int]|None = None
+    realizations: list[int] | None = None
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
@@ -162,7 +162,7 @@ async def get_statistical_vector_data(
 
     perf_metrics = ResponsePerfMetrics(response)
 
-    realizations: list[int]|None = None
+    realizations: list[int] | None = None
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
