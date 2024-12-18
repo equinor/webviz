@@ -12,6 +12,7 @@ from primary.services.sumo_access.generic_types import EnsembleScalarResponse
 from primary.services.sumo_access.parameter_access import ParameterAccess
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
+from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import converters, schemas
 
@@ -57,13 +58,18 @@ async def get_realizations_vector_data(
     ensemble_name:  Annotated[str, Query(description="Ensemble name")],
     vector_name:  Annotated[str, Query(description="Name of the vector")],
     resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, raw data without resampling wil be returned.")] = None,
-    realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be returned.")] = None,
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
     # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
     # fmt:on
 ) -> list[schemas.VectorRealizationData]:
     """Get vector data per realization"""
-
+    
     perf_metrics = ResponsePerfMetrics(response)
+
+    realizations: list[int]|None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
+
     access = SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
@@ -97,7 +103,6 @@ async def get_timestamps_list(
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency")] = None,
-    # realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include")] = None,
 ) -> list[int]:
     """Get the intersection of available timestamps.
         Note that when resampling_frequency is None, the pure intersection of the
@@ -149,13 +154,17 @@ async def get_statistical_vector_data(
     vector_name: Annotated[str, Query(description="Name of the vector")],
     resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
     statistic_functions: Annotated[list[schemas.StatisticFunction] | None, Query(description="Optional list of statistics to calculate. If not specified, all statistics will be calculated.")] = None,
-    realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be included.")] = None,
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
     # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
     # fmt:on
 ) -> schemas.VectorStatisticData:
     """Get statistical vector data for an ensemble"""
 
     perf_metrics = ResponsePerfMetrics(response)
+
+    realizations: list[int]|None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
     access = SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
@@ -242,7 +251,6 @@ async def get_realization_vector_at_timestamp(
     ensemble_name:  Annotated[str, Query(description="Ensemble name")],
     vector_name: Annotated[str, Query(description="Name of the vector")],
     timestamp_utc_ms: Annotated[int, Query(description= "Timestamp in ms UTC to query vectors at")],
-    # realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be returned.")] = None,
     # fmt:on
 ) -> EnsembleScalarResponse:
     summary_access = SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)

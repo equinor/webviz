@@ -1,6 +1,7 @@
 import { Frequency_api, VectorHistoricalData_api, VectorStatisticSensitivityData_api } from "@api";
 import { VectorRealizationData_api } from "@api";
 import { apiService } from "@framework/ApiService";
+import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 const STALE_TIME = 60 * 1000;
@@ -14,6 +15,7 @@ export function useVectorDataQuery(
     realizationsToInclude: number[] | null
 ): UseQueryResult<Array<VectorRealizationData_api>> {
     const allOrNonEmptyRealArr = realizationsToInclude === null || realizationsToInclude.length > 0 ? true : false;
+    const realizationsEncodedAsUintListStr = realizationsToInclude ? encodeAsUintListStr(realizationsToInclude) : null;
     return useQuery({
         queryKey: [
             "getRealizationsVectorData",
@@ -21,7 +23,7 @@ export function useVectorDataQuery(
             ensembleName,
             vectorName,
             resampleFrequency,
-            realizationsToInclude,
+            realizationsEncodedAsUintListStr,
         ],
         queryFn: () =>
             apiService.timeseries.getRealizationsVectorData(
@@ -29,7 +31,7 @@ export function useVectorDataQuery(
                 ensembleName ?? "",
                 vectorName ?? "",
                 resampleFrequency ?? undefined,
-                realizationsToInclude ?? undefined
+                realizationsEncodedAsUintListStr
             ),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,

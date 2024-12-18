@@ -10,6 +10,7 @@ from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolum
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
+from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import schemas
 from . import converters
@@ -52,12 +53,7 @@ async def post_get_aggregated_per_realization_table_data(
     group_by_identifiers: Annotated[
         list[schemas.InplaceVolumetricsIdentifier] | None, Query(description="The identifiers to group table data by")
     ] = None,
-    realizations: Annotated[
-        list[int] | None,
-        Query(
-            description="Optional list of realizations to include. If not specified, all realizations will be returned."
-        ),
-    ] = None,
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
 ) -> schemas.InplaceVolumetricTableDataPerFluidSelection:
     """
     Get aggregated volumetric data for a given table with data per realization based on requested results and categories/index filter.
@@ -66,6 +62,12 @@ async def post_get_aggregated_per_realization_table_data(
     As the endpoint is post, the identifiers with values object is kept for convenience.
     """
     perf_metrics = ResponsePerfMetrics(response)
+
+    realizations = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
+
+    perf_metrics.record_lap("decode realizations array")
 
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
@@ -110,12 +112,7 @@ async def post_get_aggregated_statistical_table_data(
     group_by_identifiers: Annotated[
         list[schemas.InplaceVolumetricsIdentifier] | None, Query(description="The identifiers to group table data by")
     ] = None,
-    realizations: Annotated[
-        list[int] | None,
-        Query(
-            description="Optional list of realizations to include. If not specified, all realizations will be returned."
-        ),
-    ] = None,
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
 ) -> schemas.InplaceStatisticalVolumetricTableDataPerFluidSelection:
     """
     Get statistical volumetric data across selected realizations for a given table based on requested results and categories/index filter.
@@ -124,6 +121,12 @@ async def post_get_aggregated_statistical_table_data(
     As the endpoint is post, the identifiers with values object is kept for convenience.
     """
     perf_metrics = ResponsePerfMetrics(response)
+
+    realizations: list[int]|None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
+
+    perf_metrics.record_lap("decode realizations array")
 
     access = await InplaceVolumetricsAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name

@@ -51,7 +51,7 @@ export class InplaceVolumetricsService {
      * @param accumulateFluidZones Whether to accumulate fluid zones
      * @param requestBody
      * @param groupByIdentifiers The identifiers to group table data by
-     * @param realizations Optional list of realizations to include. If not specified, all realizations will be returned.
+     * @param realizationsEncodedAsUintListStr Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
      * @returns InplaceVolumetricTableDataPerFluidSelection Successful Response
      * @throws ApiError
      */
@@ -64,7 +64,7 @@ export class InplaceVolumetricsService {
         accumulateFluidZones: boolean,
         requestBody: Body_post_get_aggregated_per_realization_table_data,
         groupByIdentifiers?: (Array<InplaceVolumetricsIdentifier> | null),
-        realizations?: (Array<number> | null),
+        realizationsEncodedAsUintListStr?: (string | null),
     ): CancelablePromise<InplaceVolumetricTableDataPerFluidSelection> {
         return this.httpRequest.request({
             method: 'POST',
@@ -77,7 +77,7 @@ export class InplaceVolumetricsService {
                 'fluid_zones': fluidZones,
                 'accumulate_fluid_zones': accumulateFluidZones,
                 'group_by_identifiers': groupByIdentifiers,
-                'realizations': realizations,
+                'realizations_encoded_as_uint_list_str': realizationsEncodedAsUintListStr,
             },
             body: requestBody,
             mediaType: 'application/json',
@@ -100,7 +100,7 @@ export class InplaceVolumetricsService {
      * @param accumulateFluidZones Whether to accumulate fluid zones
      * @param requestBody
      * @param groupByIdentifiers The identifiers to group table data by
-     * @param realizations Optional list of realizations to include. If not specified, all realizations will be returned.
+     * @param realizationsEncodedAsUintListStr Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
      * @returns InplaceStatisticalVolumetricTableDataPerFluidSelection Successful Response
      * @throws ApiError
      */
@@ -113,7 +113,7 @@ export class InplaceVolumetricsService {
         accumulateFluidZones: boolean,
         requestBody: Body_post_get_aggregated_statistical_table_data,
         groupByIdentifiers?: (Array<InplaceVolumetricsIdentifier> | null),
-        realizations?: (Array<number> | null),
+        realizationsEncodedAsUintListStr?: (string | null),
     ): CancelablePromise<InplaceStatisticalVolumetricTableDataPerFluidSelection> {
         return this.httpRequest.request({
             method: 'POST',
@@ -126,7 +126,7 @@ export class InplaceVolumetricsService {
                 'fluid_zones': fluidZones,
                 'accumulate_fluid_zones': accumulateFluidZones,
                 'group_by_identifiers': groupByIdentifiers,
-                'realizations': realizations,
+                'realizations_encoded_as_uint_list_str': realizationsEncodedAsUintListStr,
             },
             body: requestBody,
             mediaType: 'application/json',
