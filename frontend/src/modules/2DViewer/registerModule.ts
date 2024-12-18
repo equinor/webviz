@@ -21,4 +21,7 @@ ModuleRegistry.registerModule<Interfaces>({
         ModuleDataTagId.GRID3D,
         ModuleDataTagId.POLYGONS,
     ],
+    onInstanceUnload: (instanceId) => {
+        window.localStorage.removeItem(`${instanceId}-settings`);
+    },
 });
