@@ -2,6 +2,7 @@ import { Frequency_api, Observations_api } from "@api";
 import { apiService } from "@framework/ApiService";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { EnsembleVectorObservationDataMap, VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { QueryObserverResult } from "@tanstack/react-query";
 
@@ -27,6 +28,8 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
 
     const queries = vectorSpecifications.map((item) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
+        const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
+
         return () => ({
             queryKey: [
                 "getRealizationsVectorData",
@@ -34,7 +37,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                 item.ensembleIdent.getEnsembleName(),
                 item.vectorName,
                 resampleFrequency,
-                realizations,
+                realizationsEncodedAsUintListStr,
             ],
             queryFn: () =>
                 apiService.timeseries.getRealizationsVectorData(
@@ -42,7 +45,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                     item.ensembleIdent.getEnsembleName() ?? "",
                     item.vectorName ?? "",
                     resampleFrequency,
-                    realizations
+                    realizationsEncodedAsUintListStr
                 ),
             staleTime: STALE_TIME,
             gcTime: CACHE_TIME,
@@ -73,6 +76,8 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
 
     const queries = vectorSpecifications.map((item) => {
         const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
+        const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
+
         return () => ({
             queryKey: [
                 "getStatisticalVectorData",
@@ -80,7 +85,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                 item.ensembleIdent.getEnsembleName(),
                 item.vectorName,
                 resampleFrequency,
-                realizations,
+                realizationsEncodedAsUintListStr,
             ],
             queryFn: () =>
                 apiService.timeseries.getStatisticalVectorData(
@@ -89,7 +94,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                     item.vectorName ?? "",
                     resampleFrequency ?? Frequency_api.MONTHLY,
                     undefined,
-                    realizations
+                    realizationsEncodedAsUintListStr
                 ),
             staleTime: STALE_TIME,
             gcTime: CACHE_TIME,

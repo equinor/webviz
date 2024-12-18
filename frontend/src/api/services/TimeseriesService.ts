@@ -45,7 +45,7 @@ export class TimeseriesService {
      * @param ensembleName Ensemble name
      * @param vectorName Name of the vector
      * @param resamplingFrequency Resampling frequency. If not specified, raw data without resampling wil be returned.
-     * @param realizations Optional list of realizations to include. If not specified, all realizations will be returned.
+     * @param realizationsEncodedAsUintListStr Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
      * @returns VectorRealizationData Successful Response
      * @throws ApiError
      */
@@ -54,7 +54,7 @@ export class TimeseriesService {
         ensembleName: string,
         vectorName: string,
         resamplingFrequency?: (Frequency | null),
-        realizations?: (Array<number> | null),
+        realizationsEncodedAsUintListStr?: (string | null),
     ): CancelablePromise<Array<VectorRealizationData>> {
         return this.httpRequest.request({
             method: 'GET',
@@ -64,7 +64,7 @@ export class TimeseriesService {
                 'ensemble_name': ensembleName,
                 'vector_name': vectorName,
                 'resampling_frequency': resamplingFrequency,
-                'realizations': realizations,
+                'realizations_encoded_as_uint_list_str': realizationsEncodedAsUintListStr,
             },
             errors: {
                 422: `Validation Error`,
@@ -140,7 +140,7 @@ export class TimeseriesService {
      * @param vectorName Name of the vector
      * @param resamplingFrequency Resampling frequency
      * @param statisticFunctions Optional list of statistics to calculate. If not specified, all statistics will be calculated.
-     * @param realizations Optional list of realizations to include. If not specified, all realizations will be included.
+     * @param realizationsEncodedAsUintListStr Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
      * @returns VectorStatisticData Successful Response
      * @throws ApiError
      */
@@ -150,7 +150,7 @@ export class TimeseriesService {
         vectorName: string,
         resamplingFrequency: Frequency,
         statisticFunctions?: (Array<StatisticFunction> | null),
-        realizations?: (Array<number> | null),
+        realizationsEncodedAsUintListStr?: (string | null),
     ): CancelablePromise<VectorStatisticData> {
         return this.httpRequest.request({
             method: 'GET',
@@ -161,7 +161,7 @@ export class TimeseriesService {
                 'vector_name': vectorName,
                 'resampling_frequency': resamplingFrequency,
                 'statistic_functions': statisticFunctions,
-                'realizations': realizations,
+                'realizations_encoded_as_uint_list_str': realizationsEncodedAsUintListStr,
             },
             errors: {
                 422: `Validation Error`,
