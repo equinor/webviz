@@ -9,7 +9,8 @@ import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
 import { LayersActionGroup } from "@modules/2DViewer/layers/LayersActions";
-import { GroupDelegate } from "@modules/2DViewer/layers/delegates/GroupDelegate";
+import { GroupDelegate, GroupDelegateTopic } from "@modules/2DViewer/layers/delegates/GroupDelegate";
+import { usePublishSubscribeTopicValue } from "@modules/2DViewer/layers/delegates/PublishSubscribeDelegate";
 import { ColorScale } from "@modules/2DViewer/layers/framework/ColorScale/ColorScale";
 import { DeltaSurface } from "@modules/2DViewer/layers/framework/DeltaSurface/DeltaSurface";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
@@ -53,10 +54,10 @@ export type LayerManagerComponentWrapperProps = {
 
 export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapperProps): React.ReactNode {
     const colorSet = props.workbenchSettings.useColorSet();
-
     const [preferredViewLayout, setPreferredViewLayout] = useAtom(preferredViewLayoutAtom);
 
     const groupDelegate = props.layerManager.getGroupDelegate();
+    usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
         const numSharedSettings = groupDelegate.findChildren((item) => {
