@@ -2,7 +2,7 @@ import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { Interfaces, settingsToViewInterfaceInitialization } from "./interfaces";
 import { Settings } from "./settings/settings";
-import { View } from "./view";
+import { View } from "./view/view";
 
 const module = ModuleRegistry.initModule<Interfaces>("SimulationTimeSeriesSensitivity", {
     settingsToViewInterfaceInitialization,
