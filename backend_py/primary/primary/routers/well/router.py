@@ -1,7 +1,7 @@
 import logging
 from typing import List, Union
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from primary.services.smda_access.drogon import DrogonSmdaAccess
 from primary.services.smda_access import SmdaAccess
@@ -10,6 +10,8 @@ from primary.auth.auth_helper import AuthHelper
 from primary.utils.drogon import is_drogon_identifier
 
 from primary.services.ssdl_access.well_access import WellAccess as SsdlWellAccess
+
+from primary.middleware.add_browser_cache import add_custom_cache_time
 
 from . import schemas
 from . import converters
@@ -59,6 +61,7 @@ async def get_well_trajectories(
         field_identifier=field_identifier,
         wellbore_uuids=wellbore_uuids,
     )
+    add_custom_cache_time(3600 * 24 * 7)  # 1 week
 
     return [
         converters.convert_well_trajectory_to_schema(wellbore_trajectory)
