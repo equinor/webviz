@@ -1,13 +1,13 @@
-import { EnsembleIdent } from "./EnsembleIdent";
 import { EnsembleParameters, Parameter } from "./EnsembleParameters";
 import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
+import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
-export class Ensemble {
-    private _ensembleIdent: EnsembleIdent;
+export class RegularEnsemble {
+    private _ensembleIdent: RegularEnsembleIdent;
     private _fieldIdentifier: string;
     private _caseName: string;
-    private _stratigraphic_column_identifier: string;
-    private _realizationsArr: number[];
+    private _stratigraphicColumnIdentifier: string;
+    private _realizationsArray: number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
     private _color: string;
@@ -18,29 +18,29 @@ export class Ensemble {
         caseUuid: string,
         caseName: string,
         ensembleName: string,
-        stratigraphic_column_identifier: string,
-        realizationsArr: number[],
-        parameterArr: Parameter[],
-        sensitivityArr: Sensitivity[] | null,
+        stratigraphicColumnIdentifier: string,
+        realizationsArray: number[],
+        parameterArray: Parameter[],
+        sensitivityArray: Sensitivity[] | null,
         color: string,
         customName: string | null = null
     ) {
-        this._ensembleIdent = new EnsembleIdent(caseUuid, ensembleName);
+        this._ensembleIdent = new RegularEnsembleIdent(caseUuid, ensembleName);
         this._fieldIdentifier = fieldIdentifier;
         this._caseName = caseName;
-        this._stratigraphic_column_identifier = stratigraphic_column_identifier;
-        this._realizationsArr = Array.from(realizationsArr).sort((a, b) => a - b);
-        this._parameters = new EnsembleParameters(parameterArr);
+        this._stratigraphicColumnIdentifier = stratigraphicColumnIdentifier;
+        this._realizationsArray = Array.from(realizationsArray).sort((a, b) => a - b);
+        this._parameters = new EnsembleParameters(parameterArray);
         this._color = color;
         this._customName = customName;
 
         this._sensitivities = null;
-        if (sensitivityArr && sensitivityArr.length > 0) {
-            this._sensitivities = new EnsembleSensitivities(sensitivityArr);
+        if (sensitivityArray && sensitivityArray.length > 0) {
+            this._sensitivities = new EnsembleSensitivities(sensitivityArray);
         }
     }
 
-    getIdent(): EnsembleIdent {
+    getIdent(): RegularEnsembleIdent {
         return this._ensembleIdent;
     }
 
@@ -49,7 +49,7 @@ export class Ensemble {
     }
 
     getStratigraphicColumnIdentifier(): string {
-        return this._stratigraphic_column_identifier;
+        return this._stratigraphicColumnIdentifier;
     }
 
     getDisplayName(): string {
@@ -72,19 +72,19 @@ export class Ensemble {
     }
 
     getRealizations(): readonly number[] {
-        return this._realizationsArr;
+        return this._realizationsArray;
     }
 
     getRealizationCount(): number {
-        return this._realizationsArr.length;
+        return this._realizationsArray.length;
     }
 
     getMaxRealizationNumber(): number | undefined {
-        if (this._realizationsArr.length == 0) {
+        if (this._realizationsArray.length == 0) {
             return undefined;
         }
 
-        return this._realizationsArr[this._realizationsArr.length - 1];
+        return this._realizationsArray[this._realizationsArray.length - 1];
     }
 
     getParameters(): EnsembleParameters {

@@ -4,12 +4,12 @@ import {
     InplaceVolumetricsIdentifierWithValues_api,
     InplaceVolumetricsTableDefinition_api,
 } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { sortResultNames } from "./sortResultNames";
 
 type TableDefinitionsForEnsembleIdent = {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
     tableDefinitions: InplaceVolumetricsTableDefinition_api[];
 };
 
@@ -48,7 +48,7 @@ export function makeUniqueTableNamesIntersection(
 export class TableDefinitionsAccessor {
     private _tableDefinitions: InplaceVolumetricsTableDefinition_api[];
     private _tableNamesFilter: string[];
-    private _uniqueEnsembleIdents: EnsembleIdent[];
+    private _uniqueEnsembleIdents: RegularEnsembleIdent[];
     private _tableNamesIntersection: string[];
     private _fluidZonesIntersection: FluidZone_api[] = [];
     private _resultNamesIntersection: InplaceVolumetricResultName_api[] = [];
@@ -135,7 +135,7 @@ export class TableDefinitionsAccessor {
         this._identifiersWithIntersectionValues = identifiersWithValuesIntersection.sort();
     }
 
-    getUniqueEnsembleIdents(): EnsembleIdent[] {
+    getUniqueEnsembleIdents(): RegularEnsembleIdent[] {
         return this._uniqueEnsembleIdents;
     }
 
@@ -159,7 +159,7 @@ export class TableDefinitionsAccessor {
         return !this._tablesNotComparable;
     }
 
-    hasEnsembleIdents(ensembleIdents: EnsembleIdent[]): boolean {
+    hasEnsembleIdents(ensembleIdents: RegularEnsembleIdent[]): boolean {
         for (const ensembleIdent of ensembleIdents) {
             if (!this._uniqueEnsembleIdents.includes(ensembleIdent)) {
                 return false;

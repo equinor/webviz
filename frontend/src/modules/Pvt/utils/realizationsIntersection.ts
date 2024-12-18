@@ -1,8 +1,8 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 
 export function computeRealizationsIntersection(
-    ensembleIdents: EnsembleIdent[],
+    ensembleIdents: RegularEnsembleIdent[],
     filterEnsembleRealizations: EnsembleRealizationFilterFunction
 ) {
     let realizationsIntersection: number[] = [];

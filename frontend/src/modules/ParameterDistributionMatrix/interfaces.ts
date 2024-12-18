@@ -1,5 +1,5 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
@@ -14,7 +14,7 @@ type SettingsToViewInterface = {
     selectedVisualizationType: ParameterDistributionPlotType;
     showIndividualRealizationValues: boolean;
     showPercentilesAndMeanLines: boolean;
-    selectedEnsembleIdents: EnsembleIdent[];
+    selectedEnsembleIdents: RegularEnsembleIdent[];
     selectedParameterIdents: ParameterIdent[];
 };
 

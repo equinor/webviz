@@ -1,27 +1,27 @@
-import { Ensemble } from "@framework/Ensemble";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export function makeDistinguishableEnsembleDisplayName(
-    ensembleIdent: EnsembleIdent,
-    allEnsembles: readonly Ensemble[]
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,
+    allEnsembles: readonly (RegularEnsemble | DeltaEnsemble)[]
 ): string {
     const ensemble = allEnsembles.find((ensemble) => ensemble.getIdent().equals(ensembleIdent));
 
-    if (ensemble) {
-        const customName = ensemble.getCustomName();
-        if (customName) {
-            return customName;
-        }
-    }
-
-    const ensembleNameCount = allEnsembles.filter(
-        (ensemble) => ensemble.getEnsembleName() === ensembleIdent.getEnsembleName()
-    ).length;
-    if (ensembleNameCount === 1) {
+    if (!ensemble) {
         return ensembleIdent.getEnsembleName();
     }
 
-    if (!ensemble) {
+    const customName = ensemble.getCustomName();
+    if (customName) {
+        return customName;
+    }
+
+    const ensembleNameCount = allEnsembles.filter(
+        (elm) => elm.getEnsembleName() === ensembleIdent.getEnsembleName()
+    ).length;
+    if (ensembleNameCount === 1) {
         return ensembleIdent.getEnsembleName();
     }
 

@@ -1,5 +1,7 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import React from "react";
+
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -69,7 +71,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     const rftTableDefErrorMessage = usePropagateApiErrorToStatusWriter(rftTableDefinition, statusWriter) ?? "";
 
-    function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
         setUserSelectedEnsembleIdent(ensembleIdent);
     }
     function handleResponseNameChange(responseNames: string[]) {
@@ -86,7 +88,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         <div>
             <CollapsibleGroup expanded={true} title="Ensembles">
                 <EnsembleDropdown
-                    ensembles={ensembleSet.getEnsembleArr()}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />

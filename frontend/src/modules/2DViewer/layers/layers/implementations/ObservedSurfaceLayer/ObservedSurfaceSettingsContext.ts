@@ -48,7 +48,7 @@ export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedS
             const ensembleSet = workbenchSession.getEnsembleSet();
 
             const ensembleIdents = ensembleSet
-                .getEnsembleArr()
+                .getRegularEnsembleArray()
                 .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
                 .map((ensemble) => ensemble.getIdent());
 

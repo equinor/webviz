@@ -1,6 +1,6 @@
-import { Ensemble } from "@framework/Ensemble";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ContinuousParameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorScale } from "@lib/utils/ColorScale";
 import { MinMax } from "@lib/utils/MinMax";
 
@@ -13,14 +13,14 @@ export class EnsemblesContinuousParameterColoring {
      */
 
     private _parameterIdent: ParameterIdent;
-    private _ensembleContinuousParameterMap: Map<EnsembleIdent, ContinuousParameter>;
+    private _ensembleContinuousParameterMap: Map<RegularEnsembleIdent, ContinuousParameter>;
     private _colorScale: ColorScale;
 
-    constructor(selectedEnsembles: Ensemble[], parameterIdent: ParameterIdent, colorScale: ColorScale) {
+    constructor(selectedRegularEnsembles: RegularEnsemble[], parameterIdent: ParameterIdent, colorScale: ColorScale) {
         this._parameterIdent = parameterIdent;
-        this._ensembleContinuousParameterMap = new Map<EnsembleIdent, ContinuousParameter>();
+        this._ensembleContinuousParameterMap = new Map<RegularEnsembleIdent, ContinuousParameter>();
         let minMax = MinMax.createInvalid();
-        for (const ensemble of selectedEnsembles) {
+        for (const ensemble of selectedRegularEnsembles) {
             const ensembleParameters = ensemble.getParameters();
             const parameter = ensembleParameters.findParameter(parameterIdent);
             if (!parameter || parameter.type !== ParameterType.CONTINUOUS) continue;
@@ -45,18 +45,18 @@ export class EnsemblesContinuousParameterColoring {
         return this._colorScale;
     }
 
-    hasParameterForEnsemble(ensembleIdent: EnsembleIdent): boolean {
+    hasParameterForEnsemble(ensembleIdent: RegularEnsembleIdent): boolean {
         return this._ensembleContinuousParameterMap.has(ensembleIdent);
     }
 
-    hasParameterRealizationValue(ensembleIdent: EnsembleIdent, realization: number): boolean {
+    hasParameterRealizationValue(ensembleIdent: RegularEnsembleIdent, realization: number): boolean {
         const parameter = this._ensembleContinuousParameterMap.get(ensembleIdent);
         if (parameter === undefined) return false;
 
         return parameter.realizations.indexOf(realization) !== -1;
     }
 
-    getParameterRealizationValue(ensembleIdent: EnsembleIdent, realization: number): number {
+    getParameterRealizationValue(ensembleIdent: RegularEnsembleIdent, realization: number): number {
         if (!this.hasParameterRealizationValue(ensembleIdent, realization)) {
             throw new Error(
                 `Parameter ${this.getParameterDisplayName()} has no numerical value for realization ${realization} in ensemble ${ensembleIdent.toString()}`

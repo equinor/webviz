@@ -28,15 +28,15 @@ export type TransformFormationDataResult = ReturnType<typeof transformFormationD
 
 export const firstEnsembleInSelectedFieldAtom = atom((get) => {
     const selectedFieldId = get(userSelectedFieldIdentifierAtom);
-    const ensembleSetArr = get(EnsembleSetAtom).getEnsembleArr();
+    const regularEnsembleArray = get(EnsembleSetAtom).getRegularEnsembleArray();
 
-    if (!ensembleSetArr.length) {
+    if (!regularEnsembleArray.length) {
         return null;
     }
 
-    const selectedEnsemble = ensembleSetArr.find((e) => e.getFieldIdentifier() === selectedFieldId);
+    const selectedEnsemble = regularEnsembleArray.find((e) => e.getFieldIdentifier() === selectedFieldId);
 
-    return selectedEnsemble ?? ensembleSetArr[0];
+    return selectedEnsemble ?? regularEnsembleArray[0];
 });
 
 export const selectedFieldIdentifierAtom = atom((get) => {

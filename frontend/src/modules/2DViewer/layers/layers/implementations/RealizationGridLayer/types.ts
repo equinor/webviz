@@ -1,8 +1,8 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SettingType } from "@modules/2DViewer/layers/settings/settingsTypes";
 
 export type RealizationGridSettings = {
-    [SettingType.ENSEMBLE]: EnsembleIdent | null;
+    [SettingType.ENSEMBLE]: RegularEnsembleIdent | null;
     [SettingType.REALIZATION]: number | null;
     [SettingType.GRID_ATTRIBUTE]: string | null;
     [SettingType.GRID_NAME]: string | null;

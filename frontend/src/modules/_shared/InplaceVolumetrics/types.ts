@@ -4,18 +4,18 @@ import {
     InplaceVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricsIdentifier_api,
 } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { Column } from "./Table";
 
 export type InplaceVolumetricsTableData = {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
     tableName: string;
     data: InplaceVolumetricTableDataPerFluidSelection_api;
 };
 
 export type InplaceVolumetricsStatisticalTableData = {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
     tableName: string;
     data: InplaceStatisticalVolumetricTableDataPerFluidSelection_api;
 };

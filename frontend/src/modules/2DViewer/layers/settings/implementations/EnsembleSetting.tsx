@@ -1,6 +1,6 @@
 import React from "react";
 
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
@@ -8,11 +8,11 @@ import { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfa
 import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 
-export class EnsembleSetting implements Setting<EnsembleIdent | null> {
-    private _delegate: SettingDelegate<EnsembleIdent | null>;
+export class EnsembleSetting implements Setting<RegularEnsembleIdent | null> {
+    private _delegate: SettingDelegate<RegularEnsembleIdent | null>;
 
     constructor() {
-        this._delegate = new SettingDelegate<EnsembleIdent | null>(null, this);
+        this._delegate = new SettingDelegate<RegularEnsembleIdent | null>(null, this);
     }
 
     getType(): SettingType {
@@ -23,20 +23,20 @@ export class EnsembleSetting implements Setting<EnsembleIdent | null> {
         return "Ensemble";
     }
 
-    getDelegate(): SettingDelegate<EnsembleIdent | null> {
+    getDelegate(): SettingDelegate<RegularEnsembleIdent | null> {
         return this._delegate;
     }
 
-    serializeValue(value: EnsembleIdent | null): string {
+    serializeValue(value: RegularEnsembleIdent | null): string {
         return value?.toString() ?? "";
     }
 
-    deserializeValue(serializedValue: string): EnsembleIdent | null {
-        return serializedValue !== "" ? EnsembleIdent.fromString(serializedValue) : null;
+    deserializeValue(serializedValue: string): RegularEnsembleIdent | null {
+        return serializedValue !== "" ? RegularEnsembleIdent.fromString(serializedValue) : null;
     }
 
-    makeComponent(): (props: SettingComponentProps<EnsembleIdent | null>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<EnsembleIdent | null>) {
+    makeComponent(): (props: SettingComponentProps<RegularEnsembleIdent | null>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<RegularEnsembleIdent | null>) {
             const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
                 props.availableValues.includes(ensemble.getIdent())
             );
@@ -53,7 +53,7 @@ export class EnsembleSetting implements Setting<EnsembleIdent | null> {
         };
     }
 
-    valueToString(args: ValueToStringArgs<EnsembleIdent | null>): string {
+    valueToString(args: ValueToStringArgs<RegularEnsembleIdent | null>): string {
         const { value, workbenchSession } = args;
         if (value === null) {
             return "-";

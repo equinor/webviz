@@ -1,5 +1,6 @@
 import { Frequency_api, StatisticFunction_api, SummaryVectorObservations_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 /**
  * Definition of ensemble vector observation data
@@ -15,7 +16,7 @@ export type EnsembleVectorObservationData = {
 /**
  * Definition of map of ensemble ident and ensemble vector observation data
  */
-export type EnsembleVectorObservationDataMap = Map<EnsembleIdent, EnsembleVectorObservationData>;
+export type EnsembleVectorObservationDataMap = Map<RegularEnsembleIdent, EnsembleVectorObservationData>;
 
 /**
  * Definition of vector observations queries result for combined queries
@@ -27,7 +28,7 @@ export type VectorObservationsQueriesResult = {
 };
 
 export interface VectorSpec {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent;
     color: string | null;
     vectorName: string;
     hasHistoricalVector: boolean;
