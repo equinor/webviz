@@ -28,8 +28,7 @@ import {
     syncedVectorNameAtom,
     userSelectedEnsembleIdentAtom,
     userSelectedSensitivityNamesAtom,
-    userSelectedVectorNameAtom,
-    userSelectedVectorTagAtom,
+    userSelectedVectorNameAndTagAtom,
 } from "./atoms/baseAtoms";
 import {
     availableSensitivityNamesAtom,
@@ -51,8 +50,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const setSyncedEnsembleIdents = useSetAtom(syncedEnsembleIdentsAtom);
     const setSyncedVectorName = useSetAtom(syncedVectorNameAtom);
     const setUserSelectedEnsembleIdent = useSetAtom(userSelectedEnsembleIdentAtom);
-    const setUserSelectedVectorName = useSetAtom(userSelectedVectorNameAtom);
-    const setUserSelectedVectorTag = useSetAtom(userSelectedVectorTagAtom);
+    const setUserSelectedVectorNameAndTag = useSetAtom(userSelectedVectorNameAndTagAtom);
     const setUserSelectedSensitivityNamesAtom = useSetAtom(userSelectedSensitivityNamesAtom);
     const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
     const vectorsListQuery = useAtomValue(vectorListQueryAtom);
@@ -101,8 +99,9 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         setResamplingFrequency(newFreq);
     }
     function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
-        setUserSelectedVectorName(selection.selectedNodes[0] ?? null);
-        setUserSelectedVectorTag(selection.selectedTags[0]?.text ?? null);
+        const userSelectedVectorName = selection.selectedNodes[0] ?? null;
+        const userSelectedVectorTag = selection.selectedTags[0]?.text ?? null;
+        setUserSelectedVectorNameAndTag({ name: userSelectedVectorName, tag: userSelectedVectorTag });
     }
     function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
         setShowHistorical(event.target.checked);

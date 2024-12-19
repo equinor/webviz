@@ -13,7 +13,7 @@ import { VectorSpec } from "./typesAndEnums";
 export type SettingsToViewInterface = {
     vectorSpecification: VectorSpec | null;
     resamplingFrequency: Frequency_api | null;
-    selectedSensitivityNames: string[] | null;
+    selectedSensitivityNames: string[];
     showStatistics: boolean;
     showRealizations: boolean;
     showHistorical: boolean;

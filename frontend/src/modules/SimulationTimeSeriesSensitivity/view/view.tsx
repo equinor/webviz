@@ -1,6 +1,7 @@
 import React from "react";
 
 import { ModuleViewProps } from "@framework/Module";
+import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
@@ -9,6 +10,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { userSelectedActiveTimestampUtcMsAtom, vectorSpecificationAtom } from "./atoms/baseAtoms";
 import { activeTimestampUtcMsAtom } from "./atoms/derivedAtoms";
 import { TimeSeriesChart, TimeSeriesChartHoverInfo } from "./components/timeSeriesChart";
+import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
 import { useTimeSeriesChartTracesDataArrayBuilder } from "./hooks/useTimeSeriesChartTracesDataArrayBuilder";
 
@@ -18,12 +20,15 @@ export const View = ({ viewContext, workbenchSettings, workbenchServices }: Modu
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
+    const statusWriter = useViewStatusWriter(viewContext);
+
     const setUserSelectedTimestampUtcMs = useSetAtom(userSelectedActiveTimestampUtcMsAtom);
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
     const vectorSpecification = useAtomValue(vectorSpecificationAtom);
 
     const subscribedHoverTimestampUtcMs = useSubscribedValue("global.hoverTimestamp", workbenchServices);
 
+    useMakeViewStatusWriterMessages(statusWriter);
     usePublishToDataChannels(viewContext);
 
     const colorSet = workbenchSettings.useColorSet();

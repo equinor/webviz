@@ -234,6 +234,12 @@ async def get_statistical_vector_data_per_sensitivity(
                 sens_case_realization_mask = pc.and_(requested_realizations_mask, sens_case_realization_mask)
             table = vector_table.filter(sens_case_realization_mask)
 
+            if table.num_rows == 0 and requested_realizations_mask is not None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="The combination of realizations to include and sensitivity case realizations results in no valid realizations",
+                )
+
             statistics = compute_vector_statistics(table, vector_name, service_stat_funcs_to_compute)
             if not statistics:
                 raise HTTPException(status_code=404, detail="Could not compute statistics")

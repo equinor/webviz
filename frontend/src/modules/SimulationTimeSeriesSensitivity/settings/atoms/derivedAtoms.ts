@@ -11,8 +11,7 @@ import {
     syncedVectorNameAtom,
     userSelectedEnsembleIdentAtom,
     userSelectedSensitivityNamesAtom,
-    userSelectedVectorNameAtom,
-    userSelectedVectorTagAtom,
+    userSelectedVectorNameAndTagAtom,
 } from "./baseAtoms";
 import { vectorListQueryAtom } from "./queryAtoms";
 
@@ -35,27 +34,29 @@ export const availableSensitivityNamesAtom = atom<string[]>((get) => {
     const ensemble = selectedEnsembleIdent ? ensembleSet.findEnsemble(selectedEnsembleIdent) : null;
     const ensembleSensitivityNames = ensemble?.getSensitivities()?.getSensitivityNames() ?? [];
 
-    return ensembleSensitivityNames;
+    return [...ensembleSensitivityNames];
 });
 
 export const selectedSensitivityNamesAtom = atom<string[]>((get) => {
     const userSelectedSensitivityNames = get(userSelectedSensitivityNamesAtom);
     const availableSensitivityNames = get(availableSensitivityNamesAtom);
 
-    // If userSelectedSensitivityNames is empty, do not override it
-    if (!userSelectedSensitivityNames || userSelectedSensitivityNames.length === 0) {
+    // If userSelectedSensitivityNames is empty, do not override it (i.e. deselect all)
+    if (userSelectedSensitivityNames && userSelectedSensitivityNames.length === 0) {
         return [];
     }
 
     // Fixup invalid sensitivity names
-    // - If no valid sensitivity names are selected, the change can be due to new available sensitivity names
+    // - If user selected sensitivity names is null, the module is considered uninitialized
+    // - If user selected sensitivity names fixup results in empty array, it is due to new available sensitivity
+    //   names, and all are selected.
     const fixedUpSensitivityNames =
-        userSelectedSensitivityNames?.filter((sens) => availableSensitivityNames.includes(sens)) ?? [];
-    if (fixedUpSensitivityNames.length === 0) {
-        return availableSensitivityNames;
+        userSelectedSensitivityNames?.filter((sens) => availableSensitivityNames.includes(sens)) ?? null;
+    if (!fixedUpSensitivityNames || fixedUpSensitivityNames.length === 0) {
+        return [...availableSensitivityNames];
     }
 
-    return fixedUpSensitivityNames;
+    return [...fixedUpSensitivityNames];
 });
 
 export const availableVectorNamesAtom = atom<string[]>((get) => {
@@ -77,10 +78,9 @@ export const vectorSelectorDataAtom = atom((get) => {
 /**
  * Atom that handles vector name and tag in synch with fixup
  */
-const fixedUpVectorNameAndTagAtom = atom<{ name: string | null; tag: string | null }>((get) => {
+const selectedVectorNameAndTagAtom = atom<{ name: string | null; tag: string | null }>((get) => {
     const syncedVectorName = get(syncedVectorNameAtom);
-    const userSelectedVectorName = get(userSelectedVectorNameAtom);
-    const userSelectedVectorTag = get(userSelectedVectorTagAtom);
+    const userSelectedVectorNameAndTag = get(userSelectedVectorNameAndTagAtom);
     const availableVectorNames = get(availableVectorNamesAtom);
 
     // Override with synced vector name if available
@@ -89,22 +89,23 @@ const fixedUpVectorNameAndTagAtom = atom<{ name: string | null; tag: string | nu
     }
 
     // If vector name is fixed up, adjust tag as well
+    const userSelectedVectorName = userSelectedVectorNameAndTag.name;
     const fixedUpVectorName = fixupVectorName(userSelectedVectorName, availableVectorNames);
     if (fixedUpVectorName !== userSelectedVectorName) {
         return { name: fixedUpVectorName, tag: fixedUpVectorName };
     }
 
-    return { name: userSelectedVectorName, tag: userSelectedVectorTag };
+    return { name: userSelectedVectorName, tag: userSelectedVectorNameAndTag.tag };
 });
 
-export const selectedVectorNameAtom = atom<string | null>((get) => {
-    const fixedUpVectorName = get(fixedUpVectorNameAndTagAtom).name;
-    return fixedUpVectorName;
+const selectedVectorNameAtom = atom<string | null>((get) => {
+    const userSelectedVectorNameAndTag = get(selectedVectorNameAndTagAtom);
+    return userSelectedVectorNameAndTag.name;
 });
 
 export const selectedVectorTagAtom = atom<string | null>((get) => {
-    const fixedUpVectorTag = get(fixedUpVectorNameAndTagAtom).tag;
-    return fixedUpVectorTag;
+    const userSelectedVectorNameAndTag = get(selectedVectorNameAndTagAtom);
+    return userSelectedVectorNameAndTag.tag;
 });
 
 export const selectedVectorNameHasHistoricalAtom = atom<boolean>((get) => {

@@ -44,11 +44,11 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
     }
 
     const allSensitivityNamesInEnsemble = ensemble.getSensitivities()?.getSensitivityNames().sort() ?? [];
-    if (!ensemble || !selectedSensitivityNames || selectedSensitivityNames.length === 0) {
+    if (!ensemble || selectedSensitivityNames.length === 0) {
         return traceDataArr;
     }
 
-    if (ensemble && selectedSensitivityNames && selectedSensitivityNames.length > 0) {
+    if (ensemble && selectedSensitivityNames.length > 0) {
         const sensitivitiesColorMap = createSensitivityColorMap(allSensitivityNamesInEnsemble, colorSet);
         selectedSensitivityNames.forEach((sensitivityName) => {
             const color = sensitivitiesColorMap[sensitivityName];
