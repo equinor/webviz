@@ -4,6 +4,7 @@ import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import {
     resamplingFrequencyAtom,
+    showHistoricalAtom,
     showStatisticsAtom,
     vectorSpecificationAtom,
 } from "@modules/SimulationTimeSeriesSensitivity/view/atoms/baseAtoms";
@@ -90,6 +91,7 @@ export const statisticalVectorSensitivityDataQueryAtom = atomWithQuery((get) => 
 
 export const historicalVectorDataQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);
+    const showHistorical = get(showHistoricalAtom);
     const resampleFrequency = get(resamplingFrequencyAtom);
 
     const query = {
@@ -109,7 +111,7 @@ export const historicalVectorDataQueryAtom = atomWithQuery((get) => {
             ),
         staleTime: STALE_TIME,
         gcTime: CACHE_TIME,
-        enabled: !!vectorSpecification,
+        enabled: !!(vectorSpecification && showHistorical),
     };
 
     return query;
