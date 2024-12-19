@@ -223,12 +223,13 @@ async def get_statistical_vector_data_per_sensitivity(
     ret_data: list[schemas.VectorStatisticSensitivityData] = []
     if not sensitivities:
         return ret_data
-    
 
-    requested_realizations_mask = pc.is_in(vector_table["REAL"], value_set=pa.array(realizations)) if realizations else None
+    requested_realizations_mask = (
+        pc.is_in(vector_table["REAL"], value_set=pa.array(realizations)) if realizations else None
+    )
     for sensitivity in sensitivities:
         for case in sensitivity.cases:
-            sens_case_realization_mask = pc.is_in(vector_table["REAL"], value_set=pa.array(case.realizations))            
+            sens_case_realization_mask = pc.is_in(vector_table["REAL"], value_set=pa.array(case.realizations))
             if requested_realizations_mask is not None:
                 sens_case_realization_mask = pc.and_(requested_realizations_mask, sens_case_realization_mask)
             table = vector_table.filter(sens_case_realization_mask)
