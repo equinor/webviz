@@ -5,9 +5,9 @@ import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtil
 
 import { Layout, PlotDatum, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
 
-import { TimeSeriesPlotlyTrace } from "./traces";
+import { TimeSeriesPlotlyTrace } from "../utils/createTracesUtils";
 
-export type HoverInfo = {
+export type TimeSeriesChartHoverInfo = {
     timestampUtcMs: number;
     realization?: number;
     shiftKeyIsDown?: boolean;
@@ -19,7 +19,7 @@ export type TimeSeriesChartProps = {
     activeTimestampUtcMs?: number;
     hoveredTimestampUtcMs?: number;
     uirevision?: string;
-    onHover?: (hoverData: HoverInfo | null) => void;
+    onHover?: (hoverData: TimeSeriesChartHoverInfo | null) => void;
     onClick?: (timestampUtcMs: number) => void;
     height?: number | 100;
     width?: number | 100;
@@ -55,7 +55,7 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = (props) => {
                     maybeRealizationNumber = traceData.realizationNumber;
                 }
 
-                const hoverInfo: HoverInfo = {
+                const hoverInfo: TimeSeriesChartHoverInfo = {
                     timestampUtcMs: timestampUtcMs,
                     realization: maybeRealizationNumber,
                     shiftKeyIsDown: e.event.shiftKey,
