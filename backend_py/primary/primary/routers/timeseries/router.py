@@ -13,13 +13,13 @@ from primary.services.sumo_access.parameter_access import ParameterAccess
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.utils.query_string_utils import decode_uint_list_str
+from primary.middleware.add_warnings_middleware import add_warning
 
 from . import converters, schemas
 
 LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
-
 
 @router.get("/vector_list/")
 async def get_vector_list(
@@ -45,6 +45,8 @@ async def get_vector_list(
     perf_metrics.record_lap("convert-data")
 
     LOGGER.info(f"Got vector list in: {perf_metrics.to_string()}")
+
+    add_warning("This is a warning")
 
     return ret_arr
 
