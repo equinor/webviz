@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import jotaiDebugLabel from "jotai/babel/plugin-debug-label";
 import jotaiReactRefresh from "jotai/babel/plugin-react-refresh";
 import path from "path";
+import { fileURLToPath } from "url";
 import { defineConfig } from "vite";
 import vitePluginChecker from "vite-plugin-checker";
 
@@ -40,6 +41,7 @@ export default defineConfig(({ mode }) => {
                 input: {
                     app: paths.publicHtmlFile,
                 },
+                external: [fileURLToPath(new URL("src/api/customRequest.ts", import.meta.url))],
             },
             sourcemap: true,
         },

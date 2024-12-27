@@ -1,12 +1,16 @@
 import React, { ErrorInfo } from "react";
 
+import { ApiService, createModuleInstanceHttpRequestClass } from "@api";
+
 import { Atom, atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
+import { DEFAULT_API_CONFIG, apiService } from "./ApiService";
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
 import { ModuleContext } from "./ModuleContext";
+import { Origin, StatusMessageType, StatusSource } from "./ModuleInstanceStatusController";
 import { SyncSettingKey } from "./SyncSettings";
 import {
     InterfaceInitialization,
@@ -66,6 +70,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     > | null = null;
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
+    private _apiService: ApiService;
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes>) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
@@ -86,6 +91,23 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         if (options.channelDefinitions) {
             this._channelManager.registerChannels(options.channelDefinitions);
         }
+
+        this._apiService = new ApiService(DEFAULT_API_CONFIG, createModuleInstanceHttpRequestClass(this));
+    }
+
+    addWarnings(warnings: string[]): void {
+        for (const warning of warnings) {
+            this._statusController.addMessage(StatusSource.Settings, {
+                origin: Origin.API,
+                message: warning,
+                type: StatusMessageType.Warning,
+            });
+        }
+        this._statusController.reviseAndPublishState();
+    }
+
+    getApiService(): ApiService {
+        return this._apiService;
     }
 
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
@@ -366,3 +388,5 @@ export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
 
     return value;
 }
+
+export const moduleApiServiceAtom = atom<ApiService>(apiService);

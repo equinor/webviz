@@ -1,11 +1,12 @@
 import { ApiService as ApiServiceBase } from "@api";
 
+export const DEFAULT_API_CONFIG = {
+    WITH_CREDENTIALS: true,
+};
+
 class ApiService extends ApiServiceBase {
     constructor() {
-        const apiConfig = {
-            WITH_CREDENTIALS: true,
-        };
-        super(apiConfig);
+        super(DEFAULT_API_CONFIG);
     }
 }
 

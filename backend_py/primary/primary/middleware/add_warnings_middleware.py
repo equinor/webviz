@@ -16,27 +16,9 @@ async def inject_context(response: StreamingResponse) -> Response:
         return response
     
     context = request_context.get()
+    warnings = json.dumps(context["warnings"])
 
-    chunks = []
-    async for chunk in response.body_iterator:
-        chunks.append(chunk)
-
-    response_body = b"".join(chunks)
-    
-    m = MultipartEncoder(
-        fields={
-            "warnings": json.dumps(context["warnings"]),
-            "data": response_body
-        },
-        boundary="----WebKitFormBoundary7MA4YWxkTrZu0gW",
-        encoding="utf-8"
-    )
-
-    headers = MutableHeaders(raw=response.raw_headers)
-    headers["Content-Type"] = m.content_type
-    del headers["Content-Length"]
-
-    return Response(content=m.to_string(), media_type=m.content_type, status_code=response.status_code, headers=headers)
+    response.headers.append("Warnings", warnings)
 
 def add_warning(message: str):
     context = request_context.get()

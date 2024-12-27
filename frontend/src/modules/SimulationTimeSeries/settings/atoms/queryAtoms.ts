@@ -1,4 +1,4 @@
-import { apiService } from "@framework/ApiService";
+import { moduleApiServiceAtom } from "@framework/ModuleInstance";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 
 import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
@@ -8,6 +8,7 @@ const CACHE_TIME = 60 * 1000;
 
 export const vectorListQueriesAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const apiService = get(moduleApiServiceAtom);
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         return () => ({

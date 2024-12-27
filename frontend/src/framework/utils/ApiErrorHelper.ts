@@ -2,7 +2,7 @@ import { ApiError } from "@api";
 import { Origin, StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { UseQueryResult } from "@tanstack/react-query";
 
-import { ApiRequestOptions } from "src/api/core/ApiRequestOptions";
+import { ApiRequestOptions } from "src/api/auto-generated/core/ApiRequestOptions";
 
 export class ApiErrorHelper {
     private _error: ApiError;

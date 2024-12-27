@@ -18,6 +18,7 @@ import { Provider } from "jotai";
 
 import { ApplyInterfaceEffectsToSettings } from "../../ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "../../DebugProfiler";
+import { HydrateModuleApiServiceAtom } from "../../HydrateApiServiceAtom";
 import { HydrateQueryClientAtom } from "../../HydrateQueryClientAtom";
 
 type ModuleSettingsProps = {
@@ -94,15 +95,17 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                         >
                             <Provider store={atomStore}>
                                 <HydrateQueryClientAtom>
-                                    <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
-                                        <Settings
-                                            settingsContext={props.moduleInstance.getContext()}
-                                            workbenchSession={props.workbench.getWorkbenchSession()}
-                                            workbenchServices={props.workbench.getWorkbenchServices()}
-                                            workbenchSettings={props.workbench.getWorkbenchSettings()}
-                                            initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                        />
-                                    </ApplyInterfaceEffectsToSettings>
+                                    <HydrateModuleApiServiceAtom apiService={props.moduleInstance.getApiService()}>
+                                        <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
+                                            <Settings
+                                                settingsContext={props.moduleInstance.getContext()}
+                                                workbenchSession={props.workbench.getWorkbenchSession()}
+                                                workbenchServices={props.workbench.getWorkbenchServices()}
+                                                workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                                initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                            />
+                                        </ApplyInterfaceEffectsToSettings>
+                                    </HydrateModuleApiServiceAtom>
                                 </HydrateQueryClientAtom>
                             </Provider>
                         </DebugProfiler>

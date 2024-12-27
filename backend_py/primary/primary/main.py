@@ -101,13 +101,10 @@ override_default_fastapi_exception_handlers(app)
 # Add warnings to ContextVar
 @app.middleware("http")
 async def add_warnings_to_context(request, call_next):
-    if request.url.path == "/api/openapi.json":
-        return await call_next(request)
-    
     request_context.set({"warnings": []})
     response = await call_next(request)
-    adjusted_response = await inject_context(response)
-    return adjusted_response
+    await inject_context(response)
+    return response
 
 
 # This middleware instance approximately measures execution time of the route handler itself

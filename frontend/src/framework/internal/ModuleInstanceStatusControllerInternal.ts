@@ -9,7 +9,7 @@ import {
 } from "@framework/ModuleInstanceStatusController";
 
 import { cloneDeep, filter, isEqual, keys } from "lodash";
-import { ApiRequestOptions } from "src/api/core/ApiRequestOptions";
+import { ApiRequestOptions } from "src/api/auto-generated/core/ApiRequestOptions";
 import { v4 } from "uuid";
 
 type StatusMessage = {

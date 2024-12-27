@@ -12,6 +12,7 @@ import { Workbench } from "@framework/Workbench";
 import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
+import { HydrateModuleApiServiceAtom } from "@framework/internal/components/HydrateApiServiceAtom";
 import { HydrateQueryClientAtom } from "@framework/internal/components/HydrateQueryClientAtom";
 import { CircularProgress } from "@lib/components/CircularProgress";
 
@@ -106,15 +107,17 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                 >
                     <Provider store={atomStore}>
                         <HydrateQueryClientAtom>
-                            <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
-                                <View
-                                    viewContext={props.moduleInstance.getContext()}
-                                    workbenchSession={props.workbench.getWorkbenchSession()}
-                                    workbenchServices={props.workbench.getWorkbenchServices()}
-                                    workbenchSettings={props.workbench.getWorkbenchSettings()}
-                                    initialSettings={props.moduleInstance.getInitialSettings() || undefined}
-                                />
-                            </ApplyInterfaceEffectsToView>
+                            <HydrateModuleApiServiceAtom apiService={props.moduleInstance.getApiService()}>
+                                <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
+                                    <View
+                                        viewContext={props.moduleInstance.getContext()}
+                                        workbenchSession={props.workbench.getWorkbenchSession()}
+                                        workbenchServices={props.workbench.getWorkbenchServices()}
+                                        workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                        initialSettings={props.moduleInstance.getInitialSettings() || undefined}
+                                    />
+                                </ApplyInterfaceEffectsToView>
+                            </HydrateModuleApiServiceAtom>
                         </HydrateQueryClientAtom>
                     </Provider>
                 </DebugProfiler>

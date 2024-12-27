@@ -1,4 +1,4 @@
-import { ApiRequestOptions } from "src/api/core/ApiRequestOptions";
+import { ApiRequestOptions } from "src/api/auto-generated/core/ApiRequestOptions";
 
 export enum StatusMessageType {
     Warning = "warning",
