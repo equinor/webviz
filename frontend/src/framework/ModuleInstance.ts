@@ -10,7 +10,6 @@ import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
 import { ModuleContext } from "./ModuleContext";
-import { Origin, StatusMessageType, StatusSource } from "./ModuleInstanceStatusController";
 import { SyncSettingKey } from "./SyncSettings";
 import {
     InterfaceInitialization,
@@ -32,6 +31,7 @@ export enum ModuleInstanceTopic {
     SYNCED_SETTINGS = "synced-settings",
     STATE = "state",
     IMPORT_STATE = "import-state",
+    API_WARNINGS = "api-warnings",
 }
 
 export type ModuleInstanceTopicValueTypes = {
@@ -39,6 +39,7 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.STATE]: ModuleInstanceState;
     [ModuleInstanceTopic.IMPORT_STATE]: ImportState;
+    [ModuleInstanceTopic.API_WARNINGS]: string[];
 };
 
 export interface ModuleInstanceOptions<TInterfaceTypes extends ModuleInterfaceTypes> {
@@ -71,6 +72,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
     private _apiService: ApiService;
+    private _apiWarnings: string[] = [];
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes>) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
@@ -95,15 +97,13 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         this._apiService = new ApiService(DEFAULT_API_CONFIG, createModuleInstanceHttpRequestClass(this));
     }
 
-    addWarnings(warnings: string[]): void {
-        for (const warning of warnings) {
-            this._statusController.addMessage(StatusSource.Settings, {
-                origin: Origin.API,
-                message: warning,
-                type: StatusMessageType.Warning,
-            });
-        }
-        this._statusController.reviseAndPublishState();
+    setApiWarnings(warnings: string[]): void {
+        this._apiWarnings = warnings;
+        this.notifySubscribers(ModuleInstanceTopic.API_WARNINGS);
+    }
+
+    getApiWarnings(): string[] {
+        return this._apiWarnings;
     }
 
     getApiService(): ApiService {
@@ -315,6 +315,9 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
             }
             if (topic === ModuleInstanceTopic.IMPORT_STATE) {
                 return this.getImportState();
+            }
+            if (topic === ModuleInstanceTopic.API_WARNINGS) {
+                return this.getApiWarnings();
             }
         };
 

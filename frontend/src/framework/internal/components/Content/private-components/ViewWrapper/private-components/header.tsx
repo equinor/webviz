@@ -19,7 +19,7 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Close, Error, History, Input, Output, Warning } from "@mui/icons-material";
+import { Close, Error, Feedback, History, Input, Output, Warning } from "@mui/icons-material";
 
 export type HeaderProps = {
     moduleInstance: ModuleInstance<any>;
@@ -36,6 +36,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
     const hotStatusMessages = useStatusControllerStateValue(
         props.moduleInstance.getStatusController(),
         "hotMessageCache"
+    );
+    const moduleInstanceApiWarnings = useModuleInstanceTopicValue(
+        props.moduleInstance,
+        ModuleInstanceTopic.API_WARNINGS
     );
     const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
     const [, setRightDrawerContent] = useGuiState(props.guiMessageBroker, GuiState.RightDrawerContent);
@@ -125,7 +129,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
             );
         }
         const numErrors = hotStatusMessages.filter((message) => message.type === StatusMessageType.Error).length;
-        const numWarnings = hotStatusMessages.filter((message) => message.type === StatusMessageType.Warning).length;
+        const numWarnings =
+            hotStatusMessages.filter((message) => message.type === StatusMessageType.Warning).length +
+            moduleInstanceApiWarnings.length;
 
         let badgeTitle = "";
         if (numErrors > 0) {
@@ -200,6 +206,14 @@ export const Header: React.FC<HeaderProps> = (props) => {
                             title={entry.message}
                         >
                             {entry.message}
+                        </span>
+                    </div>
+                ))}
+                {moduleInstanceApiWarnings.map((entry, i) => (
+                    <div key={`${entry}-${i}`} className="flex items-center gap-2">
+                        <Feedback fontSize="small" color="warning" />
+                        <span className="ml-2 overflow-hidden text-ellipsis min-w-0 whitespace-nowrap" title={entry}>
+                            {entry}
                         </span>
                     </div>
                 ))}

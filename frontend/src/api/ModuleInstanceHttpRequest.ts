@@ -14,13 +14,20 @@ import { request as __request } from "./auto-generated/core/request";
 export function createModuleInstanceHttpRequestClass(moduleInstance: ModuleInstance<any>) {
     return class ModuleInstanceHttpRequest extends BaseHttpRequest {
         private readonly _moduleInstance: ModuleInstance<any> = moduleInstance;
+        private _warnings: Map<string, string[]> = new Map();
 
         constructor(config: OpenAPIConfig) {
             super(config);
         }
 
-        setWarnings(warnings: string[]): void {
-            this._moduleInstance.addWarnings(warnings);
+        setWarnings(hash: string, warnings: string[]): void {
+            this._warnings.set(hash, warnings);
+            const allWarnings = Array.from(this._warnings.values()).reduce((acc, val) => acc.concat(val), []);
+            this._moduleInstance.setApiWarnings(allWarnings);
+        }
+
+        private makeHashFromOptions(options: ApiRequestOptions): string {
+            return JSON.stringify(options);
         }
 
         /**
@@ -30,7 +37,9 @@ export function createModuleInstanceHttpRequestClass(moduleInstance: ModuleInsta
          * @throws ApiError
          */
         public override request<T>(options: ApiRequestOptions): CancelablePromise<T> {
-            return __request(this.config, options, this.setWarnings.bind(this));
+            const hash = this.makeHashFromOptions(options);
+            const setWarnings = this.setWarnings.bind(this, hash);
+            return __request(this.config, options, setWarnings);
         }
     };
 }

@@ -46,7 +46,7 @@ async def get_vector_list(
 
     LOGGER.info(f"Got vector list in: {perf_metrics.to_string()}")
 
-    add_warning("This is a warning")
+    add_warning("The vectors shown might not be valid!")
 
     return ret_arr
 
