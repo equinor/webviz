@@ -47,17 +47,17 @@ export const selectedRegularEnsemblesAtom = atom<RegularEnsemble[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const allSelectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
-    const selectedEnsembleIdents = filterEnsembleIdentsByType(allSelectedEnsembleIdents, RegularEnsembleIdent);
+    const selectedRegularEnsembleIdents = filterEnsembleIdentsByType(allSelectedEnsembleIdents, RegularEnsembleIdent);
 
-    const selectedEnsembles: RegularEnsemble[] = [];
-    for (const ensembleIdent of selectedEnsembleIdents) {
-        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+    const selectedRegularEnsembles: RegularEnsemble[] = [];
+    for (const regularEnsembleIdent of selectedRegularEnsembleIdents) {
+        const ensemble = ensembleSet.findEnsemble(regularEnsembleIdent);
         if (ensemble) {
-            selectedEnsembles.push(ensemble);
+            selectedRegularEnsembles.push(ensemble);
         }
     }
 
-    return selectedEnsembles;
+    return selectedRegularEnsembles;
 });
 
 export const selectedDeltaEnsemblesAtom = atom<DeltaEnsemble[]>((get) => {
@@ -67,8 +67,8 @@ export const selectedDeltaEnsemblesAtom = atom<DeltaEnsemble[]>((get) => {
     const selectedDeltaEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, DeltaEnsembleIdent);
 
     const selectedDeltaEnsembles: DeltaEnsemble[] = [];
-    for (const ensembleIdent of selectedDeltaEnsembleIdents) {
-        const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+    for (const deltaEnsembleIdent of selectedDeltaEnsembleIdents) {
+        const ensemble = ensembleSet.findEnsemble(deltaEnsembleIdent);
         if (ensemble) {
             selectedDeltaEnsembles.push(ensemble);
         }
@@ -160,7 +160,7 @@ export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
             }
 
             vectorSpecifications.push({
-                ensembleIdent: ensembleIdent,
+                ensembleIdent,
                 color: ensembleSet.findEnsemble(ensembleIdent)?.getColor() ?? null,
                 vectorName,
                 hasHistoricalVector: ensembleVectorListsHelper.hasHistoricalVector(ensembleIdent, vectorName),

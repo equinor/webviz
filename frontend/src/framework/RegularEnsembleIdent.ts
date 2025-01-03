@@ -1,11 +1,12 @@
-import { ensembleIdentUuidRegexString, isEnsembleIdentOfType } from "./utils/ensembleIdentUtils";
+import { isEnsembleIdentOfType } from "./utils/ensembleIdentUtils";
+import { UUID_REGEX_STRING } from "./utils/uuidUtils";
 
 export class RegularEnsembleIdent {
     private _caseUuid: string;
     private _ensembleName: string;
 
     constructor(caseUuid: string, ensembleName: string) {
-        const uuidRegex = new RegExp(ensembleIdentUuidRegexString());
+        const uuidRegex = new RegExp(UUID_REGEX_STRING);
         if (!uuidRegex.exec(caseUuid)) {
             throw new Error(`Invalid caseUuid: ${caseUuid}`);
         }
@@ -14,28 +15,26 @@ export class RegularEnsembleIdent {
         this._ensembleName = ensembleName;
     }
 
+    static readonly ensembleIdentRegExp = new RegExp(`^(?<caseUuid>${UUID_REGEX_STRING})::(?<ensembleName>.*)$`);
+
     static caseUuidAndEnsembleNameToString(caseUuid: string, ensembleName: string): string {
         return `${caseUuid}::${ensembleName}`;
     }
 
-    static getEnsembleIdentRegex(): RegExp {
-        return new RegExp(`^(?<caseUuid>${ensembleIdentUuidRegexString()})::(?<ensembleName>.*)$`);
-    }
-
     static isValidEnsembleIdentString(ensembleIdentString: string): boolean {
-        const regex = RegularEnsembleIdent.getEnsembleIdentRegex();
+        const regex = RegularEnsembleIdent.ensembleIdentRegExp;
         const result = regex.exec(ensembleIdentString);
         return !!result && !!result.groups && !!result.groups.caseUuid && !!result.groups.ensembleName;
     }
 
     static fromString(ensembleIdentString: string): RegularEnsembleIdent {
-        const regex = RegularEnsembleIdent.getEnsembleIdentRegex();
+        const regex = RegularEnsembleIdent.ensembleIdentRegExp;
         const result = regex.exec(ensembleIdentString);
-        if (!result || !result.groups || !result.groups.caseUuid || !result.groups.ensembleName) {
+
+        const { caseUuid, ensembleName } = result?.groups ?? {};
+        if (!caseUuid || !ensembleName) {
             throw new Error(`Invalid ensemble ident: ${ensembleIdentString}`);
         }
-
-        const { caseUuid, ensembleName } = result.groups;
 
         return new RegularEnsembleIdent(caseUuid, ensembleName);
     }

@@ -290,6 +290,8 @@ export class SubplotBuilder {
             if (subplotIndex === -1) continue;
 
             const ensembleIdent = elm.vectorSpecification.ensembleIdent;
+
+            // As of now only regular ensembles are supported
             if (!isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent)) continue;
 
             const hasParameterForEnsemble = this._ensemblesParameterColoring.hasParameterForEnsemble(ensembleIdent);

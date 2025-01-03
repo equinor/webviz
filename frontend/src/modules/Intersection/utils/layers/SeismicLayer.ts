@@ -376,7 +376,7 @@ export function isSeismicLayer(layer: BaseLayer<any, any>): layer is SeismicLaye
  * Utility function to convert the 1D array of values from the fence data to a 2D array of values
  * for the seismic slice image.
  *
- * For the bit map image, the values are provided s.t. a seismic trace is a column in the image,
+ * For the bit map image, the values are provided such that a seismic trace is a column in the image,
  * thus the data will be transposed.
  *
  * trace a,b,c and d

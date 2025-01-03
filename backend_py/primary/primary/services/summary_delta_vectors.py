@@ -22,13 +22,13 @@ def _validate_summary_vector_table_pa(
     """
     Check if the pyarrow vector table is valid.
 
-    Expect the pyarrow single vector table to contain the following columns: DATE, REAL, vector_name.
+    Expect the pyarrow single vector table to only contain the following columns: DATE, REAL, vector_name.
 
     Raises InvalidDataError if the table does not contain the expected columns.
     """
     expected_columns = {"DATE", "REAL", vector_name}
     actual_columns = set(vector_table.column_names)
-    if actual_columns != expected_columns:
+    if not expected_columns.issubset(actual_columns) or len(expected_columns) != len(actual_columns):
         unexpected_columns = actual_columns - expected_columns
         raise InvalidDataError(f"Unexpected columns in table {unexpected_columns}", service)
 
@@ -44,14 +44,14 @@ def _validate_summary_vector_table_pa(
 
 
 def create_delta_vector_table(
-    compare_vector_table: pa.Table, reference_vector_table: pa.Table, vector_name: str
+    comparison_vector_table: pa.Table, reference_vector_table: pa.Table, vector_name: str
 ) -> pa.Table:
     """
     Create a table with delta values of the requested vector name between the two input tables.
 
     Definition:
 
-        delta_vector = compare_vector - reference_vector
+        delta_vector = comparison_vector - reference_vector
 
     Performs "inner join". Only obtain matching index ["DATE", "REAL"] - i.e "DATE"-"REAL" combination
     present in only one vector is neglected.
@@ -60,10 +60,10 @@ def create_delta_vector_table(
 
     `Note`: Pre-processing of DATE-columns, e.g. resampling, should be done before calling this function.
     """
-    _validate_summary_vector_table_pa(compare_vector_table, vector_name)
+    _validate_summary_vector_table_pa(comparison_vector_table, vector_name)
     _validate_summary_vector_table_pa(reference_vector_table, vector_name)
 
-    joined_vector_table = compare_vector_table.join(
+    joined_vector_table = comparison_vector_table.join(
         reference_vector_table, keys=["DATE", "REAL"], join_type="inner", right_suffix="_reference"
     )
     delta_vector = pc.subtract(

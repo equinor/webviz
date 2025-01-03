@@ -84,19 +84,10 @@ function App() {
 
             setIsMounted(true);
 
-            const storedEnsembleIdents = workbench.maybeLoadEnsembleSettingsFromLocalStorage();
-            const storedDeltaEnsembles = workbench.maybeLoadDeltaEnsembleSettingsFromLocalStorage();
-            if (storedEnsembleIdents || storedDeltaEnsembles) {
-                setInitAppState(InitAppState.LoadingEnsembles);
-                workbench
-                    .loadAndSetupEnsembleSetInSession(
-                        queryClient,
-                        storedEnsembleIdents ?? [],
-                        storedDeltaEnsembles ?? []
-                    )
-                    .finally(() => {
-                        initApp();
-                    });
+            if (workbench.hasEnsembleSettingsInLocalStorage()) {
+                workbench.initWorkbenchFromLocalStorage(queryClient).finally(() => {
+                    initApp();
+                });
             } else {
                 initApp();
             }

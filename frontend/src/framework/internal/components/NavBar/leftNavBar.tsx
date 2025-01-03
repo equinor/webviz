@@ -8,9 +8,9 @@ import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSes
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
 import {
-    DeltaEnsembleElementItem,
+    BaseEnsembleItem,
     DeltaEnsembleItem,
-    EnsembleItem,
+    RegularEnsembleItem,
 } from "@framework/internal/components/SelectEnsemblesDialog/selectEnsemblesDialog";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
@@ -33,7 +33,7 @@ const NavBarDivider: React.FC = () => {
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const ensembleSet = useEnsembleSet(props.workbench.getWorkbenchSession());
     const [ensembleDialogOpen, setEnsembleDialogOpen] = React.useState<boolean>(false);
-    const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<EnsembleItem[]>([]);
+    const [newSelectedEnsembles, setNewSelectedEnsembles] = React.useState<RegularEnsembleItem[]>([]);
     const [newCreatedDeltaEnsembles, setNewCreatedDeltaEnsembles] = React.useState<DeltaEnsembleItem[]>([]);
     const [layoutEmpty, setLayoutEmpty] = React.useState<boolean>(props.workbench.getLayout().length === 0);
     const [collapsed, setCollapsed] = React.useState<boolean>(localStorage.getItem("navBarCollapsed") === "true");
@@ -123,7 +123,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     }
 
     function loadAndSetupEnsembles(
-        ensembleItems: EnsembleItem[],
+        ensembleItems: RegularEnsembleItem[],
         createdDeltaEnsembles: DeltaEnsembleItem[]
     ): Promise<void> {
         setNewSelectedEnsembles(ensembleItems);
@@ -134,9 +134,9 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             color: ens.color,
         }));
         const deltaEnsembleSettings: UserDeltaEnsembleSetting[] = createdDeltaEnsembles.map((deltaEns) => ({
-            compareEnsembleIdent: new RegularEnsembleIdent(
-                deltaEns.compareEnsemble.caseUuid,
-                deltaEns.compareEnsemble.ensembleName
+            comparisonEnsembleIdent: new RegularEnsembleIdent(
+                deltaEns.comparisonEnsemble.caseUuid,
+                deltaEns.comparisonEnsemble.ensembleName
             ),
             referenceEnsembleIdent: new RegularEnsembleIdent(
                 deltaEns.referenceEnsemble.caseUuid,
@@ -145,10 +145,14 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             customName: deltaEns.customName,
             color: deltaEns.color,
         }));
-        return props.workbench.loadAndSetupEnsembleSetInSession(queryClient, ensembleSettings, deltaEnsembleSettings);
+        return props.workbench.storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
+            queryClient,
+            ensembleSettings,
+            deltaEnsembleSettings
+        );
     }
 
-    const selectedEnsembles: EnsembleItem[] = ensembleSet.getRegularEnsembleArray().map((ens) => ({
+    const selectedEnsembles: RegularEnsembleItem[] = ensembleSet.getRegularEnsembleArray().map((ens) => ({
         caseUuid: ens.getCaseUuid(),
         caseName: ens.getCaseName(),
         ensembleName: ens.getEnsembleName(),
@@ -162,17 +166,17 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     }
 
     const createdDeltaEnsembles: DeltaEnsembleItem[] = ensembleSet.getDeltaEnsembleArray().map((deltaEns) => {
-        const compareEnsemble: DeltaEnsembleElementItem = {
-            caseUuid: deltaEns.getCompareEnsembleIdent().getCaseUuid(),
-            ensembleName: deltaEns.getCompareEnsembleIdent().getEnsembleName(),
+        const comparisonEnsemble: BaseEnsembleItem = {
+            caseUuid: deltaEns.getComparisonEnsembleIdent().getCaseUuid(),
+            ensembleName: deltaEns.getComparisonEnsembleIdent().getEnsembleName(),
         };
-        const referenceEnsemble: DeltaEnsembleElementItem = {
+        const referenceEnsemble: BaseEnsembleItem = {
             caseUuid: deltaEns.getReferenceEnsembleIdent().getCaseUuid(),
             ensembleName: deltaEns.getReferenceEnsembleIdent().getEnsembleName(),
         };
 
         const deltaEnsembleItem: DeltaEnsembleItem = {
-            compareEnsemble: compareEnsemble,
+            comparisonEnsemble: comparisonEnsemble,
             referenceEnsemble: referenceEnsemble,
             color: deltaEns.getColor(),
             customName: deltaEns.getCustomName(),
@@ -313,7 +317,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
             {ensembleDialogOpen && (
                 <SelectEnsemblesDialog
                     loadAndSetupEnsembles={loadAndSetupEnsembles}
-                    selectedEnsembles={fixedSelectedEnsembles}
+                    selectedRegularEnsembles={fixedSelectedEnsembles}
                     createdDeltaEnsembles={fixedCreatedDeltaEnsembles}
                     onClose={handleEnsembleDialogClose}
                     colorSet={colorSet}

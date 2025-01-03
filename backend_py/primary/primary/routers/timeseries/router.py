@@ -54,8 +54,8 @@ async def get_vector_list(
 async def get_delta_ensemble_vector_list(
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    compare_case_uuid: Annotated[str, Query(description="Sumo case uuid for compare ensemble")],
-    compare_ensemble_name: Annotated[str, Query(description="Compare ensemble name")],
+    comparison_case_uuid: Annotated[str, Query(description="Sumo case uuid for comparison ensemble")],
+    comparison_ensemble_name: Annotated[str, Query(description="Comparison ensemble name")],
     reference_case_uuid: Annotated[str, Query(description="Sumo case uuid for reference ensemble")],
     reference_ensemble_name: Annotated[str, Query(description="Reference ensemble name")],
 ) -> list[schemas.VectorDescription]:
@@ -63,13 +63,13 @@ async def get_delta_ensemble_vector_list(
 
     Definition:
 
-        delta_ensemble = compare_ensemble - reference_ensemble
+        delta_ensemble = comparison_ensemble - reference_ensemble
     """
 
     perf_metrics = ResponsePerfMetrics(response)
 
-    compare_ensemble_access = SummaryAccess.from_case_uuid(
-        authenticated_user.get_sumo_access_token(), compare_case_uuid, compare_ensemble_name
+    comparison_ensemble_access = SummaryAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), comparison_case_uuid, comparison_ensemble_name
     )
     reference_ensemble_access = SummaryAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), reference_case_uuid, reference_ensemble_name
@@ -77,14 +77,14 @@ async def get_delta_ensemble_vector_list(
     perf_metrics.record_lap("get-access")
 
     # Get vectors parallel
-    compare_vector_info_arr, reference_vector_info_arr = await asyncio.gather(
-        compare_ensemble_access.get_available_vectors_async(),
+    comparison_vector_info_arr, reference_vector_info_arr = await asyncio.gather(
+        comparison_ensemble_access.get_available_vectors_async(),
         reference_ensemble_access.get_available_vectors_async(),
     )
     perf_metrics.record_lap("get-available-vectors")
 
     # Create intersection of vector names
-    vector_names = {vi.name for vi in compare_vector_info_arr}
+    vector_names = {vi.name for vi in comparison_vector_info_arr}
     vector_names.intersection_update({vi.name for vi in reference_vector_info_arr})
     perf_metrics.record_lap("create-vectors-names-intersection")
 
@@ -110,7 +110,6 @@ async def get_realizations_vector_data(
     vector_name:  Annotated[str, Query(description="Name of the vector")],
     resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency. If not specified, raw data without resampling wil be returned.")] = None,
     realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be returned.")] = None,
-    # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
     # fmt:on
 ) -> list[schemas.VectorRealizationData]:
     """Get vector data per realization"""
@@ -148,21 +147,20 @@ async def get_delta_ensemble_realizations_vector_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    compare_case_uuid: Annotated[str, Query(description="Sumo case uuid for compare ensemble")],
-    compare_ensemble_name: Annotated[str, Query(description="Compare ensemble name")],
+    comparison_case_uuid: Annotated[str, Query(description="Sumo case uuid for comparison ensemble")],
+    comparison_ensemble_name: Annotated[str, Query(description="Comparison ensemble name")],
     reference_case_uuid: Annotated[str, Query(description="Sumo case uuid for reference ensemble")],
     reference_ensemble_name: Annotated[str, Query(description="Reference ensemble name")],
     vector_name:  Annotated[str, Query(description="Name of the vector")],
     resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
     realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be returned.")] = None,
-    # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
     # fmt:on
 ) -> list[schemas.VectorRealizationData]:
     """Get vector data per realization
 
     Definition:
 
-        delta_ensemble = compare_ensemble - reference_ensemble
+        delta_ensemble = comparison_ensemble - reference_ensemble
 
     """
 
@@ -174,18 +172,21 @@ async def get_delta_ensemble_realizations_vector_data(
             status_code=400, detail="Resampling frequency must be specified to create delta ensemble vector"
         )
 
-    compare_ensemble_access = SummaryAccess.from_case_uuid(
-        authenticated_user.get_sumo_access_token(), compare_case_uuid, compare_ensemble_name
+    comparison_ensemble_access = SummaryAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), comparison_case_uuid, comparison_ensemble_name
     )
     reference_ensemble_access = SummaryAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), reference_case_uuid, reference_ensemble_name
     )
 
     # Get tables parallel
-    # - Resampled data is assumed to be s.t. dates/timestamps are comparable between ensembles and cases, i.e. timestamps
+    # - Resampled data is assumed to be such that dates/timestamps are comparable between ensembles and cases, i.e. timestamps
     #   for a resampling of a daily vector in both ensembles should be the same
-    (compare_vector_table_pa, compare_metadata), (reference_vector_table_pa, reference_metadata) = await asyncio.gather(
-        compare_ensemble_access.get_vector_table_async(
+    (comparison_vector_table_pa, comparison_metadata), (
+        reference_vector_table_pa,
+        reference_metadata,
+    ) = await asyncio.gather(
+        comparison_ensemble_access.get_vector_table_async(
             vector_name=vector_name,
             resampling_frequency=service_freq,
             realizations=realizations,
@@ -198,11 +199,11 @@ async def get_delta_ensemble_realizations_vector_data(
     )
 
     # Check for mismatching metadata
-    if compare_metadata.is_rate != reference_metadata.is_rate:
+    if comparison_metadata.is_rate != reference_metadata.is_rate:
         raise HTTPException(
             status_code=400, detail="Rate mismatch between ensembles for delta ensemble statistical vector data"
         )
-    if compare_metadata.unit != reference_metadata.unit:
+    if comparison_metadata.unit != reference_metadata.unit:
         raise HTTPException(
             status_code=400, detail="Unit mismatch between ensembles for delta ensemble statistical vector data"
         )
@@ -212,7 +213,7 @@ async def get_delta_ensemble_realizations_vector_data(
     unit = reference_metadata.unit
 
     # Create delta ensemble data
-    delta_vector_table = create_delta_vector_table(compare_vector_table_pa, reference_vector_table_pa, vector_name)
+    delta_vector_table = create_delta_vector_table(comparison_vector_table_pa, reference_vector_table_pa, vector_name)
     perf_metrics.record_lap("create-delta-vector-table")
 
     realization_delta_vector_list = create_realization_delta_vector_list(delta_vector_table, vector_name, is_rate, unit)
@@ -263,7 +264,6 @@ async def get_historical_vector_data(
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
     non_historical_vector_name: Annotated[str, Query(description="Name of the non-historical vector")],
     resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency")] = None,
-    # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
 ) -> schemas.VectorHistoricalData:
     access = SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
@@ -294,7 +294,6 @@ async def get_statistical_vector_data(
     resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
     statistic_functions: Annotated[list[schemas.StatisticFunction] | None, Query(description="Optional list of statistics to calculate. If not specified, all statistics will be calculated.")] = None,
     realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be included.")] = None,
-    # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
     # fmt:on
 ) -> schemas.VectorStatisticData:
     """Get statistical vector data for an ensemble"""
@@ -330,22 +329,21 @@ async def get_delta_ensemble_statistical_vector_data(
     # fmt:off
     response: Response,
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    compare_case_uuid: Annotated[str, Query(description="Sumo case uuid for compare ensemble")],
-    compare_ensemble_name: Annotated[str, Query(description="Compare ensemble name")],
+    comparison_case_uuid: Annotated[str, Query(description="Sumo case uuid for comparison ensemble")],
+    comparison_ensemble_name: Annotated[str, Query(description="Comparison ensemble name")],
     reference_case_uuid: Annotated[str, Query(description="Sumo case uuid for reference ensemble")],
     reference_ensemble_name: Annotated[str, Query(description="Reference ensemble name")],
     vector_name: Annotated[str, Query(description="Name of the vector")],
     resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
     statistic_functions: Annotated[list[schemas.StatisticFunction] | None, Query(description="Optional list of statistics to calculate. If not specified, all statistics will be calculated.")] = None,
     realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be included.")] = None,
-    # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
     # fmt:on
 ) -> schemas.VectorStatisticData:
     """Get statistical vector data for an ensemble
 
     Definition:
 
-        delta_ensemble = compare_ensemble - reference_ensemble
+        delta_ensemble = comparison_ensemble - reference_ensemble
 
     """
 
@@ -359,18 +357,21 @@ async def get_delta_ensemble_statistical_vector_data(
             status_code=400, detail="Resampling frequency must be specified to create delta ensemble vector"
         )
 
-    compare_ensemble_access = SummaryAccess.from_case_uuid(
-        authenticated_user.get_sumo_access_token(), compare_case_uuid, compare_ensemble_name
+    comparison_ensemble_access = SummaryAccess.from_case_uuid(
+        authenticated_user.get_sumo_access_token(), comparison_case_uuid, comparison_ensemble_name
     )
     reference_ensemble_access = SummaryAccess.from_case_uuid(
         authenticated_user.get_sumo_access_token(), reference_case_uuid, reference_ensemble_name
     )
 
     # Get tables parallel
-    # - Resampled data is assumed to be s.t. dates/timestamps are comparable between ensembles and cases, i.e. timestamps
+    # - Resampled data is assumed to be such that dates/timestamps are comparable between ensembles and cases, i.e. timestamps
     #   for a resampling of a daily vector in both ensembles should be the same
-    (compare_vector_table_pa, compare_metadata), (reference_vector_table_pa, reference_metadata) = await asyncio.gather(
-        compare_ensemble_access.get_vector_table_async(
+    (comparison_vector_table_pa, comparison_metadata), (
+        reference_vector_table_pa,
+        reference_metadata,
+    ) = await asyncio.gather(
+        comparison_ensemble_access.get_vector_table_async(
             vector_name=vector_name,
             resampling_frequency=service_freq,
             realizations=realizations,
@@ -383,11 +384,11 @@ async def get_delta_ensemble_statistical_vector_data(
     )
 
     # Check for mismatching metadata
-    if compare_metadata.is_rate != reference_metadata.is_rate:
+    if comparison_metadata.is_rate != reference_metadata.is_rate:
         raise HTTPException(
             status_code=400, detail="Rate mismatch between ensembles for delta ensemble statistical vector data"
         )
-    if compare_metadata.unit != reference_metadata.unit:
+    if comparison_metadata.unit != reference_metadata.unit:
         raise HTTPException(
             status_code=400, detail="Unit mismatch between ensembles for delta ensemble statistical vector data"
         )
@@ -397,7 +398,7 @@ async def get_delta_ensemble_statistical_vector_data(
     unit = reference_metadata.unit
 
     # Create delta ensemble data and compute statistics
-    delta_vector_table = create_delta_vector_table(compare_vector_table_pa, reference_vector_table_pa, vector_name)
+    delta_vector_table = create_delta_vector_table(comparison_vector_table_pa, reference_vector_table_pa, vector_name)
     statistics = compute_vector_statistics(delta_vector_table, vector_name, service_stat_funcs_to_compute)
     if not statistics:
         raise HTTPException(status_code=404, detail="Could not compute statistics")
@@ -421,7 +422,6 @@ async def get_statistical_vector_data_per_sensitivity(
     vector_name: Annotated[str, Query(description="Name of the vector")],
     resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
     statistic_functions: Annotated[list[schemas.StatisticFunction] | None, Query(description="Optional list of statistics to calculate. If not specified, all statistics will be calculated.")] = None,
-    # relative_to_timestamp: Annotated[datetime.datetime | None, Query(description="Calculate relative to timestamp")] = None,
     # fmt:on
 ) -> list[schemas.VectorStatisticSensitivityData]:
     """Get statistical vector data for an ensemble per sensitivity"""

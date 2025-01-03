@@ -34,7 +34,7 @@ export type UserEnsembleSetting = {
 };
 
 export type UserDeltaEnsembleSetting = {
-    compareEnsembleIdent: RegularEnsembleIdent;
+    comparisonEnsembleIdent: RegularEnsembleIdent;
     referenceEnsembleIdent: RegularEnsembleIdent;
     customName: string | null;
     color: string;
@@ -47,7 +47,7 @@ export type StoredUserEnsembleSetting = {
 };
 
 export type StoredUserDeltaEnsembleSetting = {
-    compareEnsembleIdent: string;
+    comparisonEnsembleIdent: string;
     referenceEnsembleIdent: string;
     customName: string | null;
     color: string;
@@ -240,7 +240,29 @@ export class Workbench {
         }
     }
 
-    async loadAndSetupEnsembleSetInSession(
+    hasEnsembleSettingsInLocalStorage(): boolean {
+        return (
+            this.maybeLoadEnsembleSettingsFromLocalStorage() !== null ||
+            this.maybeLoadDeltaEnsembleSettingsFromLocalStorage() !== null
+        );
+    }
+
+    async initWorkbenchFromLocalStorage(queryClient: QueryClient): Promise<void> {
+        const storedUserEnsembleSettings = this.maybeLoadEnsembleSettingsFromLocalStorage();
+        const storeUserDeltaEnsembleSettings = this.maybeLoadDeltaEnsembleSettingsFromLocalStorage();
+
+        if (!storedUserEnsembleSettings && !storeUserDeltaEnsembleSettings) {
+            return;
+        }
+
+        await this.loadAndSetupEnsembleSetInSession(
+            queryClient,
+            storedUserEnsembleSettings ?? [],
+            storeUserDeltaEnsembleSettings ?? []
+        );
+    }
+
+    async storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
         userEnsembleSettings: UserEnsembleSetting[],
         userDeltaEnsembleSettings: UserDeltaEnsembleSetting[]
@@ -248,6 +270,14 @@ export class Workbench {
         this.storeEnsembleSetInLocalStorage(userEnsembleSettings);
         this.storeDeltaEnsembleSetInLocalStorage(userDeltaEnsembleSettings);
 
+        await this.loadAndSetupEnsembleSetInSession(queryClient, userEnsembleSettings, userDeltaEnsembleSettings);
+    }
+
+    private async loadAndSetupEnsembleSetInSession(
+        queryClient: QueryClient,
+        userEnsembleSettings: UserEnsembleSetting[],
+        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[]
+    ): Promise<void> {
         console.debug("loadAndSetupEnsembleSetInSession - starting load");
         this._workbenchSession.setEnsembleSetLoadingState(true);
         const newEnsembleSet = await loadMetadataFromBackendAndCreateEnsembleSet(
@@ -258,7 +288,7 @@ export class Workbench {
         console.debug("loadAndSetupEnsembleSetInSession - loading done");
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
         this._workbenchSession.setEnsembleSetLoadingState(false);
-        return this._workbenchSession.setEnsembleSet(newEnsembleSet);
+        this._workbenchSession.setEnsembleSet(newEnsembleSet);
     }
 
     private storeEnsembleSetInLocalStorage(ensembleSettingsToStore: UserEnsembleSetting[]): void {
@@ -273,7 +303,7 @@ export class Workbench {
         const deltaEnsembleSettingsArrayToStore: StoredUserDeltaEnsembleSetting[] = deltaEnsembleSettingsToStore.map(
             (el) => ({
                 ...el,
-                compareEnsembleIdent: el.compareEnsembleIdent.toString(),
+                comparisonEnsembleIdent: el.comparisonEnsembleIdent.toString(),
                 referenceEnsembleIdent: el.referenceEnsembleIdent.toString(),
             })
         );
@@ -300,7 +330,7 @@ export class Workbench {
         const deltaEnsembleSettingsArray = JSON.parse(deltaEnsembleSettingsString) as StoredUserDeltaEnsembleSetting[];
         const parsedDeltaEnsembleSettingsArray: UserDeltaEnsembleSetting[] = deltaEnsembleSettingsArray.map((el) => ({
             ...el,
-            compareEnsembleIdent: RegularEnsembleIdent.fromString(el.compareEnsembleIdent),
+            comparisonEnsembleIdent: RegularEnsembleIdent.fromString(el.comparisonEnsembleIdent),
             referenceEnsembleIdent: RegularEnsembleIdent.fromString(el.referenceEnsembleIdent),
         }));
 

@@ -24,7 +24,7 @@ export function maybeAssignFirstSyncedEnsemble(
  *
  * Returns null if an empty EnsembleSet is specified.
  *
- * Note that if the specified RegularEnsembleIdents and DeltaEnsembleIdents are valid, this function
+ * Note that if the specified RegularEnsembleIdent or DeltaEnsembleIdent is valid, this function
  * will always return a reference to the exact same object that was passed in currIdent. This
  * means that you can compare the references (fixedIdent !== currIdent) to detect any changes.
  */
@@ -49,7 +49,7 @@ export function fixupEnsembleIdent(
  *
  * Returns null if specified EnsembleSet does not contain any regular ensembles.
  *
- * Note that if the specified RegularEnsembleIdents is valid, this function will always return
+ * Note that if the specified RegularEnsembleIdent is valid, this function will always return
  * a reference to the exact same object that was passed in currIdent. This means that you can
  * compare the references (fixedIdent !== currIdent) to detect any changes.
  */
@@ -74,7 +74,7 @@ export function fixupRegularEnsembleIdent(
  *
  * Returns null if an empty EnsembleSet is specified.
  *
- * Note that if the specified RegularEnsembleIdents and DeltaEnsembleIdents are valid, this
+ * Note that if the specified RegularEnsembleIdents or DeltaEnsembleIdents are valid, this
  * function will always return a reference to the exact same object that was passed in
  * currIdent. This means that you can compare the references (fixedIdent !== currIdent) to
  * detect any changes.

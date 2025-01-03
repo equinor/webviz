@@ -38,6 +38,8 @@ export function useGridPolylineIntersection(
         select: transformPolylineIntersection,
         staleTime: 0,
         gcTime: 0,
-        enabled: !!(ensembleIdent && gridModelName && realizationNum !== null && polyline_utm_xy.length && enabled),
+        enabled: Boolean(
+            ensembleIdent && gridModelName && realizationNum !== null && polyline_utm_xy.length && enabled
+        ),
     });
 }

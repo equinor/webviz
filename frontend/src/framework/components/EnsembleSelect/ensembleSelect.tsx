@@ -8,29 +8,25 @@ import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Select, SelectOption, SelectProps } from "@lib/components/Select";
 
-// Overload for EnsembleSelect with DeltaEnsembleIdent
-export type EnsembleSelectWithDeltaEnsemblesProps = {
-    ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
-    multiple?: boolean;
-    allowDeltaEnsembles: true;
-    value: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
-    onChange: (ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) => void;
-} & Omit<SelectProps<string>, "options" | "value" | "onChange">;
+export type EnsembleSelectProps = (
+    | {
+          ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
+          multiple?: boolean;
+          allowDeltaEnsembles: true;
+          value: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
+          onChange: (ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) => void;
+      }
+    | {
+          ensembles: readonly RegularEnsemble[];
+          multiple?: boolean;
+          allowDeltaEnsembles?: false | undefined;
+          value: RegularEnsembleIdent[];
+          onChange: (ensembleIdentArray: RegularEnsembleIdent[]) => void;
+      }
+) &
+    Omit<SelectProps<string>, "options" | "value" | "onChange">;
 
-// Overload for EnsembleSelect without DeltaEnsembleIdent
-export type EnsembleSelectWithoutDeltaEnsemblesProps = {
-    ensembles: readonly RegularEnsemble[];
-    multiple?: boolean;
-    allowDeltaEnsembles?: false | undefined;
-    value: RegularEnsembleIdent[];
-    onChange: (ensembleIdentArray: RegularEnsembleIdent[]) => void;
-} & Omit<SelectProps<string>, "options" | "value" | "onChange">;
-
-export function EnsembleSelect(props: EnsembleSelectWithDeltaEnsemblesProps): JSX.Element;
-export function EnsembleSelect(props: EnsembleSelectWithoutDeltaEnsemblesProps): JSX.Element;
-export function EnsembleSelect(
-    props: EnsembleSelectWithDeltaEnsemblesProps | EnsembleSelectWithoutDeltaEnsemblesProps
-): JSX.Element {
+export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
     const { onChange, ensembles, value, allowDeltaEnsembles, multiple, ...rest } = props;
 
     const handleSelectionChange = React.useCallback(
@@ -38,9 +34,13 @@ export function EnsembleSelect(
             const identArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
             for (const identStr of selectedEnsembleIdentStringArray) {
                 const foundEnsemble = ensembles.find((ens) => ens.getIdent().toString() === identStr);
-                if (foundEnsemble && (allowDeltaEnsembles || foundEnsemble instanceof RegularEnsemble)) {
-                    identArray.push(foundEnsemble.getIdent());
+                if (!foundEnsemble) {
+                    throw new Error(`Ensemble not found: ${identStr}`);
                 }
+                if (!allowDeltaEnsembles && foundEnsemble instanceof DeltaEnsemble) {
+                    throw new Error(`Invalid ensemble selection: ${identStr}. Got delta ensemble when not allowed.`);
+                }
+                identArray.push(foundEnsemble.getIdent());
             }
 
             // Filter to match the correct return type before calling onChange

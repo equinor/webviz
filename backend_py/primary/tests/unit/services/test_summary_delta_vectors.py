@@ -14,9 +14,9 @@ VECTOR_TABLE_SCHEMA = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16
 
 
 def test_create_delta_vector_table() -> None:
-    # Create sample data for compare_vector_table
-    compare_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 2, 2], "vector": [10.0, 20.0, 30.0, 40.0]}
-    compare_vector_table = pa.table(compare_data, schema=VECTOR_TABLE_SCHEMA)
+    # Create sample data for comparison_vector_table
+    comparison_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 2, 2], "vector": [10.0, 20.0, 30.0, 40.0]}
+    comparison_vector_table = pa.table(comparison_data, schema=VECTOR_TABLE_SCHEMA)
 
     # Create sample data for reference_vector_table
     reference_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 2, 2], "vector": [5.0, 15.0, 25.0, 35.0]}
@@ -27,16 +27,16 @@ def test_create_delta_vector_table() -> None:
     expected_delta_table = pa.table(expected_delta_data, schema=VECTOR_TABLE_SCHEMA)
 
     # Call the function
-    result_table = create_delta_vector_table(compare_vector_table, reference_vector_table, "vector")
+    result_table = create_delta_vector_table(comparison_vector_table, reference_vector_table, "vector")
 
     # Validate the result
     assert result_table.equals(expected_delta_table)
 
 
 def test_create_delta_vector_table_with_missing_dates() -> None:
-    # Create sample data for compare_vector_table
-    compare_data = {"DATE": [1, 2, 4], "REAL": [1, 1, 2], "vector": [10.0, 20.0, 40.0]}
-    compare_vector_table = pa.table(compare_data, schema=VECTOR_TABLE_SCHEMA)
+    # Create sample data for comparison_vector_table
+    comparison_data = {"DATE": [1, 2, 4], "REAL": [1, 1, 2], "vector": [10.0, 20.0, 40.0]}
+    comparison_vector_table = pa.table(comparison_data, schema=VECTOR_TABLE_SCHEMA)
 
     # Create sample data for reference_vector_table
     reference_data = {"DATE": [1, 2, 3], "REAL": [1, 1, 2], "vector": [5.0, 15.0, 25.0]}
@@ -47,16 +47,16 @@ def test_create_delta_vector_table_with_missing_dates() -> None:
     expected_delta_table = pa.table(expected_delta_data, schema=VECTOR_TABLE_SCHEMA)
 
     # Call the function
-    result_table = create_delta_vector_table(compare_vector_table, reference_vector_table, "vector")
+    result_table = create_delta_vector_table(comparison_vector_table, reference_vector_table, "vector")
 
     # Validate the result
     assert result_table.equals(expected_delta_table)
 
 
 def test_create_delta_vector_table_with_different_reals() -> None:
-    # Create sample data for compare_vector_table
-    compare_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 2, 3], "vector": [10.0, 20.0, 30.0, 40.0]}
-    compare_vector_table = pa.table(compare_data, schema=VECTOR_TABLE_SCHEMA)
+    # Create sample data for comparison_vector_table
+    comparison_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 2, 3], "vector": [10.0, 20.0, 30.0, 40.0]}
+    comparison_vector_table = pa.table(comparison_data, schema=VECTOR_TABLE_SCHEMA)
 
     # Create sample data for reference_vector_table
     reference_data = {"DATE": [1, 2, 3, 4], "REAL": [1, 1, 2, 2], "vector": [5.0, 15.0, 25.0, 35.0]}
@@ -67,7 +67,7 @@ def test_create_delta_vector_table_with_different_reals() -> None:
     expected_delta_table = pa.table(expected_delta_data, schema=VECTOR_TABLE_SCHEMA)
 
     # Call the function
-    result_table = create_delta_vector_table(compare_vector_table, reference_vector_table, "vector")
+    result_table = create_delta_vector_table(comparison_vector_table, reference_vector_table, "vector")
 
     # Validate the result
     assert result_table.equals(expected_delta_table)

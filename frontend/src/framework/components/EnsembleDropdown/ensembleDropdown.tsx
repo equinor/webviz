@@ -7,27 +7,23 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdown";
 
-// Overload for EnsembleDropdown with DeltaEnsembleIdent
-export type EnsembleDropdownWithDeltaEnsemblesProps = {
-    ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
-    allowDeltaEnsembles: true;
-    value: RegularEnsembleIdent | DeltaEnsembleIdent | null;
-    onChange: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null) => void;
-} & Omit<DropdownProps<string>, "options" | "value" | "onChange">;
+export type EnsembleDropdownProps = (
+    | {
+          ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
+          allowDeltaEnsembles: true;
+          value: RegularEnsembleIdent | DeltaEnsembleIdent | null;
+          onChange: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null) => void;
+      }
+    | {
+          ensembles: readonly RegularEnsemble[];
+          allowDeltaEnsembles?: false | undefined;
+          value: RegularEnsembleIdent | null;
+          onChange: (ensembleIdent: RegularEnsembleIdent | null) => void;
+      }
+) &
+    Omit<DropdownProps<string>, "options" | "value" | "onChange">;
 
-// Overload for EnsembleDropdown without DeltaEnsembleIdent
-export type EnsembleDropdownWithoutDeltaEnsemblesProps = {
-    ensembles: readonly RegularEnsemble[];
-    allowDeltaEnsembles?: false | undefined;
-    value: RegularEnsembleIdent | null;
-    onChange: (ensembleIdent: RegularEnsembleIdent | null) => void;
-} & Omit<DropdownProps<string>, "options" | "value" | "onChange">;
-
-export function EnsembleDropdown(props: EnsembleDropdownWithDeltaEnsemblesProps): JSX.Element;
-export function EnsembleDropdown(props: EnsembleDropdownWithoutDeltaEnsemblesProps): JSX.Element;
-export function EnsembleDropdown(
-    props: EnsembleDropdownWithDeltaEnsemblesProps | EnsembleDropdownWithoutDeltaEnsemblesProps
-): JSX.Element {
+export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     const { onChange, ensembles, allowDeltaEnsembles, value, ...rest } = props;
 
     const handleSelectionChange = React.useCallback(
@@ -35,13 +31,19 @@ export function EnsembleDropdown(
             const foundEnsemble = ensembles.find(
                 (ensemble) => ensemble.getIdent().toString() === selectedEnsembleIdentStr
             );
-            if (foundEnsemble && allowDeltaEnsembles) {
+            if (!foundEnsemble) {
+                onChange(null);
+                return;
+            }
+            if (allowDeltaEnsembles) {
                 onChange(foundEnsemble.getIdent());
                 return;
             }
-            if (!foundEnsemble || foundEnsemble instanceof DeltaEnsemble) {
+            if (foundEnsemble instanceof DeltaEnsemble) {
                 onChange(null);
-                return;
+                throw new Error(
+                    `Invalid ensemble selection: ${selectedEnsembleIdentStr}. Got delta ensemble when not allowed.`
+                );
             }
             onChange(foundEnsemble.getIdent());
         },

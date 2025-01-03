@@ -2,6 +2,24 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 /**
+ * Get ensemble ident from string
+ * @param ensembleIdentString
+ * @returns RegularEnsembleIdent | DeltaEnsembleIdent | null
+ */
+export function getEnsembleIdentFromString(
+    ensembleIdentString: string
+): RegularEnsembleIdent | DeltaEnsembleIdent | null {
+    let ensembleIdent = null;
+    if (RegularEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
+        ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentString);
+    } else if (DeltaEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
+        ensembleIdent = DeltaEnsembleIdent.fromString(ensembleIdentString);
+    }
+
+    return ensembleIdent;
+}
+
+/**
  * Check if two ensemble idents are equal.
  */
 export function areEnsembleIdentsEqual(
@@ -56,13 +74,4 @@ export function filterEnsembleIdentsByType<T extends RegularEnsembleIdent | Delt
     type: new (...args: any[]) => T
 ): T[] {
     return ensembleIdents.filter((ensembleIdent) => isEnsembleIdentOfType(ensembleIdent, type)) as T[];
-}
-
-/**
- * Generates a regex pattern for a UUID.
- *
- * @returns A string that represents a regex pattern for a UUID
- */
-export function ensembleIdentUuidRegexString(): string {
-    return "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}";
 }

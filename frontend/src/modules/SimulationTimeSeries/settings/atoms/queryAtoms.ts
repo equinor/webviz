@@ -1,4 +1,5 @@
 import { apiService } from "@framework/ApiService";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
@@ -26,22 +27,26 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
         }
 
         // Delta Ensemble
-        const deltaEnsemble = ensembleSet.getEnsemble(ensembleIdent);
-        const compareEnsembleIdent = deltaEnsemble.getCompareEnsembleIdent();
-        const referenceEnsembleIdent = deltaEnsemble.getReferenceEnsembleIdent();
+        if (isEnsembleIdentOfType(ensembleIdent, DeltaEnsembleIdent)) {
+            const deltaEnsemble = ensembleSet.getEnsemble(ensembleIdent);
+            const comparisonEnsembleIdent = deltaEnsemble.getComparisonEnsembleIdent();
+            const referenceEnsembleIdent = deltaEnsemble.getReferenceEnsembleIdent();
 
-        return () => ({
-            queryKey: ["getDeltaEnsembleVectorList", ensembleIdent.toString()],
-            queryFn: () =>
-                apiService.timeseries.getDeltaEnsembleVectorList(
-                    compareEnsembleIdent.getCaseUuid(),
-                    compareEnsembleIdent.getEnsembleName(),
-                    referenceEnsembleIdent.getCaseUuid(),
-                    referenceEnsembleIdent.getEnsembleName()
-                ),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
-        });
+            return () => ({
+                queryKey: ["getDeltaEnsembleVectorList", ensembleIdent.toString()],
+                queryFn: () =>
+                    apiService.timeseries.getDeltaEnsembleVectorList(
+                        comparisonEnsembleIdent.getCaseUuid(),
+                        comparisonEnsembleIdent.getEnsembleName(),
+                        referenceEnsembleIdent.getCaseUuid(),
+                        referenceEnsembleIdent.getEnsembleName()
+                    ),
+                staleTime: STALE_TIME,
+                gcTime: CACHE_TIME,
+            });
+        }
+
+        throw new Error(`Invalid ensemble ident type: ${ensembleIdent}`);
     });
 
     return {

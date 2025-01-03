@@ -7,7 +7,7 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { describe, expect, test } from "vitest";
 
 describe("DeltaEnsemble", () => {
-    const COMPARE_ENSEMBLE = new RegularEnsemble(
+    const COMPARISON_ENSEMBLE = new RegularEnsemble(
         "field1",
         "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
         "case1",
@@ -55,7 +55,12 @@ describe("DeltaEnsemble", () => {
         "Custom Name Second Ensemble"
     );
 
-    const DELTA_ENSEMBLE = new DeltaEnsemble(COMPARE_ENSEMBLE, REFERENCE_ENSEMBLE, "red", "Custom Name Delta Ensemble");
+    const DELTA_ENSEMBLE = new DeltaEnsemble(
+        COMPARISON_ENSEMBLE,
+        REFERENCE_ENSEMBLE,
+        "red",
+        "Custom Name Delta Ensemble"
+    );
 
     test("should create a DeltaEnsemble instance", () => {
         expect(DELTA_ENSEMBLE).toBeInstanceOf(DeltaEnsemble);
@@ -63,22 +68,22 @@ describe("DeltaEnsemble", () => {
 
     test("should return the correct ident", () => {
         expect(DELTA_ENSEMBLE.getIdent()).toEqual(
-            new DeltaEnsembleIdent(COMPARE_ENSEMBLE.getIdent(), REFERENCE_ENSEMBLE.getIdent())
+            new DeltaEnsembleIdent(COMPARISON_ENSEMBLE.getIdent(), REFERENCE_ENSEMBLE.getIdent())
         );
     });
 
     test("should return the correct display name", () => {
         expect(DELTA_ENSEMBLE.getDisplayName()).toBe("Custom Name Delta Ensemble");
 
-        // Use display name of compare and reference ensemble if no custom name is provided
-        const DeltaEnsembleWithoutCustomName = new DeltaEnsemble(COMPARE_ENSEMBLE, REFERENCE_ENSEMBLE, "red");
+        // Use display name of comparison and reference ensemble if no custom name is provided
+        const DeltaEnsembleWithoutCustomName = new DeltaEnsemble(COMPARISON_ENSEMBLE, REFERENCE_ENSEMBLE, "red");
         expect(DeltaEnsembleWithoutCustomName.getDisplayName()).toBe(
             "(Custom Name First Ensemble) - (Custom Name Second Ensemble)"
         );
     });
 
     test("should return the correct ensemble name", () => {
-        const expectedEnsembleName = `(${COMPARE_ENSEMBLE.getIdent().getEnsembleName()}) - (${REFERENCE_ENSEMBLE.getIdent().getEnsembleName()})`;
+        const expectedEnsembleName = `(${COMPARISON_ENSEMBLE.getIdent().getEnsembleName()}) - (${REFERENCE_ENSEMBLE.getIdent().getEnsembleName()})`;
         expect(DELTA_ENSEMBLE.getEnsembleName()).toBe(expectedEnsembleName);
     });
 
@@ -113,8 +118,8 @@ describe("DeltaEnsemble", () => {
         expect(DELTA_ENSEMBLE.getSensitivities()).toBeNull();
     });
 
-    test("should return the correct compare ensemble ident", () => {
-        expect(DELTA_ENSEMBLE.getCompareEnsembleIdent().equals(COMPARE_ENSEMBLE.getIdent())).toBe(true);
+    test("should return the correct comparison ensemble ident", () => {
+        expect(DELTA_ENSEMBLE.getComparisonEnsembleIdent().equals(COMPARISON_ENSEMBLE.getIdent())).toBe(true);
     });
 
     test("should return the correct reference ensemble ident", () => {

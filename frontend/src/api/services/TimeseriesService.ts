@@ -44,17 +44,17 @@ export class TimeseriesService {
      *
      * Definition:
      *
-     * delta_ensemble = compare_ensemble - reference_ensemble
-     * @param compareCaseUuid Sumo case uuid for compare ensemble
-     * @param compareEnsembleName Compare ensemble name
+     * delta_ensemble = comparison_ensemble - reference_ensemble
+     * @param comparisonCaseUuid Sumo case uuid for comparison ensemble
+     * @param comparisonEnsembleName Comparison ensemble name
      * @param referenceCaseUuid Sumo case uuid for reference ensemble
      * @param referenceEnsembleName Reference ensemble name
      * @returns VectorDescription Successful Response
      * @throws ApiError
      */
     public getDeltaEnsembleVectorList(
-        compareCaseUuid: string,
-        compareEnsembleName: string,
+        comparisonCaseUuid: string,
+        comparisonEnsembleName: string,
         referenceCaseUuid: string,
         referenceEnsembleName: string,
     ): CancelablePromise<Array<VectorDescription>> {
@@ -62,8 +62,8 @@ export class TimeseriesService {
             method: 'GET',
             url: '/timeseries/delta_ensemble_vector_list/',
             query: {
-                'compare_case_uuid': compareCaseUuid,
-                'compare_ensemble_name': compareEnsembleName,
+                'comparison_case_uuid': comparisonCaseUuid,
+                'comparison_ensemble_name': comparisonEnsembleName,
                 'reference_case_uuid': referenceCaseUuid,
                 'reference_ensemble_name': referenceEnsembleName,
             },
@@ -111,9 +111,9 @@ export class TimeseriesService {
      *
      * Definition:
      *
-     * delta_ensemble = compare_ensemble - reference_ensemble
-     * @param compareCaseUuid Sumo case uuid for compare ensemble
-     * @param compareEnsembleName Compare ensemble name
+     * delta_ensemble = comparison_ensemble - reference_ensemble
+     * @param comparisonCaseUuid Sumo case uuid for comparison ensemble
+     * @param comparisonEnsembleName Comparison ensemble name
      * @param referenceCaseUuid Sumo case uuid for reference ensemble
      * @param referenceEnsembleName Reference ensemble name
      * @param vectorName Name of the vector
@@ -123,8 +123,8 @@ export class TimeseriesService {
      * @throws ApiError
      */
     public getDeltaEnsembleRealizationsVectorData(
-        compareCaseUuid: string,
-        compareEnsembleName: string,
+        comparisonCaseUuid: string,
+        comparisonEnsembleName: string,
         referenceCaseUuid: string,
         referenceEnsembleName: string,
         vectorName: string,
@@ -135,8 +135,8 @@ export class TimeseriesService {
             method: 'GET',
             url: '/timeseries/delta_ensemble_realizations_vector_data/',
             query: {
-                'compare_case_uuid': compareCaseUuid,
-                'compare_ensemble_name': compareEnsembleName,
+                'comparison_case_uuid': comparisonCaseUuid,
+                'comparison_ensemble_name': comparisonEnsembleName,
                 'reference_case_uuid': referenceCaseUuid,
                 'reference_ensemble_name': referenceEnsembleName,
                 'vector_name': vectorName,
@@ -251,9 +251,9 @@ export class TimeseriesService {
      *
      * Definition:
      *
-     * delta_ensemble = compare_ensemble - reference_ensemble
-     * @param compareCaseUuid Sumo case uuid for compare ensemble
-     * @param compareEnsembleName Compare ensemble name
+     * delta_ensemble = comparison_ensemble - reference_ensemble
+     * @param comparisonCaseUuid Sumo case uuid for comparison ensemble
+     * @param comparisonEnsembleName Comparison ensemble name
      * @param referenceCaseUuid Sumo case uuid for reference ensemble
      * @param referenceEnsembleName Reference ensemble name
      * @param vectorName Name of the vector
@@ -264,8 +264,8 @@ export class TimeseriesService {
      * @throws ApiError
      */
     public getDeltaEnsembleStatisticalVectorData(
-        compareCaseUuid: string,
-        compareEnsembleName: string,
+        comparisonCaseUuid: string,
+        comparisonEnsembleName: string,
         referenceCaseUuid: string,
         referenceEnsembleName: string,
         vectorName: string,
@@ -277,8 +277,8 @@ export class TimeseriesService {
             method: 'GET',
             url: '/timeseries/delta_ensemble_statistical_vector_data/',
             query: {
-                'compare_case_uuid': compareCaseUuid,
-                'compare_ensemble_name': compareEnsembleName,
+                'comparison_case_uuid': comparisonCaseUuid,
+                'comparison_ensemble_name': comparisonEnsembleName,
                 'reference_case_uuid': referenceCaseUuid,
                 'reference_ensemble_name': referenceEnsembleName,
                 'vector_name': vectorName,
