@@ -20,14 +20,18 @@ export function createModuleInstanceHttpRequestClass(moduleInstance: ModuleInsta
             super(config);
         }
 
-        setWarnings(hash: string, warnings: string[]): void {
+        private setWarnings(hash: string, warnings: string[]): void {
             this._warnings.set(hash, warnings);
             const allWarnings = Array.from(this._warnings.values()).reduce((acc, val) => acc.concat(val), []);
             this._moduleInstance.setApiWarnings(allWarnings);
         }
 
         private makeHashFromOptions(options: ApiRequestOptions): string {
-            return JSON.stringify(options);
+            return JSON.stringify({
+                method: options.method,
+                url: options.url,
+                path: options.path,
+            });
         }
 
         /**
