@@ -4,6 +4,7 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
+import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { EnsembleVectorObservationDataMap, VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { QueryObserverResult } from "@tanstack/react-query";
@@ -33,6 +34,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
         // Regular Ensemble
         if (isEnsembleIdentOfType(item.ensembleIdent, RegularEnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
+            const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
             const vectorSpecification = {
                 ...item,
                 ensembleIdent: item.ensembleIdent,
@@ -45,7 +47,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                     vectorSpecification.ensembleIdent.getEnsembleName(),
                     vectorSpecification.vectorName,
                     resampleFrequency,
-                    realizations,
+                    realizationsEncodedAsUintListStr,
                 ],
                 queryFn: () =>
                     apiService.timeseries.getRealizationsVectorData(
@@ -53,7 +55,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                         vectorSpecification.ensembleIdent.getEnsembleName() ?? "",
                         vectorSpecification.vectorName ?? "",
                         resampleFrequency,
-                        realizations
+                        realizationsEncodedAsUintListStr
                     ),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
@@ -128,6 +130,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
         // Regular Ensemble
         if (isEnsembleIdentOfType(item.ensembleIdent, RegularEnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
+            const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
             const vectorSpecification = {
                 ...item,
                 ensembleIdent: item.ensembleIdent,
@@ -139,7 +142,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                     vectorSpecification.ensembleIdent.getEnsembleName(),
                     vectorSpecification.vectorName,
                     resampleFrequency,
-                    realizations,
+                    realizationsEncodedAsUintListStr,
                 ],
                 queryFn: () =>
                     apiService.timeseries.getStatisticalVectorData(
@@ -148,7 +151,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                         vectorSpecification.vectorName ?? "",
                         resampleFrequency ?? Frequency_api.MONTHLY,
                         undefined,
-                        realizations
+                        realizationsEncodedAsUintListStr
                     ),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,

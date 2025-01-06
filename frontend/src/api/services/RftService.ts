@@ -38,7 +38,7 @@ export class RftService {
      * @param wellName Well name
      * @param responseName Response name
      * @param timestampsUtcMs Timestamps utc ms
-     * @param realizations Realizations
+     * @param realizationsEncodedAsUintListStr Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
      * @returns RftRealizationData Successful Response
      * @throws ApiError
      */
@@ -48,7 +48,7 @@ export class RftService {
         wellName: string,
         responseName: string,
         timestampsUtcMs?: (Array<number> | null),
-        realizations?: (Array<number> | null),
+        realizationsEncodedAsUintListStr?: (string | null),
     ): CancelablePromise<Array<RftRealizationData>> {
         return this.httpRequest.request({
             method: 'GET',
@@ -59,7 +59,7 @@ export class RftService {
                 'well_name': wellName,
                 'response_name': responseName,
                 'timestamps_utc_ms': timestampsUtcMs,
-                'realizations': realizations,
+                'realizations_encoded_as_uint_list_str': realizationsEncodedAsUintListStr,
             },
             errors: {
                 422: `Validation Error`,

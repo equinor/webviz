@@ -220,7 +220,7 @@ export class SurfaceService {
      * @param obsSurfAddrStr Address of observed surface, only supported address type is *OBS*
      * @param simSurfAddrStr Address of simulated surface, supported type is *PARTIAL*
      * @param statisticFunctions Statistics to calculate
-     * @param realizations Realization numbers
+     * @param realizationsEncodedAsUintListStr Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
      * @param dataFormat Format of binary data in the response
      * @param resampleToDefStr Definition of the surface onto which the data should be resampled. *SurfaceDef* object properties encoded as a `KeyValStr` string.
      * @returns SurfaceDataFloat Successful Response
@@ -230,7 +230,7 @@ export class SurfaceService {
         obsSurfAddrStr: string,
         simSurfAddrStr: string,
         statisticFunctions: Array<SurfaceStatisticFunction>,
-        realizations: Array<number>,
+        realizationsEncodedAsUintListStr?: (string | null),
         dataFormat: 'float' | 'png' = 'float',
         resampleToDefStr?: (string | null),
     ): CancelablePromise<Array<SurfaceDataFloat>> {
@@ -241,7 +241,7 @@ export class SurfaceService {
                 'obs_surf_addr_str': obsSurfAddrStr,
                 'sim_surf_addr_str': simSurfAddrStr,
                 'statistic_functions': statisticFunctions,
-                'realizations': realizations,
+                'realizations_encoded_as_uint_list_str': realizationsEncodedAsUintListStr,
                 'data_format': dataFormat,
                 'resample_to_def_str': resampleToDefStr,
             },

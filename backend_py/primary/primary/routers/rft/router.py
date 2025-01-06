@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.rft_access import RftAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
+from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import schemas
 from . import converters
@@ -35,8 +36,17 @@ async def get_realization_data(
     well_name: Annotated[str, Query(description="Well name")],
     response_name: Annotated[str, Query(description="Response name")],
     timestamps_utc_ms: Annotated[list[int] | None, Query(description="Timestamps utc ms")] = None,
-    realizations: Annotated[list[int] | None, Query(description="Realizations")] = None,
+    realizations_encoded_as_uint_list_str: Annotated[
+        str | None,
+        Query(
+            description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included."
+        ),
+    ] = None,
 ) -> list[schemas.RftRealizationData]:
+    realizations: list[int] | None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
+
     access = await RftAccess.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     data = await access.get_rft_well_realization_data(
         well_name=well_name,
