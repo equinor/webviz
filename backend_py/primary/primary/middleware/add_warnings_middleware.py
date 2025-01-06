@@ -31,7 +31,7 @@ class AddWarningsMiddleware:
                 headers = MutableHeaders(scope=message)
                 context = request_context.get()
                 warnings = json.dumps(context["warnings"])
-                headers.append("Warnings", warnings)
+                headers.append("Webviz-Content-Warnings", warnings)
 
             await send(message)
 
