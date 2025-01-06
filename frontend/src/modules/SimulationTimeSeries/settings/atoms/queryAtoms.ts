@@ -1,4 +1,4 @@
-import { moduleApiServiceAtom } from "@framework/ModuleInstance";
+import { moduleInstanceAtom } from "@framework/ModuleInstance";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 
 import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
@@ -8,13 +8,16 @@ const CACHE_TIME = 60 * 1000;
 
 export const vectorListQueriesAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
-    const apiService = get(moduleApiServiceAtom);
+    const moduleInstance = get(moduleInstanceAtom);
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
+        const reqFunc = moduleInstance?.makeApiRequestFunc(
+            ["ensembles", ensembleIdent.toString()],
+            moduleInstance?.getApiService().timeseries.getVectorList.bind(moduleInstance.getApiService().timeseries)
+        );
         return () => ({
             queryKey: ["ensembles", ensembleIdent.toString()],
-            queryFn: () =>
-                apiService.timeseries.getVectorList(ensembleIdent.getCaseUuid(), ensembleIdent.getEnsembleName()),
+            queryFn: () => reqFunc!(ensembleIdent.getCaseUuid(), ensembleIdent.getEnsembleName()),
             staleTime: STALE_TIME,
             gcTime: CACHE_TIME,
         });

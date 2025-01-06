@@ -107,7 +107,10 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                 >
                     <Provider store={atomStore}>
                         <HydrateQueryClientAtom>
-                            <HydrateModuleApiServiceAtom apiService={props.moduleInstance.getApiService()}>
+                            <HydrateModuleApiServiceAtom
+                                apiService={props.moduleInstance.getApiService()}
+                                moduleInstance={props.moduleInstance}
+                            >
                                 <ApplyInterfaceEffectsToView moduleInstance={props.moduleInstance}>
                                     <View
                                         viewContext={props.moduleInstance.getContext()}

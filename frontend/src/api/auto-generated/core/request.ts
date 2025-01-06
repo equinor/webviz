@@ -332,8 +332,8 @@ export const request = <T>(
 
                 catchErrorCodes(options, result);
 
-                if (response.headers["warnings"] && setWarnings) {
-                    const warnings = JSON.parse(response.headers["warnings"]);
+                if (response.headers["webviz-content-warnings"] && setWarnings) {
+                    const warnings = JSON.parse(response.headers["webviz-content-warnings"]);
                     setWarnings(warnings);
                 }
 

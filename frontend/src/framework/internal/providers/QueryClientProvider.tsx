@@ -32,6 +32,7 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                     gcTime: 0,
                 },
             },
+
             queryCache: new QueryCache({
                 onError: (error) => {
                     if (error && (error as unknown as QueryError).status === 401) {

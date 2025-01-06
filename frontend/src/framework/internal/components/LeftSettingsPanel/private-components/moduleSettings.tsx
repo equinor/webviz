@@ -95,7 +95,10 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                         >
                             <Provider store={atomStore}>
                                 <HydrateQueryClientAtom>
-                                    <HydrateModuleApiServiceAtom apiService={props.moduleInstance.getApiService()}>
+                                    <HydrateModuleApiServiceAtom
+                                        apiService={props.moduleInstance.getApiService()}
+                                        moduleInstance={props.moduleInstance}
+                                    >
                                         <ApplyInterfaceEffectsToSettings moduleInstance={props.moduleInstance}>
                                             <Settings
                                                 settingsContext={props.moduleInstance.getContext()}

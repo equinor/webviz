@@ -1,6 +1,6 @@
 import React, { ErrorInfo } from "react";
 
-import { ApiService, createModuleInstanceHttpRequestClass } from "@api";
+import { ApiService, CancelablePromise, createModuleInstanceHttpRequestClass } from "@api";
 
 import { Atom, atom } from "jotai";
 import { atomEffect } from "jotai-effect";
@@ -72,7 +72,10 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
     private _apiService: ApiService;
-    private _apiWarnings: string[] = [];
+    private _tempApiWarnings: string[] = [];
+    private _cachedApiWarnings: Map<ReadonlyArray<unknown>, string[]> = new Map();
+    private _currentApiWarnings: Map<ReadonlyArray<unknown>, string[]> = new Map();
+    private _currentWarnings: string[] = [];
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes>) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
@@ -98,16 +101,47 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     }
 
     setApiWarnings(warnings: string[]): void {
-        this._apiWarnings = warnings;
-        this.notifySubscribers(ModuleInstanceTopic.API_WARNINGS);
+        this._tempApiWarnings = warnings;
+    }
+
+    private adjustCurrentApiWarnings(): void {
+        const warnings: string[] = [];
+        for (const [key, value] of this._currentApiWarnings) {
+            warnings.push(...value);
+        }
+        this._currentWarnings = warnings;
     }
 
     getApiWarnings(): string[] {
-        return this._apiWarnings;
+        return this._currentWarnings;
+    }
+
+    getTempApiWarnings(): string[] {
+        return this._tempApiWarnings;
     }
 
     getApiService(): ApiService {
         return this._apiService;
+    }
+
+    makeApiRequestFunc<T extends (...args: any[]) => CancelablePromise<any>>(
+        key: ReadonlyArray<unknown>,
+        serviceFunc: T
+    ): (...args: Parameters<T>) => CancelablePromise<Awaited<ReturnType<T>>> {
+        const warnings = this._cachedApiWarnings.get(key) || [];
+        this._currentApiWarnings.set(key, warnings);
+
+        return (...args: Parameters<T>): CancelablePromise<Awaited<ReturnType<T>>> => {
+            return new CancelablePromise<Awaited<ReturnType<T>>>((resolve, reject) =>
+                serviceFunc(...args).then((data: Awaited<ReturnType<T>>) => {
+                    const newWarnings = this._tempApiWarnings;
+                    this._currentApiWarnings.set(key, newWarnings);
+                    this.adjustCurrentApiWarnings();
+                    this.notifySubscribers(ModuleInstanceTopic.API_WARNINGS);
+                    resolve(data);
+                })
+            );
+        };
     }
 
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
@@ -317,7 +351,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
                 return this.getImportState();
             }
             if (topic === ModuleInstanceTopic.API_WARNINGS) {
-                return this.getApiWarnings();
+                return this._currentWarnings;
             }
         };
 
@@ -393,3 +427,4 @@ export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
 }
 
 export const moduleApiServiceAtom = atom<ApiService>(apiService);
+export const moduleInstanceAtom = atom<ModuleInstance<any> | null>(null);
