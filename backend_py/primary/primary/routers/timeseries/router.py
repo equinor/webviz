@@ -159,7 +159,7 @@ async def get_delta_ensemble_realizations_vector_data(
     reference_ensemble_name: Annotated[str, Query(description="Reference ensemble name")],
     vector_name:  Annotated[str, Query(description="Name of the vector")],
     resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
-    realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be returned.")] = None,
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
     # fmt:on
 ) -> list[schemas.VectorRealizationData]:
     """Get vector data per realization
@@ -171,6 +171,10 @@ async def get_delta_ensemble_realizations_vector_data(
     """
 
     perf_metrics = ResponsePerfMetrics(response)
+
+    realizations: list[int] | None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     if service_freq is None:
@@ -203,6 +207,8 @@ async def get_delta_ensemble_realizations_vector_data(
             realizations=realizations,
         ),
     )
+
+    perf_metrics.record_lap("get-vector-tables-for-delta")
 
     # Check for mismatching metadata
     if comparison_metadata.is_rate != reference_metadata.is_rate:
@@ -345,7 +351,7 @@ async def get_delta_ensemble_statistical_vector_data(
     vector_name: Annotated[str, Query(description="Name of the vector")],
     resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
     statistic_functions: Annotated[list[schemas.StatisticFunction] | None, Query(description="Optional list of statistics to calculate. If not specified, all statistics will be calculated.")] = None,
-    realizations: Annotated[list[int] | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be included.")] = None,
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
     # fmt:on
 ) -> schemas.VectorStatisticData:
     """Get statistical vector data for an ensemble
@@ -357,6 +363,10 @@ async def get_delta_ensemble_statistical_vector_data(
     """
 
     perf_metrics = ResponsePerfMetrics(response)
+
+    realizations: list[int] | None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)
@@ -391,6 +401,8 @@ async def get_delta_ensemble_statistical_vector_data(
             realizations=realizations,
         ),
     )
+
+    perf_metrics.record_lap("get-vector-tables-for-delta")
 
     # Check for mismatching metadata
     if comparison_metadata.is_rate != reference_metadata.is_rate:

@@ -4,8 +4,8 @@ import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
-import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
+import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { EnsembleVectorObservationDataMap, VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { QueryObserverResult } from "@tanstack/react-query";
 
@@ -71,6 +71,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
         // Delta Ensemble
         if (isEnsembleIdentOfType(item.ensembleIdent, DeltaEnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
+            const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
             const vectorSpecification = { ...item, ensembleIdent: item.ensembleIdent };
             return () => ({
                 queryKey: [
@@ -81,7 +82,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                     vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
                     vectorSpecification.vectorName,
                     resampleFrequency,
-                    realizations,
+                    realizationsEncodedAsUintListStr,
                 ],
                 queryFn: () =>
                     apiService.timeseries.getDeltaEnsembleRealizationsVectorData(
@@ -91,7 +92,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                         vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
                         vectorSpecification.vectorName ?? "",
                         resampleFrequency ?? Frequency_api.YEARLY,
-                        realizations
+                        realizationsEncodedAsUintListStr
                     ),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
@@ -167,6 +168,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
         // Delta Ensemble
         if (isEnsembleIdentOfType(item.ensembleIdent, DeltaEnsembleIdent)) {
             const realizations = [...validEnsembleRealizationsFunction(item.ensembleIdent)];
+            const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
             const vectorSpecification = { ...item, ensembleIdent: item.ensembleIdent };
             return () => ({
                 queryKey: [
@@ -177,7 +179,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                     vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
                     vectorSpecification.vectorName,
                     resampleFrequency,
-                    realizations,
+                    realizationsEncodedAsUintListStr,
                 ],
                 queryFn: () =>
                     apiService.timeseries.getDeltaEnsembleStatisticalVectorData(
@@ -188,7 +190,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                         vectorSpecification.vectorName ?? "",
                         resampleFrequency ?? Frequency_api.MONTHLY,
                         undefined,
-                        realizations
+                        realizationsEncodedAsUintListStr
                     ),
                 staleTime: STALE_TIME,
                 gcTime: CACHE_TIME,
