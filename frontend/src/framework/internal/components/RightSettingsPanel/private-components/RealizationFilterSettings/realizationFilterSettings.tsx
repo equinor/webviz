@@ -18,6 +18,7 @@ import {
     EnsembleRealizationFilterSelections,
 } from "@framework/internal/components/EnsembleRealizationFilter";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
+import { areUnsortedArraysEqual } from "@framework/utils/arrayUtils";
 import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
 import { countTrueValues } from "@framework/utils/objectUtils";
 import { areParameterIdentStringToValueSelectionMapCandidatesEqual } from "@framework/utils/realizationFilterTypesUtils";
@@ -60,7 +61,9 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
     // Create new maps if ensembles are added or removed
     const ensembleIdentStrings = ensembleSet.getEnsembleArray().map((ensemble) => ensemble.getIdent().toString());
-    if (!isEqual(ensembleIdentStrings, Object.keys(ensembleIdentStringToRealizationFilterSelectionsMap))) {
+    if (
+        !areUnsortedArraysEqual(ensembleIdentStrings, Object.keys(ensembleIdentStringToRealizationFilterSelectionsMap))
+    ) {
         // Create new maps with the new ensemble ident strings
         const updatedHasUnsavedChangesMap: { [ensembleIdentString: string]: boolean } = {
             ...ensembleIdentStringHasUnsavedChangesMap,
