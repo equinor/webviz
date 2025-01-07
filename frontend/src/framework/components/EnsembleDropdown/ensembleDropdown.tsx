@@ -12,13 +12,13 @@ export type EnsembleDropdownProps = (
           ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
           allowDeltaEnsembles: true;
           value: RegularEnsembleIdent | DeltaEnsembleIdent | null;
-          onChange: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null) => void;
+          onChange: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => void;
       }
     | {
           ensembles: readonly RegularEnsemble[];
           allowDeltaEnsembles?: false | undefined;
           value: RegularEnsembleIdent | null;
-          onChange: (ensembleIdent: RegularEnsembleIdent | null) => void;
+          onChange: (ensembleIdent: RegularEnsembleIdent) => void;
       }
 ) &
     Omit<DropdownProps<string>, "options" | "value" | "onChange">;
@@ -32,15 +32,13 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
                 (ensemble) => ensemble.getIdent().toString() === selectedEnsembleIdentStr
             );
             if (!foundEnsemble) {
-                onChange(null);
-                return;
+                throw new Error(`Ensemble not found: ${selectedEnsembleIdentStr}`);
             }
             if (allowDeltaEnsembles) {
                 onChange(foundEnsemble.getIdent());
                 return;
             }
             if (foundEnsemble instanceof DeltaEnsemble) {
-                onChange(null);
                 throw new Error(
                     `Invalid ensemble selection: ${selectedEnsembleIdentStr}. Got delta ensemble when not allowed.`
                 );

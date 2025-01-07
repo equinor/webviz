@@ -34,9 +34,11 @@ export const statisticsTypeAtom = atom<StatisticsType>((get) => {
 
 export const selectedEnsembleIdentsAtom = atom<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
+    const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
-    const newSelectedEnsembleIdents = selectedEnsembleIdents.filter((ensemble) => ensembleSet.hasEnsemble(ensemble));
+    const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>
+        ensembleSet.hasEnsemble(ensemble)
+    );
     const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
 
     return validatedEnsembleIdents ?? [];
@@ -45,9 +47,9 @@ export const selectedEnsembleIdentsAtom = atom<(RegularEnsembleIdent | DeltaEnse
 export const selectedRegularEnsemblesAtom = atom<RegularEnsemble[]>((get) => {
     // NOTE: Used for view and color by parameter, i.e. not for delta ensembles yet!
     const ensembleSet = get(EnsembleSetAtom);
-    const allSelectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
+    const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
-    const selectedRegularEnsembleIdents = filterEnsembleIdentsByType(allSelectedEnsembleIdents, RegularEnsembleIdent);
+    const selectedRegularEnsembleIdents = filterEnsembleIdentsByType(selectedEnsembleIdents, RegularEnsembleIdent);
 
     const selectedRegularEnsembles: RegularEnsemble[] = [];
     for (const regularEnsembleIdent of selectedRegularEnsembleIdents) {
