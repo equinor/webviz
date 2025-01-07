@@ -21,6 +21,7 @@ export class DeltaEnsemble {
     private _color: string;
     private _customName: string | null;
 
+    private _stratigraphicColumnIdentifier: string | null;
     private _realizationsArray: readonly number[];
     private _parameters: EnsembleParameters;
     private _sensitivities: EnsembleSensitivities | null;
@@ -38,6 +39,16 @@ export class DeltaEnsemble {
         this._color = color;
         this._customName = customName;
 
+        // Stratigraphic column identifiers must match, otherwise set to null.
+        if (
+            comparisonEnsemble.getStratigraphicColumnIdentifier() !==
+            referenceEnsemble.getStratigraphicColumnIdentifier()
+        ) {
+            this._stratigraphicColumnIdentifier = null;
+        } else {
+            this._stratigraphicColumnIdentifier = comparisonEnsemble.getStratigraphicColumnIdentifier();
+        }
+
         // Intersection of realizations
         const realizationIntersection = this._comparisonEnsemble
             .getRealizations()
@@ -53,6 +64,10 @@ export class DeltaEnsemble {
 
     getIdent(): DeltaEnsembleIdent {
         return this._deltaEnsembleIdent;
+    }
+
+    getStratigraphicColumnIdentifier(): string | null {
+        return this._stratigraphicColumnIdentifier;
     }
 
     getDisplayName(): string {
