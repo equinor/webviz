@@ -2,8 +2,8 @@ import React from "react";
 
 import { SurfaceAttributeType_api, SurfaceMetaSet_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -49,7 +49,7 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
 
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
-        props.ensembleSet.getEnsembleArr().map((el) => el.getIdent()),
+        props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
         newSettings
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
@@ -119,7 +119,7 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
         [surfaceDirectoryQuery.isFetching, props.layer, newSettings]
     );
 
-    function handleEnsembleChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent }));
     }
 
@@ -155,7 +155,7 @@ export function SurfaceLayerSettingsComponent(props: SurfaceLayerSettingsCompone
                 <div className="table-cell">
                     <EnsembleDropdown
                         value={props.layer.getSettings().ensembleIdent}
-                        ensembles={props.ensembleSet.getEnsembleArr()}
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         onChange={handleEnsembleChange}
                         debounceTimeMs={600}
                     />

@@ -1,5 +1,5 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -84,7 +84,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
     usePropagateApiErrorToStatusWriter(vfpTableQuery, statusWriter);
 
-    function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
         setUserSelectedEnsembleIdent(ensembleIdent);
     }
 
@@ -149,7 +149,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         <div className="flex flex-col gap-2">
             <CollapsibleGroup expanded={true} title="Ensemble">
                 <EnsembleDropdown
-                    ensembles={ensembleSet.getEnsembleArr()}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />

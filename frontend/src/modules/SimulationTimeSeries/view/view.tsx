@@ -1,8 +1,9 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { Ensemble } from "@framework/Ensemble";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { ModuleViewProps } from "@framework/Module";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -28,7 +29,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const parameterIdent = viewContext.useSettingsToViewInterfaceValue("parameterIdent");
-    const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedEnsembles");
+    const selectedEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedRegularEnsembles");
+    const selectedDeltaEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedDeltaEnsembles");
     const hasRealizationsQueryError = useAtomValue(realizationsQueryHasErrorAtom);
     const hasStatisticsQueryError = useAtomValue(statisticsQueryHasErrorAtom);
 
@@ -46,7 +48,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
             ? new EnsemblesContinuousParameterColoring(selectedEnsembles, parameterIdent, parameterColorScale)
             : null;
 
-    const ensemblesWithoutParameter: Ensemble[] = [];
+    const ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[] = [];
     let parameterDisplayName: string | null = null;
     if (ensemblesParameterColoring) {
         ensemblesWithoutParameter.push(
@@ -55,6 +57,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
             )
         );
         parameterDisplayName = ensemblesParameterColoring.getParameterDisplayName();
+        ensemblesWithoutParameter.push(...selectedDeltaEnsembles);
     }
 
     useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);

@@ -17,27 +17,54 @@ import { Switch } from "@lib/components/Switch";
 import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { Add, Check, Remove } from "@mui/icons-material";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
+import { Add, Check, Info, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
+import { v4 } from "uuid";
 
 import { UserAvatar } from "./private-components/userAvatar";
 
 import { LoadingOverlay } from "../LoadingOverlay";
 
-export type EnsembleItem = {
+const CASE_UUID_ENSEMBLE_NAME_SEPARATOR = "~@@~";
+
+// Base item for ensemble data
+export type BaseEnsembleItem = {
     caseUuid: string;
-    caseName: string;
     ensembleName: string;
+};
+
+// Internal type before applying created delta ensemble externally
+type InternalDeltaEnsembleItem = {
+    comparisonEnsemble: BaseEnsembleItem | null; // Allows null
+    referenceEnsemble: BaseEnsembleItem | null; // Allows null
+    uuid: string; // To allow for equal comparison and reference ensembles during editing in the dialog
+    color: string;
+    customName: string | null;
+};
+
+export type DeltaEnsembleItem = {
+    comparisonEnsemble: BaseEnsembleItem;
+    referenceEnsemble: BaseEnsembleItem;
+    color: string;
+    customName: string | null;
+};
+export type RegularEnsembleItem = BaseEnsembleItem & {
+    caseName: string;
     color: string;
     customName: string | null;
 };
 
 export type SelectEnsemblesDialogProps = {
-    loadAndSetupEnsembles: (selectedEnsembles: EnsembleItem[]) => Promise<void>;
+    loadAndSetupEnsembles: (
+        selectedRegularEnsembles: RegularEnsembleItem[],
+        createdDeltaEnsembles: DeltaEnsembleItem[]
+    ) => Promise<void>;
     onClose: () => void;
-    selectedEnsembles: EnsembleItem[];
+    selectedRegularEnsembles: RegularEnsembleItem[];
+    createdDeltaEnsembles: DeltaEnsembleItem[];
     colorSet: ColorSet;
 };
 
@@ -65,18 +92,32 @@ function storeStateInLocalStorage(stateName: string, value: string) {
 export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (props) => {
     const [isLoadingEnsembles, setIsLoadingEnsembles] = React.useState<boolean>(false);
     const [confirmCancel, setConfirmCancel] = React.useState<boolean>(false);
-    const [newlySelectedEnsembles, setNewlySelectedEnsembles] = React.useState<EnsembleItem[]>([]);
+    const [newlySelectedRegularEnsembles, setNewlySelectedRegularEnsembles] = React.useState<RegularEnsembleItem[]>([]);
     const [casesFilteringOptions, setCasesFilteringOptions] = React.useState<CaseFilterSettings>({
         keep: !(readInitialStateFromLocalStorage("showKeepCases") === "false"),
         onlyMyCases: readInitialStateFromLocalStorage("showOnlyMyCases") === "true",
         users: [],
     });
 
+    const [deltaEnsembles, setDeltaEnsembles] = React.useState<InternalDeltaEnsembleItem[]>([]);
+
     const { userInfo } = useAuthProvider();
 
     React.useLayoutEffect(() => {
-        setNewlySelectedEnsembles(props.selectedEnsembles);
-    }, [props.selectedEnsembles]);
+        setNewlySelectedRegularEnsembles(props.selectedRegularEnsembles);
+    }, [props.selectedRegularEnsembles]);
+
+    React.useLayoutEffect(() => {
+        setDeltaEnsembles(
+            props.createdDeltaEnsembles.map((elm) => ({
+                comparisonEnsemble: elm.comparisonEnsemble,
+                referenceEnsemble: elm.referenceEnsemble,
+                uuid: v4(),
+                color: elm.color,
+                customName: elm.customName,
+            }))
+        );
+    }, [props.createdDeltaEnsembles]);
 
     const fieldsQuery = useQuery({
         queryKey: ["getFields"],
@@ -123,7 +164,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         staleTime: STALE_TIME,
     });
 
-    const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>({
+    const [selectedRegularEnsembleName, setSelectedRegularEnsembleName] = useValidState<string>({
         initialState: "",
         validStates: ensemblesQuery.data?.map((el) => el.name) ?? [],
         keepStateWhenInvalid: true,
@@ -138,53 +179,172 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         setSelectedCaseId(caseUuids[0]);
     }
 
-    function handleEnsembleChanged(ensembleNames: string[]) {
-        setSelectedEnsembleName(ensembleNames[0]);
+    function handleRegularEnsembleChanged(ensembleNames: string[]) {
+        setSelectedRegularEnsembleName(ensembleNames[0]);
     }
 
-    function checkIfEnsembleAlreadySelected(): boolean {
-        if (selectedCaseId && selectedEnsembleName) {
-            if (
-                newlySelectedEnsembles.some(
-                    (e) => e.caseUuid === selectedCaseId && e.ensembleName === selectedEnsembleName
-                )
-            ) {
-                return true;
-            }
+    function checkIfRegularEnsembleAlreadySelected(): boolean {
+        if (
+            !selectedCaseId ||
+            !selectedRegularEnsembleName ||
+            !newlySelectedRegularEnsembles.some(
+                (e) => e.caseUuid === selectedCaseId && e.ensembleName === selectedRegularEnsembleName
+            )
+        ) {
+            return false;
         }
-        return false;
+        return true;
     }
 
     function tryToFindUnusedColor(): string {
-        const usedColors = newlySelectedEnsembles.map((e) => e.color);
+        const usedColors = [
+            ...newlySelectedRegularEnsembles.map((e) => e.color),
+            ...deltaEnsembles.map((e) => e.color),
+        ];
         for (let i = 0; i < props.colorSet.getColorArray().length; i++) {
-            if (!usedColors.includes(props.colorSet.getColor(i))) {
-                return props.colorSet.getColor(i);
+            const candidateColor = props.colorSet.getColor(i);
+            if (!usedColors.includes(candidateColor)) {
+                return candidateColor;
             }
         }
-        return props.colorSet.getColor(newlySelectedEnsembles.length);
+        return props.colorSet.getColor(newlySelectedRegularEnsembles.length);
     }
 
-    function handleAddEnsemble() {
-        if (!checkIfEnsembleAlreadySelected()) {
+    function handleDeltaEnsembleComparisonEnsembleChange(
+        deltaEnsembleUuid: string,
+        newCaseUuidAndEnsembleNameString: string
+    ) {
+        const { caseUuid: newComparisonEnsembleCaseUuid, ensembleName: newComparisonEnsembleEnsembleName } =
+            createCaseUuidAndEnsembleNameFromString(newCaseUuidAndEnsembleNameString);
+
+        const comparisonEnsemble = newlySelectedRegularEnsembles.find(
+            (elm) =>
+                elm.caseUuid === newComparisonEnsembleCaseUuid && elm.ensembleName === newComparisonEnsembleEnsembleName
+        );
+        if (!comparisonEnsemble) {
+            return;
+        }
+
+        setDeltaEnsembles((prev) =>
+            prev.map((elm) => {
+                if (elm.uuid === deltaEnsembleUuid) {
+                    const newComparisonEnsemble: BaseEnsembleItem = {
+                        caseUuid: comparisonEnsemble.caseUuid,
+                        ensembleName: comparisonEnsemble.ensembleName,
+                    };
+                    return {
+                        ...elm,
+                        comparisonEnsemble: newComparisonEnsemble,
+                    };
+                }
+                return elm;
+            })
+        );
+    }
+
+    function handleDeltaEnsembleReferenceEnsembleChange(
+        deltaEnsembleUuid: string,
+        newCaseUuidAndEnsembleNameString: string
+    ) {
+        const { caseUuid: newReferenceEnsembleCaseUuid, ensembleName: newReferenceEnsembleEnsembleName } =
+            createCaseUuidAndEnsembleNameFromString(newCaseUuidAndEnsembleNameString);
+
+        const referenceEnsemble = newlySelectedRegularEnsembles.find(
+            (e) => e.caseUuid === newReferenceEnsembleCaseUuid && e.ensembleName === newReferenceEnsembleEnsembleName
+        );
+        if (!referenceEnsemble) {
+            return;
+        }
+
+        setDeltaEnsembles((prev) =>
+            prev.map((elm) => {
+                if (elm.uuid === deltaEnsembleUuid) {
+                    const newReferenceEnsemble: BaseEnsembleItem = {
+                        caseUuid: referenceEnsemble.caseUuid,
+                        ensembleName: referenceEnsemble.ensembleName,
+                    };
+                    return {
+                        ...elm,
+                        referenceEnsemble: newReferenceEnsemble,
+                    };
+                }
+                return elm;
+            })
+        );
+    }
+
+    function handleAddDeltaEnsemble() {
+        if (newlySelectedRegularEnsembles.length === 0) {
+            return;
+        }
+
+        const comparisonEnsemble = newlySelectedRegularEnsembles[0];
+        const referenceEnsemble =
+            newlySelectedRegularEnsembles.length === 1
+                ? newlySelectedRegularEnsembles[0]
+                : newlySelectedRegularEnsembles[1];
+
+        const newDeltaEnsemble: InternalDeltaEnsembleItem = {
+            comparisonEnsemble: {
+                caseUuid: comparisonEnsemble.caseUuid,
+                ensembleName: comparisonEnsemble.ensembleName,
+            },
+            referenceEnsemble: {
+                caseUuid: referenceEnsemble.caseUuid,
+                ensembleName: referenceEnsemble.ensembleName,
+            },
+            uuid: v4(),
+            color: tryToFindUnusedColor(),
+            customName: null,
+        };
+
+        setDeltaEnsembles((prev) => [...prev, newDeltaEnsemble]);
+    }
+
+    function handleAddRegularEnsemble() {
+        if (!checkIfRegularEnsembleAlreadySelected()) {
             const caseName = casesQuery.data?.find((c) => c.uuid === selectedCaseId)?.name ?? "UNKNOWN";
             const ensArr = [
                 {
                     caseUuid: selectedCaseId,
                     caseName: caseName,
-                    ensembleName: selectedEnsembleName,
+                    ensembleName: selectedRegularEnsembleName,
                     color: tryToFindUnusedColor(),
                     customName: null,
                 },
             ];
-            setNewlySelectedEnsembles((prev) => [...prev, ...ensArr]);
+            setNewlySelectedRegularEnsembles((prev) => [...prev, ...ensArr]);
         }
     }
 
-    function handleRemoveEnsemble(caseUuid: string, ensembleName: string) {
-        setNewlySelectedEnsembles((prev) => [
+    function handleRemoveDeltaEnsemble(uuid: string) {
+        setDeltaEnsembles((prev) => [...prev.filter((e) => e.uuid !== uuid)]);
+    }
+
+    function handleRemoveRegularEnsemble(caseUuid: string, ensembleName: string) {
+        setNewlySelectedRegularEnsembles((prev) => [
             ...prev.filter((e) => e.caseUuid !== caseUuid || e.ensembleName !== ensembleName),
         ]);
+
+        // Validate delta ensembles
+        const newDeltaEnsembles = [...deltaEnsembles];
+        for (const elm of deltaEnsembles) {
+            if (
+                elm.comparisonEnsemble &&
+                elm.comparisonEnsemble.caseUuid === caseUuid &&
+                elm.comparisonEnsemble.ensembleName === ensembleName
+            ) {
+                elm.comparisonEnsemble = null;
+            }
+            if (
+                elm.referenceEnsemble &&
+                elm.referenceEnsemble.caseUuid === caseUuid &&
+                elm.referenceEnsemble.ensembleName === ensembleName
+            ) {
+                elm.referenceEnsemble = null;
+            }
+        }
+        setDeltaEnsembles(newDeltaEnsembles);
     }
 
     function handleClose() {
@@ -193,7 +353,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }
 
     function handleCancel() {
-        if (isEqual(props.selectedEnsembles, newlySelectedEnsembles)) {
+        if (isEqual(props.selectedRegularEnsembles, newlySelectedRegularEnsembles)) {
             handleClose();
             return;
         }
@@ -201,9 +361,38 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }
 
     function handleApplyEnsembleSelection() {
+        if (deltaEnsembles.some((elm) => !elm.comparisonEnsemble || !elm.referenceEnsemble)) {
+            return;
+        }
+
+        const validDeltaEnsembles: DeltaEnsembleItem[] = [];
+        for (const deltaEnsemble of deltaEnsembles) {
+            if (!deltaEnsemble.comparisonEnsemble || !deltaEnsemble.referenceEnsemble) {
+                continue;
+            }
+
+            // Ensure no duplicate delta ensembles
+            if (
+                validDeltaEnsembles.some(
+                    (elm) =>
+                        isEqual(elm.comparisonEnsemble, deltaEnsemble.comparisonEnsemble) &&
+                        isEqual(elm.referenceEnsemble, deltaEnsemble.referenceEnsemble)
+                )
+            ) {
+                continue;
+            }
+
+            validDeltaEnsembles.push({
+                comparisonEnsemble: deltaEnsemble.comparisonEnsemble,
+                referenceEnsemble: deltaEnsemble.referenceEnsemble,
+                color: deltaEnsemble.color,
+                customName: deltaEnsemble.customName,
+            });
+        }
+
         setIsLoadingEnsembles(true);
         props
-            .loadAndSetupEnsembles(newlySelectedEnsembles)
+            .loadAndSetupEnsembles(newlySelectedRegularEnsembles, validDeltaEnsembles)
             .then(() => {
                 handleClose();
             })
@@ -212,8 +401,44 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             });
     }
 
-    function checkIfAnyChanges(): boolean {
-        return !isEqual(props.selectedEnsembles, newlySelectedEnsembles);
+    function hasAnyDeltaEnsemblesChanged(): boolean {
+        if (props.createdDeltaEnsembles.length !== deltaEnsembles.length) {
+            return true;
+        }
+
+        const isContentEqual = props.createdDeltaEnsembles.every((elm, idx) => {
+            const internalDeltaEnsemble = deltaEnsembles[idx];
+            return (
+                elm.color === internalDeltaEnsemble.color &&
+                elm.customName === internalDeltaEnsemble.customName &&
+                isEqual(elm.comparisonEnsemble, internalDeltaEnsemble.comparisonEnsemble) &&
+                isEqual(elm.referenceEnsemble, internalDeltaEnsemble.referenceEnsemble)
+            );
+        });
+        return !isContentEqual;
+    }
+
+    function areAnyDeltaEnsemblesInvalid(): boolean {
+        return deltaEnsembles.some((elm) => !elm.comparisonEnsemble || !elm.referenceEnsemble);
+    }
+
+    function hasDuplicateDeltaEnsembles(): boolean {
+        const uniqueDeltaEnsembles = new Set<string>();
+        for (const elm of deltaEnsembles) {
+            if (!elm.comparisonEnsemble || !elm.referenceEnsemble) {
+                continue;
+            }
+            const key = `${elm.comparisonEnsemble.caseUuid}~&&~${elm.comparisonEnsemble.ensembleName}~&&~${elm.referenceEnsemble.caseUuid}~&&~${elm.referenceEnsemble.ensembleName}`;
+            if (uniqueDeltaEnsembles.has(key)) {
+                return true;
+            }
+            uniqueDeltaEnsembles.add(key);
+        }
+        return false;
+    }
+
+    function hasAnyRegularEnsembleChanged(): boolean {
+        return !isEqual(props.selectedRegularEnsembles, newlySelectedRegularEnsembles);
     }
 
     function handleKeepCasesSwitchChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -244,19 +469,41 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         return filteredCases;
     }
 
-    function handleColorChange(caseUuid: string, ensembleName: string, color: string) {
-        setNewlySelectedEnsembles((prev) =>
-            prev.map((e) => {
-                if (e.caseUuid === caseUuid && e.ensembleName === ensembleName) {
-                    return { ...e, color: color };
+    function handleDeltaEnsembleColorChange(uuid: string, color: string) {
+        setDeltaEnsembles((prev) =>
+            prev.map((elm) => {
+                if (elm.uuid === uuid) {
+                    return { ...elm, color: color };
                 }
-                return e;
+                return elm;
             })
         );
     }
 
-    function handleEnsembleCustomNameChange(caseUuid: string, ensembleName: string, customName: string) {
-        setNewlySelectedEnsembles((prev) => {
+    function handleRegularEnsembleColorChange(caseUuid: string, ensembleName: string, color: string) {
+        setNewlySelectedRegularEnsembles((prev) =>
+            prev.map((elm) => {
+                if (elm.caseUuid === caseUuid && elm.ensembleName === ensembleName) {
+                    return { ...elm, color: color };
+                }
+                return elm;
+            })
+        );
+    }
+
+    function handleDeltaEnsembleCustomNameChange(uuid: string, customName: string) {
+        setDeltaEnsembles((prev) =>
+            prev.map((elm) => {
+                if (elm.uuid === uuid) {
+                    return { ...elm, customName: customName === "" ? null : customName };
+                }
+                return elm;
+            })
+        );
+    }
+
+    function handleRegularEnsembleCustomNameChange(caseUuid: string, ensembleName: string, customName: string) {
+        setNewlySelectedRegularEnsembles((prev) => {
             return prev.map((e) => {
                 if (e.caseUuid === caseUuid && e.ensembleName === ensembleName) {
                     return { ...e, customName: customName === "" ? null : customName };
@@ -279,7 +526,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     const ensembleOpts =
         ensemblesQuery.data?.map((e) => ({ value: e.name, label: `${e.name}  (${e.realization_count} reals)` })) ?? [];
 
-    const ensembleAlreadySelected = checkIfEnsembleAlreadySelected();
+    const regularEnsembleAlreadySelected = checkIfRegularEnsembleAlreadySelected();
 
     function makeApplyButtonStartIcon() {
         if (isLoadingEnsembles) {
@@ -297,22 +544,35 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 modal
                 width={"75%"}
                 minWidth={800}
+                // minHeight={600}
+                height={"75"}
                 actions={
                     <div className="flex gap-4">
                         <Button
                             onClick={handleClose}
                             color="danger"
-                            disabled={!checkIfAnyChanges() || isLoadingEnsembles}
+                            disabled={
+                                isLoadingEnsembles ||
+                                areAnyDeltaEnsemblesInvalid() ||
+                                !(hasAnyRegularEnsembleChanged() || hasAnyDeltaEnsemblesChanged())
+                            }
                         >
                             Discard changes
                         </Button>
-                        <Button
-                            onClick={handleApplyEnsembleSelection}
-                            disabled={!checkIfAnyChanges() || isLoadingEnsembles}
-                            startIcon={makeApplyButtonStartIcon()}
-                        >
-                            {isLoadingEnsembles ? "Loading ensembles..." : "Apply"}
-                        </Button>
+                        <div title={hasDuplicateDeltaEnsembles() ? "Duplicate Delta Ensembles (blue rows)" : ""}>
+                            <Button
+                                onClick={handleApplyEnsembleSelection}
+                                disabled={
+                                    isLoadingEnsembles ||
+                                    areAnyDeltaEnsemblesInvalid() ||
+                                    hasDuplicateDeltaEnsembles() ||
+                                    !(hasAnyRegularEnsembleChanged() || hasAnyDeltaEnsemblesChanged())
+                                }
+                                startIcon={makeApplyButtonStartIcon()}
+                            >
+                                {isLoadingEnsembles ? "Loading ensembles..." : "Apply"}
+                            </Button>
+                        </div>
                     </div>
                 }
                 showCloseCross
@@ -377,8 +637,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             >
                                 <Select
                                     options={ensembleOpts}
-                                    value={[selectedEnsembleName]}
-                                    onChange={handleEnsembleChanged}
+                                    value={[selectedRegularEnsembleName]}
+                                    onChange={handleRegularEnsembleChanged}
                                     disabled={caseOpts.length === 0}
                                     size={5}
                                     width="100%"
@@ -388,113 +648,301 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                         <div className="flex justify-end">
                             <Button
                                 variant="contained"
-                                onClick={handleAddEnsemble}
-                                color={ensembleAlreadySelected ? "success" : "primary"}
-                                disabled={ensembleAlreadySelected || ensembleOpts.length === 0}
+                                onClick={handleAddRegularEnsemble}
+                                color={regularEnsembleAlreadySelected ? "success" : "primary"}
+                                disabled={regularEnsembleAlreadySelected || ensembleOpts.length === 0}
                                 startIcon={
-                                    ensembleAlreadySelected ? <Check fontSize="small" /> : <Add fontSize="small" />
+                                    regularEnsembleAlreadySelected ? (
+                                        <Check fontSize="small" />
+                                    ) : (
+                                        <Add fontSize="small" />
+                                    )
                                 }
                             >
-                                {ensembleAlreadySelected ? "Ensemble already selected" : "Add Ensemble"}
+                                {regularEnsembleAlreadySelected ? "Ensemble already selected" : "Add Ensemble"}
                             </Button>
                         </div>
                     </div>
-                    <div className="flex flex-col flex-grow gap-4 p-4">
-                        <Label text="Selected Ensembles">
-                            <table className="w-full border border-collapse table-fixed text-sm">
-                                <thead>
-                                    <tr>
-                                        <th className="w-20 text-left p-2 bg-slate-300">Color</th>
-                                        <th className="min-w-1/3 text-left p-2 bg-slate-300">Custom name</th>
-                                        <th className="min-w-1/3 text-left p-2 bg-slate-300">Case</th>
-                                        <th className="min-w-1/4 text-left p-2 bg-slate-300">Ensemble</th>
-                                        <th className="w-20 text-left p-2 bg-slate-300">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {newlySelectedEnsembles.map((item) => (
-                                        <tr
-                                            key={`${item.caseName}-${item.ensembleName}`}
-                                            className="hover:bg-slate-100 odd:bg-slate-50 align-center"
-                                        >
-                                            <td className="p-2">
-                                                <ColorSelect
-                                                    value={item.color}
-                                                    onChange={(value) =>
-                                                        handleColorChange(item.caseUuid, item.ensembleName, value)
-                                                    }
-                                                />
-                                            </td>
-                                            <td className="p-2">
-                                                <Input
-                                                    placeholder="Give a custom name..."
-                                                    defaultValue={item.customName ?? ""}
-                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                                        handleEnsembleCustomNameChange(
-                                                            item.caseUuid,
-                                                            item.ensembleName,
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                />
-                                            </td>
-                                            <td className="p-2">
-                                                <div
-                                                    className="text-ellipsis overflow-hidden whitespace-nowrap"
-                                                    title={item.caseName}
-                                                >
-                                                    {item.caseName}
-                                                </div>
-                                            </td>
-                                            <td className="p-2">
-                                                <div
-                                                    className="text-ellipsis overflow-hidden whitespace-nowrap"
-                                                    title={item.ensembleName}
-                                                >
-                                                    {item.ensembleName}
-                                                </div>
-                                            </td>
-                                            <td className="p-2">
-                                                <IconButton
-                                                    onClick={() =>
-                                                        handleRemoveEnsemble(item.caseUuid, item.ensembleName)
-                                                    }
-                                                    color="danger"
-                                                    title="Remove ensemble from selection"
-                                                >
-                                                    <Remove fontSize="small" />
-                                                </IconButton>{" "}
-                                            </td>
+                    <div className="flex flex-col flex-grow max-h-full gap-4 p-4">
+                        <div className="flex-1 flex-col">
+                            <div className="flex-shrink">Selected Ensembles</div>
+                            <div className="flex-1 overflow-auto">
+                                <table className="w-full border border-collapse table-fixed text-sm">
+                                    <thead className="sticky top-0">
+                                        <tr>
+                                            <th className="w-20 text-left p-2 bg-slate-300">Color</th>
+                                            <th className="min-w-1/3 text-left p-2 bg-slate-300">Custom name</th>
+                                            <th className="min-w-1/3 text-left p-2 bg-slate-300">Case</th>
+                                            <th className="min-w-1/4 text-left p-2 bg-slate-300">Ensemble</th>
+                                            <th className="w-20 text-left p-2 bg-slate-300">Actions</th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </Label>
-                        {newlySelectedEnsembles.length === 0 && (
-                            <div className="text-gray-500">No ensembles selected.</div>
-                        )}
+                                    </thead>
+                                    <tbody>
+                                        {newlySelectedRegularEnsembles.map((item) => (
+                                            <tr
+                                                key={`${item.caseName}-${item.ensembleName}`}
+                                                className="hover:bg-slate-100 odd:bg-slate-50 align-center"
+                                            >
+                                                <td className="p-2">
+                                                    <ColorSelect
+                                                        value={item.color}
+                                                        onChange={(value) =>
+                                                            handleRegularEnsembleColorChange(
+                                                                item.caseUuid,
+                                                                item.ensembleName,
+                                                                value
+                                                            )
+                                                        }
+                                                    />
+                                                </td>
+                                                <td className="p-2">
+                                                    <Input
+                                                        placeholder="Give a custom name..."
+                                                        defaultValue={item.customName ?? ""}
+                                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                            handleRegularEnsembleCustomNameChange(
+                                                                item.caseUuid,
+                                                                item.ensembleName,
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                    />
+                                                </td>
+                                                <td className="p-2">
+                                                    <div
+                                                        className="text-ellipsis overflow-hidden whitespace-nowrap"
+                                                        title={item.caseName}
+                                                    >
+                                                        {item.caseName}
+                                                    </div>
+                                                </td>
+                                                <td className="p-2">
+                                                    <div
+                                                        className="text-ellipsis overflow-hidden whitespace-nowrap"
+                                                        title={item.ensembleName}
+                                                    >
+                                                        {item.ensembleName}
+                                                    </div>
+                                                </td>
+                                                <td className="p-2">
+                                                    <IconButton
+                                                        onClick={() =>
+                                                            handleRemoveRegularEnsemble(
+                                                                item.caseUuid,
+                                                                item.ensembleName
+                                                            )
+                                                        }
+                                                        color="danger"
+                                                        title="Remove ensemble from selection"
+                                                    >
+                                                        <Remove fontSize="small" />
+                                                    </IconButton>{" "}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {newlySelectedRegularEnsembles.length === 0 && (
+                                <div className="text-gray-500">No ensembles selected.</div>
+                            )}
+                        </div>
+                        <div className="flex-1 flex-col">
+                            <div className="flex-shrink flex flex-row">
+                                <Info
+                                    fontSize="medium"
+                                    titleAccess={`Create delta ensemble using selected ensembles:\n\n"Delta Ensemble" = "Comparison Ensemble" - "Reference Ensemble"`}
+                                    className={
+                                        "rounded-md px-0.25 py-0.25 border border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
+                                    }
+                                />
+                                <div className="pl-2 pr-2">Delta Ensembles</div>
+                                <IconButton
+                                    title="New delta ensemble"
+                                    onClick={handleAddDeltaEnsemble}
+                                    disabled={newlySelectedRegularEnsembles.length < 1}
+                                >
+                                    <Add />
+                                </IconButton>
+                            </div>
+                            <div className="flex-1 overflow-auto">
+                                <table className="w-full border border-collapse table-fixed text-sm">
+                                    <thead>
+                                        <tr>
+                                            <th className="w-20 text-left p-2 bg-slate-300">Color</th>
+                                            <th className="min-w-1/3 text-left p-2 bg-slate-300">Custom name</th>
+                                            <th className="min-w-1/3 text-left p-2 bg-slate-300">
+                                                Comparison Ensemble
+                                            </th>
+                                            <th className="min-w-1/4 text-left p-2 bg-slate-300">Reference Ensemble</th>
+                                            <th className="w-20 text-left p-2 bg-slate-300">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="overflow-y-auto w-full">
+                                        {deltaEnsembles.map((elm) => {
+                                            const isDeltaEnsembleValid =
+                                                elm.comparisonEnsemble !== null && elm.referenceEnsemble !== null;
+                                            const isDuplicateDeltaEnsemble =
+                                                deltaEnsembles.filter(
+                                                    (e) =>
+                                                        e.comparisonEnsemble?.caseUuid ===
+                                                            elm.comparisonEnsemble?.caseUuid &&
+                                                        e.comparisonEnsemble?.ensembleName ===
+                                                            elm.comparisonEnsemble?.ensembleName &&
+                                                        e.referenceEnsemble?.caseUuid ===
+                                                            elm.referenceEnsemble?.caseUuid &&
+                                                        e.referenceEnsemble?.ensembleName ===
+                                                            elm.referenceEnsemble?.ensembleName
+                                                ).length > 1;
+                                            return (
+                                                <tr
+                                                    key={elm.uuid}
+                                                    className={resolveClassNames(
+                                                        "align-center ",
+
+                                                        {
+                                                            "hover:bg-red-50 odd:bg-red-200 even:bg-red-300":
+                                                                !isDeltaEnsembleValid,
+                                                            "hover:bg-blue-50 odd:bg-blue-200 even:bg-blue-300":
+                                                                isDeltaEnsembleValid && isDuplicateDeltaEnsemble,
+                                                            "hover:bg-slate-100 odd:bg-slate-50":
+                                                                isDeltaEnsembleValid && !isDuplicateDeltaEnsemble,
+                                                        }
+                                                    )}
+                                                >
+                                                    <td className="p-2">
+                                                        <ColorSelect
+                                                            value={elm.color}
+                                                            onChange={(value) =>
+                                                                handleDeltaEnsembleColorChange(elm.uuid, value)
+                                                            }
+                                                        />
+                                                    </td>
+                                                    <td className="p-2">
+                                                        <Input
+                                                            placeholder="Give a custom name..."
+                                                            defaultValue={elm.customName ?? ""}
+                                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                                handleDeltaEnsembleCustomNameChange(
+                                                                    elm.uuid,
+                                                                    e.target.value
+                                                                )
+                                                            }
+                                                        />
+                                                    </td>
+                                                    <td className="p-2">
+                                                        <Dropdown
+                                                            options={newlySelectedRegularEnsembles.map((elm) => {
+                                                                return {
+                                                                    value: createCaseUuidAndEnsembleNameString(
+                                                                        elm.caseUuid,
+                                                                        elm.ensembleName
+                                                                    ),
+                                                                    label:
+                                                                        elm.customName ??
+                                                                        `${elm.ensembleName} (${elm.caseName})`,
+                                                                };
+                                                            })}
+                                                            value={
+                                                                elm.comparisonEnsemble
+                                                                    ? createCaseUuidAndEnsembleNameString(
+                                                                          elm.comparisonEnsemble.caseUuid,
+                                                                          elm.comparisonEnsemble.ensembleName
+                                                                      )
+                                                                    : undefined
+                                                            }
+                                                            onChange={(newCaseUuidAndEnsembleNameString) => {
+                                                                handleDeltaEnsembleComparisonEnsembleChange(
+                                                                    elm.uuid,
+                                                                    newCaseUuidAndEnsembleNameString
+                                                                );
+                                                            }}
+                                                        />
+                                                    </td>
+                                                    <td className="p-2">
+                                                        <Dropdown
+                                                            options={newlySelectedRegularEnsembles.map((elm) => {
+                                                                return {
+                                                                    value: createCaseUuidAndEnsembleNameString(
+                                                                        elm.caseUuid,
+                                                                        elm.ensembleName
+                                                                    ),
+                                                                    label:
+                                                                        elm.customName ??
+                                                                        `${elm.ensembleName} (${elm.caseName})`,
+                                                                };
+                                                            })}
+                                                            value={
+                                                                elm.referenceEnsemble
+                                                                    ? createCaseUuidAndEnsembleNameString(
+                                                                          elm.referenceEnsemble.caseUuid,
+                                                                          elm.referenceEnsemble.ensembleName
+                                                                      )
+                                                                    : undefined
+                                                            }
+                                                            onChange={(value) => {
+                                                                handleDeltaEnsembleReferenceEnsembleChange(
+                                                                    elm.uuid,
+                                                                    value
+                                                                );
+                                                            }}
+                                                        />
+                                                    </td>
+                                                    <td className="p-2">
+                                                        <IconButton
+                                                            onClick={() => handleRemoveDeltaEnsemble(elm.uuid)}
+                                                            color="danger"
+                                                            title="Remove delta ensemble from selection"
+                                                        >
+                                                            <Remove fontSize="small" />
+                                                        </IconButton>{" "}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {deltaEnsembles.length === 0 && (
+                                <div className="text-gray-500">No delta ensembles created.</div>
+                            )}
+                        </div>
                     </div>
                 </div>
                 {isLoadingEnsembles && <LoadingOverlay />}
             </Dialog>
-            {
-                <Dialog
-                    open={confirmCancel}
-                    onClose={() => setConfirmCancel(false)}
-                    title="Unsaved changes"
-                    modal
-                    actions={
-                        <div className="flex gap-4">
-                            <Button onClick={() => setConfirmCancel(false)}>No, don&apos;t cancel</Button>
-                            <Button onClick={handleClose} color="danger">
-                                Yes, cancel
-                            </Button>
-                        </div>
-                    }
-                >
-                    You have unsaved changes which will be lost. Are you sure you want to cancel?
-                </Dialog>
-            }
+            <Dialog
+                open={confirmCancel}
+                onClose={() => setConfirmCancel(false)}
+                title="Unsaved changes"
+                modal
+                actions={
+                    <div className="flex gap-4">
+                        <Button onClick={() => setConfirmCancel(false)}>No, don&apos;t cancel</Button>
+                        <Button onClick={handleClose} color="danger">
+                            Yes, cancel
+                        </Button>
+                    </div>
+                }
+            >
+                You have unsaved changes which will be lost. Are you sure you want to cancel?
+            </Dialog>
         </>
     );
 };
+
+function createCaseUuidAndEnsembleNameString(caseUuid: string, ensembleName: string): string {
+    return `${caseUuid}${CASE_UUID_ENSEMBLE_NAME_SEPARATOR}${ensembleName}`;
+}
+
+function createCaseUuidAndEnsembleNameFromString(caseUuidAndEnsembleNameString: string): {
+    caseUuid: string;
+    ensembleName: string;
+} {
+    const [caseUuid, ensembleName] = caseUuidAndEnsembleNameString.split(CASE_UUID_ENSEMBLE_NAME_SEPARATOR);
+    if (!caseUuid || !ensembleName) {
+        throw new Error("Invalid caseUuidAndEnsembleNameString");
+    }
+
+    return { caseUuid, ensembleName };
+}

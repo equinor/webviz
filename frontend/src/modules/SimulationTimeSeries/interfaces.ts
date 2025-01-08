@@ -1,6 +1,7 @@
 import { Frequency_api } from "@api";
-import { Ensemble } from "@framework/Ensemble";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
@@ -12,7 +13,12 @@ import {
     statisticsSelectionAtom,
     visualizationModeAtom,
 } from "./settings/atoms/baseAtoms";
-import { parameterIdentAtom, selectedEnsemblesAtom, vectorSpecificationsAtom } from "./settings/atoms/derivedAtoms";
+import {
+    parameterIdentAtom,
+    selectedDeltaEnsemblesAtom,
+    selectedRegularEnsemblesAtom,
+    vectorSpecificationsAtom,
+} from "./settings/atoms/derivedAtoms";
 import { GroupBy, StatisticsSelection, VectorSpec, VisualizationMode } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
@@ -24,7 +30,8 @@ export type SettingsToViewInterface = {
     statisticsSelection: StatisticsSelection;
     colorByParameter: boolean;
     parameterIdent: ParameterIdent | null;
-    selectedEnsembles: Ensemble[];
+    selectedRegularEnsembles: RegularEnsemble[];
+    selectedDeltaEnsembles: DeltaEnsemble[];
     resampleFrequency: Frequency_api | null;
 };
 
@@ -57,8 +64,11 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     parameterIdent: (get) => {
         return get(parameterIdentAtom);
     },
-    selectedEnsembles: (get) => {
-        return get(selectedEnsemblesAtom);
+    selectedRegularEnsembles: (get) => {
+        return get(selectedRegularEnsemblesAtom);
+    },
+    selectedDeltaEnsembles: (get) => {
+        return get(selectedDeltaEnsemblesAtom);
     },
     resampleFrequency: (get) => {
         return get(resampleFrequencyAtom);

@@ -1,6 +1,6 @@
 import { transformFormationData } from "@equinor/esv-intersection";
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
@@ -13,7 +13,7 @@ const CACHE_TIME = 60 * 1000;
 export type WellpicksLayerSettings = {
     wellboreUuid: string | null;
     fieldIdentifier: string | null;
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     filterPicks: boolean;
     selectedUnitPicks: string[];
     selectedNonUnitPicks: string[];

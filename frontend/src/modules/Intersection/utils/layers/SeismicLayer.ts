@@ -1,7 +1,7 @@
 import { SeismicFenceData_api } from "@api";
 import { SeismicInfo, findIndexOfSample, getSeismicInfo } from "@equinor/esv-intersection";
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
@@ -51,7 +51,7 @@ const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
 export type SeismicLayerSettings = {
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     realizationNum: number | null;
     polyline: {
         polylineUtmXy: number[];
@@ -376,7 +376,7 @@ export function isSeismicLayer(layer: BaseLayer<any, any>): layer is SeismicLaye
  * Utility function to convert the 1D array of values from the fence data to a 2D array of values
  * for the seismic slice image.
  *
- * For the bit map image, the values are provided s.t. a seismic trace is a column in the image,
+ * For the bit map image, the values are provided such that a seismic trace is a column in the image,
  * thus the data will be transposed.
  *
  * trace a,b,c and d

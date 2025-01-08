@@ -7,7 +7,7 @@ import {
     InplaceVolumetricsIdentifier_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import {
     InplaceVolumetricsStatisticalTableData,
@@ -16,7 +16,7 @@ import {
 import { UseQueryResult } from "@tanstack/react-query";
 
 export type EnsembleIdentWithRealizations = {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
     realizations: readonly number[];
 };
 
@@ -49,7 +49,8 @@ export function useGetAggregatedStatisticalTableDataQueries(
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
     allowEnable: boolean
 ) {
-    const uniqueSources: { ensembleIdent: EnsembleIdent; realizations: readonly number[]; tableName: string }[] = [];
+    const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
+        [];
     for (const el of ensembleIdentsWithRealizations) {
         for (const tableName of tableNames) {
             uniqueSources.push({ ensembleIdent: el.ensembleIdent, realizations: el.realizations, tableName });
@@ -146,7 +147,8 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
     allowEnable: boolean
 ) {
-    const uniqueSources: { ensembleIdent: EnsembleIdent; realizations: readonly number[]; tableName: string }[] = [];
+    const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
+        [];
     for (const el of ensembleIdentsWithRealizations) {
         for (const tableName of tableNames) {
             uniqueSources.push({ ensembleIdent: el.ensembleIdent, realizations: el.realizations, tableName });

@@ -1,4 +1,4 @@
-import { Ensemble } from "@framework/Ensemble";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 import {
     EnsembleRealizationFilterFunction,
     WorkbenchSession,
@@ -36,7 +36,7 @@ export type LayerManagerTopicPayload = {
 
 export type GlobalSettings = {
     fieldId: string | null;
-    ensembles: readonly Ensemble[];
+    ensembles: readonly RegularEnsemble[];
     realizationFilterFunction: EnsembleRealizationFilterFunction;
 };
 
@@ -194,7 +194,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     }
 
     private initializeGlobalSettings(): GlobalSettings {
-        const ensembles = this._workbenchSession.getEnsembleSet().getEnsembleArr();
+        const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
         return {
             fieldId: null,
             ensembles,
@@ -211,7 +211,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
     }
 
     private handleEnsembleSetChanged() {
-        const ensembles = this._workbenchSession.getEnsembleSet().getEnsembleArr();
+        const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
         this._globalSettings.ensembles = ensembles;
 
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);

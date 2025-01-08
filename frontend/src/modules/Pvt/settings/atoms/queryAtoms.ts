@@ -1,6 +1,6 @@
 import { ApiError, PvtData_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { UseQueryResult } from "@tanstack/react-query";
 
@@ -15,7 +15,7 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
     const selectedRealizations = get(selectedRealizationsAtom);
 
-    const ensembleIdentsAndRealizations: { ensembleIdent: EnsembleIdent; realization: number }[] = [];
+    const ensembleIdentsAndRealizations: { ensembleIdent: RegularEnsembleIdent; realization: number }[] = [];
     for (const ensembleIdent of selectedEnsembleIdents) {
         for (const realization of selectedRealizations) {
             ensembleIdentsAndRealizations.push({ ensembleIdent, realization });

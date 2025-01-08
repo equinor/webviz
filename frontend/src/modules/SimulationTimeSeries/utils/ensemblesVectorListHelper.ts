@@ -1,24 +1,31 @@
 import { VectorDescription_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { UseQueryResult } from "@tanstack/react-query";
 
 /**
  * Helper class for working with ensembles and corresponding vector list query results
+ *
+ * Assuming that the order of ensembles and queries is the same
  */
 export class EnsembleVectorListsHelper {
-    private _ensembleIdents: EnsembleIdent[];
+    private _ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
     private _queries: UseQueryResult<VectorDescription_api[]>[];
 
-    constructor(ensembles: EnsembleIdent[], vectorListQueryResults: UseQueryResult<VectorDescription_api[]>[]) {
-        if (ensembles.length !== vectorListQueryResults.length) {
+    constructor(
+        ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
+        vectorListQueryResults: UseQueryResult<VectorDescription_api[]>[]
+    ) {
+        if (ensembleIdents.length !== vectorListQueryResults.length) {
             throw new Error("Number of ensembles and vector list query results must be equal");
         }
 
-        this._ensembleIdents = ensembles;
+        this._ensembleIdents = ensembleIdents;
         this._queries = vectorListQueryResults;
     }
 
     /**
+     * Get number of queries with data results
      *
      * @returns Number of queries with data results
      */
@@ -27,6 +34,7 @@ export class EnsembleVectorListsHelper {
     }
 
     /**
+     * Get union of vector names from all queries
      *
      * @returns Array of unique vector names, as union of all vectors in all queries
      */
@@ -44,13 +52,14 @@ export class EnsembleVectorListsHelper {
     }
 
     /**
+     * Check if vector is in the requested ensembles
      *
-     * @param ensemble - EnsembleIdent to check
+     * @param ensembleIdent - RegularEnsembleIdent or DeltaEnsembleIdent to check
      * @param vector - Vector name to look for
-     * @returns
+     * @returns True if vector is in the ensemble query data, false otherwise
      */
-    isVectorInEnsemble(ensemble: EnsembleIdent, vector: string): boolean {
-        const index = this._ensembleIdents.indexOf(ensemble);
+    isVectorInEnsemble(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent, vector: string): boolean {
+        const index = this.findIndexOfEnsembleIdent(ensembleIdent);
 
         if (index === -1 || !this._queries[index].data) return false;
 
@@ -58,21 +67,23 @@ export class EnsembleVectorListsHelper {
     }
 
     /**
+     * Check if vector has historical vector in the ensemble
      *
-     * @param ensemble - EnsembleIdent to check
+     * @param ensembleIdent - RegularEnsembleIdent or DeltaEnsembleIdent to check
      * @param vector - Vector name to look for
-     * @returns
+     * @returns True if vector has historical vector in the ensemble query data, false otherwise
      */
-    hasHistoricalVector(ensemble: EnsembleIdent, vector: string): boolean {
-        if (!this.isVectorInEnsemble(ensemble, vector)) return false;
+    hasHistoricalVector(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent, vector: string): boolean {
+        if (!this.isVectorInEnsemble(ensembleIdent, vector)) return false;
 
-        const index = this._ensembleIdents.indexOf(ensemble);
+        const index = this.findIndexOfEnsembleIdent(ensembleIdent);
         if (index === -1 || !this._queries[index].data) return false;
 
         return this._queries[index].data?.some((vec) => vec.name === vector && vec.has_historical) ?? false;
     }
 
     /**
+     * Check if provided vector has historical vector in one or more of the ensembles
      *
      * @param vectors - Array of vector names to look for
      * @returns True if one or more of the vectors has historical vector in one or more of the ensembles, false otherwise
@@ -81,5 +92,16 @@ export class EnsembleVectorListsHelper {
         return this._ensembleIdents.some((ensemble) =>
             vectors.some((vector) => this.hasHistoricalVector(ensemble, vector))
         );
+    }
+
+    /**
+     * Find index of the provided ensemble ident in the list of ensembles
+     * @param ensembleIdent - RegularEnsembleIdent or DeltaEnsembleIdent to find
+     * @returns Index of the ensemble ident in the list, or -1 if not found
+     */
+    private findIndexOfEnsembleIdent(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent): number {
+        return this._ensembleIdents.findIndex((ident) => {
+            return ident.equals(ensembleIdent);
+        });
     }
 }

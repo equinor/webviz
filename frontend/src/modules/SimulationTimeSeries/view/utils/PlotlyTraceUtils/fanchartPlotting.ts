@@ -148,7 +148,7 @@ export type CreateFanchartTracesOptions = {
 
     The order of traces are minimum, low, high, maximum and free line. Thus it is required that
     values in minimum <= low, and low <= high, and high <= maximum. Fill is setting "tonexty" in
-    this function is set s.t. trace fillings are not stacked making colors in fills unchanged
+    this function is set such that trace fillings are not stacked making colors in fills unchanged
     when disabling trace statistics inputs (minimum and maximum or low and high).
 
     Free line is last trace and is plotted on top as a line - without filling to other traces.
