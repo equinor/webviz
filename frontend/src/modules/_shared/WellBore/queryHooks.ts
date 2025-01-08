@@ -2,15 +2,18 @@ import { WellboreHeader_api, WellborePicksAndStratigraphicUnits_api, WellboreTra
 import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
+import { getDrilledWellboreHeadersOptions } from "src/api/@tanstack/react-query.gen";
+
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
 
 export function useDrilledWellboreHeadersQuery(caseUuid: string | undefined): UseQueryResult<WellboreHeader_api[]> {
     return useQuery({
-        queryKey: ["getDrilledWellboreHeaders", caseUuid],
-        queryFn: () => apiService.well.getDrilledWellboreHeaders(caseUuid ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getDrilledWellboreHeadersOptions({
+            query: {
+                field_identifier: caseUuid ?? "",
+            },
+        }),
         enabled: caseUuid ? true : false,
     });
 }
