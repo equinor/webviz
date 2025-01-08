@@ -240,25 +240,18 @@ export class Workbench {
         }
     }
 
-    hasEnsembleSettingsInLocalStorage(): boolean {
-        return (
-            this.maybeLoadEnsembleSettingsFromLocalStorage() !== null ||
-            this.maybeLoadDeltaEnsembleSettingsFromLocalStorage() !== null
-        );
-    }
-
     async initWorkbenchFromLocalStorage(queryClient: QueryClient): Promise<void> {
         const storedUserEnsembleSettings = this.maybeLoadEnsembleSettingsFromLocalStorage();
-        const storeUserDeltaEnsembleSettings = this.maybeLoadDeltaEnsembleSettingsFromLocalStorage();
+        const storedUserDeltaEnsembleSettings = this.maybeLoadDeltaEnsembleSettingsFromLocalStorage();
 
-        if (!storedUserEnsembleSettings && !storeUserDeltaEnsembleSettings) {
+        if (!storedUserEnsembleSettings && !storedUserDeltaEnsembleSettings) {
             return;
         }
 
         await this.loadAndSetupEnsembleSetInSession(
             queryClient,
             storedUserEnsembleSettings ?? [],
-            storeUserDeltaEnsembleSettings ?? []
+            storedUserDeltaEnsembleSettings ?? []
         );
     }
 

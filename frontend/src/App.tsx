@@ -84,13 +84,10 @@ function App() {
 
             setIsMounted(true);
 
-            if (workbench.hasEnsembleSettingsInLocalStorage()) {
-                workbench.initWorkbenchFromLocalStorage(queryClient).finally(() => {
-                    initApp();
-                });
-            } else {
+            // Initialize the workbench
+            workbench.initWorkbenchFromLocalStorage(queryClient).finally(() => {
                 initApp();
-            }
+            });
 
             return function handleUnmount() {
                 workbench.clearLayout();
