@@ -3,9 +3,10 @@ const path = require("path");
 const process = require("process");
 
 const TYPES_FILE = "types.gen.ts";
+const INDEX_FILE = "index.ts";
 
 function parseProcessArgs() {
-  const cmdArgRegex = /^--([\w_]+)$/;
+  const cmdArgRegex = /^--(\w+)$/;
   const valueRegex = /^['"]?(.*?)['"]?$/;
 
   const argsMap = {};
@@ -13,13 +14,13 @@ function parseProcessArgs() {
   for (const arg of process.argv.slice(2)) {
     const match = arg.match(cmdArgRegex);
     if (match) {
-      argsMap[match[1]] = null;
+      argsMap[match[1]] = true;
       lastCmdArg = match[1];
     }
     else {
       const value = arg.match(valueRegex)[1];
       if (lastCmdArg) {
-        if (argsMap[lastCmdArg]) {
+        if (argsMap[lastCmdArg] && argsMap[lastCmdArg] !== true) {
           argsMap[lastCmdArg] = [...argsMap[lastCmdArg], value];
           continue;
         }
@@ -33,9 +34,11 @@ function parseProcessArgs() {
 
 const parsedArgs = parseProcessArgs();
 
+// Get process arguments
 const suffix = parsedArgs.suffix;
 let dir = parsedArgs.dir;
 const encoding = parsedArgs.encoding ?? "utf8";
+const exportTanstackQueryFromIndex = parsedArgs.exportTanstackQueryFromIndex ?? false;
 
 if (!suffix) {
   throw new Error("No suffix provided, exiting");
@@ -47,13 +50,14 @@ if (!dir) {
 }
 
 const typesFilePath = path.join(dir, TYPES_FILE);
+const indexFilePath = path.join(dir, INDEX_FILE);
 
 if (!fs.existsSync(typesFilePath)) {
   throw new Error(`File ${typesFilePath} does not exist`);
 }
 
-const exportTypesRegExp = /^export type ([\w_]+)/gm;
-const singleImportNameRegExp = /( ?([\w_]+),? ?)/g;
+const exportTypesRegExp = /^export (type|enum) (\w+)/gm;
+const singleImportNameRegExp = /(\s*(\w+),?\s*)/g;
 
 function makeImportTypesRegExp(currentDir) {
   const relativeTypesFilePath = path.relative(currentDir, typesFilePath);
@@ -62,7 +66,7 @@ function makeImportTypesRegExp(currentDir) {
   if (path.resolve(currentDir) === path.resolve(path.parse(typesFilePath).dir)) {
     escapedFilePath = `\\./${escapedFilePath}`;
   }
-  return new RegExp(`^import type {(( ?([\\w_]+),? ?)+)} from '${escapedFilePath}';`, "m");
+  return new RegExp(`^import type {((\\s*(\\w+),?\\s*)+)} from ["']${escapedFilePath}["'];`, "m");
 }
 
 // First, replace all occurences of exported types with the same type name plus the suffix
@@ -71,10 +75,10 @@ const matches = typesFileContent.matchAll(exportTypesRegExp);
 
 const exportNames = [];
 for (const match of matches) {
-  exportNames.push(match[1]);
+  exportNames.push(match[2]);
 }
 
-let newTypesFileContent = typesFileContent.replace(exportTypesRegExp, `export type $1${suffix}`);
+let newTypesFileContent = typesFileContent.replace(exportTypesRegExp, `export $1 $2${suffix}`);
 for (const exportName of exportNames) {
   const exportNameRegExp = new RegExp(`\\b${exportName}\\b`, "g");
   newTypesFileContent = newTypesFileContent.replace(exportNameRegExp, `${exportName}${suffix}`);
@@ -129,3 +133,11 @@ function recursivelyAdjustImportedTypeNames(dir) {
 }
 
 recursivelyAdjustImportedTypeNames(dir);
+
+// Finally, re-export all TanstackQuery exports from the index file
+if (exportTanstackQueryFromIndex) {
+  let indexFileContent = fs.readFileSync(indexFilePath, encoding);
+  indexFileContent += `\nexport * from './@tanstack/react-query.gen';\n`;
+  fs.writeFileSync(indexFilePath, indexFileContent);
+  console.log(`\u{2705} Added re-export statement for tanstack query exports in '${indexFilePath}'`);
+}

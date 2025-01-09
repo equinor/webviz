@@ -1,4 +1,3 @@
-import { apiService } from "@framework/ApiService";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 import {
@@ -7,6 +6,7 @@ import {
     transformGridMappedProperty,
     transformGridSurface,
 } from "./queryDataTransforms";
+import { gridSurfaceOptions } from "@api";
 
 const STALE_TIME = 60 * 1000;
 const CACHE_TIME = 60 * 1000;
@@ -24,6 +24,7 @@ export function useGridSurfaceQuery(
     k_max?: number
 ): UseQueryResult<GridSurface_trans> {
     return useQuery({
+        ...gridSurfaceOptions
         queryKey: [
             "getGridSurface",
             caseUuid,

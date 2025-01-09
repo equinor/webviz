@@ -1,12 +1,19 @@
-import { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import {
+    EnsembleDetails_api,
+    EnsembleParameter_api,
+    EnsembleSensitivity_api,
+    SensitivityType_api,
+    getEnsembleDetailsOptions,
+    getParametersOptions,
+    getSensitivitiesOptions,
+} from "@api";
 import { UserEnsembleSetting } from "@framework/Workbench";
 import { QueryClient } from "@tanstack/react-query";
 
 import { Ensemble } from "../Ensemble";
 import { EnsembleIdent } from "../EnsembleIdent";
 import { ContinuousParameter, DiscreteParameter, Parameter, ParameterType } from "../EnsembleParameters";
-import { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
+import { Sensitivity, SensitivityCase, SensitivityType } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 
 export async function loadEnsembleSetMetadataFromBackend(
@@ -17,9 +24,6 @@ export async function loadEnsembleSetMetadataFromBackend(
 
     console.debug("loadEnsembleSetMetadataFromBackend", ensembleIdentsToLoad);
 
-    const STALE_TIME = 5 * 60 * 1000;
-    const CACHE_TIME = 5 * 60 * 1000;
-
     const ensembleDetailsPromiseArr: Promise<EnsembleDetails_api>[] = [];
     const parametersPromiseArr: Promise<EnsembleParameter_api[]>[] = [];
     const sensitivitiesPromiseArr: Promise<EnsembleSensitivity_api[]>[] = [];
@@ -29,26 +33,32 @@ export async function loadEnsembleSetMetadataFromBackend(
         const ensembleName = ensembleIdent.getEnsembleName();
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
-            queryKey: ["getEnsembleDetails", caseUuid, ensembleName],
-            queryFn: () => apiService.explore.getEnsembleDetails(caseUuid, ensembleName),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
+            ...getEnsembleDetailsOptions({
+                path: {
+                    case_uuid: caseUuid,
+                    ensemble_name: ensembleName,
+                },
+            }),
         });
         ensembleDetailsPromiseArr.push(ensembleDetailsPromise);
 
         const parametersPromise = queryClient.fetchQuery({
-            queryKey: ["getParameters", caseUuid, ensembleName],
-            queryFn: () => apiService.parameters.getParameters(caseUuid, ensembleName),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
+            ...getParametersOptions({
+                query: {
+                    case_uuid: caseUuid,
+                    ensemble_name: ensembleName,
+                },
+            }),
         });
         parametersPromiseArr.push(parametersPromise);
 
         const sensitivitiesPromise = queryClient.fetchQuery({
-            queryKey: ["getSensitivities", caseUuid, ensembleName],
-            queryFn: () => apiService.parameters.getSensitivities(caseUuid, ensembleName),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
+            ...getSensitivitiesOptions({
+                query: {
+                    case_uuid: caseUuid,
+                    ensemble_name: ensembleName,
+                },
+            }),
         });
         sensitivitiesPromiseArr.push(sensitivitiesPromise);
     }
@@ -121,9 +131,20 @@ function buildSensitivityArrFromApiResponse(apiSensitivityArr: EnsembleSensitivi
             });
         }
 
+        const convertSensitivityType = (apiSensType: SensitivityType_api): SensitivityType => {
+            switch (apiSensType) {
+                case SensitivityType_api.MONTECARLO:
+                    return SensitivityType.MONTECARLO;
+                case SensitivityType_api.SCENARIO:
+                    return SensitivityType.SCENARIO;
+                default:
+                    throw new Error(`Unhandled sensitivity type: ${apiSensType}`);
+            }
+        };
+
         retSensitivityArr.push({
             name: apiSens.name,
-            type: apiSens.type,
+            type: convertSensitivityType(apiSens.type),
             cases: caseArr,
         });
     }

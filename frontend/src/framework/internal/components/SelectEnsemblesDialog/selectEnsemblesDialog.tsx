@@ -1,7 +1,6 @@
 import React from "react";
 
-import { CaseInfo_api, EnsembleInfo_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { CaseInfo_api, getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -41,9 +40,6 @@ export type SelectEnsemblesDialogProps = {
     colorSet: ColorSet;
 };
 
-const STALE_TIME = 0;
-const CACHE_TIME = 5 * 60 * 1000;
-
 interface CaseFilterSettings {
     keep: boolean;
     onlyMyCases: boolean;
@@ -79,10 +75,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }, [props.selectedEnsembles]);
 
     const fieldsQuery = useQuery({
-        queryKey: ["getFields"],
-        queryFn: () => {
-            return apiService.explore.getFields();
-        },
+        ...getFieldsOptions(),
     });
 
     const [selectedField, setSelectedField] = useValidState<string>({
@@ -92,16 +85,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     });
 
     const casesQuery = useQuery({
-        queryKey: ["getCases", selectedField],
-        queryFn: () => {
-            if (!selectedField) {
-                return Promise.resolve<CaseInfo_api[]>([]);
-            }
-            return apiService.explore.getCases(selectedField);
-        },
+        ...getCasesOptions({
+            query: {
+                field_identifier: selectedField,
+            },
+        }),
         enabled: fieldsQuery.isSuccess,
-        gcTime: CACHE_TIME,
-        staleTime: STALE_TIME,
     });
 
     const [selectedCaseId, setSelectedCaseId] = useValidState<string>({
@@ -111,16 +100,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     });
 
     const ensemblesQuery = useQuery({
-        queryKey: ["getEnsembles", selectedCaseId],
-        queryFn: () => {
-            if (!selectedCaseId) {
-                return Promise.resolve<EnsembleInfo_api[]>([]);
-            }
-            return apiService.explore.getEnsembles(selectedCaseId);
-        },
+        ...getEnsemblesOptions({
+            path: {
+                case_uuid: selectedCaseId,
+            },
+        }),
         enabled: casesQuery.isSuccess,
-        gcTime: CACHE_TIME,
-        staleTime: STALE_TIME,
     });
 
     const [selectedEnsembleName, setSelectedEnsembleName] = useValidState<string>({

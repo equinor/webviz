@@ -1,4 +1,4 @@
-import { BoundingBox3d_api } from "@api";
+import { BoundingBox3D_api } from "@api";
 import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { IntersectionType } from "@framework/types/intersection";
@@ -49,7 +49,7 @@ export type SettingsToViewInterface = {
     realization: number | null;
     wellboreUuids: string[];
     gridModelName: string | null;
-    gridModelBoundingBox3d: BoundingBox3d_api | null;
+    gridModelBoundingBox3d: BoundingBox3D_api | null;
     gridModelParameterName: string | null;
     gridModelParameterDateOrInterval: string | null;
     gridCellIndexRanges: GridCellIndexRanges;

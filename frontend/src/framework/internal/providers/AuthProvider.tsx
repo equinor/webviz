@@ -1,7 +1,6 @@
 import React from "react";
 
-import { UserInfo_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { UserInfo_api, loggedInUser } from "@api";
 
 export enum AuthState {
     LoggedIn = "LoggedIn",
@@ -38,16 +37,13 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = (props) 
     const [userInfo, setUserInfo] = React.useState<UserInfo_api | null>(null);
 
     React.useEffect(() => {
-        if (!apiService) {
-            return;
-        }
-
-        apiService.default
-            .loggedInUser(true)
+        loggedInUser({
+            throwOnError: true,
+        })
             .then((user) => {
                 if (user) {
                     setAuthState(AuthState.LoggedIn);
-                    setUserInfo(user);
+                    setUserInfo(user.data);
                 } else {
                     setAuthState(AuthState.NotLoggedIn);
                 }
