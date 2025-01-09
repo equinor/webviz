@@ -19,6 +19,7 @@
         "test:ct:ui": "playwright test -c playwright.ct.config.ts --ui"
     },
     "dependencies": {
+        "@equinor/eds-core-react": "^0.42.5",
         "@equinor/esv-intersection": "^3.0.10",
         "@headlessui/react": "^1.7.8",
         "@hey-api/client-axios": "^0.4.0",
@@ -29,8 +30,9 @@
         "@tanstack/react-query-devtools": "^5.63",
         "@types/geojson": "^7946.0.14",
         "@webviz/group-tree-plot": "^1.1.14",
-        "@webviz/subsurface-viewer": "^0.25.2",
+        "@webviz/subsurface-viewer": "^1.1.1",
         "@webviz/well-completions-plot": "^1.5.11",
+        "@webviz/well-log-viewer": "^1.12.7",
         "animate.css": "^4.1.1",
         "axios": "^1.6.5",
         "culori": "^3.2.0",
@@ -76,7 +78,7 @@
         "postcss": "^8.4.21",
         "prettier": "2.8.3",
         "sass": "^1.62.0",
-        "tailwindcss": "^3.2.4",
+        "tailwindcss": "^3.4.15",
         "typescript": "^5.3.3",
         "vite": "^5.0.12",
         "vite-plugin-checker": "^0.6.0",

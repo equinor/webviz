@@ -1,7 +1,7 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { DatedFlowNetwork_api, FlowNetworkMetadata_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { fixupEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
-import { DatedTree, EdgeMetadata, NodeMetadata } from "@webviz/group-tree-plot";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 
 import { atom } from "jotai";
 
@@ -13,19 +13,19 @@ import {
     userSelectedRealizationNumberAtom,
     validRealizationNumbersAtom,
 } from "./baseAtoms";
-import { realizationGroupTreeQueryAtom } from "./queryAtoms";
+import { realizationFlowNetworkQueryAtom } from "./queryAtoms";
 
 import { QueryStatus } from "../../types";
 
-export const groupTreeQueryResultAtom = atom((get) => {
-    return get(realizationGroupTreeQueryAtom);
+export const flowNetworkQueryResultAtom = atom((get) => {
+    return get(realizationFlowNetworkQueryAtom);
 });
 
-export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
+export const selectedEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
 
-    const validEnsembleIdent = fixupEnsembleIdent(userSelectedEnsembleIdent, ensembleSet);
+    const validEnsembleIdent = fixupRegularEnsembleIdent(userSelectedEnsembleIdent, ensembleSet);
     return validEnsembleIdent;
 });
 
@@ -49,25 +49,25 @@ export const selectedRealizationNumberAtom = atom<number | null>((get) => {
 });
 
 export const queryStatusAtom = atom<QueryStatus>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
-    if (groupTreeQueryResult.isFetching) {
+    if (flowNetworkQueryResult.isFetching) {
         return QueryStatus.Loading;
     }
-    if (groupTreeQueryResult.isError) {
+    if (flowNetworkQueryResult.isError) {
         return QueryStatus.Error;
     }
     return QueryStatus.Idle;
 });
 
 export const availableDateTimesAtom = atom<string[]>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
-    if (!groupTreeQueryResult.data) return [];
+    if (!flowNetworkQueryResult.data) return [];
 
     const dateTimes = new Set<string>();
-    groupTreeQueryResult.data.dated_trees.forEach((datedTree) => {
-        datedTree.dates.forEach((date) => {
+    flowNetworkQueryResult.data.datedNetworks.forEach((datedNetwork) => {
+        datedNetwork.dates.forEach((date) => {
             dateTimes.add(date);
         });
     });
@@ -89,15 +89,15 @@ export const selectedDateTimeAtom = atom<string | null>((get) => {
     return userSelectedDateTime;
 });
 
-export const edgeMetadataListAtom = atom<EdgeMetadata[]>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+export const edgeMetadataListAtom = atom<FlowNetworkMetadata_api[]>((get) => {
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
-    const data = groupTreeQueryResult.data;
+    const data = flowNetworkQueryResult.data;
     if (!data) {
         return [];
     }
 
-    return data.edge_metadata_list.map((elm) => ({ key: elm.key, label: elm.label }));
+    return data.edgeMetadataList;
 });
 
 export const selectedEdgeKeyAtom = atom<string | null>((get) => {
@@ -115,15 +115,15 @@ export const selectedEdgeKeyAtom = atom<string | null>((get) => {
     return userSelectedEdgeKey;
 });
 
-export const nodeMetadataListAtom = atom<NodeMetadata[]>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+export const nodeMetadataListAtom = atom<FlowNetworkMetadata_api[]>((get) => {
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
-    const data = groupTreeQueryResult.data;
+    const data = flowNetworkQueryResult.data;
     if (!data) {
         return [];
     }
 
-    return data.node_metadata_list.map((elm) => ({ key: elm.key, label: elm.label }));
+    return data.nodeMetadataList;
 });
 
 export const selectedNodeKeyAtom = atom<string | null>((get) => {
@@ -141,13 +141,13 @@ export const selectedNodeKeyAtom = atom<string | null>((get) => {
     return userSelectedNodeKey;
 });
 
-export const datedTreesAtom = atom<DatedTree[]>((get) => {
-    const groupTreeQueryResult = get(groupTreeQueryResultAtom);
+export const datedNetworksAtom = atom<DatedFlowNetwork_api[]>((get) => {
+    const flowNetworkQueryResult = get(flowNetworkQueryResultAtom);
 
-    const data = groupTreeQueryResult.data;
+    const data = flowNetworkQueryResult.data;
     if (!data) {
         return [];
     }
 
-    return data.dated_trees;
+    return data.datedNetworks;
 });

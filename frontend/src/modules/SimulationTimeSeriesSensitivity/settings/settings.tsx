@@ -1,12 +1,12 @@
 import React from "react";
 
 import { Frequency_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -37,7 +37,7 @@ import { Interfaces } from "../interfaces";
 export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<RegularEnsembleIdent | null>(null);
     const [selectedVectorName, setSelectedVectorName] = React.useState<string | null>(null);
     const [selectedVectorTag, setSelectedVectorTag] = React.useState<string | null>(null);
     const [vectorSelectorData, setVectorSelectorData] = React.useState<TreeDataNode[]>([]);
@@ -55,7 +55,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
-    const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
+    const computedEnsembleIdent = fixupRegularEnsembleIdent(candidateEnsembleIdent, ensembleSet);
 
     const vectorsListQuery = useVectorListQuery(
         computedEnsembleIdent?.getCaseUuid(),
@@ -132,7 +132,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         [computedEnsembleIdent, computedVectorName, hasComputedVectorName, hasHistoricalVector, setVectorSpec]
     );
 
-    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
@@ -148,7 +148,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     }
     function handleVectorSelectChange(selection: SmartNodeSelectorSelection) {
         setSelectedVectorName(selection.selectedNodes[0] ?? null);
-        setSelectedVectorTag(selection.selectedTags[0] ?? null);
+        setSelectedVectorTag(selection.selectedTags[0]?.text ?? null);
     }
     function handleShowHistorical(event: React.ChangeEvent<HTMLInputElement>) {
         setShowHistorical(event.target.checked);
@@ -158,7 +158,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         <>
             <CollapsibleGroup expanded={true} title="Ensemble">
                 <EnsembleDropdown
-                    ensembleSet={ensembleSet}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />

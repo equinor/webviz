@@ -1,5 +1,5 @@
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import {
     PolylineIntersection_trans,
     transformPolylineIntersection,
@@ -7,7 +7,7 @@ import {
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 export function useGridPolylineIntersection(
-    ensembleIdent: EnsembleIdent | null,
+    ensembleIdent: RegularEnsembleIdent | null,
     gridModelName: string | null,
     gridModelParameterName: string | null,
     gridModelDateOrInterval: string | null,
@@ -38,9 +38,8 @@ export function useGridPolylineIntersection(
         select: transformPolylineIntersection,
         staleTime: 0,
         gcTime: 0,
-        enabled:
+        enabled: Boolean(
             ensembleIdent && gridModelName && realizationNum !== null && polyline_utm_xy.length && enabled
-                ? true
-                : false,
+        ),
     });
 }

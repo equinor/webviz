@@ -1,8 +1,8 @@
 import React from "react";
 
 import { Frequency_api, NodeType_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -30,7 +30,7 @@ import {
 import {
     availableDateTimesAtom,
     edgeMetadataListAtom,
-    groupTreeQueryResultAtom,
+    flowNetworkQueryResultAtom,
     nodeMetadataListAtom,
     selectedDateTimeAtom,
     selectedEdgeKeyAtom,
@@ -68,9 +68,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
     const selectedDateTime = useAtomValue(selectedDateTimeAtom);
     const setUserSelectedDateTime = useSetAtom(userSelectedDateTimeAtom);
 
-    const groupTreeQueryResult = useAtomValue(groupTreeQueryResultAtom);
+    const FlowNetworkQueryResult = useAtomValue(flowNetworkQueryResultAtom);
 
-    usePropagateApiErrorToStatusWriter(groupTreeQueryResult, statusWriter);
+    usePropagateApiErrorToStatusWriter(FlowNetworkQueryResult, statusWriter);
 
     const setValidRealizationNumbersAtom = useSetAtom(validRealizationNumbersAtom);
     const filterEnsembleRealizationsFunc = useEnsembleRealizationFilterFunc(workbenchSession);
@@ -94,7 +94,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         setUserSelectedEdgeKey(value);
     }
 
-    function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
         setUserSelectedEnsembleIdent(ensembleIdent);
     }
 
@@ -142,7 +142,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
         <div className="flex flex-col gap-2 overflow-y-auto">
             <CollapsibleGroup expanded={true} title="Ensemble">
                 <EnsembleDropdown
-                    ensembleSet={ensembleSet}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={selectedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />
@@ -184,9 +184,9 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Edge, node and date selections">
                 <QueryStateWrapper
-                    queryResult={groupTreeQueryResult}
+                    queryResult={FlowNetworkQueryResult}
                     loadingComponent={<CircularProgress />}
-                    errorComponent={"Could not load group tree data"}
+                    errorComponent={"Could not load flow network data"}
                 >
                     <div className="flex flex-col gap-2">
                         <Label text="Edge options">

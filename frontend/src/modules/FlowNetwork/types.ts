@@ -14,14 +14,14 @@ export const NodeTypeEnumToStringMapping = {
     [NodeType_api.OTHER]: "Other",
 };
 
-export enum GroupTreeDataTypeOption {
+export enum FlowNetworkDataTypeOption {
     STATISTICS = "statistics",
     INDIVIDUAL_REALIZATION = "Individual_realization",
 }
 
-export const GroupTreeDataTypeOptionEnumToStringMapping = {
-    [GroupTreeDataTypeOption.STATISTICS]: "Statistics",
-    [GroupTreeDataTypeOption.INDIVIDUAL_REALIZATION]: "Individual Realization",
+export const FLowNetworkDataTypeOptionEnumToStringMapping = {
+    [FlowNetworkDataTypeOption.STATISTICS]: "Statistics",
+    [FlowNetworkDataTypeOption.INDIVIDUAL_REALIZATION]: "Individual Realization",
 };
 
 export enum QueryStatus {

@@ -7,7 +7,8 @@ import {
     InplaceVolumetricsIdentifier_api,
 } from "@api";
 import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
@@ -15,7 +16,7 @@ import {
 import { UseQueryResult } from "@tanstack/react-query";
 
 export type EnsembleIdentWithRealizations = {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
     realizations: readonly number[];
 };
 
@@ -48,7 +49,8 @@ export function useGetAggregatedStatisticalTableDataQueries(
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
     allowEnable: boolean
 ) {
-    const uniqueSources: { ensembleIdent: EnsembleIdent; realizations: readonly number[]; tableName: string }[] = [];
+    const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
+        [];
     for (const el of ensembleIdentsWithRealizations) {
         for (const tableName of tableNames) {
             uniqueSources.push({ ensembleIdent: el.ensembleIdent, realizations: el.realizations, tableName });
@@ -60,6 +62,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
 
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
+        const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
         return () => ({
             queryKey: [
                 "postGetAggregatedStatisticalTableData",
@@ -84,7 +87,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
                         identifiers_with_values: identifiersWithValues,
                     },
                     validGroupByIdentifiers,
-                    validRealizations
+                    validRealizationsEncodedAsUintListStr
                 ),
             staleTime: STALE_TIME,
             cacheTime: CACHE_TIME,
@@ -92,8 +95,8 @@ export function useGetAggregatedStatisticalTableDataQueries(
                 allowEnable &&
                     source.ensembleIdent &&
                     source.tableName &&
-                    validRealizations &&
-                    validRealizations.length &&
+                    validRealizationsEncodedAsUintListStr &&
+                    validRealizations?.length &&
                     fluidZones.length &&
                     resultNames.length &&
                     eachIdentifierHasValues
@@ -144,7 +147,8 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
     allowEnable: boolean
 ) {
-    const uniqueSources: { ensembleIdent: EnsembleIdent; realizations: readonly number[]; tableName: string }[] = [];
+    const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
+        [];
     for (const el of ensembleIdentsWithRealizations) {
         for (const tableName of tableNames) {
             uniqueSources.push({ ensembleIdent: el.ensembleIdent, realizations: el.realizations, tableName });
@@ -156,6 +160,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
 
     const queries = uniqueSources.map((source) => {
         const validRealizations = source.realizations.length === 0 ? null : [...source.realizations];
+        const validRealizationsEncodedAsUintListStr = validRealizations ? encodeAsUintListStr(validRealizations) : null;
         return () => ({
             queryKey: [
                 "postGetAggregatedPerRealizationTableData",
@@ -181,7 +186,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                         identifiers_with_values: identifiersWithValues,
                     },
                     validGroupByIdentifiers,
-                    validRealizations
+                    validRealizationsEncodedAsUintListStr
                 ),
             staleTime: STALE_TIME,
             cacheTime: CACHE_TIME,
@@ -189,8 +194,8 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                 allowEnable &&
                     source.ensembleIdent &&
                     source.tableName &&
-                    validRealizations &&
-                    validRealizations.length &&
+                    validRealizationsEncodedAsUintListStr &&
+                    validRealizations?.length &&
                     fluidZones.length &&
                     resultNames.length &&
                     eachIdentifierHasValues

@@ -1,8 +1,8 @@
 import React from "react";
 
-import { Ensemble } from "@framework/Ensemble";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleViewProps } from "@framework/Module";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
@@ -69,7 +69,7 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
             return <ContentMessage type={ContentMessageType.INFO}>No plots selected.</ContentMessage>;
         }
 
-        const selectedEnsembles: Ensemble[] = [];
+        const selectedEnsembles: RegularEnsemble[] = [];
         for (const ensembleIdent of selectedEnsembleIdents) {
             const ensemble = ensembleSet.findEnsemble(ensembleIdent);
             if (ensemble) {
@@ -77,7 +77,7 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
             }
         }
 
-        function makeEnsembleDisplayName(ensembleIdent: EnsembleIdent): string {
+        function makeEnsembleDisplayName(ensembleIdent: RegularEnsembleIdent): string {
             return makeDistinguishableEnsembleDisplayName(ensembleIdent, selectedEnsembles);
         }
 

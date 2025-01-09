@@ -1,7 +1,7 @@
 import React from "react";
 
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleRealizationFilterFunc, useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -57,11 +57,11 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
     const [selectedDependentVariables, setSelectedPlots] = useAtom(selectedDependentVariablesAtom);
 
     const [selectedMultiEnsembleIdents, setSelectedMultiEnsembleIdents] =
-        React.useState<EnsembleIdent[]>(selectedEnsembleIdents);
+        React.useState<RegularEnsembleIdent[]>(selectedEnsembleIdents);
     const [selectedMultiRealizations, setSelectedMultiRealizations] = React.useState<number[]>(selectedRealizations);
     const [selectedMultiPvtNums, setSelectedMultiPvtNums] = React.useState<number[]>(selectedPvtNums);
 
-    function handleEnsembleSelectionChange(ensembleIdents: EnsembleIdent[]) {
+    function handleEnsembleSelectionChange(ensembleIdents: RegularEnsembleIdent[]) {
         setSelectedEnsembleIdents(ensembleIdents);
         setSelectedMultiEnsembleIdents(ensembleIdents);
     }
@@ -126,7 +126,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
             </CollapsibleGroup>
             <CollapsibleGroup title="Ensembles" expanded>
                 <EnsembleSelect
-                    ensembleSet={ensembleSet}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     onChange={handleEnsembleSelectionChange}
                     value={selectedEnsembleIdents}
                     size={5}

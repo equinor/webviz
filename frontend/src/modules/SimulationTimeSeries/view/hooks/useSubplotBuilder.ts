@@ -12,7 +12,7 @@ import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc
 import { GroupBy, VectorSpec, VisualizationMode } from "../../typesAndEnums";
 import {
     activeTimestampUtcMsAtom,
-    loadedVectorSpecificationsAndHistoricalDataAtom,
+    loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,
     loadedVectorSpecificationsAndStatisticsDataAtom,
 } from "../atoms/derivedAtoms";
@@ -41,7 +41,9 @@ export function useSubplotBuilder(
     const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
-    const loadedVectorSpecificationsAndHistoricalData = useAtomValue(loadedVectorSpecificationsAndHistoricalDataAtom);
+    const loadedRegularEnsembleVectorSpecificationsAndHistoricalData = useAtomValue(
+        loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom
+    );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
 
@@ -112,7 +114,7 @@ export function useSubplotBuilder(
         subplotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);
     }
     if (showHistorical) {
-        subplotBuilder.addHistoryTraces(loadedVectorSpecificationsAndHistoricalData);
+        subplotBuilder.addHistoryTraces(loadedRegularEnsembleVectorSpecificationsAndHistoricalData);
     }
     if (showObservations) {
         subplotBuilder.addObservationsTraces(loadedVectorSpecificationsAndObservationData);

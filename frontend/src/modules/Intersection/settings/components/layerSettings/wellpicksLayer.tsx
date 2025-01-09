@@ -1,13 +1,19 @@
 import React from "react";
 
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import { LayerStatus, useLayerSettings, useLayerStatus } from "@modules/Intersection/utils/layers/BaseLayer";
 import { WellpicksLayer, WellpicksLayerSettings } from "@modules/Intersection/utils/layers/WellpicksLayer";
+
+import { isEqual } from "lodash";
+
+import { fixupSetting } from "./utils";
 
 export type WellpicksLayerSettingsComponentProps = {
     layer: WellpicksLayer;
@@ -22,6 +28,15 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
 
     const status = useLayerStatus(props.layer);
 
+    const fixupEnsembleIdent = fixupSetting(
+        "ensembleIdent",
+        props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
+        newSettings
+    );
+    if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
+        setNewSettings((prev) => ({ ...prev, ensembleIdent: fixupEnsembleIdent }));
+    }
+
     React.useEffect(
         function propagateSettingsChange() {
             props.layer.maybeUpdateSettings(newSettings);
@@ -29,6 +44,10 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
         },
         [newSettings, props.layer]
     );
+
+    function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
+        setNewSettings((prev) => ({ ...prev, ensembleIdent }));
+    }
 
     function handleToggleFilterPicks(e: React.ChangeEvent<HTMLInputElement>) {
         const checked = e.target.checked;
@@ -63,6 +82,17 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
 
     return (
         <div className="table text-sm border-spacing-y-2 border-spacing-x-3 w-full">
+            <div className="table-row">
+                <div className="table-cell align-middle w-24">Stratigraphic column source</div>
+                <div className="table-cell">
+                    <EnsembleDropdown
+                        value={props.layer.getSettings().ensembleIdent}
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
+                        onChange={handleEnsembleChange}
+                        debounceTimeMs={600}
+                    />
+                </div>
+            </div>
             <div className="table-row">
                 <div className="table-cell align-middle w-24">Filter picks</div>
                 <div className="table-cell">

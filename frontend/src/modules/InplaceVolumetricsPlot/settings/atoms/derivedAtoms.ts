@@ -1,6 +1,6 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelectedIdentifierValues } from "@modules/_shared/InplaceVolumetrics/fixupUserSelectedIdentifierValues";
 import { RealSelector, SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
@@ -31,17 +31,17 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
     if (!userSelectedEnsembleIdents) {
-        if (ensembleSet.getEnsembleArr().length === 0) {
+        if (ensembleSet.getRegularEnsembleArray().length === 0) {
             return [];
         }
-        return [ensembleSet.getEnsembleArr()[0].getIdent()];
+        return [ensembleSet.getRegularEnsembleArray()[0].getIdent()];
     }
 
     const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>
         ensembleSet.hasEnsemble(ensemble)
     );
 
-    const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
+    const validatedEnsembleIdents = fixupRegularEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
 
     return validatedEnsembleIdents ?? [];
 });

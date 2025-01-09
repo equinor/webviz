@@ -106,6 +106,22 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
         setValue(event.target.value);
 
         if (props.onChange) {
+            if (props.type === "number") {
+                let newValue = 0;
+
+                if (!isNaN(parseFloat(event.target.value as string))) {
+                    newValue = parseFloat((event.target.value as string) || "0");
+                    if (props.min !== undefined) {
+                        newValue = Math.max(props.min, newValue);
+                    }
+
+                    if (props.max !== undefined) {
+                        newValue = Math.min(props.max, newValue);
+                    }
+                }
+
+                event.target.value = newValue.toString();
+            }
             props.onChange(event);
         }
     }

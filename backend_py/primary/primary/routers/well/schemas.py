@@ -2,27 +2,6 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-class StratigraphicUnit(BaseModel):
-    """
-    Stratigraphic unit from SMDA
-
-    Camel case attributes needed for esvIntersection component in front-end
-    """
-
-    identifier: str
-    top: str
-    base: str
-    stratUnitLevel: int
-    stratUnitType: str
-    topAge: int | float
-    baseAge: int | float
-    stratUnitParent: Optional[str] = None
-    colorR: int
-    colorG: int
-    colorB: int
-    lithologyType: int | float | str = "unknown"
-
-
 class WellboreHeader(BaseModel):
     wellboreUuid: str
     uniqueWellboreIdentifier: str
@@ -32,6 +11,8 @@ class WellboreHeader(BaseModel):
     wellNorthing: float
     depthReferencePoint: str
     depthReferenceElevation: float
+    wellborePurpose: str
+    wellboreStatus: str
 
 
 class WellboreTrajectory(BaseModel):
@@ -57,15 +38,11 @@ class WellborePick(BaseModel):
     md: float
     mdMsl: float
     uniqueWellboreIdentifier: str
+    wellboreUuid: str
     pickIdentifier: str
     confidence: Optional[str] = None
     depthReferencePoint: str
     mdUnit: str
-
-
-class WellborePicksAndStratigraphicUnits(BaseModel):
-    wellbore_picks: List[WellborePick] = []
-    stratigraphic_units: List[StratigraphicUnit] = []
 
 
 class WellboreCompletion(BaseModel):
@@ -103,16 +80,19 @@ class WellborePerforation(BaseModel):
 class WellboreLogCurveHeader(BaseModel):
     logName: str
     curveName: str
-    curveUnit: str
+    curveUnit: str | None
 
 
 class WellboreLogCurveData(BaseModel):
+    name: str
     indexMin: float
     indexMax: float
     minCurveValue: float
     maxCurveValue: float
-    dataPoints: list[list[float | None]]
-    curveAlias: str
-    curveDescription: str
+    curveAlias: str | None
+    curveDescription: str | None
     indexUnit: str
-    noDataValue: float
+    noDataValue: float | None
+    unit: str
+    curveUnitDesc: str | None
+    dataPoints: list[list[float | None]]

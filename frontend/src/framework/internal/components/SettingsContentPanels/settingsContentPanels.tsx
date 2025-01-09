@@ -39,7 +39,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
                 100 - leftSettingsPanelWidth - rightSettingsPanelWidth,
                 rightSettingsPanelWidth,
             ]}
-            minSizes={[300, 0, 300]}
+            minSizes={[300, 0, 400]}
             onSizesChange={handleResizablePanelsChange}
         >
             <LeftSettingsPanel workbench={props.workbench} />

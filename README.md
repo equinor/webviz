@@ -30,7 +30,7 @@ in the following folders are changed:
 ./backend/src
 ```
 
-If other files are changed through the host operativey system,
+If other files are changed through the host operating system,
 e.g. typically when a new dependency is added, the relevant component needs to be rebuilt. I.e.
 `docker-compose up --build frontend` or `docker-compose up --build backend`.
 
@@ -51,9 +51,9 @@ as stated above).
 ### Radix applications
 
 We have two applications in Radix built from this repository:
-* [Main application](https://webviz.app.radix.equinor.com/) built from the `main` branch.
-* [Review application](https://frontend-webviz-review.radix.equinor.com/) built from the `review` branch.
-* [Dev application](https://frontend-webviz-dev.radix.equinor.com/) built from the `dev` branch.
+* [Main application](https://webviz.app.c2.radix.equinor.com/) built from the `main` branch.
+* [Review application](https://frontend-webviz-review.c2.radix.equinor.com/) built from the `review` branch.
+* [Dev application](https://frontend-webviz-dev.c2.radix.equinor.com/) built from the `dev` branch.
 
 The applications are automatically built and redeployed when pushing commits to the respective branch.
 

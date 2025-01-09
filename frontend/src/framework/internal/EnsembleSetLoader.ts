@@ -1,34 +1,164 @@
-import {
-    EnsembleDetails_api,
-    EnsembleParameter_api,
-    EnsembleSensitivity_api,
-    SensitivityType_api,
-    getEnsembleDetailsOptions,
-    getParametersOptions,
-    getSensitivitiesOptions,
-} from "@api";
-import { UserEnsembleSetting } from "@framework/Workbench";
+import { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
+import { apiService } from "@framework/ApiService";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
 import { QueryClient } from "@tanstack/react-query";
 
-import { Ensemble } from "../Ensemble";
-import { EnsembleIdent } from "../EnsembleIdent";
 import { ContinuousParameter, DiscreteParameter, Parameter, ParameterType } from "../EnsembleParameters";
 import { Sensitivity, SensitivityCase, SensitivityType } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
+import { RegularEnsemble } from "../RegularEnsemble";
+import { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
-export async function loadEnsembleSetMetadataFromBackend(
+type EnsembleApiData = {
+    ensembleDetails: EnsembleDetails_api;
+    parameters: EnsembleParameter_api[];
+    sensitivities: EnsembleSensitivity_api[];
+};
+type EnsembleIdentStringToEnsembleApiDataMap = {
+    [ensembleIdentString: string]: EnsembleApiData;
+};
+
+export async function loadMetadataFromBackendAndCreateEnsembleSet(
     queryClient: QueryClient,
-    userEnsembleSettings: UserEnsembleSetting[]
+    userEnsembleSettings: UserEnsembleSetting[],
+    userDeltaEnsembleSettings: UserDeltaEnsembleSetting[]
 ): Promise<EnsembleSet> {
-    const ensembleIdentsToLoad: EnsembleIdent[] = userEnsembleSettings.map((setting) => setting.ensembleIdent);
+    // Get ensemble idents to load
+    const ensembleIdentsToLoad: RegularEnsembleIdent[] = userEnsembleSettings.map((setting) => setting.ensembleIdent);
+    for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
+        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.comparisonEnsembleIdent)) {
+            ensembleIdentsToLoad.push(deltaEnsembleSetting.comparisonEnsembleIdent);
+        }
+        if (!ensembleIdentsToLoad.includes(deltaEnsembleSetting.referenceEnsembleIdent)) {
+            ensembleIdentsToLoad.push(deltaEnsembleSetting.referenceEnsembleIdent);
+        }
+    }
 
-    console.debug("loadEnsembleSetMetadataFromBackend", ensembleIdentsToLoad);
+    // Fetch from back-end
+    const ensembleApiDataMap = await loadEnsembleApiDataMapFromBackend(queryClient, ensembleIdentsToLoad);
 
-    const ensembleDetailsPromiseArr: Promise<EnsembleDetails_api>[] = [];
-    const parametersPromiseArr: Promise<EnsembleParameter_api[]>[] = [];
-    const sensitivitiesPromiseArr: Promise<EnsembleSensitivity_api[]>[] = [];
+    // Create regular ensembles
+    const outEnsembleArray: RegularEnsemble[] = [];
+    for (const ensembleSetting of userEnsembleSettings) {
+        const ensembleIdentString = ensembleSetting.ensembleIdent.toString();
+        const ensembleApiData = ensembleApiDataMap[ensembleIdentString];
+        if (!ensembleApiData) {
+            console.error("Error fetching ensemble data, dropping ensemble:", ensembleSetting.ensembleIdent.toString());
+            continue;
+        }
 
-    for (const ensembleIdent of ensembleIdentsToLoad) {
+        const parameterArray = buildParameterArrFromApiResponse(ensembleApiData.parameters);
+        const sensitivityArray = buildSensitivityArrFromApiResponse(ensembleApiData.sensitivities);
+        outEnsembleArray.push(
+            new RegularEnsemble(
+                ensembleApiData.ensembleDetails.field_identifier,
+                ensembleApiData.ensembleDetails.case_uuid,
+                ensembleApiData.ensembleDetails.case_name,
+                ensembleApiData.ensembleDetails.name,
+                ensembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                ensembleApiData.ensembleDetails.realizations,
+                parameterArray,
+                sensitivityArray,
+                ensembleSetting.color,
+                ensembleSetting.customName
+            )
+        );
+    }
+
+    // Create delta ensembles
+    // - Delta ensembles does not support parameters and sensitivities yet
+    const outDeltaEnsembleArray: DeltaEnsemble[] = [];
+    const emptyParameterArray: Parameter[] = [];
+    const nullSensitivityArray = null;
+    const emptyColor = "";
+    for (const deltaEnsembleSetting of userDeltaEnsembleSettings) {
+        const comparisonEnsembleIdentString = deltaEnsembleSetting.comparisonEnsembleIdent.toString();
+        const referenceEnsembleIdentString = deltaEnsembleSetting.referenceEnsembleIdent.toString();
+
+        const comparisonEnsembleApiData = ensembleApiDataMap[comparisonEnsembleIdentString];
+        const referenceEnsembleApiData = ensembleApiDataMap[referenceEnsembleIdentString];
+        if (!comparisonEnsembleApiData || !referenceEnsembleApiData) {
+            console.error(
+                "Error fetching delta ensemble data, dropping delta ensemble:",
+                deltaEnsembleSetting.customName ?? `${comparisonEnsembleIdentString} - ${referenceEnsembleIdentString}`
+            );
+            continue;
+        }
+
+        const comparisonEnsembleCustomName =
+            userEnsembleSettings.find((elm) => elm.ensembleIdent.toString() === comparisonEnsembleIdentString)
+                ?.customName ?? null;
+        const referenceEnsembleCustomName =
+            userEnsembleSettings.find((elm) => elm.ensembleIdent.toString() === referenceEnsembleIdentString)
+                ?.customName ?? null;
+
+        // Look for existing regular ensembles
+        const existingComparisonEnsemble = outEnsembleArray.find((elm) =>
+            elm.getIdent().equals(deltaEnsembleSetting.comparisonEnsembleIdent)
+        );
+        const existingReferenceEnsemble = outEnsembleArray.find((elm) =>
+            elm.getIdent().equals(deltaEnsembleSetting.referenceEnsembleIdent)
+        );
+
+        // Create delta ensemble
+        const comparisonEnsemble = existingComparisonEnsemble
+            ? existingComparisonEnsemble
+            : new RegularEnsemble(
+                  comparisonEnsembleApiData.ensembleDetails.field_identifier,
+                  comparisonEnsembleApiData.ensembleDetails.case_uuid,
+                  comparisonEnsembleApiData.ensembleDetails.case_name,
+                  comparisonEnsembleApiData.ensembleDetails.name,
+                  comparisonEnsembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                  comparisonEnsembleApiData.ensembleDetails.realizations,
+                  emptyParameterArray,
+                  nullSensitivityArray,
+                  emptyColor,
+                  comparisonEnsembleCustomName
+              );
+
+        const referenceEnsemble = existingReferenceEnsemble
+            ? existingReferenceEnsemble
+            : new RegularEnsemble(
+                  referenceEnsembleApiData.ensembleDetails.field_identifier,
+                  referenceEnsembleApiData.ensembleDetails.case_uuid,
+                  referenceEnsembleApiData.ensembleDetails.case_name,
+                  referenceEnsembleApiData.ensembleDetails.name,
+                  comparisonEnsembleApiData.ensembleDetails.stratigraphic_column_identifier,
+                  referenceEnsembleApiData.ensembleDetails.realizations,
+                  emptyParameterArray,
+                  nullSensitivityArray,
+                  emptyColor,
+                  referenceEnsembleCustomName
+              );
+
+        outDeltaEnsembleArray.push(
+            new DeltaEnsemble(
+                comparisonEnsemble,
+                referenceEnsemble,
+                deltaEnsembleSetting.color,
+                deltaEnsembleSetting.customName
+            )
+        );
+    }
+
+    return new EnsembleSet(outEnsembleArray, outDeltaEnsembleArray);
+}
+
+async function loadEnsembleApiDataMapFromBackend(
+    queryClient: QueryClient,
+    ensembleIdents: RegularEnsembleIdent[]
+): Promise<EnsembleIdentStringToEnsembleApiDataMap> {
+    console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
+
+    const STALE_TIME = 5 * 60 * 1000;
+    const CACHE_TIME = 5 * 60 * 1000;
+
+    const ensembleDetailsPromiseArray: Promise<EnsembleDetails_api>[] = [];
+    const parametersPromiseArray: Promise<EnsembleParameter_api[]>[] = [];
+    const sensitivitiesPromiseArray: Promise<EnsembleSensitivity_api[]>[] = [];
+
+    for (const ensembleIdent of ensembleIdents) {
         const caseUuid = ensembleIdent.getCaseUuid();
         const ensembleName = ensembleIdent.getEnsembleName();
 
@@ -40,7 +170,7 @@ export async function loadEnsembleSetMetadataFromBackend(
                 },
             }),
         });
-        ensembleDetailsPromiseArr.push(ensembleDetailsPromise);
+        ensembleDetailsPromiseArray.push(ensembleDetailsPromise);
 
         const parametersPromise = queryClient.fetchQuery({
             ...getParametersOptions({
@@ -50,7 +180,7 @@ export async function loadEnsembleSetMetadataFromBackend(
                 },
             }),
         });
-        parametersPromiseArr.push(parametersPromise);
+        parametersPromiseArray.push(parametersPromise);
 
         const sensitivitiesPromise = queryClient.fetchQuery({
             ...getSensitivitiesOptions({
@@ -60,103 +190,94 @@ export async function loadEnsembleSetMetadataFromBackend(
                 },
             }),
         });
-        sensitivitiesPromiseArr.push(sensitivitiesPromise);
+        sensitivitiesPromiseArray.push(sensitivitiesPromise);
     }
-    console.debug(`Issued ${ensembleDetailsPromiseArr.length} promise(s)`);
+    console.debug(`Issued ${ensembleDetailsPromiseArray.length} promise(s)`);
 
-    const outEnsembleArr: Ensemble[] = [];
+    const ensembleDetailsOutcomeArray = await Promise.allSettled(ensembleDetailsPromiseArray);
+    const parametersOutcomeArray = await Promise.allSettled(parametersPromiseArray);
+    const sensitivitiesOutcomeArray = await Promise.allSettled(sensitivitiesPromiseArray);
 
-    const ensembleDetailsOutcomeArr = await Promise.allSettled(ensembleDetailsPromiseArr);
-    const parametersOutcomeArr = await Promise.allSettled(parametersPromiseArr);
-    const sensitivitiesOutcomeArr = await Promise.allSettled(sensitivitiesPromiseArr);
-
-    for (let i = 0; i < ensembleDetailsOutcomeArr.length; i++) {
-        const ensembleDetailsOutcome = ensembleDetailsOutcomeArr[i];
+    const resMap: EnsembleIdentStringToEnsembleApiDataMap = {};
+    for (let i = 0; i < ensembleDetailsOutcomeArray.length; i++) {
+        const ensembleDetailsOutcome = ensembleDetailsOutcomeArray[i];
         console.debug(`ensembleDetailsOutcome[${i}]:`, ensembleDetailsOutcome.status);
         if (ensembleDetailsOutcome.status === "rejected") {
-            console.error("Error fetching ensemble details, dropping ensemble:", ensembleIdentsToLoad[i].toString());
+            console.error("Error fetching ensemble details, dropping ensemble:", ensembleIdents[i].toString());
             continue;
         }
 
         const ensembleDetails: EnsembleDetails_api = ensembleDetailsOutcome.value;
         if (
-            ensembleDetails.case_uuid !== ensembleIdentsToLoad[i].getCaseUuid() ||
-            ensembleDetails.name !== ensembleIdentsToLoad[i].getEnsembleName()
+            ensembleDetails.case_uuid !== ensembleIdents[i].getCaseUuid() ||
+            ensembleDetails.name !== ensembleIdents[i].getEnsembleName()
         ) {
-            console.error("Got mismatched data from backend, dropping ensemble:", ensembleIdentsToLoad[i].toString());
+            console.error("Got mismatched data from backend, dropping ensemble:", ensembleIdents[i].toString());
             continue;
         }
 
-        const parametersOutcome = parametersOutcomeArr[i];
+        const parametersOutcome = parametersOutcomeArray[i];
         console.debug(`parametersOutcome[${i}]:`, parametersOutcome.status);
-        let parameterArr: Parameter[] = [];
+        let parameterArray: EnsembleParameter_api[] = [];
         if (parametersOutcome.status === "fulfilled") {
-            parameterArr = buildParameterArrFromApiResponse(parametersOutcome.value);
+            parameterArray = parametersOutcome.value;
         }
 
-        const sensitivitiesOutcome = sensitivitiesOutcomeArr[i];
+        const sensitivitiesOutcome = sensitivitiesOutcomeArray[i];
         console.debug(`sensitivitiesOutcome[${i}]:`, sensitivitiesOutcome.status);
-        let sensitivityArr: Sensitivity[] | null = null;
+        let sensitivityArray: EnsembleSensitivity_api[] = [];
         if (sensitivitiesOutcome.status === "fulfilled") {
-            sensitivityArr = buildSensitivityArrFromApiResponse(sensitivitiesOutcome.value);
+            sensitivityArray = sensitivitiesOutcome.value;
         }
 
-        outEnsembleArr.push(
-            new Ensemble(
-                ensembleDetails.field_identifier,
-                ensembleDetails.case_uuid,
-                ensembleDetails.case_name,
-                ensembleDetails.name,
-                ensembleDetails.realizations,
-                parameterArr,
-                sensitivityArr,
-                userEnsembleSettings[i].color,
-                userEnsembleSettings[i].customName
-            )
-        );
+        resMap[ensembleIdents[i].toString()] = {
+            ensembleDetails: ensembleDetails,
+            parameters: parameterArray,
+            sensitivities: sensitivityArray,
+        };
     }
 
-    return new EnsembleSet(outEnsembleArr);
+    return resMap;
 }
 
-function buildSensitivityArrFromApiResponse(apiSensitivityArr: EnsembleSensitivity_api[]): Sensitivity[] {
-    const retSensitivityArr: Sensitivity[] = [];
+function buildSensitivityArrFromApiResponse(apiSensitivityArray: EnsembleSensitivity_api[]): Sensitivity[] {
+    const retSensitivityArray: Sensitivity[] = [];
 
-    for (const apiSens of apiSensitivityArr) {
-        const caseArr: SensitivityCase[] = [];
+    for (const apiSens of apiSensitivityArray) {
+        const caseArray: SensitivityCase[] = [];
         for (const apiCase of apiSens.cases) {
-            caseArr.push({
+            caseArray.push({
                 name: apiCase.name,
                 realizations: apiCase.realizations,
             });
         }
 
-        const convertSensitivityType = (apiSensType: SensitivityType_api): SensitivityType => {
-            switch (apiSensType) {
-                case SensitivityType_api.MONTECARLO:
-                    return SensitivityType.MONTECARLO;
-                case SensitivityType_api.SCENARIO:
-                    return SensitivityType.SCENARIO;
-                default:
-                    throw new Error(`Unhandled sensitivity type: ${apiSensType}`);
-            }
-        };
-
-        retSensitivityArr.push({
+        retSensitivityArray.push({
             name: apiSens.name,
-            type: convertSensitivityType(apiSens.type),
-            cases: caseArr,
+            type: apiSens.type,
+            cases: caseArray,
         });
     }
 
-    return retSensitivityArr;
+    return retSensitivityArray;
 }
 
-function buildParameterArrFromApiResponse(apiParameterArr: EnsembleParameter_api[]): Parameter[] {
-    const retParameterArr: Parameter[] = [];
+function buildParameterArrFromApiResponse(apiParameterArray: EnsembleParameter_api[]): Parameter[] {
+    const retParameterArray: Parameter[] = [];
 
-    for (const apiPar of apiParameterArr) {
-        if (apiPar.is_numerical) {
+    for (const apiPar of apiParameterArray) {
+        if (apiPar.is_discrete) {
+            const retPar: DiscreteParameter = {
+                type: ParameterType.DISCRETE,
+                name: apiPar.name,
+                groupName: apiPar.group_name,
+                description: apiPar.descriptive_name,
+                isConstant: apiPar.is_constant,
+                realizations: apiPar.realizations,
+                values: apiPar.values,
+            };
+            retParameterArray.push(retPar);
+        } else {
             const retPar: ContinuousParameter = {
                 type: ParameterType.CONTINUOUS,
                 name: apiPar.name,
@@ -167,20 +288,9 @@ function buildParameterArrFromApiResponse(apiParameterArr: EnsembleParameter_api
                 realizations: apiPar.realizations,
                 values: apiPar.values as number[],
             };
-            retParameterArr.push(retPar);
-        } else {
-            const retPar: DiscreteParameter = {
-                type: ParameterType.DISCRETE,
-                name: apiPar.name,
-                groupName: apiPar.group_name,
-                description: apiPar.descriptive_name,
-                isConstant: apiPar.is_constant,
-                realizations: apiPar.realizations,
-                values: apiPar.values,
-            };
-            retParameterArr.push(retPar);
+            retParameterArray.push(retPar);
         }
     }
 
-    return retParameterArr;
+    return retParameterArray;
 }

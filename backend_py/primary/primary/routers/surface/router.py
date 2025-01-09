@@ -7,9 +7,9 @@ from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.surface_access import SurfaceAccess
-from primary.services.smda_access.stratigraphy_access import StratigraphyAccess, StratigraphicUnit
+from primary.services.smda_access import SmdaAccess, StratigraphicUnit
 from primary.services.smda_access.stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from primary.services.smda_access.mocked_drogon_smda_access import _mocked_stratigraphy_access
+from primary.services.smda_access.drogon import DrogonSmdaAccess
 from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.utils.surface_intersect_with_polyline import intersect_surface_with_polyline
 from primary.services.utils.authenticated_user import AuthenticatedUser
@@ -17,6 +17,7 @@ from primary.auth.auth_helper import AuthHelper
 from primary.services.surface_query_service.surface_query_service import batch_sample_surface_in_points_async
 from primary.services.surface_query_service.surface_query_service import RealizationSampleResult
 from primary.utils.response_perf_metrics import ResponsePerfMetrics
+from primary.utils.drogon import is_drogon_identifier
 
 from . import converters
 from . import schemas
@@ -287,12 +288,30 @@ async def get_misfit_surface_data(
     obs_surf_addr_str: Annotated[str, Query(description="Address of observed surface, only supported address type is *OBS*")],
     sim_surf_addr_str: Annotated[str, Query(description="Address of simulated surface, supported type is *PARTIAL*")],
     statistic_functions: Annotated[list[schemas.SurfaceStatisticFunction], Query(description="Statistics to calculate")],
-    realizations: Annotated[list[int], Query(description="Realization numbers")],
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations encoded as string to include. If not specified, all realizations will be included.")] = None,
     data_format: Annotated[Literal["float", "png"], Query(description="Format of binary data in the response")] = "float",
     resample_to: Annotated[schemas.SurfaceDef | None, Depends(dependencies.get_resample_to_param_from_keyval_str)] = None,
     # fmt:on
 ) -> list[schemas.SurfaceDataFloat]:
     raise HTTPException(status.HTTP_501_NOT_IMPLEMENTED)
+
+
+@router.get("/stratigraphic_units")
+async def get_stratigraphic_units(
+    # fmt:off
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    # fmt:on
+) -> list[schemas.StratigraphicUnit]:
+    perf_metrics = ResponsePerfMetrics(response)
+
+    strat_units = await _get_stratigraphic_units_for_case_async(authenticated_user, case_uuid)
+    api_strat_units = [converters.to_api_stratigraphic_unit(strat_unit) for strat_unit in strat_units]
+
+    LOGGER.info(f"Got stratigraphic units in: {perf_metrics.to_string()}")
+
+    return api_strat_units
 
 
 async def _get_stratigraphic_units_for_case_async(
@@ -304,13 +323,13 @@ async def _get_stratigraphic_units_for_case_async(
     strat_column_identifier = await case_inspector.get_stratigraphic_column_identifier_async()
     perf_metrics.record_lap("get-strat-ident")
 
-    strat_access: StratigraphyAccess | _mocked_stratigraphy_access.StratigraphyAccess
-    if strat_column_identifier == "DROGON_HAS_NO_STRATCOLUMN":
-        strat_access = _mocked_stratigraphy_access.StratigraphyAccess(authenticated_user.get_smda_access_token())
+    smda_access: SmdaAccess | DrogonSmdaAccess
+    if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
+        smda_access = DrogonSmdaAccess()
     else:
-        strat_access = StratigraphyAccess(authenticated_user.get_smda_access_token())
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
-    strat_units = await strat_access.get_stratigraphic_units(strat_column_identifier)
+    strat_units = await smda_access.get_stratigraphic_units(strat_column_identifier)
     perf_metrics.record_lap("get-strat-units")
 
     LOGGER.info(f"Got stratigraphic units for case in : {perf_metrics.to_string()}")
