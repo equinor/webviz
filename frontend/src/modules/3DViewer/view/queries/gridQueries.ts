@@ -1,4 +1,7 @@
+import { GetGridParameterData_api, GetGridSurfaceData_api, getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
+
+import { ExtractParametersAndAllowNulls, disableIfAnyParameterNull } from "src/api/apiUtils";
 
 import {
     GridMappedProperty_trans,
@@ -6,106 +9,40 @@ import {
     transformGridMappedProperty,
     transformGridSurface,
 } from "./queryDataTransforms";
-import { gridSurfaceOptions } from "@api";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export function useGridSurfaceQuery(
-    caseUuid: string | null,
-    ensembleName: string | null,
-    gridName: string | null,
-    realizationNum: number | null,
-    i_min?: number,
-    i_max?: number,
-    j_min?: number,
-    j_max?: number,
-    k_min?: number,
-    k_max?: number
+    options: ExtractParametersAndAllowNulls<GetGridSurfaceData_api>
 ): UseQueryResult<GridSurface_trans> {
     return useQuery({
-        ...gridSurfaceOptions
-        queryKey: [
-            "getGridSurface",
-            caseUuid,
-            ensembleName,
-            gridName,
-            realizationNum,
-            i_min,
-            i_max,
-            j_min,
-            j_max,
-            k_min,
-            k_max,
-        ],
-        queryFn: () =>
-            apiService.grid3D.gridSurface(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                gridName ?? "",
-                realizationNum ?? 0,
-                i_min,
-                i_max,
-                j_min,
-                j_max,
-                k_min,
-                k_max
-            ),
+        ...getGridSurfaceOptions({
+            query: {
+                ...options.query,
+                case_uuid: options.query.case_uuid ?? "",
+                ensemble_name: options.query.ensemble_name ?? "",
+                grid_name: options.query.grid_name ?? "",
+                realization_num: options.query.realization_num ?? 0,
+            },
+        }),
         select: transformGridSurface,
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName && gridName && realizationNum !== null ? true : false,
+        enabled: disableIfAnyParameterNull(options),
     });
 }
 
 export function useGridParameterQuery(
-    caseUuid: string | null,
-    ensembleName: string | null,
-    gridName: string | null,
-    parameterName: string | null,
-    parameterDateOrValue: string | null,
-    realizationNum: number | null,
-    i_min?: number,
-    i_max?: number,
-    j_min?: number,
-    j_max?: number,
-    k_min?: number,
-    k_max?: number
+    options: ExtractParametersAndAllowNulls<GetGridParameterData_api>
 ): UseQueryResult<GridMappedProperty_trans> {
     return useQuery({
-        queryKey: [
-            "useGridParameter",
-            caseUuid,
-            ensembleName,
-            gridName,
-            parameterName,
-            realizationNum,
-            parameterDateOrValue,
-            i_min,
-            i_max,
-            j_min,
-            j_max,
-            k_min,
-            k_max,
-        ],
-        queryFn: () =>
-            apiService.grid3D.gridParameter(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                gridName ?? "",
-                parameterName ?? "",
-                realizationNum ?? 0,
-                parameterDateOrValue,
-                i_min,
-                i_max,
-                j_min,
-                j_max,
-                k_min,
-                k_max
-            ),
+        ...getGridParameterOptions({
+            query: {
+                ...options.query,
+                case_uuid: options.query.case_uuid ?? "",
+                ensemble_name: options.query.ensemble_name ?? "",
+                grid_name: options.query.grid_name ?? "",
+                parameter_name: options.query.parameter_name ?? "",
+                realization_num: options.query.realization_num ?? 0,
+            },
+        }),
         select: transformGridMappedProperty,
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName && gridName && parameterName && realizationNum !== null ? true : false,
+        enabled: disableIfAnyParameterNull(options),
     });
 }

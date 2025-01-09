@@ -6,7 +6,7 @@ export default defineConfig({
     output: {
         format: "prettier",
         lint: "eslint",
-        path: "./src/api",
+        path: "./src/api/autogen/",
     },
     experimentalParser: true,
     plugins: [

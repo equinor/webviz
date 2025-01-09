@@ -7,7 +7,7 @@
         "dev": "vite --host",
         "build": "tsc && NODE_OPTIONS='--max-old-space-size=8192' vite build",
         "preview": "vite preview",
-        "generate-api": "openapi-ts --name ApiService && node scripts/add-api-suffix.cjs --suffix '_api' --dir src/api --exportTanstackQueryFromIndex",
+        "generate-api": "openapi-ts && node scripts/add-api-suffix.cjs --suffix '_api' --dir src/api/autogen --exportTanstackQueryFromIndex",
         "typecheck": "tsc --noEmit",
         "lint": "eslint 'src/**/*.+(ts|tsx|js|jsx|json)' 'tests/**/*.+(ts|tsx|js|jsx|json)' --max-warnings=0",
         "depscheck": "dependency-cruise src",

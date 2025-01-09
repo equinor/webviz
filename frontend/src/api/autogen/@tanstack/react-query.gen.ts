@@ -10,11 +10,13 @@ import {
     getAlive,
     getAliveProtected,
     getCases,
+    getDeltaEnsembleRealizationsVectorData,
+    getDeltaEnsembleStatisticalVectorData,
+    getDeltaEnsembleVectorList,
     getDeltaSurfaceData,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
     getEnsembles,
-    getFieldWellTrajectories,
     getFields,
     getGridModelsInfo,
     getGridParameter,
@@ -33,18 +35,19 @@ import {
     getPolygonsData,
     getPolygonsDirectory,
     getRealizationData,
-    getRealizationGroupTreeData,
+    getRealizationFlowNetwork,
     getRealizationSurfacesMetadata,
     getRealizationVectorAtTimestamp,
     getRealizationsTablesAreEqual,
     getRealizationsVectorData,
-    getRftInfo,
     getSeismicCubeMetaList,
     getSensitivities,
     getStatisticalVectorData,
     getStatisticalVectorDataPerSensitivity,
+    getStratigraphicUnits,
     getSurfaceData,
     getTableData,
+    getTableDefinition,
     getTableDefinitions,
     getTimestampsList,
     getUserPhoto,
@@ -57,7 +60,9 @@ import {
     getWellboreCompletions,
     getWellboreLogCurveHeaders,
     getWellborePerforations,
-    getWellborePicksAndStratigraphicUnits,
+    getWellborePickIdentifiers,
+    getWellborePicksForPickIdentifier,
+    getWellborePicksForWellbore,
     loginRoute,
     postGetAggregatedPerRealizationTableData,
     postGetAggregatedStatisticalTableData,
@@ -72,11 +77,13 @@ import type {
     GetAliveData_api,
     GetAliveProtectedData_api,
     GetCasesData_api,
+    GetDeltaEnsembleRealizationsVectorDataData_api,
+    GetDeltaEnsembleStatisticalVectorDataData_api,
+    GetDeltaEnsembleVectorListData_api,
     GetDeltaSurfaceDataData_api,
     GetDrilledWellboreHeadersData_api,
     GetEnsembleDetailsData_api,
     GetEnsemblesData_api,
-    GetFieldWellTrajectoriesData_api,
     GetFieldsData_api,
     GetGridModelsInfoData_api,
     GetGridParameterData_api,
@@ -95,18 +102,19 @@ import type {
     GetPolygonsDataData_api,
     GetPolygonsDirectoryData_api,
     GetRealizationDataData_api,
-    GetRealizationGroupTreeDataData_api,
+    GetRealizationFlowNetworkData_api,
     GetRealizationSurfacesMetadataData_api,
     GetRealizationVectorAtTimestampData_api,
     GetRealizationsTablesAreEqualData_api,
     GetRealizationsVectorDataData_api,
-    GetRftInfoData_api,
     GetSeismicCubeMetaListData_api,
     GetSensitivitiesData_api,
     GetStatisticalVectorDataData_api,
     GetStatisticalVectorDataPerSensitivityData_api,
+    GetStratigraphicUnitsData_api,
     GetSurfaceDataData_api,
     GetTableDataData_api,
+    GetTableDefinitionData_api,
     GetTableDefinitionsData_api,
     GetTimestampsListData_api,
     GetUserPhotoData_api,
@@ -119,7 +127,9 @@ import type {
     GetWellboreCompletionsData_api,
     GetWellboreLogCurveHeadersData_api,
     GetWellborePerforationsData_api,
-    GetWellborePicksAndStratigraphicUnitsData_api,
+    GetWellborePickIdentifiersData_api,
+    GetWellborePicksForPickIdentifierData_api,
+    GetWellborePicksForWellboreData_api,
     LoginRouteData_api,
     PostGetAggregatedPerRealizationTableDataData_api,
     PostGetAggregatedPerRealizationTableDataError_api,
@@ -265,6 +275,25 @@ export const getVectorListOptions = (options: Options<GetVectorListData_api>) =>
     });
 };
 
+export const getDeltaEnsembleVectorListQueryKey = (options: Options<GetDeltaEnsembleVectorListData_api>) => [
+    createQueryKey("getDeltaEnsembleVectorList", options),
+];
+
+export const getDeltaEnsembleVectorListOptions = (options: Options<GetDeltaEnsembleVectorListData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDeltaEnsembleVectorList({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getDeltaEnsembleVectorListQueryKey(options),
+    });
+};
+
 export const getRealizationsVectorDataQueryKey = (options: Options<GetRealizationsVectorDataData_api>) => [
     createQueryKey("getRealizationsVectorData", options),
 ];
@@ -281,6 +310,27 @@ export const getRealizationsVectorDataOptions = (options: Options<GetRealization
             return data;
         },
         queryKey: getRealizationsVectorDataQueryKey(options),
+    });
+};
+
+export const getDeltaEnsembleRealizationsVectorDataQueryKey = (
+    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>
+) => [createQueryKey("getDeltaEnsembleRealizationsVectorData", options)];
+
+export const getDeltaEnsembleRealizationsVectorDataOptions = (
+    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>
+) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDeltaEnsembleRealizationsVectorData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getDeltaEnsembleRealizationsVectorDataQueryKey(options),
     });
 };
 
@@ -338,6 +388,27 @@ export const getStatisticalVectorDataOptions = (options: Options<GetStatisticalV
             return data;
         },
         queryKey: getStatisticalVectorDataQueryKey(options),
+    });
+};
+
+export const getDeltaEnsembleStatisticalVectorDataQueryKey = (
+    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>
+) => [createQueryKey("getDeltaEnsembleStatisticalVectorData", options)];
+
+export const getDeltaEnsembleStatisticalVectorDataOptions = (
+    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>
+) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDeltaEnsembleStatisticalVectorData({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getDeltaEnsembleStatisticalVectorDataQueryKey(options),
     });
 };
 
@@ -651,6 +722,25 @@ export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDat
     });
 };
 
+export const getStratigraphicUnitsQueryKey = (options: Options<GetStratigraphicUnitsData_api>) => [
+    createQueryKey("getStratigraphicUnits", options),
+];
+
+export const getStratigraphicUnitsOptions = (options: Options<GetStratigraphicUnitsData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getStratigraphicUnits({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getStratigraphicUnitsQueryKey(options),
+    });
+};
+
 export const getParameterNamesAndDescriptionQueryKey = (options: Options<GetParameterNamesAndDescriptionData_api>) => [
     createQueryKey("getParameterNamesAndDescription", options),
 ];
@@ -857,14 +947,14 @@ export const postGetPolylineIntersectionMutation = (options?: Partial<Options<Po
     return mutationOptions;
 };
 
-export const getRealizationGroupTreeDataQueryKey = (options: Options<GetRealizationGroupTreeDataData_api>) => [
-    createQueryKey("getRealizationGroupTreeData", options),
+export const getRealizationFlowNetworkQueryKey = (options: Options<GetRealizationFlowNetworkData_api>) => [
+    createQueryKey("getRealizationFlowNetwork", options),
 ];
 
-export const getRealizationGroupTreeDataOptions = (options: Options<GetRealizationGroupTreeDataData_api>) => {
+export const getRealizationFlowNetworkOptions = (options: Options<GetRealizationFlowNetworkData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getRealizationGroupTreeData({
+            const { data } = await getRealizationFlowNetwork({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -872,7 +962,7 @@ export const getRealizationGroupTreeDataOptions = (options: Options<GetRealizati
             });
             return data;
         },
-        queryKey: getRealizationGroupTreeDataQueryKey(options),
+        queryKey: getRealizationFlowNetworkQueryKey(options),
     });
 };
 
@@ -950,25 +1040,6 @@ export const getDrilledWellboreHeadersOptions = (options: Options<GetDrilledWell
     });
 };
 
-export const getFieldWellTrajectoriesQueryKey = (options: Options<GetFieldWellTrajectoriesData_api>) => [
-    createQueryKey("getFieldWellTrajectories", options),
-];
-
-export const getFieldWellTrajectoriesOptions = (options: Options<GetFieldWellTrajectoriesData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getFieldWellTrajectories({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getFieldWellTrajectoriesQueryKey(options),
-    });
-};
-
 export const getWellTrajectoriesQueryKey = (options: Options<GetWellTrajectoriesData_api>) => [
     createQueryKey("getWellTrajectories", options),
 ];
@@ -988,16 +1059,14 @@ export const getWellTrajectoriesOptions = (options: Options<GetWellTrajectoriesD
     });
 };
 
-export const getWellborePicksAndStratigraphicUnitsQueryKey = (
-    options: Options<GetWellborePicksAndStratigraphicUnitsData_api>
-) => [createQueryKey("getWellborePicksAndStratigraphicUnits", options)];
+export const getWellborePickIdentifiersQueryKey = (options: Options<GetWellborePickIdentifiersData_api>) => [
+    createQueryKey("getWellborePickIdentifiers", options),
+];
 
-export const getWellborePicksAndStratigraphicUnitsOptions = (
-    options: Options<GetWellborePicksAndStratigraphicUnitsData_api>
-) => {
+export const getWellborePickIdentifiersOptions = (options: Options<GetWellborePickIdentifiersData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getWellborePicksAndStratigraphicUnits({
+            const { data } = await getWellborePickIdentifiers({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1005,7 +1074,45 @@ export const getWellborePicksAndStratigraphicUnitsOptions = (
             });
             return data;
         },
-        queryKey: getWellborePicksAndStratigraphicUnitsQueryKey(options),
+        queryKey: getWellborePickIdentifiersQueryKey(options),
+    });
+};
+
+export const getWellborePicksForPickIdentifierQueryKey = (options: Options<GetWellborePicksForPickIdentifierData_api>) => [
+    createQueryKey("getWellborePicksForPickIdentifier", options),
+];
+
+export const getWellborePicksForPickIdentifierOptions = (options: Options<GetWellborePicksForPickIdentifierData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getWellborePicksForPickIdentifier({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getWellborePicksForPickIdentifierQueryKey(options),
+    });
+};
+
+export const getWellborePicksForWellboreQueryKey = (options: Options<GetWellborePicksForWellboreData_api>) => [
+    createQueryKey("getWellborePicksForWellbore", options),
+];
+
+export const getWellborePicksForWellboreOptions = (options: Options<GetWellborePicksForWellboreData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getWellborePicksForWellbore({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getWellborePicksForWellboreQueryKey(options),
     });
 };
 
@@ -1234,12 +1341,14 @@ export const getObservationsOptions = (options: Options<GetObservationsData_api>
     });
 };
 
-export const getRftInfoQueryKey = (options: Options<GetRftInfoData_api>) => [createQueryKey("getRftInfo", options)];
+export const getTableDefinitionQueryKey = (options: Options<GetTableDefinitionData_api>) => [
+    createQueryKey("getTableDefinition", options),
+];
 
-export const getRftInfoOptions = (options: Options<GetRftInfoData_api>) => {
+export const getTableDefinitionOptions = (options: Options<GetTableDefinitionData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getRftInfo({
+            const { data } = await getTableDefinition({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -1247,7 +1356,7 @@ export const getRftInfoOptions = (options: Options<GetRftInfoData_api>) => {
             });
             return data;
         },
-        queryKey: getRftInfoQueryKey(options),
+        queryKey: getTableDefinitionQueryKey(options),
     });
 };
 

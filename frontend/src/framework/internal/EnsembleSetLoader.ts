@@ -1,5 +1,12 @@
-import { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import {
+    EnsembleDetails_api,
+    EnsembleParameter_api,
+    EnsembleSensitivity_api,
+    SensitivityType_api,
+    getEnsembleDetailsOptions,
+    getParametersOptions,
+    getSensitivitiesOptions,
+} from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
 import { QueryClient } from "@tanstack/react-query";
@@ -151,9 +158,6 @@ async function loadEnsembleApiDataMapFromBackend(
 ): Promise<EnsembleIdentStringToEnsembleApiDataMap> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
 
-    const STALE_TIME = 5 * 60 * 1000;
-    const CACHE_TIME = 5 * 60 * 1000;
-
     const ensembleDetailsPromiseArray: Promise<EnsembleDetails_api>[] = [];
     const parametersPromiseArray: Promise<EnsembleParameter_api[]>[] = [];
     const sensitivitiesPromiseArray: Promise<EnsembleSensitivity_api[]>[] = [];
@@ -252,9 +256,20 @@ function buildSensitivityArrFromApiResponse(apiSensitivityArray: EnsembleSensiti
             });
         }
 
+        const convertSensitivityType = (apiType: SensitivityType_api): SensitivityType => {
+            switch (apiType) {
+                case SensitivityType_api.MONTECARLO:
+                    return SensitivityType.MONTECARLO;
+                case SensitivityType_api.SCENARIO:
+                    return SensitivityType.SCENARIO;
+                default:
+                    throw new Error(`Unhandled sensitivity type: ${apiType}`);
+            }
+        };
+
         retSensitivityArray.push({
             name: apiSens.name,
-            type: apiSens.type,
+            type: convertSensitivityType(apiSens.type),
             cases: caseArray,
         });
     }

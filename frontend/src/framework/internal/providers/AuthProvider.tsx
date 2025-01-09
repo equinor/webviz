@@ -1,6 +1,6 @@
 import React from "react";
 
-import { UserInfo_api, loggedInUser } from "@api";
+import { UserInfo_api, getLoggedInUser } from "@api";
 
 export enum AuthState {
     LoggedIn = "LoggedIn",
@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = (props) 
     const [userInfo, setUserInfo] = React.useState<UserInfo_api | null>(null);
 
     React.useEffect(() => {
-        loggedInUser({
+        getLoggedInUser({
             throwOnError: true,
         })
             .then((user) => {

@@ -10,6 +10,15 @@ import type {
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
+    GetDeltaEnsembleRealizationsVectorDataData_api,
+    GetDeltaEnsembleRealizationsVectorDataError_api,
+    GetDeltaEnsembleRealizationsVectorDataResponse_api,
+    GetDeltaEnsembleStatisticalVectorDataData_api,
+    GetDeltaEnsembleStatisticalVectorDataError_api,
+    GetDeltaEnsembleStatisticalVectorDataResponse_api,
+    GetDeltaEnsembleVectorListData_api,
+    GetDeltaEnsembleVectorListError_api,
+    GetDeltaEnsembleVectorListResponse_api,
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataError_api,
     GetDeltaSurfaceDataResponse_api,
@@ -22,9 +31,6 @@ import type {
     GetEnsemblesData_api,
     GetEnsemblesError_api,
     GetEnsemblesResponse_api,
-    GetFieldWellTrajectoriesData_api,
-    GetFieldWellTrajectoriesError_api,
-    GetFieldWellTrajectoriesResponse_api,
     GetFieldsData_api,
     GetFieldsResponse_api,
     GetGridModelsInfoData_api,
@@ -78,9 +84,9 @@ import type {
     GetRealizationDataData_api,
     GetRealizationDataError_api,
     GetRealizationDataResponse_api,
-    GetRealizationGroupTreeDataData_api,
-    GetRealizationGroupTreeDataError_api,
-    GetRealizationGroupTreeDataResponse_api,
+    GetRealizationFlowNetworkData_api,
+    GetRealizationFlowNetworkError_api,
+    GetRealizationFlowNetworkResponse_api,
     GetRealizationSurfacesMetadataData_api,
     GetRealizationSurfacesMetadataError_api,
     GetRealizationSurfacesMetadataResponse_api,
@@ -93,9 +99,6 @@ import type {
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataError_api,
     GetRealizationsVectorDataResponse_api,
-    GetRftInfoData_api,
-    GetRftInfoError_api,
-    GetRftInfoResponse_api,
     GetSeismicCubeMetaListData_api,
     GetSeismicCubeMetaListError_api,
     GetSeismicCubeMetaListResponse_api,
@@ -108,12 +111,18 @@ import type {
     GetStatisticalVectorDataPerSensitivityError_api,
     GetStatisticalVectorDataPerSensitivityResponse_api,
     GetStatisticalVectorDataResponse_api,
+    GetStratigraphicUnitsData_api,
+    GetStratigraphicUnitsError_api,
+    GetStratigraphicUnitsResponse_api,
     GetSurfaceDataData_api,
     GetSurfaceDataError_api,
     GetSurfaceDataResponse_api,
     GetTableDataData_api,
     GetTableDataError_api,
     GetTableDataResponse_api,
+    GetTableDefinitionData_api,
+    GetTableDefinitionError_api,
+    GetTableDefinitionResponse_api,
     GetTableDefinitionsData_api,
     GetTableDefinitionsError_api,
     GetTableDefinitionsResponse_api,
@@ -150,9 +159,15 @@ import type {
     GetWellborePerforationsData_api,
     GetWellborePerforationsError_api,
     GetWellborePerforationsResponse_api,
-    GetWellborePicksAndStratigraphicUnitsData_api,
-    GetWellborePicksAndStratigraphicUnitsError_api,
-    GetWellborePicksAndStratigraphicUnitsResponse_api,
+    GetWellborePickIdentifiersData_api,
+    GetWellborePickIdentifiersError_api,
+    GetWellborePickIdentifiersResponse_api,
+    GetWellborePicksForPickIdentifierData_api,
+    GetWellborePicksForPickIdentifierError_api,
+    GetWellborePicksForPickIdentifierResponse_api,
+    GetWellborePicksForWellboreData_api,
+    GetWellborePicksForWellboreError_api,
+    GetWellborePicksForWellboreResponse_api,
     LoginRouteData_api,
     LoginRouteError_api,
     PostGetAggregatedPerRealizationTableDataData_api,
@@ -241,6 +256,27 @@ export const getVectorList = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get Delta Ensemble Vector List
+ * Get list of all vectors for a delta ensemble based on all vectors in a given Sumo ensemble, excluding any historical vectors
+ *
+ * Definition:
+ *
+ * delta_ensemble = comparison_ensemble - reference_ensemble
+ */
+export const getDeltaEnsembleVectorList = <ThrowOnError extends boolean = false>(
+    options: Options<GetDeltaEnsembleVectorListData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetDeltaEnsembleVectorListResponse_api,
+        GetDeltaEnsembleVectorListError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/timeseries/delta_ensemble_vector_list/",
+    });
+};
+
+/**
  * Get Realizations Vector Data
  * Get vector data per realization
  */
@@ -254,6 +290,27 @@ export const getRealizationsVectorData = <ThrowOnError extends boolean = false>(
     >({
         ...options,
         url: "/timeseries/realizations_vector_data/",
+    });
+};
+
+/**
+ * Get Delta Ensemble Realizations Vector Data
+ * Get vector data per realization
+ *
+ * Definition:
+ *
+ * delta_ensemble = comparison_ensemble - reference_ensemble
+ */
+export const getDeltaEnsembleRealizationsVectorData = <ThrowOnError extends boolean = false>(
+    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetDeltaEnsembleRealizationsVectorDataResponse_api,
+        GetDeltaEnsembleRealizationsVectorDataError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/timeseries/delta_ensemble_realizations_vector_data/",
     });
 };
 
@@ -303,6 +360,27 @@ export const getStatisticalVectorData = <ThrowOnError extends boolean = false>(
     >({
         ...options,
         url: "/timeseries/statistical_vector_data/",
+    });
+};
+
+/**
+ * Get Delta Ensemble Statistical Vector Data
+ * Get statistical vector data for an ensemble
+ *
+ * Definition:
+ *
+ * delta_ensemble = comparison_ensemble - reference_ensemble
+ */
+export const getDeltaEnsembleStatisticalVectorData = <ThrowOnError extends boolean = false>(
+    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetDeltaEnsembleStatisticalVectorDataResponse_api,
+        GetDeltaEnsembleStatisticalVectorDataError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/timeseries/delta_ensemble_statistical_vector_data/",
     });
 };
 
@@ -507,7 +585,7 @@ export const postGetSampleSurfaceInPoints = <ThrowOnError extends boolean = fals
             "Content-Type": "application/json",
             ...options?.headers,
         },
-        url: "/surface/sample_surface_in_points",
+        url: "/surface/get_sample_surface_in_points",
     });
 };
 
@@ -532,6 +610,18 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetMisfitSurfaceDataResponse_api, GetMisfitSurfaceDataError_api, ThrowOnError>({
         ...options,
         url: "/surface/misfit_surface_data",
+    });
+};
+
+/**
+ * Get Stratigraphic Units
+ */
+export const getStratigraphicUnits = <ThrowOnError extends boolean = false>(
+    options: Options<GetStratigraphicUnitsData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetStratigraphicUnitsResponse_api, GetStratigraphicUnitsError_api, ThrowOnError>({
+        ...options,
+        url: "/surface/stratigraphic_units",
     });
 };
 
@@ -678,18 +768,18 @@ export const postGetPolylineIntersection = <ThrowOnError extends boolean = false
 };
 
 /**
- * Get Realization Group Tree Data
+ * Get Realization Flow Network
  */
-export const getRealizationGroupTreeData = <ThrowOnError extends boolean = false>(
-    options: Options<GetRealizationGroupTreeDataData_api, ThrowOnError>
+export const getRealizationFlowNetwork = <ThrowOnError extends boolean = false>(
+    options: Options<GetRealizationFlowNetworkData_api, ThrowOnError>
 ) => {
     return (options?.client ?? client).get<
-        GetRealizationGroupTreeDataResponse_api,
-        GetRealizationGroupTreeDataError_api,
+        GetRealizationFlowNetworkResponse_api,
+        GetRealizationFlowNetworkError_api,
         ThrowOnError
     >({
         ...options,
-        url: "/group_tree/realization_group_tree_data/",
+        url: "/flow_network/realization_flow_network/",
     });
 };
 
@@ -753,25 +843,8 @@ export const getDrilledWellboreHeaders = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Field Well Trajectories
- * Get well trajectories for field
- */
-export const getFieldWellTrajectories = <ThrowOnError extends boolean = false>(
-    options: Options<GetFieldWellTrajectoriesData_api, ThrowOnError>
-) => {
-    return (options?.client ?? client).get<
-        GetFieldWellTrajectoriesResponse_api,
-        GetFieldWellTrajectoriesError_api,
-        ThrowOnError
-    >({
-        ...options,
-        url: "/well/field_well_trajectories/",
-    });
-};
-
-/**
  * Get Well Trajectories
- * Get well trajectories
+ * Get well trajectories for field
  */
 export const getWellTrajectories = <ThrowOnError extends boolean = false>(
     options: Options<GetWellTrajectoriesData_api, ThrowOnError>
@@ -783,19 +856,53 @@ export const getWellTrajectories = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Wellbore Picks And Stratigraphic Units
- * Get well bore picks for a single well bore
+ * Get Wellbore Pick Identifiers
+ * Get wellbore pick identifiers for field and stratigraphic column
  */
-export const getWellborePicksAndStratigraphicUnits = <ThrowOnError extends boolean = false>(
-    options: Options<GetWellborePicksAndStratigraphicUnitsData_api, ThrowOnError>
+export const getWellborePickIdentifiers = <ThrowOnError extends boolean = false>(
+    options: Options<GetWellborePickIdentifiersData_api, ThrowOnError>
 ) => {
     return (options?.client ?? client).get<
-        GetWellborePicksAndStratigraphicUnitsResponse_api,
-        GetWellborePicksAndStratigraphicUnitsError_api,
+        GetWellborePickIdentifiersResponse_api,
+        GetWellborePickIdentifiersError_api,
         ThrowOnError
     >({
         ...options,
-        url: "/well/wellbore_picks_and_stratigraphic_units/",
+        url: "/well/wellbore_pick_identifiers/",
+    });
+};
+
+/**
+ * Get Wellbore Picks For Pick Identifier
+ * Get wellbore picks for field and pick identifier
+ */
+export const getWellborePicksForPickIdentifier = <ThrowOnError extends boolean = false>(
+    options: Options<GetWellborePicksForPickIdentifierData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetWellborePicksForPickIdentifierResponse_api,
+        GetWellborePicksForPickIdentifierError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/well/wellbore_picks_for_pick_identifier/",
+    });
+};
+
+/**
+ * Get Wellbore Picks For Wellbore
+ * Get wellbore picks for field and pick identifier
+ */
+export const getWellborePicksForWellbore = <ThrowOnError extends boolean = false>(
+    options: Options<GetWellborePicksForWellboreData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetWellborePicksForWellboreResponse_api,
+        GetWellborePicksForWellboreError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/well/wellbore_picks_for_wellbore/",
     });
 };
 
@@ -958,12 +1065,14 @@ export const getObservations = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Rft Info
+ * Get Table Definition
  */
-export const getRftInfo = <ThrowOnError extends boolean = false>(options: Options<GetRftInfoData_api, ThrowOnError>) => {
-    return (options?.client ?? client).get<GetRftInfoResponse_api, GetRftInfoError_api, ThrowOnError>({
+export const getTableDefinition = <ThrowOnError extends boolean = false>(
+    options: Options<GetTableDefinitionData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetTableDefinitionResponse_api, GetTableDefinitionError_api, ThrowOnError>({
         ...options,
-        url: "/rft/rft_info",
+        url: "/rft/table_definition",
     });
 };
 

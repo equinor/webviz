@@ -1,8 +1,7 @@
-import { apiService } from "@framework/ApiService";
+import { getGridParameterOptions, getGridSurfaceOptions } from "@api";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/layers/LayerRegistry";
-import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/layers/_utils/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settings/settingsTypes";
 import {
     GridMappedProperty_trans,
@@ -144,45 +143,41 @@ export class RealizationGridLayer
 
         const gridParameterPromise = queryClient
             .fetchQuery({
-                queryKey,
-                queryFn: () =>
-                    apiService.grid3D.gridParameter(
-                        ensembleIdent?.getCaseUuid() ?? "",
-                        ensembleIdent?.getEnsembleName() ?? "",
-                        gridName ?? "",
-                        attribute ?? "",
-                        realizationNum ?? 0,
-                        timeOrInterval,
-                        iMin,
-                        iMax - 1,
-                        jMin,
-                        jMax - 1,
-                        kMin,
-                        kMax
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getGridParameterOptions({
+                    query: {
+                        case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                        ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                        grid_name: gridName ?? "",
+                        parameter_name: attribute ?? "",
+                        parameter_time_or_interval_str: timeOrInterval,
+                        realization_num: realizationNum ?? 0,
+                        i_min: iMin,
+                        i_max: iMax - 1,
+                        j_min: jMin,
+                        j_max: jMax - 1,
+                        k_min: kMin,
+                        k_max: kMax,
+                    },
+                }),
             })
             .then(transformGridMappedProperty);
 
         const gridSurfacePromise = queryClient
             .fetchQuery({
-                queryKey: ["getGridData", ensembleIdent, gridName, realizationNum, iMin, iMax, jMin, jMax, kMin, kMax],
-                queryFn: () =>
-                    apiService.grid3D.gridSurface(
-                        ensembleIdent?.getCaseUuid() ?? "",
-                        ensembleIdent?.getEnsembleName() ?? "",
-                        gridName ?? "",
-                        realizationNum ?? 0,
-                        iMin,
-                        iMax - 1,
-                        jMin,
-                        jMax - 1,
-                        kMin,
-                        kMax
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getGridSurfaceOptions({
+                    query: {
+                        case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                        ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                        grid_name: gridName ?? "",
+                        realization_num: realizationNum ?? 0,
+                        i_min: iMin,
+                        i_max: iMax - 1,
+                        j_min: jMin,
+                        j_max: jMax - 1,
+                        k_min: kMin,
+                        k_max: kMax,
+                    },
+                }),
             })
             .then(transformGridSurface);
 

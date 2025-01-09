@@ -87,14 +87,15 @@ export type Completions_api = {
     khMax: Array<number>;
 };
 
-export type DatedTree_api = {
+export type DatedFlowNetwork_api = {
     dates: Array<string>;
-    tree: TreeNode_api;
+    network: NetworkNode_api;
 };
 
 export type EnsembleDetails_api = {
     name: string;
     field_identifier: string;
+    stratigraphic_column_identifier: string;
     case_name: string;
     case_uuid: string;
     realizations: Array<number>;
@@ -111,7 +112,7 @@ export type EnsembleInfo_api = {
 export type EnsembleParameter_api = {
     name: string;
     is_logarithmic: boolean;
-    is_numerical: boolean;
+    is_discrete: boolean;
     is_constant: boolean;
     group_name: string | null;
     descriptive_name: string | null;
@@ -123,7 +124,7 @@ export type EnsembleParameterDescription_api = {
     name: string;
     group_name: string | null;
     descriptive_name: string | null;
-    is_numerical: boolean;
+    is_discrete: boolean;
 };
 
 /**
@@ -167,6 +168,17 @@ export type FenceMeshSection_api = {
 
 export type FieldInfo_api = {
     field_identifier: string;
+};
+
+export type FlowNetworkData_api = {
+    edgeMetadataList: Array<FlowNetworkMetadata_api>;
+    nodeMetadataList: Array<FlowNetworkMetadata_api>;
+    datedNetworks: Array<DatedFlowNetwork_api>;
+};
+
+export type FlowNetworkMetadata_api = {
+    key: string;
+    label: string;
 };
 
 export enum FlowRateType_api {
@@ -264,17 +276,6 @@ export type GridDimensions_api = {
     i_count: number;
     j_count: number;
     k_count: number;
-};
-
-export type GroupTreeData_api = {
-    edge_metadata_list: Array<GroupTreeMetadata_api>;
-    node_metadata_list: Array<GroupTreeMetadata_api>;
-    dated_trees: Array<DatedTree_api>;
-};
-
-export type GroupTreeMetadata_api = {
-    key: string;
-    label: string;
 };
 
 export type HttpValidationError_api = {
@@ -381,6 +382,19 @@ export type InplaceVolumetricsTableDefinition_api = {
     identifiersWithValues: Array<InplaceVolumetricsIdentifierWithValues_api>;
 };
 
+export type NetworkNode_api = {
+    node_type: "Group" | "Well";
+    node_label: string;
+    edge_label: string;
+    node_data: {
+        [key: string]: Array<number>;
+    };
+    edge_data: {
+        [key: string]: Array<number>;
+    };
+    children: Array<NetworkNode_api>;
+};
+
 export enum NodeType_api {
     PROD = "prod",
     INJ = "inj",
@@ -422,6 +436,7 @@ export enum PolygonsAttributeType_api {
     PINCHOUT = "pinchout",
     SUBCROP = "subcrop",
     FAULT_LINES = "fault_lines",
+    NAMED_AREA = "named_area",
 }
 
 export type PolygonsMeta_api = {
@@ -471,11 +486,6 @@ export type RepeatedTableColumnData_api = {
     indices: Array<number>;
 };
 
-export type RftInfo_api = {
-    well_name: string;
-    timestamps_utc_ms: Array<number>;
-};
-
 /**
  * A specific RFT (Repeat Formation Tester) observation.
  *
@@ -522,6 +532,16 @@ export type RftRealizationData_api = {
     timestamp_utc_ms: number;
     depth_arr: Array<number>;
     value_arr: Array<number>;
+};
+
+export type RftTableDefinition_api = {
+    response_names: Array<string>;
+    well_infos: Array<RftWellInfo_api>;
+};
+
+export type RftWellInfo_api = {
+    well_name: string;
+    timestamps_utc_ms: Array<number>;
 };
 
 export type SeismicCubeMeta_api = {
@@ -795,19 +815,6 @@ export type TableColumnStatisticalData_api = {
     };
 };
 
-export type TreeNode_api = {
-    node_type: "Group" | "Well";
-    node_label: string;
-    edge_label: string;
-    node_data: {
-        [key: string]: Array<number>;
-    };
-    edge_data: {
-        [key: string]: Array<number>;
-    };
-    children: Array<TreeNode_api>;
-};
-
 export enum UnitType_api {
     METRIC = "METRIC",
     FIELD = "FIELD",
@@ -984,24 +991,29 @@ export type WellboreHeader_api = {
     wellNorthing: number;
     depthReferencePoint: string;
     depthReferenceElevation: number;
+    wellborePurpose: string;
+    wellboreStatus: string;
 };
 
 export type WellboreLogCurveData_api = {
+    name: string;
     indexMin: number;
     indexMax: number;
     minCurveValue: number;
     maxCurveValue: number;
-    dataPoints: Array<Array<number | null>>;
-    curveAlias: string;
-    curveDescription: string;
+    curveAlias: string | null;
+    curveDescription: string | null;
     indexUnit: string;
-    noDataValue: number;
+    noDataValue: number | null;
+    unit: string;
+    curveUnitDesc: string | null;
+    dataPoints: Array<Array<number | null>>;
 };
 
 export type WellboreLogCurveHeader_api = {
     logName: string;
     curveName: string;
-    curveUnit: string;
+    curveUnit: string | null;
 };
 
 export type WellborePerforation_api = {
@@ -1026,15 +1038,11 @@ export type WellborePick_api = {
     md: number;
     mdMsl: number;
     uniqueWellboreIdentifier: string;
+    wellboreUuid: string;
     pickIdentifier: string;
     confidence: string | null;
     depthReferencePoint: string;
     mdUnit: string;
-};
-
-export type WellborePicksAndStratigraphicUnits_api = {
-    wellbore_picks: Array<WellborePick_api>;
-    stratigraphic_units: Array<StratigraphicUnit_api>;
 };
 
 export type WellboreTrajectory_api = {
@@ -1190,6 +1198,49 @@ export type GetVectorListResponses_api = {
 
 export type GetVectorListResponse_api = GetVectorListResponses_api[keyof GetVectorListResponses_api];
 
+export type GetDeltaEnsembleVectorListData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid for comparison ensemble
+         */
+        comparison_case_uuid: string;
+        /**
+         * Comparison ensemble name
+         */
+        comparison_ensemble_name: string;
+        /**
+         * Sumo case uuid for reference ensemble
+         */
+        reference_case_uuid: string;
+        /**
+         * Reference ensemble name
+         */
+        reference_ensemble_name: string;
+    };
+    url: "/timeseries/delta_ensemble_vector_list/";
+};
+
+export type GetDeltaEnsembleVectorListErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetDeltaEnsembleVectorListError_api = GetDeltaEnsembleVectorListErrors_api[keyof GetDeltaEnsembleVectorListErrors_api];
+
+export type GetDeltaEnsembleVectorListResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<VectorDescription_api>;
+};
+
+export type GetDeltaEnsembleVectorListResponse_api =
+    GetDeltaEnsembleVectorListResponses_api[keyof GetDeltaEnsembleVectorListResponses_api];
+
 export type GetRealizationsVectorDataData_api = {
     body?: never;
     path?: never;
@@ -1211,9 +1262,9 @@ export type GetRealizationsVectorDataData_api = {
          */
         resampling_frequency?: Frequency_api | null;
         /**
-         * Optional list of realizations to include. If not specified, all realizations will be returned.
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
-        realizations?: Array<number> | null;
+        realizations_encoded_as_uint_list_str?: string | null;
     };
     url: "/timeseries/realizations_vector_data/";
 };
@@ -1236,6 +1287,62 @@ export type GetRealizationsVectorDataResponses_api = {
 
 export type GetRealizationsVectorDataResponse_api =
     GetRealizationsVectorDataResponses_api[keyof GetRealizationsVectorDataResponses_api];
+
+export type GetDeltaEnsembleRealizationsVectorDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid for comparison ensemble
+         */
+        comparison_case_uuid: string;
+        /**
+         * Comparison ensemble name
+         */
+        comparison_ensemble_name: string;
+        /**
+         * Sumo case uuid for reference ensemble
+         */
+        reference_case_uuid: string;
+        /**
+         * Reference ensemble name
+         */
+        reference_ensemble_name: string;
+        /**
+         * Name of the vector
+         */
+        vector_name: string;
+        /**
+         * Resampling frequency
+         */
+        resampling_frequency: Frequency_api;
+        /**
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
+    };
+    url: "/timeseries/delta_ensemble_realizations_vector_data/";
+};
+
+export type GetDeltaEnsembleRealizationsVectorDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetDeltaEnsembleRealizationsVectorDataError_api =
+    GetDeltaEnsembleRealizationsVectorDataErrors_api[keyof GetDeltaEnsembleRealizationsVectorDataErrors_api];
+
+export type GetDeltaEnsembleRealizationsVectorDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<VectorRealizationData_api>;
+};
+
+export type GetDeltaEnsembleRealizationsVectorDataResponse_api =
+    GetDeltaEnsembleRealizationsVectorDataResponses_api[keyof GetDeltaEnsembleRealizationsVectorDataResponses_api];
 
 export type GetTimestampsListData_api = {
     body?: never;
@@ -1342,9 +1449,9 @@ export type GetStatisticalVectorDataData_api = {
          */
         statistic_functions?: Array<StatisticFunction_api> | null;
         /**
-         * Optional list of realizations to include. If not specified, all realizations will be included.
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
-        realizations?: Array<number> | null;
+        realizations_encoded_as_uint_list_str?: string | null;
     };
     url: "/timeseries/statistical_vector_data/";
 };
@@ -1367,6 +1474,66 @@ export type GetStatisticalVectorDataResponses_api = {
 
 export type GetStatisticalVectorDataResponse_api =
     GetStatisticalVectorDataResponses_api[keyof GetStatisticalVectorDataResponses_api];
+
+export type GetDeltaEnsembleStatisticalVectorDataData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid for comparison ensemble
+         */
+        comparison_case_uuid: string;
+        /**
+         * Comparison ensemble name
+         */
+        comparison_ensemble_name: string;
+        /**
+         * Sumo case uuid for reference ensemble
+         */
+        reference_case_uuid: string;
+        /**
+         * Reference ensemble name
+         */
+        reference_ensemble_name: string;
+        /**
+         * Name of the vector
+         */
+        vector_name: string;
+        /**
+         * Resampling frequency
+         */
+        resampling_frequency: Frequency_api;
+        /**
+         * Optional list of statistics to calculate. If not specified, all statistics will be calculated.
+         */
+        statistic_functions?: Array<StatisticFunction_api> | null;
+        /**
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
+    };
+    url: "/timeseries/delta_ensemble_statistical_vector_data/";
+};
+
+export type GetDeltaEnsembleStatisticalVectorDataErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetDeltaEnsembleStatisticalVectorDataError_api =
+    GetDeltaEnsembleStatisticalVectorDataErrors_api[keyof GetDeltaEnsembleStatisticalVectorDataErrors_api];
+
+export type GetDeltaEnsembleStatisticalVectorDataResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: VectorStatisticData_api;
+};
+
+export type GetDeltaEnsembleStatisticalVectorDataResponse_api =
+    GetDeltaEnsembleStatisticalVectorDataResponses_api[keyof GetDeltaEnsembleStatisticalVectorDataResponses_api];
 
 export type GetStatisticalVectorDataPerSensitivityData_api = {
     body?: never;
@@ -1527,9 +1694,9 @@ export type PostGetAggregatedPerRealizationTableDataData_api = {
          */
         group_by_identifiers?: Array<InplaceVolumetricsIdentifier_api> | null;
         /**
-         * Optional list of realizations to include. If not specified, all realizations will be returned.
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
-        realizations?: Array<number> | null;
+        realizations_encoded_as_uint_list_str?: string | null;
     };
     url: "/inplace_volumetrics/get_aggregated_per_realization_table_data/";
 };
@@ -1587,9 +1754,9 @@ export type PostGetAggregatedStatisticalTableDataData_api = {
          */
         group_by_identifiers?: Array<InplaceVolumetricsIdentifier_api> | null;
         /**
-         * Optional list of realizations to include. If not specified, all realizations will be returned.
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
-        realizations?: Array<number> | null;
+        realizations_encoded_as_uint_list_str?: string | null;
     };
     url: "/inplace_volumetrics/get_aggregated_statistical_table_data/";
 };
@@ -1796,7 +1963,7 @@ export type PostGetSampleSurfaceInPointsData_api = {
          */
         realization_nums: Array<number>;
     };
-    url: "/surface/sample_surface_in_points";
+    url: "/surface/get_sample_surface_in_points";
 };
 
 export type PostGetSampleSurfaceInPointsErrors_api = {
@@ -1878,9 +2045,9 @@ export type GetMisfitSurfaceDataData_api = {
          */
         statistic_functions: Array<SurfaceStatisticFunction_api>;
         /**
-         * Realization numbers
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
-        realizations: Array<number>;
+        realizations_encoded_as_uint_list_str?: string | null;
         /**
          * Format of binary data in the response
          */
@@ -1910,6 +2077,36 @@ export type GetMisfitSurfaceDataResponses_api = {
 };
 
 export type GetMisfitSurfaceDataResponse_api = GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
+
+export type GetStratigraphicUnitsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+    };
+    url: "/surface/stratigraphic_units";
+};
+
+export type GetStratigraphicUnitsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStratigraphicUnitsError_api = GetStratigraphicUnitsErrors_api[keyof GetStratigraphicUnitsErrors_api];
+
+export type GetStratigraphicUnitsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<StratigraphicUnit_api>;
+};
+
+export type GetStratigraphicUnitsResponse_api = GetStratigraphicUnitsResponses_api[keyof GetStratigraphicUnitsResponses_api];
 
 export type GetParameterNamesAndDescriptionData_api = {
     body?: never;
@@ -2363,7 +2560,7 @@ export type PostGetPolylineIntersectionResponses_api = {
 export type PostGetPolylineIntersectionResponse_api =
     PostGetPolylineIntersectionResponses_api[keyof PostGetPolylineIntersectionResponses_api];
 
-export type GetRealizationGroupTreeDataData_api = {
+export type GetRealizationFlowNetworkData_api = {
     body?: never;
     path?: never;
     query: {
@@ -2388,28 +2585,27 @@ export type GetRealizationGroupTreeDataData_api = {
          */
         node_type_set: Array<NodeType_api>;
     };
-    url: "/group_tree/realization_group_tree_data/";
+    url: "/flow_network/realization_flow_network/";
 };
 
-export type GetRealizationGroupTreeDataErrors_api = {
+export type GetRealizationFlowNetworkErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetRealizationGroupTreeDataError_api =
-    GetRealizationGroupTreeDataErrors_api[keyof GetRealizationGroupTreeDataErrors_api];
+export type GetRealizationFlowNetworkError_api = GetRealizationFlowNetworkErrors_api[keyof GetRealizationFlowNetworkErrors_api];
 
-export type GetRealizationGroupTreeDataResponses_api = {
+export type GetRealizationFlowNetworkResponses_api = {
     /**
      * Successful Response
      */
-    200: GroupTreeData_api;
+    200: FlowNetworkData_api;
 };
 
-export type GetRealizationGroupTreeDataResponse_api =
-    GetRealizationGroupTreeDataResponses_api[keyof GetRealizationGroupTreeDataResponses_api];
+export type GetRealizationFlowNetworkResponse_api =
+    GetRealizationFlowNetworkResponses_api[keyof GetRealizationFlowNetworkResponses_api];
 
 export type GetTableDataData_api = {
     body?: never;
@@ -2528,7 +2724,7 @@ export type GetDrilledWellboreHeadersData_api = {
     path?: never;
     query: {
         /**
-         * Sumo field identifier
+         * Official field identifier
          */
         field_identifier: string;
     };
@@ -2554,49 +2750,18 @@ export type GetDrilledWellboreHeadersResponses_api = {
 export type GetDrilledWellboreHeadersResponse_api =
     GetDrilledWellboreHeadersResponses_api[keyof GetDrilledWellboreHeadersResponses_api];
 
-export type GetFieldWellTrajectoriesData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Sumo field identifier
-         */
-        field_identifier: string;
-        /**
-         * Optional subset of well names
-         */
-        unique_wellbore_identifiers?: Array<string>;
-    };
-    url: "/well/field_well_trajectories/";
-};
-
-export type GetFieldWellTrajectoriesErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetFieldWellTrajectoriesError_api = GetFieldWellTrajectoriesErrors_api[keyof GetFieldWellTrajectoriesErrors_api];
-
-export type GetFieldWellTrajectoriesResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<WellboreTrajectory_api>;
-};
-
-export type GetFieldWellTrajectoriesResponse_api =
-    GetFieldWellTrajectoriesResponses_api[keyof GetFieldWellTrajectoriesResponses_api];
-
 export type GetWellTrajectoriesData_api = {
     body?: never;
     path?: never;
     query: {
         /**
-         * Wellbore uuids
+         * Official field identifier
          */
-        wellbore_uuids: Array<string>;
+        field_identifier: string;
+        /**
+         * Optional subset of wellbore uuids
+         */
+        wellbore_uuids?: Array<string>;
     };
     url: "/well/well_trajectories/";
 };
@@ -2619,41 +2784,104 @@ export type GetWellTrajectoriesResponses_api = {
 
 export type GetWellTrajectoriesResponse_api = GetWellTrajectoriesResponses_api[keyof GetWellTrajectoriesResponses_api];
 
-export type GetWellborePicksAndStratigraphicUnitsData_api = {
+export type GetWellborePickIdentifiersData_api = {
     body?: never;
     path?: never;
     query: {
         /**
-         * Sumo case uuid
+         * Stratigraphic column identifier
          */
-        case_uuid: string;
-        /**
-         * Wellbore uuid
-         */
-        wellbore_uuid: string;
+        strat_column_identifier: string;
     };
-    url: "/well/wellbore_picks_and_stratigraphic_units/";
+    url: "/well/wellbore_pick_identifiers/";
 };
 
-export type GetWellborePicksAndStratigraphicUnitsErrors_api = {
+export type GetWellborePickIdentifiersErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetWellborePicksAndStratigraphicUnitsError_api =
-    GetWellborePicksAndStratigraphicUnitsErrors_api[keyof GetWellborePicksAndStratigraphicUnitsErrors_api];
+export type GetWellborePickIdentifiersError_api = GetWellborePickIdentifiersErrors_api[keyof GetWellborePickIdentifiersErrors_api];
 
-export type GetWellborePicksAndStratigraphicUnitsResponses_api = {
+export type GetWellborePickIdentifiersResponses_api = {
     /**
      * Successful Response
      */
-    200: WellborePicksAndStratigraphicUnits_api;
+    200: Array<string>;
 };
 
-export type GetWellborePicksAndStratigraphicUnitsResponse_api =
-    GetWellborePicksAndStratigraphicUnitsResponses_api[keyof GetWellborePicksAndStratigraphicUnitsResponses_api];
+export type GetWellborePickIdentifiersResponse_api =
+    GetWellborePickIdentifiersResponses_api[keyof GetWellborePickIdentifiersResponses_api];
+
+export type GetWellborePicksForPickIdentifierData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Official field identifier
+         */
+        field_identifier: string;
+        /**
+         * Pick identifier
+         */
+        pick_identifier: string;
+    };
+    url: "/well/wellbore_picks_for_pick_identifier/";
+};
+
+export type GetWellborePicksForPickIdentifierErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetWellborePicksForPickIdentifierError_api =
+    GetWellborePicksForPickIdentifierErrors_api[keyof GetWellborePicksForPickIdentifierErrors_api];
+
+export type GetWellborePicksForPickIdentifierResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellborePick_api>;
+};
+
+export type GetWellborePicksForPickIdentifierResponse_api =
+    GetWellborePicksForPickIdentifierResponses_api[keyof GetWellborePicksForPickIdentifierResponses_api];
+
+export type GetWellborePicksForWellboreData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Wellbore uuid
+         */
+        wellbore_uuid: string;
+    };
+    url: "/well/wellbore_picks_for_wellbore/";
+};
+
+export type GetWellborePicksForWellboreErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetWellborePicksForWellboreError_api =
+    GetWellborePicksForWellboreErrors_api[keyof GetWellborePicksForWellboreErrors_api];
+
+export type GetWellborePicksForWellboreResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellborePick_api>;
+};
+
+export type GetWellborePicksForWellboreResponse_api =
+    GetWellborePicksForWellboreResponses_api[keyof GetWellborePicksForWellboreResponses_api];
 
 export type GetWellboreCompletionsData_api = {
     body?: never;
@@ -3034,7 +3262,7 @@ export type GetObservationsResponses_api = {
 
 export type GetObservationsResponse_api = GetObservationsResponses_api[keyof GetObservationsResponses_api];
 
-export type GetRftInfoData_api = {
+export type GetTableDefinitionData_api = {
     body?: never;
     path?: never;
     query: {
@@ -3047,26 +3275,26 @@ export type GetRftInfoData_api = {
          */
         ensemble_name: string;
     };
-    url: "/rft/rft_info";
+    url: "/rft/table_definition";
 };
 
-export type GetRftInfoErrors_api = {
+export type GetTableDefinitionErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetRftInfoError_api = GetRftInfoErrors_api[keyof GetRftInfoErrors_api];
+export type GetTableDefinitionError_api = GetTableDefinitionErrors_api[keyof GetTableDefinitionErrors_api];
 
-export type GetRftInfoResponses_api = {
+export type GetTableDefinitionResponses_api = {
     /**
      * Successful Response
      */
-    200: Array<RftInfo_api>;
+    200: RftTableDefinition_api;
 };
 
-export type GetRftInfoResponse_api = GetRftInfoResponses_api[keyof GetRftInfoResponses_api];
+export type GetTableDefinitionResponse_api = GetTableDefinitionResponses_api[keyof GetTableDefinitionResponses_api];
 
 export type GetRealizationDataData_api = {
     body?: never;
@@ -3093,9 +3321,9 @@ export type GetRealizationDataData_api = {
          */
         timestamps_utc_ms?: Array<number> | null;
         /**
-         * Realizations
+         * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
-        realizations?: Array<number> | null;
+        realizations_encoded_as_uint_list_str?: string | null;
     };
     url: "/rft/realization_data";
 };

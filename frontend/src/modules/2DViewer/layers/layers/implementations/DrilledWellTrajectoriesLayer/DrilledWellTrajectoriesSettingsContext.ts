@@ -1,8 +1,6 @@
-import { apiService } from "@framework/ApiService";
+import { getDrilledWellboreHeadersOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
-import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/layers/_utils/queryConstants";
-import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/layers/_utils/utils";
 import { SettingType } from "@modules/2DViewer/layers/settings/settingsTypes";
 
 import { DrilledWellTrajectoriesSettings } from "./types";
@@ -66,11 +64,10 @@ export class DrilledWellTrajectoriesSettingsContext implements SettingsContext<D
             const fieldIdentifier = ensemble.getFieldIdentifier();
 
             return await queryClient.fetchQuery({
-                queryKey: ["getDrilledWellboreHeaders", fieldIdentifier],
-                queryFn: () =>
-                    cancelPromiseOnAbort(apiService.well.getDrilledWellboreHeaders(fieldIdentifier), abortSignal),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getDrilledWellboreHeadersOptions({
+                    query: { field_identifier: fieldIdentifier },
+                    signal: abortSignal,
+                }),
             });
         });
         availableSettingsUpdater(SettingType.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
