@@ -1,11 +1,14 @@
-import { Frequency_api, VectorHistoricalData_api, VectorStatisticSensitivityData_api } from "@api";
+import {
+    Frequency_api,
+    VectorHistoricalData_api,
+    VectorStatisticSensitivityData_api,
+    getHistoricalVectorDataOptions,
+    getRealizationsVectorDataOptions,
+    getStatisticalVectorDataPerSensitivityOptions,
+} from "@api";
 import { VectorRealizationData_api } from "@api";
-import { apiService } from "@framework/ApiService";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export function useVectorDataQuery(
     caseUuid: string | undefined,
@@ -17,25 +20,16 @@ export function useVectorDataQuery(
     const allOrNonEmptyRealArr = realizationsToInclude === null || realizationsToInclude.length > 0 ? true : false;
     const realizationsEncodedAsUintListStr = realizationsToInclude ? encodeAsUintListStr(realizationsToInclude) : null;
     return useQuery({
-        queryKey: [
-            "getRealizationsVectorData",
-            caseUuid,
-            ensembleName,
-            vectorName,
-            resampleFrequency,
-            realizationsEncodedAsUintListStr,
-        ],
-        queryFn: () =>
-            apiService.timeseries.getRealizationsVectorData(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                vectorName ?? "",
-                resampleFrequency ?? undefined,
-                realizationsEncodedAsUintListStr
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(caseUuid && ensembleName && vectorName && allOrNonEmptyRealArr),
+        ...getRealizationsVectorDataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+                vector_name: vectorName ?? "",
+                resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+                realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr ?? "",
+            },
+        }),
+        enabled: Boolean(caseUuid && ensembleName && vectorName && allOrNonEmptyRealArr),
     });
 }
 
@@ -46,19 +40,17 @@ export function useStatisticalVectorSensitivityDataQuery(
     resampleFrequency: Frequency_api | null,
     allowEnable: boolean
 ): UseQueryResult<VectorStatisticSensitivityData_api[]> {
+    getStatisticalVectorDataPerSensitivityOptions;
     return useQuery({
-        queryKey: ["getStatisticalVectorDataPerSensitivity", caseUuid, ensembleName, vectorName, resampleFrequency],
-        queryFn: () =>
-            apiService.timeseries.getStatisticalVectorDataPerSensitivity(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                vectorName ?? "",
-                resampleFrequency ?? Frequency_api.MONTHLY,
-                undefined
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(allowEnable && caseUuid && ensembleName && vectorName && resampleFrequency),
+        ...getStatisticalVectorDataPerSensitivityOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+                vector_name: vectorName ?? "",
+                resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+            },
+        }),
+        enabled: Boolean(allowEnable && caseUuid && ensembleName && vectorName && resampleFrequency),
     });
 }
 
@@ -70,16 +62,14 @@ export function useHistoricalVectorDataQuery(
     allowEnable: boolean
 ): UseQueryResult<VectorHistoricalData_api> {
     return useQuery({
-        queryKey: ["getHistoricalVectorData", caseUuid, ensembleName, vectorName, resampleFrequency],
-        queryFn: () =>
-            apiService.timeseries.getHistoricalVectorData(
-                caseUuid ?? "",
-                ensembleName ?? "",
-                vectorName ?? "",
-                resampleFrequency ?? Frequency_api.MONTHLY
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(allowEnable && caseUuid && ensembleName && vectorName && resampleFrequency),
+        ...getHistoricalVectorDataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+                non_historical_vector_name: vectorName ?? "",
+                resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+            },
+        }),
+        enabled: Boolean(allowEnable && caseUuid && ensembleName && vectorName && resampleFrequency),
     });
 }

@@ -1,5 +1,13 @@
-import { Frequency_api, Observations_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import {
+    Frequency_api,
+    Observations_api,
+    getDeltaEnsembleRealizationsVectorData,
+    getDeltaEnsembleStatisticalVectorData,
+    getHistoricalVectorData,
+    getObservations,
+    getRealizationsVectorData,
+    getStatisticalVectorData,
+} from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -16,9 +24,6 @@ import {
     visualizationModeAtom,
 } from "./baseAtoms";
 import { regularEnsembleVectorSpecificationsAtom } from "./derivedAtoms";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export const vectorDataQueriesAtom = atomWithQueries((get) => {
     const vectorSpecifications = get(vectorSpecificationsAtom);
@@ -49,21 +54,25 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                     resampleFrequency,
                     realizationsEncodedAsUintListStr,
                 ],
-                queryFn: () =>
-                    apiService.timeseries.getRealizationsVectorData(
-                        vectorSpecification.ensembleIdent.getCaseUuid() ?? "",
-                        vectorSpecification.ensembleIdent.getEnsembleName() ?? "",
-                        vectorSpecification.vectorName ?? "",
-                        resampleFrequency,
-                        realizationsEncodedAsUintListStr
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
-                enabled: !!(
+                queryFn: async () => {
+                    const { data } = await getRealizationsVectorData({
+                        query: {
+                            case_uuid: vectorSpecification.ensembleIdent.getCaseUuid(),
+                            ensemble_name: vectorSpecification.ensembleIdent.getEnsembleName(),
+                            vector_name: vectorSpecification.vectorName,
+                            resampling_frequency: resampleFrequency,
+                            realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                        },
+                        throwOnError: true,
+                    });
+
+                    return data;
+                },
+                enabled: Boolean(
                     enabled &&
-                    vectorSpecification.vectorName &&
-                    vectorSpecification.ensembleIdent.getCaseUuid() &&
-                    vectorSpecification.ensembleIdent.getEnsembleName()
+                        vectorSpecification.vectorName &&
+                        vectorSpecification.ensembleIdent.getCaseUuid() &&
+                        vectorSpecification.ensembleIdent.getEnsembleName()
                 ),
             });
         }
@@ -84,26 +93,38 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                     resampleFrequency,
                     realizationsEncodedAsUintListStr,
                 ],
-                queryFn: () =>
-                    apiService.timeseries.getDeltaEnsembleRealizationsVectorData(
-                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid(),
-                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName(),
-                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid(),
-                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
-                        vectorSpecification.vectorName ?? "",
-                        resampleFrequency ?? Frequency_api.YEARLY,
-                        realizationsEncodedAsUintListStr
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
-                enabled: !!(
+                queryFn: async () => {
+                    const { data } = await getDeltaEnsembleRealizationsVectorData({
+                        query: {
+                            comparison_case_uuid: vectorSpecification.ensembleIdent
+                                .getComparisonEnsembleIdent()
+                                .getCaseUuid(),
+                            comparison_ensemble_name: vectorSpecification.ensembleIdent
+                                .getComparisonEnsembleIdent()
+                                .getEnsembleName(),
+                            reference_case_uuid: vectorSpecification.ensembleIdent
+                                .getReferenceEnsembleIdent()
+                                .getCaseUuid(),
+                            reference_ensemble_name: vectorSpecification.ensembleIdent
+                                .getReferenceEnsembleIdent()
+                                .getEnsembleName(),
+                            vector_name: vectorSpecification.vectorName,
+                            resampling_frequency: resampleFrequency ?? Frequency_api.YEARLY,
+                            realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                        },
+                        throwOnError: true,
+                    });
+
+                    return data;
+                },
+                enabled: Boolean(
                     enabled &&
-                    resampleFrequency &&
-                    vectorSpecification.vectorName &&
-                    vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid() &&
-                    vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName() &&
-                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid() &&
-                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName()
+                        resampleFrequency &&
+                        vectorSpecification.vectorName &&
+                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid() &&
+                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName() &&
+                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid() &&
+                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName()
                 ),
             });
         }
@@ -145,22 +166,25 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                     resampleFrequency,
                     realizationsEncodedAsUintListStr,
                 ],
-                queryFn: () =>
-                    apiService.timeseries.getStatisticalVectorData(
-                        vectorSpecification.ensembleIdent.getCaseUuid() ?? "",
-                        vectorSpecification.ensembleIdent.getEnsembleName() ?? "",
-                        vectorSpecification.vectorName ?? "",
-                        resampleFrequency ?? Frequency_api.MONTHLY,
-                        undefined,
-                        realizationsEncodedAsUintListStr
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
-                enabled: !!(
+                queryFn: async () => {
+                    const { data } = await getStatisticalVectorData({
+                        query: {
+                            case_uuid: vectorSpecification.ensembleIdent.getCaseUuid(),
+                            ensemble_name: vectorSpecification.ensembleIdent.getEnsembleName(),
+                            vector_name: vectorSpecification.vectorName,
+                            resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+                            realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                        },
+                        throwOnError: true,
+                    });
+
+                    return data;
+                },
+                enabled: Boolean(
                     enabled &&
-                    vectorSpecification.vectorName &&
-                    vectorSpecification.ensembleIdent.getCaseUuid() &&
-                    vectorSpecification.ensembleIdent.getEnsembleName()
+                        vectorSpecification.vectorName &&
+                        vectorSpecification.ensembleIdent.getCaseUuid() &&
+                        vectorSpecification.ensembleIdent.getEnsembleName()
                 ),
             });
         }
@@ -181,27 +205,38 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                     resampleFrequency,
                     realizationsEncodedAsUintListStr,
                 ],
-                queryFn: () =>
-                    apiService.timeseries.getDeltaEnsembleStatisticalVectorData(
-                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid(),
-                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName(),
-                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid(),
-                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
-                        vectorSpecification.vectorName ?? "",
-                        resampleFrequency ?? Frequency_api.MONTHLY,
-                        undefined,
-                        realizationsEncodedAsUintListStr
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
-                enabled: !!(
+                queryFn: async () => {
+                    const { data } = await getDeltaEnsembleStatisticalVectorData({
+                        query: {
+                            comparison_case_uuid: vectorSpecification.ensembleIdent
+                                .getComparisonEnsembleIdent()
+                                .getCaseUuid(),
+                            comparison_ensemble_name: vectorSpecification.ensembleIdent
+                                .getComparisonEnsembleIdent()
+                                .getEnsembleName(),
+                            reference_case_uuid: vectorSpecification.ensembleIdent
+                                .getReferenceEnsembleIdent()
+                                .getCaseUuid(),
+                            reference_ensemble_name: vectorSpecification.ensembleIdent
+                                .getReferenceEnsembleIdent()
+                                .getEnsembleName(),
+                            vector_name: vectorSpecification.vectorName,
+                            resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+                            realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+                        },
+                        throwOnError: true,
+                    });
+
+                    return data;
+                },
+                enabled: Boolean(
                     enabled &&
-                    resampleFrequency &&
-                    vectorSpecification.vectorName &&
-                    vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid() &&
-                    vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName() &&
-                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid() &&
-                    vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName()
+                        resampleFrequency &&
+                        vectorSpecification.vectorName &&
+                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid() &&
+                        vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName() &&
+                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid() &&
+                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName()
                 ),
             });
         }
@@ -233,20 +268,23 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
                 vectorSpecification.vectorName,
                 resampleFrequency,
             ],
-            queryFn: () =>
-                apiService.timeseries.getHistoricalVectorData(
-                    vectorSpecification.ensembleIdent.getCaseUuid() ?? "",
-                    vectorSpecification.ensembleIdent.getEnsembleName() ?? "",
-                    vectorSpecification.vectorName ?? "",
-                    resampleFrequency ?? Frequency_api.MONTHLY
-                ),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
-            enabled: !!(
+            queryFn: async () => {
+                const { data } = await getHistoricalVectorData({
+                    query: {
+                        case_uuid: vectorSpecification.ensembleIdent.getCaseUuid(),
+                        ensemble_name: vectorSpecification.ensembleIdent.getEnsembleName(),
+                        non_historical_vector_name: vectorSpecification.vectorName,
+                        resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
+                    },
+                });
+
+                return data;
+            },
+            enabled: Boolean(
                 enabled &&
-                vectorSpecification.vectorName &&
-                vectorSpecification.ensembleIdent.getCaseUuid() &&
-                vectorSpecification.ensembleIdent.getEnsembleName()
+                    vectorSpecification.vectorName &&
+                    vectorSpecification.ensembleIdent.getCaseUuid() &&
+                    vectorSpecification.ensembleIdent.getEnsembleName()
             ),
         });
     });
@@ -271,10 +309,8 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
     const queries = uniqueEnsembleIdents.map((item) => {
         return () => ({
             queryKey: ["getObservations", item.getCaseUuid()],
-            queryFn: () => apiService.observations.getObservations(item.getCaseUuid() ?? ""),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
-            enabled: !!(showObservations && item.getCaseUuid()),
+            queryFn: () => getObservations({ query: { case_uuid: item.getCaseUuid() } }),
+            enabled: Boolean(showObservations && item.getCaseUuid()),
         });
     });
 

@@ -1,7 +1,6 @@
 import { GetGridParameterData_api, GetGridSurfaceData_api, getGridParameterOptions, getGridSurfaceOptions } from "@api";
+import { ExtractParametersAndAllowNulls } from "@api";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
-
-import { ExtractParametersAndAllowNulls, disableIfAnyParameterNull } from "src/api/apiUtils";
 
 import {
     GridMappedProperty_trans,
@@ -24,7 +23,12 @@ export function useGridSurfaceQuery(
             },
         }),
         select: transformGridSurface,
-        enabled: disableIfAnyParameterNull(options),
+        enabled: Boolean(
+            options.query.case_uuid &&
+                options.query.ensemble_name &&
+                options.query.grid_name &&
+                options.query.realization_num !== null
+        ),
     });
 }
 
@@ -43,6 +47,12 @@ export function useGridParameterQuery(
             },
         }),
         select: transformGridMappedProperty,
-        enabled: disableIfAnyParameterNull(options),
+        enabled: Boolean(
+            options.query.case_uuid &&
+                options.query.ensemble_name &&
+                options.query.grid_name &&
+                options.query.parameter_name &&
+                options.query.realization_num !== null
+        ),
     });
 }

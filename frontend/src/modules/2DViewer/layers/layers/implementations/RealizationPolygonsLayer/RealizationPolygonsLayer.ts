@@ -83,15 +83,17 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
         const polygonsName = settings[SettingType.POLYGONS_NAME].getDelegate().getValue();
         const polygonsAttribute = settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().getValue();
 
-        const queryKey = [
-            "getPolygonsData",
-            ensembleIdent?.getCaseUuid() ?? "",
-            ensembleIdent?.getEnsembleName() ?? "",
-            realizationNum ?? 0,
-            polygonsName ?? "",
-            polygonsAttribute ?? "",
-        ];
-        this._layerDelegate.registerQueryKey(queryKey);
+        const queryOptions = getPolygonsDataOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                realization_num: realizationNum ?? 0,
+                name: polygonsName ?? "",
+                attribute: polygonsAttribute ?? "",
+            },
+        });
+
+        this._layerDelegate.registerQueryKey(queryOptions.queryKey);
 
         const promise = queryClient.fetchQuery({
             ...getPolygonsDataOptions({
@@ -103,7 +105,6 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
                     attribute: polygonsAttribute ?? "",
                 },
             }),
-            queryKey,
         });
 
         return promise;

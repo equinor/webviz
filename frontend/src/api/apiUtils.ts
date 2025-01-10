@@ -23,7 +23,3 @@ export type ExtractParametersAndAllowNulls<TData extends DataShape> = (TData["pa
           }
         : // eslint-disable-next-line @typescript-eslint/ban-types
           {});
-
-export function disableIfAnyParameterNull(options: ExtractParametersAndAllowNulls<DataShape>): boolean {
-    return Object.values(options).every((value) => value !== null);
-}

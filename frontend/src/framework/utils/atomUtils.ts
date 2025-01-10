@@ -1,8 +1,8 @@
 import { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
-import { DefinedInitialDataOptions } from "@tanstack/react-query";
+import { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@tanstack/react-query";
 
 import { Atom, Getter, atom } from "jotai";
-import { atomWithQuery } from "jotai-tanstack-query";
+import { AtomWithQueryOptions, atomWithQuery } from "jotai-tanstack-query";
 import { atomWithReducer } from "jotai/utils";
 
 export function atomWithCompare<Value>(initialValue: Value, areEqualFunc: (prev: Value, next: Value) => boolean) {
@@ -20,7 +20,12 @@ type QueriesOptions<
     TError = DefaultError,
     TData = TQueryFnData,
     TQueryKey extends QueryKey = QueryKey
-> = ((get: Getter) => DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>)[];
+> = ((
+    get: Getter
+) =>
+    | DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>
+    | UndefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>
+    | AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryKey>)[];
 
 export function atomWithQueries<
     TQueryFnData = unknown,

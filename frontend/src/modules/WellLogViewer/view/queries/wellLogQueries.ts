@@ -1,8 +1,5 @@
-import { WellboreLogCurveData_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { WellboreLogCurveData_api, getLogCurveDataOptions } from "@api";
 import { UseQueryResult, useQueries } from "@tanstack/react-query";
-
-import { DEFAULT_OPTIONS } from "./shared";
 
 export function useCurveDataQueries(
     wellboreUuid: string,
@@ -10,10 +7,13 @@ export function useCurveDataQueries(
 ): UseQueryResult<WellboreLogCurveData_api>[] {
     return useQueries({
         queries: curveNames.map((name) => ({
-            queryKey: ["getLogCurveData", wellboreUuid, name],
-            queryFn: () => apiService.well.getLogCurveData(wellboreUuid, name),
+            ...getLogCurveDataOptions({
+                query: {
+                    wellbore_uuid: wellboreUuid,
+                    log_curve_name: name,
+                },
+            }),
             enabled: Boolean(wellboreUuid && name),
-            ...DEFAULT_OPTIONS,
         })),
     });
 }

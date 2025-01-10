@@ -1,4 +1,4 @@
-import { getFieldWellTrajectoriesOptions } from "@api";
+import { getWellTrajectoriesOptions } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
 import { atomWithQuery } from "jotai-tanstack-query";
@@ -18,7 +18,7 @@ export const fieldWellboreTrajectoriesQueryAtom = atomWithQuery((get) => {
     }
 
     return {
-        ...getFieldWellTrajectoriesOptions({
+        ...getWellTrajectoriesOptions({
             query: {
                 field_identifier: fieldIdentifier ?? "",
             },

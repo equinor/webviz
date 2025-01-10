@@ -1,7 +1,6 @@
 import React from "react";
 
-import { Grid3dInfo_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { Grid3dInfo_api, getGridModelsInfoOptions } from "@api";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
@@ -304,20 +303,15 @@ function makeGridParameterDateOrIntervalOptions(datesOrIntervals: (string | null
     return reduced;
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 function useGridModelInfosQuery(ensembleIdent: RegularEnsembleIdent | null, realizationNum: number | null) {
     return useQuery({
-        queryKey: ["getGridModelInfos", ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), realizationNum],
-        queryFn: () =>
-            apiService.grid3D.getGridModelsInfo(
-                ensembleIdent?.getCaseUuid() ?? "",
-                ensembleIdent?.getEnsembleName() ?? "",
-                realizationNum ?? 0
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getGridModelsInfoOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                realization_num: realizationNum ?? 0,
+            },
+        }),
         enabled: Boolean(ensembleIdent && realizationNum !== null),
     });
 }

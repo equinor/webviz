@@ -179,34 +179,37 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const wellboreCasingQuery = useWellboreCasingsQuery(highlightedWellboreUuid ?? undefined);
 
     // Grid surface query
-    const gridSurfaceQuery = useGridSurfaceQuery(
-        ensembleIdent?.getCaseUuid() ?? null,
-        ensembleIdent?.getEnsembleName() ?? null,
-        gridModelName,
-        realization,
-        gridCellIndexRanges.i[0],
-        gridCellIndexRanges.i[1],
-        gridCellIndexRanges.j[0],
-        gridCellIndexRanges.j[1],
-        gridCellIndexRanges.k[0],
-        gridCellIndexRanges.k[1]
-    );
+    const gridSurfaceQuery = useGridSurfaceQuery({
+        query: {
+            case_uuid: ensembleIdent?.getCaseUuid() ?? null,
+            ensemble_name: ensembleIdent?.getEnsembleName() ?? null,
+            grid_name: gridModelName,
+            realization_num: realization,
+            i_min: gridCellIndexRanges.i[0],
+            i_max: gridCellIndexRanges.i[1],
+            j_min: gridCellIndexRanges.j[0],
+            j_max: gridCellIndexRanges.j[1],
+            k_min: gridCellIndexRanges.k[0],
+            k_max: gridCellIndexRanges.k[1],
+        },
+    });
 
     // Grid parameter query
-    const gridParameterQuery = useGridParameterQuery(
-        ensembleIdent?.getCaseUuid() ?? null,
-        ensembleIdent?.getEnsembleName() ?? null,
-        gridModelName,
-        gridModelParameterName,
-        gridModelParameterDateOrInterval,
-        realization,
-        gridCellIndexRanges.i[0],
-        gridCellIndexRanges.i[1],
-        gridCellIndexRanges.j[0],
-        gridCellIndexRanges.j[1],
-        gridCellIndexRanges.k[0],
-        gridCellIndexRanges.k[1]
-    );
+    const gridParameterQuery = useGridParameterQuery({
+        query: {
+            case_uuid: ensembleIdent?.getCaseUuid() ?? null,
+            ensemble_name: ensembleIdent?.getEnsembleName() ?? null,
+            grid_name: gridModelName,
+            parameter_name: gridModelParameterName,
+            realization_num: realization,
+            i_min: gridCellIndexRanges.i[0],
+            i_max: gridCellIndexRanges.i[1],
+            j_min: gridCellIndexRanges.j[0],
+            j_max: gridCellIndexRanges.j[1],
+            k_min: gridCellIndexRanges.k[0],
+            k_max: gridCellIndexRanges.k[1],
+        },
+    });
 
     usePropagateApiErrorToStatusWriter(polylineIntersectionQuery, statusWriter);
     usePropagateApiErrorToStatusWriter(wellboreCasingQuery, statusWriter);

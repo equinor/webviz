@@ -1,4 +1,9 @@
-import { apiService } from "@framework/ApiService";
+import {
+    getDrilledWellboreHeadersOptions,
+    getStratigraphicUnitsOptions,
+    getWellboreLogCurveHeadersOptions,
+    getWellborePicksForWellboreOptions,
+} from "@api";
 
 import { atomWithQuery } from "jotai-tanstack-query";
 
@@ -8,22 +13,16 @@ import {
     selectedWellboreHeaderAtom,
 } from "./derivedAtoms";
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
-const SHARED_QUERY_OPTS = {
-    staleTime: STALE_TIME,
-    gcTime: CACHE_TIME,
-};
-
 export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
     const fieldId = get(selectedFieldIdentifierAtom) ?? "";
 
     return {
-        queryKey: ["getDrilledWellboreHeader", fieldId],
-        queryFn: () => apiService.well.getDrilledWellboreHeaders(fieldId),
+        ...getDrilledWellboreHeadersOptions({
+            query: {
+                field_identifier: fieldId,
+            },
+        }),
         enabled: Boolean(fieldId),
-        ...SHARED_QUERY_OPTS,
     };
 });
 
@@ -32,13 +31,15 @@ export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
 
 */
 export const wellLogCurveHeadersQueryAtom = atomWithQuery((get) => {
-    const wellboreId = get(selectedWellboreHeaderAtom)?.wellboreUuid;
+    const wellboreUuid = get(selectedWellboreHeaderAtom)?.wellboreUuid;
 
     return {
-        queryKey: ["getWellboreLogCurveHeaders", wellboreId],
-        queryFn: () => apiService.well.getWellboreLogCurveHeaders(wellboreId ?? ""),
-        enabled: Boolean(wellboreId),
-        ...SHARED_QUERY_OPTS,
+        ...getWellboreLogCurveHeadersOptions({
+            query: {
+                wellbore_uuid: wellboreUuid ?? "",
+            },
+        }),
+        enabled: Boolean(wellboreUuid),
     };
 });
 
@@ -46,10 +47,12 @@ export const wellborePicksQueryAtom = atomWithQuery((get) => {
     const selectedWellboreUuid = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
 
     return {
-        queryKey: ["getWellborePicksForWellbore", selectedWellboreUuid],
+        ...getWellborePicksForWellboreOptions({
+            query: {
+                wellbore_uuid: selectedWellboreUuid,
+            },
+        }),
         enabled: Boolean(selectedWellboreUuid),
-        queryFn: () => apiService.well.getWellborePicksForWellbore(selectedWellboreUuid),
-        ...SHARED_QUERY_OPTS,
     };
 });
 
@@ -60,9 +63,11 @@ export const wellboreStratigraphicUnitsQueryAtom = atomWithQuery((get) => {
     const caseUuid = selectedEnsemble?.getCaseUuid() ?? "";
 
     return {
-        queryKey: ["getStratigraphicUnits", caseUuid],
+        ...getStratigraphicUnitsOptions({
+            query: {
+                case_uuid: caseUuid,
+            },
+        }),
         enabled: Boolean(caseUuid),
-        queryFn: () => apiService.surface.getStratigraphicUnits(caseUuid),
-        ...SHARED_QUERY_OPTS,
     };
 });
