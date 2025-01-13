@@ -152,6 +152,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             },
         }),
         enabled: casesQuery.isSuccess,
+        gcTime: CACHE_TIME,
+        staleTime: STALE_TIME,
     });
 
     const [selectedRegularEnsembleName, setSelectedRegularEnsembleName] = useValidState<string>({
