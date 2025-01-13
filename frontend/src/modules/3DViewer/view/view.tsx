@@ -180,35 +180,31 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
     // Grid surface query
     const gridSurfaceQuery = useGridSurfaceQuery({
-        query: {
-            case_uuid: ensembleIdent?.getCaseUuid() ?? null,
-            ensemble_name: ensembleIdent?.getEnsembleName() ?? null,
-            grid_name: gridModelName,
-            realization_num: realization,
-            i_min: gridCellIndexRanges.i[0],
-            i_max: gridCellIndexRanges.i[1],
-            j_min: gridCellIndexRanges.j[0],
-            j_max: gridCellIndexRanges.j[1],
-            k_min: gridCellIndexRanges.k[0],
-            k_max: gridCellIndexRanges.k[1],
-        },
+        caseUuid: ensembleIdent?.getCaseUuid() ?? null,
+        ensembleName: ensembleIdent?.getEnsembleName() ?? null,
+        gridName: gridModelName,
+        realizationNum: realization,
+        iMin: gridCellIndexRanges.i[0],
+        iMax: gridCellIndexRanges.i[1],
+        jMin: gridCellIndexRanges.j[0],
+        jMax: gridCellIndexRanges.j[1],
+        kMin: gridCellIndexRanges.k[0],
+        kMax: gridCellIndexRanges.k[1],
     });
 
     // Grid parameter query
     const gridParameterQuery = useGridParameterQuery({
-        query: {
-            case_uuid: ensembleIdent?.getCaseUuid() ?? null,
-            ensemble_name: ensembleIdent?.getEnsembleName() ?? null,
-            grid_name: gridModelName,
-            parameter_name: gridModelParameterName,
-            realization_num: realization,
-            i_min: gridCellIndexRanges.i[0],
-            i_max: gridCellIndexRanges.i[1],
-            j_min: gridCellIndexRanges.j[0],
-            j_max: gridCellIndexRanges.j[1],
-            k_min: gridCellIndexRanges.k[0],
-            k_max: gridCellIndexRanges.k[1],
-        },
+        caseUuid: ensembleIdent?.getCaseUuid() ?? null,
+        ensembleName: ensembleIdent?.getEnsembleName() ?? null,
+        gridName: gridModelName,
+        parameterName: gridModelParameterName,
+        realizationNum: realization,
+        iMin: gridCellIndexRanges.i[0],
+        iMax: gridCellIndexRanges.i[1],
+        jMin: gridCellIndexRanges.j[0],
+        jMax: gridCellIndexRanges.j[1],
+        kMin: gridCellIndexRanges.k[0],
+        kMax: gridCellIndexRanges.k[1],
     });
 
     usePropagateApiErrorToStatusWriter(polylineIntersectionQuery, statusWriter);
