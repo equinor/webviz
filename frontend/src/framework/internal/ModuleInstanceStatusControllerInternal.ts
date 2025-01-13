@@ -7,8 +7,8 @@ import {
     StatusMessageWithType,
     StatusSource,
 } from "@framework/ModuleInstanceStatusController";
-import { RequestOptions } from "@hey-api/client-axios";
 
+import { InternalAxiosRequestConfig } from "axios";
 import { cloneDeep, filter, isEqual, keys } from "lodash";
 import { v4 } from "uuid";
 
@@ -18,7 +18,7 @@ type StatusMessage = {
     type: StatusMessageType;
     origin: Origin;
     endpoint?: string;
-    request?: RequestOptions;
+    request?: InternalAxiosRequestConfig;
     datetimeMs: number;
 };
 

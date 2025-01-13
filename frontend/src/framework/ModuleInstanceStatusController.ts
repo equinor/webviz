@@ -1,4 +1,4 @@
-import { RequestOptions } from "@hey-api/client-axios";
+import { InternalAxiosRequestConfig } from "axios";
 
 export enum StatusMessageType {
     Warning = "warning",
@@ -19,7 +19,7 @@ export type StatusMessage = {
     message: string;
     origin: Origin;
     endpoint?: string;
-    request?: RequestOptions;
+    request?: InternalAxiosRequestConfig;
 };
 
 export type StatusMessageWithType = StatusMessage & { type: StatusMessageType };

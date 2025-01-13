@@ -1,15 +1,14 @@
 import { Origin, StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { RequestOptions } from "@hey-api/client-axios";
 import { UseQueryResult } from "@tanstack/react-query";
 
-import { AxiosError } from "axios";
+import { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { isObject } from "lodash";
 
 export class ApiErrorHelper {
     private _error: AxiosError;
     private _statusCode: number | undefined;
     private _endpoint: string;
-    private _request: RequestOptions;
+    private _requestConfig: InternalAxiosRequestConfig | undefined;
     private _service: string | null = null;
     private _type: string | null = null;
     private _message: string | null = null;
@@ -18,7 +17,7 @@ export class ApiErrorHelper {
         this._error = error;
         this._statusCode = error.status;
         this._endpoint = error.config?.url ?? "Unknown endpoint";
-        this._request = error.request;
+        this._requestConfig = error.config;
         this.extractInfoFromErrorBody(error);
     }
 
@@ -101,8 +100,8 @@ export class ApiErrorHelper {
         return this._endpoint;
     }
 
-    getRequest(): RequestOptions {
-        return this._request;
+    getRequestConfig(): InternalAxiosRequestConfig | undefined {
+        return this._requestConfig;
     }
 
     makeFullErrorMessage(): string {
@@ -129,7 +128,7 @@ export class ApiErrorHelper {
             message: this.makeFullErrorMessage(),
             origin: Origin.API,
             endpoint: this.getEndPoint(),
-            request: this.getRequest(),
+            request: this.getRequestConfig(),
         };
     }
 }

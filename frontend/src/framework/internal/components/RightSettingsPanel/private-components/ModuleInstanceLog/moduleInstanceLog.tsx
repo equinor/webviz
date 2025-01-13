@@ -240,11 +240,15 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
         const target = e.currentTarget;
         timeoutRef.current = setTimeout(() => {
             if (props.logEntry.type === LogEntryType.MESSAGE) {
-                if (props.logEntry.message?.request?.query) {
+                if (props.logEntry.message?.request && "query" in (props.logEntry.message?.request ?? {})) {
                     if (!(target instanceof HTMLElement)) {
                         return;
                     }
-                    props.onShowDetails(props.logEntry.message.request.query, target.getBoundingClientRect().top);
+                    props.onShowDetails(
+                        // @ts-ignore - query is always present
+                        props.logEntry.message.request["query"] ?? {},
+                        target.getBoundingClientRect().top
+                    );
                 }
             }
         }, 500);
@@ -270,6 +274,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
             icon = <Warning fontSize="inherit" className="text-orange-600" />;
         }
         message = props.logEntry.message?.message ?? "";
+        // @ts-ignore - query is always present
         if (props.logEntry.message.request?.query) {
             const text = `${props.logEntry.message.request.method} ${props.logEntry.message.request.url}`;
             detailsString = (
@@ -278,7 +283,9 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
                 </div>
             );
             detailsObject = {};
+            // @ts-ignore - query is always present
             for (const key in props.logEntry.message.request.query) {
+                // @ts-ignore - query is always present
                 const value = props.logEntry.message.request.query[key];
                 detailsObject[key] = JSON.stringify(value);
             }
