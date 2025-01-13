@@ -10,7 +10,6 @@ import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
 export const vectorListQueriesAtom = atomWithQueries((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
-    const moduleInstance = get(moduleInstanceAtom);
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         // Regular Ensemble
@@ -18,15 +17,20 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
             return () => ({
                 queryKey: ["getVectorList", ensembleIdent.getCaseUuid(), ensembleIdent.getEnsembleName()],
                 queryFn: async () => {
-                    const { data } = await getVectorList({
+                    const result = await getVectorList({
                         query: {
                             case_uuid: ensembleIdent.getCaseUuid(),
                             ensemble_name: ensembleIdent.getEnsembleName(),
                         },
+                        headers: {
+                            "Webviz-Allow-Warnings": "true",
+                        },
                         throwOnError: true,
                     });
 
-                    return data;
+                    const warnings = result.headers["Webviz-Content-Warnings"];
+
+                    return { data: result.data, warnings };
                 },
             });
         }
@@ -46,7 +50,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                     ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
                 ],
                 queryFn: async () => {
-                    const { data } = await getDeltaEnsembleVectorList({
+                    const result = await getDeltaEnsembleVectorList({
                         query: {
                             comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
                             comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
@@ -56,7 +60,9 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                         throwOnError: true,
                     });
 
-                    return data;
+                    const warnings = result.headers["Webviz-Content-Warnings"];
+
+                    return { data: result.data, warnings };
                 },
             });
         }

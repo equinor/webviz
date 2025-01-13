@@ -1,11 +1,8 @@
 import React, { ErrorInfo } from "react";
 
-import { ApiService, CancelablePromise, createModuleInstanceHttpRequestClass } from "@api";
-
 import { Atom, atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
-import { DEFAULT_API_CONFIG, apiService } from "./ApiService";
 import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
@@ -31,7 +28,6 @@ export enum ModuleInstanceTopic {
     SYNCED_SETTINGS = "synced-settings",
     STATE = "state",
     IMPORT_STATE = "import-state",
-    API_WARNINGS = "api-warnings",
 }
 
 export type ModuleInstanceTopicValueTypes = {
@@ -39,7 +35,6 @@ export type ModuleInstanceTopicValueTypes = {
     [ModuleInstanceTopic.SYNCED_SETTINGS]: SyncSettingKey[];
     [ModuleInstanceTopic.STATE]: ModuleInstanceState;
     [ModuleInstanceTopic.IMPORT_STATE]: ImportState;
-    [ModuleInstanceTopic.API_WARNINGS]: string[];
 };
 
 export interface ModuleInstanceOptions<TInterfaceTypes extends ModuleInterfaceTypes> {
@@ -71,11 +66,6 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     > | null = null;
     private _settingsToViewInterfaceEffectsAtom: Atom<void> | null = null;
     private _viewToSettingsInterfaceEffectsAtom: Atom<void> | null = null;
-    private _apiService: ApiService;
-    private _tempApiWarnings: string[] = [];
-    private _cachedApiWarnings: Map<ReadonlyArray<unknown>, string[]> = new Map();
-    private _currentApiWarnings: Map<ReadonlyArray<unknown>, string[]> = new Map();
-    private _currentWarnings: string[] = [];
 
     constructor(options: ModuleInstanceOptions<TInterfaceTypes>) {
         this._id = `${options.module.getName()}-${options.instanceNumber}`;
@@ -96,52 +86,6 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         if (options.channelDefinitions) {
             this._channelManager.registerChannels(options.channelDefinitions);
         }
-
-        this._apiService = new ApiService(DEFAULT_API_CONFIG, createModuleInstanceHttpRequestClass(this));
-    }
-
-    setApiWarnings(warnings: string[]): void {
-        this._tempApiWarnings = warnings;
-    }
-
-    private adjustCurrentApiWarnings(): void {
-        const warnings: string[] = [];
-        for (const [key, value] of this._currentApiWarnings) {
-            warnings.push(...value);
-        }
-        this._currentWarnings = warnings;
-    }
-
-    getApiWarnings(): string[] {
-        return this._currentWarnings;
-    }
-
-    getTempApiWarnings(): string[] {
-        return this._tempApiWarnings;
-    }
-
-    getApiService(): ApiService {
-        return this._apiService;
-    }
-
-    makeApiRequestFunc<T extends (...args: any[]) => CancelablePromise<any>>(
-        key: ReadonlyArray<unknown>,
-        serviceFunc: T
-    ): (...args: Parameters<T>) => CancelablePromise<Awaited<ReturnType<T>>> {
-        const warnings = this._cachedApiWarnings.get(key) || [];
-        this._currentApiWarnings.set(key, warnings);
-
-        return (...args: Parameters<T>): CancelablePromise<Awaited<ReturnType<T>>> => {
-            return new CancelablePromise<Awaited<ReturnType<T>>>((resolve, reject) =>
-                serviceFunc(...args).then((data: Awaited<ReturnType<T>>) => {
-                    const newWarnings = this._tempApiWarnings;
-                    this._currentApiWarnings.set(key, newWarnings);
-                    this.adjustCurrentApiWarnings();
-                    this.notifySubscribers(ModuleInstanceTopic.API_WARNINGS);
-                    resolve(data);
-                })
-            );
-        };
     }
 
     getUniDirectionalSettingsToViewInterface(): UniDirectionalModuleComponentsInterface<
@@ -350,9 +294,6 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
             if (topic === ModuleInstanceTopic.IMPORT_STATE) {
                 return this.getImportState();
             }
-            if (topic === ModuleInstanceTopic.API_WARNINGS) {
-                return this._currentWarnings;
-            }
         };
 
         return snapshotGetter;
@@ -425,6 +366,3 @@ export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
 
     return value;
 }
-
-export const moduleApiServiceAtom = atom<ApiService>(apiService);
-export const moduleInstanceAtom = atom<ModuleInstance<any> | null>(null);
