@@ -276,6 +276,7 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
                         non_historical_vector_name: vectorSpecification.vectorName,
                         resampling_frequency: resampleFrequency ?? Frequency_api.MONTHLY,
                     },
+                    throwOnError: true,
                 });
 
                 return data;
@@ -309,7 +310,13 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
     const queries = uniqueEnsembleIdents.map((item) => {
         return () => ({
             queryKey: ["getObservations", item.getCaseUuid()],
-            queryFn: () => getObservations({ query: { case_uuid: item.getCaseUuid() } }),
+            queryFn: async () => {
+                const { data } = await getObservations({
+                    query: { case_uuid: item.getCaseUuid() },
+                    throwOnError: true,
+                });
+                return data;
+            },
             enabled: Boolean(showObservations && item.getCaseUuid()),
         });
     });
