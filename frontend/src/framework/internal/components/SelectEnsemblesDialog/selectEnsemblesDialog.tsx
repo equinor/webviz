@@ -29,6 +29,9 @@ import { LoadingOverlay } from "../LoadingOverlay";
 
 const CASE_UUID_ENSEMBLE_NAME_SEPARATOR = "~@@~";
 
+const STALE_TIME = 0;
+const CACHE_TIME = 5 * 60 * 1000;
+
 // Base item for ensemble data
 export type BaseEnsembleItem = {
     caseUuid: string;
@@ -132,6 +135,8 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             },
         }),
         enabled: fieldsQuery.isSuccess,
+        gcTime: CACHE_TIME,
+        staleTime: STALE_TIME,
     });
 
     const [selectedCaseId, setSelectedCaseId] = useValidState<string>({

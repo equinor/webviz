@@ -158,6 +158,9 @@ async function loadEnsembleApiDataMapFromBackend(
 ): Promise<EnsembleIdentStringToEnsembleApiDataMap> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
 
+    const STALE_TIME = 5 * 60 * 1000;
+    const CACHE_TIME = 5 * 60 * 1000;
+
     const ensembleDetailsPromiseArray: Promise<EnsembleDetails_api>[] = [];
     const parametersPromiseArray: Promise<EnsembleParameter_api[]>[] = [];
     const sensitivitiesPromiseArray: Promise<EnsembleSensitivity_api[]>[] = [];
@@ -173,6 +176,8 @@ async function loadEnsembleApiDataMapFromBackend(
                     ensemble_name: ensembleName,
                 },
             }),
+            gcTime: CACHE_TIME,
+            staleTime: STALE_TIME,
         });
         ensembleDetailsPromiseArray.push(ensembleDetailsPromise);
 
@@ -183,6 +188,8 @@ async function loadEnsembleApiDataMapFromBackend(
                     ensemble_name: ensembleName,
                 },
             }),
+            gcTime: CACHE_TIME,
+            staleTime: STALE_TIME,
         });
         parametersPromiseArray.push(parametersPromise);
 
@@ -193,6 +200,8 @@ async function loadEnsembleApiDataMapFromBackend(
                     ensemble_name: ensembleName,
                 },
             }),
+            gcTime: CACHE_TIME,
+            staleTime: STALE_TIME,
         });
         sensitivitiesPromiseArray.push(sensitivitiesPromise);
     }
