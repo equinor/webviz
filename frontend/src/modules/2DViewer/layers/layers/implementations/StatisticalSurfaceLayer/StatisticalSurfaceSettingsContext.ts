@@ -1,8 +1,6 @@
 import { SurfaceStatisticFunction_api, SurfaceTimeType_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { getRealizationSurfacesMetadataOptions } from "@api";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
-import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/layers/_utils/queryConstants";
-import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/layers/_utils/utils";
 
 import { StatisticalSurfaceSettings } from "./types";
 
@@ -91,17 +89,13 @@ export class StatisticalSurfaceSettingsContext implements SettingsContext<Statis
             }
 
             return await queryClient.fetchQuery({
-                queryKey: ["getRealizationSurfacesMetadata", ensembleIdent],
-                queryFn: () =>
-                    cancelPromiseOnAbort(
-                        apiService.surface.getRealizationSurfacesMetadata(
-                            ensembleIdent.getCaseUuid(),
-                            ensembleIdent.getEnsembleName()
-                        ),
-                        abortSignal
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getRealizationSurfacesMetadataOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                    },
+                    signal: abortSignal,
+                }),
             });
         });
 

@@ -1,5 +1,4 @@
-import { WellborePick_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { WellborePick_api, getWellborePicksForPickIdentifierOptions } from "@api";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/layers/LayerRegistry";
@@ -13,7 +12,6 @@ import { DrilledWellborePicksSettings } from "./types";
 
 import { LayerColoringType, LayerDelegate } from "../../../delegates/LayerDelegate";
 import { BoundingBox, Layer, SerializedLayer } from "../../../interfaces";
-import { CACHE_TIME, STALE_TIME } from "../../_utils/queryConstants";
 
 export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSettings, WellborePick_api[]> {
     private _layerDelegate: LayerDelegate<DrilledWellborePicksSettings, WellborePick_api[]>;
@@ -98,14 +96,12 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
 
         const promise = queryClient
             .fetchQuery({
-                queryKey,
-                queryFn: () =>
-                    apiService.well.getWellborePicksForPickIdentifier(
-                        fieldIdentifier ?? "",
-                        selectedPickIdentifier ?? ""
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getWellborePicksForPickIdentifierOptions({
+                    query: {
+                        field_identifier: fieldIdentifier ?? "",
+                        pick_identifier: selectedPickIdentifier ?? "",
+                    },
+                }),
             })
             .then((response: WellborePick_api[]) => {
                 return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));

@@ -1,8 +1,6 @@
-import { apiService } from "@framework/ApiService";
+import { getPolygonsDirectoryOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
-import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/layers/_utils/queryConstants";
-import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/layers/_utils/utils";
 import { SettingType } from "@modules/2DViewer/layers/settings/settingsTypes";
 
 import { RealizationPolygonsSettings } from "./types";
@@ -73,17 +71,13 @@ export class RealizationPolygonsSettingsContext implements SettingsContext<Reali
             }
 
             return await queryClient.fetchQuery({
-                queryKey: ["getRealizationPolygonsMetadata", ensembleIdent],
-                queryFn: () =>
-                    cancelPromiseOnAbort(
-                        apiService.polygons.getPolygonsDirectory(
-                            ensembleIdent.getCaseUuid(),
-                            ensembleIdent.getEnsembleName()
-                        ),
-                        abortSignal
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getPolygonsDirectoryOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                    },
+                    signal: abortSignal,
+                }),
             });
         });
 

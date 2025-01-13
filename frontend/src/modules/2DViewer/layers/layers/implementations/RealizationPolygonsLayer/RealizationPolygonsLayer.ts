@@ -1,10 +1,8 @@
-import { PolygonData_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { PolygonData_api, getPolygonsDataOptions } from "@api";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/2DViewer/layers/delegates/LayerDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/layers/LayerRegistry";
-import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/layers/_utils/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -85,28 +83,28 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
         const polygonsName = settings[SettingType.POLYGONS_NAME].getDelegate().getValue();
         const polygonsAttribute = settings[SettingType.POLYGONS_ATTRIBUTE].getDelegate().getValue();
 
-        const queryKey = [
-            "getPolygonsData",
-            ensembleIdent?.getCaseUuid() ?? "",
-            ensembleIdent?.getEnsembleName() ?? "",
-            realizationNum ?? 0,
-            polygonsName ?? "",
-            polygonsAttribute ?? "",
-        ];
-        this._layerDelegate.registerQueryKey(queryKey);
+        const queryOptions = getPolygonsDataOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                realization_num: realizationNum ?? 0,
+                name: polygonsName ?? "",
+                attribute: polygonsAttribute ?? "",
+            },
+        });
+
+        this._layerDelegate.registerQueryKey(queryOptions.queryKey);
 
         const promise = queryClient.fetchQuery({
-            queryKey,
-            queryFn: () =>
-                apiService.polygons.getPolygonsData(
-                    ensembleIdent?.getCaseUuid() ?? "",
-                    ensembleIdent?.getEnsembleName() ?? "",
-                    realizationNum ?? 0,
-                    polygonsName ?? "",
-                    polygonsAttribute ?? ""
-                ),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
+            ...getPolygonsDataOptions({
+                query: {
+                    case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                    ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                    realization_num: realizationNum ?? 0,
+                    name: polygonsName ?? "",
+                    attribute: polygonsAttribute ?? "",
+                },
+            }),
         });
 
         return promise;

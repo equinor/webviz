@@ -1,5 +1,4 @@
-import { WellboreTrajectory_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { WellboreTrajectory_api, getWellTrajectoriesOptions } from "@api";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/layers/LayerRegistry";
@@ -101,8 +100,9 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
 
         const promise = queryClient
             .fetchQuery({
-                queryKey,
-                queryFn: () => apiService.well.getWellTrajectories(fieldIdentifier ?? ""),
+                ...getWellTrajectoriesOptions({
+                    query: { field_identifier: fieldIdentifier ?? "" },
+                }),
                 staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
                 gcTime: 1800000,
             })

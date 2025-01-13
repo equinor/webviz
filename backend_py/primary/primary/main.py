@@ -34,6 +34,7 @@ from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
+from primary.middleware.add_warnings_middleware import AddWarningsMiddleware
 
 from . import config
 
@@ -96,6 +97,8 @@ app.include_router(general_router)
 configure_service_level_exception_handlers(app)
 override_default_fastapi_exception_handlers(app)
 
+# This middleware instance adds a Warnings header to the response containing a JSON array of warnings
+app.add_middleware(AddWarningsMiddleware)
 
 # This middleware instance approximately measures execution time of the route handler itself
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-exec-route")
@@ -117,7 +120,6 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
-
 
 @app.get("/")
 async def root() -> str:
