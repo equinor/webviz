@@ -1,5 +1,5 @@
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { postGetPolylineIntersectionOptions } from "@api";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import {
     PolylineIntersection_trans,
     transformPolylineIntersection,
@@ -7,7 +7,7 @@ import {
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
 export function useGridPolylineIntersection(
-    ensembleIdent: EnsembleIdent | null,
+    ensembleIdent: RegularEnsembleIdent | null,
     gridModelName: string | null,
     gridModelParameterName: string | null,
     gridModelDateOrInterval: string | null,
@@ -16,31 +16,20 @@ export function useGridPolylineIntersection(
     enabled: boolean
 ): UseQueryResult<PolylineIntersection_trans> {
     return useQuery({
-        queryKey: [
-            "getGridPolylineIntersection",
-            ensembleIdent?.toString() ?? "",
-            gridModelName,
-            gridModelParameterName,
-            gridModelDateOrInterval,
-            realizationNum,
-            polyline_utm_xy,
-        ],
-        queryFn: () =>
-            apiService.grid3D.postGetPolylineIntersection(
-                ensembleIdent?.getCaseUuid() ?? "",
-                ensembleIdent?.getEnsembleName() ?? "",
-                gridModelName ?? "",
-                gridModelParameterName ?? "",
-                realizationNum ?? 0,
-                { polyline_utm_xy },
-                gridModelDateOrInterval
-            ),
+        ...postGetPolylineIntersectionOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                grid_name: gridModelName ?? "",
+                parameter_name: gridModelParameterName ?? "",
+                realization_num: realizationNum ?? 0,
+                parameter_time_or_interval_str: gridModelDateOrInterval,
+            },
+            body: { polyline_utm_xy },
+        }),
         select: transformPolylineIntersection,
-        staleTime: 0,
-        gcTime: 0,
-        enabled:
+        enabled: Boolean(
             ensembleIdent && gridModelName && realizationNum !== null && polyline_utm_xy.length && enabled
-                ? true
-                : false,
+        ),
     });
 }

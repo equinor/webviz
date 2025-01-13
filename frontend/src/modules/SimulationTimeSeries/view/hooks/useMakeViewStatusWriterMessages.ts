@@ -1,6 +1,7 @@
-import { Ensemble } from "@framework/Ensemble";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { ViewContext } from "@framework/ModuleContext";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { ViewStatusWriter } from "@framework/StatusWriter";
 import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
@@ -18,7 +19,7 @@ export function useMakeViewStatusWriterMessages(
     viewContext: ViewContext<Interfaces>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
-    ensemblesWithoutParameter: Ensemble[]
+    ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[]
 ) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");

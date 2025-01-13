@@ -1,7 +1,8 @@
-import { DefaultError, QueryClient, QueryKey, QueryObserverOptions, QueryObserverResult } from "@tanstack/query-core";
+import { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
+import { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@tanstack/react-query";
 
 import { Atom, Getter, atom } from "jotai";
-import { atomWithQuery } from "jotai-tanstack-query";
+import { AtomWithQueryOptions, atomWithQuery } from "jotai-tanstack-query";
 import { atomWithReducer } from "jotai/utils";
 
 export function atomWithCompare<Value>(initialValue: Value, areEqualFunc: (prev: Value, next: Value) => boolean) {
@@ -18,20 +19,23 @@ type QueriesOptions<
     TQueryFnData = unknown,
     TError = DefaultError,
     TData = TQueryFnData,
-    TQueryData = TQueryFnData,
     TQueryKey extends QueryKey = QueryKey
-> = ((get: Getter) => Omit<QueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>, "suspense">)[];
+> = ((
+    get: Getter
+) =>
+    | DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>
+    | UndefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>
+    | AtomWithQueryOptions<TQueryFnData, TError, TData, TQueryKey>)[];
 
 export function atomWithQueries<
     TQueryFnData = unknown,
     TError = DefaultError,
     TData = TQueryFnData,
-    TQueryData = TQueryFnData,
     TQueryKey extends QueryKey = QueryKey,
     TCombinedResult = QueryObserverResult<TData, TError>[]
 >(
     getOptions: (get: Getter) => {
-        queries: readonly [...QueriesOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>];
+        queries: readonly [...QueriesOptions<TQueryFnData, TError, TData, TQueryKey>];
         combine?: (result: QueryObserverResult<TData, TError>[]) => TCombinedResult;
     },
     getQueryClient?: (get: Getter) => QueryClient
@@ -41,7 +45,7 @@ export function atomWithQueries<
         const options = get(optionsAtom);
 
         const queries = options.queries.map((option) => {
-            return atomWithQuery<TQueryFnData, TError, TData, TQueryData, TQueryKey>(option, getQueryClient);
+            return atomWithQuery<TQueryFnData, TError, TData, TQueryKey>(option, getQueryClient);
         });
 
         return queries;

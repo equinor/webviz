@@ -51,9 +51,9 @@ as stated above).
 ### Radix applications
 
 We have two applications in Radix built from this repository:
-* [Main application](https://webviz.app.radix.equinor.com/) built from the `main` branch.
-* [Review application](https://frontend-webviz-review.radix.equinor.com/) built from the `review` branch.
-* [Dev application](https://frontend-webviz-dev.radix.equinor.com/) built from the `dev` branch.
+* [Main application](https://webviz.app.c2.radix.equinor.com/) built from the `main` branch.
+* [Review application](https://frontend-webviz-review.c2.radix.equinor.com/) built from the `review` branch.
+* [Dev application](https://frontend-webviz-dev.c2.radix.equinor.com/) built from the `dev` branch.
 
 The applications are automatically built and redeployed when pushing commits to the respective branch.
 

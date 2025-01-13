@@ -1,9 +1,8 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceMetaSet_api } from "@api";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { SurfaceAttributeType_api, SurfaceMetaSet_api, getRealizationSurfacesMetadataOptions } from "@api";
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -55,7 +54,7 @@ export function SurfacesUncertaintyLayerSettingsComponent(
 
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
-        props.ensembleSet.getEnsembleArr().map((el) => el.getIdent()),
+        props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
         newSettings
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
@@ -120,7 +119,7 @@ export function SurfacesUncertaintyLayerSettingsComponent(
         [surfaceDirectoryQuery.isFetching, props.layer, newSettings]
     );
 
-    function handleEnsembleChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent }));
     }
 
@@ -156,7 +155,7 @@ export function SurfacesUncertaintyLayerSettingsComponent(
                 <div className="table-cell">
                     <EnsembleDropdown
                         value={props.layer.getSettings().ensembleIdent}
-                        ensembles={props.ensembleSet.getEnsembleArr()}
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         onChange={handleEnsembleChange}
                         debounceTimeMs={600}
                     />
@@ -250,18 +249,18 @@ function makeSurfaceNameOptions(surfaceNames: string[]): DropdownOption[] {
     return surfaceNames.map((surfaceName) => ({ label: surfaceName, value: surfaceName }));
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export function useSurfaceDirectoryQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
 ): UseQueryResult<SurfaceMetaSet_api> {
+    getRealizationSurfacesMetadataOptions;
     return useQuery({
-        queryKey: ["getSurfaceDirectory", caseUuid, ensembleName],
-        queryFn: () => apiService.surface.getRealizationSurfacesMetadata(caseUuid ?? "", ensembleName ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getRealizationSurfacesMetadataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+            },
+        }),
         enabled: Boolean(caseUuid && ensembleName),
     });
 }

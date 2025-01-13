@@ -10,9 +10,9 @@ export const selectedFieldIdentifierAtom = atom((get) => {
 
     if (
         !userSelectedField ||
-        !ensembleSet.getEnsembleArr().some((ens) => ens.getFieldIdentifier() === userSelectedField)
+        !ensembleSet.getRegularEnsembleArray().some((ens) => ens.getFieldIdentifier() === userSelectedField)
     ) {
-        return ensembleSet.getEnsembleArr().at(0)?.getFieldIdentifier() ?? null;
+        return ensembleSet.getRegularEnsembleArray().at(0)?.getFieldIdentifier() ?? null;
     }
 
     return userSelectedField;

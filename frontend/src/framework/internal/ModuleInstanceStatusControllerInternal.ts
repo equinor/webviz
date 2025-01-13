@@ -8,8 +8,8 @@ import {
     StatusSource,
 } from "@framework/ModuleInstanceStatusController";
 
+import { InternalAxiosRequestConfig } from "axios";
 import { cloneDeep, filter, isEqual, keys } from "lodash";
-import { ApiRequestOptions } from "src/api/auto-generated/core/ApiRequestOptions";
 import { v4 } from "uuid";
 
 type StatusMessage = {
@@ -18,7 +18,7 @@ type StatusMessage = {
     type: StatusMessageType;
     origin: Origin;
     endpoint?: string;
-    request?: ApiRequestOptions;
+    request?: InternalAxiosRequestConfig;
     datetimeMs: number;
 };
 

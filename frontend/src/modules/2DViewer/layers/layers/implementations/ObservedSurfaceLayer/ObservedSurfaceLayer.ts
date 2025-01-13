@@ -1,9 +1,7 @@
-import { SurfaceDataPng_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { SurfaceDataPng_api, getSurfaceDataOptions } from "@api";
 import { ItemDelegate } from "@modules/2DViewer/layers/delegates/ItemDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
 import { LayerRegistry } from "@modules/2DViewer/layers/layers/LayerRegistry";
-import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/layers/_utils/queryConstants";
 import { SettingType } from "@modules/2DViewer/layers/settings/settingsTypes";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
@@ -102,10 +100,13 @@ export class ObservedSurfaceLayer
 
         const promise = queryClient
             .fetchQuery({
-                queryKey,
-                queryFn: () => apiService.surface.getSurfaceData(surfAddrStr ?? "", "png", null),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getSurfaceDataOptions({
+                    query: {
+                        surf_addr_str: surfAddrStr ?? "",
+                        data_format: "png",
+                        resample_to_def_str: null,
+                    },
+                }),
             })
             .then((data) => transformSurfaceData(data));
 

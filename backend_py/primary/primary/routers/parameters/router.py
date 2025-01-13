@@ -80,7 +80,7 @@ async def get_parameters(
 
 
 @router.get("/is_sensitivity_run/")
-async def is_sensitivity_run(
+async def get_is_sensitivity_run(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),

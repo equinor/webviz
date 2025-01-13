@@ -1,9 +1,10 @@
 import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
@@ -104,8 +105,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         setUserSelectedParameterIdentStr(null);
     }
 
-    function handleEnsembleSelectChange(ensembleIdentArr: EnsembleIdent[]) {
-        setUserSelectedEnsembleIdents(ensembleIdentArr);
+    function handleEnsembleSelectChange(ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) {
+        setUserSelectedEnsembleIdents(ensembleIdentArray);
     }
 
     function handleVectorSelectionChange(selection: SmartNodeSelectorSelection) {
@@ -249,8 +250,9 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
             </CollapsibleGroup>
             <CollapsibleGroup expanded={true} title="Ensembles">
                 <EnsembleSelect
-                    ensembles={ensembleSet.getEnsembleArr()}
+                    ensembles={ensembleSet.getEnsembleArray()}
                     value={selectedEnsembleIdents}
+                    allowDeltaEnsembles={true}
                     size={5}
                     onChange={handleEnsembleSelectChange}
                 />

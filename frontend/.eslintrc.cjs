@@ -26,5 +26,5 @@ module.exports = {
             version: "detect",
         },
     },
-    ignorePatterns: ["src/api/customRequest.ts"],
+    ignorePatterns: ["node_modules", "scripts"],
 };

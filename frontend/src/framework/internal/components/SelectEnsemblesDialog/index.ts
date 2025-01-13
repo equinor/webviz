@@ -1,2 +1,2 @@
 export { SelectEnsemblesDialog } from "./selectEnsemblesDialog";
-export type { EnsembleItem } from "./selectEnsemblesDialog";
+export type { RegularEnsembleItem, DeltaEnsembleItem } from "./selectEnsemblesDialog";

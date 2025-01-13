@@ -1,6 +1,6 @@
 import { Grid3dDimensions_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
-import { EnsembleRealizationFilterFunctionAtom, EnsembleSetAtom } from "@framework/GlobalAtoms";
+import { EnsembleSetAtom, ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionPolylinesAtom } from "@framework/userCreatedItems/IntersectionPolylines";
 import { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
 
@@ -19,12 +19,12 @@ import {
 } from "./baseAtoms";
 import { drilledWellboreHeadersQueryAtom, gridModelInfosQueryAtom } from "./queryAtoms";
 
-export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
+export const selectedEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
     const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
 
     if (userSelectedEnsembleIdent === null || !ensembleSet.hasEnsemble(userSelectedEnsembleIdent)) {
-        return ensembleSet.getEnsembleArr()[0]?.getIdent() || null;
+        return ensembleSet.getRegularEnsembleArray()[0]?.getIdent() || null;
     }
 
     return userSelectedEnsembleIdent;
@@ -67,22 +67,14 @@ export const selectedCustomIntersectionPolylineIdAtom = atom((get) => {
 });
 
 export const availableRealizationsAtom = atom((get) => {
-    const ensembleSet = get(EnsembleSetAtom);
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
 
     if (selectedEnsembleIdent === null) {
         return [];
     }
 
-    let ensembleRealizationFilterFunction = get(EnsembleRealizationFilterFunctionAtom);
-
-    if (ensembleRealizationFilterFunction === null) {
-        ensembleRealizationFilterFunction = (ensembleIdent: EnsembleIdent) => {
-            return ensembleSet.findEnsemble(ensembleIdent)?.getRealizations() ?? [];
-        };
-    }
-
-    return ensembleRealizationFilterFunction(selectedEnsembleIdent);
+    const validEnsembleRealizationsFunction = get(ValidEnsembleRealizationsFunctionAtom);
+    return validEnsembleRealizationsFunction(selectedEnsembleIdent);
 });
 
 export const selectedRealizationAtom = atom((get) => {

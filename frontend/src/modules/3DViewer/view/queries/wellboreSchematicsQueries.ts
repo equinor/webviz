@@ -1,36 +1,46 @@
-import { WellboreCasing_api, WellboreCompletion_api, WellborePerforation_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import {
+    WellboreCasing_api,
+    WellboreCompletion_api,
+    WellborePerforation_api,
+    getWellboreCasingsOptions,
+    getWellboreCompletionsOptions,
+    getWellborePerforationsOptions,
+} from "@api";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
-export function useWellboreCasingsQuery(wellUuid: string | undefined): UseQueryResult<WellboreCasing_api[]> {
+export function useWellboreCasingsQuery(wellboreUuid: string | undefined): UseQueryResult<WellboreCasing_api[]> {
     return useQuery({
-        queryKey: ["getWellboreCasing", wellUuid],
-        queryFn: () => apiService.well.getWellboreCasings(wellUuid ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: wellUuid ? true : false,
+        ...getWellboreCasingsOptions({
+            query: {
+                wellbore_uuid: wellboreUuid ?? "",
+            },
+        }),
+        enabled: Boolean(wellboreUuid),
     });
 }
 
-export function useWellborePerforationsQuery(wellUuid: string | undefined): UseQueryResult<WellborePerforation_api[]> {
+export function useWellborePerforationsQuery(
+    wellboreUuid: string | undefined
+): UseQueryResult<WellborePerforation_api[]> {
     return useQuery({
-        queryKey: ["getWellborePerforations", wellUuid],
-        queryFn: () => apiService.well.getWellborePerforations(wellUuid ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: wellUuid ? true : false,
+        ...getWellborePerforationsOptions({
+            query: {
+                wellbore_uuid: wellboreUuid ?? "",
+            },
+        }),
+        enabled: Boolean(wellboreUuid),
     });
 }
 
-export function useWellboreCompletionsQuery(wellUuid: string | undefined): UseQueryResult<WellboreCompletion_api[]> {
+export function useWellboreCompletionsQuery(
+    wellboreUuid: string | undefined
+): UseQueryResult<WellboreCompletion_api[]> {
     return useQuery({
-        queryKey: ["getWellboreCompletions", wellUuid],
-        queryFn: () => apiService.well.getWellboreCompletions(wellUuid ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: wellUuid ? true : false,
+        ...getWellboreCompletionsOptions({
+            query: {
+                wellbore_uuid: wellboreUuid ?? "",
+            },
+        }),
+        enabled: Boolean(wellboreUuid),
     });
 }

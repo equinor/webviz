@@ -230,8 +230,8 @@ async def post_get_surface_intersection(
     return surface_intersection_response
 
 
-@router.post("/sample_surface_in_points")
-async def post_sample_surface_in_points(
+@router.post("/get_sample_surface_in_points")
+async def post_get_sample_surface_in_points(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
     surface_name: str = Query(description="Surface name"),

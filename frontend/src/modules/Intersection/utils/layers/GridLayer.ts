@@ -1,5 +1,5 @@
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { postGetPolylineIntersectionOptions } from "@api";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
@@ -14,11 +14,8 @@ import { isEqual } from "lodash";
 
 import { BaseLayer, BoundingBox, LayerTopic } from "./BaseLayer";
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export type GridLayerSettings = {
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     gridModelName: string | null;
     parameterName: string | null;
     parameterDateOrInterval: string | null;
@@ -154,24 +151,25 @@ export class GridLayer extends BaseLayer<GridLayerSettings, AdjustedPolylineInte
     protected async fetchData(queryClient: QueryClient): Promise<AdjustedPolylineIntersection> {
         super.setBoundingBox(null);
 
-        const queryKey = ["getGridPolylineIntersection", ...Object.entries(this._settings)];
-        this.registerQueryKey(queryKey);
+        const queryOptions = postGetPolylineIntersectionOptions({
+            query: {
+                case_uuid: this._settings.ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: this._settings.ensembleIdent?.getEnsembleName() ?? "",
+                grid_name: this._settings.gridModelName ?? "",
+                parameter_name: this._settings.parameterName ?? "",
+                realization_num: this._settings.realizationNum ?? 0,
+                parameter_time_or_interval_str: this._settings.parameterDateOrInterval ?? "",
+            },
+            body: {
+                polyline_utm_xy: this._settings.polyline.polylineUtmXy,
+            },
+        });
+
+        this.registerQueryKey(queryOptions.queryKey);
 
         return queryClient
             .fetchQuery({
-                queryKey,
-                queryFn: () =>
-                    apiService.grid3D.postGetPolylineIntersection(
-                        this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                        this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                        this._settings.gridModelName ?? "",
-                        this._settings.parameterName ?? "",
-                        this._settings.realizationNum ?? 0,
-                        { polyline_utm_xy: this._settings.polyline.polylineUtmXy },
-                        this._settings.parameterDateOrInterval
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...queryOptions,
             })
             .then((data) => transformPolylineIntersection(data))
             .then((data) => transformPolylineIntersectionResult(data, this._settings.polyline.actualSectionLengths));

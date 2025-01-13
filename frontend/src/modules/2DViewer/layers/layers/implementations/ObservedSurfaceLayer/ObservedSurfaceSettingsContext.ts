@@ -1,9 +1,6 @@
-import { SurfaceTimeType_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { SurfaceTimeType_api, getObservedSurfacesMetadataOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
-import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/layers/_utils/queryConstants";
-import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/layers/_utils/utils";
 import { SettingType } from "@modules/2DViewer/layers/settings/settingsTypes";
 
 import { ObservedSurfaceSettings } from "./types";
@@ -48,7 +45,7 @@ export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedS
             const ensembleSet = workbenchSession.getEnsembleSet();
 
             const ensembleIdents = ensembleSet
-                .getEnsembleArr()
+                .getRegularEnsembleArray()
                 .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
                 .map((ensemble) => ensemble.getIdent());
 
@@ -63,14 +60,12 @@ export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedS
             }
 
             return await queryClient.fetchQuery({
-                queryKey: ["getObservedSurfacesMetadata", ensembleIdent.getCaseUuid()],
-                queryFn: () =>
-                    cancelPromiseOnAbort(
-                        apiService.surface.getObservedSurfacesMetadata(ensembleIdent.getCaseUuid()),
-                        abortSignal
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getObservedSurfacesMetadataOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                    },
+                    signal: abortSignal,
+                }),
             });
         });
 

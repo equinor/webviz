@@ -1,9 +1,9 @@
 import React from "react";
 
-import { BoundingBox2d_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
+import { BoundingBox2D_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleViewProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Wellbore } from "@framework/types/wellbore";
@@ -32,7 +32,7 @@ type Bounds = [number, number, number, number];
 const updateViewPortBounds = (
     existingViewPortBounds: Bounds | undefined,
     resetBounds: boolean,
-    surfaceBB: BoundingBox2d_api
+    surfaceBB: BoundingBox2D_api
 ): Bounds => {
     const updatedBounds: Bounds = [surfaceBB.min_x, surfaceBB.min_y, surfaceBB.max_x, surfaceBB.max_y];
 
@@ -103,7 +103,7 @@ export function View({
 
     let fieldIdentifier: null | string = null;
     if (meshSurfAddr) {
-        const ensembleIdent = new EnsembleIdent(meshSurfAddr.caseUuid, meshSurfAddr.ensemble);
+        const ensembleIdent = new RegularEnsembleIdent(meshSurfAddr.caseUuid, meshSurfAddr.ensemble);
         fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null;
     }
     const wellTrajectoriesQuery = useFieldWellboreTrajectoriesQuery(fieldIdentifier ?? undefined);

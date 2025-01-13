@@ -1,9 +1,7 @@
 import { SurfaceTimeType_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { getRealizationSurfacesMetadataOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
-import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/layers/_utils/queryConstants";
-import { cancelPromiseOnAbort } from "@modules/2DViewer/layers/layers/_utils/utils";
 import { SettingType } from "@modules/2DViewer/layers/settings/settingsTypes";
 
 import { RealizationSurfaceSettings } from "./types";
@@ -76,17 +74,13 @@ export class RealizationSurfaceSettingsContext implements SettingsContext<Realiz
             }
 
             return await queryClient.fetchQuery({
-                queryKey: ["getRealizationSurfacesMetadata", ensembleIdent],
-                queryFn: () =>
-                    cancelPromiseOnAbort(
-                        apiService.surface.getRealizationSurfacesMetadata(
-                            ensembleIdent.getCaseUuid(),
-                            ensembleIdent.getEnsembleName()
-                        ),
-                        abortSignal
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getRealizationSurfacesMetadataOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                    },
+                    signal: abortSignal,
+                }),
             });
         });
 
