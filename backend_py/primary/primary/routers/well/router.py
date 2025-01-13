@@ -11,8 +11,8 @@ from primary.utils.drogon import is_drogon_identifier
 
 from primary.services.ssdl_access.well_access import WellAccess as SsdlWellAccess
 
-from primary.middleware.add_browser_cache import add_custom_cache_time
 
+from primary.middleware.add_browser_cache import add_custom_cache_time
 from . import schemas
 from . import converters
 
@@ -41,6 +41,7 @@ async def get_drilled_wellbore_headers(
     return [converters.convert_wellbore_header_to_schema(wellbore_header) for wellbore_header in wellbore_headers]
 
 
+@add_custom_cache_time(3600 * 24 * 7)  # 1 week
 @router.get("/well_trajectories/")
 async def get_well_trajectories(
     # fmt:off
@@ -61,7 +62,6 @@ async def get_well_trajectories(
         field_identifier=field_identifier,
         wellbore_uuids=wellbore_uuids,
     )
-    add_custom_cache_time(3600 * 24 * 7)  # 1 week
 
     return [
         converters.convert_well_trajectory_to_schema(wellbore_trajectory)

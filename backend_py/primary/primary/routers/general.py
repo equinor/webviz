@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.graph_access.graph_access import GraphApiAccess
+from primary.middleware.add_browser_cache import add_custom_cache_time
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ def alive_protected() -> str:
     return f"ALIVE_PROTECTED: Backend is alive at this time: {datetime.datetime.now()}"
 
 
+@add_custom_cache_time(0)  # 1 week
 @router.get("/logged_in_user", response_model=UserInfo)
 async def logged_in_user(
     request: Request,

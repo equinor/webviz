@@ -38,6 +38,7 @@ class EnsembleDetails(BaseModel):
 
 
 @router.get("/fields")
+@add_custom_cache_time(0)
 async def get_fields(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[FieldInfo]:
@@ -47,11 +48,12 @@ async def get_fields(
     sumo_inspector = SumoInspector(authenticated_user.get_sumo_access_token())
     field_ident_arr = await sumo_inspector.get_fields_async()
     ret_arr = [FieldInfo(field_identifier=field_ident.identifier) for field_ident in field_ident_arr]
-    add_custom_cache_time(0)
+
     return ret_arr
 
 
 @router.get("/cases")
+@add_custom_cache_time(0)
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
@@ -63,11 +65,12 @@ async def get_cases(
     ret_arr: List[CaseInfo] = []
 
     ret_arr = [CaseInfo(uuid=ci.uuid, name=ci.name, status=ci.status, user=ci.user) for ci in case_info_arr]
-    add_custom_cache_time(0)
+
     return ret_arr
 
 
 @router.get("/cases/{case_uuid}/ensembles")
+@add_custom_cache_time(0)
 async def get_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
@@ -77,11 +80,12 @@ async def get_ensembles(
     iteration_info_arr = await case_inspector.get_iterations_async()
 
     print(iteration_info_arr)
-    add_custom_cache_time(0)
+
     return [EnsembleInfo(name=it.name, realization_count=it.realization_count) for it in iteration_info_arr]
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
+@add_custom_cache_time(0)
 async def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
@@ -97,7 +101,7 @@ async def get_ensemble_details(
 
     if len(field_identifiers) != 1:
         raise NotImplementedError("Multiple field identifiers not supported")
-    add_custom_cache_time(0)
+
     return EnsembleDetails(
         name=ensemble_name,
         case_name=case_name,
