@@ -1,7 +1,6 @@
 import { VectorDescription_api } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { UseQueryResult } from "@tanstack/react-query";
 
 /**
  * Helper class for working with ensembles and corresponding vector list query results
@@ -10,18 +9,18 @@ import { UseQueryResult } from "@tanstack/react-query";
  */
 export class EnsembleVectorListsHelper {
     private _ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
-    private _queries: UseQueryResult<VectorDescription_api[]>[];
+    private _data: (VectorDescription_api[] | null)[];
 
     constructor(
         ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
-        vectorListQueryResults: UseQueryResult<VectorDescription_api[]>[]
+        queryData: (VectorDescription_api[] | null)[]
     ) {
-        if (ensembleIdents.length !== vectorListQueryResults.length) {
+        if (ensembleIdents.length !== queryData.length) {
             throw new Error("Number of ensembles and vector list query results must be equal");
         }
 
         this._ensembleIdents = ensembleIdents;
-        this._queries = vectorListQueryResults;
+        this._data = queryData;
     }
 
     /**
@@ -30,7 +29,7 @@ export class EnsembleVectorListsHelper {
      * @returns Number of queries with data results
      */
     numberOfQueriesWithData(): number {
-        return this._queries.filter((query) => query.data).length;
+        return this._data.filter((d) => d).length;
     }
 
     /**
@@ -40,9 +39,9 @@ export class EnsembleVectorListsHelper {
      */
     vectorsUnion(): string[] {
         const uniqueVectorNames = new Set<string>();
-        for (const query of this._queries) {
-            if (query.data) {
-                for (const vector of query.data) {
+        for (const data of this._data) {
+            if (data) {
+                for (const vector of data) {
                     uniqueVectorNames.add(vector.name);
                 }
             }
@@ -61,9 +60,9 @@ export class EnsembleVectorListsHelper {
     isVectorInEnsemble(ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent, vector: string): boolean {
         const index = this.findIndexOfEnsembleIdent(ensembleIdent);
 
-        if (index === -1 || !this._queries[index].data) return false;
+        if (index === -1 || !this._data[index]) return false;
 
-        return this._queries[index].data?.some((vec) => vec.name === vector) ?? false;
+        return this._data[index]?.some((vec) => vec.name === vector) ?? false;
     }
 
     /**
@@ -77,9 +76,9 @@ export class EnsembleVectorListsHelper {
         if (!this.isVectorInEnsemble(ensembleIdent, vector)) return false;
 
         const index = this.findIndexOfEnsembleIdent(ensembleIdent);
-        if (index === -1 || !this._queries[index].data) return false;
+        if (index === -1 || !this._data[index]) return false;
 
-        return this._queries[index].data?.some((vec) => vec.name === vector && vec.has_historical) ?? false;
+        return this._data[index]?.some((vec) => vec.name === vector && vec.has_historical) ?? false;
     }
 
     /**

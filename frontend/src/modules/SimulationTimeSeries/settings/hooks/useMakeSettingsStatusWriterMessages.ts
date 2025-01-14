@@ -29,6 +29,14 @@ export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatus
         statusWriter.addError(errorMessage);
     }
 
+    for (const query of vectorListQueries) {
+        if (query.data?.warnings?.length) {
+            for (const warning of query.data.warnings) {
+                statusWriter.addWarning(warning);
+            }
+        }
+    }
+
     // Set warning for vector names not existing in a selected ensemble
     function validateVectorNamesInEnsemble(
         vectorNames: string[],

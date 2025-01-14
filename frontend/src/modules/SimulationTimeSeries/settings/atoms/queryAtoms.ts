@@ -16,7 +16,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
         if (isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent)) {
             return () => ({
                 queryKey: ["getVectorList", ensembleIdent.getCaseUuid(), ensembleIdent.getEnsembleName()],
-                queryFn: async () => {
+                queryFn: async ({ signal }) => {
                     const result = await getVectorList({
                         query: {
                             case_uuid: ensembleIdent.getCaseUuid(),
@@ -26,9 +26,10 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                             "Webviz-Allow-Warnings": "true",
                         },
                         throwOnError: true,
+                        signal,
                     });
 
-                    const warnings = result.headers["Webviz-Content-Warnings"];
+                    const warnings = JSON.parse(result.headers["webviz-content-warnings"]);
 
                     return { data: result.data, warnings };
                 },

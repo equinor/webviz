@@ -1,3 +1,4 @@
+import { VectorDescription_api } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
@@ -145,7 +146,12 @@ export const ensembleVectorListsHelperAtom = atom<EnsembleVectorListsHelper>((ge
     const vectorListQueries = get(vectorListQueriesAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
-    return new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
+    const data = vectorListQueries.map((query) => (query.data ? query.data.data : null)) as (
+        | VectorDescription_api[]
+        | null
+    )[];
+
+    return new EnsembleVectorListsHelper(selectedEnsembleIdents, data);
 });
 
 export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {
