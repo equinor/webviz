@@ -66,10 +66,6 @@ export function withWarnings<TData extends DataShape, TReturnData>(
         queryFn: async ({ signal }) => {
             const result = await apiFunction<true>({
                 ...options,
-                headers: {
-                    ...options.headers,
-                    "Webviz-Allow-Warnings": "true",
-                },
                 throwOnError: true,
                 signal,
             });

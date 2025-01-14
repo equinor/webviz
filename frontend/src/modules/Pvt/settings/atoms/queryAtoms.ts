@@ -26,6 +26,7 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
                         case_uuid: el.ensembleIdent.getCaseUuid(),
                         ensemble_name: el.ensembleIdent.getEnsembleName(),
                         realization: el.realization,
+                        allow_warnings: true,
                     },
                 }),
                 enabled: Boolean(el.ensembleIdent && el.realization !== null),

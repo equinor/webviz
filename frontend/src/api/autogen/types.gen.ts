@@ -1057,9 +1057,23 @@ export type WellboreTrajectory_api = {
 export type GetFieldsData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
+    };
     url: "/fields";
 };
+
+export type GetFieldsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetFieldsError_api = GetFieldsErrors_api[keyof GetFieldsErrors_api];
 
 export type GetFieldsResponses_api = {
     /**
@@ -1078,6 +1092,10 @@ export type GetCasesData_api = {
          * Field identifier
          */
         field_identifier: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/cases";
 };
@@ -1108,7 +1126,12 @@ export type GetEnsemblesData_api = {
          */
         case_uuid: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
+    };
     url: "/cases/{case_uuid}/ensembles";
 };
 
@@ -1142,7 +1165,12 @@ export type GetEnsembleDetailsData_api = {
          */
         ensemble_name: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
+    };
     url: "/cases/{case_uuid}/ensembles/{ensemble_name}";
 };
 
@@ -1176,6 +1204,10 @@ export type GetVectorListData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/timeseries/vector_list/";
 };
@@ -1218,6 +1250,10 @@ export type GetDeltaEnsembleVectorListData_api = {
          * Reference ensemble name
          */
         reference_ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/timeseries/delta_ensemble_vector_list/";
 };
@@ -1229,8 +1265,7 @@ export type GetDeltaEnsembleVectorListErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetDeltaEnsembleVectorListError_api =
-    GetDeltaEnsembleVectorListErrors_api[keyof GetDeltaEnsembleVectorListErrors_api];
+export type GetDeltaEnsembleVectorListError_api = GetDeltaEnsembleVectorListErrors_api[keyof GetDeltaEnsembleVectorListErrors_api];
 
 export type GetDeltaEnsembleVectorListResponses_api = {
     /**
@@ -1266,6 +1301,10 @@ export type GetRealizationsVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/timeseries/realizations_vector_data/";
 };
@@ -1277,8 +1316,7 @@ export type GetRealizationsVectorDataErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetRealizationsVectorDataError_api =
-    GetRealizationsVectorDataErrors_api[keyof GetRealizationsVectorDataErrors_api];
+export type GetRealizationsVectorDataError_api = GetRealizationsVectorDataErrors_api[keyof GetRealizationsVectorDataErrors_api];
 
 export type GetRealizationsVectorDataResponses_api = {
     /**
@@ -1322,6 +1360,10 @@ export type GetDeltaEnsembleRealizationsVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/timeseries/delta_ensemble_realizations_vector_data/";
 };
@@ -1362,6 +1404,10 @@ export type GetTimestampsListData_api = {
          * Resampling frequency
          */
         resampling_frequency?: Frequency_api | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/timeseries/timestamps_list/";
 };
@@ -1404,6 +1450,10 @@ export type GetHistoricalVectorDataData_api = {
          * Resampling frequency
          */
         resampling_frequency?: Frequency_api | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/timeseries/historical_vector_data/";
 };
@@ -1415,8 +1465,7 @@ export type GetHistoricalVectorDataErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetHistoricalVectorDataError_api =
-    GetHistoricalVectorDataErrors_api[keyof GetHistoricalVectorDataErrors_api];
+export type GetHistoricalVectorDataError_api = GetHistoricalVectorDataErrors_api[keyof GetHistoricalVectorDataErrors_api];
 
 export type GetHistoricalVectorDataResponses_api = {
     /**
@@ -1425,8 +1474,7 @@ export type GetHistoricalVectorDataResponses_api = {
     200: VectorHistoricalData_api;
 };
 
-export type GetHistoricalVectorDataResponse_api =
-    GetHistoricalVectorDataResponses_api[keyof GetHistoricalVectorDataResponses_api];
+export type GetHistoricalVectorDataResponse_api = GetHistoricalVectorDataResponses_api[keyof GetHistoricalVectorDataResponses_api];
 
 export type GetStatisticalVectorDataData_api = {
     body?: never;
@@ -1456,6 +1504,10 @@ export type GetStatisticalVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/timeseries/statistical_vector_data/";
 };
@@ -1467,8 +1519,7 @@ export type GetStatisticalVectorDataErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetStatisticalVectorDataError_api =
-    GetStatisticalVectorDataErrors_api[keyof GetStatisticalVectorDataErrors_api];
+export type GetStatisticalVectorDataError_api = GetStatisticalVectorDataErrors_api[keyof GetStatisticalVectorDataErrors_api];
 
 export type GetStatisticalVectorDataResponses_api = {
     /**
@@ -1516,6 +1567,10 @@ export type GetDeltaEnsembleStatisticalVectorDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/timeseries/delta_ensemble_statistical_vector_data/";
 };
@@ -1564,6 +1619,10 @@ export type GetStatisticalVectorDataPerSensitivityData_api = {
          * Optional list of statistics to calculate. If not specified, all statistics will be calculated.
          */
         statistic_functions?: Array<StatisticFunction_api> | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/timeseries/statistical_vector_data_per_sensitivity/";
 };
@@ -1608,6 +1667,10 @@ export type GetRealizationVectorAtTimestampData_api = {
          * Timestamp in ms UTC to query vectors at
          */
         timestamp_utc_ms: number;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/timeseries/realization_vector_at_timestamp/";
 };
@@ -1644,6 +1707,10 @@ export type GetTableDefinitionsData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/inplace_volumetrics/table_definitions/";
 };
@@ -1702,6 +1769,10 @@ export type PostGetAggregatedPerRealizationTableDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/inplace_volumetrics/get_aggregated_per_realization_table_data/";
 };
@@ -1762,6 +1833,10 @@ export type PostGetAggregatedStatisticalTableDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/inplace_volumetrics/get_aggregated_statistical_table_data/";
 };
@@ -1798,6 +1873,10 @@ export type GetRealizationSurfacesMetadataData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/surface/realization_surfaces_metadata/";
 };
@@ -1830,6 +1909,10 @@ export type GetObservedSurfacesMetadataData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/surface/observed_surfaces_metadata/";
 };
@@ -1866,6 +1949,10 @@ export type GetSurfaceDataData_api = {
          * Format of binary data in the response
          */
         data_format?: "float" | "png";
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
         /**
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
@@ -1920,6 +2007,10 @@ export type PostGetSurfaceIntersectionData_api = {
          * Time point or time interval string
          */
         time_or_interval_str?: string | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/surface/get_surface_intersection";
 };
@@ -1931,8 +2022,7 @@ export type PostGetSurfaceIntersectionErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type PostGetSurfaceIntersectionError_api =
-    PostGetSurfaceIntersectionErrors_api[keyof PostGetSurfaceIntersectionErrors_api];
+export type PostGetSurfaceIntersectionError_api = PostGetSurfaceIntersectionErrors_api[keyof PostGetSurfaceIntersectionErrors_api];
 
 export type PostGetSurfaceIntersectionResponses_api = {
     /**
@@ -1968,6 +2058,10 @@ export type PostGetSampleSurfaceInPointsData_api = {
          * Realization numbers
          */
         realization_nums: Array<number>;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/surface/get_sample_surface_in_points";
 };
@@ -2008,6 +2102,10 @@ export type GetDeltaSurfaceDataData_api = {
          * Format of binary data in the response
          */
         data_format?: "float" | "png";
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
         /**
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
@@ -2059,6 +2157,10 @@ export type GetMisfitSurfaceDataData_api = {
          */
         data_format?: "float" | "png";
         /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
+        /**
          * Definition of the surface onto which the data should be resampled. *SurfaceDef_api* object properties encoded as a `KeyValStr` string.
          */
         resample_to_def_str?: string | null;
@@ -2082,8 +2184,7 @@ export type GetMisfitSurfaceDataResponses_api = {
     200: Array<SurfaceDataFloat_api>;
 };
 
-export type GetMisfitSurfaceDataResponse_api =
-    GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
+export type GetMisfitSurfaceDataResponse_api = GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
 
 export type GetStratigraphicUnitsData_api = {
     body?: never;
@@ -2093,6 +2194,10 @@ export type GetStratigraphicUnitsData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/surface/stratigraphic_units";
 };
@@ -2113,8 +2218,7 @@ export type GetStratigraphicUnitsResponses_api = {
     200: Array<StratigraphicUnit_api>;
 };
 
-export type GetStratigraphicUnitsResponse_api =
-    GetStratigraphicUnitsResponses_api[keyof GetStratigraphicUnitsResponses_api];
+export type GetStratigraphicUnitsResponse_api = GetStratigraphicUnitsResponses_api[keyof GetStratigraphicUnitsResponses_api];
 
 export type GetParameterNamesAndDescriptionData_api = {
     body?: never;
@@ -2136,6 +2240,10 @@ export type GetParameterNamesAndDescriptionData_api = {
          * Sort order
          */
         sort_order?: "alphabetically" | "standard_deviation";
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/parameters/parameter_names_and_description/";
 };
@@ -2176,6 +2284,10 @@ export type GetParameterData_api = {
          * Parameter name
          */
         parameter_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/parameters/parameter/";
 };
@@ -2210,6 +2322,10 @@ export type GetParametersData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/parameters/parameters/";
 };
@@ -2244,6 +2360,10 @@ export type GetIsSensitivityRunData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/parameters/is_sensitivity_run/";
 };
@@ -2278,6 +2398,10 @@ export type GetSensitivitiesData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/parameters/sensitivities/";
 };
@@ -2316,6 +2440,10 @@ export type GetGridModelsInfoData_api = {
          * Realization
          */
         realization_num: number;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/grid3d/grid_models_info/";
 };
@@ -2354,6 +2482,10 @@ export type GetIsGridGeometrySharedData_api = {
          * Grid name
          */
         grid_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/grid3d/is_grid_geometry_shared/";
 };
@@ -2365,8 +2497,7 @@ export type GetIsGridGeometrySharedErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetIsGridGeometrySharedError_api =
-    GetIsGridGeometrySharedErrors_api[keyof GetIsGridGeometrySharedErrors_api];
+export type GetIsGridGeometrySharedError_api = GetIsGridGeometrySharedErrors_api[keyof GetIsGridGeometrySharedErrors_api];
 
 export type GetIsGridGeometrySharedResponses_api = {
     /**
@@ -2375,8 +2506,7 @@ export type GetIsGridGeometrySharedResponses_api = {
     200: boolean;
 };
 
-export type GetIsGridGeometrySharedResponse_api =
-    GetIsGridGeometrySharedResponses_api[keyof GetIsGridGeometrySharedResponses_api];
+export type GetIsGridGeometrySharedResponse_api = GetIsGridGeometrySharedResponses_api[keyof GetIsGridGeometrySharedResponses_api];
 
 export type GetGridSurfaceData_api = {
     body?: never;
@@ -2422,6 +2552,10 @@ export type GetGridSurfaceData_api = {
          * Max k index
          */
         k_max?: number;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/grid3d/grid_surface";
 };
@@ -2496,6 +2630,10 @@ export type GetGridParameterData_api = {
          * Max k index
          */
         k_max?: number;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/grid3d/grid_parameter";
 };
@@ -2546,6 +2684,10 @@ export type PostGetPolylineIntersectionData_api = {
          * Time point or time interval string
          */
         parameter_time_or_interval_str?: string | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/grid3d/get_polyline_intersection";
 };
@@ -2594,6 +2736,10 @@ export type GetRealizationFlowNetworkData_api = {
          * Node types
          */
         node_type_set: Array<NodeType_api>;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/flow_network/realization_flow_network/";
 };
@@ -2605,8 +2751,7 @@ export type GetRealizationFlowNetworkErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetRealizationFlowNetworkError_api =
-    GetRealizationFlowNetworkErrors_api[keyof GetRealizationFlowNetworkErrors_api];
+export type GetRealizationFlowNetworkError_api = GetRealizationFlowNetworkErrors_api[keyof GetRealizationFlowNetworkErrors_api];
 
 export type GetRealizationFlowNetworkResponses_api = {
     /**
@@ -2634,6 +2779,10 @@ export type GetTableDataData_api = {
          * Realization number
          */
         realization: number;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/pvt/table_data/";
 };
@@ -2668,6 +2817,10 @@ export type GetRealizationsTablesAreEqualData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/pvt/realizations_tables_are_equal/";
 };
@@ -2708,6 +2861,10 @@ export type GetWellCompletionsDataData_api = {
          * Optional realizations to include. Provide single realization or list of realizations. If not specified, all realizations will be returned.
          */
         realization?: number | Array<number> | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well_completions/well_completions_data/";
 };
@@ -2728,8 +2885,7 @@ export type GetWellCompletionsDataResponses_api = {
     200: WellCompletionsData_api;
 };
 
-export type GetWellCompletionsDataResponse_api =
-    GetWellCompletionsDataResponses_api[keyof GetWellCompletionsDataResponses_api];
+export type GetWellCompletionsDataResponse_api = GetWellCompletionsDataResponses_api[keyof GetWellCompletionsDataResponses_api];
 
 export type GetDrilledWellboreHeadersData_api = {
     body?: never;
@@ -2739,6 +2895,10 @@ export type GetDrilledWellboreHeadersData_api = {
          * Official field identifier
          */
         field_identifier: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well/drilled_wellbore_headers/";
 };
@@ -2750,8 +2910,7 @@ export type GetDrilledWellboreHeadersErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetDrilledWellboreHeadersError_api =
-    GetDrilledWellboreHeadersErrors_api[keyof GetDrilledWellboreHeadersErrors_api];
+export type GetDrilledWellboreHeadersError_api = GetDrilledWellboreHeadersErrors_api[keyof GetDrilledWellboreHeadersErrors_api];
 
 export type GetDrilledWellboreHeadersResponses_api = {
     /**
@@ -2775,6 +2934,10 @@ export type GetWellTrajectoriesData_api = {
          * Optional subset of wellbore uuids
          */
         wellbore_uuids?: Array<string>;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well/well_trajectories/";
 };
@@ -2805,6 +2968,10 @@ export type GetWellborePickIdentifiersData_api = {
          * Stratigraphic column identifier
          */
         strat_column_identifier: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well/wellbore_pick_identifiers/";
 };
@@ -2816,8 +2983,7 @@ export type GetWellborePickIdentifiersErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetWellborePickIdentifiersError_api =
-    GetWellborePickIdentifiersErrors_api[keyof GetWellborePickIdentifiersErrors_api];
+export type GetWellborePickIdentifiersError_api = GetWellborePickIdentifiersErrors_api[keyof GetWellborePickIdentifiersErrors_api];
 
 export type GetWellborePickIdentifiersResponses_api = {
     /**
@@ -2841,6 +3007,10 @@ export type GetWellborePicksForPickIdentifierData_api = {
          * Pick identifier
          */
         pick_identifier: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well/wellbore_picks_for_pick_identifier/";
 };
@@ -2873,6 +3043,10 @@ export type GetWellborePicksForWellboreData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well/wellbore_picks_for_wellbore/";
 };
@@ -2905,6 +3079,10 @@ export type GetWellboreCompletionsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well/wellbore_completions/";
 };
@@ -2925,8 +3103,7 @@ export type GetWellboreCompletionsResponses_api = {
     200: Array<WellboreCompletion_api>;
 };
 
-export type GetWellboreCompletionsResponse_api =
-    GetWellboreCompletionsResponses_api[keyof GetWellboreCompletionsResponses_api];
+export type GetWellboreCompletionsResponse_api = GetWellboreCompletionsResponses_api[keyof GetWellboreCompletionsResponses_api];
 
 export type GetWellboreCasingsData_api = {
     body?: never;
@@ -2936,6 +3113,10 @@ export type GetWellboreCasingsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well/wellbore_casings/";
 };
@@ -2966,6 +3147,10 @@ export type GetWellborePerforationsData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well/wellbore_perforations/";
 };
@@ -2977,8 +3162,7 @@ export type GetWellborePerforationsErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetWellborePerforationsError_api =
-    GetWellborePerforationsErrors_api[keyof GetWellborePerforationsErrors_api];
+export type GetWellborePerforationsError_api = GetWellborePerforationsErrors_api[keyof GetWellborePerforationsErrors_api];
 
 export type GetWellborePerforationsResponses_api = {
     /**
@@ -2987,8 +3171,7 @@ export type GetWellborePerforationsResponses_api = {
     200: Array<WellborePerforation_api>;
 };
 
-export type GetWellborePerforationsResponse_api =
-    GetWellborePerforationsResponses_api[keyof GetWellborePerforationsResponses_api];
+export type GetWellborePerforationsResponse_api = GetWellborePerforationsResponses_api[keyof GetWellborePerforationsResponses_api];
 
 export type GetWellboreLogCurveHeadersData_api = {
     body?: never;
@@ -2998,6 +3181,10 @@ export type GetWellboreLogCurveHeadersData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well/wellbore_log_curve_headers/";
 };
@@ -3009,8 +3196,7 @@ export type GetWellboreLogCurveHeadersErrors_api = {
     422: HttpValidationError_api;
 };
 
-export type GetWellboreLogCurveHeadersError_api =
-    GetWellboreLogCurveHeadersErrors_api[keyof GetWellboreLogCurveHeadersErrors_api];
+export type GetWellboreLogCurveHeadersError_api = GetWellboreLogCurveHeadersErrors_api[keyof GetWellboreLogCurveHeadersErrors_api];
 
 export type GetWellboreLogCurveHeadersResponses_api = {
     /**
@@ -3034,6 +3220,10 @@ export type GetLogCurveDataData_api = {
          * Log curve name
          */
         log_curve_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/well/log_curve_data/";
 };
@@ -3068,6 +3258,10 @@ export type GetSeismicCubeMetaListData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/seismic/seismic_cube_meta_list/";
 };
@@ -3088,8 +3282,7 @@ export type GetSeismicCubeMetaListResponses_api = {
     200: Array<SeismicCubeMeta_api>;
 };
 
-export type GetSeismicCubeMetaListResponse_api =
-    GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
+export type GetSeismicCubeMetaListResponse_api = GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
 
 export type PostGetSeismicFenceData_api = {
     body: BodyPostGetSeismicFence_api;
@@ -3119,6 +3312,10 @@ export type PostGetSeismicFenceData_api = {
          * Observed or simulated
          */
         observed: boolean;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/seismic/get_seismic_fence/";
 };
@@ -3153,6 +3350,10 @@ export type GetPolygonsDirectoryData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/polygons/polygons_directory/";
 };
@@ -3173,8 +3374,7 @@ export type GetPolygonsDirectoryResponses_api = {
     200: Array<PolygonsMeta_api>;
 };
 
-export type GetPolygonsDirectoryResponse_api =
-    GetPolygonsDirectoryResponses_api[keyof GetPolygonsDirectoryResponses_api];
+export type GetPolygonsDirectoryResponse_api = GetPolygonsDirectoryResponses_api[keyof GetPolygonsDirectoryResponses_api];
 
 export type GetPolygonsDataData_api = {
     body?: never;
@@ -3200,6 +3400,10 @@ export type GetPolygonsDataData_api = {
          * Surface attribute
          */
         attribute: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/polygons/polygons_data/";
 };
@@ -3230,6 +3434,10 @@ export type GetUserPhotoData_api = {
          * User id
          */
         user_id: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/graph/user_photo/";
 };
@@ -3260,6 +3468,10 @@ export type GetObservationsData_api = {
          * Sumo case uuid
          */
         case_uuid: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/observations/observations/";
 };
@@ -3294,6 +3506,10 @@ export type GetTableDefinitionData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/rft/table_definition";
 };
@@ -3344,6 +3560,10 @@ export type GetRealizationDataData_api = {
          * Optional list of realizations encoded as string to include. If not specified, all realizations will be included.
          */
         realizations_encoded_as_uint_list_str?: string | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/rft/realization_data";
 };
@@ -3382,6 +3602,10 @@ export type GetVfpTableNamesData_api = {
          * Realization
          */
         realization: number;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/vfp/vfp_table_names/";
 };
@@ -3424,6 +3648,10 @@ export type GetVfpTableData_api = {
          * VFP table name
          */
         vfp_table_name: string;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/vfp/vfp_table/";
 };
@@ -3451,6 +3679,10 @@ export type LoginRouteData_api = {
     path?: never;
     query?: {
         redirect_url_after_login?: string | null;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/login";
 };
@@ -3474,9 +3706,23 @@ export type LoginRouteResponses_api = {
 export type AuthorizedCallbackRouteData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
+    };
     url: "/auth-callback";
 };
+
+export type AuthorizedCallbackRouteErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type AuthorizedCallbackRouteError_api = AuthorizedCallbackRouteErrors_api[keyof AuthorizedCallbackRouteErrors_api];
 
 export type AuthorizedCallbackRouteResponses_api = {
     /**
@@ -3488,9 +3734,23 @@ export type AuthorizedCallbackRouteResponses_api = {
 export type GetAliveData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
+    };
     url: "/alive";
 };
+
+export type GetAliveErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetAliveError_api = GetAliveErrors_api[keyof GetAliveErrors_api];
 
 export type GetAliveResponses_api = {
     /**
@@ -3504,9 +3764,23 @@ export type GetAliveResponse_api = GetAliveResponses_api[keyof GetAliveResponses
 export type GetAliveProtectedData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
+    };
     url: "/alive_protected";
 };
+
+export type GetAliveProtectedErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetAliveProtectedError_api = GetAliveProtectedErrors_api[keyof GetAliveProtectedErrors_api];
 
 export type GetAliveProtectedResponses_api = {
     /**
@@ -3525,6 +3799,10 @@ export type GetLoggedInUserData_api = {
          * Set to true to include user avatar and display name from Microsoft Graph API
          */
         includeGraphApiInfo?: boolean;
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
     };
     url: "/logged_in_user";
 };
@@ -3550,9 +3828,23 @@ export type GetLoggedInUserResponse_api = GetLoggedInUserResponses_api[keyof Get
 export type RootData_api = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Allow warnings
+         */
+        allow_warnings?: boolean;
+    };
     url: "/";
 };
+
+export type RootErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type RootError_api = RootErrors_api[keyof RootErrors_api];
 
 export type RootResponses_api = {
     /**

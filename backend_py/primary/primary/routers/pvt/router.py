@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.table_access import TableAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
-from primary.middleware.add_warnings_middleware import add_warning
+from primary.middleware.add_warnings_middleware import soft_raise_exception
 
 from .converters import pvt_dataframe_to_api_data
 from .schemas import PvtData
@@ -34,7 +34,7 @@ async def get_table_data(
     # Get all table schemas for a given realization and find the pvt table
     table_schemas = await access.get_table_schemas_single_realization_async(realization=realization)
 
-    add_warning("PVT table not complete")
+    soft_raise_exception(HTTPException(status_code=404, detail="PVT table not complete"))
 
     table_schema = None
     for schema in table_schemas:

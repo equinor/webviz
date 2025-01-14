@@ -2,7 +2,7 @@ import datetime
 import logging
 import os
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.responses import ORJSONResponse
 from fastapi.routing import APIRoute
 from starsessions import SessionMiddleware
@@ -34,7 +34,7 @@ from primary.utils.azure_monitor_setup import setup_azure_monitor_telemetry
 from primary.utils.exception_handlers import configure_service_level_exception_handlers
 from primary.utils.exception_handlers import override_default_fastapi_exception_handlers
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
-from primary.middleware.add_warnings_middleware import AddWarningsMiddleware
+from primary.middleware.add_warnings_middleware import AddWarningsMiddleware, allow_warnings_dep
 
 from . import config
 
@@ -61,6 +61,7 @@ app = FastAPI(
     generate_unique_id_function=custom_generate_unique_id,
     root_path="/api",
     default_response_class=ORJSONResponse,
+    dependencies=[Depends(allow_warnings_dep)],
 )
 
 if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
@@ -91,7 +92,7 @@ app.include_router(vfp_router, prefix="/vfp", tags=["vfp"])
 app.include_router(dev_router, prefix="/dev", tags=["dev"], include_in_schema=False)
 
 auth_helper = AuthHelper()
-app.include_router(auth_helper.router)
+app.include_router(auth_helper.router, dependencies=[])
 app.include_router(general_router)
 
 configure_service_level_exception_handlers(app)
@@ -120,6 +121,7 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
+
 
 @app.get("/")
 async def root() -> str:

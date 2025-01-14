@@ -3,8 +3,11 @@ import { type Options, createClient, createConfig } from "@hey-api/client-axios"
 
 import type {
     AuthorizedCallbackRouteData_api,
+    AuthorizedCallbackRouteError_api,
     GetAliveData_api,
+    GetAliveError_api,
     GetAliveProtectedData_api,
+    GetAliveProtectedError_api,
     GetAliveProtectedResponse_api,
     GetAliveResponse_api,
     GetCasesData_api,
@@ -32,6 +35,7 @@ import type {
     GetEnsemblesError_api,
     GetEnsemblesResponse_api,
     GetFieldsData_api,
+    GetFieldsError_api,
     GetFieldsResponse_api,
     GetGridModelsInfoData_api,
     GetGridModelsInfoError_api,
@@ -189,6 +193,7 @@ import type {
     PostGetSurfaceIntersectionError_api,
     PostGetSurfaceIntersectionResponse_api,
     RootData_api,
+    RootError_api,
     RootResponse_api,
 } from "./types.gen";
 
@@ -199,7 +204,7 @@ export const client = createClient(createConfig());
  * Get list of fields
  */
 export const getFields = <ThrowOnError extends boolean = false>(options?: Options<GetFieldsData_api, ThrowOnError>) => {
-    return (options?.client ?? client).get<GetFieldsResponse_api, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetFieldsResponse_api, GetFieldsError_api, ThrowOnError>({
         ...options,
         url: "/fields",
     });
@@ -1126,7 +1131,7 @@ export const loginRoute = <ThrowOnError extends boolean = false>(options?: Optio
 export const authorizedCallbackRoute = <ThrowOnError extends boolean = false>(
     options?: Options<AuthorizedCallbackRouteData_api, ThrowOnError>
 ) => {
-    return (options?.client ?? client).get<unknown, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<unknown, AuthorizedCallbackRouteError_api, ThrowOnError>({
         ...options,
         url: "/auth-callback",
     });
@@ -1136,7 +1141,7 @@ export const authorizedCallbackRoute = <ThrowOnError extends boolean = false>(
  * Get Alive
  */
 export const getAlive = <ThrowOnError extends boolean = false>(options?: Options<GetAliveData_api, ThrowOnError>) => {
-    return (options?.client ?? client).get<GetAliveResponse_api, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetAliveResponse_api, GetAliveError_api, ThrowOnError>({
         ...options,
         url: "/alive",
     });
@@ -1148,7 +1153,7 @@ export const getAlive = <ThrowOnError extends boolean = false>(options?: Options
 export const getAliveProtected = <ThrowOnError extends boolean = false>(
     options?: Options<GetAliveProtectedData_api, ThrowOnError>
 ) => {
-    return (options?.client ?? client).get<GetAliveProtectedResponse_api, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<GetAliveProtectedResponse_api, GetAliveProtectedError_api, ThrowOnError>({
         ...options,
         url: "/alive_protected",
     });
@@ -1170,7 +1175,7 @@ export const getLoggedInUser = <ThrowOnError extends boolean = false>(
  * Root
  */
 export const root = <ThrowOnError extends boolean = false>(options?: Options<RootData_api, ThrowOnError>) => {
-    return (options?.client ?? client).get<RootResponse_api, unknown, ThrowOnError>({
+    return (options?.client ?? client).get<RootResponse_api, RootError_api, ThrowOnError>({
         ...options,
         url: "/",
     });
