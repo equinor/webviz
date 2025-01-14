@@ -158,7 +158,7 @@ export class GridLayer extends BaseLayer<GridLayerSettings, AdjustedPolylineInte
                 grid_name: this._settings.gridModelName ?? "",
                 parameter_name: this._settings.parameterName ?? "",
                 realization_num: this._settings.realizationNum ?? 0,
-                parameter_time_or_interval_str: this._settings.parameterDateOrInterval ?? "",
+                parameter_time_or_interval_str: this._settings.parameterDateOrInterval ?? null,
             },
             body: {
                 polyline_utm_xy: this._settings.polyline.polylineUtmXy,
