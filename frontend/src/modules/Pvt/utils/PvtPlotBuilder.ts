@@ -51,7 +51,7 @@ export class PvtPlotBuilder {
 
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
-                const titleIndex = (numRows - row) * numCols + (col - 1);
+                const titleIndex = (row - 1) * numCols + (col - 1);
                 const axisIndex = (row - 1) * numCols + col;
 
                 const dependentVariable = adjustedDependentVariables.at(titleIndex) ?? null;
@@ -71,7 +71,7 @@ export class PvtPlotBuilder {
                 // Last plot in vertical direction? - note the reversed order of rows
                 const evenNumberOfPlotsAndFirstRow = this._numPlots % 2 === 0 && row === 1;
                 const unevenNumberOfPlotsAndLastRowAndLastColumn =
-                    this._numPlots % 2 !== 0 && row === 2 && col === numCols;
+                    this._numPlots % 2 !== 0 && row === numRows && col === numCols;
                 const unevenNumberOfPlotsAndFirstRowAndFirstColumn = this._numPlots % 2 !== 0 && row === 1 && col === 1;
                 const lastPlotInVerticalDirection =
                     evenNumberOfPlotsAndFirstRow ||
@@ -203,7 +203,8 @@ export class PvtPlotBuilder {
                     }
 
                     for (const [dependentVariable, dependentVariableMap] of groupedTracesMaps) {
-                        const row = Math.ceil(this._numPlots / 2) - Math.floor(i / 2);
+                        // const row = Math.ceil(this._numPlots / 2) - Math.floor(i / 2);
+                        const row = Math.floor(i / 2) + 1;
                         const col = (i % 2) + 1;
                         const borderTracePoints: TracePointData[] = [];
                         for (const [, tracePointDataArray] of dependentVariableMap) {
