@@ -1,5 +1,4 @@
 import React from "react";
-import Plot from "react-plotly.js";
 
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { ModuleViewProps } from "@framework/Module";
@@ -15,8 +14,8 @@ import { PlotDatum, PlotMouseEvent } from "plotly.js";
 import { userSelectedActiveTimestampUtcMsAtom } from "./atoms/baseAtoms";
 import { realizationsQueryHasErrorAtom, statisticsQueryHasErrorAtom } from "./atoms/derivedAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
+import { usePlotBuilder } from "./hooks/usePlotBuilder";
 import { usePublishToDataChannels } from "./hooks/usePublishToDataChannels";
-import { useSubplotBuilder } from "./hooks/useSubplotBuilder";
 import { EnsemblesContinuousParameterColoring } from "./utils/ensemblesContinuousParameterColoring";
 
 import { Interfaces } from "../interfaces";
@@ -63,8 +62,6 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     useMakeViewStatusWriterMessages(viewContext, statusWriter, parameterDisplayName, ensemblesWithoutParameter);
     usePublishToDataChannels(viewContext);
 
-    const [plotData, plotLayout] = useSubplotBuilder(viewContext, wrapperDivSize, colorSet, ensemblesParameterColoring);
-
     function handleClickInChart(e: PlotMouseEvent) {
         const clickedPoint: PlotDatum = e.points[0];
         if (!clickedPoint) {
@@ -79,6 +76,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
         }
     }
 
+    const plot = usePlotBuilder(viewContext, wrapperDivSize, colorSet, ensemblesParameterColoring, handleClickInChart);
+
     const doRenderContentError = hasRealizationsQueryError || hasStatisticsQueryError;
 
     return (
@@ -86,13 +85,14 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
             {doRenderContentError ? (
                 <ContentError>One or more queries have an error state.</ContentError>
             ) : (
-                <Plot
-                    key={plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
-                    data={plotData}
-                    layout={plotLayout}
-                    config={{ scrollZoom: true }}
-                    onClick={handleClickInChart}
-                />
+                // <Plot
+                //     key={plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
+                //     data={plotData}
+                //     layout={plotLayout}
+                //     config={{ scrollZoom: true }}
+                //     onClick={handleClickInChart}
+                // />
+                plot
             )}
         </div>
     );
