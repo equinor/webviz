@@ -49,6 +49,10 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
         }
     }
 
+    for (const warning of pvtDataQueries.warnings) {
+        statusWriter.addWarning(warning);
+    }
+
     function makeContent() {
         if (pvtDataQueries.isFetching) {
             return (

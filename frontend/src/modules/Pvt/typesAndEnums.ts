@@ -49,4 +49,5 @@ export type CombinedPvtDataResult = {
     errors: Error[];
     someQueriesFailed: boolean;
     allQueriesFailed: boolean;
+    warnings: string[];
 };

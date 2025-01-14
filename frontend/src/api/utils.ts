@@ -1,7 +1,7 @@
 import { Options, RequestResult } from "@hey-api/client-axios";
 import { QueryFunctionContext, queryOptions } from "@tanstack/react-query";
 
-import { client, getCases } from "./autogen";
+import { client } from "./autogen";
 
 interface DataShape {
     body?: unknown | undefined;
@@ -49,17 +49,19 @@ const createQueryKey = <TOptions extends Options>(
     return params;
 };
 
-export type AllowWarningsReturnType<TData extends DataShape, TReturnData> = {
-    queryFn?: (context: QueryFunctionContext) => Promise<{ data: TReturnData; warnings: any }>;
-    queryKey?: QueryKey<Options<TData>>;
+export type AllowWarningsReturnType<TData extends DataShape, TReturnData, TQueryKey = QueryKey<Options<TData>>> = {
+    queryFn?: (
+        context: QueryFunctionContext<QueryKey<Options<TData>>>
+    ) => Promise<{ data: TReturnData; warnings: any }>;
+    queryKey?: TQueryKey;
 };
 
 export function withWarnings<TData extends DataShape, TReturnData>(
-    apiFunction: <ThrowOnError extends boolean = false>(
+    apiFunction: <ThrowOnError extends boolean = true>(
         options: Options<TData, ThrowOnError>
     ) => RequestResult<TReturnData, any, ThrowOnError>,
     options: Options<TData>
-): AllowWarningsReturnType<TData, TReturnData> {
+) {
     return queryOptions({
         queryFn: async ({ signal }) => {
             const result = await apiFunction<true>({
@@ -79,9 +81,3 @@ export function withWarnings<TData extends DataShape, TReturnData>(
         queryKey: [createQueryKey(apiFunction.name, options)],
     });
 }
-
-const t = withWarnings(getCases, {
-    query: {
-        field_identifier: "test",
-    },
-});

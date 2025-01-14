@@ -2,18 +2,19 @@ import json
 from contextvars import ContextVar
 
 from starlette.datastructures import MutableHeaders
-
-WARNINGS_CONTEXT_DEFAULT = {
-    "report_errors_as_warnings": False,
-    "reported_warnings": []
-}
+from starlette.requests import HTTPConnection
 
 # Add warnings to ContextVar
-warnings_context: ContextVar = ContextVar("warnings_context", default=WARNINGS_CONTEXT_DEFAULT)
+warnings_context: ContextVar = ContextVar(
+    "warnings_context", default={"report_errors_as_warnings": False, "reported_warnings": []}
+)
+
 
 def add_warning(warning: str) -> None:
     context = warnings_context.get()
-    context["reported_warnings"].append(warning)
+    if context["report_errors_as_warnings"]:
+        context["reported_warnings"].append(warning)
+
 
 class AddWarningsMiddleware:
     """
@@ -26,20 +27,16 @@ class AddWarningsMiddleware:
     async def __call__(self, scope, receive, send) -> None:
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
-        
-        warnings_context.set(WARNINGS_CONTEXT_DEFAULT)
 
-        async def receive_request_with_warnings_request(message) -> None:
-            if message["type"] == "http.request":
-                headers = MutableHeaders(scope=message)
-                context = warnings_context.get()
-                allow_warnings = headers.get("Webviz-Allow-Warnings", None)
-                if allow_warnings == "true":
-                    context["report_errors_as_warnings"] = True
-                
-                warnings_context.set(context)
-            
-            await receive(message)
+        warnings_context.set({"report_errors_as_warnings": False, "reported_warnings": []})
+
+        conn = HTTPConnection(scope)
+        context = warnings_context.get()
+        allow_warnings = conn.headers.get("Webviz-Allow-Warnings", None)
+        if allow_warnings == "true":
+            context["report_errors_as_warnings"] = True
+
+        warnings_context.set(context)
 
         async def send_with_warning_header(message) -> None:
             if message["type"] == "http.response.start":
@@ -50,4 +47,4 @@ class AddWarningsMiddleware:
 
             await send(message)
 
-        await self.app(scope, receive_request_with_warnings_request, send_with_warning_header)
+        await self.app(scope, receive, send_with_warning_header)

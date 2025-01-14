@@ -1,5 +1,4 @@
-import { PvtData_api } from "@api";
-import { getTableDataOptions } from "@api";
+import { PvtData_api, getTableData, withWarnings } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { UseQueryResult } from "@tanstack/react-query";
@@ -22,7 +21,7 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
     const queries = ensembleIdentsAndRealizations
         .map((el) => {
             return () => ({
-                ...getTableDataOptions({
+                ...withWarnings(getTableData, {
                     query: {
                         case_uuid: el.ensembleIdent.getCaseUuid(),
                         ensemble_name: el.ensembleIdent.getEnsembleName(),
@@ -34,19 +33,22 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
         })
         .flat();
 
-    function combine(results: UseQueryResult<PvtData_api[], Error>[]): CombinedPvtDataResult {
+    function combine(
+        results: UseQueryResult<{ data: PvtData_api[]; warnings: string[] }, Error>[]
+    ): CombinedPvtDataResult {
         return {
             tableCollections: ensembleIdentsAndRealizations.map((el, idx) => {
                 return {
                     ensembleIdent: el.ensembleIdent,
                     realization: el.realization,
-                    tables: results[idx]?.data ?? [],
+                    tables: results[idx]?.data?.data ?? [],
                 };
             }),
             errors: results.map((result) => result.error).filter((err) => err !== null) as Error[],
             isFetching: results.some((result) => result.isFetching),
             someQueriesFailed: results.some((result) => result.isError),
             allQueriesFailed: results.every((result) => result.isError),
+            warnings: results.flatMap((result) => result.data?.warnings ?? []),
         };
     }
 
