@@ -1,17 +1,19 @@
 import { Options, RequestResult } from "@hey-api/client-axios";
-import { queryOptions } from "@tanstack/react-query";
+import { QueryFunctionContext, queryOptions } from "@tanstack/react-query";
 
-import { client } from "./autogen";
+import { client, getCases } from "./autogen";
 
 interface DataShape {
-    body?: unknown;
-    headers?: unknown;
-    path?: unknown;
-    query?: unknown;
+    body?: unknown | undefined;
+    headers?: unknown | undefined;
+    path?: unknown | undefined;
+    query?: unknown | undefined;
     url: string;
 }
 
-type ApiFunction<TData extends DataShape> = (options: Options<TData, true>) => RequestResult<TData, unknown, true>;
+export type ApiFunction<TData extends DataShape, TResponseData> = (
+    options: Options<TData, true>
+) => RequestResult<TResponseData>;
 
 type QueryKey<TOptions extends Options> = [
     Pick<TOptions, "baseURL" | "body" | "headers" | "path" | "query"> & {
@@ -47,15 +49,20 @@ const createQueryKey = <TOptions extends Options>(
     return params;
 };
 
-export type AllowWarningsReturnType<TData extends DataShape> = {
-    queryFn: (options: { signal: AbortSignal }) => Promise<{ data: TData; warnings: string[] }>;
-    queryKey: QueryKey<Options<TData>>;
+export type AllowWarningsReturnType<TData extends DataShape, TReturnData> = {
+    queryFn?: (context: QueryFunctionContext) => Promise<{ data: TReturnData; warnings: any }>;
+    queryKey?: QueryKey<Options<TData>>;
 };
 
-export function allowWarnings<TData extends DataShape>(apiFunction: ApiFunction<TData>, options: Options<TData>) {
+export function withWarnings<TData extends DataShape, TReturnData>(
+    apiFunction: <ThrowOnError extends boolean = false>(
+        options: Options<TData, ThrowOnError>
+    ) => RequestResult<TReturnData, any, ThrowOnError>,
+    options: Options<TData>
+): AllowWarningsReturnType<TData, TReturnData> {
     return queryOptions({
         queryFn: async ({ signal }) => {
-            const result = await apiFunction({
+            const result = await apiFunction<true>({
                 ...options,
                 headers: {
                     ...options.headers,
@@ -72,3 +79,9 @@ export function allowWarnings<TData extends DataShape>(apiFunction: ApiFunction<
         queryKey: [createQueryKey(apiFunction.name, options)],
     });
 }
+
+const t = withWarnings(getCases, {
+    query: {
+        field_identifier: "test",
+    },
+});

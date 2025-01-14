@@ -1,4 +1,4 @@
-import { getDeltaEnsembleVectorList, getVectorList } from "@api";
+import { GetDeltaEnsembleVectorListData_api, getDeltaEnsembleVectorList, getVectorList, withWarnings } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -15,6 +15,13 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
         // Regular Ensemble
         if (isEnsembleIdentOfType(ensembleIdent, RegularEnsembleIdent)) {
             return () => ({
+                ...withWarnings(getVectorList, {
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                    },
+                }),
+                /*
                 queryKey: ["getVectorList", ensembleIdent.getCaseUuid(), ensembleIdent.getEnsembleName()],
                 queryFn: async ({ signal }) => {
                     const result = await getVectorList({
@@ -33,6 +40,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
 
                     return { data: result.data, warnings };
                 },
+                */
             });
         }
 
@@ -43,6 +51,18 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
             const referenceEnsembleIdent = deltaEnsemble.getReferenceEnsembleIdent();
 
             return () => ({
+                ...withWarnings<GetDeltaEnsembleVectorListData_api, typeof getDeltaEnsembleVectorList>(
+                    getDeltaEnsembleVectorList,
+                    {
+                        query: {
+                            comparison_case_uuid: comparisonEnsembleIdent.getCaseUuid(),
+                            comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
+                            reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
+                            reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
+                        },
+                    }
+                ),
+                /*
                 queryKey: [
                     "getDeltaEnsembleVectorList",
                     ensembleIdent.getComparisonEnsembleIdent().getCaseUuid(),
@@ -65,6 +85,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
 
                     return { data: result.data, warnings };
                 },
+                */
             });
         }
 
