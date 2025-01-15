@@ -77,23 +77,11 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     }
 
     const plot = usePlotBuilder(viewContext, wrapperDivSize, colorSet, ensemblesParameterColoring, handleClickInChart);
-
-    const doRenderContentError = hasRealizationsQueryError || hasStatisticsQueryError;
+    const hasNoQueryErrors = !hasRealizationsQueryError && !hasStatisticsQueryError;
 
     return (
         <div className="w-full h-full" ref={wrapperDivRef}>
-            {doRenderContentError ? (
-                <ContentError>One or more queries have an error state.</ContentError>
-            ) : (
-                // <Plot
-                //     key={plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
-                //     data={plotData}
-                //     layout={plotLayout}
-                //     config={{ scrollZoom: true }}
-                //     onClick={handleClickInChart}
-                // />
-                plot
-            )}
+            {hasNoQueryErrors ? plot : <ContentError>One or more queries have an error state.</ContentError>}
         </div>
     );
 };

@@ -210,7 +210,15 @@ export class Figure {
             modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "resetScale2d"],
         };
 
-        return <Plot data={this._plotData} layout={this.makeLayout()} config={config} {...plotArgs} />;
+        return (
+            <Plot
+                key={this._plotData.length} // Note: Temporary to trigger re-render and remove legends when plotData is empty
+                data={this._plotData}
+                layout={this.makeLayout()}
+                config={config}
+                {...plotArgs}
+            />
+        );
     }
 }
 
