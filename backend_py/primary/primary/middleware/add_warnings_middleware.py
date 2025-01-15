@@ -5,8 +5,6 @@ from contextvars import ContextVar
 from fastapi import Query, HTTPException
 from starlette.datastructures import MutableHeaders
 
-# from starlette.requests import HTTPConnection
-
 # Add warnings to ContextVar
 warnings_context: ContextVar = ContextVar(
     "warnings_context", default={"report_errors_as_warnings": False, "reported_warnings": []}
@@ -47,17 +45,6 @@ class AddWarningsMiddleware:
             return await self.app(scope, receive, send)
 
         warnings_context.set({"report_errors_as_warnings": False, "reported_warnings": []})
-
-        """
-        conn = HTTPConnection(scope)
-        context = warnings_context.get()
-        conn.query_params.get("allow_warnings", )
-        allow_warnings = conn.headers.get("Webviz-Allow-Warnings", None)
-        if allow_warnings == "true":
-            context["report_errors_as_warnings"] = True
-
-        warnings_context.set(context)
-        """
 
         async def send_with_warning_header(message) -> None:
             if message["type"] == "http.response.start":
