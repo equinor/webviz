@@ -1,7 +1,6 @@
-import { SeismicFenceData_api } from "@api";
+import { SeismicFenceData_api, postGetSeismicFenceOptions } from "@api";
 import { SeismicInfo, findIndexOfSample, getSeismicInfo } from "@equinor/esv-intersection";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
@@ -47,11 +46,8 @@ export function transformSeismicFenceData(apiData: SeismicFenceData_api): Seismi
     };
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export type SeismicLayerSettings = {
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     realizationNum: number | null;
     polyline: {
         polylineUtmXy: number[];
@@ -330,36 +326,25 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             yPoints.push(point[1]);
         }
 
-        const queryKey = [
-            "postGetSeismicFence",
-            this._settings.ensembleIdent?.getCaseUuid() ?? "",
-            this._settings.ensembleIdent?.getEnsembleName() ?? "",
-            this._settings.realizationNum ?? 0,
-            this._settings.attribute ?? "",
-            this._settings.dateOrInterval ?? "",
-            this._settings.polyline.polylineUtmXy,
-            this._settings.extensionLength,
-            this._settings.surveyType,
-            this._settings.dataType,
-            this._settings.resolution,
-        ];
-        this.registerQueryKey(queryKey);
+        const queryOptions = postGetSeismicFenceOptions({
+            query: {
+                case_uuid: this._settings.ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: this._settings.ensembleIdent?.getEnsembleName() ?? "",
+                realization_num: this._settings.realizationNum ?? 0,
+                seismic_attribute: this._settings.attribute ?? "",
+                time_or_interval_str: this._settings.dateOrInterval ?? "",
+                observed: this._settings.dataType === SeismicDataType.OBSERVED,
+            },
+            body: {
+                polyline: { x_points: xPoints, y_points: yPoints },
+            },
+        });
+
+        this.registerQueryKey(queryOptions.queryKey);
 
         return queryClient
             .fetchQuery({
-                queryKey,
-                queryFn: () =>
-                    apiService.seismic.postGetSeismicFence(
-                        this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                        this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                        this._settings.realizationNum ?? 0,
-                        this._settings.attribute ?? "",
-                        this._settings.dateOrInterval ?? "",
-                        this._settings.dataType === SeismicDataType.OBSERVED,
-                        { polyline: { x_points: xPoints, y_points: yPoints } }
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...queryOptions,
             })
             .then((data) => transformSeismicFenceData(data))
             .then(async (data) => {
@@ -376,7 +361,7 @@ export function isSeismicLayer(layer: BaseLayer<any, any>): layer is SeismicLaye
  * Utility function to convert the 1D array of values from the fence data to a 2D array of values
  * for the seismic slice image.
  *
- * For the bit map image, the values are provided s.t. a seismic trace is a column in the image,
+ * For the bit map image, the values are provided such that a seismic trace is a column in the image,
  * thus the data will be transposed.
  *
  * trace a,b,c and d

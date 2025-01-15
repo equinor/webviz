@@ -1,7 +1,7 @@
 import { isEqual } from "lodash";
 
-import { Ensemble } from "./Ensemble";
-import { EnsembleIdent } from "./EnsembleIdent";
+import { DeltaEnsemble } from "./DeltaEnsemble";
+import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import {
     ContinuousParameter,
     DiscreteParameter,
@@ -10,6 +10,8 @@ import {
     ParameterIdent,
     ParameterType,
 } from "./EnsembleParameters";
+import { RegularEnsemble } from "./RegularEnsemble";
+import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import {
     DiscreteParameterValueSelection,
     IncludeExcludeFilter,
@@ -28,16 +30,16 @@ import {
 /**
  * Class for filtering realizations based on realization number or parameter values.
  *
- * The class is designed to be used in conjunction with the Ensemble class.
+ * The class is designed to be used in conjunction with the RegularEnsemble or DeltaEnsemble class.
  *
  * The class is designed to keep track of the filtering state and provide the filtered realizations
  * for an ensemble.
  *
- * Should not provide interface to get the Ensemble object itself, but can provide access to information about the ensemble,
- * such as the ensemble ident and realization numbers.
+ * Should not provide interface to get the RegularEnsemble/DeltaEnsemble object itself, but can provide
+ * access to information about the ensemble - such as the ensemble ident and realization numbers.
  */
 export class RealizationFilter {
-    private _assignedEnsemble: Ensemble;
+    private _assignedEnsemble: RegularEnsemble | DeltaEnsemble;
     private _includeExcludeFilter: IncludeExcludeFilter;
     private _filterType: RealizationFilterType;
 
@@ -52,7 +54,7 @@ export class RealizationFilter {
     private _filteredRealizations: readonly number[];
 
     constructor(
-        assignedEnsemble: Ensemble,
+        assignedEnsemble: RegularEnsemble | DeltaEnsemble,
         initialIncludeExcludeFilter = IncludeExcludeFilter.INCLUDE_FILTER,
         initialFilterType = RealizationFilterType.BY_REALIZATION_NUMBER
     ) {
@@ -65,7 +67,7 @@ export class RealizationFilter {
         this._parameterIdentStringToValueSelectionMap = null;
     }
 
-    getAssignedEnsembleIdent(): EnsembleIdent {
+    getAssignedEnsembleIdent(): RegularEnsembleIdent | DeltaEnsembleIdent {
         return this._assignedEnsemble.getIdent();
     }
 

@@ -1,8 +1,7 @@
-import { Frequency_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export interface VectorSpec {
-    ensembleIdent: EnsembleIdent;
+    ensembleIdent: RegularEnsembleIdent;
     vectorName: string;
     hasHistorical: boolean;
 }

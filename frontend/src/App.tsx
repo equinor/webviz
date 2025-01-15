@@ -84,15 +84,10 @@ function App() {
 
             setIsMounted(true);
 
-            const storedEnsembleIdents = workbench.maybeLoadEnsembleSettingsFromLocalStorage();
-            if (storedEnsembleIdents) {
-                setInitAppState(InitAppState.LoadingEnsembles);
-                workbench.loadAndSetupEnsembleSetInSession(queryClient, storedEnsembleIdents).finally(() => {
-                    initApp();
-                });
-            } else {
+            // Initialize the workbench
+            workbench.initWorkbenchFromLocalStorage(queryClient).finally(() => {
                 initApp();
-            }
+            });
 
             return function handleUnmount() {
                 workbench.clearLayout();

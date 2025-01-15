@@ -1,6 +1,5 @@
-import { SurfaceRealizationSampleValues_api } from "@api";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { SurfaceRealizationSampleValues_api, postGetSampleSurfaceInPointsOptions } from "@api";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
@@ -10,11 +9,8 @@ import { isEqual } from "lodash";
 
 import { BaseLayer, BoundingBox, LayerTopic } from "./BaseLayer";
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export type SurfacesUncertaintyLayerSettings = {
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     realizationNums: number[];
     polyline: {
         polylineUtmXy: number[];
@@ -211,33 +207,22 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
         };
 
         for (const surfaceName of this._settings.surfaceNames) {
-            const queryKey = [
-                "getSurfaceIntersection",
-                this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                this._settings.realizationNums,
-                surfaceName,
-                this._settings.attribute ?? "",
-                this._settings.polyline.polylineUtmXy,
-                this._settings.extensionLength,
-                this._settings.resolution,
-            ];
-            this.registerQueryKey(queryKey);
+            const queryOptions = postGetSampleSurfaceInPointsOptions({
+                query: {
+                    case_uuid: this._settings.ensembleIdent?.getCaseUuid() ?? "",
+                    ensemble_name: this._settings.ensembleIdent?.getEnsembleName() ?? "",
+                    surface_name: surfaceName,
+                    surface_attribute: this._settings.attribute ?? "",
+                    realization_nums: this._settings.realizationNums,
+                },
+                body: queryBody,
+            });
+
+            this.registerQueryKey(queryOptions.queryKey);
 
             const promise = queryClient
                 .fetchQuery({
-                    queryKey,
-                    queryFn: () =>
-                        apiService.surface.postSampleSurfaceInPoints(
-                            this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                            this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                            surfaceName,
-                            this._settings.attribute ?? "",
-                            this._settings.realizationNums,
-                            queryBody
-                        ),
-                    staleTime: STALE_TIME,
-                    gcTime: CACHE_TIME,
+                    ...queryOptions,
                 })
                 .then((data) => transformData(cumulatedHorizontalPolylineLengthArr, surfaceName, data));
             promises.push(promise);

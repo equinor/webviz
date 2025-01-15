@@ -1,37 +1,64 @@
 import React from "react";
 
-import { Ensemble } from "@framework/Ensemble";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { ColorTile } from "@lib/components/ColorTile";
 import { Select, SelectOption, SelectProps } from "@lib/components/Select";
 
-type EnsembleSelectProps = {
-    ensembles: readonly Ensemble[];
-    value: EnsembleIdent[];
-    onChange: (ensembleIdentArr: EnsembleIdent[]) => void;
-} & Omit<SelectProps<string>, "options" | "value" | "onChange">;
+export type EnsembleSelectProps = (
+    | {
+          ensembles: readonly (RegularEnsemble | DeltaEnsemble)[];
+          multiple?: boolean;
+          allowDeltaEnsembles: true;
+          value: (RegularEnsembleIdent | DeltaEnsembleIdent)[];
+          onChange: (ensembleIdentArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[]) => void;
+      }
+    | {
+          ensembles: readonly RegularEnsemble[];
+          multiple?: boolean;
+          allowDeltaEnsembles?: false | undefined;
+          value: RegularEnsembleIdent[];
+          onChange: (ensembleIdentArray: RegularEnsembleIdent[]) => void;
+      }
+) &
+    Omit<SelectProps<string>, "options" | "value" | "onChange">;
 
-export function EnsembleSelect(props: EnsembleSelectProps): React.ReactNode {
-    const { ensembles, value, onChange, multiple, ...rest } = props;
+export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
+    const { onChange, ensembles, value, allowDeltaEnsembles, multiple, ...rest } = props;
 
     const handleSelectionChange = React.useCallback(
-        function handleSelectionChanged(selectedEnsembleIdentStrArr: string[]) {
-            const identArr: EnsembleIdent[] = [];
-            for (const identStr of selectedEnsembleIdentStrArr) {
+        function handleSelectionChanged(selectedEnsembleIdentStringArray: string[]) {
+            const identArray: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
+            for (const identStr of selectedEnsembleIdentStringArray) {
                 const foundEnsemble = ensembles.find((ens) => ens.getIdent().toString() === identStr);
-                if (foundEnsemble) {
-                    identArr.push(foundEnsemble.getIdent());
+                if (!foundEnsemble) {
+                    throw new Error(`Ensemble not found: ${identStr}`);
                 }
+                if (!allowDeltaEnsembles && foundEnsemble instanceof DeltaEnsemble) {
+                    throw new Error(`Invalid ensemble selection: ${identStr}. Got delta ensemble when not allowed.`);
+                }
+                identArray.push(foundEnsemble.getIdent());
             }
 
-            onChange(identArr);
+            // Filter to match the correct return type before calling onChange
+            if (!allowDeltaEnsembles) {
+                const validIdentArray = identArray.filter((ident) =>
+                    isEnsembleIdentOfType(ident, RegularEnsembleIdent)
+                ) as RegularEnsembleIdent[];
+                onChange(validIdentArray);
+                return;
+            }
+            onChange(identArray);
         },
-        [ensembles, onChange]
+        [allowDeltaEnsembles, ensembles, onChange]
     );
 
-    const optionsArr: SelectOption[] = [];
+    const optionsArray: SelectOption[] = [];
     for (const ens of ensembles) {
-        optionsArr.push({
+        optionsArray.push({
             value: ens.getIdent().toString(),
             label: ens.getDisplayName(),
             adornment: (
@@ -42,17 +69,17 @@ export function EnsembleSelect(props: EnsembleSelectProps): React.ReactNode {
         });
     }
 
-    const selectedArr: string[] = [];
+    const selectedArray: string[] = [];
     for (const ident of value) {
-        selectedArr.push(ident.toString());
+        selectedArray.push(ident.toString());
     }
 
     const isMultiple = multiple ?? true;
 
     return (
         <Select
-            options={optionsArr}
-            value={selectedArr}
+            options={optionsArray}
+            value={selectedArray}
             onChange={handleSelectionChange}
             multiple={isMultiple}
             {...rest}
