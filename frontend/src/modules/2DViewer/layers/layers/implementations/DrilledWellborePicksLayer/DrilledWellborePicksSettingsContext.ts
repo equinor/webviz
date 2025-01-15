@@ -1,4 +1,4 @@
-import { apiService } from "@framework/ApiService";
+import { getDrilledWellboreHeadersOptions, getWellborePickIdentifiersOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
 import { SettingType } from "@modules/2DViewer/layers/settings/settingsTypes";
@@ -9,8 +9,6 @@ import { DefineDependenciesArgs, SettingsContext } from "../../../interfaces";
 import { DrilledWellboresSetting } from "../../../settings/implementations/DrilledWellboresSetting";
 import { EnsembleSetting } from "../../../settings/implementations/EnsembleSetting";
 import { SurfaceNameSetting } from "../../../settings/implementations/SurfaceNameSetting";
-import { CACHE_TIME, STALE_TIME } from "../../_utils/queryConstants";
-import { cancelPromiseOnAbort } from "../../_utils/utils";
 
 export class DrilledWellborePicksSettingsContext implements SettingsContext<DrilledWellborePicksSettings> {
     private _contextDelegate: SettingsContextDelegate<DrilledWellborePicksSettings>;
@@ -77,11 +75,10 @@ export class DrilledWellborePicksSettingsContext implements SettingsContext<Dril
             const fieldIdentifier = ensemble.getFieldIdentifier();
 
             return await queryClient.fetchQuery({
-                queryKey: ["getDrilledWellboreHeaders", fieldIdentifier],
-                queryFn: () =>
-                    cancelPromiseOnAbort(apiService.well.getDrilledWellboreHeaders(fieldIdentifier), abortSignal),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getDrilledWellboreHeadersOptions({
+                    query: { field_identifier: fieldIdentifier },
+                    signal: abortSignal,
+                }),
             });
         });
 
@@ -102,14 +99,10 @@ export class DrilledWellborePicksSettingsContext implements SettingsContext<Dril
             const stratColumnIdentifier = ensemble.getStratigraphicColumnIdentifier();
 
             return await queryClient.fetchQuery({
-                queryKey: ["getPickStratigraphy", stratColumnIdentifier],
-                queryFn: () =>
-                    cancelPromiseOnAbort(
-                        apiService.well.getWellborePickIdentifiers(stratColumnIdentifier),
-                        abortSignal
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...getWellborePickIdentifiersOptions({
+                    query: { strat_column_identifier: stratColumnIdentifier },
+                    signal: abortSignal,
+                }),
             });
         });
 

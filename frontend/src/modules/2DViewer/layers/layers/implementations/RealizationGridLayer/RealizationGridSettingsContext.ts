@@ -1,8 +1,6 @@
-import { apiService } from "@framework/ApiService";
+import { getGridModelsInfoOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/2DViewer/layers/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/2DViewer/layers/framework/LayerManager/LayerManager";
-import { CACHE_TIME, STALE_TIME } from "@modules/2DViewer/layers/layers/_utils/queryConstants";
-import { cancelQueryOnAbort } from "@modules/2DViewer/layers/layers/_utils/utils";
 import { SettingType } from "@modules/2DViewer/layers/settings/settingsTypes";
 
 import { RealizationGridSettings } from "./types";
@@ -90,16 +88,15 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
                 return null;
             }
 
-            return await cancelQueryOnAbort(queryClient, abortSignal, {
-                queryKey: ["getRealizationGridMetadata", ensembleIdent, realization],
-                queryFn: () =>
-                    apiService.grid3D.getGridModelsInfo(
-                        ensembleIdent.getCaseUuid(),
-                        ensembleIdent.getEnsembleName(),
-                        realization
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+            return await queryClient.fetchQuery({
+                ...getGridModelsInfoOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                        ensemble_name: ensembleIdent.getEnsembleName(),
+                        realization_num: realization,
+                    },
+                    signal: abortSignal,
+                }),
             });
         });
 

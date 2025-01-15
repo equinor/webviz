@@ -1,11 +1,8 @@
-import { WellboreTrajectory_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { WellboreTrajectory_api, getWellTrajectoriesOptions } from "@api";
 
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { selectedFieldIdentAtom, wellboreHeaderAtom } from "./baseAtoms";
-
-import { DEFAULT_OPTIONS } from "../queries/shared";
 
 export const wellboreTrajectoryQueryAtom = atomWithQuery((get) => {
     // Getting the settings atom via the interface for clearer seperation
@@ -13,10 +10,13 @@ export const wellboreTrajectoryQueryAtom = atomWithQuery((get) => {
     const fieldIdent = get(selectedFieldIdentAtom) ?? "";
 
     return {
-        queryKey: ["getWellTrajectories", wellboreUuid],
-        queryFn: () => apiService.well.getWellTrajectories(fieldIdent, [wellboreUuid]),
+        ...getWellTrajectoriesOptions({
+            query: {
+                field_identifier: fieldIdent ?? "",
+                wellbore_uuids: [wellboreUuid],
+            },
+        }),
         select: (data: WellboreTrajectory_api[]) => data[0],
         enabled: Boolean(wellboreUuid),
-        ...DEFAULT_OPTIONS,
     };
 });

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { apiService } from "@framework/ApiService";
+import { getSeismicCubeMetaListOptions } from "@api";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
@@ -338,19 +338,14 @@ function makeDateOrIntervalStringOptions(availableSeismicDateOrIntervalStrings: 
     }));
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 function useSeismicCubeMetaListQuery(ensembleIdent: RegularEnsembleIdent | null) {
     return useQuery({
-        queryKey: ["getSeismicCubeMetaList", ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName()],
-        queryFn: () =>
-            apiService.seismic.getSeismicCubeMetaList(
-                ensembleIdent?.getCaseUuid() ?? "",
-                ensembleIdent?.getEnsembleName() ?? ""
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getSeismicCubeMetaListOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+            },
+        }),
         enabled: Boolean(ensembleIdent),
     });
 }

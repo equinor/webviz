@@ -1,13 +1,9 @@
-import { InplaceVolumetricsTableDefinition_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { InplaceVolumetricsTableDefinition_api, getTableDefinitionsOptions } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { QueryObserverResult } from "@tanstack/query-core";
 
 import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export type TableDefinitionsQueryResult = {
     data: {
@@ -22,14 +18,12 @@ export const tableDefinitionsQueryAtom = atomWithQueries((get) => {
 
     const queries = selectedEnsembleIdents.map((ensembleIdent) => {
         return () => ({
-            queryKey: ["tableDefinitions", ensembleIdent.toString()],
-            queryFn: () =>
-                apiService.inplaceVolumetrics.getTableDefinitions(
-                    ensembleIdent.getCaseUuid(),
-                    ensembleIdent.getEnsembleName()
-                ),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
+            ...getTableDefinitionsOptions({
+                query: {
+                    case_uuid: ensembleIdent.getCaseUuid(),
+                    ensemble_name: ensembleIdent.getEnsembleName(),
+                },
+            }),
         });
     });
 
