@@ -6,14 +6,14 @@ import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { Layer as LayerInterface } from "@modules/_shared/LayerFramework/interfaces";
+import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { ColormapLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Rgb, parse } from "culori";
 import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
-import { DrilledWellTrajectoriesLayer } from "../../LayerFramework/customLayerImplementations/DrilledWellTrajectoriesLayer";
-import { DrilledWellborePicksLayer } from "../../LayerFramework/customLayerImplementations/DrilledWellborePicksLayer";
 import { ObservedSurfaceLayer } from "../../LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
 import { RealizationPolygonsLayer } from "../../LayerFramework/customLayerImplementations/RealizationPolygonsLayer";

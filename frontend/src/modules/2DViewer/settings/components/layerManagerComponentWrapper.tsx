@@ -8,8 +8,6 @@ import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
-import { DrilledWellTrajectoriesLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/DrilledWellTrajectoriesLayer";
-import { DrilledWellborePicksLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/DrilledWellborePicksLayer";
 import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationGridLayer";
 import { RealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationPolygonsLayer";
@@ -28,6 +26,8 @@ import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/Setting
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
 import { View } from "@modules/_shared/LayerFramework/framework/View/View";
 import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { SurfaceAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceAttributeSetting";
 import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceNameSetting";
