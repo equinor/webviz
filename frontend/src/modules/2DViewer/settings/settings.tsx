@@ -4,6 +4,7 @@ import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -12,8 +13,7 @@ import { layerManagerAtom, preferredViewLayoutAtom, userSelectedFieldIdentifierA
 import { selectedFieldIdentifierAtom } from "./atoms/derivedAtoms";
 import { LayerManagerComponentWrapper } from "./components/layerManagerComponentWrapper";
 
-import { GroupDelegateTopic } from "../layers/delegates/GroupDelegate";
-import { LayerManager, LayerManagerTopic } from "../layers/framework/LayerManager/LayerManager";
+import { LayerManager, LayerManagerTopic } from "../../_shared/LayerFramework/framework/LayerManager/LayerManager";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
