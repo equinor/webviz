@@ -5,20 +5,20 @@ import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
+import { Layer as LayerInterface } from "@modules/_shared/LayerFramework/interfaces";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { ColormapLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Rgb, parse } from "culori";
 import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
-import { Layer as LayerInterface } from "../../layers/interfaces";
-import { DrilledWellTrajectoriesLayer } from "../../layers/layers/implementations/DrilledWellTrajectoriesLayer/DrilledWellTrajectoriesLayer";
-import { DrilledWellborePicksLayer } from "../../layers/layers/implementations/DrilledWellborePicksLayer/DrilledWellborePicksLayer";
-import { ObservedSurfaceLayer } from "../../layers/layers/implementations/ObservedSurfaceLayer/ObservedSurfaceLayer";
-import { RealizationGridLayer } from "../../layers/layers/implementations/RealizationGridLayer/RealizationGridLayer";
-import { RealizationPolygonsLayer } from "../../layers/layers/implementations/RealizationPolygonsLayer/RealizationPolygonsLayer";
-import { RealizationSurfaceLayer } from "../../layers/layers/implementations/RealizationSurfaceLayer/RealizationSurfaceLayer";
-import { StatisticalSurfaceLayer } from "../../layers/layers/implementations/StatisticalSurfaceLayer/StatisticalSurfaceLayer";
+import { DrilledWellTrajectoriesLayer } from "../../LayerFramework/customLayerImplementations/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "../../LayerFramework/customLayerImplementations/DrilledWellborePicksLayer";
+import { ObservedSurfaceLayer } from "../../LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
+import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
+import { RealizationPolygonsLayer } from "../../LayerFramework/customLayerImplementations/RealizationPolygonsLayer";
+import { RealizationSurfaceLayer } from "../../LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
+import { StatisticalSurfaceLayer } from "../../LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { AdvancedWellsLayer } from "../customDeckGlLayers/AdvancedWellsLayer";
 import { WellBorePickLayerData, WellborePicksLayer } from "../customDeckGlLayers/WellborePicksLayer";
 
