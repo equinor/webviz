@@ -4,9 +4,21 @@ import { merge } from "lodash";
 import { Annotations, AxisType, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
 
 /**
+ * Enum for axis coordinate reference.
+ *
+ * DOMAIN: Use domain positions for the axis, a scalar/percentage position relative to the axis. Note this makes shape placed
+ *         same position in view independent of zoom.
+ * DATA: Use data for the axis, i.e. matching the value range of the axis. This it can follow zoom and axis range changes.
+ */
+export const enum CoordinateReference {
+    DOMAIN = "domain",
+    DATA = "data",
+}
+
+/**
  * Class to create a Plotly figure.
  *
- * With row and columns starting at 1, and subplot cell index starting at 0.
+ * With row and columns starting at 1, and axis index starting at 1.
  *
  * Note:
  *
@@ -26,26 +38,23 @@ export class Figure {
     private _plotData: Partial<PlotData>[];
     private _plotLayout: Partial<Layout>;
     private _gridAxesMapping: number[][];
-    private _axesToSubplotTitleAnnotationMapping: Map<number, Partial<Annotations>>;
+    private _axesToSubplotTitleAnnotationMap: Map<number, Partial<Annotations>>;
 
     constructor({
         data,
         layout,
         gridAxesMapping,
-        axesToSubplotTitleAnnotationMapping: axesToSubplotTitleAnnotationMapping,
+        axesToSubplotTitleAnnotationMap: axesToSubplotTitleAnnotationMap,
     }: {
         data?: PlotData[];
         layout?: Partial<Layout>;
         gridAxesMapping?: number[][];
-        axesToSubplotTitleAnnotationMapping?: Map<number, Partial<Annotations>>;
+        axesToSubplotTitleAnnotationMap?: Map<number, Partial<Annotations>>;
     }) {
         this._plotData = data ?? [];
         this._plotLayout = layout ?? {};
         this._gridAxesMapping = gridAxesMapping ?? [[1, 1]];
-        this._axesToSubplotTitleAnnotationMapping = axesToSubplotTitleAnnotationMapping ?? new Map();
-
-        // Add default subplot title annotations to layout
-        this._plotLayout.annotations = Array.from(this._axesToSubplotTitleAnnotationMapping.values());
+        this._axesToSubplotTitleAnnotationMap = axesToSubplotTitleAnnotationMap ?? new Map();
     }
 
     getAxisIndex(row: number, column: number): number {
@@ -83,78 +92,13 @@ export class Figure {
         this._plotData.push(adjustedTrace);
     }
 
-    addAnnotation(annotation: Partial<Annotations>, row?: number, column?: number): void {
-        if (row === undefined) {
-            row = 1;
-        }
-        if (column === undefined) {
-            column = 1;
-        }
-
-        const axisIndex = this.getAxisIndex(row, column);
-
-        const adjustedAnnotation: Partial<Annotations> = {
-            ...annotation,
-            xref: `x${axisIndex}` as XAxisName,
-            yref: `y${axisIndex}` as YAxisName,
-        };
-
-        if (!this._plotLayout.annotations) {
-            this._plotLayout.annotations = [];
-        }
-
-        this._plotLayout.annotations.push(adjustedAnnotation);
-    }
-
-    hasSubplotTitle(row: number, column: number): boolean {
-        const subplotIndex = this.getAxisIndex(row, column) - 1;
-        const subplotTitleAnnotation = this._axesToSubplotTitleAnnotationMapping.get(subplotIndex);
-
-        if (!this._plotLayout.annotations || !subplotTitleAnnotation) {
-            return false;
-        }
-
-        const titleAnnotation = this._plotLayout.annotations.find((elm) => {
-            return (
-                elm.text === subplotTitleAnnotation.text &&
-                elm.x === subplotTitleAnnotation.x &&
-                elm.y === subplotTitleAnnotation.y
-            );
-        });
-
-        return titleAnnotation !== undefined;
-    }
-
-    updateSubplotTitle(title: string, row: number, column: number): void {
-        const subplotIndex = this.getAxisIndex(row, column) - 1;
-        const subplotTitleAnnotation = this._axesToSubplotTitleAnnotationMapping.get(subplotIndex);
-
-        if (!this._plotLayout.annotations) {
-            throw new Error("No subplot title annotations found in layout");
-        }
-        if (!subplotTitleAnnotation) {
-            throw new Error(`No subplot title annotation found for row ${row} and column ${column}`);
-        }
-
-        // Find the annotation matching internal subplot title annotation
-        // Update the internal annotation and the layout annotation
-        for (const annotation of this._plotLayout.annotations) {
-            if (
-                annotation.text !== subplotTitleAnnotation.text &&
-                annotation.x !== subplotTitleAnnotation.x &&
-                annotation.y !== subplotTitleAnnotation.y
-            ) {
-                continue;
-            }
-
-            // Match on text, update the annotation
-            annotation.text = title;
-            subplotTitleAnnotation.text = title;
-            return;
-        }
-    }
-
-    addShape(shape: Partial<Shape>, row?: number, column?: number): void {
+    addShape(
+        shape: Partial<Shape>,
+        row?: number,
+        column?: number,
+        xCoordinateRef = CoordinateReference.DATA,
+        yCoordinateRef = CoordinateReference.DATA
+    ): void {
         if (row === undefined) {
             row = 1;
         }
@@ -166,8 +110,14 @@ export class Figure {
 
         const adjustedShape: Partial<Shape> = {
             ...shape,
-            xref: `x${axisIndex} domain` as XAxisName,
-            yref: `y${axisIndex} domain` as YAxisName,
+            xref:
+                xCoordinateRef === CoordinateReference.DOMAIN
+                    ? (`x${axisIndex} domain` as XAxisName)
+                    : (`x${axisIndex}` as XAxisName),
+            yref:
+                yCoordinateRef === CoordinateReference.DOMAIN
+                    ? (`y${axisIndex} domain` as YAxisName)
+                    : (`y${axisIndex}` as YAxisName),
         };
 
         if (!this._plotLayout.shapes) {
@@ -177,8 +127,68 @@ export class Figure {
         this._plotLayout.shapes.push(adjustedShape);
     }
 
-    getLayout(): Partial<Layout> {
-        return this._plotLayout;
+    addAnnotation(
+        annotation: Partial<Annotations>,
+        row?: number,
+        column?: number,
+        xCoordinateRef = CoordinateReference.DATA,
+        yCoordinateRef = CoordinateReference.DATA
+    ): void {
+        if (row === undefined) {
+            row = 1;
+        }
+        if (column === undefined) {
+            column = 1;
+        }
+
+        const axisIndex = this.getAxisIndex(row, column);
+
+        const adjustedAnnotation: Partial<Annotations> = {
+            ...annotation,
+            xref:
+                xCoordinateRef === CoordinateReference.DOMAIN
+                    ? (`x${axisIndex} domain` as XAxisName)
+                    : (`x${axisIndex}` as XAxisName),
+            yref:
+                yCoordinateRef === CoordinateReference.DOMAIN
+                    ? (`y${axisIndex} domain` as YAxisName)
+                    : (`y${axisIndex}` as YAxisName),
+        };
+
+        if (!this._plotLayout.annotations) {
+            this._plotLayout.annotations = [];
+        }
+
+        this._plotLayout.annotations.push(adjustedAnnotation);
+    }
+
+    hasSubplotTitle(row: number, column: number): boolean {
+        const axisIndex = this.getAxisIndex(row, column);
+        const subplotTitleAnnotation = this._axesToSubplotTitleAnnotationMap.get(axisIndex);
+
+        return subplotTitleAnnotation !== undefined;
+    }
+
+    updateSubplotTitle(title: string, row: number, column: number): void {
+        const axisIndex = this.getAxisIndex(row, column);
+        const subplotTitleAnnotation = this._axesToSubplotTitleAnnotationMap.get(axisIndex);
+
+        if (!subplotTitleAnnotation) {
+            throw new Error(`No subplot title annotation found for row ${row} and column ${column}`);
+        }
+
+        // Update the title in the internal mapping - modify by reference
+        subplotTitleAnnotation.text = title;
+    }
+
+    makeLayout(): Partial<Layout> {
+        const layout = { ...this._plotLayout };
+        layout.annotations = [
+            ...(layout.annotations ?? []),
+            ...Array.from(this._axesToSubplotTitleAnnotationMap.values()),
+        ];
+
+        return layout;
     }
 
     getNumRows(): number {
@@ -200,7 +210,7 @@ export class Figure {
             modeBarButtonsToRemove: ["toImage", "sendDataToCloud", "resetScale2d"],
         };
 
-        return <Plot data={this._plotData} layout={this._plotLayout} config={config} {...plotArgs} />;
+        return <Plot data={this._plotData} layout={this.makeLayout()} config={config} {...plotArgs} />;
     }
 }
 
@@ -244,7 +254,7 @@ function makeReversedYAxisDomain(
     spacing: number,
     margin: { top: number; bottom: number }
 ): [number, number] {
-    return makeDomain(numRows, rowIndex, spacing, { start: margin.bottom, end: margin.top }, true);
+    return makeDomain(numRows, rowIndex, spacing, { start: margin.top, end: margin.bottom }, true);
 }
 
 /**
@@ -269,6 +279,8 @@ export interface MakeSubplotOptions {
     margin?: Partial<Layout["margin"]>;
     showGrid?: boolean;
     xAxisType?: AxisType;
+    xAxisTickAngle?: number;
+    yAxisTickAngle?: number;
 }
 
 /**
@@ -295,7 +307,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
         title: options.title,
     };
 
-    const axesToSubplotTitleAnnotationMapping: Map<number, Partial<Annotations>> = new Map();
+    const axesToSubplotTitleAnnotationMap: Map<number, Partial<Annotations>> = new Map();
 
     const gridAxesMapping: number[][] = [];
 
@@ -362,10 +374,6 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                 bottom: adjustedMargin.b,
             });
 
-            // If all subplots or subplots in same column share x-axes, only show tick labels on the bottom row.
-            // Otherwise show tick labels on all rows.
-            const showTickLabels = options.sharedXAxes === "columns" ? row === options.numRows - 1 : true;
-
             if (matchingXAxisIndex !== undefined && matchingXAxisIndex !== index + 1) {
                 layout = {
                     ...layout,
@@ -373,7 +381,8 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                         anchor: anchorX,
                         domain: [xDomainStart, xDomainEnd],
                         matches: `x${matchingXAxisIndex === 1 ? "" : matchingXAxisIndex}`,
-                        showticklabels: showTickLabels,
+                        showticklabels: true,
+                        tickangle: options.xAxisTickAngle,
                         showgrid: options.showGrid ?? false,
                         type: options.xAxisType,
                     },
@@ -385,6 +394,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                         anchor: anchorX,
                         domain: [xDomainStart, xDomainEnd],
                         showticklabels: true,
+                        tickangle: options.xAxisTickAngle,
                         showgrid: options.showGrid ?? false,
                         type: options.xAxisType,
                     },
@@ -398,7 +408,8 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                         anchor: anchorY,
                         domain: [yDomainStart, yDomainEnd],
                         matches: `y${matchingYAxisIndex === 1 ? "" : matchingYAxisIndex}`,
-                        showticklabels: false,
+                        showticklabels: true,
+                        tickangle: options.yAxisTickAngle,
                         showgrid: options.showGrid ?? false,
                     },
                 };
@@ -409,6 +420,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                         anchor: anchorY,
                         domain: [yDomainStart, yDomainEnd],
                         showticklabels: true,
+                        tickangle: options.yAxisTickAngle,
                         showgrid: options.showGrid ?? false,
                     },
                 };
@@ -416,7 +428,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
 
             if (options.subplotTitles && options.subplotTitles.length > index) {
                 const title = `<b>${options.subplotTitles[index]}</b>`;
-                axesToSubplotTitleAnnotationMapping.set(index, {
+                axesToSubplotTitleAnnotationMap.set(index + 1, {
                     xanchor: "center",
                     yanchor: "top",
                     xref: "paper",
@@ -438,6 +450,6 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
     return new Figure({
         layout,
         gridAxesMapping,
-        axesToSubplotTitleAnnotationMapping: axesToSubplotTitleAnnotationMapping,
+        axesToSubplotTitleAnnotationMap: axesToSubplotTitleAnnotationMap,
     });
 }
