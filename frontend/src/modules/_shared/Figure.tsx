@@ -434,8 +434,10 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                 };
             }
 
-            if (options.subplotTitles && options.subplotTitles.length > index) {
-                const title = `<b>${options.subplotTitles[index]}</b>`;
+            // If subplot titles are provided, add them as annotations.
+            // Set empty text if title is not provided for the subplot.
+            if (options.subplotTitles) {
+                const title = options.subplotTitles.length > index ? `<b>${options.subplotTitles[index]}</b>` : "";
                 axesToSubplotTitleAnnotationMap.set(index + 1, {
                     xanchor: "center",
                     yanchor: "top",
