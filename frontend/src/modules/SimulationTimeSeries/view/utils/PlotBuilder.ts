@@ -115,17 +115,11 @@ export class PlotBuilder {
         this._scatterType = scatterType;
 
         this._subplotOwner = subplotOwner;
-        this._numberOfSubplots =
-            this._subplotOwner === SubplotOwner.VECTOR
-                ? this._uniqueVectorNames.length
-                : this._uniqueEnsembleIdents.length;
-
-        // NOTE: Fix order of subplot titles, or consider a map between row/col and title?
         if (this._subplotOwner === SubplotOwner.VECTOR) {
             this._numberOfSubplots = this._uniqueVectorNames.length;
-            this._subplotTitles = this._uniqueVectorNames
-                .map((vectorName) => this.createVectorSubplotTitle(vectorName))
-                .reverse();
+            this._subplotTitles = this._uniqueVectorNames.map((vectorName) =>
+                this.createVectorSubplotTitle(vectorName)
+            );
         } else if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
             this._numberOfSubplots = this._uniqueEnsembleIdents.length;
             this._subplotTitles = this._uniqueEnsembleIdents.map(
