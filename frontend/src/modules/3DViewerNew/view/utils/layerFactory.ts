@@ -1,24 +1,18 @@
-import { PolygonData_api, SurfaceDataPng_api, SurfaceDef_api, WellborePick_api, WellboreTrajectory_api } from "@api";
+import { WellborePick_api, WellboreTrajectory_api } from "@api";
 import { Layer } from "@deck.gl/core";
-import { GeoJsonLayer } from "@deck.gl/layers";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { Layer as LayerInterface } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
-import { ColormapLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Rgb, parse } from "culori";
-import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
+import { Feature } from "geojson";
 
-import { ObservedSurfaceLayer } from "../../LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
-import { RealizationPolygonsLayer } from "../../LayerFramework/customLayerImplementations/RealizationPolygonsLayer";
-import { RealizationSurfaceLayer } from "../../LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
-import { StatisticalSurfaceLayer } from "../../LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { AdvancedWellsLayer } from "../customDeckGlLayers/AdvancedWellsLayer";
 import { WellBorePickLayerData, WellborePicksLayer } from "../customDeckGlLayers/WellborePicksLayer";
 
@@ -37,33 +31,6 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
 
     if (!data) {
         return null;
-    }
-    if (layer instanceof ObservedSurfaceLayer) {
-        return createMapImageLayer(
-            data,
-            layer.getItemDelegate().getId(),
-            layer.getItemDelegate().getName(),
-            colorScale
-        );
-    }
-    if (layer instanceof RealizationSurfaceLayer) {
-        return createMapImageLayer(
-            data,
-            layer.getItemDelegate().getId(),
-            layer.getItemDelegate().getName(),
-            colorScale
-        );
-    }
-    if (layer instanceof StatisticalSurfaceLayer) {
-        return createMapImageLayer(
-            data,
-            layer.getItemDelegate().getId(),
-            layer.getItemDelegate().getName(),
-            colorScale
-        );
-    }
-    if (layer instanceof RealizationPolygonsLayer) {
-        return createPolygonsLayer(data, layer.getItemDelegate().getId());
     }
     if (layer instanceof DrilledWellTrajectoriesLayer) {
         return makeWellsLayer(data, layer.getItemDelegate().getId(), null);
@@ -99,77 +66,6 @@ function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string):
         data: wellPicksData,
         pickable: true,
     });
-}
-
-function createMapImageLayer(
-    layerData: SurfaceDataPng_api,
-    id: string,
-    name: string,
-    colorScale?: ColorScaleWithName
-): ColormapLayer {
-    return new ColormapLayer({
-        id: id,
-        name: name,
-        image: `data:image/png;base64,${layerData.png_image_base64}`,
-        bounds: calcBoundsForRotationAroundUpperLeftCorner(layerData.surface_def),
-        rotDeg: layerData.surface_def.rot_deg,
-        valueRange: [layerData.value_min, layerData.value_max],
-        colorMapRange: [layerData.value_min, layerData.value_max],
-        colorMapName: "Physics",
-        parameters: {
-            depthWriteEnabled: false,
-        },
-        colorMapFunction: makeColorMapFunction(colorScale, layerData.value_min, layerData.value_max),
-    });
-}
-
-function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
-    const width = (surfDef.npoints_x - 1) * surfDef.inc_x;
-    const height = (surfDef.npoints_y - 1) * surfDef.inc_y;
-    const orgRotPoint: Vec2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y };
-    const orgTopLeft: Vec2 = { x: surfDef.origin_utm_x, y: surfDef.origin_utm_y + height };
-
-    const transTopLeft: Vec2 = rotatePoint2Around(orgTopLeft, orgRotPoint, (surfDef.rot_deg * Math.PI) / 180);
-    const tLeft = transTopLeft.x;
-    const tBottom = transTopLeft.y - height;
-    const tRight = transTopLeft.x + width;
-    const tTop = transTopLeft.y;
-
-    const bounds: [number, number, number, number] = [tLeft, tBottom, tRight, tTop];
-
-    return bounds;
-}
-
-function createPolygonsLayer(polygonsData: PolygonData_api[], id: string): GeoJsonLayer {
-    const features: Feature<Geometry, GeoJsonProperties>[] = polygonsData.map((polygon) => {
-        return polygonsToGeojson(polygon);
-    });
-    const data: FeatureCollection<Geometry, GeoJsonProperties> = {
-        type: "FeatureCollection",
-        features: features,
-    };
-    return new GeoJsonLayer({
-        id: id,
-        data: data,
-        filled: false,
-        lineWidthMinPixels: 2,
-        parameters: {
-            depthTest: false,
-        },
-
-        pickable: true,
-    });
-}
-function polygonsToGeojson(polygons: PolygonData_api): Feature<Geometry, GeoJsonProperties> {
-    const data: Feature<Geometry, GeoJsonProperties> = {
-        type: "Feature",
-        geometry: {
-            type: "Polygon",
-            coordinates: [zipCoords(polygons.x_arr, polygons.y_arr, polygons.z_arr)],
-        },
-        properties: { name: polygons.poly_id, color: [0, 0, 0, 255] },
-    };
-    return data;
 }
 
 function makeWellsLayer(

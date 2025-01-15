@@ -5,7 +5,7 @@ import { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Rect2D, outerRectContainsInnerRect } from "@lib/utils/geometry";
+import { Rect3D, outerRectContainsInnerRect } from "@lib/utils/geometry";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/LayerFramework/delegates/PublishSubscribeDelegate";
@@ -13,8 +13,9 @@ import { LayerManager, LayerManagerTopic } from "@modules/_shared/LayerFramework
 import { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
-import { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
+import { BoundingBox3D, ViewportType } from "@webviz/subsurface-viewer";
 import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
@@ -72,7 +73,8 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             id: view.id,
             name: view.name,
             isSync: true,
-            layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id), "placeholder"],
+            show3D: true,
+            layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id), "placeholder", "axes-layer"],
         });
         viewerLayers.push(...view.layers);
 
@@ -100,18 +102,22 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     if (viewsAndLayers.boundingBox !== null) {
         if (prevBoundingBox !== null) {
-            const oldBoundingRect: Rect2D | null = {
+            const oldBoundingRect: Rect3D | null = {
                 x: prevBoundingBox.x[0],
                 y: prevBoundingBox.y[0],
+                z: prevBoundingBox.z[0],
                 width: prevBoundingBox.x[1] - prevBoundingBox.x[0],
                 height: prevBoundingBox.y[1] - prevBoundingBox.y[0],
+                depth: prevBoundingBox.z[1] - prevBoundingBox.z[0],
             };
 
-            const newBoundingRect: Rect2D = {
+            const newBoundingRect: Rect3D = {
                 x: viewsAndLayers.boundingBox.x[0],
                 y: viewsAndLayers.boundingBox.y[0],
+                z: viewsAndLayers.boundingBox.z[0],
                 width: viewsAndLayers.boundingBox.x[1] - viewsAndLayers.boundingBox.x[0],
                 height: viewsAndLayers.boundingBox.y[1] - viewsAndLayers.boundingBox.y[0],
+                depth: viewsAndLayers.boundingBox.z[1] - viewsAndLayers.boundingBox.z[0],
             };
 
             if (!outerRectContainsInnerRect(oldBoundingRect, newBoundingRect)) {
@@ -129,13 +135,21 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         statusWriter.addError(message);
     }
 
-    let bounds: BoundingBox2D | undefined = undefined;
+    let bounds: BoundingBox3D | undefined = undefined;
     if (prevBoundingBox) {
-        bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
+        bounds = [
+            prevBoundingBox.x[0],
+            prevBoundingBox.y[0],
+            prevBoundingBox.z[0],
+            prevBoundingBox.x[1],
+            prevBoundingBox.y[1],
+            prevBoundingBox.z[1],
+        ];
     }
 
     const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);
     layers.push(new PlaceholderLayer({ id: "placeholder" }));
+    layers.push(new AxesLayer({ id: "axes-layer", visible: true, ZIncreasingDownwards: true, bounds }));
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">

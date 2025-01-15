@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
-import { color_palette, fault, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
+import { color_palette, grid_layer, settings, wellbore } from "@equinor/eds-icons";
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { Menu } from "@lib/components/Menu";
@@ -10,7 +10,6 @@ import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
 import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationGridLayer";
-import { RealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationPolygonsLayer";
 import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
@@ -29,8 +28,6 @@ import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/_shared/
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
-import { SurfaceAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceAttributeSetting";
-import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceNameSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { Dropdown } from "@mui/base";
 import {
@@ -81,18 +78,6 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
             case "color-scale":
                 groupDelegate.prependChild(new ColorScale("Color scale", props.layerManager));
                 return;
-            case "observed-surface":
-                groupDelegate.insertChild(new ObservedSurfaceLayer(props.layerManager), numSharedSettings);
-                return;
-            case "statistical-surface":
-                groupDelegate.insertChild(new StatisticalSurfaceLayer(props.layerManager), numSharedSettings);
-                return;
-            case "realization-surface":
-                groupDelegate.insertChild(new RealizationSurfaceLayer(props.layerManager), numSharedSettings);
-                return;
-            case "realization-polygons":
-                groupDelegate.insertChild(new RealizationPolygonsLayer(props.layerManager), numSharedSettings);
-                return;
             case "drilled-wellbore-trajectories":
                 groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(props.layerManager), numSharedSettings);
                 return;
@@ -107,12 +92,6 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return;
             case "realization":
                 groupDelegate.prependChild(new SharedSetting(new RealizationSetting(), props.layerManager));
-                return;
-            case "surface-name":
-                groupDelegate.prependChild(new SharedSetting(new SurfaceNameSetting(), props.layerManager));
-                return;
-            case "surface-attribute":
-                groupDelegate.prependChild(new SharedSetting(new SurfaceAttributeSetting(), props.layerManager));
                 return;
             case "Date":
                 groupDelegate.prependChild(new SharedSetting(new TimeOrIntervalSetting(), props.layerManager));
@@ -235,26 +214,6 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
         label: "Layers",
         children: [
             {
-                label: "Surfaces",
-                children: [
-                    {
-                        identifier: "observed-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Observed Surface",
-                    },
-                    {
-                        identifier: "statistical-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Statistical Surface",
-                    },
-                    {
-                        identifier: "realization-surface",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Realization Surface",
-                    },
-                ],
-            },
-            {
                 label: "Wells",
                 children: [
                     {
@@ -266,16 +225,6 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                         identifier: "drilled-wellbore-picks",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Drilled Wellbore Picks",
-                    },
-                ],
-            },
-            {
-                label: "Polygons",
-                children: [
-                    {
-                        identifier: "realization-polygons",
-                        icon: <Icon data={fault} fontSize="small" />,
-                        label: "Realization Polygons",
                     },
                 ],
             },
@@ -303,16 +252,6 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 identifier: "realization",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Realization",
-            },
-            {
-                identifier: "surface-name",
-                icon: <Icon data={settings} fontSize="small" />,
-                label: "Surface Name",
-            },
-            {
-                identifier: "surface-attribute",
-                icon: <Icon data={settings} fontSize="small" />,
-                label: "Surface Attribute",
             },
             {
                 identifier: "Date",
