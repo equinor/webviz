@@ -12,7 +12,7 @@ import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
-import { Figure, makeSubplots } from "@modules/_shared/Figure";
+import { CoordinateReference, Figure, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { Annotations, PlotMarker, Shape } from "plotly.js";
@@ -145,7 +145,7 @@ export class PlotBuilder {
             subplotTitles: this._subplotTitles,
             xAxisType: "date",
             showGrid: true,
-            sharedXAxes: "all",
+            sharedXAxes: "columns",
         });
     }
 
@@ -249,10 +249,16 @@ export class PlotBuilder {
         for (let index = 0; index < this._numberOfSubplots; index++) {
             const { row, col } = this.getSubplotRowAndColFromIndex(index);
             for (const timeAnnotation of this.createTimeAnnotations()) {
-                this._figure.addAnnotation(timeAnnotation, row, col);
+                this._figure.addAnnotation(
+                    timeAnnotation,
+                    row,
+                    col,
+                    CoordinateReference.DATA,
+                    CoordinateReference.DOMAIN
+                );
             }
             for (const timeShape of this.createTimeShapes()) {
-                this._figure.addShape(timeShape, row, col);
+                this._figure.addShape(timeShape, row, col, CoordinateReference.DATA, CoordinateReference.DOMAIN);
             }
         }
 
@@ -522,8 +528,8 @@ export class PlotBuilder {
 
         for (const timestampUtcMs of this._timeAnnotationTimestamps) {
             timeAnnotations.push({
-                x: timestampUtcMs,
-                y: -200, // 0 - 22 / this._height
+                x: timestampUtcMs, // Data coordinate
+                y: -0.02, // Domain coordinate [0, 1]
                 text: timestampUtcMsToCompactIsoString(timestampUtcMs),
                 showarrow: false,
                 arrowhead: 0,
@@ -543,13 +549,13 @@ export class PlotBuilder {
         for (const timestampUtcMs of this._timeAnnotationTimestamps) {
             timeShapes.push({
                 type: "line",
-                x0: timestampUtcMs,
-                y0: 0,
-                x1: timestampUtcMs,
-                y1: 1,
+                x0: timestampUtcMs, // Data coordinate
+                x1: timestampUtcMs, // Data coordinate
+                y0: 0, // Domain coordinate
+                y1: 1, // Domain coordinate
                 line: {
                     color: "red",
-                    width: 3,
+                    width: 1,
                     dash: "dot",
                 },
             });
