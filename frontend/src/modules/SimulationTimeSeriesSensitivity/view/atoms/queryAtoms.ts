@@ -1,5 +1,9 @@
-import { Frequency_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import {
+    Frequency_api,
+    getHistoricalVectorDataOptions,
+    getRealizationsVectorDataOptions,
+    getStatisticalVectorDataPerSensitivityOptions,
+} from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 import {
@@ -11,9 +15,6 @@ import {
 
 import { atomWithQuery } from "jotai-tanstack-query";
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export const vectorDataQueryAtom = atomWithQuery((get) => {
     const vectorSpecification = get(vectorSpecificationAtom);
     const resampleFrequency = get(resamplingFrequencyAtom);
@@ -24,30 +25,16 @@ export const vectorDataQueryAtom = atomWithQuery((get) => {
         : null;
     const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
 
-    const query = {
-        queryKey: [
-            "getRealizationsVectorData",
-            vectorSpecification?.ensembleIdent.getCaseUuid(),
-            vectorSpecification?.ensembleIdent.getEnsembleName(),
-            vectorSpecification?.vectorName,
-            resampleFrequency,
-            realizations,
-            realizationsEncodedAsUintListStr,
-        ],
-        queryFn: () =>
-            apiService.timeseries.getRealizationsVectorData(
-                vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
-                vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
-                vectorSpecification?.vectorName ?? "",
-                resampleFrequency,
-                realizationsEncodedAsUintListStr
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!vectorSpecification,
-    };
-
-    return query;
+    const queryOptions = getRealizationsVectorDataOptions({
+        query: {
+            case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
+            ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
+            vector_name: vectorSpecification?.vectorName ?? "",
+            resampling_frequency: resampleFrequency,
+            realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+        },
+    });
+    return { ...queryOptions, enabled: !!vectorSpecification };
 });
 
 export const statisticalVectorSensitivityDataQueryAtom = atomWithQuery((get) => {
@@ -63,30 +50,17 @@ export const statisticalVectorSensitivityDataQueryAtom = atomWithQuery((get) => 
         : null;
     const realizationsEncodedAsUintListStr = realizations ? encodeAsUintListStr(realizations) : null;
 
-    const query = {
-        queryKey: [
-            "getStatisticalVectorDataPerSensitivity",
-            vectorSpecification?.ensembleIdent.getCaseUuid(),
-            vectorSpecification?.ensembleIdent.getEnsembleName(),
-            vectorSpecification?.vectorName,
-            fallbackStatisticsResampleFrequency,
-            realizationsEncodedAsUintListStr,
-        ],
-        queryFn: () =>
-            apiService.timeseries.getStatisticalVectorDataPerSensitivity(
-                vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
-                vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
-                vectorSpecification?.vectorName ?? "",
-                fallbackStatisticsResampleFrequency,
-                undefined,
-                realizationsEncodedAsUintListStr
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(showStatistics && vectorSpecification),
-    };
-
-    return query;
+    const queryOptions = getStatisticalVectorDataPerSensitivityOptions({
+        query: {
+            case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
+            ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
+            vector_name: vectorSpecification?.vectorName ?? "",
+            resampling_frequency: fallbackStatisticsResampleFrequency,
+            statistic_functions: undefined,
+            realizations_encoded_as_uint_list_str: realizationsEncodedAsUintListStr,
+        },
+    });
+    return { ...queryOptions, enabled: !!(showStatistics && vectorSpecification) };
 });
 
 export const historicalVectorDataQueryAtom = atomWithQuery((get) => {
@@ -94,25 +68,14 @@ export const historicalVectorDataQueryAtom = atomWithQuery((get) => {
     const showHistorical = get(showHistoricalAtom);
     const resampleFrequency = get(resamplingFrequencyAtom);
 
-    const query = {
-        queryKey: [
-            "getHistoricalVectorData",
-            vectorSpecification?.ensembleIdent.getCaseUuid(),
-            vectorSpecification?.ensembleIdent.getEnsembleName(),
-            vectorSpecification?.vectorName,
-            resampleFrequency,
-        ],
-        queryFn: () =>
-            apiService.timeseries.getHistoricalVectorData(
-                vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
-                vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
-                vectorSpecification?.vectorName ?? "",
-                resampleFrequency
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(vectorSpecification && showHistorical),
-    };
+    const queryOptions = getHistoricalVectorDataOptions({
+        query: {
+            case_uuid: vectorSpecification?.ensembleIdent.getCaseUuid() ?? "",
+            ensemble_name: vectorSpecification?.ensembleIdent.getEnsembleName() ?? "",
+            non_historical_vector_name: vectorSpecification?.vectorName ?? "",
+            resampling_frequency: resampleFrequency,
+        },
+    });
 
-    return query;
+    return { ...queryOptions, enabled: !!(showHistorical && vectorSpecification) };
 });

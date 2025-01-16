@@ -1,11 +1,11 @@
 import { VectorRealizationData_api } from "@api";
 import { DataGenerator } from "@framework/DataChannelTypes";
-import { Ensemble } from "@framework/Ensemble";
+import { RegularEnsemble } from "@framework/RegularEnsemble";
 
 import { indexOf } from "lodash";
 
 export function makeVectorDataGenerator(
-    ensemble: Ensemble | null,
+    ensemble: RegularEnsemble | null,
     vectorRealizationData: VectorRealizationData_api[] | null,
     activeTimestampUtcMs: number | null
 ): DataGenerator {

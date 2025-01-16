@@ -2,11 +2,11 @@ export function fixupVectorName(
     currVectorName: string | null,
     availableVectorNames: string[] | undefined
 ): string | null {
-    if (!availableVectorNames || availableVectorNames.length === 0) {
+    if (!availableVectorNames?.length) {
         return null;
     }
 
-    if (currVectorName && availableVectorNames.some((name) => name === currVectorName)) {
+    if (currVectorName && availableVectorNames.includes(currVectorName)) {
         return currVectorName;
     }
 

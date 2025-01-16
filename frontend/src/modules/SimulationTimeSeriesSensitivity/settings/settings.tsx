@@ -24,15 +24,15 @@ import {
     showHistoricalAtom,
     showRealizationsAtom,
     showStatisticsAtom,
-    syncedEnsembleIdentsAtom,
+    syncedRegularEnsembleIdentsAtom,
     syncedVectorNameAtom,
-    userSelectedEnsembleIdentAtom,
+    userSelectedRegularEnsembleIdentAtom,
     userSelectedSensitivityNamesAtom,
     userSelectedVectorNameAndTagAtom,
 } from "./atoms/baseAtoms";
 import {
     availableSensitivityNamesAtom,
-    selectedEnsembleIdentAtom,
+    selectedRegularEnsembleIdentAtom,
     selectedSensitivityNamesAtom,
     selectedVectorTagAtom,
     vectorSelectorDataAtom,
@@ -47,12 +47,12 @@ import { FrequencyEnumToStringMapping } from "../typesAndEnums";
 export function Settings({ settingsContext, workbenchSession, workbenchServices }: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(workbenchSession);
 
-    const setSyncedEnsembleIdents = useSetAtom(syncedEnsembleIdentsAtom);
+    const setSyncedRegularEnsembleIdents = useSetAtom(syncedRegularEnsembleIdentsAtom);
     const setSyncedVectorName = useSetAtom(syncedVectorNameAtom);
-    const setUserSelectedEnsembleIdent = useSetAtom(userSelectedEnsembleIdentAtom);
+    const setUserSelectedRegularEnsembleIdent = useSetAtom(userSelectedRegularEnsembleIdentAtom);
     const setUserSelectedVectorNameAndTag = useSetAtom(userSelectedVectorNameAndTagAtom);
     const setUserSelectedSensitivityNamesAtom = useSetAtom(userSelectedSensitivityNamesAtom);
-    const selectedEnsembleIdent = useAtomValue(selectedEnsembleIdentAtom);
+    const selectedRegularEnsembleIdent = useAtomValue(selectedRegularEnsembleIdentAtom);
     const vectorsListQuery = useAtomValue(vectorListQueryAtom);
     const availableSensitivityNames = useAtomValue(availableSensitivityNamesAtom);
     const selectedSensitivityNames = useAtomValue(selectedSensitivityNamesAtom);
@@ -68,13 +68,13 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, workbenchServices);
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSummaryVector = syncHelper.useValue(SyncSettingKey.TIME_SERIES, "global.syncValue.timeSeries");
-    const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<EnsembleIdent[] | null>(null);
+    const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<RegularEnsembleIdent[] | null>(null);
     const [prevSyncedSummaryVector, setPrevSyncedSummaryVector] = React.useState<{ vectorName: string } | null>(null);
 
     if (!isEqual(syncedValueEnsembles, prevSyncedEnsembleIdents)) {
         setPrevSyncedEnsembleIdents(syncedValueEnsembles);
         if (syncedValueEnsembles) {
-            setSyncedEnsembleIdents(syncedValueEnsembles);
+            setSyncedRegularEnsembleIdents(syncedValueEnsembles);
         }
     }
     if (!isEqual(syncedValueSummaryVector, prevSyncedSummaryVector)) {
@@ -84,8 +84,8 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
         }
     }
 
-    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
-        setUserSelectedEnsembleIdent(newEnsembleIdent);
+    function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
+        setUserSelectedRegularEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
         }
@@ -116,7 +116,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             <CollapsibleGroup expanded={true} title="Ensemble">
                 <EnsembleDropdown
                     ensembles={ensembleSet.getRegularEnsembleArray()}
-                    value={selectedEnsembleIdent}
+                    value={selectedRegularEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />
             </CollapsibleGroup>

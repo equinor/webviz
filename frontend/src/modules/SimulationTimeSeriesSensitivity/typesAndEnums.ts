@@ -1,3 +1,4 @@
+import { Frequency_api } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export interface VectorSpec {

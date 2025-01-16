@@ -1,18 +1,18 @@
 import { Frequency_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 
 import { atom } from "jotai";
 import { isEqual } from "lodash";
 
-function areEnsembleIdentsEqual(a: EnsembleIdent | null, b: EnsembleIdent | null) {
+function areRegularEnsembleIdentsEqual(a: RegularEnsembleIdent | null, b: RegularEnsembleIdent | null) {
     if (a === null) {
         return b === null;
     }
     return a.equals(b);
 }
 
-export const syncedEnsembleIdentsAtom = atom<EnsembleIdent[] | null>(null);
+export const syncedRegularEnsembleIdentsAtom = atom<RegularEnsembleIdent[] | null>(null);
 export const syncedVectorNameAtom = atom<string | null>(null);
 
 export const resamplingFrequencyAtom = atom<Frequency_api | null>(Frequency_api.MONTHLY);
@@ -20,7 +20,10 @@ export const showStatisticsAtom = atom<boolean>(true);
 export const showRealizationsAtom = atom<boolean>(false);
 export const showHistoricalAtom = atom<boolean>(true);
 
-export const userSelectedEnsembleIdentAtom = atomWithCompare<EnsembleIdent | null>(null, areEnsembleIdentsEqual);
+export const userSelectedRegularEnsembleIdentAtom = atomWithCompare<RegularEnsembleIdent | null>(
+    null,
+    areRegularEnsembleIdentsEqual
+);
 export const userSelectedVectorNameAndTagAtom = atomWithCompare<{ name: string | null; tag: string | null }>(
     {
         name: null,

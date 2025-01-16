@@ -1,15 +1,15 @@
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { VectorSpec } from "@modules/SimulationTimeSeriesSensitivity/typesAndEnums";
 import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
 
 import { atom } from "jotai";
 
 import {
-    syncedEnsembleIdentsAtom,
+    syncedRegularEnsembleIdentsAtom,
     syncedVectorNameAtom,
-    userSelectedEnsembleIdentAtom,
+    userSelectedRegularEnsembleIdentAtom,
     userSelectedSensitivityNamesAtom,
     userSelectedVectorNameAndTagAtom,
 } from "./baseAtoms";
@@ -17,19 +17,22 @@ import { vectorListQueryAtom } from "./queryAtoms";
 
 import { fixupVectorName } from "../utils/fixupVectorName";
 
-export const selectedEnsembleIdentAtom = atom<EnsembleIdent | null>((get) => {
-    const syncedEnsembleIdents = get(syncedEnsembleIdentsAtom);
-    const userSelectedEnsembleIdent = get(userSelectedEnsembleIdentAtom);
+export const selectedRegularEnsembleIdentAtom = atom<RegularEnsembleIdent | null>((get) => {
+    const syncedRegularEnsembleIdents = get(syncedRegularEnsembleIdentsAtom);
+    const userSelectedRegularEnsembleIdent = get(userSelectedRegularEnsembleIdentAtom);
     const ensembleSet = get(EnsembleSetAtom);
 
-    const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(userSelectedEnsembleIdent, syncedEnsembleIdents);
-    const fixedUpEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
+    const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(
+        userSelectedRegularEnsembleIdent,
+        syncedRegularEnsembleIdents
+    );
+    const fixedUpEnsembleIdent = fixupRegularEnsembleIdent(candidateEnsembleIdent, ensembleSet);
     return fixedUpEnsembleIdent;
 });
 
 export const availableSensitivityNamesAtom = atom<string[]>((get) => {
     const ensembleSet = get(EnsembleSetAtom);
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
+    const selectedEnsembleIdent = get(selectedRegularEnsembleIdentAtom);
 
     const ensemble = selectedEnsembleIdent ? ensembleSet.findEnsemble(selectedEnsembleIdent) : null;
     const ensembleSensitivityNames = ensemble?.getSensitivities()?.getSensitivityNames() ?? [];
@@ -117,16 +120,16 @@ export const selectedVectorNameHasHistoricalAtom = atom<boolean>((get) => {
 });
 
 export const vectorSpecificationAtom = atom<VectorSpec | null>((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
+    const selectedRegularEnsembleIdent = get(selectedRegularEnsembleIdentAtom);
     const selectedVectorName = get(selectedVectorNameAtom);
     const selectedVectorNameHasHistorical = get(selectedVectorNameHasHistoricalAtom);
 
-    if (!selectedEnsembleIdent || !selectedVectorName) {
+    if (!selectedRegularEnsembleIdent || !selectedVectorName) {
         return null;
     }
 
     return {
-        ensembleIdent: selectedEnsembleIdent,
+        ensembleIdent: selectedRegularEnsembleIdent,
         vectorName: selectedVectorName,
         hasHistorical: selectedVectorNameHasHistorical,
     };
