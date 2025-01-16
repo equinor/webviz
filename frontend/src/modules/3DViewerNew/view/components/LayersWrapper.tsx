@@ -74,7 +74,14 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             name: view.name,
             isSync: true,
             show3D: true,
-            layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id), "placeholder", "axes-layer"],
+            layerIds: [
+                ...globalLayerIds,
+                ...view.layers.map((layer) => layer.layer.id),
+                "placeholder",
+                "axes-layer",
+                "editable-polylines-layer",
+                "hover-point-layer",
+            ],
         });
         viewerLayers.push(...view.layers);
 

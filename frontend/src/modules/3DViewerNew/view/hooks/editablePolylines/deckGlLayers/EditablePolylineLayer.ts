@@ -1,5 +1,5 @@
 import { CompositeLayer, Layer, PickingInfo } from "@deck.gl/core";
-import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
+import { ColumnLayer, PathLayer } from "@deck.gl/layers";
 
 export type EditablePolylineLayerProps = {
     id: string;
@@ -19,7 +19,6 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
     private _polylines: Polyline[] = [];
     private _editingPolylineId: string | null = null;
     private _hoveredPolylinePointIndex: number | null = null;
-    private _hoveredPreviewPoint: number[] | null = null;
     private _isDragging = false;
 
     makePolylineData(
@@ -147,7 +146,6 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
         }
 
         if (pickingInfo.object && pickingInfo.object.index < polyline.polyline.length) {
-            this._hoveredPreviewPoint = null;
             this._hoveredPolylinePointIndex = pickingInfo.object.index;
             event.stopPropagation();
             event.handled = true;
@@ -157,7 +155,6 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
     }
 
     handlePolylineDragStart(): void {
-        this._hoveredPreviewPoint = null;
         this._isDragging = true;
 
         if (!this._editingPolylineId) {
@@ -196,43 +193,30 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
         }
     }
 
-    onHover(event: any): boolean {
-        this._hoveredPreviewPoint = event.coordinate;
-        this.setNeedsUpdate();
-        return true;
-    }
-
     renderLayers() {
         const layers: Layer<any>[] = [];
 
-        const previewData: { centroid: number[]; color: [number, number, number, number] }[] = [];
-        if (this._hoveredPreviewPoint) {
-            previewData.push({
-                centroid: this._hoveredPreviewPoint,
-                color: [255, 255, 255, 100],
-            });
-        }
-
-        for (const polyline of this._polylines) {
-            const { polygonData, columnData } = this.makePolylineData(polyline.polyline, 0, 10, 0, 0, polyline.color);
-
+        for (const polyline of this.props.polylines) {
             layers.push(
-                new SolidPolygonLayer({
-                    id: `polygon-${polyline.id}`,
-                    data: polygonData,
-                    getPolygon: (d) => d.polygon,
-                    getFillColor: (d) => d.color,
-                    extruded: true,
-                    wireframe: true,
-                    opacity: 0.5,
+                new PathLayer({
+                    id: `lines-${polyline.id}`,
+                    data: polyline.polyline,
+                    getPath: (d) => [d[0], d[1], 0],
+                    getWidth: 3,
+                    getColor: polyline.color,
+                    widthUnits: "pixels",
+                    parameters: {
+                        depthTest: false,
+                    },
+                    billboard: true,
                 }),
                 new ColumnLayer({
-                    id: "user-polyline-point-layer",
-                    data: columnData,
+                    id: `points-${polyline.id}`,
+                    data: polyline.polyline,
                     getElevation: 1,
-                    getPosition: (d) => d.centroid,
-                    getFillColor: (d) => d.color,
-                    extruded: true,
+                    getPosition: (d) => d,
+                    getFillColor: polyline.color,
+                    extruded: false,
                     radius: 50,
                     radiusUnits: "pixels",
                     pickable: true,
@@ -241,23 +225,12 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                     onDragStart: this.handlePolylineDragStart,
                     onDragEnd: this.handlePolylineDragEnd,
                     onDrag: this.handlePolylineDrag,
+                    parameters: {
+                        depthTest: false,
+                    },
                 })
             );
         }
-
-        layers.push(
-            new ColumnLayer({
-                id: "user-polyline-hover-point-layer",
-                data: previewData,
-                getElevation: 1000,
-                getPosition: (d) => d.centroid,
-                getFillColor: (d) => d.color,
-                extruded: true,
-                radius: 50,
-                radiusUnits: "pixels",
-                pickable: true,
-            })
-        );
 
         return layers;
     }

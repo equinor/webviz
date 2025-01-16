@@ -8,7 +8,7 @@ import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
 
-import { EditablePolylineLayer } from "../customDeckGlLayers/EditablePolylineLayer";
+import { useEditablePolylines } from "../hooks/editablePolylines/editablePolylinesHook";
 
 export type ReadooutWrapperProps = {
     views: ViewsType;
@@ -25,6 +25,9 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const [layerPickingInfo, setLayerPickingInfo] = React.useState<LayerPickInfo[]>([]);
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
     const [verticalScale, setVerticalScale] = React.useState<number>(1);
+    const [polylineEditingActive, setPolylineEditingActive] = React.useState<boolean>(false);
+
+    const { onMouseEvent, layers } = useEditablePolylines({ polylines: [], editingActive: polylineEditingActive });
 
     function handleFitInViewClick() {
         setTriggerHomeCounter((prev) => prev + 1);
@@ -35,7 +38,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     }
 
     function handleEditPolylines() {
-        console.log("Edit polylines");
+        setPolylineEditingActive((prev) => !prev);
     }
 
     function handleMouseHover(event: MapMouseEvent): void {
@@ -46,6 +49,8 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
         if (event.type === "hover") {
             handleMouseHover(event);
         }
+
+        onMouseEvent(event);
     }
 
     function handleVerticalScaleChange(value: number) {
@@ -56,7 +61,8 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     if (!gridVisible) {
         adjustedLayers = adjustedLayers.filter((layer) => !(layer instanceof AxesLayer));
     }
-    adjustedLayers.push(new EditablePolylineLayer({ id: "editable-polyline", editable: true, polylines: [] }));
+
+    adjustedLayers.push(...layers);
 
     return (
         <>
