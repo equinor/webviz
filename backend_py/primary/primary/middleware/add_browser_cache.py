@@ -5,6 +5,7 @@ from typing import Dict, Any
 from starlette.datastructures import MutableHeaders
 from primary.config import DEFAULT_CACHE_MAX_AGE
 
+
 # Initialize with a factory function to ensure a new dict for each context
 def get_default_context() -> Dict[str, Any]:
     return {"max_age": DEFAULT_CACHE_MAX_AGE}
@@ -29,16 +30,14 @@ def add_custom_cache_time(max_age: int):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
+
             # Create a new context dict for this request
             new_context = get_default_context()
             new_context["max_age"] = max_age
             # Store the token to reset later if needed
-            token = cache_context.set(new_context)
-            try:
-                return await func(*args, **kwargs)
-            finally:
-                # Reset context to default state
-                cache_context.reset(token)
+            cache_context.set(new_context)
+
+            return await func(*args, **kwargs)
 
         return wrapper
 
