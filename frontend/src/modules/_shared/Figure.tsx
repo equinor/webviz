@@ -270,14 +270,24 @@ function makeReversedYAxisDomain(
  *
  * numRows: Number of rows in the subplot grid.
  * numCols: Number of columns in the subplot grid.
- * subplotTitles: Titles for each subplot, from top-left to bottom-right.
+ * subplotTitles: Titles for each subplot, from top-left to bottom-right. If true, each subplot is assigned empty title.
  * sharedXAxes: Whether to share x-axes between subplots.
+ * sharedYAxes: Whether to share y-axes between subplots.
+ * width: Width of the figure.
+ * height: Height of the figure.
+ * horizontalSpacing: Spacing between subplots in the horizontal direction.
+ * verticalSpacing: Spacing between subplots in the vertical direction.
+ * margin: Margin around the subplots.
+ * showGrid: Whether to show grid lines.
+ * xAxisType: Type of x-axis.
+ * xAxisTickAngle: Angle of x-axis tick labels.
+ * yAxisTickAngle: Angle of y-axis tick labels.
  */
 export interface MakeSubplotOptions {
     numRows?: number;
     numCols?: number;
     title?: string;
-    subplotTitles?: string[];
+    subplotTitles?: true | string[];
     sharedXAxes?: boolean | "all" | "rows" | "columns";
     sharedYAxes?: boolean | "all" | "rows" | "columns";
     width?: number;
@@ -437,7 +447,10 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
             // If subplot titles are provided, add them as annotations.
             // Set empty text if title is not provided for the subplot.
             if (options.subplotTitles) {
-                const title = options.subplotTitles.length > index ? `<b>${options.subplotTitles[index]}</b>` : "";
+                const title =
+                    options.subplotTitles && options.subplotTitles !== true
+                        ? `<b>${options.subplotTitles[index] ?? ""}</b>`
+                        : "";
                 axesToSubplotTitleAnnotationMap.set(index + 1, {
                     xanchor: "center",
                     yanchor: "top",

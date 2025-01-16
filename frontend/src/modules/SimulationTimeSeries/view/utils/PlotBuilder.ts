@@ -81,7 +81,9 @@ export class PlotBuilder {
     private _figure: Figure;
     private _numRows = 1;
     private _numCols = 1;
-    private _subplotTitles: string[] = [];
+
+    private _limitDirection: "rows" | "columns" | null = null;
+    private _limitDirectionMaxElements = 0;
 
     constructor(
         subplotOwner: SubplotOwner,
@@ -91,6 +93,8 @@ export class PlotBuilder {
         width: number,
         height: number,
         ensemblesParameterColoring?: EnsemblesContinuousParameterColoring,
+        limitDirection?: "rows" | "columns",
+        limitDirectionMaxElements?: number,
         scatterType: "scatter" | "scattergl" = "scatter"
     ) {
         this._selectedVectorSpecifications = selectedVectorSpecifications;
@@ -115,54 +119,51 @@ export class PlotBuilder {
         this._scatterType = scatterType;
 
         this._subplotOwner = subplotOwner;
-        if (this._subplotOwner === SubplotOwner.VECTOR) {
-            this._numberOfSubplots = this._uniqueVectorNames.length;
-            this._subplotTitles = this._uniqueVectorNames.map((vectorName) =>
-                this.createVectorSubplotTitle(vectorName)
-            );
-        } else if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
-            this._numberOfSubplots = this._uniqueEnsembleIdents.length;
-            this._subplotTitles = this._uniqueEnsembleIdents.map(
-                (ensembleIdent) => `Ensemble: ${this._makeEnsembleDisplayName(ensembleIdent)}`
-            );
+        this._numberOfSubplots =
+            subplotOwner === SubplotOwner.VECTOR ? this._uniqueVectorNames.length : this._uniqueEnsembleIdents.length;
+
+        if (limitDirection && limitDirectionMaxElements === undefined) {
+            throw new Error("limitDirectionMaxElements must be provided if limitDirection is provided");
         }
+        this._limitDirection = limitDirection ?? null;
+        this._limitDirectionMaxElements = limitDirectionMaxElements ? Math.max(1, limitDirectionMaxElements) : 1;
 
         // Create figure
-        ({ numRows: this._numRows, numCols: this._numCols } = this.calcNumRowsAndCols(this._numberOfSubplots));
+        ({ numRows: this._numRows, numCols: this._numCols } = this.calcNumRowsAndCols(
+            this._numberOfSubplots,
+            this._limitDirection,
+            this._limitDirectionMaxElements
+        ));
         this._figure = makeSubplots({
             numCols: this._numCols,
             numRows: this._numRows,
             height: this._height,
             width: this._width,
             margin: { t: 30, b: 40, l: 40, r: 40 },
-            title: this._subplotTitles.length === 0 ? "Select vectors to visualize" : undefined,
-            subplotTitles: this._subplotTitles,
+            title: this._numberOfSubplots === 0 ? "Select vectors to visualize" : undefined,
+            subplotTitles: true,
             xAxisType: "date",
             showGrid: true,
-            sharedXAxes: "columns",
+            sharedXAxes: "all",
         });
     }
 
     private calcNumRowsAndCols(
         numSubplots: number,
-        maxNumRows?: number,
-        maxNumCols?: number
+        limitDirection: "rows" | "columns" | null,
+        maxDirectionElements: number
     ): { numRows: number; numCols: number } {
         if (numSubplots === 1) {
             return { numRows: 1, numCols: 1 };
         }
 
-        if (maxNumCols && maxNumRows) {
-            throw new Error("Only one of maxNumCols or maxNumRows can be defined");
-        }
-
-        if (maxNumRows !== undefined) {
-            const numRows = Math.min(maxNumRows, Math.ceil(Math.sqrt(numSubplots)));
+        if (limitDirection === "rows" && maxDirectionElements > 0) {
+            const numRows = Math.min(maxDirectionElements, numSubplots);
             const numCols = Math.ceil(numSubplots / numRows);
             return { numRows, numCols };
         }
-        if (maxNumCols !== undefined) {
-            const numCols = Math.min(maxNumCols, Math.ceil(Math.sqrt(numSubplots)));
+        if (limitDirection === "columns" && maxDirectionElements > 0) {
+            const numCols = Math.min(maxDirectionElements, numSubplots);
             const numRows = Math.ceil(numSubplots / numCols);
             return { numRows, numCols };
         }
@@ -175,7 +176,7 @@ export class PlotBuilder {
     /**
      * Get index of subplot for vector specification
      */
-    private getSubplotIndex(vectorSpecification: VectorSpec) {
+    private getSubplotIndexFromVectorSpec(vectorSpecification: VectorSpec) {
         if (this._subplotOwner === SubplotOwner.VECTOR) {
             return this._uniqueVectorNames.indexOf(vectorSpecification.vectorName);
         } else if (this._subplotOwner === SubplotOwner.ENSEMBLE) {
@@ -198,9 +199,15 @@ export class PlotBuilder {
      *
      */
     private getSubplotRowAndColFromIndex(subplotIndex: number): { row: number; col: number } {
-        const row = Math.floor(subplotIndex / this._numCols) + 1;
-        const col = (subplotIndex % this._numCols) + 1;
-
+        let col = null;
+        let row = null;
+        if (this._limitDirection === "rows") {
+            col = Math.floor(subplotIndex / this._numRows) + 1;
+            row = (subplotIndex % this._numRows) + 1;
+        } else {
+            row = Math.floor(subplotIndex / this._numCols) + 1;
+            col = (subplotIndex % this._numCols) + 1;
+        }
         if (row > this._numRows || col > this._numCols) {
             throw new Error("Subplot index out of bounds");
         }
@@ -209,37 +216,39 @@ export class PlotBuilder {
     }
 
     /**
-     * Update subplot titles for vector subplots
+     * Create and set subplot titles after data is added
      *
      * The subplot titles are updated based on the vector name and unit provided in the vectorNameUnitMap.
      * The unit is provided after traces are added, thus the subplot titles are updated after traces are added.
      */
-    private updateVectorSubplotTitles(): void {
-        if (this._subplotOwner !== SubplotOwner.VECTOR) {
-            return;
-        }
+    private createAndSetSubplotTitles(): void {
+        if (this._subplotOwner === SubplotOwner.VECTOR) {
+            this._uniqueVectorNames.forEach((vectorName, subplotIndex) => {
+                const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
+                if (!this._figure.hasSubplotTitle(row, col)) {
+                    return;
+                }
 
-        for (const vectorName of this._uniqueVectorNames) {
-            const getSubplotIndex = this._uniqueVectorNames.indexOf(vectorName);
-            if (getSubplotIndex === -1) {
-                continue;
-            }
-
-            const { row, col } = this.getSubplotRowAndColFromIndex(getSubplotIndex);
-            if (!this._figure.hasSubplotTitle(row, col)) {
-                continue;
-            }
-
-            const newSubplotTitle = this.createVectorSubplotTitle(vectorName);
-            this._figure.updateSubplotTitle(newSubplotTitle, row, col);
+                const newSubplotTitle = this.createVectorSubplotTitle(vectorName);
+                this._figure.updateSubplotTitle(newSubplotTitle, row, col);
+            });
+        } else {
+            this._uniqueEnsembleIdents.forEach((ensembleIdent, subplotIndex) => {
+                const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
+                if (!this._figure.hasSubplotTitle(row, col)) {
+                    return;
+                }
+                const newSubplotTitle = `Ensemble: ${this._makeEnsembleDisplayName(ensembleIdent)}`;
+                this._figure.updateSubplotTitle(newSubplotTitle, row, col);
+            });
         }
     }
 
     build(handleOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined): React.ReactNode {
-        // Post-process after all traces are added
         this.createGraphLegends();
-        this.updateVectorSubplotTitles();
+        this.createAndSetSubplotTitles();
 
+        // Add time annotations and shapes
         for (let index = 0; index < this._numberOfSubplots; index++) {
             const { row, col } = this.getSubplotRowAndColFromIndex(index);
             for (const timeAnnotation of this.createTimeAnnotations()) {
@@ -279,7 +288,7 @@ export class PlotBuilder {
 
         // Create traces for each vector
         for (const elm of selectedVectorsRealizationData) {
-            const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
+            const subplotIndex = this.getSubplotIndexFromVectorSpec(elm.vectorSpecification);
             if (subplotIndex === -1) continue;
 
             const ensembleIdent = elm.vectorSpecification.ensembleIdent;
@@ -341,7 +350,7 @@ export class PlotBuilder {
 
         // Create traces for each vector
         for (const elm of selectedVectorsRealizationData) {
-            const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
+            const subplotIndex = this.getSubplotIndexFromVectorSpec(elm.vectorSpecification);
             if (subplotIndex === -1) continue;
 
             // Get legend group and color
@@ -383,7 +392,7 @@ export class PlotBuilder {
 
         // Create traces for each vector
         for (const elm of selectedVectorsStatisticData) {
-            const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
+            const subplotIndex = this.getSubplotIndexFromVectorSpec(elm.vectorSpecification);
             if (subplotIndex === -1) continue;
 
             // Get legend group and color
@@ -422,7 +431,7 @@ export class PlotBuilder {
 
         // Create traces for each vector
         for (const elm of selectedVectorsStatisticData) {
-            const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
+            const subplotIndex = this.getSubplotIndexFromVectorSpec(elm.vectorSpecification);
             if (subplotIndex === -1) continue;
 
             // Get legend group and color
@@ -461,7 +470,7 @@ export class PlotBuilder {
 
         // Create traces for each vector
         for (const elm of selectedVectorsHistoricalData) {
-            const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
+            const subplotIndex = this.getSubplotIndexFromVectorSpec(elm.vectorSpecification);
             if (subplotIndex === -1) continue;
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
@@ -495,7 +504,7 @@ export class PlotBuilder {
 
         // Create traces for each vector
         for (const elm of selectedVectorsObservationData) {
-            const subplotIndex = this.getSubplotIndex(elm.vectorSpecification);
+            const subplotIndex = this.getSubplotIndexFromVectorSpec(elm.vectorSpecification);
             if (subplotIndex === -1) continue;
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);

@@ -11,6 +11,8 @@ import {
     showHistoricalAtom,
     showObservationsAtom,
     statisticsSelectionAtom,
+    subplotLimitDirectionAtom,
+    subplotMaxDirectionElementsAtom,
     visualizationModeAtom,
 } from "./settings/atoms/baseAtoms";
 import {
@@ -19,10 +21,14 @@ import {
     selectedRegularEnsemblesAtom,
     vectorSpecificationsAtom,
 } from "./settings/atoms/derivedAtoms";
-import { GroupBy, StatisticsSelection, VectorSpec, VisualizationMode } from "./typesAndEnums";
+import { GroupBy, StatisticsSelection, SubplotLimitDirection, VectorSpec, VisualizationMode } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     groupBy: GroupBy;
+    subplotLimitation: {
+        direction: SubplotLimitDirection;
+        maxDirectionElements: number;
+    };
     visualizationMode: VisualizationMode;
     showObservations: boolean;
     showHistorical: boolean;
@@ -42,6 +48,12 @@ export type Interfaces = {
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     groupBy: (get) => {
         return get(groupByAtom);
+    },
+    subplotLimitation: (get) => {
+        return {
+            direction: get(subplotLimitDirectionAtom),
+            maxDirectionElements: get(subplotMaxDirectionElementsAtom),
+        };
     },
     visualizationMode: (get) => {
         return get(visualizationModeAtom);
