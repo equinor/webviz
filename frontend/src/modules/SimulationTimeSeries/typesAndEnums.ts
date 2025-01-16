@@ -95,3 +95,15 @@ export const FrequencyEnumToStringMapping = {
     [Frequency_api.QUARTERLY]: "Quarterly",
     [Frequency_api.YEARLY]: "Yearly",
 };
+
+export enum SubplotLimitDirection {
+    NONE = "none",
+    COLUMNS = "columns",
+    ROWS = "rows",
+}
+
+export const SubplotLimitDirectionEnumToStringMapping = {
+    [SubplotLimitDirection.NONE]: "None",
+    [SubplotLimitDirection.COLUMNS]: "Columns",
+    [SubplotLimitDirection.ROWS]: "Rows",
+};
