@@ -1,5 +1,8 @@
-import { CompositeLayer, GetPickingInfoParams, Layer, PickingInfo } from "@deck.gl/core";
-import { ColumnLayer, LineLayer } from "@deck.gl/layers";
+import { CompositeLayer, Layer, LayerContext, PickingInfo } from "@deck.gl/core";
+import { PathStyleExtension } from "@deck.gl/extensions";
+import { ColumnLayer } from "@deck.gl/layers";
+
+import { AnimatedPathLayer } from "./AnimatedPathLayer";
 
 export type EditablePolylineLayerProps = {
     id: string;
@@ -16,8 +19,21 @@ export type Polyline = {
 export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerProps> {
     static layerName: string = "EditablePolylineLayer";
 
-    private _editingPolylineId: string | null = null;
-    private _hoveredPolylinePointIndex: number | null = null;
+    // @ts-expect-error
+    state!: {
+        hoveredPolylinePoint: {
+            polylineId: string;
+            pointIndex: number;
+        } | null;
+        dashStart: number;
+    };
+
+    initializeState(context: LayerContext): void {
+        this.state = {
+            hoveredPolylinePoint: null,
+            dashStart: 0,
+        };
+    }
 
     makePolylineData(
         polyline: number[][],
@@ -117,22 +133,43 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
         return this.props.polylines.find((polyline) => polyline.id === id);
     }
 
-    getPickingInfo({ info }: GetPickingInfoParams): PickingInfo {
-        if (!this._editingPolylineId) {
-            return info;
-        }
-        const polyline = this.getPolylineById(this._editingPolylineId);
-        if (!polyline) {
-            return info;
-        }
-        if (info.object && info.object.index < polyline.polyline.length) {
-            this._hoveredPolylinePointIndex = info.object.index;
-        } else {
-            this._hoveredPolylinePointIndex = null;
+    private extractPolylineIdFromSourceLayerId(sourceLayerId: string): string | null {
+        const match = sourceLayerId.match(/points-(.*)/);
+        if (!match) {
+            return null;
         }
 
-        this.setNeedsUpdate();
-        return info;
+        return match[1];
+    }
+
+    onHover(info: PickingInfo): boolean {
+        const sourceLayerId = info.sourceLayer?.id;
+        if (info.index !== undefined && sourceLayerId) {
+            const polylineId = this.extractPolylineIdFromSourceLayerId(sourceLayerId);
+            if (!polylineId) {
+                return false;
+            }
+
+            const polyline = this.getPolylineById(polylineId);
+            if (!polyline) {
+                return false;
+            }
+
+            this.setState({
+                hoveredPolylinePoint: {
+                    polylineId,
+                    pointIndex: info.index,
+                },
+            });
+
+            return true;
+        }
+
+        this.setState({
+            hoveredPolylinePoint: null,
+        });
+
+        return false;
     }
 
     renderLayers() {
@@ -144,16 +181,22 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                 polylineData.push({ from: polyline.polyline[i], to: polyline.polyline[i + 1] });
             }
             layers.push(
-                new LineLayer({
+                new AnimatedPathLayer({
                     id: `lines-${polyline.id}`,
-                    data: polylineData,
+                    data: [polyline.polyline],
+                    dashStart: 0,
                     getColor: polyline.color,
-                    getSourcePosition: (d) => d.from,
-                    getTargetPosition: (d) => d.to,
-                    getWidth: 3,
-                    parameters: { depthTest: false },
+                    getPath: (d) => d,
+                    getDashArray: [10, 10],
+                    getWidth: 10,
                     billboard: true,
-                    widthUnits: "pixels",
+                    widthUnits: "meters",
+                    extensions: [new PathStyleExtension({ highPrecisionDash: true })],
+                    parameters: {
+                        // @ts-expect-error - deck.gl types are wrong
+                        depthTest: false,
+                    },
+                    depthTest: false,
                 })
             );
             layers.push(
@@ -163,13 +206,19 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                     getElevation: 1,
                     getPosition: (d) => d,
                     getFillColor: (d, i) =>
-                        this._hoveredPolylinePointIndex === i.index ? [0, 0, 255, 255] : polyline.color,
+                        this.state.hoveredPolylinePoint?.polylineId === polyline.id &&
+                        this.state.hoveredPolylinePoint.pointIndex === i.index
+                            ? [230, 136, 21, 255]
+                            : polyline.color,
                     extruded: false,
                     radius: 20,
                     radiusUnits: "pixels",
                     pickable: true,
                     parameters: {
                         depthTest: false,
+                    },
+                    updateTriggers: {
+                        getFillColor: [this.state.hoveredPolylinePoint],
                     },
                 })
             );
