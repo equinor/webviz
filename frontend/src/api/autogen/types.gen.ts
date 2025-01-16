@@ -1559,6 +1559,10 @@ export type GetStatisticalVectorDataPerSensitivityData_api = {
          * Optional list of statistics to calculate. If not specified, all statistics will be calculated.
          */
         statistic_functions?: Array<StatisticFunction_api> | null;
+        /**
+         * Optional list of realizations to include. If not specified, all realizations will be included.
+         */
+        realizations_encoded_as_uint_list_str?: string | null;
     };
     url: "/timeseries/statistical_vector_data_per_sensitivity/";
 };
