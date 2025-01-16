@@ -37,8 +37,8 @@ def get_alive_protected() -> str:
     return f"ALIVE_PROTECTED: Backend is alive at this time: {datetime.datetime.now()}"
 
 
-@add_custom_cache_time(0)  # 1 week
 @router.get("/logged_in_user", response_model=UserInfo)
+@add_custom_cache_time(0)  # No cache
 async def get_logged_in_user(
     request: Request,
     includeGraphApiInfo: bool = Query(  # pylint: disable=invalid-name

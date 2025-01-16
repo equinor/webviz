@@ -41,8 +41,8 @@ async def get_drilled_wellbore_headers(
     return [converters.convert_wellbore_header_to_schema(wellbore_header) for wellbore_header in wellbore_headers]
 
 
-@add_custom_cache_time(3600 * 24 * 7)  # 1 week
 @router.get("/well_trajectories/")
+@add_custom_cache_time(3600 * 24 * 7)  # 1 week
 async def get_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),

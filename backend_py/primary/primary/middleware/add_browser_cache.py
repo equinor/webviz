@@ -30,12 +30,8 @@ def add_custom_cache_time(max_age: int):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-
-            # Create a new context dict for this request
-            new_context = get_default_context()
-            new_context["max_age"] = max_age
-            # Store the token to reset later if needed
-            cache_context.set(new_context)
+            context = cache_context.get()
+            context["max_age"] = max_age
 
             return await func(*args, **kwargs)
 
@@ -57,7 +53,7 @@ class AddBrowserCacheMiddleware:
             return await self.app(scope, receive, send)
 
         # Set initial context and store token
-        token = cache_context.set(get_default_context())
+        cache_context.set(get_default_context())
 
         async def send_with_cache_header(message) -> None:
             if message["type"] == "http.response.start":
@@ -68,8 +64,4 @@ class AddBrowserCacheMiddleware:
 
             await send(message)
 
-        try:
-            await self.app(scope, receive, send_with_cache_header)
-        finally:
-            # Reset context after request is complete
-            cache_context.reset(token)
+        await self.app(scope, receive, send_with_cache_header)
