@@ -223,6 +223,7 @@ export type CreateVectorFanchartTracesOptions = {
     legendGroup: string;
     name?: string;
     yaxis?: string;
+    xaxis?: string;
     // lineShape?: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv";
     hoverTemplate?: string;
     showLegend?: boolean;
@@ -235,6 +236,7 @@ export function createVectorFanchartTraces({
     legendGroup,
     name = undefined,
     yaxis = "y",
+    xaxis = "x",
     hoverTemplate = "(%{x}, %{y})<br>",
     showLegend = false,
     type = "scatter",
@@ -288,6 +290,7 @@ export function createVectorFanchartTraces({
         hoverTemplate: hoverTemplate,
         legendRank: legendRank,
         yaxis: yaxis,
+        xaxis: xaxis,
         type: type,
     });
 }
@@ -304,6 +307,7 @@ export type CreateVectorStatisticsTracesOptions = {
     legendGroup: string;
     name?: string;
     yaxis?: string;
+    xaxis?: string;
     // lineShape?: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv";
     lineWidth?: number;
     hoverTemplate?: string;
@@ -317,6 +321,7 @@ export function createVectorStatisticsTraces({
     legendGroup,
     name = undefined,
     yaxis = "y",
+    xaxis = "x",
     lineWidth = 2,
     hoverTemplate = "(%{x}, %{y})<br>",
     showLegend = false,
@@ -376,6 +381,7 @@ export function createVectorStatisticsTraces({
         hoverTemplate: hoverTemplate,
         legendRank: legendRank,
         yaxis: yaxis,
+        xaxis: xaxis,
         type: type,
     });
 }
