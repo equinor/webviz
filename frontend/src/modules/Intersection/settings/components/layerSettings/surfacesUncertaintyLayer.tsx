@@ -1,7 +1,6 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceMetaSet_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { SurfaceAttributeType_api, SurfaceMetaSet_api, getRealizationSurfacesMetadataOptions } from "@api";
 import { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
@@ -250,18 +249,18 @@ function makeSurfaceNameOptions(surfaceNames: string[]): DropdownOption[] {
     return surfaceNames.map((surfaceName) => ({ label: surfaceName, value: surfaceName }));
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export function useSurfaceDirectoryQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
 ): UseQueryResult<SurfaceMetaSet_api> {
+    getRealizationSurfacesMetadataOptions;
     return useQuery({
-        queryKey: ["getSurfaceDirectory", caseUuid, ensembleName],
-        queryFn: () => apiService.surface.getRealizationSurfacesMetadata(caseUuid ?? "", ensembleName ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getRealizationSurfacesMetadataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+            },
+        }),
         enabled: Boolean(caseUuid && ensembleName),
     });
 }

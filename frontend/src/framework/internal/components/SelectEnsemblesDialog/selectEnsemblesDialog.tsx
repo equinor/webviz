@@ -1,7 +1,6 @@
 import React from "react";
 
-import { CaseInfo_api, EnsembleInfo_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { CaseInfo_api, getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -29,6 +28,9 @@ import { UserAvatar } from "./private-components/userAvatar";
 import { LoadingOverlay } from "../LoadingOverlay";
 
 const CASE_UUID_ENSEMBLE_NAME_SEPARATOR = "~@@~";
+
+const STALE_TIME = 0;
+const CACHE_TIME = 5 * 60 * 1000;
 
 // Base item for ensemble data
 export type BaseEnsembleItem = {
@@ -67,9 +69,6 @@ export type SelectEnsemblesDialogProps = {
     createdDeltaEnsembles: DeltaEnsembleItem[];
     colorSet: ColorSet;
 };
-
-const STALE_TIME = 0;
-const CACHE_TIME = 5 * 60 * 1000;
 
 interface CaseFilterSettings {
     keep: boolean;
@@ -120,10 +119,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     }, [props.createdDeltaEnsembles]);
 
     const fieldsQuery = useQuery({
-        queryKey: ["getFields"],
-        queryFn: () => {
-            return apiService.explore.getFields();
-        },
+        ...getFieldsOptions(),
     });
 
     const [selectedField, setSelectedField] = useValidState<string>({
@@ -133,13 +129,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     });
 
     const casesQuery = useQuery({
-        queryKey: ["getCases", selectedField],
-        queryFn: () => {
-            if (!selectedField) {
-                return Promise.resolve<CaseInfo_api[]>([]);
-            }
-            return apiService.explore.getCases(selectedField);
-        },
+        ...getCasesOptions({
+            query: {
+                field_identifier: selectedField,
+            },
+        }),
         enabled: fieldsQuery.isSuccess,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,
@@ -152,13 +146,11 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
     });
 
     const ensemblesQuery = useQuery({
-        queryKey: ["getEnsembles", selectedCaseId],
-        queryFn: () => {
-            if (!selectedCaseId) {
-                return Promise.resolve<EnsembleInfo_api[]>([]);
-            }
-            return apiService.explore.getEnsembles(selectedCaseId);
-        },
+        ...getEnsemblesOptions({
+            path: {
+                case_uuid: selectedCaseId,
+            },
+        }),
         enabled: casesQuery.isSuccess,
         gcTime: CACHE_TIME,
         staleTime: STALE_TIME,

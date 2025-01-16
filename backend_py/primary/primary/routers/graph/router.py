@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.get("/user_photo/")
-async def user_info(
+async def get_user_photo(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     user_id: str = Query(description="User id"),

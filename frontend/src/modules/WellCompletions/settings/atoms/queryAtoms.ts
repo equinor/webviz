@@ -1,13 +1,10 @@
-import { apiService } from "@framework/ApiService";
+import { getWellCompletionsDataOptions } from "@api";
 import { RealizationSelection } from "@modules/WellCompletions/typesAndEnums";
 
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { userSelectedRealizationSelectionAtom } from "./baseAtoms";
 import { selectedEnsembleIdentAtom, selectedRealizationNumberAtom, validRealizationNumbersAtom } from "./derivedAtoms";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export const wellCompletionsQueryAtom = atomWithQuery((get) => {
     const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
@@ -28,12 +25,14 @@ export const wellCompletionsQueryAtom = atomWithQuery((get) => {
 
     // Disable query if realization number is null for single realization request
     const query = {
-        queryKey: ["getWellCompletionsData", caseUuid, ensembleName, realizations],
-        queryFn: () =>
-            apiService.wellCompletions.getWellCompletionsData(caseUuid ?? "", ensembleName ?? "", realizations),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: !!(caseUuid && ensembleName && hasValidRealizations),
+        ...getWellCompletionsDataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+                realization: realizations,
+            },
+        }),
+        enabled: Boolean(caseUuid && ensembleName && hasValidRealizations),
     };
 
     return query;

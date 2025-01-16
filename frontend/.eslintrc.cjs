@@ -21,4 +21,5 @@ module.exports = {
             version: "detect",
         },
     },
+    ignorePatterns: ["node_modules", "scripts"],
 };

@@ -1,5 +1,5 @@
-import { ApiError, PvtData_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import { PvtData_api } from "@api";
+import { getTableDataOptions } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { UseQueryResult } from "@tanstack/react-query";
@@ -7,9 +7,6 @@ import { UseQueryResult } from "@tanstack/react-query";
 import { selectedEnsembleIdentsAtom, selectedRealizationsAtom } from "./derivedAtoms";
 
 import { CombinedPvtDataResult } from "../../typesAndEnums";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export const pvtDataQueriesAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
@@ -25,16 +22,14 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
     const queries = ensembleIdentsAndRealizations
         .map((el) => {
             return () => ({
-                queryKey: ["pvtTableData", el.ensembleIdent.toString(), el.realization],
-                queryFn: () =>
-                    apiService.pvt.tableData(
-                        el.ensembleIdent.getCaseUuid(),
-                        el.ensembleIdent.getEnsembleName(),
-                        el.realization
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
-                enabled: !!(el.ensembleIdent && el.realization !== null),
+                ...getTableDataOptions({
+                    query: {
+                        case_uuid: el.ensembleIdent.getCaseUuid(),
+                        ensemble_name: el.ensembleIdent.getEnsembleName(),
+                        realization: el.realization,
+                    },
+                }),
+                enabled: Boolean(el.ensembleIdent && el.realization !== null),
             });
         })
         .flat();
@@ -48,7 +43,7 @@ export const pvtDataQueriesAtom = atomWithQueries((get) => {
                     tables: results[idx]?.data ?? [],
                 };
             }),
-            errors: results.map((result) => result.error).filter((err) => err !== null) as ApiError[],
+            errors: results.map((result) => result.error).filter((err) => err !== null) as Error[],
             isFetching: results.some((result) => result.isFetching),
             someQueriesFailed: results.some((result) => result.isError),
             allQueriesFailed: results.every((result) => result.isError),

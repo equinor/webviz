@@ -1,4 +1,4 @@
-import { ApiError, PvtData_api } from "@api";
+import { PvtData_api } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export enum ColorBy {
@@ -46,7 +46,7 @@ export type PvtTableCollection = {
 export type CombinedPvtDataResult = {
     tableCollections: PvtTableCollection[];
     isFetching: boolean;
-    errors: ApiError[];
+    errors: Error[];
     someQueriesFailed: boolean;
     allQueriesFailed: boolean;
 };

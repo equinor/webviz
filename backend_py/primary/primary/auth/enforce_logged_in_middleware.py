@@ -10,7 +10,7 @@ from .auth_helper import AuthHelper
 
 
 class EnforceLoggedInMiddleware(BaseHTTPMiddleware):
-    """Middleware to enforces that the user is logged in
+    """Middleware to enforce that the user is logged in
 
     By default, all paths except `/login` and `/auth-callback` are protected.
 

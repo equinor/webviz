@@ -1,6 +1,5 @@
-import { SeismicFenceData_api } from "@api";
+import { SeismicFenceData_api, postGetSeismicFenceOptions } from "@api";
 import { SeismicInfo, findIndexOfSample, getSeismicInfo } from "@equinor/esv-intersection";
-import { apiService } from "@framework/ApiService";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
@@ -46,9 +45,6 @@ export function transformSeismicFenceData(apiData: SeismicFenceData_api): Seismi
         fenceTracesFloat32Arr: dataFloat32Arr,
     };
 }
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export type SeismicLayerSettings = {
     ensembleIdent: RegularEnsembleIdent | null;
@@ -330,36 +326,25 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             yPoints.push(point[1]);
         }
 
-        const queryKey = [
-            "postGetSeismicFence",
-            this._settings.ensembleIdent?.getCaseUuid() ?? "",
-            this._settings.ensembleIdent?.getEnsembleName() ?? "",
-            this._settings.realizationNum ?? 0,
-            this._settings.attribute ?? "",
-            this._settings.dateOrInterval ?? "",
-            this._settings.polyline.polylineUtmXy,
-            this._settings.extensionLength,
-            this._settings.surveyType,
-            this._settings.dataType,
-            this._settings.resolution,
-        ];
-        this.registerQueryKey(queryKey);
+        const queryOptions = postGetSeismicFenceOptions({
+            query: {
+                case_uuid: this._settings.ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: this._settings.ensembleIdent?.getEnsembleName() ?? "",
+                realization_num: this._settings.realizationNum ?? 0,
+                seismic_attribute: this._settings.attribute ?? "",
+                time_or_interval_str: this._settings.dateOrInterval ?? "",
+                observed: this._settings.dataType === SeismicDataType.OBSERVED,
+            },
+            body: {
+                polyline: { x_points: xPoints, y_points: yPoints },
+            },
+        });
+
+        this.registerQueryKey(queryOptions.queryKey);
 
         return queryClient
             .fetchQuery({
-                queryKey,
-                queryFn: () =>
-                    apiService.seismic.postGetSeismicFence(
-                        this._settings.ensembleIdent?.getCaseUuid() ?? "",
-                        this._settings.ensembleIdent?.getEnsembleName() ?? "",
-                        this._settings.realizationNum ?? 0,
-                        this._settings.attribute ?? "",
-                        this._settings.dateOrInterval ?? "",
-                        this._settings.dataType === SeismicDataType.OBSERVED,
-                        { polyline: { x_points: xPoints, y_points: yPoints } }
-                    ),
-                staleTime: STALE_TIME,
-                gcTime: CACHE_TIME,
+                ...queryOptions,
             })
             .then((data) => transformSeismicFenceData(data))
             .then(async (data) => {

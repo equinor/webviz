@@ -22,7 +22,7 @@ export type ModuleInstanceLogProps = {
 };
 
 export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNode {
-    const [details, setDetails] = React.useState<Record<string, string> | null>(null);
+    const [details, setDetails] = React.useState<Record<string, unknown> | null>(null);
     const [detailsPosY, setDetailsPosY] = React.useState<number>(0);
     const [pointerOverDetails, setPointerOverDetails] = React.useState<boolean>(false);
 
@@ -79,7 +79,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
     }
 
     const handleShowDetails = React.useCallback(function handleShowDetails(
-        details: Record<string, string>,
+        details: Record<string, unknown>,
         posY: number
     ) {
         if (timeoutRef.current) {
@@ -163,7 +163,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
 }
 
 type LogListProps = {
-    onShowDetails: (details: Record<string, string>, yPos: number) => void;
+    onShowDetails: (details: Record<string, unknown>, yPos: number) => void;
     onHideDetails: () => void;
     moduleInstance: ModuleInstance<any>;
 };
@@ -208,7 +208,7 @@ function LogList(props: LogListProps): React.ReactNode {
 
 type LogEntryProps = {
     logEntry: LogEntry;
-    onShowDetails: (details: Record<string, string>, yPos: number) => void;
+    onShowDetails: (details: Record<string, unknown>, yPos: number) => void;
     onHideDetails: () => void;
 };
 
@@ -240,11 +240,15 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
         const target = e.currentTarget;
         timeoutRef.current = setTimeout(() => {
             if (props.logEntry.type === LogEntryType.MESSAGE) {
-                if (props.logEntry.message?.request?.query) {
+                if (props.logEntry.message?.request && "query" in (props.logEntry.message?.request ?? {})) {
                     if (!(target instanceof HTMLElement)) {
                         return;
                     }
-                    props.onShowDetails(props.logEntry.message.request.query, target.getBoundingClientRect().top);
+                    props.onShowDetails(
+                        // @ts-expect-error - query is always present
+                        props.logEntry.message.request["query"] ?? {},
+                        target.getBoundingClientRect().top
+                    );
                 }
             }
         }, 500);
@@ -270,6 +274,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
             icon = <Warning fontSize="inherit" className="text-orange-600" />;
         }
         message = props.logEntry.message?.message ?? "";
+        // @ts-expect-error - query is always present
         if (props.logEntry.message.request?.query) {
             const text = `${props.logEntry.message.request.method} ${props.logEntry.message.request.url}`;
             detailsString = (
@@ -277,7 +282,13 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
                     <span className="text-xs text-gray-500 text-ellipsis whitespace-nowrap block max-w-0">{text}</span>
                 </div>
             );
-            detailsObject = props.logEntry.message.request.query;
+            detailsObject = {};
+            // @ts-expect-error - query is always present
+            for (const key in props.logEntry.message.request.query) {
+                // @ts-expect-error - query is always present
+                const value = props.logEntry.message.request.query[key];
+                detailsObject[key] = JSON.stringify(value);
+            }
         }
     } else if (props.logEntry.type === LogEntryType.SUCCESS) {
         icon = <CheckCircle fontSize="inherit" className="text-green-600" />;
@@ -309,7 +320,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
 }
 
 type DetailsPopupProps = {
-    details: Record<string, string>;
+    details: Record<string, unknown>;
     right: number;
     top: number;
     onPointerEnter: () => void;
@@ -336,7 +347,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
                     {Object.entries(props.details).map(([key, value]) => (
                         <tr key={key}>
                             <td className="text-gray-600 font-bold">{key}</td>
-                            <td>{value}</td>
+                            <td>{JSON.stringify(value)}</td>
                         </tr>
                     ))}
                 </tbody>

@@ -1,12 +1,9 @@
-import { apiService } from "@framework/ApiService";
+import { getWellTrajectoriesOptions } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 
 import { atomWithQuery } from "jotai-tanstack-query";
 
 import { ensembleIdentAtom } from "./baseAtoms";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export const fieldWellboreTrajectoriesQueryAtom = atomWithQuery((get) => {
     const ensembleIdent = get(ensembleIdentAtom);
@@ -21,10 +18,11 @@ export const fieldWellboreTrajectoriesQueryAtom = atomWithQuery((get) => {
     }
 
     return {
-        queryKey: ["getFieldWellboreTrajectories", fieldIdentifier ?? ""],
-        queryFn: () => apiService.well.getWellTrajectories(fieldIdentifier ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getWellTrajectoriesOptions({
+            query: {
+                field_identifier: fieldIdentifier ?? "",
+            },
+        }),
         enabled: Boolean(fieldIdentifier),
     };
 });

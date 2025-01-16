@@ -443,9 +443,14 @@ async def get_statistical_vector_data_per_sensitivity(
     vector_name: Annotated[str, Query(description="Name of the vector")],
     resampling_frequency: Annotated[schemas.Frequency, Query(description="Resampling frequency")],
     statistic_functions: Annotated[list[schemas.StatisticFunction] | None, Query(description="Optional list of statistics to calculate. If not specified, all statistics will be calculated.")] = None,
+    realizations_encoded_as_uint_list_str: Annotated[str | None, Query(description="Optional list of realizations to include. If not specified, all realizations will be included.")] = None,
     # fmt:on
 ) -> list[schemas.VectorStatisticSensitivityData]:
     """Get statistical vector data for an ensemble per sensitivity"""
+
+    realizations: list[int] | None = None
+    if realizations_encoded_as_uint_list_str:
+        realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
     summmary_access = SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     parameter_access = await ParameterAccess.from_case_uuid_async(
@@ -461,10 +466,22 @@ async def get_statistical_vector_data_per_sensitivity(
     ret_data: list[schemas.VectorStatisticSensitivityData] = []
     if not sensitivities:
         return ret_data
+
+    requested_realizations_mask = (
+        pc.is_in(vector_table["REAL"], value_set=pa.array(realizations)) if realizations else None
+    )
     for sensitivity in sensitivities:
         for case in sensitivity.cases:
-            mask = pc.is_in(vector_table["REAL"], value_set=pa.array(case.realizations))
-            table = vector_table.filter(mask)
+            sens_case_realization_mask = pc.is_in(vector_table["REAL"], value_set=pa.array(case.realizations))
+            if requested_realizations_mask is not None:
+                sens_case_realization_mask = pc.and_(requested_realizations_mask, sens_case_realization_mask)
+            table = vector_table.filter(sens_case_realization_mask)
+
+            if table.num_rows == 0 and requested_realizations_mask is not None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="The combination of realizations to include and sensitivity case realizations results in no valid realizations",
+                )
 
             statistics = compute_vector_statistics(table, vector_name, service_stat_funcs_to_compute)
             if not statistics:

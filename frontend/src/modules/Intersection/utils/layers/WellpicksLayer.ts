@@ -1,14 +1,11 @@
+import { getStratigraphicUnitsOptions, getWellborePicksForWellboreOptions } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
-import { apiService } from "@framework/ApiService";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
 
 import { BaseLayer } from "./BaseLayer";
-
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
 
 export type WellpicksLayerSettings = {
     wellboreUuid: string | null;
@@ -72,21 +69,28 @@ export class WellpicksLayer extends BaseLayer<WellpicksLayerSettings, WellPicksL
     }
 
     protected async fetchData(queryClient: QueryClient): Promise<WellPicksLayerData> {
-        const queryKey = ["getWellborePicksAndStratigraphicUnits", this._settings.wellboreUuid];
-        this.registerQueryKey(queryKey);
-
-        const wellborePicksPromise = queryClient.fetchQuery({
-            queryKey,
-            queryFn: () => apiService.well.getWellborePicksForWellbore(this._settings.wellboreUuid ?? ""),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
+        const wellborePicksQueryOptions = getWellborePicksForWellboreOptions({
+            query: {
+                wellbore_uuid: this._settings.wellboreUuid ?? "",
+            },
         });
 
+        this.registerQueryKey(wellborePicksQueryOptions.queryKey);
+
+        const wellborePicksPromise = queryClient.fetchQuery({
+            ...wellborePicksQueryOptions,
+        });
+
+        const stratigraphicUnitsQueryOptions = getStratigraphicUnitsOptions({
+            query: {
+                case_uuid: this._settings.ensembleIdent?.getCaseUuid() ?? "",
+            },
+        });
+
+        this.registerQueryKey(stratigraphicUnitsQueryOptions.queryKey);
+
         const stratigraphicUnitsPromise = queryClient.fetchQuery({
-            queryKey: ["getStratigraphicUnits", this._settings.ensembleIdent?.getCaseUuid()],
-            queryFn: () => apiService.surface.getStratigraphicUnits(this._settings.ensembleIdent?.getCaseUuid() ?? ""),
-            staleTime: STALE_TIME,
-            gcTime: CACHE_TIME,
+            ...stratigraphicUnitsQueryOptions,
         });
 
         return Promise.all([wellborePicksPromise, stratigraphicUnitsPromise]).then(

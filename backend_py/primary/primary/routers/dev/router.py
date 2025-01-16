@@ -22,7 +22,7 @@ router = APIRouter()
 
 
 @router.get("/usersession/{user_component}/call")
-async def usersession_call(
+async def get_usersession_call(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     user_component: Annotated[UserComponent, Path(description="User session component")],
     instance_str: Annotated[str, Query(description="Instance string")] = "myInst",
@@ -59,7 +59,7 @@ async def usersession_call(
 
 
 @router.get("/usersession/{user_component}/radixlist")
-async def usersession_radixlist(user_component: UserComponent) -> list:
+async def get_usersession_radixlist(user_component: UserComponent) -> list:
     LOGGER.debug(f"usersession_radixlist() {user_component=}")
 
     session_def = _USER_SESSION_DEFS[user_component]
@@ -75,7 +75,7 @@ async def usersession_radixlist(user_component: UserComponent) -> list:
 
 
 @router.get("/usersession/{user_component}/radixcreate")
-async def usersession_radixcreate(user_component: UserComponent) -> str:
+async def get_usersession_radixcreate(user_component: UserComponent) -> str:
     LOGGER.debug(f"usersession_radixcreate() {user_component=}")
 
     session_def = _USER_SESSION_DEFS[user_component]
@@ -100,7 +100,7 @@ async def usersession_radixcreate(user_component: UserComponent) -> str:
 
 
 @router.get("/usersession/{user_component}/radixdelete")
-async def usersession_radixdelete(user_component: UserComponent) -> str:
+async def get_usersession_radixdelete(user_component: UserComponent) -> str:
     LOGGER.debug(f"usersession_radixdelete() {user_component=}")
 
     session_def = _USER_SESSION_DEFS[user_component]
@@ -112,7 +112,7 @@ async def usersession_radixdelete(user_component: UserComponent) -> str:
 
 
 @router.get("/usersession/dirlist")
-async def usersession_dirlist(
+async def get_usersession_dirlist(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     user_component: UserComponent | None = None,
 ) -> list:
@@ -134,7 +134,7 @@ async def usersession_dirlist(
 
 
 @router.get("/usersession/dirdel")
-async def usersession_dirdel(
+async def get_usersession_dirdel(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     user_component: UserComponent | None = None,
 ) -> str:
@@ -157,7 +157,7 @@ async def usersession_dirdel(
 
 
 @router.get("/bgtask")
-async def bgtask() -> str:
+async def get_bgtask() -> str:
     LOGGER.debug(f"bgtask() - start")
 
     async def funcThatThrows() -> None:
@@ -175,7 +175,7 @@ async def bgtask() -> str:
 
 
 @router.get("/ri_surf")
-async def ri_surf(
+async def get_ri_surf(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
 ) -> str:
     LOGGER.debug(f"ri_surf() - start")
@@ -200,7 +200,7 @@ async def ri_surf(
 
 
 @router.get("/ri_isect")
-async def ri_isect(
+async def get_ri_isect(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
 ) -> str:
     LOGGER.debug(f"ri_isect() - start")

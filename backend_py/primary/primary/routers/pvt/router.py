@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/table_data/")
-async def table_data(
+async def get_table_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),
@@ -50,7 +50,7 @@ async def table_data(
 
 # DOES NOT CURRENTLY WORK
 @router.get("/realizations_tables_are_equal/")
-async def realizations_tables_are_equal(
+async def get_realizations_tables_are_equal(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Query(description="Sumo case uuid"),

@@ -1,6 +1,11 @@
-import { SurfaceDef_api, SurfaceMetaSet_api } from "@api";
+import {
+    SurfaceDef_api,
+    SurfaceMetaSet_api,
+    getObservedSurfacesMetadataOptions,
+    getRealizationSurfacesMetadataOptions,
+    getSurfaceDataOptions,
+} from "@api";
 import { SurfaceDataPng_api } from "@api";
-import { apiService } from "@framework/ApiService";
 import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
 import { UseQueryResult, useQuery } from "@tanstack/react-query";
 
@@ -8,29 +13,29 @@ import { SurfaceDataFloat_trans, transformSurfaceData } from "./queryDataTransfo
 import { FullSurfaceAddress } from "./surfaceAddress";
 import { encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
 export function useRealizationSurfacesMetadataQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
 ): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
-        queryKey: ["getRealizationSurfacesMetadata", caseUuid, ensembleName],
-        queryFn: () => apiService.surface.getRealizationSurfacesMetadata(caseUuid ?? "", ensembleName ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: caseUuid && ensembleName ? true : false,
+        ...getRealizationSurfacesMetadataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+                ensemble_name: ensembleName ?? "",
+            },
+        }),
+        enabled: Boolean(caseUuid && ensembleName),
     });
 }
 
 export function useObservedSurfacesMetadataQuery(caseUuid: string | undefined): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
-        queryKey: ["getObservedSurfacesMetadata", caseUuid],
-        queryFn: () => apiService.surface.getObservedSurfacesMetadata(caseUuid ?? ""),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: caseUuid ? true : false,
+        ...getObservedSurfacesMetadataOptions({
+            query: {
+                case_uuid: caseUuid ?? "",
+            },
+        }),
+        enabled: Boolean(caseUuid),
     });
 }
 
@@ -56,12 +61,15 @@ export function useSurfaceDataQuery(
     }
 
     return useQuery({
-        queryKey: ["getSurfaceData", surfAddrStr, resampleToKeyValStr, format],
-        queryFn: () => apiService.surface.getSurfaceData(surfAddrStr ?? "", format, resampleToKeyValStr),
+        ...getSurfaceDataOptions({
+            query: {
+                surf_addr_str: surfAddrStr ?? "",
+                data_format: format,
+                resample_to_def_str: resampleToKeyValStr,
+            },
+        }),
         select: transformSurfaceData,
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
-        enabled: allowEnable && Boolean(surfAddrStr),
+        enabled: Boolean(allowEnable && surfAddrStr),
     });
 }
 

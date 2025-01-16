@@ -1,11 +1,18 @@
-import { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import {
+    EnsembleDetails_api,
+    EnsembleParameter_api,
+    EnsembleSensitivity_api,
+    SensitivityType_api,
+    getEnsembleDetailsOptions,
+    getParametersOptions,
+    getSensitivitiesOptions,
+} from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
 import { QueryClient } from "@tanstack/react-query";
 
 import { ContinuousParameter, DiscreteParameter, Parameter, ParameterType } from "../EnsembleParameters";
-import { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
+import { Sensitivity, SensitivityCase, SensitivityType } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 import { RegularEnsemble } from "../RegularEnsemble";
 import { RegularEnsembleIdent } from "../RegularEnsembleIdent";
@@ -163,26 +170,38 @@ async function loadEnsembleApiDataMapFromBackend(
         const ensembleName = ensembleIdent.getEnsembleName();
 
         const ensembleDetailsPromise = queryClient.fetchQuery({
-            queryKey: ["getEnsembleDetails", caseUuid, ensembleName],
-            queryFn: () => apiService.explore.getEnsembleDetails(caseUuid, ensembleName),
-            staleTime: STALE_TIME,
+            ...getEnsembleDetailsOptions({
+                path: {
+                    case_uuid: caseUuid,
+                    ensemble_name: ensembleName,
+                },
+            }),
             gcTime: CACHE_TIME,
+            staleTime: STALE_TIME,
         });
         ensembleDetailsPromiseArray.push(ensembleDetailsPromise);
 
         const parametersPromise = queryClient.fetchQuery({
-            queryKey: ["getParameters", caseUuid, ensembleName],
-            queryFn: () => apiService.parameters.getParameters(caseUuid, ensembleName),
-            staleTime: STALE_TIME,
+            ...getParametersOptions({
+                query: {
+                    case_uuid: caseUuid,
+                    ensemble_name: ensembleName,
+                },
+            }),
             gcTime: CACHE_TIME,
+            staleTime: STALE_TIME,
         });
         parametersPromiseArray.push(parametersPromise);
 
         const sensitivitiesPromise = queryClient.fetchQuery({
-            queryKey: ["getSensitivities", caseUuid, ensembleName],
-            queryFn: () => apiService.parameters.getSensitivities(caseUuid, ensembleName),
-            staleTime: STALE_TIME,
+            ...getSensitivitiesOptions({
+                query: {
+                    case_uuid: caseUuid,
+                    ensemble_name: ensembleName,
+                },
+            }),
             gcTime: CACHE_TIME,
+            staleTime: STALE_TIME,
         });
         sensitivitiesPromiseArray.push(sensitivitiesPromise);
     }
@@ -246,9 +265,20 @@ function buildSensitivityArrFromApiResponse(apiSensitivityArray: EnsembleSensiti
             });
         }
 
+        const convertSensitivityType = (apiType: SensitivityType_api): SensitivityType => {
+            switch (apiType) {
+                case SensitivityType_api.MONTECARLO:
+                    return SensitivityType.MONTECARLO;
+                case SensitivityType_api.SCENARIO:
+                    return SensitivityType.SCENARIO;
+                default:
+                    throw new Error(`Unhandled sensitivity type: ${apiType}`);
+            }
+        };
+
         retSensitivityArray.push({
             name: apiSens.name,
-            type: apiSens.type,
+            type: convertSensitivityType(apiSens.type),
             cases: caseArray,
         });
     }

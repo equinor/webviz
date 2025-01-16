@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BoundingBox2d_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
+import { BoundingBox2D_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
 import { ModuleViewProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -32,7 +32,7 @@ type Bounds = [number, number, number, number];
 const updateViewPortBounds = (
     existingViewPortBounds: Bounds | undefined,
     resetBounds: boolean,
-    surfaceBB: BoundingBox2d_api
+    surfaceBB: BoundingBox2D_api
 ): Bounds => {
     const updatedBounds: Bounds = [surfaceBB.min_x, surfaceBB.min_y, surfaceBB.max_x, surfaceBB.max_y];
 

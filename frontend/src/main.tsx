@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+import { client } from "@api";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
 
@@ -18,6 +19,17 @@ if (urlParams.has("cleanStart")) {
     urlParams.delete("cleanStart");
     window.location.search = urlParams.toString();
 }
+
+// --------------------------------------------------------------------
+
+/*
+    Initialize the HTTP client.
+*/
+
+client.setConfig({
+    withCredentials: true,
+    baseURL: "/api",
+});
 
 // --------------------------------------------------------------------
 

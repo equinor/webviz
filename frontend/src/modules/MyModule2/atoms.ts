@@ -1,4 +1,4 @@
-import { apiService } from "@framework/ApiService";
+import { getVectorListOptions } from "@api";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -9,12 +9,12 @@ import { atomWithQuery } from "jotai-tanstack-query";
 export const textAtom = atom<string>("I am an atom with text!");
 export const selectedEnsembleAtom = atom<RegularEnsembleIdent | null>(null);
 export const vectorsAtom = atomWithQuery((get) => ({
-    queryKey: ["ensembles", get(selectedEnsembleAtom)?.toString()],
-    queryFn: () =>
-        apiService.timeseries.getVectorList(
-            get(selectedEnsembleAtom)?.getCaseUuid() ?? "",
-            get(selectedEnsembleAtom)?.getEnsembleName() ?? ""
-        ),
+    ...getVectorListOptions({
+        query: {
+            case_uuid: get(selectedEnsembleAtom)?.getCaseUuid() ?? "",
+            ensemble_name: get(selectedEnsembleAtom)?.getEnsembleName() ?? "",
+        },
+    }),
 }));
 export const atomBasedOnVectors = atom<boolean>((get) => get(vectorsAtom).isFetching);
 export const userSelectedVectorAtom = atom<string | null>(null);

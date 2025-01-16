@@ -57,7 +57,7 @@ async def get_grid_models_info(
 
 
 @router.get("/is_grid_geometry_shared/")
-async def is_grid_geometry_shared(
+async def get_is_grid_geometry_shared(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
@@ -75,7 +75,7 @@ async def is_grid_geometry_shared(
 # Primary backend
 @router.get("/grid_surface")
 # pylint: disable=too-many-arguments
-async def grid_surface(
+async def get_grid_surface(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
@@ -126,7 +126,7 @@ async def grid_surface(
 
 @router.get("/grid_parameter")
 # pylint: disable=too-many-arguments
-async def grid_parameter(
+async def get_grid_parameter(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
