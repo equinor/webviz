@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.graph_access.graph_access import GraphApiAccess
+from primary.middleware.add_browser_cache import add_custom_cache_time
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ def get_alive_protected() -> str:
 
 
 @router.get("/logged_in_user", response_model=UserInfo)
+@add_custom_cache_time(0)  # No cache
 async def get_logged_in_user(
     request: Request,
     includeGraphApiInfo: bool = Query(  # pylint: disable=invalid-name

@@ -1,7 +1,7 @@
 import logging
 from typing import List, Union
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from primary.services.smda_access.drogon import DrogonSmdaAccess
 from primary.services.smda_access import SmdaAccess
@@ -11,6 +11,8 @@ from primary.utils.drogon import is_drogon_identifier
 
 from primary.services.ssdl_access.well_access import WellAccess as SsdlWellAccess
 
+
+from primary.middleware.add_browser_cache import add_custom_cache_time
 from . import schemas
 from . import converters
 
@@ -40,6 +42,7 @@ async def get_drilled_wellbore_headers(
 
 
 @router.get("/well_trajectories/")
+@add_custom_cache_time(3600 * 24 * 7)  # 1 week
 async def get_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),

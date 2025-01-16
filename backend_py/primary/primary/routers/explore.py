@@ -7,6 +7,7 @@ from primary.auth.auth_helper import AuthHelper
 from primary.services.sumo_access.case_inspector import CaseInspector
 from primary.services.sumo_access.sumo_inspector import SumoInspector
 from primary.services.utils.authenticated_user import AuthenticatedUser
+from primary.middleware.add_browser_cache import add_custom_cache_time
 
 router = APIRouter()
 
@@ -37,6 +38,7 @@ class EnsembleDetails(BaseModel):
 
 
 @router.get("/fields")
+@add_custom_cache_time(0)
 async def get_fields(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
 ) -> List[FieldInfo]:
@@ -51,6 +53,7 @@ async def get_fields(
 
 
 @router.get("/cases")
+@add_custom_cache_time(0)
 async def get_cases(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Field identifier"),
@@ -67,6 +70,7 @@ async def get_cases(
 
 
 @router.get("/cases/{case_uuid}/ensembles")
+@add_custom_cache_time(0)
 async def get_ensembles(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
@@ -81,6 +85,7 @@ async def get_ensembles(
 
 
 @router.get("/cases/{case_uuid}/ensembles/{ensemble_name}")
+@add_custom_cache_time(0)
 async def get_ensemble_details(
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     case_uuid: str = Path(description="Sumo case uuid"),
