@@ -63,7 +63,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                     setActivePolylineId(uuid);
                     setPolylines([
                         ...polylines,
-                        { id: uuid, color: [0, 0, 255, 255], polyline: [[...firstLayerInfos.coordinate]] },
+                        { id: uuid, color: [255, 255, 255, 255], polyline: [[...firstLayerInfos.coordinate]] },
                     ]);
                 } else {
                     const updatedPolylines = polylines.map((polyline) => {
@@ -93,12 +93,12 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
         new HoverPointLayer({
             id: "hover-point-layer",
             point: hoverPoint,
-            color: [255, 0, 0, 100],
+            color: [255, 255, 255, 100],
         }),
         new EditablePolylineLayer({
             id: "editable-polylines-layer",
             polylines,
-            editable: props.editingActive,
+            editablePolylineId: activePolylineId,
         }),
     ];
 

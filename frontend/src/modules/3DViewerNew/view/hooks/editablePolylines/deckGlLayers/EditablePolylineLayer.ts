@@ -1,9 +1,9 @@
-import { CompositeLayer, Layer, PickingInfo } from "@deck.gl/core";
-import { ColumnLayer, PathLayer } from "@deck.gl/layers";
+import { CompositeLayer, GetPickingInfoParams, Layer, PickingInfo } from "@deck.gl/core";
+import { ColumnLayer, LineLayer } from "@deck.gl/layers";
 
 export type EditablePolylineLayerProps = {
     id: string;
-    editable: boolean;
+    editablePolylineId: string | null;
     polylines: Polyline[];
 };
 
@@ -16,10 +16,8 @@ export type Polyline = {
 export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerProps> {
     static layerName: string = "EditablePolylineLayer";
 
-    private _polylines: Polyline[] = [];
     private _editingPolylineId: string | null = null;
     private _hoveredPolylinePointIndex: number | null = null;
-    private _isDragging = false;
 
     makePolylineData(
         polyline: number[][],
@@ -116,115 +114,60 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
     }
 
     private getPolylineById(id: string): Polyline | undefined {
-        return this._polylines.find((polyline) => polyline.id === id);
+        return this.props.polylines.find((polyline) => polyline.id === id);
     }
 
-    handlePolylineHover(pickingInfo: PickingInfo): void {
+    getPickingInfo({ info }: GetPickingInfoParams): PickingInfo {
         if (!this._editingPolylineId) {
-            return;
+            return info;
         }
         const polyline = this.getPolylineById(this._editingPolylineId);
         if (!polyline) {
-            return;
+            return info;
         }
-        if (pickingInfo.object && pickingInfo.object.index < polyline.polyline.length) {
-            this._hoveredPolylinePointIndex = pickingInfo.object.index;
+        if (info.object && info.object.index < polyline.polyline.length) {
+            this._hoveredPolylinePointIndex = info.object.index;
         } else {
             this._hoveredPolylinePointIndex = null;
         }
 
         this.setNeedsUpdate();
-    }
-
-    handlePolylineClick(pickingInfo: PickingInfo, event: any): void {
-        if (!this._editingPolylineId) {
-            return;
-        }
-        const polyline = this.getPolylineById(this._editingPolylineId);
-        if (!polyline) {
-            return;
-        }
-
-        if (pickingInfo.object && pickingInfo.object.index < polyline.polyline.length) {
-            this._hoveredPolylinePointIndex = pickingInfo.object.index;
-            event.stopPropagation();
-            event.handled = true;
-        } else {
-            this._hoveredPolylinePointIndex = null;
-        }
-    }
-
-    handlePolylineDragStart(): void {
-        this._isDragging = true;
-
-        if (!this._editingPolylineId) {
-            return;
-        }
-    }
-
-    handlePolylineDragEnd(): void {
-        this._isDragging = false;
-    }
-
-    handlePolylineDrag(pickingInfo: PickingInfo): void {
-        if (!this._editingPolylineId) {
-            return;
-        }
-
-        if (pickingInfo.object) {
-            const index = pickingInfo.object.index;
-            if (!pickingInfo.coordinate) {
-                return;
-            }
-
-            const polyline = this.getPolylineById(this._editingPolylineId);
-            if (!polyline) {
-                return;
-            }
-
-            const newPolyline = polyline.polyline.reduce((acc, point, i) => {
-                if (i === index && pickingInfo.coordinate) {
-                    return [...acc, [pickingInfo.coordinate[0], pickingInfo.coordinate[1]]];
-                }
-                return [...acc, point];
-            }, [] as number[][]);
-
-            polyline.polyline = newPolyline;
-        }
+        return info;
     }
 
     renderLayers() {
         const layers: Layer<any>[] = [];
 
         for (const polyline of this.props.polylines) {
+            const polylineData: { from: number[]; to: number[] }[] = [];
+            for (let i = 0; i < polyline.polyline.length - 1; i++) {
+                polylineData.push({ from: polyline.polyline[i], to: polyline.polyline[i + 1] });
+            }
             layers.push(
-                new PathLayer({
+                new LineLayer({
                     id: `lines-${polyline.id}`,
-                    data: polyline.polyline,
-                    getPath: (d) => [d[0], d[1], 0],
-                    getWidth: 3,
+                    data: polylineData,
                     getColor: polyline.color,
-                    widthUnits: "pixels",
-                    parameters: {
-                        depthTest: false,
-                    },
+                    getSourcePosition: (d) => d.from,
+                    getTargetPosition: (d) => d.to,
+                    getWidth: 3,
+                    parameters: { depthTest: false },
                     billboard: true,
-                }),
+                    widthUnits: "pixels",
+                })
+            );
+            layers.push(
                 new ColumnLayer({
                     id: `points-${polyline.id}`,
                     data: polyline.polyline,
                     getElevation: 1,
                     getPosition: (d) => d,
-                    getFillColor: polyline.color,
+                    getFillColor: (d, i) =>
+                        this._hoveredPolylinePointIndex === i.index ? [0, 0, 255, 255] : polyline.color,
                     extruded: false,
-                    radius: 50,
+                    radius: 20,
                     radiusUnits: "pixels",
                     pickable: true,
-                    onHover: this.handlePolylineHover,
-                    onClick: this.handlePolylineClick,
-                    onDragStart: this.handlePolylineDragStart,
-                    onDragEnd: this.handlePolylineDragEnd,
-                    onDrag: this.handlePolylineDrag,
                     parameters: {
                         depthTest: false,
                     },

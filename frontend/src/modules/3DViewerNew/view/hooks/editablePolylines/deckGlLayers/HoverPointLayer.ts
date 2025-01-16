@@ -25,6 +25,9 @@ export class HoverPointLayer extends CompositeLayer<HoverPointLayerProps> {
             pickable: false,
             getPosition: (d) => d,
             getFillColor: this.props.color,
+            parameters: {
+                depthTest: false,
+            },
         });
     }
 }
