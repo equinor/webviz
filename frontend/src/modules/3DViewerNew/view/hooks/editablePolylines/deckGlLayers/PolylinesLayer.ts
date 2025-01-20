@@ -40,7 +40,7 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
             }),
         ];
 
-        if (hoveredPolylineIndex !== null) {
+        if (hoveredPolylineIndex !== null && this.props.polylines[hoveredPolylineIndex]) {
             layers.push(
                 new PathLayer({
                     id: `hovered`,
