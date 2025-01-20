@@ -39,6 +39,7 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
     const handleCameraChange = React.useCallback(
         function handleCameraChange(viewport: ViewStateType): void {
             if (props.userCameraInteractionActive || props.userCameraInteractionActive === undefined) {
+                console.debug("Camera position changed", viewport);
                 setCameraPosition(viewport);
             }
         },

@@ -1,36 +1,51 @@
-import { CompositeLayer, Layer, LayerContext, PickingInfo } from "@deck.gl/core";
+import { CompositeLayer, GetPickingInfoParams, Layer, LayerContext, PickingInfo } from "@deck.gl/core";
 import { PathStyleExtension } from "@deck.gl/extensions";
-import { ColumnLayer } from "@deck.gl/layers";
+import { ColumnLayer, LineLayer, PathLayer } from "@deck.gl/layers";
 
 import { AnimatedPathLayer } from "./AnimatedPathLayer";
 
 export type EditablePolylineLayerProps = {
     id: string;
-    editablePolylineId: string | null;
-    polylines: Polyline[];
+    polyline: EditablePolyline;
+    mouseHoverPoint?: number[];
 };
 
-export type Polyline = {
-    id: string;
+export type EditablePolyline = {
     color: [number, number, number, number];
-    polyline: number[][];
+    path: number[][];
+    referencePathPointIndex?: number;
 };
+
+export type EditablePolylineLayerPickingInfo = PickingInfo & {
+    editableEntity?: {
+        type: "line" | "point";
+        index: number;
+    };
+};
+
+export function isEditablePolylineLayerPickingInfo(info: PickingInfo): info is EditablePolylineLayerPickingInfo {
+    return (
+        Object.keys(info).includes("editableEntity") &&
+        ((info as EditablePolylineLayerPickingInfo).editableEntity?.type === "line" ||
+            (info as EditablePolylineLayerPickingInfo).editableEntity?.type === "point")
+    );
+}
 
 export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerProps> {
     static layerName: string = "EditablePolylineLayer";
 
     // @ts-expect-error
     state!: {
-        hoveredPolylinePoint: {
-            polylineId: string;
-            pointIndex: number;
+        hoveredEntity: {
+            layer: "line" | "point";
+            index: number;
         } | null;
         dashStart: number;
     };
 
     initializeState(context: LayerContext): void {
         this.state = {
-            hoveredPolylinePoint: null,
+            hoveredEntity: null,
             dashStart: 0,
         };
     }
@@ -129,96 +144,150 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
         return { polygonData, columnData };
     }
 
-    private getPolylineById(id: string): Polyline | undefined {
-        return this.props.polylines.find((polyline) => polyline.id === id);
-    }
-
-    private extractPolylineIdFromSourceLayerId(sourceLayerId: string): string | null {
-        const match = sourceLayerId.match(/points-(.*)/);
-        if (!match) {
-            return null;
+    getPickingInfo({ info }: GetPickingInfoParams): EditablePolylineLayerPickingInfo {
+        if (info && info.sourceLayer && info.index !== undefined && info.index !== -1) {
+            let layer: "line" | "point" | null = null;
+            if (info.sourceLayer.id.includes("lines-selection")) {
+                layer = "line";
+            } else if (info.sourceLayer.id.includes("points")) {
+                layer = "point";
+            }
+            return {
+                ...info,
+                editableEntity: layer
+                    ? {
+                          type: layer,
+                          index: info.index,
+                      }
+                    : undefined,
+            };
         }
 
-        return match[1];
+        return info;
     }
 
-    onHover(info: PickingInfo): boolean {
-        const sourceLayerId = info.sourceLayer?.id;
-        if (info.index !== undefined && sourceLayerId) {
-            const polylineId = this.extractPolylineIdFromSourceLayerId(sourceLayerId);
-            if (!polylineId) {
-                return false;
-            }
-
-            const polyline = this.getPolylineById(polylineId);
-            if (!polyline) {
-                return false;
-            }
-
+    onHover(info: EditablePolylineLayerPickingInfo): boolean {
+        if (!info.editableEntity) {
             this.setState({
-                hoveredPolylinePoint: {
-                    polylineId,
-                    pointIndex: info.index,
-                },
+                hoveredEntity: null,
             });
-
-            return true;
+            return false;
         }
 
         this.setState({
-            hoveredPolylinePoint: null,
+            hoveredEntity: {
+                layer: info.editableEntity.type,
+                index: info.index,
+            },
         });
 
         return false;
     }
 
     renderLayers() {
+        const { polyline, mouseHoverPoint } = this.props;
+
         const layers: Layer<any>[] = [];
 
-        for (const polyline of this.props.polylines) {
-            const polylineData: { from: number[]; to: number[] }[] = [];
-            for (let i = 0; i < polyline.polyline.length - 1; i++) {
-                polylineData.push({ from: polyline.polyline[i], to: polyline.polyline[i + 1] });
-            }
+        const polylinePathLayerData: number[][][] = [];
+        for (let i = 0; i < polyline.path.length - 1; i++) {
+            polylinePathLayerData.push([polyline.path[i], polyline.path[i + 1]]);
+        }
+
+        layers.push(
+            new AnimatedPathLayer({
+                id: "lines",
+                data: polylinePathLayerData,
+                dashStart: 0,
+                getColor: polyline.color,
+                getPath: (d) => d,
+                getDashArray: [10, 10],
+                getWidth: 10,
+                billboard: true,
+                widthUnits: "meters",
+                extensions: [new PathStyleExtension({ highPrecisionDash: true })],
+                parameters: {
+                    // @ts-expect-error - deck.gl types are wrong
+                    depthTest: false,
+                },
+                pickable: false,
+                depthTest: false,
+            }),
+            new PathLayer({
+                id: "lines-selection",
+                data: polylinePathLayerData,
+                getColor: [0, 0, 0, 0],
+                getPath: (d) => d,
+                getWidth: 50,
+                billboard: true,
+                widthUnits: "meters",
+                parameters: {
+                    depthTest: false,
+                },
+                pickable: true,
+            }),
+            new ColumnLayer({
+                id: "points",
+                data: polyline.path,
+                getElevation: 1,
+                getPosition: (d) => d,
+                getFillColor: (d, context) => {
+                    if (context.index === polyline.referencePathPointIndex) {
+                        return [230, 136, 21, 255];
+                    }
+                    return [255, 255, 255, 255];
+                },
+                getLineColor: [230, 136, 21, 255],
+                getLineWidth: (d, context) => {
+                    if (
+                        this.state.hoveredEntity &&
+                        this.state.hoveredEntity.layer === "point" &&
+                        context.index === this.state.hoveredEntity.index
+                    ) {
+                        return 20;
+                    }
+                    return 10;
+                },
+                stroked: true,
+                extruded: false,
+                radius: 20,
+                radiusUnits: "pixels",
+                pickable: true,
+                parameters: {
+                    depthTest: false,
+                },
+                updateTriggers: {
+                    getFillColor: [this.state.hoveredEntity, polyline.referencePathPointIndex],
+                    getLineWidth: [this.state.hoveredEntity, polyline.referencePathPointIndex],
+                },
+            })
+        );
+
+        if (polyline.referencePathPointIndex !== undefined && mouseHoverPoint && this.state.hoveredEntity === null) {
             layers.push(
-                new AnimatedPathLayer({
-                    id: `lines-${polyline.id}`,
-                    data: [polyline.polyline],
-                    dashStart: 0,
-                    getColor: polyline.color,
-                    getPath: (d) => d,
-                    getDashArray: [10, 10],
-                    getWidth: 10,
-                    billboard: true,
-                    widthUnits: "meters",
-                    extensions: [new PathStyleExtension({ highPrecisionDash: true })],
+                new LineLayer({
+                    id: "line",
+                    data: [{ from: polyline.path[polyline.referencePathPointIndex], to: mouseHoverPoint }],
+                    getSourcePosition: (d) => d.from,
+                    getTargetPosition: (d) => d.to,
+                    getColor: [230, 136, 21, 100],
+                    getWidth: 2,
                     parameters: {
-                        // @ts-expect-error - deck.gl types are wrong
                         depthTest: false,
                     },
-                    depthTest: false,
-                })
-            );
-            layers.push(
+                }),
                 new ColumnLayer({
-                    id: `points-${polyline.id}`,
-                    data: polyline.polyline,
+                    id: "hover-point",
+                    data: [mouseHoverPoint],
                     getElevation: 1,
                     getPosition: (d) => d,
-                    getFillColor: (d, i) =>
-                        this.state.hoveredPolylinePoint?.polylineId === polyline.id &&
-                        this.state.hoveredPolylinePoint.pointIndex === i.index
-                            ? [230, 136, 21, 255]
-                            : polyline.color,
+                    getFillColor: [230, 136, 21, 255],
                     extruded: false,
                     radius: 20,
                     radiusUnits: "pixels",
-                    pickable: true,
+                    pickable: false,
                     parameters: {
                         depthTest: false,
-                    },
-                    updateTriggers: {
-                        getFillColor: [this.state.hoveredPolylinePoint],
                     },
                 })
             );

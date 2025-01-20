@@ -19,6 +19,7 @@ export type ReadooutWrapperProps = {
 
 export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const id = React.useId();
+    // const deckGlRef = React.useRef<DeckGLRef>(null);
 
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
@@ -27,7 +28,12 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const [verticalScale, setVerticalScale] = React.useState<number>(1);
     const [polylineEditingActive, setPolylineEditingActive] = React.useState<boolean>(false);
 
-    const { onMouseEvent, layers } = useEditablePolylines({ polylines: [], editingActive: polylineEditingActive });
+    const { onMouseEvent, layers, cursorIcon, disableCameraInteraction } = useEditablePolylines({
+        polylines: [],
+        editingActive: polylineEditingActive,
+    });
+
+    // deckGlRef.current?.deck.setProps({...deckGlRef.props})
 
     function handleFitInViewClick() {
         setTriggerHomeCounter((prev) => prev + 1);
@@ -73,6 +79,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                 onVerticalScaleChange={handleVerticalScaleChange}
                 verticalScale={verticalScale}
             />
+            {cursorIcon}
             <ReadoutBoxWrapper layerPickInfo={layerPickingInfo} visible />
             <SubsurfaceViewerWithCameraState
                 id={`subsurface-viewer-${id}`}
@@ -80,6 +87,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                 cameraPosition={cameraPositionSetByAction ?? undefined}
                 onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
                 onMouseEvent={handleMouseEvent}
+                userCameraInteractionActive={!disableCameraInteraction}
                 layers={adjustedLayers}
                 verticalScale={verticalScale}
                 scale={{
