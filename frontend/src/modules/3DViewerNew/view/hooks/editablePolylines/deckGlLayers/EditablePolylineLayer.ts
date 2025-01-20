@@ -43,7 +43,7 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
         dashStart: number;
     };
 
-    initializeState(context: LayerContext): void {
+    initializeState(): void {
         this.state = {
             hoveredEntity: null,
             dashStart: 0,
