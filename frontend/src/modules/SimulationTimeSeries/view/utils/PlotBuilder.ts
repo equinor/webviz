@@ -175,6 +175,8 @@ export class PlotBuilder {
 
     /**
      * Get index of subplot for vector specification
+     *
+     * The subplot index is 0-based.
      */
     private getSubplotIndexFromVectorSpec(vectorSpecification: VectorSpec) {
         if (this._subplotOwner === SubplotOwner.VECTOR) {
@@ -199,15 +201,17 @@ export class PlotBuilder {
      *
      */
     private getSubplotRowAndColFromIndex(subplotIndex: number): { row: number; col: number } {
-        let col = null;
-        let row = null;
+        let col = 1;
+        let row = 1;
         if (this._limitDirection === "rows") {
             col = Math.floor(subplotIndex / this._numRows) + 1;
             row = (subplotIndex % this._numRows) + 1;
         } else {
+            // Columns or no limit
             row = Math.floor(subplotIndex / this._numCols) + 1;
             col = (subplotIndex % this._numCols) + 1;
         }
+
         if (row > this._numRows || col > this._numCols) {
             throw new Error("Subplot index out of bounds");
         }

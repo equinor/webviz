@@ -20,19 +20,18 @@ export const enum CoordinateReference {
  *
  * With row and columns starting at 1, and axis index starting at 1.
  *
- * Note:
- *
- * Default the subplots for plotly are arranged in a grid first cell bottom-left and last top-right. This implies
+ * By default the subplots for plotly are arranged in a grid first cell bottom-left and last top-right. Which implies
  * columns from left to right and rows from bottom to top.
  *
- * This implies with the following layout for a 3x3 grid (r1 = row 1, c1 = column 1):
+ * The default layout for a 3x3 grid, with row/column -> grid axis mapping (r1 = row 1, c1 = column 1):
  *
- *              r3c1 r3c2 r3c3
- *              r2c1 r2c2 r2c3
- *              r1c1 r1c2 r1c3
+ *                [row/col]            [grid axis]
+ *              r3c1 r3c2 r3c3       x7y7 x8y8 x9y9
+ *              r2c1 r2c2 r2c3   ->  x4y4 x5y5 x6y6
+ *              r1c1 r1c2 r1c3       x1y1 x2y2 x3y3
  *
- * This general row/column can be changed with the gridAxesMapping property or by providing custom layout linking the axes and
- * domain positions.
+ * This default row/column to grid axis can be changed with the gridAxesMapping property. The default grid axis assigned
+ * top-left to bottom-right can be changed by providing custom layout linking the axes and domain positions.
  */
 export class Figure {
     private _plotData: Partial<PlotData>[];
@@ -270,7 +269,10 @@ function makeReversedYAxisDomain(
  *
  * numRows: Number of rows in the subplot grid.
  * numCols: Number of columns in the subplot grid.
- * subplotTitles: Titles for each subplot, from top-left to bottom-right. If true, each subplot is assigned empty title.
+ * subplotTitles:
+ *      - If `true`: Each subplot is assigned a title annotation with empty title text.
+ *      - If `string array`: Each subplot is assigned a title annotation with the corresponding title text from the array, arranged from top-left to bottom-right. Missing titles in the array result in empty title text.
+ *      - If `undefined` or `false`: No title annotations are added.
  * sharedXAxes: Whether to share x-axes between subplots.
  * sharedYAxes: Whether to share y-axes between subplots.
  * width: Width of the figure.
