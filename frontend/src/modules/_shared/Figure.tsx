@@ -307,8 +307,8 @@ export interface MakeSubplotOptions {
  * Utility function to create a figure with subplots.
  *
  * This function creates grid axis mapping with index from top-left to bottom-right, with row and column number
- * starting at 1, and with cell index starting at 0. This is different from default Plotly which has bottom-left
- * as the first cell.
+ * starting at 1, and with first cell axis index starting at 1. This is different from default Plotly which has
+ * bottom-left as the first cell.
  *
  * Loosely based on the python plotly function make_subplots:
  * https://github.com/plotly/plotly.py/blob/master/packages/python/plotly/plotly/subplots.py
