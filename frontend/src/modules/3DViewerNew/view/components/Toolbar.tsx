@@ -10,12 +10,13 @@ export type ToolbarProps = {
     verticalScale: number;
     onFitInView: () => void;
     onGridVisibilityChange: (visible: boolean) => void;
-    onEditPolyline: () => void;
+    onToggleEditPolyline: () => void;
     onVerticalScaleChange(value: number): void;
 };
 
 export function Toolbar(props: ToolbarProps): React.ReactNode {
     const [gridVisible, setGridVisible] = React.useState(false);
+    const [polylineEditingActive, setPolylineEditingActive] = React.useState(false);
 
     function handleFitInViewClick() {
         props.onFitInView();
@@ -43,9 +44,9 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                 {gridVisible ? <GridOn fontSize="inherit" /> : <GridOff fontSize="inherit" />}
             </ToggleButton>
             <ToolBarDivider />
-            <Button onClick={props.onEditPolyline} title="Edit polylines">
+            <ToggleButton onToggle={props.onToggleEditPolyline} title="Edit polylines" active={polylineEditingActive}>
                 <Polyline fontSize="inherit" />
-            </Button>
+            </ToggleButton>
             <ToolBarDivider />
             <HoldPressedIntervalCallbackButton
                 onHoldPressedIntervalCallback={handleVerticalScaleDecrease}

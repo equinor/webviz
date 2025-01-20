@@ -50,106 +50,12 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
         };
     }
 
-    makePolylineData(
-        polyline: number[][],
-        zMid: number,
-        zExtension: number,
-        selectedPolylineIndex: number | null,
-        hoveredPolylineIndex: number | null,
-        color: [number, number, number, number]
-    ): {
-        polygonData: { polygon: number[][]; color: number[] }[];
-        columnData: { index: number; centroid: number[]; color: number[] }[];
-    } {
-        const polygonData: {
-            polygon: number[][];
-            color: number[];
-        }[] = [];
-
-        const columnData: {
-            index: number;
-            centroid: number[];
-            color: number[];
-        }[] = [];
-
-        const width = 10;
-        for (let i = 0; i < polyline.length; i++) {
-            const startPoint = polyline[i];
-            const endPoint = polyline[i + 1];
-
-            if (i < polyline.length - 1) {
-                const lineVector = [endPoint[0] - startPoint[0], endPoint[1] - startPoint[1], 0];
-                const zVector = [0, 0, 1];
-                const normalVector = [
-                    lineVector[1] * zVector[2] - lineVector[2] * zVector[1],
-                    lineVector[2] * zVector[0] - lineVector[0] * zVector[2],
-                    lineVector[0] * zVector[1] - lineVector[1] * zVector[0],
-                ];
-                const normalizedNormalVector = [
-                    normalVector[0] / Math.sqrt(normalVector[0] ** 2 + normalVector[1] ** 2 + normalVector[2] ** 2),
-                    normalVector[1] / Math.sqrt(normalVector[0] ** 2 + normalVector[1] ** 2 + normalVector[2] ** 2),
-                ];
-
-                const point1 = [
-                    startPoint[0] - (normalizedNormalVector[0] * width) / 2,
-                    startPoint[1] - (normalizedNormalVector[1] * width) / 2,
-                    zMid - zExtension / 2,
-                ];
-
-                const point2 = [
-                    endPoint[0] - (normalizedNormalVector[0] * width) / 2,
-                    endPoint[1] - (normalizedNormalVector[1] * width) / 2,
-                    zMid - zExtension / 2,
-                ];
-
-                const point3 = [
-                    endPoint[0] + (normalizedNormalVector[0] * width) / 2,
-                    endPoint[1] + (normalizedNormalVector[1] * width) / 2,
-                    zMid - zExtension / 2,
-                ];
-
-                const point4 = [
-                    startPoint[0] + (normalizedNormalVector[0] * width) / 2,
-                    startPoint[1] + (normalizedNormalVector[1] * width) / 2,
-                    zMid - zExtension / 2,
-                ];
-
-                const polygon: number[][] = [point1, point2, point3, point4];
-                polygonData.push({ polygon, color: [color[0], color[1], color[2], color[3] / 2] });
-            }
-
-            let adjustedColor = color;
-            if (i === selectedPolylineIndex) {
-                if (i === 0 || i === polyline.length - 1) {
-                    adjustedColor = [0, 255, 0, color[3]];
-                    if (i === hoveredPolylineIndex) {
-                        adjustedColor = [200, 255, 200, color[3]];
-                    }
-                } else {
-                    adjustedColor = [60, 60, 255, color[3]];
-                    if (i === hoveredPolylineIndex) {
-                        adjustedColor = [120, 120, 255, color[3]];
-                    }
-                }
-            } else if (i === hoveredPolylineIndex) {
-                adjustedColor = [120, 120, 255, color[3]];
-            }
-            columnData.push({
-                index: i,
-                centroid: [startPoint[0], startPoint[1], zMid - zExtension / 2],
-                color: adjustedColor,
-            });
-        }
-
-        return { polygonData, columnData };
-    }
-
     getPickingInfo({ info }: GetPickingInfoParams): EditablePolylineLayerPickingInfo {
         if (info && info.sourceLayer && info.index !== undefined && info.index !== -1) {
             let layer: "line" | "point" | null = null;
             if (info.sourceLayer.id.includes("lines-selection")) {
                 layer = "line";
-            } else if (info.sourceLayer.id.includes("points")) {
+            } else if (info.sourceLayer.id.includes("points-selection")) {
                 layer = "point";
             }
             return {
@@ -252,13 +158,29 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                 extruded: false,
                 radius: 20,
                 radiusUnits: "pixels",
-                pickable: true,
+                pickable: false,
                 parameters: {
                     depthTest: false,
                 },
                 updateTriggers: {
                     getFillColor: [this.state.hoveredEntity, polyline.referencePathPointIndex],
                     getLineWidth: [this.state.hoveredEntity, polyline.referencePathPointIndex],
+                },
+            }),
+            new ColumnLayer({
+                id: "points-selection",
+                data: polyline.path,
+                getElevation: 1,
+                getPosition: (d) => d,
+                getFillColor: [255, 255, 255, 1],
+                getLineColor: [0, 0, 0, 0],
+                getLineWidth: 1,
+                extruded: false,
+                radius: 40,
+                radiusUnits: "pixels",
+                pickable: true,
+                parameters: {
+                    depthTest: false,
                 },
             })
         );

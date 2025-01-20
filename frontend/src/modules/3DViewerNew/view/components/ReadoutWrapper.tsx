@@ -1,6 +1,7 @@
 import React from "react";
 
-import { Layer as DeckGlLayer } from "@deck.gl/core";
+import { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
+import { DeckGLRef } from "@deck.gl/react";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { BoundingBox3D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -19,7 +20,7 @@ export type ReadooutWrapperProps = {
 
 export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const id = React.useId();
-    // const deckGlRef = React.useRef<DeckGLRef>(null);
+    const deckGlRef = React.useRef<DeckGLRef>(null);
 
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
@@ -28,7 +29,8 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const [verticalScale, setVerticalScale] = React.useState<number>(1);
     const [polylineEditingActive, setPolylineEditingActive] = React.useState<boolean>(false);
 
-    const { onMouseEvent, layers, cursorIcon, disableCameraInteraction } = useEditablePolylines({
+    const { onMouseEvent, layers, onDrag, getCursor } = useEditablePolylines({
+        deckGlRef,
         polylines: [],
         editingActive: polylineEditingActive,
     });
@@ -63,6 +65,10 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
         setVerticalScale(value);
     }
 
+    function handleDrag(info: PickingInfo): void {
+        onDrag(info);
+    }
+
     let adjustedLayers = [...props.layers];
     if (!gridVisible) {
         adjustedLayers = adjustedLayers.filter((layer) => !(layer instanceof AxesLayer));
@@ -75,19 +81,19 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
             <Toolbar
                 onFitInView={handleFitInViewClick}
                 onGridVisibilityChange={handleGridVisibilityChange}
-                onEditPolyline={handleEditPolylines}
+                onToggleEditPolyline={handleEditPolylines}
                 onVerticalScaleChange={handleVerticalScaleChange}
                 verticalScale={verticalScale}
             />
-            {cursorIcon}
             <ReadoutBoxWrapper layerPickInfo={layerPickingInfo} visible />
             <SubsurfaceViewerWithCameraState
+                deckGlRef={deckGlRef}
                 id={`subsurface-viewer-${id}`}
                 views={props.views}
                 cameraPosition={cameraPositionSetByAction ?? undefined}
                 onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
+                onDrag={handleDrag}
                 onMouseEvent={handleMouseEvent}
-                userCameraInteractionActive={!disableCameraInteraction}
                 layers={adjustedLayers}
                 verticalScale={verticalScale}
                 scale={{
@@ -106,6 +112,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                 }}
                 triggerHome={triggerHomeCounter}
                 pickingRadius={5}
+                getCursor={getCursor}
             >
                 {props.viewportAnnotations}
             </SubsurfaceViewerWithCameraState>

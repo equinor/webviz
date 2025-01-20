@@ -1,31 +1,40 @@
 import React from "react";
 
+import addPathIcon from "@assets/add_path.svg";
+import continuePathIcon from "@assets/continue_path.svg";
+import removePathIcon from "@assets/remove_path.svg";
+import setPathPointIcon from "@assets/set_path_point.svg";
 import { Layer, PickingInfo } from "@deck.gl/core";
-import { Add, Polyline as PolylineIcon, Remove } from "@mui/icons-material";
+import { DeckGLProps, DeckGLRef } from "@deck.gl/react";
 import { MapMouseEvent } from "@webviz/subsurface-viewer";
 
 import { isEqual } from "lodash";
+import { v4 } from "uuid";
 
 import {
     EditablePolyline,
     EditablePolylineLayer,
     isEditablePolylineLayerPickingInfo,
 } from "./deckGlLayers/EditablePolylineLayer";
+import { PolylinesLayer } from "./deckGlLayers/PolylinesLayer";
 import { Polyline } from "./types";
 
 export type UseEditablePolylinesProps = {
+    deckGlRef: React.MutableRefObject<DeckGLRef | null>;
     editingActive: boolean;
     polylines: Polyline[];
 };
 
 export type UseEditablePolylinesReturnType = {
     layers: Layer<any>[];
+    onDrag: (info: PickingInfo) => boolean;
     onMouseEvent: (event: MapMouseEvent) => void;
-    cursorIcon: React.ReactNode | null;
     disableCameraInteraction: boolean;
+    getCursor: DeckGLProps["getCursor"];
 };
 
 enum CursorIcon {
+    NONE = "none",
     ADD_POINT = "add-point",
     REMOVE_POINT = "remove-point",
     CONTINUE_FROM_POINT = "continue-from-point",
@@ -36,11 +45,14 @@ enum PathAppendLocation {
     END = "end",
 }
 
+const PATH_ADD_POINT_ICON = "";
+
 export function useEditablePolylines(props: UseEditablePolylinesProps): UseEditablePolylinesReturnType {
     const [hoverPoint, setHoverPoint] = React.useState<number[] | null>(null);
     const [activePolyline, setActivePolyline] = React.useState<EditablePolyline | null>(null);
     const [polylines, setPolylines] = React.useState<Polyline[]>(props.polylines);
     const [prevPolylines, setPrevPolylines] = React.useState<Polyline[]>(props.polylines);
+    const [prevEditingActive, setPrevEditingActive] = React.useState<boolean>(props.editingActive);
     const [cursorIcon, setCursorIcon] = React.useState<CursorIcon | null>(null);
     const [cursorPosition, setCursorPosition] = React.useState<number[] | null>(null);
     const [appendLocation, setAppendLocation] = React.useState<PathAppendLocation>(PathAppendLocation.END);
@@ -49,6 +61,21 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
     if (!isEqual(props.polylines, prevPolylines)) {
         setPolylines(props.polylines);
         setPrevPolylines(props.polylines);
+    }
+
+    if (!isEqual(props.editingActive, prevEditingActive)) {
+        setPrevEditingActive(props.editingActive);
+        if (activePolyline && !props.editingActive) {
+            setPolylines((prev) => [
+                ...prev,
+                {
+                    id: v4(),
+                    color: [230, 136, 21, 255],
+                    polyline: activePolyline.path,
+                },
+            ]);
+        }
+        setActivePolyline(null);
     }
 
     React.useEffect(function onMount() {
@@ -70,6 +97,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
             if (event.type === "hover") {
                 if (!event.x || !event.y) {
                     setHoverPoint(null);
+                    setCursorIcon(CursorIcon.NONE);
                     return;
                 }
 
@@ -78,6 +106,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                 if (!firstLayerInfos) {
                     setHoverPoint(null);
                     setCursorPosition(null);
+                    setCursorIcon(CursorIcon.NONE);
                     return;
                 }
 
@@ -116,6 +145,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                     }
                 } else {
                     setCursorPosition(null);
+                    setCursorIcon(CursorIcon.NONE);
                 }
 
                 if (firstLayerInfos && firstLayerInfos.coordinate) {
@@ -234,30 +264,84 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
         [props.editingActive, activePolyline, appendLocation]
     );
 
-    const onDragStart = React.useCallback(function onDragStart(info: PickingInfo) {
-        if (!isEditablePolylineLayerPickingInfo(info)) {
+    const disablePanning = React.useCallback(
+        function disablePanning() {
+            if (props.deckGlRef.current?.deck) {
+                props.deckGlRef.current.deck.setProps({
+                    controller: {
+                        dragRotate: false,
+                        dragPan: false,
+                    },
+                });
+            }
+        },
+        [props.deckGlRef]
+    );
+
+    const enablePanning = React.useCallback(
+        function enablePanning() {
+            if (props.deckGlRef.current?.deck) {
+                props.deckGlRef.current.deck.setProps({
+                    controller: {
+                        dragRotate: true,
+                        dragPan: true,
+                    },
+                });
+            }
+        },
+        [props.deckGlRef]
+    );
+
+    const onDragStart = React.useCallback(
+        function onDragStart(info: PickingInfo) {
+            if (!isEditablePolylineLayerPickingInfo(info)) {
+                return false;
+            }
+
+            if (info.editableEntity?.type === "point") {
+                setDraggedPointIndex(info.editableEntity.index);
+                disablePanning();
+            }
+
             return true;
-        }
-
-        if (info.editableEntity?.type === "point") {
-            setDraggedPointIndex(info.editableEntity.index);
-        }
-
-        return false;
-    }, []);
+        },
+        [disablePanning]
+    );
 
     const onDrag = React.useCallback(
         function onDrag(info: PickingInfo) {
             if (draggedPointIndex === null || !activePolyline || !info.coordinate) {
-                return true;
+                return false;
+            }
+
+            if (!info.viewport) {
+                return false;
+            }
+
+            if (!props.deckGlRef.current) {
+                return false;
+            }
+
+            const layers = props.deckGlRef.current.pickMultipleObjects({
+                x: info.x,
+                y: info.y,
+                radius: 10,
+                depth: 2,
+                unproject3D: true,
+            });
+
+            if (!layers.length) {
+                return false;
+            }
+
+            const firstLayerInfos = layers[0];
+
+            if (!firstLayerInfos || !firstLayerInfos.coordinate) {
+                return false;
             }
 
             const newPath = [...activePolyline.path];
-            newPath[draggedPointIndex] = [
-                info.coordinate[0],
-                info.coordinate[1],
-                activePolyline.path[draggedPointIndex][2],
-            ];
+            newPath[draggedPointIndex] = [...firstLayerInfos.coordinate];
 
             setActivePolyline({
                 ...activePolyline,
@@ -269,11 +353,20 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
         [draggedPointIndex, activePolyline]
     );
 
-    const onDragEnd = React.useCallback(function onDragEnd(info: PickingInfo) {
-        setDraggedPointIndex(null);
-    }, []);
+    const onDragEnd = React.useCallback(
+        function onDragEnd(info: PickingInfo) {
+            setDraggedPointIndex(null);
+            enablePanning();
+        },
+        [enablePanning]
+    );
 
-    const layers: Layer<any>[] = [];
+    const layers: Layer<any>[] = [
+        new PolylinesLayer({
+            id: "polylines-layer",
+            polylines,
+        }),
+    ];
 
     if (activePolyline) {
         layers.push(
@@ -283,36 +376,42 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                 mouseHoverPoint: hoverPoint ?? undefined,
                 onDragStart,
                 onDragEnd,
-                onDrag,
             })
         );
     }
 
-    const cursorIconElement =
-        cursorIcon && cursorPosition ? (
-            <div
-                style={{
-                    position: "absolute",
-                    left: cursorPosition[0] + 10,
-                    top: cursorPosition[1] + 10,
-                    pointerEvents: "none",
-                    zIndex: 1000,
-                }}
-            >
-                {cursorIcon === CursorIcon.CONTINUE_FROM_POINT ? (
-                    <PolylineIcon fontSize="small" />
-                ) : cursorIcon === CursorIcon.ADD_POINT ? (
-                    <Add fontSize="small" />
-                ) : cursorIcon === CursorIcon.REMOVE_POINT ? (
-                    <Remove fontSize="small" />
-                ) : null}
-            </div>
-        ) : null;
+    const getCursor = React.useCallback(
+        function getCursor(cursorState: Parameters<Exclude<DeckGLProps["getCursor"], undefined>>[0]): string {
+            if (cursorState.isDragging) {
+                return "grabbing";
+            }
+
+            if (cursorIcon === CursorIcon.CONTINUE_FROM_POINT) {
+                return `url(${continuePathIcon}), crosshair`;
+            }
+
+            if (cursorIcon === CursorIcon.ADD_POINT) {
+                return `url(${addPathIcon}), crosshair`;
+            }
+
+            if (cursorIcon === CursorIcon.REMOVE_POINT) {
+                return `url(${removePathIcon}), crosshair`;
+            }
+
+            if (activePolyline) {
+                return `url(${setPathPointIcon}), crosshair`;
+            }
+
+            return "default";
+        },
+        [cursorIcon, activePolyline]
+    );
 
     return {
         layers,
         onMouseEvent,
-        cursorIcon: cursorIconElement,
+        onDrag,
+        getCursor,
         disableCameraInteraction: draggedPointIndex !== null,
     };
 }
