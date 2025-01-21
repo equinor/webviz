@@ -4,7 +4,9 @@ import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerMan
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import { GridAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridAttributeSetting";
-import { GridLayerSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerSetting";
+import { GridLayerISetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerISetting";
+import { GridLayerJSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerJSetting";
+import { GridLayerKSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerKSetting";
 import { GridNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridNameSetting";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { ShowGridLinesSetting } from "@modules/_shared/LayerFramework/settings/implementations/ShowGridLinesSetting";
@@ -25,7 +27,9 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
                 [SettingType.REALIZATION]: new RealizationSetting(),
                 [SettingType.GRID_NAME]: new GridNameSetting(),
                 [SettingType.GRID_ATTRIBUTE]: new GridAttributeSetting(),
-                [SettingType.GRID_LAYER]: new GridLayerSetting(),
+                [SettingType.GRID_LAYER_I]: new GridLayerISetting(),
+                [SettingType.GRID_LAYER_J]: new GridLayerJSetting(),
+                [SettingType.GRID_LAYER_K]: new GridLayerKSetting(),
                 [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
                 [SettingType.SHOW_GRID_LINES]: new ShowGridLinesSetting(),
             }
@@ -38,7 +42,9 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
             settings[SettingType.REALIZATION] !== null &&
             settings[SettingType.GRID_NAME] !== null &&
             settings[SettingType.GRID_ATTRIBUTE] !== null &&
-            settings[SettingType.GRID_LAYER] !== null &&
+            settings[SettingType.GRID_LAYER_I] !== null &&
+            settings[SettingType.GRID_LAYER_J] !== null &&
+            settings[SettingType.GRID_LAYER_K] !== null &&
             settings[SettingType.TIME_OR_INTERVAL] !== null
         );
     }
@@ -129,7 +135,45 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
             return availableGridAttributes;
         });
 
-        availableSettingsUpdater(SettingType.GRID_LAYER, ({ getLocalSetting, getHelperDependency }) => {
+        availableSettingsUpdater(SettingType.GRID_LAYER_I, ({ getLocalSetting, getHelperDependency }) => {
+            const gridName = getLocalSetting(SettingType.GRID_NAME);
+            const data = getHelperDependency(realizationGridDataDep);
+
+            if (!gridName || !data) {
+                return [];
+            }
+
+            const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
+            const availableGridLayers: number[] = [];
+            if (gridDimensions) {
+                availableGridLayers.push(gridDimensions.i_count);
+                availableGridLayers.push(gridDimensions.j_count);
+                availableGridLayers.push(gridDimensions.k_count);
+            }
+
+            return availableGridLayers;
+        });
+
+        availableSettingsUpdater(SettingType.GRID_LAYER_J, ({ getLocalSetting, getHelperDependency }) => {
+            const gridName = getLocalSetting(SettingType.GRID_NAME);
+            const data = getHelperDependency(realizationGridDataDep);
+
+            if (!gridName || !data) {
+                return [];
+            }
+
+            const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
+            const availableGridLayers: number[] = [];
+            if (gridDimensions) {
+                availableGridLayers.push(gridDimensions.i_count);
+                availableGridLayers.push(gridDimensions.j_count);
+                availableGridLayers.push(gridDimensions.k_count);
+            }
+
+            return availableGridLayers;
+        });
+
+        availableSettingsUpdater(SettingType.GRID_LAYER_K, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(SettingType.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 

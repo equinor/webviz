@@ -5,6 +5,7 @@ export class AnimatedPathLayer extends PathLayer {
     static layerName = "AnimatedPathLayer";
 
     private _dashStart: number = 0;
+    private _requestId: ReturnType<typeof requestAnimationFrame> | null = null;
 
     initializeState() {
         super.initializeState();
@@ -13,6 +14,9 @@ export class AnimatedPathLayer extends PathLayer {
 
     updateState(params: UpdateParameters<this>): void {
         super.updateState(params);
+        if (this._requestId) {
+            cancelAnimationFrame(this._requestId);
+        }
         this.animate();
     }
 
@@ -20,20 +24,28 @@ export class AnimatedPathLayer extends PathLayer {
         this._dashStart = (Date.now() / 50) % 1000;
 
         this.setNeedsRedraw();
-        requestAnimationFrame(() => this.animate());
+        this._requestId = requestAnimationFrame(() => this.animate());
     }
 
     getShaders() {
         const shaders = super.getShaders();
-        shaders.inject["vs:#decl"] += `\
-      uniform float dashStart;`;
-        shaders.inject["vs:#main-end"] += `\
-      vDashOffset += dashStart;`;
-        return shaders;
+        return {
+            ...shaders,
+            inject: {
+                ...shaders.inject,
+                "vs:#decl":
+                    shaders.inject["vs:#decl"] +
+                    `\
+        uniform float dashStart;`,
+                "vs:#main-end":
+                    shaders.inject["vs:#main-end"] +
+                    `\
+        vDashOffset += dashStart;`,
+            },
+        };
     }
 
     draw({ uniforms }: Record<string, any>) {
-        uniforms.dashStart = this._dashStart || 0;
-        super.draw({ uniforms });
+        super.draw({ uniforms: { ...uniforms, dashStart: this._dashStart } });
     }
 }

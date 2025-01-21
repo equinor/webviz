@@ -23,6 +23,8 @@
         "@equinor/esv-intersection": "^3.0.10",
         "@headlessui/react": "^1.7.8",
         "@hey-api/client-axios": "^0.4.0",
+        "@luma.gl/engine": "^9.0.28",
+        "@luma.gl/webgl": "^9.0.28",
         "@mui/base": "^5.0.0-beta.3",
         "@mui/icons-material": "^5.14.9",
         "@tanstack/query-core": "^5.62.16",

@@ -6,7 +6,9 @@ export type RealizationGridSettings = {
     [SettingType.REALIZATION]: number | null;
     [SettingType.GRID_ATTRIBUTE]: string | null;
     [SettingType.GRID_NAME]: string | null;
-    [SettingType.GRID_LAYER]: number | null;
+    [SettingType.GRID_LAYER_I]: number | null;
+    [SettingType.GRID_LAYER_J]: number | null;
+    [SettingType.GRID_LAYER_K]: number | null;
     [SettingType.TIME_OR_INTERVAL]: string | null;
     [SettingType.SHOW_GRID_LINES]: boolean;
 };

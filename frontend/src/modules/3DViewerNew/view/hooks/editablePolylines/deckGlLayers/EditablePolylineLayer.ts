@@ -1,18 +1,15 @@
-import { CompositeLayer, GetPickingInfoParams, Layer, LayerContext, PickingInfo } from "@deck.gl/core";
+import { CompositeLayer, GetPickingInfoParams, Layer, PickingInfo } from "@deck.gl/core";
 import { PathStyleExtension } from "@deck.gl/extensions";
 import { ColumnLayer, LineLayer, PathLayer } from "@deck.gl/layers";
 
 import { AnimatedPathLayer } from "./AnimatedPathLayer";
 
+import { Polyline } from "../types";
+
 export type EditablePolylineLayerProps = {
     id: string;
-    polyline: EditablePolyline;
+    polyline: Polyline;
     mouseHoverPoint?: number[];
-};
-
-export type EditablePolyline = {
-    color: [number, number, number, number];
-    path: number[][];
     referencePathPointIndex?: number;
 };
 
@@ -34,7 +31,7 @@ export function isEditablePolylineLayerPickingInfo(info: PickingInfo): info is E
 export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerProps> {
     static layerName: string = "EditablePolylineLayer";
 
-    // @ts-expect-error
+    // @ts-expect-error - deck.gl types are wrong
     state!: {
         hoveredEntity: {
             layer: "line" | "point";
@@ -91,7 +88,7 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
     }
 
     renderLayers() {
-        const { polyline, mouseHoverPoint } = this.props;
+        const { polyline, mouseHoverPoint, referencePathPointIndex } = this.props;
 
         const layers: Layer<any>[] = [];
 
@@ -138,7 +135,7 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                 getElevation: 1,
                 getPosition: (d) => d,
                 getFillColor: (d, context) => {
-                    if (context.index === polyline.referencePathPointIndex) {
+                    if (context.index === referencePathPointIndex) {
                         return [230, 136, 21, 255];
                     }
                     return [255, 255, 255, 255];
@@ -163,8 +160,8 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                     depthTest: false,
                 },
                 updateTriggers: {
-                    getFillColor: [this.state.hoveredEntity, polyline.referencePathPointIndex],
-                    getLineWidth: [this.state.hoveredEntity, polyline.referencePathPointIndex],
+                    getFillColor: [this.state.hoveredEntity, referencePathPointIndex],
+                    getLineWidth: [this.state.hoveredEntity, referencePathPointIndex],
                 },
             }),
             new ColumnLayer({
@@ -185,11 +182,11 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
             })
         );
 
-        if (polyline.referencePathPointIndex !== undefined && mouseHoverPoint && this.state.hoveredEntity === null) {
+        if (referencePathPointIndex !== undefined && mouseHoverPoint && this.state.hoveredEntity === null) {
             layers.push(
                 new LineLayer({
                     id: "line",
-                    data: [{ from: polyline.path[polyline.referencePathPointIndex], to: mouseHoverPoint }],
+                    data: [{ from: polyline.path[referencePathPointIndex], to: mouseHoverPoint }],
                     getSourcePosition: (d) => d.from,
                     getTargetPosition: (d) => d.to,
                     getColor: [230, 136, 21, 100],

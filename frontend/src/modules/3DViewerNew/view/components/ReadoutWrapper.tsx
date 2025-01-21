@@ -2,6 +2,8 @@ import React from "react";
 
 import { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { DeckGLRef } from "@deck.gl/react";
+import { Menu } from "@lib/components/Menu";
+import { MenuItem } from "@lib/components/MenuItem";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { BoundingBox3D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -29,13 +31,16 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const [verticalScale, setVerticalScale] = React.useState<number>(1);
     const [polylineEditingActive, setPolylineEditingActive] = React.useState<boolean>(false);
 
-    const { onMouseEvent, layers, onDrag, getCursor } = useEditablePolylines({
+    const onEditingDone = React.useCallback(function onEditingDone() {
+        setPolylineEditingActive(false);
+    }, []);
+
+    const { onMouseEvent, layers, onDrag, getCursor, cursorPosition, contextMenuItems } = useEditablePolylines({
         deckGlRef,
         polylines: [],
         editingActive: polylineEditingActive,
+        onEditingDone,
     });
-
-    // deckGlRef.current?.deck.setProps({...deckGlRef.props})
 
     function handleFitInViewClick() {
         setTriggerHomeCounter((prev) => prev + 1);
@@ -84,7 +89,18 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                 onToggleEditPolyline={handleEditPolylines}
                 onVerticalScaleChange={handleVerticalScaleChange}
                 verticalScale={verticalScale}
+                polylineEditingActive={polylineEditingActive}
             />
+            {cursorPosition && contextMenuItems.length && (
+                <Menu style={{ position: "absolute", top: cursorPosition[1], left: cursorPosition[0] }}>
+                    {contextMenuItems.map((item, index) => (
+                        <MenuItem key={index} onClick={item.onClick} className="flex gap-2">
+                            {item.icon}
+                            {item.label}
+                        </MenuItem>
+                    ))}
+                </Menu>
+            )}
             <ReadoutBoxWrapper layerPickInfo={layerPickingInfo} visible />
             <SubsurfaceViewerWithCameraState
                 deckGlRef={deckGlRef}

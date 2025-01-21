@@ -9,7 +9,7 @@ import { SettingType } from "../settingsTypes";
 
 type ValueType = number | null;
 
-export class GridLayerSetting implements Setting<ValueType> {
+export class GridLayerJSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -17,11 +17,11 @@ export class GridLayerSetting implements Setting<ValueType> {
     }
 
     getType(): SettingType {
-        return SettingType.GRID_LAYER;
+        return SettingType.GRID_LAYER_J;
     }
 
     getLabel(): string {
-        return "Grid layer";
+        return "Grid layer J";
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -38,7 +38,7 @@ export class GridLayerSetting implements Setting<ValueType> {
         }
 
         const min = 0;
-        const max = availableValues[2];
+        const max = availableValues[1];
 
         if (max === null) {
             return false;
@@ -53,7 +53,7 @@ export class GridLayerSetting implements Setting<ValueType> {
         }
 
         const min = 0;
-        const max = availableValues[2];
+        const max = availableValues[1];
 
         if (max === null) {
             return null;
@@ -76,9 +76,9 @@ export class GridLayerSetting implements Setting<ValueType> {
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
         return function Ensemble(props: SettingComponentProps<ValueType>) {
-            const kRange = props.availableValues ? Array.from({ length: props.availableValues[2] }, (_, i) => i) : [];
+            const iRange = props.availableValues ? Array.from({ length: props.availableValues[1] }, (_, i) => i) : [];
 
-            const options: DropdownOption[] = kRange.map((value) => {
+            const options: DropdownOption[] = iRange.map((value) => {
                 return {
                     value: value.toString(),
                     label: value === null ? "None" : value.toString(),
@@ -98,4 +98,4 @@ export class GridLayerSetting implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(GridLayerSetting);
+SettingRegistry.registerSetting(GridLayerJSetting);

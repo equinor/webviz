@@ -113,17 +113,22 @@ export class RealizationGridLayer
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;
         }
-        let availableDimensions = settings[SettingType.GRID_LAYER].getDelegate().getAvailableValues();
+        let availableDimensions = settings[SettingType.GRID_LAYER_K].getDelegate().getAvailableValues();
         if (!availableDimensions.length || availableDimensions[0] === null) {
             availableDimensions = [0, 0, 0];
         }
-        const layerIndex = settings[SettingType.GRID_LAYER].getDelegate().getValue();
-        const iMin = 0;
+        const layerIIndex = settings[SettingType.GRID_LAYER_I].getDelegate().getValue();
+        const iMin = layerIIndex || 0;
         const iMax = availableDimensions[0] || 0;
-        const jMin = 0;
+
+        const layerJIndex = settings[SettingType.GRID_LAYER_J].getDelegate().getValue();
+        const jMin = layerJIndex || 0;
         const jMax = availableDimensions[1] || 0;
-        const kMin = layerIndex || 0;
-        const kMax = layerIndex || 0;
+
+        const layerKIndex = settings[SettingType.GRID_LAYER_K].getDelegate().getValue();
+        const kMin = layerKIndex || 0;
+        const kMax = availableDimensions[2] || 0;
+
         const queryKey = [
             "gridParameter",
             ensembleIdent,

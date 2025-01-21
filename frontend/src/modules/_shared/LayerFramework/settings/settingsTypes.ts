@@ -11,6 +11,8 @@ export enum SettingType {
     SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
     GRID_NAME = "gridName",
     GRID_ATTRIBUTE = "gridAttribute",
-    GRID_LAYER = "gridLayer",
+    GRID_LAYER_I = "gridLayerI",
+    GRID_LAYER_J = "gridLayerJ",
+    GRID_LAYER_K = "gridLayerK",
     SHOW_GRID_LINES = "showGridLines",
 }

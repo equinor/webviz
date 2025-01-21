@@ -80,6 +80,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 "placeholder",
                 "axes-layer",
                 "editable-polylines-layer",
+                "polylines-layer",
                 "hover-point-layer",
             ],
         });
