@@ -9,7 +9,6 @@ import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
 import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
-import { RealizationGridLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationGridLayer";
 import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
@@ -25,8 +24,6 @@ import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/Setting
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
 import { View } from "@modules/_shared/LayerFramework/framework/View/View";
 import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
-import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
-import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { Dropdown } from "@mui/base";
@@ -41,6 +38,7 @@ import {
 
 import { useAtom } from "jotai";
 
+import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
 export type LayerManagerComponentWrapperProps = {
@@ -77,12 +75,6 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return;
             case "color-scale":
                 groupDelegate.prependChild(new ColorScale("Color scale", props.layerManager));
-                return;
-            case "drilled-wellbore-trajectories":
-                groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(props.layerManager), numSharedSettings);
-                return;
-            case "drilled-wellbore-picks":
-                groupDelegate.insertChild(new DrilledWellborePicksLayer(props.layerManager), numSharedSettings);
                 return;
             case "realization-grid":
                 groupDelegate.insertChild(new RealizationGridLayer(props.layerManager), numSharedSettings);

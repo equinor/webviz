@@ -113,21 +113,21 @@ export class RealizationGridLayer
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;
         }
-        let availableDimensions = settings[SettingType.GRID_LAYER_K].getDelegate().getAvailableValues();
+        let availableDimensions = settings[SettingType.GRID_LAYER_K_RANGE].getDelegate().getAvailableValues();
         if (!availableDimensions.length || availableDimensions[0] === null) {
             availableDimensions = [0, 0, 0];
         }
-        const layerIIndex = settings[SettingType.GRID_LAYER_I].getDelegate().getValue();
-        const iMin = layerIIndex || 0;
-        const iMax = availableDimensions[0] || 0;
+        const layerIRange = settings[SettingType.GRID_LAYER_I_RANGE].getDelegate().getValue();
+        const iMin = layerIRange?.[0] ?? 0;
+        const iMax = layerIRange?.[1] ?? 0;
 
-        const layerJIndex = settings[SettingType.GRID_LAYER_J].getDelegate().getValue();
-        const jMin = layerJIndex || 0;
-        const jMax = availableDimensions[1] || 0;
+        const layerJRange = settings[SettingType.GRID_LAYER_J_RANGE].getDelegate().getValue();
+        const jMin = layerJRange?.[0] ?? 0;
+        const jMax = layerJRange?.[1] ?? 0;
 
-        const layerKIndex = settings[SettingType.GRID_LAYER_K].getDelegate().getValue();
-        const kMin = layerKIndex || 0;
-        const kMax = availableDimensions[2] || 0;
+        const layerKRange = settings[SettingType.GRID_LAYER_K_RANGE].getDelegate().getValue();
+        const kMin = layerKRange?.[0] ?? 0;
+        const kMax = layerKRange?.[1] ?? 0;
 
         const queryKey = [
             "gridParameter",

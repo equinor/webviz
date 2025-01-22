@@ -58,12 +58,12 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                     const activeThumb = Array.from(elements).findIndex(
                         (element) =>
                             element ===
-                                document
-                                    .elementsFromPoint(e.clientX, e.clientY)
-                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))
-                                    .at(0) ??
-                            elements[0] ??
-                            elements.item(0)
+                            (document
+                                .elementsFromPoint(e.clientX, e.clientY)
+                                .filter((el) => el.classList.contains("MuiSlider-thumb"))
+                                .at(0) ??
+                                elements[0] ??
+                                elements.item(0))
                     );
                     if (activeThumb >= 0) {
                         setCurrentlyActiveThumb(activeThumb);
@@ -96,12 +96,12 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                     const activeThumb = Array.from(elements).findIndex(
                         (element) =>
                             element ===
-                                document
-                                    .elementsFromPoint(e.clientX, e.clientY)
-                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))
-                                    .at(0) ??
-                            elements[0] ??
-                            elements.item(0)
+                            (document
+                                .elementsFromPoint(e.clientX, e.clientY)
+                                .filter((el) => el.classList.contains("MuiSlider-thumb"))
+                                .at(0) ??
+                                elements[0] ??
+                                elements.item(0))
                     );
                     if (activeThumb >= 0) {
                         setCurrentlyActiveThumb(activeThumb);

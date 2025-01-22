@@ -1,15 +1,15 @@
 import React from "react";
 
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import { Slider } from "@lib/components/Slider";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
 import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 
-type ValueType = number | null;
+type ValueType = [number, number] | null;
 
-export class GridLayerISetting implements Setting<ValueType> {
+export class GridLayerKRangeSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -17,11 +17,11 @@ export class GridLayerISetting implements Setting<ValueType> {
     }
 
     getType(): SettingType {
-        return SettingType.GRID_LAYER_I;
+        return SettingType.GRID_LAYER_K_RANGE;
     }
 
     getLabel(): string {
-        return "Grid layer I";
+        return "Grid layer K";
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -38,13 +38,13 @@ export class GridLayerISetting implements Setting<ValueType> {
         }
 
         const min = 0;
-        const max = availableValues[0];
+        const max = availableValues[2];
 
         if (max === null) {
             return false;
         }
 
-        return value >= min && value <= max;
+        return value[0] >= min && value[0] <= max;
     }
 
     fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
@@ -53,49 +53,41 @@ export class GridLayerISetting implements Setting<ValueType> {
         }
 
         const min = 0;
-        const max = availableValues[0];
+        const max = availableValues[2];
 
         if (max === null) {
             return null;
         }
 
         if (currentValue === null) {
-            return min;
+            return [min, max];
         }
 
-        if (currentValue < min) {
-            return min;
-        }
-
-        if (currentValue > max) {
-            return max;
-        }
-
-        return currentValue;
+        return [Math.max(currentValue[0], min), Math.min(currentValue[1], max)];
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType>) {
-            const iRange = props.availableValues ? Array.from({ length: props.availableValues[0] }, (_, i) => i) : [];
+        return function KRangeSlider(props: SettingComponentProps<ValueType>) {
+            function handleChange(_: any, value: number | number[]) {
+                if (!Array.isArray(value)) {
+                    return;
+                }
 
-            const options: DropdownOption[] = iRange.map((value) => {
-                return {
-                    value: value.toString(),
-                    label: value === null ? "None" : value.toString(),
-                };
-            });
+                props.onValueChange([value[0], value[1]]);
+            }
 
             return (
-                <Dropdown
-                    options={options}
-                    value={!props.isOverridden ? props.value?.toString() : props.overriddenValue?.toString()}
-                    onChange={(val: string) => props.onValueChange(parseInt(val))}
-                    disabled={props.isOverridden}
-                    showArrows
+                <Slider
+                    min={0}
+                    max={props.availableValues[2] ?? 1}
+                    onChange={handleChange}
+                    value={props.value ?? [0, props.availableValues[2] ?? 1]}
+                    debounceTimeMs={500}
+                    valueLabelDisplay="auto"
                 />
             );
         };
     }
 }
 
-SettingRegistry.registerSetting(GridLayerISetting);
+SettingRegistry.registerSetting(GridLayerKRangeSetting);

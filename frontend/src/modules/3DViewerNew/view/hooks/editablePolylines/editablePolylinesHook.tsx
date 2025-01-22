@@ -477,7 +477,8 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
         new PolylinesLayer({
             id: "polylines-layer",
             polylines: polylines.filter((polyline) => polyline.id !== activePolylineId),
-            selectedPolylineId: selectedPolylineId ?? undefined,
+            selectedPolylineId:
+                props.editingMode === PolylineEditingMode.NONE ? undefined : selectedPolylineId ?? undefined,
             hoverable: props.editingMode === PolylineEditingMode.IDLE,
         }),
     ];
