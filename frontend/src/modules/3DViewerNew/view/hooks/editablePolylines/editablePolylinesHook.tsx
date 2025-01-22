@@ -14,13 +14,13 @@ import { v4 } from "uuid";
 
 import { EditablePolylineLayer, isEditablePolylineLayerPickingInfo } from "./deckGlLayers/EditablePolylineLayer";
 import { PolylinesLayer, isPolylinesLayerPickingInfo } from "./deckGlLayers/PolylinesLayer";
-import { ContextMenuItem, Polyline } from "./types";
+import { ContextMenuItem, Polyline, PolylineEditingMode } from "./types";
 
 export type UseEditablePolylinesProps = {
     deckGlRef: React.MutableRefObject<DeckGLRef | null>;
-    editingActive: boolean;
+    editingMode: PolylineEditingMode;
     polylines: Polyline[];
-    onEditingDone?: (polylines: Polyline[]) => void;
+    onEditingModeChange?: (mode: PolylineEditingMode) => void;
 };
 
 export type UseEditablePolylinesReturnType = {
@@ -31,6 +31,8 @@ export type UseEditablePolylinesReturnType = {
     getCursor: DeckGLProps["getCursor"];
     cursorPosition: number[] | null;
     contextMenuItems: ContextMenuItem[];
+    activePolylineId: string | null;
+    polylines: Polyline[];
 };
 
 enum CursorIcon {
@@ -47,13 +49,12 @@ enum PathAppendLocation {
 }
 
 export function useEditablePolylines(props: UseEditablePolylinesProps): UseEditablePolylinesReturnType {
-    const { onEditingDone } = props;
+    const { onEditingModeChange } = props;
 
     const [hoverPoint, setHoverPoint] = React.useState<number[] | null>(null);
     const [activePolylineId, setActivePolylineId] = React.useState<string | null>(null);
     const [polylines, setPolylines] = React.useState<Polyline[]>(props.polylines);
     const [prevPolylines, setPrevPolylines] = React.useState<Polyline[]>(props.polylines);
-    const [prevEditingActive, setPrevEditingActive] = React.useState<boolean>(props.editingActive);
     const [cursorIcon, setCursorIcon] = React.useState<CursorIcon | null>(null);
     const [cursorPosition, setCursorPosition] = React.useState<number[] | null>(null);
     const [appendLocation, setAppendLocation] = React.useState<PathAppendLocation>(PathAppendLocation.END);
@@ -61,32 +62,44 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
     const [contextMenuItems, setContextMenuItems] = React.useState<ContextMenuItem[]>([]);
     const [selectedPolylineId, setSelectedPolylineId] = React.useState<string | null>(null);
     const [referencePathPointIndex, setReferencePathPointIndex] = React.useState<number | undefined>(undefined);
-    const [editingActive, setEditingActive] = React.useState<boolean>(props.editingActive);
+    const [prevEditingMode, setPrevEditingMode] = React.useState<PolylineEditingMode>(PolylineEditingMode.NONE);
+
+    let changedPolylines = polylines;
 
     if (!isEqual(props.polylines, prevPolylines)) {
         setPolylines(props.polylines);
         setPrevPolylines(props.polylines);
+        changedPolylines = props.polylines;
     }
 
-    if (!isEqual(props.editingActive, prevEditingActive)) {
-        setPrevEditingActive(props.editingActive);
-        setActivePolylineId(null);
-        setEditingActive(props.editingActive);
-    }
-
-    React.useEffect(function onMount() {
-        function onKeyUp(event: KeyboardEvent) {
-            if (event.key === "Escape") {
-                setReferencePathPointIndex(undefined);
-            }
+    if (props.editingMode !== prevEditingMode) {
+        if (props.editingMode === PolylineEditingMode.NONE) {
+            setActivePolylineId(null);
+            setReferencePathPointIndex(undefined);
         }
+        if (props.editingMode === PolylineEditingMode.IDLE) {
+            setReferencePathPointIndex(undefined);
+        }
+        setPrevEditingMode(props.editingMode);
+    }
 
-        window.addEventListener("keyup", onKeyUp);
+    React.useEffect(
+        function onMount() {
+            function onKeyUp(event: KeyboardEvent) {
+                if (event.key === "Escape") {
+                    setReferencePathPointIndex(undefined);
+                    onEditingModeChange?.(PolylineEditingMode.IDLE);
+                }
+            }
 
-        return () => {
-            window.removeEventListener("keyup", onKeyUp);
-        };
-    }, []);
+            window.addEventListener("keyup", onKeyUp);
+
+            return () => {
+                window.removeEventListener("keyup", onKeyUp);
+            };
+        },
+        [onEditingModeChange]
+    );
 
     const onMouseEvent = React.useCallback(
         (event: MapMouseEvent) => {
@@ -119,6 +132,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                     firstLayerInfos.coordinate
                 ) {
                     if (
+                        [PolylineEditingMode.DRAW, PolylineEditingMode.ADD_POINT].includes(props.editingMode) &&
                         editablePolylineLayerPickingInfo.editableEntity &&
                         editablePolylineLayerPickingInfo.editableEntity.type === "line"
                     ) {
@@ -126,6 +140,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                         return;
                     }
                     if (
+                        [PolylineEditingMode.DRAW, PolylineEditingMode.REMOVE_POINT].includes(props.editingMode) &&
                         activePolyline &&
                         editablePolylineLayerPickingInfo.editableEntity &&
                         editablePolylineLayerPickingInfo.editableEntity.type === "point"
@@ -146,7 +161,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
 
                 const polylinesLayerPickingInfo = event.infos.find(isPolylinesLayerPickingInfo);
 
-                if (polylinesLayerPickingInfo) {
+                if (polylinesLayerPickingInfo && props.editingMode === PolylineEditingMode.IDLE) {
                     setCursorIcon(CursorIcon.POINTER);
                     return;
                 }
@@ -166,7 +181,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                     return;
                 }
 
-                if (!editingActive) {
+                if (props.editingMode === PolylineEditingMode.IDLE && !activePolylineId) {
                     const polylinesLayerPickingInfo = event.infos.find(isPolylinesLayerPickingInfo);
                     if (
                         !polylinesLayerPickingInfo ||
@@ -191,7 +206,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                             onClick: () => {
                                 setActivePolylineId(polylinesLayerPickingInfo.polylineId ?? null);
                                 setReferencePathPointIndex(undefined);
-                                setEditingActive(true);
+                                onEditingModeChange?.(PolylineEditingMode.DRAW);
                                 setSelectedPolylineId(null);
                                 setContextMenuItems([]);
                             },
@@ -223,7 +238,10 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                     editablePolylineLayerPickingInfo.editableEntity
                 ) {
                     // Remove point
-                    if (editablePolylineLayerPickingInfo.editableEntity.type === "point") {
+                    if (
+                        editablePolylineLayerPickingInfo.editableEntity.type === "point" &&
+                        [PolylineEditingMode.DRAW, PolylineEditingMode.REMOVE_POINT].includes(props.editingMode)
+                    ) {
                         const index = editablePolylineLayerPickingInfo.editableEntity.index;
 
                         if (
@@ -267,7 +285,10 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
 
                         return;
                     }
-                    if (editablePolylineLayerPickingInfo.editableEntity.type === "line") {
+                    if (
+                        editablePolylineLayerPickingInfo.editableEntity.type === "line" &&
+                        [PolylineEditingMode.DRAW, PolylineEditingMode.ADD_POINT].includes(props.editingMode)
+                    ) {
                         const newPath = [...activePolyline.path];
                         newPath.splice(editablePolylineLayerPickingInfo.editableEntity.index + 1, 0, [
                             ...firstLayerInfos.coordinate,
@@ -298,7 +319,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                     }
                 }
 
-                if (!activePolyline) {
+                if (!activePolyline && props.editingMode === PolylineEditingMode.DRAW) {
                     const id = v4();
                     const newPolyline: Polyline = {
                         id,
@@ -312,32 +333,39 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                 } else if (activePolyline) {
                     if (referencePathPointIndex === undefined) {
                         setActivePolylineId(null);
-                        setEditingActive(false);
-                        onEditingDone?.(polylines);
+                        onEditingModeChange?.(PolylineEditingMode.IDLE);
                         return;
                     }
-                    const newPolyline: Polyline = {
-                        ...activePolyline,
-                        path: appendCoordinateToPath(activePolyline.path, firstLayerInfos.coordinate, appendLocation),
-                    };
-                    setPolylines((prevPolylines) =>
-                        prevPolylines.map((polyline) => (polyline.id === activePolyline.id ? newPolyline : polyline))
-                    );
+                    if (props.editingMode === PolylineEditingMode.DRAW) {
+                        const newPolyline: Polyline = {
+                            ...activePolyline,
+                            path: appendCoordinateToPath(
+                                activePolyline.path,
+                                firstLayerInfos.coordinate,
+                                appendLocation
+                            ),
+                        };
+                        setPolylines((prevPolylines) =>
+                            prevPolylines.map((polyline) =>
+                                polyline.id === activePolyline.id ? newPolyline : polyline
+                            )
+                        );
 
-                    setReferencePathPointIndex(
-                        appendLocation === PathAppendLocation.END ? activePolyline.path.length : 0
-                    );
+                        setReferencePathPointIndex(
+                            appendLocation === PathAppendLocation.END ? activePolyline.path.length : 0
+                        );
+                    }
                 }
             }
         },
         [
-            editingActive,
+            props.editingMode,
             activePolylineId,
             appendLocation,
             polylines,
             referencePathPointIndex,
             draggedPointIndex,
-            onEditingDone,
+            onEditingModeChange,
         ]
     );
 
@@ -450,6 +478,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
             id: "polylines-layer",
             polylines: polylines.filter((polyline) => polyline.id !== activePolylineId),
             selectedPolylineId: selectedPolylineId ?? undefined,
+            hoverable: props.editingMode === PolylineEditingMode.IDLE,
         }),
     ];
 
@@ -460,7 +489,8 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                 id: "editable-polylines-layer",
                 polyline: activePolyline,
                 mouseHoverPoint: hoverPoint ?? undefined,
-                referencePathPointIndex,
+                referencePathPointIndex:
+                    props.editingMode === PolylineEditingMode.DRAW ? referencePathPointIndex : undefined,
                 onDragStart,
                 onDragEnd,
             })
@@ -489,13 +519,16 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                 return `url(${removePathIcon}), crosshair`;
             }
 
-            if (activePolylineId && referencePathPointIndex !== undefined) {
+            if (
+                (activePolylineId && referencePathPointIndex !== undefined) ||
+                (!activePolylineId && props.editingMode === PolylineEditingMode.DRAW)
+            ) {
                 return `url(${setPathPointIcon}), crosshair`;
             }
 
             return "default";
         },
-        [cursorIcon, activePolylineId, referencePathPointIndex]
+        [cursorIcon, activePolylineId, referencePathPointIndex, props.editingMode]
     );
 
     return {
@@ -506,6 +539,8 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
         disableCameraInteraction: draggedPointIndex !== null,
         contextMenuItems,
         cursorPosition,
+        activePolylineId,
+        polylines: changedPolylines,
     };
 }
 

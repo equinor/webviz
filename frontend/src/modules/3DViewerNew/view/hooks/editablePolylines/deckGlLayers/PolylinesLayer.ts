@@ -7,6 +7,7 @@ export type PolylinesLayerProps = {
     id: string;
     polylines: Polyline[];
     selectedPolylineId?: string;
+    hoverable?: boolean;
 };
 
 export type PolylinesLayerPickingInfo = PickingInfo & {
@@ -26,6 +27,9 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
     };
 
     onHover(info: PickingInfo): boolean {
+        if (!this.props.hoverable) {
+            return false;
+        }
         if (info.index === undefined) {
             return false;
         }

@@ -8,10 +8,13 @@ import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/Sub
 import { BoundingBox3D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
+import { isEqual } from "lodash";
+
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
 
 import { useEditablePolylines } from "../hooks/editablePolylines/editablePolylinesHook";
+import { Polyline, PolylineEditingMode } from "../hooks/editablePolylines/types";
 
 export type ReadooutWrapperProps = {
     views: ViewsType;
@@ -29,18 +32,28 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const [layerPickingInfo, setLayerPickingInfo] = React.useState<LayerPickInfo[]>([]);
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
     const [verticalScale, setVerticalScale] = React.useState<number>(1);
-    const [polylineEditingActive, setPolylineEditingActive] = React.useState<boolean>(false);
+    const [polylineEditingMode, setPolylineEditingMode] = React.useState<PolylineEditingMode>(PolylineEditingMode.NONE);
+    const [polylines, setPolylines] = React.useState<Polyline[]>([]);
 
-    const onEditingDone = React.useCallback(function onEditingDone() {
-        setPolylineEditingActive(false);
-    }, []);
-
-    const { onMouseEvent, layers, onDrag, getCursor, cursorPosition, contextMenuItems } = useEditablePolylines({
+    const {
+        onMouseEvent,
+        layers,
+        onDrag,
+        getCursor,
+        cursorPosition,
+        contextMenuItems,
+        activePolylineId,
+        polylines: changedPolylines,
+    } = useEditablePolylines({
         deckGlRef,
-        polylines: [],
-        editingActive: polylineEditingActive,
-        onEditingDone,
+        polylines,
+        editingMode: polylineEditingMode,
+        onEditingModeChange: handlePolylineEditingModeChange,
     });
+
+    if (!isEqual(changedPolylines, polylines)) {
+        setPolylines(changedPolylines);
+    }
 
     function handleFitInViewClick() {
         setTriggerHomeCounter((prev) => prev + 1);
@@ -50,8 +63,8 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
         setGridVisible(visible);
     }
 
-    function handleEditPolylines() {
-        setPolylineEditingActive((prev) => !prev);
+    function handlePolylineEditingModeChange(mode: PolylineEditingMode) {
+        setPolylineEditingMode(mode);
     }
 
     function handleMouseHover(event: MapMouseEvent): void {
@@ -74,6 +87,28 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
         onDrag(info);
     }
 
+    const handlePolylineNameChange = React.useCallback(
+        function handlePolylineNameChange(name: string): void {
+            if (!activePolylineId) {
+                return;
+            }
+
+            setPolylines((prev) =>
+                prev.map((polyline) => {
+                    if (polyline.id === activePolylineId) {
+                        return {
+                            ...polyline,
+                            name,
+                        };
+                    }
+
+                    return polyline;
+                })
+            );
+        },
+        [activePolylineId]
+    );
+
     let adjustedLayers = [...props.layers];
     if (!gridVisible) {
         adjustedLayers = adjustedLayers.filter((layer) => !(layer instanceof AxesLayer));
@@ -86,10 +121,13 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
             <Toolbar
                 onFitInView={handleFitInViewClick}
                 onGridVisibilityChange={handleGridVisibilityChange}
-                onToggleEditPolyline={handleEditPolylines}
+                onPolylineEditingModeChange={handlePolylineEditingModeChange}
                 onVerticalScaleChange={handleVerticalScaleChange}
                 verticalScale={verticalScale}
-                polylineEditingActive={polylineEditingActive}
+                hasActivePolyline={Boolean(activePolylineId)}
+                polylineEditingMode={polylineEditingMode}
+                onPolylineNameChange={handlePolylineNameChange}
+                activePolylineName={polylines.find((p) => p.id === activePolylineId)?.name}
             />
             {cursorPosition && contextMenuItems.length && (
                 <Menu style={{ position: "absolute", top: cursorPosition[1], left: cursorPosition[0] }}>

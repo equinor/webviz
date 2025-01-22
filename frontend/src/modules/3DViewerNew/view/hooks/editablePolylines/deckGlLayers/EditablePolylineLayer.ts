@@ -52,7 +52,7 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
             let layer: "line" | "point" | null = null;
             if (info.sourceLayer.id.includes("lines-selection")) {
                 layer = "line";
-            } else if (info.sourceLayer.id.includes("points-selection")) {
+            } else if (info.sourceLayer.id.includes("points")) {
                 layer = "point";
             }
             return {
@@ -190,6 +190,7 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                 pickable: true,
             })
         );
+        /*
         layers.push(
             new ScatterplotLayer({
                 id: "points-selection",
@@ -218,6 +219,7 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                 },
             })
         );
+        */
 
         layers.push(
             new ScatterplotLayer({
@@ -231,10 +233,14 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                     return [230, 136, 21, 255];
                 },
                 getLineColor: (d, context) => {
-                    if (context.index === referencePathPointIndex) {
+                    if (
+                        this.state.hoveredEntity &&
+                        this.state.hoveredEntity.layer === "point" &&
+                        context.index === this.state.hoveredEntity.index
+                    ) {
                         return [255, 255, 255, 255];
                     }
-                    return [230, 136, 21, 255];
+                    return [0, 0, 0, 0];
                 },
                 getLineWidth: (d, context) => {
                     if (
@@ -242,26 +248,31 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                         this.state.hoveredEntity.layer === "point" &&
                         context.index === this.state.hoveredEntity.index
                     ) {
-                        return 20;
+                        return 5;
                     }
-                    return 10;
+                    return 0;
                 },
                 getRadius: (d, context) => {
                     if (
                         this.state.hoveredEntity?.layer === "point" &&
                         context.index === this.state.hoveredEntity.index
                     ) {
-                        return 10;
+                        return 12;
                     }
-                    return 5;
+                    return 10;
                 },
+                stroked: true,
                 radiusUnits: "pixels",
-                pickable: false,
+                lineWidthUnits: "meters",
+                lineWidthMinPixels: 3,
+                radiusMinPixels: 5,
+                pickable: true,
                 parameters: {
                     depthTest: false,
                 },
                 updateTriggers: {
-                    getLineColor: [referencePathPointIndex],
+                    getLineWidth: [this.state.hoveredEntity, referencePathPointIndex],
+                    getLineColor: [this.state.hoveredEntity],
                     getFillColor: [referencePathPointIndex],
                     getRadius: [this.state.hoveredEntity, referencePathPointIndex],
                 },
