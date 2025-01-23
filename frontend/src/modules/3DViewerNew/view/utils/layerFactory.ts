@@ -6,13 +6,15 @@ import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/v
 import { Layer as LayerInterface } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
+import { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
-import { Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { Grid3DLayer, MapLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Rgb, parse } from "culori";
 import { Feature } from "geojson";
 
 import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
+import { RealizationSurfaceLayer } from "../../LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { AdvancedWellsLayer } from "../customDeckGlLayers/AdvancedWellsLayer";
 import { WellBorePickLayerData, WellborePicksLayer } from "../customDeckGlLayers/WellborePicksLayer";
 
@@ -47,7 +49,52 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
             colorScale
         );
     }
+    if (layer instanceof RealizationSurfaceLayer) {
+        console.log(data);
+        return createSurfaceMeshLayer(
+            data,
+            layer.getItemDelegate().getId(),
+            layer.getItemDelegate().getName(),
+            colorScale
+        );
+    }
     return null;
+}
+export function createSurfaceMeshLayer(
+    layerData: SurfaceDataFloat_trans,
+    id: string,
+    name: string,
+    colorScale?: ColorScaleWithName,
+    showContours?: boolean | number[],
+    showGridLines?: boolean,
+    useSmoothShading?: boolean,
+    useMaterial?: boolean,
+    property_data?: Float32Array | null
+): MapLayer {
+    return new MapLayer({
+        "@@type": "MapLayer",
+        "@@typedArraySupport": true,
+        id: "mesh-layer",
+        name: name,
+        meshData: layerData.valuesFloat32Arr,
+        // propertiesData: layerData.valuesFloat32Arr,
+        frame: {
+            origin: [layerData.surface_def.origin_utm_x, layerData.surface_def.origin_utm_y],
+            count: [layerData.surface_def.npoints_x, layerData.surface_def.npoints_y],
+            increment: [layerData.surface_def.inc_x, layerData.surface_def.inc_y],
+            rotDeg: layerData.surface_def.rot_deg,
+        },
+        valueRange: [layerData.value_min, layerData.value_max],
+        colorMapRange: [layerData.value_min, layerData.value_max],
+        isContoursDepth: true,
+        contours: [0, 10],
+        gridLines: true,
+        material: useMaterial,
+        smoothShading: useSmoothShading,
+        colorMapName: "Physics",
+
+        colorMapFunction: makeColorMapFunction(colorScale, layerData.value_min, layerData.value_max),
+    });
 }
 function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string): WellborePicksLayer {
     const wellPicksData: WellBorePickLayerData[] = wellPicksDataApi.map((wellPick) => {

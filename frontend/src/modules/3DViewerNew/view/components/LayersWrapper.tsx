@@ -157,7 +157,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);
     layers.push(new PlaceholderLayer({ id: "placeholder" }));
-    layers.push(new AxesLayer({ id: "axes-layer", visible: true, ZIncreasingDownwards: true, bounds }));
+    layers.push(new AxesLayer({ id: "axes-layer", visible: true, ZIncreasingDownwards: false, bounds }));
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">

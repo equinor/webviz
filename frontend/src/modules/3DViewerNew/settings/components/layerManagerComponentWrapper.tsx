@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
-import { color_palette, grid_layer, settings, wellbore } from "@equinor/eds-icons";
+import { color_palette, grid_layer, settings, surface_layer, wellbore } from "@equinor/eds-icons";
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { Menu } from "@lib/components/Menu";
@@ -9,7 +9,6 @@ import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
 import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
-import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { EnsembleSetting } from "@modules//_shared/LayerFramework/settings/implementations/EnsembleSetting";
@@ -24,6 +23,7 @@ import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/Setting
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
 import { View } from "@modules/_shared/LayerFramework/framework/View/View";
 import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { Dropdown } from "@mui/base";
@@ -39,6 +39,7 @@ import {
 import { useAtom } from "jotai";
 
 import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
+import { RealizationSurfaceLayer } from "../../LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
 export type LayerManagerComponentWrapperProps = {
@@ -78,6 +79,12 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return;
             case "realization-grid":
                 groupDelegate.insertChild(new RealizationGridLayer(props.layerManager), numSharedSettings);
+                return;
+            case "realization-surface":
+                groupDelegate.insertChild(new RealizationSurfaceLayer(props.layerManager), numSharedSettings);
+                return;
+            case "drilled-wellbore-trajectories":
+                groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(props.layerManager), numSharedSettings);
                 return;
             case "ensemble":
                 groupDelegate.prependChild(new SharedSetting(new EnsembleSetting(), props.layerManager));
@@ -227,6 +234,11 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                         identifier: "realization-grid",
                         icon: <Icon data={grid_layer} fontSize="small" />,
                         label: "Realization Grid",
+                    },
+                    {
+                        identifier: "realization-surface",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Realization Surface",
                     },
                 ],
             },

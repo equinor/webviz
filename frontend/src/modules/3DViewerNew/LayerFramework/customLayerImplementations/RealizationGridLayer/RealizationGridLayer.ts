@@ -38,7 +38,7 @@ export class RealizationGridLayer
     private _itemDelegate: ItemDelegate;
 
     constructor(layerManager: LayerManager) {
-        this._itemDelegate = new ItemDelegate("Realization Grid layer", layerManager);
+        this._itemDelegate = new ItemDelegate("Realization Grid", layerManager);
         this._layerDelegate = new LayerDelegate(
             this,
             layerManager,
