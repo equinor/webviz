@@ -1,5 +1,4 @@
-import { StratigraphicUnit_api, WellLogCurveTypeEnum_api, WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
-import { transformFormationData } from "@equinor/esv-intersection";
+import { WellLogCurveTypeEnum_api, WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
 
@@ -8,8 +7,9 @@ import _ from "lodash";
 
 import {
     userSelectedFieldIdentifierAtom,
-    userSelectedNonUnitWellpicksAtom,
-    userSelectedUnitWellpicksAtom,
+    userSelectedWellPickColumnAtom,
+    userSelectedWellPickInterpreterAtom,
+    userSelectedWellPicksAtom,
     userSelectedWellboreUuidAtom,
 } from "./baseAtoms";
 import { logViewerTrackConfigs } from "./persistedAtoms";
@@ -17,24 +17,24 @@ import {
     drilledWellboreHeadersQueryAtom,
     wellLogCurveHeadersQueryAtom,
     wellborePicksQueryAtom,
-    wellboreStratigraphicUnitsQueryAtom,
+    wellboreStratColumnsQueryAtom,
 } from "./queryAtoms";
 
-export const firstEnsembleInSelectedFieldAtom = atom((get) => {
-    const selectedFieldId = get(userSelectedFieldIdentifierAtom);
-    const ensembleSetArr = get(EnsembleSetAtom).getEnsembleArr();
-
-    if (!ensembleSetArr.length) {
-        return null;
-    }
-
-    const selectedEnsemble = ensembleSetArr.find((e) => e.getFieldIdentifier() === selectedFieldId);
-
-    return selectedEnsemble ?? ensembleSetArr[0];
-});
-
+// ? The module doesnt do anything related to ensembles, should we just make it possible to pick from all fields?
+// ? If so, move to queries, and use "apiService.explore.getFields();"
 export const selectedFieldIdentifierAtom = atom((get) => {
-    return get(firstEnsembleInSelectedFieldAtom)?.getFieldIdentifier() ?? null;
+    const selectedFieldId = get(userSelectedFieldIdentifierAtom);
+    const ensembleSet = get(EnsembleSetAtom);
+    const ensembleSetArr = ensembleSet.getEnsembleArr();
+
+    // Selection-fixup. Default to field ident of first available ensemble if possible
+    if (!ensembleSetArr.length) return null;
+    if (!selectedFieldId) return ensembleSetArr[0].getFieldIdentifier();
+
+    const selectIsValid = ensembleSet.findEnsembleBy((ens) => ens.getFieldIdentifier() === selectedFieldId);
+    if (!selectIsValid) return ensembleSetArr[0].getFieldIdentifier();
+
+    return selectedFieldId;
 });
 
 export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) => {
@@ -46,22 +46,6 @@ export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) 
     }
 
     return availableWellboreHeaders.find((wh) => wh.wellboreUuid === selectedWellboreId) ?? availableWellboreHeaders[0];
-});
-
-export const selectedWellborePicksAtom = atom<TransformFormationDataResult>((get) => {
-    const wellborePicks = get(availableWellPicksAtom);
-    const selectedUnitPicks = get(userSelectedUnitWellpicksAtom);
-    const selectedNonUnitPicks = get(userSelectedNonUnitWellpicksAtom);
-
-    if (!wellborePicks) return { unitPicks: [], nonUnitPicks: [] };
-    else {
-        const unitPicks = wellborePicks.unitPicks.filter((pick) => selectedUnitPicks.includes(pick.name));
-        const nonUnitPicks = wellborePicks.nonUnitPicks.filter((pick) =>
-            selectedNonUnitPicks.includes(pick.identifier)
-        );
-
-        return { unitPicks, nonUnitPicks };
-    }
 });
 
 export const availableContinuousCurvesAtom = atom((get) => {
@@ -80,30 +64,6 @@ export const availableFlagCurvesAtom = atom((get) => {
     const logCurveHeaders = get(wellLogCurveHeadersQueryAtom)?.data ?? [];
 
     return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.FLAG]);
-});
-
-/**
- * Exposing the return type of esv-intersection's transformFormationData, since they don't export that anywhere
- */
-export type TransformFormationDataResult = ReturnType<typeof transformFormationData>;
-export type WellPicksLayerDataAndUnits = TransformFormationDataResult & { stratUnits: StratigraphicUnit_api[] };
-
-// TODO: We now have the strat units in a seperate query, just use that instead of returning the units here
-export const availableWellPicksAtom = atom<WellPicksLayerDataAndUnits>((get) => {
-    const wellborePicks = get(wellborePicksQueryAtom).data;
-    const wellboreStratUnits = get(wellboreStratigraphicUnitsQueryAtom).data;
-
-    if (!wellborePicks || !wellboreStratUnits) return { nonUnitPicks: [], unitPicks: [], stratUnits: [] };
-
-    // ! transformFormationData mutates the data object, so need to make a copy!
-    const stratUnits = [...wellboreStratUnits];
-    const transformedPickData = transformFormationData(wellborePicks, wellboreStratUnits as any);
-
-    return {
-        nonUnitPicks: _.uniqBy(transformedPickData.nonUnitPicks, "identifier"),
-        unitPicks: _.uniqBy(transformedPickData.unitPicks, "name"),
-        stratUnits,
-    };
 });
 
 export const wellLogTemplateTracksAtom = atom<TemplateTrackConfig[]>((get) => {
@@ -127,4 +87,47 @@ export const requiredCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
         .filter((header): header is WellboreLogCurveHeader_api => !!header)
         .uniqBy(({ source, sourceId, logName }) => source + sourceId + logName)
         .value();
+});
+
+export const selectedWellPickColumnAtom = atom<string | null>((get) => {
+    const userSelectedWellPickColumn = get(userSelectedWellPickColumnAtom) ?? "";
+    const wellboreStratColumns = get(wellboreStratColumnsQueryAtom).data ?? [];
+
+    // Selection-fixup. Defaults to first available option if possible
+    if (!wellboreStratColumns.length) return null;
+    if (wellboreStratColumns.includes(userSelectedWellPickColumn)) return userSelectedWellPickColumn;
+    return wellboreStratColumns[0];
+});
+
+export const wellPicksByInterpreterAtom = atom<Record<string, WellborePick_api[]>>((get) => {
+    const picks = get(wellborePicksQueryAtom).data ?? [];
+
+    return _.groupBy(picks, "interpreter");
+});
+
+export const availableWellPickInterpretersAtom = atom<string[]>((get) => {
+    const wellPicksByInterpreter = get(wellPicksByInterpreterAtom);
+    return Object.keys(wellPicksByInterpreter);
+});
+
+export const selectedWellPickInterpreter = atom<string | null>((get) => {
+    const selectedInterpreter = get(userSelectedWellPickInterpreterAtom);
+    const availableInterpreters = get(availableWellPickInterpretersAtom);
+
+    // Selection-fixup. Defaults to first available option if possible
+    if (!availableInterpreters.length) return null;
+    if (selectedInterpreter && availableInterpreters.includes(selectedInterpreter)) return selectedInterpreter;
+    return availableInterpreters[0];
+});
+
+export const selectedWellborePicksAtom = atom<WellborePick_api[]>((get) => {
+    const wellPicksByInterpreter = get(wellPicksByInterpreterAtom);
+    const selectedInterpreter = get(selectedWellPickInterpreter);
+    const selectedWellPicks = get(userSelectedWellPicksAtom);
+
+    if (!selectedInterpreter) return [];
+
+    const interpreterPicks = wellPicksByInterpreter[selectedInterpreter] ?? [];
+
+    return interpreterPicks.filter(({ pickIdentifier }) => selectedWellPicks.includes(pickIdentifier));
 });

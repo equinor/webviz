@@ -47,7 +47,7 @@ async def get_well_trajectories(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     field_identifier: str = Query(description="Official field identifier"),
-    wellbore_uuids:List[str] =  Query(None, description="Optional subset of wellbore uuids")
+    wellbore_uuids: List[str] | None = Query(None, description="Optional subset of wellbore uuids")
     # fmt:on
 ) -> List[schemas.WellboreTrajectory]:
     """Get well trajectories for field"""
@@ -81,7 +81,7 @@ async def get_wellbore_stratigraphic_columns(
 
     strat_columns = await well_access.get_stratigraphic_columns_for_wellbore(wellbore_uuid)
 
-    return [converters.convert_stratigraphic_column_to_schema(col) for col in strat_columns if col.strat_column_type]
+    return [converters.convert_stratigraphic_column_to_schema(col) for col in strat_columns]
 
 
 @router.get("/wellbore_pick_identifiers/")
@@ -146,6 +146,28 @@ async def get_wellbore_picks_for_wellbore(
         well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
 
     wellbore_picks = await well_access.get_wellbore_picks_for_wellbore(wellbore_uuid=wellbore_uuid)
+    return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
+
+
+@router.get("/wellbore_picks_in_strat_column")
+async def get_wellbore_picks_in_strat_column(
+    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
+    wellbore_uuid: str = Query(description="Wellbore uuid"),
+    strat_column: str = Query(description="Optional - Filter by stratigraphic column"),
+) -> list[schemas.WellborePick]:
+    well_access: Union[SmdaAccess, DrogonSmdaAccess]
+    if strat_column == "DROGON_HAS_NO_STRATCOLUMN":
+        # Handle DROGON
+        # well_access = DrogonSmdaAccess()
+        raise NotImplementedError
+    else:
+        # TODO: Remove field param
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), "FIELD")
+
+    wellbore_picks = await well_access.get_wellbore_picks_in_stratigraphic_column(
+        wellbore_uuid=wellbore_uuid, strat_column_identifier=strat_column
+    )
+
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
 
 

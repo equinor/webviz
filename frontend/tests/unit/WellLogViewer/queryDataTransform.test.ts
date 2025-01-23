@@ -4,7 +4,7 @@ import { WellPicksLayerData } from "@modules/Intersection/utils/layers/Wellpicks
 import {
     MAIN_AXIS_CURVE,
     SECONDARY_AXIS_CURVE,
-    createLogViewerWellpicks,
+    createLogViewerWellPicks,
     createWellLogSets,
 } from "@modules/WellLogViewer/utils/queryDataTransform";
 
@@ -372,7 +372,7 @@ describe("QueryDataTransform", () => {
         };
 
         it("should generate wellpick props from wellpick data", () => {
-            const wellpickProps = createLogViewerWellpicks(mockTransformedWellpickData);
+            const wellpickProps = createLogViewerWellPicks(mockTransformedWellpickData);
 
             expect(wellpickProps.wellpick.curves).toEqual([
                 MAIN_AXIS_CURVE,
@@ -394,7 +394,7 @@ describe("QueryDataTransform", () => {
             const stackedNonUnitPick = { ...mockNonUnitPick, md: 1500 };
             const pickDataWithStacked = { ...mockTransformedWellpickData, nonUnitPicks: [stackedNonUnitPick] };
 
-            const wellpickProps = createLogViewerWellpicks(pickDataWithStacked);
+            const wellpickProps = createLogViewerWellPicks(pickDataWithStacked);
 
             expect(wellpickProps.wellpick.data).toEqual([
                 [1500, "Some pick + A units entry-pick"],

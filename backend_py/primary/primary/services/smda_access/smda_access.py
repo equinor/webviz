@@ -15,6 +15,7 @@ from .types import (
     StratigraphicUnit,
     StratigraphicSurface,
     StratigraphicColumn,
+    WellboreStratigraphicUnit,
 )
 from .utils.queries import data_model_to_projection_param
 from .stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
@@ -32,6 +33,7 @@ class SmdaEndpoints:
     WELLHEADERS = "wellheaders"
     WELLBORE_SURVEY_SAMPLES = "wellbore-survey-samples"
     WELLBORE_PICKS = "wellbore-picks"
+    WELLBORE_PICKS_STRAT_COLUM = "wellbore-picks-columns"
 
 
 class SmdaAccess:
@@ -322,6 +324,31 @@ class SmdaAccess:
                     f"Invalid pick found for {pick_identifier=}, {result.get('unique_wellbore_identifier')}. This will be ignored."
                 )
         return picks
+
+    async def get_wellbore_picks_in_stratigraphic_column(
+        self,
+        wellbore_uuid: str,
+        strat_column_identifier: str,
+    ) -> List[WellborePick]:
+        """
+        Get wellbore picks within a column for a given wellbore
+        """
+
+        params = {
+            "_sort": "md",
+            "_projection": data_model_to_projection_param(WellborePick),
+            "strat_column_identifier": strat_column_identifier,
+            "wellbore_uuid": wellbore_uuid,
+        }
+
+        results = await self._smda_get_request(endpoint=SmdaEndpoints.WELLBORE_PICKS_STRAT_COLUM, params=params)
+        if not results:
+            raise NoDataError(
+                f"No wellbore picks found for {wellbore_uuid}, {strat_column_identifier=}.",
+                Service.SMDA,
+            )
+
+        return [WellborePick(**result) for result in results]
 
     async def get_wellbore_pick_identifiers_in_stratigraphic_column(
         self, strat_column_identifier: str

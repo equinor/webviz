@@ -1,9 +1,8 @@
 /**
  * Utilities to convert fetched well log data to the JSON well-log format (see https://jsonwelllogformat.org/)
  */
-import { WellLogCurveSourceEnum_api, WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
+import { WellLogCurveSourceEnum_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import {
     WellLogCurve,
     WellLogDataRow,
@@ -78,16 +77,16 @@ export function createWellLogSets(
         .groupBy("logName")
         .entries()
         .map(([logName, curveSet]) => {
-        const { curves, data, metadata_discrete } = createLogCurvesAndData(
-            curveSet,
-            wellboreTrajectory,
-            referenceSystem,
-            padDataWithEmptyRows
-        );
+            const { curves, data, metadata_discrete } = createLogCurvesAndData(
+                curveSet,
+                wellboreTrajectory,
+                referenceSystem,
+                padDataWithEmptyRows
+            );
 
-        const header = createLogHeader(logName, data, wellboreTrajectory);
+            const header = createLogHeader(logName, data, wellboreTrajectory);
 
-        return { header, curves, data, metadata_discrete };
+            return { header, curves, data, metadata_discrete };
         })
         .value();
 
@@ -249,9 +248,9 @@ function createLogHeader(
     };
 }
 
-export function createLogViewerWellpicks(wellborePicks: WellPicksLayerData): WellPickProps {
-    let wellpickData = generateWellpickData(wellborePicks);
-    wellpickData = mergeStackedPicks(wellpickData);
+export function createLogViewerWellPicks(wellborePicks: WellborePick_api[]): WellPickProps {
+    const wellPickData = generateWellPickData(wellborePicks);
+    const mergerdWellPickData = mergeStackedPicks(wellPickData);
 
     return {
         wellpick: {
@@ -264,7 +263,7 @@ export function createLogViewerWellpicks(wellborePicks: WellPicksLayerData): Wel
                     dimensions: 1,
                 },
             ],
-            data: wellpickData,
+            data: mergerdWellPickData,
         },
         md: MAIN_AXIS_CURVE.name,
         name: "PICK",
@@ -274,19 +273,8 @@ export function createLogViewerWellpicks(wellborePicks: WellPicksLayerData): Wel
     };
 }
 
-function generateWellpickData(wellborePicks: WellPicksLayerData): WellLogDataRow[] {
-    const rowsFromNonUnitPicks = wellborePicks.nonUnitPicks.map(pickToDataRow);
-    // Each unit-pick consists of two picks, entry and exit
-    const rowsFromUnitPicks = wellborePicks.unitPicks.flatMap(({ entryPick, exitPick }) => [
-        pickToDataRow(entryPick),
-        pickToDataRow(exitPick),
-    ]);
-
-    return [...rowsFromNonUnitPicks, ...rowsFromUnitPicks];
-}
-
-function pickToDataRow(pick: WellPicksLayerData["nonUnitPicks"][0]): WellLogDataRow {
-    return [pick.md, pick.identifier];
+function generateWellPickData(wellborePicks: WellborePick_api[]): WellLogDataRow[] {
+    return wellborePicks.map(({ md, pickIdentifier }) => [md, pickIdentifier]);
 }
 
 // ! The well log viewer does not support stacked wellpicks (same MD), and will render them on top of eachother!

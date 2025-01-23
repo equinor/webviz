@@ -8,11 +8,7 @@ import { QueryObserverResult } from "@tanstack/react-query";
 import { atomWithQuery } from "jotai-tanstack-query";
 import _ from "lodash";
 
-import {
-    firstEnsembleInSelectedFieldAtom,
-    selectedFieldIdentifierAtom,
-    selectedWellboreHeaderAtom,
-} from "./derivedAtoms";
+import { selectedFieldIdentifierAtom, selectedWellPickColumnAtom, selectedWellboreHeaderAtom } from "./derivedAtoms";
 
 export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
     const fieldId = get(selectedFieldIdentifierAtom) ?? "";
@@ -42,8 +38,8 @@ export const wellLogCurveHeadersQueryAtom = atomWithQueries((get) => {
         queries: sources.map((source) => () => ({
             queryKey: ["getWellboreLogCurveHeaders", wellboreId, source],
             queryFn: () => apiService.well.getWellboreLogCurveHeaders(wellboreId ?? "", [source]),
-        enabled: Boolean(wellboreId),
-        ...DEFAULT_OPTIONS,
+            enabled: Boolean(wellboreId),
+            ...DEFAULT_OPTIONS,
         })),
         // Flatten the result so we get a single list of headers
         combine(results: QueryObserverResult<WellboreLogCurveHeader_api[], Error>[]) {
@@ -52,28 +48,28 @@ export const wellLogCurveHeadersQueryAtom = atomWithQueries((get) => {
     };
 });
 
-export const wellborePicksQueryAtom = atomWithQuery((get) => {
-    const selectedFieldIdent = get(selectedFieldIdentifierAtom) ?? "";
-    const selectedWellboreUuid = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
+export const wellboreStratColumnsQueryAtom = atomWithQuery((get) => {
+    const wellboreUuid = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
 
     return {
-        queryKey: ["getWellborePicksForWellbore", selectedFieldIdent, selectedWellboreUuid],
-        enabled: Boolean(selectedFieldIdent && selectedWellboreUuid),
-        queryFn: () => apiService.well.getWellborePicksForWellbore(selectedFieldIdent, selectedWellboreUuid),
         ...DEFAULT_OPTIONS,
+        queryKey: ["getWellboreStratigraphicColumns", wellboreUuid],
+        enabled: Boolean(wellboreUuid),
+        queryFn: () => apiService.well.getWellboreStratigraphicColumns(wellboreUuid),
+        select: (data: StratigraphicColumn_api[]): string[] => {
+            return _.map(data, "stratColumnIdentifier");
+        },
     };
 });
 
-export const wellboreStratigraphicUnitsQueryAtom = atomWithQuery((get) => {
-    // Stratigraphic column will be computed based on the case uuid
-    // TODO: Should make it a user-selected ensemble instead, at some point
-    const selectedEnsemble = get(firstEnsembleInSelectedFieldAtom);
-    const caseUuid = selectedEnsemble?.getCaseUuid() ?? "";
+export const wellborePicksQueryAtom = atomWithQuery((get) => {
+    const selectedWellboreUuid = get(selectedWellboreHeaderAtom)?.wellboreUuid ?? "";
+    const selectedStratColumn = get(selectedWellPickColumnAtom) ?? "";
 
     return {
-        queryKey: ["getWellborePicksForWellbore", caseUuid],
-        enabled: Boolean(caseUuid),
-        queryFn: () => apiService.surface.getStratigraphicUnits(caseUuid),
+        queryKey: ["getWellborePicksForWellbore", selectedWellboreUuid, selectedStratColumn],
+        enabled: Boolean(selectedWellboreUuid && selectedStratColumn),
+        queryFn: () => apiService.well.getWellborePicksInStratColumn(selectedWellboreUuid, selectedStratColumn),
         ...DEFAULT_OPTIONS,
     };
 });

@@ -156,6 +156,29 @@ export class WellService {
         });
     }
     /**
+     * Get Wellbore Picks In Strat Column
+     * @param wellboreUuid Wellbore uuid
+     * @param stratColumn Optional - Filter by stratigraphic column
+     * @returns WellborePick Successful Response
+     * @throws ApiError
+     */
+    public getWellborePicksInStratColumn(
+        wellboreUuid: string,
+        stratColumn: string,
+    ): CancelablePromise<Array<WellborePick>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/well/wellbore_picks_in_strat_column',
+            query: {
+                'wellbore_uuid': wellboreUuid,
+                'strat_column': stratColumn,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
      * Get Wellbore Completions
      * Get well bore completions for a single well bore
      * @param wellboreUuid Wellbore uuid
