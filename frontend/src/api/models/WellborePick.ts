@@ -20,5 +20,6 @@ export type WellborePick = {
     confidence: (string | null);
     depthReferencePoint: string;
     mdUnit: string;
+    interpreter: (string | null);
 };
 

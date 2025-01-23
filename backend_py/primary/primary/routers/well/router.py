@@ -230,6 +230,8 @@ async def get_wellbore_log_curve_headers(
     Logs are available from multiple sources, which can be specificed by the "sources" parameter.
     """
 
+    # TODO: Add wellbore survey sample endpoint. for last set of curves (for now) SSDL might be best
+
     # Handle DROGON
     if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
         return []
@@ -283,7 +285,8 @@ async def get_log_curve_data(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
     wellbore_uuid: str = Query(description="Wellbore uuid"),
-    log_curve_name: str = Query(description="Log curve name or ID"),
+    log_name: str = Query(description="Log identifier"),
+    curve_name: str = Query(description="Curve identifier"),
     source: schemas.WellLogCurveSourceEnum = Query(
        description="Source to fetch well-logs from.",
        default=schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG
@@ -297,24 +300,20 @@ async def get_log_curve_data(
         raise NotImplementedError("DROGON log curve data not implemented")
 
     if source == schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG:
-        # if people use the source-ID from recieved headers, this the log_curve_name param is in the shape of <log_name>::<curve_name>
-        curve_name = log_curve_name
-        if "::" in curve_name:
-            curve_name = curve_name.split("::", 1)[1]
-
+        # Note that log name is not used on SSDL; but afaik curve names are not unique across all logs...
         well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
         log_curve = await well_access.get_log_curve_data(wellbore_uuid, curve_name)
 
         return converters.convert_wellbore_log_curve_data_to_schema(log_curve)
 
     if source == schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY:
-        header_source, header_ident = log_curve_name.split("::", 1)
+        # Here, curve name is the identifier, and logname is the source
 
-        # TODO: Remove "FIELD"
+        # TODO: Remove "FIELD" when possible
         geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token(), "FIELD")
 
         geo_headers = await geol_access.get_wellbore_geology_headers(wellbore_uuid)
-        geo_headers = [h for h in geo_headers if h.identifier == header_ident and h.source == header_source]
+        geo_headers = [h for h in geo_headers if h.identifier == curve_name and h.source == log_name]
 
         if not geo_headers:
             raise ValueError("Could not find matching geology header")
@@ -326,18 +325,13 @@ async def get_log_curve_data(
         return converters.convert_geology_data_to_log_curve_schema(geo_header, geo_data)
 
     if source == schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY:
-        # "Log curve name" in this context will be the column identifier
-        strat_col = log_curve_name
-
+        # Here, the log name is the strat column. curve name is not used
         # TODO: Remove "Field"
         smda_access = SmdaAccess(authenticated_user.get_smda_access_token(), "FIELD")
-        strat_units = await smda_access.get_stratigraphic_units(
-            strat_column_identifier=strat_col,
-            wellbore_uuid=wellbore_uuid,
-            sort=["entry_md", "strat_unit_level"],
-        )
 
-        return converters.convert_strat_unit_data_to_log_curve_schema(strat_units)
+        wellbore_strat_units = await smda_access.get_stratigraphy_for_wellbore_and_column(wellbore_uuid, log_name)
+
+        return converters.convert_strat_unit_data_to_log_curve_schema(wellbore_strat_units)
 
     raise ValueError(f"Unknown source {source}")
 

@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export enum WellLogCurveTypeEnum {
-    CONTINUOUS = "continuous",
-    DISCRETE = "discrete",
-    FLAG = "flag",
+    CONTINUOUS = 'continuous',
+    DISCRETE = 'discrete',
+    FLAG = 'flag',
 }

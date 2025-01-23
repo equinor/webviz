@@ -76,6 +76,7 @@ class WellborePick(BaseModel):
     confidence: Optional[str] = None
     depthReferencePoint: str
     mdUnit: str
+    interpreter: str | None
 
 
 class WellborePicksAndStratigraphicUnits(BaseModel):
@@ -141,6 +142,7 @@ DiscreteMetaEntry = NewType("DiscreteMetaEntry", dict[str, tuple[int, tuple[int,
 
 
 class WellboreLogCurveData(BaseModel):
+    source: WellLogCurveSourceEnum
     name: str
     logName: str
     indexMin: float

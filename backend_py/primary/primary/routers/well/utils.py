@@ -1,4 +1,4 @@
-from primary.services.smda_access.types import WellboreGeoHeader, StratigraphicColumn, StratigraphicUnit
+from primary.services.smda_access.types import WellboreGeoHeader, StratigraphicColumn
 from primary.services.ssdl_access.types import WellboreLogCurveHeader, WellboreLogCurveData
 
 from . import schemas
@@ -17,20 +17,6 @@ def curve_type_from_header(
         return schemas.WellLogCurveTypeEnum.DISCRETE
 
     return schemas.WellLogCurveTypeEnum.CONTINUOUS
-
-
-def make_unique_source_identifier(
-    header: WellboreLogCurveHeader | WellboreGeoHeader | StratigraphicColumn | StratigraphicUnit,
-) -> str:
-    if isinstance(header, WellboreGeoHeader):
-        # ! I cant find a guaranteed unique identitiy for geology headers (might be multiple across projects)
-        return f"{header.source}::{header.identifier}"
-
-    if isinstance(header, (StratigraphicColumn, StratigraphicUnit)):
-        type_or_default = header.strat_column_type or "UNNAMED"
-        return f"{header.strat_column_identifier}::{type_or_default}"
-
-    return f"{header.log_name}::{header.curve_name}"
 
 
 def get_discrete_metadata_for_well_log_curve(log_curve_data: WellboreLogCurveData) -> schemas.DiscreteMetaEntry | None:

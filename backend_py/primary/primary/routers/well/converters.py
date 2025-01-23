@@ -5,9 +5,9 @@ from primary.services.smda_access.types import (
     WellboreTrajectory,
     WellborePick,
     StratigraphicColumn,
-    StratigraphicUnit,
     WellboreGeoHeader,
     WellboreGeoData,
+    WellboreStratigraphicUnit,
 )
 from primary.services.ssdl_access.types import (
     WellboreCasing,
@@ -35,6 +35,7 @@ def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.Well
         confidence=wellbore_pick.confidence,
         depthReferencePoint=wellbore_pick.depth_reference_point,
         mdUnit=wellbore_pick.md_unit,
+        interpreter=wellbore_pick.interpreter,
     )
 
 
@@ -44,25 +45,6 @@ def convert_stratigraphic_column_to_schema(column: StratigraphicColumn) -> schem
         stratColumnAreaType=column.strat_column_area_type,
         stratColumnStatus=column.strat_column_status,
         stratColumnType=column.strat_column_type,
-    )
-
-
-def convert_stratigraphic_unit_to_schema(
-    stratigraphic_unit: StratigraphicUnit,
-) -> schemas.StratigraphicUnit:
-    return schemas.StratigraphicUnit(
-        identifier=stratigraphic_unit.identifier,
-        top=stratigraphic_unit.top,
-        base=stratigraphic_unit.base,
-        stratUnitLevel=stratigraphic_unit.strat_unit_level,
-        stratUnitType=stratigraphic_unit.strat_unit_type,
-        topAge=stratigraphic_unit.top_age,
-        baseAge=stratigraphic_unit.base_age,
-        stratUnitParent=stratigraphic_unit.strat_unit_parent,
-        colorR=stratigraphic_unit.color_r,
-        colorG=stratigraphic_unit.color_g,
-        colorB=stratigraphic_unit.color_b,
-        lithologyType=stratigraphic_unit.lithology_type,
     )
 
 
@@ -140,15 +122,15 @@ def convert_wellbore_perforation_to_schema(
     )
 
 
-# TODO: Add wellbore survey sample endpoint. for last set of curves (for now) SSDL might be best
 # TODO: Evaluate if the current header structure is the most useful
+# ? Should all these conversions happen within a dedicated service instead?
 def convert_wellbore_log_curve_header_to_schema(curve_header: WellboreLogCurveHeader) -> schemas.WellboreLogCurveHeader:
     if curve_header.log_name is None:
         raise AttributeError("Missing log name is not allowed")
 
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG,
-        sourceId=utils.make_unique_source_identifier(curve_header),
+        sourceId=f"{curve_header.log_name}::{curve_header.curve_name}",
         curveType=utils.curve_type_from_header(curve_header),
         logName=curve_header.log_name,
         curveName=curve_header.curve_name,
@@ -159,13 +141,11 @@ def convert_wellbore_log_curve_header_to_schema(curve_header: WellboreLogCurveHe
 def convert_wellbore_geo_header_to_well_log_header(
     geo_header: WellboreGeoHeader,
 ) -> schemas.WellboreLogCurveHeader:
-
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY,
-        sourceId=utils.make_unique_source_identifier(geo_header),
+        sourceId=f"{geo_header.identifier}::{geo_header.source}",
         curveType=utils.curve_type_from_header(geo_header),
-        # ! We forcing a unique log name, since each computed curve has a distinc sampling rate
-        logName=utils.make_unique_source_identifier(geo_header),
+        logName=geo_header.source,
         curveName=geo_header.identifier,
         curveUnit="UNITLESS",
     )
@@ -176,10 +156,9 @@ def convert_strat_column_to_well_log_header(column: StratigraphicColumn) -> sche
 
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY,
-        sourceId=utils.make_unique_source_identifier(column),
+        sourceId=f"{type_or_default}::{column.strat_column_identifier}",
         curveType=utils.curve_type_from_header(column),
-        # ! We forcing a unique log name, since each computed curve has a distinc sampling rate
-        logName=utils.make_unique_source_identifier(column),
+        logName=column.strat_column_identifier,
         curveName=type_or_default,
         curveUnit="UNITLESS",
     )
@@ -191,6 +170,7 @@ def convert_wellbore_log_curve_data_to_schema(
     metadata_discrete = utils.get_discrete_metadata_for_well_log_curve(wellbore_log_curve_data)
 
     return schemas.WellboreLogCurveData(
+        source=schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG,
         name=wellbore_log_curve_data.name,
         logName=wellbore_log_curve_data.log_name,
         unit=wellbore_log_curve_data.unit,
@@ -235,15 +215,17 @@ def convert_geology_data_to_log_curve_schema(
         if next_geo_data is None or next_geo_data.top_depth_md != geo_data.base_depth_md:
             data_points.append((geo_data.base_depth_md, None))
 
-        # TODO: Better structure with less subsurface-jank
+        # Set up discrete meta-data colors and strings
+        # ? This piece of code generates a structure thats very Subsurface-Comp library specific...
+        # ? Should we opt for a more generic approach here, and have some transformation logic on the frontend?
         color = (geo_data.color_r, geo_data.color_g, geo_data.color_b)
         metadata_discrete.update({geo_data.identifier: (geo_data.code, color)})
 
     return schemas.WellboreLogCurveData(
+        source=schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY,
         curveDescription="Generated - Derived from geology data entries",
         name=geo_header.identifier,
-        # ! We ensure a unique log-name since each curve has a distinc sampling rate
-        logName=utils.make_unique_source_identifier(geo_header),
+        logName=geo_header.source,
         indexMin=geo_header.md_min,
         indexMax=geo_header.md_max,
         unit="UNITLESS",
@@ -260,7 +242,7 @@ def convert_geology_data_to_log_curve_schema(
 
 
 def convert_strat_unit_data_to_log_curve_schema(
-    strat_units: list[StratigraphicUnit],
+    strat_units: list[WellboreStratigraphicUnit],
 ) -> schemas.WellboreLogCurveData:
     if len(strat_units) < 1:
         raise ValueError("Expected at least one entry in strat-unit list")
@@ -272,7 +254,7 @@ def convert_strat_unit_data_to_log_curve_schema(
     metadata_discrete: schemas.DiscreteMetaEntry = {}  # type: ignore[assignment]
 
     # The list of units has entries at different unit-levels, meaning some entries might be "inside" a different entry. Storing "parents" here to access them in later iterations
-    parent_units: list[StratigraphicUnit] = []
+    parent_units: list[WellboreStratigraphicUnit] = []
 
     for idx, current_unit in enumerate(strat_units):
         index_min = min(index_min, current_unit.entry_md)
@@ -286,8 +268,7 @@ def convert_strat_unit_data_to_log_curve_schema(
 
         metadata_discrete.update({unit_ident: (code, colors)})
 
-        # The previous pick might have placed an exit entry where this one wants to enter. If so, remove the old one
-        # TODO: Figure out how to check next properly to avoid this
+        # The previous pick might have exited where this one start. If so, remove the "exit" datapoint
         if data_points and data_points[-1][0] == current_unit.entry_md:
             data_points.pop()
 
@@ -296,7 +277,7 @@ def convert_strat_unit_data_to_log_curve_schema(
 
         if not next_unit:
             # End of curve. Add a "None" entry to make it explicit.
-            # TODO: Could maybe forgo this if we make the well-log viewer itself resepct min-max values per-curve
+            # TODO: For the future; if the subsurface component is updated to respect min-max values, the final "None" value shouldnt be needed
 
             # Get the exit_md furthest down the curve
             last_exit = current_unit.exit_md
@@ -324,10 +305,10 @@ def convert_strat_unit_data_to_log_curve_schema(
             parent_units.pop()
 
     return schemas.WellboreLogCurveData(
+        source=schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY,
         curveDescription="COMPUTED - Derived from stratigraphy unit entries",
         name=strat_units[0].strat_column_type or "UNNAMED",
-        # ! We ensure a unique log-name since each curve has a distinc sampling rate
-        logName=utils.make_unique_source_identifier(strat_units[0]),
+        logName=strat_units[0].strat_column_identifier,
         indexMin=index_min,
         indexMax=index_max,
         unit="UNITLESS",
@@ -364,9 +345,9 @@ def __get_code_for_string_data(value: str, discrete_meta: schemas.DiscreteMetaEn
 
 
 def __get_strat_unit_at_exit(
-    unit: StratigraphicUnit,
-    parent_units: list[StratigraphicUnit],
-) -> StratigraphicUnit | None:
+    unit: WellboreStratigraphicUnit,
+    parent_units: list[WellboreStratigraphicUnit],
+) -> WellboreStratigraphicUnit | None:
     for parent in parent_units:
         if parent.exit_md > unit.exit_md:
             return parent

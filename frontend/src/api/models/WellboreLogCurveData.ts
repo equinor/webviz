@@ -2,7 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { WellLogCurveSourceEnum } from './WellLogCurveSourceEnum';
 export type WellboreLogCurveData = {
+    source: WellLogCurveSourceEnum;
     name: string;
     logName: string;
     indexMin: number;
@@ -15,7 +17,7 @@ export type WellboreLogCurveData = {
     noDataValue: (number | null);
     unit: string;
     curveUnitDesc: (string | null);
-    dataPoints: Array<Array<(number | string | null)>>;
+    dataPoints: Array<any[]>;
     metadataDiscrete: (Record<string, any[]> | null);
 };
 

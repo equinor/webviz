@@ -17,13 +17,14 @@ type TemplatePlotScaleOption = DropdownOption<TemplatePlotScale>;
 
 const PLOT_SCALE_OPTIONS: TemplatePlotScaleOption[] = [
     { label: "Linear", value: "linear" },
-    { label: "Logaritmic", value: "log" },
+    { label: "Logarithmic", value: "log" },
 ];
 
 export function ContinousTrackSettings(props: TrackSettingFragmentProps): React.ReactNode {
     const dropdownId = React.useId();
 
     const curveHeadersQuery = useAtomValue(wellLogCurveHeadersQueryAtom);
+
     const curveHeadersError = usePropagateApiErrorToStatusWriter(curveHeadersQuery, props.statusWriter);
 
     const availableCurveHeaders = [

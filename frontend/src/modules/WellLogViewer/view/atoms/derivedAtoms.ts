@@ -11,6 +11,7 @@ export const intersectionReferenceSystemAtom = atom<IntersectionReferenceSystem 
     const wellboreTrajectoryQuery = get(wellboreTrajectoryQueryAtom);
 
     if (wellboreTrajectoryQuery.isPending || wellboreTrajectoryQuery.isError) return null;
+    if (!wellboreTrajectoryQuery.data) return null;
 
     const systemPath = trajectoryToReferenceSystemPath(wellboreTrajectoryQuery.data);
     const offset = wellboreTrajectoryQuery.data.mdArr[0];
@@ -28,9 +29,11 @@ function trajectoryToReferenceSystemPath(trajectory: WellboreTrajectory_api): nu
     });
 }
 
-// The Subsurface template pattern is kiiiinda stupid and only uses curve name both for data lookup and curve titles (with no way to override it, or specify a log run). This atom provides a list of all curve names that are not unique across all selected curves, allowing us to override the names when adding them to the track
+// The Subsurface template pattern is kiiiinda stupid and only uses curve name both for data lookup and curve titles
+// (with no way to override it, or specify a log run). This atom provides a list of all curve names that are not unique
+// across all selected curves, allowing us to override the names when adding them to the track
 export const nonUniqueCurveNamesAtom = atom<Set<string>>((get) => {
-    // TODO: Verify that this way of accessing the interface is acceptable
+    // TODO: Wrong use of interface, fix
     const requiredCurves = settingsToViewInterfaceInitialization.requiredCurves(get);
 
     const seenNames = new Set<string>();

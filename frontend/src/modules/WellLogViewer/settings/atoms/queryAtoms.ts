@@ -1,8 +1,12 @@
-import { WellLogCurveSourceEnum_api } from "@api";
+import { StratigraphicColumn_api, WellLogCurveSourceEnum_api, WellboreLogCurveHeader_api } from "@api";
 import { apiService } from "@framework/ApiService";
-import { DEFAULT_OPTIONS } from "@modules/WellLogViewer/view/queries/shared";
+import { atomWithQueries } from "@framework/utils/atomUtils";
+import { mergeResults } from "@modules/WellLogViewer/utils/queries";
+import { DEFAULT_OPTIONS } from "@modules/WellLogViewer/utils/queries";
+import { QueryObserverResult } from "@tanstack/react-query";
 
 import { atomWithQuery } from "jotai-tanstack-query";
+import _ from "lodash";
 
 import {
     firstEnsembleInSelectedFieldAtom,
@@ -23,23 +27,28 @@ export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
 
 /* ! Note 
   No logs are returned for any of the Drogon wells, afaik. Found a working set using in one of the TROLL ones. Some of them are still on the old system, so just click around until you find a working one
-
 */
-export const wellLogCurveHeadersQueryAtom = atomWithQuery((get) => {
+export const wellLogCurveHeadersQueryAtom = atomWithQueries((get) => {
     const wellboreId = get(selectedWellboreHeaderAtom)?.wellboreUuid;
+
     const sources = [
         WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
         WellLogCurveSourceEnum_api.SMDA_GEOLOGY,
         WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY,
     ];
 
-    // TODO: Runs a bit slow like this, seperate to 3 distinct queries for better paralellization and caching
-
+    // We *could* fetch all headers within a single query, but doing them seperately here for parallelism
     return {
-        queryKey: ["getWellboreLogCurveHeaders", wellboreId],
-        queryFn: () => apiService.well.getWellboreLogCurveHeaders(wellboreId ?? "", sources),
+        queries: sources.map((source) => () => ({
+            queryKey: ["getWellboreLogCurveHeaders", wellboreId, source],
+            queryFn: () => apiService.well.getWellboreLogCurveHeaders(wellboreId ?? "", [source]),
         enabled: Boolean(wellboreId),
         ...DEFAULT_OPTIONS,
+        })),
+        // Flatten the result so we get a single list of headers
+        combine(results: QueryObserverResult<WellboreLogCurveHeader_api[], Error>[]) {
+            return mergeResults(results, (data) => data.flat());
+        },
     };
 });
 

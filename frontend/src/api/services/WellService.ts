@@ -49,7 +49,7 @@ export class WellService {
      */
     public getWellTrajectories(
         fieldIdentifier: string,
-        wellboreUuids?: Array<string>,
+        wellboreUuids?: (Array<string> | null),
     ): CancelablePromise<Array<WellboreTrajectory>> {
         return this.httpRequest.request({
             method: 'GET',
@@ -57,6 +57,26 @@ export class WellService {
             query: {
                 'field_identifier': fieldIdentifier,
                 'wellbore_uuids': wellboreUuids,
+            },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * Get Wellbore Stratigraphic Columns
+     * @param wellboreUuid Wellbore uuid
+     * @returns StratigraphicColumn Successful Response
+     * @throws ApiError
+     */
+    public getWellboreStratigraphicColumns(
+        wellboreUuid: string,
+    ): CancelablePromise<Array<StratigraphicColumn>> {
+        return this.httpRequest.request({
+            method: 'GET',
+            url: '/well/wellbore_stratigraphic_columns/',
+            query: {
+                'wellbore_uuid': wellboreUuid,
             },
             errors: {
                 422: `Validation Error`,
@@ -227,14 +247,16 @@ export class WellService {
      * Get Log Curve Data
      * Get log curve data
      * @param wellboreUuid Wellbore uuid
-     * @param logCurveName Log curve name or ID
+     * @param logName Log identifier
+     * @param curveName Curve identifier
      * @param source Source to fetch well-logs from.
      * @returns WellboreLogCurveData Successful Response
      * @throws ApiError
      */
     public getLogCurveData(
         wellboreUuid: string,
-        logCurveName: string,
+        logName: string,
+        curveName: string,
         source?: WellLogCurveSourceEnum,
     ): CancelablePromise<WellboreLogCurveData> {
         return this.httpRequest.request({
@@ -242,7 +264,8 @@ export class WellService {
             url: '/well/log_curve_data/',
             query: {
                 'wellbore_uuid': wellboreUuid,
-                'log_curve_name': logCurveName,
+                'log_name': logName,
+                'curve_name': curveName,
                 'source': source,
             },
             errors: {

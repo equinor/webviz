@@ -1,7 +1,7 @@
 /**
  * Utilities to convert fetched well log data to the JSON well-log format (see https://jsonwelllogformat.org/)
  */
-import { WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
+import { WellLogCurveSourceEnum_api, WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import {
@@ -31,8 +31,16 @@ export const SECONDARY_AXIS_CURVE: WellLogCurve = {
     valueType: "float",
 };
 
+type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
+
+// As per the well log json curve header definition
+const ALLOWED_LOG_VALUE_TYPES = ["float", "integer", "string", "datetime", "boolean"] as const;
+type AllowedLogValue = (typeof ALLOWED_LOG_VALUE_TYPES)[number];
+
 const DATA_ROW_HEAD = Object.freeze([MAIN_AXIS_CURVE, SECONDARY_AXIS_CURVE]);
-// Sometime rows data-points are very close to each other. This is likely due to rounding errors. To avoid weird holes in the graphs, we round the index values to this value to ensure close rows are joined together
+// Sometime rows data-points are very close to each other. This is likely due to rounding
+// errors. To avoid weird holes in the graphs, we round the index values to this value
+// to ensure close rows are joined together
 const DATA_ROW_PRESICION = 3;
 
 export function createWellLogSets(
@@ -42,26 +50,46 @@ export function createWellLogSets(
     nonUniqueCurveNames?: Set<string>,
     padDataWithEmptyRows = false
 ): WellLogSet[] {
-    // According to the well-log JSON format, each curve should be grouped together in their respective log
-    const curvesByLogName = _.groupBy(curveData, "logName");
+    // The well-log viewer always picks the axis from the first log set in the collection.
+    // Adding a dedicated set for only the axes, so we always have a full set to show from.
+    const axisOnlyLog = makeAxisOnlyLog(wellboreTrajectory, referenceSystem);
 
-    const wellLogsSets = Object.entries(curvesByLogName).map(([logName, curveSet]) => {
+    const wellLogsSets = _.chain(curveData)
+        // Initial map to handle some cornercases
+        .map((curveData) => {
+            curveData = _.clone(curveData);
+
+            // Occasionally names are duplicated between logs. The log-viewer looks up
+            // curves by name only, and picks the first one when building it's graphs,
+            // must make it so all names are unique
+            curveData.name = getUniqueCurveNameForCurveData(curveData, nonUniqueCurveNames);
+
+            // These curves *will* have different sampling rates (as they only have
+            // entries when the value changes). To render these correctly in the viewer,
+            // we must ensure they have different log-names
+            if (curveData.source !== WellLogCurveSourceEnum_api.SSDL_WELL_LOG) {
+                // Names *should* be unique across logs
+                curveData.logName = `${curveData.logName}::${curveData.name}`;
+            }
+
+            return curveData;
+        })
+        // According to the well-log JSON format, each log should have their own object
+        .groupBy("logName")
+        .entries()
+        .map(([logName, curveSet]) => {
         const { curves, data, metadata_discrete } = createLogCurvesAndData(
             curveSet,
             wellboreTrajectory,
             referenceSystem,
-            nonUniqueCurveNames,
             padDataWithEmptyRows
         );
 
         const header = createLogHeader(logName, data, wellboreTrajectory);
 
         return { header, curves, data, metadata_discrete };
-    });
-
-    // The well-log viewer always picks the axis from the first log set in the collection. Adding a dedicated set for only the axes, so we always have a full set to show from.
-
-    const axisOnlyLog = makeAxisOnlyLog(wellboreTrajectory, referenceSystem);
+        })
+        .value();
 
     return [axisOnlyLog, ...wellLogsSets];
 }
@@ -88,7 +116,6 @@ function createLogCurvesAndData(
     curveData: WellboreLogCurveData_api[],
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
-    nonUniqueCurveNames?: Set<string>,
     padDataWithEmptyRows?: boolean
 ): LogCurveAndDataResult {
     const curves: WellLogSet["curves"] = [...DATA_ROW_HEAD];
@@ -106,12 +133,12 @@ function createLogCurvesAndData(
         if (curve.indexMin < minCurveMd) minCurveMd = curve.indexMin;
         if (curve.indexMax > maxCurveMd) maxCurveMd = curve.indexMax;
         if (curve.metadataDiscrete)
-            _.set(discreteMeta, getUniqueCurveNameForCurveData(curve, nonUniqueCurveNames), {
+            _.set(discreteMeta, curve.name, {
                 attributes: ["code", "color"],
                 objects: curve.metadataDiscrete,
             });
 
-        curves.push(apiCurveToLogCurve(curve, nonUniqueCurveNames));
+        curves.push(apiCurveToLogCurve(curve));
 
         curve.dataPoints.forEach(([scaleIdx, actualEntry, ...restData], idx) => {
             // ! Hack to fix subsurface graph weirdly prioritizing the PREVIOUS entry
@@ -150,18 +177,13 @@ function createLogCurvesAndData(
     };
 }
 
-function apiCurveToLogCurve(curve: WellboreLogCurveData_api, nonUniqueCurveNames?: Set<string>): WellLogCurve {
-    const firstValue = curve.dataPoints[0]?.[1];
-
-    let valueType = typeof firstValue as string;
-    if (valueType === "string") valueType = "integer";
-
+function apiCurveToLogCurve(curve: WellboreLogCurveData_api): WellLogCurve {
     return {
-        name: getUniqueCurveNameForCurveData(curve, nonUniqueCurveNames),
-        // ! The Well Log JSON format does *technically* support multiple dimensions, but the subsurface component does not
+        name: curve.name,
+        // ! The official Well Log JSON format supports multiple dimensions, but the subsurface component does not
         // dimensions: curve.dataPoints[0].length - 1,
         dimensions: 1,
-        valueType,
+        valueType: getCurveValueType(curve),
         // ? if this is just gonna be the meter in depth for all of them
         unit: curve.unit,
         description: curve.curveDescription,
@@ -170,7 +192,18 @@ function apiCurveToLogCurve(curve: WellboreLogCurveData_api, nonUniqueCurveNames
     };
 }
 
-type DataRowAccumulatorMap = Record<number, SafeWellLogDataRow>;
+function getCurveValueType(curve: WellboreLogCurveData_api): AllowedLogValue {
+    // This check could be done a bit more thoroughly, but AFAIK the value type field
+    // is not *actually* used in the viewer, and per now, all points return float
+    const valueType = typeof curve.dataPoints[0]?.[1];
+
+    // @ts-expect-error typing of includes() doesn't accept general strings (which is weird)
+    if (ALLOWED_LOG_VALUE_TYPES.includes(valueType)) {
+        return valueType as AllowedLogValue;
+    }
+
+    return "float";
+}
 
 function maybeInjectDataRow(
     rowAcc: DataRowAccumulatorMap,

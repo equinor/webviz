@@ -23,6 +23,15 @@ export class EnsembleSet {
         return this._ensembleArr.find((ens) => ens.getIdent().equals(ensembleIdent)) ?? null;
     }
 
+    /**
+     * Searches the set for any ensemble that matches the given predicate function
+     * @param predicate Some predicate to check ensembles by
+     * @returns One ensemble, if any was found. Otherwise returns null
+     */
+    findEnsembleBy(predicate: (ens: Ensemble) => boolean): Ensemble | null {
+        return this._ensembleArr.find(predicate) ?? null;
+    }
+
     findEnsembleByIdentString(ensembleIdentString: string): Ensemble | null {
         try {
             const ensembleIdent = EnsembleIdent.fromString(ensembleIdentString);

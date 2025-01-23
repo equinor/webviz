@@ -100,6 +100,30 @@ class SmdaAccess:
 
         return valid_data
 
+    async def get_stratigraphy_for_wellbore_and_column(
+        self, wellbore_uuid: str, strat_column_ident: str
+    ) -> list[WellboreStratigraphicUnit]:
+        """
+        Get a list of all well-picks for a wellbore within a stratigraphic column
+        """
+        endpoint = SmdaEndpoints.WELLBORE_STRATIGRAPHY
+        params = {
+            "_projection": data_model_to_projection_param(WellboreStratigraphicUnit),
+            "_sort": "entry_md",
+            "wellbore_uuid": wellbore_uuid,
+            "strat_column_identifier": strat_column_ident,
+        }
+
+        results = await self._smda_get_request(endpoint=endpoint, params=params)
+
+        if not results:
+            raise NoDataError(
+                f"No stratigraphic entries found for wellbore {wellbore_uuid=} in column {strat_column_ident=}.",
+                Service.SMDA,
+            )
+
+        return [WellboreStratigraphicUnit(**result) for result in results]
+
     async def get_strat_unit_types_for_wellbore(self, wellbore_uuid: str) -> List[str]:
         """
         Get a list of all stratigraphic unit types (group, formation, subzone, etc...) that are present for a given wellbore
@@ -109,11 +133,7 @@ class SmdaAccess:
 
         result = await self._smda_get_aggregation_request(endpoint=endpoint, params=params)
 
-        print(result)
-
         unit_types = map(lambda entry: entry["key"], result["strat_unit_type"])
-
-        print(unit_types)
 
         return list(unit_types)
 
