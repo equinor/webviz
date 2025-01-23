@@ -13,6 +13,15 @@ from primary.services.sumo_access.parameter_access import ParameterAccess
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.services.summary_delta_vectors import create_delta_vector_table, create_realization_delta_vector_list
+from primary.services.summary_total_vectors import (
+    create_per_day_vector_name,
+    create_per_interval_vector_name,
+    get_total_vector_name,
+    is_per_day_vector,
+    is_per_interval_vector,
+    is_per_interval_or_per_day_vector,
+    is_total_vector,
+)
 from primary.utils.query_string_utils import decode_uint_list_str
 
 from . import converters, schemas
@@ -29,6 +38,7 @@ async def get_vector_list(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
+    include_cumulative_vectors: Annotated[bool, Query(description="Include cumulative vectors")],
 ) -> list[schemas.VectorDescription]:
     """Get list of all vectors in a given Sumo ensemble, excluding any historical vectors"""
 
@@ -44,9 +54,73 @@ async def get_vector_list(
         schemas.VectorDescription(name=vi.name, descriptive_name=vi.name, has_historical=vi.has_historical)
         for vi in vector_info_arr
     ]
+
     perf_metrics.record_lap("convert-data")
 
+    if not include_cumulative_vectors:
+        LOGGER.info(f"Got vector list in: {perf_metrics.to_string()}")
+        return ret_arr
+
+    for vec in vector_info_arr:
+        if not is_total_vector(vec.name):
+            continue
+
+        per_day_vector_name = create_per_day_vector_name(vec.name)
+        per_interval_vector_name = create_per_interval_vector_name(vec.name)
+        ret_arr.extend(
+            [
+                schemas.VectorDescription(
+                    name=per_day_vector_name, descriptive_name=per_day_vector_name, has_historical=False
+                ),
+                schemas.VectorDescription(
+                    name=per_interval_vector_name, descriptive_name=per_interval_vector_name, has_historical=False
+                ),
+            ]
+        )
+
     LOGGER.info(f"Got vector list in: {perf_metrics.to_string()}")
+
+    return ret_arr
+
+
+@router.get("/cumulative_vector_list/")
+async def get_cumulative_vector_list(
+    response: Response,
+    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
+    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
+    ensemble_name: Annotated[str, Query(description="Ensemble name")],
+) -> list[schemas.VectorDescription]:
+    """Get list of all cumulative vectors in a given Sumo ensemble, excluding any historical vectors"""
+
+    perf_metrics = ResponsePerfMetrics(response)
+
+    access = SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    perf_metrics.record_lap("get-access")
+
+    vector_info_arr = await access.get_available_vectors_async()
+    perf_metrics.record_lap("get-available-vectors")
+
+    ret_arr: list[schemas.VectorDescription] = []
+    for vec in vector_info_arr:
+        if not is_total_vector(vec.name):
+            continue
+
+        per_day_vector_name = create_per_day_vector_name(vec.name)
+        per_interval_vector_name = create_per_interval_vector_name(vec.name)
+        ret_arr.extend(
+            [
+                schemas.VectorDescription(
+                    name=per_day_vector_name, descriptive_name=per_day_vector_name, has_historical=False
+                ),
+                schemas.VectorDescription(
+                    name=per_interval_vector_name, descriptive_name=per_interval_vector_name, has_historical=False
+                ),
+            ]
+        )
+
+    perf_metrics.record_lap("convert-data")
+
+    LOGGER.info(f"Got cumulative vector list in: {perf_metrics.to_string()}")
 
     return ret_arr
 
@@ -122,14 +196,40 @@ async def get_realizations_vector_data(
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
     access = SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
-    sumo_vec_arr = await access.get_vector_async(
-        vector_name=vector_name,
-        resampling_frequency=sumo_freq,
-        realizations=realizations,
-    )
-    perf_metrics.record_lap("get-vector")
+
+    if is_per_interval_vector(vector_name):
+        "PER_DAY_WOPT:A1"
+        total_vector_name = get_total_vector_name(vector_name)
+
+        total_vector_table_pa, total_vector_metadata = await access.get_vector_table_async(
+            vector_name=total_vector_name,
+            resampling_frequency=sumo_freq,
+            realizations=realizations,
+        )
+        perf_metrics.record_lap("get-total-vector-table")
+
+        # Generate per interval vector
+
+    elif is_per_day_vector(vector_name):
+        total_vector_name = get_total_vector_name(vector_name)
+
+        total_vector_table_pa, total_vector_metadata = await access.get_vector_table_async(
+            vector_name=total_vector_name,
+            resampling_frequency=sumo_freq,
+            realizations=realizations,
+        )
+        perf_metrics.record_lap("get-total-vector-table")
+
+        # Generate per interval vector
+
+    else:
+        sumo_vec_arr = await access.get_vector_async(
+            vector_name=vector_name,
+            resampling_frequency=sumo_freq,
+            realizations=realizations,
+        )
+        perf_metrics.record_lap("get-vector")
 
     ret_arr: list[schemas.VectorRealizationData] = []
     for vec in sumo_vec_arr:
