@@ -1,10 +1,10 @@
 import { WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { settingsToViewInterfaceInitialization } from "@modules/WellLogViewer/interfaces";
 
 import { atom } from "jotai";
 import _ from "lodash";
 
+import { requiredCurvesAtom } from "./baseAtoms";
 import { wellboreTrajectoryQueryAtom } from "./queryAtoms";
 
 export const intersectionReferenceSystemAtom = atom<IntersectionReferenceSystem | null>((get) => {
@@ -33,8 +33,7 @@ function trajectoryToReferenceSystemPath(trajectory: WellboreTrajectory_api): nu
 // (with no way to override it, or specify a log run). This atom provides a list of all curve names that are not unique
 // across all selected curves, allowing us to override the names when adding them to the track
 export const nonUniqueCurveNamesAtom = atom<Set<string>>((get) => {
-    // TODO: Wrong use of interface, fix
-    const requiredCurves = settingsToViewInterfaceInitialization.requiredCurves(get);
+    const requiredCurves = get(requiredCurvesAtom);
 
     const seenNames = new Set<string>();
     const nonUniqueNames = new Set<string>();
