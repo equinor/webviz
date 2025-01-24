@@ -21,6 +21,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                         query: {
                             case_uuid: ensembleIdent.getCaseUuid(),
                             ensemble_name: ensembleIdent.getEnsembleName(),
+                            include_cumulative_vectors: true,
                         },
                         throwOnError: true,
                     });

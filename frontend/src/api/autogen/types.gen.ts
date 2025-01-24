@@ -1176,6 +1176,10 @@ export type GetVectorListData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Include cumulative vectors
+         */
+        include_cumulative_vectors?: boolean | null;
     };
     url: "/timeseries/vector_list/";
 };
@@ -1197,6 +1201,40 @@ export type GetVectorListResponses_api = {
 };
 
 export type GetVectorListResponse_api = GetVectorListResponses_api[keyof GetVectorListResponses_api];
+
+export type GetCumulativeVectorListData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+    };
+    url: "/timeseries/cumulative_vector_list/";
+};
+
+export type GetCumulativeVectorListErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetCumulativeVectorListError_api = GetCumulativeVectorListErrors_api[keyof GetCumulativeVectorListErrors_api];
+
+export type GetCumulativeVectorListResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<VectorDescription_api>;
+};
+
+export type GetCumulativeVectorListResponse_api = GetCumulativeVectorListResponses_api[keyof GetCumulativeVectorListResponses_api];
 
 export type GetDeltaEnsembleVectorListData_api = {
     body?: never;

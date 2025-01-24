@@ -10,6 +10,9 @@ import type {
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
+    GetCumulativeVectorListData_api,
+    GetCumulativeVectorListError_api,
+    GetCumulativeVectorListResponse_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataError_api,
     GetDeltaEnsembleRealizationsVectorDataResponse_api,
@@ -253,6 +256,21 @@ export const getVectorList = <ThrowOnError extends boolean = false>(
         ...options,
         url: "/timeseries/vector_list/",
     });
+};
+
+/**
+ * Get Cumulative Vector List
+ * Get list of all cumulative vectors in a given Sumo ensemble, excluding any historical vectors
+ */
+export const getCumulativeVectorList = <ThrowOnError extends boolean = false>(
+    options: Options<GetCumulativeVectorListData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetCumulativeVectorListResponse_api, GetCumulativeVectorListError_api, ThrowOnError>(
+        {
+            ...options,
+            url: "/timeseries/cumulative_vector_list/",
+        }
+    );
 };
 
 /**

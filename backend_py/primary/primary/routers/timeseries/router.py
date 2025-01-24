@@ -13,13 +13,15 @@ from primary.services.sumo_access.parameter_access import ParameterAccess
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.services.summary_delta_vectors import create_delta_vector_table, create_realization_delta_vector_list
-from primary.services.summary_total_vectors import (
+from primary.services.summary_from_cumulative_vectors import (
     create_per_day_vector_name,
     create_per_interval_vector_name,
+    create_per_interval_vector_table_pa,
+    create_per_day_vector_table_pa,
+    create_realization_from_cumulative_vector_list,
     get_total_vector_name,
     is_per_day_vector,
     is_per_interval_vector,
-    is_per_interval_or_per_day_vector,
     is_total_vector,
 )
 from primary.utils.query_string_utils import decode_uint_list_str
@@ -38,7 +40,7 @@ async def get_vector_list(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
-    include_cumulative_vectors: Annotated[bool, Query(description="Include cumulative vectors")],
+    include_cumulative_vectors: Annotated[bool | None, Query(description="Include cumulative vectors")] = None,
 ) -> list[schemas.VectorDescription]:
     """Get list of all vectors in a given Sumo ensemble, excluding any historical vectors"""
 
@@ -198,6 +200,7 @@ async def get_realizations_vector_data(
     access = SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
 
+    ret_arr: list[schemas.VectorRealizationData] = []
     if is_per_interval_vector(vector_name):
         "PER_DAY_WOPT:A1"
         total_vector_name = get_total_vector_name(vector_name)
@@ -210,6 +213,24 @@ async def get_realizations_vector_data(
         perf_metrics.record_lap("get-total-vector-table")
 
         # Generate per interval vector
+        per_interval_vector_table = create_per_interval_vector_table_pa(total_vector_table_pa)
+        perf_metrics.record_lap("create-per-interval-vector-table")
+
+        unit = total_vector_metadata.unit
+
+        per_interval_vector_list = create_realization_from_cumulative_vector_list(
+            per_interval_vector_table, vector_name, unit
+        )
+        for vec in per_interval_vector_list:
+            ret_arr.append(
+                schemas.VectorRealizationData(
+                    realization=vec.realization,
+                    timestamps_utc_ms=vec.timestamps_utc_ms,
+                    values=vec.values,
+                    unit=vec.unit,
+                    is_rate=False,
+                )
+            )
 
     elif is_per_day_vector(vector_name):
         total_vector_name = get_total_vector_name(vector_name)
@@ -221,7 +242,23 @@ async def get_realizations_vector_data(
         )
         perf_metrics.record_lap("get-total-vector-table")
 
-        # Generate per interval vector
+        # Generate per day vector
+        per_day_vector_table = create_per_day_vector_table_pa(total_vector_table_pa)
+        perf_metrics.record_lap("create-per-day-vector-table")
+
+        unit = f"{total_vector_metadata.unit}/day"
+
+        per_day_vector_list = create_realization_from_cumulative_vector_list(per_day_vector_table, vector_name, unit)
+        for vec in per_day_vector_list:
+            ret_arr.append(
+                schemas.VectorRealizationData(
+                    realization=vec.realization,
+                    timestamps_utc_ms=vec.timestamps_utc_ms,
+                    values=vec.values,
+                    unit=vec.unit,
+                    is_rate=True,
+                )
+            )
 
     else:
         sumo_vec_arr = await access.get_vector_async(
@@ -231,17 +268,16 @@ async def get_realizations_vector_data(
         )
         perf_metrics.record_lap("get-vector")
 
-    ret_arr: list[schemas.VectorRealizationData] = []
-    for vec in sumo_vec_arr:
-        ret_arr.append(
-            schemas.VectorRealizationData(
-                realization=vec.realization,
-                timestamps_utc_ms=vec.timestamps_utc_ms,
-                values=vec.values,
-                unit=vec.metadata.unit,
-                is_rate=vec.metadata.is_rate,
+        for vec in sumo_vec_arr:
+            ret_arr.append(
+                schemas.VectorRealizationData(
+                    realization=vec.realization,
+                    timestamps_utc_ms=vec.timestamps_utc_ms,
+                    values=vec.values,
+                    unit=vec.metadata.unit,
+                    is_rate=vec.metadata.is_rate,
+                )
             )
-        )
 
     LOGGER.info(f"Loaded realization summary data in: {perf_metrics.to_string()}")
 
