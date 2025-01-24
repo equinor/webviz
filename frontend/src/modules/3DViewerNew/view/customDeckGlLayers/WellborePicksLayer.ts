@@ -41,7 +41,7 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                 type: "Feature",
                 geometry: {
                     type: "Point",
-                    coordinates: [wellPick.easting, wellPick.northing],
+                    coordinates: [wellPick.easting, wellPick.northing, -wellPick.tvdMsl],
                 },
                 properties: {
                     name: `${wellPick.wellBoreUwi}, TVD_MSL: ${wellPick.tvdMsl}, MD: ${wellPick.md}`,
@@ -57,7 +57,7 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
 
         const textData: TextLayerData[] = this.props.data.map((wellPick) => {
             return {
-                coordinates: [wellPick.easting, wellPick.northing, wellPick.tvdMsl],
+                coordinates: [wellPick.easting, wellPick.northing, -wellPick.tvdMsl],
                 name: wellPick.wellBoreUwi,
             };
         });
