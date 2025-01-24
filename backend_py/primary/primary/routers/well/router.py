@@ -238,7 +238,8 @@ async def get_wellbore_log_curve_headers(
     Logs are available from multiple sources, which can be specificed by the "sources" parameter.
     """
 
-    # TODO: Add wellbore survey sample endpoint. for last set of curves (for now) SSDL might be best
+    # pylint: disable=fixme
+    # TODO: Future work -- Add wellbore survey sample endpoint. for last set of curves (for now) SSDL might be best
 
     # Handle DROGON
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):

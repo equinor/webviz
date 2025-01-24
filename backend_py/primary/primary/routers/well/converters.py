@@ -113,7 +113,6 @@ def convert_wellbore_perforation_to_schema(
     )
 
 
-# TODO: Evaluate if the current header structure is the most useful
 # ? Should all these conversions happen within a dedicated service instead?
 def convert_wellbore_log_curve_header_to_schema(curve_header: WellboreLogCurveHeader) -> schemas.WellboreLogCurveHeader:
     if curve_header.log_name is None:
@@ -268,7 +267,7 @@ def convert_strat_unit_data_to_log_curve_schema(
 
         if not next_unit:
             # End of curve. Add a "None" entry to make it explicit.
-            # TODO: For the future; if the subsurface component is updated to respect min-max values, the final "None" value shouldnt be needed
+            # ! For future refference; if the subsurface component is updated to respect min-max values, this "None" value shouldnt be needed
 
             # Get the exit_md furthest down the curve
             last_exit = current_unit.exit_md
