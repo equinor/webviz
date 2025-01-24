@@ -1,6 +1,5 @@
-import { WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
+import { WellLogCurveSourceEnum_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
 import {
     MAIN_AXIS_CURVE,
     SECONDARY_AXIS_CURVE,
@@ -38,6 +37,7 @@ describe("QueryDataTransform", () => {
         ];
 
         const mockCurveData: WellboreLogCurveData_api = {
+            source: WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
             name: "GR",
             logName: "TEST",
             unit: "API",
@@ -84,7 +84,7 @@ describe("QueryDataTransform", () => {
                     name: "GR",
                     unit: "API",
                     dimensions: 1,
-                    valueType: "number",
+                    valueType: "float",
                     description: "Gamma Ray",
                 },
             ]);
@@ -107,21 +107,36 @@ describe("QueryDataTransform", () => {
         });
 
         it("should gracefully handle invalid index values", () => {
-            const curveData = {
+            // @ts-expect-error Purposefully invalid data
+            const curveDataWithNullIndex = {
                 ...mockCurveData,
                 dataPoints: [
                     [null, 50],
                     [null, 60],
                 ],
-            };
+            } as WellboreLogCurveData_api;
 
-            const wellLog = createWellLogSets([curveData], mockTrajectory, mockReferenceSystem)[1];
+            // @ts-expect-error Purposefully invalid data
+            const mockWithStringIndices: WellboreLogCurveData_api = {
+                ...mockCurveData,
+                dataPoints: [
+                    ["a", 1],
+                    ["b", 2],
+                ],
+            } as WellboreLogCurveData_api;
+
+            const wellLog = createWellLogSets([curveDataWithNullIndex], mockTrajectory, mockReferenceSystem)[1];
+
+            expect(() => {
+                createWellLogSets([mockWithStringIndices], mockTrajectory, mockReferenceSystem);
+            }).toThrow("Scale index value cannot be a string");
 
             expect(wellLog.data).toEqual([]);
         });
 
         it("should handle multiple curves correctly", () => {
             const secondCurveData: WellboreLogCurveData_api = {
+                source: WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
                 name: "RHOB",
                 logName: "TEST",
                 unit: "g/cm3",
@@ -149,14 +164,14 @@ describe("QueryDataTransform", () => {
                     name: "GR",
                     unit: "API",
                     dimensions: 1,
-                    valueType: "number",
+                    valueType: "float",
                     description: "Gamma Ray",
                 },
                 {
                     name: "RHOB",
                     unit: "g/cm3",
                     dimensions: 1,
-                    valueType: "number",
+                    valueType: "float",
                     description: null,
                 },
             ]);
@@ -168,13 +183,14 @@ describe("QueryDataTransform", () => {
         });
 
         it("should handle multiple dimensions correctly", () => {
+            // @ts-expect-error Purposefully invalid data
             const curveData = {
                 ...mockCurveData,
                 dataPoints: [
                     [1000, 50, 1111],
                     [2000, 60, 2222],
                 ],
-            };
+            } as WellboreLogCurveData_api;
 
             const wellLog = createWellLogSets([curveData], mockTrajectory, mockReferenceSystem)[1];
 
@@ -225,20 +241,6 @@ describe("QueryDataTransform", () => {
                 [3000, 300, null],
                 [4000, 400, null],
             ]);
-        });
-
-        it("should throw if index entry is a string", () => {
-            const mockWithStringIndices: WellboreLogCurveData_api = {
-                ...mockCurveData,
-                dataPoints: [
-                    ["a", 1],
-                    ["b", 2],
-                ],
-            };
-
-            expect(() => {
-                createWellLogSets([mockWithStringIndices], mockTrajectory, mockReferenceSystem);
-            }).toThrow("Scale index value cannot be a string");
         });
 
         it("should handle string data values", () => {
@@ -347,32 +349,56 @@ describe("QueryDataTransform", () => {
 
             expect(curve1.name).not.toBe(curve2.name);
         });
+
+        it("should append name to logName if source is not SSDL_WELL_LOG", () => {
+            const curveData = [
+                {
+                    source: WellLogCurveSourceEnum_api.SMDA_GEOLOGY,
+                    logName: "log1",
+                    name: "curve1",
+                    dataPoints: [[0, 1]],
+                },
+            ] as WellboreLogCurveData_api[];
+
+            const result = createWellLogSets(curveData, mockTrajectory, mockReferenceSystem);
+
+            expect(result[1].header.name).toBe("log1::curve1");
+        });
+
+        it("should not append name to logName if source is SSDL_WELL_LOG", () => {
+            const curveData = [
+                {
+                    source: WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
+                    logName: "log1",
+                    name: "curve1",
+                    dataPoints: [[0, 1]],
+                },
+            ] as WellboreLogCurveData_api[];
+
+            const result = createWellLogSets(curveData, mockTrajectory, mockReferenceSystem);
+
+            expect(result[1].header.name).toBe("log1");
+        });
     });
 
     describe("Well-picks", () => {
-        const mockNonUnitPick = {
-            identifier: "Some pick",
-            md: 1000,
-        } as WellPicksLayerData["nonUnitPicks"][0];
-
-        const mockUnitPick = {
-            entryPick: {
-                identifier: "A units entry-pick",
+        const mockWellPicks: WellborePick_api[] = [
+            {
+                pickIdentifier: "Some pick",
+                md: 1000,
+            } as WellborePick_api,
+            {
+                pickIdentifier: "A units entry-pick",
                 md: 1500,
-            },
-            exitPick: {
-                identifier: "A units exit-pick",
+            } as WellborePick_api,
+            {
+                pickIdentifier: "A units exit-pick",
                 md: 2000,
-            },
-        } as WellPicksLayerData["unitPicks"][0];
-
-        const mockTransformedWellpickData: WellPicksLayerData = {
-            nonUnitPicks: [mockNonUnitPick],
-            unitPicks: [mockUnitPick],
-        };
+            } as WellborePick_api,
+        ];
 
         it("should generate wellpick props from wellpick data", () => {
-            const wellpickProps = createLogViewerWellPicks(mockTransformedWellpickData);
+            const wellpickProps = createLogViewerWellPicks(mockWellPicks);
 
             expect(wellpickProps.wellpick.curves).toEqual([
                 MAIN_AXIS_CURVE,
@@ -391,13 +417,16 @@ describe("QueryDataTransform", () => {
         });
 
         it("should merge stacked well-picks", () => {
-            const stackedNonUnitPick = { ...mockNonUnitPick, md: 1500 };
-            const pickDataWithStacked = { ...mockTransformedWellpickData, nonUnitPicks: [stackedNonUnitPick] };
+            const picksWithStacked: WellborePick_api[] = [
+                ...mockWellPicks,
+                { pickIdentifier: "A stacked pick", md: 1500 } as WellborePick_api,
+            ];
 
-            const wellpickProps = createLogViewerWellPicks(pickDataWithStacked);
+            const wellpickProps = createLogViewerWellPicks(picksWithStacked);
 
             expect(wellpickProps.wellpick.data).toEqual([
-                [1500, "Some pick + A units entry-pick"],
+                [1000, "Some pick"],
+                [1500, "A units entry-pick + A stacked pick"],
                 [2000, "A units exit-pick"],
             ]);
         });

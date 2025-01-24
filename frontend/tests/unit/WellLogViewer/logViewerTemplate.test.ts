@@ -335,7 +335,7 @@ describe("settings import export tests", () => {
                 {
                     _key: expect.any(String),
                     _isValid: true,
-                    name: "Curve 1",
+                    name: "Continuous1",
                     type: "line",
                 },
             ],
@@ -347,7 +347,7 @@ describe("settings import export tests", () => {
                 {
                     _key: expect.any(String),
                     _isValid: true,
-                    name: "Curve 2",
+                    name: "Flag1",
                     type: "dot",
                 },
             ],
