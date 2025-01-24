@@ -544,11 +544,36 @@ export type RftWellInfo_api = {
     timestamps_utc_ms: Array<number>;
 };
 
+export type SeismicCrosslineData_api = {
+    slice_traces_b64arr: B64FloatArray_api;
+    start_utm_x: number;
+    start_utm_y: number;
+    end_utm_x: number;
+    end_utm_y: number;
+    inline_min: number;
+    inline_max: number;
+    inline_no_samples: number;
+    z_min: number;
+    z_max: number;
+    z_samples: number;
+    z_unit: string;
+    value_min: number;
+    value_max: number;
+};
+
 export type SeismicCubeMeta_api = {
     seismic_attribute: string;
     iso_date_or_interval: string;
     is_observation: boolean;
     is_depth: boolean;
+    i_min: number;
+    i_max: number;
+    j_min: number;
+    j_max: number;
+    k_min: number;
+    k_max: number;
+    z_min: number;
+    z_max: number;
 };
 
 /**
@@ -598,6 +623,23 @@ export type SeismicFenceData_api = {
 export type SeismicFencePolyline_api = {
     x_points: Array<number>;
     y_points: Array<number>;
+};
+
+export type SeismicInlineData_api = {
+    slice_traces_b64arr: B64FloatArray_api;
+    start_utm_x: number;
+    start_utm_y: number;
+    end_utm_x: number;
+    end_utm_y: number;
+    crossline_min: number;
+    crossline_max: number;
+    crossline_no_samples: number;
+    z_min: number;
+    z_max: number;
+    z_samples: number;
+    z_unit: string;
+    value_min: number;
+    value_max: number;
 };
 
 export enum SensitivityType_api {
@@ -3071,6 +3113,114 @@ export type GetSeismicCubeMetaListResponses_api = {
 };
 
 export type GetSeismicCubeMetaListResponse_api = GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
+
+export type GetInlineSliceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * Inline number
+         */
+        inline_no: number;
+    };
+    url: "/seismic/get_inline_slice/";
+};
+
+export type GetInlineSliceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetInlineSliceError_api = GetInlineSliceErrors_api[keyof GetInlineSliceErrors_api];
+
+export type GetInlineSliceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SeismicInlineData_api;
+};
+
+export type GetInlineSliceResponse_api = GetInlineSliceResponses_api[keyof GetInlineSliceResponses_api];
+
+export type GetCrosslineSliceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * Crossline number
+         */
+        crossline_no: number;
+    };
+    url: "/seismic/get_crossline_slice/";
+};
+
+export type GetCrosslineSliceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetCrosslineSliceError_api = GetCrosslineSliceErrors_api[keyof GetCrosslineSliceErrors_api];
+
+export type GetCrosslineSliceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SeismicCrosslineData_api;
+};
+
+export type GetCrosslineSliceResponse_api = GetCrosslineSliceResponses_api[keyof GetCrosslineSliceResponses_api];
 
 export type PostGetSeismicFenceData_api = {
     body: BodyPostGetSeismicFence_api;

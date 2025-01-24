@@ -3,15 +3,24 @@ import { Layer } from "@deck.gl/core";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
+import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
+import { RealizationSeismicInlineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer";
+import {
+    SeismicCrosslineData_trans,
+    SeismicInlineData_trans,
+} from "@modules/3DViewerNew/settings/queries/queryDataTransforms";
 import { Layer as LayerInterface } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
+import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { Grid3DLayer, MapLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Rgb, parse } from "culori";
 import { Feature } from "geojson";
+
+import { createSeismicCrosslineLayerData, createSeismicInlineLayerData } from "./seismicSliceUtils";
 
 import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
 import { RealizationSurfaceLayer } from "../../LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
@@ -50,7 +59,6 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
         );
     }
     if (layer instanceof RealizationSurfaceLayer) {
-        console.log(data);
         return createSurfaceMeshLayer(
             data,
             layer.getItemDelegate().getId(),
@@ -58,8 +66,57 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
             colorScale
         );
     }
+    if (layer instanceof RealizationSeismicInlineLayer) {
+        const seismicData: SeismicInlineData_trans = data;
+        const seismicLayerData = createSeismicInlineLayerData(seismicData);
+
+        const coloringMode: TGrid3DColoringMode = TGrid3DColoringMode.Property;
+        const grid3dLayer = new Grid3DLayer({
+            id: layer.getItemDelegate().getId(),
+            name: layer.getItemDelegate().getName(),
+            pointsData: seismicLayerData.pointsFloat32Arr,
+            polysData: seismicLayerData.polysUint32Arr,
+            propertiesData: seismicLayerData.propertyFloat32Arr,
+            ZIncreasingDownwards: true,
+            gridLines: false,
+            colorMapRange: [seismicLayerData.minValue, seismicLayerData.maxValue],
+            colorMapName: "Physics",
+            colorMapClampColor: true,
+            coloringMode: coloringMode,
+            material: { ambient: 0, diffuse: 0.7, shininess: 1, specularColor: [25, 25, 25] },
+            colorMapFunction: makeColorMapFunction(colorScale, seismicLayerData.minValue, seismicLayerData.maxValue),
+
+            pickable: true,
+        });
+        return grid3dLayer as unknown as WorkingGrid3dLayer;
+    }
+    if (layer instanceof RealizationSeismicCrosslineLayer) {
+        const seismicData: SeismicCrosslineData_trans = data;
+        const seismicLayerData = createSeismicCrosslineLayerData(seismicData);
+
+        const coloringMode: TGrid3DColoringMode = TGrid3DColoringMode.Property;
+        const grid3dLayer = new Grid3DLayer({
+            id: layer.getItemDelegate().getId(),
+            name: layer.getItemDelegate().getName(),
+            pointsData: seismicLayerData.pointsFloat32Arr,
+            polysData: seismicLayerData.polysUint32Arr,
+            propertiesData: seismicLayerData.propertyFloat32Arr,
+            ZIncreasingDownwards: true,
+            gridLines: false,
+            colorMapRange: [seismicLayerData.minValue, seismicLayerData.maxValue],
+            colorMapName: "Physics",
+            colorMapClampColor: true,
+            coloringMode: coloringMode,
+            material: { ambient: 0, diffuse: 0.7, shininess: 1, specularColor: [25, 25, 25] },
+            colorMapFunction: makeColorMapFunction(colorScale, seismicLayerData.minValue, seismicLayerData.maxValue),
+
+            pickable: true,
+        });
+        return grid3dLayer as unknown as WorkingGrid3dLayer;
+    }
     return null;
 }
+
 export function createSurfaceMeshLayer(
     layerData: SurfaceDataFloat_trans,
     id: string,
@@ -86,9 +143,9 @@ export function createSurfaceMeshLayer(
         },
         valueRange: [layerData.value_min, layerData.value_max],
         colorMapRange: [layerData.value_min, layerData.value_max],
-        isContoursDepth: true,
-        contours: [0, 10],
-        gridLines: true,
+        // isContoursDepth: true,
+        // contours: [0, 10],
+        gridLines: false,
         material: useMaterial,
         smoothShading: useSmoothShading,
         colorMapName: "Physics",

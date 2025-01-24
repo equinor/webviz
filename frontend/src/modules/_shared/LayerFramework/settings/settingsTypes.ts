@@ -16,4 +16,7 @@ export enum SettingType {
     GRID_LAYER_K_RANGE = "gridLayerKRange",
     GRID_LAYER_K = "gridLayerK",
     SHOW_GRID_LINES = "showGridLines",
+    SEISMIC_ATTRIBUTE = "seismicAttribute",
+    SEISMIC_INLINE = "seismicInline",
+    SEISMIC_CROSSLINE = "seismicCrossline",
 }

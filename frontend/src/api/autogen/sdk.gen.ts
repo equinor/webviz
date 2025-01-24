@@ -10,6 +10,9 @@ import type {
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
+    GetCrosslineSliceData_api,
+    GetCrosslineSliceError_api,
+    GetCrosslineSliceResponse_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataError_api,
     GetDeltaEnsembleRealizationsVectorDataResponse_api,
@@ -45,6 +48,9 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataError_api,
     GetHistoricalVectorDataResponse_api,
+    GetInlineSliceData_api,
+    GetInlineSliceError_api,
+    GetInlineSliceResponse_api,
     GetIsGridGeometrySharedData_api,
     GetIsGridGeometrySharedError_api,
     GetIsGridGeometrySharedResponse_api,
@@ -987,6 +993,38 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetSeismicCubeMetaListResponse_api, GetSeismicCubeMetaListError_api, ThrowOnError>({
         ...options,
         url: "/seismic/seismic_cube_meta_list/",
+    });
+};
+
+/**
+ * Get Inline Slice
+ * Get a seismic slice from a seismic cube.
+ *
+ * Returns:
+ * A SeismicFenceData object with fence traces in encoded 1D array, metadata for trace array decoding and fence min/max depth.
+ */
+export const getInlineSlice = <ThrowOnError extends boolean = false>(
+    options: Options<GetInlineSliceData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetInlineSliceResponse_api, GetInlineSliceError_api, ThrowOnError>({
+        ...options,
+        url: "/seismic/get_inline_slice/",
+    });
+};
+
+/**
+ * Get Crossline Slice
+ * Get a seismic slice from a seismic cube.
+ *
+ * Returns:
+ * A SeismicFenceData object with fence traces in encoded 1D array, metadata for trace array decoding and fence min/max depth.
+ */
+export const getCrosslineSlice = <ThrowOnError extends boolean = false>(
+    options: Options<GetCrosslineSliceData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetCrosslineSliceResponse_api, GetCrosslineSliceError_api, ThrowOnError>({
+        ...options,
+        url: "/seismic/get_crossline_slice/",
     });
 };
 

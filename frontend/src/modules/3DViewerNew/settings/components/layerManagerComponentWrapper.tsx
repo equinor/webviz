@@ -11,6 +11,7 @@ import { MenuItem } from "@lib/components/MenuItem";
 import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
+import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
 import { EnsembleSetting } from "@modules//_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
@@ -39,6 +40,7 @@ import {
 import { useAtom } from "jotai";
 
 import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
+import { RealizationSeismicInlineLayer } from "../../LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer/RealizationSeismicInlineLayer";
 import { RealizationSurfaceLayer } from "../../LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
@@ -82,6 +84,12 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return;
             case "realization-surface":
                 groupDelegate.insertChild(new RealizationSurfaceLayer(props.layerManager), numSharedSettings);
+                return;
+            case "realization-seismic-inline":
+                groupDelegate.insertChild(new RealizationSeismicInlineLayer(props.layerManager), numSharedSettings);
+                return;
+            case "realization-seismic-crossline":
+                groupDelegate.insertChild(new RealizationSeismicCrosslineLayer(props.layerManager), numSharedSettings);
                 return;
             case "drilled-wellbore-trajectories":
                 groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(props.layerManager), numSharedSettings);
@@ -239,6 +247,16 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                         identifier: "realization-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Realization Surface",
+                    },
+                    {
+                        identifier: "realization-seismic-inline",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Realization Seismic Inline",
+                    },
+                    {
+                        identifier: "realization-seismic-crossline",
+                        icon: <Icon data={surface_layer} fontSize="small" />,
+                        label: "Realization Seismic Crossline",
                     },
                 ],
             },

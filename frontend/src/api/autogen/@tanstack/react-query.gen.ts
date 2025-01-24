@@ -10,6 +10,7 @@ import {
     getAlive,
     getAliveProtected,
     getCases,
+    getCrosslineSlice,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
     getDeltaEnsembleVectorList,
@@ -22,6 +23,7 @@ import {
     getGridParameter,
     getGridSurface,
     getHistoricalVectorData,
+    getInlineSlice,
     getIsGridGeometryShared,
     getIsSensitivityRun,
     getLogCurveData,
@@ -77,6 +79,7 @@ import type {
     GetAliveData_api,
     GetAliveProtectedData_api,
     GetCasesData_api,
+    GetCrosslineSliceData_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleStatisticalVectorDataData_api,
     GetDeltaEnsembleVectorListData_api,
@@ -89,6 +92,7 @@ import type {
     GetGridParameterData_api,
     GetGridSurfaceData_api,
     GetHistoricalVectorDataData_api,
+    GetInlineSliceData_api,
     GetIsGridGeometrySharedData_api,
     GetIsSensitivityRunData_api,
     GetLogCurveDataData_api,
@@ -1227,6 +1231,44 @@ export const getSeismicCubeMetaListOptions = (options: Options<GetSeismicCubeMet
             return data;
         },
         queryKey: getSeismicCubeMetaListQueryKey(options),
+    });
+};
+
+export const getInlineSliceQueryKey = (options: Options<GetInlineSliceData_api>) => [
+    createQueryKey("getInlineSlice", options),
+];
+
+export const getInlineSliceOptions = (options: Options<GetInlineSliceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInlineSlice({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInlineSliceQueryKey(options),
+    });
+};
+
+export const getCrosslineSliceQueryKey = (options: Options<GetCrosslineSliceData_api>) => [
+    createQueryKey("getCrosslineSlice", options),
+];
+
+export const getCrosslineSliceOptions = (options: Options<GetCrosslineSliceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getCrosslineSlice({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getCrosslineSliceQueryKey(options),
     });
 };
 

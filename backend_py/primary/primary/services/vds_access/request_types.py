@@ -28,7 +28,11 @@ class VdsInterpolation(StrEnum):
     ANGULAR = "angular"
     TRIANGULAR = "triangular"
 
-
+class VdsDirection(StrEnum):
+    INLINE = "inline"
+    CROSSLINE = "crossline"
+    SAMPLE = "sample"
+    
 class VdsCoordinateSystem(StrEnum):
     """
     Coordinate system options for vds fence
@@ -118,4 +122,23 @@ class VdsFenceRequest(VdsRequestedResource):
             "coordinates": self.coordinates.to_list(),
             "interpolation": self.interpolation.value,
             "fillValue": self.fill_value,
+        }
+
+@dataclass
+class VdsSliceRequest(VdsRequestedResource):
+    """
+    Definition of a slice request struct for vds-slice
+    See: https://github.com/equinor/oneseismic-api/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/api/request.go#L143-L185
+    """
+
+    direction: str
+    line_no: int
+    
+
+    def request_parameters(self) -> dict:
+        return {
+            "vds": self.vds,
+            "sas": self.sas,
+            "direction": self.direction.lower(),
+            "lineno": self.line_no,
         }

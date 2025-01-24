@@ -1,4 +1,5 @@
 from typing import List
+from enum import StrEnum
 
 from pydantic import BaseModel
 from webviz_pkg.core_utils.b64 import B64FloatArray
@@ -9,7 +10,14 @@ class SeismicCubeMeta(BaseModel):
     iso_date_or_interval: str
     is_observation: bool
     is_depth: bool
-
+    i_min: int
+    i_max: int
+    j_min: int
+    j_max: int
+    k_min: int
+    k_max: int
+    z_min: float
+    z_max: float
 
 class SeismicFencePolyline(BaseModel):
     """
@@ -59,6 +67,38 @@ class SeismicFenceData(BaseModel):
     min_fence_depth: float
     max_fence_depth: float
 
+
+class SeismicInlineData(BaseModel):
+    slice_traces_b64arr: B64FloatArray
+    start_utm_x: float
+    start_utm_y: float
+    end_utm_x: float
+    end_utm_y: float
+    crossline_min: int
+    crossline_max: int
+    crossline_no_samples: int
+    z_min: float
+    z_max: float
+    z_samples: int
+    z_unit: str
+    value_min: float
+    value_max: float
+    
+class SeismicCrosslineData(BaseModel):
+    slice_traces_b64arr: B64FloatArray
+    start_utm_x: float
+    start_utm_y: float
+    end_utm_x: float
+    end_utm_y: float
+    inline_min: int
+    inline_max: int
+    inline_no_samples: int
+    z_min: float
+    z_max: float
+    z_samples: int
+    z_unit: str
+    value_min: float
+    value_max: float
 
 class SurfaceMeshAndProperty(BaseModel):
     x_ori: float
