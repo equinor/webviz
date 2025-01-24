@@ -1,5 +1,6 @@
 import React from "react";
 
+import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
@@ -21,7 +22,7 @@ export class SeismicCrosslineSetting implements Setting<ValueType> {
     }
 
     getLabel(): string {
-        return "Seismic Crossline number";
+        return "Seismic crossline";
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -52,7 +53,7 @@ export class SeismicCrosslineSetting implements Setting<ValueType> {
             return null;
         }
 
-        const min = availableValues[1];
+        const min = availableValues[0];
         const max = availableValues[1];
 
         if (max === null) {
@@ -68,23 +69,33 @@ export class SeismicCrosslineSetting implements Setting<ValueType> {
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
         return function KRangeSlider(props: SettingComponentProps<ValueType>) {
-            function handleChange(_: any, value: number | number[]) {
+            function handleSliderChange(_: any, value: number | number[]) {
                 if (Array.isArray(value)) {
                     return value[0];
                 }
 
                 props.onValueChange(value);
             }
+            function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+                props.onValueChange(Number(event.target.value));
+            }
 
             return (
-                <Slider
-                    min={0}
-                    max={props.availableValues[1] ?? 1}
-                    onChange={handleChange}
-                    value={props.value ?? props.availableValues[0] ?? 1}
-                    debounceTimeMs={500}
-                    valueLabelDisplay="auto"
-                />
+                <div className="flex items-center space-x-1">
+                    <div className="flex-grow">
+                        <Slider
+                            min={0}
+                            max={props.availableValues[1] ?? 1}
+                            onChange={handleSliderChange}
+                            value={props.value ?? props.availableValues[0] ?? 1}
+                            debounceTimeMs={500}
+                            valueLabelDisplay="auto"
+                        />
+                    </div>
+                    <div className="w-1/5">
+                        <Input value={props.value} onChange={handleInputChange} />
+                    </div>
+                </div>
             );
         };
     }
