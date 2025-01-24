@@ -15,6 +15,7 @@ import {
     getDeltaEnsembleStatisticalVectorData,
     getDeltaEnsembleVectorList,
     getDeltaSurfaceData,
+    getDepthSlice,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
     getEnsembles,
@@ -84,6 +85,7 @@ import type {
     GetDeltaEnsembleStatisticalVectorDataData_api,
     GetDeltaEnsembleVectorListData_api,
     GetDeltaSurfaceDataData_api,
+    GetDepthSliceData_api,
     GetDrilledWellboreHeadersData_api,
     GetEnsembleDetailsData_api,
     GetEnsemblesData_api,
@@ -1269,6 +1271,25 @@ export const getCrosslineSliceOptions = (options: Options<GetCrosslineSliceData_
             return data;
         },
         queryKey: getCrosslineSliceQueryKey(options),
+    });
+};
+
+export const getDepthSliceQueryKey = (options: Options<GetDepthSliceData_api>) => [
+    createQueryKey("getDepthSlice", options),
+];
+
+export const getDepthSliceOptions = (options: Options<GetDepthSliceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDepthSlice({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getDepthSliceQueryKey(options),
     });
 };
 

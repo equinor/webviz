@@ -574,6 +574,7 @@ export type SeismicCubeMeta_api = {
     k_max: number;
     z_min: number;
     z_max: number;
+    z_inc: number;
 };
 
 /**
@@ -3221,6 +3222,60 @@ export type GetCrosslineSliceResponses_api = {
 };
 
 export type GetCrosslineSliceResponse_api = GetCrosslineSliceResponses_api[keyof GetCrosslineSliceResponses_api];
+
+export type GetDepthSliceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * depth
+         */
+        depth: number;
+    };
+    url: "/seismic/get_depth_slice/";
+};
+
+export type GetDepthSliceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetDepthSliceError_api = GetDepthSliceErrors_api[keyof GetDepthSliceErrors_api];
+
+export type GetDepthSliceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SurfaceDataFloat_api;
+};
+
+export type GetDepthSliceResponse_api = GetDepthSliceResponses_api[keyof GetDepthSliceResponses_api];
 
 export type PostGetSeismicFenceData_api = {
     body: BodyPostGetSeismicFence_api;

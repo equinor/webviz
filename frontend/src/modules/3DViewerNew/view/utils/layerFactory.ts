@@ -1,9 +1,10 @@
-import { WellborePick_api, WellboreTrajectory_api } from "@api";
+import { SurfaceDef_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { Layer } from "@deck.gl/core";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
+import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthSliceLayer";
 import { RealizationSeismicInlineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer";
 import {
     SeismicCrosslineData_trans,
@@ -114,6 +115,26 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
         });
         return grid3dLayer as unknown as WorkingGrid3dLayer;
     }
+    if (layer instanceof RealizationSeismicDepthSliceLayer) {
+        const zValue = layer
+            .getSettingsContext()
+            .getDelegate()
+            .getSettings()
+            .seismicDepthSlice.getDelegate()
+            .getValue();
+        const layerData: SurfaceDataFloat_trans = data;
+        return createSurfaceConstantZWIthPropertyLayer({
+            surfaceDef: layerData.surface_def,
+            propertyFloat32Arr: layerData.valuesFloat32Arr,
+            zValue: zValue || 0,
+            id: layer.getItemDelegate().getId(),
+            name: layer.getItemDelegate().getName(),
+            valueMin: layerData.value_min,
+            valueMax: layerData.value_max,
+            colorScale: colorScale,
+            showGridLines: false,
+        });
+    }
     return null;
 }
 
@@ -151,6 +172,43 @@ export function createSurfaceMeshLayer(
         colorMapName: "Physics",
 
         colorMapFunction: makeColorMapFunction(colorScale, layerData.value_min, layerData.value_max),
+    });
+}
+type SurfaceConstantZWithPropertyLayerOptions = {
+    surfaceDef: SurfaceDef_api;
+    propertyFloat32Arr: Float32Array;
+    zValue: number;
+    id: string;
+    name: string;
+    valueMin: number;
+    valueMax: number;
+    colorScale: ColorScaleWithName;
+    showGridLines: boolean;
+};
+export function createSurfaceConstantZWIthPropertyLayer(options: SurfaceConstantZWithPropertyLayerOptions): MapLayer {
+    const meshData = new Float32Array(options.propertyFloat32Arr.length);
+    meshData.fill(options.zValue);
+    return new MapLayer({
+        "@@type": "MapLayer",
+        "@@typedArraySupport": true,
+        id: options.id,
+        name: options.name,
+        meshData: meshData,
+        propertiesData: options.propertyFloat32Arr,
+        frame: {
+            origin: [options.surfaceDef.origin_utm_x, options.surfaceDef.origin_utm_y],
+            count: [options.surfaceDef.npoints_x, options.surfaceDef.npoints_y],
+            increment: [options.surfaceDef.inc_x, options.surfaceDef.inc_y],
+            rotDeg: options.surfaceDef.rot_deg,
+        },
+        valueRange: [options.valueMin, options.valueMax],
+        colorMapRange: [options.valueMin, options.valueMax],
+        gridLines: options.showGridLines,
+        material: false,
+        smoothShading: false,
+        colorMapName: "Physics",
+
+        colorMapFunction: makeColorMapFunction(options.colorScale, options.valueMin, options.valueMax),
     });
 }
 function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string): WellborePicksLayer {

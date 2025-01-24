@@ -19,7 +19,7 @@ export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicIn
     private _itemDelegate: ItemDelegate;
 
     constructor(layerManager: LayerManager) {
-        this._itemDelegate = new ItemDelegate("Realization Seismic inline", layerManager);
+        this._itemDelegate = new ItemDelegate("Seismic Inline (realization)", layerManager);
         this._layerDelegate = new LayerDelegate(
             this,
             layerManager,

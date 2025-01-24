@@ -12,6 +12,7 @@ import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLay
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
+import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthSliceLayer";
 import { EnsembleSetting } from "@modules//_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
@@ -25,6 +26,7 @@ import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedS
 import { View } from "@modules/_shared/LayerFramework/framework/View/View";
 import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { Dropdown } from "@mui/base";
@@ -91,8 +93,15 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
             case "realization-seismic-crossline":
                 groupDelegate.insertChild(new RealizationSeismicCrosslineLayer(props.layerManager), numSharedSettings);
                 return;
+            case "realization-seismic-depth-slice":
+                groupDelegate.insertChild(new RealizationSeismicDepthSliceLayer(props.layerManager), numSharedSettings);
+                return;
             case "drilled-wellbore-trajectories":
                 groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(props.layerManager), numSharedSettings);
+                return;
+
+            case "drilled-wellbore-picks":
+                groupDelegate.insertChild(new DrilledWellborePicksLayer(props.layerManager), numSharedSettings);
                 return;
             case "ensemble":
                 groupDelegate.prependChild(new SharedSetting(new EnsembleSetting(), props.layerManager));
@@ -236,27 +245,47 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 ],
             },
             {
-                label: "Others",
+                label: "Reservoir grid",
                 children: [
                     {
                         identifier: "realization-grid",
                         icon: <Icon data={grid_layer} fontSize="small" />,
                         label: "Realization Grid",
                     },
+                ],
+            },
+            {
+                label: "Surface",
+                children: [
                     {
                         identifier: "realization-surface",
                         icon: <Icon data={surface_layer} fontSize="small" />,
                         label: "Realization Surface",
                     },
+                ],
+            },
+            {
+                label: "Seismic",
+                children: [
                     {
-                        identifier: "realization-seismic-inline",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Realization Seismic Inline",
-                    },
-                    {
-                        identifier: "realization-seismic-crossline",
-                        icon: <Icon data={surface_layer} fontSize="small" />,
-                        label: "Realization Seismic Crossline",
+                        label: "Synthetic",
+                        children: [
+                            {
+                                identifier: "realization-seismic-inline",
+                                icon: <Icon data={surface_layer} fontSize="small" />,
+                                label: "Realization Inline",
+                            },
+                            {
+                                identifier: "realization-seismic-crossline",
+                                icon: <Icon data={surface_layer} fontSize="small" />,
+                                label: "Realization Crossline",
+                            },
+                            {
+                                identifier: "realization-seismic-depth-slice",
+                                icon: <Icon data={surface_layer} fontSize="small" />,
+                                label: "Realization Depth Slice",
+                            },
+                        ],
                     },
                 ],
             },

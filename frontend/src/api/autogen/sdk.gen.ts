@@ -25,6 +25,9 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataError_api,
     GetDeltaSurfaceDataResponse_api,
+    GetDepthSliceData_api,
+    GetDepthSliceError_api,
+    GetDepthSliceResponse_api,
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersError_api,
     GetDrilledWellboreHeadersResponse_api,
@@ -998,10 +1001,7 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Inline Slice
- * Get a seismic slice from a seismic cube.
- *
- * Returns:
- * A SeismicFenceData object with fence traces in encoded 1D array, metadata for trace array decoding and fence min/max depth.
+ * Get a seismic inline from a seismic cube.
  */
 export const getInlineSlice = <ThrowOnError extends boolean = false>(
     options: Options<GetInlineSliceData_api, ThrowOnError>
@@ -1014,10 +1014,7 @@ export const getInlineSlice = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Crossline Slice
- * Get a seismic slice from a seismic cube.
- *
- * Returns:
- * A SeismicFenceData object with fence traces in encoded 1D array, metadata for trace array decoding and fence min/max depth.
+ * Get a seismic crossline from a seismic cube.
  */
 export const getCrosslineSlice = <ThrowOnError extends boolean = false>(
     options: Options<GetCrosslineSliceData_api, ThrowOnError>
@@ -1025,6 +1022,19 @@ export const getCrosslineSlice = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetCrosslineSliceResponse_api, GetCrosslineSliceError_api, ThrowOnError>({
         ...options,
         url: "/seismic/get_crossline_slice/",
+    });
+};
+
+/**
+ * Get Depth Slice
+ * Get a seismic depth slice from a seismic cube.
+ */
+export const getDepthSlice = <ThrowOnError extends boolean = false>(
+    options: Options<GetDepthSliceData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetDepthSliceResponse_api, GetDepthSliceError_api, ThrowOnError>({
+        ...options,
+        url: "/seismic/get_depth_slice/",
     });
 };
 

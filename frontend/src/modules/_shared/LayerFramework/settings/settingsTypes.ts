@@ -19,4 +19,5 @@ export enum SettingType {
     SEISMIC_ATTRIBUTE = "seismicAttribute",
     SEISMIC_INLINE = "seismicInline",
     SEISMIC_CROSSLINE = "seismicCrossline",
+    SEISMIC_DEPTH_SLICE = "seismicDepthSlice",
 }

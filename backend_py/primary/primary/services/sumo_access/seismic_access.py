@@ -55,6 +55,7 @@ class SeismicAccess:
                 k_max=cube["data"]["spec"]["nlay"]-1,
                 z_min=cube["data"]["bbox"]["zmin"],
                 z_max=cube["data"]["bbox"]["zmax"],
+                z_inc=cube["data"]["spec"]["zinc"],
             )
             seismic_cube_meta_list.append(seismic_meta)
         return seismic_cube_meta_list

@@ -14,6 +14,7 @@ class SeismicCubeMeta(BaseModel):
     k_max: int
     z_min: float
     z_max: float
+    z_inc: float
 
 
 class VdsHandle(BaseModel):

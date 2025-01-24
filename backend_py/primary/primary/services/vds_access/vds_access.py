@@ -158,6 +158,44 @@ class VdsAccess:
 
         return (flattened_fence_traces_float32_array, metadata)
 
+    async def get_depth_slice(self,depth:float ) -> Tuple[NDArray[np.float32], VdsSliceMetadata]:
+        endpoint = "slice"
+        hard_coded_fill_value = -999.25
+        slice_request = VdsSliceRequest(
+            vds=self.vds_url,
+            sas=self.sas,
+            direction=VdsDirection.DEPTH,
+            line_no=depth,
+        )
+        response = await self._query_async(endpoint, slice_request)
+        decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
+        parts = decoder.parts
+        # Validate parts from decoded response
+        if len(parts) != 2 or not parts[0].content or not parts[1].content:
+            raise ValueError(f"Expected two parts, got {len(parts)}")
+
+        # Expect each part in parts tuple to be BodyPart
+        if not isinstance(parts[0], BodyPart) or not isinstance(parts[1], BodyPart):
+            raise ValueError(f"Expected parts to be BodyPart, got {type(parts[0])}, {type(parts[1])}")
+        
+        metadata = VdsSliceMetadata(**json.loads(parts[0].content))
+        byte_array = parts[1].content
+
+        if metadata.format != "<f4":
+            raise ValueError(f"Expected float32, got {metadata.format}")
+
+        if len(metadata.shape) != 2:
+            raise ValueError(f"Expected shape to be 2D, got {metadata.shape}")
+
+
+        # Flattened array with row major order, i.e. C-order in numpy
+        flattened_fence_traces_float32_array = bytes_to_flatten_ndarray_float32(byte_array, shape=metadata.shape)
+
+        # Convert every value of `hard_coded_fill_value` to np.nan
+        flattened_fence_traces_float32_array[flattened_fence_traces_float32_array == hard_coded_fill_value] = np.nan
+
+        return (flattened_fence_traces_float32_array, metadata)
+
     async def get_flattened_fence_traces_array_and_metadata_async(
         self, coordinates: VdsCoordinates, coordinate_system: VdsCoordinateSystem = VdsCoordinateSystem.CDP
     ) -> Tuple[NDArray[np.float32], int, int]:

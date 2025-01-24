@@ -32,6 +32,7 @@ class VdsDirection(StrEnum):
     INLINE = "inline"
     CROSSLINE = "crossline"
     SAMPLE = "sample"
+    DEPTH = "depth"
     
 class VdsCoordinateSystem(StrEnum):
     """
