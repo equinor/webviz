@@ -25,16 +25,16 @@ import {
 export const selectedFieldIdentifierAtom = atom((get) => {
     const selectedFieldId = get(userSelectedFieldIdentifierAtom);
     const ensembleSet = get(EnsembleSetAtom);
-    const ensembleSetArr = ensembleSet.getEnsembleArr();
+
+    // ! Per now (24.01.25) delta ensambles are directly tied to the regular ones, and they will never have any fields
+    // ! not in the regular set, so we only need to check the regular ones
+    const regularEnsembleArray = ensembleSet.getRegularEnsembleArray();
 
     // Selection-fixup. Default to field ident of first available ensemble if possible
-    if (!ensembleSetArr.length) return null;
-    if (!selectedFieldId) return ensembleSetArr[0].getFieldIdentifier();
+    if (!regularEnsembleArray.length) return null;
+    if (regularEnsembleArray.some((ens) => ens.getFieldIdentifier() === selectedFieldId)) return selectedFieldId;
 
-    const selectIsValid = ensembleSet.findEnsembleBy((ens) => ens.getFieldIdentifier() === selectedFieldId);
-    if (!selectIsValid) return ensembleSetArr[0].getFieldIdentifier();
-
-    return selectedFieldId;
+    return regularEnsembleArray[0].getFieldIdentifier();
 });
 
 export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) => {

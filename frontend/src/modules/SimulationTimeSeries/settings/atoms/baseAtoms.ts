@@ -1,7 +1,9 @@
 import { Frequency_api, StatisticFunction_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { ParameterIdent } from "@framework/EnsembleParameters";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
+import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 
 import { atom } from "jotai";
 import { isEqual } from "lodash";
@@ -25,7 +27,10 @@ export const statisticsSelectionAtom = atom<StatisticsSelection>({
     FanchartStatisticsSelection: Object.values(FanchartStatisticOption),
 });
 
-export const userSelectedEnsembleIdentsAtom = atomWithCompare<EnsembleIdent[]>([], isEqual);
+export const userSelectedEnsembleIdentsAtom = atomWithCompare<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>(
+    [],
+    areEnsembleIdentListsEqual
+);
 
 export const selectedVectorNamesAtom = atomWithCompare<string[]>([], isEqual);
 

@@ -166,7 +166,24 @@ class PointSetXY(BaseModel):
     y_points: list[float]
 
 
+class StratigraphicColumn(BaseModel):
+    """
+    Stratigraphic column from SMDA
+    """
+
+    stratColumnIdentifier: str
+    stratColumnAreaType: str
+    stratColumnStatus: str
+    stratColumnType: str | None
+
+
 class StratigraphicUnit(BaseModel):
+    """
+    Stratigraphic unit from SMDA
+
+    Camel case attributes needed for esvIntersection component in front-end
+    """
+
     identifier: str
     top: str
     base: str

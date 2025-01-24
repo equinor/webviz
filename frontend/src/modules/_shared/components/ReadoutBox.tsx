@@ -93,7 +93,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
     return (
         <div
             ref={readoutRoot}
-            className="absolute z-[9999] w-60 flex flex-col gap-2 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none"
+            className="absolute z-[9999] w-72 flex flex-col gap-2 p-2 text-sm rounded border border-neutral-300 bg-white bg-opacity-75 backdrop-blur-sm pointer-events-none"
             style={boxPositionStyle}
         >
             {visibleReadoutItems.map((item, idx) => (

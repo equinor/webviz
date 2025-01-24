@@ -1,13 +1,13 @@
 import React from "react";
 
 import { SurfaceStatisticFunction_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Input } from "@lib/components/Input";
@@ -34,7 +34,7 @@ const SurfaceTimeTypeEnumToStringMapping = {
 //-----------------------------------------------------------------------------------------------------------
 export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<RegularEnsembleIdent | null>(null);
     const [timeType, setTimeType] = React.useState<SurfaceTimeType>(SurfaceTimeType.None);
 
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
@@ -53,7 +53,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const syncedValueDate = syncHelper.useValue(SyncSettingKey.DATE, "global.syncValue.date");
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
-    const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
+    const computedEnsembleIdent = fixupRegularEnsembleIdent(candidateEnsembleIdent, ensembleSet);
     const realizationSurfacesMetaQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
         computedEnsembleIdent?.getEnsembleName()
@@ -128,7 +128,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
         setSurfaceAddress(surfaceAddress);
     });
 
-    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
         console.debug("handleEnsembleSelectionChange()");
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
@@ -227,7 +227,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
                 labelClassName={syncHelper.isSynced(SyncSettingKey.ENSEMBLE) ? "bg-indigo-700 text-white" : ""}
             >
                 <EnsembleDropdown
-                    ensembleSet={ensembleSet}
+                    ensembles={ensembleSet.getRegularEnsembleArray()}
                     value={computedEnsembleIdent}
                     onChange={handleEnsembleSelectionChange}
                 />

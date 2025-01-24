@@ -39,15 +39,6 @@ def convert_wellbore_pick_to_schema(wellbore_pick: WellborePick) -> schemas.Well
     )
 
 
-def convert_stratigraphic_column_to_schema(column: StratigraphicColumn) -> schemas.StratigraphicColumn:
-    return schemas.StratigraphicColumn(
-        stratColumnIdentifier=column.strat_column_identifier,
-        stratColumnAreaType=column.strat_column_area_type,
-        stratColumnStatus=column.strat_column_status,
-        stratColumnType=column.strat_column_type,
-    )
-
-
 def convert_wellbore_header_to_schema(
     drilled_wellbore_header: WellboreHeader,
 ) -> schemas.WellboreHeader:
@@ -353,27 +344,3 @@ def __get_strat_unit_at_exit(
             return parent
 
     return None
-
-
-# pylint: disable-next=missing-function-docstring
-def convert_wellbore_geo_header_to_schema(data: WellboreGeoHeader) -> schemas.WellboreGeoHeader:
-    return schemas.WellboreGeoHeader(
-        uuid=data.uuid,
-        identifier=data.identifier,
-        geolType=data.geol_type,
-        mdRange=(data.md_min, data.md_max),
-        source=data.source,
-    )
-
-
-# pylint: disable-next=missing-function-docstring
-def convert_wellbore_geo_data_to_schema(data: WellboreGeoData) -> schemas.WellboreGeoData:
-    return schemas.WellboreGeoData(
-        uuid=data.uuid,
-        identifier=data.identifier,
-        geolType=data.geol_type,
-        geolGroup=data.geol_group,
-        code=data.code,
-        color=[data.color_r, data.color_g, data.color_b],
-        mdRange=[data.top_depth_md, data.base_depth_md],
-    )

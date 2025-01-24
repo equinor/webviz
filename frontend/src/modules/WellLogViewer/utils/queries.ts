@@ -2,14 +2,6 @@ import { UseQueryResult } from "@tanstack/react-query";
 
 import _ from "lodash";
 
-export const DEFAULT_STALE_TIME = 60 * 1000;
-export const DEFAULT_CACHE_TIME = 60 * 1000;
-
-export const DEFAULT_OPTIONS = {
-    staleTime: DEFAULT_STALE_TIME,
-    gcTime: DEFAULT_CACHE_TIME,
-};
-
 // ? Would this be a useful global utility?
 /**
  * Merges multiple QueryResults into a single QueryResult with an array of each query's data. The new result's state

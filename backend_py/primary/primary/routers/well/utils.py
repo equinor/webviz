@@ -60,7 +60,3 @@ def get_discrete_metadata_for_well_log_curve(log_curve_data: WellboreLogCurveDat
         return schemas.DiscreteMetaEntry({"No": (0, (255, 255, 255)), "Yes": (1, (0, 0, 0))})
 
     return None
-
-
-def is_drogon_wellbore(wellbore_uuid: str) -> bool:
-    return wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]

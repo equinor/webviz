@@ -1,8 +1,11 @@
-import { WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
-import { apiService } from "@framework/ApiService";
+import {
+    WellboreLogCurveData_api,
+    WellboreTrajectory_api,
+    getLogCurveDataOptions,
+    getWellTrajectoriesOptions,
+} from "@api";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { mergeResults } from "@modules/WellLogViewer/utils/queries";
-import { DEFAULT_OPTIONS } from "@modules/WellLogViewer/utils/queries";
 import { QueryObserverResult } from "@tanstack/react-query";
 
 import { atomWithQuery } from "jotai-tanstack-query";
@@ -16,14 +19,16 @@ export const wellboreTrajectoryQueryAtom = atomWithQuery((get) => {
     const fieldIdent = get(selectedFieldIdentAtom) ?? "";
 
     return {
-        queryKey: ["getWellTrajectories", fieldIdent, wellboreUuid],
-        queryFn: () => apiService.well.getWellTrajectories(fieldIdent, [wellboreUuid]),
+        ...getWellTrajectoriesOptions({
+            query: {
+                field_identifier: fieldIdent,
+                wellbore_uuids: [wellboreUuid],
+            },
+        }),
         select: (data: WellboreTrajectory_api[]): WellboreTrajectory_api | null => data[0] ?? null,
         enabled: Boolean(!locked && fieldIdent && wellboreUuid),
-        ...DEFAULT_OPTIONS,
     };
 });
-
 export const logCurveDataQueryAtom = atomWithQueries((get) => {
     // TODO: Handle patterns? Can be found on SMDA Geology Standard, under "symbol"
     /*
@@ -39,10 +44,15 @@ export const logCurveDataQueryAtom = atomWithQueries((get) => {
 
     return {
         queries: requiredCurves.map(({ source, logName, curveName }) => () => ({
-            queryKey: ["getLogCurveData", wellboreUuid, logName, curveName],
-            queryFn: () => apiService.well.getLogCurveData(wellboreUuid, logName, curveName, source),
+            ...getLogCurveDataOptions({
+                query: {
+                    wellbore_uuid: wellboreUuid,
+                    curve_name: curveName,
+                    log_name: logName,
+                    source,
+                },
+            }),
             enabled: Boolean(!locked && wellboreUuid && source && logName && curveName),
-            ...DEFAULT_OPTIONS,
         })),
         combine(results: QueryObserverResult<WellboreLogCurveData_api, Error>[]) {
             return mergeResults(results);

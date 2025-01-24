@@ -1,12 +1,12 @@
 import React from "react";
 
 import { SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import { fixupEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
+import { fixupRegularEnsembleIdent, maybeAssignFirstSyncedEnsemble } from "@framework/utils/ensembleUiHelpers";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -65,7 +65,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     console.debug(`${myInstanceIdStr} -- render TopographicMap settings`);
 
     const ensembleSet = useEnsembleSet(workbenchSession);
-    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<EnsembleIdent | null>(null);
+    const [selectedEnsembleIdent, setSelectedEnsembleIdent] = React.useState<RegularEnsembleIdent | null>(null);
     const [selectedMeshSurfaceName, setSelectedMeshSurfaceName] = React.useState<string | null>(null);
     const [selectedMeshSurfaceAttribute, setSelectedMeshSurfaceAttribute] = React.useState<string | null>(null);
     const [usePropertySurface, setUsePropertySurface] = React.useState<boolean>(false);
@@ -99,7 +99,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     const syncedValueEnsembles = syncHelper.useValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles");
     const syncedValueSurface = syncHelper.useValue(SyncSettingKey.SURFACE, "global.syncValue.surface");
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(selectedEnsembleIdent, syncedValueEnsembles);
-    const computedEnsembleIdent = fixupEnsembleIdent(candidateEnsembleIdent, ensembleSet);
+    const computedEnsembleIdent = fixupRegularEnsembleIdent(candidateEnsembleIdent, ensembleSet);
     if (computedEnsembleIdent && !computedEnsembleIdent.equals(selectedEnsembleIdent)) {
         setSelectedEnsembleIdent(computedEnsembleIdent);
     }
@@ -379,7 +379,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
 
     let fieldIdentifier: null | string = null;
     if (computedEnsembleIdent) {
-        const ensembleIdent = new EnsembleIdent(
+        const ensembleIdent = new RegularEnsembleIdent(
             computedEnsembleIdent.getCaseUuid(),
             computedEnsembleIdent.getEnsembleName()
         );
@@ -409,7 +409,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     function hideAllWells() {
         setSelectedWellUuids([]);
     }
-    function handleEnsembleSelectionChange(newEnsembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(newEnsembleIdent: RegularEnsembleIdent | null) {
         setSelectedEnsembleIdent(newEnsembleIdent);
         if (newEnsembleIdent) {
             syncHelper.publishValue(SyncSettingKey.ENSEMBLE, "global.syncValue.ensembles", [newEnsembleIdent]);
@@ -492,7 +492,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             <CollapsibleGroup expanded={true} title="Ensemble and realization">
                 <Label text="Ensemble" synced={syncHelper.isSynced(SyncSettingKey.ENSEMBLE)}>
                     <EnsembleDropdown
-                        ensembleSet={ensembleSet}
+                        ensembles={ensembleSet.getRegularEnsembleArray()}
                         value={computedEnsembleIdent ? computedEnsembleIdent : null}
                         onChange={handleEnsembleSelectionChange}
                     />

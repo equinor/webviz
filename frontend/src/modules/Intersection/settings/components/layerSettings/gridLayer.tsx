@@ -1,9 +1,8 @@
 import React from "react";
 
-import { Grid3dInfo_api } from "@api";
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { Grid3dInfo_api, getGridModelsInfoOptions } from "@api";
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -45,7 +44,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
 
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
-        props.ensembleSet.getEnsembleArr().map((el) => el.getIdent()),
+        props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
         newSettings
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
@@ -115,7 +114,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
         [gridModelInfosQuery.isFetching, props.layer, newSettings]
     );
 
-    function handleEnsembleChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent }));
     }
 
@@ -166,7 +165,7 @@ export function GridLayerSettingsComponent(props: GridLayerSettingsComponentProp
                 <div className="table-cell">
                     <EnsembleDropdown
                         value={props.layer.getSettings().ensembleIdent}
-                        ensembleSet={props.ensembleSet}
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         onChange={handleEnsembleChange}
                         debounceTimeMs={600}
                     />
@@ -304,20 +303,15 @@ function makeGridParameterDateOrIntervalOptions(datesOrIntervals: (string | null
     return reduced;
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
-function useGridModelInfosQuery(ensembleIdent: EnsembleIdent | null, realizationNum: number | null) {
+function useGridModelInfosQuery(ensembleIdent: RegularEnsembleIdent | null, realizationNum: number | null) {
     return useQuery({
-        queryKey: ["getGridModelInfos", ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName(), realizationNum],
-        queryFn: () =>
-            apiService.grid3D.getGridModelsInfo(
-                ensembleIdent?.getCaseUuid() ?? "",
-                ensembleIdent?.getEnsembleName() ?? "",
-                realizationNum ?? 0
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getGridModelsInfoOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                realization_num: realizationNum ?? 0,
+            },
+        }),
         enabled: Boolean(ensembleIdent && realizationNum !== null),
     });
 }

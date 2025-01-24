@@ -1,5 +1,5 @@
-import { BoundingBox3d_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { BoundingBox3D_api } from "@api";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 import { IntersectionType } from "@framework/types/intersection";
 import { ColorScale } from "@lib/utils/ColorScale";
@@ -34,7 +34,7 @@ import {
 } from "./view/atoms/baseAtoms";
 
 export type SettingsToViewInterface = {
-    ensembleIdent: EnsembleIdent | null;
+    ensembleIdent: RegularEnsembleIdent | null;
     highlightedWellboreUuid: string | null;
     customIntersectionPolylineId: string | null;
     intersectionType: IntersectionType;
@@ -49,7 +49,7 @@ export type SettingsToViewInterface = {
     realization: number | null;
     wellboreUuids: string[];
     gridModelName: string | null;
-    gridModelBoundingBox3d: BoundingBox3d_api | null;
+    gridModelBoundingBox3d: BoundingBox3D_api | null;
     gridModelParameterName: string | null;
     gridModelParameterDateOrInterval: string | null;
     gridCellIndexRanges: GridCellIndexRanges;

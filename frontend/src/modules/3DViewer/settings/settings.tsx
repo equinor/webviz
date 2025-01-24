@@ -1,8 +1,8 @@
 import React from "react";
 
 import { Grid3dInfo_api, WellboreHeader_api } from "@api";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
 import { ModuleSettingsProps } from "@framework/Module";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
@@ -77,7 +77,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const setPolylineEditModeActive = useSetAtom(editCustomIntersectionPolylineEditModeActiveAtom);
 
     const [prevSyncedIntersection, setPrevSyncedIntersection] = React.useState<Intersection | null>(null);
-    const [prevSyncedEnsembles, setPrevSyncedEnsembles] = React.useState<EnsembleIdent[] | null>(null);
+    const [prevSyncedEnsembles, setPrevSyncedEnsembles] = React.useState<RegularEnsembleIdent[] | null>(null);
     const [pickSingleGridCellIndexI, setPickSingleGridCellIndexI] = React.useState<boolean>(false);
     const [pickSingleGridCellIndexJ, setPickSingleGridCellIndexJ] = React.useState<boolean>(false);
     const [pickSingleGridCellIndexK, setPickSingleGridCellIndexK] = React.useState<boolean>(false);
@@ -153,7 +153,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const gridModelErrorMessage = usePropagateApiErrorToStatusWriter(gridModelInfos, statusWriter) ?? "";
     const wellHeadersErrorMessage = usePropagateApiErrorToStatusWriter(wellHeaders, statusWriter) ?? "";
 
-    function handleEnsembleSelectionChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleSelectionChange(ensembleIdent: RegularEnsembleIdent | null) {
         setSelectedEnsembleIdent(ensembleIdent);
         syncHelper.publishValue(
             SyncSettingKey.ENSEMBLE,
@@ -256,7 +256,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                 <div className="flex flex-col gap-2">
                     <Label text="Ensemble">
                         <EnsembleDropdown
-                            ensembleSet={ensembleSet}
+                            ensembles={ensembleSet.getRegularEnsembleArray()}
                             value={selectedEnsembleIdent}
                             onChange={handleEnsembleSelectionChange}
                             showArrows

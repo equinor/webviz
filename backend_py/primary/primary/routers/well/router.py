@@ -10,12 +10,12 @@ from primary.services.smda_access import GeologyAccess as SmdaGeologyAccess
 
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
+from primary.utils.drogon import is_drogon_identifier
 
 from primary.services.ssdl_access.well_access import WellAccess as SsdlWellAccess
 
 from . import schemas
 from . import converters
-from .utils import is_drogon_wellbore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,13 +31,13 @@ async def get_drilled_wellbore_headers(
 ) -> List[schemas.WellboreHeader]:
     """Get wellbore headers for all wells in the field"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+    if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
-    wellbore_headers = await well_access.get_wellbore_headers()
+    wellbore_headers = await well_access.get_wellbore_headers(field_identifier)
 
     return [converters.convert_wellbore_header_to_schema(wellbore_header) for wellbore_header in wellbore_headers]
 
@@ -52,13 +52,16 @@ async def get_well_trajectories(
 ) -> List[schemas.WellboreTrajectory]:
     """Get well trajectories for field"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+    if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
-    wellbore_trajectories = await well_access.get_wellbore_trajectories(wellbore_uuids=wellbore_uuids)
+    wellbore_trajectories = await well_access.get_wellbore_trajectories(
+        field_identifier=field_identifier,
+        wellbore_uuids=wellbore_uuids,
+    )
 
     return [
         converters.convert_well_trajectory_to_schema(wellbore_trajectory)
@@ -66,40 +69,21 @@ async def get_well_trajectories(
     ]
 
 
-@router.get("/wellbore_stratigraphic_columns/")
-async def get_wellbore_stratigraphic_columns(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    wellbore_uuid: str = Query(description="Wellbore uuid"),
-) -> list[schemas.StratigraphicColumn]:
-
-    if is_drogon_wellbore(wellbore_uuid):
-        # Handle DROGON
-        well_access = DrogonSmdaAccess()
-    else:
-        # TODO: Handle field
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier="FIELD")
-
-    strat_columns = await well_access.get_stratigraphic_columns_for_wellbore(wellbore_uuid)
-
-    return [converters.convert_stratigraphic_column_to_schema(col) for col in strat_columns]
-
-
 @router.get("/wellbore_pick_identifiers/")
 async def get_wellbore_pick_identifiers(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    field_identifier: str = Query(description="Official field identifier"),
     strat_column_identifier: str = Query(description="Stratigraphic column identifier")
     # fmt:on
 ) -> List[str]:
     """Get wellbore pick identifiers for field and stratigraphic column"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+    if is_drogon_identifier(strat_column_identifier=strat_column_identifier):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
 
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
     wellbore_picks = await well_access.get_wellbore_pick_identifiers_in_stratigraphic_column(
         strat_column_identifier=strat_column_identifier
@@ -117,14 +101,17 @@ async def get_wellbore_picks_for_pick_identifier(
 ) -> List[schemas.WellborePick]:
     """Get wellbore picks for field and pick identifier"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+    if is_drogon_identifier(field_identifier=field_identifier):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
 
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
-    wellbore_picks = await well_access.get_wellbore_picks_for_pick_identifier(pick_identifier=pick_identifier)
+    wellbore_picks = await well_access.get_wellbore_picks_for_pick_identifier(
+        field_identifier=field_identifier,
+        pick_identifier=pick_identifier,
+    )
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
 
 
@@ -132,18 +119,18 @@ async def get_wellbore_picks_for_pick_identifier(
 async def get_wellbore_picks_for_wellbore(
     # fmt:off
     authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    field_identifier: str = Query(description="Official field identifier"),
     wellbore_uuid: str = Query(description="Wellbore uuid")
     # fmt:on
 ) -> List[schemas.WellborePick]:
     """Get wellbore picks for field and pick identifier"""
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if field_identifier == "DROGON":
+
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         # Handle DROGON
         well_access = DrogonSmdaAccess()
 
     else:
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), field_identifier=field_identifier)
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
     wellbore_picks = await well_access.get_wellbore_picks_for_wellbore(wellbore_uuid=wellbore_uuid)
     return [converters.convert_wellbore_pick_to_schema(wellbore_pick) for wellbore_pick in wellbore_picks]
@@ -156,13 +143,12 @@ async def get_wellbore_picks_in_strat_column(
     strat_column: str = Query(description="Optional - Filter by stratigraphic column"),
 ) -> list[schemas.WellborePick]:
     well_access: Union[SmdaAccess, DrogonSmdaAccess]
-    if strat_column == "DROGON_HAS_NO_STRATCOLUMN":
+
+    if is_drogon_identifier(strat_column_identifier=strat_column):
         # Handle DROGON
-        # well_access = DrogonSmdaAccess()
-        raise NotImplementedError
+        well_access = DrogonSmdaAccess()
     else:
-        # TODO: Remove field param
-        well_access = SmdaAccess(authenticated_user.get_smda_access_token(), "FIELD")
+        well_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
     wellbore_picks = await well_access.get_wellbore_picks_in_stratigraphic_column(
         wellbore_uuid=wellbore_uuid, strat_column_identifier=strat_column
@@ -181,7 +167,7 @@ async def get_wellbore_completions(
     """Get well bore completions for a single well bore"""
 
     # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         return []
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
@@ -203,7 +189,7 @@ async def get_wellbore_casings(
     """Get well bore casings for a single well bore"""
 
     # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         return []
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
@@ -223,7 +209,7 @@ async def get_wellbore_perforations(
     """Get well bore casing for a single well bore"""
 
     # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         return []
 
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
@@ -255,7 +241,7 @@ async def get_wellbore_log_curve_headers(
     # TODO: Add wellbore survey sample endpoint. for last set of curves (for now) SSDL might be best
 
     # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         return []
 
     curve_headers = []
@@ -280,23 +266,20 @@ async def __get_headers_from_ssdl_well_log(
 
     # Missing log name implies garbage data, so we drop them
     valid_headers = filter(lambda header: header.log_name is not None, headers)
-
     return [converters.convert_wellbore_log_curve_header_to_schema(head) for head in valid_headers]
 
 
 async def __get_headers_from_smda_geology(
     authenticated_user: AuthenticatedUser, wellbore_uuid: str
 ) -> list[schemas.WellboreLogCurveHeader]:
-    # TODO fix field
-    geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token(), "FIELD")
+    geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token())
     geo_headers = await geol_access.get_wellbore_geology_headers(wellbore_uuid)
 
     return [converters.convert_wellbore_geo_header_to_well_log_header(header) for header in geo_headers]
 
 
 async def __get_headers_from_smda_stratigraghpy(authenticated_user: AuthenticatedUser, wellbore_uuid: str):
-    # TODO fix field
-    strat_access = SmdaAccess(authenticated_user.get_smda_access_token(), "FIELD")
+    strat_access = SmdaAccess(authenticated_user.get_smda_access_token())
     strat_columns = await strat_access.get_stratigraphic_columns_for_wellbore(wellbore_uuid)
 
     return [converters.convert_strat_column_to_well_log_header(col) for col in strat_columns if col.strat_column_type]
@@ -318,7 +301,7 @@ async def get_log_curve_data(
     """Get log curve data"""
 
     # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
+    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
         raise NotImplementedError("DROGON log curve data not implemented")
 
     if source == schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG:
@@ -331,8 +314,7 @@ async def get_log_curve_data(
     if source == schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY:
         # Here, curve name is the identifier, and logname is the source
 
-        # TODO: Remove "FIELD" when possible
-        geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token(), "FIELD")
+        geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token())
 
         geo_headers = await geol_access.get_wellbore_geology_headers(wellbore_uuid)
         geo_headers = [h for h in geo_headers if h.identifier == curve_name and h.source == log_name]
@@ -348,47 +330,10 @@ async def get_log_curve_data(
 
     if source == schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY:
         # Here, the log name is the strat column. curve name is not used
-        # TODO: Remove "Field"
-        smda_access = SmdaAccess(authenticated_user.get_smda_access_token(), "FIELD")
+        smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
         wellbore_strat_units = await smda_access.get_stratigraphy_for_wellbore_and_column(wellbore_uuid, log_name)
 
         return converters.convert_strat_unit_data_to_log_curve_schema(wellbore_strat_units)
 
     raise ValueError(f"Unknown source {source}")
-
-
-@router.get("/wellbore_geology_headers")
-async def get_wellbore_geology_headers(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    wellbore_uuid: str = Query(description="Wellbore uuid"),
-) -> List[schemas.WellboreGeoHeader]:
-    """Gets headers for geological interproation data for a given wellbore"""
-    # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
-        raise NotImplementedError("DROGON log curve data not implemented")
-
-    # TODO: Fix field from params
-    geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token(), "<<FIELD>>")
-    geo_headers = await geol_access.get_wellbore_geology_headers(wellbore_uuid)
-
-    return [converters.convert_wellbore_geo_header_to_schema(header) for header in geo_headers]
-
-
-@router.get("/wellbore_geology_data")
-async def get_wellbore_geology_data(
-    authenticated_user: AuthenticatedUser = Depends(AuthHelper.get_authenticated_user),
-    wellbore_uuid: str = Query(description="Wellbore uuid"),
-    geology_header_uuid: str = Query(description="Geology header uuid"),
-) -> List[schemas.WellboreGeoData]:
-    """Gets geological data entries for a given geology header"""
-
-    # Handle DROGON
-    if wellbore_uuid in ["drogon_horizontal", "drogon_vertical"]:
-        raise NotImplementedError("DROGON log curve data not implemented")
-
-    # TODO: Fix field from params
-    geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token(), "<<FIELD>>")
-    geol_data = await geol_access.get_wellbore_geology_data(wellbore_uuid, geology_header_uuid)
-
-    return [converters.convert_wellbore_geo_data_to_schema(entry) for entry in geol_data]

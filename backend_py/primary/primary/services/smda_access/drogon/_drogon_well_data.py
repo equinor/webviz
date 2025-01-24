@@ -1,6 +1,17 @@
 from typing import List
 
-from ..types import WellboreTrajectory, WellboreHeader, WellborePick
+from ..types import WellboreTrajectory, WellboreHeader, WellborePick, StratigraphicColumn
+
+
+def get_drogon_strat_columns() -> List[StratigraphicColumn]:
+    return [
+        StratigraphicColumn(
+            strat_column_identifier="DROGON_HAS_NO_STRATCOLUMN",
+            strat_column_type="lithostratigraphy",
+            strat_column_area_type="field",
+            strat_column_status="official",
+        ),
+    ]
 
 
 def get_drogon_well_headers() -> List[WellboreHeader]:
@@ -206,7 +217,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
-            interpreter="DROGON_STAT",
+            interpreter="DROGON_FMU",
             easting=464220.0686875976,
             northing=5932289.733486914,
             tvd=1841.19,
@@ -236,7 +247,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
-            interpreter="DROGON_STAT",
+            interpreter="DROGON_FMU",
             easting=464220.0686875976,
             northing=5932289.733486914,
             tvd=1641.19,

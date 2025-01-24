@@ -19,7 +19,6 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
 
     // Passed setting atoms
     const selectedWellboreHeader = props.viewContext.useSettingsToViewInterfaceValue("wellboreHeader");
-
     const templateTracks = props.viewContext.useSettingsToViewInterfaceValue("templateTracks");
     const viewerHorizontal = props.viewContext.useSettingsToViewInterfaceValue("viewerHorizontal");
     const padDataWithEmptyRows = props.viewContext.useSettingsToViewInterfaceValue("padDataWithEmptyRows");

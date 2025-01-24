@@ -1,8 +1,8 @@
 import React from "react";
 
-import { apiService } from "@framework/ApiService";
-import { EnsembleIdent } from "@framework/EnsembleIdent";
+import { getSeismicCubeMetaListOptions } from "@api";
 import { EnsembleSet } from "@framework/EnsembleSet";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -61,7 +61,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
 
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
-        props.ensembleSet.getEnsembleArr().map((el) => el.getIdent()),
+        props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
         newSettings
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
@@ -158,7 +158,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
         [seismicCubeMetaListQuery.isFetching, props.layer, newSettings]
     );
 
-    function handleEnsembleChange(ensembleIdent: EnsembleIdent | null) {
+    function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent }));
     }
 
@@ -198,7 +198,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                 <div className="table-cell">
                     <EnsembleDropdown
                         value={props.layer.getSettings().ensembleIdent}
-                        ensembleSet={props.ensembleSet}
+                        ensembles={props.ensembleSet.getRegularEnsembleArray()}
                         onChange={handleEnsembleChange}
                         debounceTimeMs={600}
                     />
@@ -338,19 +338,14 @@ function makeDateOrIntervalStringOptions(availableSeismicDateOrIntervalStrings: 
     }));
 }
 
-const STALE_TIME = 60 * 1000;
-const CACHE_TIME = 60 * 1000;
-
-function useSeismicCubeMetaListQuery(ensembleIdent: EnsembleIdent | null) {
+function useSeismicCubeMetaListQuery(ensembleIdent: RegularEnsembleIdent | null) {
     return useQuery({
-        queryKey: ["getSeismicCubeMetaList", ensembleIdent?.getCaseUuid(), ensembleIdent?.getEnsembleName()],
-        queryFn: () =>
-            apiService.seismic.getSeismicCubeMetaList(
-                ensembleIdent?.getCaseUuid() ?? "",
-                ensembleIdent?.getEnsembleName() ?? ""
-            ),
-        staleTime: STALE_TIME,
-        gcTime: CACHE_TIME,
+        ...getSeismicCubeMetaListOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+            },
+        }),
         enabled: Boolean(ensembleIdent),
     });
 }

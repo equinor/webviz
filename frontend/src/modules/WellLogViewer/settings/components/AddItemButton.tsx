@@ -6,7 +6,7 @@ import { SelectOption } from "@lib/components/Select";
 import { Button, Dropdown, MenuButton } from "@mui/base";
 import {
     Add,
-    /* ArrowDropDown */
+    /*, ArrowDropDown */
 } from "@mui/icons-material";
 
 export type AddItemButtonProps<TValue> = {

@@ -1,10 +1,22 @@
 from typing import List, Optional
 
-from ..types import WellborePick, WellboreTrajectory, WellboreHeader, StratigraphicUnit, StratigraphicSurface
+from ..types import (
+    WellborePick,
+    WellboreTrajectory,
+    WellboreHeader,
+    StratigraphicUnit,
+    StratigraphicSurface,
+    StratigraphicColumn,
+)
 from ..stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
 
 from ._drogon_strat_units import get_drogon_strat_units
-from ._drogon_well_data import get_drogon_well_trajectories, get_drogon_well_headers, get_drogon_well_picks
+from ._drogon_well_data import (
+    get_drogon_well_trajectories,
+    get_drogon_well_headers,
+    get_drogon_well_picks,
+    get_drogon_strat_columns,
+)
 
 
 class SmdaAccess:
@@ -18,11 +30,19 @@ class SmdaAccess:
     async def get_stratigraphic_units(self, stratigraphic_column_identifier: str) -> List[StratigraphicUnit]:
         return get_drogon_strat_units()
 
-    async def get_wellbore_headers(self) -> List[WellboreHeader]:
+    # pylint: disable=unused-argument
+    async def get_stratigraphic_columns_for_wellbore(self, wellbore_uuid: str) -> List[StratigraphicColumn]:
+        """Get Drogon strat columns"""
+        return get_drogon_strat_columns()
+
+    # pylint: disable=unused-argument
+    async def get_wellbore_headers(self, field_identififer: str) -> List[WellboreHeader]:
         """Get Drogon wellbore headers"""
         return get_drogon_well_headers()
 
-    async def get_wellbore_trajectories(self, wellbore_uuids: Optional[List[str]] = None) -> List[WellboreTrajectory]:
+    async def get_wellbore_trajectories(
+        self, field_identifier: str, wellbore_uuids: Optional[List[str]] = None
+    ) -> List[WellboreTrajectory]:
         """Get all Drogon trajectories"""
         all_well_trajs = get_drogon_well_trajectories()
         if wellbore_uuids:
@@ -38,8 +58,15 @@ class SmdaAccess:
         return well_picks
 
     # pylint: disable=unused-argument
+    async def get_wellbore_picks_in_stratigraphic_column(
+        self, wellbore_uuid: str, strat_column_identifier: str
+    ) -> List[WellborePick]:
+        return [pick for pick in get_drogon_well_picks() if pick.wellbore_uuid == wellbore_uuid]
+
+    # pylint: disable=unused-argument
     async def get_wellbore_picks_for_pick_identifier(
         self,
+        field_identifier: str,
         pick_identifier: str,
         interpreter: str = "STAT",
         obs_no: Optional[int] = None,

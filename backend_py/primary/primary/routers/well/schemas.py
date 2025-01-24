@@ -3,38 +3,6 @@ from typing import List, Optional, NewType
 from pydantic import BaseModel
 
 
-class StratigraphicColumn(BaseModel):
-    """
-    Stratigraphic column from SMDA
-    """
-
-    stratColumnIdentifier: str
-    stratColumnAreaType: str
-    stratColumnStatus: str
-    stratColumnType: str | None
-
-
-class StratigraphicUnit(BaseModel):
-    """
-    Stratigraphic unit from SMDA
-
-    Camel case attributes needed for esvIntersection component in front-end
-    """
-
-    identifier: str
-    top: str
-    base: str
-    stratUnitLevel: int
-    stratUnitType: str
-    topAge: int | float
-    baseAge: int | float
-    stratUnitParent: Optional[str] = None
-    colorR: int
-    colorG: int
-    colorB: int
-    lithologyType: int | float | str = "unknown"
-
-
 class WellboreHeader(BaseModel):
     wellboreUuid: str
     uniqueWellboreIdentifier: str
@@ -79,11 +47,6 @@ class WellborePick(BaseModel):
     interpreter: str | None
 
 
-class WellborePicksAndStratigraphicUnits(BaseModel):
-    wellbore_picks: List[WellborePick] = []
-    stratigraphic_units: List[StratigraphicUnit] = []
-
-
 class WellboreCompletion(BaseModel):
     mdTop: float
     mdBottom: float
@@ -116,10 +79,10 @@ class WellborePerforation(BaseModel):
     completionMode: str
 
 
-class WellLogCurveSourceEnum(str, Enum):
-    SSDL_WELL_LOG = "ssdl::well_log"
-    SMDA_GEOLOGY = "smda::geology"
-    SMDA_STRATIGRAPHY = "smda::stratigraphy"
+class WellLogCurveSourceEnum(Enum):
+    SSDL_WELL_LOG = "ssdl.well_log"
+    SMDA_GEOLOGY = "smda.geology"
+    SMDA_STRATIGRAPHY = "smda.stratigraphy"
 
 
 class WellLogCurveTypeEnum(str, Enum):
@@ -156,29 +119,6 @@ class WellboreLogCurveData(BaseModel):
     unit: str
     curveUnitDesc: str | None
     dataPoints: list[tuple[float, float | str | None]]
+
     # ? Field is very specific for the well-log-viewer module, should we instead create a "standards" service to get curve styles and others like this?
     metadataDiscrete: Optional[DiscreteMetaEntry] = None
-
-
-# pylint: disable-next=missing-class-docstring
-class WellboreGeoHeader(BaseModel):
-    uuid: str
-    identifier: str
-    geolType: str
-    mdRange: tuple[float, float]
-    source: str
-
-
-# pylint: disable-next=missing-class-docstring
-class WellboreGeoData(BaseModel):
-    uuid: str
-    identifier: str
-    geolType: str
-    geolGroup: str
-    code: int
-
-    # ! I would like to use tuples, but OpenAPI turns them into a 'any[]' type
-    # color: tuple[int, int, int]
-    # mdRange: Tuple[float, float]
-    color: List[int]
-    mdRange: List[float]
