@@ -3,6 +3,7 @@ import numpy as np
 
 from primary.routers.timeseries import router
 from primary.routers.timeseries import schemas
+from primary.utils.query_string_utils import encode_as_uint_list_str
 
 
 @pytest.mark.parametrize(
@@ -38,8 +39,8 @@ async def test_get_realizations_vector_data_dates(
     ["realizations", "real_count", "expected_mean"],
     [
         (None, 100, 3945757.89),
-        ([0, 1, 2, 3, 4, 5], 6, 4074376.18),
-        ([0, 10, 99], 3, 4384017.10),
+        (encode_as_uint_list_str([0, 1, 2, 3, 4, 5]), 6, 4074376.18),
+        (encode_as_uint_list_str([0, 10, 99]), 3, 4384017.10),
     ],
 )
 async def test_get_realizations_vector_data_realizations(
