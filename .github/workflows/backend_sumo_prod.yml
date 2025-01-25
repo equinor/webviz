@@ -2,15 +2,9 @@ name: integration
 
 on:
   push:
-  pull_request:
-    branches:
-      - main
-  release:
-    types:
-      - published
-  # workflow_dispatch:
-  # schedule:
-  #   - cron: "48 4 * * *"
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
 
 jobs:
   sumo_prod:
