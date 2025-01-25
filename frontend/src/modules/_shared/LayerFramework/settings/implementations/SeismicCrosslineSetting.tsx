@@ -93,7 +93,7 @@ export class SeismicCrosslineSetting implements Setting<ValueType> {
                         />
                     </div>
                     <div className="w-1/5">
-                        <Input value={props.value} onChange={handleInputChange} />
+                        <Input type="number" value={props.value} onChange={handleInputChange} />
                     </div>
                 </div>
             );
