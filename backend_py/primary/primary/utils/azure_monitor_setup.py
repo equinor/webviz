@@ -3,7 +3,7 @@ from azure.monitor.opentelemetry import configure_azure_monitor
 from fastapi import FastAPI
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.sdk._logs import LoggingHandler
-
+from opentelemetry._logs import get_logger
 
 # This is a custom logging handler that does formatting of log messages before passing them on to open telemetry.
 # Note that the class we're inheriting from here *is* an OpenTelemetry derived Python logger.
@@ -18,8 +18,10 @@ class LoggingHandlerWithFormatting(LoggingHandler):
         record.msg = formatted_msg
         record.args = None
 
+        logger = get_logger(record.name, logger_provider=self._logger_provider)
+
         # Note that the logger that we're calling emit on here is an Open Telemetry Logger, not a Python logger.
-        self._logger.emit(self._translate(record))
+        logger.emit(self._translate(record))
 
         # For inspecting and debugging the actual telemetry payload, uncomment the following lines.
         # log_record_as_json = self._translate(record).to_json()
