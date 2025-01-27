@@ -2,8 +2,8 @@ import { getGridModelsInfoOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
+import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
-import { GridAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridAttributeSetting";
 import { GridLayerIRangeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerIRangeSetting";
 import { GridLayerJRangeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerJRangeSetting";
 import { GridLayerKRangeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerKRangeSetting";
@@ -26,7 +26,7 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
                 [SettingType.ENSEMBLE]: new EnsembleSetting(),
                 [SettingType.REALIZATION]: new RealizationSetting(),
                 [SettingType.GRID_NAME]: new GridNameSetting(),
-                [SettingType.GRID_ATTRIBUTE]: new GridAttributeSetting(),
+                [SettingType.ATTRIBUTE]: new AttributeSetting(),
                 [SettingType.GRID_LAYER_I_RANGE]: new GridLayerIRangeSetting(),
                 [SettingType.GRID_LAYER_J_RANGE]: new GridLayerJRangeSetting(),
                 [SettingType.GRID_LAYER_K_RANGE]: new GridLayerKRangeSetting(),
@@ -41,7 +41,7 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
             settings[SettingType.ENSEMBLE] !== null &&
             settings[SettingType.REALIZATION] !== null &&
             settings[SettingType.GRID_NAME] !== null &&
-            settings[SettingType.GRID_ATTRIBUTE] !== null &&
+            settings[SettingType.ATTRIBUTE] !== null &&
             settings[SettingType.GRID_LAYER_I_RANGE] !== null &&
             settings[SettingType.GRID_LAYER_J_RANGE] !== null &&
             settings[SettingType.GRID_LAYER_K_RANGE] !== null &&
@@ -117,7 +117,7 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
             return availableGridNames;
         });
 
-        availableSettingsUpdater(SettingType.GRID_ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
+        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(SettingType.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
@@ -194,7 +194,7 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
 
         availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(SettingType.GRID_NAME);
-            const gridAttribute = getLocalSetting(SettingType.GRID_ATTRIBUTE);
+            const gridAttribute = getLocalSetting(SettingType.ATTRIBUTE);
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !gridAttribute || !data) {

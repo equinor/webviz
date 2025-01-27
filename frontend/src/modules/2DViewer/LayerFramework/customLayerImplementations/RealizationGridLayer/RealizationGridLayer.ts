@@ -108,7 +108,7 @@ export class RealizationGridLayer
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const realizationNum = settings[SettingType.REALIZATION].getDelegate().getValue();
         const gridName = settings[SettingType.GRID_NAME].getDelegate().getValue();
-        const attribute = settings[SettingType.GRID_ATTRIBUTE].getDelegate().getValue();
+        const attribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
         let timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;

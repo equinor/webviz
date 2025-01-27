@@ -27,6 +27,7 @@ import { View } from "@modules/_shared/LayerFramework/framework/View/View";
 import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
+import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { Dropdown } from "@mui/base";
@@ -108,6 +109,9 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return;
             case "realization":
                 groupDelegate.prependChild(new SharedSetting(new RealizationSetting(), props.layerManager));
+                return;
+            case "attribute":
+                groupDelegate.prependChild(new SharedSetting(new AttributeSetting(), props.layerManager));
                 return;
             case "Date":
                 groupDelegate.prependChild(new SharedSetting(new TimeOrIntervalSetting(), props.layerManager));
@@ -303,6 +307,11 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 identifier: "realization",
                 icon: <Icon data={settings} fontSize="small" />,
                 label: "Realization",
+            },
+            {
+                identifier: "attribute",
+                icon: <Icon data={settings} fontSize="small" />,
+                label: "Attribute",
             },
             {
                 identifier: "Date",

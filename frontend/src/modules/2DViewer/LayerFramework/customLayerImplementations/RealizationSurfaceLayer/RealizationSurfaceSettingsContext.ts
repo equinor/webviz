@@ -3,9 +3,9 @@ import { getRealizationSurfacesMetadataOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
+import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
-import { SurfaceAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceAttributeSetting";
 import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceNameSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
@@ -22,7 +22,7 @@ export class RealizationSurfaceSettingsContext implements SettingsContext<Realiz
         >(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),
-            [SettingType.SURFACE_ATTRIBUTE]: new SurfaceAttributeSetting(),
+            [SettingType.ATTRIBUTE]: new AttributeSetting(),
             [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),
             [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
         });
@@ -83,7 +83,7 @@ export class RealizationSurfaceSettingsContext implements SettingsContext<Realiz
             });
         });
 
-        availableSettingsUpdater(SettingType.SURFACE_ATTRIBUTE, ({ getHelperDependency }) => {
+        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!data) {
@@ -98,7 +98,7 @@ export class RealizationSurfaceSettingsContext implements SettingsContext<Realiz
         });
 
         availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
-            const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
+            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
             const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!attribute || !data) {
@@ -117,7 +117,7 @@ export class RealizationSurfaceSettingsContext implements SettingsContext<Realiz
         });
 
         availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
+            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
             const surfaceName = getLocalSetting(SettingType.SURFACE_NAME);
             const data = getHelperDependency(realizationSurfaceMetadataDep);
 

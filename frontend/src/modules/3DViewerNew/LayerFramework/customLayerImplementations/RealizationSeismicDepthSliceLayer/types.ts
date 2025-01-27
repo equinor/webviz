@@ -4,7 +4,7 @@ import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTy
 export type RealizationSeismicDepthSliceSettings = {
     [SettingType.ENSEMBLE]: RegularEnsembleIdent | null;
     [SettingType.REALIZATION]: number | null;
-    [SettingType.SEISMIC_ATTRIBUTE]: string | null;
+    [SettingType.ATTRIBUTE]: string | null;
     [SettingType.TIME_OR_INTERVAL]: string | null;
     [SettingType.SEISMIC_DEPTH_SLICE]: number | null;
 };

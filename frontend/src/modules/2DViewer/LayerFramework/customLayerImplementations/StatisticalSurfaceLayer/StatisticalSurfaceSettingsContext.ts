@@ -3,13 +3,13 @@ import { getRealizationSurfacesMetadataOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
+import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import {
     SensitivityNameCasePair,
     SensitivitySetting,
 } from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
 import { StatisticFunctionSetting } from "@modules/_shared/LayerFramework/settings/implementations/StatisticFunctionSetting";
-import { SurfaceAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceAttributeSetting";
 import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceNameSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
@@ -27,7 +27,7 @@ export class StatisticalSurfaceSettingsContext implements SettingsContext<Statis
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.STATISTIC_FUNCTION]: new StatisticFunctionSetting(),
             [SettingType.SENSITIVITY]: new SensitivitySetting(),
-            [SettingType.SURFACE_ATTRIBUTE]: new SurfaceAttributeSetting(),
+            [SettingType.ATTRIBUTE]: new AttributeSetting(),
             [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),
             [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
         });
@@ -101,7 +101,7 @@ export class StatisticalSurfaceSettingsContext implements SettingsContext<Statis
             });
         });
 
-        availableSettingsUpdater(SettingType.SURFACE_ATTRIBUTE, ({ getHelperDependency }) => {
+        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(surfaceMetadataDep);
 
             if (!data) {
@@ -115,7 +115,7 @@ export class StatisticalSurfaceSettingsContext implements SettingsContext<Statis
             return availableAttributes;
         });
         availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
-            const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
+            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
             const data = getHelperDependency(surfaceMetadataDep);
 
             if (!attribute || !data) {
@@ -134,7 +134,7 @@ export class StatisticalSurfaceSettingsContext implements SettingsContext<Statis
         });
 
         availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
+            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
             const surfaceName = getLocalSetting(SettingType.SURFACE_NAME);
             const data = getHelperDependency(surfaceMetadataDep);
 

@@ -73,7 +73,7 @@ export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicIn
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const realizationNum = settings[SettingType.REALIZATION].getDelegate().getValue();
-        const seismicAttribute = settings[SettingType.SEISMIC_ATTRIBUTE].getDelegate().getValue();
+        const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
 
         let timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
         const seismicInlineNumber = settings[SettingType.SEISMIC_INLINE].getDelegate().getValue();

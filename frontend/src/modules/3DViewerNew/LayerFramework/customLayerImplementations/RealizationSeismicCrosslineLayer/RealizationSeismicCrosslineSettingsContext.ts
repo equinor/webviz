@@ -1,17 +1,11 @@
-import { getGridModelsInfoOptions, getSeismicCubeMetaListOptions } from "@api";
+import { getSeismicCubeMetaListOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
+import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
-import { GridAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridAttributeSetting";
-import { GridLayerIRangeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerIRangeSetting";
-import { GridLayerJRangeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerJRangeSetting";
-import { GridLayerKRangeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerKRangeSetting";
-import { GridNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridNameSetting";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
-import { SeismicAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/SeismicAttributeSetting";
 import { SeismicCrosslineSetting } from "@modules/_shared/LayerFramework/settings/implementations/SeismicCrosslineSetting";
-import { ShowGridLinesSetting } from "@modules/_shared/LayerFramework/settings/implementations/ShowGridLinesSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
@@ -29,7 +23,7 @@ export class RealizationSeismicCrosslineSettingsContext
         >(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),
-            [SettingType.SEISMIC_ATTRIBUTE]: new SeismicAttributeSetting(),
+            [SettingType.ATTRIBUTE]: new AttributeSetting(),
             [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
             [SettingType.SEISMIC_CROSSLINE]: new SeismicCrosslineSetting(),
         });
@@ -39,7 +33,7 @@ export class RealizationSeismicCrosslineSettingsContext
         return (
             settings[SettingType.ENSEMBLE] !== null &&
             settings[SettingType.REALIZATION] !== null &&
-            settings[SettingType.SEISMIC_ATTRIBUTE] !== null &&
+            settings[SettingType.ATTRIBUTE] !== null &&
             settings[SettingType.TIME_OR_INTERVAL] !== null
         );
     }
@@ -99,7 +93,7 @@ export class RealizationSeismicCrosslineSettingsContext
             });
         });
 
-        availableSettingsUpdater(SettingType.SEISMIC_ATTRIBUTE, ({ getHelperDependency }) => {
+        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);
 
             if (!data) {
@@ -114,7 +108,7 @@ export class RealizationSeismicCrosslineSettingsContext
         });
 
         availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const seismicAttribute = getLocalSetting(SettingType.SEISMIC_ATTRIBUTE);
+            const seismicAttribute = getLocalSetting(SettingType.ATTRIBUTE);
 
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);
 
@@ -135,7 +129,7 @@ export class RealizationSeismicCrosslineSettingsContext
             return availableTimeOrIntervals;
         });
         availableSettingsUpdater(SettingType.SEISMIC_CROSSLINE, ({ getLocalSetting, getHelperDependency }) => {
-            const seismicAttribute = getLocalSetting(SettingType.SEISMIC_ATTRIBUTE);
+            const seismicAttribute = getLocalSetting(SettingType.ATTRIBUTE);
             const timeOrInterval = getLocalSetting(SettingType.TIME_OR_INTERVAL);
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);
 
