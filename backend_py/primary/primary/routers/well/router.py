@@ -1,4 +1,3 @@
-# type: ignore
 import logging
 from typing import List, Union
 
@@ -279,7 +278,9 @@ async def __get_headers_from_smda_geology(
     return [converters.convert_wellbore_geo_header_to_well_log_header(header) for header in geo_headers]
 
 
-async def __get_headers_from_smda_stratigraghpy(authenticated_user: AuthenticatedUser, wellbore_uuid: str):
+async def __get_headers_from_smda_stratigraghpy(
+    authenticated_user: AuthenticatedUser, wellbore_uuid: str
+) -> list[schemas.WellboreLogCurveHeader]:
     strat_access = SmdaAccess(authenticated_user.get_smda_access_token())
     strat_columns = await strat_access.get_stratigraphic_columns_for_wellbore(wellbore_uuid)
 
