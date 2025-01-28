@@ -43,7 +43,7 @@ export class Figure {
         data,
         layout,
         gridAxesMapping,
-        axesIndexToSubplotTitleAnnotationMap: axesIndexToSubplotTitleAnnotationMap,
+        axesIndexToSubplotTitleAnnotationMap,
     }: {
         data?: PlotData[];
         layout?: Partial<Layout>;
@@ -464,6 +464,6 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
     return new Figure({
         layout,
         gridAxesMapping,
-        axesIndexToSubplotTitleAnnotationMap: axesIndexToSubplotTitleAnnotationMap,
+        axesIndexToSubplotTitleAnnotationMap,
     });
 }
