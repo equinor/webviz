@@ -9,7 +9,7 @@ from primary.services.utils.arrow_helpers import validate_summary_vector_table_p
 
 
 @dataclass
-class RealizationFromCumulativeVector:
+class RealizationDerivedVector:
     realization: int
     timestamps_utc_ms: list[int]
     values: list[float]
@@ -113,7 +113,7 @@ def get_total_vector_name(vector_name: str) -> str:
         return vector_name.lstrip("PER_DAY_")
     if vector_name.startswith("PER_INTVL_"):
         return vector_name.lstrip("PER_INTVL_")
-    raise InvalidDataError(f"Expected {vector_name} to be a cumulative vector!", Service.GENERAL)
+    raise InvalidDataError(f"Expected {vector_name} to be a derived PER_DAY or PER_INTVL vector!", Service.GENERAL)
 
 
 def create_per_interval_vector_table_pa(total_vector_table_pa: pa.Table) -> pa.Table:
@@ -225,11 +225,11 @@ def create_per_day_vector_table_pa(total_vector_table_pa: pa.Table) -> pa.Table:
     return sorted_per_day_vector_df.to_arrow()
 
 
-def create_realization_from_cumulative_vector_list(
+def create_realization_derived_vector_list(
     vector_table: pa.Table, vector_name: str, unit: str
-) -> list[RealizationFromCumulativeVector]:
+) -> list[RealizationDerivedVector]:
     """
-    Create a list of RealizationFromCumulativeVector from the vector table.
+    Create a list of RealizationDerivedVector from the vector table.
     """
     validate_summary_vector_table_pa(vector_table, vector_name)
 
@@ -239,7 +239,7 @@ def create_realization_from_cumulative_vector_list(
     whole_date_np_arr = vector_table.column("DATE").to_numpy()
     whole_value_np_arr = vector_table.column(vector_name).to_numpy()
 
-    ret_arr: list[RealizationFromCumulativeVector] = []
+    ret_arr: list[RealizationDerivedVector] = []
     for i, real in enumerate(unique_reals):
         start_row_idx = first_occurrence_idx[i]
         row_count = real_counts[i]
@@ -248,7 +248,7 @@ def create_realization_from_cumulative_vector_list(
 
         # Create RealizationDeltaVector
         ret_arr.append(
-            RealizationFromCumulativeVector(
+            RealizationDerivedVector(
                 realization=real,
                 timestamps_utc_ms=date_np_arr.astype(int).tolist(),
                 values=value_np_arr.tolist(),

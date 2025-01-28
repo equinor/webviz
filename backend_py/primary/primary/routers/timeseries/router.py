@@ -13,12 +13,12 @@ from primary.services.sumo_access.parameter_access import ParameterAccess
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.services.summary_delta_vectors import create_delta_vector_table, create_realization_delta_vector_list
-from primary.services.summary_from_cumulative_vectors import (
+from primary.services.summary_derived_vectors import (
     create_per_day_vector_name,
     create_per_interval_vector_name,
     create_per_interval_vector_table_pa,
     create_per_day_vector_table_pa,
-    create_realization_from_cumulative_vector_list,
+    create_realization_derived_vector_list,
     get_total_vector_name,
     is_per_day_vector,
     is_per_interval_vector,
@@ -222,7 +222,7 @@ async def get_realizations_vector_data(
 
         unit = total_vector_metadata.unit
 
-        per_interval_vector_list = create_realization_from_cumulative_vector_list(
+        per_interval_vector_list = create_realization_derived_vector_list(
             per_interval_vector_table, vector_name, unit
         )
         for vec in per_interval_vector_list:
@@ -254,7 +254,7 @@ async def get_realizations_vector_data(
         # Note: Uppercase DAY is hardcoded here, as the unit is always per day
         unit = f"{total_vector_metadata.unit}/DAY"
 
-        per_day_vector_list = create_realization_from_cumulative_vector_list(per_day_vector_table, vector_name, unit)
+        per_day_vector_list = create_realization_derived_vector_list(per_day_vector_table, vector_name, unit)
         for vec in per_day_vector_list:
             ret_arr.append(
                 schemas.VectorRealizationData(

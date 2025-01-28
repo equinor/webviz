@@ -4,7 +4,7 @@ import pytest
 import pyarrow as pa
 
 from primary.services.service_exceptions import InvalidDataError
-from primary.primary.services.summary_from_cumulative_vectors import (
+from primary.services.summary_derived_vectors import (
     create_per_day_vector_table_pa,
     create_per_interval_vector_table_pa,
 )
