@@ -10,9 +10,9 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
+import { PublishSubscribe, PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../delegates/PublishSubscribeDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import { Group, Item, SerializedLayerManager, SerializedType } from "../../interfaces";
 

@@ -4,7 +4,7 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Link, Warning } from "@mui/icons-material";
 
-import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
+import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDelegate";
 import { SettingTopic } from "../delegates/SettingDelegate";
 import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { Setting, SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";

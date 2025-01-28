@@ -11,8 +11,8 @@ import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 import { ColorScale } from "./ColorScale";
 
+import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { usePublishSubscribeTopicValue } from "../../delegates/PublishSubscribeDelegate";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 
 export type ColorScaleComponentProps = {

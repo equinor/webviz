@@ -17,7 +17,6 @@ import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { EnsembleSetting } from "@modules//_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
-import { usePublishSubscribeTopicValue } from "@modules/_shared/LayerFramework/delegates/PublishSubscribeDelegate";
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
@@ -32,6 +31,7 @@ import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/imple
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceNameSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
+import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Dropdown } from "@mui/base";
 import {
     Check,

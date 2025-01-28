@@ -1,7 +1,7 @@
 import { ItemDelegateTopic } from "./ItemDelegate";
-import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
+import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationFactory } from "../framework/utils/DeserializationFactory";

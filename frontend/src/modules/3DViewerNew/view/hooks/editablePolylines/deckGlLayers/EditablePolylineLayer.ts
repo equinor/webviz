@@ -1,16 +1,24 @@
 import { CompositeLayer, GetPickingInfoParams, Layer, PickingInfo } from "@deck.gl/core";
 import { PathStyleExtension } from "@deck.gl/extensions";
-import { ColumnLayer, LineLayer, PathLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { LineLayer, PathLayer, ScatterplotLayer } from "@deck.gl/layers";
 
 import { AnimatedPathLayer } from "./AnimatedPathLayer";
 
 import { Polyline } from "../types";
+
+export enum AllowHoveringOf {
+    NONE = "none",
+    LINES = "line",
+    POINTS = "point",
+    LINES_AND_POINTS = "lines-and-points",
+}
 
 export type EditablePolylineLayerProps = {
     id: string;
     polyline: Polyline;
     mouseHoverPoint?: number[];
     referencePathPointIndex?: number;
+    allowHoveringOf: AllowHoveringOf;
 };
 
 export type EditablePolylineLayerPickingInfo = PickingInfo & {
@@ -70,10 +78,18 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
     }
 
     onHover(info: EditablePolylineLayerPickingInfo): boolean {
-        if (!info.editableEntity) {
+        if (!info.editableEntity || this.props.allowHoveringOf === AllowHoveringOf.NONE) {
             this.setState({
                 hoveredEntity: null,
             });
+            return false;
+        }
+
+        if (this.props.allowHoveringOf === AllowHoveringOf.LINES && info.editableEntity.type === "point") {
+            return false;
+        }
+
+        if (this.props.allowHoveringOf === AllowHoveringOf.POINTS && info.editableEntity.type === "line") {
             return false;
         }
 
@@ -107,17 +123,15 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                         depthTest: false,
                     },
                 }),
-                new ColumnLayer({
+                new ScatterplotLayer({
                     id: "hover-point",
                     data: [mouseHoverPoint],
-                    getElevation: 1,
                     getPosition: (d) => d,
                     getFillColor: [230, 136, 21, 255],
                     getLineColor: [230, 136, 21, 255],
                     getLineWidth: 10,
-                    extruded: false,
-                    radius: 30,
-                    lineWidthMinPixels: 5,
+                    getRadius: 10,
+                    lineWidthMinPixels: 3,
                     lineWidthMaxPixels: 5,
                     radiusUnits: "pixels",
                     lineWidthUnits: "pixels",
@@ -180,9 +194,9 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                 getColor: [0, 0, 0, 0],
                 getPath: (d) => d,
                 getWidth: 50,
-                widthMinPixels: 6,
-                widthMaxPixels: 10,
-                billboard: true,
+                widthMinPixels: 10,
+                widthMaxPixels: 20,
+                billboard: false,
                 widthUnits: "meters",
                 parameters: {
                     depthTest: false,
@@ -226,13 +240,13 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                 id: "points",
                 data: polyline.path,
                 getPosition: (d) => d,
-                getFillColor: (d, context) => {
+                getFillColor: (_, context) => {
                     if (context.index === referencePathPointIndex) {
                         return [255, 255, 255, 255];
                     }
                     return [230, 136, 21, 255];
                 },
-                getLineColor: (d, context) => {
+                getLineColor: (_, context) => {
                     if (
                         this.state.hoveredEntity &&
                         this.state.hoveredEntity.layer === "point" &&
@@ -242,7 +256,7 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                     }
                     return [0, 0, 0, 0];
                 },
-                getLineWidth: (d, context) => {
+                getLineWidth: (_, context) => {
                     if (
                         this.state.hoveredEntity &&
                         this.state.hoveredEntity.layer === "point" &&
@@ -252,7 +266,7 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                     }
                     return 0;
                 },
-                getRadius: (d, context) => {
+                getRadius: (_, context) => {
                     if (
                         this.state.hoveredEntity?.layer === "point" &&
                         context.index === this.state.hoveredEntity.index

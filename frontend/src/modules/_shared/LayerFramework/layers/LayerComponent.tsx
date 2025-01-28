@@ -7,9 +7,9 @@ import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
+import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
 import { LayerDelegateTopic, LayerStatus } from "../delegates/LayerDelegate";
-import { usePublishSubscribeTopicValue } from "../delegates/PublishSubscribeDelegate";
 import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../delegates/SettingsContextDelegate";
 import { EditName } from "../framework/utilityComponents/EditName";
 import { RemoveItemButton } from "../framework/utilityComponents/RemoveItemButton";

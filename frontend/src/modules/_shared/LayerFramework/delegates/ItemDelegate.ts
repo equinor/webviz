@@ -2,8 +2,8 @@ import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import { GroupDelegate } from "./GroupDelegate";
-import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 
+import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { SerializedItem } from "../interfaces";
 

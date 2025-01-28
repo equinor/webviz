@@ -4,8 +4,7 @@ import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { isArray, isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
-
+import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { AvailableValuesType, Setting } from "../interfaces";
 
 export enum SettingTopic {

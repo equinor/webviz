@@ -12,7 +12,11 @@ import { MapMouseEvent } from "@webviz/subsurface-viewer";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { EditablePolylineLayer, isEditablePolylineLayerPickingInfo } from "./deckGlLayers/EditablePolylineLayer";
+import {
+    AllowHoveringOf,
+    EditablePolylineLayer,
+    isEditablePolylineLayerPickingInfo,
+} from "./deckGlLayers/EditablePolylineLayer";
 import { PolylinesLayer, isPolylinesLayerPickingInfo } from "./deckGlLayers/PolylinesLayer";
 import { ContextMenuItem, Polyline, PolylineEditingMode } from "./types";
 
@@ -483,6 +487,17 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
         }),
     ];
 
+    let allowHoveringOf = AllowHoveringOf.NONE;
+    if (props.editingMode === PolylineEditingMode.DRAW) {
+        allowHoveringOf = AllowHoveringOf.LINES_AND_POINTS;
+    }
+    if (props.editingMode === PolylineEditingMode.ADD_POINT) {
+        allowHoveringOf = AllowHoveringOf.LINES;
+    }
+    if (props.editingMode === PolylineEditingMode.REMOVE_POINT) {
+        allowHoveringOf = AllowHoveringOf.POINTS;
+    }
+
     if (activePolylineId) {
         const activePolyline = polylines.find((polyline) => polyline.id === activePolylineId);
         layers.push(
@@ -494,6 +509,7 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                     props.editingMode === PolylineEditingMode.DRAW ? referencePathPointIndex : undefined,
                 onDragStart,
                 onDragEnd,
+                allowHoveringOf,
             })
         );
     }
@@ -509,22 +525,22 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
             }
 
             if (cursorIcon === CursorIcon.CONTINUE_FROM_POINT) {
-                return `url(${continuePathIcon}), crosshair`;
+                return `url(${continuePathIcon}) 4 2, crosshair`;
             }
 
             if (cursorIcon === CursorIcon.ADD_POINT) {
-                return `url(${addPathIcon}), crosshair`;
+                return `url(${addPathIcon}) 4 2, crosshair`;
             }
 
             if (cursorIcon === CursorIcon.REMOVE_POINT) {
-                return `url(${removePathIcon}), crosshair`;
+                return `url(${removePathIcon}) 4 2, crosshair`;
             }
 
             if (
                 (activePolylineId && referencePathPointIndex !== undefined) ||
                 (!activePolylineId && props.editingMode === PolylineEditingMode.DRAW)
             ) {
-                return `url(${setPathPointIcon}), crosshair`;
+                return `url(${setPathPointIcon}) 4 2, crosshair`;
             }
 
             return "default";
