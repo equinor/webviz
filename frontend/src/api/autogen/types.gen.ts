@@ -95,10 +95,10 @@ export type DatedFlowNetwork_api = {
 export type EnsembleDetails_api = {
     name: string;
     field_identifier: string;
-    stratigraphic_column_identifier: string;
     case_name: string;
     case_uuid: string;
     realizations: Array<number>;
+    stratigraphic_column_identifier: string;
 };
 
 export type EnsembleInfo_api = {
