@@ -2,7 +2,7 @@ import React from "react";
 
 import { Point2D, Point3D } from "@webviz/subsurface-viewer";
 
-import { isEqual } from "lodash";
+import _, { isEqual } from "lodash";
 
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import { Workbench } from "./Workbench";
@@ -19,6 +19,7 @@ export type GlobalTopicDefinitions = {
     "global.infoMessage": string;
     "global.hoverRealization": { realization: number } | null;
     "global.hoverTimestamp": { timestampUtcMs: number } | null;
+    /** @deprecated use `global.hover.md` and `global.hover.wellbore` instead to delegate to hover-service */
     "global.hoverMd": { wellboreUuid: string; md: number } | null;
     "global.hoverZone": { zoneName: string } | null;
     "global.hoverRegion": { regionName: string } | null;
@@ -42,12 +43,19 @@ export type GlobalTopicDefinitions = {
     "global.syncValue.inplaceVolumetricsResultName": string;
 };
 
-export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions;
+type HoverTopicDefinitions = {
+    "hover.md": number | null;
+    "hover.wellbore": string | null;
+};
+
+export type AllTopicDefinitions = NavigatorTopicDefinitions & GlobalTopicDefinitions & HoverTopicDefinitions;
 
 export type TopicDefinitionsType<T extends keyof AllTopicDefinitions> = T extends keyof GlobalTopicDefinitions
     ? GlobalTopicDefinitions[T]
     : T extends keyof NavigatorTopicDefinitions
     ? NavigatorTopicDefinitions[T]
+    : T extends keyof HoverTopicDefinitions
+    ? HoverTopicDefinitions[T]
     : never;
 
 export type SubscriberCallbackElement<T extends keyof AllTopicDefinitions> = {
@@ -57,15 +65,67 @@ export type SubscriberCallbackElement<T extends keyof AllTopicDefinitions> = {
 
 export type CallbackFunction<T extends keyof AllTopicDefinitions> = (value: AllTopicDefinitions[T] | null) => void;
 
+class HoverService {
+    _workbenchServices: WorkbenchServices;
+    _updateThrottleMs = 100;
+
+    // Each broadcasted topic needs their own debounce method
+    _topicThrottleMap: Map<keyof HoverTopicDefinitions, _.DebouncedFunc<HoverService["_doPublishHoverData"]>>;
+
+    constructor(workbenchServices: WorkbenchServices) {
+        this._workbenchServices = workbenchServices;
+        this._topicThrottleMap = new Map();
+    }
+
+    publishHoverData<T extends keyof HoverTopicDefinitions>(
+        topic: T,
+        subscribers: Set<SubscriberCallbackElement<any>>,
+        value: HoverTopicDefinitions[T],
+        publisherId?: string
+    ) {
+        const throttleFunc = this._getOrCreateTopicThrottleMethod(topic);
+
+        throttleFunc(subscribers, value, publisherId);
+    }
+
+    private _getOrCreateTopicThrottleMethod<T extends keyof HoverTopicDefinitions>(
+        topic: T
+    ): _.DebouncedFunc<HoverService["_doPublishHoverData"]> {
+        if (!this._topicThrottleMap.has(topic)) {
+            const throttledMethod = _.throttle(this._doPublishHoverData, this._updateThrottleMs);
+            this._topicThrottleMap.set(topic, throttledMethod);
+        }
+
+        // If-block above gurantees this is non-null
+        return this._topicThrottleMap.get(topic)!;
+    }
+
+    private _doPublishHoverData<T extends keyof HoverTopicDefinitions>(
+        subscribers: Set<SubscriberCallbackElement<any>>,
+        value: HoverTopicDefinitions[T],
+        publisherId?: string
+    ) {
+        for (const { subscriberId, callbackFn } of subscribers) {
+            if (subscriberId === undefined || publisherId === undefined || subscriberId !== publisherId) {
+                callbackFn(value);
+            }
+        }
+    }
+}
 export class WorkbenchServices {
     protected _workbench: Workbench;
     protected _subscribersMap: Map<string, Set<SubscriberCallbackElement<any>>>;
     protected _topicValueCache: Map<string, any>;
 
+    // Sub-service. Manages hover events specifically, and adds a throttle to it
+    protected _hoverService: HoverService;
+
     protected constructor(workbench: Workbench) {
         this._workbench = workbench;
         this._subscribersMap = new Map();
         this._topicValueCache = new Map();
+
+        this._hoverService = new HoverService(this);
     }
 
     subscribe<T extends keyof AllTopicDefinitions>(topic: T, callbackFn: CallbackFunction<T>, subscriberId?: string) {
@@ -88,7 +148,7 @@ export class WorkbenchServices {
         };
     }
 
-    publishGlobalData<T extends keyof GlobalTopicDefinitions>(
+    publishGlobalData<T extends keyof AllTopicDefinitions>(
         topic: T,
         value: TopicDefinitionsType<T>,
         publisherId?: string
@@ -116,6 +176,16 @@ export class WorkbenchServices {
         if (!subscribersSet) {
             return;
         }
+
+        // Delegate to hover-service to throttle updates
+        if (topic.startsWith("hover.")) {
+            const hoverTopic = topic as keyof HoverTopicDefinitions;
+            const hoverValue = value as HoverTopicDefinitions[typeof hoverTopic];
+
+            this._hoverService.publishHoverData(hoverTopic, subscribersSet, hoverValue, publisherId);
+            return;
+        }
+
         for (const { subscriberId, callbackFn } of subscribersSet) {
             if (subscriberId === undefined || publisherId === undefined || subscriberId !== publisherId) {
                 callbackFn(value);
@@ -173,4 +243,40 @@ export function useSubscribedValueConditionally<T extends keyof AllTopicDefiniti
     );
 
     return latestValue;
+}
+
+export function useHoverValue<T extends keyof HoverTopicDefinitions>(
+    topic: T,
+    moduleId: string,
+    workbenchServices: WorkbenchServices
+): [HoverTopicDefinitions[T], (v: AllTopicDefinitions[T]) => void, boolean] {
+    const [latestValue, setLatestValue] = React.useState<AllTopicDefinitions[T]>(null);
+
+    // Helper to track if the update if the latest update came from the implementer, or someone else
+    const [updateIsInteral, setUpdateIsInteral] = React.useState<boolean>(false);
+
+    React.useEffect(
+        function subscribeToServiceTopic() {
+            function handleNewValue(newValue: AllTopicDefinitions[T] | null) {
+                setLatestValue(newValue);
+                setUpdateIsInteral(false);
+            }
+            const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue, moduleId);
+            return unsubscribeFunc;
+        },
+        [workbenchServices, moduleId, topic]
+    );
+
+    const updateValue = React.useCallback(
+        function updateValue(newVal: AllTopicDefinitions[T]) {
+            setLatestValue(newVal);
+            setUpdateIsInteral(true);
+
+            // @ts-expect-error Dont know how to fix the typing for newVal here
+            workbenchServices.publishGlobalData(topic, newVal, moduleId);
+        },
+        [moduleId, topic, workbenchServices]
+    );
+
+    return [latestValue, updateValue, updateIsInteral];
 }

@@ -4,7 +4,7 @@ import { WellboreHeader_api, WellboreLogCurveData_api, WellboreTrajectory_api } 
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
-import { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
+import { GlobalTopicDefinitions, WorkbenchServices, useHoverValue } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
 import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
@@ -52,6 +52,8 @@ export type SubsurfaceLogViewerWrapperProps = {
     moduleProps: ModuleViewProps<InterfaceTypes>;
 };
 
+// TODO: Fully remove
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function useSubscribeToGlobalHoverMdChange(
     workbenchServices: WorkbenchServices,
     wellLogController: WellLogController | null,
@@ -78,6 +80,8 @@ function useSubscribeToGlobalHoverMdChange(
     );
 }
 
+// TODO: Fully remove
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function useCreateGlobalHoverMdBroadcastFunc(
     workbenchServices: WorkbenchServices,
     instanceId: string,
@@ -175,37 +179,48 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     });
     const colorTables = React.useMemo(() => createContinuousColorScaleForMap(colorScale), [colorScale]);
 
-    const instanceId = props.moduleProps.viewContext.getInstanceIdString();
+    const moduleInstanceId = props.moduleProps.viewContext.getInstanceIdString();
     const syncableSettingKeys = props.moduleProps.viewContext.useSyncedSettingKeys();
-    const wellboreUuid = props.wellboreHeader?.wellboreUuid ?? "";
+
+    const wellboreUuid = props.wellboreHeader?.wellboreUuid;
+    const workbenchServices = props.moduleProps.workbenchServices;
 
     // Set up global hover md synchronization
-    useSubscribeToGlobalHoverMdChange(props.moduleProps.workbenchServices, wellLogController, instanceId, wellboreUuid);
-    const broadcastGlobalMdChange = useCreateGlobalHoverMdBroadcastFunc(
-        props.moduleProps.workbenchServices,
-        instanceId,
-        wellboreUuid
+    const [hoveredMd, setHoveredMd, updateIsInteral] = useHoverValue("hover.md", moduleInstanceId, workbenchServices);
+    const [hoveredWellbore, setHoveredWellbore] = useHoverValue("hover.wellbore", moduleInstanceId, workbenchServices);
+
+    const broadcastMdHover = React.useCallback(
+        function broadcastWellboreAndMdHover(md: number | null) {
+            setHoveredWellbore(wellboreUuid ?? null);
+            setHoveredMd(md);
+        },
+        [setHoveredMd, setHoveredWellbore, wellboreUuid]
     );
+
+    // If there was an external update from some other place, update selection
+    if (hoveredMd && !updateIsInteral && hoveredWellbore === wellboreUuid) {
+        wellLogController?.selectContent([hoveredMd ?? undefined, undefined]);
+    }
 
     // Set up global vertical scale synchronization
     useSubscribeToGlobalVerticalScaleChange(
         props.moduleProps.workbenchServices,
         wellLogController,
         syncableSettingKeys,
-        instanceId
+        moduleInstanceId
     );
     const broadcastVerticalScaleChange = useCreateGlobalVerticalScaleBroadcastFunc(
         props.moduleProps.workbenchServices,
         syncableSettingKeys,
-        instanceId
+        moduleInstanceId
     );
 
     const handleMouseOut = React.useCallback(
         function handleMouseOut() {
-            broadcastGlobalMdChange(null);
+            broadcastMdHover(null);
             setShowReadoutBox(false);
         },
-        [broadcastGlobalMdChange]
+        [broadcastMdHover]
     );
 
     const handleMouseIn = React.useCallback(function handleMouseIn() {
@@ -232,11 +247,11 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         function handleSelection() {
             const currentSelection = wellLogController?.getContentSelection()[0] ?? null;
 
-            broadcastGlobalMdChange(currentSelection);
+            broadcastMdHover(currentSelection);
 
             // TODO: It's possible to pin and select a range, should we have that color a section of other synced intersections?
         },
-        [broadcastGlobalMdChange, wellLogController]
+        [broadcastMdHover, wellLogController]
     );
 
     const handleInfoFilled = React.useCallback(function handleInfoFilled(infos: Info[]) {
