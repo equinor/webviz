@@ -11,8 +11,8 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
-import { CoordinateReference, Figure, makeSubplots } from "@modules/_shared/Figure";
+import { SubplotLimitDirection, VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
+import { CoordinateDomain, Figure, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { Annotations, PlotMarker, Shape } from "plotly.js";
@@ -82,7 +82,7 @@ export class PlotBuilder {
     private _numRows = 1;
     private _numCols = 1;
 
-    private _limitDirection: "rows" | "columns" | null = null;
+    private _limitDirection: SubplotLimitDirection = SubplotLimitDirection.NONE;
     private _limitDirectionMaxElements = 0;
 
     constructor(
@@ -93,7 +93,7 @@ export class PlotBuilder {
         width: number,
         height: number,
         ensemblesParameterColoring?: EnsemblesContinuousParameterColoring,
-        limitDirection?: "rows" | "columns",
+        limitDirection?: SubplotLimitDirection,
         limitDirectionMaxElements?: number,
         scatterType: "scatter" | "scattergl" = "scatter"
     ) {
@@ -125,7 +125,7 @@ export class PlotBuilder {
         if (limitDirection && limitDirectionMaxElements === undefined) {
             throw new Error("limitDirectionMaxElements must be provided if limitDirection is provided");
         }
-        this._limitDirection = limitDirection ?? null;
+        this._limitDirection = limitDirection ?? SubplotLimitDirection.NONE;
         this._limitDirectionMaxElements = limitDirectionMaxElements ? Math.max(1, limitDirectionMaxElements) : 1;
 
         // Create figure
@@ -141,7 +141,6 @@ export class PlotBuilder {
             width: this._width,
             margin: { t: 30, b: 40, l: 40, r: 40 },
             title: this._numberOfSubplots === 0 ? "Select vectors to visualize" : undefined,
-            subplotTitles: true,
             xAxisType: "date",
             showGrid: true,
             sharedXAxes: "all",
@@ -150,24 +149,25 @@ export class PlotBuilder {
 
     private calcNumRowsAndCols(
         numSubplots: number,
-        limitDirection: "rows" | "columns" | null,
+        limitDirection: SubplotLimitDirection,
         maxDirectionElements: number
     ): { numRows: number; numCols: number } {
         if (numSubplots === 1) {
             return { numRows: 1, numCols: 1 };
         }
 
-        if (limitDirection === "rows" && maxDirectionElements > 0) {
+        if (limitDirection === SubplotLimitDirection.ROWS && maxDirectionElements > 0) {
             const numRows = Math.min(maxDirectionElements, numSubplots);
             const numCols = Math.ceil(numSubplots / numRows);
             return { numRows, numCols };
         }
-        if (limitDirection === "columns" && maxDirectionElements > 0) {
+        if (limitDirection === SubplotLimitDirection.COLUMNS && maxDirectionElements > 0) {
             const numCols = Math.min(maxDirectionElements, numSubplots);
             const numRows = Math.ceil(numSubplots / numCols);
             return { numRows, numCols };
         }
 
+        // No direction limitation or invalid direction
         const numRows = Math.ceil(Math.sqrt(numSubplots));
         const numCols = Math.ceil(numSubplots / numRows);
         return { numRows, numCols };
@@ -203,7 +203,7 @@ export class PlotBuilder {
     private getSubplotRowAndColFromIndex(subplotIndex: number): { row: number; col: number } {
         let col = 1;
         let row = 1;
-        if (this._limitDirection === "rows") {
+        if (this._limitDirection === SubplotLimitDirection.ROWS) {
             col = Math.floor(subplotIndex / this._numRows) + 1;
             row = (subplotIndex % this._numRows) + 1;
         } else {
@@ -256,16 +256,10 @@ export class PlotBuilder {
         for (let index = 0; index < this._numberOfSubplots; index++) {
             const { row, col } = this.getSubplotRowAndColFromIndex(index);
             for (const timeAnnotation of this.createTimeAnnotations()) {
-                this._figure.addAnnotation(
-                    timeAnnotation,
-                    row,
-                    col,
-                    CoordinateReference.DATA,
-                    CoordinateReference.DOMAIN
-                );
+                this._figure.addAnnotation(timeAnnotation, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
             }
             for (const timeShape of this.createTimeShapes()) {
-                this._figure.addShape(timeShape, row, col, CoordinateReference.DATA, CoordinateReference.DOMAIN);
+                this._figure.addShape(timeShape, row, col, CoordinateDomain.DATA, CoordinateDomain.SCENE);
             }
         }
 

@@ -4,23 +4,23 @@ import { merge } from "lodash";
 import { Annotations, AxisType, Layout, PlotData, Shape, XAxisName, YAxisName } from "plotly.js";
 
 /**
- * Enum for axis coordinate reference.
+ * Enum for axis coordinate domain.
  *
- * DOMAIN: Use domain positions for the axis, a scalar/percentage position relative to the axis. Note this makes shape placed
- *         same position in view independent of zoom.
- * DATA: Use data for the axis, i.e. matching the value range of the axis. This it can follow zoom and axis range changes.
+ * SCENE: Use scene domain positions for the axis, a scalar/percentage position relative to the axis. Note: This makes shapes
+ *        placed in the same position in the view, independent of zoom etc.
+ * DATA: Use data for the axis, i.e. matching the value range of the axis. This way it can follow zoom and axis range changes.
  */
-export const enum CoordinateReference {
-    DOMAIN = "domain",
+export const enum CoordinateDomain {
+    SCENE = "scene",
     DATA = "data",
 }
 
 /**
  * Class to create a Plotly figure.
  *
- * With row and columns starting at 1, and axis index starting at 1.
+ * With rows and columns starting at 1, and axis index starting at 1.
  *
- * By default the subplots for plotly are arranged in a grid first cell bottom-left and last top-right. Which implies
+ * By default, the subplots for plotly are arranged in a grid, first cell bottom-left and last top-right. Which implies
  * columns from left to right and rows from bottom to top.
  *
  * The default layout for a 3x3 grid, with row/column -> grid axis mapping (r1 = row 1, c1 = column 1):
@@ -37,23 +37,23 @@ export class Figure {
     private _plotData: Partial<PlotData>[];
     private _plotLayout: Partial<Layout>;
     private _gridAxesMapping: number[][];
-    private _axesToSubplotTitleAnnotationMap: Map<number, Partial<Annotations>>;
+    private _axesIndexToSubplotTitleAnnotationMap: Map<number, Partial<Annotations>>;
 
     constructor({
         data,
         layout,
         gridAxesMapping,
-        axesToSubplotTitleAnnotationMap: axesToSubplotTitleAnnotationMap,
+        axesIndexToSubplotTitleAnnotationMap: axesIndexToSubplotTitleAnnotationMap,
     }: {
         data?: PlotData[];
         layout?: Partial<Layout>;
         gridAxesMapping?: number[][];
-        axesToSubplotTitleAnnotationMap?: Map<number, Partial<Annotations>>;
+        axesIndexToSubplotTitleAnnotationMap?: Map<number, Partial<Annotations>>;
     }) {
         this._plotData = data ?? [];
         this._plotLayout = layout ?? {};
         this._gridAxesMapping = gridAxesMapping ?? [[1, 1]];
-        this._axesToSubplotTitleAnnotationMap = axesToSubplotTitleAnnotationMap ?? new Map();
+        this._axesIndexToSubplotTitleAnnotationMap = axesIndexToSubplotTitleAnnotationMap ?? new Map();
     }
 
     getAxisIndex(row: number, column: number): number {
@@ -95,8 +95,8 @@ export class Figure {
         shape: Partial<Shape>,
         row?: number,
         column?: number,
-        xCoordinateRef = CoordinateReference.DATA,
-        yCoordinateRef = CoordinateReference.DATA
+        xCoordinateDomain = CoordinateDomain.DATA,
+        yCoordinateDomain = CoordinateDomain.DATA
     ): void {
         if (row === undefined) {
             row = 1;
@@ -109,14 +109,8 @@ export class Figure {
 
         const adjustedShape: Partial<Shape> = {
             ...shape,
-            xref:
-                xCoordinateRef === CoordinateReference.DOMAIN
-                    ? (`x${axisIndex} domain` as XAxisName)
-                    : (`x${axisIndex}` as XAxisName),
-            yref:
-                yCoordinateRef === CoordinateReference.DOMAIN
-                    ? (`y${axisIndex} domain` as YAxisName)
-                    : (`y${axisIndex}` as YAxisName),
+            xref: this.makeXAxisRef(axisIndex, xCoordinateDomain),
+            yref: this.makeYAxisRef(axisIndex, yCoordinateDomain),
         };
 
         if (!this._plotLayout.shapes) {
@@ -130,8 +124,8 @@ export class Figure {
         annotation: Partial<Annotations>,
         row?: number,
         column?: number,
-        xCoordinateRef = CoordinateReference.DATA,
-        yCoordinateRef = CoordinateReference.DATA
+        xCoordinateDomain = CoordinateDomain.DATA,
+        yCoordinateDomain = CoordinateDomain.DATA
     ): void {
         if (row === undefined) {
             row = 1;
@@ -144,14 +138,8 @@ export class Figure {
 
         const adjustedAnnotation: Partial<Annotations> = {
             ...annotation,
-            xref:
-                xCoordinateRef === CoordinateReference.DOMAIN
-                    ? (`x${axisIndex} domain` as XAxisName)
-                    : (`x${axisIndex}` as XAxisName),
-            yref:
-                yCoordinateRef === CoordinateReference.DOMAIN
-                    ? (`y${axisIndex} domain` as YAxisName)
-                    : (`y${axisIndex}` as YAxisName),
+            xref: this.makeXAxisRef(axisIndex, xCoordinateDomain),
+            yref: this.makeYAxisRef(axisIndex, yCoordinateDomain),
         };
 
         if (!this._plotLayout.annotations) {
@@ -163,14 +151,14 @@ export class Figure {
 
     hasSubplotTitle(row: number, column: number): boolean {
         const axisIndex = this.getAxisIndex(row, column);
-        const subplotTitleAnnotation = this._axesToSubplotTitleAnnotationMap.get(axisIndex);
+        const subplotTitleAnnotation = this._axesIndexToSubplotTitleAnnotationMap.get(axisIndex);
 
         return subplotTitleAnnotation !== undefined;
     }
 
     updateSubplotTitle(title: string, row: number, column: number): void {
         const axisIndex = this.getAxisIndex(row, column);
-        const subplotTitleAnnotation = this._axesToSubplotTitleAnnotationMap.get(axisIndex);
+        const subplotTitleAnnotation = this._axesIndexToSubplotTitleAnnotationMap.get(axisIndex);
 
         if (!subplotTitleAnnotation) {
             throw new Error(`No subplot title annotation found for row ${row} and column ${column}`);
@@ -184,7 +172,7 @@ export class Figure {
         const layout = { ...this._plotLayout };
         layout.annotations = [
             ...(layout.annotations ?? []),
-            ...Array.from(this._axesToSubplotTitleAnnotationMap.values()),
+            ...Array.from(this._axesIndexToSubplotTitleAnnotationMap.values()),
         ];
 
         return layout;
@@ -218,6 +206,14 @@ export class Figure {
                 {...plotArgs}
             />
         );
+    }
+
+    private makeYAxisRef(axisIndex: number, coordinateDomain: CoordinateDomain): YAxisName {
+        return (coordinateDomain === CoordinateDomain.SCENE ? `y${axisIndex} domain` : `y${axisIndex}`) as YAxisName;
+    }
+
+    private makeXAxisRef(axisIndex: number, coordinateDomain: CoordinateDomain): XAxisName {
+        return (coordinateDomain === CoordinateDomain.SCENE ? `x${axisIndex} domain` : `x${axisIndex}`) as XAxisName;
     }
 }
 
@@ -269,10 +265,8 @@ function makeReversedYAxisDomain(
  *
  * numRows: Number of rows in the subplot grid.
  * numCols: Number of columns in the subplot grid.
- * subplotTitles:
- *      - If `true`: Each subplot is assigned a title annotation with empty title text.
- *      - If `string array`: Each subplot is assigned a title annotation with the corresponding title text from the array, arranged from top-left to bottom-right. Missing titles in the array result in empty title text.
- *      - If `undefined` or `false`: No title annotations are added.
+ * subplotTitles: Subplot titles, arranged from top-left to bottom-right. Each subplot is assigned a title annotation with the corresponding title text from the array.
+ *                Missing titles in the array, or undefined titles, result in empty title text.
  * sharedXAxes: Whether to share x-axes between subplots.
  * sharedYAxes: Whether to share y-axes between subplots.
  * width: Width of the figure.
@@ -289,7 +283,7 @@ export interface MakeSubplotOptions {
     numRows?: number;
     numCols?: number;
     title?: string;
-    subplotTitles?: true | string[];
+    subplotTitles?: string[];
     sharedXAxes?: boolean | "all" | "rows" | "columns";
     sharedYAxes?: boolean | "all" | "rows" | "columns";
     width?: number;
@@ -327,7 +321,7 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
         title: options.title,
     };
 
-    const axesToSubplotTitleAnnotationMap: Map<number, Partial<Annotations>> = new Map();
+    const axesIndexToSubplotTitleAnnotationMap: Map<number, Partial<Annotations>> = new Map();
 
     const gridAxesMapping: number[][] = [];
 
@@ -446,27 +440,22 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
                 };
             }
 
-            // If subplot titles are provided, add them as annotations.
-            // Set empty text if title is not provided for the subplot.
-            if (options.subplotTitles) {
-                const title =
-                    options.subplotTitles && options.subplotTitles !== true
-                        ? `<b>${options.subplotTitles[index] ?? ""}</b>`
-                        : "";
-                axesToSubplotTitleAnnotationMap.set(index + 1, {
-                    xanchor: "center",
-                    yanchor: "top",
-                    xref: "paper",
-                    yref: "paper",
-                    x: xDomainStart + (xDomainEnd - xDomainStart) / 2,
-                    y: yDomainEnd + (options.height ? 20 / options.height : 0.02),
-                    text: title,
-                    showarrow: false,
-                    font: {
-                        size: 14,
-                    },
-                });
-            }
+            // Add subplot titles as annotations.
+            // - If title is provided, apply string, otherwise set empty text for the annotation.
+            const title = options.subplotTitles ? `<b>${options.subplotTitles[index] ?? ""}</b>` : "";
+            axesIndexToSubplotTitleAnnotationMap.set(index + 1, {
+                xanchor: "center",
+                yanchor: "top",
+                xref: "paper",
+                yref: "paper",
+                x: xDomainStart + (xDomainEnd - xDomainStart) / 2,
+                y: yDomainEnd + (options.height ? 20 / options.height : 0.02),
+                text: title,
+                showarrow: false,
+                font: {
+                    size: 14,
+                },
+            });
 
             gridAxesMapping[row].push(index + 1);
         }
@@ -475,6 +464,6 @@ export function makeSubplots(options: MakeSubplotOptions): Figure {
     return new Figure({
         layout,
         gridAxesMapping,
-        axesToSubplotTitleAnnotationMap: axesToSubplotTitleAnnotationMap,
+        axesIndexToSubplotTitleAnnotationMap: axesIndexToSubplotTitleAnnotationMap,
     });
 }

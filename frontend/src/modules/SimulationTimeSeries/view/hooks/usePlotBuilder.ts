@@ -10,7 +10,7 @@ import { useAtomValue } from "jotai";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
-import { GroupBy, SubplotLimitDirection, VectorSpec, VisualizationMode } from "../../typesAndEnums";
+import { GroupBy, VectorSpec, VisualizationMode } from "../../typesAndEnums";
 import {
     activeTimestampUtcMsAtom,
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
@@ -71,15 +71,6 @@ export function usePlotBuilder(
         loadedVectorSpecificationsAndObservationData.push(...ensembleObservationData.vectorsObservationData);
     });
 
-    let limitDirection: "rows" | "columns" | undefined = undefined;
-    if (subplotLimitation.direction === SubplotLimitDirection.ROWS) {
-        limitDirection = "rows";
-    }
-    if (subplotLimitation.direction === SubplotLimitDirection.COLUMNS) {
-        limitDirection = "columns";
-    }
-    const limitDirectionMaxElements = subplotLimitation.maxDirectionElements;
-
     const plotBuilder = new PlotBuilder(
         subplotOwner,
         vectorSpecifications ?? [],
@@ -88,8 +79,8 @@ export function usePlotBuilder(
         wrapperDivSize.width,
         wrapperDivSize.height,
         ensemblesParameterColoring ?? undefined,
-        limitDirection,
-        limitDirectionMaxElements,
+        subplotLimitation.direction,
+        subplotLimitation.maxDirectionElements,
         scatterType
     );
 

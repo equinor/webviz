@@ -5,7 +5,7 @@ import { Axis } from "plotly.js";
 
 import { Table } from "./Table";
 
-import { CoordinateReference, Figure, MakeSubplotOptions, makeSubplots } from "../Figure";
+import { CoordinateDomain, Figure, MakeSubplotOptions, makeSubplots } from "../Figure";
 
 export class PlotBuilder {
     private _table: Table;
@@ -205,8 +205,8 @@ export class PlotBuilder {
                 },
                 row,
                 col,
-                CoordinateReference.DOMAIN,
-                CoordinateReference.DOMAIN
+                CoordinateDomain.SCENE,
+                CoordinateDomain.SCENE
             );
         }
 
