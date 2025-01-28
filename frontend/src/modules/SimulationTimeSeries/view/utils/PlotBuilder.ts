@@ -1,6 +1,7 @@
 import React from "react";
 
 import {
+    Frequency_api,
     SummaryVectorObservations_api,
     VectorHistoricalData_api,
     VectorRealizationData_api,
@@ -11,7 +12,11 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { SubplotLimitDirection, VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
+import {
+    FrequencyEnumToStringMapping,
+    SubplotLimitDirection,
+    VectorSpec,
+} from "@modules/SimulationTimeSeries/typesAndEnums";
 import { CoordinateDomain, Figure, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
@@ -24,6 +29,7 @@ import {
     createVectorRealizationTrace,
     createVectorRealizationTraces,
     createVectorStatisticsTraces,
+    getTraceLineShape,
 } from "./PlotlyTraceUtils/createVectorTracesUtils";
 import { scaleHexColorLightness } from "./colorUtils";
 import { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
@@ -45,6 +51,8 @@ export class PlotBuilder {
     private _selectedVectorSpecifications: VectorSpec[] = [];
     private _numberOfSubplots = 0;
     private _subplotOwner: SubplotOwner;
+
+    private _resampleFrequency: Frequency_api | null = null;
 
     private _addedVectorsLegendTracker: string[] = [];
     private _addedEnsemblesLegendTracker: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
@@ -88,6 +96,7 @@ export class PlotBuilder {
     constructor(
         subplotOwner: SubplotOwner,
         selectedVectorSpecifications: VectorSpec[],
+        resampleFrequency: Frequency_api | null,
         makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string,
         colorSet: ColorSet,
         width: number,
@@ -101,6 +110,7 @@ export class PlotBuilder {
         this._width = width;
         this._height = height;
         this._makeEnsembleDisplayName = makeEnsembleDisplayName;
+        this._resampleFrequency = resampleFrequency;
 
         this._uniqueVectorNames = [...new Set(selectedVectorSpecifications.map((vec) => vec.vectorName))];
         this._uniqueEnsembleIdents = [];
@@ -313,11 +323,13 @@ export class PlotBuilder {
                 }
 
                 const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
+                const lineShape = getTraceLineShape(elm.vectorSpecification.vectorName, realizationData.is_rate);
                 const vectorRealizationTrace = createVectorRealizationTrace({
                     vectorRealizationData: realizationData,
                     name: name,
                     color: parameterColor,
                     legendGroup: this._makeEnsembleDisplayName(elm.vectorSpecification.ensembleIdent),
+                    lineShape: lineShape,
                     hoverTemplate: this._defaultHoverTemplate,
                     showLegend: addLegendForTraces,
                     yaxis: `y${subplotIndex + 1}`,
@@ -359,11 +371,14 @@ export class PlotBuilder {
             }
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const isRateVector = elm.data.at(0)?.is_rate ?? false;
+            const lineShape = getTraceLineShape(elm.vectorSpecification.vectorName, isRateVector);
             const vectorRealizationTraces = createVectorRealizationTraces({
                 vectorRealizationsData: elm.data,
                 name: name,
                 color: color,
                 legendGroup: legendGroup,
+                lineShape: lineShape,
                 hoverTemplate: this._defaultHoverTemplate,
                 showLegend: addLegendForTraces,
                 type: this._scatterType,
@@ -398,10 +413,12 @@ export class PlotBuilder {
             const color = this.getHexColor(elm.vectorSpecification);
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const lineShape = getTraceLineShape(elm.vectorSpecification.vectorName, elm.data.is_rate);
             const vectorFanchartTraces = createVectorFanchartTraces({
                 vectorStatisticData: elm.data,
                 hexColor: color,
                 legendGroup: legendGroup,
+                lineShape: lineShape,
                 name: name,
                 yaxis: `y${subplotIndex + 1}`,
                 type: this._scatterType,
@@ -437,10 +454,12 @@ export class PlotBuilder {
             const color = this.getHexColor(elm.vectorSpecification);
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const lineShape = getTraceLineShape(elm.vectorSpecification.vectorName, elm.data.is_rate);
             const vectorStatisticsTraces = createVectorStatisticsTraces({
                 vectorStatisticData: elm.data,
                 hexColor: color,
                 legendGroup: legendGroup,
+                lineShape: lineShape,
                 name: name,
                 lineWidth: lineWidth,
                 type: this._scatterType,
@@ -472,11 +491,13 @@ export class PlotBuilder {
             if (subplotIndex === -1) continue;
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const lineShape = getTraceLineShape(elm.vectorSpecification.vectorName, elm.data.is_rate);
             const vectorHistoryTrace = createHistoricalVectorTrace({
                 vectorHistoricalData: elm.data,
                 name: name,
                 color: this._historyVectorColor,
                 type: this._scatterType,
+                lineShape: lineShape,
             });
 
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
@@ -738,7 +759,13 @@ export class PlotBuilder {
     }
 
     private createVectorSubplotTitle(vectorName: string): string {
-        const vectorDescription = simulationVectorDescription(vectorName);
+        let vectorDescription = simulationVectorDescription(vectorName);
+
+        if ((vectorName.startsWith("PER_DAY_") || vectorName.startsWith("PER_INTVL_")) && this._resampleFrequency) {
+            const frequencyDescription = FrequencyEnumToStringMapping[this._resampleFrequency];
+            vectorDescription = `${frequencyDescription} ${vectorDescription}`;
+        }
+
         const unit = this._vectorNameUnitMap[vectorName];
         if (!unit) return vectorDescription;
 
