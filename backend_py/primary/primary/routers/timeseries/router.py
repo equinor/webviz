@@ -40,9 +40,12 @@ async def get_vector_list(
     authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
     case_uuid: Annotated[str, Query(description="Sumo case uuid")],
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
-    include_cumulative_vectors: Annotated[bool | None, Query(description="Include cumulative vectors")] = None,
+    include_derived_vectors: Annotated[bool | None, Query(description="Include derived vectors")] = None,
 ) -> list[schemas.VectorDescription]:
-    """Get list of all vectors in a given Sumo ensemble, excluding any historical vectors"""
+    """Get list of all vectors in a given Sumo ensemble, excluding any historical vectors
+    
+    Optionally include derived vectors.
+    """
 
     perf_metrics = ResponsePerfMetrics(response)
 
@@ -59,7 +62,7 @@ async def get_vector_list(
 
     perf_metrics.record_lap("convert-data")
 
-    if not include_cumulative_vectors:
+    if not include_derived_vectors:
         LOGGER.info(f"Got vector list in: {perf_metrics.to_string()}")
         return ret_arr
 
@@ -72,57 +75,25 @@ async def get_vector_list(
         ret_arr.extend(
             [
                 schemas.VectorDescription(
-                    name=per_day_vector_name, descriptive_name=per_day_vector_name, has_historical=False
+                    name=per_day_vector_name,
+                    descriptive_name=per_day_vector_name,
+                    has_historical=False,
+                    derived_vector=schemas.DerivedVector(
+                        category=schemas.DerivedVectorCategory.PER_DAY, source_vector=vec.name
+                    ),
                 ),
                 schemas.VectorDescription(
-                    name=per_interval_vector_name, descriptive_name=per_interval_vector_name, has_historical=False
+                    name=per_interval_vector_name,
+                    descriptive_name=per_interval_vector_name,
+                    has_historical=False,
+                    derived_vector=schemas.DerivedVector(
+                        category=schemas.DerivedVectorCategory.PER_INTVL, source_vector=vec.name
+                    ),
                 ),
             ]
         )
 
     LOGGER.info(f"Got vector list in: {perf_metrics.to_string()}")
-
-    return ret_arr
-
-
-@router.get("/cumulative_vector_list/")
-async def get_cumulative_vector_list(
-    response: Response,
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
-    ensemble_name: Annotated[str, Query(description="Ensemble name")],
-) -> list[schemas.VectorDescription]:
-    """Get list of all cumulative vectors in a given Sumo ensemble, excluding any historical vectors"""
-
-    perf_metrics = ResponsePerfMetrics(response)
-
-    access = SummaryAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    perf_metrics.record_lap("get-access")
-
-    vector_info_arr = await access.get_available_vectors_async()
-    perf_metrics.record_lap("get-available-vectors")
-
-    ret_arr: list[schemas.VectorDescription] = []
-    for vec in vector_info_arr:
-        if not is_total_vector(vec.name):
-            continue
-
-        per_day_vector_name = create_per_day_vector_name(vec.name)
-        per_interval_vector_name = create_per_interval_vector_name(vec.name)
-        ret_arr.extend(
-            [
-                schemas.VectorDescription(
-                    name=per_day_vector_name, descriptive_name=per_day_vector_name, has_historical=False
-                ),
-                schemas.VectorDescription(
-                    name=per_interval_vector_name, descriptive_name=per_interval_vector_name, has_historical=False
-                ),
-            ]
-        )
-
-    perf_metrics.record_lap("convert-data")
-
-    LOGGER.info(f"Got cumulative vector list in: {perf_metrics.to_string()}")
 
     return ret_arr
 
@@ -135,6 +106,7 @@ async def get_delta_ensemble_vector_list(
     comparison_ensemble_name: Annotated[str, Query(description="Comparison ensemble name")],
     reference_case_uuid: Annotated[str, Query(description="Sumo case uuid for reference ensemble")],
     reference_ensemble_name: Annotated[str, Query(description="Reference ensemble name")],
+    include_derived_vectors: Annotated[bool | None, Query(description="Include derived vectors")] = None,
 ) -> list[schemas.VectorDescription]:
     """Get list of all vectors for a delta ensemble based on all vectors in a given Sumo ensemble, excluding any historical vectors
 
@@ -173,6 +145,38 @@ async def get_delta_ensemble_vector_list(
     perf_metrics.record_lap("convert-data-to-schema")
 
     LOGGER.info(f"Got delta ensemble vector list in: {perf_metrics.to_string()}")
+
+    if not include_derived_vectors:
+        return ret_arr
+
+    for vector_name in vector_names:
+        if not is_total_vector(vector_name):
+            continue
+
+        per_day_vector_name = create_per_day_vector_name(vector_name)
+        per_interval_vector_name = create_per_interval_vector_name(vector_name)
+        ret_arr.extend(
+            [
+                schemas.VectorDescription(
+                    name=per_day_vector_name,
+                    descriptive_name=per_day_vector_name,
+                    has_historical=False,
+                    derived_vector=schemas.DerivedVector(
+                        category=schemas.DerivedVectorCategory.PER_DAY, source_vector=vector_name
+                    ),
+                ),
+                schemas.VectorDescription(
+                    name=per_interval_vector_name,
+                    descriptive_name=per_interval_vector_name,
+                    has_historical=False,
+                    derived_vector=schemas.DerivedVector(
+                        category=schemas.DerivedVectorCategory.PER_INTVL, source_vector=vector_name
+                    ),
+                ),
+            ]
+        )
+
+    LOGGER.info(f"Got vector list in: {perf_metrics.to_string()}")
 
     return ret_arr
 
@@ -229,6 +233,7 @@ async def get_realizations_vector_data(
                     values=vec.values,
                     unit=vec.unit,
                     is_rate=False,
+                    derived_vector_category=schemas.DerivedVectorCategory.PER_INTVL,
                 )
             )
 
@@ -246,7 +251,8 @@ async def get_realizations_vector_data(
         per_day_vector_table = create_per_day_vector_table_pa(total_vector_table_pa)
         perf_metrics.record_lap("create-per-day-vector-table")
 
-        unit = f"{total_vector_metadata.unit}/day"
+        # Note: Uppercase DAY is hardcoded here, as the unit is always per day
+        unit = f"{total_vector_metadata.unit}/DAY"
 
         per_day_vector_list = create_realization_from_cumulative_vector_list(per_day_vector_table, vector_name, unit)
         for vec in per_day_vector_list:
@@ -257,6 +263,7 @@ async def get_realizations_vector_data(
                     values=vec.values,
                     unit=vec.unit,
                     is_rate=True,
+                    derived_vector_category=schemas.DerivedVectorCategory.PER_DAY,
                 )
             )
 

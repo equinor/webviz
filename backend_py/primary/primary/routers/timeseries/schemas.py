@@ -1,11 +1,10 @@
-import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import List
 
 from pydantic import BaseModel
 
 
-class Frequency(str, Enum):
+class Frequency(StrEnum):
     DAILY = "DAILY"
     WEEKLY = "WEEKLY"
     MONTHLY = "MONTHLY"
@@ -13,7 +12,7 @@ class Frequency(str, Enum):
     YEARLY = "YEARLY"
 
 
-class StatisticFunction(str, Enum):
+class StatisticFunction(StrEnum):
     MEAN = "MEAN"
     MIN = "MIN"
     MAX = "MAX"
@@ -22,10 +21,21 @@ class StatisticFunction(str, Enum):
     P50 = "P50"
 
 
+class DerivedVectorCategory(StrEnum):
+    PER_DAY = "PER_DAY"
+    PER_INTVL = "PER_INTVL"
+
+
+class DerivedVector(BaseModel):
+    category: DerivedVectorCategory
+    source_vector: str
+
+
 class VectorDescription(BaseModel):
     name: str
     descriptive_name: str
     has_historical: bool
+    derived_vector: DerivedVector | None = None
 
 
 class VectorHistoricalData(BaseModel):
@@ -41,6 +51,7 @@ class VectorRealizationData(BaseModel):
     values: List[float]
     unit: str
     is_rate: bool
+    derived_vector_category: DerivedVectorCategory | None = None
 
 
 class StatisticValueObject(BaseModel):
@@ -54,6 +65,7 @@ class VectorStatisticData(BaseModel):
     value_objects: List[StatisticValueObject]
     unit: str
     is_rate: bool
+    derived_vector_category: DerivedVectorCategory | None = None
 
 
 class VectorStatisticSensitivityData(BaseModel):

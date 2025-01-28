@@ -11,6 +11,7 @@ import { useAtomValue } from "jotai";
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 import { GroupBy, VectorSpec, VisualizationMode } from "../../typesAndEnums";
+import { resampleFrequencyAtom } from "../atoms/baseAtoms";
 import {
     activeTimestampUtcMsAtom,
     loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
@@ -40,6 +41,7 @@ export function usePlotBuilder(
     const statisticsSelection = viewContext.useSettingsToViewInterfaceValue("statisticsSelection");
     const subplotLimitation = viewContext.useSettingsToViewInterfaceValue("subplotLimitation");
 
+    const resampleFrequency = useAtomValue(resampleFrequencyAtom);
     const vectorObservationsQueries = useAtomValue(vectorObservationsQueriesAtom);
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
@@ -74,6 +76,7 @@ export function usePlotBuilder(
     const plotBuilder = new PlotBuilder(
         subplotOwner,
         vectorSpecifications ?? [],
+        resampleFrequency,
         makeEnsembleDisplayName,
         colorSet,
         wrapperDivSize.width,

@@ -92,6 +92,16 @@ export type DatedFlowNetwork_api = {
     network: NetworkNode_api;
 };
 
+export type DerivedVector_api = {
+    category: DerivedVectorCategory_api;
+    source_vector: string;
+};
+
+export enum DerivedVectorCategory_api {
+    PER_DAY = "PER_DAY",
+    PER_INTVL = "PER_INTVL",
+}
+
 export type EnsembleDetails_api = {
     name: string;
     field_identifier: string;
@@ -841,6 +851,7 @@ export type VectorDescription_api = {
     name: string;
     descriptive_name: string;
     has_historical: boolean;
+    derived_vector: DerivedVector_api | null;
 };
 
 export type VectorHistoricalData_api = {
@@ -856,6 +867,7 @@ export type VectorRealizationData_api = {
     values: Array<number>;
     unit: string;
     is_rate: boolean;
+    derived_vector_category: DerivedVectorCategory_api | null;
 };
 
 export type VectorStatisticData_api = {
@@ -864,6 +876,7 @@ export type VectorStatisticData_api = {
     value_objects: Array<StatisticValueObject_api>;
     unit: string;
     is_rate: boolean;
+    derived_vector_category: DerivedVectorCategory_api | null;
 };
 
 export type VectorStatisticSensitivityData_api = {
@@ -1177,9 +1190,9 @@ export type GetVectorListData_api = {
          */
         ensemble_name: string;
         /**
-         * Include cumulative vectors
+         * Include derived vectors
          */
-        include_cumulative_vectors?: boolean | null;
+        include_derived_vectors?: boolean | null;
     };
     url: "/timeseries/vector_list/";
 };
@@ -1202,40 +1215,6 @@ export type GetVectorListResponses_api = {
 
 export type GetVectorListResponse_api = GetVectorListResponses_api[keyof GetVectorListResponses_api];
 
-export type GetCumulativeVectorListData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble name
-         */
-        ensemble_name: string;
-    };
-    url: "/timeseries/cumulative_vector_list/";
-};
-
-export type GetCumulativeVectorListErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetCumulativeVectorListError_api = GetCumulativeVectorListErrors_api[keyof GetCumulativeVectorListErrors_api];
-
-export type GetCumulativeVectorListResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: Array<VectorDescription_api>;
-};
-
-export type GetCumulativeVectorListResponse_api = GetCumulativeVectorListResponses_api[keyof GetCumulativeVectorListResponses_api];
-
 export type GetDeltaEnsembleVectorListData_api = {
     body?: never;
     path?: never;
@@ -1256,6 +1235,10 @@ export type GetDeltaEnsembleVectorListData_api = {
          * Reference ensemble name
          */
         reference_ensemble_name: string;
+        /**
+         * Include derived vectors
+         */
+        include_derived_vectors?: boolean | null;
     };
     url: "/timeseries/delta_ensemble_vector_list/";
 };

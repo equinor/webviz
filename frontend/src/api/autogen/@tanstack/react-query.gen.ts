@@ -10,7 +10,6 @@ import {
     getAlive,
     getAliveProtected,
     getCases,
-    getCumulativeVectorList,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
     getDeltaEnsembleVectorList,
@@ -78,7 +77,6 @@ import type {
     GetAliveData_api,
     GetAliveProtectedData_api,
     GetCasesData_api,
-    GetCumulativeVectorListData_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleStatisticalVectorDataData_api,
     GetDeltaEnsembleVectorListData_api,
@@ -274,25 +272,6 @@ export const getVectorListOptions = (options: Options<GetVectorListData_api>) =>
             return data;
         },
         queryKey: getVectorListQueryKey(options),
-    });
-};
-
-export const getCumulativeVectorListQueryKey = (options: Options<GetCumulativeVectorListData_api>) => [
-    createQueryKey("getCumulativeVectorList", options),
-];
-
-export const getCumulativeVectorListOptions = (options: Options<GetCumulativeVectorListData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getCumulativeVectorList({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getCumulativeVectorListQueryKey(options),
     });
 };
 
