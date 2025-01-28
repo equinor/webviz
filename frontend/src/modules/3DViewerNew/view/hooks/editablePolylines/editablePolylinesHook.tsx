@@ -422,10 +422,6 @@ export function useEditablePolylines(props: UseEditablePolylinesProps): UseEdita
                 return false;
             }
 
-            if (!info.viewport) {
-                return false;
-            }
-
             if (!props.deckGlRef.current) {
                 return false;
             }

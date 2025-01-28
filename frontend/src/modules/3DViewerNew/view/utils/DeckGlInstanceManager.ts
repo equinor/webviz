@@ -2,12 +2,8 @@
 This manager is responsible for managing plugins for DeckGL, forwarding events to them, and adding/adjusting layers based on the plugins' responses.
 */
 import { Layer, PickingInfo } from "@deck.gl/core";
-import { DeckGLRef } from "@deck.gl/react";
-import {
-    PublishSubscribe,
-    PublishSubscribeDelegate,
-    TopicPayloads,
-} from "@modules_shared/utils/PublishSubscribeDelegate";
+import { DeckGLProps, DeckGLRef } from "@deck.gl/react";
+import { PublishSubscribe, PublishSubscribeDelegate } from "@modules_shared/utils/PublishSubscribeDelegate";
 import { MapMouseEvent, SubsurfaceViewerProps } from "@webviz/subsurface-viewer";
 
 export enum DeckGlPluginTopic {
@@ -18,43 +14,25 @@ export type DeckGlPluginPayloads = {
     [DeckGlPluginTopic.REQUIRE_REDRAW]: undefined;
 };
 
-export class DeckGlPlugin<
-    TAdditionalTopic extends string | never = never,
-    TAdditionalPayloads extends TopicPayloads<TAdditionalTopic> | never = never
-> implements PublishSubscribe<DeckGlPluginTopic | TAdditionalTopic, DeckGlPluginPayloads & TAdditionalPayloads>
-{
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<TAdditionalTopic | DeckGlPluginTopic>();
+export class DeckGlPlugin {
+    private _manager: DeckGlInstanceManager;
+
+    constructor(manager: DeckGlInstanceManager) {
+        this._manager = manager;
+    }
 
     private requireRedraw() {
-        this._publishSubscribeDelegate.notifySubscribers(DeckGlPluginTopic.REQUIRE_REDRAW);
+        this._manager.redraw();
     }
 
     handleDragStart?(pickingInfo: PickingInfo): void;
-    handleDrag?(pickingInfo: PickingInfo, deckGlRef: DeckGLRef): void;
-    handleMouseEvent?(event: MapMouseEvent): void;
+    handleDrag?(pickingInfo: PickingInfo): void;
+    handleMouseHover?(pickingInfo: PickingInfo): void;
+    handleMouseClick?(pickingInfo: PickingInfo): void;
     handleKeyUpEvent?(key: string): void;
     handleKeyDownEvent?(key: string): void;
-    getCursor?(): string | null;
-
-    protected makeSnapshot?<T extends TAdditionalTopic>(
-        topic: T,
-    ): TAdditionalPayloads[T];
-
-    makeSnapshotGetter<T extends DeckGlPluginTopic | TAdditionalTopic>(
-        topic: T
-    ): () => (DeckGlPluginPayloads & TAdditionalPayloads)[T] {
-        const snapshotGetter = (): any => {
-            if (topic === DeckGlPluginTopic.REQUIRE_REDRAW) {
-                return undefined;
-            }
-        };
-
-        return snapshotGetter;
-    }
-
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<TAdditionalTopic | DeckGlPluginTopic> {
-        return this._publishSubscribeDelegate;
-    }
+    getCursor?(pickingInfo: PickingInfo): string | null;
+    getLayers?(): Layer<any>[];
 }
 
 export enum DeckGlInstanceManagerTopic {
@@ -65,16 +43,27 @@ export type DeckGlInstanceManagerPayloads = {
     [DeckGlInstanceManagerTopic.REDRAW]: undefined;
 };
 
-export class DeckGlInstanceManager implements PublishSubscribe<DeckGlPluginTopic, DeckGlPluginPayloads> {
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<DeckGlPluginTopic>();
+type HoverPoint = {
+    worldCoordinates: number[];
+    screenCoordinates: [number, number];
+};
 
-    private _ref: DeckGLRef;
-    private _hoverPoint: [number, number, number] | null = null;
+export class DeckGlInstanceManager
+    implements PublishSubscribe<DeckGlInstanceManagerTopic, DeckGlInstanceManagerPayloads>
+{
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<DeckGlInstanceManagerTopic>();
+
+    private _ref: DeckGLRef | null;
+    private _hoverPoint: HoverPoint | null = null;
     private _plugins: DeckGlPlugin[] = [];
-    private _layers: Layer<any>[] = [];
     private _layersIdPluginMap = new Map<string, DeckGlPlugin>();
+    private _cursor: string = "auto";
 
-    constructor(ref: DeckGLRef) {
+    constructor(ref: DeckGLRef | null) {
+        this._ref = ref;
+    }
+
+    setRef(ref: DeckGLRef | null) {
         this._ref = ref;
     }
 
@@ -82,19 +71,17 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlPluginTopic
         this._plugins.push(plugin);
     }
 
-    addLayers(layers: Layer<any>) {
-        this._layers.push(layers);
+    redraw() {
+        this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.REDRAW);
     }
 
-    redraw() {}
-
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<DeckGlPluginTopic> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<DeckGlInstanceManagerTopic> {
         return this._publishSubscribeDelegate;
     }
 
-    makeSnapshotGetter<T extends DeckGlPluginTopic>(topic: T): () => DeckGlPluginPayloads[T] {
+    makeSnapshotGetter<T extends DeckGlInstanceManagerTopic>(topic: T): () => DeckGlInstanceManagerPayloads[T] {
         const snapshotGetter = (): any => {
-            if (topic === DeckGlPluginTopic.REQUIRE_REDRAW) {
+            if (topic === DeckGlInstanceManagerTopic.REDRAW) {
                 return undefined;
             }
         };
@@ -104,6 +91,11 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlPluginTopic
 
     private getLayerIdFromPickingInfo(pickingInfo: PickingInfo): string | undefined {
         return pickingInfo.layer?.id;
+    }
+
+    private setCursor(cursor: string) {
+        this._cursor = cursor;
+        this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.REDRAW);
     }
 
     handleDrag(pickingInfo: PickingInfo): void {
@@ -117,7 +109,7 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlPluginTopic
             return;
         }
 
-        plugin.handleDrag?.(pickingInfo, this._ref);
+        plugin.handleDrag?.(pickingInfo);
     }
 
     handleDragStart(pickingInfo: PickingInfo) {
@@ -134,12 +126,66 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlPluginTopic
         plugin.handleDragStart?.(pickingInfo);
     }
 
-    handleMouseEvent(event: MapMouseEvent) {}
+    handleMouseEvent(event: MapMouseEvent) {
+        const firstLayerInfo = this.getFirstLayerUnderCursorInfo(event);
+        if (!firstLayerInfo || !firstLayerInfo.coordinate) {
+            this._hoverPoint = null;
+            return;
+        }
 
-    makeDeckGlComponentProps(): Partial<SubsurfaceViewerProps> {
+        this._hoverPoint = {
+            worldCoordinates: firstLayerInfo.coordinate,
+            screenCoordinates: [firstLayerInfo.x, firstLayerInfo.y],
+        };
+
+        const layerId = this.getLayerIdFromPickingInfo(firstLayerInfo);
+        if (!layerId) {
+            return;
+        }
+
+        const plugin = this._layersIdPluginMap.get(layerId);
+        if (!plugin) {
+            return;
+        }
+
+        if (event.type === "hover") {
+            plugin.handleMouseHover?.(firstLayerInfo);
+            this._cursor = plugin.getCursor?.(firstLayerInfo) ?? "auto";
+        }
+    }
+
+    private getFirstLayerUnderCursorInfo(event: MapMouseEvent): PickingInfo | undefined {
+        for (const info of event.infos) {
+            if (info.coordinate && info.x) {
+                return info;
+            }
+        }
+
+        return undefined;
+    }
+
+    getCursor(cursorState: Parameters<Exclude<DeckGLProps["getCursor"], undefined>>[0]): string {
+        if (cursorState.isDragging) {
+            return "grabbing";
+        }
+
+        return this._cursor;
+    }
+
+    makeDeckGlComponentProps(withLayers: Layer<any>[]): Partial<SubsurfaceViewerProps> {
+        const layers = [...withLayers];
+        for (const plugin of this._plugins) {
+            const pluginLayers = plugin.getLayers?.() ?? [];
+            layers.push(...pluginLayers);
+            for (const layer of pluginLayers) {
+                this._layersIdPluginMap.set(layer.id, plugin);
+            }
+        }
         return {
             onDrag: this.handleDrag.bind(this),
             onMouseEvent: this.handleMouseEvent.bind(this),
+            getCursor: this.getCursor.bind(this),
+            layers,
         };
     }
 }

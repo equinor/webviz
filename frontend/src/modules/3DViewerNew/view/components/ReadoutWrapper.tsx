@@ -2,19 +2,16 @@ import React from "react";
 
 import { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { DeckGLRef } from "@deck.gl/react";
-import { Menu } from "@lib/components/Menu";
-import { MenuItem } from "@lib/components/MenuItem";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { BoundingBox3D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { isEqual } from "lodash";
-
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
 
-import { useEditablePolylines } from "../hooks/editablePolylines/editablePolylinesHook";
 import { Polyline, PolylineEditingMode } from "../hooks/editablePolylines/types";
+import { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
+import { PolylinesPlugin } from "../utils/PolylinesPlugin";
 
 export type ReadooutWrapperProps = {
     views: ViewsType;
@@ -26,6 +23,18 @@ export type ReadooutWrapperProps = {
 export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const id = React.useId();
     const deckGlRef = React.useRef<DeckGLRef>(null);
+    const [deckGlManager, setDeckGlManager] = React.useState<DeckGlInstanceManager>(
+        new DeckGlInstanceManager(deckGlRef.current)
+    );
+    const [polylinesPlugin, setPolylinesPlugin] = React.useState<PolylinesPlugin>(new PolylinesPlugin(deckGlManager));
+
+    React.useEffect(function setupDeckGlManager() {
+        const manager = new DeckGlInstanceManager(deckGlRef.current);
+        setDeckGlManager(manager);
+
+        const polylinesPlugin = new PolylinesPlugin(manager);
+        manager.addPlugin(polylinesPlugin);
+    }, []);
 
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
@@ -35,6 +44,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const [polylineEditingMode, setPolylineEditingMode] = React.useState<PolylineEditingMode>(PolylineEditingMode.NONE);
     const [polylines, setPolylines] = React.useState<Polyline[]>([]);
 
+    /*
     const {
         onMouseEvent,
         layers,
@@ -54,6 +64,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     if (!isEqual(changedPolylines, polylines)) {
         setPolylines(changedPolylines);
     }
+        */
 
     function handleFitInViewClick() {
         setTriggerHomeCounter((prev) => prev + 1);
@@ -64,7 +75,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     }
 
     function handlePolylineEditingModeChange(mode: PolylineEditingMode) {
-        setPolylineEditingMode(mode);
+        polylinesPlugin.setEditingMode(mode);
     }
 
     function handleMouseHover(event: MapMouseEvent): void {
@@ -76,7 +87,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
             handleMouseHover(event);
         }
 
-        onMouseEvent(event);
+        // onMouseEvent(event);
     }
 
     function handleVerticalScaleChange(value: number) {
@@ -84,8 +95,10 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     }
 
     function handleDrag(info: PickingInfo): void {
-        onDrag(info);
+        // onDrag(info);
     }
+
+    const activePolylineId = polylinesPlugin.getCurrentEditingPolylineId();
 
     const handlePolylineNameChange = React.useCallback(
         function handlePolylineNameChange(name: string): void {
@@ -114,7 +127,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
         adjustedLayers = adjustedLayers.filter((layer) => !(layer instanceof AxesLayer));
     }
 
-    adjustedLayers.push(...layers);
+    // adjustedLayers.push(...layers);
 
     return (
         <>
@@ -124,12 +137,12 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                 onPolylineEditingModeChange={handlePolylineEditingModeChange}
                 onVerticalScaleChange={handleVerticalScaleChange}
                 verticalScale={verticalScale}
-                hasActivePolyline={Boolean(activePolylineId)}
+                hasActivePolyline={Boolean()}
                 polylineEditingMode={polylineEditingMode}
                 onPolylineNameChange={handlePolylineNameChange}
                 activePolylineName={polylines.find((p) => p.id === activePolylineId)?.name}
             />
-            {cursorPosition && contextMenuItems.length && (
+            {/*cursorPosition && contextMenuItems.length && (
                 <Menu style={{ position: "absolute", top: cursorPosition[1], left: cursorPosition[0] }}>
                     {contextMenuItems.map((item, index) => (
                         <MenuItem key={index} onClick={item.onClick} className="flex gap-2">
@@ -138,7 +151,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                         </MenuItem>
                     ))}
                 </Menu>
-            )}
+            )*/}
             <ReadoutBoxWrapper layerPickInfo={layerPickingInfo} visible />
             <SubsurfaceViewerWithCameraState
                 deckGlRef={deckGlRef}
@@ -146,9 +159,6 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                 views={props.views}
                 cameraPosition={cameraPositionSetByAction ?? undefined}
                 onCameraPositionApplied={() => setCameraPositionSetByAction(null)}
-                onDrag={handleDrag}
-                onMouseEvent={handleMouseEvent}
-                layers={adjustedLayers}
                 verticalScale={verticalScale}
                 scale={{
                     visible: true,
@@ -166,7 +176,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                 }}
                 triggerHome={triggerHomeCounter}
                 pickingRadius={5}
-                getCursor={getCursor}
+                {...deckGlManager.makeDeckGlComponentProps(adjustedLayers)}
             >
                 {props.viewportAnnotations}
             </SubsurfaceViewerWithCameraState>
