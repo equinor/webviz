@@ -332,7 +332,6 @@ export class PlotBuilder {
                     lineShape: lineShape,
                     hoverTemplate: this._defaultHoverTemplate,
                     showLegend: addLegendForTraces,
-                    yaxis: `y${subplotIndex + 1}`,
                     type: this._scatterType,
                 });
 
@@ -420,7 +419,6 @@ export class PlotBuilder {
                 legendGroup: legendGroup,
                 lineShape: lineShape,
                 name: name,
-                yaxis: `y${subplotIndex + 1}`,
                 type: this._scatterType,
             });
 
