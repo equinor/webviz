@@ -30,7 +30,7 @@ export type LayerManagerTopicPayload = {
     [LayerManagerTopic.SETTINGS_CHANGED]: void;
     [LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED]: void;
     [LayerManagerTopic.LAYER_DATA_REVISION]: number;
-    [LayerManagerTopic.GLOBAL_SETTINGS_CHANGED]: void;
+    [LayerManagerTopic.GLOBAL_SETTINGS_CHANGED]: GlobalSettings;
     [LayerManagerTopic.SHARED_SETTINGS_CHANGED]: void;
 };
 

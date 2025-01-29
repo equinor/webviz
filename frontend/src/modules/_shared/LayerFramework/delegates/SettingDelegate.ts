@@ -20,7 +20,7 @@ export enum SettingTopic {
 export type SettingTopicPayloads<TValue> = {
     [SettingTopic.VALUE_CHANGED]: TValue;
     [SettingTopic.VALIDITY_CHANGED]: boolean;
-    [SettingTopic.AVAILABLE_VALUES_CHANGED]: Exclude<TValue, null>[];
+    [SettingTopic.AVAILABLE_VALUES_CHANGED]: AvailableValuesType<TValue>;
     [SettingTopic.OVERRIDDEN_CHANGED]: TValue | undefined;
     [SettingTopic.LOADING_STATE_CHANGED]: boolean;
     [SettingTopic.INIT_STATE_CHANGED]: boolean;

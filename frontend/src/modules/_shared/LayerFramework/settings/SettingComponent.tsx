@@ -87,7 +87,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
                                 value={value}
                                 isValueValid={isValid}
                                 isOverridden={overriddenValue !== undefined}
-                                overriddenValue={overriddenValue}
+                                overriddenValue={overriddenValue ?? null}
                                 availableValues={availableValues}
                                 globalSettings={globalSettings}
                                 workbenchSession={props.manager.getWorkbenchSession()}
