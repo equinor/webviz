@@ -40,7 +40,7 @@ async def get_relperm_table_info(
     )
     assembler = RelPermAssembler(access)
     relperm_table_info = await assembler.get_relperm_table_info(table_name)
-
+    print("*****************************", relperm_table_info)
     return converters.to_api_relperm_table_info(relperm_table_info)
 
 
@@ -52,14 +52,14 @@ async def get_relperm_realizations_curve_data(
     table_name: Annotated[str, Query(description="Table name")],
     saturation_axis_name: Annotated[str, Query(description="Saturation axis name")],
     curve_names: Annotated[List[str], Query(description="Curve names")],
-    satnums: Annotated[List[int], Query(description="Satnums")],
-) -> schemas.RelPermRealizationDataForSaturation:
+    satnum: Annotated[int, Query(description="Satnum")],
+) -> schemas.RelPermRealizationData:
 
     access = await RelPermAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     assembler = RelPermAssembler(access)
-    relperm_data = await assembler.get_relperm_realization_data(table_name, saturation_axis_name, curve_names, satnums)
+    relperm_data = await assembler.get_relperm_realization_data(table_name, saturation_axis_name, curve_names, satnum)
 
     return converters.to_api_relperm_realization_data(relperm_data)
 

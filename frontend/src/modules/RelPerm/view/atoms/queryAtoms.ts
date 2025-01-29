@@ -1,79 +1,98 @@
 import { getRelpermRealizationsCurveDataOptions, getRelpermStatisticalCurveDataOptions } from "@api";
-import {
-    selectedRelPermSaturationAxisAtom,
-    selectedRelPermTableNameAtom,
-} from "@modules/RelPerm/settings/atoms/derivedAtoms";
+import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { atomWithQueries } from "@framework/utils/atomUtils";
+import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { VisualizationType } from "@modules/RelPerm/typesAndEnums";
 
-import { atomWithQuery } from "jotai-tanstack-query";
+import { Getter } from "jotai";
 
-import {
-    selectedEnsembleIdentAtom,
-    selectedRelPermCurveNamesAtom,
-    selectedSatNumsAtom,
-    selectedVisualizationTypeAtom,
-} from "./baseAtoms";
+import { relPermSpecificationsAtom, selectedVisualizationTypeAtom } from "./baseAtoms";
 
-export const relPermRealizationDataQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-    const selectedTableName = get(selectedRelPermTableNameAtom);
-    const selectedRelPermSaturationAxis = get(selectedRelPermSaturationAxisAtom);
-    const selectedSatNums = get(selectedSatNumsAtom);
-    const selectedRelPermCurveNames = get(selectedRelPermCurveNamesAtom);
-    const visualizationType = get(selectedVisualizationTypeAtom);
-    const query = {
-        ...getRelpermRealizationsCurveDataOptions({
-            query: {
-                case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
-                ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
-                table_name: selectedTableName ?? "",
-                saturation_axis_name: selectedRelPermSaturationAxis ?? "",
-                curve_names: selectedRelPermCurveNames ?? [],
-                satnums: selectedSatNums ?? [],
-            },
+export const relPermRealizationDataQueryAtom = atomWithQueries((get: Getter) => {
+    const relPermSpecifications = get(relPermSpecificationsAtom);
+
+    return {
+        queries: relPermSpecifications.map((item) => (get: Getter) => {
+            const visualizationType = get(selectedVisualizationTypeAtom);
+
+            if (isEnsembleIdentOfType(item.ensembleIdent, RegularEnsembleIdent)) {
+                return {
+                    ...getRelpermRealizationsCurveDataOptions({
+                        query: {
+                            case_uuid: item.ensembleIdent.getCaseUuid(),
+                            ensemble_name: item.ensembleIdent.getEnsembleName(),
+                            table_name: item.tableName,
+                            saturation_axis_name: item.saturationAxisName,
+                            curve_names: item.curveNames,
+                            satnum: item.satNum,
+                        },
+                    }),
+                    enabled: visualizationType === VisualizationType.INDIVIDUAL_REALIZATIONS,
+                };
+            }
+
+            if (isEnsembleIdentOfType(item.ensembleIdent, DeltaEnsembleIdent)) {
+                return {
+                    ...getRelpermRealizationsCurveDataOptions({
+                        query: {
+                            case_uuid: item.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid(),
+                            ensemble_name: item.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName(),
+                            table_name: item.tableName,
+                            saturation_axis_name: item.saturationAxisName,
+                            curve_names: item.curveNames,
+                            satnum: item.satNum,
+                        },
+                    }),
+                    enabled: visualizationType === VisualizationType.INDIVIDUAL_REALIZATIONS,
+                };
+            }
+
+            throw new Error(`Invalid ensemble ident type: ${item.ensembleIdent}`);
         }),
-        enabled: Boolean(
-            selectedEnsembleIdent?.getCaseUuid() &&
-                selectedEnsembleIdent?.getEnsembleName() &&
-                selectedTableName &&
-                selectedRelPermSaturationAxis &&
-                selectedSatNums &&
-                selectedRelPermCurveNames &&
-                visualizationType === VisualizationType.INDIVIDUAL_REALIZATIONS
-        ),
     };
-
-    return query;
 });
 
-export const relPermStatisticalDataQueryAtom = atomWithQuery((get) => {
-    const selectedEnsembleIdent = get(selectedEnsembleIdentAtom);
-    const selectedTableName = get(selectedRelPermTableNameAtom);
-    const selectedRelPermSaturationAxis = get(selectedRelPermSaturationAxisAtom);
-    const selectedSatNums = get(selectedSatNumsAtom);
-    const selectedRelPermCurveNames = get(selectedRelPermCurveNamesAtom);
-    const visualizationType = get(selectedVisualizationTypeAtom);
-    const query = {
-        ...getRelpermStatisticalCurveDataOptions({
-            query: {
-                case_uuid: selectedEnsembleIdent?.getCaseUuid() ?? "",
-                ensemble_name: selectedEnsembleIdent?.getEnsembleName() ?? "",
-                table_name: selectedTableName ?? "",
-                saturation_axis_name: selectedRelPermSaturationAxis ?? "",
-                curve_names: selectedRelPermCurveNames ?? [],
-                satnums: selectedSatNums ?? [],
-            },
-        }),
-        enabled: Boolean(
-            selectedEnsembleIdent?.getCaseUuid() &&
-                selectedEnsembleIdent?.getEnsembleName() &&
-                selectedTableName &&
-                selectedRelPermSaturationAxis &&
-                selectedSatNums &&
-                selectedRelPermCurveNames &&
-                visualizationType === VisualizationType.STATISTICAL_FANCHART
-        ),
-    };
+export const relPermStatisticalDataQueryAtom = atomWithQueries((get: Getter) => {
+    const relPermSpecifications = get(relPermSpecificationsAtom);
 
-    return query;
+    return {
+        queries: relPermSpecifications.map((item) => (get: Getter) => {
+            const visualizationType = get(selectedVisualizationTypeAtom);
+
+            if (isEnsembleIdentOfType(item.ensembleIdent, RegularEnsembleIdent)) {
+                return {
+                    ...getRelpermStatisticalCurveDataOptions({
+                        query: {
+                            case_uuid: item.ensembleIdent.getCaseUuid(),
+                            ensemble_name: item.ensembleIdent.getEnsembleName(),
+                            table_name: item.tableName,
+                            saturation_axis_name: item.saturationAxisName,
+                            curve_names: item.curveNames,
+                            satnums: [item.satNum],
+                        },
+                    }),
+                    enabled: visualizationType === VisualizationType.STATISTICAL_FANCHART,
+                };
+            }
+
+            if (isEnsembleIdentOfType(item.ensembleIdent, DeltaEnsembleIdent)) {
+                return {
+                    ...getRelpermStatisticalCurveDataOptions({
+                        query: {
+                            case_uuid: item.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid(),
+                            ensemble_name: item.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName(),
+                            table_name: item.tableName,
+                            saturation_axis_name: item.saturationAxisName,
+                            curve_names: item.curveNames,
+                            satnums: [item.satNum],
+                        },
+                    }),
+                    enabled: visualizationType === VisualizationType.STATISTICAL_FANCHART,
+                };
+            }
+
+            throw new Error(`Invalid ensemble ident type: ${item.ensembleIdent}`);
+        }),
+    };
 });

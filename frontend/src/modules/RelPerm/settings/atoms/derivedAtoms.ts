@@ -1,6 +1,7 @@
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupEnsembleIdent, fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
+import { RelPermSpec } from "@modules/RelPerm/typesAndEnums";
 
 import { atom } from "jotai";
 
@@ -107,4 +108,31 @@ export const selectedSatNumsAtom = atom<number[]>((get) => {
     }
 
     return computedSatNums;
+});
+
+export const relPermSpecificationsAtom = atom<RelPermSpec[]>((get) => {
+    const ensembleIdent = get(selectedEnsembleIdentAtom);
+    const selectedCurveNames = get(selectedRelPermCurveNamesAtom);
+    const selectedSatNums = get(selectedSatNumsAtom);
+    const selectedSaturationAxisName = get(selectedRelPermSaturationAxisAtom);
+    const selectedTableName = get(selectedRelPermTableNameAtom);
+
+    const specifications: RelPermSpec[] = [];
+
+    // for (const vectorName of selectedVectorNames) {
+    //     if (!ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vectorName)) {
+    //         continue;
+    //     }
+    if (ensembleIdent && selectedTableName && selectedSaturationAxisName && selectedCurveNames) {
+        for (const satNum of selectedSatNums) {
+            specifications.push({
+                ensembleIdent,
+                tableName: selectedTableName,
+                saturationAxisName: selectedSaturationAxisName,
+                curveNames: selectedCurveNames,
+                satNum: satNum,
+            });
+        }
+    }
+    return specifications;
 });

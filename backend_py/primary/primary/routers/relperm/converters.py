@@ -1,9 +1,9 @@
 from primary.services.relperm_assembler.relperm_assembler import (
     RelPermTableInfo,
     RelPermSaturationAxis,
-    RelPermRealizationDataForSaturation,
+    RelPermRealizationData,
     RelPermStatisticalDataForSaturation,
-    RealizationCurveData,
+    RelPermRealizationCurveData,
     Statistic,
 )
 
@@ -23,16 +23,16 @@ def to_api_relperm_saturation_axis(axis: RelPermSaturationAxis) -> schemas.RelPe
 
     return schemas.RelPermSaturationAxis(
         saturation_name=axis.saturation_name,
-        relperm_curve_names=axis.relperm_curve_names,
+        relperm_curve_names=[schemas.RelPermCurveNames(curvename) for curvename in axis.relperm_curve_names],
         capillary_pressure_curve_names=axis.capillary_pressure_curve_names,
     )
 
 
 def to_api_relperm_realization_data(
-    data: RelPermRealizationDataForSaturation,
-) -> schemas.RelPermRealizationDataForSaturation:
-
-    return schemas.RelPermRealizationDataForSaturation(
+    data: RelPermRealizationData,
+) -> schemas.RelPermRealizationData:
+    print("*****************************", data)
+    return schemas.RelPermRealizationData(
         saturation_axis_data=schemas.CurveData(
             curve_name=data.saturation_axis_data.curve_name,
             curve_values=data.saturation_axis_data.curve_values,
@@ -40,7 +40,7 @@ def to_api_relperm_realization_data(
         ),
         saturation_number=data.saturation_number,
         relperm_curve_data=[
-            schemas.RealizationCurveData(
+            schemas.RelPermRealizationCurveData(
                 curve_name=curve_data.curve_name,
                 curve_values=curve_data.curve_values.tolist(),
                 realization_id=curve_data.realization_id,
@@ -91,7 +91,7 @@ def to_api_relperm_statistical_data(
         ),
         saturation_number=data.saturation_number,
         relperm_curve_data=[
-            schemas.StatisticalCurveData(
+            schemas.RelPermStatisticalCurveData(
                 curve_name=curve_data.curve_name,
                 curve_values=_convert_statistic_values_dict_to_schema(curve_data.curve_values),
             )

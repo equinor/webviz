@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import List, Callable, Dict
 import logging
 from dataclasses import dataclass
@@ -15,7 +15,7 @@ from primary.services.service_exceptions import (
 LOGGER = logging.getLogger(__name__)
 
 
-class RelPermFamily(str, Enum):
+class RelPermFamily(StrEnum):
     """Enumeration of relative permeability keyword families"""
 
     FAMILY_1 = "family_1"  # SWOF, SGOF, SLGOF family
@@ -28,10 +28,19 @@ RELPERM_FAMILIES = {
 }
 
 
+class RelPermCurveNames(StrEnum):
+    KRW = "Relative permeability water"
+    KRG = "Relative permeability gas"
+    KROW = "Relative permeability oil water"
+    KROG = "Relative permeability oil gas"
+    PCOW = "Capilar pressure oil water"
+    PCOG = "Capilar pressure oil gas"
+
+
 @dataclass
 class RelPermSaturationAxis:
     saturation_name: str
-    relperm_curve_names: List[str]
+    relperm_curve_names: List[RelPermCurveNames]
     capillary_pressure_curve_names: List[str]
 
 
@@ -50,13 +59,13 @@ class CurveData:
 
 
 @dataclass
-class RealizationCurveData:
+class RelPermRealizationCurveData:
     curve_name: str
     curve_values: np.ndarray
     realization_id: int
 
 
-class Statistic(str, Enum):
+class Statistic(StrEnum):
     """
     Definition of possible statistics for a result column in an inplace volumetrics table
     """
@@ -70,23 +79,23 @@ class Statistic(str, Enum):
 
 
 @dataclass
-class StatisticalCurveData:
+class RelPermStatisticalCurveData:
     curve_name: str
     curve_values: Dict[Statistic, List[float]]
 
 
 @dataclass
-class RelPermRealizationDataForSaturation:
+class RelPermRealizationData:
     saturation_number: int
     saturation_axis_data: CurveData
-    relperm_curve_data: List[RealizationCurveData]
+    relperm_curve_data: List[RelPermRealizationCurveData]
 
 
 @dataclass
 class RelPermStatisticalDataForSaturation:
     saturation_axis_data: CurveData
     saturation_number: int
-    relperm_curve_data: List[StatisticalCurveData]
+    relperm_curve_data: List[RelPermStatisticalCurveData]
 
 
 class RelPermAssembler:
@@ -106,10 +115,10 @@ class RelPermAssembler:
         )
 
     async def get_relperm_realization_data(
-        self, relperm_table_name: str, saturation_axis_name: str, curve_names: List[str], satnums: List[int]
-    ) -> RelPermRealizationDataForSaturation:
+        self, relperm_table_name: str, saturation_axis_name: str, curve_names: List[str], satnum: int
+    ) -> RelPermRealizationData:
         realizations_table: pl.DataFrame = await self._relperm_access.get_relperm_table(relperm_table_name)
-        satnum = satnums[0]
+
         table_columns = realizations_table.columns
 
         if saturation_axis_name not in table_columns:
@@ -126,6 +135,7 @@ class RelPermAssembler:
                 )
 
         columns_to_use = [saturation_axis_name] + curve_names + ["REAL", "SATNUM"]
+
         filtered_table = (
             realizations_table.select(columns_to_use)
             .filter((realizations_table["SATNUM"].cast(pl.Int32) == satnum))
@@ -137,7 +147,7 @@ class RelPermAssembler:
             filtered_table, shared_saturation_axis, saturation_axis_name, curve_names
         )
 
-        real_data: List[RealizationCurveData] = []
+        real_data: List[RelPermRealizationCurveData] = []
 
         for _real, real_table in interpolated_realizations_table.group_by("REAL"):
 
@@ -145,10 +155,12 @@ class RelPermAssembler:
             for curve_name in curve_names:
                 curve_values = real_table[curve_name].to_numpy()
                 real_data.append(
-                    RealizationCurveData(curve_name=curve_name, curve_values=curve_values, realization_id=realization)
+                    RelPermRealizationCurveData(
+                        curve_name=curve_name, curve_values=curve_values, realization_id=realization
+                    )
                 )
 
-        return RelPermRealizationDataForSaturation(
+        return RelPermRealizationData(
             saturation_axis_data=CurveData(
                 curve_values=shared_saturation_axis.tolist(),
                 curve_name=saturation_axis_name,
@@ -215,7 +227,9 @@ class RelPermAssembler:
                     raise ValueError(f"Column {statistic_column_name} not found in statistical table")
                 curve_values = statistical_df[statistic_column_name].to_list()
                 stat_curve_values[statistic] = curve_values
-            statistical_curve_data.append(StatisticalCurveData(curve_name=curve_name, curve_values=stat_curve_values))
+            statistical_curve_data.append(
+                RelPermStatisticalCurveData(curve_name=curve_name, curve_values=stat_curve_values)
+            )
         return RelPermStatisticalDataForSaturation(
             saturation_axis_data=CurveData(
                 curve_values=statistical_df[saturation_axis_name].to_list(),
@@ -323,10 +337,12 @@ def extract_saturation_axes_from_relperm_table(
                 RelPermSaturationAxis(
                     saturation_name="SW",
                     relperm_curve_names=[
-                        curve_name for curve_name in ["KROW", "KRW"] if curve_name in relperm_table_columns
+                        curve_name
+                        for curve_name in [RelPermCurveNames.KROW, RelPermCurveNames.KRW]
+                        if curve_name in relperm_table_columns
                     ],
                     capillary_pressure_curve_names=[
-                        curve_name for curve_name in ["PCOW"] if curve_name in relperm_table_columns
+                        curve_name for curve_name in [RelPermCurveNames.PCOW] if curve_name in relperm_table_columns
                     ],
                 )
             )
@@ -335,10 +351,12 @@ def extract_saturation_axes_from_relperm_table(
                 RelPermSaturationAxis(
                     saturation_name="SG",
                     relperm_curve_names=[
-                        curve_name for curve_name in ["KRG", "KROG"] if curve_name in relperm_table_columns
+                        curve_name
+                        for curve_name in [RelPermCurveNames.KRG, RelPermCurveNames.KROG]
+                        if curve_name in relperm_table_columns
                     ],
                     capillary_pressure_curve_names=[
-                        curve_name for curve_name in ["PCOG"] if curve_name in relperm_table_columns
+                        curve_name for curve_name in [RelPermCurveNames.PCOG] if curve_name in relperm_table_columns
                     ],
                 )
             )
@@ -348,9 +366,11 @@ def extract_saturation_axes_from_relperm_table(
             saturation_infos.append(
                 RelPermSaturationAxis(
                     saturation_name="SW",
-                    relperm_curve_names=[curve_name for curve_name in ["KRW"] if curve_name in relperm_table_columns],
+                    relperm_curve_names=[
+                        curve_name for curve_name in [RelPermCurveNames.KRW] if curve_name in relperm_table_columns
+                    ],
                     capillary_pressure_curve_names=[
-                        curve_name for curve_name in ["PCOW"] if curve_name in relperm_table_columns
+                        curve_name for curve_name in [RelPermCurveNames.PCOW] if curve_name in relperm_table_columns
                     ],
                 )
             )
@@ -358,9 +378,11 @@ def extract_saturation_axes_from_relperm_table(
             saturation_infos.append(
                 RelPermSaturationAxis(
                     saturation_name="SG",
-                    relperm_curve_names=[curve_name for curve_name in ["KRG"] if curve_name in relperm_table_columns],
+                    relperm_curve_names=[
+                        curve_name for curve_name in [RelPermCurveNames.KRG] if curve_name in relperm_table_columns
+                    ],
                     capillary_pressure_curve_names=[
-                        curve_name for curve_name in ["PCOG"] if curve_name in relperm_table_columns
+                        curve_name for curve_name in [RelPermCurveNames.PCOG] if curve_name in relperm_table_columns
                     ],
                 )
             )
@@ -369,7 +391,9 @@ def extract_saturation_axes_from_relperm_table(
                 RelPermSaturationAxis(
                     saturation_name="SO",
                     relperm_curve_names=[
-                        curve_name for curve_name in ["KROW", "KROG"] if curve_name in relperm_table_columns
+                        curve_name
+                        for curve_name in [RelPermCurveNames.KROW, RelPermCurveNames.KROG]
+                        if curve_name in relperm_table_columns
                     ],
                     capillary_pressure_curve_names=[],
                 )

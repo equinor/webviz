@@ -1,7 +1,7 @@
 import {
+    RelPermStatisticalCurveData_api,
     RelPermStatisticalDataForSaturation_api,
     Statistic_api,
-    StatisticalCurveData_api,
     SummaryVectorDateObservation_api,
     VectorHistoricalData_api,
     VectorRealizationData_api,

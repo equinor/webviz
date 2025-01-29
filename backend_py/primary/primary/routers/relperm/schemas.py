@@ -22,16 +22,25 @@ class CurveData(BaseModel):
     unit: str | None = None
 
 
-class RealizationCurveData(BaseModel):
+class RelPermRealizationCurveData(BaseModel):
     curve_name: str
     curve_values: List[float]
     realization_id: int
 
 
-class RelPermRealizationDataForSaturation(BaseModel):
+class RelPermRealizationData(BaseModel):
     saturation_number: int
     saturation_axis_data: CurveData
-    relperm_curve_data: List[RealizationCurveData]
+    relperm_curve_data: List[RelPermRealizationCurveData]
+
+
+class RelPermCurveNames(StrEnum):
+    KRW = "Relative permeability water"
+    KRG = "Relative permeability gas"
+    KROW = "Relative permeability oil water"
+    KROG = "Relative permeability oil gas"
+    PCOW = "Capilar pressure oil water"
+    PCOG = "Capilar pressure oil gas"
 
 
 class Statistic(StrEnum):
@@ -47,7 +56,7 @@ class Statistic(StrEnum):
     P90 = "p90"
 
 
-class StatisticalCurveData(BaseModel):
+class RelPermStatisticalCurveData(BaseModel):
     curve_name: str
     curve_values: Dict[Statistic, List[float]]
 
@@ -55,4 +64,4 @@ class StatisticalCurveData(BaseModel):
 class RelPermStatisticalDataForSaturation(BaseModel):
     saturation_axis_data: CurveData
     saturation_number: int
-    relperm_curve_data: List[StatisticalCurveData]
+    relperm_curve_data: List[RelPermStatisticalCurveData]
