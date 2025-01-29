@@ -34,15 +34,6 @@ class RelPermRealizationData(BaseModel):
     relperm_curve_data: List[RelPermRealizationCurveData]
 
 
-class RelPermCurveNames(StrEnum):
-    KRW = "Relative permeability water"
-    KRG = "Relative permeability gas"
-    KROW = "Relative permeability oil water"
-    KROG = "Relative permeability oil gas"
-    PCOW = "Capilar pressure oil water"
-    PCOG = "Capilar pressure oil gas"
-
-
 class Statistic(StrEnum):
     """
     Definition of possible statistics

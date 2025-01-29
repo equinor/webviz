@@ -23,7 +23,7 @@ def to_api_relperm_saturation_axis(axis: RelPermSaturationAxis) -> schemas.RelPe
 
     return schemas.RelPermSaturationAxis(
         saturation_name=axis.saturation_name,
-        relperm_curve_names=[schemas.RelPermCurveNames(curvename) for curvename in axis.relperm_curve_names],
+        relperm_curve_names=axis.relperm_curve_names,
         capillary_pressure_curve_names=axis.capillary_pressure_curve_names,
     )
 
@@ -31,7 +31,7 @@ def to_api_relperm_saturation_axis(axis: RelPermSaturationAxis) -> schemas.RelPe
 def to_api_relperm_realization_data(
     data: RelPermRealizationData,
 ) -> schemas.RelPermRealizationData:
-    print("*****************************", data)
+
     return schemas.RelPermRealizationData(
         saturation_axis_data=schemas.CurveData(
             curve_name=data.saturation_axis_data.curve_name,
