@@ -2,7 +2,8 @@ import addPathIcon from "@assets/add_path.svg";
 import continuePathIcon from "@assets/continue_path.svg";
 import removePathIcon from "@assets/remove_path.svg";
 import { Layer, PickingInfo } from "@deck.gl/core";
-import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import { PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import { Edit, Remove } from "@mui/icons-material";
 
 import { v4 } from "uuid";
 
@@ -31,17 +32,13 @@ export enum PolylineEditingMode {
 }
 
 export enum PolylinesPluginTopic {
-    EDITING_POLYLINE_CHANGE = "editing_polyline_change",
-    EDITING_MODE_CHANGE = "editing_mode_change",
+    EDITING_POLYLINE_ID = "editing_polyline_id",
+    EDITING_MODE = "editing_mode_change",
 }
 
 export type PolylinesPluginTopicPayloads = {
-    [PolylinesPluginTopic.EDITING_MODE_CHANGE]: {
-        editingMode: PolylineEditingMode;
-    };
-    [PolylinesPluginTopic.EDITING_POLYLINE_CHANGE]: {
-        editingPolylineId: string | null;
-    };
+    [PolylinesPluginTopic.EDITING_MODE]: PolylineEditingMode;
+    [PolylinesPluginTopic.EDITING_POLYLINE_ID]: string | null;
 };
 
 enum AppendToPathLocation {
@@ -49,7 +46,7 @@ enum AppendToPathLocation {
     END = "end",
 }
 
-export class PolylinesPlugin extends DeckGlPlugin {
+export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<PolylinesPluginTopicPayloads> {
     private _currentEditingPolylineId: string | null = null;
     private _currentEditingPolylinePathReferencePointIndex: number | null = null;
     private _polylines: Polyline[] = [];
@@ -63,11 +60,33 @@ export class PolylinesPlugin extends DeckGlPlugin {
 
     private setCurrentEditingPolylineId(id: string | null): void {
         this._currentEditingPolylineId = id;
-        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.EDITING_POLYLINE_CHANGE);
+        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.EDITING_POLYLINE_ID);
     }
 
-    private getActivePolyline(): Polyline | undefined {
+    getActivePolyline(): Polyline | undefined {
         return this._polylines.find((polyline) => polyline.id === this._currentEditingPolylineId);
+    }
+
+    setActivePolylineName(name: string): void {
+        const activePolyline = this.getActivePolyline();
+        if (!activePolyline) {
+            return;
+        }
+
+        this._polylines = this._polylines.map((polyline) => {
+            if (polyline.id === activePolyline.id) {
+                return {
+                    ...polyline,
+                    name,
+                };
+            }
+            return polyline;
+        });
+        this.requireRedraw();
+    }
+
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<PolylinesPluginTopicPayloads> {
+        return this._publishSubscribeDelegate;
     }
 
     setEditingMode(mode: PolylineEditingMode): void {
@@ -76,7 +95,7 @@ export class PolylinesPlugin extends DeckGlPlugin {
             this._hoverPoint = null;
             this._currentEditingPolylinePathReferencePointIndex = null;
         }
-        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.EDITING_MODE_CHANGE);
+        this._publishSubscribeDelegate.notifySubscribers(PolylinesPluginTopic.EDITING_MODE);
         this.requireRedraw();
     }
 
@@ -101,6 +120,17 @@ export class PolylinesPlugin extends DeckGlPlugin {
             this._hoverPoint = null;
             this.setEditingMode(PolylineEditingMode.IDLE);
             this.requireRedraw();
+            return;
+        }
+        if (key === "Delete") {
+            if (this._editingMode === PolylineEditingMode.IDLE) {
+                if (this._selectedPolylineId) {
+                    this._polylines = this._polylines.filter((polyline) => polyline.id !== this._selectedPolylineId);
+                    this._selectedPolylineId = null;
+                    this.requireRedraw();
+                }
+                return;
+            }
         }
     }
 
@@ -303,12 +333,12 @@ export class PolylinesPlugin extends DeckGlPlugin {
         // An alternative would be to store a reference to the layer the polyline was first created upon
         // and always try to use that layer to get the coordinates
         const layerUnderCursor = this.getFirstLayerUnderCursorInfo(pickingInfo.x, pickingInfo.y);
-        if (!layerUnderCursor) {
+        if (!layerUnderCursor || !layerUnderCursor.coordinate) {
             return;
         }
 
         const newPath = [...activePolyline.path];
-        newPath[this._draggedPathPointIndex] = [...pickingInfo.coordinate];
+        newPath[this._draggedPathPointIndex] = [...layerUnderCursor.coordinate];
         this.updateActivePolylinePath(newPath);
         this.requireRedraw();
     }
@@ -350,8 +380,8 @@ export class PolylinesPlugin extends DeckGlPlugin {
                 return `url(${removePathIcon}) 4 2, crosshair`;
             }
 
-            if (this._editingMode === PolylineEditingMode.IDLE) {
-                return "pointer";
+            if (this._editingMode === PolylineEditingMode.IDLE && pickingInfo.editableEntity.type === "point") {
+                return "grab";
             }
         }
 
@@ -369,6 +399,7 @@ export class PolylinesPlugin extends DeckGlPlugin {
 
         return [
             {
+                icon: <Edit />,
                 label: "Edit",
                 onClick: () => {
                     this.setCurrentEditingPolylineId(pickingInfo.polylineId ?? null);
@@ -376,6 +407,7 @@ export class PolylinesPlugin extends DeckGlPlugin {
                 },
             },
             {
+                icon: <Remove />,
                 label: "Delete",
                 onClick: () => {
                     this._polylines = this._polylines.filter((polyline) => polyline.id !== pickingInfo.polylineId);
@@ -429,18 +461,18 @@ export class PolylinesPlugin extends DeckGlPlugin {
         return layers;
     }
 
-    protected makeSnapshot<T extends PolylinesPluginTopic>(topic: T): PolylinesPluginTopicPayloads[T] {
-        if (topic === PolylinesPluginTopic.EDITING_MODE_CHANGE) {
-            return {
-                editingMode: this._editingMode,
-            } as PolylinesPluginTopicPayloads[T];
-        }
-        if (topic === PolylinesPluginTopic.EDITING_POLYLINE_CHANGE) {
-            return {
-                editingPolylineId: this._currentEditingPolylineId,
-            } as PolylinesPluginTopicPayloads[T];
-        }
+    makeSnapshotGetter<T extends PolylinesPluginTopic>(topic: T): () => PolylinesPluginTopicPayloads[T] {
+        const snapshotGetter = (): any => {
+            if (topic === PolylinesPluginTopic.EDITING_MODE) {
+                return this._editingMode;
+            }
+            if (topic === PolylinesPluginTopic.EDITING_POLYLINE_ID) {
+                return this._currentEditingPolylineId;
+            }
 
-        throw new Error("Unknown topic");
+            throw new Error(`Unknown topic ${topic}`);
+        };
+
+        return snapshotGetter;
     }
 }

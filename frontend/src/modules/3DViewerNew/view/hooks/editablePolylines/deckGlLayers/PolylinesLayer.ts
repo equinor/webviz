@@ -79,6 +79,7 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
                         parameters: {
                             depthTest: false,
                         },
+                        billboard: true,
                     })
                 );
             }
@@ -97,6 +98,7 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
                     parameters: {
                         depthTest: false,
                     },
+                    billboard: true,
                 })
             );
         }
@@ -133,7 +135,6 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
                 getPath: (d) => d.path,
                 getColor: (d: Polyline) => d.color,
                 getWidth: 10,
-                billboard: false,
                 widthUnits: "meters",
                 widthMinPixels: 3,
                 widthMaxPixels: 10,
@@ -141,6 +142,7 @@ export class PolylinesLayer extends CompositeLayer<PolylinesLayerProps> {
                 parameters: {
                     depthTest: false,
                 },
+                billboard: true,
             }),
             new TextLayer({
                 id: `polylines-labels`,

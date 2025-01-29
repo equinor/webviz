@@ -6,32 +6,39 @@ import { Input } from "@lib/components/Input";
 import { ToggleButton } from "@lib/components/ToggleButton";
 import { AddPathPointIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
 import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
+import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Add, FilterCenterFocus, GridOff, GridOn, Polyline, Remove } from "@mui/icons-material";
 
 import { PolylineEditingMode } from "../hooks/editablePolylines/types";
+import { PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
 
 export type ToolbarProps = {
     verticalScale: number;
-    polylineEditingMode: PolylineEditingMode;
     hasActivePolyline: boolean;
     activePolylineName?: string;
     onFitInView: () => void;
+    polylinesPlugin: PolylinesPlugin;
     onGridVisibilityChange: (visible: boolean) => void;
-    onPolylineEditingModeChange: (mode: PolylineEditingMode) => void;
     onVerticalScaleChange(value: number): void;
-    onPolylineNameChange: (name: string) => void;
+    onPolylineNameChange(name: string): void;
 };
 
 export function Toolbar(props: ToolbarProps): React.ReactNode {
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
-    const [polylineEditingMode, setPolylineEditingMode] = React.useState<PolylineEditingMode>(PolylineEditingMode.NONE);
-    const [prevPolylineEditingMode, setPrevPolylineEditingMode] = React.useState<PolylineEditingMode>(
-        PolylineEditingMode.NONE
+    const [polylineName, setPolylineName] = React.useState<string | null>(null);
+    const [prevEditingPolylineId, setPrevEditingPolylineId] = React.useState<string | null>(null);
+    const polylineEditingMode = usePublishSubscribeTopicValue(props.polylinesPlugin, PolylinesPluginTopic.EDITING_MODE);
+    const editingPolylineId = usePublishSubscribeTopicValue(
+        props.polylinesPlugin,
+        PolylinesPluginTopic.EDITING_POLYLINE_ID
     );
 
-    if (props.polylineEditingMode !== prevPolylineEditingMode) {
-        setPolylineEditingMode(props.polylineEditingMode);
-        setPrevPolylineEditingMode(props.polylineEditingMode);
+    if (editingPolylineId !== prevEditingPolylineId) {
+        setPrevEditingPolylineId(editingPolylineId);
+        const activePolyline = props.polylinesPlugin.getActivePolyline();
+        if (activePolyline) {
+            setPolylineName(activePolyline.name);
+        }
     }
 
     function handleFitInViewClick() {
@@ -53,21 +60,18 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     function handleTogglePolylineEditing() {
         if (polylineEditingMode !== PolylineEditingMode.NONE) {
-            setPolylineEditingMode(PolylineEditingMode.NONE);
-            props.onPolylineEditingModeChange(PolylineEditingMode.NONE);
+            props.polylinesPlugin.setEditingMode(PolylineEditingMode.NONE);
             return;
         }
-        setPolylineEditingMode(PolylineEditingMode.IDLE);
-        props.onPolylineEditingModeChange(PolylineEditingMode.IDLE);
+        props.polylinesPlugin.setEditingMode(PolylineEditingMode.IDLE);
     }
 
     function handlePolylineEditingModeChange(mode: PolylineEditingMode) {
-        setPolylineEditingMode(mode);
-        props.onPolylineEditingModeChange(mode);
+        props.polylinesPlugin.setEditingMode(mode);
     }
 
     function handlePolylineNameChange(event: React.ChangeEvent<HTMLInputElement>) {
-        props.onPolylineNameChange(event.target.value);
+        props.polylinesPlugin.setActivePolylineName(event.target.value);
     }
 
     return (
@@ -144,8 +148,8 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                 <RemovePathPointIcon fontSize="inherit" />
                             </ToggleButton>
                             <Input
-                                disabled={!props.hasActivePolyline}
-                                value={props.hasActivePolyline ? props.activePolylineName : ""}
+                                disabled={!polylineName}
+                                value={polylineName ?? ""}
                                 onChange={handlePolylineNameChange}
                             />
                         </div>

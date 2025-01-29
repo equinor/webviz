@@ -5,11 +5,12 @@ import React from "react";
 
 import { Layer, PickingInfo } from "@deck.gl/core";
 import { DeckGLProps, DeckGLRef } from "@deck.gl/react";
+import { SubsurfaceViewerWithCameraStateProps } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { PublishSubscribe, PublishSubscribeDelegate } from "@modules_shared/utils/PublishSubscribeDelegate";
-import { MapMouseEvent, SubsurfaceViewerProps } from "@webviz/subsurface-viewer";
+import { MapMouseEvent } from "@webviz/subsurface-viewer";
 
 export type ContextMenuItem = {
-    icon?: React.ReactNode;
+    icon?: React.ReactElement;
     label: string;
     onClick: () => void;
 };
@@ -18,6 +19,7 @@ export type ContextMenu = {
     position: { x: number; y: number };
     items: ContextMenuItem[];
 };
+
 export class DeckGlPlugin {
     private _manager: DeckGlInstanceManager;
 
@@ -205,8 +207,10 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
     }
 
     handleMouseEvent(event: MapMouseEvent) {
-        this._contextMenu = null;
-        this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.CONTEXT_MENU);
+        if (event.type !== "hover") {
+            this._contextMenu = null;
+            this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.CONTEXT_MENU);
+        }
 
         const firstLayerInfo = this.getFirstLayerUnderCursorInfo(event);
         if (!firstLayerInfo || !firstLayerInfo.coordinate) {
@@ -234,12 +238,11 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             if (event.type === "contextmenu") {
                 const contextMenuItems = plugin.getContextMenuItems?.(firstLayerInfo) ?? [];
                 this._contextMenu = {
-                    position: { x: event.x ?? 0, y: event.y ?? 0 },
+                    position: { x: firstLayerInfo.x, y: firstLayerInfo.y },
                     items: contextMenuItems,
                 };
                 this._publishSubscribeDelegate.notifySubscribers(DeckGlInstanceManagerTopic.CONTEXT_MENU);
             }
-
             return;
         }
 
@@ -268,8 +271,9 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             return undefined;
         }
 
-        const layer = this._ref.deck.pickObject({ x, y, radius: 10, unproject3D: true }) ?? undefined;
-        return layer;
+        const layer =
+            this._ref.deck.pickMultipleObjects({ x, y, radius: 10, depth: 1, unproject3D: true }) ?? undefined;
+        return layer[0];
     }
 
     private getFirstLayerUnderCursorInfo(event: MapMouseEvent): PickingInfo | undefined {
@@ -290,8 +294,8 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
         return this._cursor;
     }
 
-    makeDeckGlComponentProps(withLayers: Layer<any>[]): Partial<SubsurfaceViewerProps> {
-        const layers = [...withLayers];
+    makeDeckGlComponentProps(props: SubsurfaceViewerWithCameraStateProps): SubsurfaceViewerWithCameraStateProps {
+        const layers = [...(props.layers ?? [])];
         for (const plugin of this._plugins) {
             const pluginLayers = plugin.getLayers?.() ?? [];
             layers.push(...pluginLayers);
@@ -300,8 +304,12 @@ export class DeckGlInstanceManager implements PublishSubscribe<DeckGlInstanceMan
             }
         }
         return {
+            ...props,
             onDrag: this.handleDrag.bind(this),
-            onMouseEvent: this.handleMouseEvent.bind(this),
+            onMouseEvent: (event) => {
+                this.handleMouseEvent(event);
+                props.onMouseEvent?.(event);
+            },
             getCursor: (state) => this.getCursor(state),
             layers,
         };
