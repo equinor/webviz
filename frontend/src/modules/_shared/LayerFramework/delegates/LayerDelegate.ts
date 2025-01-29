@@ -42,14 +42,14 @@ export type LayerDelegatePayloads<TData> = {
  * It also manages the status of the layer (loading, success, error).
  */
 export class LayerDelegate<TSettings extends Settings, TData>
-    implements PublishSubscribe<LayerDelegateTopic, LayerDelegatePayloads<TData>>
+    implements PublishSubscribe<LayerDelegatePayloads<TData>>
 {
     private _owner: Layer<TSettings, TData>;
     private _settingsContext: SettingsContext<TSettings>;
     private _layerManager: LayerManager;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _cancellationPending: boolean = false;
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerDelegateTopic>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerDelegatePayloads<TData>>();
     private _queryKeys: unknown[][] = [];
     private _status: LayerStatus = LayerStatus.IDLE;
     private _data: TData | null = null;
@@ -191,7 +191,7 @@ export class LayerDelegate<TSettings extends Settings, TData>
         return snapshotGetter;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<LayerDelegateTopic> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<LayerDelegatePayloads<TData>> {
         return this._publishSubscribeDelegate;
     }
 

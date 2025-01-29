@@ -115,7 +115,7 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                     data: [{ from: polyline.path[referencePathPointIndex], to: mouseHoverPoint }],
                     getSourcePosition: (d) => d.from,
                     getTargetPosition: (d) => d.to,
-                    getColor: [230, 136, 21, 100],
+                    getColor: [polyline.color[0], polyline.color[1], polyline.color[2], 100],
                     getWidth: 10,
                     widthUnits: "meters",
                     widthMinPixels: 3,
@@ -127,14 +127,11 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                     id: "hover-point",
                     data: [mouseHoverPoint],
                     getPosition: (d) => d,
-                    getFillColor: [230, 136, 21, 255],
-                    getLineColor: [230, 136, 21, 255],
-                    getLineWidth: 10,
+                    getFillColor: [polyline.color[0], polyline.color[1], polyline.color[2], 100],
                     getRadius: 10,
-                    lineWidthMinPixels: 3,
-                    lineWidthMaxPixels: 5,
                     radiusUnits: "pixels",
-                    lineWidthUnits: "pixels",
+                    radiusMinPixels: 5,
+                    radiusMaxPixels: 10,
                     pickable: false,
                     parameters: {
                         depthTest: false,
@@ -244,7 +241,7 @@ export class EditablePolylineLayer extends CompositeLayer<EditablePolylineLayerP
                     if (context.index === referencePathPointIndex) {
                         return [255, 255, 255, 255];
                     }
-                    return [230, 136, 21, 255];
+                    return polyline.color;
                 },
                 getLineColor: (_, context) => {
                     if (

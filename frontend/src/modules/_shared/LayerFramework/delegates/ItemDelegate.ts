@@ -23,14 +23,14 @@ export type ItemDelegatePayloads = {
  * The ItemDelegate class is responsible for managing the basic properties of an item.
  * It provides methods for setting and getting the id, parent group, name, visibility, and expansion state of the item.
  */
-export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDelegatePayloads> {
+export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     private _id: string;
     private _name: string;
     private _visible: boolean = true;
     private _expanded: boolean = true;
     private _parentGroup: GroupDelegate | null = null;
     private _layerManager: LayerManager;
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<ItemDelegateTopic>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<ItemDelegatePayloads>();
 
     constructor(name: string, layerManager: LayerManager) {
         this._id = v4();
@@ -118,7 +118,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegateTopic, ItemDel
         return snapshotGetter;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<ItemDelegateTopic> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<ItemDelegatePayloads> {
         return this._publishSubscribeDelegate;
     }
 

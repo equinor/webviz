@@ -50,13 +50,13 @@ export type SettingsContextDelegateState<TSettings extends Settings, TKey extend
  *
  */
 export class SettingsContextDelegate<TSettings extends Settings, TKey extends keyof TSettings = keyof TSettings>
-    implements PublishSubscribe<SettingsContextDelegateTopic, SettingsContextDelegatePayloads>
+    implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
     private _parentContext: SettingsContext<TSettings, TKey>;
     private _layerManager: LayerManager;
     private _settings: { [K in TKey]: Setting<TSettings[K]> } = {} as { [K in TKey]: Setting<TSettings[K]> };
     private _overriddenSettings: { [K in TKey]: TSettings[K] } = {} as { [K in TKey]: TSettings[K] };
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegateTopic>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegatePayloads>();
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _loadingState: SettingsContextLoadingState = SettingsContextLoadingState.LOADING;
 
@@ -217,7 +217,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         return snapshotGetter;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SettingsContextDelegateTopic> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SettingsContextDelegatePayloads> {
         return this._publishSubscribeDelegate;
     }
 

@@ -3,14 +3,16 @@ import React from "react";
 import { Layer as DeckGlLayer, PickingInfo } from "@deck.gl/core";
 import { DeckGLRef } from "@deck.gl/react";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
+import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { BoundingBox3D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
+import { ContextMenu } from "./ContextMenu";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
 
 import { Polyline, PolylineEditingMode } from "../hooks/editablePolylines/types";
-import { DeckGlInstanceManager } from "../utils/DeckGlInstanceManager";
+import { DeckGlInstanceManager, DeckGlInstanceManagerTopic } from "../utils/DeckGlInstanceManager";
 import { PolylinesPlugin } from "../utils/PolylinesPlugin";
 
 export type ReadooutWrapperProps = {
@@ -28,12 +30,19 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     );
     const [polylinesPlugin, setPolylinesPlugin] = React.useState<PolylinesPlugin>(new PolylinesPlugin(deckGlManager));
 
+    usePublishSubscribeTopicValue(deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
+
     React.useEffect(function setupDeckGlManager() {
         const manager = new DeckGlInstanceManager(deckGlRef.current);
         setDeckGlManager(manager);
 
         const polylinesPlugin = new PolylinesPlugin(manager);
         manager.addPlugin(polylinesPlugin);
+        setPolylinesPlugin(polylinesPlugin);
+
+        return function cleanupDeckGlManager() {
+            manager.beforeDestroy();
+        };
     }, []);
 
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
@@ -152,6 +161,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
                     ))}
                 </Menu>
             )*/}
+            <ContextMenu deckGlManager={deckGlManager} />
             <ReadoutBoxWrapper layerPickInfo={layerPickingInfo} visible />
             <SubsurfaceViewerWithCameraState
                 deckGlRef={deckGlRef}

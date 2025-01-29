@@ -33,12 +33,12 @@ export type SettingTopicPayloads<TValue> = {
  * It provides a method for setting available values, which are used to validate the setting value or applying a fixup if the value is invalid.
  * It provides methods for setting and getting the value and its states, checking if the value is valid, and setting the value as overridden or persisted.
  */
-export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, SettingTopicPayloads<TValue>> {
+export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopicPayloads<TValue>> {
     private _id: string;
     private _owner: Setting<TValue>;
     private _value: TValue;
     private _isValueValid: boolean = false;
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopic>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TValue>>();
     private _availableValues: AvailableValuesType<TValue> = [] as unknown as AvailableValuesType<TValue>;
     private _overriddenValue: TValue | undefined = undefined;
     private _loading: boolean = false;
@@ -230,7 +230,7 @@ export class SettingDelegate<TValue> implements PublishSubscribe<SettingTopic, S
         return snapshotGetter;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SettingTopic> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SettingTopicPayloads<TValue>> {
         return this._publishSubscribeDelegate;
     }
 

@@ -50,12 +50,12 @@ export type GlobalSettings = {
  * It does also serve as a provider of the QueryClient and WorkbenchSession.
  */
 
-export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, LayerManagerTopicPayload> {
+export class LayerManager implements Group, PublishSubscribe<LayerManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
     private _workbenchSettings: WorkbenchSettings;
     private _groupDelegate: GroupDelegate;
     private _queryClient: QueryClient;
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerManagerTopic>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerManagerTopicPayload>();
     private _itemDelegate: ItemDelegate;
     private _layerDataRevision: number = 0;
     private _globalSettings: GlobalSettings;
@@ -166,7 +166,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopic, 
         return snapshotGetter;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<LayerManagerTopic> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<LayerManagerTopicPayload> {
         return this._publishSubscribeDelegate;
     }
 
