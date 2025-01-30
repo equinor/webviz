@@ -125,7 +125,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                             </ToggleButton>
                             <ToggleButton
                                 active={polylineEditingMode === PolylineEditingMode.ADD_POINT}
-                                disabled={!props.hasActivePolyline}
+                                disabled={!editingPolylineId}
                                 title="Add point"
                                 onToggle={(active) =>
                                     handlePolylineEditingModeChange(
@@ -137,7 +137,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                             </ToggleButton>
                             <ToggleButton
                                 active={polylineEditingMode === PolylineEditingMode.REMOVE_POINT}
-                                disabled={!props.hasActivePolyline}
+                                disabled={!editingPolylineId}
                                 title="Remove point"
                                 onToggle={(active) =>
                                     handlePolylineEditingModeChange(
@@ -148,8 +148,8 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
                                 <RemovePathPointIcon fontSize="inherit" />
                             </ToggleButton>
                             <Input
-                                disabled={!polylineName}
-                                value={polylineName ?? ""}
+                                disabled={!editingPolylineId}
+                                value={editingPolylineId ? polylineName : ""}
                                 onChange={handlePolylineNameChange}
                             />
                         </div>

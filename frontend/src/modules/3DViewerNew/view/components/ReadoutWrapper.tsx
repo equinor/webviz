@@ -2,24 +2,31 @@ import React from "react";
 
 import { Layer as DeckGlLayer } from "@deck.gl/core";
 import { DeckGLRef } from "@deck.gl/react";
+import { useIntersectionPolylines } from "@framework/UserCreatedItems";
+import { WorkbenchSession } from "@framework/WorkbenchSession";
+import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { BoundingBox3D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
+import culori from "culori";
+
 import { ContextMenu } from "./ContextMenu";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
 
-import { Polyline } from "../hooks/editablePolylines/types";
 import { DeckGlInstanceManager, DeckGlInstanceManagerTopic } from "../utils/DeckGlInstanceManager";
-import { PolylinesPlugin } from "../utils/PolylinesPlugin";
+import { Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
 
 export type ReadooutWrapperProps = {
     views: ViewsType;
     viewportAnnotations: React.ReactNode[];
     layers: DeckGlLayer[];
     bounds?: BoundingBox3D;
+    workbenchSession: WorkbenchSession;
+    workbenchSettings: WorkbenchSettings;
 };
 
 export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
@@ -32,18 +39,58 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
 
     usePublishSubscribeTopicValue(deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
 
-    React.useEffect(function setupDeckGlManager() {
-        const manager = new DeckGlInstanceManager(deckGlRef.current);
-        setDeckGlManager(manager);
+    const intersectionPolylines = useIntersectionPolylines(props.workbenchSession);
+    const colorSet = props.workbenchSettings.useColorSet();
 
-        const polylinesPlugin = new PolylinesPlugin(manager);
-        manager.addPlugin(polylinesPlugin);
-        setPolylinesPlugin(polylinesPlugin);
+    const colorGenerator = React.useCallback(
+        function* colorGenerator() {
+            const colors: [number, number, number][] = colorSet.getColorArray().map((c) => {
+                const rgb = culori.converter("rgb")(c);
+                if (!rgb) {
+                    return [0, 0, 0];
+                }
+                return [rgb.r, rgb.g, rgb.b];
+            });
+            let i = 0;
+            while (true) {
+                yield colors[i % colors.length];
+                i++;
+            }
+        },
+        [colorSet]
+    );
 
-        return function cleanupDeckGlManager() {
-            manager.beforeDestroy();
-        };
-    }, []);
+    React.useEffect(
+        function setupDeckGlManager() {
+            const manager = new DeckGlInstanceManager(deckGlRef.current);
+            setDeckGlManager(manager);
+
+            const polylinesPlugin = new PolylinesPlugin(manager, colorGenerator());
+            polylinesPlugin.setPolylines(intersectionPolylines.getPolylines());
+            manager.addPlugin(polylinesPlugin);
+            setPolylinesPlugin(polylinesPlugin);
+
+            const unsubscribeFromPolylinesPlugin = polylinesPlugin
+                .getPublishSubscribeDelegate()
+                .makeSubscriberFunction(PolylinesPluginTopic.POLYLINES)(() => {
+                intersectionPolylines.setPolylines(polylinesPlugin.getPolylines());
+            });
+
+            const unsubscribeFromIntersectionPolylines = intersectionPolylines.subscribe(
+                IntersectionPolylinesEvent.CHANGE,
+                () => {
+                    polylinesPlugin.setPolylines(intersectionPolylines.getPolylines());
+                }
+            );
+
+            return function cleanupDeckGlManager() {
+                manager.beforeDestroy();
+                unsubscribeFromPolylinesPlugin();
+                unsubscribeFromIntersectionPolylines();
+            };
+        },
+        [intersectionPolylines, colorGenerator]
+    );
 
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
@@ -97,8 +144,6 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     if (!gridVisible) {
         adjustedLayers = adjustedLayers.filter((layer) => !(layer instanceof AxesLayer));
     }
-
-    // adjustedLayers.push(...layers);
 
     return (
         <>

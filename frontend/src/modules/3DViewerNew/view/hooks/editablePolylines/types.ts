@@ -1,12 +1,5 @@
 import React from "react";
 
-export type Polyline = {
-    id: string;
-    name: string;
-    color: [number, number, number, number];
-    path: number[][];
-};
-
 export enum PolylineEditingMode {
     DRAW = "draw",
     ADD_POINT = "add_point",

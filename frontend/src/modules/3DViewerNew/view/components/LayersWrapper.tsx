@@ -3,6 +3,8 @@ import React from "react";
 import { View as DeckGlView } from "@deck.gl/core";
 import { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
+import { WorkbenchSession } from "@framework/WorkbenchSession";
+import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect3D, outerRectContainsInnerRect } from "@lib/utils/geometry";
@@ -26,6 +28,8 @@ export type LayersWrapperProps = {
     layerManager: LayerManager;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
+    workbenchSession: WorkbenchSession;
+    workbenchSettings: WorkbenchSettings;
 };
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
@@ -168,6 +172,8 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                         viewportAnnotations={viewportAnnotations}
                         layers={layers}
                         bounds={bounds}
+                        workbenchSession={props.workbenchSession}
+                        workbenchSettings={props.workbenchSettings}
                     />
                 </div>
             </PendingWrapper>

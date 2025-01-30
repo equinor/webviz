@@ -19,6 +19,8 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             layerManager={layerManager}
             preferredViewLayout={preferredViewLayout}
             viewContext={props.viewContext}
+            workbenchSession={props.workbenchSession}
+            workbenchSettings={props.workbenchSettings}
         />
     );
 }

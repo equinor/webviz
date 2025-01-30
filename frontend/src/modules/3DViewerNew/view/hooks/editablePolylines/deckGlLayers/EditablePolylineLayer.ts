@@ -1,10 +1,9 @@
 import { CompositeLayer, GetPickingInfoParams, Layer, PickingInfo } from "@deck.gl/core";
 import { PathStyleExtension } from "@deck.gl/extensions";
 import { LineLayer, PathLayer, ScatterplotLayer } from "@deck.gl/layers";
+import { Polyline } from "@modules/3DViewerNew/view/utils/PolylinesPlugin";
 
 import { AnimatedPathLayer } from "./AnimatedPathLayer";
-
-import { Polyline } from "../types";
 
 export enum AllowHoveringOf {
     NONE = "none",

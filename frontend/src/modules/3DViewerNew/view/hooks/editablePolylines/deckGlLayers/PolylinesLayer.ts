@@ -1,7 +1,6 @@
 import { CompositeLayer, FilterContext, GetPickingInfoParams, Layer, PickingInfo } from "@deck.gl/core";
 import { PathLayer, TextLayer } from "@deck.gl/layers";
-
-import { Polyline } from "../types";
+import { Polyline } from "@modules/3DViewerNew/view/utils/PolylinesPlugin";
 
 export type PolylinesLayerProps = {
     id: string;
