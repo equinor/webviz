@@ -255,7 +255,9 @@ async def get_delta_ensemble_realizations_vector_data(
     derived_vector_schema: schemas.DerivedVector | None = None
     if derived_vector_category:
         target_vector_name = get_total_vector_name(vector_name)
-        derived_vector_schema = schemas.DerivedVector(category=derived_vector_category, sourceVector=target_vector_name)
+        derived_vector_schema = schemas.DerivedVector(
+            category=converters.to_api_derived_vector_category(derived_vector_category), sourceVector=target_vector_name
+        )
 
     # Create delta ensemble table and metadata:
     table_and_metadata = await _create_delta_vector_table_and_metadata_async(
@@ -573,7 +575,7 @@ async def get_statistical_vector_data_per_sensitivity(
                 raise HTTPException(status_code=404, detail="Could not compute statistics")
 
             statistic_data: schemas.VectorStatisticData = converters.to_api_vector_statistic_data(
-                statistics, vector_metadata.is_rate, vector_metadata.unit
+                statistics, vector_metadata.is_rate, vector_metadata.unit, None
             )
             sensitivity_statistic_data = schemas.VectorStatisticSensitivityData(
                 sensitivityName=sensitivity.name,

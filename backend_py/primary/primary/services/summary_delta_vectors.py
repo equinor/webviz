@@ -6,11 +6,13 @@ import numpy as np
 
 from primary.services.utils.arrow_helpers import validate_summary_vector_table_pa
 
+
 @dataclass
 class DeltaVectorTableAndMetadata:
     table: pa.Table
     is_rate: bool
     unit: str
+
 
 @dataclass
 class RealizationDeltaVector:

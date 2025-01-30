@@ -34,7 +34,7 @@ def to_service_statistic_functions(
 
 
 def to_api_vector_statistic_data(
-    vector_statistics: VectorStatistics,is_rate: bool, unit: str, derived_vector: Optional[schemas.DerivedVector]
+    vector_statistics: VectorStatistics, is_rate: bool, unit: str, derived_vector: Optional[schemas.DerivedVector]
 ) -> schemas.VectorStatisticData:
     """
     Create API VectorStatisticData from service layer VectorStatistics
@@ -65,7 +65,7 @@ def to_api_delta_ensemble_vector_statistic_data(
         valueObjects=value_objects,
         unit=unit,
         isRate=is_rate,
-        derivedVector=derived_vector
+        derivedVector=derived_vector,
     )
 
     return ret_data

@@ -57,7 +57,7 @@ YEARLY_TOTAL_VECTOR_TABLE = pa.table(
 )
 
 
-def test_create_per_interval_vector_table_pa_WEEKLY_input():
+def test_create_per_interval_vector_table_pa_weekly_input():
     # Expected output table
     expected_table = pa.table(
         {
@@ -78,7 +78,7 @@ def test_create_per_interval_vector_table_pa_WEEKLY_input():
     assert result_table.equals(expected_table)
 
 
-def test_create_per_interval_vector_table_pa_MONTHLY_input():
+def test_create_per_interval_vector_table_pa_monthly_input():
     # Expected output table
     expected_table = pa.table(
         {
@@ -99,7 +99,7 @@ def test_create_per_interval_vector_table_pa_MONTHLY_input():
     assert result_table.equals(expected_table)
 
 
-def test_create_per_interval_vector_table_pa_YEARLY_input():
+def test_create_per_interval_vector_table_pa_yearly_input():
     # Expected output table
     expected_table = pa.table(
         {
@@ -154,11 +154,13 @@ def test_create_per_interval_vector_table_pa_invalid_column_type():
     input_table = pa.table(data)
 
     # Call the function and expect an InvalidDataError
-    with pytest.raises(InvalidDataError, match="DATE column must be of type timestamp\(ms\)"):
+    with pytest.raises(
+        InvalidDataError, match=r"DATE column must be of type timestamp\(ms\), but got int32 \[service=general\]"
+    ):
         create_per_interval_vector_table_pa(input_table)
 
 
-def test_create_per_day_vector_table_pa_WEEKLY_input():
+def test_create_per_day_vector_table_pa_weekly_input():
     # Expected output table
     expected_table = pa.table(
         {
@@ -180,7 +182,7 @@ def test_create_per_day_vector_table_pa_WEEKLY_input():
     assert result_table.equals(expected_table)
 
 
-def test_create_per_day_vector_table_pa_MONTHLY_input():
+def test_create_per_day_vector_table_pa_monthly_input():
     # Expected output table
     expected_table = pa.table(
         {
@@ -202,7 +204,7 @@ def test_create_per_day_vector_table_pa_MONTHLY_input():
     assert result_table.equals(expected_table)
 
 
-def test_create_per_day_vector_table_pa_YEARLY_input():
+def test_create_per_day_vector_table_pa_yearly_input():
     # Expected output table
     expected_table = pa.table(
         {
@@ -268,7 +270,9 @@ def test_create_per_day_vector_table_pa_invalid_column_type():
     input_table = pa.table(data)
 
     # Call the function and expect an InvalidDataError
-    with pytest.raises(InvalidDataError, match="DATE column must be of type timestamp\(ms\)"):
+    with pytest.raises(
+        InvalidDataError, match=r"DATE column must be of type timestamp\(ms\), but got int32 \[service=general\]"
+    ):
         create_per_day_vector_table_pa(input_table)
 
 
