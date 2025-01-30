@@ -1,58 +1,62 @@
 import React from "react";
 
+import { PublishSubscribeDelegate } from "@modules/_shared/LayerFramework/delegates/PublishSubscribeDelegate";
+
 import _ from "lodash";
 
-export type HoverTopicDefinitions = {
-    "hover.md": number | null;
-    "hover.wellbore": string | null;
-    "hover.realization": number | null;
-    "hover.timestamp": number | null;
-    "hover.zone": string | null;
-    "hover.region": string | null;
-    "hover.facies": string | null;
-};
-
-// Types for a generic PubSub service
-// ? Should these be put in global util? And implemented in WorkbenchServices?
-type SubscriberCallback<TopicDefinitions, T extends keyof TopicDefinitions> = (value: TopicDefinitions[T]) => void;
-
-type SubscriberOpts<T extends keyof HoverTopicDefinitions> = {
-    // ? Should this be allowed to be optional?
-    subscriberId?: string;
-    callbackFn: SubscriberCallback<HoverTopicDefinitions, T>;
-};
-
-interface PublishSubscribeService<TopicDefinitions> {
-    subscribe<T extends keyof TopicDefinitions>(
-        topic: T,
-        callback: SubscriberCallback<TopicDefinitions, T>,
-        subscriberId: string
-    ): () => void;
-
-    publishTopicValue<T extends keyof TopicDefinitions>(
-        topic: T,
-        value: TopicDefinitions[T],
-        subscriberId: string
-    ): void;
+export enum HoverTopic {
+    MD = "hover.md",
+    WELLBORE = "hover.wellbore",
+    REALIZATION = "hover.realization",
+    TIMESTAMP = "hover.timestamp",
+    ZONE = "hover.zone",
+    REGION = "hover.region",
+    FACIES = "hover.facies",
 }
 
-export type HoverTopicDefinitionType<T extends keyof HoverTopicDefinitions> = HoverTopicDefinitions[T];
-export type ThrottledPublishFunc = _.DebouncedFunc<HoverService["publishTopicValue"]>;
+export type HoverData = {
+    [HoverTopic.MD]: number | null;
+    [HoverTopic.WELLBORE]: string | null;
+    [HoverTopic.REALIZATION]: number | null;
+    [HoverTopic.TIMESTAMP]: number | null;
+    [HoverTopic.ZONE]: string | null;
+    [HoverTopic.REGION]: string | null;
+    [HoverTopic.FACIES]: string | null;
+};
 
+// Possible future functionality
+// - Some system to get derived "hovers"? A hovered wellbore implies a Well, which implies a field, and so on...
 
-// ? Should this rather be "extends WorkbenchServices" ?
-export class HoverService implements PublishSubscribeService<HoverTopicDefinitions> {
-    // All subscribers
-    #topicSubscribersMap: Map<keyof HoverTopicDefinitions, Set<SubscriberOpts<any>>> = new Map();
-    #topicValueCache: Map<keyof HoverTopicDefinitions, any> = new Map();
+export type ThrottledPublishFunc = _.DebouncedFunc<
+    <T extends keyof HoverData>(topic: T, newValue: HoverData[T]) => void
+>;
 
-    // Broadcast throttling. Each broadcasted topic needs their own debounce method
-    #topicThrottleMap: Map<keyof HoverTopicDefinitions, ThrottledPublishFunc> = new Map();
-    #broadcastThrottleMs = 100;
+export class HoverService {
+    // Currently available hover-data. The two objects are updated at different rates, but will contain the same data
+    // when the system is not actively hovering
+    #hoverData: Partial<HoverData> = {};
+    #throttledHoverData: Partial<HoverData> = {};
 
-    #getOrCreateTopicThrottleMethod<T extends keyof HoverTopicDefinitions>(topic: T): ThrottledPublishFunc {
+    #lastHoveredModule: string | null = null;
+
+    // Throttling. Each topic is updated with its own throttle method.
+    #topicThrottleMap = new Map<keyof HoverData, ThrottledPublishFunc>();
+    #dataUpdateThrottleMs = 100;
+
+    // Delegate to handle update notifications
+    #publishSubscribeDelegate = new PublishSubscribeDelegate<keyof HoverData>();
+
+    #getOrCreateTopicThrottleMethod(topic: keyof HoverData): ThrottledPublishFunc {
         if (!this.#topicThrottleMap.has(topic)) {
-            const throttledMethod = _.throttle(this.#doPublishTopicValue, this.#broadcastThrottleMs);
+            const throttledMethod = _.throttle(
+                this.#doThrottledHoverDataUpdate.bind(this),
+                this.#dataUpdateThrottleMs,
+                {
+                    // These settings make it so notifications are only pushed *after* the throttle timer elapses
+                    leading: false,
+                    trailing: true,
+                }
+            );
 
             this.#topicThrottleMap.set(topic, throttledMethod);
         }
@@ -61,86 +65,67 @@ export class HoverService implements PublishSubscribeService<HoverTopicDefinitio
         return this.#topicThrottleMap.get(topic)!;
     }
 
-    #hasValueBeenBroadcast<T extends keyof HoverTopicDefinitions>(topic: T, value: any) {
-        return _.isEqual(this.#topicValueCache.get(topic), value);
+    #doThrottledHoverDataUpdate<T extends keyof HoverData>(topic: T, value: HoverData[T]): void {
+        this.#throttledHoverData[topic] = value;
+        this.getPublishSubscribeDelegate().notifySubscribers(topic);
     }
 
-    // ! Writen as an arrow function to make typing match "publishTopicValue" parans
-    #doPublishTopicValue: HoverService["publishTopicValue"] = (topic, value, publisherId) => {
-        const subscribers = this.#topicSubscribersMap.get(topic) ?? [];
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<keyof HoverData> {
+        return this.#publishSubscribeDelegate;
+    }
 
-        for (const { callbackFn, subscriberId } of subscribers) {
-            // Dont publish to yourself
-            if (publisherId && publisherId !== subscriberId) {
-                callbackFn(value);
-            }
+    makeSnapshotGetter<T extends keyof HoverData>(topic: T, moduleInstanceId: string): () => HoverData[T] | null {
+        // ? Should  this be an  opt-in functionality?
+        // ! The module that is currently hovering will always see the data updated immedietally
+        if (this.#lastHoveredModule && moduleInstanceId === this.#lastHoveredModule) {
+            return () => this.#hoverData[topic] ?? null;
+        } else {
+            return () => this.#throttledHoverData[topic] ?? null;
         }
-    };
-
-    subscribe<T extends keyof HoverTopicDefinitions>(
-        topic: T,
-        callbackFn: SubscriberCallback<HoverTopicDefinitions, T>,
-        subscriberId?: string
-    ): () => void {
-        const newEntry = { subscriberId, callbackFn };
-
-        const subscribersSet = this.#topicSubscribersMap.get(topic) || new Set();
-        subscribersSet.add(newEntry);
-
-        this.#topicSubscribersMap.set(topic, subscribersSet);
-
-        // If we already have a value for this topic, trigger the callback immediately
-        // May have to revise this and make it an op-in behavior, but for now it's fine
-        if (this.#topicValueCache.has(topic)) {
-            callbackFn(this.#topicValueCache.get(topic));
-        }
-
-        return () => {
-            subscribersSet.delete(newEntry);
-        };
     }
-    publishTopicValue<T extends keyof HoverTopicDefinitions>(
-        topic: T,
-        value: HoverTopicDefinitions[T],
-        publisherId?: string
-    ): void {
-        if (this.#hasValueBeenBroadcast(topic, value)) return;
-        // ? Should we add to cache regardless of the throttle function, or make it part of the throttled method?
-        this.#topicValueCache.set(topic, value);
 
-        const throttledBroadcast = this.#getOrCreateTopicThrottleMethod(topic);
-
-        throttledBroadcast(topic, value, publisherId);
+    updateHoverValue<T extends keyof HoverData>(topic: T, newValue: HoverData[T]): void {
+        this.#hoverData[topic] = newValue;
+        this.#getOrCreateTopicThrottleMethod(topic)(topic, newValue);
     }
+
+    setLastHoveredModule(moduleInstanceId: string | null) {
+        if (this.#lastHoveredModule === moduleInstanceId) return;
+
+        this.#lastHoveredModule = moduleInstanceId;
+
+        // This might change what data-object a subscriber should get info from. Therefore, each subscriber needs to be
+        // notified that they should check their snapshots again.
+        // ? It seems to be fine without this? Is it because the modules are being re-rendered anyways?
+        // _.values(HoverTopic).forEach((topic) => this.getPublishSubscribeDelegate().notifySubscribers(topic));
+    }
+
+    // ? Currently, the md and wellbore hovers are "cleared" when the module implementer sets them to null.
+    // ? Should there be a more explicit way to stop hovering?
+    // endHoverEffect(): void {
+    //     this.#lastHoveredModule = null
+    //     this.#hoverData = {}
+    //     this.#throttledHoverData = {}
+    //     // notify subscribers...
+    // }
 }
 
-export function useHoverValue<T extends keyof HoverTopicDefinitions>(
+export function useHoverValue<T extends keyof HoverData>(
     topic: T,
-    moduleId: string,
-    hoverService: HoverService
-): [HoverTopicDefinitions[T], (v: HoverTopicDefinitions[T]) => void] {
-    const [latestValue, setLatestValue] = React.useState<HoverTopicDefinitions[T]>(null);
-
-    // Helper to track if the update if the latest update came from the implementer, or someone else
-
-    React.useEffect(
-        function subscribeToServiceTopic() {
-            function handleNewValue(newValue: HoverTopicDefinitions[T] | null) {
-                setLatestValue(newValue);
-            }
-            const unsubscribeFunc = hoverService.subscribe(topic, handleNewValue, moduleId);
-            return unsubscribeFunc;
-        },
-        [hoverService, moduleId, topic]
+    hoverService: HoverService,
+    moduleInstanceId: string
+): [HoverData[T], (v: HoverData[T]) => void] {
+    const latestValue = React.useSyncExternalStore<HoverData[T]>(
+        hoverService.getPublishSubscribeDelegate().makeSubscriberFunction(topic),
+        hoverService.makeSnapshotGetter(topic, moduleInstanceId)
     );
 
     const updateValue = React.useCallback(
-        function updateValue(newVal: HoverTopicDefinitions[T]) {
-            setLatestValue(newVal);
-
-            hoverService.publishTopicValue(topic, newVal, moduleId);
+        function updateHoverValue(newValue: HoverData[T]) {
+            hoverService.setLastHoveredModule(moduleInstanceId);
+            hoverService.updateHoverValue(topic, newValue);
         },
-        [moduleId, topic, hoverService]
+        [hoverService, moduleInstanceId, topic]
     );
 
     return [latestValue, updateValue];

@@ -1,7 +1,7 @@
 import React from "react";
 
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { HoverService, useHoverValue } from "@framework/HoverService";
+import { HoverService, HoverTopic, useHoverValue } from "@framework/HoverService";
 import { ViewContext } from "@framework/ModuleContext";
 import { Viewport } from "@framework/types/viewport";
 import { Interfaces } from "@modules/Intersection/interfaces";
@@ -37,13 +37,16 @@ export type ReadoutWrapperProps = {
 
 export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const moduleInstanceId = props.viewContext.getInstanceIdString();
-
     const [readoutItems, setReadoutItems] = React.useState<ReadoutItem[]>([]);
 
     // Hover synchronization
     const [hoverIsLocal, setHoverIsLocal] = React.useState<boolean>(false);
-    const [hoveredMd, setHoveredMd] = useHoverValue("hover.md", moduleInstanceId, props.hoverService);
-    const [hoveredWellbore, setHoveredWellbore] = useHoverValue("hover.wellbore", moduleInstanceId, props.hoverService);
+    const [hoveredMd, setHoveredMd] = useHoverValue(HoverTopic.MD, props.hoverService, moduleInstanceId);
+    const [hoveredWellbore, setHoveredWellbore] = useHoverValue(
+        HoverTopic.WELLBORE,
+        props.hoverService,
+        moduleInstanceId
+    );
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {

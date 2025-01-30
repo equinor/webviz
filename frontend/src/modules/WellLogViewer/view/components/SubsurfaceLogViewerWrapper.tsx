@@ -2,7 +2,7 @@ import React from "react";
 
 import { WellboreHeader_api, WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { useHoverValue } from "@framework/HoverService";
+import { HoverTopic, useHoverValue } from "@framework/HoverService";
 import { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
@@ -188,8 +188,8 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const hoverService = props.moduleProps.hoverService;
 
     // Set up global hover md synchronization
-    const [hoveredMd, setHoveredMd] = useHoverValue("hover.md", moduleInstanceId, hoverService);
-    const [hoveredWellbore, setHoveredWellbore] = useHoverValue("hover.wellbore", moduleInstanceId, hoverService);
+    const [hoveredMd, setHoveredMd] = useHoverValue(HoverTopic.MD, hoverService, moduleInstanceId);
+    const [hoveredWellbore, setHoveredWellbore] = useHoverValue(HoverTopic.WELLBORE, hoverService, moduleInstanceId);
 
     const broadcastMdHover = React.useCallback(
         function broadcastWellboreAndMdHover(md: number | null) {
@@ -200,7 +200,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     );
 
     // If there was an external update from some other place, update selection
-    if (hoveredMd && hoveredWellbore === wellboreUuid) {
+    if (hoveredWellbore === wellboreUuid) {
         wellLogController?.selectContent([hoveredMd ?? undefined, undefined]);
     }
 
