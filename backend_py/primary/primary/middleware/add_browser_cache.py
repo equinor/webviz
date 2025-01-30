@@ -14,13 +14,13 @@ def get_default_context() -> Dict[str, Any]:
 cache_context: ContextVar[Dict[str, Any]] = ContextVar("cache_context", default=get_default_context())
 
 
-def add_custom_cache_time(max_age: int, stale_while_revalidate: int = 0) -> Callable:
+def add_custom_cache_time(max_age_s: int, stale_while_revalidate_s: int = 0) -> Callable:
     """
     Decorator that sets a custom browser cache time for the endpoint response.
 
     Args:
-        max_age (int): The maximum age in seconds for the cache
-        stale_while_revalidate (int): The stale-while-revalidate time in seconds
+        max_age_s (int): The maximum age in seconds for the cache
+        stale_while_revalidate_s (int): The stale-while-revalidate time in seconds
 
     Example:
         @add_custom_cache_time(300, 600) # 5 minutes max age, 10 minutes stale-while-revalidate
@@ -32,8 +32,8 @@ def add_custom_cache_time(max_age: int, stale_while_revalidate: int = 0) -> Call
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Callable:
             context = cache_context.get()
-            context["max_age"] = max_age
-            context["stale_while_revalidate"] = stale_while_revalidate
+            context["max_age"] = max_age_s
+            context["stale_while_revalidate"] = stale_while_revalidate_s
 
             return await func(*args, **kwargs)
 
