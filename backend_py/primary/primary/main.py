@@ -12,6 +12,8 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
+
+from primary.middleware.add_browser_cache import AddBrowserCacheMiddleware
 from primary.routers.dev.router import router as dev_router
 from primary.routers.explore.router import router as explore_router
 from primary.routers.general import router as general_router
@@ -104,6 +106,7 @@ app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-ex
 # Also redirects to /login endpoint for some select paths
 unprotected_paths = ["/logged_in_user", "/alive", "/openapi.json"]
 paths_redirected_to_login = ["/", "/alive_protected"]
+
 app.add_middleware(
     EnforceLoggedInMiddleware,
     unprotected_paths=unprotected_paths,
@@ -117,6 +120,7 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
+app.add_middleware(AddBrowserCacheMiddleware)
 
 
 @app.get("/")

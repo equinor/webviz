@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from primary.auth.auth_helper import AuthHelper
 from primary.services.graph_access.graph_access import GraphApiAccess
+from primary.middleware.add_browser_cache import no_cache
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,18 +26,21 @@ router = APIRouter()
 
 
 @router.get("/alive")
+@no_cache
 def get_alive() -> str:
     print("entering alive route")
     return f"ALIVE: Backend is alive at this time: {datetime.datetime.now()}"
 
 
 @router.get("/alive_protected")
+@no_cache
 def get_alive_protected() -> str:
     print("entering alive_protected route")
     return f"ALIVE_PROTECTED: Backend is alive at this time: {datetime.datetime.now()}"
 
 
 @router.get("/logged_in_user", response_model=UserInfo)
+@no_cache
 async def get_logged_in_user(
     request: Request,
     includeGraphApiInfo: bool = Query(  # pylint: disable=invalid-name

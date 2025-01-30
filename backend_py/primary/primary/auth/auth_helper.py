@@ -12,6 +12,7 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary import config
 from primary.services.utils.authenticated_user import AuthenticatedUser
+from primary.middleware.add_browser_cache import no_cache
 
 
 class AuthHelper:
@@ -24,6 +25,7 @@ class AuthHelper:
             methods=["GET"],
         )
 
+    @no_cache
     async def _login_route(self, request: Request, redirect_url_after_login: Optional[str] = None) -> RedirectResponse:
         # print("######################### _login_route()")
 
@@ -55,6 +57,7 @@ class AuthHelper:
 
         return RedirectResponse(flow_dict["auth_uri"])
 
+    @no_cache
     async def _authorized_callback_route(self, request: Request) -> Response:
         # print("######################### _authorized_callback_route()")
 
