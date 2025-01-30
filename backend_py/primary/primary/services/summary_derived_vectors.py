@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import StrEnum
 
 import numpy as np
 import pyarrow as pa
@@ -8,8 +9,13 @@ from primary.services.service_exceptions import InvalidDataError, Service
 from primary.services.utils.arrow_helpers import validate_summary_vector_table_pa
 
 
+class DerivedVectorCategory(StrEnum):
+    PER_DAY = "PER_DAY"
+    PER_INTERVAL = "PER_INTVL"
+
+
 @dataclass
-class RealizationDerivedVector:
+class DerivedRealizationVector:
     realization: int
     timestamps_utc_ms: list[int]
     values: list[float]
@@ -58,6 +64,40 @@ TOTAL_VARS = [
 ]
 
 
+def create_derived_vector_unit(source_unit: str, category: DerivedVectorCategory) -> str:
+    if category == DerivedVectorCategory.PER_DAY:
+        return f"{source_unit}/DAY"
+    return source_unit
+
+
+def get_derived_vector_category(vector_name: str) -> DerivedVectorCategory | None:
+    if is_per_day_vector(vector_name):
+        return DerivedVectorCategory.PER_DAY
+    if is_per_interval_vector(vector_name):
+        return DerivedVectorCategory.PER_INTERVAL
+    return None
+
+
+def is_derived_vector(vector_name: str) -> bool:
+    return get_derived_vector_category(vector_name) is not None
+
+
+def create_per_day_vector_name(vector: str) -> str:
+    return f"PER_DAY_{vector}"
+
+
+def create_per_interval_vector_name(vector: str) -> str:
+    return f"PER_INTVL_{vector}"
+
+
+def is_per_interval_vector(vector_name: str) -> bool:
+    return vector_name.startswith("PER_INTVL_")
+
+
+def is_per_day_vector(vector_name: str) -> bool:
+    return vector_name.startswith("PER_DAY_")
+
+
 def is_total_vector(vector_name: str, delimiter: str = ":") -> bool:
     """
     Check if a vector is a total vector.
@@ -88,32 +128,27 @@ def is_total_vector(vector_name: str, delimiter: str = ":") -> bool:
     return any(total_var in vector_base_substring for total_var in TOTAL_VARS)
 
 
-def create_per_day_vector_name(vector: str) -> str:
-    return f"PER_DAY_{vector}"
-
-
-def create_per_interval_vector_name(vector: str) -> str:
-    return f"PER_INTVL_{vector}"
-
-
-def is_per_interval_vector(vector_name: str) -> bool:
-    return vector_name.startswith("PER_INTVL_")
-
-
-def is_per_day_vector(vector_name: str) -> bool:
-    return vector_name.startswith("PER_DAY_")
-
-
-def is_per_interval_or_per_day_vector(vector_name: str) -> bool:
-    return is_per_interval_vector(vector_name) or is_per_day_vector(vector_name)
-
-
 def get_total_vector_name(vector_name: str) -> str:
     if vector_name.startswith("PER_DAY_"):
-        return vector_name.lstrip("PER_DAY_")
+        return vector_name.removeprefix("PER_DAY_")
     if vector_name.startswith("PER_INTVL_"):
-        return vector_name.lstrip("PER_INTVL_")
+        return vector_name.removeprefix("PER_INTVL_")
     raise InvalidDataError(f"Expected {vector_name} to be a derived PER_DAY or PER_INTVL vector!", Service.GENERAL)
+
+
+def create_derived_vector_table_for_category(
+    total_vector_table_pa: pa.Table, category: DerivedVectorCategory
+) -> pa.Table:
+    """
+    Create derived vector table based on provided category.
+
+    Raises InvalidDataError if the provided category is not handled.
+    """
+    if category == DerivedVectorCategory.PER_INTERVAL:
+        return create_per_interval_vector_table_pa(total_vector_table_pa)
+    if category == DerivedVectorCategory.PER_DAY:
+        return create_per_day_vector_table_pa(total_vector_table_pa)
+    raise InvalidDataError(f"Unhandled derived vector category: {category}", Service.GENERAL)
 
 
 def create_per_interval_vector_table_pa(total_vector_table_pa: pa.Table) -> pa.Table:
@@ -225,21 +260,21 @@ def create_per_day_vector_table_pa(total_vector_table_pa: pa.Table) -> pa.Table:
     return sorted_per_day_vector_df.to_arrow()
 
 
-def create_realization_derived_vector_list(
-    vector_table: pa.Table, vector_name: str, unit: str
-) -> list[RealizationDerivedVector]:
+def create_derived_realization_vector_list(
+    derived_vector_table: pa.Table, vector_name: str, unit: str
+) -> list[DerivedRealizationVector]:
     """
-    Create a list of RealizationDerivedVector from the vector table.
+    Create a list of DerivedRealizationVector from the derived vector table.
     """
-    validate_summary_vector_table_pa(vector_table, vector_name)
+    validate_summary_vector_table_pa(derived_vector_table, vector_name)
 
-    real_arr_np = vector_table.column("REAL").to_numpy()
+    real_arr_np = derived_vector_table.column("REAL").to_numpy()
     unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
 
-    whole_date_np_arr = vector_table.column("DATE").to_numpy()
-    whole_value_np_arr = vector_table.column(vector_name).to_numpy()
+    whole_date_np_arr = derived_vector_table.column("DATE").to_numpy()
+    whole_value_np_arr = derived_vector_table.column(vector_name).to_numpy()
 
-    ret_arr: list[RealizationDerivedVector] = []
+    ret_arr: list[DerivedRealizationVector] = []
     for i, real in enumerate(unique_reals):
         start_row_idx = first_occurrence_idx[i]
         row_count = real_counts[i]
@@ -248,7 +283,7 @@ def create_realization_derived_vector_list(
 
         # Create RealizationDeltaVector
         ret_arr.append(
-            RealizationDerivedVector(
+            DerivedRealizationVector(
                 realization=real,
                 timestamps_utc_ms=date_np_arr.astype(int).tolist(),
                 values=value_np_arr.tolist(),

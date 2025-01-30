@@ -1,4 +1,5 @@
 import {
+    DerivedVectorCategory_api,
     StatisticFunction_api,
     SummaryVectorDateObservation_api,
     VectorHistoricalData_api,
@@ -12,17 +13,29 @@ import { LineData, StatisticsData, createStatisticsTraces } from "./statisticsPl
 
 import { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
+function isDerivedVectorOfCategory(
+    vectorData: VectorRealizationData_api | VectorStatisticData_api | VectorHistoricalData_api,
+    category: DerivedVectorCategory_api
+): boolean {
+    return "derivedVector" in vectorData && vectorData.derivedVector?.category === category;
+}
+
 /**
- * Utility function for getting the shape of the trace line for given vector type.
+ * Utility function for getting the shape of the trace line for given vector data.
  *
- * The vector name is provided to handle custom calculated vectors, which are valid forward in time.
+ * Default is "linear", rate vectors are "vh", and custom calculated vectors are "hv".
  */
-export function getTraceLineShape(vectorName: string, isRateVector?: boolean): "linear" | "hv" | "vh" {
-    if (vectorName.startsWith("PER_DAY_") || vectorName.startsWith("PER_INTVL_")) {
+export function getTraceLineShape(
+    vectorData: VectorRealizationData_api | VectorStatisticData_api | VectorHistoricalData_api
+): "linear" | "hv" | "vh" {
+    if (
+        isDerivedVectorOfCategory(vectorData, DerivedVectorCategory_api.PER_DAY) ||
+        isDerivedVectorOfCategory(vectorData, DerivedVectorCategory_api.PER_INTVL)
+    ) {
         // Custom calculated vectors valid forward in time
         return "hv";
     }
-    if (isRateVector) {
+    if (vectorData.isRate) {
         // Rate vectors are valid backward in time
         return "vh";
     }
@@ -68,7 +81,7 @@ export function createVectorRealizationTrace({
     //         "scattergl" hides traces when zooming and panning for Ruben on work computer.
 
     return {
-        x: vectorRealizationData.timestamps_utc_ms,
+        x: vectorRealizationData.timestampsUtcMs,
         y: vectorRealizationData.values,
         line: { width: 1, color: color, shape: lineShape },
         mode: "lines",
@@ -147,7 +160,7 @@ export function createHistoricalVectorTrace({
         line: { shape: lineShape, color: color },
         mode: "lines",
         type: type,
-        x: vectorHistoricalData.timestamps_utc_ms,
+        x: vectorHistoricalData.timestampsUtcMs,
         y: vectorHistoricalData.values,
         hovertext: hoverText,
         hoverinfo: "y+x+text",
@@ -251,20 +264,20 @@ export function createVectorFanchartTraces({
     type = "scatter",
     legendRank,
 }: CreateVectorFanchartTracesOptions): Partial<TimeSeriesPlotData>[] {
-    const lowData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.P90);
-    const highData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.P10);
+    const lowData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.P90);
+    const highData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.P10);
     let lowHighData: LowHighData | undefined = undefined;
     if (lowData && highData) {
         lowHighData = {
-            highName: highData.statistic_function.toString(),
+            highName: highData.statisticFunction.toString(),
             highData: highData.values,
-            lowName: lowData.statistic_function.toString(),
+            lowName: lowData.statisticFunction.toString(),
             lowData: lowData.values,
         };
     }
 
-    const minData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.MIN);
-    const maxData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.MAX);
+    const minData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.MIN);
+    const maxData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.MAX);
     let minMaxData: MinMaxData | undefined = undefined;
     if (minData && maxData) {
         minMaxData = {
@@ -273,17 +286,17 @@ export function createVectorFanchartTraces({
         };
     }
 
-    const meanData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.MEAN);
+    const meanData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.MEAN);
     let meanFreeLineData: FreeLineData | undefined = undefined;
     if (meanData) {
         meanFreeLineData = {
-            name: meanData.statistic_function.toString(),
+            name: meanData.statisticFunction.toString(),
             data: meanData.values,
         };
     }
 
     const fanchartData: FanchartData = {
-        samples: vectorStatisticData.timestamps_utc_ms,
+        samples: vectorStatisticData.timestampsUtcMs,
         lowHigh: lowHighData,
         minimumMaximum: minMaxData,
         freeLine: meanFreeLineData,
@@ -338,40 +351,40 @@ export function createVectorStatisticsTraces({
     type = "scatter",
     legendRank,
 }: CreateVectorStatisticsTracesOptions): Partial<TimeSeriesPlotData>[] {
-    const lowValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.P90
+    const lowValueObject = vectorStatisticData.valueObjects.find(
+        (v) => v.statisticFunction === StatisticFunction_api.P90
     );
-    const midValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.P50
+    const midValueObject = vectorStatisticData.valueObjects.find(
+        (v) => v.statisticFunction === StatisticFunction_api.P50
     );
-    const highValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.P10
+    const highValueObject = vectorStatisticData.valueObjects.find(
+        (v) => v.statisticFunction === StatisticFunction_api.P10
     );
-    const minValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.MIN
+    const minValueObject = vectorStatisticData.valueObjects.find(
+        (v) => v.statisticFunction === StatisticFunction_api.MIN
     );
-    const maxValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.MAX
+    const maxValueObject = vectorStatisticData.valueObjects.find(
+        (v) => v.statisticFunction === StatisticFunction_api.MAX
     );
-    const meanValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.MEAN
+    const meanValueObject = vectorStatisticData.valueObjects.find(
+        (v) => v.statisticFunction === StatisticFunction_api.MEAN
     );
 
     const lowData: LineData | undefined = lowValueObject
-        ? { data: lowValueObject.values, name: lowValueObject.statistic_function.toString() }
+        ? { data: lowValueObject.values, name: lowValueObject.statisticFunction.toString() }
         : undefined;
     const midData: LineData | undefined = midValueObject
-        ? { data: midValueObject.values, name: midValueObject.statistic_function.toString() }
+        ? { data: midValueObject.values, name: midValueObject.statisticFunction.toString() }
         : undefined;
     const highData: LineData | undefined = highValueObject
-        ? { data: highValueObject.values, name: highValueObject.statistic_function.toString() }
+        ? { data: highValueObject.values, name: highValueObject.statisticFunction.toString() }
         : undefined;
     const meanData: LineData | undefined = meanValueObject
-        ? { data: meanValueObject.values, name: meanValueObject.statistic_function.toString() }
+        ? { data: meanValueObject.values, name: meanValueObject.statisticFunction.toString() }
         : undefined;
 
     const statisticsData: StatisticsData = {
-        samples: vectorStatisticData.timestamps_utc_ms,
+        samples: vectorStatisticData.timestampsUtcMs,
         freeLine: meanData,
         minimum: minValueObject ? minValueObject.values : undefined,
         maximum: maxValueObject ? maxValueObject.values : undefined,

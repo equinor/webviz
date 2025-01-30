@@ -79,7 +79,7 @@ export class EnsembleVectorListsHelper {
         const index = this.findIndexOfEnsembleIdent(ensembleIdent);
         if (index === -1 || !this._queries[index].data) return false;
 
-        return this._queries[index].data?.some((vec) => vec.name === vector && vec.has_historical) ?? false;
+        return this._queries[index].data?.some((vec) => vec.name === vector && vec.hasHistorical) ?? false;
     }
 
     /**

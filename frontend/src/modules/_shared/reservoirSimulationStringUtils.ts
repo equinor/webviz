@@ -22,21 +22,22 @@ function getVectorDefinition(vector: string): VectorDefinition | null {
 /**
  * Returns a more human friendly description of the vector name if possible, otherwise returns the vector name as is.
  *
+ * Optional prefix and suffix can be added to the description. These are added before and after the vector base name description.
+ * This implies suffix to be added in front of any well, region or completion description.
+ *
+ * Exampled usage: simulationVectorDescription("WOPR:A1", "Average ", " Per Day") => "Average Oil Production Rate Per Day, well A1"
+ *
  * NOTE:
  *   - Based on https://github.com/equinor/webviz-subsurface/blob/master/webviz_subsurface/_abbreviations/reservoir_simulation.py
  *   - Handle user defined vectors later on
  */
-export function simulationVectorDescription(vector: string): string {
-    let prefix = "";
-    let suffix = "";
-    if (vector.startsWith("PER_DAY_")) {
-        prefix = "Average ";
-        suffix = " Per day";
-        vector = vector.slice("PER_DAY_".length);
-    } else if (vector.startsWith("PER_INTVL_")) {
-        prefix = "Interval ";
-        vector = vector.slice("PER_INTVL_".length);
-    }
+export function simulationVectorDescription(
+    vector: string,
+    vectorBasePrefix?: string,
+    vectorBaseSuffix?: string
+): string {
+    const prefix = vectorBasePrefix ?? "";
+    const suffix = vectorBaseSuffix ?? "";
 
     let vectorName = vector;
     let node: string | null = null;

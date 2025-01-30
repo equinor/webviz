@@ -94,7 +94,7 @@ export type DatedFlowNetwork_api = {
 
 export type DerivedVector_api = {
     category: DerivedVectorCategory_api;
-    source_vector: string;
+    sourceVector: string;
 };
 
 export enum DerivedVectorCategory_api {
@@ -625,7 +625,7 @@ export enum StatisticFunction_api {
 }
 
 export type StatisticValueObject_api = {
-    statistic_function: StatisticFunction_api;
+    statisticFunction: StatisticFunction_api;
     values: Array<number>;
 };
 
@@ -849,44 +849,44 @@ export type ValidationError_api = {
 
 export type VectorDescription_api = {
     name: string;
-    descriptive_name: string;
-    has_historical: boolean;
-    derived_vector: DerivedVector_api | null;
+    descriptiveName: string;
+    hasHistorical: boolean;
+    derivedVector: DerivedVector_api | null;
 };
 
 export type VectorHistoricalData_api = {
-    timestamps_utc_ms: Array<number>;
+    timestampsUtcMs: Array<number>;
     values: Array<number>;
     unit: string;
-    is_rate: boolean;
+    isRate: boolean;
 };
 
 export type VectorRealizationData_api = {
     realization: number;
-    timestamps_utc_ms: Array<number>;
+    timestampsUtcMs: Array<number>;
     values: Array<number>;
     unit: string;
-    is_rate: boolean;
-    derived_vector_category: DerivedVectorCategory_api | null;
+    isRate: boolean;
+    derivedVector: DerivedVector_api | null;
 };
 
 export type VectorStatisticData_api = {
     realizations: Array<number>;
-    timestamps_utc_ms: Array<number>;
-    value_objects: Array<StatisticValueObject_api>;
+    timestampsUtcMs: Array<number>;
+    valueObjects: Array<StatisticValueObject_api>;
     unit: string;
-    is_rate: boolean;
-    derived_vector_category: DerivedVectorCategory_api | null;
+    isRate: boolean;
+    derivedVector: DerivedVector_api | null;
 };
 
 export type VectorStatisticSensitivityData_api = {
     realizations: Array<number>;
-    timestamps_utc_ms: Array<number>;
-    value_objects: Array<StatisticValueObject_api>;
+    timestampsUtcMs: Array<number>;
+    valueObjects: Array<StatisticValueObject_api>;
     unit: string;
-    is_rate: boolean;
-    sensitivity_name: string;
-    sensitivity_case: string;
+    isRate: boolean;
+    sensitivityName: string;
+    sensitivityCase: string;
 };
 
 export type VfpInjTable_api = {
