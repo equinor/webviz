@@ -1,8 +1,8 @@
 import React from "react";
 
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { HoverService, useHoverValue } from "@framework/HoverService";
 import { ViewContext } from "@framework/ModuleContext";
-import { WorkbenchServices, useHoverValue } from "@framework/WorkbenchServices";
 import { Viewport } from "@framework/types/viewport";
 import { Interfaces } from "@modules/Intersection/interfaces";
 import { EsvIntersection, EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
@@ -31,7 +31,7 @@ export type ReadoutWrapperProps = {
         y: [number, number];
     };
     verticalScale: number;
-    workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
 };
 
@@ -41,16 +41,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const [readoutItems, setReadoutItems] = React.useState<ReadoutItem[]>([]);
 
     // Hover synchronization
-    const [hoveredMd, setHoveredMd, updateIsInteral] = useHoverValue(
-        "hover.md",
-        moduleInstanceId,
-        props.workbenchServices
-    );
-    const [hoveredWellbore, setHoveredWellbore] = useHoverValue(
-        "hover.wellbore",
-        moduleInstanceId,
-        props.workbenchServices
-    );
+    const [hoverIsLocal, setHoverIsLocal] = React.useState<boolean>(false);
+    const [hoveredMd, setHoveredMd] = useHoverValue("hover.md", moduleInstanceId, props.hoverService);
+    const [hoveredWellbore, setHoveredWellbore] = useHoverValue("hover.wellbore", moduleInstanceId, props.hoverService);
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
@@ -63,6 +56,8 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         function publishHoverEvent(md: number | null): void {
             setHoveredWellbore(props.wellboreHeaderUuid);
             setHoveredMd(md);
+            // ? Should we instead have a "hoverService.getCurrentlyHoveredModule" method for things like this?
+            setHoverIsLocal(md != null);
         },
         [props.wellboreHeaderUuid, setHoveredMd, setHoveredWellbore]
     );
@@ -81,7 +76,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     const highlightItems: HighlightItem[] = [];
 
-    if (props.referenceSystem && hoveredMd && hoveredWellbore === props.wellboreHeaderUuid && !updateIsInteral) {
+    if (props.referenceSystem && !hoverIsLocal && hoveredMd && hoveredWellbore === props.wellboreHeaderUuid) {
         const point = props.referenceSystem.project(hoveredMd);
         highlightItems.push({
             point: [point[0], point[1]],

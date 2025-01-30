@@ -1,6 +1,7 @@
 import React from "react";
 
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { HoverService } from "@framework/HoverService";
 import { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
@@ -24,6 +25,7 @@ export type ViewportWrapperProps = {
     };
     viewport: Viewport | null;
     workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
 };
 
@@ -158,7 +160,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 bounds={props.bounds}
                 viewport={viewport ?? undefined}
                 onViewportChange={handleViewportChange}
-                workbenchServices={props.workbenchServices}
+                hoverService={props.hoverService}
                 viewContext={props.viewContext}
             />
             <Toolbar

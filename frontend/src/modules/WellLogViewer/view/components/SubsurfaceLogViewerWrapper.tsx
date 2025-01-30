@@ -2,9 +2,10 @@ import React from "react";
 
 import { WellboreHeader_api, WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import { useHoverValue } from "@framework/HoverService";
 import { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
-import { GlobalTopicDefinitions, WorkbenchServices, useHoverValue } from "@framework/WorkbenchServices";
+import { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
 import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
@@ -33,6 +34,7 @@ const AXIS_TITLES = {
     time: "TIME",
 };
 
+// TODO: Fully remove
 type GlobalHoverMd = GlobalTopicDefinitions["global.hoverMd"];
 
 export type SubsurfaceLogViewerWrapperProps = {
@@ -183,11 +185,11 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const syncableSettingKeys = props.moduleProps.viewContext.useSyncedSettingKeys();
 
     const wellboreUuid = props.wellboreHeader?.wellboreUuid;
-    const workbenchServices = props.moduleProps.workbenchServices;
+    const hoverService = props.moduleProps.hoverService;
 
     // Set up global hover md synchronization
-    const [hoveredMd, setHoveredMd, updateIsInteral] = useHoverValue("hover.md", moduleInstanceId, workbenchServices);
-    const [hoveredWellbore, setHoveredWellbore] = useHoverValue("hover.wellbore", moduleInstanceId, workbenchServices);
+    const [hoveredMd, setHoveredMd] = useHoverValue("hover.md", moduleInstanceId, hoverService);
+    const [hoveredWellbore, setHoveredWellbore] = useHoverValue("hover.wellbore", moduleInstanceId, hoverService);
 
     const broadcastMdHover = React.useCallback(
         function broadcastWellboreAndMdHover(md: number | null) {
@@ -198,7 +200,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     );
 
     // If there was an external update from some other place, update selection
-    if (hoveredMd && !updateIsInteral && hoveredWellbore === wellboreUuid) {
+    if (hoveredMd && hoveredWellbore === wellboreUuid) {
         wellLogController?.selectContent([hoveredMd ?? undefined, undefined]);
     }
 

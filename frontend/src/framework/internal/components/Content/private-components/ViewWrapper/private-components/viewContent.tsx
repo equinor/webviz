@@ -112,6 +112,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
                                     workbenchSession={props.workbench.getWorkbenchSession()}
                                     workbenchServices={props.workbench.getWorkbenchServices()}
                                     workbenchSettings={props.workbench.getWorkbenchSettings()}
+                                    hoverService={props.workbench.getHoverService()}
                                     initialSettings={props.moduleInstance.getInitialSettings() || undefined}
                                 />
                             </ApplyInterfaceEffectsToView>

@@ -2,6 +2,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
+import { HoverService } from "./HoverService";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState } from "./Module";
 import { ModuleInstance } from "./ModuleInstance";
@@ -57,6 +58,7 @@ export class Workbench {
     private _moduleInstances: ModuleInstance<any>[];
     private _workbenchSession: WorkbenchSessionPrivate;
     private _workbenchServices: PrivateWorkbenchServices;
+    private _hoverService: HoverService;
     private _workbenchSettings: PrivateWorkbenchSettings;
     private _guiMessageBroker: GuiMessageBroker;
     private _subscribersMap: { [key: string]: Set<() => void> };
@@ -69,6 +71,7 @@ export class Workbench {
         this._atomStoreMaster = new AtomStoreMaster();
         this._workbenchSession = new WorkbenchSessionPrivate(this._atomStoreMaster);
         this._workbenchServices = new PrivateWorkbenchServices(this);
+        this._hoverService = new HoverService();
         this._workbenchSettings = new PrivateWorkbenchSettings();
         this._guiMessageBroker = new GuiMessageBroker();
         this._subscribersMap = {};
@@ -99,6 +102,10 @@ export class Workbench {
 
     getWorkbenchServices(): WorkbenchServices {
         return this._workbenchServices;
+    }
+
+    getHoverService(): HoverService {
+        return this._hoverService;
     }
 
     getWorkbenchSettings(): PrivateWorkbenchSettings {
