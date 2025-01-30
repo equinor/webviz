@@ -119,11 +119,18 @@ class Grid3dAccess:
     ) -> List[Grid3dPropertyInfo]:
         """Get metadata for grid properties belonging to a grid geometry"""
         grid3d_properties_collection: Grid3dPropertyCollection = Grid3dPropertyCollection(
-            sumo=self._sumo_client, case_uuid=self._case_uuid, grid3d_geometry_name=grid3d_geometry_name
+            sumo=self._sumo_client, case_uuid=self._case_uuid
         )
+        # Temporary until metadata is stabilized
+        # If grid name is in data.geometry.name this will work:
         grid3d_properties_collection_filtered = grid3d_properties_collection.filter(
-            iteration=self._iteration_name, realization=realization
+            iteration=self._iteration_name, realization=realization, geometry_as_geometry_name=grid3d_geometry_name
         )
+        length_collection = await grid3d_properties_collection_filtered.length_async()
+        if length_collection == 0:
+            grid3d_properties_collection_filtered = grid3d_properties_collection.filter(
+                iteration=self._iteration_name, realization=realization, geometry_as_tagname=grid3d_geometry_name
+            )
 
         properties_meta: List[Grid3dPropertyInfo] = []
         async for property_meta in grid3d_properties_collection_filtered:

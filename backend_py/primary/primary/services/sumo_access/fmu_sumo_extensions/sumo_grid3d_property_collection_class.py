@@ -20,7 +20,6 @@ class Grid3dPropertyCollection(ChildCollection):
 
     def __init__(
         self,
-        grid3d_geometry_name: str,
         sumo: SumoClient,
         case_uuid: str,
         query: Dict | None = None,
@@ -35,7 +34,6 @@ class Grid3dPropertyCollection(ChildCollection):
             pit (Pit): point in time
         """
 
-        self._grid3d_geometry_name = grid3d_geometry_name
         super().__init__("cpgrid_property", sumo, case_uuid, query, pit)
 
         # self._aggregation_cache = {}
@@ -138,6 +136,8 @@ class Grid3dPropertyCollection(ChildCollection):
         uuid: Union[str, List[str], bool, None] = None,
         is_observation: bool | None = None,
         is_prediction: bool | None = None,
+        geometry_as_geometry_name: str | None = None,
+        geometry_as_tagname: str | None = None,
     ) -> "Grid3dPropertyCollection":
         """Filter grid properties
 
@@ -160,7 +160,6 @@ class Grid3dPropertyCollection(ChildCollection):
 
         query = super()._add_filter(
             name=name,
-            tagname=self._grid3d_geometry_name,
             iteration=iteration,
             realization=realization,
             aggregation=aggregation,
@@ -171,5 +170,12 @@ class Grid3dPropertyCollection(ChildCollection):
             is_observation=is_observation,
             is_prediction=is_prediction,
         )
-
-        return Grid3dPropertyCollection(self._grid3d_geometry_name, self._sumo, self._case_uuid, query, self._pit)
+        if geometry_as_geometry_name:
+            query = self._utils.extend_query_object(
+                query, {"bool": {"must": [{"term": {"data.geometry.name.keyword": geometry_as_geometry_name}}]}}
+            )
+        elif geometry_as_tagname:
+            query = self._utils.extend_query_object(
+                query, {"bool": {"must": [{"term": {"data.tagname.keyword": geometry_as_tagname}}]}}
+            )
+        return Grid3dPropertyCollection(self._sumo, self._case_uuid, query, self._pit)
