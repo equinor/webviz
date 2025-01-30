@@ -60,7 +60,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
 
     // Ensemble selections
-    const ensembleSet = useEnsembleSet(props.workbenchSession);
+    const fullEnsembleSet = useEnsembleSet(props.workbenchSession);
 
     const selectedField = useAtomValue(selectedFieldIdentifierAtom);
     const setSelectedField = useSetAtom(userSelectedFieldIdentifierAtom);
@@ -84,7 +84,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
         <div className="flex flex-col h-full gap-1">
             <CollapsibleGroup title="Wellbore" expanded>
                 <Label text="Field">
-                    <FieldDropdown value={selectedField} ensembleSet={ensembleSet} onChange={setSelectedField} />
+                    <FieldDropdown value={selectedField} ensembleSet={fullEnsembleSet} onChange={setSelectedField} />
                 </Label>
 
                 <Label text="Wellbore" wrapperClassName="mt-4">
@@ -101,7 +101,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
                 </Label>
             </CollapsibleGroup>
 
-            <CollapsibleGroup title="Well Log settings" expanded>
+            <CollapsibleGroup title="Log viewer settings" expanded>
                 <ViewerSettings statusWriter={statusWriter} />
             </CollapsibleGroup>
 

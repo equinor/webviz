@@ -1,4 +1,5 @@
-from typing import List, Optional
+from enum import Enum
+from typing import List, Optional, NewType
 from pydantic import BaseModel
 
 
@@ -43,6 +44,7 @@ class WellborePick(BaseModel):
     confidence: Optional[str] = None
     depthReferencePoint: str
     mdUnit: str
+    interpreter: str | None
 
 
 class WellboreCompletion(BaseModel):
@@ -77,22 +79,46 @@ class WellborePerforation(BaseModel):
     completionMode: str
 
 
+class WellLogCurveSourceEnum(Enum):
+    SSDL_WELL_LOG = "ssdl.well_log"
+    SMDA_GEOLOGY = "smda.geology"
+    SMDA_STRATIGRAPHY = "smda.stratigraphy"
+
+
+class WellLogCurveTypeEnum(str, Enum):
+    CONTINUOUS = "continuous"
+    DISCRETE = "discrete"
+    FLAG = "flag"
+
+
 class WellboreLogCurveHeader(BaseModel):
+    source: WellLogCurveSourceEnum
+    sourceId: str
+    curveType: WellLogCurveTypeEnum
+
     logName: str
     curveName: str
     curveUnit: str | None
 
 
+DiscreteMetaEntry = NewType("DiscreteMetaEntry", dict[str, tuple[int, tuple[int, int, int]]])
+
+
 class WellboreLogCurveData(BaseModel):
+    source: WellLogCurveSourceEnum
     name: str
+    logName: str
     indexMin: float
     indexMax: float
-    minCurveValue: float
-    maxCurveValue: float
+    minCurveValue: float | None
+    maxCurveValue: float | None
     curveAlias: str | None
     curveDescription: str | None
     indexUnit: str
     noDataValue: float | None
     unit: str
     curveUnitDesc: str | None
-    dataPoints: list[list[float | None]]
+    dataPoints: list[tuple[float, float | str | None]]
+
+    # ? Field is very specific for the well-log-viewer module, should we instead create a "standards" service to get curve styles and others like this?
+    metadataDiscrete: Optional[DiscreteMetaEntry] = None
