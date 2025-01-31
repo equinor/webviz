@@ -110,8 +110,6 @@ async def get_grid_geometry_and_property_blob_ids_async(
     # Try with tagname first
     grid_geometry_id, grid_property_id = await try_query_with_field(GridPropertyField.TAGNAME)
 
-    if grid_geometry_id is None:
-        raise InvalidDataError("Did not find expected document types", service=Service.SUMO)
     # If no results, try with geometry.name
     if grid_property_id is None:
         grid_geometry_id, grid_property_id = await try_query_with_field(GridPropertyField.GEOMETRY_NAME)
