@@ -21,6 +21,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                         query: {
                             case_uuid: ensembleIdent.getCaseUuid(),
                             ensemble_name: ensembleIdent.getEnsembleName(),
+                            include_derived_vectors: true,
                         },
                         throwOnError: true,
                     });
@@ -51,6 +52,7 @@ export const vectorListQueriesAtom = atomWithQueries((get) => {
                             comparison_ensemble_name: comparisonEnsembleIdent.getEnsembleName(),
                             reference_case_uuid: referenceEnsembleIdent.getCaseUuid(),
                             reference_ensemble_name: referenceEnsembleIdent.getEnsembleName(),
+                            include_derived_vectors: true,
                         },
                         throwOnError: true,
                     });

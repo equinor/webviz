@@ -245,6 +245,8 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
 /**
  * Get Vector List
  * Get list of all vectors in a given Sumo ensemble, excluding any historical vectors
+ *
+ * Optionally include derived vectors.
  */
 export const getVectorList = <ThrowOnError extends boolean = false>(
     options: Options<GetVectorListData_api, ThrowOnError>

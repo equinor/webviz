@@ -44,6 +44,7 @@ import {
 } from "./atoms/baseAtoms";
 import {
     continuousAndNonConstantParametersUnionAtom,
+    customVectorDefinitionsAtom,
     ensembleVectorListsHelperAtom,
     isVectorListQueriesFetchingAtom,
     selectedEnsembleIdentsAtom,
@@ -87,6 +88,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const [statisticsSelection, setStatisticsSelection] = useAtom(statisticsSelectionAtom);
     const [selectedVectorNames, setSelectedVectorNames] = useAtom(selectedVectorNamesAtom);
     const vectorSelectorData = useAtomValue(vectorSelectorDataAtom);
+    const customVectorDefinitions = useAtomValue(customVectorDefinitionsAtom);
     const statisticsType = useAtomValue(statisticsTypeAtom);
     const [filteredParameterIdentList, setFilteredParameterIdentList] = useAtom(filteredParameterIdentListAtom);
     const setUserSelectedEnsembleIdents = useSetAtom(userSelectedEnsembleIdentsAtom);
@@ -320,6 +322,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             numSecondsUntilSuggestionsAreShown={0.5}
                             lineBreakAfterTag={true}
                             onChange={handleVectorSelectionChange}
+                            customVectorDefinitions={customVectorDefinitions ?? undefined}
                         />
                     </QueryStateWrapper>
                 </div>

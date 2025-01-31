@@ -1,11 +1,10 @@
-import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import List
 
 from pydantic import BaseModel
 
 
-class Frequency(str, Enum):
+class Frequency(StrEnum):
     DAILY = "DAILY"
     WEEKLY = "WEEKLY"
     MONTHLY = "MONTHLY"
@@ -13,7 +12,7 @@ class Frequency(str, Enum):
     YEARLY = "YEARLY"
 
 
-class StatisticFunction(str, Enum):
+class StatisticFunction(StrEnum):
     MEAN = "MEAN"
     MIN = "MIN"
     MAX = "MAX"
@@ -22,61 +21,58 @@ class StatisticFunction(str, Enum):
     P50 = "P50"
 
 
+class DerivedVectorCategory(StrEnum):
+    PER_DAY = "PER_DAY"
+    PER_INTVL = "PER_INTVL"
+
+
+class DerivedVector(BaseModel):
+    category: DerivedVectorCategory
+    sourceVector: str
+
+
 class VectorDescription(BaseModel):
     name: str
-    descriptive_name: str
-    has_historical: bool
+    descriptiveName: str
+    hasHistorical: bool
+    derivedVector: DerivedVector | None = None
 
 
 class VectorHistoricalData(BaseModel):
-    timestamps_utc_ms: List[int]
+    timestampsUtcMs: List[int]
     values: List[float]
     unit: str
-    is_rate: bool
+    isRate: bool
 
 
 class VectorRealizationData(BaseModel):
     realization: int
-    timestamps_utc_ms: List[int]
+    timestampsUtcMs: List[int]
     values: List[float]
     unit: str
-    is_rate: bool
+    isRate: bool
+    derivedVector: DerivedVector | None = None
 
 
 class StatisticValueObject(BaseModel):
-    statistic_function: StatisticFunction
+    statisticFunction: StatisticFunction
     values: List[float]
 
 
 class VectorStatisticData(BaseModel):
     realizations: List[int]
-    timestamps_utc_ms: List[int]
-    value_objects: List[StatisticValueObject]
+    timestampsUtcMs: List[int]
+    valueObjects: List[StatisticValueObject]
     unit: str
-    is_rate: bool
+    isRate: bool
+    derivedVector: DerivedVector | None = None
 
 
 class VectorStatisticSensitivityData(BaseModel):
     realizations: List[int]
-    timestamps_utc_ms: List[int]
-    value_objects: List[StatisticValueObject]
+    timestampsUtcMs: List[int]
+    valueObjects: List[StatisticValueObject]
     unit: str
-    is_rate: bool
-    sensitivity_name: str
-    sensitivity_case: str
-
-
-class VectorExpressionInfo(BaseModel):
-    """
-    `Description`:
-    Dictionary with all required items for an expression
-
-    `Required keys`:
-    expression: str, mathematical expression
-    variable_names: List[str], list of variable names
-    vector_names: List[str], list of vector names
-    """
-
-    expression: str
-    variable_names: str
-    vector_names: str
+    isRate: bool
+    sensitivityName: str
+    sensitivityCase: str

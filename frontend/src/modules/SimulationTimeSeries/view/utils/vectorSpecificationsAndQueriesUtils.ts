@@ -44,8 +44,8 @@ export function filterVectorSpecificationAndIndividualStatisticsDataArray(
     if (selectedIndividualStatisticOptions.length === 0) return [];
 
     const output = vectorSpecificationAndStatisticsData.map((v) => {
-        const filteredValueObjects = v.data.value_objects.filter((vo) => {
-            return selectedIndividualStatisticOptions.includes(vo.statistic_function);
+        const filteredValueObjects = v.data.valueObjects.filter((vo) => {
+            return selectedIndividualStatisticOptions.includes(vo.statisticFunction);
         });
         return { vectorSpecification: v.vectorSpecification, data: { ...v.data, value_objects: filteredValueObjects } };
     });
@@ -74,8 +74,8 @@ export function filterVectorSpecificationAndFanchartStatisticsDataArray(
     if (includeStatisticFunctions.length === 0) return [];
 
     const output = vectorSpecificationAndStatisticsData.map((v) => {
-        const filteredValueObjects = v.data.value_objects.filter((vo) => {
-            return includeStatisticFunctions.includes(vo.statistic_function);
+        const filteredValueObjects = v.data.valueObjects.filter((vo) => {
+            return includeStatisticFunctions.includes(vo.statisticFunction);
         });
         return { vectorSpecification: v.vectorSpecification, data: { ...v.data, value_objects: filteredValueObjects } };
     });

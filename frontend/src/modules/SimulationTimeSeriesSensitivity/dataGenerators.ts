@@ -14,7 +14,7 @@ export function makeVectorDataGenerator(
 
         if (ensemble && vectorRealizationData) {
             vectorRealizationData.forEach((vec) => {
-                const indexOfTimestamp = indexOf(vec.timestamps_utc_ms, activeTimestampUtcMs);
+                const indexOfTimestamp = indexOf(vec.timestampsUtcMs, activeTimestampUtcMs);
                 data.push({
                     key: vec.realization,
                     value: indexOfTimestamp === -1 ? 0 : vec.values[indexOfTimestamp],
