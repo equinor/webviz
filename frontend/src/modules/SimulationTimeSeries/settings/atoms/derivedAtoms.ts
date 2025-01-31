@@ -1,3 +1,4 @@
+import { VectorDefinitionsType } from "@assets/vectorDefinitions";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
@@ -6,7 +7,9 @@ import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
+import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 import { createVectorSelectorDataFromVectors } from "@modules/_shared/components/VectorSelector";
+import { simulationVectorDefinition } from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { atom } from "jotai";
 
@@ -122,30 +125,55 @@ export const isVectorListQueriesFetchingAtom = atom<boolean>((get) => {
     return vectorListQueries.some((query) => query.isFetching);
 });
 
-export const availableVectorNamesAtom = atom((get) => {
-    const ensembleVectorListsHelper = get(ensembleVectorListsHelperAtom);
-
-    const vectorNamesUnion = ensembleVectorListsHelper.vectorsUnion();
-
-    return vectorNamesUnion;
-});
-
-export const vectorSelectorDataAtom = atom((get) => {
-    const isFetching = get(isVectorListQueriesFetchingAtom);
-    const availableVectorNames = get(availableVectorNamesAtom);
-
-    if (isFetching) {
-        return [];
-    }
-
-    return createVectorSelectorDataFromVectors(availableVectorNames);
-});
-
 export const ensembleVectorListsHelperAtom = atom<EnsembleVectorListsHelper>((get) => {
     const vectorListQueries = get(vectorListQueriesAtom);
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);
 
     return new EnsembleVectorListsHelper(selectedEnsembleIdents, vectorListQueries);
+});
+
+export const vectorSelectorDataAtom = atom((get) => {
+    const isFetching = get(isVectorListQueriesFetchingAtom);
+    const ensembleVectorListsHelper = get(ensembleVectorListsHelperAtom);
+
+    if (isFetching) {
+        return [];
+    }
+
+    const vectorNames = ensembleVectorListsHelper.vectorNamesUnion();
+
+    return createVectorSelectorDataFromVectors(vectorNames);
+});
+
+export const customVectorDefinitionsAtom = atom<VectorDefinitionsType | null>((get) => {
+    const isFetching = get(isVectorListQueriesFetchingAtom);
+    const ensembleVectorListsHelper = get(ensembleVectorListsHelperAtom);
+
+    if (isFetching) {
+        return null;
+    }
+
+    const vectors = ensembleVectorListsHelper.vectorsUnion();
+
+    const customVectorDefinitions: VectorDefinitionsType = {};
+    for (const vector of vectors) {
+        if (!vector.derivedVector) {
+            continue;
+        }
+
+        // Only add custom definitions parent nodes
+        const parentNodeName = vector.name.split(":", 2)[0];
+        const sourceVectorBaseName = vector.derivedVector.sourceVector.split(":", 2)[0];
+        const adjustedDerivedVector = {
+            ...vector.derivedVector,
+            sourceVector: sourceVectorBaseName,
+        };
+        const type = simulationVectorDefinition(vector.derivedVector.sourceVector)?.type ?? "";
+        const derivedVectorDescription = createDerivedVectorDescription(vector.name, adjustedDerivedVector);
+        customVectorDefinitions[parentNodeName] = { type, description: derivedVectorDescription };
+    }
+
+    return customVectorDefinitions;
 });
 
 export const vectorSpecificationsAtom = atom<VectorSpec[]>((get) => {

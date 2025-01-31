@@ -84,3 +84,34 @@ export function simulationVectorDescription(
 
     return `${prefix}${vector}${suffix}`;
 }
+
+/**
+ * Returns the vector definition for the simulation vector if it exists, otherwise returns null.
+ */
+export function simulationVectorDefinition(vector: string): VectorDefinition | null {
+    let vectorName = vector;
+    if (vector.includes(":")) {
+        [vectorName] = vector.split(":", 2);
+    }
+
+    // Handle regions and completions
+    if (vectorName.length === 8) {
+        if (vectorName[0] === "R") {
+            // Region vectors for other FIP regions than FIPNUM are written on a special form:
+            // 8 signs, with the last 3 defining the region.
+            // E.g.: For an array "FIPREG": ROIP is ROIP_REG, RPR is RPR__REG and ROIPL is ROIPLREG
+            // Underscores _ are always used to fill
+
+            const vectorBaseName = vectorName.slice(0, 5).replace(/_+$/, ""); // Equivalent to rstrip("_")
+            return getVectorDefinition(vectorBaseName);
+        } else if (vectorName[0] === "W" && vectorName[4] === "L") {
+            // These are completion vectors, e.g. WWCTL:__1:OP_1 and WOPRL_10:OP_1 for
+            // water-cut in OP_1 completion 1 and oil production rate in OP_1 completion 10
+
+            const vectorBaseName = vector.slice(0, 5);
+            return getVectorDefinition(vectorBaseName);
+        }
+    }
+
+    return getVectorDefinition(vectorName);
+}

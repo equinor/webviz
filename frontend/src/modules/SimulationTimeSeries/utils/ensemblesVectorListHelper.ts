@@ -38,7 +38,7 @@ export class EnsembleVectorListsHelper {
      *
      * @returns Array of unique vector names, as union of all vectors in all queries
      */
-    vectorsUnion(): string[] {
+    vectorNamesUnion(): string[] {
         const uniqueVectorNames = new Set<string>();
         for (const query of this._queries) {
             if (query.data) {
@@ -49,6 +49,30 @@ export class EnsembleVectorListsHelper {
         }
 
         return Array.from(uniqueVectorNames);
+    }
+
+    /**
+     * Get union of vector descriptions from all queries
+     *
+     * If duplicate vector names exist, this will keep the first occurrence of the vector description
+     *
+     * @returns Array of unique vector descriptions, as union of all vectors in all queries
+     */
+    vectorsUnion(): VectorDescription_api[] {
+        const vectorDescriptionMap = new Map<string, VectorDescription_api>();
+        for (const query of this._queries) {
+            if (query.data) {
+                for (const vector of query.data) {
+                    // Note: This will keep the first vector with the same name,
+                    // i.e. if vectors are different in different ensembles, only the first one will be kept
+                    if (!vectorDescriptionMap.has(vector.name)) {
+                        vectorDescriptionMap.set(vector.name, vector);
+                    }
+                }
+            }
+        }
+
+        return Array.from(vectorDescriptionMap.values());
     }
 
     /**

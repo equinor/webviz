@@ -1,7 +1,6 @@
 import React from "react";
 
 import {
-    DerivedVectorCategory_api,
     DerivedVector_api,
     Frequency_api,
     SummaryVectorObservations_api,
@@ -19,6 +18,7 @@ import {
     SubplotLimitDirection,
     VectorSpec,
 } from "@modules/SimulationTimeSeries/typesAndEnums";
+import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 import { CoordinateDomain, Figure, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
@@ -782,23 +782,15 @@ export class PlotBuilder {
     }
 
     private createVectorDescription(vectorName: string, derivedVector?: DerivedVector_api | null): string {
-        let simulationVectorName = vectorName;
-        let prefix: string | undefined = undefined;
-        let suffix: string | undefined = undefined;
-        const frequencyString: string | null = this._resampleFrequency
-            ? FrequencyEnumToStringMapping[this._resampleFrequency]
-            : null;
-        if (derivedVector?.category === DerivedVectorCategory_api.PER_DAY) {
-            simulationVectorName = derivedVector.sourceVector;
-            prefix = frequencyString ? `${frequencyString} Average ` : "Average ";
-            suffix = " Per day";
-        }
-        if (derivedVector?.category === DerivedVectorCategory_api.PER_INTVL) {
-            simulationVectorName = derivedVector.sourceVector;
-            prefix = frequencyString ? `${frequencyString} Interval ` : "Interval ";
+        if (derivedVector) {
+            if (this._resampleFrequency) {
+                const frequencyString = FrequencyEnumToStringMapping[this._resampleFrequency];
+                return `${frequencyString} ${createDerivedVectorDescription(vectorName, derivedVector)}`;
+            }
+            return createDerivedVectorDescription(vectorName, derivedVector);
         }
 
-        return simulationVectorDescription(simulationVectorName, prefix, suffix);
+        return simulationVectorDescription(vectorName);
     }
 
     private makeTraceNameFromVectorSpecification(vectorSpecification: VectorSpec): string {
