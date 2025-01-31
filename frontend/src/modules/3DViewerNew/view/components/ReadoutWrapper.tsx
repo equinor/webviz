@@ -11,7 +11,7 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 import { BoundingBox3D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import culori from "culori";
+import { converter } from "culori";
 
 import { ContextMenu } from "./ContextMenu";
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
@@ -45,11 +45,11 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const colorGenerator = React.useCallback(
         function* colorGenerator() {
             const colors: [number, number, number][] = colorSet.getColorArray().map((c) => {
-                const rgb = culori.converter("rgb")(c);
+                const rgb = converter("rgb")(c);
                 if (!rgb) {
                     return [0, 0, 0];
                 }
-                return [rgb.r, rgb.g, rgb.b];
+                return [rgb.r * 255, rgb.g * 255, rgb.b * 255];
             });
             let i = 0;
             while (true) {

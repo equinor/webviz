@@ -4,6 +4,7 @@ export enum SettingType {
     STATISTIC_FUNCTION = "statisticFunction",
     SENSITIVITY = "sensitivity",
     SURFACE_NAME = "surfaceName",
+    INTERSECTION = "intersection",
     ATTRIBUTE = "attribute",
     TIME_OR_INTERVAL = "timeOrInterval",
     POLYGONS_ATTRIBUTE = "polygonsAttribute",

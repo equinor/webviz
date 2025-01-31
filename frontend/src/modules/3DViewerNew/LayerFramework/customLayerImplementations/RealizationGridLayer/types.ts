@@ -4,6 +4,7 @@ import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTy
 export type RealizationGridSettings = {
     [SettingType.ENSEMBLE]: RegularEnsembleIdent | null;
     [SettingType.REALIZATION]: number | null;
+    [SettingType.INTERSECTION]: { type: "wellbore" | "polyline"; name: string; uuid: string } | null;
     [SettingType.ATTRIBUTE]: string | null;
     [SettingType.GRID_NAME]: string | null;
     [SettingType.GRID_LAYER_I_RANGE]: [number, number] | null;
