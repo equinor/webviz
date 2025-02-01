@@ -52,7 +52,7 @@
     },
     "devDependencies": {
         "@hey-api/openapi-ts": "^0.61.1",
-        "@playwright/experimental-ct-react": "^1.39.0",
+        "@playwright/experimental-ct-react": "^1.50.1",
         "@playwright/test": "^1.39.0",
         "@trivago/prettier-plugin-sort-imports": "^4.0.0",
         "@types/culori": "^2.0.0",
