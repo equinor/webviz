@@ -448,7 +448,10 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             return null;
         }
 
-        return allOptionsWithSeperators.find((opt) => isOptionOfValue(opt, selection))?.adornment || null;
+        const adornment = allOptionsWithSeperators.find((opt) => isOptionOfValue(opt, selection))?.adornment;
+
+        if (!adornment) return null;
+        return <span className="align-sub max-h-5 max-w-5 overflow-hidden">{adornment}</span>;
     }
 
     function handleSelectPreviousOption() {
@@ -522,7 +525,11 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                         }
                         startAdornment={makeInputAdornment()}
                         endAdornment={
-                            <IconButton size="small" onClick={() => setDropdownVisible((prev) => !prev)}>
+                            <IconButton
+                                size="small"
+                                className="align-sub"
+                                onClick={() => setDropdownVisible((prev) => !prev)}
+                            >
                                 {dropdownVisible ? (
                                     <ExpandLess fontSize="inherit" />
                                 ) : (
