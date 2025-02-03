@@ -783,11 +783,12 @@ export class PlotBuilder {
 
     private createVectorDescription(vectorName: string, derivedVector?: DerivedVector_api | null): string {
         if (derivedVector) {
+            const derivedVectorDescription = createDerivedVectorDescription(vectorName, derivedVector);
             if (this._resampleFrequency) {
                 const frequencyString = FrequencyEnumToStringMapping[this._resampleFrequency];
-                return `${frequencyString} ${createDerivedVectorDescription(vectorName, derivedVector)}`;
+                return `${frequencyString} ${derivedVectorDescription}`;
             }
-            return createDerivedVectorDescription(vectorName, derivedVector);
+            return derivedVectorDescription;
         }
 
         return simulationVectorDescription(vectorName);

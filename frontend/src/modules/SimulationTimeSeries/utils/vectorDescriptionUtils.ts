@@ -6,7 +6,11 @@ import { simulationVectorDescription } from "@modules/_shared/reservoirSimulatio
  *
  * Use source vector name to retrieve the official vector description, and add prefix and suffix
  */
-export function createDerivedVectorDescription(vectorName: string, derivedVector: DerivedVector_api): string {
+export function createDerivedVectorDescription(
+    vectorName: string,
+    derivedVector: DerivedVector_api,
+    excludeTypeDescription = false
+): string {
     let simulationVectorName = vectorName;
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
@@ -20,5 +24,5 @@ export function createDerivedVectorDescription(vectorName: string, derivedVector
         prefix = "Interval ";
     }
 
-    return simulationVectorDescription(simulationVectorName, prefix, suffix);
+    return simulationVectorDescription(simulationVectorName, prefix, suffix, excludeTypeDescription);
 }

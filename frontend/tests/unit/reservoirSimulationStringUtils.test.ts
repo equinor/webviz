@@ -1,4 +1,8 @@
-import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
+import {
+    simulationUnitReformat,
+    simulationVectorDefinition,
+    simulationVectorDescription,
+} from "@modules/_shared/reservoirSimulationStringUtils";
 
 import { describe, expect, test } from "vitest";
 
@@ -28,5 +32,25 @@ describe("Reservoir Simulation string utils tests", () => {
         expect(simulationUnitReformat("INVALID_UNIT", "INVALID_UNIT_SYSTEM")).toEqual("INVALID_UNIT");
         expect(simulationUnitReformat("M3", "INVALID_UNIT_SYSTEM")).toEqual("M3");
         expect(simulationUnitReformat("SM3/DAY", "INVALID_UNIT_SYSTEM")).toEqual("SM3/DAY");
+    });
+
+    test("Test simulationVectorDefinition", () => {
+        expect(simulationVectorDefinition("INVALID_VECTOR")).toBeNull();
+        expect(simulationVectorDefinition("WOPR")).toEqual({
+            description: "Oil Production Rate",
+            type: "well",
+        });
+        expect(simulationVectorDefinition("ROIP:1")).toEqual({
+            description: "Oil In Place (liquid+gas phase)",
+            type: "region",
+        });
+        expect(simulationVectorDefinition("WOPRL_10")).toEqual({
+            description: "Oil Flow Rate",
+            type: "completion",
+        });
+        expect(simulationVectorDefinition("FGIP")).toEqual({
+            description: "Gas In Place (liquid+gas phase)",
+            type: "field",
+        });
     });
 });
