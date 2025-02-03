@@ -137,6 +137,10 @@ export class PolylinesPlugin extends DeckGlPlugin implements PublishSubscribe<Po
         this.requireRedraw();
     }
 
+    getEditingMode(): PolylineEditingMode {
+        return this._editingMode;
+    }
+
     getCurrentEditingPolylineId(): string | null {
         return this._currentEditingPolylineId;
     }

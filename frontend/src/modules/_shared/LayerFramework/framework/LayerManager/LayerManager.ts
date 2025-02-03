@@ -6,7 +6,7 @@ import {
     createEnsembleRealizationFilterFuncForWorkbenchSession,
 } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { IntersectionPolylines, IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
+import { IntersectionPolyline, IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
@@ -39,7 +39,7 @@ export type GlobalSettings = {
     fieldId: string | null;
     ensembles: readonly RegularEnsemble[];
     realizationFilterFunction: EnsembleRealizationFilterFunction;
-    intersectionPolylines: IntersectionPolylines;
+    intersectionPolylines: IntersectionPolyline[];
 };
 
 /*
@@ -208,7 +208,10 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopicPa
             fieldId: null,
             ensembles,
             realizationFilterFunction: createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
-            intersectionPolylines: this._workbenchSession.getUserCreatedItems().getIntersectionPolylines(),
+            intersectionPolylines: this._workbenchSession
+                .getUserCreatedItems()
+                .getIntersectionPolylines()
+                .getPolylines(),
         };
     }
 
@@ -228,6 +231,10 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopicPa
     }
 
     private handleIntersectionPolylinesChanged() {
+        this._globalSettings.intersectionPolylines = this._workbenchSession
+            .getUserCreatedItems()
+            .getIntersectionPolylines()
+            .getPolylines();
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
     }
 }

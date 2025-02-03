@@ -121,6 +121,10 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         }
 
         this._makeGlobalSettingGetter(settingName, (value) => {
+            const cachedValue = this._cachedGlobalSettingsMap.get(settingName as string);
+            if (isEqual(value, cachedValue)) {
+                return;
+            }
             this._cachedGlobalSettingsMap.set(settingName as string, value);
             this.callUpdateFunc();
         });

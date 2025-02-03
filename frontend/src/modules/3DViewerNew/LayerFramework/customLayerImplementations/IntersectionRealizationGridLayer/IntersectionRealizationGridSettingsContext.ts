@@ -1,55 +1,53 @@
-import { getGridModelsInfoOptions } from "@api";
+import { getDrilledWellboreHeadersOptions, getGridModelsInfoOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
 import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
-import { GridLayerIRangeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerIRangeSetting";
-import { GridLayerJRangeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerJRangeSetting";
-import { GridLayerKRangeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerKRangeSetting";
 import { GridNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridNameSetting";
+import {
+    IntersectionSetting,
+    IntersectionSettingValue,
+} from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { ShowGridLinesSetting } from "@modules/_shared/LayerFramework/settings/implementations/ShowGridLinesSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
-import { RealizationGridSettings } from "./types";
+import { IntersectionRealizationGridSettings } from "./types";
 
-export class RealizationGridSettingsContext implements SettingsContext<RealizationGridSettings> {
-    private _contextDelegate: SettingsContextDelegate<RealizationGridSettings>;
+export class IntersectionRealizationGridSettingsContext
+    implements SettingsContext<IntersectionRealizationGridSettings>
+{
+    private _contextDelegate: SettingsContextDelegate<IntersectionRealizationGridSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<RealizationGridSettings, keyof RealizationGridSettings>(
-            this,
-            layerManager,
-            {
-                [SettingType.ENSEMBLE]: new EnsembleSetting(),
-                [SettingType.REALIZATION]: new RealizationSetting(),
-                [SettingType.GRID_NAME]: new GridNameSetting(),
-                [SettingType.ATTRIBUTE]: new AttributeSetting(),
-                [SettingType.GRID_LAYER_I_RANGE]: new GridLayerIRangeSetting(),
-                [SettingType.GRID_LAYER_J_RANGE]: new GridLayerJRangeSetting(),
-                [SettingType.GRID_LAYER_K_RANGE]: new GridLayerKRangeSetting(),
-                [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
-                [SettingType.SHOW_GRID_LINES]: new ShowGridLinesSetting(),
-            }
-        );
+        this._contextDelegate = new SettingsContextDelegate<
+            IntersectionRealizationGridSettings,
+            keyof IntersectionRealizationGridSettings
+        >(this, layerManager, {
+            [SettingType.INTERSECTION]: new IntersectionSetting(),
+            [SettingType.ENSEMBLE]: new EnsembleSetting(),
+            [SettingType.REALIZATION]: new RealizationSetting(),
+            [SettingType.GRID_NAME]: new GridNameSetting(),
+            [SettingType.ATTRIBUTE]: new AttributeSetting(),
+            [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
+            [SettingType.SHOW_GRID_LINES]: new ShowGridLinesSetting(),
+        });
     }
 
-    areCurrentSettingsValid(settings: RealizationGridSettings): boolean {
+    areCurrentSettingsValid(settings: IntersectionRealizationGridSettings): boolean {
         return (
+            settings[SettingType.INTERSECTION] !== null &&
             settings[SettingType.ENSEMBLE] !== null &&
             settings[SettingType.REALIZATION] !== null &&
             settings[SettingType.GRID_NAME] !== null &&
             settings[SettingType.ATTRIBUTE] !== null &&
-            settings[SettingType.GRID_LAYER_I_RANGE] !== null &&
-            settings[SettingType.GRID_LAYER_J_RANGE] !== null &&
-            settings[SettingType.GRID_LAYER_K_RANGE] !== null &&
             settings[SettingType.TIME_OR_INTERVAL] !== null
         );
     }
 
-    getDelegate(): SettingsContextDelegate<RealizationGridSettings> {
+    getDelegate(): SettingsContextDelegate<IntersectionRealizationGridSettings> {
         return this._contextDelegate;
     }
 
@@ -62,7 +60,7 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
         availableSettingsUpdater,
         queryClient,
         workbenchSession,
-    }: DefineDependenciesArgs<RealizationGridSettings>) {
+    }: DefineDependenciesArgs<IntersectionRealizationGridSettings>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -137,61 +135,56 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
             return availableGridAttributes;
         });
 
-        availableSettingsUpdater(SettingType.GRID_LAYER_I_RANGE, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(SettingType.GRID_NAME);
-            const data = getHelperDependency(realizationGridDataDep);
+        const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
+            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
 
-            if (!gridName || !data) {
-                return [];
+            if (!ensembleIdent) {
+                return null;
             }
 
-            const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
-            const availableGridLayers: number[] = [];
-            if (gridDimensions) {
-                availableGridLayers.push(gridDimensions.i_count);
-                availableGridLayers.push(gridDimensions.j_count);
-                availableGridLayers.push(gridDimensions.k_count);
+            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+
+            if (!ensemble) {
+                return null;
             }
 
-            return availableGridLayers;
+            const fieldIdentifier = ensemble.getFieldIdentifier();
+
+            return await queryClient.fetchQuery({
+                ...getDrilledWellboreHeadersOptions({
+                    query: { field_identifier: fieldIdentifier },
+                    signal: abortSignal,
+                }),
+            });
         });
 
-        availableSettingsUpdater(SettingType.GRID_LAYER_J_RANGE, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(SettingType.GRID_NAME);
-            const data = getHelperDependency(realizationGridDataDep);
+        availableSettingsUpdater(SettingType.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
+            const intersectionPolylines = getGlobalSetting("intersectionPolylines");
 
-            if (!gridName || !data) {
+            if (!wellboreHeaders) {
                 return [];
             }
 
-            const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
-            const availableGridLayers: number[] = [];
-            if (gridDimensions) {
-                availableGridLayers.push(gridDimensions.i_count);
-                availableGridLayers.push(gridDimensions.j_count);
-                availableGridLayers.push(gridDimensions.k_count);
+            const intersectionOptions: IntersectionSettingValue[] = [];
+            for (const wellboreHeader of wellboreHeaders) {
+                intersectionOptions.push({
+                    type: "wellbore",
+                    name: wellboreHeader.uniqueWellboreIdentifier,
+                    uuid: wellboreHeader.wellboreUuid,
+                });
             }
 
-            return availableGridLayers;
-        });
-
-        availableSettingsUpdater(SettingType.GRID_LAYER_K_RANGE, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(SettingType.GRID_NAME);
-            const data = getHelperDependency(realizationGridDataDep);
-
-            if (!gridName || !data) {
-                return [];
+            for (const polyline of intersectionPolylines) {
+                intersectionOptions.push({
+                    type: "polyline",
+                    name: polyline.name,
+                    uuid: polyline.id,
+                });
             }
 
-            const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
-            const availableGridLayers: number[] = [];
-            if (gridDimensions) {
-                availableGridLayers.push(gridDimensions.i_count);
-                availableGridLayers.push(gridDimensions.j_count);
-                availableGridLayers.push(gridDimensions.k_count);
-            }
-
-            return availableGridLayers;
+            return intersectionOptions;
         });
 
         availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {

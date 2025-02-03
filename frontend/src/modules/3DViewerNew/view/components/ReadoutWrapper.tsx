@@ -72,8 +72,10 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
 
             const unsubscribeFromPolylinesPlugin = polylinesPlugin
                 .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(PolylinesPluginTopic.POLYLINES)(() => {
-                intersectionPolylines.setPolylines(polylinesPlugin.getPolylines());
+                .makeSubscriberFunction(PolylinesPluginTopic.EDITING_POLYLINE_ID)(() => {
+                if (polylinesPlugin.getCurrentEditingPolylineId() === null) {
+                    intersectionPolylines.setPolylines(polylinesPlugin.getPolylines());
+                }
             });
 
             const unsubscribeFromIntersectionPolylines = intersectionPolylines.subscribe(

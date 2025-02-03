@@ -3,6 +3,7 @@ import { Layer } from "@deck.gl/core";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
+import { IntersectionRealizationGridLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/IntersectionRealizationGridLayer";
 import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
 import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthSliceLayer";
 import { RealizationSeismicInlineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer";
@@ -51,15 +52,14 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
     if (layer instanceof DrilledWellborePicksLayer) {
         return createWellPicksLayer(data, layer.getItemDelegate().getId());
     }
+    if (layer instanceof IntersectionRealizationGridLayer) {
+        return makeIntersectionLayer(
+            data.polylineIntersectionData,
+            layer.getSettingsContext().getDelegate().getSettings().showGridLines.getDelegate().getValue(),
+            colorScale
+        );
+    }
     if (layer instanceof RealizationGridLayer) {
-        if (data.polylineIntersectionData) {
-            return makeIntersectionLayer(
-                data.polylineIntersectionData,
-                layer.getSettingsContext().getDelegate().getSettings().showGridLines.getDelegate().getValue(),
-                colorScale
-            );
-        }
-
         return makeGrid3DLayer(
             layer.getItemDelegate().getId(),
             data.gridSurfaceData,

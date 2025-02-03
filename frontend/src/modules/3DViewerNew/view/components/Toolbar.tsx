@@ -5,9 +5,19 @@ import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIn
 import { Input } from "@lib/components/Input";
 import { ToggleButton } from "@lib/components/ToggleButton";
 import { AddPathPointIcon, DrawPathIcon, RemovePathPointIcon } from "@lib/icons/";
+import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Toolbar as GenericToolbar, ToolBarDivider } from "@modules/_shared/components/Toolbar";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import { Add, FilterCenterFocus, GridOff, GridOn, Polyline, Remove } from "@mui/icons-material";
+import {
+    Add,
+    FilterCenterFocus,
+    GridOff,
+    GridOn,
+    KeyboardDoubleArrowLeft,
+    KeyboardDoubleArrowRight,
+    Polyline,
+    Remove,
+} from "@mui/icons-material";
 
 import { PolylineEditingMode } from "../hooks/editablePolylines/types";
 import { PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
@@ -24,6 +34,7 @@ export type ToolbarProps = {
 };
 
 export function Toolbar(props: ToolbarProps): React.ReactNode {
+    const [expanded, setExpanded] = React.useState<boolean>(false);
     const [gridVisible, setGridVisible] = React.useState<boolean>(false);
     const [polylineName, setPolylineName] = React.useState<string | null>(null);
     const [prevEditingPolylineId, setPrevEditingPolylineId] = React.useState<string | null>(null);
@@ -76,40 +87,53 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
 
     return (
         <GenericToolbar>
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1 text-sm">
                 <div className="flex items-center gap-1">
                     <Button onClick={handleFitInViewClick} title="Focus top view">
                         <FilterCenterFocus fontSize="inherit" />
                     </Button>
-                    <ToggleButton onToggle={handleGridToggle} title="Toggle grid" active={gridVisible}>
-                        {gridVisible ? <GridOn fontSize="inherit" /> : <GridOff fontSize="inherit" />}
-                    </ToggleButton>
+                    <div className={resolveClassNames("flex gap-1 items-center", expanded ? "flex" : "hidden")}>
+                        <ToggleButton onToggle={handleGridToggle} title="Toggle grid" active={gridVisible}>
+                            {gridVisible ? <GridOn fontSize="inherit" /> : <GridOff fontSize="inherit" />}
+                        </ToggleButton>
+                        <ToolBarDivider />
+                        <ToggleButton
+                            onToggle={handleTogglePolylineEditing}
+                            title="Edit polylines"
+                            active={polylineEditingMode !== PolylineEditingMode.NONE}
+                        >
+                            <Polyline fontSize="inherit" />
+                        </ToggleButton>
+                        <ToolBarDivider />
+                        <HoldPressedIntervalCallbackButton
+                            onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
+                            title="Decrease vertical scale"
+                        >
+                            <Remove fontSize="inherit" />
+                        </HoldPressedIntervalCallbackButton>
+                        <span title="Vertical scale" className="w-8 text-center">
+                            {props.verticalScale.toFixed(2)}
+                        </span>
+                        <HoldPressedIntervalCallbackButton
+                            onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
+                            title="Increase vertical scale"
+                        >
+                            <Add fontSize="inherit" />
+                        </HoldPressedIntervalCallbackButton>
+                    </div>
                     <ToolBarDivider />
-                    <ToggleButton
-                        onToggle={handleTogglePolylineEditing}
-                        title="Edit polylines"
-                        active={polylineEditingMode !== PolylineEditingMode.NONE}
+                    <Button
+                        title={expanded ? "Collapse toolbar" : "Expand toolbar"}
+                        onClick={() => setExpanded(!expanded)}
                     >
-                        <Polyline fontSize="inherit" />
-                    </ToggleButton>
-                    <ToolBarDivider />
-                    <HoldPressedIntervalCallbackButton
-                        onHoldPressedIntervalCallback={handleVerticalScaleDecrease}
-                        title="Decrease vertical scale"
-                    >
-                        <Remove fontSize="inherit" />
-                    </HoldPressedIntervalCallbackButton>
-                    <span title="Vertical scale" className="w-8 text-center">
-                        {props.verticalScale.toFixed(2)}
-                    </span>
-                    <HoldPressedIntervalCallbackButton
-                        onHoldPressedIntervalCallback={handleVerticalScaleIncrease}
-                        title="Increase vertical scale"
-                    >
-                        <Add fontSize="inherit" />
-                    </HoldPressedIntervalCallbackButton>
+                        {expanded ? (
+                            <KeyboardDoubleArrowLeft fontSize="inherit" />
+                        ) : (
+                            <KeyboardDoubleArrowRight fontSize="inherit" />
+                        )}
+                    </Button>
                 </div>
-                {polylineEditingMode !== PolylineEditingMode.NONE && (
+                {polylineEditingMode !== PolylineEditingMode.NONE && expanded && (
                     <>
                         <div className="flex w-full items-center gap-1 text-lg p-2 bg-slate-100">
                             <ToggleButton

@@ -11,6 +11,7 @@ import { MenuItem } from "@lib/components/MenuItem";
 import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
+import { IntersectionRealizationGridLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/IntersectionRealizationGridLayer";
 import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
 import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthSliceLayer";
 import { EnsembleSetting } from "@modules//_shared/LayerFramework/settings/implementations/EnsembleSetting";
@@ -81,6 +82,9 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return;
             case "color-scale":
                 groupDelegate.prependChild(new ColorScale("Color scale", props.layerManager));
+                return;
+            case "intersection-realization-grid":
+                groupDelegate.insertChild(new IntersectionRealizationGridLayer(props.layerManager), numSharedSettings);
                 return;
             case "realization-grid":
                 groupDelegate.insertChild(new RealizationGridLayer(props.layerManager), numSharedSettings);
@@ -245,6 +249,16 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                         identifier: "drilled-wellbore-picks",
                         icon: <Icon data={wellbore} fontSize="small" />,
                         label: "Drilled Wellbore Picks",
+                    },
+                ],
+            },
+            {
+                label: "Intersection",
+                children: [
+                    {
+                        identifier: "intersection-realization-grid",
+                        icon: <Icon data={grid_layer} fontSize="small" />,
+                        label: "Intersection Realization Grid",
                     },
                 ],
             },
