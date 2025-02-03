@@ -25,6 +25,7 @@ export function Settings(): React.ReactNode {
                 {
                     value: "v2",
                     label: "V:2",
+                    adornment: <ImageAspectRatioTwoTone fontSize="inherit" className="align-sub" />,
                 },
             ],
         },

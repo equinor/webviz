@@ -41,6 +41,7 @@ export type DropdownProps<TValue = string> = {
     showArrows?: boolean;
     debounceTimeMs?: number;
     placeholder?: string;
+    dropdownMaxWidth?: number;
     onChange?: (value: TValue) => void;
 } & BaseComponentProps;
 
@@ -57,12 +58,12 @@ type DropdownRect = {
 };
 
 type OptionItem<TValue> = {
-          type: "option";
+    type: "option";
     parentGroup?: string;
 } & DropdownOption<TValue>;
 
 type SeperatorItem<TValue> = {
-          type: "separator";
+    type: "separator";
     parentGroup?: never;
 } & DropdownOptionGroup<TValue>;
 
@@ -87,7 +88,12 @@ function makeOptionListItems<TValue>(
 ): OptionOrSeperator<TValue>[] {
     return options.flatMap((option) => {
         if (isDropdownOptionGroup(option)) {
-            const seperatorItem = { type: "separator", ...option } as OptionOrSeperator<TValue>;
+            const seperatorItem = {
+                ...option,
+                type: "separator",
+                // Transform here instead of with CSS to allow size estimations
+                label: option.label.toUpperCase(),
+            } as OptionOrSeperator<TValue>;
 
             // Recursively make entries for this group's items
             const optionItems = makeOptionListItems(option.options, filter, option.label);
@@ -107,6 +113,8 @@ function makeOptionListItems<TValue>(
 
 export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const { onChange } = props;
+
+    const dropdownMaxWidthOrDefault = props.dropdownMaxWidth ?? 500;
 
     const valueWithDefault = props.value ?? null;
     const [prevValue, setPrevValue] = React.useState<TValue | null>(props.value ?? null);
@@ -200,9 +208,12 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     React.useEffect(
         function updateDropdownRectWidthEffect() {
             let longestOptionWidth = allOptionsWithSeperators.reduce((prev, current) => {
-                const { label, adornment } = current;
+                const { type, label, adornment } = current;
 
-                const labelWidth = getTextWidthWithFont(label, "Equinor", 1);
+                // ! The separator text gets rendered with text-xs
+                const fontSize = type === "separator" ? 0.75 : 1;
+
+                const labelWidth = getTextWidthWithFont(label, "Equinor", fontSize);
                 const adornmentWidth = adornment ? convertRemToPixels((5 + 2) / 4) : 0;
                 const totalWidth = labelWidth + adornmentWidth;
 
@@ -219,9 +230,13 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                     longestOptionWidth = getTextWidthWithFont(noMatchingOptionsText, "Equinor", 1);
                 }
             }
+
+            // Make sure the width doesn't get too large
+            longestOptionWidth = Math.min(longestOptionWidth, dropdownMaxWidthOrDefault);
+
             setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));
         },
-        [allOptionsWithSeperators, filter]
+        [allOptionsWithSeperators, filter, dropdownMaxWidthOrDefault]
     );
 
     React.useEffect(
@@ -280,6 +295,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             filteredOptionsWithSeparators,
             selection,
             dropdownRect.width,
+            dropdownMaxWidthOrDefault,
             setOptionIndexWithFocusToCurrentSelection,
         ]
     );
@@ -412,7 +428,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     }, []);
 
     const handleInputChange = React.useCallback(function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-            setFilter(event.target.value);
+        setFilter(event.target.value);
     }, []);
 
     const handlePointerOver = React.useCallback(function handlePointerOver(index: number) {
@@ -498,12 +514,12 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                     <Input
                         ref={inputRef}
                         id={props.id}
+                        truncate
                         error={
                             !!selection &&
                             !allOptionsWithSeperators.find((option) => isOptionOfValue(option, selection)) &&
                             allOptionsWithSeperators.length > 0
                         }
-                        onClick={() => handleInputClick()}
                         startAdornment={makeInputAdornment()}
                         endAdornment={
                             <IconButton size="small" onClick={() => setDropdownVisible((prev) => !prev)}>
@@ -514,10 +530,11 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                                 )}
                             </IconButton>
                         }
-                        onChange={handleInputChange}
                         value={makeInputValue()}
                         rounded={props.showArrows ? "left" : "all"}
                         placeholder={props.placeholder}
+                        onClick={() => handleInputClick()}
+                        onChange={handleInputChange}
                     />
                 </div>
                 {props.showArrows && (
@@ -562,7 +579,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                                         : noMatchingOptionsText}
                                 </div>
                             )}
-                            <div style={{ height: filteredOptionsWithSeparators.length * OPTION_HEIGHT }}>
+                            <ul style={{ height: filteredOptionsWithSeparators.length * OPTION_HEIGHT }}>
                                 <Virtualization
                                     direction="vertical"
                                     items={filteredOptionsWithSeparators}
@@ -571,7 +588,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                                     startIndex={startIndex}
                                     renderItem={renderItem}
                                 />
-                            </div>
+                            </ul>
                         </div>
                     )}
             </div>
@@ -589,8 +606,8 @@ type OptionProps<TValue> = DropdownOption<TValue> & {
 
 function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
     return (
-        <div
-            className={resolveClassNames("flex items-center cursor-pointer select-none px-1", {
+        <li
+            className={resolveClassNames("flex items-center cursor-pointer select-none px-1 gap-1", {
                 "bg-blue-600 text-white box-border hover:bg-blue-700": props.isSelected,
                 "bg-blue-100": !props.isSelected && props.isFocused,
                 "bg-blue-700 text-white": props.isSelected && props.isFocused,
@@ -602,26 +619,22 @@ function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
             onPointerMove={() => props.onPointerOver(props.value)}
             onClick={() => !props.disabled && props.onSelect(props.value)}
         >
-            <span
-                className={resolveClassNames("whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex gap-2", {
-                    "ml-2": props.isInGroup,
-                })}
-            >
-                {props.adornment && <span className="max-w-5 max-h-5 overflow-hidden">{props.adornment}</span>}
-                {props.label}
-            </span>
-        </div>
+            {props.adornment && (
+                <div className="max-w-5 max-h-5 overflow-hidden flex-shrink-0 inline-flex">{props.adornment}</div>
+            )}
+            <span className="truncate">{props.label}</span>
+        </li>
     );
 }
 
 function SeparatorItem(props: DropdownOptionGroup<unknown>): React.ReactNode {
     return (
-        <div
-            className="px-1 flex gap-1 text-xs text-gray-500 uppercase font-semibold items-center pointer-events-none select-none"
+        <li
+            className="px-1 flex text-xs text-gray-500 font-semibold items-center pointer-events-none select-none"
             style={{ height: OPTION_HEIGHT }}
         >
-            <span className="whitespace-nowrap text-ellipsis overflow-hidden min-w-0 flex gap-2">{props.label}</span>
-        </div>
+            <span className="truncate">{props.label}</span>
+        </li>
     );
 }
 

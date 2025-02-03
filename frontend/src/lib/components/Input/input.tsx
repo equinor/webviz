@@ -10,6 +10,7 @@ export type InputProps = InputUnstyledProps & {
     min?: number;
     max?: number;
     rounded?: "all" | "left" | "right" | "none";
+    truncate?: boolean;
     debounceTimeMs?: number;
     onValueChange?: (value: string) => void;
 };
@@ -174,7 +175,8 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                         },
                         input: {
                             className: resolveClassNames(
-                                "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none"
+                                "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none",
+                                { "text-ellipsis": props.truncate }
                             ),
                         },
                     }}
