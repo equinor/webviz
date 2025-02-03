@@ -3,18 +3,28 @@ import logging
 from fmu.sumo.explorer.explorer import SumoClient, Pit
 from fmu.sumo.explorer.objects import CaseCollection, Case
 from webviz_pkg.core_utils.perf_timer import PerfTimer
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary import config
+from primary.httpx_client import httpx_sync_client, httpx_async_client
 from primary.services.service_exceptions import Service, NoDataError, MultipleDataMatchesError
 
 LOGGER = logging.getLogger(__name__)
 
 
 def create_sumo_client(access_token: str) -> SumoClient:
+    timer = PerfMetrics()
     if access_token == "DUMMY_TOKEN_FOR_TESTING":  # nosec bandit B105
         sumo_client = SumoClient(env=config.SUMO_ENV, interactive=False)
     else:
-        sumo_client = SumoClient(env=config.SUMO_ENV, token=access_token, interactive=False)
+        sumo_client = SumoClient(
+            env=config.SUMO_ENV,
+            token=access_token,
+            http_client=httpx_sync_client.client,
+            async_http_client=httpx_async_client.client,
+        )
+    timer.record_lap("create_sumo_client()")
+    LOGGER.debug(f"{timer.to_string()}ms")
     return sumo_client
 
 

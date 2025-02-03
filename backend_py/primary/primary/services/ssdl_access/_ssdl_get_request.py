@@ -1,11 +1,10 @@
 import logging
 from typing import List, Optional
 
-import httpx
-
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary import config
+from primary.httpx_client import httpx_async_client
 from primary.services.service_exceptions import (
     Service,
     InvalidDataError,
@@ -30,23 +29,22 @@ async def ssdl_get_request(access_token: str, endpoint: str, params: Optional[di
     }
     timer = PerfTimer()
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(urlstring, params=params, headers=headers, timeout=60)
-        results = []
-        if response.status_code == 200:
-            results = response.json()
+    response = await httpx_async_client.client.get(urlstring, params=params, headers=headers, timeout=60)
+    results = []
+    if response.status_code == 200:
+        results = response.json()
 
-        elif response.status_code == 401:
-            raise AuthorizationError("Unauthorized access to SSDL", Service.SSDL)
-        elif response.status_code == 403:
-            raise AuthorizationError("Forbidden access to SSDL", Service.SSDL)
-        elif response.status_code == 404:
-            raise InvalidDataError(f"Endpoint {endpoint} either does not exists or can not be found", Service.SSDL)
+    elif response.status_code == 401:
+        raise AuthorizationError("Unauthorized access to SSDL", Service.SSDL)
+    elif response.status_code == 403:
+        raise AuthorizationError("Forbidden access to SSDL", Service.SSDL)
+    elif response.status_code == 404:
+        raise InvalidDataError(f"Endpoint {endpoint} either does not exists or can not be found", Service.SSDL)
 
-        # Capture other errors
-        else:
-            raise InvalidParameterError(f"Can not fetch data from endpoint {endpoint}", Service.SSDL)
+    # Capture other errors
+    else:
+        raise InvalidParameterError(f"Can not fetch data from endpoint {endpoint}", Service.SSDL)
 
-        print(f"TIME SSDL fetch {endpoint} took {timer.lap_s():.2f} seconds")
-        LOGGER.debug(f"TIME SSDL fetch {endpoint} took {timer.lap_s():.2f} seconds")
+    print(f"TIME SSDL fetch {endpoint} took {timer.lap_s():.2f} seconds")
+    LOGGER.debug(f"TIME SSDL fetch {endpoint} took {timer.lap_s():.2f} seconds")
     return results

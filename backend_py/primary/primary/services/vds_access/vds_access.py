@@ -8,6 +8,7 @@ from requests_toolbelt.multipart.decoder import MultipartDecoder, BodyPart
 import httpx
 
 from primary import config
+from primary.httpx_client import httpx_async_client
 
 from .response_types import VdsMetadata, VdsFenceMetadata
 from .request_types import (
@@ -56,13 +57,12 @@ class VdsAccess:
     async def _query_async(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
         """Query the service"""
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{config.VDS_HOST_ADDRESS}/{endpoint}",
-                headers={"Content-Type": "application/json"},
-                content=json.dumps(request.request_parameters()),
-                timeout=60,
-            )
+        response = await httpx_async_client.client.post(
+            f"{config.VDS_HOST_ADDRESS}/{endpoint}",
+            headers={"Content-Type": "application/json"},
+            content=json.dumps(request.request_parameters()),
+            timeout=60,
+        )
 
         if response.is_error:
             raise RuntimeError(f"({str(response.status_code)})-{response.reason_phrase}-{response.text}")
