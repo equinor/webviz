@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 
-from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
+from primary.services.sumo_access.summary_access import Frequency, SummaryAccess, VectorMetadata
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.group_tree_types import TreeType
 
@@ -131,6 +131,7 @@ class FlowNetworkAssembler:
         self._group_tree_df_model: Optional[GroupTreeDataframeModel] = None
         self._filtered_group_tree_df: Optional[pd.DataFrame] = None
         self._all_vectors: Optional[set[str]] = None
+        self._vector_metadata_by_keyword: dict[str, list[VectorMetadata]] = {}
         self._smry_table_sorted_by_date: pa.Table | None = None
 
         self._node_static_working_data: dict[str, StaticNodeWorkingData] | None = None
@@ -246,11 +247,23 @@ class FlowNetworkAssembler:
         # Get summary vectors for all data simultaneously to obtain one request from Sumo
         # Many summary vectors might not be needed, but will be filtered out later on. This is the most efficient way to get the data
         # NOTE: "WSTAT" vectors are enumerated well state indicator, thus interpolated values might create issues (should be resolved by resampling-code)
-        single_realization_vectors_table, _ = await self._summary_access.get_single_real_vectors_table_async(
-            vector_names=list(vectors_of_interest),
-            resampling_frequency=self._summary_resampling_frequency,
-            realization=self._realization,
+        single_realization_vectors_table, vector_metadata = (
+            await self._summary_access.get_single_real_vectors_table_async(
+                vector_names=list(vectors_of_interest),
+                resampling_frequency=self._summary_resampling_frequency,
+                realization=self._realization,
+            )
         )
+
+        # Store vector metadata entries in a dict for easy lookup later
+        vector_metadata_by_keyword: dict[str, list[VectorMetadata]] = {}
+        for vec_meta in vector_metadata:
+            entries = vector_metadata_by_keyword.get(vec_meta.keyword, [])
+            entries.append(vec_meta)
+            vector_metadata_by_keyword[vec_meta.keyword] = entries
+
+        self._vector_metadata_by_keyword = vector_metadata_by_keyword
+
         self._performance_times.init_summary_vector_data_table = timer.lap_ms()
 
         # Create list of column names in the table once (for performance)
@@ -305,42 +318,58 @@ class FlowNetworkAssembler:
 
         return (
             dated_network_list,
-            self._get_edge_options(self._node_types),
-            [
-                FlowNetworkMetadata(key=datatype.value, label=_utils.get_label_for_datatype(datatype))
-                for datatype in [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
-            ],
+            self._assemble_metadata_for_data_types(self._get_edge_data_types()),
+            self._assemble_metadata_for_data_types(self._get_node_data_types()),
         )
 
-    def _get_edge_options(self, node_types: set[NodeType]) -> list[FlowNetworkMetadata]:
-        """Returns a list with edge node options for the dropdown
-        menu in the Flow Network module.
+    def _get_edge_data_types(self) -> list[DataType]:
+        node_types = self._node_types
+        data_types: list[DataType] = []
 
-        The output list has the format:
-        [
-            {"name": DataType.OILRATE.value, "label": "Oil Rate"},
-            {"name": DataType.GASRATE.value, "label": "Gas Rate"},
-        ]
-        """
-        options: list[FlowNetworkMetadata] = []
         if NodeType.PROD in node_types:
-            for rate in [DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE]:
-                options.append(FlowNetworkMetadata(key=rate.value, label=_utils.get_label_for_datatype(rate)))
+            data_types.extend([DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE])
         if NodeType.INJ in node_types and self._network_classification.HAS_WATER_INJ:
-            options.append(
-                FlowNetworkMetadata(
-                    key=DataType.WATERINJRATE.value, label=_utils.get_label_for_datatype(DataType.WATERINJRATE)
-                )
-            )
+            data_types.append(DataType.WATERINJRATE)
         if NodeType.INJ in node_types and self._network_classification.HAS_GAS_INJ:
-            options.append(
-                FlowNetworkMetadata(
-                    key=DataType.GASINJRATE.value, label=_utils.get_label_for_datatype(DataType.GASINJRATE)
-                )
+            data_types.append(DataType.GASINJRATE)
+
+        # ? Why do we default to oilrate?
+        if len(data_types) == 0:
+            data_types.append(DataType.OILRATE)
+
+        return data_types
+
+    def _get_node_data_types(self) -> list[DataType]:
+        return [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
+
+    def _assemble_metadata_for_data_types(self, data_types: list[DataType]) -> list[FlowNetworkMetadata]:
+        """Returns a list with metadata for a set of data types"""
+        options: list[FlowNetworkMetadata] = []
+
+        for data_type in data_types:
+            vector_metadata = self._get_vector_metadata_for_data_type(data_type)
+
+            network_metadata = FlowNetworkMetadata(
+                key=data_type.value,
+                label=_utils.get_label_for_datatype(data_type),
+                unit=vector_metadata.unit,
             )
-        if options:
-            return options
-        return [FlowNetworkMetadata(key=DataType.OILRATE.value, label=_utils.get_label_for_datatype(DataType.OILRATE))]
+
+            options.append(network_metadata)
+
+        return options
+
+    def _get_vector_metadata_for_data_type(self, data_type: DataType) -> VectorMetadata:
+        # ! Assumes that unit is equivalent for field, group and well vectors.
+        data_vector = _utils.WELL_DATATYPE_VECTOR_MAP[data_type]
+
+        vector_meta_list = self._vector_metadata_by_keyword.get(data_vector, [])
+
+        # ? Can this actually happen? I assume the summary table fetch guarantees all vectors are accounted for?
+        if len(vector_meta_list) < 1:
+            raise ValueError(f"Vector metadata missing for vector {data_vector}")
+
+        return vector_meta_list[0]
 
     def _verify_neccessary_injection_vectors(self, vectors_of_interest: set[str]) -> None:
         # Has any water injection or gas injection vectors among vectors of interest
