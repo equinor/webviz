@@ -92,12 +92,12 @@ export type DatedFlowNetwork_api = {
     network: NetworkNode_api;
 };
 
-export type DerivedVector_api = {
-    category: DerivedVectorCategory_api;
+export type DerivedVectorInfo_api = {
+    type: DerivedVectorType_api;
     sourceVector: string;
 };
 
-export enum DerivedVectorCategory_api {
+export enum DerivedVectorType_api {
     PER_DAY = "PER_DAY",
     PER_INTVL = "PER_INTVL",
 }
@@ -851,7 +851,7 @@ export type VectorDescription_api = {
     name: string;
     descriptiveName: string;
     hasHistorical: boolean;
-    derivedVector: DerivedVector_api | null;
+    derivedVectorInfo: DerivedVectorInfo_api | null;
 };
 
 export type VectorHistoricalData_api = {
@@ -867,7 +867,7 @@ export type VectorRealizationData_api = {
     values: Array<number>;
     unit: string;
     isRate: boolean;
-    derivedVector: DerivedVector_api | null;
+    derivedVectorInfo: DerivedVectorInfo_api | null;
 };
 
 export type VectorStatisticData_api = {
@@ -876,7 +876,7 @@ export type VectorStatisticData_api = {
     valueObjects: Array<StatisticValueObject_api>;
     unit: string;
     isRate: boolean;
-    derivedVector: DerivedVector_api | null;
+    derivedVectorInfo: DerivedVectorInfo_api | null;
 };
 
 export type VectorStatisticSensitivityData_api = {

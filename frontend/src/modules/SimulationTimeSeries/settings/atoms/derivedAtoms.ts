@@ -156,22 +156,26 @@ export const customVectorDefinitionsAtom = atom<VectorDefinitionsType | null>((g
     const vectors = ensembleVectorListsHelper.vectorsUnion();
 
     // Create custom vector definitions for parent nodes of derived vectors
-    const excludeTypeDescription = true; // Exclude type description in description for parent nodes
     const customVectorParentNodeDefinitions: VectorDefinitionsType = {};
     for (const vector of vectors) {
-        if (!vector.derivedVector) {
+        if (!vector.derivedVectorInfo) {
             continue;
         }
 
-        // Only add custom definitions parent nodes
-        const type = simulationVectorDefinition(vector.derivedVector.sourceVector)?.type ?? "";
-        const parentNodeName = vector.name.split(":", 2)[0];
+        // Create description only for base name of source vector (i.e. parent node)
+        const sourceVectorBaseName = vector.derivedVectorInfo.sourceVector.split(":", 2)[0];
         const derivedVectorDescription = createDerivedVectorDescription(
-            vector.name,
-            vector.derivedVector,
-            excludeTypeDescription
+            sourceVectorBaseName,
+            vector.derivedVectorInfo.type
         );
-        customVectorParentNodeDefinitions[parentNodeName] = { type, description: derivedVectorDescription };
+        const sourceBaseVectorType = simulationVectorDefinition(sourceVectorBaseName)?.type ?? "";
+
+        // Only add custom definitions for parent nodes
+        const parentNodeName = vector.name.split(":", 2)[0];
+        customVectorParentNodeDefinitions[parentNodeName] = {
+            type: sourceBaseVectorType,
+            description: derivedVectorDescription,
+        };
     }
 
     return customVectorParentNodeDefinitions;

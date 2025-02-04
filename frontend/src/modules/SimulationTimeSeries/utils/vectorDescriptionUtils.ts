@@ -1,4 +1,4 @@
-import { DerivedVectorCategory_api, DerivedVector_api } from "@api";
+import { DerivedVectorType_api } from "@api";
 import { simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
 /**
@@ -6,23 +6,16 @@ import { simulationVectorDescription } from "@modules/_shared/reservoirSimulatio
  *
  * Use source vector name to retrieve the official vector description, and add prefix and suffix
  */
-export function createDerivedVectorDescription(
-    vectorName: string,
-    derivedVector: DerivedVector_api,
-    excludeTypeDescription = false
-): string {
-    let simulationVectorName = vectorName;
+export function createDerivedVectorDescription(sourceVector: string, derivedVectorType: DerivedVectorType_api): string {
     let prefix: string | undefined = undefined;
     let suffix: string | undefined = undefined;
-    if (derivedVector.category === DerivedVectorCategory_api.PER_DAY) {
-        simulationVectorName = derivedVector.sourceVector;
+    if (derivedVectorType === DerivedVectorType_api.PER_DAY) {
         prefix = "Average ";
         suffix = " Per day";
     }
-    if (derivedVector.category === DerivedVectorCategory_api.PER_INTVL) {
-        simulationVectorName = derivedVector.sourceVector;
+    if (derivedVectorType === DerivedVectorType_api.PER_INTVL) {
         prefix = "Interval ";
     }
 
-    return simulationVectorDescription(simulationVectorName, prefix, suffix, excludeTypeDescription);
+    return simulationVectorDescription(sourceVector, prefix, suffix);
 }

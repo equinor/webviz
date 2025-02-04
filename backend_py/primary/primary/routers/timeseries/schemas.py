@@ -1,5 +1,4 @@
 from enum import StrEnum
-from typing import List
 
 from pydantic import BaseModel
 
@@ -21,13 +20,13 @@ class StatisticFunction(StrEnum):
     P50 = "P50"
 
 
-class DerivedVectorCategory(StrEnum):
+class DerivedVectorType(StrEnum):
     PER_DAY = "PER_DAY"
     PER_INTVL = "PER_INTVL"
 
 
-class DerivedVector(BaseModel):
-    category: DerivedVectorCategory
+class DerivedVectorInfo(BaseModel):
+    type: DerivedVectorType
     sourceVector: str
 
 
@@ -35,43 +34,43 @@ class VectorDescription(BaseModel):
     name: str
     descriptiveName: str
     hasHistorical: bool
-    derivedVector: DerivedVector | None = None
+    derivedVectorInfo: DerivedVectorInfo | None = None
 
 
 class VectorHistoricalData(BaseModel):
-    timestampsUtcMs: List[int]
-    values: List[float]
+    timestampsUtcMs: list[int]
+    values: list[float]
     unit: str
     isRate: bool
 
 
 class VectorRealizationData(BaseModel):
     realization: int
-    timestampsUtcMs: List[int]
-    values: List[float]
+    timestampsUtcMs: list[int]
+    values: list[float]
     unit: str
     isRate: bool
-    derivedVector: DerivedVector | None = None
+    derivedVectorInfo: DerivedVectorInfo | None = None
 
 
 class StatisticValueObject(BaseModel):
     statisticFunction: StatisticFunction
-    values: List[float]
+    values: list[float]
 
 
 class VectorStatisticData(BaseModel):
-    realizations: List[int]
-    timestampsUtcMs: List[int]
-    valueObjects: List[StatisticValueObject]
+    realizations: list[int]
+    timestampsUtcMs: list[int]
+    valueObjects: list[StatisticValueObject]
     unit: str
     isRate: bool
-    derivedVector: DerivedVector | None = None
+    derivedVectorInfo: DerivedVectorInfo | None = None
 
 
 class VectorStatisticSensitivityData(BaseModel):
-    realizations: List[int]
-    timestampsUtcMs: List[int]
-    valueObjects: List[StatisticValueObject]
+    realizations: list[int]
+    timestampsUtcMs: list[int]
+    valueObjects: list[StatisticValueObject]
     unit: str
     isRate: bool
     sensitivityName: str

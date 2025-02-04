@@ -1,7 +1,7 @@
 import React from "react";
 
 import {
-    DerivedVector_api,
+    DerivedVectorInfo_api,
     Frequency_api,
     SummaryVectorObservations_api,
     VectorHistoricalData_api,
@@ -344,7 +344,7 @@ export class PlotBuilder {
                 this.createVectorSubplotTitleAndInsertIntoMap(
                     elm.vectorSpecification.vectorName,
                     realizationData.unit,
-                    realizationData.derivedVector
+                    realizationData.derivedVectorInfo
                 );
             }
         }
@@ -396,7 +396,7 @@ export class PlotBuilder {
                 this.createVectorSubplotTitleAndInsertIntoMap(
                     elm.vectorSpecification.vectorName,
                     elm.data[0].unit,
-                    elm.data[0].derivedVector
+                    elm.data[0].derivedVectorInfo
                 );
             }
         }
@@ -438,7 +438,7 @@ export class PlotBuilder {
             this.createVectorSubplotTitleAndInsertIntoMap(
                 elm.vectorSpecification.vectorName,
                 elm.data.unit,
-                elm.data.derivedVector
+                elm.data.derivedVectorInfo
             );
         }
     }
@@ -483,7 +483,7 @@ export class PlotBuilder {
             this.createVectorSubplotTitleAndInsertIntoMap(
                 elm.vectorSpecification.vectorName,
                 elm.data.unit,
-                elm.data.derivedVector
+                elm.data.derivedVectorInfo
             );
         }
     }
@@ -771,19 +771,22 @@ export class PlotBuilder {
     private createVectorSubplotTitleAndInsertIntoMap(
         vectorName: string,
         unit: string,
-        derivedVector?: DerivedVector_api | null
+        derivedVectorInfo?: DerivedVectorInfo_api | null
     ): void {
         if (vectorName in this._vectorNameSubplotTitleMap) return;
 
-        const vectorDescription = this.createVectorDescription(vectorName, derivedVector);
+        const vectorDescription = this.createVectorDescription(vectorName, derivedVectorInfo);
         const unitText = unit.length === 0 ? "" : ` [${simulationUnitReformat(unit)}]`;
 
         this._vectorNameSubplotTitleMap[vectorName] = `${vectorDescription}${unitText}`;
     }
 
-    private createVectorDescription(vectorName: string, derivedVector?: DerivedVector_api | null): string {
-        if (derivedVector) {
-            const derivedVectorDescription = createDerivedVectorDescription(vectorName, derivedVector);
+    private createVectorDescription(vectorName: string, derivedVectorInfo?: DerivedVectorInfo_api | null): string {
+        if (derivedVectorInfo) {
+            const derivedVectorDescription = createDerivedVectorDescription(
+                derivedVectorInfo.sourceVector,
+                derivedVectorInfo.type
+            );
             if (this._resampleFrequency) {
                 const frequencyString = FrequencyEnumToStringMapping[this._resampleFrequency];
                 return `${frequencyString} ${derivedVectorDescription}`;

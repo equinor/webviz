@@ -8,8 +8,7 @@ from primary.services.utils.arrow_helpers import validate_summary_vector_table_p
 
 
 @dataclass
-class DeltaVectorTableAndMetadata:
-    table: pa.Table
+class DeltaVectorMetadata:
     is_rate: bool
     unit: str
 

@@ -19,7 +19,7 @@ def validate_summary_vector_table_pa(
     """
     expected_columns = {"DATE", "REAL", vector_name}
     actual_columns = set(vector_table.column_names)
-    if not expected_columns.issubset(actual_columns) or len(expected_columns) != len(actual_columns):
+    if expected_columns != actual_columns:
         unexpected_columns = actual_columns - expected_columns
         raise InvalidDataError(f"Unexpected columns in table {unexpected_columns}", service)
 

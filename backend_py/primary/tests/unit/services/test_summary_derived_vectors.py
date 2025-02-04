@@ -1,4 +1,5 @@
 import datetime
+import re
 import pytest
 
 import pyarrow as pa
@@ -6,14 +7,15 @@ import pyarrow as pa
 from primary.services.service_exceptions import InvalidDataError
 from primary.services.summary_derived_vectors import (
     DerivedRealizationVector,
-    DerivedVectorCategory,
+    DerivedVectorType,
     create_derived_realization_vector_list,
     create_derived_vector_unit,
     create_per_day_vector_table_pa,
     create_per_interval_vector_table_pa,
     create_per_day_vector_name,
     create_per_interval_vector_name,
-    get_derived_vector_category,
+    find_derived_vector_type,
+    get_derived_vector_type,
     get_total_vector_name,
     is_total_vector,
     is_derived_vector,
@@ -295,24 +297,29 @@ def test_create_derived_realization_vector_list():
             realization=1,
             timestamps_utc_ms=[1609459200000, 1610064000000, 1610668800000],
             values=[10.0, 20.0, 30.0],
+            is_rate=False,
             unit="unit",
         ),
         DerivedRealizationVector(
             realization=2,
             timestamps_utc_ms=[1609459200000, 1610064000000, 1610668800000],
             values=[40.0, 50.0, 60.0],
+            is_rate=False,
             unit="unit",
         ),
         DerivedRealizationVector(
             realization=4,
             timestamps_utc_ms=[1609459200000, 1610064000000, 1610668800000],
             values=[70.0, 80.0, 90.0],
+            is_rate=False,
             unit="unit",
         ),
     ]
 
+    is_rate = False
+
     # Call the function
-    result_list = create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", "unit")
+    result_list = create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", is_rate, "unit")
 
     # Assert the result
     assert result_list == expected_list
@@ -331,9 +338,11 @@ def test_create_derived_realization_vector_list_invalid_column_name():
         }
     )
 
+    is_rate = False
+
     # Call the function and expect an InvalidDataError
     with pytest.raises(InvalidDataError):
-        create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", "unit")
+        create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", is_rate, "unit")
 
 
 def test_create_derived_realization_vector_list_invalid_column_type():
@@ -346,9 +355,11 @@ def test_create_derived_realization_vector_list_invalid_column_type():
         }
     )
 
+    is_rate = False
+
     # Call the function and expect an InvalidDataError
     with pytest.raises(InvalidDataError):
-        create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", "unit")
+        create_derived_realization_vector_list(derived_vector_table, "DERIVED_VECTOR", is_rate, "unit")
 
 
 def test_get_total_vector_name_per_day():
@@ -398,23 +409,38 @@ def test_is_total_vector_invalid_format():
 
 
 def test_create_derived_vector_unit_per_day():
-    assert create_derived_vector_unit("m3", DerivedVectorCategory.PER_DAY) == "m3/DAY"
+    assert create_derived_vector_unit("m3", DerivedVectorType.PER_DAY) == "m3/DAY"
 
 
 def test_create_derived_vector_unit_other():
-    assert create_derived_vector_unit("m3", DerivedVectorCategory.PER_INTERVAL) == "m3"
+    assert create_derived_vector_unit("m3", DerivedVectorType.PER_INTERVAL) == "m3"
+
+
+def test_find_derived_vector_category_per_day():
+    assert find_derived_vector_type("PER_DAY_VECTOR") == DerivedVectorType.PER_DAY
+
+
+def test_find_derived_vector_category_per_interval():
+    assert find_derived_vector_type("PER_INTVL_VECTOR") == DerivedVectorType.PER_INTERVAL
+
+
+def test_find_derived_vector_category_none():
+    assert find_derived_vector_type("OTHER_VECTOR") is None
 
 
 def test_get_derived_vector_category_per_day():
-    assert get_derived_vector_category("PER_DAY_VECTOR") == DerivedVectorCategory.PER_DAY
+    assert get_derived_vector_type("PER_DAY_VECTOR") == DerivedVectorType.PER_DAY
 
 
 def test_get_derived_vector_category_per_interval():
-    assert get_derived_vector_category("PER_INTVL_VECTOR") == DerivedVectorCategory.PER_INTERVAL
+    assert get_derived_vector_type("PER_INTVL_VECTOR") == DerivedVectorType.PER_INTERVAL
 
 
 def test_get_derived_vector_category_none():
-    assert get_derived_vector_category("OTHER_VECTOR") is None
+    with pytest.raises(
+        InvalidDataError, match=re.escape("Expected OTHER_VECTOR to be a derived vector. [service=general]")
+    ):
+        get_derived_vector_type("OTHER_VECTOR")
 
 
 def test_is_derived_vector_true():

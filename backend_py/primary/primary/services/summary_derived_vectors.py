@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -9,7 +10,7 @@ from primary.services.service_exceptions import InvalidDataError, Service
 from primary.services.utils.arrow_helpers import validate_summary_vector_table_pa
 
 
-class DerivedVectorCategory(StrEnum):
+class DerivedVectorType(StrEnum):
     PER_DAY = "PER_DAY"
     PER_INTERVAL = "PER_INTVL"
 
@@ -19,6 +20,7 @@ class DerivedRealizationVector:
     realization: int
     timestamps_utc_ms: list[int]
     values: list[float]
+    is_rate: bool
     unit: str
 
 
@@ -27,7 +29,7 @@ class DerivedRealizationVector:
 # characters in the variable is considered (i.e. the leading 'W', 'G' or
 # 'F' is discarded).
 # Ref.: https://github.com/equinor/resdata/blob/f82318a84bbefb6a53ed674a04eb2a73d89de02d/lib/ecl/smspec_node.cpp#L332-L335
-TOTAL_VARS = [
+TOTAL_VARS = {
     "OPT",
     "GPT",
     "WPT",
@@ -61,25 +63,43 @@ TOTAL_VARS = [
     "NIT",
     "CPT",
     "CIT",
-]
+}
 
 
-def create_derived_vector_unit(source_unit: str, category: DerivedVectorCategory) -> str:
-    if category == DerivedVectorCategory.PER_DAY:
+def create_derived_vector_unit(source_unit: str, derived_type: DerivedVectorType) -> str:
+    if derived_type == DerivedVectorType.PER_DAY:
         return f"{source_unit}/DAY"
     return source_unit
 
 
-def get_derived_vector_category(vector_name: str) -> DerivedVectorCategory | None:
+def find_derived_vector_type(vector_name: str) -> DerivedVectorType | None:
+    """
+    Find derived vector type based on vector name. Returns None if not a derived vector.
+    """
     if is_per_day_vector(vector_name):
-        return DerivedVectorCategory.PER_DAY
+        return DerivedVectorType.PER_DAY
     if is_per_interval_vector(vector_name):
-        return DerivedVectorCategory.PER_INTERVAL
+        return DerivedVectorType.PER_INTERVAL
     return None
 
 
+def get_derived_vector_type(vector_name: str) -> DerivedVectorType:
+    """
+    Get derived vector type based on vector name. Raises InvalidDataError if not a derived vector.
+
+    This function is intended to be used when it is known that the vector is a derived vector, checked by `is_derived_vector`.
+    """
+    vector_type = find_derived_vector_type(vector_name)
+    if vector_type is None:
+        raise InvalidDataError(f"Expected {vector_name} to be a derived vector.", Service.GENERAL)
+    return vector_type
+
+
 def is_derived_vector(vector_name: str) -> bool:
-    return get_derived_vector_category(vector_name) is not None
+    """
+    Check if a vector is a derived vector.
+    """
+    return find_derived_vector_type(vector_name) is not None
 
 
 def create_per_day_vector_name(vector: str) -> str:
@@ -96,6 +116,14 @@ def is_per_interval_vector(vector_name: str) -> bool:
 
 def is_per_day_vector(vector_name: str) -> bool:
     return vector_name.startswith("PER_DAY_")
+
+
+def get_total_vector_name(vector_name: str) -> str:
+    if vector_name.startswith("PER_DAY_"):
+        return vector_name.removeprefix("PER_DAY_")
+    if vector_name.startswith("PER_INTVL_"):
+        return vector_name.removeprefix("PER_INTVL_")
+    raise InvalidDataError(f"Expected {vector_name} to be a derived PER_DAY or PER_INTVL vector!", Service.GENERAL)
 
 
 def is_total_vector(vector_name: str, delimiter: str = ":") -> bool:
@@ -117,43 +145,29 @@ def is_total_vector(vector_name: str, delimiter: str = ":") -> bool:
     if len(vector_base_name) < 1:
         return False
 
-    # Do not include leading "W", "G" or "F" for comparison
-    vector_base_substring = vector_base_name[1:]
+    # Regex to strip leading char and trailing H (historical vector)
+    total_var_regex = r"^[A-Z]|H$"
+    vector_base_substring = re.sub(total_var_regex, "", vector_base_name)
 
-    # All TOTAL_VARS element greater or equal to 3 characters
-    if len(vector_base_substring) < 3:
-        return False
-
-    # Check if a total_var is substring of vector_base_substring, to ensure trailing H (historical vector) is also considered
-    return any(total_var in vector_base_substring for total_var in TOTAL_VARS)
+    return vector_base_substring in TOTAL_VARS
 
 
-def get_total_vector_name(vector_name: str) -> str:
-    if vector_name.startswith("PER_DAY_"):
-        return vector_name.removeprefix("PER_DAY_")
-    if vector_name.startswith("PER_INTVL_"):
-        return vector_name.removeprefix("PER_INTVL_")
-    raise InvalidDataError(f"Expected {vector_name} to be a derived PER_DAY or PER_INTVL vector!", Service.GENERAL)
-
-
-def create_derived_vector_table_for_category(
-    total_vector_table_pa: pa.Table, category: DerivedVectorCategory
-) -> pa.Table:
+def create_derived_vector_table_for_type(total_vector_table_pa: pa.Table, derived_type: DerivedVectorType) -> pa.Table:
     """
-    Create derived vector table based on provided category.
+    Create derived vector table based on provided type. The source vector should be a total vector.
 
-    Raises InvalidDataError if the provided category is not handled.
+    Raises InvalidDataError if the provided type is not handled.
     """
-    if category == DerivedVectorCategory.PER_INTERVAL:
+    if derived_type == DerivedVectorType.PER_INTERVAL:
         return create_per_interval_vector_table_pa(total_vector_table_pa)
-    if category == DerivedVectorCategory.PER_DAY:
+    if derived_type == DerivedVectorType.PER_DAY:
         return create_per_day_vector_table_pa(total_vector_table_pa)
-    raise InvalidDataError(f"Unhandled derived vector category: {category}", Service.GENERAL)
+    raise InvalidDataError(f"Unhandled derived vector type: {derived_type}", Service.GENERAL)
 
 
 def create_per_interval_vector_table_pa(total_vector_table_pa: pa.Table) -> pa.Table:
     """
-    Calculates interval delta data for vector column in provided table.
+    Calculates interval delta data for vector column in provided table. The source vector should be a total vector.
 
     The input table must contain columns "DATE", "REAL" and the total vector name.
     The output table will contain columns "DATE", "REAL" and the per interval vector name.
@@ -205,7 +219,7 @@ def create_per_interval_vector_table_pa(total_vector_table_pa: pa.Table) -> pa.T
 
 def create_per_day_vector_table_pa(total_vector_table_pa: pa.Table) -> pa.Table:
     """
-    Calculates interval delta per day data for vector column in provided table.
+    Calculates interval delta per day data for vector column in provided table. The source vector should be a total vector.
 
     This implies calculating interval delta data, and divide the delta by number of days between each date.
 
@@ -261,7 +275,7 @@ def create_per_day_vector_table_pa(total_vector_table_pa: pa.Table) -> pa.Table:
 
 
 def create_derived_realization_vector_list(
-    derived_vector_table: pa.Table, vector_name: str, unit: str
+    derived_vector_table: pa.Table, vector_name: str, is_rate: bool, unit: str
 ) -> list[DerivedRealizationVector]:
     """
     Create a list of DerivedRealizationVector from the derived vector table.
@@ -287,6 +301,7 @@ def create_derived_realization_vector_list(
                 realization=real,
                 timestamps_utc_ms=date_np_arr.astype(int).tolist(),
                 values=value_np_arr.tolist(),
+                is_rate=is_rate,
                 unit=unit,
             )
         )

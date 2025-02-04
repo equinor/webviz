@@ -47,7 +47,7 @@ export function filterVectorSpecificationAndIndividualStatisticsDataArray(
         const filteredValueObjects = v.data.valueObjects.filter((vo) => {
             return selectedIndividualStatisticOptions.includes(vo.statisticFunction);
         });
-        return { vectorSpecification: v.vectorSpecification, data: { ...v.data, value_objects: filteredValueObjects } };
+        return { vectorSpecification: v.vectorSpecification, data: { ...v.data, valueObjects: filteredValueObjects } };
     });
     return output;
 }
@@ -77,7 +77,7 @@ export function filterVectorSpecificationAndFanchartStatisticsDataArray(
         const filteredValueObjects = v.data.valueObjects.filter((vo) => {
             return includeStatisticFunctions.includes(vo.statisticFunction);
         });
-        return { vectorSpecification: v.vectorSpecification, data: { ...v.data, value_objects: filteredValueObjects } };
+        return { vectorSpecification: v.vectorSpecification, data: { ...v.data, valueObjects: filteredValueObjects } };
     });
     return output;
 }
