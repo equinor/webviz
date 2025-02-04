@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from fmu.sumo.explorer.explorer import SumoClient, Pit
 from fmu.sumo.explorer.objects import CaseCollection, Case
@@ -19,10 +20,10 @@ class SynchronousMethodCallError(Exception):
 class FakeHTTPXClient:
     """A fake HTTPX client to ensure we use async methods instead of sync ones."""
 
-    def __init__(self, *args, **kwargs):  # pylint: disable=unused-argument
+    def __init__(self, *args: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
         self._error_msg = "🚫 Do not use a synchronious http class!. Use the async http class instead. "
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> None:
         """Catch any synchronous method calls and raise a helpful error."""
         async_methods = {"get", "post", "put", "patch", "delete", "head", "options"}
         if name in async_methods:

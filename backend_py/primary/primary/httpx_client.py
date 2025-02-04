@@ -13,7 +13,7 @@ class HTTPXAsyncClientWrapper:
     _instance: Optional["HTTPXAsyncClientWrapper"] = None
     _async_client: Optional[httpx.AsyncClient] = None
 
-    def __new__(cls):
+    def __new__(cls) -> "HTTPXAsyncClientWrapper":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance

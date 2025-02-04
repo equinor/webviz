@@ -95,7 +95,7 @@ async def _get_object_uuids_for_surface_realizations(
     surface_attribute: str,
     realizations: Optional[List[int]],
 ) -> List[_RealizationObjectId]:
-    sumo_client = create_sumo_client(token=sumo_access_token)
+    sumo_client = create_sumo_client(access_token=sumo_access_token)
     case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
     case = await case_collection.getitem_async(0)
 

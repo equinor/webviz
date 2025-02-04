@@ -76,12 +76,12 @@ else:
 
 # Start the httpx client on startup and stop it on shutdown of the app
 @app.on_event("startup")
-async def startup_event():
+async def startup_event() -> None:
     httpx_async_client.start()
 
 
 @app.on_event("shutdown")
-async def shutdown_event():
+async def shutdown_event() -> None:
     await httpx_async_client.stop()
 
 
