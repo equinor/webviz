@@ -1,11 +1,5 @@
 FROM python:3.11-slim@sha256:ad2c4e5884418404c5289acad4a471dde8500e24ba57ad574cdcae46523e507a
 
-# Temporary when testing sumo-wrapper from git with new SumoClient
-RUN apt-get update && \
-    apt-get install -y git && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
 RUN useradd --create-home --uid 1234 appuser  # Changing to non-root user early
 
 USER 1234
