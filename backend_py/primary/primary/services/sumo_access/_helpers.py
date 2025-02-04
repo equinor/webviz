@@ -6,10 +6,30 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary import config
-from primary.httpx_client import httpx_sync_client, httpx_async_client
+from primary.httpx_client import httpx_async_client
 from primary.services.service_exceptions import Service, NoDataError, MultipleDataMatchesError
 
 LOGGER = logging.getLogger(__name__)
+
+
+class SynchronousMethodCallError(Exception):
+    """Custom error for when synchronous methods are called instead of async."""
+
+    pass
+
+
+class FakeHTTPXClient:
+    """A fake HTTPX client to ensure we use async methods instead of sync ones."""
+
+    def __init__(self, *args, **kwargs):
+        self._error_msg = "🚫 Do not use a synchronious http class!\n" "Use the async http class instead. "
+
+    def __getattr__(self, name):
+        """Catch any synchronous method calls and raise a helpful error."""
+        async_methods = {"get", "post", "put", "patch", "delete", "head", "options"}
+        if name in async_methods:
+            raise SynchronousMethodCallError(self._error_msg.format(method=name))
+        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
 
 def create_sumo_client(access_token: str) -> SumoClient:
@@ -20,7 +40,7 @@ def create_sumo_client(access_token: str) -> SumoClient:
         sumo_client = SumoClient(
             env=config.SUMO_ENV,
             token=access_token,
-            http_client=httpx_sync_client.client,
+            http_client=FakeHTTPXClient(),
             async_http_client=httpx_async_client.client,
         )
     timer.record_lap("create_sumo_client()")

@@ -36,7 +36,7 @@ from primary.utils.exception_handlers import override_default_fastapi_exception_
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
 
 from . import config
-from .httpx_client import httpx_async_client, httpx_sync_client
+from .httpx_client import httpx_async_client
 
 ensure_console_log_handler_is_configured()
 setup_normal_log_levels()
@@ -74,17 +74,15 @@ else:
     LOGGER.warning("Skipping telemetry configuration, APPLICATIONINSIGHTS_CONNECTION_STRING env variable not set.")
 
 
-# Start the httpx clients on startup and stop it on shutdown of the app
+# Start the httpx client on startup and stop it on shutdown of the app
 @app.on_event("startup")
 async def startup_event():
     httpx_async_client.start()
-    httpx_sync_client.start()
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     await httpx_async_client.stop()
-    httpx_sync_client.stop()
 
 
 # The tags we add here will determine the name of the frontend api service for our endpoints as well as
