@@ -17,6 +17,7 @@ import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layer
 import { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { FenceMeshSection_trans, PolylineIntersection_trans } from "@modules/_shared/utils/wellbore";
+import { WellBorePickLayerData, WellborePicksLayer } from "@modules_shared/customDeckGlLayers/WellborePicksLayer";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { Grid3DLayer, MapLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
@@ -28,7 +29,6 @@ import { createSeismicCrosslineLayerData, createSeismicInlineLayerData } from ".
 import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
 import { RealizationSurfaceLayer } from "../../LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { AdvancedWellsLayer } from "../customDeckGlLayers/AdvancedWellsLayer";
-import { WellBorePickLayerData, WellborePicksLayer } from "../customDeckGlLayers/WellborePicksLayer";
 
 export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
     const data = layer.getLayerDelegate().getData();
