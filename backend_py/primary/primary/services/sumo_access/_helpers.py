@@ -15,14 +15,12 @@ LOGGER = logging.getLogger(__name__)
 class SynchronousMethodCallError(Exception):
     """Custom error for when synchronous methods are called instead of async."""
 
-    pass
-
 
 class FakeHTTPXClient:
     """A fake HTTPX client to ensure we use async methods instead of sync ones."""
 
-    def __init__(self, *args, **kwargs):
-        self._error_msg = "🚫 Do not use a synchronious http class!\n" "Use the async http class instead. "
+    def __init__(self, *args, **kwargs):  # pylint: disable=unused-argument
+        self._error_msg = "🚫 Do not use a synchronious http class!. Use the async http class instead. "
 
     def __getattr__(self, name):
         """Catch any synchronous method calls and raise a helpful error."""

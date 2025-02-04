@@ -1,8 +1,6 @@
 import logging
 from typing import List
 
-import httpx
-
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary import config
