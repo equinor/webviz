@@ -5,7 +5,7 @@ import { Axis } from "plotly.js";
 
 import { Table } from "./Table";
 
-import { Figure, MakeSubplotOptions, makeSubplots } from "../Figure";
+import { CoordinateDomain, Figure, MakeSubplotOptions, makeSubplots } from "../Figure";
 
 export class PlotBuilder {
     private _table: Table;
@@ -72,7 +72,7 @@ export class PlotBuilder {
                 const yAxisKey = `yaxis${axisIndex}`;
                 const xAxisKey = `xaxis${axisIndex}`;
 
-                const oldLayout = figure.getLayout();
+                const oldLayout = figure.makeLayout();
 
                 figure.updateLayout({
                     // @ts-expect-error - Ignore string type of xAxisKey for oldLayout[xAxisKey]
@@ -152,12 +152,12 @@ export class PlotBuilder {
         let legendAdded = false;
         for (let row = 1; row <= numRows; row++) {
             for (let col = 1; col <= numCols; col++) {
-                const index = (numRows - 1 - (row - 1)) * numCols + (col - 1);
+                const index = (row - 1) * numCols + col - 1;
                 if (!keys[index]) {
                     continue;
                 }
                 const label = this._formatLabelFunction(tableCollection.getCollectedBy(), keys[index]);
-                subplotTitles[(row - 1) * numCols + col - 1] = label;
+                subplotTitles[index] = label;
 
                 if (this._highlightedSubPlotNames.includes(keys[index].toString())) {
                     highlightedSubplots.push({ row, col });
@@ -182,6 +182,7 @@ export class PlotBuilder {
             height,
             width,
             subplotTitles,
+            xAxisTickAngle: 35,
             ...options,
         });
 
@@ -203,7 +204,9 @@ export class PlotBuilder {
                     y1: 1,
                 },
                 row,
-                col
+                col,
+                CoordinateDomain.SCENE,
+                CoordinateDomain.SCENE
             );
         }
 
