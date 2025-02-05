@@ -7,7 +7,7 @@ import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { ArrowDropDown, ArrowDropUp, ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import { isEqual } from "lodash";
+import _ from "lodash";
 
 import { BaseComponent, BaseComponentProps } from "../BaseComponent";
 import { IconButton } from "../IconButton";
@@ -79,7 +79,7 @@ function isDropdownOptionGroup<T>(optionOrGroup: DropdownOptionOrGroup<T>): opti
 
 function isOptionOfValue<T>(opt: OptionOrTitle<T>, targetValue: T): opt is OptionItem<T> {
     if (opt.type === "groupTitle") return false;
-    return isEqual(opt.value, targetValue);
+    return _.isEqual(opt.value, targetValue);
 }
 
 function makeOptionListItemsRecursively<TValue>(
@@ -164,8 +164,10 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         [filteredOptionsWithSeparators, valueWithDefault]
     );
 
+    const firstItemIsGroupTitle = allOptionsWithSeparators[selectionIndex]?.type === "groupTitle";
+
     // Value changed externally, update indexes to match the new value
-    if (!isEqual(prevValue, valueWithDefault)) {
+    if (!_.isEqual(prevValue, valueWithDefault)) {
         setSelection(valueWithDefault);
         setPrevValue(valueWithDefault);
         setSelectionIndex(allOptionsWithSeparators.findIndex((option) => isOptionOfValue(option, valueWithDefault)));
@@ -508,7 +510,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             return (
                 <OptionItem
                     key={`${item.value}`}
-                    isSelected={isEqual(selection, item.value)}
+                    isSelected={_.isEqual(selection, item.value)}
                     isFocused={optionIndexWithFocus === index}
                     isInGroup={!!item.parent}
                     {...item}
@@ -558,8 +560,8 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                             className={resolveClassNames(
                                 "border border-gray-300 hover:bg-blue-100 rounded-tr cursor-pointer",
                                 {
-                                    "pointer-events-none": selectionIndex <= 0,
-                                    "text-gray-400": selectionIndex <= 0,
+                                    "pointer-events-none": selectionIndex <= (firstItemIsGroupTitle ? 1 : 0),
+                                    "text-gray-400": selectionIndex <= (firstItemIsGroupTitle ? 1 : 0),
                                 }
                             )}
                             onClick={handleSelectPreviousOption}
@@ -568,7 +570,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                         </div>
                         <div
                             className={resolveClassNames(
-                                "border border-gray-300 hover:bg-blue-100 rounded-tr cursor-pointer",
+                                "border border-gray-300 hover:bg-blue-100 rounded-br cursor-pointer",
                                 {
                                     "pointer-events-none": selectionIndex >= filteredOptionsWithSeparators.length - 1,
                                     "text-gray-400": selectionIndex >= filteredOptionsWithSeparators.length - 1,
@@ -622,13 +624,13 @@ type OptionProps<TValue> = DropdownOption<TValue> & {
 function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
     return (
         <li
-            className={resolveClassNames("flex items-center cursor-pointer select-none px-1 gap-1", {
+            className={resolveClassNames("flex items-center cursor-pointer select-none px-2 gap-1", {
                 "bg-blue-600 text-white box-border hover:bg-blue-700": props.isSelected,
                 "bg-blue-100": !props.isSelected && props.isFocused,
                 "bg-blue-700 text-white": props.isSelected && props.isFocused,
                 "pointer-events-none": props.disabled,
                 "text-gray-400": props.disabled,
-                "pl-3": props.isInGroup,
+                "pl-4": props.isInGroup,
             })}
             style={{ height: OPTION_HEIGHT }}
             title={props.label}
@@ -646,7 +648,7 @@ function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
 function GroupTitle(props: DropdownOptionGroup<unknown>): React.ReactNode {
     return (
         <li
-            className="px-1 flex items-center gap-1 text-xs text-gray-500 font-semibold pointer-events-none select-none"
+            className="px-2 flex items-center gap-1 text-xs text-gray-500 font-semibold select-none"
             style={{ height: OPTION_HEIGHT }}
         >
             {props.adornment && (

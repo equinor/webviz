@@ -9,11 +9,6 @@ export function Settings(): React.ReactNode {
 
     const options: DropdownOptionOrGroup<string>[] = [
         {
-            value: "x1",
-            label: "X:1",
-        },
-
-        {
             label: "GROUP 1",
             adornment: <ImageAspectRatioTwoTone fontSize="inherit" className="align-sub" />,
             options: [
@@ -42,14 +37,62 @@ export function Settings(): React.ReactNode {
             ],
         },
         {
+            value: "x1",
+            label: "X:1",
+        },
+        {
             value: "x2",
             label: "X:2",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x3",
+            label: "X:3",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x4",
+            label: "X:4",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x5",
+            label: "X:5",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x6",
+            label: "X:6",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x7",
+            label: "X:7",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x8",
+            label: "X:8",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x9",
+            label: "X:9",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x10",
+            label: "X:10",
             adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
         },
     ];
 
     return (
         <>
+            <Label text="Dropdown">
+                <Dropdown value={selectedItem} options={options} onChange={setSelectedItem} showArrows />
+            </Label>
+
             <Label text="Dropdown">
                 <Dropdown value={selectedItem} options={options} onChange={setSelectedItem} />
             </Label>
