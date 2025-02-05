@@ -112,6 +112,29 @@ function makeOptionListItemsRecursively<TValue>(
     });
 }
 
+function findValidDropdownIndex(itemList: OptionOrTitle<any>[], currentIdx: number, increment: number): number {
+    if (!itemList.length) return -1;
+
+    const direction = Math.sign(increment);
+    let adjustedIndex = currentIdx + increment;
+    adjustedIndex = _.clamp(adjustedIndex, 0, itemList.length - 1);
+
+    // Bump the selection one step further if the target isn't a valid option
+    // ! Assumes there can never be two group titles in a row
+    if (itemList[adjustedIndex].type !== "option") {
+        if (adjustedIndex === 0) return 1;
+
+        adjustedIndex += direction;
+        adjustedIndex = _.clamp(adjustedIndex, 0, itemList.length - 1);
+    }
+
+    if (itemList[adjustedIndex].type !== "option") {
+        throw new Error("Expected option item to follow non-option item!");
+    }
+
+    return adjustedIndex;
+}
+
 export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const { onChange } = props;
 
@@ -179,6 +202,12 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         setPrevFilter(filter);
     }
 
+    const closePopover = React.useCallback(function closePopover() {
+        setDropdownVisible(false);
+        setFilter(null);
+        setOptionIndexWithFocus(-1);
+    }, []);
+
     React.useEffect(function mountEffect() {
         return function handleUnmount() {
             if (debounceTimerRef.current) {
@@ -188,27 +217,27 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     }, []);
 
     React.useEffect(
-        function handleOptionsChangeEffect() {
-            function handleMouseDown(event: MouseEvent) {
+        function setupInputBlurListener() {
+            // ! The ref is *actually* the div wrapping the input, so normal "blur" is not available
+            function handleInputFocusOut(event: FocusEvent) {
                 if (
-                    dropdownRef.current &&
-                    !dropdownRef.current.contains(event.target as Node) &&
                     inputRef.current &&
-                    !inputRef.current.contains(event.target as Node)
+                    !inputRef.current.contains(event.relatedTarget as Node) &&
+                    dropdownRef.current &&
+                    !dropdownRef.current.contains(event.relatedTarget as Node)
                 ) {
-                    setDropdownVisible(false);
-                    setFilter(null);
-                    setOptionIndexWithFocus(-1);
+                    closePopover();
                 }
             }
 
-            document.addEventListener("mousedown", handleMouseDown);
+            const dropdownInput = inputRef.current;
+            dropdownInput?.addEventListener("focusout", handleInputFocusOut);
 
-            return () => {
-                document.removeEventListener("mousedown", handleMouseDown);
+            return function removeInputBlurListener() {
+                dropdownInput?.removeEventListener("focusout", handleInputFocusOut);
             };
         },
-        [props.options]
+        [closePopover]
     );
 
     React.useEffect(
@@ -332,100 +361,93 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         function handleOptionClick(value: TValue) {
             setSelection(value);
             setSelectionIndex(allOptionsWithSeparators.findIndex((option) => isOptionOfValue(option, value)));
-            setDropdownVisible(false);
-            setFilter(null);
-            setOptionIndexWithFocus(-1);
+            closePopover();
             handleOnChange(value);
         },
-        [allOptionsWithSeparators, handleOnChange]
+        [allOptionsWithSeparators, handleOnChange, closePopover]
     );
 
     React.useEffect(
         function addKeyDownEventHandlerEffect() {
             function handleKeyDown(e: KeyboardEvent) {
-                if (e.key === "Escape") {
-                    setDropdownVisible(false);
-                    setOptionIndexWithFocus(-1);
-                    setKeyboardFocus(false);
-                    inputRef.current?.blur();
+                // Close the dropdown
+                if (dropdownVisible && e.key === "Escape") {
+                    // FIXME: the ref is a div, so blur() isn't possible
+                    // inputRef.current?.blur();
+                    closePopover();
                 }
-                if (dropdownRef.current) {
-                    const currentStartIndex = Math.round(dropdownRef.current?.scrollTop / OPTION_HEIGHT);
-                    if (dropdownVisible) {
-                        if (e.key === "ArrowUp") {
-                            e.preventDefault();
-                            let adjustedOptionIndexWithFocus =
-                                optionIndexWithFocus === -1 ? selectionIndex : optionIndexWithFocus;
-                            adjustedOptionIndexWithFocus--;
 
-                            // Make sure we are focusing on an option and not a separator
-                            const item = filteredOptionsWithSeparators[adjustedOptionIndexWithFocus];
-                            let scrollToTop = false;
-                            if (item && item.type !== "option") {
-                                if (adjustedOptionIndexWithFocus === 0) {
-                                    adjustedOptionIndexWithFocus = 1;
-                                    scrollToTop = true;
-                                } else {
-                                    adjustedOptionIndexWithFocus--;
-                                }
-                            }
+                // Select the currently highlighted element
+                if (e.key === "Enter" && dropdownRef.current && dropdownVisible) {
+                    e.preventDefault();
+                    const option = filteredOptionsWithSeparators[keyboardFocus ? optionIndexWithFocus : selectionIndex];
+                    if (option && option.type === "option" && !option.disabled) {
+                        handleOptionClick(option.value);
+                    }
+                }
 
-                            const newIndex = Math.max(0, adjustedOptionIndexWithFocus);
-                            setOptionIndexWithFocus(newIndex);
-                            const newStartIndex = newIndex - (scrollToTop ? 1 : 0);
-                            if (newStartIndex < currentStartIndex) {
-                                setStartIndex(newStartIndex);
-                            }
-                            setKeyboardFocus(true);
-                        }
-                        if (e.key === "ArrowDown") {
-                            e.preventDefault();
-                            let adjustedOptionIndexWithFocus =
-                                optionIndexWithFocus === -1 ? selectionIndex : optionIndexWithFocus;
-                            adjustedOptionIndexWithFocus++;
+                // Change the selection. If the popover is closed, we immediately select the next option
+                let selectionMove = 0;
+                if (e.key === "ArrowUp") selectionMove = -1;
+                if (e.key === "ArrowDown") selectionMove = 1;
+                if (selectionMove) {
+                    e.preventDefault();
+                    const currentIndex = optionIndexWithFocus === -1 ? selectionIndex : optionIndexWithFocus;
+                    const newSelectionIndex = findValidDropdownIndex(
+                        allOptionsWithSeparators,
+                        currentIndex,
+                        selectionMove
+                    );
 
-                            // Make sure we are focusing on an option and not a separator
-                            const item = filteredOptionsWithSeparators[adjustedOptionIndexWithFocus];
-                            if (item && item.type !== "option") {
-                                adjustedOptionIndexWithFocus++;
-                            }
+                    if (!dropdownVisible || !dropdownRef.current) {
+                        // Popover is closed, select the next index immediately
+                        const option = allOptionsWithSeparators[newSelectionIndex] as OptionItem<TValue>;
+                        handleOptionClick(option.value);
+                    } else {
+                        // Popover is open, move focus within options list
+                        setOptionIndexWithFocus(newSelectionIndex);
+                        setKeyboardFocus(true);
 
-                            const newIndex = Math.min(
-                                filteredOptionsWithSeparators.length - 1,
-                                adjustedOptionIndexWithFocus
-                            );
+                        // Current start for virtualization index
+                        const virtualizationTopIndex = Math.round(dropdownRef.current!.scrollTop / OPTION_HEIGHT);
+                        const virtualizationBottomIndex = virtualizationTopIndex + MIN_HEIGHT / OPTION_HEIGHT - 1;
 
-                            setOptionIndexWithFocus(newIndex);
-                            if (newIndex >= currentStartIndex + MIN_HEIGHT / OPTION_HEIGHT - 1) {
-                                setStartIndex(Math.max(0, newIndex - MIN_HEIGHT / OPTION_HEIGHT + 1));
-                            }
-                            setKeyboardFocus(true);
-                        }
-                        if (e.key === "Enter") {
-                            e.preventDefault();
-                            const option =
-                                filteredOptionsWithSeparators[keyboardFocus ? optionIndexWithFocus : selectionIndex];
-                            if (option && option.type === "option" && !option.disabled) {
-                                handleOptionClick(option.value);
-                            }
+                        const scrollToTop = currentIndex === 1 && newSelectionIndex === 1;
+                        const newStartIndex = newSelectionIndex - (scrollToTop ? 1 : 0);
+
+                        if (newStartIndex < virtualizationTopIndex) {
+                            setStartIndex(newStartIndex);
+                        } else if (newStartIndex >= virtualizationBottomIndex) {
+                            setStartIndex(Math.max(0, newStartIndex - MIN_HEIGHT / OPTION_HEIGHT + 1));
                         }
                     }
                 }
             }
 
-            window.addEventListener("keydown", handleKeyDown);
+            const dropdownInput = inputRef.current;
+            const dropdownPopover = dropdownRef.current;
+
+            dropdownInput?.addEventListener("keydown", handleKeyDown);
+
+            // Also add listeners to the popover itself, if the user somehow moves their focus to it (happens if they click the group titles)
+            // Tabindex needed to allow keydown events on popover
+            if (dropdownPopover) dropdownPopover.tabIndex = -1;
+            dropdownPopover?.addEventListener("keydown", handleKeyDown);
 
             return function removeKeyDownEventHandler() {
-                window.removeEventListener("keydown", handleKeyDown);
+                dropdownInput?.removeEventListener("keydown", handleKeyDown);
+                dropdownPopover?.removeEventListener("keydown", handleKeyDown);
             };
         },
         [
+            allOptionsWithSeparators,
             filteredOptionsWithSeparators,
             dropdownVisible,
-            handleOptionClick,
-            optionIndexWithFocus,
             selectionIndex,
+            optionIndexWithFocus,
             keyboardFocus,
+            closePopover,
+            handleOptionClick,
         ]
     );
 
@@ -466,20 +488,10 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     }
 
     function handleSelectPreviousOption() {
-        let newIndex = Math.max(0, selectionIndex - 1);
-        let item = filteredOptionsWithSeparators[newIndex];
-        if (item && item.type === "groupTitle") {
-            if (newIndex === 0) {
-                newIndex = 1;
-            } else {
-                newIndex--;
-            }
-            item = filteredOptionsWithSeparators[newIndex];
-        }
-        if (!item || item.type !== "option") {
-            throw new Error("Every separator should be followed by an option");
-        }
-        const newValue = item.value;
+        const newIndex = findValidDropdownIndex(allOptionsWithSeparators, selectionIndex, -1);
+        const newItem = allOptionsWithSeparators[newIndex] as OptionItem<TValue>;
+
+        const newValue = newItem.value;
         setSelectionIndex(newIndex);
         setSelection(newValue);
         handleOnChange(newValue);
@@ -487,16 +499,10 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     }
 
     function handleSelectNextOption() {
-        let newIndex = Math.min(filteredOptionsWithSeparators.length - 1, selectionIndex + 1);
-        let item = filteredOptionsWithSeparators[newIndex];
-        if (item && item.type === "groupTitle") {
-            newIndex++;
-            item = filteredOptionsWithSeparators[newIndex];
-        }
-        if (newIndex >= filteredOptionsWithSeparators.length - 1 || !item || item.type !== "option") {
-            throw new Error("Every separator should be followed by an option");
-        }
-        const newValue = item.value;
+        const newIndex = findValidDropdownIndex(allOptionsWithSeparators, selectionIndex, 1);
+        const newItem = allOptionsWithSeparators[newIndex] as OptionItem<TValue>;
+
+        const newValue = newItem.value;
         setSelectionIndex(newIndex);
         setSelection(newValue);
         handleOnChange(newValue);
