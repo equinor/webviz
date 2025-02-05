@@ -10,8 +10,23 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect3D, outerRectContainsInnerRect } from "@lib/utils/geometry";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
+import { IntersectionRealizationGridLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/IntersectionRealizationGridLayer";
+import { RealizationGridLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationGridLayer";
+import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
+import { makeGrid3DLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeGrid3dLayer";
+import { makeIntersectionLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeIntersectionGrid3dLayer";
+import { makeRealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeRealizationSeismicCrosslineLayer";
 import { LayerManager, LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
+import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
+import {
+    LayerWithPosition,
+    VisualizationFactory,
+    VisualizationTarget,
+} from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import { makeWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/wellborePicksLayer";
+import { makeWellsLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/wellsLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
@@ -21,8 +36,17 @@ import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
-import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
-import { DeckGlLayerWithPosition, recursivelyMakeViewsAndLayers } from "../utils/makeViewsAndLayers";
+import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
+
+const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
+VISUALIZATION_FACTORY.registerVisualizationFunction(DrilledWellborePicksLayer, makeWellborePicksLayer);
+VISUALIZATION_FACTORY.registerVisualizationFunction(DrilledWellTrajectoriesLayer, makeWellsLayer);
+VISUALIZATION_FACTORY.registerVisualizationFunction(RealizationGridLayer, makeGrid3DLayer);
+VISUALIZATION_FACTORY.registerVisualizationFunction(IntersectionRealizationGridLayer, makeIntersectionLayer);
+VISUALIZATION_FACTORY.registerVisualizationFunction(
+    RealizationSeismicCrosslineLayer,
+    makeRealizationSeismicCrosslineLayer
+);
 
 export type LayersWrapperProps = {
     layerManager: LayerManager;
@@ -42,7 +66,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     usePublishSubscribeTopicValue(props.layerManager, LayerManagerTopic.LAYER_DATA_REVISION);
 
     const viewports: ViewportType[] = [];
-    const viewerLayers: DeckGlLayerWithPosition[] = [];
+    const viewerLayers: LayerWithPosition<VisualizationTarget.DECK_GL>[] = [];
     const viewportAnnotations: React.ReactNode[] = [];
     const globalColorScales: ColorScaleWithId[] = [];
 
@@ -57,7 +81,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     let numLoadingLayers = 0;
 
-    const viewsAndLayers = recursivelyMakeViewsAndLayers(props.layerManager.getGroupDelegate());
+    const viewsAndLayers = VISUALIZATION_FACTORY.make(props.layerManager);
 
     numCols = Math.ceil(Math.sqrt(viewsAndLayers.views.length));
     numRows = Math.ceil(viewsAndLayers.views.length / numCols);
@@ -161,7 +185,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);
     layers.push(new PlaceholderLayer({ id: "placeholder" }));
-    layers.push(new AxesLayer({ id: "axes-layer", visible: true, ZIncreasingDownwards: false, bounds }));
+    layers.push(new AxesLayer({ id: "axes-layer", visible: true, ZIncreasingDownwards: true, bounds }));
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">

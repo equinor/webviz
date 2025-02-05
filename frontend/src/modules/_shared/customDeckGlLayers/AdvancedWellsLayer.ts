@@ -5,10 +5,6 @@ import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 export class AdvancedWellsLayer extends WellsLayer {
     static layerName: string = "WellsLayer";
 
-    constructor(props: any) {
-        super(props);
-    }
-
     filterSubLayer(context: FilterContext): boolean {
         if (context.layer.id.includes("names")) {
             return context.viewport.zoom > -2;

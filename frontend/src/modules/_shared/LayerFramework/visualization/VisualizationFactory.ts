@@ -12,38 +12,37 @@ import { ColorScale } from "../framework/ColorScale/ColorScale";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
 import { LayerManager } from "../framework/LayerManager/LayerManager";
 import { View } from "../framework/View/View";
-import { BoundingBox, Layer, instanceofGroup, instanceofLayer } from "../interfaces";
+import { BoundingBox, Layer, Settings, instanceofGroup, instanceofLayer } from "../interfaces";
 
-export enum LayerVisualizationTarget {
-    DECK_GL_2D = "deck_gl_2d",
-    DECK_GL_3D = "deck_gl_3d",
+export enum VisualizationTarget {
+    DECK_GL = "deck_gl_2d",
     ESV = "esv",
     // VIDEX = "videx",
 }
 
-export type LayerVisualizationArgs<T> = {
+export type VisualizationFunctionArgs<TSettings extends Settings, TData> = {
     id: string;
     name: string;
-    data: T;
+    data: TData;
     colorScale: ColorScaleWithName;
+    settings: TSettings;
 };
 
 export type TargetReturnTypes = {
-    [LayerVisualizationTarget.DECK_GL_2D]: DeckGlLayer<any>;
-    [LayerVisualizationTarget.DECK_GL_3D]: DeckGlLayer<any>;
-    [LayerVisualizationTarget.ESV]: EsvLayer<any>;
+    [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
+    [VisualizationTarget.ESV]: EsvLayer<any>;
 };
 
-export type MakeVisualizationFunction<TData, TTarget extends LayerVisualizationTarget> = (
-    args: LayerVisualizationArgs<TData>
+export type MakeVisualizationFunction<TSettings extends Settings, TData, TTarget extends VisualizationTarget> = (
+    args: VisualizationFunctionArgs<TSettings, TData>
 ) => TargetReturnTypes[TTarget];
 
-export type LayerWithPosition<TTarget extends LayerVisualizationTarget> = {
+export type LayerWithPosition<TTarget extends VisualizationTarget> = {
     layer: TargetReturnTypes[TTarget];
     position: number;
 };
 
-export type VisualizationView<TTarget extends LayerVisualizationTarget> = {
+export type VisualizationView<TTarget extends VisualizationTarget> = {
     id: string;
     color: string | null;
     name: string;
@@ -51,7 +50,7 @@ export type VisualizationView<TTarget extends LayerVisualizationTarget> = {
     colorScales: ColorScaleWithId[];
 };
 
-export type FactoryProduct<TTarget extends LayerVisualizationTarget> = {
+export type FactoryProduct<TTarget extends VisualizationTarget> = {
     views: VisualizationView<TTarget>[];
     layers: LayerWithPosition<TTarget>[];
     errorMessages: (StatusMessage | string)[];
@@ -60,24 +59,18 @@ export type FactoryProduct<TTarget extends LayerVisualizationTarget> = {
     numLoadingLayers: number;
 };
 
-export class LayerVisualizationFactory<TTarget extends LayerVisualizationTarget> {
-    private _layerManager: LayerManager;
-    private _visualizationFunctions: Map<string, MakeVisualizationFunction<any, TTarget>> = new Map();
+export class VisualizationFactory<TTarget extends VisualizationTarget> {
+    private _visualizationFunctions: Map<string, MakeVisualizationFunction<any, any, TTarget>> = new Map();
 
-    constructor(layerManager: LayerManager) {
-        this._layerManager = layerManager;
-    }
-
-    registerVisualizationFunctions<TData>(
-        funcs: { layer: Layer<any, TData>; func: MakeVisualizationFunction<TData, TTarget> }[]
+    registerVisualizationFunction<TSettings extends Settings, TData>(
+        layerCtor: { new (layerManager: LayerManager): Layer<TSettings, TData> },
+        func: MakeVisualizationFunction<TSettings, TData, TTarget>
     ): void {
-        for (const { layer, func } of funcs) {
-            this._visualizationFunctions.set(layer.constructor.name, func);
-        }
+        this._visualizationFunctions.set(layerCtor.name, func);
     }
 
-    make(): FactoryProduct<TTarget> {
-        return this.makeRecursively(this._layerManager.getGroupDelegate());
+    make(layerManager: LayerManager): FactoryProduct<TTarget> {
+        return this.makeRecursively(layerManager.getGroupDelegate());
     }
 
     private makeRecursively(groupDelegate: GroupDelegate, numCollectedLayers: number = 0): FactoryProduct<TTarget> {
@@ -191,6 +184,7 @@ export class LayerVisualizationFactory<TTarget extends LayerVisualizationTarget>
             name: layer.getItemDelegate().getName(),
             data: layer.getLayerDelegate().getData(),
             colorScale,
+            settings: layer.getLayerDelegate().getSettingsContext().getDelegate().getValues(),
         });
     }
 

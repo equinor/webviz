@@ -18,23 +18,13 @@ import { isEqual } from "lodash";
 import { RealizationGridSettingsContext } from "./RealizationGridSettingsContext";
 import { RealizationGridSettings } from "./types";
 
-export class RealizationGridLayer
-    implements
-        Layer<
-            RealizationGridSettings,
-            {
-                gridSurfaceData: GridSurface_trans | null;
-                gridParameterData: GridMappedProperty_trans | null;
-            }
-        >
-{
-    private _layerDelegate: LayerDelegate<
-        RealizationGridSettings,
-        {
-            gridSurfaceData: GridSurface_trans | null;
-            gridParameterData: GridMappedProperty_trans | null;
-        }
-    >;
+export type RealizationGridLayerData = {
+    gridSurfaceData: GridSurface_trans;
+    gridParameterData: GridMappedProperty_trans;
+};
+
+export class RealizationGridLayer implements Layer<RealizationGridSettings, RealizationGridLayerData> {
+    private _layerDelegate: LayerDelegate<RealizationGridSettings, RealizationGridLayerData>;
     private _itemDelegate: ItemDelegate;
 
     constructor(layerManager: LayerManager) {
@@ -55,13 +45,7 @@ export class RealizationGridLayer
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<
-        RealizationGridSettings,
-        {
-            gridSurfaceData: GridSurface_trans | null;
-            gridParameterData: GridMappedProperty_trans | null;
-        }
-    > {
+    getLayerDelegate(): LayerDelegate<RealizationGridSettings, RealizationGridLayerData> {
         return this._layerDelegate;
     }
 
@@ -108,10 +92,7 @@ export class RealizationGridLayer
         return null;
     }
 
-    fetchData(queryClient: QueryClient): Promise<{
-        gridSurfaceData: GridSurface_trans | null;
-        gridParameterData: GridMappedProperty_trans | null;
-    }> {
+    fetchData(queryClient: QueryClient): Promise<RealizationGridLayerData> {
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const realizationNum = settings[SettingType.REALIZATION].getDelegate().getValue();

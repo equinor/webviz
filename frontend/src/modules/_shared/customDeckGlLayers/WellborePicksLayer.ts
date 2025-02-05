@@ -3,7 +3,7 @@ import { GeoJsonLayer, TextLayer } from "@deck.gl/layers";
 
 import type { Feature, FeatureCollection } from "geojson";
 
-export type WellBorePickLayerData = {
+export type WellborePickLayerData = {
     easting: number;
     northing: number;
     wellBoreUwi: string;
@@ -19,7 +19,7 @@ type TextLayerData = {
 
 export type WellBorePicksLayerProps = {
     id: string;
-    data: WellBorePickLayerData[];
+    data: WellborePickLayerData[];
 };
 
 export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> {

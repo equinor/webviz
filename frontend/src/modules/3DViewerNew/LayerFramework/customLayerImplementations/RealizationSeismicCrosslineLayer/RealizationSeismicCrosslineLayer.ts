@@ -77,7 +77,7 @@ export class RealizationSeismicCrosslineLayer
         const realizationNum = settings[SettingType.REALIZATION].getDelegate().getValue();
         const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
 
-        let timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
+        const timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
         const seismicCrosslineNumber = settings[SettingType.SEISMIC_CROSSLINE].getDelegate().getValue();
 
         const queryKey = [
