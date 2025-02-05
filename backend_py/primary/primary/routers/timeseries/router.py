@@ -191,9 +191,6 @@ async def get_realizations_vector_data(
             derived_realization_vector_list, derived_vector_info
         )
 
-    if len(ret_arr) == 0:
-        raise HTTPException(status_code=404, detail="Could not get ensemble realization vector data")
-
     LOGGER.info(f"Loaded realization summary data in: {perf_metrics.to_string()}")
     return ret_arr
 
@@ -280,9 +277,6 @@ async def get_delta_ensemble_realizations_vector_data(
         ret_arr = converters.realization_delta_vector_list_to_api_vector_realization_data_list(
             realization_delta_vector_list, derived_vector_info
         )
-
-    if len(ret_arr) == 0:
-        raise HTTPException(status_code=404, detail="Could not get delta ensemble realization vector data")
 
     LOGGER.info(f"Loaded realization delta ensemble summary data in: {perf_metrics.to_string()}")
     return ret_arr
