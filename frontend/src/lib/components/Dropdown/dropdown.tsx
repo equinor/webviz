@@ -16,9 +16,8 @@ import { Virtualization } from "../Virtualization";
 
 export type DropdownOptionGroup<TValue = string> = {
     label: string;
-    // ? Should groups also be allowed an adornment?
-    adornment?: never;
     options: DropdownOption<TValue>[];
+    adornment?: React.ReactNode;
 };
 
 export type DropdownOption<TValue = string> = {
@@ -29,24 +28,25 @@ export type DropdownOption<TValue = string> = {
     disabled?: boolean;
 };
 
-type OptionOrGroup<TValue> = DropdownOption<TValue> | DropdownOptionGroup<TValue>;
+export type DropdownOptionOrGroup<TValue> = DropdownOption<TValue> | DropdownOptionGroup<TValue>;
 
 export type DropdownProps<TValue = string> = {
     id?: string;
     wrapperId?: string;
-    options: OptionOrGroup<TValue>[];
+    options: DropdownOptionOrGroup<TValue>[];
     value?: TValue;
     filter?: boolean;
     width?: string | number;
     showArrows?: boolean;
     debounceTimeMs?: number;
     placeholder?: string;
-    dropdownMaxWidth?: number;
+    popoverMaxWidth?: number;
     onChange?: (value: TValue) => void;
 } & BaseComponentProps;
 
 const MIN_HEIGHT = 200;
 const OPTION_HEIGHT = 32;
+const DEFAULT_POPOVER_MAX_WIDTH = 500;
 
 type DropdownRect = {
     left?: number;
@@ -59,53 +59,54 @@ type DropdownRect = {
 
 type OptionItem<TValue> = {
     type: "option";
-    parentGroup?: string;
+    // refference to group. Used to get the icon and adding some styling
+    parent?: DropdownOptionGroup;
 } & DropdownOption<TValue>;
 
-type SeperatorItem<TValue> = {
-    type: "separator";
+type GroupTitle<TValue> = {
+    type: "groupTitle";
     parentGroup?: never;
 } & DropdownOptionGroup<TValue>;
 
-type OptionOrSeperator<TValue> = OptionItem<TValue> | SeperatorItem<TValue>;
+type OptionOrTitle<TValue> = OptionItem<TValue> | GroupTitle<TValue>;
 
 const noMatchingOptionsText = "No matching options";
 const noOptionsText = "No options";
 
-function isDropdownOptionGroup<T>(optionOrGroup: OptionOrGroup<T>): optionOrGroup is DropdownOptionGroup<T> {
+function isDropdownOptionGroup<T>(optionOrGroup: DropdownOptionOrGroup<T>): optionOrGroup is DropdownOptionGroup<T> {
     return Object.hasOwn(optionOrGroup, "options");
 }
 
-function isOptionOfValue<T>(opt: OptionOrSeperator<T>, targetValue: T): opt is OptionItem<T> {
-    if (opt.type === "separator") return false;
+function isOptionOfValue<T>(opt: OptionOrTitle<T>, targetValue: T): opt is OptionItem<T> {
+    if (opt.type === "groupTitle") return false;
     return isEqual(opt.value, targetValue);
 }
 
-function makeOptionListItems<TValue>(
-    options: OptionOrGroup<TValue>[],
+function makeOptionListItemsRecursively<TValue>(
+    options: DropdownOptionOrGroup<TValue>[],
     filter?: string | null,
-    parentGroup?: string
-): OptionOrSeperator<TValue>[] {
+    parentGroup?: DropdownOptionGroup<TValue>
+): OptionOrTitle<TValue>[] {
     return options.flatMap((option) => {
         if (isDropdownOptionGroup(option)) {
-            const seperatorItem = {
+            const groupTitle = {
                 ...option,
-                type: "separator",
+                type: "groupTitle",
                 // Transform here instead of with CSS to allow size estimations
                 label: option.label.toUpperCase(),
-            } as OptionOrSeperator<TValue>;
+            } as OptionOrTitle<TValue>;
 
             // Recursively make entries for this group's items
-            const optionItems = makeOptionListItems(option.options, filter, option.label);
+            const optionItems = makeOptionListItemsRecursively(option.options, filter, option);
 
             if (!optionItems.length) return [];
-            return [seperatorItem, ...optionItems];
+            return [groupTitle, ...optionItems];
         }
 
-        // Dont include the item if it's filtered away
+        // Don't include the item if it's filtered away
         if (filter && !option.label.includes(filter)) return [];
 
-        const optionItem = { type: "option", parentGroup, ...option } as OptionOrSeperator<TValue>;
+        const optionItem = { type: "option", parent: parentGroup, ...option } as OptionOrTitle<TValue>;
 
         return [optionItem];
     });
@@ -114,7 +115,7 @@ function makeOptionListItems<TValue>(
 export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const { onChange } = props;
 
-    const dropdownMaxWidthOrDefault = props.dropdownMaxWidth ?? 500;
+    const popoverMaxWidthOrDefault = props.popoverMaxWidth ?? DEFAULT_POPOVER_MAX_WIDTH;
 
     const valueWithDefault = props.value ?? null;
     const [prevValue, setPrevValue] = React.useState<TValue | null>(props.value ?? null);
@@ -122,11 +123,14 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const [filter, setFilter] = React.useState<string | null>(null);
     const [prevFilter, setPrevFilter] = React.useState<string | null>(filter);
 
-    const allOptionsWithSeperators = React.useMemo(() => makeOptionListItems(props.options), [props.options]);
+    const allOptionsWithSeparators = React.useMemo(
+        () => makeOptionListItemsRecursively(props.options),
+        [props.options]
+    );
     const filteredOptionsWithSeparators = React.useMemo(() => {
-        if (!filter) return allOptionsWithSeperators;
-        return makeOptionListItems(props.options, filter);
-    }, [props.options, allOptionsWithSeperators, filter]);
+        if (!filter) return allOptionsWithSeparators;
+        return makeOptionListItemsRecursively(props.options, filter);
+    }, [props.options, allOptionsWithSeparators, filter]);
 
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
     const [dropdownRect, setDropdownRect] = React.useState<DropdownRect>({
@@ -164,7 +168,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     if (!isEqual(prevValue, valueWithDefault)) {
         setSelection(valueWithDefault);
         setPrevValue(valueWithDefault);
-        setSelectionIndex(allOptionsWithSeperators.findIndex((option) => isOptionOfValue(option, valueWithDefault)));
+        setSelectionIndex(allOptionsWithSeparators.findIndex((option) => isOptionOfValue(option, valueWithDefault)));
     }
 
     // Filter string changed
@@ -207,11 +211,11 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
 
     React.useEffect(
         function updateDropdownRectWidthEffect() {
-            let longestOptionWidth = allOptionsWithSeperators.reduce((prev, current) => {
+            let longestOptionWidth = allOptionsWithSeparators.reduce((prev, current) => {
                 const { type, label, adornment } = current;
 
                 // ! The separator text gets rendered with text-xs
-                const fontSize = type === "separator" ? 0.75 : 1;
+                const fontSize = type === "groupTitle" ? 0.75 : 1;
 
                 const labelWidth = getTextWidthWithFont(label, "Equinor", fontSize);
                 const adornmentWidth = adornment ? convertRemToPixels((5 + 2) / 4) : 0;
@@ -224,7 +228,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             }, 0);
 
             if (longestOptionWidth === 0) {
-                if (allOptionsWithSeperators.length === 0 || filter === "") {
+                if (allOptionsWithSeparators.length === 0 || filter === "") {
                     longestOptionWidth = getTextWidthWithFont(noOptionsText, "Equinor", 1);
                 } else {
                     longestOptionWidth = getTextWidthWithFont(noMatchingOptionsText, "Equinor", 1);
@@ -232,11 +236,11 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             }
 
             // Make sure the width doesn't get too large
-            longestOptionWidth = Math.min(longestOptionWidth, dropdownMaxWidthOrDefault);
+            longestOptionWidth = Math.min(longestOptionWidth, popoverMaxWidthOrDefault);
 
             setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));
         },
-        [allOptionsWithSeperators, filter, dropdownMaxWidthOrDefault]
+        [allOptionsWithSeparators, filter, popoverMaxWidthOrDefault]
     );
 
     React.useEffect(
@@ -295,7 +299,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             filteredOptionsWithSeparators,
             selection,
             dropdownRect.width,
-            dropdownMaxWidthOrDefault,
+            popoverMaxWidthOrDefault,
             setOptionIndexWithFocusToCurrentSelection,
         ]
     );
@@ -325,13 +329,13 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const handleOptionClick = React.useCallback(
         function handleOptionClick(value: TValue) {
             setSelection(value);
-            setSelectionIndex(allOptionsWithSeperators.findIndex((option) => isOptionOfValue(option, value)));
+            setSelectionIndex(allOptionsWithSeparators.findIndex((option) => isOptionOfValue(option, value)));
             setDropdownVisible(false);
             setFilter(null);
             setOptionIndexWithFocus(-1);
             handleOnChange(value);
         },
-        [allOptionsWithSeperators, handleOnChange]
+        [allOptionsWithSeparators, handleOnChange]
     );
 
     React.useEffect(
@@ -440,7 +444,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         if (dropdownVisible && filter !== null) {
             return filter;
         }
-        return allOptionsWithSeperators.find((opt) => isOptionOfValue(opt, selection))?.label || "";
+        return allOptionsWithSeparators.find((opt) => isOptionOfValue(opt, selection))?.label || "";
     }
 
     function makeInputAdornment() {
@@ -448,7 +452,12 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
             return null;
         }
 
-        const adornment = allOptionsWithSeperators.find((opt) => isOptionOfValue(opt, selection))?.adornment;
+        const selectedOption = allOptionsWithSeparators.find((opt): opt is OptionItem<TValue> =>
+            isOptionOfValue(opt, selection)
+        );
+
+        // Prioritize own adornment, fallback to parent group, if any
+        const adornment = selectedOption?.adornment || selectedOption?.parent?.adornment;
 
         if (!adornment) return null;
         return <span className="align-sub max-h-5 max-w-5 overflow-hidden">{adornment}</span>;
@@ -457,7 +466,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     function handleSelectPreviousOption() {
         let newIndex = Math.max(0, selectionIndex - 1);
         let item = filteredOptionsWithSeparators[newIndex];
-        if (item && item.type === "separator") {
+        if (item && item.type === "groupTitle") {
             if (newIndex === 0) {
                 newIndex = 1;
             } else {
@@ -478,7 +487,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     function handleSelectNextOption() {
         let newIndex = Math.min(filteredOptionsWithSeparators.length - 1, selectionIndex + 1);
         let item = filteredOptionsWithSeparators[newIndex];
-        if (item && item.type === "separator") {
+        if (item && item.type === "groupTitle") {
             newIndex++;
             item = filteredOptionsWithSeparators[newIndex];
         }
@@ -492,16 +501,16 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
         setOptionIndexWithFocus(-1);
     }
 
-    function renderItem(item: OptionOrSeperator<TValue>, index: number) {
-        if (item.type === "separator") {
-            return <SeparatorItem key={`${item.label}-${index}`} {...item} />;
+    function renderItem(item: OptionOrTitle<TValue>, index: number) {
+        if (item.type === "groupTitle") {
+            return <GroupTitle key={`${item.label}-${index}`} {...item} />;
         } else {
             return (
                 <OptionItem
                     key={`${item.value}`}
                     isSelected={isEqual(selection, item.value)}
                     isFocused={optionIndexWithFocus === index}
-                    isInGroup={!!item.parentGroup}
+                    isInGroup={!!item.parent}
                     {...item}
                     onSelect={handleOptionClick}
                     onPointerOver={() => handlePointerOver(index)}
@@ -517,11 +526,10 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
                     <Input
                         ref={inputRef}
                         id={props.id}
-                        truncate
                         error={
                             !!selection &&
-                            !allOptionsWithSeperators.find((option) => isOptionOfValue(option, selection)) &&
-                            allOptionsWithSeperators.length > 0
+                            !allOptionsWithSeparators.find((option) => isOptionOfValue(option, selection)) &&
+                            allOptionsWithSeparators.length > 0
                         }
                         startAdornment={makeInputAdornment()}
                         endAdornment={
@@ -620,6 +628,7 @@ function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
                 "bg-blue-700 text-white": props.isSelected && props.isFocused,
                 "pointer-events-none": props.disabled,
                 "text-gray-400": props.disabled,
+                "pl-3": props.isInGroup,
             })}
             style={{ height: OPTION_HEIGHT }}
             title={props.label}
@@ -629,18 +638,22 @@ function OptionItem<TValue>(props: OptionProps<TValue>): React.ReactNode {
             {props.adornment && (
                 <div className="max-w-5 max-h-5 overflow-hidden flex-shrink-0 inline-flex">{props.adornment}</div>
             )}
-            <span className="truncate">{props.label}</span>
+            <div className="truncate">{props.label}</div>
         </li>
     );
 }
 
-function SeparatorItem(props: DropdownOptionGroup<unknown>): React.ReactNode {
+function GroupTitle(props: DropdownOptionGroup<unknown>): React.ReactNode {
     return (
         <li
-            className="px-1 flex text-xs text-gray-500 font-semibold items-center pointer-events-none select-none"
+            className="px-1 flex items-center gap-1 text-xs text-gray-500 font-semibold pointer-events-none select-none"
             style={{ height: OPTION_HEIGHT }}
         >
-            <span className="truncate">{props.label}</span>
+            {props.adornment && (
+                <div className="max-w-4 max-h-4 overflow-hidden flex-shrink-0 inline-flex">{props.adornment}</div>
+            )}
+            {/* Font size xs slightly miss-aligns the text for some reason */}
+            <span className="mt-0.5 truncate">{props.label}</span>
         </li>
     );
 }

@@ -1,22 +1,21 @@
 import React from "react";
 
-import { DropdownOption } from "@lib/components/Dropdown";
-import { Dropdown, DropdownOptionGroup } from "@lib/components/Dropdown/dropdown";
+import { Dropdown, DropdownOptionOrGroup } from "@lib/components/Dropdown/dropdown";
 import { Label } from "@lib/components/Label";
 import { ArrowBackIosNew, ImageAspectRatioTwoTone } from "@mui/icons-material";
 
 export function Settings(): React.ReactNode {
     const [selectedItem, setSelectedItem] = React.useState<string>();
 
-    const options: (DropdownOption<string> | DropdownOptionGroup<string>)[] = [
+    const options: DropdownOptionOrGroup<string>[] = [
         {
             value: "x1",
             label: "X:1",
-            adornment: <ArrowBackIosNew fontSize="inherit" />,
         },
 
         {
             label: "GROUP 1",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" className="align-sub" />,
             options: [
                 {
                     value: "v1",
@@ -25,12 +24,12 @@ export function Settings(): React.ReactNode {
                 {
                     value: "v2",
                     label: "V:2",
-                    adornment: <ImageAspectRatioTwoTone fontSize="inherit" className="align-sub" />,
                 },
             ],
         },
         {
-            label: "GROUP 2 with a very very very very very very very long name",
+            label: "GROUP 2 with a very very very very very very very very very very very very very very very very very very very very very very long name",
+            adornment: <ArrowBackIosNew fontSize="inherit" />,
             options: [
                 {
                     value: "v3",
