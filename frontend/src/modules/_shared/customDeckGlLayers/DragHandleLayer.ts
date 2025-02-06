@@ -173,8 +173,8 @@ export class DragHandleLayer extends CompositeLayer<DragHandleLayerProps> {
         } else if (dragDirection === DragDirection.XYZ) {
             data.push({ position: [position[0] + 10, position[1], position[2]], orientation: [90, 0, 0] });
             data.push({ position: [position[0] - 10, position[1], position[2]], orientation: [-90, 0, 0] });
-            data.push({ position: [position[0], position[1] + 10, position[2]], orientation: [0, 90, 0] });
-            data.push({ position: [position[0], position[1] - 10, position[2]], orientation: [0, -90, 0] });
+            data.push({ position: [position[0], position[1] + 10, position[2]], orientation: [90, 90, 0] });
+            data.push({ position: [position[0], position[1] - 10, position[2]], orientation: [90, -90, 0] });
             data.push({ position: [position[0], position[1], position[2] + 10], orientation: [0, 0, 0] });
             data.push({ position: [position[0], position[1], position[2] - 10], orientation: [180, 0, 0] });
         }

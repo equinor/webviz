@@ -145,7 +145,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
 
     let adjustedLayers = [
         ...props.layers,
-        new DragHandleLayer({ id: "est", position: [456000, 6818471, -500], dragDirection: DragDirection.Y }),
+        new DragHandleLayer({ id: "est", position: [456000, 6818471, -500], dragDirection: DragDirection.XYZ }),
     ];
     if (!gridVisible) {
         adjustedLayers = adjustedLayers.filter((layer) => !(layer instanceof AxesLayer));
