@@ -124,19 +124,4 @@ export class EnsembleSet {
         }
         return null;
     }
-
-    /**
-     * Searches the set for any ensemble that matches the given predicate function
-     * @param predicate Some predicate to check ensembles by
-     * @returns One ensemble, if any was found. Otherwise returns null
-     */
-    findEnsembleBy(
-        predicate: (ens: RegularEnsemble | DeltaEnsemble) => boolean
-    ): RegularEnsemble | DeltaEnsemble | null {
-        // Check among the regular ones first, return early if anything was found
-        const regularHit = this._regularEnsembleArray.find(predicate);
-        if (regularHit) return regularHit;
-
-        return this._deltaEnsembleArray.find(predicate) ?? null;
-    }
 }

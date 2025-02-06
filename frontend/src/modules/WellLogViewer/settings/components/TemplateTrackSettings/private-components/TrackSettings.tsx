@@ -26,7 +26,7 @@ export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
 
     const applyConfigChange = React.useCallback(
         function applyConfigChange(configChanges: Partial<TemplateTrackConfig>) {
-            onUpdateTrack({ ...props.trackConfig, ...configChanges });
+            onUpdateTrack({ ...props.trackConfig, ...configChanges } as TemplateTrackConfig);
         },
         [props.trackConfig, onUpdateTrack]
     );

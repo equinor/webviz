@@ -4,10 +4,7 @@ import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
 import { SelectOption } from "@lib/components/Select";
 import { Button, Dropdown, MenuButton } from "@mui/base";
-import {
-    Add,
-    /*, ArrowDropDown */
-} from "@mui/icons-material";
+import { Add } from "@mui/icons-material";
 
 export type AddItemButtonProps<TValue> = {
     buttonText: string;

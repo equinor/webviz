@@ -1,5 +1,6 @@
 """Classes for accessing geology APIs"""
 
+import logging
 from enum import StrEnum
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
@@ -7,6 +8,8 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 from .smda_access import SmdaAccess
 from .types import WellboreGeoHeader, WellboreGeoData
 from .utils.queries import data_model_to_projection_param
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Endpoints(StrEnum):
@@ -30,7 +33,8 @@ class GeologyAccess(SmdaAccess):
         result = await self._smda_get_request(endpoint=endpoint, params=params)
         parsed_header = WellboreGeoHeader(**result[0])
 
-        print(f"TIME SMDA fetch wellbore geo headers took {timer.lap_s():.2f} seconds")
+        LOGGER.info(f"TIME SMDA fetch wellbore geo headers took {timer.lap_s():.2f} seconds")
+
         return parsed_header
 
     async def get_wellbore_geology_headers(self, wellbore_uuid: str) -> list[WellboreGeoHeader]:
@@ -48,7 +52,8 @@ class GeologyAccess(SmdaAccess):
         result = await self._smda_get_request(endpoint=endpoint, params=params)
         parsed_result = [WellboreGeoHeader(**header) for header in result]
 
-        print(f"TIME SMDA fetch wellbore geo headers took {timer.lap_s():.2f} seconds")
+        LOGGER.info(f"TIME SMDA fetch wellbore geo headers took {timer.lap_s():.2f} seconds")
+
         return parsed_result
 
     async def get_wellbore_geology_data(
@@ -71,5 +76,6 @@ class GeologyAccess(SmdaAccess):
         result = await self._smda_get_request(endpoint=endpoint, params=params)
         parsed_result = [WellboreGeoData(**header) for header in result]
 
-        print(f"TIME SMDA fetch wellbore geo data took {timer.lap_s():.2f} seconds")
+        LOGGER.info(f"TIME SMDA fetch wellbore geo data took {timer.lap_s():.2f} seconds")
+
         return parsed_result

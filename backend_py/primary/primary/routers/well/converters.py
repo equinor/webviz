@@ -1,5 +1,4 @@
-from typing import TypeVar, Optional
-
+from primary.utils.arrays import safe_index_get
 from primary.services.smda_access.types import (
     WellboreHeader,
     WellboreTrajectory,
@@ -118,13 +117,18 @@ def convert_wellbore_log_curve_header_to_schema(curve_header: WellboreLogCurveHe
     if curve_header.log_name is None:
         raise AttributeError("Missing log name is not allowed")
 
+    # Replace the "UNITLESS" string to simplify frontend checks
+    curve_unit = None
+    if curve_header.curve_unit and str.upper(curve_header.curve_unit) == "UNITLESS":
+        curve_unit = curve_header.curve_unit
+
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG,
         sourceId=f"{curve_header.log_name}::{curve_header.curve_name}",
         curveType=utils.curve_type_from_header(curve_header),
         logName=curve_header.log_name,
         curveName=curve_header.curve_name,
-        curveUnit=curve_header.curve_unit,
+        curveUnit=curve_unit,
     )
 
 
@@ -137,7 +141,7 @@ def convert_wellbore_geo_header_to_well_log_header(
         curveType=utils.curve_type_from_header(geo_header),
         logName=geo_header.source,
         curveName=geo_header.identifier,
-        curveUnit="UNITLESS",
+        curveUnit=None,
     )
 
 
@@ -150,7 +154,7 @@ def convert_strat_column_to_well_log_header(column: StratigraphicColumn) -> sche
         curveType=utils.curve_type_from_header(column),
         logName=column.strat_column_identifier,
         curveName=type_or_default,
-        curveUnit="UNITLESS",
+        curveUnit=None,
     )
 
 
@@ -159,11 +163,16 @@ def convert_wellbore_log_curve_data_to_schema(
 ) -> schemas.WellboreLogCurveData:
     metadata_discrete = utils.get_discrete_metadata_for_well_log_curve(wellbore_log_curve_data)
 
+    # Replace the "UNITLESS" string to simplify frontend checks
+    curve_unit = None
+    if wellbore_log_curve_data.unit and str.upper(wellbore_log_curve_data.unit) != "UNITLESS":
+        curve_unit = wellbore_log_curve_data.unit
+
     return schemas.WellboreLogCurveData(
         source=schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG,
         name=wellbore_log_curve_data.name,
         logName=wellbore_log_curve_data.log_name,
-        unit=wellbore_log_curve_data.unit,
+        unit=curve_unit,
         curveUnitDesc=wellbore_log_curve_data.curve_unit_desc,
         indexMin=wellbore_log_curve_data.index_min,
         indexMax=wellbore_log_curve_data.index_max,
@@ -187,17 +196,11 @@ def convert_geology_data_to_log_curve_schema(
     if len(geo_data_entries) < 1:
         raise ValueError("Expected at least one entry in geology data list")
 
-    index_min = float("inf")
-    index_max = float("-inf")
-
     data_points: list[tuple[float, float | str | None]] = []
     metadata_discrete: schemas.DiscreteMetaEntry = {}  # type: ignore[assignment]
 
     for idx, geo_data in enumerate(geo_data_entries):
-        index_min = min(index_min, geo_data.top_depth_md)
-        index_max = max(index_max, geo_data.base_depth_md)
-
-        next_geo_data = __safe_index_get(idx + 1, geo_data_entries)
+        next_geo_data = safe_index_get(idx + 1, geo_data_entries)
 
         data_points.append((geo_data.top_depth_md, geo_data.code))
 
@@ -218,13 +221,13 @@ def convert_geology_data_to_log_curve_schema(
         logName=geo_header.source,
         indexMin=geo_header.md_min,
         indexMax=geo_header.md_max,
-        unit="UNITLESS",
         indexUnit=geo_header.md_unit,
         dataPoints=data_points,
         metadataDiscrete=metadata_discrete,
-        # These fields can't be derived in a meaningful way. Luckily, they shouldnt be needed for discrete curves anyways, soooooo
-        minCurveValue=0,
-        maxCurveValue=0,
+        # These fields can't be derived in a meaningful way. Luckily, they shouldn't be needed for discrete curves anyways
+        unit=None,
+        minCurveValue=None,
+        maxCurveValue=None,
         noDataValue=None,
         curveAlias=None,
         curveUnitDesc=None,
@@ -250,10 +253,10 @@ def convert_strat_unit_data_to_log_curve_schema(
         index_min = min(index_min, current_unit.entry_md)
         index_max = max(index_max, current_unit.exit_md)
 
-        next_unit = __safe_index_get(idx + 1, strat_units)
+        next_unit = safe_index_get(idx + 1, strat_units)
 
         unit_ident = current_unit.strat_unit_identifier
-        code = __get_code_for_string_data(unit_ident, metadata_discrete)
+        code = _get_code_for_string_data(unit_ident, metadata_discrete)
         colors = (current_unit.color_r, current_unit.color_g, current_unit.color_b)
 
         metadata_discrete.update({unit_ident: (code, colors)})
@@ -263,7 +266,6 @@ def convert_strat_unit_data_to_log_curve_schema(
             data_points.pop()
 
         data_points.append((current_unit.entry_md, code))
-        # data_points.append([current_unit.exit_md, code])
 
         if not next_unit:
             # End of curve. Add a "None" entry to make it explicit.
@@ -279,12 +281,12 @@ def convert_strat_unit_data_to_log_curve_schema(
             break
 
         if current_unit.exit_md < next_unit.entry_md:
-            # This section isnt directly connected to the next, so the curve should return to the parent's value here
-            exit_unit = __get_strat_unit_at_exit(current_unit, parent_units)
+            # This section isn't directly connected to the next, so the curve should return to the parent's value here
+            exit_unit = _get_strat_unit_at_exit(current_unit, parent_units)
             exit_value = None
 
             if exit_unit:
-                exit_value = __get_code_for_string_data(exit_unit.strat_unit_identifier, metadata_discrete)
+                exit_value = _get_code_for_string_data(exit_unit.strat_unit_identifier, metadata_discrete)
 
             data_points.append((current_unit.exit_md, exit_value))
 
@@ -301,40 +303,27 @@ def convert_strat_unit_data_to_log_curve_schema(
         logName=strat_units[0].strat_column_identifier,
         indexMin=index_min,
         indexMax=index_max,
-        unit="UNITLESS",
         indexUnit="m",
         dataPoints=data_points,
         metadataDiscrete=metadata_discrete,
-        # These fields can't be derived in a meaningful way. Luckily, they shouldnt be needed for discrete curves in the WellLogViewer anyways, soooooo
-        minCurveValue=0,
-        maxCurveValue=0,
+        # These fields can't be derived in a meaningful way. Luckily, they shouldn't be needed for discrete curves in the WellLogViewer anyways, soooooo
+        unit=None,
+        minCurveValue=None,
+        maxCurveValue=None,
         noDataValue=None,
         curveAlias=None,
         curveUnitDesc=None,
     )
 
 
-Tdata = TypeVar("Tdata")
-
-
-# ? Should we make this a global utility? Might be useful for other people
-def __safe_index_get(index: int, arr: list[Tdata], default: Optional[Tdata] = None) -> Optional[Tdata]:
-    """Gets an item from a list, or returns default if index is out of range"""
-
-    try:
-        return arr[index]
-    except IndexError:
-        return default
-
-
-def __get_code_for_string_data(value: str, discrete_meta: schemas.DiscreteMetaEntry) -> int:
+def _get_code_for_string_data(value: str, discrete_meta: schemas.DiscreteMetaEntry) -> int:
     if value in discrete_meta.keys():
         return discrete_meta[value][0]
 
     return len(discrete_meta.keys()) + 1
 
 
-def __get_strat_unit_at_exit(
+def _get_strat_unit_at_exit(
     unit: WellboreStratigraphicUnit,
     parent_units: list[WellboreStratigraphicUnit],
 ) -> WellboreStratigraphicUnit | None:

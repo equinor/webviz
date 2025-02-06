@@ -247,18 +247,18 @@ async def get_wellbore_log_curve_headers(
     curve_headers = []
 
     if schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG in sources:
-        curve_headers += await __get_headers_from_ssdl_well_log(authenticated_user, wellbore_uuid)
+        curve_headers += await _get_headers_from_ssdl_well_log_async(authenticated_user, wellbore_uuid)
 
     if schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY in sources:
-        curve_headers += await __get_headers_from_smda_geology(authenticated_user, wellbore_uuid)
+        curve_headers += await _get_headers_from_smda_geology_async(authenticated_user, wellbore_uuid)
 
     if schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY in sources:
-        curve_headers += await __get_headers_from_smda_stratigraghpy(authenticated_user, wellbore_uuid)
+        curve_headers += await _get_headers_from_smda_stratigraghpy_async(authenticated_user, wellbore_uuid)
 
     return curve_headers
 
 
-async def __get_headers_from_ssdl_well_log(
+async def _get_headers_from_ssdl_well_log_async(
     authenticated_user: AuthenticatedUser, wellbore_uuid: str
 ) -> list[schemas.WellboreLogCurveHeader]:
     well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
@@ -269,7 +269,7 @@ async def __get_headers_from_ssdl_well_log(
     return [converters.convert_wellbore_log_curve_header_to_schema(head) for head in valid_headers]
 
 
-async def __get_headers_from_smda_geology(
+async def _get_headers_from_smda_geology_async(
     authenticated_user: AuthenticatedUser, wellbore_uuid: str
 ) -> list[schemas.WellboreLogCurveHeader]:
     geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token())
@@ -278,7 +278,7 @@ async def __get_headers_from_smda_geology(
     return [converters.convert_wellbore_geo_header_to_well_log_header(header) for header in geo_headers]
 
 
-async def __get_headers_from_smda_stratigraghpy(
+async def _get_headers_from_smda_stratigraghpy_async(
     authenticated_user: AuthenticatedUser, wellbore_uuid: str
 ) -> list[schemas.WellboreLogCurveHeader]:
     strat_access = SmdaAccess(authenticated_user.get_smda_access_token())

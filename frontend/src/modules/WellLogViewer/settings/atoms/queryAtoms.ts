@@ -60,7 +60,7 @@ export const wellboreStratColumnsQueryAtom = atomWithQuery((get) => {
     return {
         ...getWellboreStratigraphicColumnsOptions({ query: { wellbore_uuid: wellboreUuid } }),
         enabled: Boolean(wellboreUuid),
-        select: (data: StratigraphicColumn_api[]): string[] => _.map(data, "stratColumnIdentifier"),
+        select: (data: StratigraphicColumn_api[]): string[] => _.map(data, "identifier"),
     };
 });
 

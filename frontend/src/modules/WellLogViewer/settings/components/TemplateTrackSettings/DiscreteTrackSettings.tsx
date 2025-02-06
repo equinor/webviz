@@ -1,6 +1,6 @@
 import React from "react";
 
-import { WellLogCurveSourceEnum_api, WellboreLogCurveHeader_api } from "@api";
+import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api, WellboreLogCurveHeader_api } from "@api";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -10,6 +10,7 @@ import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { ArrowDownward } from "@mui/icons-material";
+import { UseQueryResult } from "@tanstack/react-query";
 
 import { useAtomValue } from "jotai";
 import _ from "lodash";
@@ -24,9 +25,15 @@ const DEFAULT_SOURCE = WellLogCurveSourceEnum_api.SMDA_GEOLOGY;
 
 export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.ReactNode {
     const { onFieldChange } = props;
-    const currentPlot = props.trackConfig.plots[0];
 
-    const currentCurveHeader = currentPlot?._curveHeader;
+    // Make sure the config type is correct
+    if (props.trackConfig._type !== WellLogCurveTypeEnum_api.DISCRETE) {
+        throw new Error("Expected track-config to be of type ");
+    }
+
+    // Guaranteed to have one plot entry
+    const discretePlotConfig = props.trackConfig.plots[0];
+    const currentCurveHeader = discretePlotConfig._curveHeader;
 
     const showLinesCheckId = React.useId();
     const showLabelsCheckId = React.useId();
@@ -38,7 +45,11 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
     const [activeSource, setActiveSource] = React.useState(currentCurveHeader?.source ?? DEFAULT_SOURCE);
 
     const curveHeadersQuery = useAtomValue(wellLogCurveHeadersQueryAtom);
-    const curveHeadersError = usePropagateApiErrorToStatusWriter(curveHeadersQuery, props.statusWriter);
+    const curveHeadersError = usePropagateApiErrorToStatusWriter(
+        // ! Cast is safe, since MergedQueryResult includes `.error`
+        curveHeadersQuery as UseQueryResult,
+        props.statusWriter
+    );
 
     const availableDiscreteCurves = useAtomValue(availableDiscreteCurvesAtom);
     const availableFlagCurves = useAtomValue(availableFlagCurvesAtom);
@@ -46,41 +57,36 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
         () => [...availableDiscreteCurves, ...availableFlagCurves],
         [availableDiscreteCurves, availableFlagCurves]
     );
-    const categories = _.chain(availableCurveHeaders)
-        .map("source")
-        .uniq()
-        .map((source) => ({ value: source, label: curveSourceToText(source) }))
-        .value() as DropdownOption<WellLogCurveSourceEnum_api>[];
 
-    const headersForCategory = availableCurveHeaders.filter((header) => activeSource === header.source);
+    const headersForSource = availableCurveHeaders.filter((header) => activeSource === header.source);
 
-    const selectOptions = makeCurveOptions(activeSource, headersForCategory);
+    const categoryOptions = makeLogSourceOptions(availableCurveHeaders);
+    const selectOptions = makeCurveOptions(activeSource, headersForSource);
 
     const handleCurveHeaderSelect = React.useCallback(
         function handleCurveHeaderSelect([choice]: string[]) {
             const chosenHeader = availableCurveHeaders.find(
                 ({ source, sourceId }) => source === activeSource && sourceId === choice
             );
-
-            if (!chosenHeader) return console.warn(`Selected value '${choice}' not found`);
+            if (!chosenHeader) throw new Error(`Selected value '${choice}' not found`);
 
             const newTrackPlot = makeTrackPlot({
-                ...currentPlot,
+                ...discretePlotConfig,
                 _curveHeader: chosenHeader,
             });
 
             onFieldChange({ plots: [newTrackPlot] });
         },
-        [availableCurveHeaders, onFieldChange, activeSource, currentPlot]
+        [availableCurveHeaders, onFieldChange, activeSource, discretePlotConfig]
     );
 
     const handlePlotSettingsChange = React.useCallback(
         function handlePlotSettingsChange(changes: Partial<TemplatePlotConfig>) {
-            const newPlot = makeTrackPlot({ ...currentPlot, ...changes });
+            const newPlot = makeTrackPlot({ ...discretePlotConfig, ...changes });
 
             onFieldChange({ plots: [newPlot] });
         },
-        [currentPlot, onFieldChange]
+        [discretePlotConfig, onFieldChange]
     );
 
     return (
@@ -88,23 +94,23 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
             <label htmlFor={showLinesCheckId}>Show lines</label>
             <Checkbox
                 id={showLinesCheckId}
-                checked={currentPlot.showLines ?? true}
+                checked={discretePlotConfig.showLines ?? true}
                 onChange={(e) => handlePlotSettingsChange({ showLines: e.target.checked })}
             />
 
             <label htmlFor={showLabelsCheckId}>Show labels</label>
             <Checkbox
                 id={showLabelsCheckId}
-                checked={currentPlot.showLabels ?? true}
+                checked={discretePlotConfig.showLabels ?? true}
                 onChange={(e) => handlePlotSettingsChange({ showLabels: e.target.checked })}
             />
 
             <label htmlFor={labelRotationId}>Label direction</label>
 
             <RadioGroup
-                disabled={!(currentPlot.showLabels ?? true)}
+                disabled={!(discretePlotConfig.showLabels ?? true)}
                 direction="horizontal"
-                value={currentPlot.labelRotation ?? 0}
+                value={discretePlotConfig.labelRotation ?? 0}
                 options={[
                     {
                         label: <ArrowDownward titleAccess="Downwards" fontSize="inherit" />,
@@ -121,7 +127,12 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
             <label htmlFor={categorySelectId}>Source</label>
 
             <PendingWrapper isPending={curveHeadersQuery.isPending} errorMessage={curveHeadersError ?? ""}>
-                <Dropdown id={categorySelectId} value={activeSource} options={categories} onChange={setActiveSource} />
+                <Dropdown
+                    id={categorySelectId}
+                    value={activeSource}
+                    options={categoryOptions}
+                    onChange={setActiveSource}
+                />
             </PendingWrapper>
 
             <div className="col-span-2">
@@ -138,6 +149,17 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
             </div>
         </>
     );
+}
+
+function makeLogSourceOptions(headers: WellboreLogCurveHeader_api[]): DropdownOption<WellLogCurveSourceEnum_api>[] {
+    return _.chain(headers)
+        .map("source")
+        .uniq()
+        .map<DropdownOption<WellLogCurveSourceEnum_api>>((source) => ({
+            value: source,
+            label: curveSourceToText(source),
+        }))
+        .value();
 }
 
 function makeCurveOptions(

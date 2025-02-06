@@ -116,7 +116,7 @@ class WellboreLogCurveData(BaseModel):
     curveDescription: str | None
     indexUnit: str
     noDataValue: float | None
-    unit: str
+    unit: str | None
     curveUnitDesc: str | None
     dataPoints: list[tuple[float, float | str | None]]
 

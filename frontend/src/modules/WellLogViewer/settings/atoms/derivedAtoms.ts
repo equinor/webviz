@@ -49,19 +49,19 @@ export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) 
 });
 
 export const availableContinuousCurvesAtom = atom((get) => {
-    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom)?.data ?? [];
+    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
 
     return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.CONTINUOUS]);
 });
 
 export const availableDiscreteCurvesAtom = atom((get) => {
-    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom)?.data ?? [];
+    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
 
     return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.DISCRETE]);
 });
 
 export const availableFlagCurvesAtom = atom((get) => {
-    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom)?.data ?? [];
+    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
 
     return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.FLAG]);
 });
@@ -73,7 +73,7 @@ export const wellLogTemplateTracksAtom = atom<TemplateTrackConfig[]>((get) => {
         return {
             ...config,
             plots: config.plots.filter(({ _isValid }) => _isValid),
-        };
+        } as TemplateTrackConfig;
     });
 });
 

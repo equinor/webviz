@@ -171,10 +171,10 @@ class StratigraphicColumn(BaseModel):
     Stratigraphic column from SMDA
     """
 
-    stratColumnIdentifier: str
-    stratColumnAreaType: str
-    stratColumnStatus: str
-    stratColumnType: str | None
+    identifier: str
+    areaType: str
+    status: str
+    type: str | None
 
 
 class StratigraphicUnit(BaseModel):

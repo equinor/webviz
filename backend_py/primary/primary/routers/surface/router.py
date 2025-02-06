@@ -311,7 +311,7 @@ async def get_wellbore_stratigraphic_columns(
 
     strat_columns = await smda_access.get_stratigraphic_columns_for_wellbore(wellbore_uuid)
 
-    return [converters.convert_stratigraphic_column_to_schema(col) for col in strat_columns]
+    return [converters.to_api_stratigraphic_column(col) for col in strat_columns]
 
 
 @router.get("/stratigraphic_units")

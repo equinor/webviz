@@ -52,7 +52,6 @@ async def smda_get_request(access_token: str, endpoint: str, params: dict) -> Li
                     break
                 params["_next"] = next_request
             elif response.status_code == 404:
-                LOGGER.error(f"{str(response.status_code) } {endpoint} either does not exists or can not be found")
                 raise ServiceRequestError(
                     f"[{str(response.status_code)}] '{endpoint}' either does not exists or can not be found",
                     Service.SMDA,
@@ -90,17 +89,21 @@ async def smda_get_aggregation_request(access_token: str, endpoint: str, params:
         if response.status_code == 200:
             response_aggregations = response.json()["data"]["aggregations"]
 
-            print(response_aggregations)
-
             for aggregation_key in params["_aggregation"].split(","):
                 # A count, is the only aggregation that exists
                 buckets = response_aggregations[aggregation_key + "_count"]["buckets"]
                 aggregations.update({aggregation_key: buckets})
 
         elif response.status_code == 404:
-            print(f"{str(response.status_code) } {endpoint} either does not exists or can not be found")
-        else:
-            print(f"[WARNING:] Can not fetch data from endpont {endpoint}  ({ str(response.status_code)})")
+            raise ServiceRequestError(
+                f"[{str(response.status_code)}] '{endpoint}' either does not exists or can not be found", Service.SMDA
+            )
 
-    print(f"TIME SMDA fetch {endpoint} took {timer.lap_s():.2f} seconds")
+        else:
+            raise ServiceRequestError(
+                f"[{str(response.status_code)}] Cannot aggregate data from endpoint: '{endpoint}'", Service.SMDA
+            )
+
+        LOGGER.info(f"TIME SMDA aggregation '{endpoint}' took {timer.lap_s():.2f} seconds")
+
     return aggregations

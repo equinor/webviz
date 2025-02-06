@@ -3,6 +3,7 @@ import React from "react";
 import { Dropdown, type DropdownOption } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
+import { UseQueryResult } from "@tanstack/react-query";
 import { TemplatePlotScale } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { useAtomValue } from "jotai";
@@ -25,7 +26,11 @@ export function ContinousTrackSettings(props: TrackSettingFragmentProps): React.
 
     const curveHeadersQuery = useAtomValue(wellLogCurveHeadersQueryAtom);
 
-    const curveHeadersError = usePropagateApiErrorToStatusWriter(curveHeadersQuery, props.statusWriter);
+    const curveHeadersError = usePropagateApiErrorToStatusWriter(
+        // ! Cast is safe, since MergedQueryResult includes `.error`
+        curveHeadersQuery as UseQueryResult,
+        props.statusWriter
+    );
 
     const availableCurveHeaders = [
         ...useAtomValue(availableContinuousCurvesAtom),

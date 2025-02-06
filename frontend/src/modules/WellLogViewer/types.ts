@@ -18,9 +18,19 @@ export type TemplatePlotConfig = Partial<TemplatePlot> & {
 /**
  * Extension of the SS-comp library type to add some state types to help with editing settings
  */
-export type TemplateTrackConfig = Omit<TemplateTrack, "plots"> & {
+export type TemplateTrackConfig = ContinuousTemplateTrackConfig | DiscreteTemplateTrackConfig;
+
+export type ContinuousTemplateTrackConfig = Omit<TemplateTrack, "plots"> & {
     // ID used to allow the settings-menu to drag-sort them
     _key: string;
-    _type: WellLogCurveTypeEnum_api.CONTINUOUS | WellLogCurveTypeEnum_api.DISCRETE;
+    _type: WellLogCurveTypeEnum_api.CONTINUOUS;
     plots: TemplatePlotConfig[];
+};
+
+export type DiscreteTemplateTrackConfig = Omit<TemplateTrack, "plots"> & {
+    // ID used to allow the settings-menu to drag-sort them
+    _key: string;
+    _type: WellLogCurveTypeEnum_api.DISCRETE;
+    // ! Discrete tracks only support a single plot, currently
+    plots: [TemplatePlotConfig];
 };

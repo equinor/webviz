@@ -186,8 +186,6 @@ function apiCurveToLogCurve(curve: WellboreLogCurveData_api): WellLogCurve {
         // ? if this is just gonna be the meter in depth for all of them
         unit: curve.unit,
         description: curve.curveDescription,
-        // quantity,
-        // description
     };
 }
 

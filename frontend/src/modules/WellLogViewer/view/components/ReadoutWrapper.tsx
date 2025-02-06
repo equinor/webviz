@@ -59,12 +59,10 @@ function curveInfoToReadoutInfo(info: Info): InfoItem {
     let name = info.name ?? "";
     name = CURVE_NAME_OVERRIDES[name] ?? name;
 
-    const unit = ["UNITLESS", undefined].includes(info.units) ? "" : info.units;
-
     return {
         value: info.discrete ?? info.value,
+        unit: info.units ?? "",
         adornment: <div className="w-2 h-2 rounded-full" style={{ background: info.color }} />,
         name,
-        unit,
     };
 }

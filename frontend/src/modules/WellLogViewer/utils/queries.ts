@@ -1,4 +1,10 @@
-import { UseQueryResult } from "@tanstack/react-query";
+import {
+    DefinedQueryObserverResult,
+    QueryObserverLoadingErrorResult,
+    QueryObserverLoadingResult,
+    QueryObserverPendingResult,
+    UseQueryResult,
+} from "@tanstack/react-query";
 
 import _ from "lodash";
 
@@ -18,18 +24,34 @@ import _ from "lodash";
  * @returns A single QueryResult object
  */
 
+// Only pick the fields we genrally use. Following UseQuertResult
+type RelevantFields = "data" | "error" | "isPending" | "isError" | "isSuccess";
+
+// Need to define each variant type to make MergedQueryResult get the same  type-narrowing as the original
+type MergeDefinedResult<TData> = Pick<DefinedQueryObserverResult<TData>, RelevantFields>;
+type MergeLoadingErrorResult<TData> = Pick<QueryObserverLoadingErrorResult<TData>, RelevantFields>;
+type MergeLoadingResult<TData> = Pick<QueryObserverLoadingResult<TData>, RelevantFields>;
+type MergePendingResult<TData> = Pick<QueryObserverPendingResult<TData>, RelevantFields>;
+
+export type MergedQueryResult<TData> =
+    | MergeDefinedResult<TData>
+    | MergeLoadingErrorResult<TData>
+    | MergeLoadingResult<TData>
+    | MergePendingResult<TData>;
+
 export function mergeResults<T, K = T[]>(
     results: UseQueryResult<T>[],
     dataTransform?: (data: T[]) => NonNullable<K>
-): UseQueryResult<K> {
-    const error = _.find(results, "error")?.error;
-    const isLoading = _.some(results, "isLoading");
+): MergedQueryResult<K> {
+    const error = _.find(results, "error")?.error ?? null;
+
+    const isError = !!error;
+    const isPending = _.some(results, "isPending");
     const isSuccess = _.every(results, "isSuccess");
-    const isFetched = _.every(results, "isFetched");
 
     // Guard clauses for pending states. Data not defined here
-    if (error) return { error, isLoading: false, isSuccess: false, isFetched } as UseQueryResult<K>;
-    if (!isSuccess) return { isLoading, isSuccess: false, isFetched } as UseQueryResult<K>;
+    if (isError) return { data: undefined, error, isError: true, isPending: false, isSuccess: false };
+    if (isPending) return { data: undefined, error, isError, isPending, isSuccess: false };
 
     // Data fetched, return and maybe apply transform
     let data: T[] | K = _.map(results, "data") as T[];
@@ -38,5 +60,5 @@ export function mergeResults<T, K = T[]>(
         data = dataTransform(data);
     }
 
-    return { data: data as K, isLoading, isSuccess, isFetched } as UseQueryResult<K>;
+    return { data: data as K, error: null, isPending, isError, isSuccess };
 }

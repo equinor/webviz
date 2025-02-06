@@ -29,7 +29,7 @@ function trajectoryToReferenceSystemPath(trajectory: WellboreTrajectory_api): nu
     });
 }
 
-// The Subsurface template pattern is kiiiinda stupid and only uses curve name both for data lookup and curve titles
+// The Subsurface template pattern is exceptionally cumbersome and only uses curve name both for data lookup and curve titles
 // (with no way to override it, or specify a log run). This atom provides a list of all curve names that are not unique
 // across all selected curves, allowing us to override the names when adding them to the track
 export const nonUniqueCurveNamesAtom = atom<Set<string>>((get) => {

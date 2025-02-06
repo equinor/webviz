@@ -50,8 +50,6 @@ def get_discrete_metadata_for_well_log_curve(log_curve_data: WellboreLogCurveDat
                 "Poor": (0, (255, 204, 0)),
             }
         )
-    # if log_curve_data.name == "PRES_":
-
     if log_curve_data.name == "CORE":
         # This curve has curve_alias set to FLAG, but that doesnt really make sense, so no meta is given
         return None

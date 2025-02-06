@@ -5,6 +5,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { CircularProgress } from "@mui/material";
+import { UseQueryResult } from "@tanstack/react-query";
 
 import { useAtomValue } from "jotai";
 
@@ -29,13 +30,17 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     const intersectionReferenceSystem = useAtomValue(intersectionReferenceSystemAtom);
     const curveDataQueries = useAtomValue(logCurveDataQueryAtom);
 
-    const mainElementsLoading = curveDataQueries.isLoading || wellboreTrajectoryDataQuery.isLoading;
+    const mainElementsLoading = curveDataQueries.isPending || wellboreTrajectoryDataQuery.isPending;
     const mainElementsSuccess = curveDataQueries.isSuccess && wellboreTrajectoryDataQuery.isSuccess;
 
     statusWriter.setLoading(mainElementsLoading);
 
     usePropagateApiErrorToStatusWriter(wellboreTrajectoryDataQuery, statusWriter);
-    usePropagateApiErrorToStatusWriter(curveDataQueries, statusWriter);
+    usePropagateApiErrorToStatusWriter(
+        // ! Cast is safe, since MergedQueryResult includes `.error`
+        curveDataQueries as UseQueryResult,
+        statusWriter
+    );
 
     React.useEffect(
         function setModuleName() {
@@ -58,25 +63,28 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
                 <CircularProgress />
             </div>
         );
-    } else if (!mainElementsSuccess) {
-        return <ContentError>Error loading curve data.</ContentError>;
-    } else if (!intersectionReferenceSystem) {
-        return <ContentError>Unexpected null for reference system.</ContentError>;
-    } else if (!wellboreTrajectoryDataQuery.data) {
-        return <ContentError>Unexpected null for trajectory data</ContentError>;
-    } else {
-        return (
-            <SubsurfaceLogViewerWrapper
-                wellboreHeader={selectedWellboreHeader}
-                trajectoryData={wellboreTrajectoryDataQuery.data}
-                intersectionReferenceSystem={intersectionReferenceSystem}
-                wellpicks={wellborePicks}
-                curveData={curveDataQueries.data}
-                templateTrackConfigs={templateTracks}
-                horizontal={viewerHorizontal}
-                padDataWithEmptyRows={padDataWithEmptyRows}
-                moduleProps={props}
-            />
-        );
     }
+    if (!mainElementsSuccess) {
+        return <ContentError>Error loading curve data.</ContentError>;
+    }
+    if (!intersectionReferenceSystem) {
+        return <ContentError>Unexpected null for reference system.</ContentError>;
+    }
+    if (!wellboreTrajectoryDataQuery.data) {
+        return <ContentError>Unexpected null for trajectory data</ContentError>;
+    }
+
+    return (
+        <SubsurfaceLogViewerWrapper
+            wellboreHeader={selectedWellboreHeader}
+            trajectoryData={wellboreTrajectoryDataQuery.data}
+            intersectionReferenceSystem={intersectionReferenceSystem}
+            wellpicks={wellborePicks}
+            curveData={curveDataQueries.data}
+            templateTrackConfigs={templateTracks}
+            horizontal={viewerHorizontal}
+            padDataWithEmptyRows={padDataWithEmptyRows}
+            moduleProps={props}
+        />
+    );
 }

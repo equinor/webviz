@@ -31,9 +31,7 @@ export function createLogTemplate(templateTracks: TemplateTrackConfig[], nonUniq
 }
 
 export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotConfig {
-    // const curveColor = plot.color ?? ;
-    // const curveColor2 = plot.color2 ?? ;
-    // DIFF_CURVE_COLORS
+    if (!plot.type) throw new Error(`Plot type is required`);
 
     const config: TemplatePlotConfig = _.defaults(plot, {
         _curveHeader: null,
@@ -48,37 +46,22 @@ export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotCo
     config.name = config._curveHeader?.curveName;
 
     // Reset config options that are only used in some specific cases
-    // config.color2 = undefined;
     config.name2 = undefined;
     config.fill = undefined;
     config.fill2 = undefined;
     config.colorMapFunctionName = undefined;
 
-    switch (plot.type) {
-        case "differential":
-            config._isValid = config._isValid && Boolean(plot._curveHeader2);
-            config.name2 = plot._curveHeader2?.curveName;
-            // config.color2 = plot.;
-            config.fill = DIFF_CURVE_COLORS.at(0);
-            config.fill2 = DIFF_CURVE_COLORS.at(1);
-            break;
-        case "gradientfill":
-            config.colorMapFunctionName = "Continuous";
-            break;
-        case "stacked":
-            if (config._curveHeader?.curveType === WellLogCurveTypeEnum_api.CONTINUOUS) {
-                console.warn(
-                    `Showing continuous curve ${config._curveHeader.curveName} as a stacked plot. This is most likely a mistake`
-                );
-            }
-            break;
-        case "line":
-        case "linestep":
-        case "dot":
-        case "area":
-            break;
-        default:
-            throw new Error(`Unsupported plot type: ${plot.type}`);
+    if (plot.type === "differential") {
+        config._isValid = config._isValid && Boolean(plot._curveHeader2);
+        config.name2 = plot._curveHeader2?.curveName;
+        config.fill = DIFF_CURVE_COLORS.at(0);
+        config.fill2 = DIFF_CURVE_COLORS.at(1);
+    } else if (plot.type === "gradientfill") {
+        config.colorMapFunctionName = "Continuous";
+    } else if (plot.type === "stacked" && plot._curveHeader?.curveType === WellLogCurveTypeEnum_api.CONTINUOUS) {
+        console.warn(
+            `Showing continuous curve ${plot._curveHeader.curveName} as a stacked plot. This is most likely a mistake`
+        );
     }
 
     return config;

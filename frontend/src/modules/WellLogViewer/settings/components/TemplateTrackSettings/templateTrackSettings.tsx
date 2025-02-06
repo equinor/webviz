@@ -160,10 +160,15 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
 }
 
 function createNewConfig(title: string, type: TemplateTrackConfig["_type"]): TemplateTrackConfig {
-    let plots = [] as ReturnType<typeof makeTrackPlot>[];
-
     if (type === WellLogCurveTypeEnum_api.DISCRETE) {
-        plots = [makeTrackPlot({ _curveHeader: null, type: "stacked" })];
+        return {
+            _key: v4(),
+            _type: type,
+            scale: "linear",
+            width: 3,
+            title,
+            plots: [makeTrackPlot({ _curveHeader: null, type: "stacked" })],
+        };
     }
 
     return {
@@ -172,6 +177,6 @@ function createNewConfig(title: string, type: TemplateTrackConfig["_type"]): Tem
         scale: "linear",
         width: 3,
         title,
-        plots,
+        plots: [] as ReturnType<typeof makeTrackPlot>[],
     };
 }

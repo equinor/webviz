@@ -623,10 +623,10 @@ export type StatisticValueObject_api = {
  * Stratigraphic column from SMDA
  */
 export type StratigraphicColumn_api = {
-    stratColumnIdentifier: string;
-    stratColumnAreaType: string;
-    stratColumnStatus: string;
-    stratColumnType: string | null;
+    identifier: string;
+    areaType: string;
+    status: string;
+    type: string | null;
 };
 
 /**
@@ -1029,7 +1029,7 @@ export type WellboreLogCurveData_api = {
     curveDescription: string | null;
     indexUnit: string;
     noDataValue: number | null;
-    unit: string;
+    unit: string | null;
     curveUnitDesc: string | null;
     dataPoints: Array<[number, number | string | null]>;
     metadataDiscrete: {

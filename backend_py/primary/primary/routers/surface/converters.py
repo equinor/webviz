@@ -177,12 +177,12 @@ def to_api_surface_intersection(
     )
 
 
-def convert_stratigraphic_column_to_schema(column: StratigraphicColumn) -> schemas.StratigraphicColumn:
+def to_api_stratigraphic_column(column: StratigraphicColumn) -> schemas.StratigraphicColumn:
     return schemas.StratigraphicColumn(
-        stratColumnIdentifier=column.strat_column_identifier,
-        stratColumnAreaType=column.strat_column_area_type,
-        stratColumnStatus=column.strat_column_status,
-        stratColumnType=column.strat_column_type,
+        identifier=column.strat_column_identifier,
+        areaType=column.strat_column_area_type,
+        status=column.strat_column_status,
+        type=column.strat_column_type,
     )
 
 
