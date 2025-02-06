@@ -56,7 +56,7 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
             // Add statistics traces
             if (showStatistics && statisticsQuery.data) {
                 const matchingCases: VectorStatisticSensitivityData_api[] = statisticsQuery.data.filter(
-                    (stat) => stat.sensitivity_name === sensitivityName
+                    (stat) => stat.sensitivityName === sensitivityName
                 );
                 const traces = createStatisticalLineTraces(matchingCases, StatisticFunction_api.MEAN, color);
                 traceDataArr.push(...traces);
@@ -79,7 +79,7 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
         if (historicalQuery?.data && showHistorical) {
             traceDataArr.push(
                 createLineTrace({
-                    timestampsMsUtc: historicalQuery.data.timestamps_utc_ms,
+                    timestampsMsUtc: historicalQuery.data.timestampsUtcMs,
                     values: historicalQuery.data.values,
                     name: "history",
                     lineShape: "linear",

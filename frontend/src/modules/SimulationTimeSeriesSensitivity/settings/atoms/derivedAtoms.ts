@@ -116,7 +116,7 @@ export const selectedVectorNameHasHistoricalAtom = atom<boolean>((get) => {
     const vectorListQuery = get(vectorListQueryAtom);
 
     const selectedVector = vectorListQuery.data?.find((vec) => vec.name === selectedVectorName);
-    return !!selectedVector?.has_historical;
+    return !!selectedVector?.hasHistorical;
 });
 
 export const vectorSpecificationAtom = atom<VectorSpec | null>((get) => {

@@ -1,6 +1,8 @@
 import React from "react";
 
 import {
+    DerivedVectorInfo_api,
+    Frequency_api,
     SummaryVectorObservations_api,
     VectorHistoricalData_api,
     VectorRealizationData_api,
@@ -11,7 +13,12 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { SubplotLimitDirection, VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
+import {
+    FrequencyEnumToStringMapping,
+    SubplotLimitDirection,
+    VectorSpec,
+} from "@modules/SimulationTimeSeries/typesAndEnums";
+import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
 import { CoordinateDomain, Figure, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
@@ -24,12 +31,13 @@ import {
     createVectorRealizationTrace,
     createVectorRealizationTraces,
     createVectorStatisticsTraces,
+    getTraceLineShape,
 } from "./PlotlyTraceUtils/createVectorTracesUtils";
 import { scaleHexColorLightness } from "./colorUtils";
 import { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
 import { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
-type VectorNameUnitMap = { [vectorName: string]: string };
+type VectorNameSubplotTitleMap = { [vectorName: string]: string };
 type HexColorMap = { [key: string]: string };
 export enum SubplotOwner {
     VECTOR = "Vector",
@@ -45,6 +53,8 @@ export class PlotBuilder {
     private _selectedVectorSpecifications: VectorSpec[] = [];
     private _numberOfSubplots = 0;
     private _subplotOwner: SubplotOwner;
+
+    private _resampleFrequency: Frequency_api | null = null;
 
     private _addedVectorsLegendTracker: string[] = [];
     private _addedEnsemblesLegendTracker: (RegularEnsembleIdent | DeltaEnsembleIdent)[] = [];
@@ -74,7 +84,7 @@ export class PlotBuilder {
 
     private _traceFallbackColor = "#000000";
 
-    private _vectorNameUnitMap: VectorNameUnitMap = {};
+    private _vectorNameSubplotTitleMap: VectorNameSubplotTitleMap = {};
 
     private _timeAnnotationTimestamps: number[] = [];
 
@@ -88,6 +98,7 @@ export class PlotBuilder {
     constructor(
         subplotOwner: SubplotOwner,
         selectedVectorSpecifications: VectorSpec[],
+        resampleFrequency: Frequency_api | null,
         makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string,
         colorSet: ColorSet,
         width: number,
@@ -101,6 +112,7 @@ export class PlotBuilder {
         this._width = width;
         this._height = height;
         this._makeEnsembleDisplayName = makeEnsembleDisplayName;
+        this._resampleFrequency = resampleFrequency;
 
         this._uniqueVectorNames = [...new Set(selectedVectorSpecifications.map((vec) => vec.vectorName))];
         this._uniqueEnsembleIdents = [];
@@ -225,15 +237,15 @@ export class PlotBuilder {
      * The subplot titles are updated based on the vector name and unit provided in the vectorNameUnitMap.
      * The unit is provided after traces are added, thus the subplot titles are updated after traces are added.
      */
-    private createAndSetSubplotTitles(): void {
+    private updateSubplotTitles(): void {
         if (this._subplotOwner === SubplotOwner.VECTOR) {
             this._uniqueVectorNames.forEach((vectorName, subplotIndex) => {
+                const newSubplotTitle = this._vectorNameSubplotTitleMap[vectorName];
                 const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
-                if (!this._figure.hasSubplotTitle(row, col)) {
+                if (!newSubplotTitle || !this._figure.hasSubplotTitle(row, col)) {
                     return;
                 }
 
-                const newSubplotTitle = this.createVectorSubplotTitle(vectorName);
                 this._figure.updateSubplotTitle(newSubplotTitle, row, col);
             });
         } else {
@@ -250,7 +262,7 @@ export class PlotBuilder {
 
     build(handleOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined): React.ReactNode {
         this.createGraphLegends();
-        this.createAndSetSubplotTitles();
+        this.updateSubplotTitles();
 
         // Add time annotations and shapes
         for (let index = 0; index < this._numberOfSubplots; index++) {
@@ -313,14 +325,15 @@ export class PlotBuilder {
                 }
 
                 const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
+                const lineShape = getTraceLineShape(realizationData);
                 const vectorRealizationTrace = createVectorRealizationTrace({
                     vectorRealizationData: realizationData,
                     name: name,
                     color: parameterColor,
                     legendGroup: this._makeEnsembleDisplayName(elm.vectorSpecification.ensembleIdent),
+                    lineShape: lineShape,
                     hoverTemplate: this._defaultHoverTemplate,
                     showLegend: addLegendForTraces,
-                    yaxis: `y${subplotIndex + 1}`,
                     type: this._scatterType,
                 });
 
@@ -328,7 +341,11 @@ export class PlotBuilder {
                 this._figure.addTrace(vectorRealizationTrace, row, col);
 
                 this._hasRealizationsTracesColoredByParameter = true;
-                this.insertVectorNameAndUnitIntoMap(elm.vectorSpecification.vectorName, realizationData.unit);
+                this.createVectorSubplotTitleAndInsertIntoMap(
+                    elm.vectorSpecification.vectorName,
+                    realizationData.unit,
+                    realizationData.derivedVectorInfo
+                );
             }
         }
     }
@@ -350,6 +367,7 @@ export class PlotBuilder {
         for (const elm of selectedVectorsRealizationData) {
             const subplotIndex = this.getSubplotIndexFromVectorSpec(elm.vectorSpecification);
             if (subplotIndex === -1) continue;
+            if (elm.data.length === 0) continue;
 
             // Get legend group and color
             const legendGroup = this.getLegendGroupAndUpdateTracker(elm.vectorSpecification);
@@ -359,11 +377,13 @@ export class PlotBuilder {
             }
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const lineShape = getTraceLineShape(elm.data[0]);
             const vectorRealizationTraces = createVectorRealizationTraces({
                 vectorRealizationsData: elm.data,
                 name: name,
                 color: color,
                 legendGroup: legendGroup,
+                lineShape: lineShape,
                 hoverTemplate: this._defaultHoverTemplate,
                 showLegend: addLegendForTraces,
                 type: this._scatterType,
@@ -373,7 +393,11 @@ export class PlotBuilder {
             this._figure.addTraces(vectorRealizationTraces, row, col);
 
             if (elm.data.length !== 0) {
-                this.insertVectorNameAndUnitIntoMap(elm.vectorSpecification.vectorName, elm.data[0].unit);
+                this.createVectorSubplotTitleAndInsertIntoMap(
+                    elm.vectorSpecification.vectorName,
+                    elm.data[0].unit,
+                    elm.data[0].derivedVectorInfo
+                );
             }
         }
     }
@@ -398,19 +422,24 @@ export class PlotBuilder {
             const color = this.getHexColor(elm.vectorSpecification);
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const lineShape = getTraceLineShape(elm.data);
             const vectorFanchartTraces = createVectorFanchartTraces({
                 vectorStatisticData: elm.data,
                 hexColor: color,
                 legendGroup: legendGroup,
+                lineShape: lineShape,
                 name: name,
-                yaxis: `y${subplotIndex + 1}`,
                 type: this._scatterType,
             });
 
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
             this._figure.addTraces(vectorFanchartTraces, row, col);
 
-            this.insertVectorNameAndUnitIntoMap(elm.vectorSpecification.vectorName, elm.data.unit);
+            this.createVectorSubplotTitleAndInsertIntoMap(
+                elm.vectorSpecification.vectorName,
+                elm.data.unit,
+                elm.data.derivedVectorInfo
+            );
         }
     }
 
@@ -437,10 +466,12 @@ export class PlotBuilder {
             const color = this.getHexColor(elm.vectorSpecification);
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const lineShape = getTraceLineShape(elm.data);
             const vectorStatisticsTraces = createVectorStatisticsTraces({
                 vectorStatisticData: elm.data,
                 hexColor: color,
                 legendGroup: legendGroup,
+                lineShape: lineShape,
                 name: name,
                 lineWidth: lineWidth,
                 type: this._scatterType,
@@ -449,7 +480,11 @@ export class PlotBuilder {
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
             this._figure.addTraces(vectorStatisticsTraces, row, col);
 
-            this.insertVectorNameAndUnitIntoMap(elm.vectorSpecification.vectorName, elm.data.unit);
+            this.createVectorSubplotTitleAndInsertIntoMap(
+                elm.vectorSpecification.vectorName,
+                elm.data.unit,
+                elm.data.derivedVectorInfo
+            );
         }
     }
 
@@ -472,18 +507,20 @@ export class PlotBuilder {
             if (subplotIndex === -1) continue;
 
             const name = this.makeTraceNameFromVectorSpecification(elm.vectorSpecification);
+            const lineShape = getTraceLineShape(elm.data);
             const vectorHistoryTrace = createHistoricalVectorTrace({
                 vectorHistoricalData: elm.data,
                 name: name,
                 color: this._historyVectorColor,
                 type: this._scatterType,
+                lineShape: lineShape,
             });
 
             const { row, col } = this.getSubplotRowAndColFromIndex(subplotIndex);
             this._figure.addTrace(vectorHistoryTrace, row, col);
 
             this._hasHistoryTraces = true;
-            this.insertVectorNameAndUnitIntoMap(elm.vectorSpecification.vectorName, elm.data.unit);
+            this.createVectorSubplotTitleAndInsertIntoMap(elm.vectorSpecification.vectorName, elm.data.unit);
         }
     }
 
@@ -731,18 +768,33 @@ export class PlotBuilder {
         return this._traceFallbackColor;
     }
 
-    private insertVectorNameAndUnitIntoMap(vectorName: string, unit: string): void {
-        if (vectorName in this._vectorNameUnitMap) return;
+    private createVectorSubplotTitleAndInsertIntoMap(
+        vectorName: string,
+        unit: string,
+        derivedVectorInfo?: DerivedVectorInfo_api | null
+    ): void {
+        if (vectorName in this._vectorNameSubplotTitleMap) return;
 
-        this._vectorNameUnitMap[vectorName] = unit;
+        const vectorDescription = this.createVectorDescription(vectorName, derivedVectorInfo);
+        const unitText = unit.length === 0 ? "" : ` [${simulationUnitReformat(unit)}]`;
+
+        this._vectorNameSubplotTitleMap[vectorName] = `${vectorDescription}${unitText}`;
     }
 
-    private createVectorSubplotTitle(vectorName: string): string {
-        const vectorDescription = simulationVectorDescription(vectorName);
-        const unit = this._vectorNameUnitMap[vectorName];
-        if (!unit) return vectorDescription;
+    private createVectorDescription(vectorName: string, derivedVectorInfo?: DerivedVectorInfo_api | null): string {
+        if (derivedVectorInfo) {
+            const derivedVectorDescription = createDerivedVectorDescription(
+                derivedVectorInfo.sourceVector,
+                derivedVectorInfo.type
+            );
+            if (this._resampleFrequency) {
+                const frequencyString = FrequencyEnumToStringMapping[this._resampleFrequency];
+                return `${frequencyString} ${derivedVectorDescription}`;
+            }
+            return derivedVectorDescription;
+        }
 
-        return `${vectorDescription} [${simulationUnitReformat(unit)}]`;
+        return simulationVectorDescription(vectorName);
     }
 
     private makeTraceNameFromVectorSpecification(vectorSpecification: VectorSpec): string {
