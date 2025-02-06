@@ -12,12 +12,12 @@ import { isEqual } from "lodash";
 import { RealizationSeismicCrosslineSettingsContext } from "./RealizationSeismicCrosslineSettingsContext";
 import { RealizationSeismicCrosslineSettings } from "./types";
 
-import { SeismicCrosslineData_trans, transformSeismicCrossline } from "../../../settings/queries/queryDataTransforms";
+import { SeismicSliceData_trans, transformSeismicSlice } from "../../../settings/queries/queryDataTransforms";
 
 export class RealizationSeismicCrosslineLayer
-    implements Layer<RealizationSeismicCrosslineSettings, SeismicCrosslineData_trans>
+    implements Layer<RealizationSeismicCrosslineSettings, SeismicSliceData_trans>
 {
-    private _layerDelegate: LayerDelegate<RealizationSeismicCrosslineSettings, SeismicCrosslineData_trans>;
+    private _layerDelegate: LayerDelegate<RealizationSeismicCrosslineSettings, SeismicSliceData_trans>;
     private _itemDelegate: ItemDelegate;
 
     constructor(layerManager: LayerManager) {
@@ -38,7 +38,7 @@ export class RealizationSeismicCrosslineLayer
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<RealizationSeismicCrosslineSettings, SeismicCrosslineData_trans> {
+    getLayerDelegate(): LayerDelegate<RealizationSeismicCrosslineSettings, SeismicSliceData_trans> {
         return this._layerDelegate;
     }
 
@@ -56,9 +56,9 @@ export class RealizationSeismicCrosslineLayer
         }
 
         return {
-            x: [data.start_utm_x, data.end_utm_x],
-            y: [data.start_utm_y, data.end_utm_y],
-            z: [data.z_min, data.z_max],
+            x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
+            y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
+            z: [data.u_min, data.u_max],
         };
     }
 
@@ -71,7 +71,7 @@ export class RealizationSeismicCrosslineLayer
         return [data.value_min, data.value_max];
     }
 
-    fetchData(queryClient: QueryClient): Promise<SeismicCrosslineData_trans> {
+    fetchData(queryClient: QueryClient): Promise<SeismicSliceData_trans> {
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const realizationNum = settings[SettingType.REALIZATION].getDelegate().getValue();
@@ -104,7 +104,7 @@ export class RealizationSeismicCrosslineLayer
                     },
                 }),
             })
-            .then((data) => transformSeismicCrossline(data));
+            .then((data) => transformSeismicSlice(data));
 
         return seismicSlicePromise;
     }

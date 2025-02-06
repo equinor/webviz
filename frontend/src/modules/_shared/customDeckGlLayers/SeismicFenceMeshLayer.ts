@@ -64,13 +64,15 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         const { startPosition } = this.props;
         const { geometry } = this.state;
 
-        return new SimpleMeshLayer({
-            id: "seismic-fence-mesh-layer",
-            data: [0],
-            mesh: geometry,
-            getPosition: startPosition,
-            getColor: [255, 255, 255, 255],
-            material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
-        });
+        return [
+            new SimpleMeshLayer({
+                id: "seismic-fence-mesh-layer",
+                data: [0],
+                mesh: geometry,
+                getPosition: startPosition,
+                getColor: [255, 255, 255, 255],
+                material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
+            }),
+        ];
     }
 }

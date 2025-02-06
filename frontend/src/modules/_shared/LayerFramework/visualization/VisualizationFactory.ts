@@ -66,6 +66,9 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         layerCtor: { new (layerManager: LayerManager): Layer<TSettings, TData> },
         func: MakeVisualizationFunction<TSettings, TData, TTarget>
     ): void {
+        if (this._visualizationFunctions.has(layerCtor.name)) {
+            throw new Error(`Visualization function for layer ${layerCtor.name} already registered`);
+        }
         this._visualizationFunctions.set(layerCtor.name, func);
     }
 

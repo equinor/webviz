@@ -1,11 +1,10 @@
-import { SurfaceDataPng_api, getCrosslineSliceOptions, getDepthSliceOptions } from "@api";
+import { getDepthSliceOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
-import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
@@ -13,15 +12,12 @@ import { isEqual } from "lodash";
 import { RealizationSeismicDepthSliceSettingsContext } from "./RealizationSeismicDepthSliceSettingsContext";
 import { RealizationSeismicDepthSliceSettings } from "./types";
 
-import { SeismicCrosslineData_trans, transformSeismicCrossline } from "../../../settings/queries/queryDataTransforms";
+import { SeismicSliceData_trans, transformSeismicSlice } from "../../../settings/queries/queryDataTransforms";
 
 export class RealizationSeismicDepthSliceLayer
-    implements Layer<RealizationSeismicDepthSliceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
+    implements Layer<RealizationSeismicDepthSliceSettings, SeismicSliceData_trans>
 {
-    private _layerDelegate: LayerDelegate<
-        RealizationSeismicDepthSliceSettings,
-        SurfaceDataFloat_trans | SurfaceDataPng_api
-    >;
+    private _layerDelegate: LayerDelegate<RealizationSeismicDepthSliceSettings, SeismicSliceData_trans>;
     private _itemDelegate: ItemDelegate;
 
     constructor(layerManager: LayerManager) {
@@ -42,10 +38,7 @@ export class RealizationSeismicDepthSliceLayer
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<
-        RealizationSeismicDepthSliceSettings,
-        SurfaceDataFloat_trans | SurfaceDataPng_api
-    > {
+    getLayerDelegate(): LayerDelegate<RealizationSeismicDepthSliceSettings, SeismicSliceData_trans> {
         return this._layerDelegate;
     }
     makeBoundingBox(): BoundingBox | null {
@@ -54,10 +47,17 @@ export class RealizationSeismicDepthSliceLayer
             return null;
         }
 
+        const settings = this.getSettingsContext().getDelegate().getSettings();
+        const seismicDepth = settings[SettingType.SEISMIC_DEPTH_SLICE].getDelegate().getValue();
+
+        if (seismicDepth === null) {
+            return null;
+        }
+
         return {
-            x: [data.transformed_bbox_utm.min_x, data.transformed_bbox_utm.max_x],
-            y: [data.transformed_bbox_utm.min_y, data.transformed_bbox_utm.max_y],
-            z: [data.value_min, data.value_max],
+            x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
+            y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
+            z: [seismicDepth, seismicDepth],
         };
     }
     doSettingsChangesRequireDataRefetch(
@@ -76,13 +76,13 @@ export class RealizationSeismicDepthSliceLayer
         return [data.value_min, data.value_max];
     }
 
-    fetchData(queryClient: QueryClient): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    fetchData(queryClient: QueryClient): Promise<SeismicSliceData_trans> {
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const realizationNum = settings[SettingType.REALIZATION].getDelegate().getValue();
         const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
 
-        let timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
+        const timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
         const seismicDepth = settings[SettingType.SEISMIC_DEPTH_SLICE].getDelegate().getValue();
 
         const queryKey = [
@@ -109,7 +109,7 @@ export class RealizationSeismicDepthSliceLayer
                     },
                 }),
             })
-            .then((data) => transformSurfaceData(data));
+            .then((data) => transformSeismicSlice(data));
 
         return seismicSlicePromise;
     }

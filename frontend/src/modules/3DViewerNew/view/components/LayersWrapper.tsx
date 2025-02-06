@@ -13,9 +13,14 @@ import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { IntersectionRealizationGridLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/IntersectionRealizationGridLayer";
 import { RealizationGridLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationGridLayer";
 import { RealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicCrosslineLayer";
+import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicDepthSliceLayer";
+import { RealizationSeismicInlineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer";
 import { makeGrid3DLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeGrid3dLayer";
 import { makeIntersectionLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeIntersectionGrid3dLayer";
-import { makeRealizationSeismicCrosslineLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeRealizationSeismicCrosslineLayer";
+import {
+    Plane,
+    makeSeismicFenceMeshLayerFunction,
+} from "@modules/3DViewerNew/LayerFramework/visualization/makeSeismicFenceMeshLayer";
 import { LayerManager, LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
@@ -45,7 +50,15 @@ VISUALIZATION_FACTORY.registerVisualizationFunction(RealizationGridLayer, makeGr
 VISUALIZATION_FACTORY.registerVisualizationFunction(IntersectionRealizationGridLayer, makeIntersectionLayer);
 VISUALIZATION_FACTORY.registerVisualizationFunction(
     RealizationSeismicCrosslineLayer,
-    makeRealizationSeismicCrosslineLayer
+    makeSeismicFenceMeshLayerFunction(Plane.CROSSLINE)
+);
+VISUALIZATION_FACTORY.registerVisualizationFunction(
+    RealizationSeismicInlineLayer,
+    makeSeismicFenceMeshLayerFunction(Plane.INLINE)
+);
+VISUALIZATION_FACTORY.registerVisualizationFunction(
+    RealizationSeismicDepthSliceLayer,
+    makeSeismicFenceMeshLayerFunction(Plane.DEPTH)
 );
 
 export type LayersWrapperProps = {

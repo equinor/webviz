@@ -544,23 +544,6 @@ export type RftWellInfo_api = {
     timestamps_utc_ms: Array<number>;
 };
 
-export type SeismicCrosslineData_api = {
-    slice_traces_b64arr: B64FloatArray_api;
-    start_utm_x: number;
-    start_utm_y: number;
-    end_utm_x: number;
-    end_utm_y: number;
-    inline_min: number;
-    inline_max: number;
-    inline_no_samples: number;
-    z_min: number;
-    z_max: number;
-    z_samples: number;
-    z_unit: string;
-    value_min: number;
-    value_max: number;
-};
-
 export type SeismicCubeMeta_api = {
     seismic_attribute: string;
     iso_date_or_interval: string;
@@ -626,19 +609,17 @@ export type SeismicFencePolyline_api = {
     y_points: Array<number>;
 };
 
-export type SeismicInlineData_api = {
+export type SeismicSliceData_api = {
     slice_traces_b64arr: B64FloatArray_api;
-    start_utm_x: number;
-    start_utm_y: number;
-    end_utm_x: number;
-    end_utm_y: number;
-    crossline_min: number;
-    crossline_max: number;
-    crossline_no_samples: number;
-    z_min: number;
-    z_max: number;
-    z_samples: number;
-    z_unit: string;
+    bbox_utm: Array<Array<number>>;
+    u_min: number;
+    u_max: number;
+    u_num_samples: number;
+    u_unit: string;
+    v_min: number;
+    v_max: number;
+    v_num_samples: number;
+    v_unit: string;
     value_min: number;
     value_max: number;
 };
@@ -3164,7 +3145,7 @@ export type GetInlineSliceResponses_api = {
     /**
      * Successful Response
      */
-    200: SeismicInlineData_api;
+    200: SeismicSliceData_api;
 };
 
 export type GetInlineSliceResponse_api = GetInlineSliceResponses_api[keyof GetInlineSliceResponses_api];
@@ -3218,7 +3199,7 @@ export type GetCrosslineSliceResponses_api = {
     /**
      * Successful Response
      */
-    200: SeismicCrosslineData_api;
+    200: SeismicSliceData_api;
 };
 
 export type GetCrosslineSliceResponse_api = GetCrosslineSliceResponses_api[keyof GetCrosslineSliceResponses_api];
@@ -3272,7 +3253,7 @@ export type GetDepthSliceResponses_api = {
     /**
      * Successful Response
      */
-    200: SurfaceDataFloat_api;
+    200: SeismicSliceData_api;
 };
 
 export type GetDepthSliceResponse_api = GetDepthSliceResponses_api[keyof GetDepthSliceResponses_api];

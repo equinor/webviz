@@ -12,10 +12,10 @@ import { isEqual } from "lodash";
 import { RealizationSeismicInlineSettingsContext } from "./RealizationSeismicInlineSettingsContext";
 import { RealizationSeismicInlineSettings } from "./types";
 
-import { SeismicInlineData_trans, transformSeismicInline } from "../../../settings/queries/queryDataTransforms";
+import { SeismicSliceData_trans, transformSeismicSlice } from "../../../settings/queries/queryDataTransforms";
 
-export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicInlineSettings, SeismicInlineData_trans> {
-    private _layerDelegate: LayerDelegate<RealizationSeismicInlineSettings, SeismicInlineData_trans>;
+export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicInlineSettings, SeismicSliceData_trans> {
+    private _layerDelegate: LayerDelegate<RealizationSeismicInlineSettings, SeismicSliceData_trans>;
     private _itemDelegate: ItemDelegate;
 
     constructor(layerManager: LayerManager) {
@@ -36,7 +36,7 @@ export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicIn
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<RealizationSeismicInlineSettings, SeismicInlineData_trans> {
+    getLayerDelegate(): LayerDelegate<RealizationSeismicInlineSettings, SeismicSliceData_trans> {
         return this._layerDelegate;
     }
 
@@ -54,9 +54,9 @@ export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicIn
         }
 
         return {
-            x: [data.start_utm_x, data.end_utm_x],
-            y: [data.start_utm_y, data.end_utm_y],
-            z: [data.z_min, data.z_max],
+            x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
+            y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
+            z: [data.u_min, data.u_max],
         };
     }
 
@@ -69,13 +69,13 @@ export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicIn
         return [data.value_min, data.value_max];
     }
 
-    fetchData(queryClient: QueryClient): Promise<SeismicInlineData_trans> {
+    fetchData(queryClient: QueryClient): Promise<SeismicSliceData_trans> {
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const realizationNum = settings[SettingType.REALIZATION].getDelegate().getValue();
         const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
 
-        let timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
+        const timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
         const seismicInlineNumber = settings[SettingType.SEISMIC_INLINE].getDelegate().getValue();
 
         const queryKey = [
@@ -102,7 +102,7 @@ export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicIn
                     },
                 }),
             })
-            .then((data) => transformSeismicInline(data));
+            .then((data) => transformSeismicSlice(data));
 
         return seismicSlicePromise;
     }

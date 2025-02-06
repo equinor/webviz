@@ -20,6 +20,7 @@ class SeismicCubeMeta(BaseModel):
     z_max: float
     z_inc: float
 
+
 class SeismicFencePolyline(BaseModel):
     """
     (x, y) points defining a polyline in domain coordinate system, to retrieve fence of seismic data.
@@ -69,53 +70,16 @@ class SeismicFenceData(BaseModel):
     max_fence_depth: float
 
 
-class SeismicInlineData(BaseModel):
+class SeismicSliceData(BaseModel):
     slice_traces_b64arr: B64FloatArray
-    start_utm_x: float
-    start_utm_y: float
-    end_utm_x: float
-    end_utm_y: float
-    crossline_min: int
-    crossline_max: int
-    crossline_no_samples: int
-    z_min: float
-    z_max: float
-    z_samples: int
-    z_unit: str
+    bbox_utm: List[List[float]]
+    u_min: int
+    u_max: int
+    u_num_samples: int
+    u_unit: str
+    v_min: float
+    v_max: float
+    v_num_samples: int
+    v_unit: str
     value_min: float
     value_max: float
-    
-class SeismicCrosslineData(BaseModel):
-    slice_traces_b64arr: B64FloatArray
-    start_utm_x: float
-    start_utm_y: float
-    end_utm_x: float
-    end_utm_y: float
-    inline_min: int
-    inline_max: int
-    inline_no_samples: int
-    z_min: float
-    z_max: float
-    z_samples: int
-    z_unit: str
-    value_min: float
-    value_max: float
-
-class SurfaceMeshAndProperty(BaseModel):
-    x_ori: float
-    y_ori: float
-    x_count: int
-    y_count: int
-    x_inc: float
-    y_inc: float
-    x_min: float
-    x_max: float
-    y_min: float
-    y_max: float
-    mesh_value_min: float
-    mesh_value_max: float
-    property_value_min: float
-    property_value_max: float
-    rot_deg: float
-    mesh_data: str
-    property_data: str
