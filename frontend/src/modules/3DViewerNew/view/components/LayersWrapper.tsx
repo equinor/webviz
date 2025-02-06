@@ -123,6 +123,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 "editable-polylines-layer",
                 "polylines-layer",
                 "hover-point-layer",
+                "est",
             ],
         });
         viewerLayers.push(...view.layers);
