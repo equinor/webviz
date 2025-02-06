@@ -141,17 +141,52 @@ export class DragHandleLayer extends CompositeLayer<DragHandleLayerProps> {
     }
 
     renderLayers() {
-        const { position } = this.props;
+        const { position, dragDirection } = this.props;
         const { hoveredIndex } = this.state;
+
+        const data: { position: number[]; orientation: number[] }[] = [];
+
+        if (dragDirection === DragDirection.X) {
+            data.push({ position: [position[0] + 10, position[1], position[2]], orientation: [90, 0, 0] });
+            data.push({ position: [position[0] - 10, position[1], position[2]], orientation: [-90, 0, 0] });
+        } else if (dragDirection === DragDirection.Y) {
+            data.push({ position: [position[0], position[1] + 10, position[2]], orientation: [90, 90, 0] });
+            data.push({ position: [position[0], position[1] - 10, position[2]], orientation: [90, -90, 0] });
+        } else if (dragDirection === DragDirection.Z) {
+            data.push({ position: [position[0], position[1], position[2] + 10], orientation: [0, 0, 0] });
+            data.push({ position: [position[0], position[1], position[2] - 10], orientation: [180, 0, 0] });
+        } else if (dragDirection === DragDirection.XY) {
+            data.push({ position: [position[0] + 10, position[1], position[2]], orientation: [90, 0, 0] });
+            data.push({ position: [position[0] - 10, position[1], position[2]], orientation: [-90, 0, 0] });
+            data.push({ position: [position[0], position[1] + 10, position[2]], orientation: [0, 90, 0] });
+            data.push({ position: [position[0], position[1] - 10, position[2]], orientation: [0, -90, 0] });
+        } else if (dragDirection === DragDirection.XZ) {
+            data.push({ position: [position[0] + 10, position[1], position[2]], orientation: [90, 0, 0] });
+            data.push({ position: [position[0] - 10, position[1], position[2]], orientation: [-90, 0, 0] });
+            data.push({ position: [position[0], position[1], position[2] + 10], orientation: [0, 0, 0] });
+            data.push({ position: [position[0], position[1], position[2] - 10], orientation: [180, 0, 0] });
+        } else if (dragDirection === DragDirection.YZ) {
+            data.push({ position: [position[0], position[1] + 10, position[2]], orientation: [0, 90, 0] });
+            data.push({ position: [position[0], position[1] - 10, position[2]], orientation: [0, -90, 0] });
+            data.push({ position: [position[0], position[1], position[2] + 10], orientation: [0, 0, 0] });
+            data.push({ position: [position[0], position[1], position[2] - 10], orientation: [180, 0, 0] });
+        } else if (dragDirection === DragDirection.XYZ) {
+            data.push({ position: [position[0] + 10, position[1], position[2]], orientation: [90, 0, 0] });
+            data.push({ position: [position[0] - 10, position[1], position[2]], orientation: [-90, 0, 0] });
+            data.push({ position: [position[0], position[1] + 10, position[2]], orientation: [0, 90, 0] });
+            data.push({ position: [position[0], position[1] - 10, position[2]], orientation: [0, -90, 0] });
+            data.push({ position: [position[0], position[1], position[2] + 10], orientation: [0, 0, 0] });
+            data.push({ position: [position[0], position[1], position[2] - 10], orientation: [180, 0, 0] });
+        }
 
         const layers = [
             new SimpleMeshLayer({
                 id: "drag-handle-cone",
-                data: [{ position }],
+                data,
                 mesh: makeArrowMesh(),
                 getPosition: (d) => d.position,
                 getColor: (d, ctx) => (ctx.index === hoveredIndex ? [255, 255, 255] : [0, 0, 255]),
-                getOrientation: [0, 0, 0],
+                getOrientation: (d) => d.orientation,
                 getScale: [10, 10, 10],
                 pickable: true,
                 updateTriggers: {
