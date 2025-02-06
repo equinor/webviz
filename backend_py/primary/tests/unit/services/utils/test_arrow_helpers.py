@@ -1,9 +1,13 @@
+import pytest
+import pyarrow as pa
+import numpy as np
+
+from primary.services.service_exceptions import InvalidDataError, Service
+
 from primary.services.utils.arrow_helpers import is_date_column_monotonically_increasing
 from primary.services.utils.arrow_helpers import find_first_non_increasing_date_pair
 from primary.services.utils.arrow_helpers import detect_missing_realizations
-
-import pyarrow as pa
-import numpy as np
+from primary.services.utils.arrow_helpers import validate_summary_vector_table_pa
 
 
 def test_monotonically_increasing_date_util_functions() -> None:
@@ -54,3 +58,71 @@ def test_detect_missing_realizations() -> None:
     assert len(missing_reals_list) == 2
     assert 0 in missing_reals_list
     assert 5 in missing_reals_list
+
+
+def test_validate_summary_vector_table_pa_valid() -> None:
+    vector_name = "VECTOR"
+    data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0]}
+    schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16()), (vector_name, pa.float32())])
+    table = pa.Table.from_pydict(data, schema=schema)
+    try:
+        validate_summary_vector_table_pa(table, vector_name)
+    except InvalidDataError:
+        pytest.fail("validate_summary_vector_table_pa raised InvalidDataError unexpectedly!")
+
+
+def test_validate_summary_vector_table_pa_missing_column() -> None:
+    vector_name = "VECTOR"
+    data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6]}
+    schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16())])
+    table = pa.Table.from_pydict(data, schema=schema)
+    with pytest.raises(InvalidDataError):
+        validate_summary_vector_table_pa(table, vector_name)
+
+
+def test_validate_summary_vector_table_pa_unexpected_column() -> None:
+    vector_name = "VECTOR"
+    data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0], "EXTRA": [10.0, 11.0, 12.0]}
+    schema = pa.schema(
+        [("DATE", pa.timestamp("ms")), ("REAL", pa.int16()), (vector_name, pa.float32()), ("EXTRA", pa.float32())]
+    )
+    table = pa.Table.from_pydict(data, schema=schema)
+    with pytest.raises(InvalidDataError):
+        validate_summary_vector_table_pa(table, vector_name)
+
+
+def test_validate_summary_vector_table_pa_invalid_date_type() -> None:
+    vector_name = "VECTOR"
+    data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7.0, 8.0, 9.0]}
+    schema = pa.schema([("DATE", pa.int32()), ("REAL", pa.int16()), (vector_name, pa.float32())])
+    table = pa.Table.from_pydict(data, schema=schema)
+    with pytest.raises(InvalidDataError):
+        validate_summary_vector_table_pa(table, vector_name)
+
+
+def test_validate_summary_vector_table_pa_invalid_real_type() -> None:
+    vector_name = "VECTOR"
+    data = {"DATE": [1, 2, 3], "REAL": [4.0, 5.0, 6.0], vector_name: [7.0, 8.0, 9.0]}
+    schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.float32()), (vector_name, pa.float32())])
+    table = pa.Table.from_pydict(data, schema=schema)
+    with pytest.raises(InvalidDataError):
+        validate_summary_vector_table_pa(table, vector_name)
+
+
+def test_validate_summary_vector_table_pa_invalid_vector_type() -> None:
+    vector_name = "VECTOR"
+    data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6], vector_name: [7, 8, 9]}
+    schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16()), (vector_name, pa.int32())])
+    table = pa.Table.from_pydict(data, schema=schema)
+    with pytest.raises(InvalidDataError):
+        validate_summary_vector_table_pa(table, vector_name)
+
+
+def test_validate_summary_vector_table_pa_sumo_service() -> None:
+    vector_name = "VECTOR"
+    data = {"DATE": [1, 2, 3], "REAL": [4, 5, 6]}
+    schema = pa.schema([("DATE", pa.timestamp("ms")), ("REAL", pa.int16())])
+    table = pa.Table.from_pydict(data, schema=schema)
+    with pytest.raises(InvalidDataError) as excinfo:
+        validate_summary_vector_table_pa(table, vector_name, Service.SUMO)
+    assert excinfo.value.service == Service.SUMO

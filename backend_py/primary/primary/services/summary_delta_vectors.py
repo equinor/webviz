@@ -4,7 +4,13 @@ import pyarrow as pa
 import pyarrow.compute as pc
 import numpy as np
 
-from primary.services.service_exceptions import InvalidDataError, Service
+from primary.services.utils.arrow_helpers import validate_summary_vector_table_pa
+
+
+@dataclass
+class DeltaVectorMetadata:
+    is_rate: bool
+    unit: str
 
 
 @dataclass
@@ -14,33 +20,6 @@ class RealizationDeltaVector:
     values: list[float]
     is_rate: bool
     unit: str
-
-
-def _validate_summary_vector_table_pa(
-    vector_table: pa.Table, vector_name: str, service: Service = Service.GENERAL
-) -> None:
-    """
-    Check if the pyarrow vector table is valid.
-
-    Expect the pyarrow single vector table to only contain the following columns: DATE, REAL, vector_name.
-
-    Raises InvalidDataError if the table does not contain the expected columns.
-    """
-    expected_columns = {"DATE", "REAL", vector_name}
-    actual_columns = set(vector_table.column_names)
-    if not expected_columns.issubset(actual_columns) or len(expected_columns) != len(actual_columns):
-        unexpected_columns = actual_columns - expected_columns
-        raise InvalidDataError(f"Unexpected columns in table {unexpected_columns}", service)
-
-    # Validate table column types
-    if vector_table.field("DATE").type != pa.timestamp("ms"):
-        raise InvalidDataError(
-            f'DATE column must be of type timestamp(ms), but got {vector_table.field("DATE").type}', service
-        )
-    if vector_table.field("REAL").type != pa.int16():
-        raise InvalidDataError("REAL column must be of type int16", service)
-    if vector_table.field(vector_name).type != pa.float32():
-        raise InvalidDataError(f"{vector_name} column must be of type float32", service)
 
 
 def create_delta_vector_table(
@@ -60,8 +39,8 @@ def create_delta_vector_table(
 
     `Note`: Pre-processing of DATE-columns, e.g. resampling, should be done before calling this function.
     """
-    _validate_summary_vector_table_pa(comparison_vector_table, vector_name)
-    _validate_summary_vector_table_pa(reference_vector_table, vector_name)
+    validate_summary_vector_table_pa(comparison_vector_table, vector_name)
+    validate_summary_vector_table_pa(reference_vector_table, vector_name)
 
     joined_vector_table = comparison_vector_table.join(
         reference_vector_table, keys=["DATE", "REAL"], join_type="inner", right_suffix="_reference"
@@ -87,7 +66,7 @@ def create_realization_delta_vector_list(
     """
     Create a list of RealizationDeltaVector from the delta vector table.
     """
-    _validate_summary_vector_table_pa(delta_vector_table, vector_name)
+    validate_summary_vector_table_pa(delta_vector_table, vector_name)
 
     real_arr_np = delta_vector_table.column("REAL").to_numpy()
     unique_reals, first_occurrence_idx, real_counts = np.unique(real_arr_np, return_index=True, return_counts=True)
