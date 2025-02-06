@@ -8,6 +8,7 @@ import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect3D, outerRectContainsInnerRect } from "@lib/utils/geometry";
+import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { IntersectionRealizationGridLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/IntersectionRealizationGridLayer";
@@ -17,6 +18,7 @@ import { RealizationSeismicDepthSliceLayer } from "@modules/3DViewerNew/LayerFra
 import { RealizationSeismicInlineLayer } from "@modules/3DViewerNew/LayerFramework/customLayerImplementations/RealizationSeismicInlineLayer";
 import { makeGrid3DLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeGrid3dLayer";
 import { makeIntersectionLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeIntersectionGrid3dLayer";
+import { makeRealizationSurfaceLayer } from "@modules/3DViewerNew/LayerFramework/visualization/makeRealizationSurfaceLayer";
 import {
     Plane,
     makeSeismicFenceMeshLayerFunction,
@@ -60,6 +62,7 @@ VISUALIZATION_FACTORY.registerVisualizationFunction(
     RealizationSeismicDepthSliceLayer,
     makeSeismicFenceMeshLayerFunction(Plane.DEPTH)
 );
+VISUALIZATION_FACTORY.registerVisualizationFunction(RealizationSurfaceLayer, makeRealizationSurfaceLayer);
 
 export type LayersWrapperProps = {
     layerManager: LayerManager;
