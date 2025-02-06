@@ -3,12 +3,12 @@ import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { Geometry } from "@luma.gl/engine";
 
 export type SeismicFenceMeshLayerProps = {
+    startPosition: [number, number, number];
     data: {
         vertices: Float32Array;
-        indices: Uint16Array;
+        indices: Uint32Array;
         properties: Float32Array;
     };
-    propertyRange: [number, number];
     colorMapFunction: (value: number) => [number, number, number];
 };
 
@@ -21,17 +21,16 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     };
 
     private makeColorsArray(): Float32Array {
-        const { data, propertyRange, colorMapFunction } = this.props;
-        const [minValue, maxValue] = propertyRange;
+        const { data, colorMapFunction } = this.props;
 
         const colors = new Float32Array(data.properties.length * 4);
 
         for (let i = 0; i < data.properties.length; i++) {
-            const [r, g, b] = colorMapFunction((data.properties[i] - minValue) / (maxValue - minValue));
-            colors[i * 4 + 0] = r;
-            colors[i * 4 + 1] = g;
-            colors[i * 4 + 2] = b;
-            colors[i * 4 + 3] = 255;
+            const [r, g, b] = colorMapFunction(data.properties[i]);
+            colors[i * 4 + 0] = r / 255;
+            colors[i * 4 + 1] = g / 255;
+            colors[i * 4 + 2] = b / 255;
+            colors[i * 4 + 3] = 1;
         }
 
         return colors;
@@ -62,14 +61,16 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     }
 
     renderLayers() {
+        const { startPosition } = this.props;
         const { geometry } = this.state;
 
         return new SimpleMeshLayer({
             id: "seismic-fence-mesh-layer",
             data: [0],
             mesh: geometry,
-            getPosition: [0, 0, 0],
-            getColor: [255, 255, 255],
+            getPosition: startPosition,
+            getColor: [255, 255, 255, 255],
+            material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
         });
     }
 }

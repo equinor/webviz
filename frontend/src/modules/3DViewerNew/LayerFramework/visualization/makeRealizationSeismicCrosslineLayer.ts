@@ -9,23 +9,18 @@ function generatePointFenceMesh(
     numSamplesXY: number,
     minDepth: number,
     maxDepth: number,
-    numDepthSamples: number,
-    propertyArray: Float32Array
+    numDepthSamples: number
 ): {
     vertices: Float32Array;
-    indices: Uint16Array;
-    properties: Float32Array;
-    minPropValue: number;
-    maxPropValue: number;
+    indices: Uint32Array;
 } {
     const vertices = new Float32Array(numSamplesXY * numDepthSamples * 3);
-    const properties = new Float32Array(numSamplesXY * numDepthSamples);
 
     // Number of triangles to be drawn
     const numTriangles = (numSamplesXY - 1) * (numDepthSamples - 1) * 2;
 
     // Triangle strip indices
-    const indices = new Uint16Array(numTriangles * 3);
+    const indices = new Uint32Array(numTriangles * 3);
 
     const stepX = (endPoint[0] - startPoint[0]) / (numSamplesXY - 1);
     const stepY = (endPoint[1] - startPoint[1]) / (numSamplesXY - 1);
@@ -33,11 +28,8 @@ function generatePointFenceMesh(
 
     let verticesIndex = 0;
     let indicesIndex = 0;
-    let propertiesIndex = 0;
-    let minPropValue = Infinity;
-    let maxPropValue = -Infinity;
 
-    for (let i = 0; i < numDepthSamples; i++) {
+    for (let col = 0; col < numSamplesXY; col++) {
         /*
         if (i > 1) {
             // Draw a degenerated triangle to move to the next row
@@ -45,38 +37,24 @@ function generatePointFenceMesh(
             indices[indicesIndex++] = i * numSamplesXY;
         }
             */
-        for (let j = 0; j < numSamplesXY; j++) {
-            vertices[verticesIndex++] = startPoint[0] + j * stepX;
-            vertices[verticesIndex++] = startPoint[1] + j * stepY;
-            vertices[verticesIndex++] = -(minDepth + i * stepZ);
+        for (let row = 0; row < numDepthSamples; row++) {
+            vertices[verticesIndex++] = col * stepX;
+            vertices[verticesIndex++] = col * stepY;
+            vertices[verticesIndex++] = -(row * stepZ);
 
-            const propValue = propertyArray[j * numDepthSamples + i];
-            properties[propertiesIndex++] = propValue;
-            minPropValue = Math.min(minPropValue, propValue);
-            maxPropValue = Math.max(maxPropValue, propValue);
+            if (row > 0 && col > 0) {
+                indices[indicesIndex++] = (col - 1) * numDepthSamples + row - 1;
+                indices[indicesIndex++] = (col - 1) * numDepthSamples + row;
+                indices[indicesIndex++] = col * numDepthSamples + row - 1;
 
-            /*
-            if (i > 0) {
-                indices[indicesIndex++] = (i - 1) * numSamplesXY + j;
-                indices[indicesIndex++] = i * numSamplesXY + j;
-            }
-                */
-
-            if (i > 0 && j > 0) {
-                // Three indices for the triangle
-                indices[indicesIndex++] = (i - 1) * numSamplesXY + j;
-                indices[indicesIndex++] = i * numSamplesXY + j;
-                indices[indicesIndex++] = (i - 1) * numSamplesXY + j + 1;
-
-                // Three indices for the triangle
-                indices[indicesIndex++] = i * numSamplesXY + j;
-                indices[indicesIndex++] = i * numSamplesXY + j + 1;
-                indices[indicesIndex++] = (i - 1) * numSamplesXY + j + 1;
+                indices[indicesIndex++] = col * numDepthSamples + row - 1;
+                indices[indicesIndex++] = (col - 1) * numDepthSamples + row;
+                indices[indicesIndex++] = col * numDepthSamples + row;
             }
         }
     }
 
-    return { vertices, indices, properties, minPropValue, maxPropValue };
+    return { vertices, indices };
 }
 
 export function makeRealizationSeismicCrosslineLayer({
@@ -90,16 +68,15 @@ export function makeRealizationSeismicCrosslineLayer({
     const minDepth = data.z_min;
     const maxDepth = data.z_max;
     const numDepthSamples = data.z_samples;
-    const propertyArray = data.dataFloat32Arr;
+    const properties = data.dataFloat32Arr;
 
-    const { vertices, indices, properties, minPropValue, maxPropValue } = generatePointFenceMesh(
+    const { vertices, indices } = generatePointFenceMesh(
         startPoint,
         endPoint,
         numSamples,
         minDepth,
         maxDepth,
-        numDepthSamples,
-        propertyArray
+        numDepthSamples
     );
 
     return new SeismicFenceMeshLayer({
@@ -109,7 +86,7 @@ export function makeRealizationSeismicCrosslineLayer({
             indices,
             properties,
         },
-        propertyRange: [minPropValue, maxPropValue],
-        colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, minPropValue, maxPropValue, false),
+        startPosition: [startPoint[0], startPoint[1], -minDepth],
+        colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
     });
 }
