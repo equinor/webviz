@@ -92,6 +92,16 @@ export type DatedFlowNetwork_api = {
     network: NetworkNode_api;
 };
 
+export type DerivedVectorInfo_api = {
+    type: DerivedVectorType_api;
+    sourceVector: string;
+};
+
+export enum DerivedVectorType_api {
+    PER_DAY = "PER_DAY",
+    PER_INTVL = "PER_INTVL",
+}
+
 export type EnsembleDetails_api = {
     name: string;
     field_identifier: string;
@@ -615,7 +625,7 @@ export enum StatisticFunction_api {
 }
 
 export type StatisticValueObject_api = {
-    statistic_function: StatisticFunction_api;
+    statisticFunction: StatisticFunction_api;
     values: Array<number>;
 };
 
@@ -849,41 +859,44 @@ export type ValidationError_api = {
 
 export type VectorDescription_api = {
     name: string;
-    descriptive_name: string;
-    has_historical: boolean;
+    descriptiveName: string;
+    hasHistorical: boolean;
+    derivedVectorInfo: DerivedVectorInfo_api | null;
 };
 
 export type VectorHistoricalData_api = {
-    timestamps_utc_ms: Array<number>;
+    timestampsUtcMs: Array<number>;
     values: Array<number>;
     unit: string;
-    is_rate: boolean;
+    isRate: boolean;
 };
 
 export type VectorRealizationData_api = {
     realization: number;
-    timestamps_utc_ms: Array<number>;
+    timestampsUtcMs: Array<number>;
     values: Array<number>;
     unit: string;
-    is_rate: boolean;
+    isRate: boolean;
+    derivedVectorInfo: DerivedVectorInfo_api | null;
 };
 
 export type VectorStatisticData_api = {
     realizations: Array<number>;
-    timestamps_utc_ms: Array<number>;
-    value_objects: Array<StatisticValueObject_api>;
+    timestampsUtcMs: Array<number>;
+    valueObjects: Array<StatisticValueObject_api>;
     unit: string;
-    is_rate: boolean;
+    isRate: boolean;
+    derivedVectorInfo: DerivedVectorInfo_api | null;
 };
 
 export type VectorStatisticSensitivityData_api = {
     realizations: Array<number>;
-    timestamps_utc_ms: Array<number>;
-    value_objects: Array<StatisticValueObject_api>;
+    timestampsUtcMs: Array<number>;
+    valueObjects: Array<StatisticValueObject_api>;
     unit: string;
-    is_rate: boolean;
-    sensitivity_name: string;
-    sensitivity_case: string;
+    isRate: boolean;
+    sensitivityName: string;
+    sensitivityCase: string;
 };
 
 export type VfpInjTable_api = {
@@ -1207,6 +1220,10 @@ export type GetVectorListData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Include derived vectors
+         */
+        include_derived_vectors?: boolean | null;
     };
     url: "/timeseries/vector_list/";
 };
@@ -1249,6 +1266,10 @@ export type GetDeltaEnsembleVectorListData_api = {
          * Reference ensemble name
          */
         reference_ensemble_name: string;
+        /**
+         * Include derived vectors
+         */
+        include_derived_vectors?: boolean | null;
     };
     url: "/timeseries/delta_ensemble_vector_list/";
 };
