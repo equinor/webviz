@@ -14,7 +14,7 @@ export type InputProps = InputUnstyledProps & {
     onValueChange?: (value: string) => void;
 };
 
-export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRef<HTMLInputElement>) => {
+export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRef<HTMLDivElement>) => {
     const {
         startAdornment,
         endAdornment,
@@ -53,7 +53,6 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
     const handleAdornmentClick = React.useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         if (internalRef.current) {
             internalRef.current.focus();
-            internalRef.current.getElementsByTagName("input")[0].focus();
         }
         event.stopPropagation();
     }, []);
@@ -167,15 +166,15 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                     onChange={handleInputChange}
                     onBlur={handleInputEditingDone}
                     onKeyUp={handleKeyUp}
-                    ref={internalRef}
                     slotProps={{
                         root: {
                             className: "grow",
                         },
                         input: {
                             className: resolveClassNames(
-                                "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none"
+                                "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none truncate"
                             ),
+                            ref: internalRef,
                         },
                     }}
                 />
