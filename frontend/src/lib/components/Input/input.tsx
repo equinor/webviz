@@ -172,7 +172,7 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
                         },
                         input: {
                             className: resolveClassNames(
-                                "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none truncate"
+                                "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none"
                             ),
                             ref: internalRef,
                         },
