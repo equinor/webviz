@@ -285,10 +285,10 @@ class InplaceVolumetricsAssembler:
         )
 
         # Get volume table per fluid selection - requested volumes and volumes needed for properties
-        volume_df_per_fluid_selection: dict[FluidSelection, pl.DataFrame] = (
-            await self._create_volume_df_per_fluid_selection(
-                table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
-            )
+        volume_df_per_fluid_selection: dict[
+            FluidSelection, pl.DataFrame
+        ] = await self._create_volume_df_per_fluid_selection(
+            table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
         )
 
         # If accumulate_fluid_zones is True, exclude BO and BG from valid properties

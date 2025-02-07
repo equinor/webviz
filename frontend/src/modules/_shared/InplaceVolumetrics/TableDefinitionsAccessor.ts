@@ -48,6 +48,12 @@ export function makeUniqueTableNamesIntersection(
     return Array.from(tableNamesIntersection);
 }
 
+// Defines how to handle identifier values among table definitions
+export enum IdentifierValueCriteria {
+    ALLOW_INTERSECTION = "allow_intersection",
+    REQUIRE_EQUALITY = "require_equality",
+}
+
 export class TableDefinitionsAccessor {
     private _tableDefinitions: InplaceVolumetricsTableDefinition_api[];
     private _tableNamesFilter: string[];
@@ -55,15 +61,24 @@ export class TableDefinitionsAccessor {
     private _tableNamesIntersection: string[];
     private _fluidZonesIntersection: FluidZone_api[] = [];
     private _resultNamesIntersection: InplaceVolumetricResultName_api[] = [];
+
     private _commonIdentifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
+    private _identifierValueCriteria: IdentifierValueCriteria;
 
     private _tablesNotComparable: boolean = false;
 
-    constructor(tableDefinitionsPerEnsembleIdent: TableDefinitionsForEnsembleIdent[], tableNamesFilter?: string[]) {
+    constructor(
+        tableDefinitionsPerEnsembleIdent: TableDefinitionsForEnsembleIdent[],
+        tableNamesFilter: string[],
+        identifierValueCriteria: IdentifierValueCriteria
+    ) {
         this._tableDefinitions = tableDefinitionsPerEnsembleIdent.flatMap((data) => data.tableDefinitions);
-        this._tableNamesFilter = tableNamesFilter ?? [];
+        this._tableNamesFilter = tableNamesFilter;
+
         this._uniqueEnsembleIdents = tableDefinitionsPerEnsembleIdent.map((data) => data.ensembleIdent);
         this._tableNamesIntersection = makeUniqueTableNamesIntersection(tableDefinitionsPerEnsembleIdent);
+        this._identifierValueCriteria = identifierValueCriteria;
+
         this.makeIntersections();
     }
 
@@ -125,7 +140,15 @@ export class TableDefinitionsAccessor {
                 }
 
                 // Tables are not comparable when identifier values are not equal
-                if (!isEqual(identifierWithValues.values.sort(), currentIdentifierWithValues.values.sort())) {
+                if (this._identifierValueCriteria === IdentifierValueCriteria.ALLOW_INTERSECTION) {
+                    const values = Array.from(
+                        new Set(identifierWithValues.values.concat(currentIdentifierWithValues.values))
+                    );
+                    commonIdentifiersWithValuesMap.set(identifier, {
+                        identifier,
+                        values,
+                    });
+                } else if (!isEqual(identifierWithValues.values.sort(), currentIdentifierWithValues.values.sort())) {
                     this._tablesNotComparable = true;
                     break;
                 }
@@ -141,11 +164,7 @@ export class TableDefinitionsAccessor {
         this._resultNamesIntersection = sortResultNames(Array.from(resultNames));
         this._commonIdentifiersWithValues = Array.from(commonIdentifiersWithValuesMap.values());
 
-        if (
-            this._fluidZonesIntersection.length === 0 ||
-            this._resultNamesIntersection.length === 0 ||
-            this._commonIdentifiersWithValues.length === 0
-        ) {
+        if (this._commonIdentifiersWithValues.length === 0) {
             this._tablesNotComparable = true;
         }
     }

@@ -1,6 +1,5 @@
 import { InplaceVolumetricResultName_api } from "@api";
-import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
-import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
+import { InplaceVolumetricsFilterSelections, PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 import {
     SelectorColumn,
     SourceAndTableIdentifierUnion,
@@ -9,7 +8,7 @@ import {
 
 import { atom } from "jotai";
 
-export const filterAtom = atom<InplaceVolumetricsFilter>({
+export const filterAtom = atom<InplaceVolumetricsFilterSelections>({
     ensembleIdents: [],
     tableNames: [],
     fluidZones: [],

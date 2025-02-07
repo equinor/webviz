@@ -12,6 +12,7 @@ import {
 import { atom } from "jotai";
 
 import {
+    selectedIdentifierValueCriteriaAtom,
     userSelectedAccumulationOptionsAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
@@ -44,8 +45,13 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
 export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get) => {
     const selectedTableNames = get(selectedTableNamesAtom);
     const tableDefinitions = get(tableDefinitionsQueryAtom);
+    const selectedIdentifierValueCriteria = get(selectedIdentifierValueCriteriaAtom);
 
-    return new TableDefinitionsAccessor(tableDefinitions.isLoading ? [] : tableDefinitions.data, selectedTableNames);
+    return new TableDefinitionsAccessor(
+        tableDefinitions.isLoading ? [] : tableDefinitions.data,
+        selectedTableNames,
+        selectedIdentifierValueCriteria
+    );
 });
 
 export const areTableDefinitionSelectionsValidAtom = atom<boolean>((get) => {

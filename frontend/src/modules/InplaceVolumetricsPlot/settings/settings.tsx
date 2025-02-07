@@ -3,10 +3,11 @@ import React from "react";
 import { InplaceVolumetricResultName_api } from "@api";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
+import { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
+import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 import { SelectorColumn } from "@modules/_shared/InplaceVolumetrics/types";
 import { RealSelector } from "@modules/_shared/InplaceVolumetrics/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
@@ -15,6 +16,7 @@ import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/I
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
+    selectedIdentifierValueCriteriaAtom,
     userSelectedColorByAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
@@ -77,12 +79,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const setSelectedColorBy = useSetAtom(userSelectedColorByAtom);
 
     const [selectedPlotType, setSelectedPlotType] = useAtom(userSelectedPlotTypeAtom);
+    const [selectedIdentifierValueCriteria, setSelectedIdentifierValueCriteria] = useAtom(
+        selectedIdentifierValueCriteriaAtom
+    );
 
-    function handleFilterChange(newFilter: InplaceVolumetricsFilter) {
+    function handleFilterChange(newFilter: InplaceVolumetricsFilterSettings) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedFluidZones(newFilter.fluidZones);
         setSelectedIdentifiersValues(newFilter.identifiersValues);
+        setSelectedIdentifierValueCriteria(
+            newFilter.allowIdentifierValuesIntersection
+                ? IdentifierValueCriteria.ALLOW_INTERSECTION
+                : IdentifierValueCriteria.REQUIRE_EQUALITY
+        );
     }
 
     const resultNameOptions: DropdownOption<InplaceVolumetricResultName_api>[] = tableDefinitionsAccessor
@@ -168,6 +178,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             selectedFluidZones={selectedFluidZones}
             selectedIdentifiersValues={selectedIdentifiersValues}
             selectedTableNames={selectedTableNames}
+            selectedAllowIdentifierValueIntersection={
+                selectedIdentifierValueCriteria === IdentifierValueCriteria.ALLOW_INTERSECTION
+            }
             onChange={handleFilterChange}
             additionalSettings={plotSettings}
             areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}

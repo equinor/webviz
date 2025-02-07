@@ -1,10 +1,10 @@
 import { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
-import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
+import { InplaceVolumetricsFilterSelections } from "@modules/InplaceVolumetricsTable/types";
 import { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
 
-export const filterAtom = atom<InplaceVolumetricsFilter>({
+export const filterAtom = atom<InplaceVolumetricsFilterSelections>({
     ensembleIdents: [],
     tableNames: [],
     fluidZones: [],

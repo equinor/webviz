@@ -3,12 +3,13 @@ import React from "react";
 import { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
+import { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { Select, SelectOption } from "@lib/components/Select";
 import { TagOption, TagPicker } from "@lib/components/TagPicker";
+import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
 import {
     InplaceVolumetricStatisticEnumToStringMapping,
     SourceAndTableIdentifierUnion,
@@ -22,6 +23,7 @@ import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/I
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
 import {
+    selectedIdentifierValueCriteriaAtom,
     selectedStatisticOptionsAtom,
     selectedTableTypeAtom,
     userSelectedAccumulationOptionsAtom,
@@ -69,12 +71,20 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const [selectedTableType, setSelectedTableType] = useAtom(selectedTableTypeAtom);
     const [selectedStatisticOptions, setSelectedStatisticOptions] = useAtom(selectedStatisticOptionsAtom);
+    const [selectedIdentifierValueCriteria, setSelectedIdentifierValueCriteria] = useAtom(
+        selectedIdentifierValueCriteriaAtom
+    );
 
-    function handleFilterChange(newFilter: InplaceVolumetricsFilter) {
+    function handleFilterChange(newFilter: InplaceVolumetricsFilterSettings) {
         setSelectedEnsembleIdents(newFilter.ensembleIdents);
         setSelectedTableNames(newFilter.tableNames);
         setSelectedFluidZones(newFilter.fluidZones);
         setSelectedIdentifiersValues(newFilter.identifiersValues);
+        setSelectedIdentifierValueCriteria(
+            newFilter.allowIdentifierValuesIntersection
+                ? IdentifierValueCriteria.ALLOW_INTERSECTION
+                : IdentifierValueCriteria.REQUIRE_EQUALITY
+        );
     }
 
     function handleAccumulationOptionsChange(
@@ -167,6 +177,9 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             selectedFluidZones={selectedFluidZones}
             selectedIdentifiersValues={selectedIdentifiersValues}
             selectedTableNames={selectedTableNames}
+            selectedAllowIdentifierValueIntersection={
+                selectedIdentifierValueCriteria === IdentifierValueCriteria.ALLOW_INTERSECTION
+            }
             onChange={handleFilterChange}
             additionalSettings={tableSettings}
             areCurrentlySelectedTablesComparable={tableDefinitionsAccessor.getAreTablesComparable()}
