@@ -90,12 +90,12 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         .map((name) => ({ label: name, value: name, hoverText: createHoverTextForVolume(name) }));
 
     // Create selector options
-    const identifiersIntersection = tableDefinitionsAccessor.getIdentifiersWithIntersectionValues().map((ident) => {
+    const commonIdentifiers = tableDefinitionsAccessor.getCommonIdentifiersWithValues().map((ident) => {
         return ident.identifier;
     });
     const selectorOptions: DropdownOption<SelectorColumn>[] = [
         { label: RealSelector.REAL, value: RealSelector.REAL },
-        ...identifiersIntersection.map((name) => ({ label: name, value: name })),
+        ...commonIdentifiers.map((name) => ({ label: name, value: name })),
     ];
 
     const subplotOptions = makeSubplotByOptions(tableDefinitionsAccessor, selectedTableNames);
@@ -163,7 +163,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             isPending={tableDefinitionsQueryResult.isLoading}
             availableFluidZones={tableDefinitionsAccessor.getFluidZonesIntersection()}
             availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
-            availableIdentifiersWithValues={tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()}
+            availableIdentifiersWithValues={tableDefinitionsAccessor.getCommonIdentifiersWithValues()}
             selectedEnsembleIdents={selectedEnsembleIdents}
             selectedFluidZones={selectedFluidZones}
             selectedIdentifiersValues={selectedIdentifiersValues}

@@ -221,7 +221,8 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
 
     let errorMessage: string | undefined = undefined;
     if (props.areCurrentlySelectedTablesComparable === false) {
-        errorMessage = "Selected tables are not comparable";
+        errorMessage =
+            "Selected tables are not comparable due to mismatching fluid zones, result names or identifier columns";
     }
 
     return (
@@ -234,7 +235,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                     size={5}
                 />
             </CollapsibleGroup>
-            <PendingWrapper isPending={props.isPending ?? false} errorMessage={props.errorMessage}>
+            <PendingWrapper isPending={props.isPending ?? false} errorMessage={props.errorMessage ?? errorMessage}>
                 <div className="flex flex-col gap-2">{props.additionalSettings}</div>
                 <div className="flex flex-col gap-2">
                     <CollapsibleGroup title="Volumetric table names" expanded>
@@ -255,36 +256,28 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                             size={3}
                         />
                     </CollapsibleGroup>
-                    <PendingWrapper isPending={false} errorMessage={errorMessage}>
-                        <CollapsibleGroup title="Identifier filters" expanded>
-                            <div className="flex flex-col gap-2">
-                                {props.availableIdentifiersWithValues.map((identifier) => (
-                                    <CollapsibleGroup
-                                        key={identifier.identifier}
-                                        title={identifier.identifier}
-                                        expanded
-                                    >
-                                        <Select
-                                            options={identifier.values.map((value) => ({
-                                                value: value,
-                                                label: value.toString(),
-                                            }))}
-                                            value={
-                                                identifiersValues.find((el) => el.identifier === identifier.identifier)
-                                                    ?.values ?? []
-                                            }
-                                            onChange={(value) =>
-                                                handleIdentifierValuesChange(identifier.identifier, value)
-                                            }
-                                            multiple
-                                            size={Math.max(Math.min(identifier.values.length, 10), 3)}
-                                            showQuickSelectButtons={true}
-                                        />
-                                    </CollapsibleGroup>
-                                ))}
-                            </div>
-                        </CollapsibleGroup>
-                    </PendingWrapper>
+                    <CollapsibleGroup title="Identifier filters" expanded>
+                        <div className="flex flex-col gap-2">
+                            {props.availableIdentifiersWithValues.map((identifier) => (
+                                <CollapsibleGroup key={identifier.identifier} title={identifier.identifier} expanded>
+                                    <Select
+                                        options={identifier.values.map((value) => ({
+                                            value: value,
+                                            label: value.toString(),
+                                        }))}
+                                        value={
+                                            identifiersValues.find((el) => el.identifier === identifier.identifier)
+                                                ?.values ?? []
+                                        }
+                                        onChange={(value) => handleIdentifierValuesChange(identifier.identifier, value)}
+                                        multiple
+                                        size={Math.max(Math.min(identifier.values.length, 10), 3)}
+                                        showQuickSelectButtons={true}
+                                    />
+                                </CollapsibleGroup>
+                            ))}
+                        </div>
+                    </CollapsibleGroup>
                 </div>
             </PendingWrapper>
         </>

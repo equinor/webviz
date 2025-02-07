@@ -2,9 +2,12 @@ import {
     FluidZone_api,
     InplaceVolumetricResultName_api,
     InplaceVolumetricsIdentifierWithValues_api,
+    InplaceVolumetricsIdentifier_api,
     InplaceVolumetricsTableDefinition_api,
 } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+
+import { isEqual } from "lodash";
 
 import { sortResultNames } from "./sortResultNames";
 
@@ -52,7 +55,8 @@ export class TableDefinitionsAccessor {
     private _tableNamesIntersection: string[];
     private _fluidZonesIntersection: FluidZone_api[] = [];
     private _resultNamesIntersection: InplaceVolumetricResultName_api[] = [];
-    private _identifiersWithIntersectionValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
+    private _commonIdentifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
+
     private _tablesNotComparable: boolean = false;
 
     constructor(tableDefinitionsPerEnsembleIdent: TableDefinitionsForEnsembleIdent[], tableNamesFilter?: string[]) {
@@ -64,32 +68,36 @@ export class TableDefinitionsAccessor {
     }
 
     private makeIntersections(): void {
+        if (this._tableDefinitions.length === 0) {
+            return;
+        }
+
         const fluidZones: Set<FluidZone_api> = new Set();
         const resultNames: Set<InplaceVolumetricResultName_api> = new Set();
-        const identifiersWithValuesIntersection: InplaceVolumetricsIdentifierWithValues_api[] = [];
+        const commonIdentifiersWithValuesMap: Map<
+            InplaceVolumetricsIdentifier_api,
+            InplaceVolumetricsIdentifierWithValues_api
+        > = new Map();
 
-        let index = 0;
+        let isInitialized = false;
         for (const tableDefinition of this._tableDefinitions) {
             if (this._tableNamesFilter && !this._tableNamesFilter.includes(tableDefinition.tableName)) {
                 continue;
             }
 
-            if (index === 0) {
+            if (!isInitialized) {
                 // Initialize sets and arrays with the first valid tableDefinition
                 tableDefinition.fluidZones.forEach((fluidZone) => fluidZones.add(fluidZone));
                 tableDefinition.resultNames.forEach((resultName) => resultNames.add(resultName));
 
                 for (const identifierWithValues of tableDefinition.identifiersWithValues) {
-                    const existingIdentifierWithValues = identifiersWithValuesIntersection.find(
-                        (el) => el.identifier === identifierWithValues.identifier
-                    );
-                    if (existingIdentifierWithValues) {
+                    if (commonIdentifiersWithValuesMap.has(identifierWithValues.identifier)) {
                         throw new Error(`Duplicate identifier ${identifierWithValues.identifier}`);
                     }
-
-                    identifiersWithValuesIntersection.push(identifierWithValues);
+                    commonIdentifiersWithValuesMap.set(identifierWithValues.identifier, identifierWithValues);
                 }
-                index++;
+
+                isInitialized = true;
                 continue;
             }
 
@@ -98,41 +106,48 @@ export class TableDefinitionsAccessor {
                     fluidZones.delete(fluidZone);
                 }
             }
-
             for (const resultName of resultNames) {
                 if (!tableDefinition.resultNames.includes(resultName)) {
                     resultNames.delete(resultName);
                 }
             }
 
-            for (const identifierWithIntersectionValues of identifiersWithValuesIntersection) {
+            const identifiersToRemove = [];
+            for (const [identifier, identifierWithValues] of commonIdentifiersWithValuesMap) {
                 const currentIdentifierWithValues = tableDefinition.identifiersWithValues.find(
-                    (item) => item.identifier === identifierWithIntersectionValues.identifier
+                    (item) => item.identifier === identifier
                 );
 
+                // Remove identifiers that are not present in all table definitions
                 if (!currentIdentifierWithValues) {
-                    // Identifier is not present in the current tableDefinition, an intersection is not possible
-                    this._tablesNotComparable = true;
-                    break;
+                    identifiersToRemove.push(identifier);
+                    continue;
                 }
 
-                // Update values of the identifier
-                identifierWithIntersectionValues.values = identifierWithIntersectionValues.values.filter((value) =>
-                    currentIdentifierWithValues.values.includes(value)
-                );
-
-                if (identifierWithIntersectionValues.values.length === 0) {
-                    // Intersection is empty, an intersection is not possible
+                // Tables are not comparable when identifier values are not equal
+                if (!isEqual(identifierWithValues.values.sort(), currentIdentifierWithValues.values.sort())) {
                     this._tablesNotComparable = true;
                     break;
                 }
             }
-            index++;
+
+            // Remove identifiers that are not common among all table definitions
+            for (const identifier of identifiersToRemove) {
+                commonIdentifiersWithValuesMap.delete(identifier);
+            }
         }
 
         this._fluidZonesIntersection = Array.from(fluidZones).sort();
         this._resultNamesIntersection = sortResultNames(Array.from(resultNames));
-        this._identifiersWithIntersectionValues = identifiersWithValuesIntersection.sort();
+        this._commonIdentifiersWithValues = Array.from(commonIdentifiersWithValuesMap.values());
+
+        if (
+            this._fluidZonesIntersection.length === 0 ||
+            this._resultNamesIntersection.length === 0 ||
+            this._commonIdentifiersWithValues.length === 0
+        ) {
+            this._tablesNotComparable = true;
+        }
     }
 
     getUniqueEnsembleIdents(): RegularEnsembleIdent[] {
@@ -151,8 +166,8 @@ export class TableDefinitionsAccessor {
         return this._resultNamesIntersection;
     }
 
-    getIdentifiersWithIntersectionValues(): InplaceVolumetricsIdentifierWithValues_api[] {
-        return this._identifiersWithIntersectionValues;
+    getCommonIdentifiersWithValues(): InplaceVolumetricsIdentifierWithValues_api[] {
+        return this._commonIdentifiersWithValues;
     }
 
     getAreTablesComparable(): boolean {
@@ -206,7 +221,7 @@ export class TableDefinitionsAccessor {
     hasIdentifiersWithValues(identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[]): boolean {
         for (const identifierValue of identifiersWithValues) {
             const identifier = identifierValue.identifier;
-            const tableDefinitionsIdentifier = this._identifiersWithIntersectionValues.find(
+            const tableDefinitionsIdentifier = this._commonIdentifiersWithValues.find(
                 (el) => el.identifier === identifier
             );
             if (!tableDefinitionsIdentifier) {

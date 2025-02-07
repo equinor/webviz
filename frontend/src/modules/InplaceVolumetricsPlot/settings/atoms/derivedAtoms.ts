@@ -1,7 +1,7 @@
 import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
-import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
+import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelectedIdentifierValues } from "@modules/_shared/InplaceVolumetrics/fixupUserSelectedIdentifierValues";
 import { RealSelector, SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 import {
@@ -121,7 +121,11 @@ export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
         return tableDefinitionsAccessor.getFluidZonesIntersection();
     }
 
-    return fixupUserSelection(userSelectedFluidZones, tableDefinitionsAccessor.getFluidZonesIntersection(), true);
+    return fixupUserSelection(
+        userSelectedFluidZones,
+        tableDefinitionsAccessor.getFluidZonesIntersection(),
+        FixupSelection.SELECT_ALL
+    );
 });
 
 export const selectedResultNameAtom = atom<InplaceVolumetricResultName_api | null>((get) => {
@@ -174,7 +178,7 @@ export const selectedSelectorColumnAtom = atom<SelectorColumn | null>((get) => {
 
     const possibleSelectorColumns = [
         RealSelector.REAL,
-        ...tableDefinitionsAccessor.getIdentifiersWithIntersectionValues().map((ident) => ident.identifier),
+        ...tableDefinitionsAccessor.getCommonIdentifiersWithValues().map((ident) => ident.identifier),
     ];
     if (!userSelectedSelectorColumn) {
         return possibleSelectorColumns[0];
@@ -192,13 +196,12 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
     const userSelectedIdentifierValues = get(userSelectedIdentifiersValuesAtom);
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
-    const uniqueIdentifierValues = tableDefinitionsAccessor.getIdentifiersWithIntersectionValues();
-    const selectAllOnFixup = true;
+    const uniqueIdentifierValues = tableDefinitionsAccessor.getCommonIdentifiersWithValues();
 
     const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = fixupUserSelectedIdentifierValues(
         userSelectedIdentifierValues,
         uniqueIdentifierValues,
-        selectAllOnFixup
+        FixupSelection.SELECT_ALL
     );
 
     return fixedUpIdentifierValues;

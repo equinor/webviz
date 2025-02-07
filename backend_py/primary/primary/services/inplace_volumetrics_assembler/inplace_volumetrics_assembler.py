@@ -257,7 +257,7 @@ class InplaceVolumetricsAssembler:
 
         Calculation of volume names and properties, and creation of the results is handled outside this function.
         """
-        # Check for empty identifier selections
+        # Check for empty identifier selection lists
         has_empty_identifier_selection = any(
             not identifier_with_values.values for identifier_with_values in identifiers_with_values
         )
@@ -285,10 +285,10 @@ class InplaceVolumetricsAssembler:
         )
 
         # Get volume table per fluid selection - requested volumes and volumes needed for properties
-        volume_df_per_fluid_selection: dict[
-            FluidSelection, pl.DataFrame
-        ] = await self._create_volume_df_per_fluid_selection(
-            table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
+        volume_df_per_fluid_selection: dict[FluidSelection, pl.DataFrame] = (
+            await self._create_volume_df_per_fluid_selection(
+                table_name, all_volume_names, fluid_zones, realizations, identifiers_with_values, accumulate_fluid_zones
+            )
         )
 
         # If accumulate_fluid_zones is True, exclude BO and BG from valid properties

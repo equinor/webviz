@@ -72,7 +72,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             return "Failed to load volumetric table data";
         }
         if (!areSelectedTablesComparable) {
-            return "Selected volumetric tables are not comparable";
+            return "Selected volumetric tables are not comparable due to mismatching fluid zones, result names or identifier columns";
         }
 
         return null;

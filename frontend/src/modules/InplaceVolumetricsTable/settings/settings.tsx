@@ -101,7 +101,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const accumulateOptions: TagOption<
         Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>
     >[] = [{ label: "FLUID ZONE", value: SourceIdentifier.FLUID_ZONE }];
-    for (const identifier of tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()) {
+    for (const identifier of tableDefinitionsAccessor.getCommonIdentifiersWithValues()) {
         accumulateOptions.push({ label: identifier.identifier, value: identifier.identifier });
     }
 
@@ -162,7 +162,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             isPending={tableDefinitionsQueryResult.isLoading}
             availableFluidZones={tableDefinitionsAccessor.getFluidZonesIntersection()}
             availableTableNames={tableDefinitionsAccessor.getTableNamesIntersection()}
-            availableIdentifiersWithValues={tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()}
+            availableIdentifiersWithValues={tableDefinitionsAccessor.getCommonIdentifiersWithValues()}
             selectedEnsembleIdents={selectedEnsembleIdents}
             selectedFluidZones={selectedFluidZones}
             selectedIdentifiersValues={selectedIdentifiersValues}
