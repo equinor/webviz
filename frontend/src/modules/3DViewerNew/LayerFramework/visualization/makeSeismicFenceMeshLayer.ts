@@ -79,6 +79,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
         const properties = data.dataFloat32Arr;
 
         let startPosition: [number, number, number] = [0, 0, 0];
+        let boundingBox: number[][] = [];
 
         let transformUVToXYZ: (u: number, v: number) => [number, number, number] = () => {
             throw new Error("transformUVToXYZ not implemented");
@@ -86,6 +87,12 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
 
         if (plane === Plane.CROSSLINE || plane === Plane.INLINE) {
             startPosition = [bbox[0][0], bbox[0][1], -data.u_min];
+            boundingBox = [
+                startPosition,
+                [bbox[1][0], bbox[1][1], -data.u_min],
+                [bbox[1][0], bbox[1][1], -data.u_max],
+                [bbox[0][0], bbox[0][1], -data.u_max],
+            ];
             transformUVToXYZ = (u: number, v: number): [number, number, number] => {
                 const x = v * (bbox[1][0] - bbox[0][0]);
                 const y = v * (bbox[1][1] - bbox[0][1]);
@@ -94,6 +101,12 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
             };
         } else if (plane === Plane.DEPTH) {
             startPosition = [bbox[0][0], bbox[0][1], -settings.seismicDepthSlice];
+            boundingBox = [
+                startPosition,
+                [bbox[1][0], bbox[1][1], -settings.seismicDepthSlice],
+                [bbox[2][0], bbox[2][1], -settings.seismicDepthSlice],
+                [bbox[3][0], bbox[3][1], -settings.seismicDepthSlice],
+            ];
             transformUVToXYZ = (u: number, v: number): [number, number, number] => {
                 const x = u * (bbox[1][0] - bbox[0][0]) + v * (bbox[3][0] - bbox[0][0]); // Diagonal across bounding box
                 const y = u * (bbox[1][1] - bbox[0][1]) + v * (bbox[3][1] - bbox[0][1]); // Diagonal across bounding box
@@ -113,6 +126,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
             },
             startPosition,
             colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
+            boundingBox,
         });
     };
 }

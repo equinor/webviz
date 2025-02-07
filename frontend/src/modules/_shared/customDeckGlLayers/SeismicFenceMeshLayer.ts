@@ -1,4 +1,5 @@
-import { CompositeLayer, CompositeLayerProps, Layer, UpdateParameters } from "@deck.gl/core";
+import { CompositeLayer, CompositeLayerProps, Layer, PickingInfo, UpdateParameters } from "@deck.gl/core";
+import { PathLayer } from "@deck.gl/layers";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { Geometry } from "@luma.gl/engine";
 
@@ -9,6 +10,7 @@ export type SeismicFenceMeshLayerProps = {
         indices: Uint32Array;
         properties: Float32Array;
     };
+    boundingBox: number[][]; // [minX, minY, minZ, maxX, maxY, maxZ]
     colorMapFunction: (value: number) => [number, number, number];
 };
 
@@ -18,6 +20,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     // @ts-expect-error - private
     state!: {
         geometry: Geometry;
+        isHovered: boolean;
     };
 
     private makeColorsArray(): Float32Array {
@@ -55,16 +58,23 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         });
     }
 
+    onHover(pickingInfo: PickingInfo): boolean {
+        this.setState({ isHovered: pickingInfo.index !== -1 });
+        return false;
+    }
+
     updateState(params: UpdateParameters<Layer<SeismicFenceMeshLayerProps & Required<CompositeLayerProps>>>) {
         super.updateState(params);
-        this.makeMesh();
+        if (params.changeFlags.dataChanged) {
+            this.makeMesh();
+        }
     }
 
     renderLayers() {
-        const { startPosition } = this.props;
-        const { geometry } = this.state;
+        const { startPosition, boundingBox } = this.props;
+        const { geometry, isHovered } = this.state;
 
-        return [
+        const layers: Layer<any>[] = [
             new SimpleMeshLayer({
                 id: "seismic-fence-mesh-layer",
                 data: [0],
@@ -72,7 +82,28 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                 getPosition: startPosition,
                 getColor: [255, 255, 255, 255],
                 material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
+                pickable: true,
             }),
         ];
+
+        if (isHovered) {
+            layers.push(
+                new PathLayer({
+                    id: "seismic-fence-mesh-layer-hovered",
+                    data: [[boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3], boundingBox[0]]],
+                    getPath: (d: number[]) => d,
+                    getColor: [0, 0, 255, 255],
+                    getWidth: 2,
+                    pickable: false,
+                    billboard: true,
+                    widthUnits: "pixels",
+                    parameters: {
+                        depthTest: false,
+                    },
+                })
+            );
+        }
+
+        return layers;
     }
 }
