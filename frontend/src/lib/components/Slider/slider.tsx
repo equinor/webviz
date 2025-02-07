@@ -14,7 +14,7 @@ export type SliderProps = {
     debounceTimeMs?: number;
 } & Omit<SliderUnstyledProps, "valueLabelFormat">;
 
-export const Slider = React.forwardRef((props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) => {
+function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const {
         valueLabelDisplay,
         value: propsValue,
@@ -35,6 +35,7 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
     const [valueLabelPosition, setValueLabelPosition] = React.useState<Vec2>({ x: 0, y: 0 });
 
     const divRef = React.useRef<HTMLDivElement>(null);
+    React.useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => divRef.current);
     const valueLabelRef = React.useRef<HTMLDivElement>(null);
 
     const sliderRect = useElementBoundingRect(divRef);
@@ -58,12 +59,12 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                     const activeThumb = Array.from(elements).findIndex(
                         (element) =>
                             element ===
-                                document
-                                    .elementsFromPoint(e.clientX, e.clientY)
-                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))
-                                    .at(0) ??
-                            elements[0] ??
-                            elements.item(0)
+                            (document
+                                .elementsFromPoint(e.clientX, e.clientY)
+                                .filter((el) => el.classList.contains("MuiSlider-thumb"))
+                                .at(0) ??
+                                elements[0] ??
+                                elements.item(0))
                     );
                     if (activeThumb >= 0) {
                         setCurrentlyActiveThumb(activeThumb);
@@ -96,12 +97,12 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                     const activeThumb = Array.from(elements).findIndex(
                         (element) =>
                             element ===
-                                document
-                                    .elementsFromPoint(e.clientX, e.clientY)
-                                    .filter((el) => el.classList.contains("MuiSlider-thumb"))
-                                    .at(0) ??
-                            elements[0] ??
-                            elements.item(0)
+                            (document
+                                .elementsFromPoint(e.clientX, e.clientY)
+                                .filter((el) => el.classList.contains("MuiSlider-thumb"))
+                                .at(0) ??
+                                elements[0] ??
+                                elements.item(0))
                     );
                     if (activeThumb >= 0) {
                         setCurrentlyActiveThumb(activeThumb);
@@ -204,120 +205,118 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
     }, []);
 
     return (
-        <BaseComponent disabled={props.disabled}>
-            <div ref={divRef} className="mt-2 mb-2 flex justify-center">
-                <SliderUnstyled
-                    {...rest}
-                    scale={props.scale}
-                    orientation={orientation ?? "horizontal"}
-                    max={max}
-                    min={min}
-                    onChange={handleValueChanged}
-                    value={value}
-                    ref={ref}
-                    slotProps={{
-                        root: {
-                            className: resolveClassNames(
-                                orientation === "vertical" ? "w-3" : "w-full mx-3",
-                                orientation === "vertical" ? "h-full my-3" : "h-3",
-                                "cursor-pointer",
-                                "touch-action-none",
-                                "inline-block",
-                                "relative",
-                                orientation === "vertical" ? "px-4" : ""
-                            ),
-                        },
-                        rail: {
-                            className: resolveClassNames(
-                                "block",
-                                orientation === "vertical" ? "w-1" : "w-full",
-                                orientation === "vertical" ? "h-full" : "h-1",
-                                track === "inverted" ? "bg-blue-600" : "bg-blue-200",
-                                "rounded",
-                                orientation === "vertical" ? "top-0" : "left-0",
-                                "transform",
-                                orientation === "vertical" ? "-translate-y-1" : "translate-y-1"
-                            ),
-                        },
-                        track: {
-                            className: resolveClassNames(
-                                "block",
-                                orientation === "vertical" ? "w-1" : "h-1",
-                                track !== "inverted" ? "bg-blue-600" : "bg-blue-200",
-                                "rounded",
-                                "absolute",
-                                "transform",
-                                orientation === "vertical" ? "translate-x-1/2" : "",
-                                orientation === "vertical" ? "-translate-y-1" : "",
-                                orientation === "vertical" ? "-ml-0.5" : "",
-                                track === false ? "hidden" : ""
-                            ),
-                        },
-                        thumb: {
-                            className: resolveClassNames(
-                                "absolute",
-                                "box-content",
-                                "w-5",
-                                "h-5",
-                                "block",
-                                "bg-blue-600",
-                                "z-30",
-                                "shadow-sm",
-                                "rounded-full",
-                                "transform",
-                                orientation === "vertical" ? "translate-x-1/2" : "-translate-x-1/2",
-                                orientation === "vertical" ? "translate-y-1.5" : "-translate-y-1",
-                                orientation === "vertical" ? "left-0" : "top-0",
-                                orientation === "vertical" ? "-ml-0.5" : "ml-0.5",
-                                "cursor-pointer",
-                                "outline-none",
-                                "focus:outline-none",
-                                "hover:shadow-md",
-                                "active:shadow-lg",
-                                "after:absolute",
-                                "after:rounded-full",
-                                "after:w-7",
-                                "after:h-7",
-                                "after:inset-0",
-                                "after:-left-1",
-                                "after:-top-1",
-                                "after:bg-blue-600",
-                                "after:transition-all",
-                                "after:duration-100",
-                                "after:ease-in-out",
-                                "after:transform",
-                                "after:scale-0",
-                                "after:opacity-0",
-                                "after:hover:opacity-10",
-                                "after:hover:scale-100",
-                                "after:z-50",
-                                "after:active:scale-110",
-                                "after:active:opacity-15",
-                                "after:active:-left-[0.4em]",
-                                "after:active:-top-[0.4em]",
-                                "after:active:w-8",
-                                "after:active:h-8"
-                            ),
-                        },
-                        mark: {
-                            className: resolveClassNames(
-                                "absolute",
-                                "w-2",
-                                "h-2",
-                                "-ml-0.5",
-                                "-mt-0.5",
-                                "bg-blue-600",
-                                "border-2",
-                                "opacity-80",
-                                "border-white",
-                                "transform",
-                                orientation === "vertical" ? "-translate-y-0" : "",
-                                "z-20"
-                            ),
-                        },
-                    }}
-                />
-            </div>
+        <BaseComponent disabled={props.disabled} ref={divRef} className="mt-2 mb-2 flex justify-center">
+            <SliderUnstyled
+                {...rest}
+                scale={props.scale}
+                orientation={orientation ?? "horizontal"}
+                max={max}
+                min={min}
+                onChange={handleValueChanged}
+                value={value}
+                ref={ref}
+                slotProps={{
+                    root: {
+                        className: resolveClassNames(
+                            orientation === "vertical" ? "w-3" : "w-full mx-3",
+                            orientation === "vertical" ? "h-full my-3" : "h-3",
+                            "cursor-pointer",
+                            "touch-action-none",
+                            "inline-block",
+                            "relative",
+                            orientation === "vertical" ? "px-4" : ""
+                        ),
+                    },
+                    rail: {
+                        className: resolveClassNames(
+                            "block",
+                            orientation === "vertical" ? "w-1" : "w-full",
+                            orientation === "vertical" ? "h-full" : "h-1",
+                            track === "inverted" ? "bg-blue-600" : "bg-blue-200",
+                            "rounded",
+                            orientation === "vertical" ? "top-0" : "left-0",
+                            "transform",
+                            orientation === "vertical" ? "-translate-y-1" : "translate-y-1"
+                        ),
+                    },
+                    track: {
+                        className: resolveClassNames(
+                            "block",
+                            orientation === "vertical" ? "w-1" : "h-1",
+                            track !== "inverted" ? "bg-blue-600" : "bg-blue-200",
+                            "rounded",
+                            "absolute",
+                            "transform",
+                            orientation === "vertical" ? "translate-x-1/2" : "",
+                            orientation === "vertical" ? "-translate-y-1" : "",
+                            orientation === "vertical" ? "-ml-0.5" : "",
+                            track === false ? "hidden" : ""
+                        ),
+                    },
+                    thumb: {
+                        className: resolveClassNames(
+                            "absolute",
+                            "box-content",
+                            "w-5",
+                            "h-5",
+                            "block",
+                            "bg-blue-600",
+                            "z-30",
+                            "shadow-sm",
+                            "rounded-full",
+                            "transform",
+                            orientation === "vertical" ? "translate-x-1/2" : "-translate-x-1/2",
+                            orientation === "vertical" ? "translate-y-1.5" : "-translate-y-1",
+                            orientation === "vertical" ? "left-0" : "top-0",
+                            orientation === "vertical" ? "-ml-0.5" : "ml-0.5",
+                            "cursor-pointer",
+                            "outline-none",
+                            "focus:outline-none",
+                            "hover:shadow-md",
+                            "active:shadow-lg",
+                            "after:absolute",
+                            "after:rounded-full",
+                            "after:w-7",
+                            "after:h-7",
+                            "after:inset-0",
+                            "after:-left-1",
+                            "after:-top-1",
+                            "after:bg-blue-600",
+                            "after:transition-all",
+                            "after:duration-100",
+                            "after:ease-in-out",
+                            "after:transform",
+                            "after:scale-0",
+                            "after:opacity-0",
+                            "after:hover:opacity-10",
+                            "after:hover:scale-100",
+                            "after:z-50",
+                            "after:active:scale-110",
+                            "after:active:opacity-15",
+                            "after:active:-left-[0.4em]",
+                            "after:active:-top-[0.4em]",
+                            "after:active:w-8",
+                            "after:active:h-8"
+                        ),
+                    },
+                    mark: {
+                        className: resolveClassNames(
+                            "absolute",
+                            "w-2",
+                            "h-2",
+                            "-ml-0.5",
+                            "-mt-0.5",
+                            "bg-blue-600",
+                            "border-2",
+                            "opacity-80",
+                            "border-white",
+                            "transform",
+                            orientation === "vertical" ? "-translate-y-0" : "",
+                            "z-20"
+                        ),
+                    },
+                }}
+            />
             {valueLabelDisplay !== undefined &&
                 valueLabelDisplay !== "off" &&
                 createPortal(
@@ -363,6 +362,6 @@ export const Slider = React.forwardRef((props: SliderProps, ref: React.Forwarded
                 )}
         </BaseComponent>
     );
-});
+}
 
-Slider.displayName = "Slider";
+export const Slider = React.forwardRef(SliderComponent);

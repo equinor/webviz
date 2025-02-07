@@ -197,259 +197,271 @@ export type RealizationPickerProps = {
     onChange?: (realizationPickerSelection: RealizationPickerSelection) => void;
 } & BaseComponentProps;
 
-export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
-    const [selections, setSelections] = React.useState<Selection[]>(
-        props.initialRangeTags
-            ? [...props.initialRangeTags].map((rangeTag) => {
-                  return { value: rangeTag, uuid: v4() };
-              })
-            : []
-    );
-    const [activeSelectionUuid, setActiveSelectionUuid] = React.useState<string | null>(null);
-    const [caretPosition, setCaretPosition] = React.useState<CaretPosition>(CaretPosition.End);
-    const [prevSelectedRangeTags, setPrevSelectedRangeTags] = React.useState<string[]>(
-        props.selectedRangeTags ? [...props.selectedRangeTags] : []
-    );
+export const RealizationPicker = React.forwardRef(
+    (props: RealizationPickerProps, ref: React.ForwardedRef<HTMLDivElement>) => {
+        const [selections, setSelections] = React.useState<Selection[]>(
+            props.initialRangeTags
+                ? [...props.initialRangeTags].map((rangeTag) => {
+                      return { value: rangeTag, uuid: v4() };
+                  })
+                : []
+        );
+        const [activeSelectionUuid, setActiveSelectionUuid] = React.useState<string | null>(null);
+        const [caretPosition, setCaretPosition] = React.useState<CaretPosition>(CaretPosition.End);
+        const [prevSelectedRangeTags, setPrevSelectedRangeTags] = React.useState<string[]>(
+            props.selectedRangeTags ? [...props.selectedRangeTags] : []
+        );
 
-    const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-    const inputRef = React.useRef<HTMLInputElement>(null);
+        const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+        const inputRef = React.useRef<HTMLInputElement>(null);
 
-    if (props.selectedRangeTags !== undefined && !isEqual(props.selectedRangeTags, prevSelectedRangeTags)) {
-        const newSelections =
-            props.selectedRangeTags?.map((rangeTag) => {
-                return { value: rangeTag, uuid: v4() };
-            }) ?? [];
-        setSelections(newSelections);
-        setPrevSelectedRangeTags(props.selectedRangeTags ? [...props.selectedRangeTags] : []);
-    }
+        if (props.selectedRangeTags !== undefined && !isEqual(props.selectedRangeTags, prevSelectedRangeTags)) {
+            const newSelections =
+                props.selectedRangeTags?.map((rangeTag) => {
+                    return { value: rangeTag, uuid: v4() };
+                }) ?? [];
+            setSelections(newSelections);
+            setPrevSelectedRangeTags(props.selectedRangeTags ? [...props.selectedRangeTags] : []);
+        }
 
-    const checkValidity = React.useCallback(
-        function checkValidity(value: string): SelectionValidityInfo {
-            if (!REALIZATION_RANGE_REGEX.test(value)) {
-                return {
-                    validity: SelectionValidity.InputError,
-                    numMatchedRealizations: 0,
-                    numMatchedValidRealizations: 0,
-                };
-            }
-
-            const range = value.split("-");
-            if (range.length === 1) {
-                if (parseInt(range[0]) < 0) {
+        const checkValidity = React.useCallback(
+            function checkValidity(value: string): SelectionValidityInfo {
+                if (!REALIZATION_RANGE_REGEX.test(value)) {
                     return {
                         validity: SelectionValidity.InputError,
                         numMatchedRealizations: 0,
                         numMatchedValidRealizations: 0,
                     };
                 }
-                if (props.validRealizations) {
-                    if (!props.validRealizations.includes(parseInt(range[0]))) {
+
+                const range = value.split("-");
+                if (range.length === 1) {
+                    if (parseInt(range[0]) < 0) {
                         return {
-                            validity: SelectionValidity.Invalid,
-                            numMatchedRealizations: 1,
+                            validity: SelectionValidity.InputError,
+                            numMatchedRealizations: 0,
                             numMatchedValidRealizations: 0,
                         };
                     }
+                    if (props.validRealizations) {
+                        if (!props.validRealizations.includes(parseInt(range[0]))) {
+                            return {
+                                validity: SelectionValidity.Invalid,
+                                numMatchedRealizations: 1,
+                                numMatchedValidRealizations: 0,
+                            };
+                        }
+                    }
+                    return {
+                        validity: SelectionValidity.Valid,
+                        numMatchedRealizations: 1,
+                        numMatchedValidRealizations: 1,
+                    };
+                } else if (range.length === 2) {
+                    if (parseInt(range[0]) < 0 || parseInt(range[1]) <= parseInt(range[0])) {
+                        return {
+                            validity: SelectionValidity.InputError,
+                            numMatchedRealizations: 0,
+                            numMatchedValidRealizations: 0,
+                        };
+                    }
+                    const numMatches = parseInt(range[1]) - parseInt(range[0]) + 1;
+                    if (props.validRealizations) {
+                        let numNotValid = 0;
+                        for (let i = parseInt(range[0]); i <= parseInt(range[1]); i++) {
+                            if (!props.validRealizations.includes(i)) {
+                                numNotValid++;
+                            }
+                        }
+                        if (numNotValid > 0) {
+                            return {
+                                validity: SelectionValidity.Invalid,
+                                numMatchedRealizations: numMatches,
+                                numMatchedValidRealizations: numMatches - numNotValid,
+                            };
+                        }
+                    }
+                    return {
+                        validity: SelectionValidity.Valid,
+                        numMatchedRealizations: numMatches,
+                        numMatchedValidRealizations: numMatches,
+                    };
                 }
+
                 return {
                     validity: SelectionValidity.Valid,
                     numMatchedRealizations: 1,
                     numMatchedValidRealizations: 1,
                 };
-            } else if (range.length === 2) {
-                if (parseInt(range[0]) < 0 || parseInt(range[1]) <= parseInt(range[0])) {
-                    return {
-                        validity: SelectionValidity.InputError,
-                        numMatchedRealizations: 0,
-                        numMatchedValidRealizations: 0,
-                    };
-                }
-                const numMatches = parseInt(range[1]) - parseInt(range[0]) + 1;
-                if (props.validRealizations) {
-                    let numNotValid = 0;
-                    for (let i = parseInt(range[0]); i <= parseInt(range[1]); i++) {
-                        if (!props.validRealizations.includes(i)) {
-                            numNotValid++;
-                        }
-                    }
-                    if (numNotValid > 0) {
-                        return {
-                            validity: SelectionValidity.Invalid,
-                            numMatchedRealizations: numMatches,
-                            numMatchedValidRealizations: numMatches - numNotValid,
-                        };
-                    }
-                }
-                return {
-                    validity: SelectionValidity.Valid,
-                    numMatchedRealizations: numMatches,
-                    numMatchedValidRealizations: numMatches,
-                };
+            },
+            [props.validRealizations]
+        );
+
+        function handleSelectionsChange(newSelections: Selection[]) {
+            if (debounceTimeout.current) {
+                clearTimeout(debounceTimeout.current);
             }
 
-            return {
-                validity: SelectionValidity.Valid,
-                numMatchedRealizations: 1,
-                numMatchedValidRealizations: 1,
-            };
-        },
-        [props.validRealizations]
-    );
-
-    function handleSelectionsChange(newSelections: Selection[]) {
-        if (debounceTimeout.current) {
-            clearTimeout(debounceTimeout.current);
+            debounceTimeout.current = setTimeout(() => {
+                if (props.onChange) {
+                    props.onChange({
+                        selectedRealizations: calcUniqueSelections(newSelections, props.validRealizations),
+                        selectedRangeTags: newSelections.map((selection) => selection.value),
+                    });
+                }
+            }, props.debounceTimeMs || 0);
         }
 
-        debounceTimeout.current = setTimeout(() => {
-            if (props.onChange) {
-                props.onChange({
-                    selectedRealizations: calcUniqueSelections(newSelections, props.validRealizations),
-                    selectedRangeTags: newSelections.map((selection) => selection.value),
-                });
-            }
-        }, props.debounceTimeMs || 0);
-    }
-
-    function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
-        const value = event.target.value;
-        const newSelections = [...selections, { value, uuid: v4() }];
-        setSelections(newSelections);
-        setActiveSelectionUuid(null);
-        event.target.value = "";
-        handleSelectionsChange(newSelections);
-    }
-
-    function handlePointerDown() {
-        if (inputRef.current) {
+        function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
+            const value = event.target.value;
+            const newSelections = [...selections, { value, uuid: v4() }];
+            setSelections(newSelections);
             setActiveSelectionUuid(null);
-            setTimeout(() => {
-                inputRef.current?.focus();
-                inputRef.current?.setSelectionRange(inputRef.current?.value.length, inputRef.current?.value.length);
-            }, 500);
+            event.target.value = "";
+            handleSelectionsChange(newSelections);
         }
-    }
 
-    function handleRemove(uuid: string) {
-        const newSelections = selections.filter((selection) => selection.uuid !== uuid);
-        setSelections(newSelections);
-        handleSelectionsChange(newSelections);
-    }
-
-    function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
-        const eventTarget = event.target as HTMLInputElement;
-
-        const allowedChars = "0123456789-,";
-        if (event.key === "Backspace" && event.currentTarget.value === "") {
-            const lastSelection = selections[selections.length - 1];
-            if (lastSelection) {
-                const newSelections = selections.slice(0, -1);
-                setSelections(newSelections);
-            }
+        function handlePointerDown() {
             if (inputRef.current) {
-                inputRef.current.value = lastSelection?.value || "";
-            }
-            event.preventDefault();
-        } else if (event.key === "Enter" || event.key === ",") {
-            event.preventDefault();
-            handleChange(event as any);
-        } else if (event.key === "Backspace" || event.key === "Delete" || event.key === "Home" || event.key === "End") {
-            return;
-        } else if (event.key === "ArrowLeft") {
-            if (eventTarget.selectionStart === 0 && eventTarget.selectionEnd === 0) {
-                let currentSelectionIndex = selections.findIndex((selection) => selection.uuid === activeSelectionUuid);
-                if (activeSelectionUuid === null) {
-                    currentSelectionIndex = selections.length;
-                }
-                if (currentSelectionIndex > 0) {
-                    setActiveSelectionUuid(selections[currentSelectionIndex - 1].uuid);
-                    setCaretPosition(CaretPosition.End);
-                }
-                event.preventDefault();
-            }
-        } else if (event.key === "ArrowRight") {
-            if (
-                eventTarget.selectionStart === eventTarget.value.length &&
-                eventTarget.selectionEnd === eventTarget.value.length
-            ) {
-                const currentSelectionIndex = selections.findIndex(
-                    (selection) => selection.uuid === activeSelectionUuid
-                );
-                if (currentSelectionIndex !== -1 && currentSelectionIndex < selections.length - 1) {
-                    setActiveSelectionUuid(selections[currentSelectionIndex + 1].uuid);
-                    setCaretPosition(CaretPosition.Start);
-                } else {
-                    setActiveSelectionUuid(null);
+                setActiveSelectionUuid(null);
+                setTimeout(() => {
                     inputRef.current?.focus();
-                    inputRef.current?.setSelectionRange(0, 0);
+                    inputRef.current?.setSelectionRange(inputRef.current?.value.length, inputRef.current?.value.length);
+                }, 500);
+            }
+        }
+
+        function handleRemove(uuid: string) {
+            const newSelections = selections.filter((selection) => selection.uuid !== uuid);
+            setSelections(newSelections);
+            handleSelectionsChange(newSelections);
+        }
+
+        function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+            const eventTarget = event.target as HTMLInputElement;
+
+            const allowedChars = "0123456789-,";
+            if (event.key === "Backspace" && event.currentTarget.value === "") {
+                const lastSelection = selections[selections.length - 1];
+                if (lastSelection) {
+                    const newSelections = selections.slice(0, -1);
+                    setSelections(newSelections);
+                }
+                if (inputRef.current) {
+                    inputRef.current.value = lastSelection?.value || "";
                 }
                 event.preventDefault();
+            } else if (event.key === "Enter" || event.key === ",") {
+                event.preventDefault();
+                handleChange(event as any);
+            } else if (
+                event.key === "Backspace" ||
+                event.key === "Delete" ||
+                event.key === "Home" ||
+                event.key === "End"
+            ) {
+                return;
+            } else if (event.key === "ArrowLeft") {
+                if (eventTarget.selectionStart === 0 && eventTarget.selectionEnd === 0) {
+                    let currentSelectionIndex = selections.findIndex(
+                        (selection) => selection.uuid === activeSelectionUuid
+                    );
+                    if (activeSelectionUuid === null) {
+                        currentSelectionIndex = selections.length;
+                    }
+                    if (currentSelectionIndex > 0) {
+                        setActiveSelectionUuid(selections[currentSelectionIndex - 1].uuid);
+                        setCaretPosition(CaretPosition.End);
+                    }
+                    event.preventDefault();
+                }
+            } else if (event.key === "ArrowRight") {
+                if (
+                    eventTarget.selectionStart === eventTarget.value.length &&
+                    eventTarget.selectionEnd === eventTarget.value.length
+                ) {
+                    const currentSelectionIndex = selections.findIndex(
+                        (selection) => selection.uuid === activeSelectionUuid
+                    );
+                    if (currentSelectionIndex !== -1 && currentSelectionIndex < selections.length - 1) {
+                        setActiveSelectionUuid(selections[currentSelectionIndex + 1].uuid);
+                        setCaretPosition(CaretPosition.Start);
+                    } else {
+                        setActiveSelectionUuid(null);
+                        inputRef.current?.focus();
+                        inputRef.current?.setSelectionRange(0, 0);
+                    }
+                    event.preventDefault();
+                }
+            } else if (!allowedChars.includes(event.key)) {
+                event.preventDefault();
             }
-        } else if (!allowedChars.includes(event.key)) {
-            event.preventDefault();
         }
-    }
 
-    function handleTagValueChange(uuid: string, value: string) {
-        const newSelections = selections.map((selection) => {
-            if (selection.uuid === uuid) {
-                return { ...selection, value };
-            }
-            return selection;
-        });
-        setSelections(newSelections);
-        handleSelectionsChange(newSelections);
-    }
+        function handleTagValueChange(uuid: string, value: string) {
+            const newSelections = selections.map((selection) => {
+                if (selection.uuid === uuid) {
+                    return { ...selection, value };
+                }
+                return selection;
+            });
+            setSelections(newSelections);
+            handleSelectionsChange(newSelections);
+        }
 
-    function clearSelections() {
-        setSelections([]);
-        setActiveSelectionUuid(null);
-        handleSelectionsChange([]);
-    }
+        function clearSelections() {
+            setSelections([]);
+            setActiveSelectionUuid(null);
+            handleSelectionsChange([]);
+        }
 
-    const numSelectedRealizations = calcUniqueSelections(selections, props.validRealizations).length;
+        const numSelectedRealizations = calcUniqueSelections(selections, props.validRealizations).length;
 
-    return (
-        <BaseComponent disabled={props.disabled}>
-            <div className="relative border border-gray-300 rounded p-2 pr-6 min-h-[3rem]">
-                <ul className="flex flex-wrap items-center cursor-text gap-1 h-full" onPointerDown={handlePointerDown}>
-                    {selections.map((selection) => (
-                        <RealizationRangeTag
-                            key={selection.uuid}
-                            uuid={selection.uuid}
-                            active={selection.uuid === activeSelectionUuid}
-                            caretPosition={caretPosition}
-                            initialValue={selection.value}
-                            checkValidity={checkValidity}
-                            validRealizations={props.validRealizations}
-                            onRemove={() => handleRemove(selection.uuid)}
-                            onFocus={() => setActiveSelectionUuid(selection.uuid)}
-                            onKeyDown={handleKeyDown}
-                            onChange={(value) => handleTagValueChange(selection.uuid, value)}
-                        />
-                    ))}
-                    <li className="flex-grow flex">
-                        <input
-                            ref={inputRef}
-                            type="text"
-                            className="outline-none flex-grow"
-                            onKeyDown={handleKeyDown}
-                        />
-                    </li>
-                </ul>
-                <div
-                    className="absolute right-2 top-1/2 -mt-3 h-6 w-4 text-sm text-slate-800 hover:text-slate-600 cursor-pointer"
-                    onClick={clearSelections}
-                    title="Clear selection"
-                >
-                    <Close fontSize="inherit" />
+        return (
+            <BaseComponent ref={ref} disabled={props.disabled}>
+                <div className="relative border border-gray-300 rounded p-2 pr-6 min-h-[3rem]">
+                    <ul
+                        className="flex flex-wrap items-center cursor-text gap-1 h-full"
+                        onPointerDown={handlePointerDown}
+                    >
+                        {selections.map((selection) => (
+                            <RealizationRangeTag
+                                key={selection.uuid}
+                                uuid={selection.uuid}
+                                active={selection.uuid === activeSelectionUuid}
+                                caretPosition={caretPosition}
+                                initialValue={selection.value}
+                                checkValidity={checkValidity}
+                                validRealizations={props.validRealizations}
+                                onRemove={() => handleRemove(selection.uuid)}
+                                onFocus={() => setActiveSelectionUuid(selection.uuid)}
+                                onKeyDown={handleKeyDown}
+                                onChange={(value) => handleTagValueChange(selection.uuid, value)}
+                            />
+                        ))}
+                        <li className="flex-grow flex">
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                className="outline-none flex-grow"
+                                onKeyDown={handleKeyDown}
+                            />
+                        </li>
+                    </ul>
+                    <div
+                        className="absolute right-2 top-1/2 -mt-3 h-6 w-4 text-sm text-slate-800 hover:text-slate-600 cursor-pointer"
+                        onClick={clearSelections}
+                        title="Clear selection"
+                    >
+                        <Close fontSize="inherit" />
+                    </div>
                 </div>
-            </div>
-            <div className="text-sm text-gray-500 text-right mt-2">
-                {numSelectedRealizations} realization{numSelectedRealizations === 1 ? "" : "s"} selected
-            </div>
-        </BaseComponent>
-    );
-};
+                <div className="text-sm text-gray-500 text-right mt-2">
+                    {numSelectedRealizations} realization{numSelectedRealizations === 1 ? "" : "s"} selected
+                </div>
+            </BaseComponent>
+        );
+    }
+);
 
 RealizationPicker.displayName = "RealizationPicker";
