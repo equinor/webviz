@@ -415,7 +415,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                 <div
                     className="overflow-y-auto border border-gray-300 rounded-md w-full bg-white input-comp"
                     style={{ height: sizeWithDefault * 24 + 2 }}
-                    ref={ref}
+                    ref={virtualizationRef}
                     tabIndex={0}
                 >
                     {filteredOptions.length === 0 && (
