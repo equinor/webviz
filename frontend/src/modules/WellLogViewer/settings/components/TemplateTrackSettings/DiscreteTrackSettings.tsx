@@ -17,7 +17,12 @@ import _ from "lodash";
 
 import { TrackSettingFragmentProps } from "./private-components/TrackSettings";
 
-import { curveSourceToText, simplifyLogName } from "../../../utils/strings";
+import {
+    curveSourceToText,
+    findCurveHeaderBySelectValue,
+    makeSelectValueForCurveHeader,
+    simplifyLogName,
+} from "../../../utils/strings";
 import { availableDiscreteCurvesAtom, availableFlagCurvesAtom } from "../../atoms/derivedAtoms";
 import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";
 
@@ -65,19 +70,17 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
 
     const handleCurveHeaderSelect = React.useCallback(
         function handleCurveHeaderSelect([choice]: string[]) {
-            const chosenHeader = availableCurveHeaders.find(
-                ({ source, sourceId }) => source === activeSource && sourceId === choice
-            );
-            if (!chosenHeader) throw new Error(`Selected value '${choice}' not found`);
+            const headerChoice = findCurveHeaderBySelectValue(headersForSource, choice);
+            if (!headerChoice) throw new Error(`Selected value '${choice}' not found`);
 
             const newTrackPlot = makeTrackPlot({
                 ...discretePlotConfig,
-                _curveHeader: chosenHeader,
+                _curveHeader: headerChoice,
             });
 
             onFieldChange({ plots: [newTrackPlot] });
         },
-        [availableCurveHeaders, onFieldChange, activeSource, discretePlotConfig]
+        [onFieldChange, discretePlotConfig, headersForSource]
     );
 
     const handlePlotSettingsChange = React.useCallback(
@@ -140,7 +143,7 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
                 <PendingWrapper isPending={curveHeadersQuery.isPending} errorMessage={curveHeadersError ?? ""}>
                     <Select
                         id={curveSelectId}
-                        value={currentCurveHeader?.sourceId ? [currentCurveHeader.sourceId] : []}
+                        value={currentCurveHeader ? [makeSelectValueForCurveHeader(currentCurveHeader)] : []}
                         options={selectOptions}
                         size={Math.max(Math.min(6, selectOptions.length), 2)}
                         onChange={handleCurveHeaderSelect}
@@ -168,13 +171,13 @@ function makeCurveOptions(
 ): SelectOption[] {
     return _.chain(headers)
         .filter(["source", chosenSource])
-        .map((header): SelectOption => {
+        .map<SelectOption>((header) => {
             return {
+                value: makeSelectValueForCurveHeader(header),
                 label: _.startCase(header.curveName),
-                value: header.sourceId,
                 adornment: (
                     <span
-                        className="order-1 text-[0.75rem] flex-shrink-[9999] overflow-hidden leading-tight block bg-gray-400 px-1 py-0.5 rounded text-white text-ellipsis whitespace-nowrap w-auto "
+                        className="order-1 text-xs flex-shrink-[9999] overflow-hidden leading-tight block bg-gray-400 px-1 py-0.5 rounded text-white text-ellipsis whitespace-nowrap w-auto "
                         title={header.logName}
                     >
                         {simplifyLogName(header.logName, 12)}

@@ -1052,7 +1052,6 @@ export type WellboreLogCurveData_api = {
 
 export type WellboreLogCurveHeader_api = {
     source: WellLogCurveSourceEnum_api;
-    sourceId: string;
     curveType: WellLogCurveTypeEnum_api;
     logName: string;
     curveName: string;

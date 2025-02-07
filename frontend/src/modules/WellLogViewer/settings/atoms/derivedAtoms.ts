@@ -19,6 +19,7 @@ import {
     wellborePicksQueryAtom,
     wellboreStratColumnsQueryAtom,
 } from "./queryAtoms";
+import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
 
 // ? The module doesnt do anything related to ensembles, should we just make it possible to pick from all fields?
 // ? If so, move to queries, and use "apiService.explore.getFields();"
@@ -85,7 +86,7 @@ export const requiredCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
         .filter("_isValid") // Do not bother with invalid configs
         .flatMap(({ _curveHeader, _curveHeader2 }) => [_curveHeader, _curveHeader2])
         .filter((header): header is WellboreLogCurveHeader_api => !!header)
-        .uniqBy(({ source, sourceId, logName }) => source + sourceId + logName)
+        .uniqBy(makeSelectValueForCurveHeader)
         .value();
 });
 

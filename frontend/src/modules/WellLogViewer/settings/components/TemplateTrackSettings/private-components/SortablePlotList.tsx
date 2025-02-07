@@ -10,6 +10,7 @@ import { arrayMove } from "@lib/utils/arrays";
 import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { CURVE_COLOR_PALETTE } from "@modules/WellLogViewer/utils/logViewerColors";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
+import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
 import { Delete, SwapHoriz, Warning } from "@mui/icons-material";
 import { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
@@ -35,9 +36,12 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 
     // If the current selection does not exist, keep it in the selection, with a warning. This can happen when the user is importing a config, or swapping between wellbores
     props.plots.forEach((plot) => {
-        if (!plot._curveHeader) return;
-        if (curveHeaderOptions.some(({ value }) => plot._curveHeader?.sourceId === value)) return;
-        curveHeaderOptions.push(makeMissingCurveOption(plot._curveHeader));
+        // Check both possible curveHeaders
+        [plot._curveHeader, plot._curveHeader2].forEach((header) => {
+            if (header && !curveHeaderOptions.some(({ value }) => value === makeSelectValueForCurveHeader(header))) {
+                curveHeaderOptions.push(makeMissingCurveOption(header));
+            }
+        });
     });
 
     const addPlot = React.useCallback(
@@ -153,7 +157,7 @@ function SortablePlotItem(props: SortablePlotItemProps) {
         <div className="flex-grow flex">
             <Dropdown
                 placeholder="Select a curve"
-                value={props.plot._curveHeader?.sourceId ?? ""}
+                value={makeSelectValueForCurveHeader(props.plot._curveHeader)}
                 options={props.curveHeaderOptions}
                 onChange={handlePlotSelectChange}
             />
@@ -176,7 +180,7 @@ function SortablePlotItem(props: SortablePlotItemProps) {
 
                     <Dropdown
                         placeholder="Select 2nd curve"
-                        value={props.plot._curveHeader2?.sourceId}
+                        value={makeSelectValueForCurveHeader(props.plot._curveHeader2)}
                         options={props.curveHeaderOptions}
                         onChange={(v) => handlePlotSelectChange(v, true)}
                     />
@@ -226,7 +230,7 @@ function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): Curve
         .sortBy([sortStatLogsToTop, "logName", "curveName"])
         .map<CurveDropdownOption>((curveHeader) => {
             return {
-                value: curveHeader.sourceId,
+                value: makeSelectValueForCurveHeader(curveHeader),
                 label: curveHeader.curveName,
                 group: curveHeader.logName,
                 _curveHeader: curveHeader,
@@ -240,7 +244,7 @@ function makeMissingCurveOption(curveHeader: WellboreLogCurveHeader_api): CurveD
     // @ts-expect-error We don't care about the _header field here, since the choice is always disabled
     return {
         label: curveHeader.curveName,
-        value: curveHeader.sourceId,
+        value: makeSelectValueForCurveHeader(curveHeader),
         group: "Unavailable curves!",
         disabled: true,
         adornment: (

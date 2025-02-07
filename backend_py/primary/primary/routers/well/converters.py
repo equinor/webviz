@@ -124,7 +124,6 @@ def convert_wellbore_log_curve_header_to_schema(curve_header: WellboreLogCurveHe
 
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG,
-        sourceId=f"{curve_header.log_name}::{curve_header.curve_name}",
         curveType=utils.curve_type_from_header(curve_header),
         logName=curve_header.log_name,
         curveName=curve_header.curve_name,
@@ -137,7 +136,6 @@ def convert_wellbore_geo_header_to_well_log_header(
 ) -> schemas.WellboreLogCurveHeader:
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY,
-        sourceId=f"{geo_header.identifier}::{geo_header.source}",
         curveType=utils.curve_type_from_header(geo_header),
         logName=geo_header.source,
         curveName=geo_header.identifier,
@@ -150,7 +148,6 @@ def convert_strat_column_to_well_log_header(column: StratigraphicColumn) -> sche
 
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SMDA_STRATIGRAPHY,
-        sourceId=f"{type_or_default}::{column.strat_column_identifier}",
         curveType=utils.curve_type_from_header(column),
         logName=column.strat_column_identifier,
         curveName=type_or_default,

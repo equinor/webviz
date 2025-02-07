@@ -93,7 +93,6 @@ class WellLogCurveTypeEnum(str, Enum):
 
 class WellboreLogCurveHeader(BaseModel):
     source: WellLogCurveSourceEnum
-    sourceId: str
     curveType: WellLogCurveTypeEnum
 
     logName: str

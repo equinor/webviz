@@ -1,4 +1,4 @@
-import { WellLogCurveSourceEnum_api, WellboreLogCurveData_api } from "@api";
+import { WellLogCurveSourceEnum_api, WellboreLogCurveData_api, WellboreLogCurveHeader_api } from "@api";
 import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 
 /**
@@ -54,4 +54,18 @@ export function getUniqueCurveNameForCurveData(curve: WellboreLogCurveData_api, 
 
 function makeCompoundCurveName(curveName: string, logName: string) {
     return `${curveName} - ${simplifyLogName(logName)}`;
+}
+
+export function makeSelectValueForCurveHeader(header: WellboreLogCurveHeader_api | null | undefined): string {
+    if (!header) return "";
+
+    const { source, curveName, logName } = header;
+    return [source, curveName, logName].join("::");
+}
+
+export function findCurveHeaderBySelectValue(
+    headers: WellboreLogCurveHeader_api[],
+    uniqueKey: string
+): WellboreLogCurveHeader_api | undefined {
+    return headers.find((h) => makeSelectValueForCurveHeader(h) === uniqueKey);
 }

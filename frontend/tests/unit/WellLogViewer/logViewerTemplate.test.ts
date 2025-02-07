@@ -26,7 +26,6 @@ class MockFile {
 const MOCK_CURVE_HEADER1: WellboreLogCurveHeader_api = {
     curveType: WellLogCurveTypeEnum_api.CONTINUOUS,
     source: WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
-    sourceId: "Continuous1",
     curveName: "Continuous1",
     curveUnit: "m",
     logName: "FooLog",
@@ -35,7 +34,6 @@ const MOCK_CURVE_HEADER1: WellboreLogCurveHeader_api = {
 const MOCK_CURVE_HEADER2: WellboreLogCurveHeader_api = {
     curveType: WellLogCurveTypeEnum_api.CONTINUOUS,
     source: WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
-    sourceId: "Continuous2",
     curveName: "Continuous2",
     curveUnit: "m",
     logName: "FooLog",
@@ -44,7 +42,6 @@ const MOCK_CURVE_HEADER2: WellboreLogCurveHeader_api = {
 const MOCK_CURVE_HEADER3: WellboreLogCurveHeader_api = {
     curveType: WellLogCurveTypeEnum_api.FLAG,
     source: WellLogCurveSourceEnum_api.SSDL_WELL_LOG,
-    sourceId: "Flag1",
     curveName: "Flag1",
     curveUnit: "m",
     logName: "FooFlagLog",
@@ -53,7 +50,6 @@ const MOCK_CURVE_HEADER3: WellboreLogCurveHeader_api = {
 const MOCK_CURVE_HEADER4: WellboreLogCurveHeader_api = {
     curveType: WellLogCurveTypeEnum_api.DISCRETE,
     source: WellLogCurveSourceEnum_api.SMDA_STRATIGRAPHY,
-    sourceId: "Strat::Litho",
     curveName: "Lithology",
     logName: "Lithology",
     curveUnit: null,
