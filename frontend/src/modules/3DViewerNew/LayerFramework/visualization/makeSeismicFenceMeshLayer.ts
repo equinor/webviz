@@ -1,6 +1,8 @@
+import { Layer } from "@deck.gl/core";
 import { SeismicSliceData_trans } from "@modules/3DViewerNew/settings/queries/queryDataTransforms";
 import { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
+import { MovableLayerWrapper } from "@modules/_shared/customDeckGlLayers/MovableLayerWrapper";
 import { SeismicFenceMeshLayer } from "@modules/_shared/customDeckGlLayers/SeismicFenceMeshLayer";
 
 /*
@@ -34,13 +36,6 @@ function generatePointFenceMesh(
     let indicesIndex = 0;
 
     for (let v = 0; v < numSamplesV; v++) {
-        /*
-        if (i > 1) {
-            // Draw a degenerated triangle to move to the next row
-            indices[indicesIndex++] = (i - 1) * numSamplesXY + numSamplesXY - 1;
-            indices[indicesIndex++] = i * numSamplesXY;
-        }
-            */
         for (let u = 0; u < numSamplesU; u++) {
             const [x, y, z] = transformUVToXYZ(u * stepU, v * stepV);
             vertices[verticesIndex++] = x;
@@ -75,7 +70,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
         data,
         colorScale,
         settings,
-    }: VisualizationFunctionArgs<any, SeismicSliceData_trans>): SeismicFenceMeshLayer {
+    }: VisualizationFunctionArgs<any, SeismicSliceData_trans>): Layer<any> {
         const bbox = data.bbox_utm;
         const properties = data.dataFloat32Arr;
 
@@ -118,18 +113,20 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
 
         const { vertices, indices } = generatePointFenceMesh(data.u_num_samples, data.v_num_samples, transformUVToXYZ);
 
-        return new SeismicFenceMeshLayer({
-            id,
-            name,
-            data: {
-                vertices,
-                indices,
-                properties,
-            },
-            startPosition,
-            colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
-            boundingBox,
-            zIncreaseDownwards: true,
+        return new MovableLayerWrapper({
+            wrappedLayer: new SeismicFenceMeshLayer({
+                id,
+                name,
+                data: {
+                    vertices,
+                    indices,
+                    properties,
+                },
+                startPosition,
+                colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
+                boundingBox,
+                zIncreaseDownwards: true,
+            }),
         });
     };
 }
