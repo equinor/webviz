@@ -26,13 +26,6 @@
             "request": "launch",
             "program": "${workspaceFolder}/frontend/scripts/add-api-suffix.cjs",
             "args": ["--suffix", "'__api'", "--dir", "'src/api/'"]
-        },
-        {
-            "name": "Playwright:CT",
-            "type": "node",
-            "request": "launch",
-            "program": "${workspaceFolder}/frontend/scripts/playwright-ct.cjs",
-            "args": ["--config", "playwright.ct.config.ts"]
         }
     ]
 }
