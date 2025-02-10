@@ -3,7 +3,6 @@ import { Layer as EsvLayer } from "@equinor/esv-intersection";
 import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { defaultColorPalettes, defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { DeckGlPlugin } from "@modules/3DViewerNew/view/utils/DeckGlInstanceManager";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
@@ -30,7 +29,7 @@ export type VisualizationFunctionArgs<TSettings extends Settings, TData> = {
 };
 
 export type TargetReturnTypes = {
-    [VisualizationTarget.DECK_GL]: DeckGlLayer<any> | DeckGlPlugin;
+    [VisualizationTarget.DECK_GL]: DeckGlLayer<any>;
     [VisualizationTarget.ESV]: EsvLayer<any>;
 };
 

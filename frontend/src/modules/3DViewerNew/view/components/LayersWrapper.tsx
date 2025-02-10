@@ -44,7 +44,6 @@ import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
-import { DeckGlPlugin } from "../utils/DeckGlInstanceManager";
 
 const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
 VISUALIZATION_FACTORY.registerVisualizationFunction(DrilledWellborePicksLayer, makeWellborePicksLayer);
@@ -111,13 +110,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     viewerLayers.push(...viewsAndLayers.layers);
     globalColorScales.push(...viewsAndLayers.colorScales);
-    const globalLayerIds: string[] = [];
-    const layers: string[];
-    for (const el of viewsAndLayers.layers) {
-        if (el instanceof DeckGlPlugin) {
-            const las = el.getLayers();
-        }
-    };
+    const globalLayerIds = viewsAndLayers.layers.map((layer) => layer.layer.id);
 
     for (const view of viewsAndLayers.views) {
         viewports.push({
