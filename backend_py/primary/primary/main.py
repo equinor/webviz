@@ -45,6 +45,7 @@ setup_normal_log_levels()
 
 # temporarily set some loggers to DEBUG
 # logging.getLogger().setLevel(logging.DEBUG)
+logging.getLogger("primary.services.sumo_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.smda_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.ssdl_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
