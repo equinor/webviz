@@ -18,10 +18,12 @@ class SynchronousMethodCallError(Exception):
 
 
 class FakeHTTPXClient:
-    """A fake HTTPX client to ensure we use async methods instead of sync ones."""
+    """A fake HTTPX client to ensure we use async methods instead of sync ones.
+    This is needed as we do not want to allow any synchronous HTTP calls in the primary service.
+    Ideally this should be handled by the SumoClient. https://github.com/equinor/fmu-sumo/issues/369"""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
-        self._error_msg = "🚫 Do not use a synchronious http class!. Use the async http class instead. "
+        self._error_msg = "🚫 Do not use a synchronous http class!. Use the async http class instead. "
 
     def __getattr__(self, name: str) -> None:
         """Catch any synchronous method calls and raise a helpful error."""
