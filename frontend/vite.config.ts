@@ -5,6 +5,7 @@ import jotaiReactRefresh from "jotai/babel/plugin-react-refresh";
 import path from "path";
 import { defineConfig } from "vite";
 import vitePluginChecker from "vite-plugin-checker";
+import glsl from "vite-plugin-glsl";
 
 import aliases from "./aliases.json";
 
@@ -34,6 +35,7 @@ export default defineConfig(({ mode }) => {
                 },
             }),
             vitePluginChecker({ typescript: true }),
+            glsl(),
         ],
         build: {
             rollupOptions: {

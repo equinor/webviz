@@ -7,7 +7,6 @@ import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
-import { DragDirection, DragHandleLayer } from "@modules/_shared/customDeckGlLayers/DragHandleLayer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { BoundingBox3D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -143,10 +142,7 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
         setLayerPickingInfo(pickingInfo);
     }
 
-    let adjustedLayers = [
-        ...props.layers,
-        new DragHandleLayer({ id: "est", position: [456000, 6818471, -500], dragDirection: DragDirection.XYZ }),
-    ];
+    let adjustedLayers = [...props.layers];
     if (!gridVisible) {
         adjustedLayers = adjustedLayers.filter((layer) => !(layer instanceof AxesLayer));
     }

@@ -1,7 +1,15 @@
-import { CompositeLayer, CompositeLayerProps, Layer, PickingInfo, UpdateParameters } from "@deck.gl/core";
+import {
+    CompositeLayer,
+    CompositeLayerProps,
+    GetPickingInfoParams,
+    Layer,
+    PickingInfo,
+    UpdateParameters,
+} from "@deck.gl/core";
 import { PathLayer } from "@deck.gl/layers";
-import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { Geometry } from "@luma.gl/engine";
+
+import { MeshLayer } from "./MeshLayer/MeshLayer";
 
 export type SeismicFenceMeshLayerProps = {
     startPosition: [number, number, number];
@@ -12,6 +20,11 @@ export type SeismicFenceMeshLayerProps = {
     };
     boundingBox: number[][]; // [minX, minY, minZ, maxX, maxY, maxZ]
     colorMapFunction: (value: number) => [number, number, number];
+    hoverable?: boolean;
+};
+
+export type SeismicFenceMeshLayerPickingInfo = PickingInfo & {
+    propertyValue: number;
 };
 
 export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerProps> {
@@ -42,7 +55,6 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     private makeMesh() {
         const { data } = this.props;
 
-        // Implementation of mesh creation
         this.setState({
             geometry: new Geometry({
                 attributes: {
@@ -58,6 +70,11 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         });
     }
 
+    getPickingInfo({ info }: GetPickingInfoParams): PickingInfo {
+        console.debug(info.color);
+        return info;
+    }
+
     onHover(pickingInfo: PickingInfo): boolean {
         this.setState({ isHovered: pickingInfo.index !== -1 });
         return false;
@@ -71,11 +88,11 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     }
 
     renderLayers() {
-        const { startPosition, boundingBox } = this.props;
+        const { startPosition, boundingBox, hoverable } = this.props;
         const { geometry, isHovered } = this.state;
 
         const layers: Layer<any>[] = [
-            new SimpleMeshLayer({
+            new MeshLayer({
                 id: "seismic-fence-mesh-layer",
                 data: [0],
                 mesh: geometry,
@@ -86,7 +103,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
             }),
         ];
 
-        if (isHovered) {
+        if (isHovered && hoverable) {
             layers.push(
                 new PathLayer({
                     id: "seismic-fence-mesh-layer-hovered",
