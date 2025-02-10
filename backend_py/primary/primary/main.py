@@ -45,18 +45,15 @@ setup_normal_log_levels()
 
 # temporarily set some loggers to DEBUG
 # logging.getLogger().setLevel(logging.DEBUG)
-logging.getLogger("primary.services.sumo_access._helpers").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.smda_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.ssdl_access").setLevel(logging.DEBUG)
-# logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
-# logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
-# logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
+logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
+logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
+# logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
+# logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
-# uvicorn_error = logging.getLogger("uvicorn.error")
-# uvicorn_error.disabled = True
-uvicorn_access = logging.getLogger("uvicorn.access")
-uvicorn_access.disabled = True
 
 
 def custom_generate_unique_id(route: APIRoute) -> str:
