@@ -1,6 +1,9 @@
 #version 300 es
 #define SHADER_NAME mesh-layer-vs
 
+// Scale the model
+uniform float sizeScale;
+
 // Primitive attributes
 in vec3 positions;
 in vec3 normals;
@@ -25,11 +28,11 @@ void main(void) {
 
   vertexIndex = gl_VertexID;
 
-  cameraPosition = project.cameraPosition;
+  cameraPosition = project_uCameraPosition;
 
   vColor = vec4(colors.rgb, 1.0);
 
-  vec3 pos = positions * simpleMesh.sizeScale + instanceTranslation;
+  vec3 pos = positions * sizeScale + instanceTranslation;
 
   pos = project_size(pos);
   DECKGL_FILTER_SIZE(pos, geometry);

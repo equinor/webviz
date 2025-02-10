@@ -17,16 +17,11 @@ function normalizeGeometryAttributes(attributes: MeshAttributes): MeshAttributes
     if (!normalAttribute) {
         normalAttribute = { size: 3, value: new Float32Array(vertexCount * 3).fill(0) };
     }
-    let texCoordAttribute = attributes.TEXCOORD_0 || attributes.texCoords;
-    if (!texCoordAttribute) {
-        texCoordAttribute = { size: 2, value: new Float32Array(vertexCount * 2).fill(0) };
-    }
 
     return {
         positions: positionAttribute,
         colors: colorAttribute,
         normals: normalAttribute,
-        texCoords: texCoordAttribute,
     };
 }
 

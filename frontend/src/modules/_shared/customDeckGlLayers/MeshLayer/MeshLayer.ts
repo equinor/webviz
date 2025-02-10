@@ -8,25 +8,18 @@ import {
     Position,
     UpdateParameters,
     picking,
-    project,
+    project32,
 } from "@deck.gl/core";
-import { MeshAttribute, MeshAttributes, getMeshBoundingBox } from "@loaders.gl/schema";
-import { Geometry as GeometryType, Model } from "@luma.gl/engine";
+import { getMeshBoundingBox } from "@loaders.gl/schema";
+import { Model } from "@luma.gl/engine";
 import { phongMaterial } from "@luma.gl/shadertools";
 import { utilities } from "@webviz/subsurface-viewer/dist/layers/shader_modules";
 
 import fs from "./_shaders/fragment.glsl?raw";
 import vs from "./_shaders/vertex.glsl?raw";
-import { SimpleMeshProps, simpleMeshUniforms } from "./uniforms";
 import { getGeometry } from "./utils";
 
-type Mesh =
-    | GeometryType
-    | {
-          attributes: MeshAttributes;
-          indices?: MeshAttribute;
-      }
-    | MeshAttributes;
+import { Mesh } from "../types";
 
 type _MeshLayerProps<TData = unknown> = {
     mesh: string | Mesh | Promise<Mesh> | null;
@@ -76,7 +69,7 @@ export class MeshLayer<TData = any, TExtraProps extends {} = {}> extends Layer<
         return super.getShaders({
             vs,
             fs,
-            modules: [project, phongMaterial, picking, utilities, simpleMeshUniforms],
+            modules: [project32, phongMaterial, picking, utilities],
         });
     }
 
@@ -146,20 +139,20 @@ export class MeshLayer<TData = any, TExtraProps extends {} = {}> extends Layer<
         }
     }
 
-    draw() {
+    draw({ uniforms }: { uniforms: any }) {
         const { model } = this.state;
         if (!model) {
             return;
         }
 
-        const { viewport, renderPass } = this.context;
-        const { sizeScale, coordinateSystem, _instanced } = this.props;
+        const { renderPass } = this.context;
+        const { sizeScale } = this.props;
 
-        const simpleMeshProps: SimpleMeshProps = {
+        model.setUniforms(uniforms);
+        model.setUniforms({
             sizeScale,
             flatShading: !this.state.hasNormals,
-        };
-        model.shaderInputs.setProps({ simpleMesh: simpleMeshProps });
+        });
         model.draw(renderPass);
     }
 
