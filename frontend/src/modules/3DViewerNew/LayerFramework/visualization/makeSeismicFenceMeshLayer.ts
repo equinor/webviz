@@ -71,6 +71,7 @@ export enum Plane {
 export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
     return function makeSeismicFenceMeshLayer({
         id,
+        name,
         data,
         colorScale,
         settings,
@@ -119,6 +120,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
 
         return new SeismicFenceMeshLayer({
             id,
+            name,
             data: {
                 vertices,
                 indices,
@@ -127,6 +129,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
             startPosition,
             colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
             boundingBox,
+            zIncreaseDownwards: true,
         });
     };
 }

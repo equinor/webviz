@@ -9,9 +9,14 @@ import {
 import { PathLayer } from "@deck.gl/layers";
 import { Geometry } from "@luma.gl/engine";
 
-import { MeshLayer } from "./MeshLayer/MeshLayer";
+import { ExtendedSimpleMeshLayer } from "./ExtendedSimpleMeshLayer/ExtendedSimpleMeshLayer";
+
+export type SeismicFenceMeshLayerPickingInfo = {
+    properties?: { name: string; value: number }[];
+} & PickingInfo;
 
 export type SeismicFenceMeshLayerProps = {
+    name?: string;
     startPosition: [number, number, number];
     data: {
         vertices: Float32Array;
@@ -21,10 +26,7 @@ export type SeismicFenceMeshLayerProps = {
     boundingBox: number[][]; // [minX, minY, minZ, maxX, maxY, maxZ]
     colorMapFunction: (value: number) => [number, number, number];
     hoverable?: boolean;
-};
-
-export type SeismicFenceMeshLayerPickingInfo = PickingInfo & {
-    propertyValue: number;
+    zIncreaseDownwards?: boolean;
 };
 
 export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerProps> {
@@ -70,9 +72,33 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         });
     }
 
-    getPickingInfo({ info }: GetPickingInfoParams): PickingInfo {
-        console.debug(info.color);
-        return info;
+    getPickingInfo({ info }: GetPickingInfoParams): SeismicFenceMeshLayerPickingInfo {
+        const { data, zIncreaseDownwards } = this.props;
+        if (!info.color) {
+            return info;
+        }
+
+        const r = info.color[0];
+        const g = info.color[1];
+        const b = info.color[2];
+
+        const vertexIndex = r * 256 * 256 + g * 256 + b;
+        const property = this.props.data.properties[vertexIndex];
+
+        if (property === undefined) {
+            return info;
+        }
+
+        const properties: { name: string; value: number }[] = [];
+        properties.push({ name: "Property", value: property });
+        if (info.coordinate?.length === 3) {
+            properties.push({ name: "Depth", value: (zIncreaseDownwards ? -1 : 1) * info.coordinate[2] });
+        }
+
+        return {
+            ...info,
+            properties,
+        };
     }
 
     onHover(pickingInfo: PickingInfo): boolean {
@@ -92,7 +118,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         const { geometry, isHovered } = this.state;
 
         const layers: Layer<any>[] = [
-            new MeshLayer({
+            new ExtendedSimpleMeshLayer({
                 id: "seismic-fence-mesh-layer",
                 data: [0],
                 mesh: geometry,
