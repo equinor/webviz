@@ -74,11 +74,17 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
         predictedNextBoundingBox,
     }: VisualizationFunctionArgs<any, SeismicSliceData_trans>): Layer<any> {
         let bbox = data.bbox_utm;
+        let adjustedData = data;
         if (isLoading && predictedNextBoundingBox) {
             bbox = [
                 [predictedNextBoundingBox.x[0], predictedNextBoundingBox.y[0], predictedNextBoundingBox.z[0]],
                 [predictedNextBoundingBox.x[1], predictedNextBoundingBox.y[1], predictedNextBoundingBox.z[1]],
             ];
+            adjustedData = {
+                ...data,
+                u_num_samples: 2,
+                v_num_samples: 2,
+            };
         }
         const properties = data.dataFloat32Arr;
 
@@ -119,7 +125,11 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
             };
         }
 
-        const { vertices, indices } = generatePointFenceMesh(data.u_num_samples, data.v_num_samples, transformUVToXYZ);
+        const { vertices, indices } = generatePointFenceMesh(
+            adjustedData.u_num_samples,
+            adjustedData.v_num_samples,
+            transformUVToXYZ
+        );
 
         return new MovableLayerWrapper({
             wrappedLayer: new SeismicFenceMeshLayer({

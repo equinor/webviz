@@ -127,7 +127,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                     id: "seismic-fence-mesh-layer-loading",
                     data: [0],
                     mesh: geometry,
-                    getColor: [255, 255, 255, 255],
+                    getColor: [0, 0, 0, 50],
                     pickable: false,
                     getPosition: startPosition,
                     material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
