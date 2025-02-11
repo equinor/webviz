@@ -247,12 +247,13 @@ class FlowNetworkAssembler:
         # Get summary vectors for all data simultaneously to obtain one request from Sumo
         # Many summary vectors might not be needed, but will be filtered out later on. This is the most efficient way to get the data
         # NOTE: "WSTAT" vectors are enumerated well state indicator, thus interpolated values might create issues (should be resolved by resampling-code)
-        single_realization_vectors_table, vector_metadata = (
-            await self._summary_access.get_single_real_vectors_table_async(
-                vector_names=list(vectors_of_interest),
-                resampling_frequency=self._summary_resampling_frequency,
-                realization=self._realization,
-            )
+        (
+            single_realization_vectors_table,
+            vector_metadata,
+        ) = await self._summary_access.get_single_real_vectors_table_async(
+            vector_names=list(vectors_of_interest),
+            resampling_frequency=self._summary_resampling_frequency,
+            realization=self._realization,
         )
 
         # Store vector metadata entries in a dict for easy lookup later
