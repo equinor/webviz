@@ -137,7 +137,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                 "border",
                 "border-gray-300",
                 "shadow-sm",
-                "focus:border-indigo-500",
+                "focus-within:border-indigo-500",
                 "w-full",
                 "h-full",
                 "sm:text-sm",
@@ -171,9 +171,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                         className: "grow",
                     },
                     input: {
-                        className: resolveClassNames(
-                            "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none"
-                        ),
+                        className: resolveClassNames("h-full block w-full sm:text-sm outline-none"),
                         ref: internalRef,
                     },
                 }}
