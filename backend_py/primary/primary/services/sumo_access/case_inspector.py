@@ -40,9 +40,7 @@ class CaseInspector:
     async def get_iterations_async(self) -> list[IterationInfo]:
         case: Case = await self._get_or_create_case_obj()
 
-        # Stick with the sync version for now, since there is a bug in the async version of SumoExplorer
-        # See: https://github.com/equinor/fmu-sumo/issues/326
-        iterations = case.iterations
+        iterations = await case.iterations_async
 
         iter_info_arr: list[IterationInfo] = []
         for iteration in iterations:
