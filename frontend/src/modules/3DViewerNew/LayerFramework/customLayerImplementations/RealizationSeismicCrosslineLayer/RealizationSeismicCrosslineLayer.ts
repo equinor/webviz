@@ -61,6 +61,12 @@ export class RealizationSeismicCrosslineLayer
             return null;
         }
 
+        console.debug("real", {
+            x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
+            y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
+            z: [data.u_min, data.u_max],
+        });
+
         return {
             x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
             y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
@@ -88,24 +94,28 @@ export class RealizationSeismicCrosslineLayer
         }
 
         const xmin = meta.spec.xOrigin;
-        const xmax = meta.spec.xOrigin + meta.spec.xInc * seismicCrosslineNumber;
+        const xmax = meta.spec.xOrigin + meta.spec.xInc * (meta.spec.numCols - 1);
 
-        const ymin = meta.spec.yOrigin;
-        const ymax = meta.spec.yOrigin + meta.spec.yInc * meta.spec.yFlip * (meta.spec.numRows - 1);
+        const ymin = meta.spec.yOrigin + meta.spec.yInc * meta.spec.yFlip * seismicCrosslineNumber;
+        const ymax = ymin;
 
         const zmin = meta.spec.zOrigin;
         const zmax = meta.spec.zOrigin + meta.spec.zInc * meta.spec.zFlip * (meta.spec.numLayers - 1);
 
         const maxXY = { x: xmax, y: ymax };
         const minXY = { x: xmin, y: ymin };
+        const origin = { x: meta.spec.xOrigin, y: meta.spec.yOrigin };
 
-        const rotatedMaxXY = rotatePoint2Around(maxXY, minXY, 0);
+        const rotatedMinXY = rotatePoint2Around(minXY, origin, (meta.spec.rotation / 180.0) * Math.PI);
+        const rotatedMaxXY = rotatePoint2Around(maxXY, origin, (meta.spec.rotation / 180.0) * Math.PI);
 
-        return {
-            x: [xmin, rotatedMaxXY.x],
-            y: [ymin, rotatedMaxXY.y],
+        console.debug("predicted", {
+            x: [rotatedMinXY.x, rotatedMaxXY.x],
+            y: [rotatedMinXY.y, rotatedMaxXY.y],
             z: [zmin, zmax],
-        };
+        });
+
+        return { x: [rotatedMinXY.x, rotatedMaxXY.x], y: [rotatedMinXY.y, rotatedMaxXY.y], z: [zmin, zmax] };
     }
 
     makeValueRange(): [number, number] | null {
