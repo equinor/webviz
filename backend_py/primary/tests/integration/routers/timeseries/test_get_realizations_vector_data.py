@@ -31,7 +31,7 @@ async def test_get_realizations_vector_data_dates(
     # check the first realization
     first_real_results = realization_data[0]
     assert isinstance(first_real_results, schemas.VectorRealizationData)
-    assert len(first_real_results.timestamps_utc_ms) == date_count
+    assert len(first_real_results.timestampsUtcMs) == date_count
     assert np.isclose(np.mean(first_real_results.values), expected_mean, atol=1e-5)
 
 
