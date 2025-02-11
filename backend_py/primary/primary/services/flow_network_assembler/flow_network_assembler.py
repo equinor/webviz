@@ -149,7 +149,7 @@ class FlowNetworkAssembler:
         if len(missing_sumvecs) > 0:
             str_missing_sumvecs = ", ".join(missing_sumvecs)
             raise NoDataError(
-                f"Missing summary vectors for the FlowNetwork plugin: {str_missing_sumvecs}", Service.GENERAL
+                f"Missing summary vectors for the FlowNetwork assembly: {str_missing_sumvecs}", Service.GENERAL
             )
 
     async def _initialize_group_tree_df_async(self) -> None:
