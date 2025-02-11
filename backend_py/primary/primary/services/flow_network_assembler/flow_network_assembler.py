@@ -8,7 +8,6 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 
-from fastapi import HTTPException
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 
