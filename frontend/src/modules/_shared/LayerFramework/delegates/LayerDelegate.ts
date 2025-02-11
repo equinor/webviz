@@ -9,7 +9,15 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
-import { BoundingBox, Layer, SerializedLayer, SerializedType, Settings, SettingsContext } from "../interfaces";
+import {
+    BoundingBox,
+    Layer,
+    SerializedLayer,
+    SerializedType,
+    Settings,
+    SettingsContext,
+    StoredData,
+} from "../interfaces";
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -41,11 +49,11 @@ export type LayerDelegatePayloads<TData> = {
  * It is responsible for (re-)fetching the data whenever changes to settings make it necessary.
  * It also manages the status of the layer (loading, success, error).
  */
-export class LayerDelegate<TSettings extends Settings, TData>
+export class LayerDelegate<TSettings extends Settings, TData, TStoredData extends StoredData = Record<string, never>>
     implements PublishSubscribe<LayerDelegatePayloads<TData>>
 {
-    private _owner: Layer<TSettings, TData>;
-    private _settingsContext: SettingsContext<TSettings>;
+    private _owner: Layer<TSettings, TData, TStoredData>;
+    private _settingsContext: SettingsContext<TSettings, TStoredData>;
     private _layerManager: LayerManager;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _cancellationPending: boolean = false;
@@ -54,15 +62,17 @@ export class LayerDelegate<TSettings extends Settings, TData>
     private _status: LayerStatus = LayerStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
+    private _prevBoundingBox: BoundingBox | null = null;
+    private _predictedBoundingBox: BoundingBox | null = null;
     private _boundingBox: BoundingBox | null = null;
     private _valueRange: [number, number] | null = null;
     private _coloringType: LayerColoringType;
     private _isSubordinated: boolean = false;
 
     constructor(
-        owner: Layer<TSettings, TData>,
+        owner: Layer<TSettings, TData, TStoredData>,
         layerManager: LayerManager,
-        settingsContext: SettingsContext<TSettings>,
+        settingsContext: SettingsContext<TSettings, TStoredData>,
         coloringType: LayerColoringType
     ) {
         this._owner = owner;
@@ -116,12 +126,23 @@ export class LayerDelegate<TSettings extends Settings, TData>
         return this._data;
     }
 
-    getSettingsContext(): SettingsContext<TSettings> {
+    getSettingsContext(): SettingsContext<TSettings, TStoredData> {
         return this._settingsContext;
     }
 
     getBoundingBox(): BoundingBox | null {
         return this._boundingBox;
+    }
+
+    getLastValidBoundingBox(): BoundingBox | null {
+        if (this._boundingBox) {
+            return this._boundingBox;
+        }
+        return this._prevBoundingBox;
+    }
+
+    getPredictedBoundingBox(): BoundingBox | null {
+        return this._predictedBoundingBox;
     }
 
     getColoringType(): LayerColoringType {
@@ -227,9 +248,11 @@ export class LayerDelegate<TSettings extends Settings, TData>
             return;
         }
 
-        this.setStatus(LayerStatus.LOADING);
         this.invalidateBoundingBox();
         this.invalidateValueRange();
+        this._predictedBoundingBox = this._owner.predictBoundingBox?.() ?? null;
+
+        this.setStatus(LayerStatus.LOADING);
 
         try {
             this._data = await this._owner.fetchData(queryClient);
@@ -297,6 +320,15 @@ export class LayerDelegate<TSettings extends Settings, TData>
     }
 
     private invalidateBoundingBox(): void {
+        if (this._boundingBox) {
+            this._prevBoundingBox = {
+                x: [this._boundingBox.x[0], this._boundingBox.x[1]],
+                y: [this._boundingBox.y[0], this._boundingBox.y[1]],
+                z: [this._boundingBox.z[0], this._boundingBox.z[1]],
+            };
+        } else {
+            this._prevBoundingBox = null;
+        }
         this._boundingBox = null;
     }
 

@@ -544,20 +544,35 @@ export type RftWellInfo_api = {
     timestamps_utc_ms: Array<number>;
 };
 
+/**
+ * Metadata for a seismic cube.
+ */
 export type SeismicCubeMeta_api = {
-    seismic_attribute: string;
-    iso_date_or_interval: string;
-    is_observation: boolean;
-    is_depth: boolean;
-    i_min: number;
-    i_max: number;
-    j_min: number;
-    j_max: number;
-    k_min: number;
-    k_max: number;
-    z_min: number;
-    z_max: number;
-    z_inc: number;
+    seismicAttribute: string;
+    unit: string;
+    isoDateOrInterval: string;
+    isObservation: boolean;
+    isDepth: boolean;
+    bbox: BoundingBox3D_api;
+    spec: SeismicCubeSpec_api;
+};
+
+/**
+ * Specification for a seismic cube.
+ */
+export type SeismicCubeSpec_api = {
+    numCols: number;
+    numRows: number;
+    numLayers: number;
+    xOrigin: number;
+    yOrigin: number;
+    zOrigin: number;
+    xInc: number;
+    yInc: number;
+    zInc: number;
+    yFlip: number;
+    zFlip: number;
+    rotation: number;
 };
 
 /**

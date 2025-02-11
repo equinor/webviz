@@ -1,4 +1,5 @@
 import { getCrosslineSliceOptions } from "@api";
+import { rotatePoint2Around } from "@lib/utils/vec2";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
@@ -10,14 +11,19 @@ import { QueryClient } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import { RealizationSeismicCrosslineSettingsContext } from "./RealizationSeismicCrosslineSettingsContext";
-import { RealizationSeismicCrosslineSettings } from "./types";
+import { RealizationSeismicCrosslineSettings, RealizationSeismicCrosslineStoredData } from "./types";
 
 import { SeismicSliceData_trans, transformSeismicSlice } from "../../../settings/queries/queryDataTransforms";
 
 export class RealizationSeismicCrosslineLayer
-    implements Layer<RealizationSeismicCrosslineSettings, SeismicSliceData_trans>
+    implements
+        Layer<RealizationSeismicCrosslineSettings, SeismicSliceData_trans, RealizationSeismicCrosslineStoredData>
 {
-    private _layerDelegate: LayerDelegate<RealizationSeismicCrosslineSettings, SeismicSliceData_trans>;
+    private _layerDelegate: LayerDelegate<
+        RealizationSeismicCrosslineSettings,
+        SeismicSliceData_trans,
+        RealizationSeismicCrosslineStoredData
+    >;
     private _itemDelegate: ItemDelegate;
 
     constructor(layerManager: LayerManager) {
@@ -38,7 +44,7 @@ export class RealizationSeismicCrosslineLayer
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<RealizationSeismicCrosslineSettings, SeismicSliceData_trans> {
+    getLayerDelegate() {
         return this._layerDelegate;
     }
 
@@ -59,6 +65,46 @@ export class RealizationSeismicCrosslineLayer
             x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
             y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
             z: [data.u_min, data.u_max],
+        };
+    }
+
+    predictBoundingBox(): BoundingBox | null {
+        const settings = this.getSettingsContext().getDelegate().getSettings();
+        const seismicCrosslineNumber = settings[SettingType.SEISMIC_CROSSLINE].getDelegate().getValue();
+        const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
+        const isoTimeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
+        const seismicCubeMeta = this._layerDelegate.getSettingsContext().getDelegate().getStoredData("seismicCubeMeta");
+
+        if (!seismicCubeMeta || !seismicCrosslineNumber) {
+            return null;
+        }
+
+        const meta = seismicCubeMeta.find(
+            (m) => m.seismicAttribute === seismicAttribute && m.isoDateOrInterval === isoTimeOrInterval
+        );
+
+        if (!meta) {
+            return null;
+        }
+
+        const xmin = meta.spec.xOrigin;
+        const xmax = meta.spec.xOrigin + meta.spec.xInc * seismicCrosslineNumber;
+
+        const ymin = meta.spec.yOrigin;
+        const ymax = meta.spec.yOrigin + meta.spec.yInc * meta.spec.yFlip * (meta.spec.numRows - 1);
+
+        const zmin = meta.spec.zOrigin;
+        const zmax = meta.spec.zOrigin + meta.spec.zInc * meta.spec.zFlip * (meta.spec.numLayers - 1);
+
+        const maxXY = { x: xmax, y: ymax };
+        const minXY = { x: xmin, y: ymin };
+
+        const rotatedMaxXY = rotatePoint2Around(maxXY, minXY, 0);
+
+        return {
+            x: [xmin, rotatedMaxXY.x],
+            y: [ymin, rotatedMaxXY.y],
+            z: [zmin, zmax],
         };
     }
 

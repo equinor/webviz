@@ -5,7 +5,6 @@ import { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect3D, outerRectContainsInnerRect } from "@lib/utils/geometry";
 import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
@@ -95,8 +94,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     let numCols = 0;
     let numRows = 0;
 
-    let numLoadingLayers = 0;
-
     const viewsAndLayers = VISUALIZATION_FACTORY.make(props.layerManager);
 
     numCols = Math.ceil(Math.sqrt(viewsAndLayers.views.length));
@@ -180,7 +177,6 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         }
     }
 
-    numLoadingLayers = viewsAndLayers.numLoadingLayers;
     statusWriter.setLoading(viewsAndLayers.numLoadingLayers > 0);
 
     for (const message of viewsAndLayers.errorMessages) {
@@ -205,18 +201,16 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
-            <PendingWrapper isPending={numLoadingLayers > 0}>
-                <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                    <ReadoutWrapper
-                        views={views}
-                        viewportAnnotations={viewportAnnotations}
-                        layers={layers}
-                        bounds={bounds}
-                        workbenchSession={props.workbenchSession}
-                        workbenchSettings={props.workbenchSettings}
-                    />
-                </div>
-            </PendingWrapper>
+            <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
+                <ReadoutWrapper
+                    views={views}
+                    viewportAnnotations={viewportAnnotations}
+                    layers={layers}
+                    bounds={bounds}
+                    workbenchSession={props.workbenchSession}
+                    workbenchSettings={props.workbenchSettings}
+                />
+            </div>
         </div>
     );
 }

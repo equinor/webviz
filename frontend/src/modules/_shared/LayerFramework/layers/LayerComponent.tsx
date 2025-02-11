@@ -18,7 +18,7 @@ import { Layer, Setting } from "../interfaces";
 import { SettingComponent } from "../settings/SettingComponent";
 
 export type LayerComponentProps = {
-    layer: Layer<any, any>;
+    layer: Layer<any, any, any>;
 };
 
 export function LayerComponent(props: LayerComponentProps): React.ReactNode {

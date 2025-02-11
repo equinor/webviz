@@ -22,10 +22,7 @@ export class IntersectionRealizationGridSettingsContext
     private _contextDelegate: SettingsContextDelegate<IntersectionRealizationGridSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<
-            IntersectionRealizationGridSettings,
-            keyof IntersectionRealizationGridSettings
-        >(this, layerManager, {
+        this._contextDelegate = new SettingsContextDelegate<IntersectionRealizationGridSettings>(this, layerManager, {
             [SettingType.INTERSECTION]: new IntersectionSetting(),
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),

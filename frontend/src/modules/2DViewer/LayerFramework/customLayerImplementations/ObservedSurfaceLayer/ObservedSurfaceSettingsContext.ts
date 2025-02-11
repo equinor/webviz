@@ -14,16 +14,12 @@ export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedS
     private _contextDelegate: SettingsContextDelegate<ObservedSurfaceSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<ObservedSurfaceSettings, keyof ObservedSurfaceSettings>(
-            this,
-            layerManager,
-            {
-                [SettingType.ENSEMBLE]: new EnsembleSetting(),
-                [SettingType.ATTRIBUTE]: new AttributeSetting(),
-                [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),
-                [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
-            }
-        );
+        this._contextDelegate = new SettingsContextDelegate<ObservedSurfaceSettings>(this, layerManager, {
+            [SettingType.ENSEMBLE]: new EnsembleSetting(),
+            [SettingType.ATTRIBUTE]: new AttributeSetting(),
+            [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),
+            [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
+        });
     }
 
     getDelegate(): SettingsContextDelegate<ObservedSurfaceSettings> {

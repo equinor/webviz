@@ -70,8 +70,16 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
         data,
         colorScale,
         settings,
+        isLoading,
+        predictedNextBoundingBox,
     }: VisualizationFunctionArgs<any, SeismicSliceData_trans>): Layer<any> {
-        const bbox = data.bbox_utm;
+        let bbox = data.bbox_utm;
+        if (isLoading && predictedNextBoundingBox) {
+            bbox = [
+                [predictedNextBoundingBox.x[0], predictedNextBoundingBox.y[0], predictedNextBoundingBox.z[0]],
+                [predictedNextBoundingBox.x[1], predictedNextBoundingBox.y[1], predictedNextBoundingBox.z[1]],
+            ];
+        }
         const properties = data.dataFloat32Arr;
 
         let startPosition: [number, number, number] = [0, 0, 0];
@@ -126,6 +134,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
                 colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
                 boundingBox,
                 zIncreaseDownwards: true,
+                isLoading,
             }),
         });
     };

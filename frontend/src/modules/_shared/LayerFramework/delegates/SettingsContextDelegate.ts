@@ -7,10 +7,12 @@ import { GlobalSettings, LayerManager, LayerManagerTopic } from "../framework/La
 import {
     AvailableValuesType,
     EachAvailableValuesType,
+    NullableStoredData,
     SerializedSettingsState,
     Setting,
     Settings,
     SettingsContext,
+    StoredData,
     UpdateFunc,
 } from "../interfaces";
 
@@ -49,19 +51,24 @@ export type SettingsContextDelegateState<TSettings extends Settings, TKey extend
  * It also takes care of notifying its subscribers (e.g. the respective layer delegate) when the settings change.
  *
  */
-export class SettingsContextDelegate<TSettings extends Settings, TKey extends keyof TSettings = keyof TSettings>
-    implements PublishSubscribe<SettingsContextDelegatePayloads>
+export class SettingsContextDelegate<
+    TSettings extends Settings,
+    TStoredData extends StoredData = Record<string, never>,
+    TKey extends keyof TSettings = keyof TSettings,
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData
+> implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
-    private _parentContext: SettingsContext<TSettings, TKey>;
+    private _parentContext: SettingsContext<TSettings, TStoredData, TKey, TStoredDataKey>;
     private _layerManager: LayerManager;
     private _settings: { [K in TKey]: Setting<TSettings[K]> } = {} as { [K in TKey]: Setting<TSettings[K]> };
     private _overriddenSettings: { [K in TKey]: TSettings[K] } = {} as { [K in TKey]: TSettings[K] };
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegatePayloads>();
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _loadingState: SettingsContextLoadingState = SettingsContextLoadingState.LOADING;
+    private _storedData: NullableStoredData<TStoredData> = {} as NullableStoredData<TStoredData>;
 
     constructor(
-        context: SettingsContext<TSettings, TKey>,
+        context: SettingsContext<TSettings, TStoredData, TKey, TStoredDataKey>,
         layerManager: LayerManager,
         settings: { [K in TKey]: Setting<TSettings[K]> }
     ) {
@@ -197,8 +204,16 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         this.getLayerManager().publishTopic(LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED);
     }
 
+    setStoredData<K extends keyof TStoredData>(key: K, data: TStoredData[K] | null): void {
+        this._storedData[key] = data;
+    }
+
     getSettings() {
         return this._settings;
+    }
+
+    getStoredData(key: TStoredDataKey): TStoredData[TStoredDataKey] | null {
+        return this._storedData[key];
     }
 
     makeSnapshotGetter<T extends SettingsContextDelegateTopic>(topic: T): () => SettingsContextDelegatePayloads[T] {
@@ -287,7 +302,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             updateFunc: UpdateFunc<EachAvailableValuesType<TSettings[K]>, TSettings, K>
         ): Dependency<EachAvailableValuesType<TSettings[K]>, TSettings, K> => {
             const dependency = new Dependency<EachAvailableValuesType<TSettings[K]>, TSettings, K>(
-                this as unknown as SettingsContextDelegate<TSettings, K>,
+                this as unknown as SettingsContextDelegate<TSettings, TStoredData, K, TStoredDataKey>,
                 updateFunc,
                 makeSettingGetter,
                 makeGlobalSettingGetter
@@ -314,6 +329,26 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             return dependency;
         };
 
+        const storedDataUpdater = <K extends TStoredDataKey>(
+            key: K,
+            updateFunc: UpdateFunc<NullableStoredData<TStoredData>[K], TSettings, TKey>
+        ): Dependency<NullableStoredData<TStoredData>[K], TSettings, TKey> => {
+            const dependency = new Dependency<NullableStoredData<TStoredData>[K], TSettings, TKey>(
+                this as unknown as SettingsContextDelegate<TSettings, TStoredData, TKey, K>,
+                updateFunc,
+                makeSettingGetter,
+                makeGlobalSettingGetter
+            );
+
+            dependency.subscribe((storedData: TStoredData[K] | null) => {
+                this.setStoredData(key, storedData);
+            });
+
+            dependency.initialize();
+
+            return dependency;
+        };
+
         const helperDependency = <T>(
             update: (args: {
                 getLocalSetting: <T extends TKey>(settingName: T) => TSettings[T];
@@ -323,7 +358,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
             }) => T
         ) => {
             const dependency = new Dependency<T, TSettings, TKey>(
-                this as unknown as SettingsContextDelegate<TSettings, TKey>,
+                this as unknown as SettingsContextDelegate<TSettings, TStoredData, TKey, TStoredDataKey>,
                 update,
                 makeSettingGetter,
                 makeGlobalSettingGetter
@@ -337,6 +372,7 @@ export class SettingsContextDelegate<TSettings extends Settings, TKey extends ke
         if (this._parentContext.defineDependencies) {
             this._parentContext.defineDependencies({
                 availableSettingsUpdater,
+                storedDataUpdater,
                 helperDependency,
                 workbenchSession: this.getLayerManager().getWorkbenchSession(),
                 workbenchSettings: this.getLayerManager().getWorkbenchSettings(),

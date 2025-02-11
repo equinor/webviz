@@ -20,10 +20,7 @@ export class StatisticalSurfaceSettingsContext implements SettingsContext<Statis
     private _contextDelegate: SettingsContextDelegate<StatisticalSurfaceSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<
-            StatisticalSurfaceSettings,
-            keyof StatisticalSurfaceSettings
-        >(this, layerManager, {
+        this._contextDelegate = new SettingsContextDelegate<StatisticalSurfaceSettings>(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.STATISTIC_FUNCTION]: new StatisticFunctionSetting(),
             [SettingType.SENSITIVITY]: new SensitivitySetting(),

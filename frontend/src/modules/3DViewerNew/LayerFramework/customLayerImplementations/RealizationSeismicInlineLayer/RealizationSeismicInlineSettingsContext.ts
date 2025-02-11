@@ -15,10 +15,7 @@ export class RealizationSeismicInlineSettingsContext implements SettingsContext<
     private _contextDelegate: SettingsContextDelegate<RealizationSeismicInlineSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<
-            RealizationSeismicInlineSettings,
-            keyof RealizationSeismicInlineSettings
-        >(this, layerManager, {
+        this._contextDelegate = new SettingsContextDelegate<RealizationSeismicInlineSettings>(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),
             [SettingType.ATTRIBUTE]: new AttributeSetting(),
@@ -99,7 +96,7 @@ export class RealizationSeismicInlineSettingsContext implements SettingsContext<
             }
 
             const availableSeismicAttributes = [
-                ...Array.from(new Set(data.map((seismicInfos) => seismicInfos.seismic_attribute))),
+                ...Array.from(new Set(data.map((seismicInfos) => seismicInfos.seismicAttribute))),
             ];
 
             return availableSeismicAttributes;
@@ -118,8 +115,8 @@ export class RealizationSeismicInlineSettingsContext implements SettingsContext<
                 ...Array.from(
                     new Set(
                         data
-                            .filter((surface) => surface.seismic_attribute === seismicAttribute)
-                            .map((el) => el.iso_date_or_interval)
+                            .filter((surface) => surface.seismicAttribute === seismicAttribute)
+                            .map((el) => el.isoDateOrInterval)
                     )
                 ),
             ];
@@ -136,11 +133,11 @@ export class RealizationSeismicInlineSettingsContext implements SettingsContext<
             }
             const seismicInfo = data.filter(
                 (seismicInfos) =>
-                    seismicInfos.seismic_attribute === seismicAttribute &&
-                    seismicInfos.iso_date_or_interval === timeOrInterval
+                    seismicInfos.seismicAttribute === seismicAttribute &&
+                    seismicInfos.isoDateOrInterval === timeOrInterval
             )[0];
-            const iMin = seismicInfo.i_min;
-            const iMax = seismicInfo.i_max;
+            const iMin = 0;
+            const iMax = seismicInfo.spec.numCols - 1;
 
             return [iMin, iMax];
         });

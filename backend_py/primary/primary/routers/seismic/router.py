@@ -32,7 +32,7 @@ async def get_seismic_cube_meta_list(
     )
     seismic_cube_meta_list = await access.get_seismic_cube_meta_list_async()
     try:
-        return [schemas.SeismicCubeMeta(**meta.__dict__) for meta in seismic_cube_meta_list]
+        return [converters.to_api_vds_cube_meta(meta) for meta in seismic_cube_meta_list]
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

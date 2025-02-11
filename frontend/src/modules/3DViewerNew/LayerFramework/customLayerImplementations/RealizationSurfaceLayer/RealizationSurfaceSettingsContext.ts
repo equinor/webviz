@@ -16,10 +16,7 @@ export class RealizationSurfaceSettingsContext implements SettingsContext<Realiz
     private _contextDelegate: SettingsContextDelegate<RealizationSurfaceSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<
-            RealizationSurfaceSettings,
-            keyof RealizationSurfaceSettings
-        >(this, layerManager, {
+        this._contextDelegate = new SettingsContextDelegate<RealizationSurfaceSettings>(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),
             [SettingType.ATTRIBUTE]: new AttributeSetting(),

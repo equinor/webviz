@@ -76,6 +76,7 @@ function buildVtkStylePolyDataFromFenceSections(fenceSections: FenceMeshSection_
 
 export function makeIntersectionLayer({
     id,
+    name,
     data,
     colorScale,
     settings,
@@ -84,6 +85,7 @@ export function makeIntersectionLayer({
 
     const grid3dIntersectionLayer = new Grid3DLayer({
         id,
+        name,
         pointsData: polyData.points,
         polysData: polyData.polys,
         propertiesData: polyData.props,
@@ -99,7 +101,8 @@ export function makeIntersectionLayer({
         ZIncreasingDownwards: false,
         gridLines: settings.showGridLines,
         material: { ambient: 0.4, diffuse: 0.7, shininess: 8, specularColor: [25, 25, 25] },
-        pickable: false,
+        pickable: true,
     });
+
     return grid3dIntersectionLayer;
 }

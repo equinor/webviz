@@ -1,24 +1,42 @@
 from typing import List
-from enum import StrEnum
 
 from pydantic import BaseModel
 from webviz_pkg.core_utils.b64 import B64FloatArray
 
+from .._shared.schemas import BoundingBox3d
+
+
+class SeismicCubeSpec(BaseModel):
+    """
+    Specification for a seismic cube.
+    """
+
+    numCols: int
+    numRows: int
+    numLayers: int
+    xOrigin: float
+    yOrigin: float
+    zOrigin: float
+    xInc: float
+    yInc: float
+    zInc: float
+    yFlip: int
+    zFlip: int
+    rotation: float
+
 
 class SeismicCubeMeta(BaseModel):
-    seismic_attribute: str
-    iso_date_or_interval: str
-    is_observation: bool
-    is_depth: bool
-    i_min: int
-    i_max: int
-    j_min: int
-    j_max: int
-    k_min: int
-    k_max: int
-    z_min: float
-    z_max: float
-    z_inc: float
+    """
+    Metadata for a seismic cube.
+    """
+
+    seismicAttribute: str
+    unit: str
+    isoDateOrInterval: str
+    isObservation: bool
+    isDepth: bool
+    bbox: BoundingBox3d
+    spec: SeismicCubeSpec
 
 
 class SeismicFencePolyline(BaseModel):

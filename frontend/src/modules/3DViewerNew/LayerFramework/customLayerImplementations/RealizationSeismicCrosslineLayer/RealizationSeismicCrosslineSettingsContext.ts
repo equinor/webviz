@@ -9,17 +9,20 @@ import { SeismicCrosslineSetting } from "@modules/_shared/LayerFramework/setting
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
-import { RealizationSeismicCrosslineSettings } from "./types";
+import { RealizationSeismicCrosslineSettings, RealizationSeismicCrosslineStoredData } from "./types";
 
 export class RealizationSeismicCrosslineSettingsContext
-    implements SettingsContext<RealizationSeismicCrosslineSettings>
+    implements SettingsContext<RealizationSeismicCrosslineSettings, RealizationSeismicCrosslineStoredData>
 {
-    private _contextDelegate: SettingsContextDelegate<RealizationSeismicCrosslineSettings>;
+    private _contextDelegate: SettingsContextDelegate<
+        RealizationSeismicCrosslineSettings,
+        RealizationSeismicCrosslineStoredData
+    >;
 
     constructor(layerManager: LayerManager) {
         this._contextDelegate = new SettingsContextDelegate<
             RealizationSeismicCrosslineSettings,
-            keyof RealizationSeismicCrosslineSettings
+            RealizationSeismicCrosslineStoredData
         >(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),
@@ -38,7 +41,7 @@ export class RealizationSeismicCrosslineSettingsContext
         );
     }
 
-    getDelegate(): SettingsContextDelegate<RealizationSeismicCrosslineSettings> {
+    getDelegate() {
         return this._contextDelegate;
     }
 
@@ -49,8 +52,9 @@ export class RealizationSeismicCrosslineSettingsContext
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        storedDataUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationSeismicCrosslineSettings>) {
+    }: DefineDependenciesArgs<RealizationSeismicCrosslineSettings, RealizationSeismicCrosslineStoredData>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -74,6 +78,7 @@ export class RealizationSeismicCrosslineSettingsContext
 
             return [...realizations];
         });
+
         const realizationSeismicCrosslineDataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
             const realization = getLocalSetting(SettingType.REALIZATION);
@@ -93,6 +98,16 @@ export class RealizationSeismicCrosslineSettingsContext
             });
         });
 
+        storedDataUpdater("seismicCubeMeta", ({ getHelperDependency }) => {
+            const data = getHelperDependency(realizationSeismicCrosslineDataDep);
+
+            if (!data) {
+                return null;
+            }
+
+            return data;
+        });
+
         availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationSeismicCrosslineDataDep);
 
@@ -101,7 +116,7 @@ export class RealizationSeismicCrosslineSettingsContext
             }
 
             const availableSeismicAttributes = [
-                ...Array.from(new Set(data.map((seismicInfos) => seismicInfos.seismic_attribute))),
+                ...Array.from(new Set(data.map((seismicInfos) => seismicInfos.seismicAttribute))),
             ];
 
             return availableSeismicAttributes;
@@ -120,14 +135,15 @@ export class RealizationSeismicCrosslineSettingsContext
                 ...Array.from(
                     new Set(
                         data
-                            .filter((surface) => surface.seismic_attribute === seismicAttribute)
-                            .map((el) => el.iso_date_or_interval)
+                            .filter((surface) => surface.seismicAttribute === seismicAttribute)
+                            .map((el) => el.isoDateOrInterval)
                     )
                 ),
             ];
 
             return availableTimeOrIntervals;
         });
+
         availableSettingsUpdater(SettingType.SEISMIC_CROSSLINE, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(SettingType.ATTRIBUTE);
             const timeOrInterval = getLocalSetting(SettingType.TIME_OR_INTERVAL);
@@ -138,11 +154,11 @@ export class RealizationSeismicCrosslineSettingsContext
             }
             const seismicInfo = data.filter(
                 (seismicInfos) =>
-                    seismicInfos.seismic_attribute === seismicAttribute &&
-                    seismicInfos.iso_date_or_interval === timeOrInterval
+                    seismicInfos.seismicAttribute === seismicAttribute &&
+                    seismicInfos.isoDateOrInterval === timeOrInterval
             )[0];
-            const jMin = seismicInfo.j_min;
-            const jMax = seismicInfo.j_max;
+            const jMin = 0;
+            const jMax = seismicInfo.spec.numRows - 1;
 
             return [jMin, jMax];
         });

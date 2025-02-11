@@ -19,21 +19,17 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
     private _contextDelegate: SettingsContextDelegate<RealizationGridSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<RealizationGridSettings, keyof RealizationGridSettings>(
-            this,
-            layerManager,
-            {
-                [SettingType.ENSEMBLE]: new EnsembleSetting(),
-                [SettingType.REALIZATION]: new RealizationSetting(),
-                [SettingType.GRID_NAME]: new GridNameSetting(),
-                [SettingType.ATTRIBUTE]: new AttributeSetting(),
-                [SettingType.GRID_LAYER_I_RANGE]: new GridLayerIRangeSetting(),
-                [SettingType.GRID_LAYER_J_RANGE]: new GridLayerJRangeSetting(),
-                [SettingType.GRID_LAYER_K_RANGE]: new GridLayerKRangeSetting(),
-                [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
-                [SettingType.SHOW_GRID_LINES]: new ShowGridLinesSetting(),
-            }
-        );
+        this._contextDelegate = new SettingsContextDelegate<RealizationGridSettings>(this, layerManager, {
+            [SettingType.ENSEMBLE]: new EnsembleSetting(),
+            [SettingType.REALIZATION]: new RealizationSetting(),
+            [SettingType.GRID_NAME]: new GridNameSetting(),
+            [SettingType.ATTRIBUTE]: new AttributeSetting(),
+            [SettingType.GRID_LAYER_I_RANGE]: new GridLayerIRangeSetting(),
+            [SettingType.GRID_LAYER_J_RANGE]: new GridLayerJRangeSetting(),
+            [SettingType.GRID_LAYER_K_RANGE]: new GridLayerKRangeSetting(),
+            [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
+            [SettingType.SHOW_GRID_LINES]: new ShowGridLinesSetting(),
+        });
     }
 
     areCurrentSettingsValid(settings: RealizationGridSettings): boolean {

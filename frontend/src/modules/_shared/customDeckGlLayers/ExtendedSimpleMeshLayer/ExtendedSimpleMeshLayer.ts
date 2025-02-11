@@ -1,6 +1,7 @@
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 
 export class ExtendedSimpleMeshLayer extends SimpleMeshLayer {
+    static name = "ExtendedSimpleMeshLayer";
     getShaders() {
         return {
             ...super.getShaders(),

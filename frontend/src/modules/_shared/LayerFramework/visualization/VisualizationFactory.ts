@@ -26,6 +26,8 @@ export type VisualizationFunctionArgs<TSettings extends Settings, TData> = {
     data: TData;
     colorScale: ColorScaleWithName;
     settings: TSettings;
+    isLoading: boolean;
+    predictedNextBoundingBox: BoundingBox | null;
 };
 
 export type TargetReturnTypes = {
@@ -63,7 +65,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
     private _visualizationFunctions: Map<string, MakeVisualizationFunction<any, any, TTarget>> = new Map();
 
     registerVisualizationFunction<TSettings extends Settings, TData>(
-        layerCtor: { new (layerManager: LayerManager): Layer<TSettings, TData> },
+        layerCtor: { new (layerManager: LayerManager): Layer<TSettings, TData, any> },
         func: MakeVisualizationFunction<TSettings, TData, TTarget>
     ): void {
         if (this._visualizationFunctions.has(layerCtor.name)) {
@@ -128,13 +130,15 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                     collectedNumLoadingLayers++;
                 }
 
-                if (child.getLayerDelegate().getStatus() !== LayerStatus.SUCCESS) {
-                    if (child.getLayerDelegate().getStatus() === LayerStatus.ERROR) {
-                        const error = child.getLayerDelegate().getError();
-                        if (error) {
-                            collectedErrorMessages.push(error);
-                        }
+                if (child.getLayerDelegate().getStatus() === LayerStatus.ERROR) {
+                    const error = child.getLayerDelegate().getError();
+                    if (error) {
+                        collectedErrorMessages.push(error);
                     }
+                    continue;
+                }
+
+                if (child.getLayerDelegate().getData() === null) {
                     continue;
                 }
 
@@ -188,6 +192,8 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
             data: layer.getLayerDelegate().getData(),
             colorScale,
             settings: layer.getLayerDelegate().getSettingsContext().getDelegate().getValues(),
+            isLoading: layer.getLayerDelegate().getStatus() === LayerStatus.LOADING,
+            predictedNextBoundingBox: layer.getLayerDelegate().getPredictedBoundingBox(),
         });
     }
 
