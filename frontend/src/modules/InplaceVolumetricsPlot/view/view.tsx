@@ -9,7 +9,8 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import { useAtomValue } from "jotai";
 
-import { areSelectedTablesComparableAtom, resultNameAtom } from "./atoms/baseAtoms";
+import { resultNameAtom } from "./atoms/baseAtoms";
+import { areSelectedTablesComparableAtom } from "./atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useBuildPlotAndTable } from "./hooks/usePlotBuilder";
@@ -57,7 +58,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             return "Failed to load volumetric table data";
         }
         if (!areSelectedTablesComparable) {
-            return "Selected volumetric tables are not comparable";
+            return "Selected volumetric tables are not comparable due to mismatching fluid zones, result names or identifier columns";
         }
 
         return null;
