@@ -172,13 +172,13 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     function maybeDebounceOnChange(
         filter: InplaceVolumetricsFilterSettings,
         publish: boolean,
-        noTimeout?: boolean
+        dropDebounce?: boolean
     ): void {
         if (debounceTimeoutRef.current) {
             clearTimeout(debounceTimeoutRef.current);
         }
 
-        if (!props.debounceMs || noTimeout) {
+        if (!props.debounceMs || dropDebounce) {
             callOnChangeAndMaybePublish(filter, publish);
             return;
         }
@@ -233,8 +233,8 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             allowIdentifierValuesIntersection: checked,
         };
         const doPublish = true;
-        const noTimeout = true;
-        maybeDebounceOnChange(filter, doPublish, noTimeout);
+        const dropDebounce = true;
+        maybeDebounceOnChange(filter, doPublish, dropDebounce);
     }
 
     function handleIdentifierValuesChange(
