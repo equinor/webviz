@@ -3,6 +3,7 @@ import React from "react";
 import { WellboreLogCurveHeader_api } from "@api";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import { DropdownOptionGroup } from "@lib/components/Dropdown/dropdown";
 import { Label } from "@lib/components/Label";
 import { SortableList, SortableListItem } from "@lib/components/SortableList";
 import { ColorSet } from "@lib/utils/ColorSet";
@@ -36,11 +37,11 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
     const curveHeaderOptions = makeCurveNameOptions(props.availableCurveHeaders);
     const missingCurves = useAtomValue(missingCurvesAtom);
 
-    missingCurves.forEach((curveName) => {
+    if (missingCurves.length) {
         // If the current selection does not exist, keep it in the dropdown options, but with a warning.
         // This can happen when the user is importing a config, or swapping between wellbores.
-        curveHeaderOptions.push(makeMissingCurveOption(curveName));
-    });
+        curveHeaderOptions.push(makeMissingCurveGroup(missingCurves));
+    }
 
     const addPlot = React.useCallback(
         function addPlot(plotType: TemplatePlotTypes) {
@@ -108,7 +109,7 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 
 type SortablePlotItemProps = {
     plot: TemplatePlotConfig;
-    curveHeaderOptions: CurveDropdownOption[];
+    curveHeaderOptions: CurveDropdownOptionGroup[];
     onPlotUpdate: (plot: TemplatePlotConfig) => void;
     onDeletePlot: (plot: TemplatePlotConfig) => void;
 };
@@ -185,34 +186,52 @@ function SortablePlotItem(props: SortablePlotItemProps) {
 }
 
 // It's my understanding that the STAT logs are the main curves users' would care about, so sorting them to the top first
-function sortStatLogsToTop(o: WellboreLogCurveHeader_api) {
-    if (o.logName.startsWith("STAT_")) return 0;
+function sortStatLogsToTop(group: CurveDropdownOptionGroup) {
+    if (group.label.startsWith("STAT_")) return 0;
     else return 1;
 }
 
 // The select value string needs a specific pattern
 type CurveDropdownOption = DropdownOption<TemplatePlotConfig["_logAndName"]>;
+type CurveDropdownOptionGroup = DropdownOptionGroup<TemplatePlotConfig["_logAndName"]>;
 
-function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): CurveDropdownOption[] {
-    return _.chain(curveHeaders)
-        .sortBy([sortStatLogsToTop, "logName", "curveName"])
-        .map<CurveDropdownOption>((curveHeader) => {
-            return {
-                // ... surely they wont have log-names with :: in them, RIGHT?
-                value: `${curveHeader.logName}::${curveHeader.curveName}`,
-                label: curveHeader.curveName,
-                group: curveHeader.logName,
-            };
-        })
-        .value();
+function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): CurveDropdownOptionGroup[] {
+    return (
+        _.chain(curveHeaders)
+            .groupBy("logName")
+            .entries()
+            .map(([logName, headers]): CurveDropdownOptionGroup => {
+                return {
+                    label: logName,
+                    options: _.chain(headers).sortBy("curveName").map(curveHeaderToDropdownOption).value(),
+                };
+            })
+            // Sort each log group by name
+            .sortBy([sortStatLogsToTop, "label"])
+            .value()
+    );
+}
+
+function curveHeaderToDropdownOption(curveHeader: WellboreLogCurveHeader_api): CurveDropdownOption {
+    return {
+        // ... surely they wont have log-names with :: in them, RIGHT?
+        value: `${curveHeader.logName}::${curveHeader.curveName}`,
+        label: curveHeader.curveName,
+    };
 }
 
 // Helper method to show a missing curve as a disabled option
+function makeMissingCurveGroup(curveNames: string[]): CurveDropdownOptionGroup {
+    return {
+        label: "Unavailable curves!",
+        options: curveNames.map(makeMissingCurveOption),
+    };
+}
+
 function makeMissingCurveOption(curveName: string): CurveDropdownOption {
     return {
         label: curveName,
         value: `${curveName}::n/a`,
-        group: "Unavailable curves!",
         disabled: true,
         adornment: (
             <span title="This plot is is not available for this wellbore!" className="text-yellow-500">
