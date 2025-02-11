@@ -266,7 +266,7 @@ class InplaceVolumetricsAssembler:
 
         Calculation of volume names and properties, and creation of the results is handled outside this function.
         """
-        # Check for empty identifier selections
+        # Check for empty identifier selection lists
         has_empty_identifier_selection = any(
             not identifier_with_values.values for identifier_with_values in identifiers_with_values
         )

@@ -45,7 +45,7 @@ class GroupTreeAccess:
             if await table_collection.length_async() > 1:
                 raise MultipleDataMatchesError("Multiple tables found.", service=Service.SUMO)
 
-            group_tree_df = table_collection[0].to_pandas()
+            group_tree_df = await table_collection[0].to_pandas_async()
 
             _validate_group_tree_df(group_tree_df)
 

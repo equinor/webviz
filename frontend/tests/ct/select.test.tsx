@@ -28,10 +28,9 @@ test.describe("Select", () => {
         await expect(select).toBeVisible();
         const firstDiv = select.locator("div").first();
         const secondDiv = firstDiv.locator("div").first();
-        const thirdDiv = secondDiv.locator("div").first();
 
         // Virtualization does always hold more elements than visible in the view, so we expect to have at least "size" visible elements
-        expect((await thirdDiv.locator("div").count()) > SIZE).toBeTruthy();
+        expect((await secondDiv.locator("div").count()) > SIZE).toBeTruthy();
     });
 
     test("Single select is working", async ({ mount }) => {
@@ -43,7 +42,7 @@ test.describe("Select", () => {
         const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} />);
 
         // Click on first element and expect selection
-        let options = await select.locator("div").first().locator("div").nth(1).locator("div");
+        let options = await select.locator("div").nth(1).locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 
@@ -82,7 +81,7 @@ test.describe("Select", () => {
         expect(select).toContainText(selectOptions1[0].value);
 
         // Click on fourth element and expect selection
-        options = await select.locator("div").first().locator("div").nth(1).locator("div");
+        options = await select.locator("div").nth(1).locator("div");
         await options.nth(3).click();
         expect(selection.includes(selectOptions1[3].value)).toBeTruthy();
     });
@@ -96,7 +95,7 @@ test.describe("Select", () => {
         const select = await mount(<Select options={selectOptions1} size={SIZE} onChange={handleChange} multiple />);
 
         // Click on first element and expect selection
-        const options = select.locator("div").first().locator("div").nth(1).locator("div");
+        const options = select.locator("div").nth(1).locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 
@@ -217,7 +216,7 @@ test.describe("Select", () => {
         }
 
         // Click on first element and expect selection
-        const options = select.locator("div").first().locator("div").nth(1).locator("div");
+        const options = select.locator("div").nth(1).locator("div");
         await options.first().click();
         expect(selection.includes(selectOptions1[0].value)).toBeTruthy();
 

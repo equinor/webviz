@@ -5,14 +5,33 @@ import { Switch as SwitchUnstyled, UseSwitchParameters, useSwitch } from "@mui/b
 
 import { BaseComponent } from "../BaseComponent";
 
-export const Switch = React.forwardRef((props: UseSwitchParameters, ref: React.ForwardedRef<HTMLInputElement>) => {
+export type SwitchProps = UseSwitchParameters & {
+    switchRef?: React.Ref<HTMLSpanElement>;
+    inputRef?: React.Ref<HTMLInputElement>;
+    thumbRef?: React.Ref<HTMLSpanElement>;
+    rootRef?: React.Ref<HTMLSpanElement>;
+};
+
+function SwitchComponent(props: SwitchProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const { getInputProps, checked, disabled } = useSwitch(props);
 
+    const switchRef = React.useRef<HTMLSpanElement>(null);
+    React.useImperativeHandle<HTMLSpanElement | null, HTMLSpanElement | null>(props.switchRef, () => switchRef.current);
+
+    const inputRef = React.useRef<HTMLInputElement>(null);
+    React.useImperativeHandle<HTMLInputElement | null, HTMLInputElement | null>(props.inputRef, () => inputRef.current);
+
+    const rootRef = React.useRef<HTMLSpanElement>(null);
+    React.useImperativeHandle<HTMLSpanElement | null, HTMLSpanElement | null>(props.rootRef, () => rootRef.current);
+
+    const thumbRef = React.useRef<HTMLSpanElement>(null);
+    React.useImperativeHandle<HTMLSpanElement | null, HTMLSpanElement | null>(props.thumbRef, () => thumbRef.current);
+
     return (
-        <BaseComponent disabled={disabled}>
+        <BaseComponent ref={ref} disabled={disabled}>
             <SwitchUnstyled
                 {...getInputProps()}
-                ref={ref}
+                ref={switchRef}
                 slotProps={{
                     root: {
                         className: resolveClassNames(
@@ -27,6 +46,7 @@ export const Switch = React.forwardRef((props: UseSwitchParameters, ref: React.F
                                 "bg-blue-500": checked,
                             }
                         ),
+                        ref: rootRef,
                     },
                     input: {
                         className: resolveClassNames(
@@ -42,6 +62,7 @@ export const Switch = React.forwardRef((props: UseSwitchParameters, ref: React.F
                             "z-1",
                             "cursor-pointer"
                         ),
+                        ref: inputRef,
                     },
                     thumb: {
                         className: resolveClassNames(
@@ -56,11 +77,12 @@ export const Switch = React.forwardRef((props: UseSwitchParameters, ref: React.F
                             "transition-all",
                             "z-2"
                         ),
+                        ref: thumbRef,
                     },
                 }}
             />
         </BaseComponent>
     );
-});
+}
 
-Switch.displayName = "Switch";
+export const Switch = React.forwardRef(SwitchComponent);

@@ -56,9 +56,10 @@ class TableAccess:
             iteration=self._iteration_name,
             realization=realization,
         )
-        if not table_collection:
+        table_length = await table_collection.length_async()
+        if table_length == 0:
             raise NoDataError(f"No table found for {table_schema=}", Service.SUMO)
-        if len(table_collection) > 1:
+        if table_length > 1:
             raise MultipleDataMatchesError(f"Multiple tables found for {table_schema=}", Service.SUMO)
 
         sumo_table = await table_collection.getitem_async(0)

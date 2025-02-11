@@ -1,6 +1,5 @@
 import { InplaceVolumetricResultName_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
 import { SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { userSelectedPlotTypeAtom } from "./settings/atoms/baseAtoms";
@@ -17,17 +16,16 @@ import {
     selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/derivedAtoms";
-import { PlotType } from "./typesAndEnums";
+import { InplaceVolumetricsFilterSelections, PlotType } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
-    filter: InplaceVolumetricsFilter;
+    filter: InplaceVolumetricsFilterSelections;
     resultName: InplaceVolumetricResultName_api | null;
     resultName2: InplaceVolumetricResultName_api | null;
     selectorColumn: SelectorColumn | null;
     subplotBy: SourceAndTableIdentifierUnion;
     colorBy: SourceAndTableIdentifierUnion;
     plotType: PlotType;
-    areSelectedTablesComparable: boolean;
     areTableDefinitionSelectionsValid: boolean;
 };
 
@@ -42,6 +40,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
             tableNames: get(selectedTableNamesAtom),
             fluidZones: get(selectedFluidZonesAtom),
             identifiersValues: get(selectedIdentifiersValuesAtom),
+            areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };
     },
     resultName: (get) => get(selectedResultNameAtom),
@@ -50,6 +49,5 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     subplotBy: (get) => get(selectedSubplotByAtom),
     colorBy: (get) => get(selectedColorByAtom),
     plotType: (get) => get(userSelectedPlotTypeAtom),
-    areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),
     areTableDefinitionSelectionsValid: (get) => get(areTableDefinitionSelectionsValidAtom),
 };

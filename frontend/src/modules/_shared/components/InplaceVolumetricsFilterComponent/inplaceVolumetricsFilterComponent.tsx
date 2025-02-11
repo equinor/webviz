@@ -7,8 +7,10 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { WorkbenchServices } from "@framework/WorkbenchServices";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
-import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
+import { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
+import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { ErrorWrapper } from "@lib/components/ErrorWrapper";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
 
@@ -25,7 +27,8 @@ export type InplaceVolumetricsFilterComponentProps = {
     selectedTableNames: string[];
     selectedFluidZones: FluidZone_api[];
     selectedIdentifiersValues: InplaceVolumetricsIdentifierWithValues_api[];
-    onChange: (filter: InplaceVolumetricsFilter) => void;
+    selectedAllowIdentifierValuesIntersection: boolean;
+    onChange: (filter: InplaceVolumetricsFilterSettings) => void;
     isPending?: boolean;
     errorMessage?: string;
     additionalSettings?: React.ReactNode;
@@ -49,7 +52,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     const [prevIdentifiersValues, setPrevIdentifiersValues] = React.useState<
         InplaceVolumetricsIdentifierWithValues_api[]
     >(props.selectedIdentifiersValues);
-    const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumetricsFilter | null>(null);
+    const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumetricsFilterSettings | null>(null);
 
     const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -91,12 +94,18 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
 
     const syncedFilter = syncHelper.useValue(
         SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
-        "global.syncValue.inplaceVolumetricsFilter"
+        "global.syncValue.inplaceVolumetricsFilterSettings"
     );
 
     if (!isEqual(syncedFilter, prevSyncedFilter)) {
         if (syncedFilter) {
-            const filter = { ensembleIdents, tableNames, fluidZones, identifiersValues };
+            const filter = {
+                ensembleIdents,
+                tableNames,
+                fluidZones,
+                identifiersValues,
+                allowIdentifierValuesIntersection: props.selectedAllowIdentifierValuesIntersection,
+            };
 
             if (!isEqual(syncedFilter.ensembleIdents, ensembleIdents)) {
                 filter.ensembleIdents = [...syncedFilter.ensembleIdents];
@@ -108,6 +117,10 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
 
             if (!isEqual(syncedFilter.fluidZones, fluidZones)) {
                 filter.fluidZones = [...syncedFilter.fluidZones];
+            }
+
+            if (syncedFilter.allowIdentifierValuesIntersection !== props.selectedAllowIdentifierValuesIntersection) {
+                filter.allowIdentifierValuesIntersection = props.selectedAllowIdentifierValuesIntersection;
             }
 
             if (!isEqual(syncedFilter.identifiersValues, identifiersValues)) {
@@ -142,7 +155,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
         };
     }, []);
 
-    function callOnChangeAndMaybePublish(filter: InplaceVolumetricsFilter, publish: boolean): void {
+    function callOnChangeAndMaybePublish(filter: InplaceVolumetricsFilterSettings, publish: boolean): void {
         if (debounceTimeoutRef.current) {
             clearTimeout(debounceTimeoutRef.current);
         }
@@ -150,18 +163,22 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
         if (publish) {
             syncHelper.publishValue(
                 SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
-                "global.syncValue.inplaceVolumetricsFilter",
+                "global.syncValue.inplaceVolumetricsFilterSettings",
                 filter
             );
         }
     }
 
-    function maybeDebounceOnChange(filter: InplaceVolumetricsFilter, publish: boolean): void {
+    function maybeDebounceOnChange(
+        filter: InplaceVolumetricsFilterSettings,
+        publish: boolean,
+        dropDebounce?: boolean
+    ): void {
         if (debounceTimeoutRef.current) {
             clearTimeout(debounceTimeoutRef.current);
         }
 
-        if (!props.debounceMs) {
+        if (!props.debounceMs || dropDebounce) {
             callOnChangeAndMaybePublish(filter, publish);
             return;
         }
@@ -177,14 +194,21 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             ensembleIdents: newEnsembleIdents,
             tableNames: tableNames,
             fluidZones,
-            identifiersValues: identifiersValues,
+            identifiersValues,
+            allowIdentifierValuesIntersection: props.selectedAllowIdentifierValuesIntersection,
         };
         callOnChangeAndMaybePublish(filter, publish);
     }
 
     function handleTableNamesChange(newTableNames: string[], publish = true): void {
         setTableNames(newTableNames);
-        const filter = { ensembleIdents, tableNames: newTableNames, fluidZones, identifiersValues: identifiersValues };
+        const filter = {
+            ensembleIdents,
+            tableNames: newTableNames,
+            fluidZones,
+            identifiersValues,
+            allowIdentifierValuesIntersection: props.selectedAllowIdentifierValuesIntersection,
+        };
         callOnChangeAndMaybePublish(filter, publish);
     }
 
@@ -194,9 +218,23 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             ensembleIdents,
             tableNames: tableNames,
             fluidZones: newFluidZones,
-            identifiersValues: identifiersValues,
+            identifiersValues,
+            allowIdentifierValuesIntersection: props.selectedAllowIdentifierValuesIntersection,
         };
         maybeDebounceOnChange(filter, publish);
+    }
+
+    function handleAllowIdentifierValueIntersectionChange(checked: boolean): void {
+        const filter = {
+            ensembleIdents,
+            tableNames: tableNames,
+            fluidZones,
+            identifiersValues,
+            allowIdentifierValuesIntersection: checked,
+        };
+        const doPublish = true;
+        const dropDebounce = true;
+        maybeDebounceOnChange(filter, doPublish, dropDebounce);
     }
 
     function handleIdentifierValuesChange(
@@ -212,17 +250,18 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             identifierValues.values = [...values];
         }
         setIdentifiersValues(newIdentifiersValues);
-        const filter = { ensembleIdents, tableNames: tableNames, fluidZones, identifiersValues: newIdentifiersValues };
+        const filter = {
+            ensembleIdents,
+            tableNames: tableNames,
+            fluidZones,
+            identifiersValues: newIdentifiersValues,
+            allowIdentifierValuesIntersection: props.selectedAllowIdentifierValuesIntersection,
+        };
         maybeDebounceOnChange(filter, publish);
     }
 
     const tableSourceOptions = props.availableTableNames.map((source) => ({ value: source, label: source }));
     const fluidZoneOptions = props.availableFluidZones.map((zone) => ({ value: zone, label: zone }));
-
-    let errorMessage: string | undefined = undefined;
-    if (props.areCurrentlySelectedTablesComparable === false) {
-        errorMessage = "Selected tables are not comparable";
-    }
 
     return (
         <>
@@ -238,26 +277,46 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                 <div className="flex flex-col gap-2">{props.additionalSettings}</div>
                 <div className="flex flex-col gap-2">
                     <CollapsibleGroup title="Volumetric table names" expanded>
-                        <Select
-                            options={tableSourceOptions}
-                            value={tableNames}
-                            onChange={handleTableNamesChange}
-                            multiple
-                            size={3}
-                        />
+                        <ErrorWrapper
+                            isError={tableSourceOptions.length === 0 && !props.isPending}
+                            message={"No table names"}
+                        >
+                            <Select
+                                options={tableSourceOptions}
+                                value={tableNames}
+                                onChange={handleTableNamesChange}
+                                multiple
+                                size={3}
+                            />
+                        </ErrorWrapper>
                     </CollapsibleGroup>
                     <CollapsibleGroup title="Fluid zones" expanded>
-                        <Select
-                            options={fluidZoneOptions}
-                            value={fluidZones}
-                            onChange={handleFluidZoneChange}
-                            multiple
-                            size={3}
-                        />
+                        <ErrorWrapper
+                            isError={fluidZoneOptions.length === 0 && !props.isPending}
+                            message={"No fluid zones"}
+                        >
+                            <Select
+                                options={fluidZoneOptions}
+                                value={fluidZones}
+                                onChange={handleFluidZoneChange}
+                                multiple
+                                size={3}
+                            />
+                        </ErrorWrapper>
                     </CollapsibleGroup>
-                    <PendingWrapper isPending={false} errorMessage={errorMessage}>
-                        <CollapsibleGroup title="Identifier filters" expanded>
-                            <div className="flex flex-col gap-2">
+                    <CollapsibleGroup title="Identifier filters" expanded>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex flex-row items-center gap-2">
+                                <div className="flex-grow">Allow intersection of values</div>
+                                <Checkbox
+                                    checked={props.selectedAllowIdentifierValuesIntersection}
+                                    onChange={(_, checked) => handleAllowIdentifierValueIntersectionChange(checked)}
+                                />
+                            </div>
+                            <ErrorWrapper
+                                isError={!props.areCurrentlySelectedTablesComparable}
+                                message={"Selected tables are not comparable due to mismatching identifier columns"}
+                            >
                                 {props.availableIdentifiersWithValues.map((identifier) => (
                                     <CollapsibleGroup
                                         key={identifier.identifier}
@@ -282,9 +341,9 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                                         />
                                     </CollapsibleGroup>
                                 ))}
-                            </div>
-                        </CollapsibleGroup>
-                    </PendingWrapper>
+                            </ErrorWrapper>
+                        </div>
+                    </CollapsibleGroup>
                 </div>
             </PendingWrapper>
         </>
