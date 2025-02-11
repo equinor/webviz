@@ -1,3 +1,5 @@
+import { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
+
 export enum PlotType {
     HISTOGRAM = "histogram",
     SCATTER = "scatter",
@@ -14,4 +16,11 @@ export const plotTypeToStringMapping: Record<PlotType, string> = {
     [PlotType.BOX]: "Box",
     [PlotType.BAR]: "Bar",
     [PlotType.CONVERGENCE]: "Convergence",
+};
+
+export type InplaceVolumetricsFilterSelections = Omit<
+    InplaceVolumetricsFilterSettings,
+    "allowIdentifierValuesIntersection"
+> & {
+    areSelectedTablesComparable: boolean;
 };
