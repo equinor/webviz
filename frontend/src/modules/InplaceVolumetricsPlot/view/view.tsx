@@ -9,7 +9,8 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import { useAtomValue } from "jotai";
 
-import { areSelectedTablesComparableAtom, resultNameAtom } from "./atoms/baseAtoms";
+import { resultNameAtom } from "./atoms/baseAtoms";
+import { areSelectedTablesComparableAtom } from "./atoms/derivedAtoms";
 import { aggregatedTableDataQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useBuildPlotAndTable } from "./hooks/usePlotBuilder";

@@ -26,7 +26,6 @@ export type SettingsToViewInterface = {
     subplotBy: SourceAndTableIdentifierUnion;
     colorBy: SourceAndTableIdentifierUnion;
     plotType: PlotType;
-    areSelectedTablesComparable: boolean;
     areTableDefinitionSelectionsValid: boolean;
 };
 
@@ -41,6 +40,7 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
             tableNames: get(selectedTableNamesAtom),
             fluidZones: get(selectedFluidZonesAtom),
             identifiersValues: get(selectedIdentifiersValuesAtom),
+            areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };
     },
     resultName: (get) => get(selectedResultNameAtom),
@@ -49,6 +49,5 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
     subplotBy: (get) => get(selectedSubplotByAtom),
     colorBy: (get) => get(selectedColorByAtom),
     plotType: (get) => get(userSelectedPlotTypeAtom),
-    areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),
     areTableDefinitionSelectionsValid: (get) => get(areTableDefinitionSelectionsValidAtom),
 };

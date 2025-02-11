@@ -17,7 +17,6 @@ import { InplaceVolumetricsFilterSelections } from "./types";
 
 export type SettingsToViewInterface = {
     filter: InplaceVolumetricsFilterSelections;
-    areSelectedTablesComparable: boolean;
     resultNames: InplaceVolumetricResultName_api[];
     accumulationOptions: Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>[];
     tableType: TableType;
@@ -36,9 +35,9 @@ export const settingsToViewInterfaceInitialization: InterfaceInitialization<Sett
             tableNames: get(selectedTableNamesAtom),
             fluidZones: get(selectedFluidZonesAtom),
             identifiersValues: get(selectedIdentifiersValuesAtom),
+            areSelectedTablesComparable: get(areSelectedTablesComparableAtom),
         };
     },
-    areSelectedTablesComparable: (get) => get(areSelectedTablesComparableAtom),
     resultNames: (get) => get(selectedResultNamesAtom),
     accumulationOptions: (get) => get(selectedAccumulationOptionsAtom),
     tableType: (get) => get(selectedTableTypeAtom),

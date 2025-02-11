@@ -9,8 +9,8 @@ export const filterAtom = atom<InplaceVolumetricsFilterSelections>({
     tableNames: [],
     fluidZones: [],
     identifiersValues: [],
+    areSelectedTablesComparable: false,
 });
-export const areSelectedTablesComparableAtom = atom<boolean>(false);
 export const resultNamesAtom = atom<InplaceVolumetricResultName_api[]>([]);
 export const accumulationOptionsAtom = atom<
     Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>[]

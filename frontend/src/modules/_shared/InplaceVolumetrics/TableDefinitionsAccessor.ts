@@ -141,12 +141,14 @@ export class TableDefinitionsAccessor {
 
                 // Tables are not comparable when identifier values are not equal
                 if (this._identifierValueCriteria === IdentifierValueCriteria.ALLOW_INTERSECTION) {
-                    const values = Array.from(
-                        new Set(identifierWithValues.values.concat(currentIdentifierWithValues.values))
+                    const valuesIntersection = identifierWithValues.values.filter((value) =>
+                        currentIdentifierWithValues.values.includes(value)
                     );
+
+                    // Set or update existing identifier with intersected values
                     commonIdentifiersWithValuesMap.set(identifier, {
                         identifier,
-                        values,
+                        values: valuesIntersection,
                     });
                 } else if (!isEqual(identifierWithValues.values.sort(), currentIdentifierWithValues.values.sort())) {
                     this._tablesNotComparable = true;
@@ -164,6 +166,7 @@ export class TableDefinitionsAccessor {
         this._resultNamesIntersection = sortResultNames(Array.from(resultNames));
         this._commonIdentifiersWithValues = Array.from(commonIdentifiersWithValuesMap.values());
 
+        // Not comparable if there are no common identifiers
         if (this._commonIdentifiersWithValues.length === 0) {
             this._tablesNotComparable = true;
         }

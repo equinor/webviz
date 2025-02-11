@@ -3,4 +3,6 @@ import { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolume
 export type InplaceVolumetricsFilterSelections = Omit<
     InplaceVolumetricsFilterSettings,
     "allowIdentifierValuesIntersection"
->;
+> & {
+    areSelectedTablesComparable: boolean;
+};

@@ -11,8 +11,7 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import { useAtomValue } from "jotai";
 
-import { areSelectedTablesComparableAtom } from "./atoms/baseAtoms";
-import { hasAllQueriesFailedAtom as haveAllQueriesFailedAtom, isQueryFetchingAtom } from "./atoms/derivedAtoms";
+import { areSelectedTablesComparableAtom, haveAllQueriesFailedAtom, isQueryFetchingAtom } from "./atoms/derivedAtoms";
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useTableBuilder } from "./hooks/useTableBuilder";
 

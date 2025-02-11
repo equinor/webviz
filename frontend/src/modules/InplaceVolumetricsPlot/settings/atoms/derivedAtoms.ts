@@ -5,7 +5,6 @@ import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelectio
 import { fixupUserSelectedIdentifierValues } from "@modules/_shared/InplaceVolumetrics/fixupUserSelectedIdentifierValues";
 import { RealSelector, SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 import {
-    IdentifierValueCriteria,
     TableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,
 } from "@modules_shared/InplaceVolumetrics/TableDefinitionsAccessor";
@@ -13,6 +12,7 @@ import {
 import { atom } from "jotai";
 
 import {
+    selectedIdentifierValueCriteriaAtom,
     userSelectedColorByAtom,
     userSelectedEnsembleIdentsAtom,
     userSelectedFluidZonesAtom,
@@ -50,11 +50,12 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
 export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get) => {
     const selectedTableNames = get(selectedTableNamesAtom);
     const tableDefinitions = get(tableDefinitionsQueryAtom);
+    const selectedIdentifierValueCriteria = get(selectedIdentifierValueCriteriaAtom);
 
     return new TableDefinitionsAccessor(
         tableDefinitions.isLoading ? [] : tableDefinitions.data,
         selectedTableNames,
-        IdentifierValueCriteria.REQUIRE_EQUALITY
+        selectedIdentifierValueCriteria
     );
 });
 

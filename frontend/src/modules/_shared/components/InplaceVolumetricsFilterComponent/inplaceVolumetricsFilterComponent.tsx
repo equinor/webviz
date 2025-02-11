@@ -27,7 +27,7 @@ export type InplaceVolumetricsFilterComponentProps = {
     selectedTableNames: string[];
     selectedFluidZones: FluidZone_api[];
     selectedIdentifiersValues: InplaceVolumetricsIdentifierWithValues_api[];
-    selectedAllowIdentifierValueIntersection: boolean;
+    selectedAllowIdentifierValuesIntersection: boolean;
     onChange: (filter: InplaceVolumetricsFilterSettings) => void;
     isPending?: boolean;
     errorMessage?: string;
@@ -40,9 +40,6 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     const [ensembleIdents, setEnsembleIdents] = React.useState<RegularEnsembleIdent[]>(props.selectedEnsembleIdents);
     const [tableNames, setTableNames] = React.useState<string[]>(props.selectedTableNames);
     const [fluidZones, setFluidZones] = React.useState<FluidZone_api[]>(props.selectedFluidZones);
-    const [allowIdentifierValuesIntersection, setAllowIdentifierValuesIntersection] = React.useState<boolean>(
-        props.selectedAllowIdentifierValueIntersection
-    );
     const [identifiersValues, setIdentifiersValues] = React.useState<InplaceVolumetricsIdentifierWithValues_api[]>(
         props.selectedIdentifiersValues
     );
@@ -55,9 +52,6 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     const [prevIdentifiersValues, setPrevIdentifiersValues] = React.useState<
         InplaceVolumetricsIdentifierWithValues_api[]
     >(props.selectedIdentifiersValues);
-    const [prevAllowIdentifierValuesIntersection, setPrevAllowIdentifierValuesIntersection] = React.useState<boolean>(
-        props.selectedAllowIdentifierValueIntersection
-    );
     const [prevSyncedFilter, setPrevSyncedFilter] = React.useState<InplaceVolumetricsFilterSettings | null>(null);
 
     const debounceTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,11 +69,6 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     if (!isEqual(props.selectedFluidZones, prevFluidZones)) {
         setFluidZones(props.selectedFluidZones);
         setPrevFluidZones(props.selectedFluidZones);
-    }
-
-    if (props.selectedAllowIdentifierValueIntersection !== prevAllowIdentifierValuesIntersection) {
-        setAllowIdentifierValuesIntersection(props.selectedAllowIdentifierValueIntersection);
-        setPrevAllowIdentifierValuesIntersection(props.selectedAllowIdentifierValueIntersection);
     }
 
     if (!isEqual(props.selectedIdentifiersValues, prevIdentifiersValues)) {
@@ -115,7 +104,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                 tableNames,
                 fluidZones,
                 identifiersValues,
-                allowIdentifierValuesIntersection,
+                allowIdentifierValuesIntersection: props.selectedAllowIdentifierValuesIntersection,
             };
 
             if (!isEqual(syncedFilter.ensembleIdents, ensembleIdents)) {
@@ -130,8 +119,8 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                 filter.fluidZones = [...syncedFilter.fluidZones];
             }
 
-            if (syncedFilter.allowIdentifierValuesIntersection !== allowIdentifierValuesIntersection) {
-                filter.allowIdentifierValuesIntersection = allowIdentifierValuesIntersection;
+            if (syncedFilter.allowIdentifierValuesIntersection !== props.selectedAllowIdentifierValuesIntersection) {
+                filter.allowIdentifierValuesIntersection = props.selectedAllowIdentifierValuesIntersection;
             }
 
             if (!isEqual(syncedFilter.identifiersValues, identifiersValues)) {
@@ -180,12 +169,16 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
         }
     }
 
-    function maybeDebounceOnChange(filter: InplaceVolumetricsFilterSettings, publish: boolean): void {
+    function maybeDebounceOnChange(
+        filter: InplaceVolumetricsFilterSettings,
+        publish: boolean,
+        noTimeout?: boolean
+    ): void {
         if (debounceTimeoutRef.current) {
             clearTimeout(debounceTimeoutRef.current);
         }
 
-        if (!props.debounceMs) {
+        if (!props.debounceMs || noTimeout) {
             callOnChangeAndMaybePublish(filter, publish);
             return;
         }
@@ -202,7 +195,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             tableNames: tableNames,
             fluidZones,
             identifiersValues,
-            allowIdentifierValuesIntersection,
+            allowIdentifierValuesIntersection: props.selectedAllowIdentifierValuesIntersection,
         };
         callOnChangeAndMaybePublish(filter, publish);
     }
@@ -214,7 +207,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             tableNames: newTableNames,
             fluidZones,
             identifiersValues,
-            allowIdentifierValuesIntersection,
+            allowIdentifierValuesIntersection: props.selectedAllowIdentifierValuesIntersection,
         };
         callOnChangeAndMaybePublish(filter, publish);
     }
@@ -226,21 +219,22 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             tableNames: tableNames,
             fluidZones: newFluidZones,
             identifiersValues,
-            allowIdentifierValuesIntersection,
+            allowIdentifierValuesIntersection: props.selectedAllowIdentifierValuesIntersection,
         };
         maybeDebounceOnChange(filter, publish);
     }
 
     function handleAllowIdentifierValueIntersectionChange(checked: boolean): void {
-        setAllowIdentifierValuesIntersection(checked);
         const filter = {
             ensembleIdents,
             tableNames: tableNames,
             fluidZones,
             identifiersValues,
-            allowIdentifierValuesIntersection,
+            allowIdentifierValuesIntersection: checked,
         };
-        maybeDebounceOnChange(filter, true);
+        const doPublish = true;
+        const noTimeout = true;
+        maybeDebounceOnChange(filter, doPublish, noTimeout);
     }
 
     function handleIdentifierValuesChange(
@@ -261,7 +255,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             tableNames: tableNames,
             fluidZones,
             identifiersValues: newIdentifiersValues,
-            allowIdentifierValuesIntersection,
+            allowIdentifierValuesIntersection: props.selectedAllowIdentifierValuesIntersection,
         };
         maybeDebounceOnChange(filter, publish);
     }
@@ -315,7 +309,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                             <div className="flex flex-row items-center gap-2">
                                 <div className="flex-grow">Allow intersection of values</div>
                                 <Checkbox
-                                    checked={allowIdentifierValuesIntersection}
+                                    checked={props.selectedAllowIdentifierValuesIntersection}
                                     onChange={(_, checked) => handleAllowIdentifierValueIntersectionChange(checked)}
                                 />
                             </div>

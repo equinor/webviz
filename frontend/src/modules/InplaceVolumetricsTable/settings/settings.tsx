@@ -177,7 +177,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
             selectedFluidZones={selectedFluidZones}
             selectedIdentifiersValues={selectedIdentifiersValues}
             selectedTableNames={selectedTableNames}
-            selectedAllowIdentifierValueIntersection={
+            selectedAllowIdentifierValuesIntersection={
                 selectedIdentifierValueCriteria === IdentifierValueCriteria.ALLOW_INTERSECTION
             }
             onChange={handleFilterChange}

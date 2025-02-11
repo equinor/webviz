@@ -21,4 +21,6 @@ export const plotTypeToStringMapping: Record<PlotType, string> = {
 export type InplaceVolumetricsFilterSelections = Omit<
     InplaceVolumetricsFilterSettings,
     "allowIdentifierValuesIntersection"
->;
+> & {
+    areSelectedTablesComparable: boolean;
+};
