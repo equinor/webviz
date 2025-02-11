@@ -89,7 +89,7 @@ async def post_get_seismic_fence(
 
     meta: VdsMetadata = await vds_access.get_metadata_async()
     if len(meta.axis) != 3:
-        raise ValueError(f"Expected 3 axes, got {len(meta.axis)}")
+        raise HTTPException(status_code=400, detail=f"Expected 3 axes, got {len(meta.axis)}")
     depth_axis_meta = meta.axis[2]
 
     return schemas.SeismicFenceData(

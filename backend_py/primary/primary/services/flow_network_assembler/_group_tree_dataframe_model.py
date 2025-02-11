@@ -3,6 +3,7 @@ from typing import Callable, List, Optional
 import pandas as pd
 
 from primary.services.sumo_access.group_tree_types import TreeType
+from primary.services.service_exceptions import Service, NoDataError
 
 
 class GroupTreeDataframeModel:
@@ -46,11 +47,11 @@ class GroupTreeDataframeModel:
         * PARENT
         * KEYWORD (GRUPTREE, BRANPROP or WELSPECS)
         """
-        expected_columns = {"DATE", "CHILD", "KEYWORD", "PARENT"}
-        if not expected_columns.issubset(grouptree_dataframe.columns):
-            raise ValueError(
-                f"Expected columns: {expected_columns} not found in the grouptree dataframe. "
-                f"Columns found: {grouptree_dataframe.columns}"
+        if not GroupTreeDataframeModel.has_expected_columns(grouptree_dataframe):
+            raise NoDataError(
+                f"Expected columns: {GroupTreeDataframeModel.expected_columns()} not found in the grouptree dataframe. "
+                f"Columns found: {grouptree_dataframe.columns}",
+                service=Service.GENERAL,
             )
 
         # Note: Only support single realization for now
@@ -60,7 +61,7 @@ class GroupTreeDataframeModel:
         self._grouptree_df = grouptree_dataframe
 
         if tree_type.value not in self._grouptree_df["KEYWORD"].unique():
-            raise ValueError(f"Tree type: {tree_type} not found in grouptree dataframe.")
+            raise NoDataError(f"Tree type: {tree_type} not found in grouptree dataframe.", service=Service.GENERAL)
 
         self._terminal_node = terminal_node
         self._tree_type = tree_type
@@ -84,6 +85,14 @@ class GroupTreeDataframeModel:
 
         self._grouptree_wells = list(group_tree_wells)
         self._grouptree_groups = list(group_tree_groups)
+
+    @staticmethod
+    def expected_columns() -> set[str]:
+        return {"DATE", "CHILD", "KEYWORD", "PARENT"}
+
+    @staticmethod
+    def has_expected_columns(dataframe: pd.DataFrame) -> bool:
+        return GroupTreeDataframeModel.expected_columns().issubset(dataframe.columns)
 
     @property
     def dataframe(self) -> pd.DataFrame:
@@ -129,8 +138,9 @@ class GroupTreeDataframeModel:
 
         if terminal_node is not None:
             if terminal_node not in self._grouptree_df["CHILD"].unique():
-                raise ValueError(
-                    f"Terminal node '{terminal_node}' not found in 'CHILD' column " "of the gruptree data."
+                raise NoDataError(
+                    f"Terminal node '{terminal_node}' not found in 'CHILD' column of the gruptree data.",
+                    Service.GENERAL,
                 )
             if terminal_node != "FIELD":
                 branch_nodes = self._create_branch_node_list(terminal_node)
