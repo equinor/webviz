@@ -3,6 +3,7 @@ from typing import List
 from enum import StrEnum
 from pydantic import BaseModel
 
+
 ######################################################################################################
 #
 # This file contains the response types for the vds-slice service found in the following file:
@@ -71,10 +72,9 @@ class VdsSliceMetadata(VdsArray):
     See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L160-L162
     """
 
-    x: VdsAxis
-    y: VdsAxis
+    x_axis: VdsAxis
+    y_axis: VdsAxis
     geospatial: List[List[float]]
-    # shape: List[int]
 
 
 class VdsBoundingBox(BaseModel):
