@@ -4,6 +4,7 @@ import { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
+import { simulationUnitReformat } from "@modules/_shared/reservoirSimulationStringUtils";
 import { DatedTree, EdgeMetadata, GroupTreePlot, NodeMetadata } from "@webviz/group-tree-plot";
 
 import { Interfaces } from "./interfaces";
@@ -32,11 +33,19 @@ export function View({ viewContext }: ModuleViewProps<Interfaces>) {
     }, [datedNetworks]);
 
     // Convert metadata lists to front-end format
-    const convertedEdgeMetadataList: EdgeMetadata[] = React.useMemo(() => {
-        return edgeMetadataList.map((elm) => ({ key: elm.key, label: elm.label }));
+    const convertedEdgeMetadataList = React.useMemo(() => {
+        return edgeMetadataList.map<EdgeMetadata>((elm) => ({
+            key: elm.key,
+            label: elm.label,
+            unit: elm.unit ? simulationUnitReformat(elm.unit) : "",
+        }));
     }, [edgeMetadataList]);
-    const convertedNodeMetadataList: NodeMetadata[] = React.useMemo(() => {
-        return nodeMetadataList.map((elm) => ({ key: elm.key, label: elm.label }));
+    const convertedNodeMetadataList = React.useMemo(() => {
+        return nodeMetadataList.map<NodeMetadata>((elm) => ({
+            key: elm.key,
+            label: elm.label,
+            unit: elm.unit ? simulationUnitReformat(elm.unit) : "",
+        }));
     }, [nodeMetadataList]);
 
     return (
@@ -47,9 +56,12 @@ export function View({ viewContext }: ModuleViewProps<Interfaces>) {
                 </ContentInfo>
             ) : queryStatus === QueryStatus.Error ? (
                 <ContentError>Error loading group tree data.</ContentError>
+            ) : !datedTrees.length ? (
+                <ContentInfo>No dated trees found</ContentInfo>
             ) : (
                 <GroupTreePlot
                     id="test_id"
+                    initialVisibleDepth={1}
                     edgeMetadataList={convertedEdgeMetadataList}
                     nodeMetadataList={convertedNodeMetadataList}
                     datedTrees={datedTrees}

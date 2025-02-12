@@ -12,14 +12,16 @@ from fastapi import HTTPException
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 
-from primary.services.sumo_access.summary_access import Frequency, SummaryAccess
+from primary.services.sumo_access.summary_access import Frequency, SummaryAccess, VectorMetadata
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.group_tree_types import TreeType
 
 from . import _utils
+from ._assembler_performance_times import PerformanceTimes
 from ._group_tree_dataframe_model import (
     GroupTreeDataframeModel,
 )
+
 
 from .flow_network_types import (
     DataType,
@@ -38,44 +40,6 @@ from .flow_network_types import (
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-@dataclass
-# Dataclass needs to save a bunch of timestamps. Many attributes is okay here, as splitting it would be more cumbersome
-# pylint: disable-next=too-many-instance-attributes
-class PerformanceTimes:
-    """Simple utility class to store performance timer results for different internal method calls"""
-
-    init_sumo_data: int = 0
-    init_summary_vector_list: int = 0
-    fetch_grouptree_df: int = 0
-    init_grouptree_df_model: int = 0
-    create_filtered_dataframe: int = 0
-    init_summary_vector_data_table: int = 0
-    create_node_classifications: int = 0
-    create_network_summary_vectors_info: int = 0
-
-    # Unused for logging for now, but available if needed
-    build_and_verify_vectors_of_interest: int = 0
-    create_well_node_classifications: int = 0
-
-    def log_sumo_download_times(self) -> None:
-        # Log download from Sumo times
-        LOGGER.info(
-            f"Total time to fetch data from Sumo: {self.init_sumo_data + self.init_summary_vector_data_table}ms, "
-            f"Get summary vector list in: {self.init_summary_vector_list}ms, "
-            f"Get group tree table in: {self.fetch_grouptree_df}ms, "
-            f"Get summary vectors in: {self.init_summary_vector_data_table}ms"
-        )
-
-    def log_structure_init_times(self) -> None:
-        # Log initialization of data structures times
-        LOGGER.info(
-            f"Initialize GroupTreeModel in: {self.init_grouptree_df_model}ms, "
-            f"Create filtered dataframe in: {self.create_filtered_dataframe}ms, "
-            f"Create node classifications in: {self.create_node_classifications}ms, "
-            f"Create group tree summary vectors info in: {self.create_network_summary_vectors_info}ms"
-        )
 
 
 @dataclass
@@ -131,6 +95,7 @@ class FlowNetworkAssembler:
         self._group_tree_df_model: Optional[GroupTreeDataframeModel] = None
         self._filtered_group_tree_df: Optional[pd.DataFrame] = None
         self._all_vectors: Optional[set[str]] = None
+        self._vector_metadata_by_keyword: dict[str, list[VectorMetadata]] = {}
         self._smry_table_sorted_by_date: pa.Table | None = None
 
         self._node_static_working_data: dict[str, StaticNodeWorkingData] | None = None
@@ -141,6 +106,25 @@ class FlowNetworkAssembler:
         self._network_classification = NetworkClassification(
             HAS_GAS_INJ=False, HAS_WATER_INJ=False, TERMINAL_NODE=terminal_node
         )
+
+    @property
+    def _edge_data_types(self) -> list[DataType]:
+        # ! Using a list to keep the datatypes in the same order every run
+        data_types: list[DataType] = []
+
+        if NodeType.PROD in self._node_types:
+            data_types.extend([DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE])
+        if NodeType.INJ in self._node_types and self._network_classification.HAS_WATER_INJ:
+            data_types.append(DataType.WATERINJRATE)
+        if NodeType.INJ in self._node_types and self._network_classification.HAS_GAS_INJ:
+            data_types.append(DataType.GASINJRATE)
+
+        return data_types
+
+    @property
+    def _node_data_types(self) -> list[DataType]:
+        # ! Using a list to keep the datatypes in the same order every run
+        return [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
 
     def _verify_that_sumvecs_exists(self, check_sumvecs: set[str]) -> None:
         """
@@ -246,11 +230,24 @@ class FlowNetworkAssembler:
         # Get summary vectors for all data simultaneously to obtain one request from Sumo
         # Many summary vectors might not be needed, but will be filtered out later on. This is the most efficient way to get the data
         # NOTE: "WSTAT" vectors are enumerated well state indicator, thus interpolated values might create issues (should be resolved by resampling-code)
-        single_realization_vectors_table, _ = await self._summary_access.get_single_real_vectors_table_async(
+        (
+            single_realization_vectors_table,
+            vector_metadata,
+        ) = await self._summary_access.get_single_real_vectors_table_async(
             vector_names=list(vectors_of_interest),
             resampling_frequency=self._summary_resampling_frequency,
             realization=self._realization,
         )
+
+        # Store vector metadata entries in a dict for easy lookup later
+        vector_metadata_by_keyword: dict[str, list[VectorMetadata]] = {}
+        for vec_meta in vector_metadata:
+            entries = vector_metadata_by_keyword.get(vec_meta.keyword, [])
+            entries.append(vec_meta)
+            vector_metadata_by_keyword[vec_meta.keyword] = entries
+
+        self._vector_metadata_by_keyword = vector_metadata_by_keyword
+
         self._performance_times.init_summary_vector_data_table = timer.lap_ms()
 
         # Create list of column names in the table once (for performance)
@@ -295,52 +292,51 @@ class FlowNetworkAssembler:
         if self._node_static_working_data is None:
             raise ValueError("Static working data for nodes has not been initialized")
 
+        edge_data_types = self._edge_data_types
+        node_data_types = self._node_data_types
+
         dated_network_list = _create_dated_networks(
             self._smry_table_sorted_by_date,
             self._filtered_group_tree_df_safe,
             self._node_static_working_data,
             self._node_types,
             self._network_classification.TERMINAL_NODE,
+            set(node_data_types) | set(edge_data_types),
         )
 
         return (
             dated_network_list,
-            self._get_edge_options(self._node_types),
-            [
-                FlowNetworkMetadata(key=datatype.value, label=_utils.get_label_for_datatype(datatype))
-                for datatype in [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
-            ],
+            self._assemble_metadata_for_data_types(edge_data_types),
+            self._assemble_metadata_for_data_types(node_data_types),
         )
 
-    def _get_edge_options(self, node_types: set[NodeType]) -> list[FlowNetworkMetadata]:
-        """Returns a list with edge node options for the dropdown
-        menu in the Flow Network module.
-
-        The output list has the format:
-        [
-            {"name": DataType.OILRATE.value, "label": "Oil Rate"},
-            {"name": DataType.GASRATE.value, "label": "Gas Rate"},
-        ]
-        """
+    def _assemble_metadata_for_data_types(self, data_types: list[DataType]) -> list[FlowNetworkMetadata]:
+        """Returns a list with metadata for a set of data types"""
         options: list[FlowNetworkMetadata] = []
-        if NodeType.PROD in node_types:
-            for rate in [DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE]:
-                options.append(FlowNetworkMetadata(key=rate.value, label=_utils.get_label_for_datatype(rate)))
-        if NodeType.INJ in node_types and self._network_classification.HAS_WATER_INJ:
-            options.append(
-                FlowNetworkMetadata(
-                    key=DataType.WATERINJRATE.value, label=_utils.get_label_for_datatype(DataType.WATERINJRATE)
-                )
+
+        for data_type in data_types:
+            vector_metadata = self._get_vector_metadata_for_data_type(data_type)
+
+            network_metadata = FlowNetworkMetadata(
+                key=data_type.value,
+                label=_utils.get_label_for_datatype(data_type),
+                unit=vector_metadata.unit,
             )
-        if NodeType.INJ in node_types and self._network_classification.HAS_GAS_INJ:
-            options.append(
-                FlowNetworkMetadata(
-                    key=DataType.GASINJRATE.value, label=_utils.get_label_for_datatype(DataType.GASINJRATE)
-                )
-            )
-        if options:
-            return options
-        return [FlowNetworkMetadata(key=DataType.OILRATE.value, label=_utils.get_label_for_datatype(DataType.OILRATE))]
+
+            options.append(network_metadata)
+
+        return options
+
+    def _get_vector_metadata_for_data_type(self, data_type: DataType) -> VectorMetadata:
+        # ! Assumes that unit is equivalent for field, group and well vectors.
+        data_vector = _utils.WELL_DATATYPE_VECTOR_MAP[data_type]
+
+        vector_meta_list = self._vector_metadata_by_keyword.get(data_vector, [])
+
+        if len(vector_meta_list) < 1:
+            raise ValueError(f"Vector metadata missing for vector {data_vector}")
+
+        return vector_meta_list[0]
 
     def _verify_neccessary_injection_vectors(self, vectors_of_interest: set[str]) -> None:
         # Has any water injection or gas injection vectors among vectors of interest
@@ -718,6 +714,7 @@ def _create_dated_networks(
     node_static_working_data_dict: dict[str, StaticNodeWorkingData],
     valid_node_types: set[NodeType],
     terminal_node: str,
+    valid_data_types: set[DataType],
 ) -> list[DatedFlowNetwork]:
     """
     Create a list of static flow networks with summary data, based on the group trees and resampled summary data.
@@ -787,6 +784,7 @@ def _create_dated_networks(
                 node_static_working_data_dict,
                 valid_node_types,
                 terminal_node,
+                valid_data_types,
             )
 
             dated_networks.append(DatedFlowNetwork(dates=formatted_dates, network=network))
@@ -814,6 +812,7 @@ def _create_dated_network(
     node_static_working_data_dict: dict[str, StaticNodeWorkingData],
     valid_node_types: set[NodeType],
     terminal_node: str,
+    valid_data_types: set[DataType],
 ) -> NetworkNode:
     """
     Create a static flowm network with summary data for a set of dates.
@@ -841,6 +840,7 @@ def _create_dated_network(
         valid_node_types,
         smry_for_grouptree_sorted_by_date,
         number_of_dates_in_smry,
+        valid_data_types,
     )
 
     terminal_node_elm = nodes_dict.get(terminal_node)
@@ -868,6 +868,7 @@ def _create_flat_network_nodes_map(
     valid_node_types: set[NodeType],
     smry_for_grouptree_sorted_by_date: pa.Table,
     number_of_dates_in_smry: int,
+    valid_data_types: set[DataType],
 ) -> dict[str, FlatNetworkNodeData]:
     """
     Creates a map with node names and their respective flat network node data.
@@ -890,7 +891,7 @@ def _create_flat_network_nodes_map(
     # Create edge label for nodes
     edge_labels = [""] * len(node_names)
     if "VFP_TABLE" in grouptree_at_date.columns:
-        edge_labels = _create_edge_label_list_from_vfp_table_column(grouptree_at_date["VFP_TABLE"])
+        edge_labels = _utils.create_edge_label_list_from_vfp_table_column(grouptree_at_date["VFP_TABLE"])
 
     # Iterate over every row in the grouptree dataframe to create the network nodes
     for node_name, parent_name, node_keyword, edge_label in zip(node_names, parent_names, keywords, edge_labels):
@@ -901,7 +902,7 @@ def _create_flat_network_nodes_map(
         if node_static_working_data is None:
             raise ValueError(f"No summary vector info found for node {node_name}")
 
-        if not _is_valid_node_type(node_static_working_data.node_classification, valid_node_types):
+        if not _utils.is_valid_node_type(node_static_working_data.node_classification, valid_node_types):
             continue
 
         network_node = _create_network_node(
@@ -912,41 +913,12 @@ def _create_flat_network_nodes_map(
             smry_columns_set,
             smry_for_grouptree_sorted_by_date,
             number_of_dates_in_smry,
+            valid_data_types,
         )
 
         nodes_dict[node_name] = FlatNetworkNodeData(parent_name=parent_name, node_without_children=network_node)
 
     return nodes_dict
-
-
-def _is_valid_node_type(node_classification: NodeClassification, valid_node_types: set[NodeType]) -> bool:
-    """Returns True if the node classification is a valid node type"""
-    if node_classification.IS_PROD and NodeType.PROD in valid_node_types:
-        return True
-    if node_classification.IS_INJ and NodeType.INJ in valid_node_types:
-        return True
-    if node_classification.IS_OTHER and NodeType.OTHER in valid_node_types:
-        return True
-    return False
-
-
-def _create_edge_label_list_from_vfp_table_column(vfp_table_column: pd.Series) -> list[str]:
-    """
-    Creates an edge label list based on the column named "VFP_TABLE".
-
-    If the VFP_TABLE column is not present, the function will raise a ValueError.
-    """
-    if vfp_table_column.empty:
-        raise ValueError("VFP_TABLE column is empty.")
-
-    edge_labels: list[str] = []
-    for vfp_nb in vfp_table_column:
-        if vfp_nb in [None, 9999] or np.isnan(vfp_nb):
-            edge_labels.append("")
-        else:
-            edge_labels.append(f"VFP {int(vfp_nb)}")
-
-    return edge_labels
 
 
 def _create_network_node(
@@ -957,6 +929,7 @@ def _create_network_node(
     smry_columns_set: set,
     smry_for_grouptree_sorted_by_date: pa.Table,
     number_of_dates_in_smry: int,
+    valid_data_types: set[DataType],
 ) -> NetworkNode:
     # Find working data for the node
 
@@ -971,6 +944,9 @@ def _create_network_node(
     summary_vector_info = working_data.node_summary_vectors_info
     for sumvec, info in summary_vector_info.items():
         datatype = info.DATATYPE
+
+        if valid_data_types and datatype not in valid_data_types:
+            continue
 
         if sumvec in smry_columns_set:
             data = smry_for_grouptree_sorted_by_date[sumvec].to_numpy().round(2)

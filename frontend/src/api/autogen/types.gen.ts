@@ -189,6 +189,7 @@ export type FlowNetworkData_api = {
 export type FlowNetworkMetadata_api = {
     key: string;
     label: string;
+    unit: string | null;
 };
 
 export enum FlowRateType_api {
