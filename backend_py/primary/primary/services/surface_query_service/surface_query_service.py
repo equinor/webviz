@@ -3,14 +3,14 @@ from typing import Dict, List, Optional
 
 import httpx
 import numpy as np
-from fmu.sumo.explorer._utils import Utils as InternalExplorerUtils
-from fmu.sumo.explorer.objects import CaseCollection
+
+# from fmu.sumo.explorer._utils import Utils as InternalExplorerUtils
+# from fmu.sumo.explorer.objects import CaseCollection
 from pydantic import BaseModel
+from sumo.wrapper import SumoClient
 
 from primary import config
-from primary.httpx_client import httpx_async_client
 from primary.services.sumo_access.sumo_blob_access import get_sas_token_and_blob_store_base_uri_for_case
-from primary.services.sumo_access._helpers import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 
@@ -71,10 +71,9 @@ async def batch_sample_surface_in_points_async(
         yCoords=y_coords,
     )
 
-    LOGGER.info(f"Running async go point sampling for surface: {surface_name}")
-    response: httpx.Response = await httpx_async_client.client.post(
-        url=SERVICE_ENDPOINT, json=request_body.model_dump()
-    )
+    async with httpx.AsyncClient(timeout=300) as client:
+        LOGGER.info(f"Running async go point sampling for surface: {surface_name}")
+        response: httpx.Response = await client.post(url=SERVICE_ENDPOINT, json=request_body.model_dump())
 
     json_data: bytes = response.content
     response_body = _PointSamplingResponseBody.model_validate_json(json_data)
@@ -95,31 +94,32 @@ async def _get_object_uuids_for_surface_realizations(
     surface_attribute: str,
     realizations: Optional[List[int]],
 ) -> List[_RealizationObjectId]:
-    sumo_client = create_sumo_client(access_token=sumo_access_token)
-    case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
-    case = await case_collection.getitem_async(0)
+    # sumo_client = SumoClient(env=config.SUMO_ENV, token=sumo_access_token, interactive=False)
+    # case_collection = CaseCollection(sumo_client).filter(uuid=case_uuid)
+    # case = await case_collection.getitem_async(0)
 
-    # What about time here??
-    surface_collection = case.surfaces.filter(
-        iteration=iteration_name,
-        name=surface_name,
-        tagname=surface_attribute,
-        realization=realizations,
-    )
+    # # What about time here??
+    # surface_collection = case.surfaces.filter(
+    #     iteration=iteration_name,
+    #     name=surface_name,
+    #     tagname=surface_attribute,
+    #     realization=realizations,
+    # )
 
-    # Is this the right way to get hold of the object uuids?
-    internal_explorer_utils = InternalExplorerUtils(sumo_client)
-    # pylint: disable=protected-access
-    object_meta_list: List[Dict] = await internal_explorer_utils.get_objects_async(
-        500, surface_collection._query, ["_id", "fmu.realization.id"]
-    )
+    # # Is this the right way to get hold of the object uuids?
+    # internal_explorer_utils = InternalExplorerUtils(sumo_client)
+    # # pylint: disable=protected-access
+    # object_meta_list: List[Dict] = await internal_explorer_utils.get_objects_async(
+    #     500, surface_collection._query, ["_id", "fmu.realization.id"]
+    # )
 
-    ret_list: List[_RealizationObjectId] = []
-    for obj_meta in object_meta_list:
-        ret_list.append(
-            _RealizationObjectId(
-                realization=obj_meta["_source"]["fmu"]["realization"]["id"], objectUuid=obj_meta["_id"]
-            )
-        )
+    # ret_list: List[_RealizationObjectId] = []
+    # for obj_meta in object_meta_list:
+    #     ret_list.append(
+    #         _RealizationObjectId(
+    #             realization=obj_meta["_source"]["fmu"]["realization"]["id"], objectUuid=obj_meta["_id"]
+    #         )
+    #     )
 
-    return ret_list
+    # return ret_list
+    return []
