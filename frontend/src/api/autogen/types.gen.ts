@@ -102,6 +102,15 @@ export enum DerivedVectorType_api {
     PER_INTVL = "PER_INTVL",
 }
 
+/**
+ * Holds information that describes how a discrete curve value should be presented to the user.
+ */
+export type DiscreteValueMetadata_api = {
+    code: number;
+    identifier: string;
+    rgbColor: [number, number, number];
+};
+
 export type EnsembleDetails_api = {
     name: string;
     field_identifier: string;
@@ -1045,9 +1054,7 @@ export type WellboreLogCurveData_api = {
     unit: string | null;
     curveUnitDesc: string | null;
     dataPoints: Array<[number, number | string | null]>;
-    metadataDiscrete: {
-        [key: string]: [number, [number, number, number]];
-    } | null;
+    discreteValueMetadata: Array<DiscreteValueMetadata_api> | null;
 };
 
 export type WellboreLogCurveHeader_api = {

@@ -119,7 +119,7 @@ def convert_wellbore_log_curve_header_to_schema(curve_header: WellboreLogCurveHe
 
     # Replace the "UNITLESS" string to simplify frontend checks
     curve_unit = None
-    if curve_header.curve_unit and str.upper(curve_header.curve_unit) == "UNITLESS":
+    if curve_header.curve_unit and str.upper(curve_header.curve_unit) != "UNITLESS":
         curve_unit = curve_header.curve_unit
 
     return schemas.WellboreLogCurveHeader(
@@ -158,7 +158,7 @@ def convert_strat_column_to_well_log_header(column: StratigraphicColumn) -> sche
 def convert_wellbore_log_curve_data_to_schema(
     wellbore_log_curve_data: WellboreLogCurveData,
 ) -> schemas.WellboreLogCurveData:
-    metadata_discrete = utils.get_discrete_metadata_for_well_log_curve(wellbore_log_curve_data)
+    discrete_value_meta = utils.build_discrete_value_meta_for_ssdl_curve(wellbore_log_curve_data)
 
     # Replace the "UNITLESS" string to simplify frontend checks
     curve_unit = None
@@ -180,7 +180,7 @@ def convert_wellbore_log_curve_data_to_schema(
         curveDescription=wellbore_log_curve_data.curve_description,
         indexUnit=wellbore_log_curve_data.index_unit,
         noDataValue=wellbore_log_curve_data.no_data_value,
-        metadataDiscrete=metadata_discrete,
+        discreteValueMetadata=discrete_value_meta,
     )
 
 
@@ -193,8 +193,8 @@ def convert_geology_data_to_log_curve_schema(
     if len(geo_data_entries) < 1:
         raise ValueError("Expected at least one entry in geology data list")
 
+    discrete_value_metadata = utils.build_discrete_value_meta_for_geo_data(geo_data_entries)
     data_points: list[tuple[float, float | str | None]] = []
-    metadata_discrete: schemas.DiscreteMetaEntry = {}  # type: ignore[assignment]
 
     for idx, geo_data in enumerate(geo_data_entries):
         next_geo_data = safe_index_get(idx + 1, geo_data_entries)
@@ -205,12 +205,6 @@ def convert_geology_data_to_log_curve_schema(
         if next_geo_data is None or next_geo_data.top_depth_md != geo_data.base_depth_md:
             data_points.append((geo_data.base_depth_md, None))
 
-        # Set up discrete meta-data colors and strings
-        # ? This piece of code generates a structure thats very Subsurface-Comp library specific...
-        # ? Should we opt for a more generic approach here, and have some transformation logic on the frontend?
-        color = (geo_data.color_r, geo_data.color_g, geo_data.color_b)
-        metadata_discrete.update({geo_data.identifier: (geo_data.code, color)})
-
     return schemas.WellboreLogCurveData(
         source=schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY,
         curveDescription="Generated - Derived from geology data entries",
@@ -220,7 +214,7 @@ def convert_geology_data_to_log_curve_schema(
         indexMax=geo_header.md_max,
         indexUnit=geo_header.md_unit,
         dataPoints=data_points,
-        metadataDiscrete=metadata_discrete,
+        discreteValueMetadata=discrete_value_metadata,
         # These fields can't be derived in a meaningful way. Luckily, they shouldn't be needed for discrete curves anyways
         unit=None,
         minCurveValue=None,
@@ -237,11 +231,13 @@ def convert_strat_unit_data_to_log_curve_schema(
     if len(strat_units) < 1:
         raise ValueError("Expected at least one entry in strat-unit list")
 
+    ident_to_code_map = _build_strat_unit_ident_code_map(strat_units)
+    discrete_metadata = utils.build_discrete_value_meta_for_strat_data_and_codes(strat_units, ident_to_code_map)
+
     index_min = float("inf")
     index_max = float("-inf")
 
     data_points: list[tuple[float, float | str | None]] = []
-    metadata_discrete: schemas.DiscreteMetaEntry = {}  # type: ignore[assignment]
 
     # The list of units has entries at different unit-levels, meaning some entries might be "inside" a different entry. Storing "parents" here to access them in later iterations
     parent_units: list[WellboreStratigraphicUnit] = []
@@ -253,16 +249,13 @@ def convert_strat_unit_data_to_log_curve_schema(
         next_unit = safe_index_get(idx + 1, strat_units)
 
         unit_ident = current_unit.strat_unit_identifier
-        code = _get_code_for_string_data(unit_ident, metadata_discrete)
-        colors = (current_unit.color_r, current_unit.color_g, current_unit.color_b)
-
-        metadata_discrete.update({unit_ident: (code, colors)})
+        discrete_code = ident_to_code_map[unit_ident]
 
         # The previous pick might have exited where this one start. If so, remove the "exit" datapoint
         if data_points and data_points[-1][0] == current_unit.entry_md:
             data_points.pop()
 
-        data_points.append((current_unit.entry_md, code))
+        data_points.append((current_unit.entry_md, discrete_code))
 
         if not next_unit:
             # End of curve. Add a "None" entry to make it explicit.
@@ -280,10 +273,7 @@ def convert_strat_unit_data_to_log_curve_schema(
         if current_unit.exit_md < next_unit.entry_md:
             # This section isn't directly connected to the next, so the curve should return to the parent's value here
             exit_unit = _get_strat_unit_at_exit(current_unit, parent_units)
-            exit_value = None
-
-            if exit_unit:
-                exit_value = _get_code_for_string_data(exit_unit.strat_unit_identifier, metadata_discrete)
+            exit_value = ident_to_code_map[exit_unit.strat_unit_identifier] if exit_unit else None
 
             data_points.append((current_unit.exit_md, exit_value))
 
@@ -302,7 +292,7 @@ def convert_strat_unit_data_to_log_curve_schema(
         indexMax=index_max,
         indexUnit="m",
         dataPoints=data_points,
-        metadataDiscrete=metadata_discrete,
+        discreteValueMetadata=discrete_metadata,
         # These fields can't be derived in a meaningful way. Luckily, they shouldn't be needed for discrete curves in the WellLogViewer anyways, soooooo
         unit=None,
         minCurveValue=None,
@@ -313,11 +303,14 @@ def convert_strat_unit_data_to_log_curve_schema(
     )
 
 
-def _get_code_for_string_data(value: str, discrete_meta: schemas.DiscreteMetaEntry) -> int:
-    if value in discrete_meta.keys():
-        return discrete_meta[value][0]
+def _build_strat_unit_ident_code_map(strat_units: list[WellboreStratigraphicUnit]) -> dict[str, int]:
+    ident_to_code_map: dict[str, int] = {}
 
-    return len(discrete_meta.keys()) + 1
+    for unit in strat_units:
+        if unit.strat_unit_identifier not in ident_to_code_map:
+            ident_to_code_map.update({unit.strat_unit_identifier: len(ident_to_code_map.keys())})
+
+    return ident_to_code_map
 
 
 def _get_strat_unit_at_exit(

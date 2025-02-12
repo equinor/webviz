@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, NewType
+from typing import List, Optional, TypeAlias
 from pydantic import BaseModel
 
 
@@ -100,7 +100,17 @@ class WellboreLogCurveHeader(BaseModel):
     curveUnit: str | None
 
 
-DiscreteMetaEntry = NewType("DiscreteMetaEntry", dict[str, tuple[int, tuple[int, int, int]]])
+RgbArray: TypeAlias = tuple[int, int, int]
+
+
+class DiscreteValueMetadata(BaseModel):
+    """
+    Holds information that describes how a discrete curve value should be presented to the user.
+    """
+
+    code: int
+    identifier: str
+    rgbColor: RgbArray
 
 
 class WellboreLogCurveData(BaseModel):
@@ -118,6 +128,4 @@ class WellboreLogCurveData(BaseModel):
     unit: str | None
     curveUnitDesc: str | None
     dataPoints: list[tuple[float, float | str | None]]
-
-    # ? Field is very specific for the well-log-viewer module, should we instead create a "standards" service to get curve styles and others like this?
-    metadataDiscrete: Optional[DiscreteMetaEntry] = None
+    discreteValueMetadata: list[DiscreteValueMetadata] | None

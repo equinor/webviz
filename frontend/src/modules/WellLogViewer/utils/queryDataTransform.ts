@@ -118,7 +118,7 @@ function createLogCurvesAndData(
     padDataWithEmptyRows?: boolean
 ): LogCurveAndDataResult {
     const curves: WellLogSet["curves"] = [...DATA_ROW_HEAD];
-    const discreteMeta: WellLogSet["metadata_discrete"] = {};
+    const metadataDiscrete: WellLogSet["metadata_discrete"] = {};
 
     // We add 2 since each row also includes the MD and TVD axis curves
     // ! We're assuming the DataPoints list is sorted on MD, and that continuous sets
@@ -131,11 +131,14 @@ function createLogCurvesAndData(
     curveData.forEach((curve, curveIndex) => {
         if (curve.indexMin < minCurveMd) minCurveMd = curve.indexMin;
         if (curve.indexMax > maxCurveMd) maxCurveMd = curve.indexMax;
-        if (curve.metadataDiscrete)
-            _.set(discreteMeta, curve.name, {
-                attributes: ["code", "color"],
-                objects: curve.metadataDiscrete,
+        // Re-structure the metadata into the well-log-viewer map-format
+        if (curve.discreteValueMetadata) {
+            // ! Using an array for set-path, since names might contain periods
+            _.set(metadataDiscrete, [curve.name, "attributes"], ["code", "color"]);
+            curve.discreteValueMetadata.forEach((meta) => {
+                _.set(metadataDiscrete, [curve.name, "objects", meta.identifier], [meta.code, meta.rgbColor]);
             });
+        }
 
         curves.push(apiCurveToLogCurve(curve));
 
@@ -144,7 +147,7 @@ function createLogCurvesAndData(
             // To make it look correct, we essentially offset the entire graph by one.
             // Go back to using the actual entry once that's fixed
             let entry;
-            if (curve.metadataDiscrete) entry = curve.dataPoints[idx - 1]?.[1] ?? null;
+            if (curve.discreteValueMetadata) entry = curve.dataPoints[idx - 1]?.[1] ?? null;
             else entry = actualEntry;
 
             if (!scaleIdx) return console.warn("Unexpected null for scale entry");
@@ -171,7 +174,7 @@ function createLogCurvesAndData(
 
     return {
         data: _.chain(rowAcc).values().sortBy("0").value(),
-        metadata_discrete: discreteMeta,
+        metadata_discrete: metadataDiscrete,
         curves,
     };
 }
