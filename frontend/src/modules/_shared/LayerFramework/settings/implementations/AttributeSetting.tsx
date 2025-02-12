@@ -9,7 +9,7 @@ import { SettingType } from "../settingsTypes";
 
 type ValueType = string | null;
 
-export class SurfaceAttributeSetting implements Setting<ValueType> {
+export class AttributeSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -17,11 +17,11 @@ export class SurfaceAttributeSetting implements Setting<ValueType> {
     }
 
     getType(): SettingType {
-        return SettingType.SURFACE_ATTRIBUTE;
+        return SettingType.ATTRIBUTE;
     }
 
     getLabel(): string {
-        return "Surface attribute";
+        return "Attribute";
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -50,4 +50,4 @@ export class SurfaceAttributeSetting implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(SurfaceAttributeSetting);
+SettingRegistry.registerSetting(AttributeSetting);

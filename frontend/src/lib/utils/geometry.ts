@@ -12,6 +12,15 @@ export type Rect2D = {
     height: number;
 };
 
+export type Rect3D = {
+    x: number;
+    y: number;
+    z: number;
+    width: number;
+    height: number;
+    depth: number;
+};
+
 export const ORIGIN = Object.freeze({ x: 0, y: 0 });
 export const MANHATTAN_LENGTH = 13.11;
 
@@ -78,7 +87,20 @@ export function addMarginToRect(rect: Rect2D, margin: number): Rect2D {
     };
 }
 
-export function outerRectContainsInnerRect(outerRect: Rect2D, innerRect: Rect2D): boolean {
+export function outerRectContainsInnerRect(outerRect: Rect3D, innerRect: Rect3D): boolean;
+export function outerRectContainsInnerRect(outerRect: Rect2D, innerRect: Rect2D): boolean;
+export function outerRectContainsInnerRect(outerRect: Rect2D | Rect3D, innerRect: Rect2D | Rect3D): boolean {
+    if ("depth" in outerRect && "depth" in innerRect) {
+        return (
+            outerRect.x <= innerRect.x &&
+            outerRect.y <= innerRect.y &&
+            outerRect.z <= innerRect.z &&
+            outerRect.x + outerRect.width >= innerRect.x + innerRect.width &&
+            outerRect.y + outerRect.height >= innerRect.y + innerRect.height &&
+            outerRect.z + outerRect.depth >= innerRect.z + innerRect.depth
+        );
+    }
+
     return (
         outerRect.x <= innerRect.x &&
         outerRect.y <= innerRect.y &&

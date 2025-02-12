@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-
+from enum import StrEnum
 from pydantic import BaseModel
 
 ######################################################################################################
@@ -14,7 +14,10 @@ from pydantic import BaseModel
 # https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go
 #
 ######################################################################################################
-
+class VdsDirection(StrEnum):
+    INLINE = "Inline"
+    CROSSLINE = "Crossline"
+    SAMPLE = "Sample"
 
 @dataclass
 class VdsArray:
@@ -32,16 +35,6 @@ class VdsArray:
     format: str
     shape: List[int]
 
-
-@dataclass
-class VdsFenceMetadata(VdsArray):
-    """
-    Definition of a fence metadata response from vds-slice
-
-    See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L160-L162
-    """
-
-
 class VdsAxis(BaseModel):
     """
     Definition of an axis from vds-slice
@@ -52,11 +45,32 @@ class VdsAxis(BaseModel):
     See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L37-L55
     """
 
-    annotation: str
-    max: float
-    min: float
+    annotation: VdsDirection
+    max: int
+    min: int
     samples: int
     unit: str
+
+@dataclass
+class VdsFenceMetadata(VdsArray):
+    """
+    Definition of a fence metadata response from vds-slice
+
+    See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L160-L162
+    """
+
+@dataclass
+class VdsSliceMetadata(VdsArray):
+    """
+    Definition of a fence metadata response from vds-slice
+
+    See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L160-L162
+    """
+    x: VdsAxis
+    y: VdsAxis
+    geospatial: List[List[float]]
+    # shape: List[int]
+
 
 
 class VdsBoundingBox(BaseModel):

@@ -8,8 +8,8 @@ import { Delete, ExpandLess, ExpandMore, Link } from "@mui/icons-material";
 
 import { SharedSetting } from "./SharedSetting";
 
+import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { usePublishSubscribeTopicValue } from "../../delegates/PublishSubscribeDelegate";
 import { SettingComponent } from "../../settings/SettingComponent";
 
 export type SharedSettingComponentProps = {
