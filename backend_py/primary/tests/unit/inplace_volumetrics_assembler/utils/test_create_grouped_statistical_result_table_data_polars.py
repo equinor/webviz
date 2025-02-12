@@ -9,7 +9,6 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     Statistic,
     InplaceVolumetricsIdentifier,
 )
-from primary.services.service_exceptions import InvalidParameterError
 
 
 def test_create_grouped_statistical_result_table_data_polars() -> None:
@@ -100,5 +99,5 @@ def test_create_grouped_statistical_result_table_data_polars_empty_grouping_list
 
     empty_group_by_identifiers_list: List[InplaceVolumetricsIdentifier] = []
 
-    with pytest.raises(InvalidParameterError, match="Group by identifiers must be a non-empty list or None"):
+    with pytest.raises(ValueError, match="Group by identifiers must be a non-empty list or None"):
         create_grouped_statistical_result_table_data_polars(result_df, empty_group_by_identifiers_list)

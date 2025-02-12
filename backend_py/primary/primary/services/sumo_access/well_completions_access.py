@@ -95,7 +95,7 @@ class WellCompletionsAccess:
             well_completions_table = well_completions_table.append_column("KH", first_table["KH"])
             return well_completions_table
 
-        raise ValueError('Expected columns "OP/SH" and "KH" not found in tables')
+        raise NoDataError('Expected columns "OP/SH" and "KH" not found in tables', service=Service.SUMO)
 
     @staticmethod
     def _validate_common_table_columns(
@@ -107,15 +107,19 @@ class WellCompletionsAccess:
         """
         # Ensure expected common columns are present
         if not common_column_names.issubset(first_table.column_names):
-            raise ValueError(
-                f"Expected columns of first table: {common_column_names} - got: {first_table.column_names}"
+            raise InvalidDataError(
+                f"Expected columns of first table: {common_column_names} - got: {first_table.column_names}",
+                Service.SUMO,
             )
         if not common_column_names.issubset(second_table.column_names):
-            raise ValueError(
-                f"Expected columns of second table: {common_column_names} - got: {second_table.column_names}"
+            raise InvalidDataError(
+                f"Expected columns of second table: {common_column_names} - got: {second_table.column_names}",
+                Service.SUMO,
             )
 
         # Verify equal values for common columns in both tables
         for column_name in common_column_names:
             if not first_table[column_name].equals(second_table[column_name]):
-                raise ValueError(f'Expected equal column content for column "{column_name}" in first and second table')
+                raise InvalidDataError(
+                    f'Expected equal column content for column "{column_name}" in first and second table', Service.SUMO
+                )

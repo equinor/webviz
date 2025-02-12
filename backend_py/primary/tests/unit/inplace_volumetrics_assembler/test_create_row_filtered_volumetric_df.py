@@ -9,7 +9,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     InplaceVolumetricsIdentifierWithValues,
 )
 from primary.services.sumo_access.inplace_volumetrics_access import IGNORED_IDENTIFIER_COLUMN_VALUES
-from primary.services.service_exceptions import InvalidParameterError
+from primary.services.service_exceptions import InvalidDataError, InvalidParameterError, NoDataError
 
 
 @pytest.fixture
@@ -29,8 +29,8 @@ def test_create_row_filtered_volumetric_df_no_realizations(inplace_volumetrics_d
 
 def test_create_row_filtered_volumetric_df_no_data_found(inplace_volumetrics_df: pl.DataFrame) -> None:
     with pytest.raises(
-        ValueError,
-        match=re.escape("Missing data error: The following realization values do not exist in 'REAL' column: [4, 5]"),
+        NoDataError,
+        match=re.escape("Missing data error. The following realization values do not exist in 'REAL' column: [4, 5]"),
     ):
         InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
             table_name="test_table", inplace_volumetrics_df=inplace_volumetrics_df, realizations=[4, 5]
@@ -70,7 +70,7 @@ def test_create_row_filtered_volumetric_df_missing_identifier_column(inplace_vol
     identifiers_with_values = [
         InplaceVolumetricsIdentifierWithValues(identifier=InplaceVolumetricsIdentifier("REGION"), values=["X", "Y"])
     ]
-    with pytest.raises(ValueError, match="Identifier column name REGION not found in table test_table"):
+    with pytest.raises(InvalidDataError, match="Identifier column name REGION not found in table test_table"):
         InplaceVolumetricsAssembler._create_row_filtered_volumetric_df(
             table_name="test_table",
             inplace_volumetrics_df=inplace_volumetrics_df,

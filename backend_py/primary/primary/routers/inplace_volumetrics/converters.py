@@ -174,4 +174,4 @@ def _convert_statistic_enum_to_inplace_volumetric_statistic_enum(
     if statistic == Statistic.P90:
         return schemas.InplaceVolumetricStatistic.P90
 
-    raise ValueError(f"Unknown statistic value: {statistic.value}")
+    raise ValueError(f"Unhandled statistic value: {statistic.value}")

@@ -93,6 +93,6 @@ def test_create_per_group_summed_realization_volume_df_missing_real_column() -> 
         InplaceVolumetricsIdentifier.REGION,
     ]
 
-    # Call the function and expect a ValueError
+    # Call the function and expect a NoDataError
     with pytest.raises(ValueError, match="REAL column not found in volume DataFrame"):
         create_per_group_summed_realization_volume_df(volume_df, group_by_identifiers)
