@@ -2,8 +2,8 @@ import React from "react";
 
 import { Edit } from "@mui/icons-material";
 
+import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { usePublishSubscribeTopicValue } from "../../delegates/PublishSubscribeDelegate";
 import { Item } from "../../interfaces";
 
 type EditItemNameProps = {
