@@ -30,138 +30,13 @@ from ._loaders import load_aggregated_arrow_table_single_column_from_sumo, load_
 
 LOGGER = logging.getLogger(__name__)
 
-from fmu.sumo.explorer.objects._search_context import filters
-
-
-class MySearchContext(SearchContext):
-    async def aggregate_async(self, columns=None, operation=None):
-        hidden_length = await self.hidden.length_async()
-        if hidden_length > 0:
-            return await self.hidden._aggregate_async(columns=columns, operation=operation)
-        else:
-            return await self.visible._aggregate_async(columns=columns, operation=operation)
-
-    async def aggregation_async(self, column=None, operation=None):
-        assert operation is not None
-        assert column is None or isinstance(column, str)
-        sc = self.filter(aggregation=operation, column=column)
-        numaggs = await sc.length_async()
-        assert numaggs <= 1
-        if numaggs == 1:
-            return await sc.getitem_async(0)
-        else:
-            return await self.filter(realization=True).aggregate_async(
-                columns=[column] if column is not None else None,
-                operation=operation,
-            )
-
-    def filter(self, **kwargs) -> "MySearchContext":
-        """Filter SearchContext"""
-
-        must = self._must[:]
-        must_not = self._must_not[:]
-        for k, v in kwargs.items():
-            f = filters.get(k)
-            if f is None:
-                raise Exception(f"Don't know how to generate filter for {k}")
-                pass
-            _must, _must_not = f(v)
-            if _must:
-                must.append(_must)
-            if _must_not is not None:
-                must_not.append(_must_not)
-
-        sc = MySearchContext(
-            self._sumo,
-            must=must,
-            must_not=must_not,
-            hidden=self._hidden,
-            visible=self._visible,
-        )
-
-        if "has" in kwargs:
-            # Get list of cases matched by current filter set
-            uuids = sc._get_field_values("fmu.case.uuid.keyword")
-            # Generate new searchcontext for objects that match the uuids
-            # and also satisfy the "has" filter
-            sc = MySearchContext(
-                self._sumo,
-                must=[
-                    {"terms": {"fmu.case.uuid.keyword": uuids}},
-                    kwargs["has"],
-                ],
-            )
-            uuids = sc._get_field_values("fmu.case.uuid.keyword")
-            sc = MySearchContext(
-                self._sumo,
-                must=[{"ids": {"values": uuids}}],
-            )
-
-        return sc
-
-    @property
-    def hidden(self):
-        return MySearchContext(
-            sumo=self._sumo,
-            must=self._must,
-            must_not=self._must_not,
-            hidden=True,
-            visible=False,
-        )
-
-    @property
-    def visible(self):
-        return MySearchContext(
-            sumo=self._sumo,
-            must=self._must,
-            must_not=self._must_not,
-            hidden=False,
-            visible=True,
-        )
-
-    def _verify_aggregation_operation(self):
-        query = {
-            "query": self._query,
-            "size": 1,
-            "track_total_hits": True,
-            "aggs": {
-                k: {"terms": {"field": k + ".keyword", "size": 1}}
-                for k in [
-                    "fmu.case.uuid",
-                    "class",
-                    "fmu.iteration.name",
-                    "data.name",
-                    "data.tagname",
-                    "data.content",
-                ]
-            },
-        }
-        sres = self._sumo.post("/search", json=query).json()
-        prototype = sres["hits"]["hits"][0]
-        conflicts = [
-            k
-            for (k, v) in sres["aggregations"].items()
-            if (("sum_other_doc_count" in v) and (v["sum_other_doc_count"] > 0))
-        ]
-        if len(conflicts) > 0:
-            raise Exception(f"Conflicting values for {conflicts}")
-
-        hits = self._search_all(select=["fmu.realization.id"])
-
-        if any(hit["_source"]["fmu"].get("realization") is None for hit in hits):
-            raise Exception("Selection contains non-realization data.")
-
-        uuids = [hit["_id"] for hit in hits]
-        rids = [hit["_source"]["fmu"]["realization"]["id"] for hit in hits]
-        return prototype, uuids, rids
-
 
 class SummaryAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
         self._sumo_client: SumoClient = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
-        self._ensemble_context = MySearchContext(sumo=self._sumo_client).filter(
+        self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
             uuid=self._case_uuid, iteration=self._iteration_name
         )
 
@@ -173,13 +48,13 @@ class SummaryAccess:
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     @property
-    def ensemble_context(self) -> MySearchContext:
+    def ensemble_context(self) -> SearchContext:
         return self._ensemble_context
 
     async def get_available_vectors_async(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
-        table_context: MySearchContext = self.ensemble_context.filter(cls="table", tagname="summary")
+        table_context: SearchContext = self.ensemble_context.filter(cls="table", tagname="summary")
         print(type(table_context))
         table_names = await table_context.names_async
         if len(table_names) == 0:
