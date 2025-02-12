@@ -61,12 +61,6 @@ export class RealizationSeismicCrosslineLayer
             return null;
         }
 
-        console.debug("real", {
-            x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
-            y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
-            z: [data.u_min, data.u_max],
-        });
-
         return {
             x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
             y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
@@ -130,29 +124,23 @@ export class RealizationSeismicCrosslineLayer
         const timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
         const seismicCrosslineNumber = settings[SettingType.SEISMIC_CROSSLINE].getDelegate().getValue();
 
-        const queryKey = [
-            "realizationSeismicCrosslineSlice",
-            ensembleIdent,
-            seismicAttribute,
-            timeOrInterval,
-            realizationNum,
-            seismicCrosslineNumber,
-        ];
-        this._layerDelegate.registerQueryKey(queryKey);
+        const queryOptions = getCrosslineSliceOptions({
+            query: {
+                case_uuid: ensembleIdent?.getCaseUuid() ?? "",
+                ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
+                realization_num: realizationNum ?? 0,
+                seismic_attribute: seismicAttribute ?? "",
+                time_or_interval_str: timeOrInterval ?? "",
+                observed: false,
+                crossline_no: seismicCrosslineNumber ?? 0,
+            },
+        });
+
+        this._layerDelegate.registerQueryKey(queryOptions.queryKey);
 
         const seismicSlicePromise = queryClient
             .fetchQuery({
-                ...getCrosslineSliceOptions({
-                    query: {
-                        case_uuid: ensembleIdent?.getCaseUuid() ?? "",
-                        ensemble_name: ensembleIdent?.getEnsembleName() ?? "",
-                        realization_num: realizationNum ?? 0,
-                        seismic_attribute: seismicAttribute ?? "",
-                        time_or_interval_str: timeOrInterval ?? "",
-                        observed: false,
-                        crossline_no: seismicCrosslineNumber ?? 0,
-                    },
-                }),
+                ...queryOptions,
             })
             .then((data) => transformSeismicSlice(data));
 

@@ -1,3 +1,4 @@
+import checkboardTextureUrl from "@assets/textures/checkboard.bmp?url";
 import {
     CompositeLayer,
     CompositeLayerProps,
@@ -6,14 +7,14 @@ import {
     PickingInfo,
     UpdateParameters,
 } from "@deck.gl/core";
-import { PathLayer } from "@deck.gl/layers";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { Geometry } from "@luma.gl/engine";
 
+import { isEqual } from "lodash";
 import workerpool from "workerpool";
 
 import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
-import { Space, WebworkerParameters, makeMesh } from "./_private/worker";
+import { WebworkerParameters, makeMesh } from "./_private/worker";
 
 export type SeismicFenceMeshLayerPickingInfo = {
     properties?: { name: string; value: number }[];
@@ -28,7 +29,6 @@ export type SeismicFenceSection = {
 
 export type SeismicFenceMeshLayerProps = {
     name?: string;
-    startPosition: [number, number, number];
     data: {
         sections: SeismicFenceSection[];
     };
@@ -37,6 +37,12 @@ export type SeismicFenceMeshLayerProps = {
     zIncreaseDownwards?: boolean;
     isLoading?: boolean;
 };
+
+function assert(condition: any, msg?: string): asserts condition {
+    if (!condition) {
+        throw new Error(msg);
+    }
+}
 
 export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerProps> {
     static layerName: string = "SeismicFenceMeshLayer";
@@ -52,14 +58,48 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     private _numTasks = 0;
     private _numTasksCompleted = 0;
     private _numTasksFailed = 0;
-    private _transVertices: Float32Array | null = null;
-    private _transIndices: Uint32Array | null = null;
+    private _sharedVerticesBuffer: SharedArrayBuffer | null = null;
+    private _sharedIndicesBuffer: SharedArrayBuffer | null = null;
+    private _colorsArray: Float32Array = new Float32Array();
 
     // @ts-expect-error - private
     state!: {
         geometry: Geometry;
         isHovered: boolean;
+        isLoaded: boolean;
     };
+
+    initializeState(): void {
+        this.setState({
+            ...this.state,
+            isHovered: false,
+            isLoaded: false,
+        });
+
+        this.rebuildMesh();
+    }
+
+    updateState({
+        props,
+        oldProps,
+    }: UpdateParameters<Layer<SeismicFenceMeshLayerProps & Required<CompositeLayerProps>>>) {
+        const updateRequired =
+            !isEqual(oldProps.data?.sections.length, props.data?.sections.length) ||
+            !isEqual(oldProps.data?.sections, props.data?.sections);
+
+        if (updateRequired) {
+            this.setState({
+                ...this.state,
+                isLoaded: false,
+            });
+
+            if (props.isLoading) {
+                return;
+            }
+
+            this.rebuildMesh();
+        }
+    }
 
     private calcNumVerticesForSection(section: SeismicFenceSection): number {
         return section.numSamplesU * section.numSamplesV * 3;
@@ -69,55 +109,90 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         return (section.numSamplesU - 1) * (section.numSamplesV - 1) * 6;
     }
 
-    private initTransferableObjects() {
+    private initSharedBuffers() {
         const { data } = this.props;
 
-        for (const section of data.sections) {
-            const numVertices = this.calcNumVerticesForSection(section);
-            const numIndices = this.calcNumIndicesForSection(section);
+        let totalNumVertices = 0;
+        let totalNumIndices = 0;
 
-            this._transVertices = new Float32Array(numVertices);
-            this._transIndices = new Uint32Array(numIndices);
+        for (const section of data.sections) {
+            totalNumVertices += this.calcNumVerticesForSection(section);
+            totalNumIndices += this.calcNumIndicesForSection(section);
         }
+        this._sharedVerticesBuffer = new SharedArrayBuffer(totalNumVertices * Float32Array.BYTES_PER_ELEMENT);
+        this._sharedIndicesBuffer = new SharedArrayBuffer(totalNumIndices * Uint32Array.BYTES_PER_ELEMENT);
     }
 
-    private checkIfAllTasksCompleted() {
+    private maybeUpdateGeometry() {
         if (this._numTasks === this._numTasksCompleted) {
-            this.setState({
-                geometry: new Geometry({
-                    attributes: {
-                        positions: this._transVertices,
-                        colors: {
-                            value: this.makeColorsArray(),
-                            size: 4,
+            this.colorMesh().then(() => {
+                const verticesArr = new Float32Array(this._sharedVerticesBuffer!);
+                const indicesArr = new Uint32Array(this._sharedIndicesBuffer!);
+                this.setState({
+                    geometry: new Geometry({
+                        attributes: {
+                            positions: verticesArr,
+                            colors: {
+                                value: this._colorsArray,
+                                size: 4,
+                            },
                         },
-                    },
-                    topology: "triangle-list",
-                    indices: this._transIndices,
-                }),
+                        topology: "triangle-list",
+                        indices: indicesArr,
+                    }),
+                    isLoaded: true,
+                });
             });
         }
     }
 
-    private rebuildMesh() {
-        const params: WebworkerParameters[] = [];
+    private calcOrigin(): [number, number, number] {
+        const { data, zIncreaseDownwards } = this.props;
 
-        this.initTransferableObjects();
+        if (data.sections.length === 0) {
+            return [0, 0, 0];
+        }
+
+        const firstSection = data.sections[0];
+
+        return [
+            firstSection.boundingBox[0][0],
+            firstSection.boundingBox[0][1],
+            (zIncreaseDownwards ? -1 : 1) * firstSection.boundingBox[0][2],
+        ];
+    }
+
+    private rebuildMesh() {
+        const { zIncreaseDownwards } = this.props;
+
+        this.initSharedBuffers();
+
+        assert(this._sharedVerticesBuffer !== null, "Shared vertices buffer is null");
+        assert(this._sharedIndicesBuffer !== null, "Shared indices buffer is null");
+
+        const origin = this.calcOrigin();
 
         let verticesIndex = 0;
         let indicesIndex = 0;
         for (const section of this.props.data.sections) {
             this._numTasks++;
 
+            const offset: [number, number, number] = [
+                section.boundingBox[0][0] - origin[0],
+                section.boundingBox[0][1] - origin[1],
+                (zIncreaseDownwards ? -1 : 1) * section.boundingBox[0][2] - origin[2],
+            ];
+
             const params: WebworkerParameters = {
+                offset,
                 numSamplesU: section.numSamplesU,
                 numSamplesV: section.numSamplesV,
                 boundingBox: section.boundingBox,
                 startVerticesIndex: verticesIndex,
                 startIndicesIndex: indicesIndex,
-                transVertices: this._transVertices,
-                transIndices: this._transIndices,
-                space: Space.FENCE,
+                sharedVerticesBuffer: this._sharedVerticesBuffer,
+                sharedIndicesBuffer: this._sharedIndicesBuffer,
+                zIncreasingDownwards: this.props.zIncreaseDownwards ?? false,
             };
 
             verticesIndex += this.calcNumVerticesForSection(section);
@@ -126,9 +201,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
             this._pool
                 .exec(makeMesh, [{ ...params }])
                 .then(() => {
-                    this;
                     this._numTasksCompleted++;
-                    this.checkIfAllTasksCompleted();
+                    this.maybeUpdateGeometry();
                 })
                 .catch(() => {
                     this._numTasksFailed++;
@@ -136,42 +210,42 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         }
     }
 
-    private makeColorsArray(): Float32Array {
+    private async colorMesh() {
         const { data, colorMapFunction } = this.props;
 
-        const colors = new Float32Array(data.properties.length * 4);
+        this._colorsArray = new Float32Array(
+            data.sections.reduce((acc, section) => acc + section.properties.length * 4, 0)
+        );
 
-        for (let i = 0; i < data.properties.length; i++) {
-            const [r, g, b] = colorMapFunction(data.properties[i]);
-            colors[i * 4 + 0] = r / 255;
-            colors[i * 4 + 1] = g / 255;
-            colors[i * 4 + 2] = b / 255;
-            colors[i * 4 + 3] = 1;
+        let colorIndex = 0;
+        for (const section of data.sections) {
+            for (let i = 0; i < section.properties.length; i++) {
+                const [r, g, b] = colorMapFunction(section.properties[i]);
+                this._colorsArray[colorIndex * 4 + 0] = r / 255;
+                this._colorsArray[colorIndex * 4 + 1] = g / 255;
+                this._colorsArray[colorIndex * 4 + 2] = b / 255;
+                this._colorsArray[colorIndex * 4 + 3] = 1;
+                colorIndex++;
+            }
         }
-
-        return colors;
     }
 
-    private makeMesh() {
+    private getProperty(vertexIndex: number): number {
         const { data } = this.props;
 
-        this.setState({
-            geometry: new Geometry({
-                attributes: {
-                    positions: data.vertices,
-                    colors: {
-                        value: this.makeColorsArray(),
-                        size: 4,
-                    },
-                },
-                topology: "triangle-list",
-                indices: data.indices,
-            }),
-        });
+        let offset = 0;
+        for (const section of data.sections) {
+            if (vertexIndex < offset + section.properties.length) {
+                return section.properties[vertexIndex - offset];
+            }
+            offset += section.properties.length;
+        }
+
+        return 0;
     }
 
     getPickingInfo({ info }: GetPickingInfoParams): SeismicFenceMeshLayerPickingInfo {
-        const { data, zIncreaseDownwards } = this.props;
+        const { zIncreaseDownwards } = this.props;
         if (!info.color) {
             return info;
         }
@@ -181,7 +255,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         const b = info.color[2];
 
         const vertexIndex = r * 256 * 256 + g * 256 + b;
-        const property = data.properties[vertexIndex];
+
+        const property = this.getProperty(vertexIndex);
 
         if (property === undefined) {
             return info;
@@ -204,38 +279,63 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         return false;
     }
 
-    updateState(params: UpdateParameters<Layer<SeismicFenceMeshLayerProps & Required<CompositeLayerProps>>>) {
-        super.updateState(params);
-        if (params.changeFlags.dataChanged) {
-            this.makeMesh();
-        }
-    }
-
     renderLayers() {
-        const { startPosition, boundingBox, hoverable, isLoading } = this.props;
-        const { geometry, isHovered } = this.state;
+        const { hoverable, isLoading, data, zIncreaseDownwards } = this.props;
+        const { geometry, isHovered, isLoaded } = this.state;
+
+        const origin = this.calcOrigin();
 
         const layers: Layer<any>[] = [];
 
-        if (isLoading) {
-            layers.push(
-                new SimpleMeshLayer({
-                    id: "seismic-fence-mesh-layer-loading",
-                    data: [0],
-                    mesh: geometry,
-                    getColor: [0, 0, 0, 50],
-                    pickable: false,
-                    getPosition: startPosition,
-                    material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
-                })
-            );
+        if (isLoading || !isLoaded) {
+            for (const section of data.sections) {
+                const vertices = new Float32Array(4 * 3);
+                const indices = new Uint32Array([0, 1, 2, 2, 3, 0]);
+
+                let verticesIndex = 0;
+                vertices[verticesIndex++] = section.boundingBox[0][0];
+                vertices[verticesIndex++] = section.boundingBox[0][1];
+                vertices[verticesIndex++] = (zIncreaseDownwards ? -1 : 1) * section.boundingBox[0][2];
+
+                vertices[verticesIndex++] = section.boundingBox[1][0];
+                vertices[verticesIndex++] = section.boundingBox[1][1];
+                vertices[verticesIndex++] = (zIncreaseDownwards ? -1 : 1) * section.boundingBox[1][2];
+
+                vertices[verticesIndex++] = section.boundingBox[3][0];
+                vertices[verticesIndex++] = section.boundingBox[3][1];
+                vertices[verticesIndex++] = (zIncreaseDownwards ? -1 : 1) * section.boundingBox[3][2];
+
+                vertices[verticesIndex++] = section.boundingBox[2][0];
+                vertices[verticesIndex++] = section.boundingBox[2][1];
+                vertices[verticesIndex++] = (zIncreaseDownwards ? -1 : 1) * section.boundingBox[2][2];
+
+                const placeholderGeometry = new Geometry({
+                    attributes: {
+                        positions: vertices,
+                    },
+                    topology: "triangle-list",
+                    indices,
+                });
+                layers.push(
+                    new SimpleMeshLayer({
+                        id: "seismic-fence-mesh-layer-loading",
+                        data: [0],
+                        mesh: placeholderGeometry,
+                        getPosition: [0, 0, 0],
+                        texture: checkboardTextureUrl,
+                        getColor: [100, 100, 100, 100],
+                        material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
+                        pickable: false,
+                    })
+                );
+            }
         } else {
             layers.push(
                 new ExtendedSimpleMeshLayer({
                     id: "seismic-fence-mesh-layer",
                     data: [0],
                     mesh: geometry,
-                    getPosition: startPosition,
+                    getPosition: origin,
                     getColor: [255, 255, 255, 255],
                     material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
                     pickable: true,
@@ -243,6 +343,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
             );
         }
 
+        /*
         if (isHovered && hoverable) {
             layers.push(
                 new PathLayer({
@@ -260,6 +361,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                 })
             );
         }
+            */
 
         return layers;
     }

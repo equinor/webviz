@@ -88,7 +88,7 @@ export class SeismicCrosslineSetting implements Setting<ValueType> {
                             max={props.availableValues[1] ?? 1}
                             onChange={handleSliderChange}
                             value={props.value ?? props.availableValues[0] ?? 1}
-                            debounceTimeMs={0}
+                            debounceTimeMs={500}
                             valueLabelDisplay="auto"
                         />
                     </div>

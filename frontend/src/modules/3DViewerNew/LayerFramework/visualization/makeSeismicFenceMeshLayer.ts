@@ -73,7 +73,32 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
         isLoading,
         predictedNextBoundingBox,
     }: VisualizationFunctionArgs<any, SeismicSliceData_trans>): Layer<any> {
-        let bbox = data.bbox_utm;
+        let bbox: number[][] = [
+            [data.bbox_utm[0][0], data.bbox_utm[0][1], data.u_min],
+            [data.bbox_utm[1][0], data.bbox_utm[1][1], data.u_min],
+            [data.bbox_utm[0][0], data.bbox_utm[0][1], data.u_max],
+            [data.bbox_utm[1][0], data.bbox_utm[1][1], data.u_max],
+        ];
+
+        if (plane === Plane.DEPTH) {
+            bbox = [
+                [data.bbox_utm[0][0], data.bbox_utm[0][1], settings.seismicDepthSlice],
+                [data.bbox_utm[0][0], data.bbox_utm[1][1], settings.seismicDepthSlice],
+                [data.bbox_utm[1][0], data.bbox_utm[0][1], settings.seismicDepthSlice],
+                [data.bbox_utm[1][0], data.bbox_utm[1][1], settings.seismicDepthSlice],
+            ];
+        }
+
+        if (isLoading && predictedNextBoundingBox) {
+            bbox = [
+                [predictedNextBoundingBox.x[0], predictedNextBoundingBox.y[0], predictedNextBoundingBox.z[0]],
+                [predictedNextBoundingBox.x[1], predictedNextBoundingBox.y[1], predictedNextBoundingBox.z[0]],
+                [predictedNextBoundingBox.x[0], predictedNextBoundingBox.y[0], predictedNextBoundingBox.z[1]],
+                [predictedNextBoundingBox.x[1], predictedNextBoundingBox.y[1], predictedNextBoundingBox.z[1]],
+            ];
+        }
+
+        /*
         let adjustedData = data;
         if (isLoading && predictedNextBoundingBox) {
             bbox = [
@@ -130,19 +155,23 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
             adjustedData.v_num_samples,
             transformUVToXYZ
         );
+        */
 
         return new MovableLayerWrapper({
             wrappedLayer: new SeismicFenceMeshLayer({
                 id,
                 name,
                 data: {
-                    vertices,
-                    indices,
-                    properties,
+                    sections: [
+                        {
+                            boundingBox: bbox,
+                            properties: data.dataFloat32Arr,
+                            numSamplesU: data.u_num_samples,
+                            numSamplesV: data.v_num_samples,
+                        },
+                    ],
                 },
-                startPosition,
                 colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
-                boundingBox,
                 zIncreaseDownwards: true,
                 isLoading,
             }),

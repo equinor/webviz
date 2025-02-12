@@ -1,42 +1,58 @@
-import workerpool from "workerpool";
-
 export enum Space {
     FENCE = "FENCE",
     LAYER = "LAYER",
 }
 
 export type WebworkerParameters = {
-    transVertices: Float32Array;
-    transIndices: Uint32Array;
+    offset: [number, number, number];
+    sharedVerticesBuffer: SharedArrayBuffer;
+    sharedIndicesBuffer: SharedArrayBuffer;
     startVerticesIndex: number;
     startIndicesIndex: number;
     numSamplesU: number;
     numSamplesV: number;
     boundingBox: number[][];
-    space: Space;
+    zIncreasingDownwards: boolean;
 };
 
-export type WebworkerResult = {
-    vertices: Float32Array;
-    indices: Uint32Array;
-    outlineIndices: Uint32Array;
-};
+export function makeMesh(parameters: WebworkerParameters) {
+    const bbox = parameters.boundingBox;
 
-export function makeMesh(parameters: WebworkerParameters): WebworkerResult {
-    let transformUVToXYZ: (u: number, v: number) => [number, number, number] = () => {
-        throw new Error("transformUVToXYZ not implemented");
-    };
+    const vectorV = [bbox[1][0] - bbox[0][0], bbox[1][1] - bbox[0][1], bbox[1][2] - bbox[0][2]];
+    const vectorU = [bbox[2][0] - bbox[0][0], bbox[2][1] - bbox[0][1], bbox[2][2] - bbox[0][2]];
 
-    if (parameters.space === Space.FENCE) {
-        transformUVToXYZ = (u: number, v: number): [number, number, number] => {
-            const x = v * (bbox[1][0] - bbox[0][0]);
-            const y = v * (bbox[1][1] - bbox[0][1]);
-            const z = -(u * (data.u_max - data.u_min));
-            return [x, y, z];
-        };
+    function transformUVToXYZ(u: number, v: number): [number, number, number] {
+        const x = parameters.offset[0] + u * vectorU[0] + v * vectorV[0];
+        const y = parameters.offset[1] + u * vectorU[1] + v * vectorV[1];
+        const z = parameters.offset[2] + (parameters.zIncreasingDownwards ? -1 : 1) * (v * vectorV[2] + u * vectorU[2]);
+        return [x, y, z];
+    }
+
+    const verticesArray = new Float32Array(parameters.sharedVerticesBuffer);
+    const indicesArray = new Uint32Array(parameters.sharedIndicesBuffer);
+
+    const stepU = 1.0 / (parameters.numSamplesU - 1);
+    const stepV = 1.0 / (parameters.numSamplesV - 1);
+
+    let verticesIndex = parameters.startVerticesIndex;
+    let indicesIndex = parameters.startIndicesIndex;
+
+    for (let v = 0; v < parameters.numSamplesV; v++) {
+        for (let u = 0; u < parameters.numSamplesU; u++) {
+            const [x, y, z] = transformUVToXYZ(u * stepU, v * stepV);
+            verticesArray[verticesIndex++] = x;
+            verticesArray[verticesIndex++] = y;
+            verticesArray[verticesIndex++] = z;
+
+            if (u > 0 && v > 0) {
+                indicesArray[indicesIndex++] = (v - 1) * parameters.numSamplesU + u - 1;
+                indicesArray[indicesIndex++] = (v - 1) * parameters.numSamplesU + u;
+                indicesArray[indicesIndex++] = v * parameters.numSamplesU + u - 1;
+
+                indicesArray[indicesIndex++] = v * parameters.numSamplesU + u - 1;
+                indicesArray[indicesIndex++] = (v - 1) * parameters.numSamplesU + u;
+                indicesArray[indicesIndex++] = v * parameters.numSamplesU + u;
+            }
+        }
     }
 }
-
-workerpool.worker({
-    makeMesh,
-});
