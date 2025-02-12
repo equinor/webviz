@@ -22,7 +22,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
 
-    private _contextDelegate: SettingsContextDelegate<TSettings, TKey>;
+    private _contextDelegate: SettingsContextDelegate<TSettings, any, TKey, any>;
 
     private _makeSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void;
     private _makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
@@ -39,7 +39,7 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
     private _numChildDependencies = 0;
 
     constructor(
-        contextDelegate: SettingsContextDelegate<TSettings, TKey>,
+        contextDelegate: SettingsContextDelegate<TSettings, any, TKey, any>,
         updateFunc: UpdateFunc<TReturnValue, TSettings, TKey>,
         makeSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
@@ -121,6 +121,10 @@ export class Dependency<TReturnValue, TSettings extends Settings, TKey extends k
         }
 
         this._makeGlobalSettingGetter(settingName, (value) => {
+            const cachedValue = this._cachedGlobalSettingsMap.get(settingName as string);
+            if (isEqual(value, cachedValue)) {
+                return;
+            }
             this._cachedGlobalSettingsMap.set(settingName as string, value);
             this.callUpdateFunc();
         });

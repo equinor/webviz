@@ -79,7 +79,7 @@ export class StatisticalSurfaceLayer
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const surfaceName = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
-        const attribute = settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().getValue();
+        const attribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
         const timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
         const statisticFunction = settings[SettingType.STATISTIC_FUNCTION].getDelegate().getValue();
         const sensitivityNameCasePair = settings[SettingType.SENSITIVITY].getDelegate().getValue();

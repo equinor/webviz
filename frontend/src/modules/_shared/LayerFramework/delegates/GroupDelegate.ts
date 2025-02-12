@@ -1,7 +1,7 @@
 import { ItemDelegateTopic } from "./ItemDelegate";
-import { PublishSubscribe, PublishSubscribeDelegate } from "./PublishSubscribeDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
+import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationFactory } from "../framework/utils/DeserializationFactory";
@@ -24,11 +24,11 @@ export type GroupDelegateTopicPayloads = {
  * It provides methods for adding, removing, and moving children, as well as for serializing and deserializing children.
  * The class also provides methods for finding children and descendants based on a predicate.
  */
-export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, GroupDelegateTopicPayloads> {
+export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayloads> {
     private _owner: Item | null;
     private _color: string | null = null;
     private _children: Item[] = [];
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<GroupDelegateTopic>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<GroupDelegateTopicPayloads>();
     private _unsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _treeRevisionNumber: number = 0;
     private _deserializing = false;
@@ -165,7 +165,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopic, Group
         return snapshotGetter;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<GroupDelegateTopic> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<GroupDelegateTopicPayloads> {
         return this._publishSubscribeDelegate;
     }
 

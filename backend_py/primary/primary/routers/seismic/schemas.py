@@ -3,12 +3,40 @@ from typing import List
 from pydantic import BaseModel
 from webviz_pkg.core_utils.b64 import B64FloatArray
 
+from .._shared.schemas import BoundingBox3d
+
+
+class SeismicCubeSpec(BaseModel):
+    """
+    Specification for a seismic cube.
+    """
+
+    numCols: int
+    numRows: int
+    numLayers: int
+    xOrigin: float
+    yOrigin: float
+    zOrigin: float
+    xInc: float
+    yInc: float
+    zInc: float
+    yFlip: int
+    zFlip: int
+    rotation: float
+
 
 class SeismicCubeMeta(BaseModel):
-    seismic_attribute: str
-    iso_date_or_interval: str
-    is_observation: bool
-    is_depth: bool
+    """
+    Metadata for a seismic cube.
+    """
+
+    seismicAttribute: str
+    unit: str
+    isoDateOrInterval: str
+    isObservation: bool
+    isDepth: bool
+    bbox: BoundingBox3d
+    spec: SeismicCubeSpec
 
 
 class SeismicFencePolyline(BaseModel):
@@ -60,21 +88,16 @@ class SeismicFenceData(BaseModel):
     max_fence_depth: float
 
 
-class SurfaceMeshAndProperty(BaseModel):
-    x_ori: float
-    y_ori: float
-    x_count: int
-    y_count: int
-    x_inc: float
-    y_inc: float
-    x_min: float
-    x_max: float
-    y_min: float
-    y_max: float
-    mesh_value_min: float
-    mesh_value_max: float
-    property_value_min: float
-    property_value_max: float
-    rot_deg: float
-    mesh_data: str
-    property_data: str
+class SeismicSliceData(BaseModel):
+    slice_traces_b64arr: B64FloatArray
+    bbox_utm: List[List[float]]
+    u_min: int
+    u_max: int
+    u_num_samples: int
+    u_unit: str
+    v_min: float
+    v_max: float
+    v_num_samples: int
+    v_unit: str
+    value_min: float
+    value_max: float

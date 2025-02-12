@@ -12,10 +12,7 @@ export class DrilledWellTrajectoriesSettingsContext implements SettingsContext<D
     private _contextDelegate: SettingsContextDelegate<DrilledWellTrajectoriesSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<
-            DrilledWellTrajectoriesSettings,
-            keyof DrilledWellTrajectoriesSettings
-        >(this, layerManager, {
+        this._contextDelegate = new SettingsContextDelegate<DrilledWellTrajectoriesSettings>(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.SMDA_WELLBORE_HEADERS]: new DrilledWellboresSetting(),
         });
