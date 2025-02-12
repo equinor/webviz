@@ -28,12 +28,14 @@ class VdsInterpolation(StrEnum):
     ANGULAR = "angular"
     TRIANGULAR = "triangular"
 
+
 class VdsDirection(StrEnum):
     INLINE = "inline"
     CROSSLINE = "crossline"
     SAMPLE = "sample"
     DEPTH = "depth"
-    
+
+
 class VdsCoordinateSystem(StrEnum):
     """
     Coordinate system options for vds fence
@@ -125,6 +127,7 @@ class VdsFenceRequest(VdsRequestedResource):
             "fillValue": self.fill_value,
         }
 
+
 @dataclass
 class VdsSliceRequest(VdsRequestedResource):
     """
@@ -134,7 +137,6 @@ class VdsSliceRequest(VdsRequestedResource):
 
     direction: str
     line_no: int
-    
 
     def request_parameters(self) -> dict:
         return {

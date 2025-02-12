@@ -19,7 +19,7 @@ from .request_types import (
     VdsRequestedResource,
     VdsMetadataRequest,
     VdsSliceRequest,
-    VdsDirection
+    VdsDirection,
 )
 
 
@@ -81,8 +81,7 @@ class VdsAccess:
         metadata = response.json()
         return VdsMetadata(**metadata)
 
-    
-    async def get_inline_slice(self,line_no:int ) -> Tuple[NDArray[np.float32], VdsSliceMetadata]:
+    async def get_inline_slice(self, line_no: int) -> Tuple[NDArray[np.float32], VdsSliceMetadata]:
         endpoint = "slice"
         hard_coded_fill_value = -999.25
         slice_request = VdsSliceRequest(
@@ -101,7 +100,7 @@ class VdsAccess:
         # Expect each part in parts tuple to be BodyPart
         if not isinstance(parts[0], BodyPart) or not isinstance(parts[1], BodyPart):
             raise ValueError(f"Expected parts to be BodyPart, got {type(parts[0])}, {type(parts[1])}")
-        
+
         metadata = VdsSliceMetadata(**json.loads(parts[0].content))
         byte_array = parts[1].content
 
@@ -111,7 +110,6 @@ class VdsAccess:
         if len(metadata.shape) != 2:
             raise ValueError(f"Expected shape to be 2D, got {metadata.shape}")
 
-
         # Flattened array with row major order, i.e. C-order in numpy
         flattened_fence_traces_float32_array = bytes_to_flatten_ndarray_float32(byte_array, shape=metadata.shape)
 
@@ -120,7 +118,7 @@ class VdsAccess:
 
         return (flattened_fence_traces_float32_array, metadata)
 
-    async def get_crossline_slice(self,line_no:int ) -> Tuple[NDArray[np.float32], VdsSliceMetadata]:
+    async def get_crossline_slice(self, line_no: int) -> Tuple[NDArray[np.float32], VdsSliceMetadata]:
         endpoint = "slice"
         hard_coded_fill_value = -999.25
         slice_request = VdsSliceRequest(
@@ -139,7 +137,7 @@ class VdsAccess:
         # Expect each part in parts tuple to be BodyPart
         if not isinstance(parts[0], BodyPart) or not isinstance(parts[1], BodyPart):
             raise ValueError(f"Expected parts to be BodyPart, got {type(parts[0])}, {type(parts[1])}")
-        
+
         metadata = VdsSliceMetadata(**json.loads(parts[0].content))
         byte_array = parts[1].content
 
@@ -149,7 +147,6 @@ class VdsAccess:
         if len(metadata.shape) != 2:
             raise ValueError(f"Expected shape to be 2D, got {metadata.shape}")
 
-
         # Flattened array with row major order, i.e. C-order in numpy
         flattened_fence_traces_float32_array = bytes_to_flatten_ndarray_float32(byte_array, shape=metadata.shape)
 
@@ -158,7 +155,7 @@ class VdsAccess:
 
         return (flattened_fence_traces_float32_array, metadata)
 
-    async def get_depth_slice(self,depth:float ) -> Tuple[NDArray[np.float32], VdsSliceMetadata]:
+    async def get_depth_slice(self, depth: float) -> Tuple[NDArray[np.float32], VdsSliceMetadata]:
         endpoint = "slice"
         hard_coded_fill_value = -999.25
         slice_request = VdsSliceRequest(
@@ -177,7 +174,7 @@ class VdsAccess:
         # Expect each part in parts tuple to be BodyPart
         if not isinstance(parts[0], BodyPart) or not isinstance(parts[1], BodyPart):
             raise ValueError(f"Expected parts to be BodyPart, got {type(parts[0])}, {type(parts[1])}")
-        
+
         metadata = VdsSliceMetadata(**json.loads(parts[0].content))
         byte_array = parts[1].content
 
@@ -186,7 +183,6 @@ class VdsAccess:
 
         if len(metadata.shape) != 2:
             raise ValueError(f"Expected shape to be 2D, got {metadata.shape}")
-
 
         # Flattened array with row major order, i.e. C-order in numpy
         flattened_fence_traces_float32_array = bytes_to_flatten_ndarray_float32(byte_array, shape=metadata.shape)
