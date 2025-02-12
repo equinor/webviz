@@ -155,7 +155,7 @@ class VdsAccess:
 
         return (flattened_fence_traces_float32_array, metadata)
 
-    async def get_depth_slice(self, depth: float) -> Tuple[NDArray[np.float32], VdsSliceMetadata]:
+    async def get_depth_slice(self, depth: int) -> Tuple[NDArray[np.float32], VdsSliceMetadata]:
         endpoint = "slice"
         hard_coded_fill_value = -999.25
         slice_request = VdsSliceRequest(
