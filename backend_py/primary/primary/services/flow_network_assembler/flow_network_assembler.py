@@ -107,6 +107,25 @@ class FlowNetworkAssembler:
             HAS_GAS_INJ=False, HAS_WATER_INJ=False, TERMINAL_NODE=terminal_node
         )
 
+    @property
+    def _edge_data_types(self) -> list[DataType]:
+        # ! Using a list to keep the datatypes in the same order every run
+        data_types: list[DataType] = []
+
+        if NodeType.PROD in self._node_types:
+            data_types.extend([DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE])
+        if NodeType.INJ in self._node_types and self._network_classification.HAS_WATER_INJ:
+            data_types.append(DataType.WATERINJRATE)
+        if NodeType.INJ in self._node_types and self._network_classification.HAS_GAS_INJ:
+            data_types.append(DataType.GASINJRATE)
+
+        return data_types
+
+    @property
+    def _node_data_types(self) -> list[DataType]:
+        # ! Using a list to keep the datatypes in the same order every run
+        return [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
+
     def _verify_that_sumvecs_exists(self, check_sumvecs: set[str]) -> None:
         """
         Takes in a list of summary vectors and checks if they are present among the assemblers available vectors.
@@ -273,8 +292,8 @@ class FlowNetworkAssembler:
         if self._node_static_working_data is None:
             raise ValueError("Static working data for nodes has not been initialized")
 
-        edge_data_types = self._get_edge_data_types()
-        node_data_types = self._get_node_data_types()
+        edge_data_types = self._edge_data_types
+        node_data_types = self._node_data_types
 
         dated_network_list = _create_dated_networks(
             self._smry_table_sorted_by_date,
@@ -290,23 +309,6 @@ class FlowNetworkAssembler:
             self._assemble_metadata_for_data_types(edge_data_types),
             self._assemble_metadata_for_data_types(node_data_types),
         )
-
-    def _get_edge_data_types(self) -> list[DataType]:
-        # ! Using a list to keep the datatypes in the same order every run
-        data_types: list[DataType] = []
-
-        if NodeType.PROD in self._node_types:
-            data_types.extend([DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE])
-        if NodeType.INJ in self._node_types and self._network_classification.HAS_WATER_INJ:
-            data_types.append(DataType.WATERINJRATE)
-        if NodeType.INJ in self._node_types and self._network_classification.HAS_GAS_INJ:
-            data_types.append(DataType.GASINJRATE)
-
-        return data_types
-
-    def _get_node_data_types(self) -> list[DataType]:
-        # ! Using a list to keep the datatypes in the same order every run
-        return [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
 
     def _assemble_metadata_for_data_types(self, data_types: list[DataType]) -> list[FlowNetworkMetadata]:
         """Returns a list with metadata for a set of data types"""
@@ -331,7 +333,6 @@ class FlowNetworkAssembler:
 
         vector_meta_list = self._vector_metadata_by_keyword.get(data_vector, [])
 
-        # ? Can this actually happen? I assume the summary table fetch guarantees all vectors are accounted for?
         if len(vector_meta_list) < 1:
             raise ValueError(f"Vector metadata missing for vector {data_vector}")
 

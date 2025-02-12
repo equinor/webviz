@@ -37,14 +37,14 @@ export function View({ viewContext }: ModuleViewProps<Interfaces>) {
         return edgeMetadataList.map<EdgeMetadata>((elm) => ({
             key: elm.key,
             label: elm.label,
-            unit: simulationUnitReformat(elm.unit ?? ""),
+            unit: elm.unit ? simulationUnitReformat(elm.unit) : "",
         }));
     }, [edgeMetadataList]);
     const convertedNodeMetadataList = React.useMemo(() => {
         return nodeMetadataList.map<NodeMetadata>((elm) => ({
             key: elm.key,
             label: elm.label,
-            unit: simulationUnitReformat(elm.unit ?? ""),
+            unit: elm.unit ? simulationUnitReformat(elm.unit) : "",
         }));
     }, [nodeMetadataList]);
 
