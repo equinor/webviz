@@ -1,6 +1,6 @@
 import { Alq_api, FlowRateType_api, Gfr_api, VfpInjTable_api, VfpProdTable_api, Wfr_api } from "@api";
 
-import { isProdTable } from "./vfpTableClassifier";
+import { isInjTable, isProdTable } from "./vfpTableClassifier";
 
 import { VfpParam, VfpType } from "../types";
 
@@ -16,7 +16,7 @@ export class VfpDataAccessor {
     }
 
     isInjTable(): boolean {
-        return !isProdTable(this._vfpTable);
+        return isInjTable(this._vfpTable);
     }
 
     getTableNumber(): number {
@@ -65,7 +65,7 @@ export class VfpDataAccessor {
         if (vfpParam === VfpParam.THP) {
             return this._vfpTable.thpValues;
         }
-        if ("isProdTable" in this._vfpTable) {
+        if (isProdTable(this._vfpTable)) {
             if (vfpParam === VfpParam.WFR) {
                 return this._vfpTable.wfrValues;
             }

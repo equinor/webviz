@@ -1,6 +1,5 @@
 from enum import StrEnum
 from dataclasses import dataclass
-from typing import Dict, List, Union
 
 
 # NOTE:
@@ -88,26 +87,26 @@ class CategorizedResultNames:
     Class to hold categorized result names
 
     Attributes:
-    - volume_names: List[str] - Basic volume names among result names
-    - calculated_volume_names: List[str] - Calculated volume names among result names (STOIIP_TOTAL, GIIP_TOTAL)
-    - property_names: List[str] - Property names among result names
+    - volume_names: list[str] - Basic volume names among result names
+    - calculated_volume_names: list[str] - Calculated volume names among result names (STOIIP_TOTAL, GIIP_TOTAL)
+    - property_names: list[str] - Property names among result names
     """
 
-    volume_names: List[str]
-    calculated_volume_names: List[str]
-    property_names: List[str]
+    volume_names: list[str]
+    calculated_volume_names: list[str]
+    property_names: list[str]
 
 
 @dataclass
 class InplaceVolumetricsIdentifierWithValues:
     """
-    Unique values for an identifier column in an inplace volumetrics table
+    Unique values for an identifier column in an inplace volumetric table
 
     NOTE: Ideally all values should be strings, but it is possible that some values are integers - especially for REGION
     """
 
     identifier: InplaceVolumetricsIdentifier
-    values: List[Union[str, int]]  # List of values: str or int
+    values: list[str | int]  # list of values: str or int
 
 
 @dataclass
@@ -115,9 +114,9 @@ class InplaceVolumetricsTableDefinition:
     """Definition of a volumetric table"""
 
     table_name: str
-    identifiers_with_values: List[InplaceVolumetricsIdentifierWithValues]
-    result_names: List[str]
-    fluid_zones: List[FluidZone]
+    identifiers_with_values: list[InplaceVolumetricsIdentifierWithValues]
+    result_names: list[str]
+    fluid_zones: list[FluidZone]
 
 
 @dataclass
@@ -125,20 +124,20 @@ class RepeatedTableColumnData:
     """Definition of a column with repeated column data"""
 
     column_name: str
-    unique_values: List[str | int]  # ["Valysar", "Therys", "Volon"]
-    indices: List[int]  # [0, 1, 1, 1, 2, 2, 2]. Length = number of rows in the table
+    unique_values: list[str | int]  # ["Valysar", "Therys", "Volon"]
+    indices: list[int]  # [0, 1, 1, 1, 2, 2, 2]. Length = number of rows in the table
 
 
 @dataclass
 class TableColumnData:
     column_name: str
-    values: List[float]  # Column values Length = number of rows in the table
+    values: list[float]  # Column values Length = number of rows in the table
 
 
 @dataclass
 class TableColumnStatisticalData:
     column_name: str
-    statistic_values: Dict[Statistic, List[float]]  # Statistics values Length = number of rows in the table
+    statistic_values: dict[Statistic, list[float]]  # Statistics values Length = number of rows in the table
 
 
 @dataclass
@@ -148,10 +147,10 @@ class InplaceVolumetricTableData:
     Contains data for a single fluid zone, e.g. Oil, Gas, Water, or sum of fluid zones
     """
 
-    # fluid_zones: List[FluidZone]  # Oil, Gas, Water or "Oil + Gas", etc.
+    # fluid_zones: list[FluidZone]  # Oil, Gas, Water or "Oil + Gas", etc.
     fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selector_columns: List[RepeatedTableColumnData]  # Index columns and realizations
-    result_columns: List[TableColumnData]
+    selector_columns: list[RepeatedTableColumnData]  # Index columns and realizations
+    result_columns: list[TableColumnData]
 
 
 @dataclass
@@ -163,8 +162,8 @@ class InplaceStatisticalVolumetricTableData:
     """
 
     fluid_selection_name: str  # Oil, Gas, Water or "Oil + Gas", etc.
-    selector_columns: List[RepeatedTableColumnData]  # Index columns and realizations
-    result_column_statistics: List[TableColumnStatisticalData]
+    selector_columns: list[RepeatedTableColumnData]  # Index columns and realizations
+    result_column_statistics: list[TableColumnStatisticalData]
 
 
 @dataclass
@@ -175,7 +174,7 @@ class InplaceVolumetricTableDataPerFluidSelection:
     Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
     """
 
-    table_data_per_fluid_selection: List[InplaceVolumetricTableData]
+    table_data_per_fluid_selection: list[InplaceVolumetricTableData]
 
 
 @dataclass
@@ -186,4 +185,4 @@ class InplaceStatisticalVolumetricTableDataPerFluidSelection:
     Fluid selection can be single fluid zones, e.g. Oil, Gas, Water, or sum of fluid zones - Oil + Gas + Water
     """
 
-    table_data_per_fluid_selection: List[InplaceStatisticalVolumetricTableData]
+    table_data_per_fluid_selection: list[InplaceStatisticalVolumetricTableData]

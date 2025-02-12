@@ -40,7 +40,8 @@ class CaseInspector:
     async def get_iterations_async(self) -> list[IterationInfo]:
         case: Case = await self._get_or_create_case_obj()
 
-        iterations = await case.iterations_async
+        # Until we update fmu-sumo > 2.0 we need to fetch iterations synchronously.
+        iterations = case.iterations
 
         iter_info_arr: list[IterationInfo] = []
         for iteration in iterations:

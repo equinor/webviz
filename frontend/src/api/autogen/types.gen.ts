@@ -891,7 +891,7 @@ export type VectorStatisticSensitivityData_api = {
 };
 
 export type VfpInjTable_api = {
-    isInjTable: boolean;
+    vfpType: "INJ";
     tableNumber: number;
     datum: number;
     flowRateType: FlowRateType_api;
@@ -906,28 +906,28 @@ export type VfpInjTable_api = {
 };
 
 export type VfpProdTable_api = {
-    isProdTable: boolean;
+    vfpType: "PROD";
     tableNumber: number;
     datum: number;
-    thpType: Thp_api;
-    wfrType: Wfr_api;
-    gfrType: Gfr_api;
-    alqType: Alq_api;
     flowRateType: FlowRateType_api;
     unitType: UnitType_api;
     tabType: TabType_api;
     thpValues: Array<number>;
-    wfrValues: Array<number>;
-    gfrValues: Array<number>;
-    alqValues: Array<number>;
     flowRateValues: Array<number>;
     bhpValues: Array<number>;
     flowRateUnit: string;
     thpUnit: string;
+    bhpUnit: string;
+    thpType: Thp_api;
+    wfrType: Wfr_api;
+    gfrType: Gfr_api;
+    alqType: Alq_api;
+    wfrValues: Array<number>;
+    gfrValues: Array<number>;
+    alqValues: Array<number>;
     wfrUnit: string;
     gfrUnit: string;
     alqUnit: string;
-    bhpUnit: string;
 };
 
 export enum Wfr_api {

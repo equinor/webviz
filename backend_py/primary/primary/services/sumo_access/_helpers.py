@@ -41,7 +41,7 @@ def create_sumo_client(access_token: str) -> SumoClient:
         sumo_client = SumoClient(
             env=config.SUMO_ENV,
             token=access_token,
-            http_client=FakeHTTPXClient(),
+            http_client=None,  # Until we update fmu-sumo > 2.0 we need to initialize a sync client.
             async_http_client=httpx_async_client.client,
         )
     timer.record_lap("create_sumo_client()")
