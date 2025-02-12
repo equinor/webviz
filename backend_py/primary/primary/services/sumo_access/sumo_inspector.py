@@ -1,9 +1,15 @@
 from typing import List
 from pydantic import BaseModel
+import logging
 
-from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
+import asyncio
+from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
+
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from ._helpers import create_sumo_client
+
+LOGGER = logging.getLogger(__name__)
 
 
 class FieldInfo(BaseModel):
@@ -23,20 +29,34 @@ class SumoInspector:
 
     async def get_fields_async(self) -> List[FieldInfo]:
         """Get list of fields"""
-        case_collection = CaseCollection(self._sumo_client)
-        field_idents = await case_collection.fields_async
-        field_idents = sorted(list(set(field_idents)))
-
+        timer = PerfMetrics()
+        search_context = SearchContext(self._sumo_client)
+        field_names = await search_context._get_field_values_async("masterdata.smda.field.identifier.keyword")
+        timer.record_lap("get_fields")
+        field_idents = sorted(list(set(field_names)))
+        LOGGER.debug(timer.to_string())
         return [FieldInfo(identifier=field_ident) for field_ident in field_idents]
 
+    async def _get_case_info_async(self, search_context: SearchContext, case_uuid: str) -> CaseInfo:
+
+        case = await search_context.get_case_by_uuid_async(case_uuid)
+        return CaseInfo(uuid=case.uuid, name=case.name, status=case.status, user=case.user)
+
     async def get_cases_async(self, field_identifier: str) -> List[CaseInfo]:
-        case_collection = CaseCollection(self._sumo_client).filter(field=field_identifier)
+        """Get list of cases for specified field"""
+        timer = PerfMetrics()
+        search_context = SearchContext(self._sumo_client)
+        field_context = search_context.filter(field=field_identifier, cls="case")
+        cases = await field_context.cases_async
+        case_uuids = cases.uuids
+        timer.record_lap("get case uuids")
 
-        case_info_arr: List[CaseInfo] = []
-        async for case in case_collection:
-            case_info_arr.append(CaseInfo(uuid=case.uuid, name=case.name, status=case.status, user=case.user))
+        async with asyncio.TaskGroup() as tg:
+            tasks = [tg.create_task(self._get_case_info_async(search_context, case_uuid)) for case_uuid in case_uuids]
 
-        # Sort on case name before returning
-        case_info_arr.sort(key=lambda case_info: case_info.name)
+        case_info_arr: list[CaseInfo] = [task.result() for task in tasks]
 
+        timer.record_lap("get_cases_for_field")
+        case_info_arr = sorted(case_info_arr, key=lambda case_info: case_info.name)
+        LOGGER.debug(timer.to_string())
         return case_info_arr

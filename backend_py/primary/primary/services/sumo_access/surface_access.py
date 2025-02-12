@@ -1,13 +1,13 @@
 import asyncio
 import logging
 from io import BytesIO
-from typing import Sequence
+from typing import Sequence, Any
 
 import xtgeo
 
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SumoClient
-from fmu.sumo.explorer.objects import SurfaceCollection, Surface
+from fmu.sumo.explorer.objects import Surface
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from primary.services.utils.statistic_function import StatisticFunction
@@ -124,50 +124,51 @@ class SurfaceAccess:
         Get surface data for a realization surface
         If time_or_interval_str is None, only surfaces with no time information will be considered.
         """
-        if not self._iteration_name:
-            raise InvalidParameterError("Iteration name must be set to get realization surface", Service.SUMO)
+        # if not self._iteration_name:
+        #     raise InvalidParameterError("Iteration name must be set to get realization surface", Service.SUMO)
 
-        perf_metrics = PerfMetrics()
+        # perf_metrics = PerfMetrics()
 
-        surf_str = self._make_real_surf_log_str(real_num, name, attribute, time_or_interval_str)
+        # surf_str = self._make_real_surf_log_str(real_num, name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+        # time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
 
-        surface_collection = SurfaceCollection(self._sumo_client, self._case_uuid).filter(
-            is_observation=False,
-            aggregation=False,
-            iteration=self._iteration_name,
-            realization=real_num,
-            name=name,
-            tagname=attribute,
-            time=time_filter,
-        )
+        # surface_collection = SurfaceCollection(self._sumo_client, self._case_uuid).filter(
+        #     is_observation=False,
+        #     aggregation=False,
+        #     iteration=self._iteration_name,
+        #     realization=real_num,
+        #     name=name,
+        #     tagname=attribute,
+        #     time=time_filter,
+        # )
 
-        surf_count = await surface_collection.length_async()
-        if surf_count > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
-            )
-        if surf_count == 0:
-            LOGGER.warning(f"No realization surface found in Sumo for: {surf_str}")
-            return None
+        # surf_count = await surface_collection.length_async()
+        # if surf_count > 1:
+        #     raise MultipleDataMatchesError(
+        #         f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
+        #     )
+        # if surf_count == 0:
+        #     LOGGER.warning(f"No realization surface found in Sumo for: {surf_str}")
+        #     return None
 
-        sumo_surf: Surface = await surface_collection.getitem_async(0)
-        perf_metrics.record_lap("locate")
+        # sumo_surf: Surface = await surface_collection.getitem_async(0)
+        # perf_metrics.record_lap("locate")
 
-        byte_stream: BytesIO = await sumo_surf.blob_async
-        perf_metrics.record_lap("download")
+        # byte_stream: BytesIO = await sumo_surf.blob_async
+        # perf_metrics.record_lap("download")
 
-        xtgeo_surf = xtgeo.surface_from_file(byte_stream)
-        perf_metrics.record_lap("xtgeo-read")
+        # xtgeo_surf = xtgeo.surface_from_file(byte_stream)
+        # perf_metrics.record_lap("xtgeo-read")
 
-        size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
-        LOGGER.debug(
-            f"Got realization surface from Sumo in: {perf_metrics.to_string()} "
-            f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, {size_mb:.2f}MB] ({surf_str})"
-        )
+        # size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
+        # LOGGER.debug(
+        #     f"Got realization surface from Sumo in: {perf_metrics.to_string()} "
+        #     f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, {size_mb:.2f}MB] ({surf_str})"
+        # )
 
-        return xtgeo_surf
+        # return xtgeo_surf
+        return None
 
     async def get_observed_surface_data_async(
         self, name: str, attribute: str, time_or_interval_str: str
@@ -175,44 +176,45 @@ class SurfaceAccess:
         """
         Get surface data for an observed surface
         """
-        perf_metrics = PerfMetrics()
+        # perf_metrics = PerfMetrics()
 
-        surf_str = self._make_obs_surf_log_str(name, attribute, time_or_interval_str)
+        # surf_str = self._make_obs_surf_log_str(name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
-        surface_collection = SurfaceCollection(self._sumo_client, self._case_uuid).filter(
-            stage="case",
-            is_observation=True,
-            name=name,
-            tagname=attribute,
-            time=time_filter,
-        )
+        # time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+        # surface_collection = SurfaceCollection(self._sumo_client, self._case_uuid).filter(
+        #     stage="case",
+        #     is_observation=True,
+        #     name=name,
+        #     tagname=attribute,
+        #     time=time_filter,
+        # )
 
-        surf_count = await surface_collection.length_async()
-        if surf_count > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
-            )
-        if surf_count == 0:
-            LOGGER.warning(f"No observed surface found in Sumo for: {surf_str}")
-            return None
+        # surf_count = await surface_collection.length_async()
+        # if surf_count > 1:
+        #     raise MultipleDataMatchesError(
+        #         f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
+        #     )
+        # if surf_count == 0:
+        #     LOGGER.warning(f"No observed surface found in Sumo for: {surf_str}")
+        #     return None
 
-        sumo_surf: Surface = await surface_collection.getitem_async(0)
-        perf_metrics.record_lap("locate")
+        # sumo_surf: Surface = await surface_collection.getitem_async(0)
+        # perf_metrics.record_lap("locate")
 
-        byte_stream: BytesIO = await sumo_surf.blob_async
-        perf_metrics.record_lap("download")
+        # byte_stream: BytesIO = await sumo_surf.blob_async
+        # perf_metrics.record_lap("download")
 
-        xtgeo_surf = xtgeo.surface_from_file(byte_stream)
-        perf_metrics.record_lap("xtgeo-read")
+        # xtgeo_surf = xtgeo.surface_from_file(byte_stream)
+        # perf_metrics.record_lap("xtgeo-read")
 
-        size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
-        LOGGER.debug(
-            f"Got observed surface from Sumo in: {perf_metrics.to_string()} "
-            f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, {size_mb:.2f}MB] ({surf_str})"
-        )
+        # size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
+        # LOGGER.debug(
+        #     f"Got observed surface from Sumo in: {perf_metrics.to_string()} "
+        #     f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, {size_mb:.2f}MB] ({surf_str})"
+        # )
 
-        return xtgeo_surf
+        # return xtgeo_surf
+        return None
 
     async def get_statistical_surface_data_async(
         self,
@@ -228,60 +230,61 @@ class SurfaceAccess:
         in the statistics. The list of realizations cannon be empty.
         If time_or_interval_str is None, only surfaces with no time information will be considered.
         """
-        if not self._iteration_name:
-            raise InvalidParameterError("Iteration name must be set to get realization surfaces", Service.SUMO)
+        # if not self._iteration_name:
+        #     raise InvalidParameterError("Iteration name must be set to get realization surfaces", Service.SUMO)
 
-        if realizations is not None:
-            if len(realizations) == 0:
-                raise InvalidParameterError("List of realizations cannot be empty", Service.SUMO)
+        # if realizations is not None:
+        #     if len(realizations) == 0:
+        #         raise InvalidParameterError("List of realizations cannot be empty", Service.SUMO)
 
-        perf_metrics = PerfMetrics()
+        # perf_metrics = PerfMetrics()
 
-        surf_str = self._make_stat_surf_log_str(name, attribute, time_or_interval_str)
+        # surf_str = self._make_stat_surf_log_str(name, attribute, time_or_interval_str)
 
-        time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
+        # time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
 
-        surface_collection = SurfaceCollection(self._sumo_client, self._case_uuid).filter(
-            is_observation=False,
-            aggregation=False,
-            iteration=self._iteration_name,
-            name=name,
-            tagname=attribute,
-            realization=realizations,
-            time=time_filter,
-        )
+        # surface_collection = SurfaceCollection(self._sumo_client, self._case_uuid).filter(
+        #     is_observation=False,
+        #     aggregation=False,
+        #     iteration=self._iteration_name,
+        #     name=name,
+        #     tagname=attribute,
+        #     realization=realizations,
+        #     time=time_filter,
+        # )
 
-        surf_count = await surface_collection.length_async()
-        if surf_count == 0:
-            LOGGER.warning(f"No statistical source surfaces found in Sumo for: {surf_str}")
-            return None
-        perf_metrics.record_lap("locate")
+        # surf_count = await surface_collection.length_async()
+        # if surf_count == 0:
+        #     LOGGER.warning(f"No statistical source surfaces found in Sumo for: {surf_str}")
+        #     return None
+        # perf_metrics.record_lap("locate")
 
-        realizations_found = await surface_collection.realizations_async
-        perf_metrics.record_lap("collect-reals")
+        # realizations_found = await surface_collection.realizations_async
+        # perf_metrics.record_lap("collect-reals")
 
-        # Ensure that we got data for all the requested realizations
-        if realizations is not None:
-            missing_reals = list(set(realizations) - set(realizations_found))
-            if len(missing_reals) > 0:
-                raise InvalidParameterError(
-                    f"Could not find source surfaces for realizations: {missing_reals} in Sumo for {surf_str}",
-                    Service.SUMO,
-                )
+        # # Ensure that we got data for all the requested realizations
+        # if realizations is not None:
+        #     missing_reals = list(set(realizations) - set(realizations_found))
+        #     if len(missing_reals) > 0:
+        #         raise InvalidParameterError(
+        #             f"Could not find source surfaces for realizations: {missing_reals} in Sumo for {surf_str}",
+        #             Service.SUMO,
+        #         )
 
-        xtgeo_surf = await _compute_statistical_surface_async(statistic_function, surface_collection)
-        perf_metrics.record_lap("calc-stat")
+        # xtgeo_surf = await _compute_statistical_surface_async(statistic_function, surface_collection)
+        # perf_metrics.record_lap("calc-stat")
 
-        if not xtgeo_surf:
-            LOGGER.warning(f"Could not calculate statistical surface using Sumo for: {surf_str}")
-            return None
+        # if not xtgeo_surf:
+        #     LOGGER.warning(f"Could not calculate statistical surface using Sumo for: {surf_str}")
+        #     return None
 
-        LOGGER.debug(
-            f"Calculated statistical surface using Sumo in: {perf_metrics.to_string()} "
-            f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, real count: {len(realizations_found)}] ({surf_str})"
-        )
+        # LOGGER.debug(
+        #     f"Calculated statistical surface using Sumo in: {perf_metrics.to_string()} "
+        #     f"[{xtgeo_surf.ncol}x{xtgeo_surf.nrow}, real count: {len(realizations_found)}] ({surf_str})"
+        # )
 
-        return xtgeo_surf
+        # return xtgeo_surf
+        return None
 
     def _make_real_surf_log_str(self, real_num: int, name: str, attribute: str, date_str: str | None) -> str:
         addr_str = f"N={name}, A={attribute}, R={real_num}, D={date_str}, C={self._case_uuid}, I={self._iteration_name}"
@@ -363,9 +366,7 @@ def _time_or_interval_str_to_time_filter(time_or_interval_str: str | None) -> Ti
     )
 
 
-async def _compute_statistical_surface_async(
-    statistic: StatisticFunction, surface_coll: SurfaceCollection
-) -> xtgeo.RegularSurface:
+async def _compute_statistical_surface_async(statistic: StatisticFunction, surface_coll: Any) -> xtgeo.RegularSurface:
     xtgeo_surf: xtgeo.RegularSurface = None
     if statistic == StatisticFunction.MIN:
         xtgeo_surf = await surface_coll.min_async()

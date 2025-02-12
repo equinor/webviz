@@ -1,16 +1,12 @@
 import logging
-from io import BytesIO
 from typing import List, Optional, Sequence, Tuple, Set
 
 import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
-import pyarrow.feather as pf
-import pyarrow.parquet as pq
-from fmu.sumo.explorer.explorer import SumoClient
-from fmu.sumo.explorer.objects import TableCollection, Table
 from webviz_pkg.core_utils.perf_timer import PerfTimer
-
+from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from primary.services.utils.arrow_helpers import (
     find_first_non_increasing_date_pair,
     sort_table_on_real_then_date,
@@ -18,21 +14,146 @@ from primary.services.utils.arrow_helpers import (
 )
 from primary.services.service_exceptions import (
     Service,
-    NoDataError,
     InvalidDataError,
     MultipleDataMatchesError,
     InvalidParameterError,
+    NoDataError,
 )
 
 
 from ._field_metadata import create_vector_metadata_from_field_meta
-from ._helpers import create_sumo_client
 from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
 from .generic_types import EnsembleScalarResponse
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
-from .queries.summary import find_summary_vector_tables_async
+from ._helpers import create_sumo_client
+from ._loaders import load_aggregated_arrow_table_single_column_from_sumo, load_single_realization_arrow_table
 
 LOGGER = logging.getLogger(__name__)
+
+from fmu.sumo.explorer.objects._search_context import filters
+
+
+class MySearchContext(SearchContext):
+    async def aggregate_async(self, columns=None, operation=None):
+        hidden_length = await self.hidden.length_async()
+        if hidden_length > 0:
+            return await self.hidden._aggregate_async(columns=columns, operation=operation)
+        else:
+            return await self.visible._aggregate_async(columns=columns, operation=operation)
+
+    async def aggregation_async(self, column=None, operation=None):
+        assert operation is not None
+        assert column is None or isinstance(column, str)
+        sc = self.filter(aggregation=operation, column=column)
+        numaggs = await sc.length_async()
+        assert numaggs <= 1
+        if numaggs == 1:
+            return await sc.getitem_async(0)
+        else:
+            return await self.filter(realization=True).aggregate_async(
+                columns=[column] if column is not None else None,
+                operation=operation,
+            )
+
+    def filter(self, **kwargs) -> "MySearchContext":
+        """Filter SearchContext"""
+
+        must = self._must[:]
+        must_not = self._must_not[:]
+        for k, v in kwargs.items():
+            f = filters.get(k)
+            if f is None:
+                raise Exception(f"Don't know how to generate filter for {k}")
+                pass
+            _must, _must_not = f(v)
+            if _must:
+                must.append(_must)
+            if _must_not is not None:
+                must_not.append(_must_not)
+
+        sc = MySearchContext(
+            self._sumo,
+            must=must,
+            must_not=must_not,
+            hidden=self._hidden,
+            visible=self._visible,
+        )
+
+        if "has" in kwargs:
+            # Get list of cases matched by current filter set
+            uuids = sc._get_field_values("fmu.case.uuid.keyword")
+            # Generate new searchcontext for objects that match the uuids
+            # and also satisfy the "has" filter
+            sc = MySearchContext(
+                self._sumo,
+                must=[
+                    {"terms": {"fmu.case.uuid.keyword": uuids}},
+                    kwargs["has"],
+                ],
+            )
+            uuids = sc._get_field_values("fmu.case.uuid.keyword")
+            sc = MySearchContext(
+                self._sumo,
+                must=[{"ids": {"values": uuids}}],
+            )
+
+        return sc
+
+    @property
+    def hidden(self):
+        return MySearchContext(
+            sumo=self._sumo,
+            must=self._must,
+            must_not=self._must_not,
+            hidden=True,
+            visible=False,
+        )
+
+    @property
+    def visible(self):
+        return MySearchContext(
+            sumo=self._sumo,
+            must=self._must,
+            must_not=self._must_not,
+            hidden=False,
+            visible=True,
+        )
+
+    def _verify_aggregation_operation(self):
+        query = {
+            "query": self._query,
+            "size": 1,
+            "track_total_hits": True,
+            "aggs": {
+                k: {"terms": {"field": k + ".keyword", "size": 1}}
+                for k in [
+                    "fmu.case.uuid",
+                    "class",
+                    "fmu.iteration.name",
+                    "data.name",
+                    "data.tagname",
+                    "data.content",
+                ]
+            },
+        }
+        sres = self._sumo.post("/search", json=query).json()
+        prototype = sres["hits"]["hits"][0]
+        conflicts = [
+            k
+            for (k, v) in sres["aggregations"].items()
+            if (("sum_other_doc_count" in v) and (v["sum_other_doc_count"] > 0))
+        ]
+        if len(conflicts) > 0:
+            raise Exception(f"Conflicting values for {conflicts}")
+
+        hits = self._search_all(select=["fmu.realization.id"])
+
+        if any(hit["_source"]["fmu"].get("realization") is None for hit in hits):
+            raise Exception("Selection contains non-realization data.")
+
+        uuids = [hit["_id"] for hit in hits]
+        rids = [hit["_source"]["fmu"]["realization"]["id"] for hit in hits]
+        return prototype, uuids, rids
 
 
 class SummaryAccess:
@@ -40,38 +161,43 @@ class SummaryAccess:
         self._sumo_client: SumoClient = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
+        self._ensemble_context = MySearchContext(sumo=self._sumo_client).filter(
+            uuid=self._case_uuid, iteration=self._iteration_name
+        )
 
     @classmethod
-    def from_case_uuid(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SummaryAccess":
+    def from_case_uuid_and_ensemble_name(
+        cls, access_token: str, case_uuid: str, iteration_name: str
+    ) -> "SummaryAccess":
         sumo_client: SumoClient = create_sumo_client(access_token)
-        return SummaryAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+
+    @property
+    def ensemble_context(self) -> MySearchContext:
+        return self._ensemble_context
 
     async def get_available_vectors_async(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
-        # For now, the search below only considers the collection-aggregated tables even if we will
-        #  also be accessing and returning data for the per-realization summary tables.
-        table_info_arr = await find_summary_vector_tables_async(
-            self._sumo_client, self._case_uuid, self._iteration_name
-        )
-        et_get_table_info_ms = timer.lap_ms()
-
-        if len(table_info_arr) == 0:
-            LOGGER.warning(f"No summary tables found in case={self._case_uuid}, iteration={self._iteration_name}")
-            return []
-        if len(table_info_arr) > 1:
-            table_names = [ti.table_name for ti in table_info_arr]
+        table_context: MySearchContext = self.ensemble_context.filter(cls="table", tagname="summary")
+        print(type(table_context))
+        table_names = await table_context.names_async
+        if len(table_names) == 0:
+            raise NoDataError(
+                f"No summary tables found in case={self._case_uuid}, iteration={self._iteration_name}", Service.SUMO
+            )
+        if len(table_names) > 1:
             raise MultipleDataMatchesError(
                 f"Multiple summary tables found in case={self._case_uuid}, iteration={self._iteration_name}: {table_names=}",
                 Service.SUMO,
             )
-
-        table_info = table_info_arr[0]
+        column_names = await table_context.columns_async
+        et_get_table_info_ms = timer.lap_ms()
 
         ret_info_arr: List[VectorInfo] = []
         hist_vectors: Set[str] = set()
 
-        for vec_name in table_info.column_names:
+        for vec_name in column_names:
             if vec_name not in ["DATE", "REAL"]:
                 if _is_historical_vector_name(vec_name):
                     hist_vectors.add(vec_name)
@@ -88,7 +214,7 @@ class SummaryAccess:
         LOGGER.debug(
             f"Got available vectors in: {timer.elapsed_ms()}ms "
             f"(get_table_info={et_get_table_info_ms}ms, build_return_info={et_build_return_info_ms}ms) "
-            f"(total_column_count={len(table_info.column_names)})"
+            f"(total_column_count={len(column_names)})"
         )
 
         return ret_info_arr
@@ -109,9 +235,12 @@ class SummaryAccess:
         """
         timer = PerfTimer()
 
-        table = await _load_all_real_arrow_table_from_sumo(
-            self._sumo_client, self._case_uuid, self._iteration_name, vector_name
+        table: pa.Table = await load_aggregated_arrow_table_single_column_from_sumo(
+            ensemble_context=self.ensemble_context,
+            table_content_name="timeseries",
+            table_column_name=vector_name,
         )
+        table = _validate_single_vector_table(table, vector_name)
         et_loading_ms = timer.lap_ms()
 
         if realizations is not None:
@@ -205,10 +334,23 @@ class SummaryAccess:
             raise InvalidParameterError("List of requested vector names is empty", Service.SUMO)
 
         timer = PerfTimer()
-
-        table: pa.Table = await _load_single_real_arrow_table_from_sumo(
-            self._sumo_client, self._case_uuid, self._iteration_name, vector_names, realization
+        columns_to_get = ["DATE"]
+        columns_to_get.extend(vector_names)
+        table: pa.Table = await load_single_realization_arrow_table(
+            ensemble_context=self.ensemble_context,
+            table_content_name="timeseries",
+            table_name="summary",
+            table_column_names=columns_to_get,
+            realization_no=realization,
         )
+        # Verify that we got the expected DATE column
+
+        if not "DATE" in table.column_names:
+            raise InvalidDataError("Table does not contain a DATE column", Service.SUMO)
+        date_field: pa.Field = table.field("DATE")
+        if date_field.type != pa.timestamp("ms"):
+            raise InvalidDataError(f"Unexpected type for DATE column {date_field.type=}", Service.SUMO)
+
         et_loading_ms = timer.lap_ms()
 
         # Verify that the column datatypes are as we expect
@@ -260,9 +402,14 @@ class SummaryAccess:
         if not hist_vec_name:
             return None
 
-        table = await _load_all_real_arrow_table_from_sumo(
-            self._sumo_client, self._case_uuid, self._iteration_name, hist_vec_name
+        table: pa.Table = await load_aggregated_arrow_table_single_column_from_sumo(
+            ensemble_context=self.ensemble_context,
+            table_content_name="timeseries",
+            table_name="summary",
+            table_column_name=hist_vec_name,
         )
+
+        table = _validate_single_vector_table(table, hist_vec_name)
         et_load_table_ms = timer.lap_ms()
 
         # Use data from the first realization
@@ -336,44 +483,24 @@ class SummaryAccess:
         return pc.unique(table.column("DATE")).to_numpy().astype(int).tolist()
 
 
-async def _load_all_real_arrow_table_from_sumo(
-    sumo_client: SumoClient, case_uuid: str, iteration_name: str, vector_name: str
-) -> pa.Table:
-    timer = PerfTimer()
-
-    sumo_table = await _locate_all_real_combined_sumo_table(
-        sumo_client, case_uuid, iteration_name, column_name=vector_name
-    )
-    et_locate_ms = timer.lap_ms()
-
-    # print(f"{sumo_table.format=}")
-    # print(f"{sumo_table.name=}")
-    # print(f"{sumo_table.tagname=}")
-
-    byte_stream: BytesIO = await sumo_table.blob_async
-    blob_size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
-    et_download_ms = timer.lap_ms()
-
-    # In practice, these are always stored in parquet format
-    table: pa.Table = pq.read_table(byte_stream)
-    et_read_ms = timer.lap_ms()
+def _validate_single_vector_table(arrow_table: pa.Table, vector_name: str) -> pa.Table:
 
     # Verify that we got the expected columns
-    if not "DATE" in table.column_names:
+    if not "DATE" in arrow_table.column_names:
         raise InvalidDataError("Table does not contain a DATE column", Service.SUMO)
-    if not "REAL" in table.column_names:
+    if not "REAL" in arrow_table.column_names:
         raise InvalidDataError("Table does not contain a REAL column", Service.SUMO)
-    if not vector_name in table.column_names:
+    if not vector_name in arrow_table.column_names:
         raise InvalidDataError(f"Table does not contain a {vector_name} column", Service.SUMO)
-    if table.num_columns != 3:
+    if arrow_table.num_columns != 3:
         raise InvalidDataError("Table should contain exactly 3 columns", Service.SUMO)
 
     # Verify that we got the expected columns
-    if sorted(table.column_names) != sorted(["DATE", "REAL", vector_name]):
-        raise InvalidDataError(f"Unexpected columns in table {table.column_names=}", Service.SUMO)
+    if sorted(arrow_table.column_names) != sorted(["DATE", "REAL", vector_name]):
+        raise InvalidDataError(f"Unexpected columns in table {arrow_table.column_names=}", Service.SUMO)
 
     # Verify that the column datatypes are as we expect
-    schema = table.schema
+    schema = arrow_table.schema
     if schema.field("DATE").type != pa.timestamp("ms"):
         raise InvalidDataError(f"Unexpected type for DATE column {schema.field('DATE').type=}", Service.SUMO)
     if schema.field("REAL").type != pa.int16():
@@ -383,59 +510,7 @@ async def _load_all_real_arrow_table_from_sumo(
             f"Unexpected type for {vector_name} column {schema.field(vector_name).type=}", Service.SUMO
         )
 
-    LOGGER.debug(
-        f"Loaded all realizations arrow table from Sumo in: {timer.elapsed_ms()}ms "
-        f"(locate={et_locate_ms}ms, download={et_download_ms}ms, read={et_read_ms}ms) "
-        f"({vector_name=}, {table.shape=}, {blob_size_mb=:.2f})"
-    )
-
-    return table
-
-
-async def _load_single_real_arrow_table_from_sumo(
-    sumo_client: SumoClient, case_uuid: str, iteration_name: str, vector_names: Sequence[str], realization: int
-) -> pa.Table:
-    timer = PerfTimer()
-
-    sumo_table: Table = await _locate_single_real_sumo_table(sumo_client, case_uuid, iteration_name, realization)
-    et_locate_ms = timer.lap_ms()
-
-    # print(f"{sumo_table.format=}")
-    # print(f"{sumo_table.name=}")
-    # print(f"{sumo_table.tagname=}")
-    # print(f"{sumo_table.context=}")
-    # print(f"{sumo_table.stage=}")
-    # print(f"{sumo_table.aggregation=}")
-
-    byte_stream: BytesIO = await sumo_table.blob_async
-    blob_size_mb = byte_stream.getbuffer().nbytes / (1024 * 1024)
-    et_download_ms = timer.lap_ms()
-
-    columns_to_get = ["DATE"]
-    columns_to_get.extend(vector_names)
-
-    # Currently (spring 2024) these are stored in feather format, but will transition to parquet
-    table: pa.Table
-    try:
-        table = pf.read_table(byte_stream, columns=columns_to_get)
-    except pa.ArrowInvalid:
-        table = pq.read_table(byte_stream, columns=columns_to_get)
-    et_read_ms = timer.lap_ms()
-
-    # Verify that we got the expected DATE column
-    if not "DATE" in table.column_names:
-        raise InvalidDataError("Table does not contain a DATE column", Service.SUMO)
-    date_field: pa.Field = table.field("DATE")
-    if date_field.type != pa.timestamp("ms"):
-        raise InvalidDataError(f"Unexpected type for DATE column {date_field.type=}", Service.SUMO)
-
-    LOGGER.debug(
-        f"Loaded single realization arrow table from Sumo in: {timer.elapsed_ms()}ms "
-        f"(locate={et_locate_ms}ms, download={et_download_ms}ms, read={et_read_ms}ms) "
-        f"({realization=}, {table.shape=}, {blob_size_mb=:.2f})"
-    )
-
-    return table
+    return arrow_table
 
 
 def _is_historical_vector_name(vector_name: str) -> bool:
@@ -454,50 +529,3 @@ def _construct_historical_vector_name(non_historical_vector_name: str) -> Option
         return hist_vec
 
     return None
-
-
-async def _locate_all_real_combined_sumo_table(
-    sumo_client: SumoClient, case_uuid: str, iteration_name: str, column_name: str
-) -> Table:
-    """Locate sumo table that has concatenated summary data for all realizations for a single vector"""
-    table_collection = TableCollection(sumo=sumo_client, case_uuid=case_uuid).filter(
-        tagname="summary",
-        stage="iteration",
-        aggregation="collection",
-        iteration=iteration_name,
-        column=column_name,
-    )
-
-    table_count = await table_collection.length_async()
-    if table_count == 0:
-        raise NoDataError(f"No summary tables with collection aggregation found: {column_name=}", Service.SUMO)
-    if table_count > 1:
-        table_names = await table_collection.names_async
-        raise MultipleDataMatchesError(
-            f"Multiple summary tables with collection aggregation found: {column_name=}, {table_names=}", Service.SUMO
-        )
-
-    return await table_collection.getitem_async(0)
-
-
-async def _locate_single_real_sumo_table(
-    sumo_client: SumoClient, case_uuid: str, iteration_name: str, realization: int
-) -> Table:
-    """Locate the sumo table with summary data for all vectors for the for the specified single realization"""
-    table_collection = TableCollection(sumo=sumo_client, case_uuid=case_uuid).filter(
-        tagname="summary",
-        stage="realization",
-        iteration=iteration_name,
-        realization=realization,
-    )
-
-    table_count = await table_collection.length_async()
-    if table_count == 0:
-        raise NoDataError(f"No summary tables found for realization {realization=}", Service.SUMO)
-    if table_count > 1:
-        table_names = await table_collection.names_async
-        raise MultipleDataMatchesError(
-            f"Multiple summary tables found for realization {realization=}, {table_names=}", Service.SUMO
-        )
-
-    return await table_collection.getitem_async(0)

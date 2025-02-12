@@ -4,7 +4,7 @@ from typing import List
 
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.objects import Case
-from fmu.sumo.explorer.objects.cube_collection import CubeCollection
+
 
 from ._helpers import create_sumo_client, create_sumo_case_async
 from .seismic_types import SeismicCubeMeta, VdsHandle
@@ -25,32 +25,33 @@ class SeismicAccess:
         return SeismicAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_seismic_cube_meta_list_async(self) -> List[SeismicCubeMeta]:
-        first_realization = (await self._case.get_realizations_async())[0]
-        seismic_cube_collection: CubeCollection = self._case.cubes.filter(
-            iteration=self._iteration_name, realization=first_realization
-        )
-        seismic_cube_meta_list: List[SeismicCubeMeta] = []
-        async for cube in seismic_cube_collection:
-            t_start = cube["data"].get("time", {}).get("t0", {}).get("value", None)
-            t_end = cube["data"].get("time", {}).get("t1", {}).get("value", None)
+        # first_realization = (await self._case.get_realizations_async())[0]
+        # seismic_cube_collection: CubeCollection = self._case.cubes.filter(
+        #     iteration=self._iteration_name, realization=first_realization
+        # )
+        # seismic_cube_meta_list: List[SeismicCubeMeta] = []
+        # async for cube in seismic_cube_collection:
+        #     t_start = cube["data"].get("time", {}).get("t0", {}).get("value", None)
+        #     t_end = cube["data"].get("time", {}).get("t1", {}).get("value", None)
 
-            if not t_start and not t_end:
-                raise ValueError(f"Cube {cube['data']['tagname']} has no time information")
+        #     if not t_start and not t_end:
+        #         raise ValueError(f"Cube {cube['data']['tagname']} has no time information")
 
-            if t_start and not t_end:
-                iso_string_or_time_interval = t_start
+        #     if t_start and not t_end:
+        #         iso_string_or_time_interval = t_start
 
-            else:
-                iso_string_or_time_interval = f"{t_start}/{t_end}"
+        #     else:
+        #         iso_string_or_time_interval = f"{t_start}/{t_end}"
 
-            seismic_meta = SeismicCubeMeta(
-                seismic_attribute=cube["data"].get("tagname"),
-                iso_date_or_interval=iso_string_or_time_interval,
-                is_observation=cube["data"]["is_observation"],
-                is_depth=cube["data"].get("vertical_domain", "depth") == "depth",
-            )
-            seismic_cube_meta_list.append(seismic_meta)
-        return seismic_cube_meta_list
+        #     seismic_meta = SeismicCubeMeta(
+        #         seismic_attribute=cube["data"].get("tagname"),
+        #         iso_date_or_interval=iso_string_or_time_interval,
+        #         is_observation=cube["data"]["is_observation"],
+        #         is_depth=cube["data"].get("vertical_domain", "depth") == "depth",
+        #     )
+        #     seismic_cube_meta_list.append(seismic_meta)
+        # return seismic_cube_meta_list
+        return []
 
     async def get_vds_handle_async(
         self,
@@ -60,48 +61,48 @@ class SeismicAccess:
         observed: bool = False,
     ) -> VdsHandle:
         """Get the vds handle for a given cube"""
-        timestamp_arr = time_or_interval_str.split("/", 1)
-        if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
-            raise ValueError("time_or_interval_str must contain a single timestamp or interval")
-        if len(timestamp_arr) == 1:
-            time_filter = TimeFilter(
-                TimeType.TIMESTAMP,
-                start=timestamp_arr[0],
-                end=timestamp_arr[0],
-                exact=True,
-            )
-        else:
-            time_filter = TimeFilter(
-                TimeType.INTERVAL,
-                start=timestamp_arr[0],
-                end=timestamp_arr[1],
-                exact=True,
-            )
+        # timestamp_arr = time_or_interval_str.split("/", 1)
+        # if len(timestamp_arr) == 0 or len(timestamp_arr) > 2:
+        #     raise ValueError("time_or_interval_str must contain a single timestamp or interval")
+        # if len(timestamp_arr) == 1:
+        #     time_filter = TimeFilter(
+        #         TimeType.TIMESTAMP,
+        #         start=timestamp_arr[0],
+        #         end=timestamp_arr[0],
+        #         exact=True,
+        #     )
+        # else:
+        #     time_filter = TimeFilter(
+        #         TimeType.INTERVAL,
+        #         start=timestamp_arr[0],
+        #         end=timestamp_arr[1],
+        #         exact=True,
+        #     )
 
-        cube_collection: CubeCollection = self._case.cubes.filter(
-            tagname=seismic_attribute,
-            realization=realization,
-            iteration=self._iteration_name,
-            time=time_filter,
-            # is_observation=observed,  # Does not work for observed. Only handles observed on case level?
-        )
+        # cube_collection: CubeCollection = self._case.cubes.filter(
+        #     tagname=seismic_attribute,
+        #     realization=realization,
+        #     iteration=self._iteration_name,
+        #     time=time_filter,
+        #     # is_observation=observed,  # Does not work for observed. Only handles observed on case level?
+        # )
 
-        # Filter on observed
-        cubes = []
-        async for cube in cube_collection:
-            if cube["data"]["is_observation"] == observed:
-                cubes.append(cube)
-                break
+        # # Filter on observed
+        # cubes = []
+        # async for cube in cube_collection:
+        #     if cube["data"]["is_observation"] == observed:
+        #         cubes.append(cube)
+        #         break
 
-        if not cubes:
-            raise ValueError(f"Cube {seismic_attribute} not found in case {self._case_uuid}")
-        if len(cubes) > 1:
-            raise ValueError(f"Multiple cubes found for {seismic_attribute} in case {self._case_uuid}")
-        cube = cubes[0]
+        # if not cubes:
+        #     raise ValueError(f"Cube {seismic_attribute} not found in case {self._case_uuid}")
+        # if len(cubes) > 1:
+        #     raise ValueError(f"Multiple cubes found for {seismic_attribute} in case {self._case_uuid}")
+        # cube = cubes[0]
 
         return VdsHandle(
-            sas_token=cube.sas,
-            vds_url=clean_vds_url(cube.url),
+            sas_token="cube.sas",
+            vds_url="clean_vds_url(cube.url)",
         )
 
 
