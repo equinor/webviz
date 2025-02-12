@@ -3,7 +3,7 @@ import { SeismicSliceData_trans } from "@modules/3DViewerNew/settings/queries/qu
 import { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
 import { MovableLayerWrapper } from "@modules/_shared/customDeckGlLayers/MovableLayerWrapper";
-import { SeismicFenceMeshLayer } from "@modules/_shared/customDeckGlLayers/SeismicFenceMeshLayer";
+import { SeismicFenceMeshLayer } from "@modules/_shared/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 
 /*
  * Generate a mesh for a seismic fence plot

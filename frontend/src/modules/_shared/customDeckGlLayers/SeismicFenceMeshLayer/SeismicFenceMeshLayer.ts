@@ -10,21 +10,28 @@ import { PathLayer } from "@deck.gl/layers";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { Geometry } from "@luma.gl/engine";
 
-import { ExtendedSimpleMeshLayer } from "./ExtendedSimpleMeshLayer/ExtendedSimpleMeshLayer";
+import workerpool from "workerpool";
+
+import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
+import { Space, WebworkerParameters, makeMesh } from "./_private/worker";
 
 export type SeismicFenceMeshLayerPickingInfo = {
     properties?: { name: string; value: number }[];
 } & PickingInfo;
 
+export type SeismicFenceSection = {
+    numSamplesU: number;
+    numSamplesV: number;
+    properties: Float32Array;
+    boundingBox: number[][]; // [minX, minY, minZ, maxX, maxY, maxZ]
+};
+
 export type SeismicFenceMeshLayerProps = {
     name?: string;
     startPosition: [number, number, number];
     data: {
-        vertices: Float32Array;
-        indices: Uint32Array;
-        properties: Float32Array;
+        sections: SeismicFenceSection[];
     };
-    boundingBox: number[][]; // [minX, minY, minZ, maxX, maxY, maxZ]
     colorMapFunction: (value: number) => [number, number, number];
     hoverable?: boolean;
     zIncreaseDownwards?: boolean;
@@ -34,11 +41,100 @@ export type SeismicFenceMeshLayerProps = {
 export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerProps> {
     static layerName: string = "SeismicFenceMeshLayer";
 
+    private _pool = workerpool.pool({
+        workerType: "web",
+        maxWorkers: 10,
+        workerOpts: {
+            // By default, Vite uses a module worker in dev mode, which can cause your application to fail. Therefore, we need to use a module worker in dev mode and a classic worker in prod mode.
+            type: import.meta.env.PROD ? undefined : "module",
+        },
+    });
+    private _numTasks = 0;
+    private _numTasksCompleted = 0;
+    private _numTasksFailed = 0;
+    private _transVertices: Float32Array | null = null;
+    private _transIndices: Uint32Array | null = null;
+
     // @ts-expect-error - private
     state!: {
         geometry: Geometry;
         isHovered: boolean;
     };
+
+    private calcNumVerticesForSection(section: SeismicFenceSection): number {
+        return section.numSamplesU * section.numSamplesV * 3;
+    }
+
+    private calcNumIndicesForSection(section: SeismicFenceSection): number {
+        return (section.numSamplesU - 1) * (section.numSamplesV - 1) * 6;
+    }
+
+    private initTransferableObjects() {
+        const { data } = this.props;
+
+        for (const section of data.sections) {
+            const numVertices = this.calcNumVerticesForSection(section);
+            const numIndices = this.calcNumIndicesForSection(section);
+
+            this._transVertices = new Float32Array(numVertices);
+            this._transIndices = new Uint32Array(numIndices);
+        }
+    }
+
+    private checkIfAllTasksCompleted() {
+        if (this._numTasks === this._numTasksCompleted) {
+            this.setState({
+                geometry: new Geometry({
+                    attributes: {
+                        positions: this._transVertices,
+                        colors: {
+                            value: this.makeColorsArray(),
+                            size: 4,
+                        },
+                    },
+                    topology: "triangle-list",
+                    indices: this._transIndices,
+                }),
+            });
+        }
+    }
+
+    private rebuildMesh() {
+        const params: WebworkerParameters[] = [];
+
+        this.initTransferableObjects();
+
+        let verticesIndex = 0;
+        let indicesIndex = 0;
+        for (const section of this.props.data.sections) {
+            this._numTasks++;
+
+            const params: WebworkerParameters = {
+                numSamplesU: section.numSamplesU,
+                numSamplesV: section.numSamplesV,
+                boundingBox: section.boundingBox,
+                startVerticesIndex: verticesIndex,
+                startIndicesIndex: indicesIndex,
+                transVertices: this._transVertices,
+                transIndices: this._transIndices,
+                space: Space.FENCE,
+            };
+
+            verticesIndex += this.calcNumVerticesForSection(section);
+            indicesIndex += this.calcNumIndicesForSection(section);
+
+            this._pool
+                .exec(makeMesh, [{ ...params }])
+                .then(() => {
+                    this;
+                    this._numTasksCompleted++;
+                    this.checkIfAllTasksCompleted();
+                })
+                .catch(() => {
+                    this._numTasksFailed++;
+                });
+        }
+    }
 
     private makeColorsArray(): Float32Array {
         const { data, colorMapFunction } = this.props;
