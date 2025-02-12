@@ -1,4 +1,3 @@
-import checkboardTextureUrl from "@assets/textures/checkboard.bmp?url";
 import {
     CompositeLayer,
     CompositeLayerProps,
@@ -322,7 +321,6 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                         data: [0],
                         mesh: placeholderGeometry,
                         getPosition: [0, 0, 0],
-                        texture: checkboardTextureUrl,
                         getColor: [100, 100, 100, 100],
                         material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
                         pickable: false,
