@@ -17,9 +17,11 @@ from primary.services.sumo_access.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.group_tree_types import TreeType
 
 from . import _utils
+from ._assembler_performance_times import PerformanceTimes
 from ._group_tree_dataframe_model import (
     GroupTreeDataframeModel,
 )
+
 
 from .flow_network_types import (
     DataType,
@@ -38,44 +40,6 @@ from .flow_network_types import (
 
 
 LOGGER = logging.getLogger(__name__)
-
-
-@dataclass
-# Dataclass needs to save a bunch of timestamps. Many attributes is okay here, as splitting it would be more cumbersome
-# pylint: disable-next=too-many-instance-attributes
-class PerformanceTimes:
-    """Simple utility class to store performance timer results for different internal method calls"""
-
-    init_sumo_data: int = 0
-    init_summary_vector_list: int = 0
-    fetch_grouptree_df: int = 0
-    init_grouptree_df_model: int = 0
-    create_filtered_dataframe: int = 0
-    init_summary_vector_data_table: int = 0
-    create_node_classifications: int = 0
-    create_network_summary_vectors_info: int = 0
-
-    # Unused for logging for now, but available if needed
-    build_and_verify_vectors_of_interest: int = 0
-    create_well_node_classifications: int = 0
-
-    def log_sumo_download_times(self) -> None:
-        # Log download from Sumo times
-        LOGGER.info(
-            f"Total time to fetch data from Sumo: {self.init_sumo_data + self.init_summary_vector_data_table}ms, "
-            f"Get summary vector list in: {self.init_summary_vector_list}ms, "
-            f"Get group tree table in: {self.fetch_grouptree_df}ms, "
-            f"Get summary vectors in: {self.init_summary_vector_data_table}ms"
-        )
-
-    def log_structure_init_times(self) -> None:
-        # Log initialization of data structures times
-        LOGGER.info(
-            f"Initialize GroupTreeModel in: {self.init_grouptree_df_model}ms, "
-            f"Create filtered dataframe in: {self.create_filtered_dataframe}ms, "
-            f"Create node classifications in: {self.create_node_classifications}ms, "
-            f"Create group tree summary vectors info in: {self.create_network_summary_vectors_info}ms"
-        )
 
 
 @dataclass
@@ -309,38 +273,39 @@ class FlowNetworkAssembler:
         if self._node_static_working_data is None:
             raise ValueError("Static working data for nodes has not been initialized")
 
+        edge_data_types = self._get_edge_data_types()
+        node_data_types = self._get_node_data_types()
+
         dated_network_list = _create_dated_networks(
             self._smry_table_sorted_by_date,
             self._filtered_group_tree_df_safe,
             self._node_static_working_data,
             self._node_types,
             self._network_classification.TERMINAL_NODE,
+            set(node_data_types) | set(edge_data_types),
         )
 
         return (
             dated_network_list,
-            self._assemble_metadata_for_data_types(self._get_edge_data_types()),
-            self._assemble_metadata_for_data_types(self._get_node_data_types()),
+            self._assemble_metadata_for_data_types(edge_data_types),
+            self._assemble_metadata_for_data_types(node_data_types),
         )
 
     def _get_edge_data_types(self) -> list[DataType]:
-        node_types = self._node_types
+        # ! Using a list to keep the datatypes in the same order every run
         data_types: list[DataType] = []
 
-        if NodeType.PROD in node_types:
+        if NodeType.PROD in self._node_types:
             data_types.extend([DataType.OILRATE, DataType.GASRATE, DataType.WATERRATE])
-        if NodeType.INJ in node_types and self._network_classification.HAS_WATER_INJ:
+        if NodeType.INJ in self._node_types and self._network_classification.HAS_WATER_INJ:
             data_types.append(DataType.WATERINJRATE)
-        if NodeType.INJ in node_types and self._network_classification.HAS_GAS_INJ:
+        if NodeType.INJ in self._node_types and self._network_classification.HAS_GAS_INJ:
             data_types.append(DataType.GASINJRATE)
-
-        # ? Why do we default to oilrate?
-        if len(data_types) == 0:
-            data_types.append(DataType.OILRATE)
 
         return data_types
 
     def _get_node_data_types(self) -> list[DataType]:
+        # ! Using a list to keep the datatypes in the same order every run
         return [DataType.PRESSURE, DataType.BHP, DataType.WMCTL]
 
     def _assemble_metadata_for_data_types(self, data_types: list[DataType]) -> list[FlowNetworkMetadata]:
@@ -748,6 +713,7 @@ def _create_dated_networks(
     node_static_working_data_dict: dict[str, StaticNodeWorkingData],
     valid_node_types: set[NodeType],
     terminal_node: str,
+    valid_data_types: set[DataType],
 ) -> list[DatedFlowNetwork]:
     """
     Create a list of static flow networks with summary data, based on the group trees and resampled summary data.
@@ -817,6 +783,7 @@ def _create_dated_networks(
                 node_static_working_data_dict,
                 valid_node_types,
                 terminal_node,
+                valid_data_types,
             )
 
             dated_networks.append(DatedFlowNetwork(dates=formatted_dates, network=network))
@@ -844,6 +811,7 @@ def _create_dated_network(
     node_static_working_data_dict: dict[str, StaticNodeWorkingData],
     valid_node_types: set[NodeType],
     terminal_node: str,
+    valid_data_types: set[DataType],
 ) -> NetworkNode:
     """
     Create a static flowm network with summary data for a set of dates.
@@ -871,6 +839,7 @@ def _create_dated_network(
         valid_node_types,
         smry_for_grouptree_sorted_by_date,
         number_of_dates_in_smry,
+        valid_data_types,
     )
 
     terminal_node_elm = nodes_dict.get(terminal_node)
@@ -898,6 +867,7 @@ def _create_flat_network_nodes_map(
     valid_node_types: set[NodeType],
     smry_for_grouptree_sorted_by_date: pa.Table,
     number_of_dates_in_smry: int,
+    valid_data_types: set[DataType],
 ) -> dict[str, FlatNetworkNodeData]:
     """
     Creates a map with node names and their respective flat network node data.
@@ -942,6 +912,7 @@ def _create_flat_network_nodes_map(
             smry_columns_set,
             smry_for_grouptree_sorted_by_date,
             number_of_dates_in_smry,
+            valid_data_types,
         )
 
         nodes_dict[node_name] = FlatNetworkNodeData(parent_name=parent_name, node_without_children=network_node)
@@ -957,6 +928,7 @@ def _create_network_node(
     smry_columns_set: set,
     smry_for_grouptree_sorted_by_date: pa.Table,
     number_of_dates_in_smry: int,
+    valid_data_types: set[DataType],
 ) -> NetworkNode:
     # Find working data for the node
 
@@ -971,6 +943,9 @@ def _create_network_node(
     summary_vector_info = working_data.node_summary_vectors_info
     for sumvec, info in summary_vector_info.items():
         datatype = info.DATATYPE
+
+        if valid_data_types and datatype not in valid_data_types:
+            continue
 
         if sumvec in smry_columns_set:
             data = smry_for_grouptree_sorted_by_date[sumvec].to_numpy().round(2)
