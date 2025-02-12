@@ -9,7 +9,6 @@ import { Layer as LayerInterface } from "@modules/_shared/LayerFramework/interfa
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
-import { WellborePickLayerData, WellborePicksLayer } from "@modules_shared/customDeckGlLayers/WellborePicksLayer";
 import { ColormapLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import { Rgb, parse } from "culori";
@@ -21,6 +20,7 @@ import { RealizationPolygonsLayer } from "../../LayerFramework/customLayerImplem
 import { RealizationSurfaceLayer } from "../../LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "../../LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { AdvancedWellsLayer } from "../customDeckGlLayers/AdvancedWellsLayer";
+import { WellBorePickLayerData, WellborePicksLayer } from "../customDeckGlLayers/WellborePicksLayer";
 
 export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
     const data = layer.getLayerDelegate().getData();
@@ -83,7 +83,7 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
     return null;
 }
 function createWellPicksLayer(wellPicksDataApi: WellborePick_api[], id: string): WellborePicksLayer {
-    const wellPicksData: WellborePickLayerData[] = wellPicksDataApi.map((wellPick) => {
+    const wellPicksData: WellBorePickLayerData[] = wellPicksDataApi.map((wellPick) => {
         return {
             easting: wellPick.easting,
             northing: wellPick.northing,
