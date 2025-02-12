@@ -920,7 +920,7 @@ def _create_flat_network_nodes_map(
     # Create edge label for nodes
     edge_labels = [""] * len(node_names)
     if "VFP_TABLE" in grouptree_at_date.columns:
-        edge_labels = _create_edge_label_list_from_vfp_table_column(grouptree_at_date["VFP_TABLE"])
+        edge_labels = _utils.create_edge_label_list_from_vfp_table_column(grouptree_at_date["VFP_TABLE"])
 
     # Iterate over every row in the grouptree dataframe to create the network nodes
     for node_name, parent_name, node_keyword, edge_label in zip(node_names, parent_names, keywords, edge_labels):
@@ -931,7 +931,7 @@ def _create_flat_network_nodes_map(
         if node_static_working_data is None:
             raise ValueError(f"No summary vector info found for node {node_name}")
 
-        if not _is_valid_node_type(node_static_working_data.node_classification, valid_node_types):
+        if not _utils.is_valid_node_type(node_static_working_data.node_classification, valid_node_types):
             continue
 
         network_node = _create_network_node(
@@ -947,36 +947,6 @@ def _create_flat_network_nodes_map(
         nodes_dict[node_name] = FlatNetworkNodeData(parent_name=parent_name, node_without_children=network_node)
 
     return nodes_dict
-
-
-def _is_valid_node_type(node_classification: NodeClassification, valid_node_types: set[NodeType]) -> bool:
-    """Returns True if the node classification is a valid node type"""
-    if node_classification.IS_PROD and NodeType.PROD in valid_node_types:
-        return True
-    if node_classification.IS_INJ and NodeType.INJ in valid_node_types:
-        return True
-    if node_classification.IS_OTHER and NodeType.OTHER in valid_node_types:
-        return True
-    return False
-
-
-def _create_edge_label_list_from_vfp_table_column(vfp_table_column: pd.Series) -> list[str]:
-    """
-    Creates an edge label list based on the column named "VFP_TABLE".
-
-    If the VFP_TABLE column is not present, the function will raise a ValueError.
-    """
-    if vfp_table_column.empty:
-        raise ValueError("VFP_TABLE column is empty.")
-
-    edge_labels: list[str] = []
-    for vfp_nb in vfp_table_column:
-        if vfp_nb in [None, 9999] or np.isnan(vfp_nb):
-            edge_labels.append("")
-        else:
-            edge_labels.append(f"VFP {int(vfp_nb)}")
-
-    return edge_labels
 
 
 def _create_network_node(
