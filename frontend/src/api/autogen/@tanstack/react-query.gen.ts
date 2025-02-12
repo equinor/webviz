@@ -63,6 +63,8 @@ import {
     getWellborePickIdentifiers,
     getWellborePicksForPickIdentifier,
     getWellborePicksForWellbore,
+    getWellborePicksInStratColumn,
+    getWellboreStratigraphicColumns,
     loginRoute,
     postGetAggregatedPerRealizationTableData,
     postGetAggregatedStatisticalTableData,
@@ -130,6 +132,8 @@ import type {
     GetWellborePickIdentifiersData_api,
     GetWellborePicksForPickIdentifierData_api,
     GetWellborePicksForWellboreData_api,
+    GetWellborePicksInStratColumnData_api,
+    GetWellboreStratigraphicColumnsData_api,
     LoginRouteData_api,
     PostGetAggregatedPerRealizationTableDataData_api,
     PostGetAggregatedPerRealizationTableDataError_api,
@@ -722,6 +726,25 @@ export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDat
     });
 };
 
+export const getWellboreStratigraphicColumnsQueryKey = (options: Options<GetWellboreStratigraphicColumnsData_api>) => [
+    createQueryKey("getWellboreStratigraphicColumns", options),
+];
+
+export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellboreStratigraphicColumnsData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getWellboreStratigraphicColumns({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getWellboreStratigraphicColumnsQueryKey(options),
+    });
+};
+
 export const getStratigraphicUnitsQueryKey = (options: Options<GetStratigraphicUnitsData_api>) => [
     createQueryKey("getStratigraphicUnits", options),
 ];
@@ -1113,6 +1136,25 @@ export const getWellborePicksForWellboreOptions = (options: Options<GetWellboreP
             return data;
         },
         queryKey: getWellborePicksForWellboreQueryKey(options),
+    });
+};
+
+export const getWellborePicksInStratColumnQueryKey = (options: Options<GetWellborePicksInStratColumnData_api>) => [
+    createQueryKey("getWellborePicksInStratColumn", options),
+];
+
+export const getWellborePicksInStratColumnOptions = (options: Options<GetWellborePicksInStratColumnData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getWellborePicksInStratColumn({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getWellborePicksInStratColumnQueryKey(options),
     });
 };
 

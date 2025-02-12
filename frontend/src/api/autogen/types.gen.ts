@@ -630,6 +630,16 @@ export type StatisticValueObject_api = {
 };
 
 /**
+ * Stratigraphic column from SMDA
+ */
+export type StratigraphicColumn_api = {
+    stratColumnIdentifier: string;
+    stratColumnAreaType: string;
+    stratColumnStatus: string;
+    stratColumnType: string | null;
+};
+
+/**
  * Stratigraphic unit from SMDA
  *
  * Camel case attributes needed for esvIntersection component in front-end
@@ -972,6 +982,18 @@ export type WellCompletionsZone_api = {
     subzones: Array<WellCompletionsZone_api> | null;
 };
 
+export enum WellLogCurveSourceEnum_api {
+    SSDL_WELL_LOG = "ssdl.well_log",
+    SMDA_GEOLOGY = "smda.geology",
+    SMDA_STRATIGRAPHY = "smda.stratigraphy",
+}
+
+export enum WellLogCurveTypeEnum_api {
+    CONTINUOUS = "continuous",
+    DISCRETE = "discrete",
+    FLAG = "flag",
+}
+
 export type WellboreCasing_api = {
     itemType: string;
     diameterNumeric: number;
@@ -1009,21 +1031,29 @@ export type WellboreHeader_api = {
 };
 
 export type WellboreLogCurveData_api = {
+    source: WellLogCurveSourceEnum_api;
     name: string;
+    logName: string;
     indexMin: number;
     indexMax: number;
-    minCurveValue: number;
-    maxCurveValue: number;
+    minCurveValue: number | null;
+    maxCurveValue: number | null;
     curveAlias: string | null;
     curveDescription: string | null;
     indexUnit: string;
     noDataValue: number | null;
     unit: string;
     curveUnitDesc: string | null;
-    dataPoints: Array<Array<number | null>>;
+    dataPoints: Array<[number, number | string | null]>;
+    metadataDiscrete: {
+        [key: string]: [number, [number, number, number]];
+    } | null;
 };
 
 export type WellboreLogCurveHeader_api = {
+    source: WellLogCurveSourceEnum_api;
+    sourceId: string;
+    curveType: WellLogCurveTypeEnum_api;
     logName: string;
     curveName: string;
     curveUnit: string | null;
@@ -1056,6 +1086,7 @@ export type WellborePick_api = {
     confidence: string | null;
     depthReferencePoint: string;
     mdUnit: string;
+    interpreter: string | null;
 };
 
 export type WellboreTrajectory_api = {
@@ -2103,6 +2134,38 @@ export type GetMisfitSurfaceDataResponses_api = {
 
 export type GetMisfitSurfaceDataResponse_api = GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
 
+export type GetWellboreStratigraphicColumnsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Wellbore uuid
+         */
+        wellbore_uuid: string;
+    };
+    url: "/surface/wellbore_stratigraphic_columns/";
+};
+
+export type GetWellboreStratigraphicColumnsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetWellboreStratigraphicColumnsError_api =
+    GetWellboreStratigraphicColumnsErrors_api[keyof GetWellboreStratigraphicColumnsErrors_api];
+
+export type GetWellboreStratigraphicColumnsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<StratigraphicColumn_api>;
+};
+
+export type GetWellboreStratigraphicColumnsResponse_api =
+    GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
+
 export type GetStratigraphicUnitsData_api = {
     body?: never;
     path?: never;
@@ -2786,7 +2849,7 @@ export type GetWellTrajectoriesData_api = {
         /**
          * Optional subset of wellbore uuids
          */
-        wellbore_uuids?: Array<string>;
+        wellbore_uuids?: Array<string> | null;
     };
     url: "/well/well_trajectories/";
 };
@@ -2908,6 +2971,42 @@ export type GetWellborePicksForWellboreResponses_api = {
 export type GetWellborePicksForWellboreResponse_api =
     GetWellborePicksForWellboreResponses_api[keyof GetWellborePicksForWellboreResponses_api];
 
+export type GetWellborePicksInStratColumnData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Wellbore uuid
+         */
+        wellbore_uuid: string;
+        /**
+         * Optional - Filter by stratigraphic column
+         */
+        strat_column: string;
+    };
+    url: "/well/wellbore_picks_in_strat_column";
+};
+
+export type GetWellborePicksInStratColumnErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetWellborePicksInStratColumnError_api =
+    GetWellborePicksInStratColumnErrors_api[keyof GetWellborePicksInStratColumnErrors_api];
+
+export type GetWellborePicksInStratColumnResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellborePick_api>;
+};
+
+export type GetWellborePicksInStratColumnResponse_api =
+    GetWellborePicksInStratColumnResponses_api[keyof GetWellborePicksInStratColumnResponses_api];
+
 export type GetWellboreCompletionsData_api = {
     body?: never;
     path?: never;
@@ -3006,6 +3105,10 @@ export type GetWellboreLogCurveHeadersData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        /**
+         * Sources to fetch well-logs from.
+         */
+        sources?: Array<WellLogCurveSourceEnum_api>;
     };
     url: "/well/wellbore_log_curve_headers/";
 };
@@ -3038,9 +3141,17 @@ export type GetLogCurveDataData_api = {
          */
         wellbore_uuid: string;
         /**
-         * Log curve name
+         * Log identifier
          */
-        log_curve_name: string;
+        log_name: string;
+        /**
+         * Curve identifier
+         */
+        curve_name: string;
+        /**
+         * Source to fetch well-logs from.
+         */
+        source?: WellLogCurveSourceEnum_api;
     };
     url: "/well/log_curve_data/";
 };

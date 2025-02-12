@@ -168,6 +168,12 @@ import type {
     GetWellborePicksForWellboreData_api,
     GetWellborePicksForWellboreError_api,
     GetWellborePicksForWellboreResponse_api,
+    GetWellborePicksInStratColumnData_api,
+    GetWellborePicksInStratColumnError_api,
+    GetWellborePicksInStratColumnResponse_api,
+    GetWellboreStratigraphicColumnsData_api,
+    GetWellboreStratigraphicColumnsError_api,
+    GetWellboreStratigraphicColumnsResponse_api,
     LoginRouteData_api,
     LoginRouteError_api,
     PostGetAggregatedPerRealizationTableDataData_api,
@@ -616,6 +622,22 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get Wellbore Stratigraphic Columns
+ */
+export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = false>(
+    options: Options<GetWellboreStratigraphicColumnsData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetWellboreStratigraphicColumnsResponse_api,
+        GetWellboreStratigraphicColumnsError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/surface/wellbore_stratigraphic_columns/",
+    });
+};
+
+/**
  * Get Stratigraphic Units
  */
 export const getStratigraphicUnits = <ThrowOnError extends boolean = false>(
@@ -909,6 +931,22 @@ export const getWellborePicksForWellbore = <ThrowOnError extends boolean = false
 };
 
 /**
+ * Get Wellbore Picks In Strat Column
+ */
+export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = false>(
+    options: Options<GetWellborePicksInStratColumnData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetWellborePicksInStratColumnResponse_api,
+        GetWellborePicksInStratColumnError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/well/wellbore_picks_in_strat_column",
+    });
+};
+
+/**
  * Get Wellbore Completions
  * Get well bore completions for a single well bore
  */
@@ -951,7 +989,8 @@ export const getWellborePerforations = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Wellbore Log Curve Headers
- * Get all log curve headers for a single well bore
+ * Get all log curve headers for a single well bore.
+ * Logs are available from multiple sources, which can be specificed by the "sources" parameter.
  */
 export const getWellboreLogCurveHeaders = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreLogCurveHeadersData_api, ThrowOnError>

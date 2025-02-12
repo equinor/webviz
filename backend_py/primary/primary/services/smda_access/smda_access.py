@@ -8,19 +8,32 @@ from primary.services.service_exceptions import (
     NoDataError,
 )
 
-from .types import WellborePick, WellboreTrajectory, WellboreHeader, StratigraphicUnit, StratigraphicSurface
+from .types import (
+    WellborePick,
+    WellboreTrajectory,
+    WellboreHeader,
+    StratigraphicUnit,
+    StratigraphicSurface,
+    StratigraphicColumn,
+    WellboreStratigraphicUnit,
+)
+from .utils.queries import data_model_to_projection_param
 from .stratigraphy_utils import sort_stratigraphic_names_by_hierarchy
-from ._smda_get_request import smda_get_request
+from ._smda_get_request import smda_get_request, smda_get_aggregation_request
+
 
 LOGGER = logging.getLogger(__name__)
 
 
 class SmdaEndpoints:
     STRAT_UNITS = "strat-units"
+    WELLBORE_STRATIGRAPHY = "wellbore-stratigraphy"
+    WELLBORE_STRAT_COLUMN = "wellbore-strat-columns"
     WELLBORE_SURVEY_HEADERS = "wellbore-survey-headers"
     WELLHEADERS = "wellheaders"
     WELLBORE_SURVEY_SAMPLES = "wellbore-survey-samples"
     WELLBORE_PICKS = "wellbore-picks"
+    WELLBORE_PICKS_STRAT_COLUM = "wellbore-picks-columns"
 
 
 class SmdaAccess:
@@ -30,20 +43,87 @@ class SmdaAccess:
     async def _smda_get_request(self, endpoint: str, params: dict) -> List[dict]:
         return await smda_get_request(access_token=self._smda_token, endpoint=endpoint, params=params)
 
-    async def get_stratigraphic_units(self, strat_column_identifier: str) -> List[StratigraphicUnit]:
+    async def _smda_get_aggregation_request(self, endpoint: str, params: dict) -> dict:
+        return await smda_get_aggregation_request(access_token=self._smda_token, endpoint=endpoint, params=params)
+
+    async def get_stratigraphic_units(
+        self,
+        strat_column_identifier: str,
+        wellbore_uuid: Optional[str] = None,
+        sort: Optional[list[str]] = None,
+    ) -> List[StratigraphicUnit]:
         """
-        Get stratigraphic units for a given stratigraphic column
+        Get stratigraphic units for a given stratigraphic column.
+        Can optionally include a wellbore uuid to futher filter the age
         """
 
         params = {
+            "_projection": data_model_to_projection_param(StratigraphicUnit),
             "strat_column_identifier": strat_column_identifier,
             "_sort": "strat_unit_level,top_age",
         }
+
+        # Add optional fields, if they exist
+        if wellbore_uuid:
+            params.update({"wellbore_uuid": wellbore_uuid})
+        if sort:
+            params.update({"_sort": ",".join(sort)})
+
         results = await self._smda_get_request(endpoint=SmdaEndpoints.STRAT_UNITS, params=params)
         if not results:
             raise NoDataError(f"No stratigraphic units found for {strat_column_identifier=}.", Service.SMDA)
         units = [StratigraphicUnit(**result) for result in results]
         return units
+
+    async def get_stratigraphic_columns_for_wellbore(self, wellbore_uuid: str) -> list[StratigraphicColumn]:
+        """Fetches a list of all stratigrapic columns avaialbe for a specific wellbore"""
+        endpoint = SmdaEndpoints.WELLBORE_STRAT_COLUMN
+        params = {
+            "_projection": data_model_to_projection_param(StratigraphicColumn),
+            "wellbore_uuid": wellbore_uuid,
+            # Sorting to facilitate deduping. Prioritize the most newly updated entry
+            "_sort": "strat_column_identifier,update_date",
+            "_order": "desc",
+        }
+
+        results = await self._smda_get_request(endpoint=endpoint, params=params)
+
+        # Returned columns are sometimes duplicated with all main fields as the same (atleast as far as I can see, only timestamps and uuid are different). We will dedupe the list by only picking the newest entry, which will be sorted to the top
+        seen_idents = set()
+        valid_data = []
+
+        for result in results:
+            column = StratigraphicColumn(**result)
+
+            if column.strat_column_identifier not in seen_idents:
+                seen_idents.add(column.strat_column_identifier)
+                valid_data.append(column)
+
+        return valid_data
+
+    async def get_stratigraphy_for_wellbore_and_column(
+        self, wellbore_uuid: str, strat_column_ident: str
+    ) -> list[WellboreStratigraphicUnit]:
+        """
+        Get a list of all well-picks for a wellbore within a stratigraphic column
+        """
+        endpoint = SmdaEndpoints.WELLBORE_STRATIGRAPHY
+        params = {
+            "_projection": data_model_to_projection_param(WellboreStratigraphicUnit),
+            "_sort": "entry_md",
+            "wellbore_uuid": wellbore_uuid,
+            "strat_column_identifier": strat_column_ident,
+        }
+
+        results = await self._smda_get_request(endpoint=endpoint, params=params)
+
+        if not results:
+            raise NoDataError(
+                f"No stratigraphic entries found for wellbore {wellbore_uuid=} in column {strat_column_ident=}.",
+                Service.SMDA,
+            )
+
+        return [WellboreStratigraphicUnit(**result) for result in results]
 
     async def get_wellbore_headers(self, field_identifier: str) -> List[WellboreHeader]:
         """
@@ -231,6 +311,31 @@ class SmdaAccess:
                     f"Invalid pick found for {pick_identifier=}, {result.get('unique_wellbore_identifier')}. This will be ignored."
                 )
         return picks
+
+    async def get_wellbore_picks_in_stratigraphic_column(
+        self,
+        wellbore_uuid: str,
+        strat_column_identifier: str,
+    ) -> List[WellborePick]:
+        """
+        Get wellbore picks within a column for a given wellbore
+        """
+
+        params = {
+            "_sort": "md",
+            "_projection": data_model_to_projection_param(WellborePick),
+            "strat_column_identifier": strat_column_identifier,
+            "wellbore_uuid": wellbore_uuid,
+        }
+
+        results = await self._smda_get_request(endpoint=SmdaEndpoints.WELLBORE_PICKS_STRAT_COLUM, params=params)
+        if not results:
+            raise NoDataError(
+                f"No wellbore picks found for {wellbore_uuid}, {strat_column_identifier=}.",
+                Service.SMDA,
+            )
+
+        return [WellborePick(**result) for result in results]
 
     async def get_wellbore_pick_identifiers_in_stratigraphic_column(
         self, strat_column_identifier: str
