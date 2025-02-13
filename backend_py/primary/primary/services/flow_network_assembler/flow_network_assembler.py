@@ -948,7 +948,7 @@ def _create_network_node(
     for sumvec, info in summary_vector_info.items():
         datatype = info.DATATYPE
 
-        if data_types_of_interest and datatype not in data_types_of_interest:
+        if data_types_of_interest is not None and datatype not in data_types_of_interest:
             continue
 
         if sumvec in smry_columns_set:
