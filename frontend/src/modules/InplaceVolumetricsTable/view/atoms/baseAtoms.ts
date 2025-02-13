@@ -1,16 +1,16 @@
 import { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
-import { InplaceVolumetricsFilter } from "@framework/types/inplaceVolumetricsFilter";
+import { InplaceVolumetricsFilterSelections } from "@modules/InplaceVolumetricsTable/types";
 import { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
 
-export const filterAtom = atom<InplaceVolumetricsFilter>({
+export const filterAtom = atom<InplaceVolumetricsFilterSelections>({
     ensembleIdents: [],
     tableNames: [],
     fluidZones: [],
     identifiersValues: [],
+    areSelectedTablesComparable: false,
 });
-export const areSelectedTablesComparableAtom = atom<boolean>(false);
 export const resultNamesAtom = atom<InplaceVolumetricResultName_api[]>([]);
 export const accumulationOptionsAtom = atom<
     Omit<SourceAndTableIdentifierUnion, SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME>[]

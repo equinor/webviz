@@ -13,7 +13,7 @@ export type CollapsibleGroupProps = {
     onChange?: (expanded: boolean) => void;
 } & BaseComponentProps;
 
-export const CollapsibleGroup: React.FC<CollapsibleGroupProps> = (props) => {
+function CollapsibleGroupComponent(props: CollapsibleGroupProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const [expanded, setExpanded] = React.useState(props.expanded ?? false);
     const [prevExpanded, setPrevExpanded] = React.useState<boolean | undefined>(props.expanded);
 
@@ -28,30 +28,28 @@ export const CollapsibleGroup: React.FC<CollapsibleGroupProps> = (props) => {
     };
 
     return (
-        <BaseComponent disabled={props.disabled}>
-            <div className="shadow">
-                <div
-                    className={resolveClassNames(
-                        "flex flex-row justify-between items-center bg-slate-100 cursor-pointer p-2 select-none gap-2",
-                        { "border-b": expanded }
-                    )}
-                    onClick={handleClick}
-                    title={expanded ? "Collapse" : "Expand"}
-                >
-                    {props.icon && React.cloneElement(props.icon, { className: "w-4 h-4" })}
-                    <h3 className="text-sm font-semibold flex-grow leading-none">{props.title}</h3>
-                    {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-                </div>
-                <div
-                    className={resolveClassNames("p-2", {
-                        hidden: !expanded,
-                    })}
-                >
-                    {props.children}
-                </div>
+        <BaseComponent ref={ref} disabled={props.disabled} className="shadow">
+            <div
+                className={resolveClassNames(
+                    "flex flex-row justify-between items-center bg-slate-100 cursor-pointer p-2 select-none gap-2",
+                    { "border-b": expanded }
+                )}
+                onClick={handleClick}
+                title={expanded ? "Collapse" : "Expand"}
+            >
+                {props.icon && React.cloneElement(props.icon, { className: "w-4 h-4" })}
+                <h3 className="text-sm font-semibold flex-grow leading-none">{props.title}</h3>
+                {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+            </div>
+            <div
+                className={resolveClassNames("p-2", {
+                    hidden: !expanded,
+                })}
+            >
+                {props.children}
             </div>
         </BaseComponent>
     );
-};
+}
 
-CollapsibleGroup.displayName = "CollapsibleGroup";
+export const CollapsibleGroup = React.forwardRef(CollapsibleGroupComponent);

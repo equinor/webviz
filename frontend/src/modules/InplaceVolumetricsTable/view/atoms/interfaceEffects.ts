@@ -3,7 +3,6 @@ import { SettingsToViewInterface } from "@modules/InplaceVolumetricsTable/interf
 
 import {
     accumulationOptionsAtom,
-    areSelectedTablesComparableAtom,
     areTableDefinitionSelectionsValidAtom,
     filterAtom,
     resultNamesAtom,
@@ -15,10 +14,6 @@ export const settingsToViewInterfaceEffects: InterfaceEffects<SettingsToViewInte
     (getInterfaceValue, setAtomValue) => {
         const filter = getInterfaceValue("filter");
         setAtomValue(filterAtom, filter);
-    },
-    (getInterfaceValue, setAtomValue) => {
-        const areSelectedTablesComparable = getInterfaceValue("areSelectedTablesComparable");
-        setAtomValue(areSelectedTablesComparableAtom, areSelectedTablesComparable);
     },
     (getInterfaceValue, setAtomValue) => {
         const resultNames = getInterfaceValue("resultNames");

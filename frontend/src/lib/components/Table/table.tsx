@@ -282,7 +282,10 @@ class AlternatingColumnStyleHelper {
     }
 }
 
-export function Table(props: TableProps<TableHeading>): React.ReactNode {
+export function TableComponent(
+    props: TableProps<TableHeading>,
+    ref: React.ForwardedRef<HTMLDivElement>
+): React.ReactNode {
     const [layoutError, setLayoutError] = React.useState<LayoutError>({ error: false, message: "" });
     const [preprocessedData, setPreprocessedData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
     const [filteredData, setFilteredData] = React.useState<IdentifiedTableRow<TableHeading>[]>([]);
@@ -300,6 +303,7 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
     const [prevHeadings, setPrevHeadings] = React.useState<TableHeading>({});
 
     const containerRef = React.useRef<HTMLDivElement>(null);
+    React.useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => containerRef.current);
 
     if (!isEqual(prevData, props.data)) {
         setPrevData(props.data);
@@ -615,28 +619,29 @@ export function Table(props: TableProps<TableHeading>): React.ReactNode {
     }
 
     return (
-        <BaseComponent disabled={props.disabled}>
-            <div
-                ref={containerRef}
-                className="relative overflow-auto"
-                style={{ width: props.width, height: props.height }}
-            >
-                <table className="w-full max-h-full border-0 border-separate border-spacing-0 text-sm">
-                    <thead className="border-0 m-0 p-0 sticky top-0">{makeHeadings()}</thead>
-                    <tbody style={{ width: props.width, maxHeight: props.height }}>
-                        <Virtualization
-                            containerRef={containerRef}
-                            direction="vertical"
-                            placeholderComponent="tr"
-                            items={filteredData}
-                            itemSize={ROW_HEIGHT_PX}
-                            renderItem={makeDataRow}
-                        />
-                    </tbody>
-                </table>
-            </div>
+        <BaseComponent
+            disabled={props.disabled}
+            ref={containerRef}
+            className="relative overflow-auto"
+            style={{ width: props.width, height: props.height }}
+        >
+            <table className="w-full max-h-full border-0 border-separate border-spacing-0 text-sm">
+                <thead className="border-0 m-0 p-0 sticky top-0">{makeHeadings()}</thead>
+                <tbody style={{ width: props.width, maxHeight: props.height }}>
+                    <Virtualization
+                        containerRef={containerRef}
+                        direction="vertical"
+                        placeholderComponent="tr"
+                        items={filteredData}
+                        itemSize={ROW_HEIGHT_PX}
+                        renderItem={makeDataRow}
+                    />
+                </tbody>
+            </table>
         </BaseComponent>
     );
 }
+
+export const Table = React.forwardRef(TableComponent);
 
 Table.displayName = "Table";

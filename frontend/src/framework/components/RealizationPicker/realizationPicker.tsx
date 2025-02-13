@@ -197,7 +197,7 @@ export type RealizationPickerProps = {
     onChange?: (realizationPickerSelection: RealizationPickerSelection) => void;
 } & BaseComponentProps;
 
-export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
+function RealizationPickerComponent(props: RealizationPickerProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const [selections, setSelections] = React.useState<Selection[]>(
         props.initialRangeTags
             ? [...props.initialRangeTags].map((rangeTag) => {
@@ -410,7 +410,7 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
     const numSelectedRealizations = calcUniqueSelections(selections, props.validRealizations).length;
 
     return (
-        <BaseComponent disabled={props.disabled}>
+        <BaseComponent ref={ref} disabled={props.disabled}>
             <div className="relative border border-gray-300 rounded p-2 pr-6 min-h-[3rem]">
                 <ul className="flex flex-wrap items-center cursor-text gap-1 h-full" onPointerDown={handlePointerDown}>
                     {selections.map((selection) => (
@@ -450,6 +450,6 @@ export const RealizationPicker: React.FC<RealizationPickerProps> = (props) => {
             </div>
         </BaseComponent>
     );
-};
+}
 
-RealizationPicker.displayName = "RealizationPicker";
+export const RealizationPicker = React.forwardRef(RealizationPickerComponent);
