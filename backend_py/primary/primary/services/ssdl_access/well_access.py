@@ -67,7 +67,7 @@ class WellAccess:
             raise InvalidDataError(f"Invalid log curve headers for field {field_uuid}", Service.SSDL) from error
         return result
 
-    async def get_log_curve_data(self, wellbore_uuid: str, curve_name: str) -> types.WellboreLogCurveData:
+    async def get_log_curve_data_async(self, wellbore_uuid: str, curve_name: str) -> types.WellboreLogCurveData:
         params = {"normalized_data": False}
         endpoint = f"WellLog/{wellbore_uuid}/{curve_name}"
         ssdl_data = await ssdl_get_request(access_token=self._ssdl_token, endpoint=endpoint, params=params)
