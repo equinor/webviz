@@ -40,7 +40,7 @@ import { BoundingBox3D, ViewportType } from "@webviz/subsurface-viewer";
 import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { AxesLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { ReadoutWrapper } from "./ReadoutWrapper";
+import { InteractionWrapper } from "./InteractionWrapper";
 
 import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 
@@ -202,7 +202,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
             <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
-                <ReadoutWrapper
+                <InteractionWrapper
                     views={views}
                     viewportAnnotations={viewportAnnotations}
                     layers={layers}

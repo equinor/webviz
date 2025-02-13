@@ -11,7 +11,7 @@ export type Label = {
 export class LabelOrganizer {
     private _labelsMap: Map<string, Label[]> = new Map();
     private _animationFrameId: number | null = null;
-    private _subscribers: (() => void)[] = [];
+    private _subscribers: ((project: (pos: [number, number, number]) => Vec2) => void)[] = [];
 
     private _ref: DeckGLRef | null;
 
@@ -21,18 +21,37 @@ export class LabelOrganizer {
 
     setDeckRef(ref: DeckGLRef | null) {
         this._ref = ref;
-        if (this._ref?.deck) {
-            this._ref.deck.props.onViewStateChange = () => {
-                this.maybeUpdateLabels();
-            };
-        }
+        this.maybeUpdateLabels();
     }
 
     private maybeUpdateLabels() {
-        this._subscribers.forEach((s) => s());
+        if (this._animationFrameId) {
+            cancelAnimationFrame(this._animationFrameId);
+        }
+
+        this._animationFrameId = requestAnimationFrame(() => {
+            this._animationFrameId = null;
+            this.maybeUpdateLabels();
+        });
+
+        if (!this._ref?.deck?.isInitialized) {
+            return;
+        }
+        const viewport = this._ref?.deck?.getViewports()[0];
+        if (!viewport) {
+            return;
+        }
+        const project = (position: [number, number, number]) => {
+            const pos = viewport.project(position);
+            return {
+                x: pos[0],
+                y: pos[1],
+            };
+        };
+        this._subscribers.forEach((s) => s(project));
     }
 
-    subscribe(func: () => void) {
+    subscribe(func: (project: (pos: [number, number, number]) => Vec2) => void) {
         this._subscribers.push(func);
     }
 
@@ -52,7 +71,6 @@ export class LabelOrganizer {
 
         for (const [layerId, labels] of this._labelsMap) {
             for (const viewport of viewports) {
-                const projectFunc = viewport.project;
                 const viewportId = viewport.id;
                 const viewportLabels: LabelComponentProps[] = labels.map((label) => {
                     return {
@@ -61,7 +79,7 @@ export class LabelOrganizer {
                         referencePosition: label.referencePosition,
                         position: label.referencePosition,
                         projectFunc: (position: [number, number, number]) => {
-                            const pos = projectFunc(position);
+                            const pos = viewport.project(position);
                             return {
                                 x: pos[0],
                                 y: pos[1],
@@ -94,18 +112,19 @@ type LabelComponentProps = {
     referencePosition: [number, number, number];
     position: [number, number, number];
     projectFunc: (position: [number, number, number]) => Vec2;
-    subscribeToViewportChange: (func: () => void) => void;
+    subscribeToViewportChange: (func: (projectionFunc: (position: [number, number, number]) => Vec2) => void) => void;
 };
 
 export function LabelComponent(props: LabelComponentProps) {
+    const { projectFunc, subscribeToViewportChange } = props;
     const [position, setPosition] = React.useState(props.projectFunc(props.referencePosition));
 
     React.useEffect(() => {
-        props.subscribeToViewportChange(() => {
-            const newPosition = props.projectFunc(props.referencePosition);
+        props.subscribeToViewportChange((project) => {
+            const newPosition = project(props.referencePosition);
             setPosition(newPosition);
         });
-    }, [props.projectFunc, props.referencePosition, props.subscribeToViewportChange]);
+    }, [props.referencePosition, subscribeToViewportChange]);
 
     return (
         <div
