@@ -28,14 +28,14 @@ router = APIRouter()
 @router.get("/alive")
 @no_cache
 def get_alive() -> str:
-    print("entering alive route")
+
     return f"ALIVE: Backend is alive at this time: {datetime.datetime.now()}"
 
 
 @router.get("/alive_protected")
 @no_cache
 def get_alive_protected() -> str:
-    print("entering alive_protected route")
+
     return f"ALIVE_PROTECTED: Backend is alive at this time: {datetime.datetime.now()}"
 
 
@@ -47,11 +47,10 @@ async def get_logged_in_user(
         False, description="Set to true to include user avatar and display name from Microsoft Graph API"
     ),
 ) -> UserInfo:
-    print("entering logged_in_user route")
 
     await starsessions.load_session(request)
     authenticated_user = AuthHelper.get_authenticated_user(request)
-    print(f"{authenticated_user=}")
+
     if not authenticated_user:
         # What is the most appropriate return code?
         # Probably 401, but seemingly we got into trouble with that. Should try again
