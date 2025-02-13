@@ -793,12 +793,14 @@ files = [
 
 [[package]]
 name = "fmu-sumo"
-version = "0.1.dev185+gffcbd1a"
+version = "2.3.1"
 description = "Python package for interacting with Sumo in an FMU setting"
 optional = false
 python-versions = ">=3.8"
-files = []
-develop = false
+files = [
+    {file = "fmu_sumo-2.3.1-py3-none-any.whl", hash = "sha256:68a2010ae63ca27d2bd38e8652c030f2a8b27bd752f242a55a620406cd1d27d0"},
+    {file = "fmu_sumo-2.3.1.tar.gz", hash = "sha256:4c45f034ea6542efae14312613fbf12e7a525b051ccab41cdf073692cb25615e"},
+]
 
 [package.dependencies]
 deprecation = "*"
@@ -809,12 +811,6 @@ all = ["OpenVDS", "pandas (>=1.1.3)", "pyarrow", "xtgeo"]
 dev = ["pytest", "ruff"]
 docs = ["autoapi", "sphinx (==6.2.1)", "sphinx-autodoc-typehints", "sphinx-rtd-theme", "sphinxcontrib-apidoc"]
 test = ["OpenVDS", "pandas (>=1.1.3)", "pyarrow", "pytest", "pytest-timeout", "xtgeo"]
-
-[package.source]
-type = "git"
-url = "https://github.com/hanskallekleiv/fmu-sumo"
-reference = "async-fixes"
-resolved_reference = "ffcbd1ad20c4febc972452165fd8cb491257c835"
 
 [[package]]
 name = "fonttools"
@@ -3566,4 +3562,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "5966965784a4c9a2f0d81536cf0718c8efc24304bdd6484ad494e359811b92ed"
+content-hash = "8c117c22b8aa491b2dc4a040dfbb132c134516fbc866ae3a7a0ad7ca8d00fdb5"
