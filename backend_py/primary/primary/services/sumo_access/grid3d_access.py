@@ -70,44 +70,57 @@ class Grid3dAccess:
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
+    @property
+    def ensemble_context(self) -> SearchContext:
+        return self._ensemble_context
+
     async def get_models_info_arr_async(self, realization: int) -> List[Grid3dInfo]:
         """Get metadata for all 3D grid models, including bbox, dimensions and properties"""
 
-        ensemble_context = await self.get_ensemble_context()
-        grid3d_context = ensemble_context.filter(cls="cpgrid", realization=realization)
+        grid3d_context = self.ensemble_context.grids.filter(realization=realization)
+
+        grid_count = await grid3d_context.length_async()
+
         timer = PerfMetrics()
         grid3d_info_arr = []
-        for grid3d_el in grid3d_context:
-            bbox2 = await grid3d_el._get_field_values_async("data.bbox")
-            print("****************************************************", bbox2)
+        for grid_no in range(grid_count):
+
+            grid3d_el = await grid3d_context.getitem_async(grid_no)
+            grid_metadata = grid3d_el.metadata
+
             bbox = Grid3dBoundingBox(
-                xmin=grid3d_el["data"]["bbox"]["xmin"],
-                ymin=grid3d_el["data"]["bbox"]["ymin"],
-                zmin=grid3d_el["data"]["bbox"]["zmin"],
-                xmax=grid3d_el["data"]["bbox"]["xmax"],
-                ymax=grid3d_el["data"]["bbox"]["ymax"],
-                zmax=grid3d_el["data"]["bbox"]["zmax"],
+                xmin=grid_metadata["data"]["bbox"]["xmin"],
+                ymin=grid_metadata["data"]["bbox"]["ymin"],
+                zmin=grid_metadata["data"]["bbox"]["zmin"],
+                xmax=grid_metadata["data"]["bbox"]["xmax"],
+                ymax=grid_metadata["data"]["bbox"]["ymax"],
+                zmax=grid_metadata["data"]["bbox"]["zmax"],
             )
             timer.record_lap("get_bbox")
-            dimensions = Grid3dDimensions(
-                i_count=grid3d_el["data"]["spec"]["nrow"],
-                j_count=grid3d_el["data"]["spec"]["ncol"],
-                k_count=grid3d_el["data"]["spec"]["nlay"],
-                subgrids=[
+            if grid_metadata.get("data").get("spec").get("zonation"):
+                subgrids = [
                     Grid3dZone(name=zone["name"], start_layer=zone["min_layer_idx"], end_layer=zone["max_layer_idx"])
-                    for zone in grid3d_el["data"]["spec"]["zonation"]
-                ],
+                    for zone in grid_metadata["data"]["spec"]["zonation"]
+                ]
+            else:
+                subgrids = []
+            dimensions = Grid3dDimensions(
+                i_count=grid_metadata["data"]["spec"]["nrow"],
+                j_count=grid_metadata["data"]["spec"]["ncol"],
+                k_count=grid_metadata["data"]["spec"]["nlay"],
+                subgrids=subgrids,
             )
             timer.record_lap("get_dimensions")
             grid_properties_context = grid3d_el.grid_properties
             property_names = await grid_properties_context.names_async
+
             timer.record_lap("get_property_names")
             property_info_arr = []
             for property_name in property_names:
                 property_info_arr.append(Grid3dPropertyInfo(property_name=property_name))
             timer.record_lap("get_property_info")
             grid3d_info = Grid3dInfo(
-                grid_name=grid3d_el["data"]["name"],
+                grid_name=grid_metadata["data"]["name"],
                 bbox=bbox,
                 dimensions=dimensions,
                 property_info_arr=property_info_arr,
@@ -136,3 +149,11 @@ class Grid3dAccess:
     async def get_property_blob_id_async(self, grid3d_geometry_name: str, property_name: str, realization: int) -> str:
         """Get the uuid of a grid property"""
         return ""
+
+
+# async def get_grid_model_info_async(
+#     access_token: str, case_uuid: str, iteration_name: str, realization_num: int
+# ) -> List[Grid3dInfo]:
+#     """Get metadata for all 3D grid models, including bbox, dimensions and properties"""
+#     access = Grid3dAccess.from_case_uuid_and_ensemble_name(access_token, case_uuid, iteration_name)
+#     return await access.get_models_info_arr_async(realization_num)
