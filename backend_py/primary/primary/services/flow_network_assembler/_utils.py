@@ -17,6 +17,12 @@ from .flow_network_types import (
 
 LOGGER = logging.getLogger(__name__)
 
+NODE_TYPE_ENUM_TO_STRING_MAPPING = {
+    NodeType.INJ: "Injector",
+    NodeType.PROD: "Producer",
+    NodeType.OTHER: "Other",
+}
+
 
 FIELD_DATATYPE_VECTOR_MAP = {
     DataType.OILRATE: "FOPR",

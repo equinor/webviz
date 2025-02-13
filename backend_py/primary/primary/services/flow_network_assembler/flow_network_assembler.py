@@ -11,7 +11,7 @@ import pyarrow.compute as pc
 from fastapi import HTTPException
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-
+from primary.services.service_exceptions import NoDataError, Service
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess, VectorMetadata
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.group_tree_types import TreeType
@@ -845,6 +845,12 @@ def _create_dated_network(
         number_of_dates_in_smry,
         data_types_of_interest,
     )
+
+    if not nodes_dict:
+        raise NoDataError(
+            f"No nodes found in the group tree for the selected node types: {[_utils.NODE_TYPE_ENUM_TO_STRING_MAPPING[elm] for elm in selected_node_types]}",
+            Service.GENERAL,
+        )
 
     terminal_node_elm = nodes_dict.get(terminal_node)
 
