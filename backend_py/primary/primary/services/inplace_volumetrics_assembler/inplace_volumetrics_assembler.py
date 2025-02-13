@@ -89,7 +89,6 @@ class InplaceVolumetricsAssembler:
             for vol_table_name in vol_table_names
         ]
         tables = await asyncio.gather(*tasks)
-        print(tables, len(tables))
 
         tables_info: list[InplaceVolumetricsTableDefinition] = []
         for table_result in tables:
