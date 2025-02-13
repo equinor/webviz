@@ -112,7 +112,7 @@ class SummaryAccess:
 
         table: pa.Table = await load_aggregated_arrow_table_single_column_from_sumo(
             ensemble_context=self.ensemble_context,
-            table_content_name="timeseries",
+            table_content_name=["timeseries", "simulationtimeseries"],
             table_column_name=vector_name,
         )
         table = _validate_single_vector_table(table, vector_name)
@@ -213,8 +213,7 @@ class SummaryAccess:
         columns_to_get.extend(vector_names)
         table: pa.Table = await load_single_realization_arrow_table(
             ensemble_context=self.ensemble_context,
-            table_content_name="timeseries",
-            table_name="summary",
+            table_content_name=["timeseries", "simulationtimeseries"],
             table_column_names=columns_to_get,
             realization_no=realization,
         )
@@ -279,8 +278,7 @@ class SummaryAccess:
 
         table: pa.Table = await load_aggregated_arrow_table_single_column_from_sumo(
             ensemble_context=self.ensemble_context,
-            table_content_name="timeseries",
-            table_name="summary",
+            table_content_name=["timeseries", "simulationtimeseries"],
             table_column_name=hist_vec_name,
         )
 

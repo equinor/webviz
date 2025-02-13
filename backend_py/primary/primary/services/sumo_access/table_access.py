@@ -29,11 +29,14 @@ class TableAccess:
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
+    @property
+    def ensemble_context(self) -> SearchContext:
+        return self._ensemble_context
+
     async def get_table_schemas_single_realization_async(self, realization: int = 0) -> List[SumoTableSchema]:
         """Get all table descriptions for a given realization"""
 
-        ensemble_context = await self.get_ensemble_context()
-        table_context = ensemble_context.tables.filter(
+        table_context = self.ensemble_context.tables.filter(
             realization=realization,
         )
         return [
@@ -51,8 +54,8 @@ class TableAccess:
         realization: int = 0,
     ) -> pa.Table:
         """Get a pyarrow table for a given realization"""
-        ensemble_context = await self.get_ensemble_context()
-        table_context = ensemble_context.tables.filter(
+
+        table_context = self.ensemble_context.tables.filter(
             realization=realization,
             name=table_schema.name,
             tagname=table_schema.tagname,

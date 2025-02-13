@@ -17,6 +17,7 @@ from primary.services.service_exceptions import (
 
 from .rft_types import RftTableDefinition, RftWellInfo, RftRealizationData
 from ._helpers import create_sumo_client
+from ._loaders import load_aggregated_arrow_table_multiple_columns_from_sumo
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,19 +35,19 @@ class RftAccess:
         )
 
     @classmethod
-    def from_case_uuid_and_ensemble_name(
-        cls, access_token: str, case_uuid: str, iteration_name: str
-    ) -> "SummaryAccess":
+    def from_case_uuid_and_ensemble_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "RftAccess":
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+
+    @property
+    def ensemble_context(self) -> SearchContext:
+        return self._ensemble_context
 
     async def get_rft_info(self) -> RftTableDefinition:
         """Get a collection of rft tables for a case and iteration"""
         timer = PerfMetrics()
 
-        ensemble_context = await self.get_ensemble_context()
-        table_context = ensemble_context.filter(cls="table", tagname="rft")
-        timer.record_lap("get_ensemble_context")
+        table_context = self.ensemble_context.filter(cls="table", tagname="rft")
 
         table_names = await table_context.names_async
         timer.record_lap("get_table_names")
@@ -64,8 +65,11 @@ class RftAccess:
         columns = await table_context.columns_async
         available_response_names = [col for col in columns if col in ALLOWED_RFT_RESPONSE_NAMES]
 
-        table = await self.load_aggregated_arrow_table_multiple_columns_from_sumo(
-            table_content_name="rft", table_name=table_names[0], table_column_names=available_response_names
+        table = await load_aggregated_arrow_table_multiple_columns_from_sumo(
+            ensemble_context=self.ensemble_context,
+            table_content_name="rft",
+            table_name=table_names[0],
+            table_column_names=available_response_names,
         )
         timer.record_lap("load_aggregated_arrow_table")
 
@@ -93,8 +97,10 @@ class RftAccess:
         timer = PerfMetrics()
         column_names = [response_name, "DEPTH"]
 
-        table = await self.load_aggregated_arrow_table_multiple_columns_from_sumo(
-            table_content_name="rft", table_name="rft", table_column_names=column_names
+        table = await load_aggregated_arrow_table_multiple_columns_from_sumo(
+            ensemble_context=self.ensemble_context,
+            table_content_name="rft",
+            table_column_names=column_names,
         )
         timer.record_lap("load_aggregated_arrow_table")
 

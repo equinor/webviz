@@ -14,7 +14,7 @@ async def load_aggregated_arrow_table_single_column_from_sumo(
     ensemble_context: SearchContext,
     table_column_name: str,
     table_name: str | None = None,
-    table_content_name: str | None = None,
+    table_content_name: str | list[str] | None = None,
     table_tagname: str | None = None,
 ) -> pa.Table:
     """Filters an ensemble context for a single table and column, aggregates the column (if it does not already exist),
@@ -23,7 +23,7 @@ async def load_aggregated_arrow_table_single_column_from_sumo(
 
     table_context = ensemble_context.filter(
         cls="table",
-        # tagname=table_tagname,
+        tagname=table_tagname,
         content=table_content_name,
         column=table_column_name,
         name=table_name,
@@ -40,7 +40,7 @@ async def load_aggregated_arrow_table_multiple_columns_from_sumo(
     ensemble_context: SearchContext,
     table_column_names: list[str],
     table_name: str | None = None,
-    table_content_name: str | None = None,
+    table_content_name: str | list[str] | None = None,
     table_tagname: str | None = None,
 ) -> pa.Table:
     """Fetches multiple columns async and aggregates them into a single Arrow table"""
@@ -70,19 +70,22 @@ async def load_aggregated_arrow_table_multiple_columns_from_sumo(
 
 async def load_single_realization_arrow_table(
     ensemble_context: SearchContext,
-    table_content_name: str,
-    table_name: str,
     realization_no: int,
+    table_content_name: str,
+    table_name: str | None = None,
     table_column_names: list[str] | None = None,
 ) -> pa.Table:
     """Get a pyarrow table for a given realization and context"""
     timer = PerfMetrics()
 
     table_context = ensemble_context.tables.filter(
+        content=table_content_name,
         name=table_name,
         realization=realization_no,
     )
     no_of_tables = await table_context.length_async()
+    names = await table_context.names_async
+    print(names)
     if no_of_tables == 0:
         raise NoDataError(
             f"No tables found in {table_content_name=}, {table_name=}",
