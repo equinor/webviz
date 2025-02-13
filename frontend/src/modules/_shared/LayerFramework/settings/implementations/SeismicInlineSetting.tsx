@@ -80,6 +80,8 @@ export class SeismicInlineSetting implements Setting<ValueType> {
                 props.onValueChange(Number(event.target.value));
             }
 
+            const validValue = props.value ?? props.availableValues[0] ?? 1;
+
             return (
                 <div className="flex items-center space-x-1">
                     <div className="flex-grow">
@@ -87,13 +89,13 @@ export class SeismicInlineSetting implements Setting<ValueType> {
                             min={0}
                             max={props.availableValues[1] ?? 1}
                             onChange={handleSliderChange}
-                            value={props.value ?? props.availableValues[0] ?? 1}
+                            value={validValue}
                             debounceTimeMs={500}
                             valueLabelDisplay="auto"
                         />
                     </div>
                     <div className="w-1/5">
-                        <Input type="number" value={props.value} onChange={handleInputChange} />
+                        <Input type="number" value={validValue} onChange={handleInputChange} />
                     </div>
                 </div>
             );

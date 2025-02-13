@@ -8,6 +8,8 @@ import {
 } from "@deck.gl/core";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { Geometry } from "@luma.gl/engine";
+import { ExtendedLayerProps } from "@webviz/subsurface-viewer";
+import { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 
 import { isEqual } from "lodash";
 import workerpool from "workerpool";
@@ -26,8 +28,7 @@ export type SeismicFenceSection = {
     boundingBox: number[][]; // [minX, minY, minZ, maxX, maxY, maxZ]
 };
 
-export type SeismicFenceMeshLayerProps = {
-    name?: string;
+export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
     data: {
         sections: SeismicFenceSection[];
     };
@@ -35,7 +36,10 @@ export type SeismicFenceMeshLayerProps = {
     hoverable?: boolean;
     zIncreaseDownwards?: boolean;
     isLoading?: boolean;
-};
+
+    // Non public properties:
+    reportBoundingBox?: React.Dispatch<ReportBoundingBoxAction>;
+}
 
 function assert(condition: any, msg?: string): asserts condition {
     if (!condition) {
@@ -122,6 +126,28 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         this._sharedIndicesBuffer = new SharedArrayBuffer(totalNumIndices * Uint32Array.BYTES_PER_ELEMENT);
     }
 
+    private calcBoundingBox(): BoundingBox3D {
+        let xmin = Number.MAX_VALUE;
+        let ymin = Number.MAX_VALUE;
+        let zmin = Number.MAX_VALUE;
+        let xmax = Number.MIN_VALUE;
+        let ymax = Number.MIN_VALUE;
+        let zmax = Number.MIN_VALUE;
+
+        for (const section of this.props.data.sections) {
+            for (const point of section.boundingBox) {
+                xmin = Math.min(xmin, point[0]);
+                ymin = Math.min(ymin, point[1]);
+                zmin = Math.min(zmin, point[2]);
+                xmax = Math.max(xmax, point[0]);
+                ymax = Math.max(ymax, point[1]);
+                zmax = Math.max(zmax, point[2]);
+            }
+        }
+
+        return [xmin, ymin, zmin, xmax, ymax, zmax];
+    }
+
     private maybeUpdateGeometry() {
         if (this._numTasks === this._numTasksCompleted) {
             this.colorMesh().then(() => {
@@ -140,6 +166,10 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                         indices: indicesArr,
                     }),
                     isLoaded: true,
+                });
+
+                this.props.reportBoundingBox?.({
+                    layerBoundingBox: this.calcBoundingBox(),
                 });
             });
         }
@@ -252,6 +282,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         const r = info.color[0];
         const g = info.color[1];
         const b = info.color[2];
+        const a = info.color[3];
 
         const vertexIndex = r * 256 * 256 + g * 256 + b;
 

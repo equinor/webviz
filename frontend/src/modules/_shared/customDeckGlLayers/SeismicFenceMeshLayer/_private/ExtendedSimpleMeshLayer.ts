@@ -19,6 +19,7 @@ export class ExtendedSimpleMeshLayer extends SimpleMeshLayer {
         float r = 0.0;
         float g = 0.0;
         float b = 0.0;
+        float a = 0.0;
     
         if (vertexIndex >= (256 * 256) - 1) {
         r = floor(float(vertexIndex) / (256.0 * 256.0));

@@ -2,7 +2,6 @@ import { Layer } from "@deck.gl/core";
 import { SeismicSliceData_trans } from "@modules/3DViewerNew/settings/queries/queryDataTransforms";
 import { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
-import { MovableLayerWrapper } from "@modules/_shared/customDeckGlLayers/MovableLayerWrapper";
 import { SeismicFenceMeshLayer } from "@modules/_shared/customDeckGlLayers/SeismicFenceMeshLayer/SeismicFenceMeshLayer";
 
 /*
@@ -157,24 +156,22 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
         );
         */
 
-        return new MovableLayerWrapper({
-            wrappedLayer: new SeismicFenceMeshLayer({
-                id,
-                name,
-                data: {
-                    sections: [
-                        {
-                            boundingBox: bbox,
-                            properties: data.dataFloat32Arr,
-                            numSamplesU: data.u_num_samples,
-                            numSamplesV: data.v_num_samples,
-                        },
-                    ],
-                },
-                colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
-                zIncreaseDownwards: true,
-                isLoading,
-            }),
+        return new SeismicFenceMeshLayer({
+            id,
+            name,
+            data: {
+                sections: [
+                    {
+                        boundingBox: bbox,
+                        properties: data.dataFloat32Arr,
+                        numSamplesU: data.u_num_samples,
+                        numSamplesV: data.v_num_samples,
+                    },
+                ],
+            },
+            colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
+            zIncreaseDownwards: true,
+            isLoading,
         });
     };
 }

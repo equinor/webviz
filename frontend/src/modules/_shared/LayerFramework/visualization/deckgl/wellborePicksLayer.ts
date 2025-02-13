@@ -11,7 +11,7 @@ export function makeWellborePicksLayer({
         return {
             easting: wellborePick.easting,
             northing: wellborePick.northing,
-            wellBoreUwi: wellborePick.wellboreUuid,
+            wellBoreUwi: wellborePick.uniqueWellboreIdentifier,
             tvdMsl: wellborePick.tvdMsl,
             md: wellborePick.md,
             slotName: "",

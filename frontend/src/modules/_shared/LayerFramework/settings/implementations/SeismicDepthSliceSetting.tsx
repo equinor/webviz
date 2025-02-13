@@ -92,6 +92,8 @@ export class SeismicDepthSliceSetting implements Setting<ValueType> {
                 props.onValueChange(closestValue);
             }
 
+            const validValue = props.value ?? props.availableValues[0] ?? 1;
+
             return (
                 <div className="flex items-center space-x-1">
                     <div className="flex-grow">
@@ -99,14 +101,14 @@ export class SeismicDepthSliceSetting implements Setting<ValueType> {
                             min={props.availableValues[0]}
                             max={props.availableValues[1]}
                             onChange={handleSliderChange}
-                            value={props.value ?? props.availableValues[0] ?? 1}
+                            value={validValue}
                             debounceTimeMs={500}
                             valueLabelDisplay="auto"
                             step={props.availableValues[2]}
                         />
                     </div>
                     <div className="w-1/5">
-                        <Input value={props.value} onChange={handleInputChange} />
+                        <Input value={validValue} onChange={handleInputChange} />
                     </div>
                 </div>
             );
