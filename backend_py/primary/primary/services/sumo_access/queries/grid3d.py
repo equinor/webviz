@@ -94,7 +94,7 @@ async def get_grid_geometry_and_property_blob_ids_async(
                             {"term": {"fmu.iteration.name.keyword": iteration}},
                             {"term": {"fmu.realization.id": realization}},
                             {"term": {"data.name.keyword": parameter_name}},
-                            {"term": {"data.tagname.keyword": grid_name}},
+                            {"term": {"data.geometry.name.keyword": grid_name}},
                         ]
                     }
                 },
