@@ -1,100 +1,68 @@
 /**
  * Utilities and constants used for generating well-log-viewer template configs
  */
-import {
-    Template,
-    TemplatePlotTypes,
-    TemplateTrack,
-} from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import { WellLogCurveTypeEnum_api } from "@api";
+import { Template, TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
+import _ from "lodash";
 import { v4 } from "uuid";
 
 import { CURVE_COLOR_PALETTE, DIFF_CURVE_COLORS } from "./logViewerColors";
 import { MAIN_AXIS_CURVE } from "./queryDataTransform";
+import { getUniqueCurveNameForPlotConfig } from "./strings";
 
-import { TemplatePlotConfig } from "../types";
+import { TemplatePlotConfig, TemplateTrackConfig } from "../types";
 
 export const DEFAULT_MAX_VISIBLE_TRACKS = 5;
 
-export function isCompositePlotType(type: TemplatePlotTypes) {
-    return ["differential"].includes(type);
-}
-
-export function createLogTemplate(templateTrackConfigs: TemplateTrack[]): Template {
+export function createLogTemplate(templateTracks: TemplateTrackConfig[], nonUniqueNames?: Set<string>): Template {
     return {
         // AFAIK, this name is not show anywhere
         name: "Well log viewer",
         scale: { primary: MAIN_AXIS_CURVE.name, allowSecondary: true },
-        tracks: templateTrackConfigs,
+        tracks: templateTracks.map<TemplateTrack>((track) => ({
+            ...track,
+            plots: track.plots.map((plot) => ({
+                ...plot,
+                name: getUniqueCurveNameForPlotConfig(plot, nonUniqueNames),
+            })) as TemplatePlot[],
+        })),
     };
 }
 
 export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotConfig {
-    // If colors get put as undefined, new colors are selected EVERY rerender, so we should avoid that
-    const curveColor = plot.color ?? CURVE_COLOR_PALETTE.getColors()[0];
-    const curveColor2 = plot.color2 ?? CURVE_COLOR_PALETTE.getColors()[3];
-    // DIFF_CURVE_COLORS
-    const config: TemplatePlotConfig = {
-        ...plot,
-        _id: plot._id ?? v4(),
-        _isValid: Boolean(plot.name && plot.type),
-        _logAndName: plot._logAndName ?? `${plot.name}::{undefined}`,
-        name: plot.name,
-        type: plot.type,
-        color: curveColor,
-        color2: curveColor2,
+    if (!plot.type) throw new Error(`Plot type is required`);
 
-        // Reset the values that are curve specific
-        name2: undefined,
-        fill: undefined,
-        fill2: undefined,
-        colorTable: undefined,
-    };
+    const config: TemplatePlotConfig = _.defaults(plot, {
+        _curveHeader: null,
+        _key: v4(),
+        // If "color" is undefined, new colors are selected EVERY rerender, so we should avoid that
+        color: CURVE_COLOR_PALETTE.getColors()[0],
+        color2: CURVE_COLOR_PALETTE.getColors()[3],
+    } as TemplatePlotConfig);
 
-    switch (plot.type) {
-        case "stacked":
-            throw new Error("Stacked graph type currently not supported");
-        case "differential":
-            return {
-                ...config,
-                _isValid: config._isValid && Boolean(plot.name2),
-                name2: plot.name2,
-                fill: DIFF_CURVE_COLORS.at(0),
-                fill2: DIFF_CURVE_COLORS.at(1),
-            };
+    // Recompute derived values
+    config._isValid = Boolean(plot._curveHeader && plot.type);
+    config.name = config._curveHeader?.curveName;
 
-        case "gradientfill":
-            return {
-                ...config,
-                colorTable: "Continuous",
-            };
+    // Reset config options that are only used in some specific cases
+    config.name2 = undefined;
+    config.fill = undefined;
+    config.fill2 = undefined;
+    config.colorMapFunctionName = undefined;
 
-        case "line":
-        case "linestep":
-        case "dot":
-        case "area":
-            return config;
-        default:
-            throw new Error(`Unsupported plot type: ${plot.type}`);
+    if (plot.type === "differential") {
+        config._isValid = config._isValid && Boolean(plot._curveHeader2);
+        config.name2 = plot._curveHeader2?.curveName;
+        config.fill = DIFF_CURVE_COLORS.at(0);
+        config.fill2 = DIFF_CURVE_COLORS.at(1);
+    } else if (plot.type === "gradientfill") {
+        config.colorMapFunctionName = "Continuous";
+    } else if (plot.type === "stacked" && plot._curveHeader?.curveType === WellLogCurveTypeEnum_api.CONTINUOUS) {
+        console.warn(
+            `Showing continuous curve ${plot._curveHeader.curveName} as a stacked plot. This is most likely a mistake`
+        );
     }
-}
 
-// Matches the ones from the TemplatePlotTypes literal
-const AVAILABLE_PLOT_TYPES = ["line", "linestep", "dot", "area", "gradientfill", "differential", "stacked"];
-
-export function isValidPlot(config: Partial<TemplatePlotConfig>): boolean {
-    // This is irregardless of plot type
-    if (!config.type || !config.name || !config.color) return false;
-    if (!AVAILABLE_PLOT_TYPES.includes(config.type)) return false;
-
-    switch (config.type) {
-        case "stacked":
-            throw new Error("Stacked graph type currently not supported");
-        case "differential":
-            return Boolean(config.name2 && config.color2 && config.fill && config.fill2);
-        case "gradientfill":
-            return Boolean(config.colorTable);
-        default:
-            return true;
-    }
+    return config;
 }

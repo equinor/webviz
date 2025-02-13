@@ -1,6 +1,17 @@
 from typing import List
 
-from ..types import WellboreTrajectory, WellboreHeader, WellborePick
+from ..types import WellboreTrajectory, WellboreHeader, WellborePick, StratigraphicColumn
+
+
+def get_drogon_strat_columns() -> List[StratigraphicColumn]:
+    return [
+        StratigraphicColumn(
+            strat_column_identifier="DROGON_HAS_NO_STRATCOLUMN",
+            strat_column_type="lithostratigraphy",
+            strat_column_area_type="field",
+            strat_column_status="official",
+        ),
+    ]
 
 
 def get_drogon_well_headers() -> List[WellboreHeader]:
@@ -56,6 +67,7 @@ def get_drogon_well_trajectories() -> List[WellboreTrajectory]:
 def get_drogon_well_picks() -> List[WellborePick]:
     return [
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=462480.0,
             northing=5934232.0,
             tvd=1645.44,
@@ -70,6 +82,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=462480.0,
             northing=5934232.0,
             tvd=0.0,
@@ -84,6 +97,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=462480.0,
             northing=5934232.0,
             tvd=1620.08,
@@ -98,6 +112,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=462480.0,
             northing=5934232.0,
             tvd=1600.57,
@@ -112,6 +127,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=462480.0,
             northing=5934232.0,
             tvd=1630.44,
@@ -126,6 +142,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=463256.9114,
             northing=5930542.2944,
             tvd=0.0,
@@ -140,6 +157,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=464220.0686875976,
             northing=5932289.733486914,
             tvd=1641.19,
@@ -154,6 +172,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=463849.68880478514,
             northing=5931573.151211523,
             tvd=1628.2,
@@ -168,6 +187,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=464220.0686875976,
             northing=5932289.733486914,
             tvd=1641.19,
@@ -182,6 +202,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=463256.9114,
             northing=5930542.2944,
             tvd=1828.2,
@@ -196,6 +217,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_FMU",
             easting=464220.0686875976,
             northing=5932289.733486914,
             tvd=1841.19,
@@ -210,6 +232,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_STAT",
             easting=463849.68880478514,
             northing=5931573.151211523,
             tvd=1628.2,
@@ -224,6 +247,7 @@ def get_drogon_well_picks() -> List[WellborePick]:
             md_unit="m",
         ),
         WellborePick(
+            interpreter="DROGON_FMU",
             easting=464220.0686875976,
             northing=5932289.733486914,
             tvd=1641.19,
