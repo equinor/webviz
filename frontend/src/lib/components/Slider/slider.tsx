@@ -1,10 +1,9 @@
 import React from "react";
 
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2 } from "@lib/utils/vec2";
-import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
+import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
+import { Popper as PopperUnstyled, Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
@@ -13,6 +12,59 @@ export type SliderProps = {
     valueLabelFormat?: string | ((value: number) => React.ReactNode);
     debounceTimeMs?: number;
 } & Omit<SliderUnstyledProps, "valueLabelFormat">;
+
+interface SliderValueLabelProps {
+    labelContent: React.ReactNode;
+    visible: boolean;
+}
+
+function SliderValueLabel(props: SliderValueLabelProps) {
+    const anchorRef = React.useRef<HTMLDivElement | null>(null);
+    return (
+        <>
+            <PopperUnstyled
+                id="slider-popper"
+                className="z-50"
+                open={props.visible}
+                anchorEl={() => anchorRef.current!}
+                placement="top"
+                // Push the popper a little bit upwards to make room for the arrow
+                popperOptions={{ modifiers: [{ name: "offset", options: { offset: [0, 8] } }] }}
+            >
+                <span
+                    className={resolveClassNames(
+                        "pointer-events-none",
+                        "inline-block",
+                        "rounded",
+                        "bg-blue-600",
+                        "text-white",
+                        "p-2",
+                        "h-6",
+                        "text-xs",
+                        "font-bold",
+                        "leading-none",
+                        "whitespace-nowrap",
+
+                        // Arrow
+                        "before:absolute",
+                        "before:-bottom-2",
+                        "before:left-1/2",
+                        "before:transform",
+                        "before:-translate-x-1/2",
+                        "before:-translate-y-1/2",
+                        "before:w-2",
+                        "before:h-2",
+                        "before:bg-blue-600",
+                        "before:rotate-45"
+                    )}
+                >
+                    {props.labelContent}
+                </span>
+            </PopperUnstyled>
+            <div ref={anchorRef} />
+        </>
+    );
+}
 
 function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const {
@@ -32,11 +84,9 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
     const [currentlyActiveThumb, setCurrentlyActiveThumb] = React.useState<number>(0);
     const [prevValue, setPrevValue] = React.useState<number | number[]>(propsValue ?? 0);
     const [valueLabelVisible, setValueLabelVisible] = React.useState<boolean>(false);
-    const [valueLabelPosition, setValueLabelPosition] = React.useState<Vec2>({ x: 0, y: 0 });
 
     const divRef = React.useRef<HTMLDivElement>(null);
     React.useImperativeHandle<HTMLDivElement | null, HTMLDivElement | null>(ref, () => divRef.current);
-    const valueLabelRef = React.useRef<HTMLDivElement>(null);
 
     const sliderRect = useElementBoundingRect(divRef);
 
@@ -69,13 +119,6 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                     if (activeThumb >= 0) {
                         setCurrentlyActiveThumb(activeThumb);
                     }
-                    const thumb = elements[activeThumb];
-                    if (thumb) {
-                        setValueLabelPosition({
-                            x: thumb.getBoundingClientRect().left + thumb.getBoundingClientRect().width / 2 + 1,
-                            y: thumb.getBoundingClientRect().top + thumb.getBoundingClientRect().height / 2 + 1,
-                        });
-                    }
                 }
             }
         };
@@ -106,13 +149,6 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                     );
                     if (activeThumb >= 0) {
                         setCurrentlyActiveThumb(activeThumb);
-                    }
-                    const thumb = elements[activeThumb];
-                    if (thumb) {
-                        setValueLabelPosition({
-                            x: thumb.getBoundingClientRect().left + thumb.getBoundingClientRect().width / 2 + 1,
-                            y: thumb.getBoundingClientRect().top + thumb.getBoundingClientRect().height / 2 + 1,
-                        });
                     }
                 }
                 document.addEventListener("pointerup", handlePointerUp);
@@ -150,23 +186,6 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         setValue(value);
         setCurrentlyActiveThumb(activeThumb);
 
-        const activeThumbValue = Array.isArray(value) ? value[activeThumb] : value;
-        const range = (max ?? 100) - (min ?? 0);
-        setValueLabelPosition({
-            x:
-                (orientation === "vertical"
-                    ? sliderRect.width / 2
-                    : ((activeThumbValue - (min ?? 0)) / range) * sliderRect.width) +
-                sliderRect.left +
-                3,
-            y:
-                (orientation === "vertical"
-                    ? sliderRect.height * (1 - (activeThumbValue - (min ?? 0)) / range) - 4
-                    : sliderRect.height / 2) +
-                sliderRect.top +
-                1,
-        });
-
         if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
         }
@@ -182,7 +201,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         }, debounceTimeMs);
     }
 
-    function makeLabel(): React.ReactNode {
+    function makeLabelContent(): React.ReactNode {
         const currentValue = Array.isArray(value) ? value[currentlyActiveThumb] : value;
         const adjustedValue = props.scale ? props.scale(currentValue) : currentValue;
 
@@ -215,7 +234,12 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                 onChange={handleValueChanged}
                 value={value}
                 ref={ref}
+                slots={{ valueLabel: SliderValueLabel }}
                 slotProps={{
+                    valueLabel: {
+                        labelContent: makeLabelContent(),
+                        visible: valueLabelVisible && valueLabelDisplay === "auto",
+                    },
                     root: {
                         className: resolveClassNames(
                             orientation === "vertical" ? "w-3" : "w-full mx-3",
@@ -261,7 +285,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             "h-5",
                             "block",
                             "bg-blue-600",
-                            "z-30",
+                            "z-5",
                             "shadow-sm",
                             "rounded-full",
                             "transform",
@@ -306,60 +330,22 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             "h-2",
                             "-ml-0.5",
                             "-mt-0.5",
-                            "bg-blue-600",
-                            "border-2",
                             "opacity-80",
-                            "border-white",
                             "transform",
                             orientation === "vertical" ? "-translate-y-0" : "",
-                            "z-20"
+                            "z-4",
+                            {
+                                "border-2 bg-blue-600 border-white":
+                                    Array.isArray(props.marks) &&
+                                    props.marks.length <
+                                        ((orientation === "vertical" ? sliderRect.height : sliderRect.width) -
+                                            convertRemToPixels(6 / 4)) /
+                                            8,
+                            }
                         ),
                     },
                 }}
             />
-            {valueLabelDisplay !== undefined &&
-                valueLabelDisplay !== "off" &&
-                createPortal(
-                    <div
-                        className="absolute flex justify-center w-40 -ml-20 h-4 -mt-5 pointer-events-none z-50"
-                        ref={valueLabelRef}
-                        style={{ left: valueLabelPosition.x, top: valueLabelPosition.y }}
-                    >
-                        <div
-                            className={resolveClassNames(
-                                "rounded",
-                                "bg-blue-600",
-                                "text-white",
-                                "p-2",
-                                "text-xs",
-                                "font-bold",
-                                "leading-none",
-                                "transform",
-                                "-ml-0.5",
-                                "-translate-y-full",
-                                "transition-opacity",
-                                "pointer-events-none",
-                                "h-6",
-                                "before:absolute",
-                                "before:-bottom-5",
-                                "before:left-1/2",
-                                "before:transform",
-                                "before:-translate-x-1/2",
-                                "before:-translate-y-full",
-                                "before:w-4",
-                                "before:h-4",
-                                "before:bg-blue-600",
-                                "before:rotate-45",
-                                "before:-z-10",
-                                {
-                                    hidden: !valueLabelVisible && valueLabelDisplay === "auto",
-                                }
-                            )}
-                        >
-                            {makeLabel()}
-                        </div>
-                    </div>
-                )}
         </BaseComponent>
     );
 }
