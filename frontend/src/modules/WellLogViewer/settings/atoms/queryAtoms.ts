@@ -3,6 +3,7 @@ import {
     WellLogCurveSourceEnum_api,
     WellboreLogCurveHeader_api,
     getDrilledWellboreHeadersOptions,
+    getFieldsOptions,
     getWellboreLogCurveHeadersOptions,
     getWellborePicksInStratColumnOptions,
     getWellboreStratigraphicColumnsOptions,
@@ -15,6 +16,10 @@ import { atomWithQuery } from "jotai-tanstack-query";
 import _ from "lodash";
 
 import { selectedFieldIdentifierAtom, selectedWellPickColumnAtom, selectedWellboreHeaderAtom } from "./derivedAtoms";
+
+export const availableFieldsQueryAtom = atomWithQuery(() => {
+    return getFieldsOptions();
+});
 
 export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
     const fieldId = get(selectedFieldIdentifierAtom) ?? "";

@@ -4,10 +4,9 @@ import { WellboreHeader_api } from "@api";
 import { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { Intersection, IntersectionType } from "@framework/types/intersection";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
+import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select, SelectOption } from "@lib/components/Select";
@@ -18,7 +17,7 @@ import _ from "lodash";
 
 import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./atoms/derivedAtoms";
-import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
+import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
 import { ViewerSettings } from "./components/ViewerSettings";
 
@@ -59,11 +58,15 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
 
-    // Ensemble selections
-    const fullEnsembleSet = useEnsembleSet(props.workbenchSession);
-
+    // Field selection
+    const availableFields = useAtomValue(availableFieldsQueryAtom)?.data ?? [];
     const selectedField = useAtomValue(selectedFieldIdentifierAtom);
     const setSelectedField = useSetAtom(userSelectedFieldIdentifierAtom);
+
+    const fieldOptions = availableFields.map<DropdownOption>((f) => ({
+        value: f.field_identifier,
+        label: f.field_identifier,
+    }));
 
     // Wellbore selection
     const wellboreHeaders = useAtomValue(drilledWellboreHeadersQueryAtom);
@@ -84,7 +87,12 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
         <div className="flex flex-col h-full gap-1">
             <CollapsibleGroup title="Wellbore" expanded>
                 <Label text="Field">
-                    <FieldDropdown value={selectedField} ensembleSet={fullEnsembleSet} onChange={setSelectedField} />
+                    <Dropdown
+                        value={selectedField}
+                        options={fieldOptions}
+                        disabled={fieldOptions.length === 0}
+                        onChange={setSelectedField}
+                    />
                 </Label>
 
                 <Label text="Wellbore" wrapperClassName="mt-4">

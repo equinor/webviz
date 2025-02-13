@@ -1,6 +1,6 @@
 import { WellLogCurveTypeEnum_api, WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
 
 import { atom } from "jotai";
 import _ from "lodash";
@@ -14,28 +14,21 @@ import {
 } from "./baseAtoms";
 import { logViewerTrackConfigs } from "./persistedAtoms";
 import {
+    availableFieldsQueryAtom,
     drilledWellboreHeadersQueryAtom,
     wellLogCurveHeadersQueryAtom,
     wellborePicksQueryAtom,
     wellboreStratColumnsQueryAtom,
 } from "./queryAtoms";
-import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
 
-// ? The module doesnt do anything related to ensembles, should we just make it possible to pick from all fields?
-// ? If so, move to queries, and use "apiService.explore.getFields();"
 export const selectedFieldIdentifierAtom = atom((get) => {
+    const availableFields = get(availableFieldsQueryAtom).data ?? [];
     const selectedFieldId = get(userSelectedFieldIdentifierAtom);
-    const ensembleSet = get(EnsembleSetAtom);
 
-    // ! Per now (24.01.25) delta ensambles are directly tied to the regular ones, and they will never have any fields
-    // ! not in the regular set, so we only need to check the regular ones
-    const regularEnsembleArray = ensembleSet.getRegularEnsembleArray();
-
-    // Selection-fixup. Default to field ident of first available ensemble if possible
-    if (!regularEnsembleArray.length) return null;
-    if (regularEnsembleArray.some((ens) => ens.getFieldIdentifier() === selectedFieldId)) return selectedFieldId;
-
-    return regularEnsembleArray[0].getFieldIdentifier();
+    // Fixup selected field id
+    if (!availableFields.length) return null;
+    const selectionIsValid = availableFields.some((field) => field.field_identifier === selectedFieldId);
+    return selectionIsValid ? selectedFieldId : availableFields[0].field_identifier;
 });
 
 export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) => {
