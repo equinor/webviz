@@ -137,7 +137,7 @@ def convert_wellbore_geo_header_to_well_log_header(
     return schemas.WellboreLogCurveHeader(
         source=schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY,
         curveType=utils.curve_type_from_header(geo_header),
-        logName=geo_header.source,
+        logName=geo_header.interpreter,
         curveName=geo_header.identifier,
         curveUnit=None,
     )

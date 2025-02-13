@@ -317,12 +317,12 @@ async def get_log_curve_data(
         return converters.convert_wellbore_log_curve_data_to_schema(log_curve)
 
     if source == schemas.WellLogCurveSourceEnum.SMDA_GEOLOGY:
-        # Here, curve name is the identifier, and logname is the source
+        # Here, curve name is the identifier, and logname is the iterpreter
 
         geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token())
 
         geo_headers = await geol_access.get_wellbore_geology_headers_async(wellbore_uuid)
-        geo_headers = [h for h in geo_headers if h.identifier == curve_name and h.source == log_name]
+        geo_headers = [h for h in geo_headers if h.identifier == curve_name and h.interpreter == log_name]
 
         if not geo_headers:
             raise ValueError("Could not find matching geology header")

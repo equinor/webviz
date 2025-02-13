@@ -152,7 +152,7 @@ class WellboreGeoHeader(BaseModel):
     md_max: float
     md_unit: str
     source: str
-    # description: str | None
+    interpreter: str
 
 
 # pylint: disable-next=missing-class-docstring
