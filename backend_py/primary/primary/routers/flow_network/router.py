@@ -45,7 +45,7 @@ async def get_realization_flow_network(
         summary_access=summary_access,
         realization=realization,
         summary_frequency=summary_frequency,
-        node_types=unique_node_types,
+        selected_node_types=unique_node_types,
         flow_network_mode=NetworkModeOptions.SINGLE_REAL,
     )
 
@@ -57,7 +57,7 @@ async def get_realization_flow_network(
         dated_networks,
         edge_metadata,
         node_metadata,
-    ) = await network_assembler.create_dated_networks_and_metadata_lists()
+    ) = network_assembler.create_dated_networks_and_metadata_lists()
     create_data_time_ms = timer.lap_ms()
 
     LOGGER.info(

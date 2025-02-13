@@ -29,7 +29,7 @@
         "@tanstack/react-query": "^5.63",
         "@tanstack/react-query-devtools": "^5.63",
         "@types/geojson": "^7946.0.14",
-        "@webviz/group-tree-plot": "^1.1.14",
+        "@webviz/group-tree-plot": "^1.4.0",
         "@webviz/subsurface-viewer": "^1.1.1",
         "@webviz/well-completions-plot": "^1.5.11",
         "@webviz/well-log-viewer": "^1.12.7",

@@ -140,3 +140,4 @@ class DatedFlowNetwork:
 class FlowNetworkMetadata:
     key: str
     label: str
+    unit: str | None = None
