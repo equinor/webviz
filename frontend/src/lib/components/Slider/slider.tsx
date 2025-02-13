@@ -3,7 +3,7 @@ import React from "react";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
+import { Popper as PopperUnstyled, Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
@@ -18,45 +18,51 @@ interface SliderValueLabelProps {
     visible: boolean;
 }
 
-function SliderValueLabel({ labelContent, visible }: SliderValueLabelProps) {
+function SliderValueLabel(props: SliderValueLabelProps) {
+    const anchorRef = React.useRef<HTMLDivElement | null>(null);
     return (
-        <span
-            className={resolveClassNames(
-                "rounded",
-                "bg-blue-600",
-                "text-white",
-                "p-2",
-                "text-xs",
-                "font-bold",
-                "leading-none",
-                "transform",
-                "-translate-x-1/2",
-                "-translate-y-full",
-                "transition-opacity",
-                "pointer-events-none",
-                "h-6",
-                "inline-block",
-                "absolute",
-                "whitespace-nowrap",
-                "before:absolute",
-                "before:-bottom-2",
-                "before:left-1/2",
-                "before:transform",
-                "before:-translate-x-1/2",
-                "before:-translate-y-1/2",
-                "before:w-2",
-                "before:h-2",
-                "before:bg-blue-600",
-                "before:rotate-45",
-                "before:-z-10",
+        <>
+            <PopperUnstyled
+                id="slider-popper"
+                className="z-50"
+                open={props.visible}
+                anchorEl={() => anchorRef.current!}
+                placement="top"
+                // Push the popper a little bit upwards to make room for the arrow
+                popperOptions={{ modifiers: [{ name: "offset", options: { offset: [0, 8] } }] }}
+            >
+                <span
+                    className={resolveClassNames(
+                        "pointer-events-none",
+                        "inline-block",
+                        "rounded",
+                        "bg-blue-600",
+                        "text-white",
+                        "p-2",
+                        "h-6",
+                        "text-xs",
+                        "font-bold",
+                        "leading-none",
+                        "whitespace-nowrap",
 
-                {
-                    hidden: !visible,
-                }
-            )}
-        >
-            <div>{labelContent}</div>
-        </span>
+                        // Arrow
+                        "before:absolute",
+                        "before:-bottom-2",
+                        "before:left-1/2",
+                        "before:transform",
+                        "before:-translate-x-1/2",
+                        "before:-translate-y-1/2",
+                        "before:w-2",
+                        "before:h-2",
+                        "before:bg-blue-600",
+                        "before:rotate-45"
+                    )}
+                >
+                    {props.labelContent}
+                </span>
+            </PopperUnstyled>
+            <div ref={anchorRef} />
+        </>
     );
 }
 
