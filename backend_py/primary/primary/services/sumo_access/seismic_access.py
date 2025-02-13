@@ -42,12 +42,27 @@ class SeismicAccess:
 
             else:
                 iso_string_or_time_interval = f"{t_start}/{t_end}"
-
             seismic_meta = SeismicCubeMeta(
                 seismic_attribute=cube["data"].get("tagname"),
+                unit=cube["data"].get("unit"),
                 iso_date_or_interval=iso_string_or_time_interval,
                 is_observation=cube["data"]["is_observation"],
                 is_depth=cube["data"].get("vertical_domain", "depth") == "depth",
+                bbox=cube["data"]["bbox"],
+                spec={
+                    "num_cols": cube["data"]["spec"]["ncol"],
+                    "num_rows": cube["data"]["spec"]["nrow"],
+                    "num_layers": cube["data"]["spec"]["nlay"],
+                    "x_origin": cube["data"]["spec"]["xori"],
+                    "y_origin": cube["data"]["spec"]["yori"],
+                    "z_origin": cube["data"]["spec"]["zori"],
+                    "x_inc": cube["data"]["spec"]["xinc"],
+                    "y_inc": cube["data"]["spec"]["yinc"],
+                    "z_inc": cube["data"]["spec"]["zinc"],
+                    "y_flip": cube["data"]["spec"]["yflip"],
+                    "z_flip": cube["data"]["spec"]["zflip"],
+                    "rotation": cube["data"]["spec"]["rotation"],
+                },
             )
             seismic_cube_meta_list.append(seismic_meta)
         return seismic_cube_meta_list

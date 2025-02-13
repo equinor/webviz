@@ -81,7 +81,7 @@ export class RealizationSurfaceLayer
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const realizationNum = settings[SettingType.REALIZATION].getDelegate().getValue();
         const surfaceName = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
-        const attribute = settings[SettingType.SURFACE_ATTRIBUTE].getDelegate().getValue();
+        const attribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
         const timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
 
         if (ensembleIdent && surfaceName && attribute && realizationNum !== null) {

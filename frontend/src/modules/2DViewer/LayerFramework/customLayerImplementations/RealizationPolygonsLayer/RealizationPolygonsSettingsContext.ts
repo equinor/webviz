@@ -14,10 +14,7 @@ export class RealizationPolygonsSettingsContext implements SettingsContext<Reali
     private _contextDelegate: SettingsContextDelegate<RealizationPolygonsSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<
-            RealizationPolygonsSettings,
-            keyof RealizationPolygonsSettings
-        >(this, layerManager, {
+        this._contextDelegate = new SettingsContextDelegate<RealizationPolygonsSettings>(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),
             [SettingType.POLYGONS_ATTRIBUTE]: new PolygonsAttributeSetting(),

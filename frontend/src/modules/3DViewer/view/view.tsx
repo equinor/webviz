@@ -149,15 +149,15 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             }
         }
     } else if (intersectionType === IntersectionType.CUSTOM_POLYLINE) {
-        if (customIntersectionPolyline && customIntersectionPolyline.points.length >= 2) {
+        if (customIntersectionPolyline && customIntersectionPolyline.path.length >= 2) {
             intersectionReferenceSystem = new IntersectionReferenceSystem(
-                customIntersectionPolyline.points.map((point) => [point[0], point[1], 0])
+                customIntersectionPolyline.path.map((point) => [point[0], point[1], 0])
             );
             intersectionReferenceSystem.offset = 0;
             if (!customIntersectionPolyline) {
                 statusWriter.addError("Custom intersection polyline not found");
             } else {
-                for (const point of customIntersectionPolyline.points) {
+                for (const point of customIntersectionPolyline.path) {
                     polylineUtmXy.push(point[0], point[1]);
                 }
             }

@@ -3,6 +3,8 @@ from typing import List, Optional
 from pydantic import BaseModel
 from webviz_pkg.core_utils.b64 import B64FloatArray, B64UintArray
 
+from .._shared.schemas import BoundingBox3d
+
 
 # Rename?
 class Grid3dGeometry(BaseModel):
@@ -24,17 +26,6 @@ class Grid3dMappedProperty(BaseModel):
     poly_props_b64arr: B64FloatArray
     min_grid_prop_value: float
     max_grid_prop_value: float
-
-
-class BoundingBox3d(BaseModel):
-    """Bounding box for a 3D grid geometry"""
-
-    xmin: float
-    ymin: float
-    zmin: float
-    xmax: float
-    ymax: float
-    zmax: float
 
 
 class Grid3dZone(BaseModel):

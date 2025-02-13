@@ -8,11 +8,11 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect2D, outerRectContainsInnerRect } from "@lib/utils/geometry";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import { usePublishSubscribeTopicValue } from "@modules/_shared/LayerFramework/delegates/PublishSubscribeDelegate";
 import { LayerManager, LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
 import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 

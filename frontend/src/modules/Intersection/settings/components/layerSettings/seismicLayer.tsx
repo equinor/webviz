@@ -90,15 +90,15 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                     seismicCubeMetaListQuery.data
                         .filter((el) => {
                             return (
-                                el.is_depth &&
-                                el.is_observation === (newSettings.dataType === SeismicDataType.OBSERVED) &&
+                                el.isDepth &&
+                                el.isObservation === (newSettings.dataType === SeismicDataType.OBSERVED) &&
                                 ((newSettings.surveyType === SeismicSurveyType.THREE_D &&
-                                    !isIsoStringInterval(el.iso_date_or_interval)) ||
+                                    !isIsoStringInterval(el.isoDateOrInterval)) ||
                                     (newSettings.surveyType === SeismicSurveyType.FOUR_D &&
-                                        isIsoStringInterval(el.iso_date_or_interval)))
+                                        isIsoStringInterval(el.isoDateOrInterval)))
                             );
                         })
-                        .map((el) => el.seismic_attribute)
+                        .map((el) => el.seismicAttribute)
                 )
             )
         );
@@ -109,16 +109,16 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                     seismicCubeMetaListQuery.data
                         .filter((el) => {
                             return (
-                                el.is_depth &&
-                                el.seismic_attribute === newSettings.attribute &&
-                                el.is_observation === (newSettings.dataType === SeismicDataType.OBSERVED) &&
+                                el.isDepth &&
+                                el.seismicAttribute === newSettings.attribute &&
+                                el.isObservation === (newSettings.dataType === SeismicDataType.OBSERVED) &&
                                 ((newSettings.surveyType === SeismicSurveyType.THREE_D &&
-                                    !isIsoStringInterval(el.iso_date_or_interval)) ||
+                                    !isIsoStringInterval(el.isoDateOrInterval)) ||
                                     (newSettings.surveyType === SeismicSurveyType.FOUR_D &&
-                                        isIsoStringInterval(el.iso_date_or_interval)))
+                                        isIsoStringInterval(el.isoDateOrInterval)))
                             );
                         })
-                        .map((el) => el.iso_date_or_interval)
+                        .map((el) => el.isoDateOrInterval)
                 )
             ).sort()
         );
