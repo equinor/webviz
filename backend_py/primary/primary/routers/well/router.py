@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from primary.services.smda_access.drogon import DrogonSmdaAccess
 from primary.services.smda_access import SmdaAccess
 from primary.services.smda_access import GeologyAccess as SmdaGeologyAccess
+from primary.services.service_exceptions import NoDataError
 
 from primary.services.utils.authenticated_user import AuthenticatedUser
 from primary.auth.auth_helper import AuthHelper
@@ -276,7 +277,11 @@ async def _get_headers_from_smda_geology_async(
     authenticated_user: AuthenticatedUser, wellbore_uuid: str
 ) -> list[schemas.WellboreLogCurveHeader]:
     geol_access = SmdaGeologyAccess(authenticated_user.get_smda_access_token())
-    geo_headers = await geol_access.get_wellbore_geology_headers_async(wellbore_uuid)
+
+    try:
+        geo_headers = await geol_access.get_wellbore_geology_headers_async(wellbore_uuid)
+    except NoDataError:
+        geo_headers = []
 
     return [converters.convert_wellbore_geo_header_to_well_log_header(header) for header in geo_headers]
 
@@ -285,7 +290,11 @@ async def _get_headers_from_smda_stratigraghpy_async(
     authenticated_user: AuthenticatedUser, wellbore_uuid: str
 ) -> list[schemas.WellboreLogCurveHeader]:
     strat_access = SmdaAccess(authenticated_user.get_smda_access_token())
-    strat_columns = await strat_access.get_stratigraphic_columns_for_wellbore_async(wellbore_uuid)
+
+    try:
+        strat_columns = await strat_access.get_stratigraphic_columns_for_wellbore_async(wellbore_uuid)
+    except NoDataError:
+        strat_columns = []
 
     return [converters.convert_strat_column_to_well_log_header(col) for col in strat_columns if col.strat_column_type]
 

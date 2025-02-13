@@ -5,7 +5,7 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary import config
 from primary.httpx_client import httpx_async_client
-from primary.services.service_exceptions import ServiceRequestError, Service
+from primary.services.service_exceptions import ServiceRequestError, NoDataError, Service
 
 LOGGER = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ async def smda_get_request_async(access_token: str, endpoint: str, params: dict)
         if response.status_code == 200:
             result = response.json()["data"]["results"]
             if not result:
-                raise ServiceRequestError(f"No data found for endpoint: '{endpoint}'", Service.SMDA)
+                raise NoDataError(f"No data found for endpoint: '{endpoint}'", Service.SMDA)
 
             results.extend(result)
 
