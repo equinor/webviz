@@ -27,20 +27,20 @@ class SmdaAccess:
         pass
 
     # pylint: disable=unused-argument
-    async def get_stratigraphic_units(self, stratigraphic_column_identifier: str) -> List[StratigraphicUnit]:
+    async def get_stratigraphic_units_async(self, stratigraphic_column_identifier: str) -> List[StratigraphicUnit]:
         return get_drogon_strat_units()
 
     # pylint: disable=unused-argument
-    async def get_stratigraphic_columns_for_wellbore(self, wellbore_uuid: str) -> List[StratigraphicColumn]:
+    async def get_stratigraphic_columns_for_wellbore_async(self, wellbore_uuid: str) -> List[StratigraphicColumn]:
         """Get Drogon strat columns"""
         return get_drogon_strat_columns()
 
     # pylint: disable=unused-argument
-    async def get_wellbore_headers(self, field_identififer: str) -> List[WellboreHeader]:
+    async def get_wellbore_headers_async(self, field_identififer: str) -> List[WellboreHeader]:
         """Get Drogon wellbore headers"""
         return get_drogon_well_headers()
 
-    async def get_wellbore_trajectories(
+    async def get_wellbore_trajectories_async(
         self, field_identifier: str, wellbore_uuids: Optional[List[str]] = None
     ) -> List[WellboreTrajectory]:
         """Get all Drogon trajectories"""
@@ -50,7 +50,7 @@ class SmdaAccess:
         return all_well_trajs
 
     # pylint: disable=unused-argument
-    async def get_wellbore_picks_for_wellbore(
+    async def get_wellbore_picks_for_wellbore_async(
         self, wellbore_uuid: str, obs_no: Optional[int] = None
     ) -> List[WellborePick]:
         """Get Drogon picks for a wellbore"""
@@ -58,13 +58,13 @@ class SmdaAccess:
         return well_picks
 
     # pylint: disable=unused-argument
-    async def get_wellbore_picks_in_stratigraphic_column(
+    async def get_wellbore_picks_in_stratigraphic_column_async(
         self, wellbore_uuid: str, strat_column_identifier: str
     ) -> List[WellborePick]:
         return [pick for pick in get_drogon_well_picks() if pick.wellbore_uuid == wellbore_uuid]
 
     # pylint: disable=unused-argument
-    async def get_wellbore_picks_for_pick_identifier(
+    async def get_wellbore_picks_for_pick_identifier_async(
         self,
         field_identifier: str,
         pick_identifier: str,
@@ -74,10 +74,10 @@ class SmdaAccess:
         """Get Drogon picks for a pick identifier"""
         return [pick for pick in get_drogon_well_picks() if pick.pick_identifier == pick_identifier]
 
-    async def get_wellbore_pick_identifiers_in_stratigraphic_column(
+    async def get_wellbore_pick_identifiers_in_stratigraphic_column_async(
         self, strat_column_identifier: str
     ) -> List[StratigraphicSurface]:
         """Get Drogon pick identifiers for a stratigraphic column"""
-        strat_units = await self.get_stratigraphic_units(strat_column_identifier)
+        strat_units = await self.get_stratigraphic_units_async(strat_column_identifier)
         sorted_stratigraphic_surfaces = sort_stratigraphic_names_by_hierarchy(strat_units)
         return sorted_stratigraphic_surfaces

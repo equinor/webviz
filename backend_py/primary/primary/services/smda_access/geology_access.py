@@ -18,7 +18,7 @@ class Endpoints(StrEnum):
 
 
 class GeologyAccess(SmdaAccess):
-    async def get_geology_header(self, header_uuid: str) -> WellboreGeoHeader:
+    async def get_geology_header_async(self, header_uuid: str) -> WellboreGeoHeader:
         """
         Returns a single header for a geological feature.
         """
@@ -30,14 +30,14 @@ class GeologyAccess(SmdaAccess):
             "uuid": header_uuid,
         }
 
-        result = await self._smda_get_request(endpoint=endpoint, params=params)
+        result = await self._smda_get_request_async(endpoint=endpoint, params=params)
         parsed_header = WellboreGeoHeader(**result[0])
 
         LOGGER.info(f"TIME SMDA fetch wellbore geo headers took {timer.lap_s():.2f} seconds")
 
         return parsed_header
 
-    async def get_wellbore_geology_headers(self, wellbore_uuid: str) -> list[WellboreGeoHeader]:
+    async def get_wellbore_geology_headers_async(self, wellbore_uuid: str) -> list[WellboreGeoHeader]:
         """
         Returns a list of all lithological and paleogeographical headers for a given wellbore
         """
@@ -49,14 +49,14 @@ class GeologyAccess(SmdaAccess):
             "wellbore_uuid": wellbore_uuid,
         }
 
-        result = await self._smda_get_request(endpoint=endpoint, params=params)
+        result = await self._smda_get_request_async(endpoint=endpoint, params=params)
         parsed_result = [WellboreGeoHeader(**header) for header in result]
 
         LOGGER.info(f"TIME SMDA fetch wellbore geo headers took {timer.lap_s():.2f} seconds")
 
         return parsed_result
 
-    async def get_wellbore_geology_data(
+    async def get_wellbore_geology_data_async(
         self, wellbore_uuid: str, geo_header_uuid: str | None = None
     ) -> list[WellboreGeoData]:
         """
@@ -73,7 +73,7 @@ class GeologyAccess(SmdaAccess):
             "wellbore_geol_header_uuid": geo_header_uuid,
         }
 
-        result = await self._smda_get_request(endpoint=endpoint, params=params)
+        result = await self._smda_get_request_async(endpoint=endpoint, params=params)
         parsed_result = [WellboreGeoData(**header) for header in result]
 
         LOGGER.info(f"TIME SMDA fetch wellbore geo data took {timer.lap_s():.2f} seconds")

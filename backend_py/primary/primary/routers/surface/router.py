@@ -309,7 +309,7 @@ async def get_wellbore_stratigraphic_columns(
     else:
         smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
-    strat_columns = await smda_access.get_stratigraphic_columns_for_wellbore(wellbore_uuid)
+    strat_columns = await smda_access.get_stratigraphic_columns_for_wellbore_async(wellbore_uuid)
 
     return [converters.to_api_stratigraphic_column(col) for col in strat_columns]
 
@@ -347,7 +347,7 @@ async def _get_stratigraphic_units_for_case_async(
     else:
         smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
 
-    strat_units = await smda_access.get_stratigraphic_units(strat_column_identifier)
+    strat_units = await smda_access.get_stratigraphic_units_async(strat_column_identifier)
     perf_metrics.record_lap("get-strat-units")
 
     LOGGER.info(f"Got stratigraphic units for case in : {perf_metrics.to_string()}")

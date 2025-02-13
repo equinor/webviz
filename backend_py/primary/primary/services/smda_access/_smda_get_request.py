@@ -19,7 +19,7 @@ def _make_headers(access_token: str) -> dict:
     }
 
 
-async def smda_get_request(access_token: str, endpoint: str, params: dict) -> List[dict]:
+async def smda_get_request_async(access_token: str, endpoint: str, params: dict) -> List[dict]:
     """
     Generic GET request to SMDA API.
     Uses `next` pagination to get all results.
@@ -66,7 +66,7 @@ async def smda_get_request(access_token: str, endpoint: str, params: dict) -> Li
     return results
 
 
-async def smda_get_aggregation_request(access_token: str, endpoint: str, params: dict) -> dict:
+async def smda_get_aggregation_request_async(access_token: str, endpoint: str, params: dict) -> dict:
     """
     Alternative getter; runs an aggregation (i.e. a count of occurences) request on the SMDA API, and returns the aggregated buckets for each aggregated value.
     https://smda.equinor.com/learn/develop/smda-rest-api/#_next
