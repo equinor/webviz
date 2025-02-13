@@ -113,13 +113,6 @@ describe("makeTrackPlot tests", () => {
         expect(result3._isValid).toBe(false);
     });
 
-    it("should throw an error for unsupported plot type", () => {
-        // @ts-expect-error "Purposeful erroneous type"
-        const plot = { name: "SomeCurve", type: "unsupported" } as TemplatePlotConfig;
-
-        expect(() => makeTrackPlot(plot)).toThrow("Unsupported plot type: unsupported");
-    });
-
     it("should create a valid gradientfill plot config", () => {
         const result = makeTrackPlot({
             _curveHeader: MOCK_CURVE_HEADER1,

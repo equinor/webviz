@@ -51,7 +51,7 @@ describe("QueryDataTransform", () => {
             maxCurveValue: 60,
             curveDescription: "Gamma Ray",
             dataPoints: mockDataPoints,
-            metadataDiscrete: null,
+            discreteValueMetadata: null,
         };
 
         it("should have a axis-only set first", () => {
@@ -149,7 +149,7 @@ describe("QueryDataTransform", () => {
                 minCurveValue: 50,
                 maxCurveValue: 60,
                 curveDescription: null,
-                metadataDiscrete: null,
+                discreteValueMetadata: null,
                 dataPoints: [
                     [1000, 2.3],
                     [2000, 2.4],
@@ -269,11 +269,11 @@ describe("QueryDataTransform", () => {
                     [1500, 1],
                     [2000, null],
                 ],
-                metadataDiscrete: {
-                    Yes: [0, [255, 0, 0]],
-                    No: [1, [0, 255, 0]],
-                    Maybe: [2, [0, 0, 255]],
-                },
+                discreteValueMetadata: [
+                    { code: 0, identifier: "Yes", rgbColor: [255, 0, 0] },
+                    { code: 1, identifier: "No", rgbColor: [0, 255, 0] },
+                    { code: 2, identifier: "Maybe", rgbColor: [0, 0, 255] },
+                ],
             };
 
             const wellLog = createWellLogSets([mockDiscrete], mockTrajectory, mockReferenceSystem)[1];
