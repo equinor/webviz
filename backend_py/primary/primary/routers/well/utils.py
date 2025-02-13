@@ -1,3 +1,4 @@
+import re as regex
 from primary.services.smda_access.types import (
     WellboreGeoHeader,
     WellboreGeoData,
@@ -42,12 +43,13 @@ def build_discrete_value_meta_for_ssdl_curve(
             schemas.DiscreteValueMetadata(code=4, rgbColor=(31, 96, 64), identifier="Oil/Gas"),
             schemas.DiscreteValueMetadata(code=5, rgbColor=(230, 230, 230), identifier="Uncertain"),
         ]
-    if log_curve_data.name == "CPI_QUAL_FLAG":
-        # Same here, can be from 0 - 4
+
+    if regex.search("_QUAL_|_QUAL$", log_curve_data.name):
+        # Another "flag" variant, describing quality. Can be from 0 - 4
         # Names are from the wiki
         # ! Colors are just a guess
         return [
-            schemas.DiscreteValueMetadata(code=0, rgbColor=(255, 51, 0), identifier="Unkown/Bad"),
+            schemas.DiscreteValueMetadata(code=0, rgbColor=(200, 51, 0), identifier="Unkown/Bad"),
             schemas.DiscreteValueMetadata(code=1, rgbColor=(51, 204, 51), identifier="Excellent"),
             schemas.DiscreteValueMetadata(code=2, rgbColor=(153, 255, 51), identifier="Good"),
             schemas.DiscreteValueMetadata(code=3, rgbColor=(255, 255, 77), identifier="Fair"),
