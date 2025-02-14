@@ -12,11 +12,7 @@ import {
 
 import { BaseComponent } from "../BaseComponent";
 
-type SliderValueLabelProps = {
-    visible: boolean;
-} & SliderValueLabelSlotProps;
-
-function SliderValueLabel(props: SliderValueLabelProps) {
+function SliderValueLabel(props: SliderValueLabelSlotProps) {
     const anchorRef = React.useRef<HTMLDivElement | null>(null);
 
     return (
@@ -24,7 +20,7 @@ function SliderValueLabel(props: SliderValueLabelProps) {
             <PopperUnstyled
                 id="slider-popper"
                 className="z-50"
-                open={props.visible}
+                open={props.disabled ? false : true}
                 anchorEl={() => anchorRef.current!}
                 placement="top"
                 popperOptions={{ modifiers: [{ name: "offset", options: { offset: [0, 8] } }] }}
@@ -210,7 +206,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                 }}
                 slotProps={{
                     valueLabel: {
-                        visible: valueLabelDisplay === "auto" && valueLabelVisible,
+                        disabled: !(valueLabelDisplay === "auto" && valueLabelVisible),
                     },
                     root: {
                         className: resolveClassNames(
