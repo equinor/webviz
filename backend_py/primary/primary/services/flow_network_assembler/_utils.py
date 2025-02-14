@@ -1,4 +1,6 @@
 import logging
+import pandas as pd
+import numpy as np
 
 from primary.services.sumo_access.group_tree_types import TreeType
 
@@ -10,10 +12,17 @@ from .flow_network_types import (
     NodeSummaryVectorsInfo,
     EdgeOrNode,
     DataType,
+    NodeType,
 )
 
 
 LOGGER = logging.getLogger(__name__)
+
+NODE_TYPE_ENUM_TO_STRING_MAPPING = {
+    NodeType.INJ: "Injector",
+    NodeType.PROD: "Producer",
+    NodeType.OTHER: "Other",
+}
 
 
 FIELD_DATATYPE_VECTOR_MAP = {
@@ -256,3 +265,33 @@ def _compute_node_datatypes_for_name_and_keyword(
             datatypes.append(DataType.GASINJRATE)
 
     return datatypes
+
+
+def is_valid_node_type(node_classification: NodeClassification, valid_node_types: set[NodeType]) -> bool:
+    """Returns True if the node classification is a valid node type"""
+    if node_classification.IS_PROD and NodeType.PROD in valid_node_types:
+        return True
+    if node_classification.IS_INJ and NodeType.INJ in valid_node_types:
+        return True
+    if node_classification.IS_OTHER and NodeType.OTHER in valid_node_types:
+        return True
+    return False
+
+
+def create_edge_label_list_from_vfp_table_column(vfp_table_column: pd.Series) -> list[str]:
+    """
+    Creates an edge label list based on the column named "VFP_TABLE".
+
+    If the VFP_TABLE column is not present, the function will raise a ValueError.
+    """
+    if vfp_table_column.empty:
+        raise ValueError("VFP_TABLE column is empty.")
+
+    edge_labels: list[str] = []
+    for vfp_nb in vfp_table_column:
+        if vfp_nb in [None, 9999] or np.isnan(vfp_nb):
+            edge_labels.append("")
+        else:
+            edge_labels.append(f"VFP {int(vfp_nb)}")
+
+    return edge_labels
