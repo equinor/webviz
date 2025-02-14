@@ -231,7 +231,7 @@ def convert_strat_unit_data_to_log_curve_schema(
     if len(strat_units) < 1:
         raise ValueError("Expected at least one entry in strat-unit list")
 
-    ident_to_code_map = _build_strat_unit_ident_code_map(strat_units)
+    ident_to_code_map = _build_strat_unit_ident_to_code_map(strat_units)
     discrete_metadata = utils.build_discrete_value_meta_for_strat_data_and_codes(strat_units, ident_to_code_map)
 
     index_min = float("inf")
@@ -303,7 +303,7 @@ def convert_strat_unit_data_to_log_curve_schema(
     )
 
 
-def _build_strat_unit_ident_code_map(strat_units: list[WellboreStratigraphicUnit]) -> dict[str, int]:
+def _build_strat_unit_ident_to_code_map(strat_units: list[WellboreStratigraphicUnit]) -> dict[str, int]:
     ident_to_code_map: dict[str, int] = {}
 
     for unit in strat_units:
