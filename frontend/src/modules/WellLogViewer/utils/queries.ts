@@ -6,7 +6,7 @@ import {
     UseQueryResult,
 } from "@tanstack/react-query";
 
-import _ from "lodash";
+import _, { result } from "lodash";
 
 // ? Would this be a useful global utility?
 /**
@@ -25,7 +25,7 @@ import _ from "lodash";
  */
 
 // Only pick the fields we genrally use. Following UseQuertResult
-type RelevantFields = "data" | "error" | "isPending" | "isError" | "isSuccess";
+type RelevantFields = "data" | "error" | "isPending" | "isError" | "isSuccess" | "isFetching";
 
 // Need to define each variant type to make MergedQueryResult get the same  type-narrowing as the original
 type MergeDefinedResult<TData> = Pick<DefinedQueryObserverResult<TData>, RelevantFields>;
@@ -47,11 +47,12 @@ export function mergeResults<T, K = T[]>(
 
     const isError = !!error;
     const isPending = _.some(results, "isPending");
+    const isFetching = _.some(result, "isFetching");
     const isSuccess = _.every(results, "isSuccess");
 
     // Guard clauses for pending states. Data not defined here
-    if (isError) return { data: undefined, error, isError: true, isPending: false, isSuccess: false };
-    if (isPending) return { data: undefined, error, isError, isPending, isSuccess: false };
+    if (isError) return { isFetching, data: undefined, error, isError: true, isPending: false, isSuccess: false };
+    if (isPending) return { isFetching, data: undefined, error, isError, isPending, isSuccess: false };
 
     // Data fetched, return and maybe apply transform
     let data: T[] | K = _.map(results, "data") as T[];
@@ -60,5 +61,5 @@ export function mergeResults<T, K = T[]>(
         data = dataTransform(data);
     }
 
-    return { data: data as K, error: null, isPending, isError, isSuccess };
+    return { isFetching, data: data as K, error: null, isPending, isError, isSuccess };
 }
