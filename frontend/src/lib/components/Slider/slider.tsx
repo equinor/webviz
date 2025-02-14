@@ -7,19 +7,33 @@ import { Popper as PopperUnstyled, Slider as SliderUnstyled, SliderProps as Slid
 
 import { BaseComponent } from "../BaseComponent";
 
-export type SliderProps = {
-    valueLabelDisplay?: "auto" | "off";
-    valueLabelFormat?: string | ((value: number) => React.ReactNode);
-    debounceTimeMs?: number;
-} & Omit<SliderUnstyledProps, "valueLabelFormat">;
-
 interface SliderValueLabelProps {
-    labelContent: React.ReactNode;
+    currentlyActiveThumb: number;
+    sliderValue: number | number[];
+    scale?: (value: number) => number;
+    valueLabelFormat?: string | ((value: number) => React.ReactNode);
     visible: boolean;
 }
 
 function SliderValueLabel(props: SliderValueLabelProps) {
     const anchorRef = React.useRef<HTMLDivElement | null>(null);
+
+    function makeLabelContent(): React.ReactNode {
+        const currentValue = Array.isArray(props.sliderValue)
+            ? props.sliderValue[props.currentlyActiveThumb]
+            : props.sliderValue;
+        const adjustedValue = props.scale ? props.scale(currentValue) : currentValue;
+
+        if (props.valueLabelFormat) {
+            if (typeof props.valueLabelFormat === "function") {
+                return props.valueLabelFormat(adjustedValue);
+            }
+            return props.valueLabelFormat;
+        }
+
+        return adjustedValue;
+    }
+
     return (
         <>
             <PopperUnstyled
@@ -58,7 +72,7 @@ function SliderValueLabel(props: SliderValueLabelProps) {
                         "before:rotate-45"
                     )}
                 >
-                    {props.labelContent}
+                    {makeLabelContent()}
                 </span>
             </PopperUnstyled>
             <div ref={anchorRef} />
@@ -66,18 +80,14 @@ function SliderValueLabel(props: SliderValueLabelProps) {
     );
 }
 
+export type SliderProps = {
+    valueLabelDisplay?: "auto" | "off";
+    valueLabelFormat?: string | ((value: number) => React.ReactNode);
+    debounceTimeMs?: number;
+} & Omit<SliderUnstyledProps, "valueLabelFormat">;
+
 function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) {
-    const {
-        valueLabelDisplay,
-        value: propsValue,
-        max,
-        min,
-        valueLabelFormat,
-        orientation,
-        track,
-        debounceTimeMs,
-        ...rest
-    } = props;
+    const { valueLabelDisplay, value: propsValue, max, min, orientation, track, debounceTimeMs, ...rest } = props;
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [value, setValue] = React.useState<number | number[]>(propsValue ?? 0);
@@ -201,20 +211,6 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         }, debounceTimeMs);
     }
 
-    function makeLabelContent(): React.ReactNode {
-        const currentValue = Array.isArray(value) ? value[currentlyActiveThumb] : value;
-        const adjustedValue = props.scale ? props.scale(currentValue) : currentValue;
-
-        if (valueLabelFormat) {
-            if (typeof valueLabelFormat === "function") {
-                return valueLabelFormat(adjustedValue);
-            }
-            return valueLabelFormat;
-        }
-
-        return adjustedValue;
-    }
-
     React.useEffect(function handleMount() {
         return function handleUnmount() {
             if (debounceTimerRef.current) {
@@ -237,7 +233,10 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                 slots={{ valueLabel: SliderValueLabel }}
                 slotProps={{
                     valueLabel: {
-                        labelContent: makeLabelContent(),
+                        currentlyActiveThumb,
+                        sliderValue: value,
+                        scale: props.scale,
+                        valueLabelFormat: props.valueLabelFormat,
                         visible: valueLabelVisible && valueLabelDisplay === "auto",
                     },
                     root: {
