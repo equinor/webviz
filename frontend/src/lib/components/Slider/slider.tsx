@@ -3,36 +3,21 @@ import React from "react";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Popper as PopperUnstyled, Slider as SliderUnstyled, SliderProps as SliderUnstyledProps } from "@mui/base";
+import {
+    Popper as PopperUnstyled,
+    Slider as SliderUnstyled,
+    SliderProps as SliderUnstyledProps,
+    SliderValueLabelSlotProps,
+} from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
 type SliderValueLabelProps = {
-    currentlyActiveThumb: number;
-    sliderValue: number | number[];
-    scale?: (value: number) => number;
-    valueLabelFormat?: string | ((value: number) => React.ReactNode);
     visible: boolean;
-};
+} & SliderValueLabelSlotProps;
 
 function SliderValueLabel(props: SliderValueLabelProps) {
     const anchorRef = React.useRef<HTMLDivElement | null>(null);
-
-    function makeLabelContent(): React.ReactNode {
-        const currentValue = Array.isArray(props.sliderValue)
-            ? props.sliderValue[props.currentlyActiveThumb]
-            : props.sliderValue;
-        const adjustedValue = props.scale ? props.scale(currentValue) : currentValue;
-
-        if (props.valueLabelFormat) {
-            if (typeof props.valueLabelFormat === "function") {
-                return props.valueLabelFormat(adjustedValue);
-            }
-            return props.valueLabelFormat;
-        }
-
-        return adjustedValue;
-    }
 
     return (
         <>
@@ -42,7 +27,6 @@ function SliderValueLabel(props: SliderValueLabelProps) {
                 open={props.visible}
                 anchorEl={() => anchorRef.current!}
                 placement="top"
-                // Push the popper a little bit upwards to make room for the arrow
                 popperOptions={{ modifiers: [{ name: "offset", options: { offset: [0, 8] } }] }}
             >
                 <span
@@ -58,8 +42,6 @@ function SliderValueLabel(props: SliderValueLabelProps) {
                         "font-bold",
                         "leading-none",
                         "whitespace-nowrap",
-
-                        // Arrow
                         "before:absolute",
                         "before:-bottom-2",
                         "before:left-1/2",
@@ -72,7 +54,7 @@ function SliderValueLabel(props: SliderValueLabelProps) {
                         "before:rotate-45"
                     )}
                 >
-                    {makeLabelContent()}
+                    {props.children}
                 </span>
             </PopperUnstyled>
             <div ref={anchorRef} />
@@ -82,16 +64,26 @@ function SliderValueLabel(props: SliderValueLabelProps) {
 
 export type SliderProps = {
     valueLabelDisplay?: "auto" | "off";
-    valueLabelFormat?: string | ((value: number) => React.ReactNode);
+    valueLabelFormat?: string | ((value: number) => string);
     debounceTimeMs?: number;
 } & Omit<SliderUnstyledProps, "valueLabelFormat">;
 
 function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElement>) {
-    const { valueLabelDisplay, value: propsValue, max, min, orientation, track, debounceTimeMs, ...rest } = props;
+    const {
+        valueLabelDisplay,
+        value: propsValue,
+        valueLabelFormat,
+        scale,
+        max,
+        min,
+        orientation,
+        track,
+        debounceTimeMs,
+        ...rest
+    } = props;
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const [value, setValue] = React.useState<number | number[]>(propsValue ?? 0);
-    const [currentlyActiveThumb, setCurrentlyActiveThumb] = React.useState<number>(0);
     const [prevValue, setPrevValue] = React.useState<number | number[]>(propsValue ?? 0);
     const [valueLabelVisible, setValueLabelVisible] = React.useState<boolean>(false);
 
@@ -110,27 +102,9 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         let pointerPressed = false;
         let hovered = false;
 
-        const handlePointerOver = (e: PointerEvent) => {
+        const handlePointerOver = () => {
             setValueLabelVisible(true);
             hovered = true;
-            if (divRef.current) {
-                const elements = divRef.current.getElementsByClassName("MuiSlider-thumb");
-                if (elements.length >= 1) {
-                    const activeThumb = Array.from(elements).findIndex(
-                        (element) =>
-                            element ===
-                            (document
-                                .elementsFromPoint(e.clientX, e.clientY)
-                                .filter((el) => el.classList.contains("MuiSlider-thumb"))
-                                .at(0) ??
-                                elements[0] ??
-                                elements.item(0))
-                    );
-                    if (activeThumb >= 0) {
-                        setCurrentlyActiveThumb(activeThumb);
-                    }
-                }
-            }
         };
 
         const handlePointerOut = () => {
@@ -141,26 +115,9 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
             setValueLabelVisible(false);
         };
 
-        const handlePointerDown = (e: PointerEvent) => {
+        const handlePointerDown = () => {
             pointerPressed = true;
-
             if (divRef.current) {
-                const elements = divRef.current.getElementsByClassName("MuiSlider-thumb");
-                if (elements.length >= 1) {
-                    const activeThumb = Array.from(elements).findIndex(
-                        (element) =>
-                            element ===
-                            (document
-                                .elementsFromPoint(e.clientX, e.clientY)
-                                .filter((el) => el.classList.contains("MuiSlider-thumb"))
-                                .at(0) ??
-                                elements[0] ??
-                                elements.item(0))
-                    );
-                    if (activeThumb >= 0) {
-                        setCurrentlyActiveThumb(activeThumb);
-                    }
-                }
                 document.addEventListener("pointerup", handlePointerUp);
             }
         };
@@ -194,7 +151,6 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
     function handleValueChanged(event: Event, value: number | number[], activeThumb: number) {
         setValue(value);
-        setCurrentlyActiveThumb(activeThumb);
 
         if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
@@ -219,6 +175,22 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         };
     }, []);
 
+    // This function converts the slider value to a content for label
+    const formatLabelValue = React.useCallback(
+        function formatLabelValue(labelValue: number): React.ReactNode {
+            const adjustedValue = scale ? scale(labelValue) : labelValue;
+            if (valueLabelFormat) {
+                if (typeof valueLabelFormat === "function") {
+                    return valueLabelFormat(adjustedValue);
+                }
+                return valueLabelFormat;
+            }
+
+            return adjustedValue.toString();
+        },
+        [scale, valueLabelFormat]
+    );
+
     return (
         <BaseComponent disabled={props.disabled} ref={divRef} className="mt-2 mb-2 flex justify-center">
             <SliderUnstyled
@@ -230,14 +202,15 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                 onChange={handleValueChanged}
                 value={value}
                 ref={ref}
-                slots={{ valueLabel: SliderValueLabel }}
+                valueLabelFormat={(value) => {
+                    return formatLabelValue(value);
+                }}
+                slots={{
+                    valueLabel: SliderValueLabel,
+                }}
                 slotProps={{
                     valueLabel: {
-                        currentlyActiveThumb,
-                        sliderValue: value,
-                        scale: props.scale,
-                        valueLabelFormat: props.valueLabelFormat,
-                        visible: valueLabelVisible && valueLabelDisplay === "auto",
+                        visible: valueLabelDisplay === "auto" && valueLabelVisible,
                     },
                     root: {
                         className: resolveClassNames(
