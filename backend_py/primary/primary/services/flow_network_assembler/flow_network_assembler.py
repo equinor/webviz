@@ -8,10 +8,9 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pc
 
-from fastapi import HTTPException
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from primary.services.service_exceptions import NoDataError, Service
+from primary.services.service_exceptions import InvalidDataError, NoDataError, Service
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess, VectorMetadata
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.group_tree_types import TreeType
@@ -91,15 +90,12 @@ class FlowNetworkAssembler:
         self._excl_well_endswith = excl_well_endswith
         self._summary_resampling_frequency = summary_frequency
         self._selected_node_types = selected_node_types
-
         self._group_tree_df_model: Optional[GroupTreeDataframeModel] = None
         self._filtered_group_tree_df: Optional[pd.DataFrame] = None
         self._all_vectors: Optional[set[str]] = None
         self._vector_metadata_by_keyword: dict[str, list[VectorMetadata]] = {}
         self._smry_table_sorted_by_date: pa.Table | None = None
-
         self._node_static_working_data: dict[str, StaticNodeWorkingData] | None = None
-
         self._performance_times = PerformanceTimes()
 
         # Store network details in data class to make it easier to feed it to the various helpers
@@ -147,13 +143,15 @@ class FlowNetworkAssembler:
     def _verify_that_sumvecs_exists(self, check_sumvecs: set[str]) -> None:
         """
         Takes in a list of summary vectors and checks if they are present among the assemblers available vectors.
-        If any are missing, a ValueError is raised with the list of all missing summary vectors.
+        If any are missing, a NoDataError is raised with the list of all missing summary vectors.
         """
         # Find vectors that are missing in the valid sumvecs
         missing_sumvecs = check_sumvecs - self._all_vectors_safe
         if len(missing_sumvecs) > 0:
             str_missing_sumvecs = ", ".join(missing_sumvecs)
-            raise ValueError("Missing summary vectors for the FlowNetwork plugin: ", f"{str_missing_sumvecs}.")
+            raise NoDataError(
+                f"Missing summary vectors for the FlowNetwork assembly: {str_missing_sumvecs}", Service.GENERAL
+            )
 
     async def _initialize_group_tree_df_async(self) -> None:
         """Get group tree data from Sumo, and store it in a helper model class"""
@@ -165,7 +163,14 @@ class FlowNetworkAssembler:
         self._performance_times.fetch_grouptree_df = timer.lap_ms()
 
         if group_tree_table_df is None:
-            raise HTTPException(status_code=404, detail="Group tree data not found")
+            raise NoDataError("Group tree data not found", Service.GENERAL)
+
+        if not GroupTreeDataframeModel.has_expected_columns(group_tree_table_df):
+            raise InvalidDataError(
+                f"Expected columns: {GroupTreeDataframeModel.expected_columns()} not found in the grouptree dataframe. "
+                f"Columns found: {group_tree_table_df.columns}",
+                service=Service.GENERAL,
+            )
 
         self._group_tree_df_model = GroupTreeDataframeModel(group_tree_table_df, self._tree_type)
 
@@ -285,10 +290,8 @@ class FlowNetworkAssembler:
         """
         if self._network_mode != NetworkModeOptions.SINGLE_REAL:
             raise ValueError("Network mode must be SINGLE_REAL to create a single realization dataset")
-
         if self._smry_table_sorted_by_date is None:
             raise ValueError("Summary dataframe sorted by date has not been initialized")
-
         if self._node_static_working_data is None:
             raise ValueError("Static working data for nodes has not been initialized")
 
@@ -353,9 +356,9 @@ class FlowNetworkAssembler:
 
         # If any water or gas injection vectors exist, require field injection vectors exist
         if has_wi_vectors and "FWIR" not in vectors_of_interest:
-            raise ValueError("Water injection vectors (WWIR/GWIR) found, but missing expected: FWIR")
+            raise NoDataError("Water injection vectors (WWIR/GWIR) found, but missing expected: FWIR", Service.GENERAL)
         if has_gi_vectors and "FGIR" not in vectors_of_interest:
-            raise ValueError("Gas injection vectors (WGIR/GGIR) found, but missing expected: FGIR")
+            raise NoDataError("Gas injection vectors (WGIR/GGIR) found, but missing expected: FGIR", Service.GENERAL)
 
     def _create_node_classifications(
         self, wstat_vectors: set[str], vector_data_table: pa.Table
@@ -412,7 +415,9 @@ class FlowNetworkAssembler:
         # Check if all edges is subset of initialized single realization vectors column names
         if not network_summary_vectors_info.edge_summary_vectors.issubset(vector_column_names):
             missing_sumvecs = network_summary_vectors_info.edge_summary_vectors - set(vector_column_names)
-            raise ValueError(f"Missing summary vectors for edges in the flow network: {', '.join(missing_sumvecs)}.")
+            raise NoDataError(
+                f"Missing summary vectors for edges in the flow network: {', '.join(missing_sumvecs)}.", Service.GENERAL
+            )
 
         # Expect all dictionaries to have the same keys
         if set(network_summary_vectors_info.node_summary_vectors_info_dict.keys()) != set(node_classifications.keys()):
