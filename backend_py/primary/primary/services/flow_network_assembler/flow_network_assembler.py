@@ -10,11 +10,10 @@ import pyarrow.compute as pc
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from primary.services.service_exceptions import NoDataError, Service
+from primary.services.service_exceptions import InvalidDataError, NoDataError, Service
 from primary.services.sumo_access.summary_access import Frequency, SummaryAccess, VectorMetadata
 from primary.services.sumo_access.group_tree_access import GroupTreeAccess
 from primary.services.sumo_access.group_tree_types import TreeType
-from primary.services.service_exceptions import InvalidDataError, NoDataError, Service
 
 from . import _utils
 from ._assembler_performance_times import PerformanceTimes
