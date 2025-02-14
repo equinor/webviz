@@ -9,6 +9,7 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
     TableColumnStatisticalData,
 )
 
+
 from primary.services.inplace_volumetrics_assembler._utils import (
     _create_named_expression_with_nan_for_inf,
     _create_repeated_table_column_data_from_polars_column,
@@ -198,7 +199,8 @@ def test_validate_length_of_statistics_data_lists_mismatched_lengths_selector_vs
         )
     ]
     with pytest.raises(
-        ValueError, match="Number of result1 statistic mean values does not match expected number of rows: 2. Got: 3"
+        ValueError,
+        match="Number of result1 statistic mean values does not match expected number of rows: 2. Got: 3",
     ):
         _validate_length_of_statistics_data_lists(selector_column_data_list, result_statistical_data_list)
 
@@ -230,7 +232,8 @@ def test_validate_length_of_statistics_data_lists_mismatched_lengths_statistic()
         )
     ]
     with pytest.raises(
-        ValueError, match="Number of result1 statistic mean values does not match expected number of rows: 3. Got: 2"
+        ValueError,
+        match="Number of result1 statistic mean values does not match expected number of rows: 3. Got: 2",
     ):
         _validate_length_of_statistics_data_lists(selector_column_data_list, result_statistical_data_list)
 

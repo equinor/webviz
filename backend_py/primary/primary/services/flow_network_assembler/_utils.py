@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 
 from primary.services.sumo_access.group_tree_types import TreeType
+
 from .flow_network_types import (
     CategorizedNodeSummaryVectors,
     NodeClassification,
@@ -209,7 +210,7 @@ def get_node_vectors_info_and_categorized_node_summary_vectors_from_name_and_key
     tree_classification: NetworkClassification,
 ) -> tuple[NodeSummaryVectorsInfo, CategorizedNodeSummaryVectors]:
     if not isinstance(node_name, str) or not isinstance(node_keyword, str):
-        raise ValueError("Nodename and keyword must be strings")
+        raise ValueError(f'Nodename and keyword must be strings, got: "{node_name}" and "{node_keyword}"')
 
     node_classification = node_classifications[node_name]
 
