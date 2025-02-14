@@ -7,13 +7,13 @@ import { Popper as PopperUnstyled, Slider as SliderUnstyled, SliderProps as Slid
 
 import { BaseComponent } from "../BaseComponent";
 
-interface SliderValueLabelProps {
+type SliderValueLabelProps = {
     currentlyActiveThumb: number;
     sliderValue: number | number[];
     scale?: (value: number) => number;
     valueLabelFormat?: string | ((value: number) => React.ReactNode);
     visible: boolean;
-}
+};
 
 function SliderValueLabel(props: SliderValueLabelProps) {
     const anchorRef = React.useRef<HTMLDivElement | null>(null);
