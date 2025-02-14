@@ -24,7 +24,7 @@ import _, { result } from "lodash";
  * @returns A single QueryResult object
  */
 
-// Only pick the fields we genrally use. Following UseQuertResult
+// Only pick the fields we generally use. Following UseQueryResult
 type RelevantFields = "data" | "error" | "isPending" | "isError" | "isSuccess" | "isFetching";
 
 // Need to define each variant type to make MergedQueryResult get the same  type-narrowing as the original
