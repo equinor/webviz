@@ -48,7 +48,10 @@ def create_sumo_client(access_token: str) -> SumoClient:
     return sumo_client
 
 
-async def create_sumo_case_async(client: SumoClient, case_uuid: str, want_keepalive_pit: bool) -> Case:
+async def create_sumo_case_async(
+    client: SumoClient,
+    case_uuid: str,
+) -> Case:
     timer = PerfMetrics()
 
     search_context = SearchContext(client)

@@ -37,7 +37,7 @@ class CaseInspector:
     async def _get_or_create_case_context(self) -> Case:
         if self._cached_case_context is None:
             self._cached_case_context = await create_sumo_case_async(
-                client=self._sumo_client, case_uuid=self._case_uuid, want_keepalive_pit=False
+                client=self._sumo_client, case_uuid=self._case_uuid
             )
 
         return self._cached_case_context

@@ -25,7 +25,7 @@ class WellCompletionsAccess:
         cls, access_token: str, case_uuid: str, iteration_name: str
     ) -> "WellCompletionsAccess":
         sumo_client = create_sumo_client(access_token)
-        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
+        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid)
         return WellCompletionsAccess(case=case, iteration_name=iteration_name)
 
     async def get_well_completions_single_realization_table_async(self, realization: int) -> pa.Table | None:
@@ -75,6 +75,7 @@ class WellCompletionsAccess:
             )
 
         # Download in parallel
+
         tasks = [asyncio.create_task(table.to_arrow_async()) for table in well_completions_table_collection]
         arrow_tables: list[pa.Table] = await asyncio.gather(*tasks)
         first_table = arrow_tables[0]
