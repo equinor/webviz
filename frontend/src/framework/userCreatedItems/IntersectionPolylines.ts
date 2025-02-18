@@ -8,7 +8,7 @@ import { v4 } from "uuid";
 export type IntersectionPolyline = {
     id: string;
     name: string;
-    points: number[][];
+    path: number[][];
 };
 
 export type IntersectionPolylineWithoutId = Omit<IntersectionPolyline, "id">;
