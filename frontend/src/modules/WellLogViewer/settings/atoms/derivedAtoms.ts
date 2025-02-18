@@ -12,7 +12,7 @@ import {
     userSelectedWellPicksAtom,
     userSelectedWellboreUuidAtom,
 } from "./baseAtoms";
-import { logViewerTrackConfigs } from "./persistedAtoms";
+import { logViewerTrackConfigsAtom } from "./persistedAtoms";
 import {
     availableFieldsQueryAtom,
     drilledWellboreHeadersQueryAtom,
@@ -61,7 +61,7 @@ export const availableFlagCurvesAtom = atom((get) => {
 });
 
 export const wellLogTemplateTracksAtom = atom<TemplateTrackConfig[]>((get) => {
-    const templateTrackConfigs = get(logViewerTrackConfigs);
+    const templateTrackConfigs = get(logViewerTrackConfigsAtom);
 
     return templateTrackConfigs.map((config) => {
         return {
@@ -72,7 +72,7 @@ export const wellLogTemplateTracksAtom = atom<TemplateTrackConfig[]>((get) => {
 });
 
 export const requiredCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
-    const templateTracks = get(logViewerTrackConfigs);
+    const templateTracks = get(logViewerTrackConfigsAtom);
 
     return _.chain(templateTracks)
         .flatMap<TemplatePlotConfig>("plots")
@@ -127,7 +127,7 @@ export const selectedWellborePicksAtom = atom<WellborePick_api[]>((get) => {
 });
 
 export const missingCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
-    const templateTracks = get(logViewerTrackConfigs) ?? [];
+    const templateTracks = get(logViewerTrackConfigsAtom) ?? [];
     const availableCurvesQuery = get(wellLogCurveHeadersQueryAtom);
     if (availableCurvesQuery.isPending || availableCurvesQuery.isError) return [];
 
