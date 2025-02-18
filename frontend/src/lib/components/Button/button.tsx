@@ -11,10 +11,15 @@ export type ButtonProps = {
     endIcon?: React.ReactNode;
     color?: "primary" | "danger" | "success" | "secondary";
     size?: "small" | "medium" | "large";
+    buttonRef?: React.Ref<HTMLButtonElement>;
 } & ButtonUnstyledProps;
 
-export const Button = React.forwardRef((props: ButtonProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
-    const { disabled, variant, children, startIcon, endIcon, color, ...rest } = props;
+function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElement>) {
+    const { disabled, variant, children, startIcon, endIcon, color, buttonRef, ...rest } = props;
+
+    const internalRef = React.useRef<HTMLButtonElement>(null);
+    React.useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(buttonRef, () => internalRef.current);
+
     const classNames = [
         "inline-flex",
         "items-center",
@@ -73,10 +78,10 @@ export const Button = React.forwardRef((props: ButtonProps, ref: React.Forwarded
     );
 
     return (
-        <BaseComponent disabled={disabled}>
+        <BaseComponent disabled={disabled} ref={ref}>
             <ButtonUnstyled
                 {...rest}
-                ref={ref}
+                ref={buttonRef}
                 slotProps={{
                     root: {
                         className: resolveClassNames(...classNames),
@@ -87,6 +92,6 @@ export const Button = React.forwardRef((props: ButtonProps, ref: React.Forwarded
             </ButtonUnstyled>
         </BaseComponent>
     );
-});
+}
 
-Button.displayName = "Button";
+export const Button = React.forwardRef(ButtonComponent);

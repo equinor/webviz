@@ -23,6 +23,11 @@ export const identifiersValuesAtom = atom((get) => {
     return filter?.identifiersValues ?? [];
 });
 
+export const areSelectedTablesComparableAtom = atom((get) => {
+    const filter = get(filterAtom);
+    return filter?.areSelectedTablesComparable ?? false;
+});
+
 export const ensembleIdentsWithRealizationsAtom = atom((get) => {
     const filter = get(filterAtom);
     const ensemblIdents = filter?.ensembleIdents ?? [];
@@ -68,7 +73,7 @@ export const isQueryFetchingAtom = atom((get) => {
     return activeQueriesResult.isFetching;
 });
 
-export const hasAllQueriesFailedAtom = atom((get) => {
+export const haveAllQueriesFailedAtom = atom((get) => {
     const tableType = get(tableTypeAtom);
     const perRealizationTableDataResults = get(perRealizationTableDataResultsAtom);
     const statisticalTableDataResults = get(statisticalTableDataResultsAtom);

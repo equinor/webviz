@@ -43,7 +43,10 @@ type DropdownRect = {
 const NO_MATCHING_TAGS_TEXT = "No matching tags";
 const NO_TAGS_TEXT = "No tags";
 
-export function TagPicker<T>(props: TagPickerProps<T>): React.ReactElement {
+export function TagPickerComponent<T>(
+    props: TagPickerProps<T>,
+    ref: React.ForwardedRef<HTMLDivElement>
+): React.ReactElement {
     const [selectedTags, setSelectedTags] = React.useState<T[]>(props.value);
     const [prevSelectedTags, setPrevSelectedTags] = React.useState<T[]>(props.value);
     const [dropdownVisible, setDropdownVisible] = React.useState<boolean>(false);
@@ -250,7 +253,7 @@ export function TagPicker<T>(props: TagPickerProps<T>): React.ReactElement {
     }
 
     return (
-        <BaseComponent disabled={props.disabled}>
+        <BaseComponent ref={ref} disabled={props.disabled}>
             <div
                 style={{ width: props.width }}
                 id={props.wrapperId}
@@ -320,6 +323,10 @@ export function TagPicker<T>(props: TagPickerProps<T>): React.ReactElement {
         </BaseComponent>
     );
 }
+
+export const TagPicker = React.forwardRef(TagPickerComponent) as <T>(
+    props: TagPickerProps<T> & { ref?: React.Ref<HTMLDivElement> }
+) => React.ReactElement;
 
 type TagProps<T> = {
     tag: TagOption<T>;

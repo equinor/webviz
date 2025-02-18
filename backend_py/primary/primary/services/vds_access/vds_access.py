@@ -7,7 +7,10 @@ from numpy.typing import NDArray
 from requests_toolbelt.multipart.decoder import MultipartDecoder, BodyPart
 import httpx
 
+from primary.services.service_exceptions import InvalidDataError, Service
+
 from primary import config
+from primary.httpx_client import httpx_async_client
 
 from .response_types import VdsMetadata, VdsFenceMetadata
 from .request_types import (
@@ -56,13 +59,12 @@ class VdsAccess:
     async def _query_async(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
         """Query the service"""
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{config.VDS_HOST_ADDRESS}/{endpoint}",
-                headers={"Content-Type": "application/json"},
-                content=json.dumps(request.request_parameters()),
-                timeout=60,
-            )
+        response = await httpx_async_client.client.post(
+            f"{config.VDS_HOST_ADDRESS}/{endpoint}",
+            headers={"Content-Type": "application/json"},
+            content=json.dumps(request.request_parameters()),
+            timeout=60,
+        )
 
         if response.is_error:
             raise RuntimeError(f"({str(response.status_code)})-{response.reason_phrase}-{response.text}")
@@ -159,20 +161,22 @@ class VdsAccess:
 
         # Validate parts from decoded response
         if len(parts) != 2 or not parts[0].content or not parts[1].content:
-            raise ValueError(f"Expected two parts, got {len(parts)}")
+            raise InvalidDataError(f"Expected two parts, got {len(parts)}", Service.VDS)
 
         # Expect each part in parts tuple to be BodyPart
         if not isinstance(parts[0], BodyPart) or not isinstance(parts[1], BodyPart):
-            raise ValueError(f"Expected parts to be BodyPart, got {type(parts[0])}, {type(parts[1])}")
+            raise InvalidDataError(
+                f"Expected parts to be BodyPart, got {type(parts[0])}, {type(parts[1])}", Service.VDS
+            )
 
         metadata = VdsFenceMetadata(**json.loads(parts[0].content))
         byte_array = parts[1].content
 
         if metadata.format != "<f4":
-            raise ValueError(f"Expected float32, got {metadata.format}")
+            raise InvalidDataError(f"Expected float32, got {metadata.format}", Service.VDS)
 
         if len(metadata.shape) != 2:
-            raise ValueError(f"Expected shape to be 2D, got {metadata.shape}")
+            raise InvalidDataError(f"Expected shape to be 2D, got {metadata.shape}", Service.VDS)
 
         # fence array data: [[t11, t12, ..., t1n], [t21, t22, ..., t2n], ..., [tm1, tm2, ..., tmn]]
         # m = num_traces, n = num_samples_per_trace

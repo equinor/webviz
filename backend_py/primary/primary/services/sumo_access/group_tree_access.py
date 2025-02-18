@@ -6,6 +6,8 @@ from fmu.sumo.explorer.objects import Case
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
+from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, Service
+
 from ._helpers import create_sumo_client, create_sumo_case_async
 
 
@@ -41,9 +43,9 @@ class GroupTreeAccess:
             if await table_collection.length_async() == 0:
                 return None
             if await table_collection.length_async() > 1:
-                raise ValueError("Multiple tables found.")
+                raise MultipleDataMatchesError("Multiple tables found.", service=Service.SUMO)
 
-            group_tree_df = table_collection[0].to_pandas()
+            group_tree_df = await table_collection[0].to_pandas_async()
 
             _validate_group_tree_df(group_tree_df)
 
@@ -72,4 +74,4 @@ def _validate_group_tree_df(df: pd.DataFrame) -> None:
     expected_columns = {"DATE", "CHILD", "KEYWORD", "PARENT"}
 
     if not expected_columns.issubset(df.columns):
-        raise ValueError(f"Expected columns: {expected_columns} - got: {df.columns}")
+        raise InvalidDataError(f"Expected columns: {expected_columns} - got: {df.columns}", Service.SUMO)

@@ -22,6 +22,11 @@ export const identifiersValuesAtom = atom((get) => {
     return filter?.identifiersValues ?? [];
 });
 
+export const areSelectedTablesComparableAtom = atom((get) => {
+    const filter = get(filterAtom);
+    return filter?.areSelectedTablesComparable ?? false;
+});
+
 export const doAccumulateFluidZonesAtom = atom((get) => {
     const subplotBy = get(subplotByAtom);
     const colorBy = get(colorByAtom);

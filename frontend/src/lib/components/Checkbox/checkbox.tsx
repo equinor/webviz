@@ -15,7 +15,7 @@ export type CheckboxProps = {
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => void;
 } & BaseComponentProps;
 
-export const Checkbox: React.FC<CheckboxProps> = (props) => {
+function CheckboxComponent(props: CheckboxProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const { onChange } = props;
 
     const [checked, setChecked] = React.useState<boolean>(props.checked ?? false);
@@ -36,36 +36,34 @@ export const Checkbox: React.FC<CheckboxProps> = (props) => {
     );
 
     return (
-        <BaseComponent disabled={props.disabled}>
-            <div className="flex gap-2 items-center">
-                <input
-                    id={props.id ?? id.current}
-                    name={props.name}
-                    ref={(el) => el && (el.indeterminate = props.indeterminate ?? false)}
-                    type="checkbox"
-                    checked={checked}
-                    onChange={handleChange}
-                    className={resolveClassNames(
-                        "w-4",
-                        "h-4",
-                        "text-blue-600",
-                        "border-gray-300",
-                        "rounded",
-                        "focus:ring-blue-500",
-                        "cursor-pointer"
-                    )}
-                />
-                {props.label && (
-                    <label
-                        htmlFor={props.id ?? id.current}
-                        className={resolveClassNames("block", "text-gray-900", "cursor-pointer")}
-                    >
-                        {props.label}
-                    </label>
+        <BaseComponent ref={ref} disabled={props.disabled} className="flex gap-2 items-center">
+            <input
+                id={props.id ?? id.current}
+                name={props.name}
+                ref={(el) => el && (el.indeterminate = props.indeterminate ?? false)}
+                type="checkbox"
+                checked={checked}
+                onChange={handleChange}
+                className={resolveClassNames(
+                    "w-4",
+                    "h-4",
+                    "text-blue-600",
+                    "border-gray-300",
+                    "rounded",
+                    "focus:ring-blue-500",
+                    "cursor-pointer"
                 )}
-            </div>
+            />
+            {props.label && (
+                <label
+                    htmlFor={props.id ?? id.current}
+                    className={resolveClassNames("block", "text-gray-900", "cursor-pointer")}
+                >
+                    {props.label}
+                </label>
+            )}
         </BaseComponent>
     );
-};
+}
 
-Checkbox.displayName = "Checkbox";
+export const Checkbox = React.forwardRef(CheckboxComponent);

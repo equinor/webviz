@@ -7,7 +7,7 @@ import { v4 } from "uuid";
 import { BaseComponent } from "../BaseComponent";
 import { BaseComponentProps } from "../BaseComponent";
 
-export type RadioProps<T extends string | number> = {
+type RadioProps<T extends string | number> = {
     name: string;
     label: React.ReactNode;
     value: T;
@@ -15,7 +15,7 @@ export type RadioProps<T extends string | number> = {
     onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: T) => void;
 } & BaseComponentProps;
 
-export function Radio<T extends string | number>(props: RadioProps<T>): JSX.Element {
+function Radio<T extends string | number>(props: RadioProps<T>): JSX.Element {
     return (
         <BaseComponent disabled={props.disabled}>
             <label className="relative inline-flex align-middle gap-2 items-center group">
@@ -72,34 +72,35 @@ export type RadioGroupProps<T extends string | number> = {
     direction?: "horizontal" | "vertical";
 } & BaseComponentProps;
 
-export function RadioGroup<T extends string | number>(props: RadioGroupProps<T>): JSX.Element {
+function RadioGroupComponent<T extends string | number>(
+    props: RadioGroupProps<T>,
+    ref: React.ForwardedRef<HTMLDivElement>
+) {
     const name = React.useRef<string>(props.name || v4());
     return (
-        <BaseComponent disabled={props.disabled}>
+        <BaseComponent ref={ref} disabled={props.disabled}>
+            <span>{props.name}</span>
             <div
-                className={resolveClassNames({
-                    "opacity-30 pointer-events-none": props.disabled === true,
+                className={resolveClassNames("flex", "radio-group", "gap-y-1", "gap-x-3", {
+                    "flex-col": props.direction !== "horizontal",
                 })}
             >
-                <span>{props.name}</span>
-                <div
-                    className={resolveClassNames("flex", "radio-group", "gap-y-1", "gap-x-3", {
-                        "flex-col": props.direction !== "horizontal",
-                    })}
-                >
-                    {props.options.map((option) => (
-                        <Radio
-                            key={option.value}
-                            name={name.current}
-                            label={option.label}
-                            value={option.value}
-                            checked={option.value === props.value}
-                            onChange={props.onChange}
-                            disabled={option.disabled}
-                        />
-                    ))}
-                </div>
+                {props.options.map((option) => (
+                    <Radio
+                        key={option.value}
+                        name={name.current}
+                        label={option.label}
+                        value={option.value}
+                        checked={option.value === props.value}
+                        onChange={props.onChange}
+                        disabled={option.disabled}
+                    />
+                ))}
             </div>
         </BaseComponent>
     );
 }
+
+export const RadioGroup = React.forwardRef(RadioGroupComponent) as <TValue extends string | number>(
+    props: RadioGroupProps<TValue> & { ref?: React.Ref<HTMLDivElement> }
+) => React.ReactElement;

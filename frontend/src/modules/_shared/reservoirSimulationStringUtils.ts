@@ -20,28 +20,12 @@ function getVectorDefinition(vector: string): VectorDefinition | null {
 }
 
 /**
- * Returns a more human friendly description of the vector name if possible, otherwise returns the vector name as is.
- *
- * NOTE:
- *   - Based on https://github.com/equinor/webviz-subsurface/blob/master/webviz_subsurface/_abbreviations/reservoir_simulation.py
- *   - Handle user defined vectors later on
+ * Returns the vector definition for the simulation vector if it exists, otherwise returns null.
  */
-export function simulationVectorDescription(vector: string): string {
-    let prefix = "";
-    let suffix = "";
-    if (vector.startsWith("PER_DAY_")) {
-        prefix = "Average ";
-        suffix = " Per day";
-        vector = vector.slice("PER_DAY_".length);
-    } else if (vector.startsWith("PER_INTVL_")) {
-        prefix = "Interval ";
-        vector = vector.slice("PER_INTVL_".length);
-    }
-
+export function simulationVectorDefinition(vector: string): VectorDefinition | null {
     let vectorName = vector;
-    let node: string | null = null;
     if (vector.includes(":")) {
-        [vectorName, node] = vector.split(":", 2);
+        [vectorName] = vector.split(":", 2);
     }
 
     // Handle regions and completions
@@ -53,33 +37,62 @@ export function simulationVectorDescription(vector: string): string {
             // Underscores _ are always used to fill
 
             const vectorBaseName = vectorName.slice(0, 5).replace(/_+$/, ""); // Equivalent to rstrip("_")
-            const fip = vectorName.slice(5);
-
-            const definition = getVectorDefinition(vectorBaseName);
-            if (definition && definition.type === "region") {
-                return `${prefix}${definition.description}${suffix}, region ${fip} ${node ?? ""}`;
-            }
+            return getVectorDefinition(vectorBaseName);
         } else if (vectorName[0] === "W" && vectorName[4] === "L") {
             // These are completion vectors, e.g. WWCTL:__1:OP_1 and WOPRL_10:OP_1 for
             // water-cut in OP_1 completion 1 and oil production rate in OP_1 completion 10
 
             const vectorBaseName = vector.slice(0, 5);
-            const comp = vectorName.slice(5).replace(/^_+/, ""); // Equivalent to lstrip("_")
-
-            const definition = getVectorDefinition(vectorBaseName);
-            if (definition && definition.type === "completion") {
-                return `${prefix}${definition.description}${suffix}, well ${node ?? ""} completion ${comp}`;
-            }
+            return getVectorDefinition(vectorBaseName);
         }
     }
 
-    const definition = getVectorDefinition(vectorName);
-    if (definition) {
-        if (node === null) {
-            return `${prefix}${definition.description}${suffix}`;
-        }
-        return `${prefix}${definition.description}${suffix}, ${definition.type.replace(/_/g, " ")} ${node}`;
+    return getVectorDefinition(vectorName);
+}
+
+/**
+ * Returns a more human friendly description of the vector name if possible, otherwise returns the vector name as is.
+ *
+ * Optional prefix and suffix can be added to the description. These are added before and after the vector base name description.
+ * This implies suffix to be added in front of any well, region or completion description.
+ *
+ * Exampled usage: simulationVectorDescription("WOPR:A1", "Average ", " Per Day") => "Average Oil Production Rate Per Day, well A1"
+ *
+ * NOTE:
+ *   - Based on https://github.com/equinor/webviz-subsurface/blob/master/webviz_subsurface/_abbreviations/reservoir_simulation.py
+ *   - Handle user defined vectors later on
+ */
+export function simulationVectorDescription(
+    vector: string,
+    vectorBasePrefix = "",
+    vectorBaseSuffix = "",
+    excludeTypeDescription = false
+): string {
+    const [vectorName, node] = vector.includes(":") ? vector.split(":", 2) : [vector, null];
+    const vectorDefinition = simulationVectorDefinition(vectorName);
+
+    if (!vectorDefinition) {
+        return `${vectorBasePrefix}${vector}${vectorBaseSuffix}`;
     }
 
-    return `${prefix}${vector}${suffix}`;
+    const { description, type } = vectorDefinition;
+    const baseDescription = `${vectorBasePrefix}${description}${vectorBaseSuffix}`;
+
+    if (excludeTypeDescription) {
+        return baseDescription;
+    }
+
+    if (type === "region") {
+        const fip = vectorName.slice(5);
+        const region = fip ? `region ${fip} ${node ?? ""}` : `region ${node ?? ""}`;
+        return `${baseDescription}, ${region}`;
+    }
+    if (type === "completion") {
+        const comp = vectorName.slice(5).replace(/^_+/, ""); // Equivalent to lstrip("_")
+        return `${baseDescription}, well ${node ?? ""} completion ${comp}`;
+    }
+    if (node) {
+        return `${baseDescription}, ${type.replace(/_/g, " ")} ${node}`;
+    }
+    return baseDescription;
 }

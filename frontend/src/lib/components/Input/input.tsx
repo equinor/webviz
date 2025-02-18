@@ -14,7 +14,7 @@ export type InputProps = InputUnstyledProps & {
     onValueChange?: (value: string) => void;
 };
 
-export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRef<HTMLInputElement>) => {
+function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const {
         startAdornment,
         endAdornment,
@@ -53,7 +53,6 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
     const handleAdornmentClick = React.useCallback((event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
         if (internalRef.current) {
             internalRef.current.focus();
-            internalRef.current.getElementsByTagName("input")[0].focus();
         }
         event.stopPropagation();
     }, []);
@@ -127,66 +126,63 @@ export const Input = React.forwardRef((props: InputProps, ref: React.ForwardedRe
     }
 
     return (
-        <BaseComponent disabled={props.disabled}>
-            <div
-                ref={ref}
-                className={resolveClassNames(
-                    "flex",
-                    "justify-center",
-                    "gap-2",
-                    "bg-white",
-                    "border",
-                    "border-gray-300",
-                    "shadow-sm",
-                    "focus:border-indigo-500",
-                    "w-full",
-                    "h-full",
-                    "sm:text-sm",
-                    "px-2",
-                    "py-1.5",
-                    "outline-none",
-                    "cursor-text",
-                    {
-                        "border-red-300": props.error,
-                        "border-2": props.error,
-                        "rounded-l": props.rounded === "left",
-                        "rounded-r": props.rounded === "right",
-                        rounded: props.rounded === "all" || !props.rounded,
-                    }
-                )}
-                style={wrapperStyle}
-            >
-                {startAdornment && (
-                    <div className="flex items-center h-full" onClick={handleAdornmentClick}>
-                        {startAdornment}
-                    </div>
-                )}
-                <InputUnstyled
-                    {...other}
-                    value={value}
-                    onChange={handleInputChange}
-                    onBlur={handleInputEditingDone}
-                    onKeyUp={handleKeyUp}
-                    ref={internalRef}
-                    slotProps={{
-                        root: {
-                            className: "grow",
-                        },
-                        input: {
-                            className: resolveClassNames(
-                                "h-full focus:border-indigo-500 block w-full sm:text-sm border-gray-300 outline-none truncate"
-                            ),
-                        },
-                    }}
-                />
-                {endAdornment && (
-                    <div className="flex items-center h-full" onClick={handleAdornmentClick}>
-                        {endAdornment}
-                    </div>
-                )}
-            </div>
+        <BaseComponent
+            disabled={props.disabled}
+            ref={ref}
+            className={resolveClassNames(
+                "flex",
+                "justify-center",
+                "gap-2",
+                "bg-white",
+                "border",
+                "border-gray-300",
+                "shadow-sm",
+                "focus-within:border-indigo-500",
+                "w-full",
+                "h-full",
+                "sm:text-sm",
+                "px-2",
+                "py-1.5",
+                "outline-none",
+                "cursor-text",
+                {
+                    "border-red-300": props.error,
+                    "border-2": props.error,
+                    "rounded-l": props.rounded === "left",
+                    "rounded-r": props.rounded === "right",
+                    rounded: props.rounded === "all" || !props.rounded,
+                }
+            )}
+            style={wrapperStyle}
+        >
+            {startAdornment && (
+                <div className="flex items-center h-full" onClick={handleAdornmentClick}>
+                    {startAdornment}
+                </div>
+            )}
+            <InputUnstyled
+                {...other}
+                value={value}
+                onChange={handleInputChange}
+                onBlur={handleInputEditingDone}
+                onKeyUp={handleKeyUp}
+                slotProps={{
+                    root: {
+                        className: "grow",
+                    },
+                    input: {
+                        className: resolveClassNames("h-full block w-full sm:text-sm outline-none truncate"),
+                        ref: internalRef,
+                    },
+                }}
+            />
+            {endAdornment && (
+                <div className="flex items-center h-full" onClick={handleAdornmentClick}>
+                    {endAdornment}
+                </div>
+            )}
         </BaseComponent>
     );
-});
+}
 
-Input.displayName = "Input";
+export const Input = React.forwardRef(InputComponent);

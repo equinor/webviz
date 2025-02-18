@@ -92,7 +92,7 @@ export const activeTimestampUtcMsAtom = atom<number | null>((get) => {
         loadedVectorSpecificationsAndRealizationData.length > 0
     ) {
         const firstTimeStamp =
-            loadedVectorSpecificationsAndRealizationData.at(0)?.data.at(0)?.timestamps_utc_ms[0] ?? null;
+            loadedVectorSpecificationsAndRealizationData.at(0)?.data.at(0)?.timestampsUtcMs[0] ?? null;
         return firstTimeStamp;
     }
 
