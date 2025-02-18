@@ -174,10 +174,11 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
     const [keyboardFocus, setKeyboardFocus] = React.useState<boolean>(false);
 
     const inputRef = React.useRef<HTMLInputElement>(null);
+    const inputWrapperRef = React.useRef<HTMLDivElement>(null);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const inputBoundingRect = useElementBoundingRect(inputRef);
+    const inputBoundingRect = useElementBoundingRect(inputWrapperRef);
 
     // Sets the currently focused item as the selected item
     const setOptionIndexWithFocusToCurrentSelection = React.useCallback(
@@ -222,24 +223,22 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
     }, []);
 
     React.useEffect(
-        function setupInputBlurListener() {
-            // ! The ref is *actually* the div wrapping the input, so normal "blur" is not available
-            function handleInputFocusOut(event: FocusEvent) {
+        function setupInputWrapperFocusOutListener() {
+            function handleWrapperFocusOut(event: FocusEvent) {
                 if (
-                    inputRef.current &&
-                    !inputRef.current.contains(event.relatedTarget as Node) &&
-                    dropdownRef.current &&
-                    !dropdownRef.current.contains(event.relatedTarget as Node)
+                    !inputWrapperRef.current?.contains(event.relatedTarget as Node) &&
+                    !dropdownRef.current?.contains(event.relatedTarget as Node)
                 ) {
                     closePopover();
                 }
             }
 
-            const dropdownInput = inputRef.current;
-            dropdownInput?.addEventListener("focusout", handleInputFocusOut);
+            // Adding listener to the *wrapper*, since focus might move to adornments
+            const dropdownWrapper = inputWrapperRef.current;
+            dropdownWrapper?.addEventListener("focusout", handleWrapperFocusOut);
 
-            return function removeInputBlurListener() {
-                dropdownInput?.removeEventListener("focusout", handleInputFocusOut);
+            return function removeInputWrapperFocusOutListener() {
+                dropdownWrapper?.removeEventListener("focusout", handleWrapperFocusOut);
             };
         },
         [closePopover]
@@ -282,7 +281,6 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
     React.useEffect(
         function computeDropdownRectEffect() {
             if (dropdownVisible) {
-                const inputClientBoundingRect = inputRef.current?.getBoundingClientRect();
                 const bodyClientBoundingRect = document.body.getBoundingClientRect();
 
                 const preferredHeight =
@@ -291,29 +289,28 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                         Math.max(filteredOptionsWithSeparators.length * OPTION_HEIGHT, OPTION_HEIGHT)
                     ) + 2;
 
-                if (inputClientBoundingRect && bodyClientBoundingRect) {
+                if (inputBoundingRect && bodyClientBoundingRect) {
                     const newDropdownRect: DropdownRect = {
                         minWidth: inputBoundingRect.width,
                         width: dropdownRect.width,
                         height: preferredHeight,
                     };
 
-                    if (inputClientBoundingRect.y + inputBoundingRect.height + preferredHeight > window.innerHeight) {
-                        const height = Math.min(inputClientBoundingRect.y, preferredHeight);
-                        newDropdownRect.top = inputClientBoundingRect.y - height;
+                    if (inputBoundingRect.y + inputBoundingRect.height + preferredHeight > window.innerHeight) {
+                        const height = Math.min(inputBoundingRect.y, preferredHeight);
+                        newDropdownRect.top = inputBoundingRect.y - height;
                         newDropdownRect.height = height;
                     } else {
-                        newDropdownRect.top = inputClientBoundingRect.y + inputBoundingRect.height;
+                        newDropdownRect.top = inputBoundingRect.y + inputBoundingRect.height;
                         newDropdownRect.height = Math.min(
                             preferredHeight,
-                            window.innerHeight - inputClientBoundingRect.y - inputBoundingRect.height
+                            window.innerHeight - inputBoundingRect.y - inputBoundingRect.height
                         );
                     }
-                    if (inputClientBoundingRect.x + inputBoundingRect.width > window.innerWidth / 2) {
-                        newDropdownRect.right =
-                            window.innerWidth - (inputClientBoundingRect.x + inputBoundingRect.width);
+                    if (inputBoundingRect.x + inputBoundingRect.width > window.innerWidth / 2) {
+                        newDropdownRect.right = window.innerWidth - (inputBoundingRect.x + inputBoundingRect.width);
                     } else {
-                        newDropdownRect.left = inputClientBoundingRect.x;
+                        newDropdownRect.left = inputBoundingRect.x;
                     }
 
                     setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }));
@@ -377,8 +374,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
             function handleKeyDown(e: KeyboardEvent) {
                 // Close the dropdown
                 if (dropdownVisible && e.key === "Escape") {
-                    inputRef.current?.blur();
-                    // closePopover();
+                    closePopover();
                 }
 
                 // Select the currently highlighted element
@@ -536,8 +532,9 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
             <div style={{ width: props.width }} id={props.wrapperId} className="flex hover input-comp rounded">
                 <div className="flex-grow">
                     <Input
-                        inputRef={inputRef}
                         id={props.id}
+                        ref={inputWrapperRef}
+                        inputRef={inputRef}
                         error={
                             !!selection &&
                             !allOptionsWithSeparators.find((option) => isOptionOfValue(option, selection)) &&
@@ -561,6 +558,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                         rounded={props.showArrows ? "left" : "all"}
                         placeholder={props.placeholder}
                         onClick={() => handleInputClick()}
+                        onFocus={() => setDropdownVisible(true)}
                         onChange={handleInputChange}
                     />
                 </div>
