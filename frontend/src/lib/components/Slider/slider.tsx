@@ -171,7 +171,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
         };
     }, []);
 
-    // This function converts the slider value to a content for label
+    // This function converts the slider value to a content string for the label
     const formatLabelValue = React.useCallback(
         function formatLabelValue(labelValue: number): React.ReactNode {
             const adjustedValue = scale ? scale(labelValue) : labelValue;
