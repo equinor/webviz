@@ -8,10 +8,6 @@ from . import schemas
 
 
 def to_api_vds_cube_meta(seismic_meta: SeismicCubeMeta) -> schemas.SeismicCubeMeta:
-    """
-    Create API SeismicCubeMeta from VdsSliceMetadata
-    """
-
     return schemas.SeismicCubeMeta(
         seismicAttribute=seismic_meta.seismic_attribute,
         unit=seismic_meta.unit,
@@ -38,7 +34,7 @@ def to_api_vds_cube_meta(seismic_meta: SeismicCubeMeta) -> schemas.SeismicCubeMe
             zInc=seismic_meta.spec.z_inc,
             yFlip=seismic_meta.spec.y_flip,
             zFlip=seismic_meta.spec.z_flip,
-            rotation=seismic_meta.spec.rotation,
+            rotationDeg=seismic_meta.spec.rotation,
         ),
     )
 
@@ -46,21 +42,17 @@ def to_api_vds_cube_meta(seismic_meta: SeismicCubeMeta) -> schemas.SeismicCubeMe
 def to_api_vds_slice_data(
     flattened_slice_traces_array: NDArray[np.float32], metadata: VdsSliceMetadata
 ) -> schemas.SeismicSliceData:
-    """
-    Create API SeismicCrosslineData from VdsSliceMetadata and flattened slice traces array
-    """
-
     return schemas.SeismicSliceData(
         slice_traces_b64arr=b64_encode_float_array_as_float32(flattened_slice_traces_array),
         bbox_utm=metadata.geospatial,
-        u_min=metadata.x["min"],
-        u_max=metadata.x["max"],
-        u_num_samples=metadata.x["samples"],
-        u_unit=metadata.x["unit"],
-        v_min=metadata.y["min"],
-        v_max=metadata.y["max"],
-        v_num_samples=metadata.y["samples"],
-        v_unit=metadata.y["unit"],
-        value_min=np.nanmin(flattened_slice_traces_array),
-        value_max=np.nanmax(flattened_slice_traces_array),
+        u_min=metadata.x_axis.min,
+        u_max=metadata.x_axis.max,
+        u_num_samples=metadata.x_axis.samples,
+        u_unit=metadata.x_axis.unit,
+        v_min=metadata.y_axis.min,
+        v_max=metadata.y_axis.max,
+        v_num_samples=metadata.y_axis.samples,
+        v_unit=metadata.y_axis.unit,
+        value_min=np.nanmin(flattened_slice_traces_array).astype(float),
+        value_max=np.nanmax(flattened_slice_traces_array).astype(float),
     )

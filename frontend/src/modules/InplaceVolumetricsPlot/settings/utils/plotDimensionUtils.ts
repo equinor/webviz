@@ -37,7 +37,7 @@ export function makeSubplotByOptions(
         },
     ];
 
-    for (const identifier of tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()) {
+    for (const identifier of tableDefinitionsAccessor.getCommonIdentifiersWithValues()) {
         options.push({
             value: identifier.identifier,
             label: identifier.identifier,
@@ -98,7 +98,7 @@ export function makeColorByOptions(
         });
     }
 
-    for (const identifier of tableDefinitionsAccessor.getIdentifiersWithIntersectionValues()) {
+    for (const identifier of tableDefinitionsAccessor.getCommonIdentifiersWithValues()) {
         if (selectedSubplotBy !== identifier.identifier) {
             options.push({
                 value: identifier.identifier,

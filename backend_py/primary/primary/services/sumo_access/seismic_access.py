@@ -6,8 +6,10 @@ from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.objects import Case
 from fmu.sumo.explorer.objects.cube_collection import CubeCollection
 
+from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
+
 from ._helpers import create_sumo_client, create_sumo_case_async
-from .seismic_types import SeismicCubeMeta, VdsHandle
+from .seismic_types import SeismicCubeMeta, SeismicCubeSpec, VdsHandle
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,13 +37,28 @@ class SeismicAccess:
             t_end = cube["data"].get("time", {}).get("t1", {}).get("value", None)
 
             if not t_start and not t_end:
-                raise ValueError(f"Cube {cube['data']['tagname']} has no time information")
+                raise InvalidDataError(f"Cube {cube['data']['tagname']} has no time information", Service.VDS)
 
             if t_start and not t_end:
                 iso_string_or_time_interval = t_start
 
             else:
                 iso_string_or_time_interval = f"{t_start}/{t_end}"
+
+            seismic_spec = SeismicCubeSpec(
+                num_cols=cube["data"]["spec"]["ncol"],
+                num_rows=cube["data"]["spec"]["nrow"],
+                num_layers=cube["data"]["spec"]["nlay"],
+                x_origin=cube["data"]["spec"]["xori"],
+                y_origin=cube["data"]["spec"]["yori"],
+                z_origin=cube["data"]["spec"]["zori"],
+                x_inc=cube["data"]["spec"]["xinc"],
+                y_inc=cube["data"]["spec"]["yinc"],
+                z_inc=cube["data"]["spec"]["zinc"],
+                y_flip=cube["data"]["spec"]["yflip"],
+                z_flip=cube["data"]["spec"]["zflip"],
+                rotation=cube["data"]["spec"]["rotation"],
+            )
             seismic_meta = SeismicCubeMeta(
                 seismic_attribute=cube["data"].get("tagname"),
                 unit=cube["data"].get("unit"),
@@ -49,20 +66,7 @@ class SeismicAccess:
                 is_observation=cube["data"]["is_observation"],
                 is_depth=cube["data"].get("vertical_domain", "depth") == "depth",
                 bbox=cube["data"]["bbox"],
-                spec={
-                    "num_cols": cube["data"]["spec"]["ncol"],
-                    "num_rows": cube["data"]["spec"]["nrow"],
-                    "num_layers": cube["data"]["spec"]["nlay"],
-                    "x_origin": cube["data"]["spec"]["xori"],
-                    "y_origin": cube["data"]["spec"]["yori"],
-                    "z_origin": cube["data"]["spec"]["zori"],
-                    "x_inc": cube["data"]["spec"]["xinc"],
-                    "y_inc": cube["data"]["spec"]["yinc"],
-                    "z_inc": cube["data"]["spec"]["zinc"],
-                    "y_flip": cube["data"]["spec"]["yflip"],
-                    "z_flip": cube["data"]["spec"]["zflip"],
-                    "rotation": cube["data"]["spec"]["rotation"],
-                },
+                spec=seismic_spec,
             )
             seismic_cube_meta_list.append(seismic_meta)
         return seismic_cube_meta_list
@@ -109,9 +113,11 @@ class SeismicAccess:
                 break
 
         if not cubes:
-            raise ValueError(f"Cube {seismic_attribute} not found in case {self._case_uuid}")
+            raise NoDataError(f"Cube {seismic_attribute} not found in case {self._case_uuid}", Service.VDS)
         if len(cubes) > 1:
-            raise ValueError(f"Multiple cubes found for {seismic_attribute} in case {self._case_uuid}")
+            raise MultipleDataMatchesError(
+                f"Multiple cubes found for {seismic_attribute} in case {self._case_uuid}", Service.VDS
+            )
         cube = cubes[0]
 
         return VdsHandle(

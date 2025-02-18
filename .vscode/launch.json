@@ -26,6 +26,18 @@
       "request": "launch",
       "program": "${workspaceFolder}/frontend/scripts/add-api-suffix.cjs",
       "args": ["--suffix", "'__api'", "--dir", "'src/api/'"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Current Test File",
+      "autoAttachChildProcesses": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "cwd": "${workspaceRoot}/frontend/",
+      "program": "${workspaceRoot}/frontend/node_modules/vitest/vitest.mjs",
+      "args": ["run"],
+      "smartStep": true,
+      "console": "integratedTerminal"
     }
   ]
 }

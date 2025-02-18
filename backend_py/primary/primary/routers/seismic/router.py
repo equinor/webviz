@@ -69,7 +69,7 @@ async def get_inline_slice(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    flattened_slice_traces_array, metadata = await vds_access.get_inline_slice(line_no=inline_no)
+    flattened_slice_traces_array, metadata = await vds_access.get_inline_slice_async(line_no=inline_no)
 
     return converters.to_api_vds_slice_data(
         flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
@@ -108,7 +108,7 @@ async def get_crossline_slice(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    flattened_slice_traces_array, metadata = await vds_access.get_crossline_slice(line_no=crossline_no)
+    flattened_slice_traces_array, metadata = await vds_access.get_crossline_slice_async(line_no=crossline_no)
 
     return converters.to_api_vds_slice_data(
         flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
@@ -124,7 +124,7 @@ async def get_depth_slice(
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
     observed: bool = Query(description="Observed or simulated"),
-    depth: int = Query(description="depth"),
+    depth_slice_no: int = Query(description="Depth slice no"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic depth slice from a seismic cube."""
     seismic_access = await SeismicAccess.from_case_uuid_async(
@@ -147,7 +147,7 @@ async def get_depth_slice(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    flattened_slice_traces_array, metadata = await vds_access.get_depth_slice(depth=depth)
+    flattened_slice_traces_array, metadata = await vds_access.get_depth_slice_async(depth_slice_no=depth_slice_no)
 
     return converters.to_api_vds_slice_data(
         flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
@@ -206,7 +206,7 @@ async def post_get_seismic_fence(
     meta: VdsMetadata = await vds_access.get_metadata_async()
 
     if len(meta.axis) != 3:
-        raise ValueError(f"Expected 3 axes, got {len(meta.axis)}")
+        raise HTTPException(status_code=400, detail=f"Expected 3 axes, got {len(meta.axis)}")
     depth_axis_meta = meta.axis[2]
 
     return schemas.SeismicFenceData(

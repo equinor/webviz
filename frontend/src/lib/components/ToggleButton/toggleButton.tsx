@@ -7,9 +7,10 @@ import { BaseComponent } from "../BaseComponent";
 export type ToggleButtonProps = ButtonUnstyledProps & {
     active: boolean;
     onToggle: (active: boolean) => void;
+    buttonRef?: React.Ref<HTMLButtonElement>;
 };
 
-export const ToggleButton = React.forwardRef((props: ToggleButtonProps, ref: React.ForwardedRef<HTMLButtonElement>) => {
+function ToggleButtonComponent(props: ToggleButtonProps, ref: React.ForwardedRef<HTMLDivElement>) {
     const { active, onToggle, ...other } = props;
     const [isActive, setIsActive] = React.useState<boolean>(active);
     const [prevActive, setPrevActive] = React.useState<boolean>(active);
@@ -19,17 +20,23 @@ export const ToggleButton = React.forwardRef((props: ToggleButtonProps, ref: Rea
         setPrevActive(active);
     }
 
+    const buttonRef = React.useRef<HTMLButtonElement>(null);
+    React.useImperativeHandle<HTMLButtonElement | null, HTMLButtonElement | null>(
+        props.buttonRef,
+        () => buttonRef.current
+    );
+
     const handleClick = React.useCallback(() => {
         setIsActive(!isActive);
         onToggle(!active);
     }, [active, onToggle, isActive]);
 
     return (
-        <BaseComponent disabled={props.disabled}>
+        <BaseComponent ref={ref} disabled={props.disabled}>
             <ButtonUnstyled
                 {...other}
                 onClick={handleClick}
-                ref={ref}
+                ref={buttonRef}
                 slotProps={{
                     root: {
                         className: `inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500${
@@ -40,6 +47,6 @@ export const ToggleButton = React.forwardRef((props: ToggleButtonProps, ref: Rea
             />
         </BaseComponent>
     );
-});
+}
 
-ToggleButton.displayName = "ToggleButton";
+export const ToggleButton = React.forwardRef(ToggleButtonComponent);

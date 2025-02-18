@@ -12,8 +12,10 @@ from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from primary.auth.auth_helper import AuthHelper
 from primary.auth.enforce_logged_in_middleware import EnforceLoggedInMiddleware
 from primary.middleware.add_process_time_to_server_timing_middleware import AddProcessTimeToServerTimingMiddleware
+
+from primary.middleware.add_browser_cache import AddBrowserCacheMiddleware
 from primary.routers.dev.router import router as dev_router
-from primary.routers.explore import router as explore_router
+from primary.routers.explore.router import router as explore_router
 from primary.routers.general import router as general_router
 from primary.routers.graph.router import router as graph_router
 from primary.routers.grid3d.router import router as grid3d_router
@@ -36,7 +38,7 @@ from primary.utils.exception_handlers import override_default_fastapi_exception_
 from primary.utils.logging_setup import ensure_console_log_handler_is_configured, setup_normal_log_levels
 
 from . import config
-
+from .httpx_client import httpx_async_client
 
 ensure_console_log_handler_is_configured()
 setup_normal_log_levels()
@@ -44,10 +46,13 @@ setup_normal_log_levels()
 # temporarily set some loggers to DEBUG
 # logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("primary.services.sumo_access").setLevel(logging.DEBUG)
-logging.getLogger("primary.services.user_session_manager").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.smda_access").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.ssdl_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
+# logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
+# logging.getLogger("uvicorn.access").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -67,6 +72,17 @@ if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
     setup_azure_monitor_telemetry(app)
 else:
     LOGGER.warning("Skipping telemetry configuration, APPLICATIONINSIGHTS_CONNECTION_STRING env variable not set.")
+
+
+# Start the httpx client on startup and stop it on shutdown of the app
+@app.on_event("startup")
+async def startup_event() -> None:
+    httpx_async_client.start()
+
+
+@app.on_event("shutdown")
+async def shutdown_event() -> None:
+    await httpx_async_client.stop()
 
 
 # The tags we add here will determine the name of the frontend api service for our endpoints as well as
@@ -104,6 +120,7 @@ app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total-ex
 # Also redirects to /login endpoint for some select paths
 unprotected_paths = ["/logged_in_user", "/alive", "/openapi.json"]
 paths_redirected_to_login = ["/", "/alive_protected"]
+
 app.add_middleware(
     EnforceLoggedInMiddleware,
     unprotected_paths=unprotected_paths,
@@ -117,6 +134,7 @@ app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 # This middleware instance measures execution time of the endpoints, including the cost of other middleware
 app.add_middleware(AddProcessTimeToServerTimingMiddleware, metric_name="total")
+app.add_middleware(AddBrowserCacheMiddleware)
 
 
 @app.get("/")

@@ -59,6 +59,7 @@ export interface SerializedSharedSetting extends SerializedItem {
     type: SerializedType.SHARED_SETTING;
     settingType: SettingType;
     wrappedSettingClass: string;
+    wrappedSettingCtorParams: any[];
     value: string;
 }
 
@@ -216,6 +217,7 @@ export interface Setting<TValue> {
     serializeValue?: (value: TValue) => string;
     deserializeValue?: (serializedValue: string) => TValue;
     valueToString?: (args: ValueToStringArgs<TValue>) => string;
+    getConstructorParams?: () => any[];
 }
 
 export type Settings = { [key in SettingType]?: any };

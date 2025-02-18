@@ -1,16 +1,15 @@
-import { WellboreHeader_api } from "@api";
+import { WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
 import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
-import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import {
-    allSelectedWellLogCurvesAtom,
+    requiredCurvesAtom,
     selectedFieldIdentifierAtom,
     selectedWellboreHeaderAtom,
     selectedWellborePicksAtom,
-    wellLogTemplateTracks,
+    wellLogTemplateTracksAtom,
 } from "./settings/atoms/derivedAtoms";
 import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "./settings/atoms/persistedAtoms";
+import { TemplateTrackConfig } from "./types";
 
 export type InterfaceTypes = {
     settingsToView: SettingsToViewInterface;
@@ -19,19 +18,19 @@ export type InterfaceTypes = {
 export type SettingsToViewInterface = {
     selectedField: string | null;
     wellboreHeader: WellboreHeader_api | null;
-    requiredDataCurves: string[];
-    templateTracks: TemplateTrack[];
+    templateTracks: TemplateTrackConfig[];
     viewerHorizontal: boolean;
     padDataWithEmptyRows: boolean;
-    selectedWellborePicks: WellPicksLayerData;
+    selectedWellborePicks: WellborePick_api[];
+    requiredCurves: WellboreLogCurveHeader_api[];
 };
 
 export const settingsToViewInterfaceInitialization: InterfaceInitialization<SettingsToViewInterface> = {
     selectedField: (get) => get(selectedFieldIdentifierAtom),
     wellboreHeader: (get) => get(selectedWellboreHeaderAtom),
-    templateTracks: (get) => get(wellLogTemplateTracks),
-    requiredDataCurves: (get) => get(allSelectedWellLogCurvesAtom),
+    templateTracks: (get) => get(wellLogTemplateTracksAtom),
     viewerHorizontal: (get) => get(viewerHorizontalAtom),
     padDataWithEmptyRows: (get) => get(padDataWithEmptyRowsAtom),
     selectedWellborePicks: (get) => get(selectedWellborePicksAtom),
+    requiredCurves: (get) => get(requiredCurvesAtom),
 };

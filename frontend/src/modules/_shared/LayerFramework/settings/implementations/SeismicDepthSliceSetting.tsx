@@ -49,7 +49,7 @@ export class SeismicDepthSliceSetting implements Setting<ValueType> {
     }
 
     fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
-        if (availableValues.length < 3) {
+        if (availableValues.length < 2) {
             return null;
         }
 
@@ -68,7 +68,7 @@ export class SeismicDepthSliceSetting implements Setting<ValueType> {
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function KRangeSlider(props: SettingComponentProps<ValueType>) {
+        return function RangeSlider(props: SettingComponentProps<ValueType>) {
             function handleSliderChange(_: any, value: number | number[]) {
                 if (Array.isArray(value)) {
                     return value[0];
@@ -92,8 +92,6 @@ export class SeismicDepthSliceSetting implements Setting<ValueType> {
                 props.onValueChange(closestValue);
             }
 
-            const validValue = props.value ?? props.availableValues[0] ?? 1;
-
             return (
                 <div className="flex items-center space-x-1">
                     <div className="flex-grow">
@@ -101,14 +99,14 @@ export class SeismicDepthSliceSetting implements Setting<ValueType> {
                             min={props.availableValues[0]}
                             max={props.availableValues[1]}
                             onChange={handleSliderChange}
-                            value={validValue}
+                            value={props.value ?? props.availableValues[0] ?? 1}
                             debounceTimeMs={500}
                             valueLabelDisplay="auto"
                             step={props.availableValues[2]}
                         />
                     </div>
                     <div className="w-1/5">
-                        <Input value={validValue} onChange={handleInputChange} />
+                        <Input value={props.value} onChange={handleInputChange} />
                     </div>
                 </div>
             );
