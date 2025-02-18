@@ -102,6 +102,7 @@ export class SharedSetting implements Item {
             ...this._itemDelegate.serializeState(),
             type: SerializedType.SHARED_SETTING,
             wrappedSettingClass: this._wrappedSetting.constructor.name,
+            wrappedSettingCtorParams: this._wrappedSetting.getConstructorParams?.() ?? [],
             settingType: this._wrappedSetting.getType(),
             value: this._wrappedSetting.getDelegate().serializeValue(),
         };

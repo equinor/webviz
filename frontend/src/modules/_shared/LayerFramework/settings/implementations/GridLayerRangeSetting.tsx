@@ -9,19 +9,47 @@ import { SettingType } from "../settingsTypes";
 
 type ValueType = [number, number] | null;
 
-export class GridLayerIRangeSetting implements Setting<ValueType> {
-    private _delegate: SettingDelegate<ValueType>;
+export enum Direction {
+    I,
+    J,
+    K,
+}
 
-    constructor() {
+export class GridLayerRangeSetting implements Setting<ValueType> {
+    private _delegate: SettingDelegate<ValueType>;
+    private _direction: Direction;
+    private _params: [Direction];
+
+    constructor(...params: [Direction]) {
         this._delegate = new SettingDelegate<ValueType>(null, this);
+        this._params = params;
+        this._direction = params[0];
+    }
+
+    getConstructorParams() {
+        return this._params;
     }
 
     getType(): SettingType {
-        return SettingType.GRID_LAYER_I_RANGE;
+        switch (this._direction) {
+            case Direction.I:
+                return SettingType.GRID_LAYER_I_RANGE;
+            case Direction.J:
+                return SettingType.GRID_LAYER_J_RANGE;
+            case Direction.K:
+                return SettingType.GRID_LAYER_K_RANGE;
+        }
     }
 
     getLabel(): string {
-        return "Grid layer I";
+        switch (this._direction) {
+            case Direction.I:
+                return "Grid layer I";
+            case Direction.J:
+                return "Grid layer J";
+            case Direction.K:
+                return "Grid layer K";
+        }
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -38,7 +66,7 @@ export class GridLayerIRangeSetting implements Setting<ValueType> {
         }
 
         const min = 0;
-        const max = availableValues[0];
+        const max = availableValues[this._direction];
 
         if (max === null) {
             return false;
@@ -53,7 +81,7 @@ export class GridLayerIRangeSetting implements Setting<ValueType> {
         }
 
         const min = 0;
-        const max = availableValues[0];
+        const max = availableValues[this._direction];
 
         if (max === null) {
             return null;
@@ -67,7 +95,8 @@ export class GridLayerIRangeSetting implements Setting<ValueType> {
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function IRangeSlider(props: SettingComponentProps<ValueType>) {
+        const direction = this._direction;
+        return function RangeSlider(props: SettingComponentProps<ValueType>) {
             function handleChange(_: any, value: number | number[]) {
                 if (!Array.isArray(value)) {
                     return;
@@ -79,9 +108,9 @@ export class GridLayerIRangeSetting implements Setting<ValueType> {
             return (
                 <Slider
                     min={0}
-                    max={props.availableValues[0] ?? 1}
+                    max={props.availableValues[direction] ?? 1}
                     onChange={handleChange}
-                    value={props.value ?? [0, props.availableValues[0] ?? 1]}
+                    value={props.value ?? [0, props.availableValues[direction] ?? 1]}
                     debounceTimeMs={500}
                     valueLabelDisplay="auto"
                 />
@@ -90,4 +119,4 @@ export class GridLayerIRangeSetting implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(GridLayerIRangeSetting);
+SettingRegistry.registerSetting(GridLayerRangeSetting);

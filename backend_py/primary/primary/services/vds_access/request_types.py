@@ -30,10 +30,17 @@ class VdsInterpolation(StrEnum):
 
 
 class VdsDirection(StrEnum):
+    """
+    Direction options for vds slice
+
+    Source: https://github.com/equinor/oneseismic-api/blob/1d44cbeafe298219bfc0814c82ca57de817982c6/api/handlers/slice.go#L60
+    """
+
     INLINE = "inline"
     CROSSLINE = "crossline"
-    SAMPLE = "sample"
     DEPTH = "depth"
+    TIME = "time"
+    SAMPLE = "sample"
 
 
 class VdsCoordinateSystem(StrEnum):

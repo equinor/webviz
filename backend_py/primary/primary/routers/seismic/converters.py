@@ -8,10 +8,6 @@ from . import schemas
 
 
 def to_api_vds_cube_meta(seismic_meta: SeismicCubeMeta) -> schemas.SeismicCubeMeta:
-    """
-    Create API SeismicCubeMeta from VdsSliceMetadata
-    """
-
     return schemas.SeismicCubeMeta(
         seismicAttribute=seismic_meta.seismic_attribute,
         unit=seismic_meta.unit,
@@ -38,7 +34,7 @@ def to_api_vds_cube_meta(seismic_meta: SeismicCubeMeta) -> schemas.SeismicCubeMe
             zInc=seismic_meta.spec.z_inc,
             yFlip=seismic_meta.spec.y_flip,
             zFlip=seismic_meta.spec.z_flip,
-            rotation=seismic_meta.spec.rotation,
+            rotationDeg=seismic_meta.spec.rotation,
         ),
     )
 
@@ -46,10 +42,6 @@ def to_api_vds_cube_meta(seismic_meta: SeismicCubeMeta) -> schemas.SeismicCubeMe
 def to_api_vds_slice_data(
     flattened_slice_traces_array: NDArray[np.float32], metadata: VdsSliceMetadata
 ) -> schemas.SeismicSliceData:
-    """
-    Create API SeismicCrosslineData from VdsSliceMetadata and flattened slice traces array
-    """
-
     return schemas.SeismicSliceData(
         slice_traces_b64arr=b64_encode_float_array_as_float32(flattened_slice_traces_array),
         bbox_utm=metadata.geospatial,

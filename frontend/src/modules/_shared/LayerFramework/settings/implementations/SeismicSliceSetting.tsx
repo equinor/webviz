@@ -10,19 +10,41 @@ import { SettingType } from "../settingsTypes";
 
 type ValueType = number | null;
 
-export class SeismicCrosslineSetting implements Setting<ValueType> {
+export enum Direction {
+    INLINE,
+    CROSSLINE,
+}
+export class SeismicSliceSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
+    private _params: [Direction];
+    private _direction: Direction;
 
-    constructor() {
+    constructor(params: [Direction]) {
         this._delegate = new SettingDelegate<ValueType>(null, this);
+        this._params = params;
+        this._direction = params[0];
+    }
+
+    getConstructorParams() {
+        return this._params;
     }
 
     getType(): SettingType {
-        return SettingType.SEISMIC_CROSSLINE;
+        switch (this._direction) {
+            case Direction.INLINE:
+                return SettingType.SEISMIC_INLINE;
+            case Direction.CROSSLINE:
+                return SettingType.SEISMIC_CROSSLINE;
+        }
     }
 
     getLabel(): string {
-        return "Seismic crossline";
+        switch (this._direction) {
+            case Direction.INLINE:
+                return "Seismic inline";
+            case Direction.CROSSLINE:
+                return "Seismic crossline";
+        }
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -68,7 +90,7 @@ export class SeismicCrosslineSetting implements Setting<ValueType> {
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function KRangeSlider(props: SettingComponentProps<ValueType>) {
+        return function RangeSlider(props: SettingComponentProps<ValueType>) {
             function handleSliderChange(_: any, value: number | number[]) {
                 if (Array.isArray(value)) {
                     return value[0];
@@ -88,7 +110,7 @@ export class SeismicCrosslineSetting implements Setting<ValueType> {
                             max={props.availableValues[1] ?? 1}
                             onChange={handleSliderChange}
                             value={props.value ?? props.availableValues[0] ?? 1}
-                            debounceTimeMs={0}
+                            debounceTimeMs={500}
                             valueLabelDisplay="auto"
                         />
                     </div>
@@ -101,4 +123,4 @@ export class SeismicCrosslineSetting implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(SeismicCrosslineSetting);
+SettingRegistry.registerSetting(SeismicSliceSetting);

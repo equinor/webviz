@@ -49,7 +49,7 @@ export class SeismicDepthSliceSetting implements Setting<ValueType> {
     }
 
     fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
-        if (availableValues.length < 3) {
+        if (availableValues.length < 2) {
             return null;
         }
 
@@ -68,7 +68,7 @@ export class SeismicDepthSliceSetting implements Setting<ValueType> {
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function KRangeSlider(props: SettingComponentProps<ValueType>) {
+        return function RangeSlider(props: SettingComponentProps<ValueType>) {
             function handleSliderChange(_: any, value: number | number[]) {
                 if (Array.isArray(value)) {
                     return value[0];

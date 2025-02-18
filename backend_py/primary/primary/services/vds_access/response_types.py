@@ -16,8 +16,19 @@ from pydantic import BaseModel
 #
 ######################################################################################################
 class VdsDirection(StrEnum):
+    """
+    Direction options for vds slice
+
+    https://github.com/equinor/oneseismic-api/blob/1d44cbeafe298219bfc0814c82ca57de817982c6/internal/core/direction.cpp#L16
+    """
+
+    I = "I"
+    J = "J"
+    K = "K"
     INLINE = "Inline"
     CROSSLINE = "Crossline"
+    DEPTH = "Depth"
+    TIME = "Time"
     SAMPLE = "Sample"
 
 
@@ -49,8 +60,8 @@ class VdsAxis(BaseModel):
     """
 
     annotation: VdsDirection
-    max: int
-    min: int
+    max: float
+    min: float
     samples: int
     unit: str
 
@@ -67,7 +78,7 @@ class VdsFenceMetadata(VdsArray):
 @dataclass
 class VdsSliceMetadata(VdsArray):
     """
-    Definition of a fence metadata response from vds-slice
+    Definition of a slice metadata response from vds-slice
 
     See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L160-L162
     """
@@ -92,8 +103,6 @@ class VdsBoundingBox(BaseModel):
 class VdsMetadata(BaseModel):
     """
     Definition of metadata from vds-slice
-
-
 
     See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L140-L157
     """

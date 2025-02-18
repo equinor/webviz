@@ -124,7 +124,7 @@ async def get_depth_slice(
     seismic_attribute: str = Query(description="Seismic cube attribute"),
     time_or_interval_str: str = Query(description="Timestamp or timestep"),
     observed: bool = Query(description="Observed or simulated"),
-    depth: int = Query(description="depth"),
+    depth_slice_no: int = Query(description="Depth slice no"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic depth slice from a seismic cube."""
     seismic_access = await SeismicAccess.from_case_uuid_async(
@@ -147,7 +147,7 @@ async def get_depth_slice(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    flattened_slice_traces_array, metadata = await vds_access.get_depth_slice(depth=depth)
+    flattened_slice_traces_array, metadata = await vds_access.get_depth_slice(depth_slice_no=depth_slice_no)
 
     return converters.to_api_vds_slice_data(
         flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
