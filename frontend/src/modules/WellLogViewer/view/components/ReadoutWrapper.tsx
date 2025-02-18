@@ -1,15 +1,15 @@
 import React from "react";
 
+import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { InfoItem, ReadoutBox, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
 import { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import _ from "lodash";
 
 import { DEFAULT_MAX_VISIBLE_TRACKS } from "../../utils/logViewerTemplate";
 
 export type ReadoutWrapperProps = {
-    templateTracks: TemplateTrack[];
+    templateTracks: TemplateTrackConfig[];
     wellLogReadout: Info[];
     hide?: boolean;
 };
@@ -24,7 +24,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     return <ReadoutBox maxNumItems={DEFAULT_MAX_VISIBLE_TRACKS + 1} readoutItems={readoutItems} noLabelColor />;
 }
 
-function parseWellLogReadout(wellLogInfo: Info[], templateTracks: TemplateTrack[]): ReadoutItem[] {
+function parseWellLogReadout(wellLogInfo: Info[], templateTracks: TemplateTrackConfig[]): ReadoutItem[] {
     return _.chain(wellLogInfo)
         .filter(({ type }) => type !== "separator")
         .groupBy("iTrack")
@@ -34,7 +34,7 @@ function parseWellLogReadout(wellLogInfo: Info[], templateTracks: TemplateTrack[
         .value();
 }
 
-function infoToReadoutItem(infos: Info[], iTrack: number, templateTracks: TemplateTrack[]): ReadoutItem {
+function infoToReadoutItem(infos: Info[], iTrack: number, templateTracks: TemplateTrackConfig[]): ReadoutItem {
     // The axis curves are printes with index -1
     if (iTrack === -1) {
         return {
@@ -44,7 +44,7 @@ function infoToReadoutItem(infos: Info[], iTrack: number, templateTracks: Templa
     } else {
         const trackTemplate = templateTracks[iTrack];
         return {
-            label: trackTemplate.title,
+            label: trackTemplate.title ?? trackTemplate.plots[0]?.name ?? "",
             info: infos.map(curveInfoToReadoutInfo),
         };
     }
@@ -60,9 +60,9 @@ function curveInfoToReadoutInfo(info: Info): InfoItem {
     name = CURVE_NAME_OVERRIDES[name] ?? name;
 
     return {
-        name,
-        value: info.value,
+        value: info.discrete ?? info.value,
         unit: info.units ?? "",
         adornment: <div className="w-2 h-2 rounded-full" style={{ background: info.color }} />,
+        name,
     };
 }

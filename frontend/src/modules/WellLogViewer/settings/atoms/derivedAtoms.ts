@@ -1,46 +1,34 @@
-import { WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
-import { transformFormationData } from "@equinor/esv-intersection";
-import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
-import { TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import { WellLogCurveTypeEnum_api, WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
+import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
 
 import { atom } from "jotai";
 import _ from "lodash";
 
 import {
     userSelectedFieldIdentifierAtom,
-    userSelectedNonUnitWellpicksAtom,
-    userSelectedUnitWellpicksAtom,
+    userSelectedWellPickColumnAtom,
+    userSelectedWellPickInterpreterAtom,
+    userSelectedWellPicksAtom,
     userSelectedWellboreUuidAtom,
 } from "./baseAtoms";
 import { logViewerTrackConfigs } from "./persistedAtoms";
 import {
+    availableFieldsQueryAtom,
     drilledWellboreHeadersQueryAtom,
     wellLogCurveHeadersQueryAtom,
     wellborePicksQueryAtom,
-    wellboreStratigraphicUnitsQueryAtom,
+    wellboreStratColumnsQueryAtom,
 } from "./queryAtoms";
 
-/**
- * Exposing the return type of esv-intersection's transformFormationData, since they don't export that anywhere
- */
-export type TransformFormationDataResult = ReturnType<typeof transformFormationData>;
-
-export const firstEnsembleInSelectedFieldAtom = atom((get) => {
-    const selectedFieldId = get(userSelectedFieldIdentifierAtom);
-    const regularEnsembleArray = get(EnsembleSetAtom).getRegularEnsembleArray();
-
-    if (!regularEnsembleArray.length) {
-        return null;
-    }
-
-    const selectedEnsemble = regularEnsembleArray.find((e) => e.getFieldIdentifier() === selectedFieldId);
-
-    return selectedEnsemble ?? regularEnsembleArray[0];
-});
-
 export const selectedFieldIdentifierAtom = atom((get) => {
-    return get(firstEnsembleInSelectedFieldAtom)?.getFieldIdentifier() ?? null;
+    const availableFields = get(availableFieldsQueryAtom).data ?? [];
+    const selectedFieldId = get(userSelectedFieldIdentifierAtom);
+
+    // Fixup selected field id
+    if (!availableFields.length) return null;
+    const selectionIsValid = availableFields.some((field) => field.field_identifier === selectedFieldId);
+    return selectionIsValid ? selectedFieldId : availableFields[0].field_identifier;
 });
 
 export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) => {
@@ -54,85 +42,109 @@ export const selectedWellboreHeaderAtom = atom<WellboreHeader_api | null>((get) 
     return availableWellboreHeaders.find((wh) => wh.wellboreUuid === selectedWellboreId) ?? availableWellboreHeaders[0];
 });
 
-export const availableWellPicksAtom = atom<TransformFormationDataResult>((get) => {
-    const wellborePicks = get(wellborePicksQueryAtom).data;
-    const wellboreStratUnits = get(wellboreStratigraphicUnitsQueryAtom).data;
+export const availableContinuousCurvesAtom = atom((get) => {
+    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
 
-    if (!wellborePicks || !wellboreStratUnits) return { nonUnitPicks: [], unitPicks: [] };
-
-    const transformedPickData = transformFormationData(wellborePicks, wellboreStratUnits as any);
-
-    return {
-        nonUnitPicks: _.uniqBy(transformedPickData.nonUnitPicks, "identifier"),
-        unitPicks: _.uniqBy(transformedPickData.unitPicks, "name"),
-    };
+    return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.CONTINUOUS]);
 });
 
-export const selectedWellborePicksAtom = atom<WellPicksLayerData>((get) => {
-    const wellborePicks = get(availableWellPicksAtom);
-    const selectedUnitPicks = get(userSelectedUnitWellpicksAtom);
-    const selectedNonUnitPicks = get(userSelectedNonUnitWellpicksAtom);
+export const availableDiscreteCurvesAtom = atom((get) => {
+    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
 
-    if (!wellborePicks) return { unitPicks: [], nonUnitPicks: [] };
-    else {
-        const unitPicks = wellborePicks.unitPicks.filter((pick) => selectedUnitPicks.includes(pick.name));
-        const nonUnitPicks = wellborePicks.nonUnitPicks.filter((pick) =>
-            selectedNonUnitPicks.includes(pick.identifier)
-        );
-
-        return { unitPicks, nonUnitPicks };
-    }
+    return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.DISCRETE]);
 });
 
-export const groupedCurveHeadersAtom = atom<Record<string, WellboreLogCurveHeader_api[]>>((get) => {
-    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom)?.data ?? [];
+export const availableFlagCurvesAtom = atom((get) => {
+    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
 
-    return _.groupBy(logCurveHeaders, "logName");
+    return _.filter(logCurveHeaders, ["curveType", WellLogCurveTypeEnum_api.FLAG]);
 });
 
-export const wellLogTemplateTracks = atom<TemplateTrack[]>((get) => {
+export const wellLogTemplateTracksAtom = atom<TemplateTrackConfig[]>((get) => {
     const templateTrackConfigs = get(logViewerTrackConfigs);
 
-    return templateTrackConfigs.map((config): TemplateTrack => {
+    return templateTrackConfigs.map((config) => {
         return {
             ...config,
-            plots: config.plots.filter(({ _isValid }) => _isValid) as TemplatePlot[],
-        };
+            plots: config.plots.filter(({ _isValid }) => _isValid),
+        } as TemplateTrackConfig;
     });
 });
 
-export const allSelectedWellLogCurvesAtom = atom<string[]>((get) => {
-    const templateTracks = get(wellLogTemplateTracks);
+export const requiredCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
+    const templateTracks = get(logViewerTrackConfigs);
 
-    const curveNames = templateTracks.reduce<string[]>((acc, trackCfg) => {
-        const usedCurves = _.flatMap(trackCfg.plots, ({ name, name2 }) => {
-            if (name2) return [name, name2];
-            else return [name];
-        });
-
-        return _.uniq([...acc, ...usedCurves]);
-    }, []);
-
-    return curveNames;
+    return _.chain(templateTracks)
+        .flatMap<TemplatePlotConfig>("plots")
+        .filter("_isValid") // Do not bother with invalid configs
+        .flatMap(({ _curveHeader, _curveHeader2 }) => [_curveHeader, _curveHeader2])
+        .filter((header): header is WellboreLogCurveHeader_api => !!header)
+        .uniqBy(makeSelectValueForCurveHeader)
+        .value();
 });
 
-/**
- * Returns a list of all user-selected curves that have no available curve-header
- */
-export const missingCurvesAtom = atom<string[]>((get) => {
-    const allSelectedWellLogCurves = get(allSelectedWellLogCurvesAtom);
-    const curveHeadersQuery = get(wellLogCurveHeadersQueryAtom);
+export const selectedWellPickColumnAtom = atom<string | null>((get) => {
+    const userSelectedWellPickColumn = get(userSelectedWellPickColumnAtom) ?? "";
+    const wellboreStratColumns = get(wellboreStratColumnsQueryAtom).data ?? [];
 
-    // While loading, assume all curves are "available" (since they *most likely* are)
-    if (!curveHeadersQuery.data) return [];
+    // Selection-fixup. Defaults to first available option if possible
+    if (!wellboreStratColumns.length) return null;
+    if (wellboreStratColumns.includes(userSelectedWellPickColumn)) return userSelectedWellPickColumn;
+    return wellboreStratColumns[0];
+});
 
-    const missingNames: string[] = [];
+export const wellPicksByInterpreterAtom = atom<Record<string, WellborePick_api[]>>((get) => {
+    const picks = get(wellborePicksQueryAtom).data ?? [];
 
-    allSelectedWellLogCurves.forEach((selectedName) => {
-        if (!curveHeadersQuery.data.some(({ curveName }) => curveName === selectedName)) {
-            missingNames.push(selectedName);
-        }
+    return _.groupBy(picks, "interpreter");
+});
+
+export const availableWellPickInterpretersAtom = atom<string[]>((get) => {
+    const wellPicksByInterpreter = get(wellPicksByInterpreterAtom);
+    return Object.keys(wellPicksByInterpreter);
+});
+
+export const selectedWellPickInterpreter = atom<string | null>((get) => {
+    const selectedInterpreter = get(userSelectedWellPickInterpreterAtom);
+    const availableInterpreters = get(availableWellPickInterpretersAtom);
+
+    // Selection-fixup. Defaults to first available option if possible
+    if (!availableInterpreters.length) return null;
+    if (selectedInterpreter && availableInterpreters.includes(selectedInterpreter)) return selectedInterpreter;
+    return availableInterpreters[0];
+});
+
+export const selectedWellborePicksAtom = atom<WellborePick_api[]>((get) => {
+    const wellPicksByInterpreter = get(wellPicksByInterpreterAtom);
+    const selectedInterpreter = get(selectedWellPickInterpreter);
+    const selectedWellPicks = get(userSelectedWellPicksAtom);
+
+    if (!selectedInterpreter) return [];
+
+    const interpreterPicks = wellPicksByInterpreter[selectedInterpreter] ?? [];
+
+    return interpreterPicks.filter(({ pickIdentifier }) => selectedWellPicks.includes(pickIdentifier));
+});
+
+export const missingCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
+    const templateTracks = get(logViewerTrackConfigs) ?? [];
+    const availableCurvesQuery = get(wellLogCurveHeadersQueryAtom);
+    if (availableCurvesQuery.isPending || availableCurvesQuery.isError) return [];
+
+    // Prepare all header select values for faster lookup
+    const allCurveSelectValues = new Set(availableCurvesQuery.data.map(makeSelectValueForCurveHeader));
+
+    const missingCurves: WellboreLogCurveHeader_api[] = [];
+
+    const allPlots = _.flatMap(templateTracks, "plots") as TemplatePlotConfig[];
+
+    allPlots.forEach(({ _curveHeader, _curveHeader2 }) => {
+        const selectValue1 = makeSelectValueForCurveHeader(_curveHeader);
+        const selectValue2 = makeSelectValueForCurveHeader(_curveHeader2);
+
+        if (_curveHeader && !allCurveSelectValues.has(selectValue1)) missingCurves.push(_curveHeader!);
+        if (_curveHeader2 && !allCurveSelectValues.has(selectValue2)) missingCurves.push(_curveHeader2!);
     });
 
-    return missingNames;
+    return missingCurves;
 });

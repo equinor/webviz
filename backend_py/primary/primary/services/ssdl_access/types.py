@@ -54,10 +54,11 @@ class WellboreLogCurveHeader(BaseModel):
 
 class WellboreLogCurveData(BaseModel):
     name: str
+    log_name: str
     index_min: float
     index_max: float
-    min_curve_value: float
-    max_curve_value: float
+    min_curve_value: float | None
+    max_curve_value: float | None
     curve_alias: str | None
     curve_description: str | None
     index_unit: str
@@ -66,9 +67,14 @@ class WellboreLogCurveData(BaseModel):
     curve_unit_desc: str | None
 
     # This field has weird casing. This is just how SSDL has decided to return this object, so we leave it as is to make model validation
-    DataPoints: list[list[float | None]]
+    # [float, ...(float | str | None)] would be more correct
+    # ! Our version of open-api does not generate tuples as expected. Instead of:
+    # !     [number, ...(number | string | None)]
+    # ! we get:
+    # !     (number | string | null)[]
+    DataPoints: list[tuple[float, float | str | None]]
 
     @property
-    def data_points(self) -> list[list[float | None]]:
-        # Utility property to  "DataPoint" with proper casing
+    def data_points(self) -> list[tuple[float, float | str | None]]:
+        # Utility property to provide "DataPoint" with proper casing
         return self.DataPoints
