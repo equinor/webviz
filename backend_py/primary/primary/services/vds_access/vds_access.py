@@ -11,7 +11,6 @@ from primary.services.service_exceptions import InvalidDataError, Service
 
 from primary import config
 from primary.httpx_client import httpx_async_client
-from primary.services.service_exceptions import InvalidDataError, Service
 
 from .response_types import VdsArray, VdsMetadata, VdsFenceMetadata, VdsSliceMetadata
 from .request_types import (

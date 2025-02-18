@@ -69,7 +69,7 @@ async def get_inline_slice(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    flattened_slice_traces_array, metadata = await vds_access.get_inline_slice(line_no=inline_no)
+    flattened_slice_traces_array, metadata = await vds_access.get_inline_slice_async(line_no=inline_no)
 
     return converters.to_api_vds_slice_data(
         flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
@@ -108,7 +108,7 @@ async def get_crossline_slice(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    flattened_slice_traces_array, metadata = await vds_access.get_crossline_slice(line_no=crossline_no)
+    flattened_slice_traces_array, metadata = await vds_access.get_crossline_slice_async(line_no=crossline_no)
 
     return converters.to_api_vds_slice_data(
         flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
@@ -147,7 +147,7 @@ async def get_depth_slice(
 
     vds_access = VdsAccess(sas_token=vds_handle.sas_token, vds_url=vds_handle.vds_url)
 
-    flattened_slice_traces_array, metadata = await vds_access.get_depth_slice(depth_slice_no=depth_slice_no)
+    flattened_slice_traces_array, metadata = await vds_access.get_depth_slice_async(depth_slice_no=depth_slice_no)
 
     return converters.to_api_vds_slice_data(
         flattened_slice_traces_array=flattened_slice_traces_array, metadata=metadata
