@@ -48,6 +48,7 @@ logging.getLogger("primary.services.user_session_manager").setLevel(logging.DEBU
 logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
+logging.getLogger("primary.auth").setLevel(logging.DEBUG)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -110,7 +111,7 @@ app.add_middleware(
     paths_redirected_to_login=paths_redirected_to_login,
 )
 
-session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="user-auth:")
+session_store = RedisStore(config.REDIS_USER_SESSION_URL, prefix="auth-sessions:")
 app.add_middleware(SessionMiddleware, store=session_store)
 
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
