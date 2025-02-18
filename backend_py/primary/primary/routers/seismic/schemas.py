@@ -128,8 +128,8 @@ class SeismicSliceData(BaseModel):
 
     slice_traces_b64arr: B64FloatArray
     bbox_utm: List[List[float]]
-    u_min: int
-    u_max: int
+    u_min: float
+    u_max: float
     u_num_samples: int
     u_unit: str
     v_min: float

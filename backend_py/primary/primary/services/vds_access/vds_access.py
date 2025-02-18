@@ -277,7 +277,7 @@ class VdsAccess:
 
         return parts
 
-    def _assert_valid_metadata_format_and_shape(self, metadata: VdsArray):
+    def _assert_valid_metadata_format_and_shape(self, metadata: VdsArray) -> None:
         if metadata.format != "<f4":
             raise InvalidDataError(f"Expected float32, got {metadata.format}", service=Service.VDS)
 
