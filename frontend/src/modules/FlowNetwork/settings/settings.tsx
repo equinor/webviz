@@ -191,6 +191,8 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
                     <div className="flex flex-col gap-2">
                         <Label text="Edge options">
                             <Dropdown
+                                placeholder={!edgeMetadataList.length ? "No edge data available" : ""}
+                                disabled={!edgeMetadataList.length}
                                 options={edgeMetadataList.map((item) => {
                                     return { label: item.label, value: item.key };
                                 })}

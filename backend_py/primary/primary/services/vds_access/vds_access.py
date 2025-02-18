@@ -7,6 +7,8 @@ from numpy.typing import NDArray
 from requests_toolbelt.multipart.decoder import MultipartDecoder, BodyPart
 import httpx
 
+from primary.services.service_exceptions import InvalidDataError, Service
+
 from primary import config
 from primary.httpx_client import httpx_async_client
 from primary.services.service_exceptions import InvalidDataError, Service

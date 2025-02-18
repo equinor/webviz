@@ -1,25 +1,26 @@
 import React from "react";
 
-import { WellboreHeader_api, WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
+import { WellboreHeader_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
-import { WellPicksLayerData } from "@modules/Intersection/utils/layers/WellpicksLayer";
+import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { WellLogViewer } from "@webviz/well-log-viewer";
 import { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import { TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 import { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
+import { useAtomValue } from "jotai";
 import { isEqual } from "lodash";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import { InterfaceTypes } from "../../interfaces";
 import { createLogTemplate } from "../../utils/logViewerTemplate";
-import { createLogViewerWellpicks, createWellLog } from "../../utils/queryDataTransform";
+import { createLogViewerWellPicks, createWellLogSets } from "../../utils/queryDataTransform";
+import { nonUniqueCurveNamesAtom } from "../atoms/derivedAtoms";
 
 const AXIS_MNEMOS = {
     md: ["RKB", "DEPTH", "DEPT", "MD", "TDEP", "MD_RKB"],
@@ -41,12 +42,12 @@ export type SubsurfaceLogViewerWrapperProps = {
     curveData: WellboreLogCurveData_api[];
     trajectoryData: WellboreTrajectory_api;
     intersectionReferenceSystem: IntersectionReferenceSystem;
-    wellpicks: WellPicksLayerData;
+    wellpicks: WellborePick_api[];
 
     // Viewer config
     horizontal: boolean;
     padDataWithEmptyRows: boolean;
-    templateTracks: TemplateTrack[];
+    templateTrackConfigs: TemplateTrackConfig[];
 
     // Passing the module props to make context and service access less cumbersome
     moduleProps: ModuleViewProps<InterfaceTypes>;
@@ -145,19 +146,31 @@ function useCreateGlobalVerticalScaleBroadcastFunc(
 }
 
 export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
-    const trackConfigs = props.templateTracks;
+    const nonUniqueCurveNames = useAtomValue(nonUniqueCurveNamesAtom);
+
+    const trackConfigs = props.templateTrackConfigs;
     const trajectoryData = props.trajectoryData;
     const curveData = props.curveData;
     const intersectionReferenceSystem = props.intersectionReferenceSystem;
     const padDataWithEmptyRows = props.padDataWithEmptyRows;
 
+    const wellpicks = React.useMemo(() => createLogViewerWellPicks(props.wellpicks), [props.wellpicks]);
+
     // Curve data transform is a bit heavy, so we use Memo-hooks to reduce re-render overhead
-    const template = React.useMemo(() => createLogTemplate(trackConfigs), [trackConfigs]);
-    const wellpicks = React.useMemo(() => createLogViewerWellpicks(props.wellpicks), [props.wellpicks]);
-    const welllog = React.useMemo(
-        () => createWellLog(curveData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows),
-        [curveData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows]
+    const template = React.useMemo(
+        () => createLogTemplate(trackConfigs, nonUniqueCurveNames),
+        [trackConfigs, nonUniqueCurveNames]
     );
+
+    const welllog = React.useMemo(() => {
+        return createWellLogSets(
+            curveData,
+            trajectoryData,
+            intersectionReferenceSystem,
+            nonUniqueCurveNames,
+            padDataWithEmptyRows
+        );
+    }, [curveData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows, nonUniqueCurveNames]);
 
     return { template, welllog, wellpicks };
 }
@@ -259,7 +272,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         >
             <WellLogViewer
                 id="well-log-viewer"
-                welllog={welllog}
+                wellLogSets={welllog}
                 template={template}
                 wellpick={wellpicks}
                 horizontal={props.horizontal}
@@ -267,17 +280,18 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
                 layout={{ right: undefined }}
                 axisMnemos={AXIS_MNEMOS}
                 axisTitles={AXIS_TITLES}
-                colorTables={colorTables}
+                colorMapFunctions={colorTables}
                 // Disable the pin and selection logic, since we dont use that for anything yet
-                options={{ hideSelectionInterval: true }}
+                options={{ hideSelectionInterval: true, maxVisibleTrackNum: 12 }}
                 onTrackMouseEvent={handleTrackMouseEvent}
                 onCreateController={handleCreateController}
                 onContentSelection={handleSelection}
                 onContentRescale={handleContentRescale}
                 onInfoFilled={handleInfoFilled}
             />
+
             <ReadoutWrapper
-                templateTracks={props.templateTracks}
+                templateTracks={props.templateTrackConfigs}
                 wellLogReadout={wellLogReadout}
                 hide={!showReadoutBox}
             />
