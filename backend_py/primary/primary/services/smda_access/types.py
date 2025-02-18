@@ -159,8 +159,8 @@ class WellboreGeoHeader(BaseModel):
 class WellboreGeoData(BaseModel):
     uuid: str
     identifier: str
-    geol_type: str
-    geol_group: str
+    geol_type: str | None
+    geol_group: str | None
     code: int
 
     top_depth_md: float
