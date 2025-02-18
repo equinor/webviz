@@ -579,6 +579,20 @@ export type SeismicCubeMeta_api = {
 
 /**
  * Specification for a seismic cube.
+ *
+ * `Properties:`
+ * - `numCols`: The number of columns in the seismic cube.
+ * - `numRows`: The number of rows in the seismic cube.
+ * - `numLayers`: The number of layers in the seismic cube.
+ * - `xOrigin`: The x-coordinate of the origin of the cube [m].
+ * - `yOrigin`: The y-coordinate of the origin of the cube [m].
+ * - `zOrigin`: The z-coordinate of the origin of the cube [m].
+ * - `xInc`: The increment in the x-direction [m].
+ * - `yInc`: The increment in the y-direction [m].
+ * - `zInc`: The increment in the z-direction [m].
+ * - `yFlip`: {-1, 1} - The flip factor for the y-direction (1 if not flipped, -1 if flipped).
+ * - `zFlip`: {-1, 1} - The flip factor for the z-direction (1 if not flipped, -1 if flipped).
+ * - `rotationDeg`: The rotation angle of the cube [deg].
  */
 export type SeismicCubeSpec_api = {
     numCols: number;
@@ -592,7 +606,7 @@ export type SeismicCubeSpec_api = {
     zInc: number;
     yFlip: number;
     zFlip: number;
-    rotation: number;
+    rotationDeg: number;
 };
 
 /**
@@ -644,6 +658,28 @@ export type SeismicFencePolyline_api = {
     y_points: Array<number>;
 };
 
+/**
+ * Definition of a seismic slice from a seismic cube. This could be an inline, crossline, or depth slice.
+ * u and v axes are the respective domain coordinate system axes, and the slice traces are the seismic data values.
+ * The SeismicCubeMeta_api specification object (not part of this schema) provides a transformation matrix for converting
+ * the slice data from its own coordinate system (u,v) to the global coordinate system.
+ *
+ * `Properties:`
+ * - `slice_traces_b64arr`: The slice trace array is base64 encoded 1D float array - where data is stored trace by trace.
+ * - `bbox_utm`: The bounding box of the slice in UTM coordinates.
+ * - `u_min`: The minimum value of the u-axis.
+ * - `u_max`: The maximum value of the u-axis.
+ * - `u_num_samples`: The number of samples along the u-axis.
+ * - `u_unit`: The unit of the u-axis.
+ * - `v_min`: The minimum value of the v-axis.
+ * - `v_max`: The maximum value of the v-axis.
+ * - `v_num_samples`: The number of samples along the v-axis.
+ * - `v_unit`: The unit of the v-axis.
+ * - `value_min`: The minimum value of the seismic data values.
+ * - `value_max`: The maximum value of the seismic data values.
+ *
+ * Fence traces 1D array: [trace_1_sample_1, trace_1_sample_2, ..., trace_1_sample_n, ..., trace_m_sample_1, trace_m_sample_2, ..., trace_m_sample_n]
+ */
 export type SeismicSliceData_api = {
     slice_traces_b64arr: B64FloatArray_api;
     bbox_utm: Array<Array<number>>;
@@ -3391,9 +3427,9 @@ export type GetDepthSliceData_api = {
          */
         observed: boolean;
         /**
-         * depth
+         * Depth slice no
          */
-        depth: number;
+        depth_slice_no: number;
     };
     url: "/seismic/get_depth_slice/";
 };
