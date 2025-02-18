@@ -564,11 +564,49 @@ export type RftWellInfo_api = {
     timestamps_utc_ms: Array<number>;
 };
 
+/**
+ * Metadata for a seismic cube.
+ */
 export type SeismicCubeMeta_api = {
-    seismic_attribute: string;
-    iso_date_or_interval: string;
-    is_observation: boolean;
-    is_depth: boolean;
+    seismicAttribute: string;
+    unit: string;
+    isoDateOrInterval: string;
+    isObservation: boolean;
+    isDepth: boolean;
+    bbox: BoundingBox3D_api;
+    spec: SeismicCubeSpec_api;
+};
+
+/**
+ * Specification for a seismic cube.
+ *
+ * `Properties:`
+ * - `numCols`: The number of columns in the seismic cube.
+ * - `numRows`: The number of rows in the seismic cube.
+ * - `numLayers`: The number of layers in the seismic cube.
+ * - `xOrigin`: The x-coordinate of the origin of the cube [m].
+ * - `yOrigin`: The y-coordinate of the origin of the cube [m].
+ * - `zOrigin`: The z-coordinate of the origin of the cube [m].
+ * - `xInc`: The increment in the x-direction [m].
+ * - `yInc`: The increment in the y-direction [m].
+ * - `zInc`: The increment in the z-direction [m].
+ * - `yFlip`: {-1, 1} - The flip factor for the y-direction (1 if not flipped, -1 if flipped).
+ * - `zFlip`: {-1, 1} - The flip factor for the z-direction (1 if not flipped, -1 if flipped).
+ * - `rotationDeg`: The rotation angle of the cube [deg].
+ */
+export type SeismicCubeSpec_api = {
+    numCols: number;
+    numRows: number;
+    numLayers: number;
+    xOrigin: number;
+    yOrigin: number;
+    zOrigin: number;
+    xInc: number;
+    yInc: number;
+    zInc: number;
+    yFlip: number;
+    zFlip: number;
+    rotationDeg: number;
 };
 
 /**
@@ -618,6 +656,43 @@ export type SeismicFenceData_api = {
 export type SeismicFencePolyline_api = {
     x_points: Array<number>;
     y_points: Array<number>;
+};
+
+/**
+ * Definition of a seismic slice from a seismic cube. This could be an inline, crossline, or depth slice.
+ * u and v axes are the respective domain coordinate system axes, and the slice traces are the seismic data values.
+ * The SeismicCubeMeta_api specification object (not part of this schema) provides a transformation matrix for converting
+ * the slice data from its own coordinate system (u,v) to the global coordinate system.
+ *
+ * `Properties:`
+ * - `slice_traces_b64arr`: The slice trace array is base64 encoded 1D float array - where data is stored trace by trace.
+ * - `bbox_utm`: The bounding box of the slice in UTM coordinates.
+ * - `u_min`: The minimum value of the u-axis.
+ * - `u_max`: The maximum value of the u-axis.
+ * - `u_num_samples`: The number of samples along the u-axis.
+ * - `u_unit`: The unit of the u-axis.
+ * - `v_min`: The minimum value of the v-axis.
+ * - `v_max`: The maximum value of the v-axis.
+ * - `v_num_samples`: The number of samples along the v-axis.
+ * - `v_unit`: The unit of the v-axis.
+ * - `value_min`: The minimum value of the seismic data values.
+ * - `value_max`: The maximum value of the seismic data values.
+ *
+ * Fence traces 1D array: [trace_1_sample_1, trace_1_sample_2, ..., trace_1_sample_n, ..., trace_m_sample_1, trace_m_sample_2, ..., trace_m_sample_n]
+ */
+export type SeismicSliceData_api = {
+    slice_traces_b64arr: B64FloatArray_api;
+    bbox_utm: Array<Array<number>>;
+    u_min: number;
+    u_max: number;
+    u_num_samples: number;
+    u_unit: string;
+    v_min: number;
+    v_max: number;
+    v_num_samples: number;
+    v_unit: string;
+    value_min: number;
+    value_max: number;
 };
 
 export enum SensitivityType_api {
@@ -3214,6 +3289,168 @@ export type GetSeismicCubeMetaListResponses_api = {
 };
 
 export type GetSeismicCubeMetaListResponse_api = GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
+
+export type GetInlineSliceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * Inline number
+         */
+        inline_no: number;
+    };
+    url: "/seismic/get_inline_slice/";
+};
+
+export type GetInlineSliceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetInlineSliceError_api = GetInlineSliceErrors_api[keyof GetInlineSliceErrors_api];
+
+export type GetInlineSliceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SeismicSliceData_api;
+};
+
+export type GetInlineSliceResponse_api = GetInlineSliceResponses_api[keyof GetInlineSliceResponses_api];
+
+export type GetCrosslineSliceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * Crossline number
+         */
+        crossline_no: number;
+    };
+    url: "/seismic/get_crossline_slice/";
+};
+
+export type GetCrosslineSliceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetCrosslineSliceError_api = GetCrosslineSliceErrors_api[keyof GetCrosslineSliceErrors_api];
+
+export type GetCrosslineSliceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SeismicSliceData_api;
+};
+
+export type GetCrosslineSliceResponse_api = GetCrosslineSliceResponses_api[keyof GetCrosslineSliceResponses_api];
+
+export type GetDepthSliceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * Depth slice no
+         */
+        depth_slice_no: number;
+    };
+    url: "/seismic/get_depth_slice/";
+};
+
+export type GetDepthSliceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetDepthSliceError_api = GetDepthSliceErrors_api[keyof GetDepthSliceErrors_api];
+
+export type GetDepthSliceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SeismicSliceData_api;
+};
+
+export type GetDepthSliceResponse_api = GetDepthSliceResponses_api[keyof GetDepthSliceResponses_api];
 
 export type PostGetSeismicFenceData_api = {
     body: BodyPostGetSeismicFence_api;

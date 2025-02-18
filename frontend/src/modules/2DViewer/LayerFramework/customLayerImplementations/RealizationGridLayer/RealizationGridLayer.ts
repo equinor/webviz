@@ -108,16 +108,16 @@ export class RealizationGridLayer
         const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
         const realizationNum = settings[SettingType.REALIZATION].getDelegate().getValue();
         const gridName = settings[SettingType.GRID_NAME].getDelegate().getValue();
-        const attribute = settings[SettingType.GRID_ATTRIBUTE].getDelegate().getValue();
+        const attribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
         let timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;
         }
-        let availableDimensions = settings[SettingType.GRID_LAYER].getDelegate().getAvailableValues();
+        let availableDimensions = settings[SettingType.GRID_LAYER_K].getDelegate().getAvailableValues();
         if (!availableDimensions.length || availableDimensions[0] === null) {
             availableDimensions = [0, 0, 0];
         }
-        const layerIndex = settings[SettingType.GRID_LAYER].getDelegate().getValue();
+        const layerIndex = settings[SettingType.GRID_LAYER_K].getDelegate().getValue();
         const iMin = 0;
         const iMax = availableDimensions[0] || 0;
         const jMin = 0;

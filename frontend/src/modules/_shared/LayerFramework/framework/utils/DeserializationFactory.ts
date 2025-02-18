@@ -62,7 +62,10 @@ export class DeserializationFactory {
 
         if (serialized.type === SerializedType.SHARED_SETTING) {
             const serializedSharedSetting = serialized as SerializedSharedSetting;
-            const wrappedSetting = SettingRegistry.makeSetting(serializedSharedSetting.wrappedSettingClass);
+            const wrappedSetting = SettingRegistry.makeSetting(
+                serializedSharedSetting.wrappedSettingClass,
+                serializedSharedSetting.wrappedSettingCtorParams
+            );
             const setting = new SharedSetting(wrappedSetting, this._layerManager);
             setting.deserializeState(serializedSharedSetting);
             return setting;

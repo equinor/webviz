@@ -114,7 +114,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
     if (!isEqual(props.intersectionPolyline, prevIntersectionPolyline)) {
         setPrevIntersectionPolyline(props.intersectionPolyline);
         if (props.intersectionPolyline) {
-            setCurrentlyEditedPolyline(props.intersectionPolyline.points);
+            setCurrentlyEditedPolyline(props.intersectionPolyline.path);
             setPolylineEditingActive(true);
             setPolylineEditPointsModusActive(true);
             setSelectedPolylinePointIndex(0);
@@ -359,14 +359,14 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 props.onIntersectionPolylineChange({
                     ...props.intersectionPolyline,
                     name,
-                    points: currentlyEditedPolyline,
+                    path: currentlyEditedPolyline,
                 });
             }
         } else {
             if (props.onAddIntersectionPolyline && currentlyEditedPolyline.length > 1) {
                 props.onAddIntersectionPolyline({
                     name,
-                    points: currentlyEditedPolyline,
+                    path: currentlyEditedPolyline,
                 });
             }
             handlePolylineEditingCancel();
