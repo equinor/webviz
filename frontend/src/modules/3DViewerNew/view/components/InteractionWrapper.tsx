@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Layer as DeckGlLayer, View as DeckGlView } from "@deck.gl/core";
+import { Layer as DeckGlLayer } from "@deck.gl/core";
 import { DeckGLRef } from "@deck.gl/react";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
@@ -14,7 +14,6 @@ import { ReadooutWrapperProps, ReadoutWrapper } from "./ReadoutWrapper";
 import { Toolbar } from "./Toolbar";
 
 import { DeckGlInstanceManager, DeckGlInstanceManagerTopic } from "../utils/DeckGlInstanceManager";
-import { LabelComponent, LabelOrganizer } from "../utils/LabelOrganizer";
 import { Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
 
 export type InteractionWrapperProps = {} & Omit<
@@ -28,7 +27,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     const [deckGlManager, setDeckGlManager] = React.useState<DeckGlInstanceManager>(
         new DeckGlInstanceManager(deckGlRef.current)
     );
-    const [labelOrganizer, setLabelOrganizer] = React.useState<LabelOrganizer>(new LabelOrganizer(deckGlRef.current));
     const [polylinesPlugin, setPolylinesPlugin] = React.useState<PolylinesPlugin>(new PolylinesPlugin(deckGlManager));
 
     usePublishSubscribeTopicValue(deckGlManager, DeckGlInstanceManagerTopic.REDRAW);
@@ -59,8 +57,6 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             const manager = new DeckGlInstanceManager(deckGlRef.current);
             setDeckGlManager(manager);
 
-            labelOrganizer.setDeckRef(deckGlRef.current);
-
             const polylinesPlugin = new PolylinesPlugin(manager, colorGenerator());
             polylinesPlugin.setPolylines(intersectionPolylines.getPolylines());
             manager.addPlugin(polylinesPlugin);
@@ -87,7 +83,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
                 unsubscribeFromIntersectionPolylines();
             };
         },
-        [intersectionPolylines, colorGenerator, labelOrganizer]
+        [intersectionPolylines, colorGenerator]
     );
 
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
@@ -132,34 +128,9 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
     );
 
     let adjustedLayers: DeckGlLayer[] = [];
-    for (const layer of props.layers) {
-        adjustedLayers.push(
-            layer.clone({
-                // @ts-expect-error - we need to add the registerLabels function to the layer
-                reportLabels: labelOrganizer.registerLabels.bind(labelOrganizer),
-            })
-        );
-    }
     if (!gridVisible) {
         adjustedLayers = adjustedLayers.filter((layer) => !(layer instanceof AxesLayer));
     }
-
-    const viewportLabels = labelOrganizer.makeLabelComponents();
-    const viewportAnnotations = viewportLabels.map((el) => {
-        return (
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            /* @ts-expect-error */
-            <DeckGlView key={el.viewportId} id={el.viewportId}>
-                <div className="h-full w-full relative top-0 left-0 overflow-hidden">
-                    {el.labels.map((label) => (
-                        <LabelComponent {...label} />
-                    ))}
-                </div>
-            </DeckGlView>
-        );
-    });
-
-    const adjustedViewportAnnotations = [...props.viewportAnnotations, ...viewportAnnotations];
 
     return (
         <>
@@ -177,7 +148,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
             <ReadoutWrapper
                 {...props}
                 deckGlRef={deckGlRef}
-                viewportAnnotations={adjustedViewportAnnotations}
+                viewportAnnotations={props.viewportAnnotations}
                 layers={adjustedLayers}
                 deckGlManager={deckGlManager}
                 verticalScale={verticalScale}

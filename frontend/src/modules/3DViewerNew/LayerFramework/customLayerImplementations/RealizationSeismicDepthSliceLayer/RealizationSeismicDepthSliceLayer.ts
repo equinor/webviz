@@ -105,7 +105,7 @@ export class RealizationSeismicDepthSliceLayer
                         seismic_attribute: seismicAttribute ?? "",
                         time_or_interval_str: timeOrInterval ?? "",
                         observed: false,
-                        depth: seismicDepth ?? 0,
+                        depth_slice_no: seismicDepth ?? 0,
                     },
                 }),
             })

@@ -100,8 +100,8 @@ export class RealizationSeismicCrosslineLayer
         const minXY = { x: xmin, y: ymin };
         const origin = { x: meta.spec.xOrigin, y: meta.spec.yOrigin };
 
-        const rotatedMinXY = rotatePoint2Around(minXY, origin, (meta.spec.rotation / 180.0) * Math.PI);
-        const rotatedMaxXY = rotatePoint2Around(maxXY, origin, (meta.spec.rotation / 180.0) * Math.PI);
+        const rotatedMinXY = rotatePoint2Around(minXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
+        const rotatedMaxXY = rotatePoint2Around(maxXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
 
         return { x: [rotatedMinXY.x, rotatedMaxXY.x], y: [rotatedMinXY.y, rotatedMaxXY.y], z: [zmin, zmax] };
     }

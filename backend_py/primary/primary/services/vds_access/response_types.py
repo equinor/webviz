@@ -48,20 +48,16 @@ class VdsArray:
     format: str
     shape: List[int]
 
+
 class VdsAxis(BaseModel):
     """
     Definition of an axis from vds-slice
 
-class VdsAxis(BaseModel):
-    """
-    Definition of a fence metadata response from vds-slice
+    Neglected:
+    - stepsize: float
 
-    See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L160-L162
+    See: https://github.com/equinor/vds-slice/blob/ab6f39789bf3d3b59a8df14f1c4682d340dc0bf3/internal/core/core.go#L37-L55
     """
-    x: VdsAxis
-    y: VdsAxis
-    geospatial: List[List[float]]
-    # shape: List[int]
 
     annotation: VdsDirection
     max: float
