@@ -1,9 +1,11 @@
 import { CompositeLayer, CompositeLayerProps, FilterContext, Layer, UpdateParameters } from "@deck.gl/core";
-import { GeoJsonLayer, TextLayer } from "@deck.gl/layers";
+import { GeoJsonLayer } from "@deck.gl/layers";
+import { ExtendedLayerProps } from "@webviz/subsurface-viewer";
+import { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 
 import type { Feature, FeatureCollection } from "geojson";
 
-export type WellBorePickLayerData = {
+export type WellborePickLayerData = {
     easting: number;
     northing: number;
     wellBoreUwi: string;
@@ -17,10 +19,14 @@ type TextLayerData = {
     name: string;
 };
 
-export type WellBorePicksLayerProps = {
+export interface WellBorePicksLayerProps extends ExtendedLayerProps {
     id: string;
-    data: WellBorePickLayerData[];
-};
+    data: WellborePickLayerData[];
+    zIncreaseDownwards?: boolean;
+
+    // Non public properties:
+    reportBoundingBox?: React.Dispatch<ReportBoundingBoxAction>;
+}
 
 export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> {
     static layerName: string = "WellborePicksLayer";
@@ -35,13 +41,35 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
         return true;
     }
 
+    private calcBoundingBox(): BoundingBox3D {
+        const { data } = this.props;
+
+        let minX = Number.MAX_VALUE;
+        let minY = Number.MAX_VALUE;
+        let minZ = Number.MAX_VALUE;
+        let maxX = Number.MIN_VALUE;
+        let maxY = Number.MIN_VALUE;
+        let maxZ = Number.MIN_VALUE;
+
+        for (const wellPick of data) {
+            minX = Math.min(minX, wellPick.easting);
+            minY = Math.min(minY, wellPick.northing);
+            minZ = Math.min(minZ, wellPick.tvdMsl);
+            maxX = Math.max(maxX, wellPick.easting);
+            maxY = Math.max(maxY, wellPick.northing);
+            maxZ = Math.max(maxZ, wellPick.tvdMsl);
+        }
+
+        return [minX, minY, minZ, maxX, maxY, maxZ];
+    }
+
     updateState(params: UpdateParameters<Layer<WellBorePicksLayerProps & Required<CompositeLayerProps>>>): void {
         const features: Feature[] = params.props.data.map((wellPick) => {
             return {
                 type: "Feature",
                 geometry: {
                     type: "Point",
-                    coordinates: [wellPick.easting, wellPick.northing],
+                    coordinates: [wellPick.easting, wellPick.northing, wellPick.tvdMsl],
                 },
                 properties: {
                     name: `${wellPick.wellBoreUwi}, TVD_MSL: ${wellPick.tvdMsl}, MD: ${wellPick.md}`,
@@ -64,6 +92,10 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
 
         this._pointsData = pointsData;
         this._textData = textData;
+
+        this.props.reportBoundingBox?.({
+            layerBoundingBox: this.calcBoundingBox(),
+        });
     }
 
     renderLayers() {
@@ -91,6 +123,7 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                 })
             ),
 
+            /*
             new TextLayer(
                 this.getSubLayerProps({
                     id: "text",
@@ -114,8 +147,14 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                     getTextAnchor: "middle",
                     getPosition: (d: TextLayerData) => d.coordinates,
                     getText: (d: TextLayerData) => d.name,
+                    extensions: [
+                        new CollisionFilterExtension({
+                            collisionEnabled: true,
+                        }),
+                    ],
                 })
             ),
+            */
         ];
     }
 }

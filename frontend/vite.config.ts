@@ -5,6 +5,7 @@ import jotaiReactRefresh from "jotai/babel/plugin-react-refresh";
 import path from "path";
 import { defineConfig } from "vite";
 import vitePluginChecker from "vite-plugin-checker";
+import glsl from "vite-plugin-glsl";
 
 import aliases from "./aliases.json";
 
@@ -28,12 +29,23 @@ export default defineConfig(({ mode }) => {
 
     return {
         plugins: [
+            {
+                name: "isolation",
+                configureServer(server) {
+                    server.middlewares.use((_req, res, next) => {
+                        res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+                        res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+                        next();
+                    });
+                },
+            },
             react({
                 babel: {
                     plugins: [jotaiDebugLabel, jotaiReactRefresh],
                 },
             }),
             vitePluginChecker({ typescript: true }),
+            glsl(),
         ],
         build: {
             rollupOptions: {
