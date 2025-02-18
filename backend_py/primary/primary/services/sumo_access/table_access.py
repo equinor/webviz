@@ -4,6 +4,9 @@ from typing import List
 import pyarrow as pa
 from fmu.sumo.explorer.objects import Case
 
+
+from primary.services.service_exceptions import NoDataError, MultipleDataMatchesError, Service
+
 from ._helpers import create_sumo_client, create_sumo_case_async
 from .generic_types import SumoTableSchema
 
@@ -55,9 +58,9 @@ class TableAccess:
         )
         table_length = await table_collection.length_async()
         if table_length == 0:
-            raise ValueError(f"No table found for {table_schema=}")
+            raise NoDataError(f"No table found for {table_schema=}", Service.SUMO)
         if table_length > 1:
-            raise ValueError(f"Multiple tables found for {table_schema=}")
+            raise MultipleDataMatchesError(f"Multiple tables found for {table_schema=}", Service.SUMO)
 
         sumo_table = await table_collection.getitem_async(0)
         return await sumo_table.to_arrow_async()
@@ -72,7 +75,7 @@ class TableAccess:
         )
 
         if not table_collection:
-            raise ValueError(f"No table found for vector {table_schema=}")
+            raise NoDataError(f"No table found for vector {table_schema=}", Service.SUMO)
 
         # How to get the md5 sum? Maybe something like this, but the md5 is not in the metadata....
         md5s = [table.metadata.get("file", {}).get("md5_sum", None) for table in table_collection]

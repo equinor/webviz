@@ -15,7 +15,6 @@ from primary.services.sumo_access.inplace_volumetrics_types import (
 )
 
 from primary.services.sumo_access.inplace_volumetrics_access import InplaceVolumetricsAccess
-from ..service_exceptions import Service, InvalidParameterError
 
 """
 This file contains general utility functions for the Inplace Volumetrics provider
@@ -178,7 +177,7 @@ def create_grouped_statistical_result_table_data_polars(
     - Tuple with selector column data list and results statistical data list
     """
     if group_by_identifiers == []:
-        raise InvalidParameterError("Group by identifiers must be a non-empty list or None", Service.GENERAL)
+        raise ValueError("Group by identifiers must be a non-empty list or None")
 
     possible_selector_columns = InplaceVolumetricsAccess.get_possible_selector_columns()
     valid_selector_columns = [elm for elm in possible_selector_columns if elm in result_df.columns]
