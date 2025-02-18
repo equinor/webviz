@@ -57,14 +57,19 @@ type DropdownRect = {
     minWidth: number;
 };
 
+enum ItemType {
+    OPTION = "option",
+    GROUP_TITLE = "group_title",
+}
+
 type OptionItem<TValue> = {
-    type: "option";
-    // refference to group. Used to get the icon and adding some styling
+    type: ItemType.OPTION;
+    // Reference to group. Used to get the icon and adding some styling
     parent?: DropdownOptionGroup;
 } & DropdownOption<TValue>;
 
 type GroupTitle<TValue> = {
-    type: "groupTitle";
+    type: ItemType.GROUP_TITLE;
     parentGroup?: never;
 } & DropdownOptionGroup<TValue>;
 
@@ -78,7 +83,7 @@ function isDropdownOptionGroup<T>(optionOrGroup: DropdownOptionOrGroup<T>): opti
 }
 
 function isOptionOfValue<T>(opt: OptionOrTitle<T>, targetValue: T): opt is OptionItem<T> {
-    if (opt.type === "groupTitle") return false;
+    if (opt.type === ItemType.GROUP_TITLE) return false;
     return _.isEqual(opt.value, targetValue);
 }
 
@@ -91,7 +96,7 @@ function makeOptionListItemsRecursively<TValue>(
         if (isDropdownOptionGroup(option)) {
             const groupTitle = {
                 ...option,
-                type: "groupTitle",
+                type: ItemType.GROUP_TITLE,
                 // Transform here instead of with CSS to allow size estimations
                 label: option.label.toUpperCase(),
             } as OptionOrTitle<TValue>;
@@ -106,7 +111,7 @@ function makeOptionListItemsRecursively<TValue>(
         // Don't include the item if it's filtered away
         if (filter && !option.label.includes(filter)) return [];
 
-        const optionItem = { type: "option", parent: parentGroup, ...option } as OptionOrTitle<TValue>;
+        const optionItem = { type: ItemType.OPTION, parent: parentGroup, ...option } as OptionOrTitle<TValue>;
 
         return [optionItem];
     });
@@ -121,14 +126,14 @@ function findValidDropdownIndex(itemList: OptionOrTitle<any>[], currentIdx: numb
 
     // Bump the selection one step further if the target isn't a valid option
     // ! Assumes there can never be two group titles in a row
-    if (itemList[adjustedIndex].type !== "option") {
+    if (itemList[adjustedIndex].type !== ItemType.OPTION) {
         if (adjustedIndex === 0) return 1;
 
         adjustedIndex += direction;
         adjustedIndex = _.clamp(adjustedIndex, 0, itemList.length - 1);
     }
 
-    if (itemList[adjustedIndex].type !== "option") {
+    if (itemList[adjustedIndex].type !== ItemType.OPTION) {
         throw new Error("Expected option item to follow non-option item!");
     }
 
@@ -168,7 +173,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [keyboardFocus, setKeyboardFocus] = React.useState<boolean>(false);
 
-    const inputRef = React.useRef<HTMLDivElement>(null);
+    const inputRef = React.useRef<HTMLInputElement>(null);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -187,7 +192,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
         [filteredOptionsWithSeparators, valueWithDefault]
     );
 
-    const firstItemIsGroupTitle = allOptionsWithSeparators[selectionIndex]?.type === "groupTitle";
+    const firstItemIsGroupTitle = allOptionsWithSeparators[selectionIndex]?.type === ItemType.GROUP_TITLE;
 
     // Value changed externally, update indexes to match the new value
     if (!_.isEqual(prevValue, valueWithDefault)) {
@@ -246,7 +251,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                 const { type, label, adornment } = current;
 
                 // ! The separator text gets rendered with text-xs
-                const fontSize = type === "groupTitle" ? 0.75 : 1;
+                const fontSize = type === ItemType.GROUP_TITLE ? 0.75 : 1;
 
                 const labelWidth = getTextWidthWithFont(label, "Equinor", fontSize);
                 const adornmentWidth = adornment ? convertRemToPixels((5 + 2) / 4) : 0;
@@ -372,16 +377,15 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
             function handleKeyDown(e: KeyboardEvent) {
                 // Close the dropdown
                 if (dropdownVisible && e.key === "Escape") {
-                    // FIXME: the ref is a div, so blur() isn't possible
-                    // inputRef.current?.blur();
-                    closePopover();
+                    inputRef.current?.blur();
+                    // closePopover();
                 }
 
                 // Select the currently highlighted element
                 if (e.key === "Enter" && dropdownRef.current && dropdownVisible) {
                     e.preventDefault();
                     const option = filteredOptionsWithSeparators[keyboardFocus ? optionIndexWithFocus : selectionIndex];
-                    if (option && option.type === "option" && !option.disabled) {
+                    if (option && option.type === ItemType.OPTION && !option.disabled) {
                         handleOptionClick(option.value);
                     }
                 }
@@ -510,7 +514,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
     }
 
     function renderItem(item: OptionOrTitle<TValue>, index: number) {
-        if (item.type === "groupTitle") {
+        if (item.type === ItemType.GROUP_TITLE) {
             return <GroupTitle key={`${item.label}-${index}`} {...item} />;
         } else {
             return (
@@ -532,7 +536,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
             <div style={{ width: props.width }} id={props.wrapperId} className="flex hover input-comp rounded">
                 <div className="flex-grow">
                     <Input
-                        ref={inputRef}
+                        inputRef={inputRef}
                         id={props.id}
                         error={
                             !!selection &&
