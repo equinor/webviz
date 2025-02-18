@@ -6,7 +6,7 @@ import {
     UseQueryResult,
 } from "@tanstack/react-query";
 
-import _, { result } from "lodash";
+import _ from "lodash";
 
 // ? Would this be a useful global utility?
 /**
@@ -47,7 +47,7 @@ export function mergeResults<T, K = T[]>(
 
     const isError = !!error;
     const isPending = _.some(results, "isPending");
-    const isFetching = _.some(result, "isFetching");
+    const isFetching = _.some(results, "isFetching");
     const isSuccess = _.every(results, "isSuccess");
 
     // Guard clauses for pending states. Data not defined here
