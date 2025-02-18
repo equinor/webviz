@@ -10,6 +10,9 @@ import type {
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
+    GetCrosslineSliceData_api,
+    GetCrosslineSliceError_api,
+    GetCrosslineSliceResponse_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataError_api,
     GetDeltaEnsembleRealizationsVectorDataResponse_api,
@@ -22,6 +25,9 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataError_api,
     GetDeltaSurfaceDataResponse_api,
+    GetDepthSliceData_api,
+    GetDepthSliceError_api,
+    GetDepthSliceResponse_api,
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersError_api,
     GetDrilledWellboreHeadersResponse_api,
@@ -45,6 +51,9 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataError_api,
     GetHistoricalVectorDataResponse_api,
+    GetInlineSliceData_api,
+    GetInlineSliceError_api,
+    GetInlineSliceResponse_api,
     GetIsGridGeometrySharedData_api,
     GetIsGridGeometrySharedError_api,
     GetIsGridGeometrySharedResponse_api,
@@ -1028,6 +1037,45 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetSeismicCubeMetaListResponse_api, GetSeismicCubeMetaListError_api, ThrowOnError>({
         ...options,
         url: "/seismic/seismic_cube_meta_list/",
+    });
+};
+
+/**
+ * Get Inline Slice
+ * Get a seismic inline from a seismic cube.
+ */
+export const getInlineSlice = <ThrowOnError extends boolean = false>(
+    options: Options<GetInlineSliceData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetInlineSliceResponse_api, GetInlineSliceError_api, ThrowOnError>({
+        ...options,
+        url: "/seismic/get_inline_slice/",
+    });
+};
+
+/**
+ * Get Crossline Slice
+ * Get a seismic crossline from a seismic cube.
+ */
+export const getCrosslineSlice = <ThrowOnError extends boolean = false>(
+    options: Options<GetCrosslineSliceData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetCrosslineSliceResponse_api, GetCrosslineSliceError_api, ThrowOnError>({
+        ...options,
+        url: "/seismic/get_crossline_slice/",
+    });
+};
+
+/**
+ * Get Depth Slice
+ * Get a seismic depth slice from a seismic cube.
+ */
+export const getDepthSlice = <ThrowOnError extends boolean = false>(
+    options: Options<GetDepthSliceData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetDepthSliceResponse_api, GetDepthSliceError_api, ThrowOnError>({
+        ...options,
+        url: "/seismic/get_depth_slice/",
     });
 };
 

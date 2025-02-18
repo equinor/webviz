@@ -9,7 +9,7 @@ import { SettingType } from "../settingsTypes";
 
 type ValueType = number | null;
 
-export class GridLayerSetting implements Setting<ValueType> {
+export class GridLayerKSetting implements Setting<ValueType> {
     private _delegate: SettingDelegate<ValueType>;
 
     constructor() {
@@ -17,11 +17,11 @@ export class GridLayerSetting implements Setting<ValueType> {
     }
 
     getType(): SettingType {
-        return SettingType.GRID_LAYER;
+        return SettingType.GRID_LAYER_K;
     }
 
     getLabel(): string {
-        return "Grid layer";
+        return "Grid layer K";
     }
 
     getDelegate(): SettingDelegate<ValueType> {
@@ -98,4 +98,4 @@ export class GridLayerSetting implements Setting<ValueType> {
     }
 }
 
-SettingRegistry.registerSetting(GridLayerSetting);
+SettingRegistry.registerSetting(GridLayerKSetting);
