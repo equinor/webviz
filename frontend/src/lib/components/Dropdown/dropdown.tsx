@@ -104,7 +104,12 @@ function makeOptionListItemsRecursively<TValue>(
             // Recursively make entries for this group's items
             const optionItems = makeOptionListItemsRecursively(option.options, filter, option);
 
-            if (!optionItems.length) return [];
+            if (!optionItems.length) {
+                // Warning is only relevant if no filter was applied
+                if (!filter) console.warn(`Group ${groupTitle.label} contains no children. Skipping...`);
+
+                return [];
+            }
             return [groupTitle, ...optionItems];
         }
 
@@ -131,10 +136,6 @@ function findValidDropdownIndex(itemList: OptionOrTitle<any>[], currentIdx: numb
 
         adjustedIndex += direction;
         adjustedIndex = _.clamp(adjustedIndex, 0, itemList.length - 1);
-    }
-
-    if (itemList[adjustedIndex].type !== ItemType.OPTION) {
-        throw new Error("Expected option item to follow non-option item!");
     }
 
     return adjustedIndex;

@@ -37,6 +37,11 @@ export function Settings(): React.ReactNode {
             ],
         },
         {
+            // This empty group will log a warning
+            label: "Empty group",
+            options: [],
+        },
+        {
             value: "x1",
             label: "X:1",
         },
