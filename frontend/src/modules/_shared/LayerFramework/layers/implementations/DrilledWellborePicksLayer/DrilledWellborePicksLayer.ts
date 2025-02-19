@@ -1,8 +1,10 @@
 import { WellborePick_api, getWellborePicksForPickIdentifierOptions } from "@api";
+import { BBox } from "@lib/utils/boundingBox";
+import { OBBox, fromAxisAlignedBoundingBox } from "@lib/utils/orientedBoundingBox";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -45,30 +47,27 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
+    makeBoundingBox(): OBBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
         }
 
-        const bbox: BoundingBox = {
-            x: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-            y: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-            z: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
+        const bbox: BBox = {
+            min: { x: Infinity, y: Infinity, z: Infinity },
+            max: { x: -Infinity, y: -Infinity, z: -Infinity },
         };
 
-        for (const trajectory of data) {
-            bbox.x[0] = Math.min(bbox.x[0], trajectory.easting);
-            bbox.x[1] = Math.max(bbox.x[1], trajectory.easting);
-
-            bbox.y[0] = Math.min(bbox.y[0], trajectory.northing);
-            bbox.y[1] = Math.max(bbox.y[1], trajectory.northing);
-
-            bbox.z[0] = Math.min(bbox.z[0], trajectory.tvdMsl);
-            bbox.z[1] = Math.max(bbox.z[1], trajectory.tvdMsl);
+        for (const pick of data) {
+            bbox.min.x = Math.min(bbox.min.x, pick.easting);
+            bbox.max.x = Math.max(bbox.max.x, pick.easting);
+            bbox.min.y = Math.min(bbox.min.y, pick.northing);
+            bbox.max.y = Math.max(bbox.max.y, pick.northing);
+            bbox.min.z = Math.min(bbox.min.z, pick.tvdMsl);
+            bbox.max.z = Math.max(bbox.max.z, pick.tvdMsl);
         }
 
-        return bbox;
+        return fromAxisAlignedBoundingBox(bbox);
     }
 
     fetchData(queryClient: QueryClient): Promise<WellborePick_api[]> {

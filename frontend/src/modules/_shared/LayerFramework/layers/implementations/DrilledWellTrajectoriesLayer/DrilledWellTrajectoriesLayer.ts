@@ -1,8 +1,10 @@
 import { WellboreTrajectory_api, getWellTrajectoriesOptions } from "@api";
+import { BBox } from "@lib/utils/boundingBox";
+import { OBBox, fromAxisAlignedBoundingBox } from "@lib/utils/orientedBoundingBox";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -45,34 +47,33 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
+    makeBoundingBox(): OBBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
         }
 
-        const bbox: BoundingBox = {
-            x: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-            y: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-            z: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
+        const bbox: BBox = {
+            min: { x: Infinity, y: Infinity, z: Infinity },
+            max: { x: -Infinity, y: -Infinity, z: -Infinity },
         };
 
         for (const trajectory of data) {
             for (const point of trajectory.eastingArr) {
-                bbox.x[0] = Math.min(bbox.x[0], point);
-                bbox.x[1] = Math.max(bbox.x[1], point);
+                bbox.min.x = Math.min(bbox.min.x, point);
+                bbox.max.x = Math.max(bbox.max.x, point);
             }
             for (const point of trajectory.northingArr) {
-                bbox.y[0] = Math.min(bbox.y[0], point);
-                bbox.y[1] = Math.max(bbox.y[1], point);
+                bbox.min.y = Math.min(bbox.min.y, point);
+                bbox.max.y = Math.max(bbox.max.y, point);
             }
             for (const point of trajectory.tvdMslArr) {
-                bbox.z[0] = Math.min(bbox.z[0], point);
-                bbox.z[1] = Math.max(bbox.z[1], point);
+                bbox.min.z = Math.min(bbox.min.z, point);
+                bbox.max.z = Math.max(bbox.max.z, point);
             }
         }
 
-        return bbox;
+        return fromAxisAlignedBoundingBox(bbox);
     }
 
     fetchData(queryClient: QueryClient): Promise<WellboreTrajectory_api[]> {

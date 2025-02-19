@@ -1,8 +1,3 @@
-export enum Space {
-    FENCE = "FENCE",
-    LAYER = "LAYER",
-}
-
 export type WebworkerParameters = {
     offset: [number, number, number];
     sharedVerticesBuffer: SharedArrayBuffer;
@@ -15,6 +10,20 @@ export type WebworkerParameters = {
     zIncreasingDownwards: boolean;
 };
 
+/*
+Generates a mesh for a seismic fence.
+@param parameters The parameters for generating the mesh
+- offset: The offset of the mesh
+- sharedVerticesBuffer: The shared vertices buffer
+- sharedIndicesBuffer: The shared indices buffer
+- startVerticesIndex: The start index of the vertices in the shared memory buffer
+- startIndicesIndex: The start index of the indices in the shared memory buffer
+- numSamplesU: The number of samples in the U direction
+- numSamplesV: The number of samples in the V direction
+- boundingBox: The bounding box of the mesh - used to transform UV coordinates to XYZ coordinates
+- zIncreasingDownwards: Whether the Z axis increases downwards
+
+*/
 export function makeMesh(parameters: WebworkerParameters) {
     const bbox = parameters.boundingBox;
 

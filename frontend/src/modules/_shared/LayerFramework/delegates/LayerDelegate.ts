@@ -1,6 +1,7 @@
 import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
+import { OBBox, clone } from "@lib/utils/orientedBoundingBox";
 import { QueryClient, isCancelledError } from "@tanstack/react-query";
 
 import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
@@ -9,15 +10,7 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
-import {
-    BoundingBox,
-    Layer,
-    SerializedLayer,
-    SerializedType,
-    Settings,
-    SettingsContext,
-    StoredData,
-} from "../interfaces";
+import { Layer, SerializedLayer, SerializedType, Settings, SettingsContext, StoredData } from "../interfaces";
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -62,9 +55,9 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
     private _status: LayerStatus = LayerStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
-    private _prevBoundingBox: BoundingBox | null = null;
-    private _predictedBoundingBox: BoundingBox | null = null;
-    private _boundingBox: BoundingBox | null = null;
+    private _prevOrientedBoundingBox: OBBox | null = null;
+    private _predictedOrientedBoundingBox: OBBox | null = null;
+    private _boundingBox: OBBox | null = null;
     private _valueRange: [number, number] | null = null;
     private _coloringType: LayerColoringType;
     private _isSubordinated: boolean = false;
@@ -130,19 +123,19 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
         return this._settingsContext;
     }
 
-    getBoundingBox(): BoundingBox | null {
+    getOrientedBoundingBox(): OBBox | null {
         return this._boundingBox;
     }
 
-    getLastValidBoundingBox(): BoundingBox | null {
+    getLastValidBoundingBox(): OBBox | null {
         if (this._boundingBox) {
             return this._boundingBox;
         }
-        return this._prevBoundingBox;
+        return this._prevOrientedBoundingBox;
     }
 
-    getPredictedBoundingBox(): BoundingBox | null {
-        return this._predictedBoundingBox;
+    getPredictedOrientedBoundingBox(): OBBox | null {
+        return this._predictedOrientedBoundingBox;
     }
 
     getColoringType(): LayerColoringType {
@@ -250,7 +243,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
 
         this.invalidateBoundingBox();
         this.invalidateValueRange();
-        this._predictedBoundingBox = this._owner.predictBoundingBox?.() ?? null;
+        this._predictedOrientedBoundingBox = this._owner.predictBoundingBox?.() ?? null;
 
         this.setStatus(LayerStatus.LOADING);
 
@@ -321,13 +314,9 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
 
     private invalidateBoundingBox(): void {
         if (this._boundingBox) {
-            this._prevBoundingBox = {
-                x: [this._boundingBox.x[0], this._boundingBox.x[1]],
-                y: [this._boundingBox.y[0], this._boundingBox.y[1]],
-                z: [this._boundingBox.z[0], this._boundingBox.z[1]],
-            };
+            this._prevOrientedBoundingBox = clone(this._boundingBox);
         } else {
-            this._prevBoundingBox = null;
+            this._prevOrientedBoundingBox = null;
         }
         this._boundingBox = null;
     }

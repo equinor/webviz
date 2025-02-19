@@ -9,15 +9,21 @@ import { SeismicDepthSliceSetting } from "@modules/_shared/LayerFramework/settin
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
-import { RealizationSeismicDepthSliceSettings } from "./types";
+import { RealizationSeismicDepthSliceSettings, RealizationSeismicDepthSliceStoredData } from "./types";
 
 export class RealizationSeismicDepthSliceSettingsContext
-    implements SettingsContext<RealizationSeismicDepthSliceSettings>
+    implements SettingsContext<RealizationSeismicDepthSliceSettings, RealizationSeismicDepthSliceStoredData>
 {
-    private _contextDelegate: SettingsContextDelegate<RealizationSeismicDepthSliceSettings>;
+    private _contextDelegate: SettingsContextDelegate<
+        RealizationSeismicDepthSliceSettings,
+        RealizationSeismicDepthSliceStoredData
+    >;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<RealizationSeismicDepthSliceSettings>(this, layerManager, {
+        this._contextDelegate = new SettingsContextDelegate<
+            RealizationSeismicDepthSliceSettings,
+            RealizationSeismicDepthSliceStoredData
+        >(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),
             [SettingType.ATTRIBUTE]: new AttributeSetting(),
@@ -35,7 +41,10 @@ export class RealizationSeismicDepthSliceSettingsContext
         );
     }
 
-    getDelegate(): SettingsContextDelegate<RealizationSeismicDepthSliceSettings> {
+    getDelegate(): SettingsContextDelegate<
+        RealizationSeismicDepthSliceSettings,
+        RealizationSeismicDepthSliceStoredData
+    > {
         return this._contextDelegate;
     }
 
@@ -46,8 +55,9 @@ export class RealizationSeismicDepthSliceSettingsContext
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        storedDataUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationSeismicDepthSliceSettings>) {
+    }: DefineDependenciesArgs<RealizationSeismicDepthSliceSettings, RealizationSeismicDepthSliceStoredData>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -71,7 +81,8 @@ export class RealizationSeismicDepthSliceSettingsContext
 
             return [...realizations];
         });
-        const RealizationSeismicDepthSliceDataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+
+        const realizationSeismicDepthSliceDataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
             const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
             const realization = getLocalSetting(SettingType.REALIZATION);
 
@@ -90,8 +101,18 @@ export class RealizationSeismicDepthSliceSettingsContext
             });
         });
 
+        storedDataUpdater("seismicCubeMeta", ({ getHelperDependency }) => {
+            const data = getHelperDependency(realizationSeismicDepthSliceDataDep);
+
+            if (!data) {
+                return null;
+            }
+
+            return data;
+        });
+
         availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getHelperDependency }) => {
-            const data = getHelperDependency(RealizationSeismicDepthSliceDataDep);
+            const data = getHelperDependency(realizationSeismicDepthSliceDataDep);
 
             if (!data) {
                 return [];
@@ -107,7 +128,7 @@ export class RealizationSeismicDepthSliceSettingsContext
         availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(SettingType.ATTRIBUTE);
 
-            const data = getHelperDependency(RealizationSeismicDepthSliceDataDep);
+            const data = getHelperDependency(realizationSeismicDepthSliceDataDep);
 
             if (!seismicAttribute || !data) {
                 return [];
@@ -125,10 +146,11 @@ export class RealizationSeismicDepthSliceSettingsContext
 
             return availableTimeOrIntervals;
         });
+
         availableSettingsUpdater(SettingType.SEISMIC_DEPTH_SLICE, ({ getLocalSetting, getHelperDependency }) => {
             const seismicAttribute = getLocalSetting(SettingType.ATTRIBUTE);
             const timeOrInterval = getLocalSetting(SettingType.TIME_OR_INTERVAL);
-            const data = getHelperDependency(RealizationSeismicDepthSliceDataDep);
+            const data = getHelperDependency(realizationSeismicDepthSliceDataDep);
 
             if (!seismicAttribute || !timeOrInterval || !data) {
                 return [];

@@ -16,7 +16,7 @@ import { Toolbar } from "./Toolbar";
 import { DeckGlInstanceManager, DeckGlInstanceManagerTopic } from "../utils/DeckGlInstanceManager";
 import { Polyline, PolylinesPlugin, PolylinesPluginTopic } from "../utils/PolylinesPlugin";
 
-export type InteractionWrapperProps = {} & Omit<
+export type InteractionWrapperProps = Omit<
     ReadooutWrapperProps,
     "deckGlManager" | "triggerHome" | "verticalScale" | "deckGlRef"
 >;
@@ -127,7 +127,7 @@ export function InteractionWrapper(props: InteractionWrapperProps): React.ReactN
         [activePolylineId]
     );
 
-    let adjustedLayers: DeckGlLayer[] = [];
+    let adjustedLayers: DeckGlLayer[] = [...props.layers];
     if (!gridVisible) {
         adjustedLayers = adjustedLayers.filter((layer) => !(layer instanceof AxesLayer));
     }

@@ -1,6 +1,7 @@
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorScaleSerialization } from "@lib/utils/ColorScale";
+import { OBBox } from "@lib/utils/orientedBoundingBox";
 import { QueryClient } from "@tanstack/react-query";
 
 import { GroupDelegate } from "./delegates/GroupDelegate";
@@ -91,12 +92,6 @@ export function instanceofGroup(item: Item): item is Group {
     return (item as Group).getItemDelegate !== undefined && (item as Group).getGroupDelegate !== undefined;
 }
 
-export type BoundingBox = {
-    x: [number, number];
-    y: [number, number];
-    z: [number, number];
-};
-
 export enum FetchDataFunctionResult {
     SUCCESS = "SUCCESS",
     IN_PROGRESS = "IN_PROGRESS",
@@ -115,8 +110,8 @@ export interface Layer<TSettings extends Settings, TData, TStoredData extends St
     getLayerDelegate(): LayerDelegate<TSettings, TData, TStoredData>;
     doSettingsChangesRequireDataRefetch(prevSettings: TSettings, newSettings: TSettings): boolean;
     fetchData(queryClient: QueryClient): Promise<TData>;
-    makeBoundingBox?(): BoundingBox | null;
-    predictBoundingBox?(): BoundingBox | null;
+    makeBoundingBox?(): OBBox | null;
+    predictBoundingBox?(): OBBox | null;
     makeValueRange?(): [number, number] | null;
 }
 

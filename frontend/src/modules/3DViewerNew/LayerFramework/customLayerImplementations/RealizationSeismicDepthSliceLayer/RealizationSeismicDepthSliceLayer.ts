@@ -1,8 +1,11 @@
 import { getDepthSliceOptions } from "@api";
+import { OBBox, fromCornerPoints } from "@lib/utils/orientedBoundingBox";
+import { rotatePoint2Around } from "@lib/utils/vec2";
+import { Vec3 } from "@lib/utils/vec3";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -10,14 +13,19 @@ import { QueryClient } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import { RealizationSeismicDepthSliceSettingsContext } from "./RealizationSeismicDepthSliceSettingsContext";
-import { RealizationSeismicDepthSliceSettings } from "./types";
+import { RealizationSeismicDepthSliceSettings, RealizationSeismicDepthSliceStoredData } from "./types";
 
 import { SeismicSliceData_trans, transformSeismicSlice } from "../../../settings/queries/queryDataTransforms";
 
 export class RealizationSeismicDepthSliceLayer
-    implements Layer<RealizationSeismicDepthSliceSettings, SeismicSliceData_trans>
+    implements
+        Layer<RealizationSeismicDepthSliceSettings, SeismicSliceData_trans, RealizationSeismicDepthSliceStoredData>
 {
-    private _layerDelegate: LayerDelegate<RealizationSeismicDepthSliceSettings, SeismicSliceData_trans>;
+    private _layerDelegate: LayerDelegate<
+        RealizationSeismicDepthSliceSettings,
+        SeismicSliceData_trans,
+        RealizationSeismicDepthSliceStoredData
+    >;
     private _itemDelegate: ItemDelegate;
 
     constructor(layerManager: LayerManager) {
@@ -38,10 +46,15 @@ export class RealizationSeismicDepthSliceLayer
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<RealizationSeismicDepthSliceSettings, SeismicSliceData_trans> {
+    getLayerDelegate(): LayerDelegate<
+        RealizationSeismicDepthSliceSettings,
+        SeismicSliceData_trans,
+        RealizationSeismicDepthSliceStoredData
+    > {
         return this._layerDelegate;
     }
-    makeBoundingBox(): BoundingBox | null {
+
+    makeBoundingBox(): OBBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
@@ -54,12 +67,55 @@ export class RealizationSeismicDepthSliceLayer
             return null;
         }
 
-        return {
-            x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
-            y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
-            z: [seismicDepth, seismicDepth],
-        };
+        // The endpoint returns the bounding box as four points
+
+        const cornerPoints: Vec3[] = data.bbox_utm.map((point) => {
+            return { x: point[0], y: point[1], z: seismicDepth };
+        });
+
+        const obbox = fromCornerPoints(cornerPoints);
+
+        return obbox;
     }
+
+    predictBoundingBox(): OBBox | null {
+        const settings = this.getSettingsContext().getDelegate().getSettings();
+        const seismicDepthSliceNumber = settings[SettingType.SEISMIC_DEPTH_SLICE].getDelegate().getValue();
+        const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
+        const isoTimeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
+        const seismicCubeMeta = this._layerDelegate.getSettingsContext().getDelegate().getStoredData("seismicCubeMeta");
+
+        if (!seismicCubeMeta || seismicDepthSliceNumber === null) {
+            return null;
+        }
+
+        const meta = seismicCubeMeta.find(
+            (m) => m.seismicAttribute === seismicAttribute && m.isoDateOrInterval === isoTimeOrInterval
+        );
+
+        if (!meta) {
+            return null;
+        }
+
+        const xmin = meta.spec.xOrigin;
+        const xmax = meta.spec.xOrigin + meta.spec.xInc * (meta.spec.numCols - 1);
+
+        const ymin = meta.spec.yOrigin;
+        const ymax = meta.spec.yOrigin + meta.spec.yInc * meta.spec.yFlip * (meta.spec.numRows - 1);
+
+        const zmin = -seismicDepthSliceNumber;
+        const zmax = zmin;
+
+        const maxXY = { x: xmax, y: ymax };
+        const minXY = { x: xmin, y: ymin };
+        const origin = { x: meta.spec.xOrigin, y: meta.spec.yOrigin };
+
+        const rotatedMinXY = rotatePoint2Around(minXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
+        const rotatedMaxXY = rotatePoint2Around(maxXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
+
+        return { x: [rotatedMinXY.x, rotatedMaxXY.x], y: [rotatedMinXY.y, rotatedMaxXY.y], z: [zmin, zmax] };
+    }
+
     doSettingsChangesRequireDataRefetch(
         prevSettings: RealizationSeismicDepthSliceSettings,
         newSettings: RealizationSeismicDepthSliceSettings

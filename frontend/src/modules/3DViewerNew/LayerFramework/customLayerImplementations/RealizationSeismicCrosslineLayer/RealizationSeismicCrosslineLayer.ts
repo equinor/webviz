@@ -1,9 +1,11 @@
 import { getCrosslineSliceOptions } from "@api";
+import { OBBox, fromCornerPoints } from "@lib/utils/orientedBoundingBox";
 import { rotatePoint2Around } from "@lib/utils/vec2";
+import { Vec3 } from "@lib/utils/vec3";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -55,27 +57,26 @@ export class RealizationSeismicCrosslineLayer
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
+    makeBoundingBox(): OBBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
         }
 
-        return {
-            x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
-            y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
-            z: [data.u_min, data.u_max],
-        };
+        const cornerPoints: Vec3[] = data.bbox_utm.map((point) => ({ x: point[0], y: point[1], z: data.u_min }));
+        cornerPoints.push(...data.bbox_utm.map((point) => ({ x: point[0], y: point[1], z: data.u_max })));
+
+        return fromCornerPoints(cornerPoints);
     }
 
-    predictBoundingBox(): BoundingBox | null {
+    predictBoundingBox(): OBBox | null {
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const seismicCrosslineNumber = settings[SettingType.SEISMIC_CROSSLINE].getDelegate().getValue();
         const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
         const isoTimeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
         const seismicCubeMeta = this._layerDelegate.getSettingsContext().getDelegate().getStoredData("seismicCubeMeta");
 
-        if (!seismicCubeMeta || !seismicCrosslineNumber) {
+        if (!seismicCubeMeta || seismicCrosslineNumber === null) {
             return null;
         }
 
@@ -103,7 +104,18 @@ export class RealizationSeismicCrosslineLayer
         const rotatedMinXY = rotatePoint2Around(minXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
         const rotatedMaxXY = rotatePoint2Around(maxXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
 
-        return { x: [rotatedMinXY.x, rotatedMaxXY.x], y: [rotatedMinXY.y, rotatedMaxXY.y], z: [zmin, zmax] };
+        const cornerPoints: Vec3[] = [
+            { x: rotatedMinXY.x, y: rotatedMinXY.y, z: zmin },
+            { x: rotatedMaxXY.x, y: rotatedMinXY.y, z: zmin },
+            { x: rotatedMaxXY.x, y: rotatedMaxXY.y, z: zmin },
+            { x: rotatedMinXY.x, y: rotatedMaxXY.y, z: zmin },
+            { x: rotatedMinXY.x, y: rotatedMinXY.y, z: zmax },
+            { x: rotatedMaxXY.x, y: rotatedMinXY.y, z: zmax },
+            { x: rotatedMaxXY.x, y: rotatedMaxXY.y, z: zmax },
+            { x: rotatedMinXY.x, y: rotatedMaxXY.y, z: zmax },
+        ];
+
+        return fromCornerPoints(cornerPoints);
     }
 
     makeValueRange(): [number, number] | null {

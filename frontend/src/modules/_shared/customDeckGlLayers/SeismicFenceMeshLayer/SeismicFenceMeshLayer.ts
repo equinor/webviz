@@ -282,7 +282,6 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         const r = info.color[0];
         const g = info.color[1];
         const b = info.color[2];
-        const a = info.color[3];
 
         const vertexIndex = r * 256 * 256 + g * 256 + b;
 

@@ -112,7 +112,7 @@ export function recursivelyMakeViewsAndLayers(
                 collectedColorScales.push(colorScale);
             }
 
-            const boundingBox = child.getLayerDelegate().getBoundingBox();
+            const boundingBox = child.getLayerDelegate().getOrientedBoundingBox();
             maybeApplyBoundingBox(boundingBox);
             collectedLayers.push({ layer, position: numCollectedLayers + collectedLayers.length });
         }

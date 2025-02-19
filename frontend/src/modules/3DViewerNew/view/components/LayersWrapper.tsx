@@ -31,8 +31,8 @@ import {
     VisualizationFactory,
     VisualizationTarget,
 } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { makeWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/wellborePicksLayer";
-import { makeWellsLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/wellsLayer";
+import { makeWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeWellborePicksLayer";
+import { makeWellsLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeWellsLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
