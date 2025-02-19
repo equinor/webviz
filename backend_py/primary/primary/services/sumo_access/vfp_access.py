@@ -3,7 +3,7 @@ from typing import List
 
 import numpy as np
 import pyarrow as pa
-from fmu.sumo.explorer.objects import Case
+from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
 
 from ._helpers import create_sumo_case_async, create_sumo_client
@@ -30,36 +30,45 @@ class VfpAccess:
     Class for accessing and retrieving Vfp tables
     """
 
-    def __init__(self, case: Case, iteration_name: str):
-        self._case = case
-        self._iteration_name = iteration_name
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+        self._sumo_client: SumoClient = sumo_client
+        self._case_uuid: str = case_uuid
+        self._iteration_name: str = iteration_name
+        self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
+            uuid=self._case_uuid, iteration=self._iteration_name
+        )
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "VfpAccess":
-        sumo_client = create_sumo_client(access_token)
-        case: Case = await create_sumo_case_async(sumo_client, case_uuid, want_keepalive_pit=False)
-        return VfpAccess(case, iteration_name)
+    def from_case_uuid_and_ensemble_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "VfpAccess":
+        sumo_client: SumoClient = create_sumo_client(access_token)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+
+    @property
+    def ensemble_context(self) -> SearchContext:
+        return self._ensemble_context
 
     async def get_all_vfp_table_names_for_realization(self, realization: int) -> List[str]:
         """Returns all VFP table names/tagnames for a realization."""
-        table_collection = self._case.tables.filter(
+        table_context = self.ensemble_context.tables.filter(
             content="lift_curves", realization=realization, iteration=self._iteration_name
         )
-        table_count = await table_collection.length_async()
+        table_count = await table_context.length_async()
         if table_count == 0:
             raise NoDataError(f"No VFP tables found for realization: {realization}", Service.SUMO)
-        return table_collection.tagnames
+        tagnames = await table_context._get_field_values_async("data.tagname.keyword")
+
+        return tagnames
 
     async def get_vfp_table_from_tagname_as_pyarrow(self, tagname: str, realization: int) -> pa.Table:
         """Returns a VFP table as a pyarrow table for a specific tagname (table name)
         and realization.
         """
 
-        table_collection = self._case.tables.filter(
+        table_context = self.ensemble_context.tables.filter(
             tagname=tagname, realization=realization, iteration=self._iteration_name
         )
 
-        table_count = await table_collection.length_async()
+        table_count = await table_context.length_async()
         if table_count == 0:
             raise NoDataError(
                 f"No VFP table found with tagname: {tagname} and realization: {realization}", Service.SUMO
@@ -68,8 +77,8 @@ class VfpAccess:
             raise MultipleDataMatchesError(
                 f"Multiple VFP tables found with tagname: {tagname} and realization: {realization}", Service.SUMO
             )
-
-        pa_table: pa.Table = await table_collection[0].to_arrow_async()
+        sumo_table = await table_context.getitem_async(0)
+        pa_table: pa.Table = await sumo_table.to_arrow_async()
 
         return pa_table
 

@@ -5,7 +5,7 @@ from typing import List, Optional
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from fmu.sumo.explorer.objects import Case
+from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 from ._helpers import create_sumo_client, create_sumo_case_async
@@ -21,34 +21,44 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ParameterAccess:
-    def __init__(self, case: Case, iteration_name: str):
-        self._case: Case = case
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+        self._sumo_client: SumoClient = sumo_client
+        self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
+        self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
+            uuid=self._case_uuid, iteration=self._iteration_name
+        )
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "ParameterAccess":
-        sumo_client = create_sumo_client(access_token)
-        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
-        return ParameterAccess(case=case, iteration_name=iteration_name)
+    def from_case_uuid_and_ensemble_name(
+        cls, access_token: str, case_uuid: str, iteration_name: str
+    ) -> "ParameterAccess":
+        sumo_client: SumoClient = create_sumo_client(access_token)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
+
+    @property
+    def ensemble_context(self) -> SearchContext:
+        return self._ensemble_context
 
     async def get_parameters_and_sensitivities(self) -> EnsembleParameters:
         """Retrieve parameters for an ensemble"""
         timer = PerfTimer()
 
-        table_collection = self._case.tables.filter(
-            iteration=self._iteration_name,
-            aggregation="collection",
+        table_context = self.ensemble_context.dictionaries.filter(
             name="parameters",
-            tagname="all",
         )
-        if await table_collection.length_async() == 0:
-            raise ValueError(f"No parameter tables found {self._case.name, self._iteration_name}")
-        if await table_collection.length_async() > 1:
-            raise ValueError(f"Multiple parameter tables found {self._case.name,self._iteration_name}")
+        table = await table_context.aggregation_async(operation="collection")
+        print(table)
+        length = await table_context.length_async()
+        print("****************************************************", length)
+        if await table_context.length_async() == 0:
+            raise ValueError(f"No parameter tables found {self._case_uuid, self._iteration_name}")
+        if await table_context.length_async() > 1:
+            raise ValueError(f"Multiple parameter tables found {self._case_uuid,self._iteration_name}")
 
-        table = await table_collection.getitem_async(0)
-        byte_stream: BytesIO = await table.blob_async
-        table = pq.read_table(byte_stream)
+        sumo_table = await table_context.getitem_async(0)
+
+        table = await sumo_table.to_arrow_async()
 
         et_download_arrow_table_ms = timer.lap_ms()
         LOGGER.debug(f"Downloaded arrow table in {et_download_arrow_table_ms}ms")

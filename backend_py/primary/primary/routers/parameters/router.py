@@ -26,7 +26,7 @@ async def get_parameter_names_and_description(
     # fmt:on
 ) -> List[schemas.EnsembleParameterDescription]:
     """Retrieve parameter names and description for an ensemble"""
-    access = await ParameterAccess.from_case_uuid_async(
+    access = ParameterAccess.from_case_uuid_and_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     parameters = (await access.get_parameters_and_sensitivities()).parameters
@@ -56,7 +56,7 @@ async def get_parameter(
 ) -> Optional[EnsembleParameter]:
     """Get a parameter in a given Sumo ensemble"""
 
-    access = await ParameterAccess.from_case_uuid_async(
+    access = ParameterAccess.from_case_uuid_and_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     parameters = (await access.get_parameters_and_sensitivities()).parameters
@@ -72,7 +72,7 @@ async def get_parameters(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
 ) -> List[EnsembleParameter]:
-    access = await ParameterAccess.from_case_uuid_async(
+    access = ParameterAccess.from_case_uuid_and_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     parameters = (await access.get_parameters_and_sensitivities()).parameters
@@ -87,7 +87,7 @@ async def get_is_sensitivity_run(
 ) -> bool:
     """Check if a given Sumo ensemble is a sensitivity run"""
 
-    access = await ParameterAccess.from_case_uuid_async(
+    access = ParameterAccess.from_case_uuid_and_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     parameters = await access.get_parameters_and_sensitivities()
@@ -102,7 +102,7 @@ async def get_sensitivities(
 ) -> List[EnsembleSensitivity]:
     """Get sensitivities in a given Sumo ensemble"""
 
-    access = await ParameterAccess.from_case_uuid_async(
+    access = ParameterAccess.from_case_uuid_and_ensemble_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 

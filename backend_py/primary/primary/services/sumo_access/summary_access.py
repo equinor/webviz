@@ -55,7 +55,7 @@ class SummaryAccess:
         timer = PerfTimer()
 
         table_context: SearchContext = self.ensemble_context.filter(cls="table", tagname="summary")
-        print(type(table_context))
+
         table_names = await table_context.names_async
         if len(table_names) == 0:
             raise NoDataError(
@@ -112,7 +112,10 @@ class SummaryAccess:
 
         table: pa.Table = await load_aggregated_arrow_table_single_column_from_sumo(
             ensemble_context=self.ensemble_context,
-            table_content_name=["timeseries", "simulationtimeseries"],
+            table_content_name=[
+                "timeseries",
+                "simulationtimeseries",
+            ],  # New metadata uses simulationtimeseries, but most existing cases use timeseries
             table_column_name=vector_name,
         )
         table = _validate_single_vector_table(table, vector_name)
