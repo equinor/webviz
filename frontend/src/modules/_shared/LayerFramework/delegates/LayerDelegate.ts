@@ -1,7 +1,7 @@
 import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
+import * as bbox from "@lib/utils/boundingBox";
 import { isDevMode } from "@lib/utils/devMode";
-import { OBBox, clone } from "@lib/utils/orientedBoundingBox";
 import { QueryClient, isCancelledError } from "@tanstack/react-query";
 
 import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
@@ -55,9 +55,9 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
     private _status: LayerStatus = LayerStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
-    private _prevOrientedBoundingBox: OBBox | null = null;
-    private _predictedOrientedBoundingBox: OBBox | null = null;
-    private _boundingBox: OBBox | null = null;
+    private _prevBoundingBox: bbox.BBox | null = null;
+    private _predictedBoundingBox: bbox.BBox | null = null;
+    private _boundingBox: bbox.BBox | null = null;
     private _valueRange: [number, number] | null = null;
     private _coloringType: LayerColoringType;
     private _isSubordinated: boolean = false;
@@ -123,19 +123,19 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
         return this._settingsContext;
     }
 
-    getOrientedBoundingBox(): OBBox | null {
+    getBoundingBox(): bbox.BBox | null {
         return this._boundingBox;
     }
 
-    getLastValidBoundingBox(): OBBox | null {
+    getLastValidBoundingBox(): bbox.BBox | null {
         if (this._boundingBox) {
             return this._boundingBox;
         }
-        return this._prevOrientedBoundingBox;
+        return this._prevBoundingBox;
     }
 
-    getPredictedOrientedBoundingBox(): OBBox | null {
-        return this._predictedOrientedBoundingBox;
+    getPredictedBoundingBox(): bbox.BBox | null {
+        return this._predictedBoundingBox;
     }
 
     getColoringType(): LayerColoringType {
@@ -243,7 +243,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
 
         this.invalidateBoundingBox();
         this.invalidateValueRange();
-        this._predictedOrientedBoundingBox = this._owner.predictBoundingBox?.() ?? null;
+        this._predictedBoundingBox = this._owner.predictBoundingBox?.() ?? null;
 
         this.setStatus(LayerStatus.LOADING);
 
@@ -314,9 +314,9 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
 
     private invalidateBoundingBox(): void {
         if (this._boundingBox) {
-            this._prevOrientedBoundingBox = clone(this._boundingBox);
+            this._prevBoundingBox = bbox.clone(this._boundingBox);
         } else {
-            this._prevOrientedBoundingBox = null;
+            this._prevBoundingBox = null;
         }
         this._boundingBox = null;
     }

@@ -156,7 +156,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                     collectedColorScales.push(colorScale);
                 }
 
-                const boundingBox = child.getLayerDelegate().getOrientedBoundingBox();
+                const boundingBox = child.getLayerDelegate().getBoundingBox();
                 maybeApplyBoundingBox(boundingBox);
                 collectedLayers.push({ layer, position: numCollectedLayers + collectedLayers.length });
             }
@@ -195,8 +195,8 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
             colorScale,
             settings: layer.getLayerDelegate().getSettingsContext().getDelegate().getValues(),
             isLoading: layer.getLayerDelegate().getStatus() === LayerStatus.LOADING,
-            orientedBoundingBox: layer.getLayerDelegate().getOrientedBoundingBox(),
-            predictedNextOrientedBoundingBox: layer.getLayerDelegate().getPredictedOrientedBoundingBox(),
+            orientedBoundingBox: layer.getLayerDelegate().getBoundingBox(),
+            predictedNextOrientedBoundingBox: layer.getLayerDelegate().getPredictedBoundingBox(),
         });
     }
 

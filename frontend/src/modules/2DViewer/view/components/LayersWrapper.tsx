@@ -5,11 +5,10 @@ import { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Rect2D, outerRectContainsInnerRect } from "@lib/utils/geometry";
+import * as bbox from "@lib/utils/boundingBox";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { LayerManager, LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
@@ -28,7 +27,7 @@ export type LayersWrapperProps = {
 };
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
-    const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
+    const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
@@ -100,21 +99,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     if (viewsAndLayers.boundingBox !== null) {
         if (prevBoundingBox !== null) {
-            const oldBoundingRect: Rect2D | null = {
-                x: prevBoundingBox.x[0],
-                y: prevBoundingBox.y[0],
-                width: prevBoundingBox.x[1] - prevBoundingBox.x[0],
-                height: prevBoundingBox.y[1] - prevBoundingBox.y[0],
-            };
-
-            const newBoundingRect: Rect2D = {
-                x: viewsAndLayers.boundingBox.x[0],
-                y: viewsAndLayers.boundingBox.y[0],
-                width: viewsAndLayers.boundingBox.x[1] - viewsAndLayers.boundingBox.x[0],
-                height: viewsAndLayers.boundingBox.y[1] - viewsAndLayers.boundingBox.y[0],
-            };
-
-            if (!outerRectContainsInnerRect(oldBoundingRect, newBoundingRect)) {
+            if (!bbox.containsBox(prevBoundingBox, viewsAndLayers.boundingBox)) {
                 setPrevBoundingBox(viewsAndLayers.boundingBox);
             }
         } else {
@@ -131,7 +116,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     let bounds: BoundingBox2D | undefined = undefined;
     if (prevBoundingBox) {
-        bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
+        bounds = [prevBoundingBox.min.x, prevBoundingBox.min.y, prevBoundingBox.max.x, prevBoundingBox.max.y];
     }
 
     const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);

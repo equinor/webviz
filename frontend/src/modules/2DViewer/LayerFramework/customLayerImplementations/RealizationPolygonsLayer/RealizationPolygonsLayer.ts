@@ -1,8 +1,9 @@
 import { PolygonData_api, getPolygonsDataOptions } from "@api";
+import { BBox, create } from "@lib/utils/boundingBox";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -45,30 +46,29 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
+    makeBoundingBox(): BBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
         }
 
-        const bbox: BoundingBox = {
-            x: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
-            y: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
-            z: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
-        };
+        const bbox: BBox = create(
+            { x: Infinity, y: Infinity, z: Infinity },
+            { x: -Infinity, y: -Infinity, z: -Infinity }
+        );
 
         for (const polygon of data) {
             for (const point of polygon.x_arr) {
-                bbox.x[0] = Math.min(bbox.x[0], point);
-                bbox.x[1] = Math.max(bbox.x[1], point);
+                bbox.min.x = Math.min(bbox.min.x, point);
+                bbox.max.x = Math.max(bbox.max.x, point);
             }
             for (const point of polygon.y_arr) {
-                bbox.y[0] = Math.min(bbox.y[0], point);
-                bbox.y[1] = Math.max(bbox.y[1], point);
+                bbox.min.y = Math.min(bbox.min.y, point);
+                bbox.max.y = Math.max(bbox.max.y, point);
             }
             for (const point of polygon.z_arr) {
-                bbox.z[0] = Math.min(bbox.z[0], point);
-                bbox.z[1] = Math.max(bbox.z[1], point);
+                bbox.min.z = Math.min(bbox.min.z, point);
+                bbox.max.z = Math.max(bbox.max.z, point);
             }
         }
 

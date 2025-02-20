@@ -1,9 +1,10 @@
 import { SurfaceDataPng_api, SurfaceTimeType_api } from "@api";
 import { getSurfaceDataOptions } from "@api";
+import * as bbox from "@lib/utils/boundingBox";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
@@ -51,17 +52,18 @@ export class RealizationSurfaceLayer
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
+    makeBoundingBox(): bbox.BBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
         }
 
-        return {
-            x: [data.transformed_bbox_utm.min_x, data.transformed_bbox_utm.max_x],
-            y: [data.transformed_bbox_utm.min_y, data.transformed_bbox_utm.max_y],
-            z: [0, 0],
+        const boundingBox: bbox.BBox = {
+            min: { x: data.transformed_bbox_utm.min_x, y: data.transformed_bbox_utm.min_y, z: 0 },
+            max: { x: data.transformed_bbox_utm.max_x, y: data.transformed_bbox_utm.max_y, z: 0 },
         };
+
+        return boundingBox;
     }
 
     makeValueRange(): [number, number] | null {

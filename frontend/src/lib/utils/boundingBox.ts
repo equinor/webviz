@@ -7,7 +7,7 @@ export type BBox = {
     max: vec3.Vec3;
 };
 
-/*
+/**
     Creates a new bounding box.
     */
 export function create(min: vec3.Vec3, max: vec3.Vec3): BBox {
@@ -21,7 +21,7 @@ export function fromBoundingBox3DApi(boundingBox: BoundingBox3D_api): BBox {
     );
 }
 
-/*
+/**
     Returns true if the bounding box contains the given point.
     */
 export function containsPoint(box: BBox, point: vec3.Vec3): boolean {
@@ -35,7 +35,7 @@ export function containsPoint(box: BBox, point: vec3.Vec3): boolean {
     );
 }
 
-/*
+/**
     Returns true if the two bounding boxes intersect.
     */
 export function intersects(box1: BBox, box2: BBox): boolean {
@@ -49,7 +49,21 @@ export function intersects(box1: BBox, box2: BBox): boolean {
     );
 }
 
-/*
+/**
+ * Returns true if outerBox contains innerBox.
+ */
+export function containsBox(outerBox: BBox, innerBox: BBox): boolean {
+    return (
+        outerBox.min.x <= innerBox.min.x &&
+        outerBox.min.y <= innerBox.min.y &&
+        outerBox.min.z <= innerBox.min.z &&
+        outerBox.max.x >= innerBox.max.x &&
+        outerBox.max.y >= innerBox.max.y &&
+        outerBox.max.z >= innerBox.max.z
+    );
+}
+
+/**
   Converts a bounding box to an array of numbers.
   The array contains the following numbers in the following order:
     [min.x, min.y, min.z, max.x, max.y, max.z]
@@ -58,11 +72,36 @@ export function toNumArray(box: BBox): [number, number, number, number, number, 
     return [box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z];
 }
 
-/*
+/**
     Converts an array of numbers to a bounding box.
     The array should contain the following numbers in the following order:
     [min.x, min.y, min.z, max.x, max.y, max.z]
     */
 export function fromNumArray(array: [number, number, number, number, number, number]): BBox {
     return create(vec3.fromArray(array.slice(0, 3)), vec3.fromArray(array.slice(3, 6)));
+}
+
+/**
+ * Clones the given bounding box.
+ */
+export function clone(box: BBox): BBox {
+    return create(vec3.clone(box.min), vec3.clone(box.max));
+}
+
+/**
+ * Combines the two bounding boxes into a new bounding box that contains both.
+ */
+export function combine(box1: BBox, box2: BBox): BBox {
+    return create(
+        vec3.create(
+            Math.min(box1.min.x, box2.min.x),
+            Math.min(box1.min.y, box2.min.y),
+            Math.min(box1.min.z, box2.min.z)
+        ),
+        vec3.create(
+            Math.max(box1.max.x, box2.max.x),
+            Math.max(box1.max.y, box2.max.y),
+            Math.max(box1.max.z, box2.max.z)
+        )
+    );
 }

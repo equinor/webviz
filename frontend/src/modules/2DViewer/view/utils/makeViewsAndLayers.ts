@@ -2,12 +2,13 @@ import { Layer as DeckGlLayer } from "@deck.gl/core";
 import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+import * as bbox from "@lib/utils/boundingBox";
 import { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { LayerColoringType, LayerStatus } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
 import { View } from "@modules/_shared/LayerFramework/framework/View/View";
-import { BoundingBox, Layer, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
@@ -30,7 +31,7 @@ export type DeckGlViewsAndLayers = {
     views: DeckGlView[];
     layers: DeckGlLayerWithPosition[];
     errorMessages: (StatusMessage | string)[];
-    boundingBox: BoundingBox | null;
+    boundingBox: bbox.BBox | null;
     colorScales: ColorScaleWithId[];
     numLoadingLayers: number;
 };
@@ -44,11 +45,11 @@ export function recursivelyMakeViewsAndLayers(
     const collectedColorScales: ColorScaleWithId[] = [];
     const collectedErrorMessages: (StatusMessage | string)[] = [];
     let collectedNumLoadingLayers = 0;
-    let globalBoundingBox: BoundingBox | null = null;
+    let globalBoundingBox: bbox.BBox | null = null;
 
     const children = groupDelegate.getChildren();
 
-    const maybeApplyBoundingBox = (boundingBox: BoundingBox | null) => {
+    const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
         if (boundingBox) {
             globalBoundingBox =
                 globalBoundingBox === null ? boundingBox : makeNewBoundingBox(boundingBox, globalBoundingBox);
@@ -112,7 +113,7 @@ export function recursivelyMakeViewsAndLayers(
                 collectedColorScales.push(colorScale);
             }
 
-            const boundingBox = child.getLayerDelegate().getOrientedBoundingBox();
+            const boundingBox = child.getLayerDelegate().getBoundingBox();
             maybeApplyBoundingBox(boundingBox);
             collectedLayers.push({ layer, position: numCollectedLayers + collectedLayers.length });
         }
@@ -174,10 +175,6 @@ function findColorScale(layer: Layer<any, any>): { id: string; colorScale: Color
     };
 }
 
-function makeNewBoundingBox(newBoundingBox: BoundingBox, oldBoundingBox: BoundingBox): BoundingBox {
-    return {
-        x: [Math.min(newBoundingBox.x[0], oldBoundingBox.x[0]), Math.max(newBoundingBox.x[1], oldBoundingBox.x[1])],
-        y: [Math.min(newBoundingBox.y[0], oldBoundingBox.y[0]), Math.max(newBoundingBox.y[1], oldBoundingBox.y[1])],
-        z: [Math.min(newBoundingBox.z[0], oldBoundingBox.z[0]), Math.max(newBoundingBox.z[1], oldBoundingBox.z[1])],
-    };
+function makeNewBoundingBox(newBoundingBox: bbox.BBox, oldBoundingBox: bbox.BBox): bbox.BBox {
+    return bbox.combine(newBoundingBox, oldBoundingBox);
 }

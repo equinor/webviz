@@ -7,16 +7,16 @@ export type OBBox = {
     halfExtents: number[];
 };
 
-/*
-    Creates a new oriented bounding box.
-    */
+/**
+ * Creates a new oriented bounding box.
+ */
 export function create(center: vec3.Vec3, principalAxes: vec3.Vec3[], halfExtents: number[]): OBBox {
     return { centerPoint: center, principalAxes, halfExtents };
 }
 
 /*
-    Returns true if the oriented bounding box contains the given point.
-    */
+ * Returns true if the oriented bounding box contains the given point.
+ */
 export function containsPoint(box: OBBox, point: vec3.Vec3): boolean {
     const diff = vec3.subtract(point, box.centerPoint);
     return (
@@ -26,9 +26,9 @@ export function containsPoint(box: OBBox, point: vec3.Vec3): boolean {
     );
 }
 
-/*
-    Converts an oriented bounding box to an axis-aligned bounding box.
-    */
+/**
+ * Converts an oriented bounding box to an axis-aligned bounding box.
+ */
 export function toAxisAlignedBoundingBox(box: OBBox): bbox.BBox {
     const absAxisX = vec3.abs(box.principalAxes[0]);
     const absAxisY = vec3.abs(box.principalAxes[1]);
@@ -49,19 +49,32 @@ export function fromAxisAlignedBoundingBox(box: bbox.BBox): OBBox {
     return create(centerPoint, principalAxes, [halfExtents.x, halfExtents.y, halfExtents.z]);
 }
 
-/*
-    Returns the corner points of the oriented bounding box.
+/**
+ * Returns true if outerBox contains innerBox.
+ */
+export function containsBox(outerBox: OBBox, innerBox: OBBox): boolean {
+    const points = calcCornerPoints(innerBox);
+    for (const point of points) {
+        if (!containsPoint(outerBox, point)) {
+            return false;
+        }
+    }
+    return true;
+}
 
-    The points are returned in the following order for z-axis up coordinate system:
-    0: bottom front left
-    1: bottom front right
-    2: bottom back left
-    3: bottom back right
-    4: top front left
-    5: top front right
-    6: top back left
-    7: top back right
-    */
+/**
+ *  Returns the corner points of the oriented bounding box.
+ *
+ *  The points are returned in the following order for z-axis up coordinate system:
+ *  0: bottom front left
+ *  1: bottom front right
+ *  2: bottom back left
+ *  3: bottom back right
+ *  4: top front left
+ *  5: top front right
+ *  6: top back left
+ *  7: top back right
+ */
 
 export function calcCornerPoints(box: OBBox): vec3.Vec3[] {
     const halfExtents = box.halfExtents;
@@ -88,6 +101,9 @@ export function calcCornerPoints(box: OBBox): vec3.Vec3[] {
     return points;
 }
 
+/**
+ * Creates an oriented bounding box from the given corner points.
+ */
 export function fromCornerPoints(points: vec3.Vec3[]): OBBox {
     const min = vec3.create(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE);
     const max = vec3.create(-Number.MAX_VALUE, -Number.MAX_VALUE, -Number.MAX_VALUE);
@@ -109,9 +125,9 @@ export function fromCornerPoints(points: vec3.Vec3[]): OBBox {
     return create(center, principalAxes, [halfExtents.x, halfExtents.y, halfExtents.z]);
 }
 
-/*
-    Combines two oriented bounding boxes into a new oriented bounding box that contains both input boxes.
-    */
+/**
+ * Combines two oriented bounding boxes into a new oriented bounding box that contains both input boxes.
+ */
 export function combine(box1: OBBox, box2: OBBox): OBBox {
     const points1 = calcCornerPoints(box1);
     const points2 = calcCornerPoints(box2);
@@ -136,6 +152,9 @@ export function combine(box1: OBBox, box2: OBBox): OBBox {
     return create(center, principalAxes, [halfExtents.x, halfExtents.y, halfExtents.z]);
 }
 
+/**
+ * Clones the given oriented bounding box.
+ */
 export function clone(box: OBBox): OBBox {
     return create(
         vec3.clone(box.centerPoint),

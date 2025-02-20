@@ -1,4 +1,5 @@
 import { getGridParameterOptions, getGridSurfaceOptions } from "@api";
+import * as bbox from "@lib/utils/boundingBox";
 import {
     GridMappedProperty_trans,
     GridSurface_trans,
@@ -8,7 +9,7 @@ import {
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -72,23 +73,22 @@ export class RealizationGridLayer
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
+    makeBoundingBox(): bbox.BBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
         }
 
-        return {
-            x: [
-                data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmin,
-                data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmax,
-            ],
-            y: [
-                data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymin,
-                data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymax,
-            ],
-            z: [data.gridSurfaceData.zmin, data.gridSurfaceData.zmax],
-        };
+        const boundingBox = bbox.fromNumArray([
+            data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmin,
+            data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymin,
+            data.gridSurfaceData.zmin,
+            data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmax,
+            data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymax,
+            data.gridSurfaceData.zmax,
+        ]);
+
+        return boundingBox;
     }
 
     makeValueRange(): [number, number] | null {
