@@ -66,7 +66,7 @@ class Grid3dAccess:
         )
 
     @classmethod
-    def from_case_uuid_and_ensemble_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "Grid3dAccess":
+    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "Grid3dAccess":
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
@@ -151,5 +151,5 @@ class Grid3dAccess:
 #     access_token: str, case_uuid: str, iteration_name: str, realization_num: int
 # ) -> List[Grid3dInfo]:
 #     """Get metadata for all 3D grid models, including bbox, dimensions and properties"""
-#     access = Grid3dAccess.from_case_uuid_and_ensemble_name(access_token, case_uuid, iteration_name)
+#     access = Grid3dAccess.from_iteration_name(access_token, case_uuid, iteration_name)
 #     return await access.get_models_info_arr_async(realization_num)

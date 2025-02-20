@@ -35,7 +35,7 @@ class RftAccess:
         )
 
     @classmethod
-    def from_case_uuid_and_ensemble_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "RftAccess":
+    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "RftAccess":
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 

@@ -23,7 +23,7 @@ async def get_well_completions_data(
     realization: Annotated[int | list[int] | None, Query( description="Optional realizations to include. Provide single realization or list of realizations. If not specified, all realizations will be returned.")] = None,
     # fmt:on
 ) -> schemas.WellCompletionsData:
-    access = await WellCompletionsAccess.from_case_uuid_async(
+    access = await WellCompletionsAccess.from_iteration_name_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 

@@ -27,7 +27,7 @@ async def get_table_definitions(
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> list[schemas.InplaceVolumetricsTableDefinition]:
     """Get the volumetric tables definitions for a given ensemble."""
-    access = InplaceVolumetricsAccess.from_case_uuid_and_ensemble_name(
+    access = InplaceVolumetricsAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     assembler = InplaceVolumetricsAssembler(access)
@@ -74,7 +74,7 @@ async def post_get_aggregated_per_realization_table_data(
 
     perf_metrics.record_lap("decode realizations array")
 
-    access = InplaceVolumetricsAccess.from_case_uuid_and_ensemble_name(
+    access = InplaceVolumetricsAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -138,7 +138,7 @@ async def post_get_aggregated_statistical_table_data(
 
     perf_metrics.record_lap("decode realizations array")
 
-    access = InplaceVolumetricsAccess.from_case_uuid_and_ensemble_name(
+    access = InplaceVolumetricsAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 

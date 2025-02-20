@@ -19,7 +19,7 @@ class SeismicAccess:
         self._iteration_name: str = iteration_name
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SeismicAccess":
+    async def from_iteration_name_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SeismicAccess":
         sumo_client = create_sumo_client(access_token)
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return SeismicAccess(case=case, case_uuid=case_uuid, iteration_name=iteration_name)

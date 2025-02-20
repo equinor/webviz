@@ -21,7 +21,7 @@ class WellCompletionsAccess:
         self._iteration_name: str = iteration_name
 
     @classmethod
-    async def from_case_uuid_async(
+    async def from_iteration_name_async(
         cls, access_token: str, case_uuid: str, iteration_name: str
     ) -> "WellCompletionsAccess":
         sumo_client = create_sumo_client(access_token)

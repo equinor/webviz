@@ -54,7 +54,7 @@ async def get_vector_list(
 
     perf_metrics = ResponsePerfMetrics(response)
 
-    access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     perf_metrics.record_lap("get-access")
@@ -100,10 +100,10 @@ async def get_delta_ensemble_vector_list(
 
     perf_metrics = ResponsePerfMetrics(response)
 
-    comparison_ensemble_access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    comparison_ensemble_access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), comparison_case_uuid, comparison_ensemble_name
     )
-    reference_ensemble_access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    reference_ensemble_access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), reference_case_uuid, reference_ensemble_name
     )
     perf_metrics.record_lap("get-access")
@@ -156,7 +156,7 @@ async def get_realizations_vector_data(
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
-    access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
@@ -300,7 +300,7 @@ async def get_timestamps_list(
     For other resampling frequencies, the date range will be expanded to cover the entire
     time range of all the requested realizations before computing the resampled dates.
     """
-    access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     sumo_freq = Frequency.from_string_value(resampling_frequency.value if resampling_frequency else "dummy")
@@ -316,7 +316,7 @@ async def get_historical_vector_data(
     non_historical_vector_name: Annotated[str, Query(description="Name of the non-historical vector")],
     resampling_frequency: Annotated[schemas.Frequency | None, Query(description="Resampling frequency")] = None,
 ) -> schemas.VectorHistoricalData:
-    access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -357,7 +357,7 @@ async def get_statistical_vector_data(
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
-    access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -512,7 +512,7 @@ async def get_statistical_vector_data_per_sensitivity(
     if realizations_encoded_as_uint_list_str:
         realizations = decode_uint_list_str(realizations_encoded_as_uint_list_str)
 
-    summmary_access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    summmary_access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     parameter_access = await ParameterAccess.from_case_uuid_async(
@@ -575,7 +575,7 @@ async def get_realization_vector_at_timestamp(
     timestamp_utc_ms: Annotated[int, Query(description= "Timestamp in ms UTC to query vectors at")],
     # fmt:on
 ) -> EnsembleScalarResponse:
-    summary_access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    summary_access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     ensemble_response = await summary_access.get_vector_values_at_timestamp_async(
@@ -635,10 +635,10 @@ async def _get_vector_tables_and_create_delta_vector_table_and_metadata_async(
     Get vector tables for comparison and reference ensembles and create delta ensemble vector table and metadata
     """
     # Separate summary access to comparison and reference ensemble
-    comparison_ensemble_access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    comparison_ensemble_access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), comparison_case_uuid, comparison_ensemble_name
     )
-    reference_ensemble_access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    reference_ensemble_access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), reference_case_uuid, reference_ensemble_name
     )
 

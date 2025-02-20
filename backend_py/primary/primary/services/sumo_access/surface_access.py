@@ -29,7 +29,7 @@ class SurfaceAccess:
         self._iteration_name: str | None = iteration_name
 
     @classmethod
-    def from_case_uuid(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SurfaceAccess":
+    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SurfaceAccess":
         sumo_client = create_sumo_client(access_token)
         return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 

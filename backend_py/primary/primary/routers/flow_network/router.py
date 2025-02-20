@@ -29,10 +29,10 @@ async def get_realization_flow_network(
 ) -> schemas.FlowNetworkData:
     timer = PerfTimer()
 
-    group_tree_access = GroupTreeAccess.from_case_uuid_and_ensemble_name(
+    group_tree_access = GroupTreeAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    summary_access = SummaryAccess.from_case_uuid_and_ensemble_name(
+    summary_access = SummaryAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
     summary_frequency = Frequency.from_string_value(resampling_frequency.value)
