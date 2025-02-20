@@ -134,14 +134,16 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         let ymax = Number.MIN_VALUE;
         let zmax = Number.MIN_VALUE;
 
+        const zFactor = this.props.zIncreaseDownwards ? -1 : 1;
+
         for (const section of this.props.data.sections) {
             for (const point of section.boundingBox) {
                 xmin = Math.min(xmin, point[0]);
                 ymin = Math.min(ymin, point[1]);
-                zmin = Math.min(zmin, point[2]);
+                zmin = Math.min(zmin, zFactor * point[2]);
                 xmax = Math.max(xmax, point[0]);
                 ymax = Math.max(ymax, point[1]);
-                zmax = Math.max(zmax, point[2]);
+                zmax = Math.max(zmax, zFactor * point[2]);
             }
         }
 

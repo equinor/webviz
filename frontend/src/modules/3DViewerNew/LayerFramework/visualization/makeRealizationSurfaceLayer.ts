@@ -16,14 +16,28 @@ export function makeRealizationSurfaceLayer({
     data,
     colorScale,
 }: VisualizationFunctionArgs<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>): MapLayer {
-    if (!isSurfaceDataFloat(data)) {
-        throw new Error("SurfaceDataPng_api is not supported in makeRealizationSurfaceLayer");
+    if (isSurfaceDataFloat(data)) {
+        return new MapLayer({
+            id,
+            name,
+            meshData: data.valuesFloat32Arr,
+            frame: {
+                origin: [data.surface_def.origin_utm_x, data.surface_def.origin_utm_y],
+                count: [data.surface_def.npoints_x, data.surface_def.npoints_y],
+                increment: [data.surface_def.inc_x, data.surface_def.inc_y],
+                rotDeg: data.surface_def.rot_deg,
+            },
+            valueRange: [data.value_min, data.value_max],
+            colorMapRange: [data.value_min, data.value_max],
+            colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max),
+            gridLines: false,
+        });
     }
 
     return new MapLayer({
         id,
         name,
-        meshData: data.valuesFloat32Arr,
+        meshData: data.png_image_base64,
         frame: {
             origin: [data.surface_def.origin_utm_x, data.surface_def.origin_utm_y],
             count: [data.surface_def.npoints_x, data.surface_def.npoints_y],
