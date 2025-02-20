@@ -47,14 +47,10 @@ class SummaryAccess:
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    @property
-    def ensemble_context(self) -> SearchContext:
-        return self._ensemble_context
-
     async def get_available_vectors_async(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
-        table_context: SearchContext = self.ensemble_context.filter(cls="table", tagname="summary")
+        table_context: SearchContext = self._ensemble_context.filter(cls="table", tagname="summary")
 
         table_names = await table_context.names_async
         if len(table_names) == 0:
@@ -111,7 +107,7 @@ class SummaryAccess:
         timer = PerfTimer()
 
         table: pa.Table = await load_aggregated_arrow_table_single_column_from_sumo(
-            ensemble_context=self.ensemble_context,
+            ensemble_context=self._ensemble_context,
             table_content_name=[
                 "timeseries",
                 "simulationtimeseries",
@@ -215,7 +211,7 @@ class SummaryAccess:
         columns_to_get = ["DATE"]
         columns_to_get.extend(vector_names)
         table: pa.Table = await load_single_realization_arrow_table(
-            ensemble_context=self.ensemble_context,
+            ensemble_context=self._ensemble_context,
             table_content_name=["timeseries", "simulationtimeseries"],
             table_column_names=columns_to_get,
             realization_no=realization,
@@ -280,7 +276,7 @@ class SummaryAccess:
             return None
 
         table: pa.Table = await load_aggregated_arrow_table_single_column_from_sumo(
-            ensemble_context=self.ensemble_context,
+            ensemble_context=self._ensemble_context,
             table_content_name=["timeseries", "simulationtimeseries"],
             table_column_name=hist_vec_name,
         )
