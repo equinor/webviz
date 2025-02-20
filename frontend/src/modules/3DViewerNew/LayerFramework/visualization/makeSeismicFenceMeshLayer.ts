@@ -18,7 +18,6 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
         colorScale,
         settings,
         isLoading,
-        predictedNextOrientedBoundingBox: predictedNextBoundingBox,
     }: VisualizationFunctionArgs<any, SeismicSliceData_trans>): Layer<any> {
         let bbox: number[][] = [
             [data.bbox_utm[0][0], data.bbox_utm[0][1], data.u_min],
@@ -36,6 +35,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
             ];
         }
 
+        /*
         if (isLoading && predictedNextBoundingBox) {
             if (plane === Plane.DEPTH) {
                 bbox = [
@@ -53,6 +53,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
                 ];
             }
         }
+            */
 
         return new SeismicFenceMeshLayer({
             id,

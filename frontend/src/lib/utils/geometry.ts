@@ -1,4 +1,5 @@
 import type { Vec2 } from "./vec2";
+import { Vec3 } from "./vec3";
 
 export type Size2D = {
     width: number;
@@ -20,6 +21,22 @@ export type Rect3D = {
     height: number;
     depth: number;
 };
+
+export enum GeometryType {
+    POLYGON = "polygon",
+    ELEVATED_POLYGON = "elevated_polygon",
+}
+
+export type Geometry =
+    | {
+          type: GeometryType.POLYGON;
+          points: Vec3[];
+      }
+    | {
+          type: GeometryType.ELEVATED_POLYGON;
+          points: Vec3[];
+          height: number;
+      };
 
 export const ORIGIN = Object.freeze({ x: 0, y: 0 });
 export const MANHATTAN_LENGTH = 13.11;

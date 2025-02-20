@@ -1,6 +1,7 @@
 import { getWellTrajectoriesOptions, postGetPolylineIntersectionOptions } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import * as bbox from "@lib/utils/boundingBox";
+import * as vec3 from "@lib/utils/vec3";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
@@ -60,12 +61,23 @@ export class IntersectionRealizationGridLayer
             return null;
         }
 
-        // TODO: Implement bounding box calculation
-        if (data) {
-            return null;
+        const boundingBox = bbox.create(
+            vec3.create(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY),
+            vec3.create(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY)
+        );
+
+        for (const section of data.fenceMeshSections) {
+            boundingBox.min.x = Math.min(boundingBox.min.x, section.start_utm_x, section.end_utm_x);
+            boundingBox.max.x = Math.max(boundingBox.max.x, section.start_utm_x, section.end_utm_x);
+            boundingBox.min.y = Math.min(boundingBox.min.y, section.start_utm_y, section.end_utm_y);
+            boundingBox.max.y = Math.max(boundingBox.max.y, section.start_utm_y, section.end_utm_y);
+            for (let i = 2; i < section.verticesUzFloat32Arr.length; i += 3) {
+                boundingBox.min.z = Math.min(boundingBox.min.z, section.verticesUzFloat32Arr[i]);
+                boundingBox.max.z = Math.max(boundingBox.max.z, section.verticesUzFloat32Arr[i]);
+            }
         }
 
-        return null;
+        return boundingBox;
     }
 
     makeValueRange(): [number, number] | null {

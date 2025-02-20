@@ -1,9 +1,10 @@
 import { getWellTrajectoriesOptions, postGetPolylineIntersectionOptions } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import * as bbox from "@lib/utils/boundingBox";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import {
@@ -53,7 +54,7 @@ export class IntersectionRealizationGridLayer
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
+    makeBoundingBox(): bbox.BBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;

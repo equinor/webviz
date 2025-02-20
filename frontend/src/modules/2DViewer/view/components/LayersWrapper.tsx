@@ -99,7 +99,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     if (viewsAndLayers.boundingBox !== null) {
         if (prevBoundingBox !== null) {
-            if (!bbox.containsBox(prevBoundingBox, viewsAndLayers.boundingBox)) {
+            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, viewsAndLayers.boundingBox)) {
                 setPrevBoundingBox(viewsAndLayers.boundingBox);
             }
         } else {

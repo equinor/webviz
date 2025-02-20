@@ -52,7 +52,7 @@ export function intersects(box1: BBox, box2: BBox): boolean {
 /**
  * Returns true if outerBox contains innerBox.
  */
-export function containsBox(outerBox: BBox, innerBox: BBox): boolean {
+export function outerBoxcontainsInnerBox(outerBox: BBox, innerBox: BBox): boolean {
     return (
         outerBox.min.x <= innerBox.min.x &&
         outerBox.min.y <= innerBox.min.y &&

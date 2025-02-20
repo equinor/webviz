@@ -9,13 +9,21 @@ import { SeismicInlineSetting } from "@modules/_shared/LayerFramework/settings/i
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
-import { RealizationSeismicInlineSettings } from "./types";
+import { RealizationSeismicInlineSettings, RealizationSeismicInlineSliceStoredData } from "./types";
 
-export class RealizationSeismicInlineSettingsContext implements SettingsContext<RealizationSeismicInlineSettings> {
-    private _contextDelegate: SettingsContextDelegate<RealizationSeismicInlineSettings>;
+export class RealizationSeismicInlineSettingsContext
+    implements SettingsContext<RealizationSeismicInlineSettings, RealizationSeismicInlineSliceStoredData>
+{
+    private _contextDelegate: SettingsContextDelegate<
+        RealizationSeismicInlineSettings,
+        RealizationSeismicInlineSliceStoredData
+    >;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<RealizationSeismicInlineSettings>(this, layerManager, {
+        this._contextDelegate = new SettingsContextDelegate<
+            RealizationSeismicInlineSettings,
+            RealizationSeismicInlineSliceStoredData
+        >(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),
             [SettingType.ATTRIBUTE]: new AttributeSetting(),
@@ -33,7 +41,7 @@ export class RealizationSeismicInlineSettingsContext implements SettingsContext<
         );
     }
 
-    getDelegate(): SettingsContextDelegate<RealizationSeismicInlineSettings> {
+    getDelegate(): SettingsContextDelegate<RealizationSeismicInlineSettings, RealizationSeismicInlineSliceStoredData> {
         return this._contextDelegate;
     }
 
@@ -45,7 +53,7 @@ export class RealizationSeismicInlineSettingsContext implements SettingsContext<
         helperDependency,
         availableSettingsUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationSeismicInlineSettings>) {
+    }: DefineDependenciesArgs<RealizationSeismicInlineSettings, RealizationSeismicInlineSliceStoredData>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");

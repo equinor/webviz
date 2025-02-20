@@ -2,6 +2,7 @@ import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import * as bbox from "@lib/utils/boundingBox";
 import { isDevMode } from "@lib/utils/devMode";
+import { Geometry } from "@lib/utils/geometry";
 import { QueryClient, isCancelledError } from "@tanstack/react-query";
 
 import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
@@ -56,8 +57,9 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
     private _prevBoundingBox: bbox.BBox | null = null;
-    private _predictedBoundingBox: bbox.BBox | null = null;
     private _boundingBox: bbox.BBox | null = null;
+    private _predictedGeometry: Geometry | null = null;
+    private _predictedBoundingBox: bbox.BBox | null = null;
     private _valueRange: [number, number] | null = null;
     private _coloringType: LayerColoringType;
     private _isSubordinated: boolean = false;
@@ -136,6 +138,10 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
 
     getPredictedBoundingBox(): bbox.BBox | null {
         return this._predictedBoundingBox;
+    }
+
+    getPredictedGeometry(): Geometry | null {
+        return this._predictedGeometry;
     }
 
     getColoringType(): LayerColoringType {
@@ -243,7 +249,11 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
 
         this.invalidateBoundingBox();
         this.invalidateValueRange();
-        this._predictedBoundingBox = this._owner.predictBoundingBox?.() ?? null;
+        const prediction = this._owner.predictNextGeometryAndBoundingBox?.() ?? null;
+        if (prediction) {
+            this._predictedGeometry = prediction[0];
+            this._boundingBox = prediction[1];
+        }
 
         this.setStatus(LayerStatus.LOADING);
 

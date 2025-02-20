@@ -1,4 +1,6 @@
 import { getGridParameterOptions, getGridSurfaceOptions } from "@api";
+import * as bbox from "@lib/utils/boundingBox";
+import * as vec3 from "@lib/utils/vec3";
 import {
     GridMappedProperty_trans,
     GridSurface_trans,
@@ -8,7 +10,7 @@ import {
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -56,27 +58,20 @@ export class RealizationGridLayer implements Layer<RealizationGridSettings, Real
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
+    makeBoundingBox(): bbox.BBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
         }
 
-        if (data.gridSurfaceData) {
-            return {
-                x: [
-                    data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmin,
-                    data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmax,
-                ],
-                y: [
-                    data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymin,
-                    data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymax,
-                ],
-                z: [data.gridSurfaceData.zmin, data.gridSurfaceData.zmax],
-            };
+        if (!data.gridSurfaceData) {
+            return null;
         }
 
-        return null;
+        return bbox.create(
+            vec3.create(data.gridSurfaceData.xmin, data.gridSurfaceData.ymin, data.gridSurfaceData.zmin),
+            vec3.create(data.gridSurfaceData.xmax, data.gridSurfaceData.ymax, data.gridSurfaceData.zmax)
+        );
     }
 
     makeValueRange(): [number, number] | null {

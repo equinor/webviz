@@ -1,6 +1,5 @@
 import { WellboreTrajectory_api } from "@api";
 import * as bbox from "@lib/utils/boundingBox";
-import * as obbox from "@lib/utils/orientedBoundingBox";
 
 import { Feature, FeatureCollection, GeoJsonProperties, GeometryCollection, LineString, Point } from "geojson";
 
@@ -57,7 +56,7 @@ export function makeWellsLayer({
     id,
     data,
     name,
-    orientedBoundingBox,
+    boundingBox,
 }: VisualizationFunctionArgs<any, WellboreTrajectory_api[]>): AdvancedWellsLayer {
     // Filter out some wellbores that are known to be not working - this is a temporary solution
     const filteredData = data.filter((wellbore) => wellbore.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH");
@@ -68,9 +67,7 @@ export function makeWellsLayer({
         features: filteredData.map((wellTrajectory) => wellTrajectoryToGeojson(wellTrajectory)),
     };
 
-    const bbox3d = orientedBoundingBox
-        ? bbox.toNumArray(obbox.toAxisAlignedBoundingBox(orientedBoundingBox))
-        : undefined;
+    const bbox3d = boundingBox ? bbox.toNumArray(boundingBox) : undefined;
 
     return new AdvancedWellsLayer({
         id,

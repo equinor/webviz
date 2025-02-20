@@ -1,8 +1,12 @@
 import { getInlineSliceOptions } from "@api";
+import * as bbox from "@lib/utils/boundingBox";
+import { Geometry, GeometryType } from "@lib/utils/geometry";
+import { rotatePoint2Around } from "@lib/utils/vec2";
+import * as vec3 from "@lib/utils/vec3";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -10,12 +14,18 @@ import { QueryClient } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import { RealizationSeismicInlineSettingsContext } from "./RealizationSeismicInlineSettingsContext";
-import { RealizationSeismicInlineSettings } from "./types";
+import { RealizationSeismicInlineSettings, RealizationSeismicInlineSliceStoredData } from "./types";
 
 import { SeismicSliceData_trans, transformSeismicSlice } from "../../../settings/queries/queryDataTransforms";
 
-export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicInlineSettings, SeismicSliceData_trans> {
-    private _layerDelegate: LayerDelegate<RealizationSeismicInlineSettings, SeismicSliceData_trans>;
+export class RealizationSeismicInlineLayer
+    implements Layer<RealizationSeismicInlineSettings, SeismicSliceData_trans, RealizationSeismicInlineSliceStoredData>
+{
+    private _layerDelegate: LayerDelegate<
+        RealizationSeismicInlineSettings,
+        SeismicSliceData_trans,
+        RealizationSeismicInlineSliceStoredData
+    >;
     private _itemDelegate: ItemDelegate;
 
     constructor(layerManager: LayerManager) {
@@ -36,7 +46,11 @@ export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicIn
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<RealizationSeismicInlineSettings, SeismicSliceData_trans> {
+    getLayerDelegate(): LayerDelegate<
+        RealizationSeismicInlineSettings,
+        SeismicSliceData_trans,
+        RealizationSeismicInlineSliceStoredData
+    > {
         return this._layerDelegate;
     }
 
@@ -47,17 +61,70 @@ export class RealizationSeismicInlineLayer implements Layer<RealizationSeismicIn
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
+    makeBoundingBox(): bbox.BBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
         }
 
-        return {
-            x: [data.bbox_utm[0][0], data.bbox_utm[1][0]],
-            y: [data.bbox_utm[0][1], data.bbox_utm[1][1]],
-            z: [data.u_min, data.u_max],
+        return bbox.create(
+            vec3.create(data.bbox_utm[0][0], data.bbox_utm[0][1], data.u_min),
+            vec3.create(data.bbox_utm[1][0], data.bbox_utm[1][1], data.u_max)
+        );
+    }
+
+    predictNextGeometryAndBoundingBox(): [Geometry, bbox.BBox] | null {
+        const settings = this.getSettingsContext().getDelegate().getSettings();
+        const seismicInlineNumber = settings[SettingType.SEISMIC_INLINE].getDelegate().getValue();
+        const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
+        const isoTimeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
+        const seismicCubeMeta = this._layerDelegate.getSettingsContext().getDelegate().getStoredData("seismicCubeMeta");
+
+        if (!seismicCubeMeta || seismicInlineNumber === null) {
+            return null;
+        }
+
+        const meta = seismicCubeMeta.find(
+            (m) => m.seismicAttribute === seismicAttribute && m.isoDateOrInterval === isoTimeOrInterval
+        );
+
+        if (!meta) {
+            return null;
+        }
+
+        const xmin = meta.spec.xOrigin;
+        const xmax = meta.spec.xOrigin + meta.spec.xInc * (meta.spec.numCols - 1);
+
+        const ymin = meta.spec.yOrigin + meta.spec.yInc * meta.spec.yFlip * seismicInlineNumber;
+        const ymax = ymin;
+
+        const zmin = meta.spec.zOrigin;
+        const zmax = meta.spec.zOrigin + meta.spec.zInc * meta.spec.zFlip * (meta.spec.numLayers - 1);
+
+        const maxXY = { x: xmax, y: ymax };
+        const minXY = { x: xmin, y: ymin };
+        const origin = { x: meta.spec.xOrigin, y: meta.spec.yOrigin };
+
+        const rotatedMinXY = rotatePoint2Around(minXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
+        const rotatedMaxXY = rotatePoint2Around(maxXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
+
+        const geometry: Geometry = {
+            type: GeometryType.POLYGON,
+            points: [
+                vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmin),
+                vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmin),
+                vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmax),
+                vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmax),
+            ],
         };
+
+        return [
+            geometry,
+            bbox.create(
+                vec3.create(Math.min(rotatedMinXY.x, rotatedMaxXY.x), Math.min(rotatedMinXY.y, rotatedMaxXY.y), zmin),
+                vec3.create(Math.max(rotatedMinXY.x, rotatedMaxXY.x), Math.max(rotatedMinXY.y, rotatedMaxXY.y), zmax)
+            ),
+        ];
     }
 
     makeValueRange(): [number, number] | null {

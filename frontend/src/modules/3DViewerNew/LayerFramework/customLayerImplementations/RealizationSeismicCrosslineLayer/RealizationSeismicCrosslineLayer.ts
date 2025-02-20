@@ -1,7 +1,8 @@
 import { getCrosslineSliceOptions } from "@api";
-import { OBBox, fromCornerPoints } from "@lib/utils/orientedBoundingBox";
+import * as bbox from "@lib/utils/boundingBox";
+import { Geometry, GeometryType } from "@lib/utils/geometry";
 import { rotatePoint2Around } from "@lib/utils/vec2";
-import { Vec3 } from "@lib/utils/vec3";
+import * as vec3 from "@lib/utils/vec3";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
@@ -57,19 +58,19 @@ export class RealizationSeismicCrosslineLayer
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): OBBox | null {
+    makeBoundingBox(): bbox.BBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
         }
 
-        const cornerPoints: Vec3[] = data.bbox_utm.map((point) => ({ x: point[0], y: point[1], z: data.u_min }));
-        cornerPoints.push(...data.bbox_utm.map((point) => ({ x: point[0], y: point[1], z: data.u_max })));
-
-        return fromCornerPoints(cornerPoints);
+        return bbox.create(
+            vec3.create(data.bbox_utm[0][0], data.bbox_utm[0][1], data.u_min),
+            vec3.create(data.bbox_utm[1][0], data.bbox_utm[1][1], data.u_max)
+        );
     }
 
-    predictBoundingBox(): OBBox | null {
+    predictNextGeometryAndBoundingBox(): [Geometry, bbox.BBox] | null {
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const seismicCrosslineNumber = settings[SettingType.SEISMIC_CROSSLINE].getDelegate().getValue();
         const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
@@ -104,18 +105,23 @@ export class RealizationSeismicCrosslineLayer
         const rotatedMinXY = rotatePoint2Around(minXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
         const rotatedMaxXY = rotatePoint2Around(maxXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
 
-        const cornerPoints: Vec3[] = [
-            { x: rotatedMinXY.x, y: rotatedMinXY.y, z: zmin },
-            { x: rotatedMaxXY.x, y: rotatedMinXY.y, z: zmin },
-            { x: rotatedMaxXY.x, y: rotatedMaxXY.y, z: zmin },
-            { x: rotatedMinXY.x, y: rotatedMaxXY.y, z: zmin },
-            { x: rotatedMinXY.x, y: rotatedMinXY.y, z: zmax },
-            { x: rotatedMaxXY.x, y: rotatedMinXY.y, z: zmax },
-            { x: rotatedMaxXY.x, y: rotatedMaxXY.y, z: zmax },
-            { x: rotatedMinXY.x, y: rotatedMaxXY.y, z: zmax },
-        ];
+        const geometry: Geometry = {
+            type: GeometryType.POLYGON,
+            points: [
+                vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmin),
+                vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmin),
+                vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmax),
+                vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmax),
+            ],
+        };
 
-        return fromCornerPoints(cornerPoints);
+        return [
+            geometry,
+            bbox.create(
+                vec3.create(Math.min(rotatedMinXY.x, rotatedMaxXY.x), Math.min(rotatedMinXY.y, rotatedMaxXY.y), zmin),
+                vec3.create(Math.max(rotatedMinXY.x, rotatedMaxXY.x), Math.max(rotatedMinXY.y, rotatedMaxXY.y), zmax)
+            ),
+        ];
     }
 
     makeValueRange(): [number, number] | null {

@@ -1,6 +1,6 @@
 import { WellborePick_api, getWellborePicksForPickIdentifierOptions } from "@api";
-import { BBox } from "@lib/utils/boundingBox";
-import { OBBox, fromAxisAlignedBoundingBox } from "@lib/utils/orientedBoundingBox";
+import * as bbox from "@lib/utils/boundingBox";
+import * as vec3 from "@lib/utils/vec3";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
@@ -47,27 +47,27 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): OBBox | null {
+    makeBoundingBox(): bbox.BBox | null {
         const data = this._layerDelegate.getData();
         if (!data) {
             return null;
         }
 
-        const bbox: BBox = {
-            min: { x: Infinity, y: Infinity, z: Infinity },
-            max: { x: -Infinity, y: -Infinity, z: -Infinity },
-        };
+        const boundingBox = bbox.create(
+            vec3.create(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY),
+            vec3.create(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY)
+        );
 
         for (const pick of data) {
-            bbox.min.x = Math.min(bbox.min.x, pick.easting);
-            bbox.max.x = Math.max(bbox.max.x, pick.easting);
-            bbox.min.y = Math.min(bbox.min.y, pick.northing);
-            bbox.max.y = Math.max(bbox.max.y, pick.northing);
-            bbox.min.z = Math.min(bbox.min.z, pick.tvdMsl);
-            bbox.max.z = Math.max(bbox.max.z, pick.tvdMsl);
+            boundingBox.min.x = Math.min(boundingBox.min.x, pick.easting);
+            boundingBox.max.x = Math.max(boundingBox.max.x, pick.easting);
+            boundingBox.min.y = Math.min(boundingBox.min.y, pick.northing);
+            boundingBox.max.y = Math.max(boundingBox.max.y, pick.northing);
+            boundingBox.min.z = Math.min(boundingBox.min.z, pick.tvdMsl);
+            boundingBox.max.z = Math.max(boundingBox.max.z, pick.tvdMsl);
         }
 
-        return fromAxisAlignedBoundingBox(bbox);
+        return boundingBox;
     }
 
     fetchData(queryClient: QueryClient): Promise<WellborePick_api[]> {

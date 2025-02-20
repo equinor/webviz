@@ -3,7 +3,8 @@ import { Layer as EsvLayer } from "@equinor/esv-intersection";
 import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { defaultColorPalettes, defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import * as obbox from "@lib/utils/orientedBoundingBox";
+import * as bbox from "@lib/utils/boundingBox";
+import { Geometry } from "@lib/utils/geometry";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
@@ -28,8 +29,9 @@ export type VisualizationFunctionArgs<TSettings extends Settings, TData> = {
     colorScale: ColorScaleWithName;
     settings: TSettings;
     isLoading: boolean;
-    orientedBoundingBox: obbox.OBBox | null;
-    predictedNextOrientedBoundingBox: obbox.OBBox | null;
+    boundingBox: bbox.BBox | null;
+    predictedBoundingBox: bbox.BBox | null;
+    predictedGeometry: Geometry | null;
 };
 
 export type TargetReturnTypes = {
@@ -58,7 +60,7 @@ export type FactoryProduct<TTarget extends VisualizationTarget> = {
     views: VisualizationView<TTarget>[];
     layers: LayerWithPosition<TTarget>[];
     errorMessages: (StatusMessage | string)[];
-    boundingBox: obbox.OBBox | null;
+    boundingBox: bbox.BBox | null;
     colorScales: ColorScaleWithId[];
     numLoadingLayers: number;
 };
@@ -86,11 +88,11 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         const collectedColorScales: ColorScaleWithId[] = [];
         const collectedErrorMessages: (StatusMessage | string)[] = [];
         let collectedNumLoadingLayers = 0;
-        let globalBoundingBox: obbox.OBBox | null = null;
+        let globalBoundingBox: bbox.BBox | null = null;
 
         const children = groupDelegate.getChildren();
 
-        const maybeApplyBoundingBox = (boundingBox: obbox.OBBox | null) => {
+        const maybeApplyBoundingBox = (boundingBox: bbox.BBox | null) => {
             if (boundingBox) {
                 globalBoundingBox =
                     globalBoundingBox === null ? boundingBox : this.makeNewBoundingBox(boundingBox, globalBoundingBox);
@@ -195,13 +197,14 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
             colorScale,
             settings: layer.getLayerDelegate().getSettingsContext().getDelegate().getValues(),
             isLoading: layer.getLayerDelegate().getStatus() === LayerStatus.LOADING,
-            orientedBoundingBox: layer.getLayerDelegate().getBoundingBox(),
-            predictedNextOrientedBoundingBox: layer.getLayerDelegate().getPredictedBoundingBox(),
+            boundingBox: layer.getLayerDelegate().getBoundingBox(),
+            predictedBoundingBox: layer.getLayerDelegate().getPredictedBoundingBox(),
+            predictedGeometry: layer.getLayerDelegate().getPredictedGeometry(),
         });
     }
 
-    private makeNewBoundingBox(newBoundingBox: obbox.OBBox, oldBoundingBox: obbox.OBBox): obbox.OBBox {
-        return obbox.combine(newBoundingBox, oldBoundingBox);
+    private makeNewBoundingBox(newBoundingBox: bbox.BBox, oldBoundingBox: bbox.BBox): bbox.BBox {
+        return bbox.combine(newBoundingBox, oldBoundingBox);
     }
 
     private findColorScale(layer: Layer<any, any>): { id: string; colorScale: ColorScaleWithName } | null {

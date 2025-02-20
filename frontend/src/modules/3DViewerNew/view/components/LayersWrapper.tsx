@@ -6,7 +6,7 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Rect3D, outerRectContainsInnerRect } from "@lib/utils/geometry";
+import * as bbox from "@lib/utils/boundingBox";
 import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
@@ -23,7 +23,6 @@ import {
     makeSeismicFenceMeshLayerFunction,
 } from "@modules/3DViewerNew/LayerFramework/visualization/makeSeismicFenceMeshLayer";
 import { LayerManager, LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import {
@@ -72,7 +71,7 @@ export type LayersWrapperProps = {
 };
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
-    const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
+    const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
@@ -151,25 +150,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     if (viewsAndLayers.boundingBox !== null) {
         if (prevBoundingBox !== null) {
-            const oldBoundingRect: Rect3D | null = {
-                x: prevBoundingBox.x[0],
-                y: prevBoundingBox.y[0],
-                z: prevBoundingBox.z[0],
-                width: prevBoundingBox.x[1] - prevBoundingBox.x[0],
-                height: prevBoundingBox.y[1] - prevBoundingBox.y[0],
-                depth: prevBoundingBox.z[1] - prevBoundingBox.z[0],
-            };
-
-            const newBoundingRect: Rect3D = {
-                x: viewsAndLayers.boundingBox.x[0],
-                y: viewsAndLayers.boundingBox.y[0],
-                z: viewsAndLayers.boundingBox.z[0],
-                width: viewsAndLayers.boundingBox.x[1] - viewsAndLayers.boundingBox.x[0],
-                height: viewsAndLayers.boundingBox.y[1] - viewsAndLayers.boundingBox.y[0],
-                depth: viewsAndLayers.boundingBox.z[1] - viewsAndLayers.boundingBox.z[0],
-            };
-
-            if (!outerRectContainsInnerRect(oldBoundingRect, newBoundingRect)) {
+            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, viewsAndLayers.boundingBox)) {
                 setPrevBoundingBox(viewsAndLayers.boundingBox);
             }
         } else {
@@ -185,14 +166,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     let bounds: BoundingBox3D | undefined = undefined;
     if (prevBoundingBox) {
-        bounds = [
-            prevBoundingBox.x[0],
-            prevBoundingBox.y[0],
-            prevBoundingBox.z[0],
-            prevBoundingBox.x[1],
-            prevBoundingBox.y[1],
-            prevBoundingBox.z[1],
-        ];
+        bounds = bbox.toNumArray(prevBoundingBox);
     }
 
     const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);
