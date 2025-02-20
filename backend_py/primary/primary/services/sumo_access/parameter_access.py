@@ -36,15 +36,11 @@ class ParameterAccess:
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    @property
-    def ensemble_context(self) -> SearchContext:
-        return self._ensemble_context
-
     async def get_parameters_and_sensitivities(self) -> EnsembleParameters:
         """Retrieve parameters for an ensemble"""
         timer = PerfTimer()
 
-        table_context = self.ensemble_context.dictionaries.filter(
+        table_context = self._ensemble_context.dictionaries.filter(
             name="parameters",
         )
         table = await table_context.aggregation_async(operation="collection")

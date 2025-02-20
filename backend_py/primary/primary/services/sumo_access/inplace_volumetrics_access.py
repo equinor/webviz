@@ -54,10 +54,6 @@ class InplaceVolumetricsAccess:
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    @property
-    def ensemble_context(self) -> SearchContext:
-        return self._ensemble_context
-
     @staticmethod
     def get_possible_identifier_columns() -> List[str]:
         return POSSIBLE_IDENTIFIER_COLUMNS
@@ -71,7 +67,7 @@ class InplaceVolumetricsAccess:
 
     async def get_inplace_volumetrics_table_names_async(self) -> List[str]:
 
-        table_context = self.ensemble_context.tables.filter(content="volumes")
+        table_context = self._ensemble_context.tables.filter(content="volumes")
         table_names = await table_context.names_async
         return table_names
 
@@ -87,7 +83,7 @@ class InplaceVolumetricsAccess:
         pa.Table with columns: ZONE, REGION, FACIES, REAL, and the requested column names.
         """
 
-        table_context = self.ensemble_context.tables.filter(
+        table_context = self._ensemble_context.tables.filter(
             name=table_name,
             content="volumes",
             column=column_names if column_names is None else list(column_names),
@@ -107,7 +103,7 @@ class InplaceVolumetricsAccess:
 
         # Assemble tables into a single table
         vol_table: pa.Table = await load_aggregated_arrow_table_multiple_columns_from_sumo(
-            ensemble_context=self.ensemble_context,
+            ensemble_context=self._ensemble_context,
             table_column_names=requested_columns,
             table_content_name="volumes",
             table_name=table_name,
@@ -125,7 +121,7 @@ class InplaceVolumetricsAccess:
         pa.Table with columns: ZONE, REGION, FACIES, REAL, and the requested column names.
         """
 
-        realizations = await self.ensemble_context._get_field_values_async("fmu.realization.id")
+        realizations = await self._ensemble_context._get_field_values_async("fmu.realization.id")
         if len(realizations) == 0:
             raise InvalidDataError(
                 f"No realizations found in the ensemble {self._case_uuid}, {self._iteration_name}",
@@ -133,7 +129,7 @@ class InplaceVolumetricsAccess:
             )
 
         vol_table: pa.Table = await load_single_realization_arrow_table(
-            ensemble_context=self.ensemble_context,
+            ensemble_context=self._ensemble_context,
             table_content_name="volumes",
             table_name=table_name,
             realization_no=realizations[0],

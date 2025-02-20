@@ -39,15 +39,11 @@ class RftAccess:
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    @property
-    def ensemble_context(self) -> SearchContext:
-        return self._ensemble_context
-
     async def get_rft_info(self) -> RftTableDefinition:
         """Get a collection of rft tables for a case and iteration"""
         timer = PerfMetrics()
 
-        table_context = self.ensemble_context.filter(cls="table", tagname="rft")
+        table_context = self._ensemble_context.filter(cls="table", tagname="rft")
 
         table_names = await table_context.names_async
         timer.record_lap("get_table_names")
@@ -66,7 +62,7 @@ class RftAccess:
         available_response_names = [col for col in columns if col in ALLOWED_RFT_RESPONSE_NAMES]
 
         table = await load_aggregated_arrow_table_multiple_columns_from_sumo(
-            ensemble_context=self.ensemble_context,
+            ensemble_context=self._ensemble_context,
             table_content_name="rft",
             table_name=table_names[0],
             table_column_names=available_response_names,
@@ -98,7 +94,7 @@ class RftAccess:
         column_names = [response_name, "DEPTH"]
 
         table = await load_aggregated_arrow_table_multiple_columns_from_sumo(
-            ensemble_context=self.ensemble_context,
+            ensemble_context=self._ensemble_context,
             table_content_name="rft",
             table_column_names=column_names,
         )

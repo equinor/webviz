@@ -70,14 +70,10 @@ class Grid3dAccess:
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    @property
-    def ensemble_context(self) -> SearchContext:
-        return self._ensemble_context
-
     async def get_models_info_arr_async(self, realization: int) -> List[Grid3dInfo]:
         """Get metadata for all 3D grid models, including bbox, dimensions and properties"""
 
-        grid3d_context = self.ensemble_context.grids.filter(realization=realization)
+        grid3d_context = self._ensemble_context.grids.filter(realization=realization)
 
         grid_count = await grid3d_context.length_async()
 

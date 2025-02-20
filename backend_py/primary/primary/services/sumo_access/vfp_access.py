@@ -43,13 +43,9 @@ class VfpAccess:
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    @property
-    def ensemble_context(self) -> SearchContext:
-        return self._ensemble_context
-
     async def get_all_vfp_table_names_for_realization(self, realization: int) -> List[str]:
         """Returns all VFP table names/tagnames for a realization."""
-        table_context = self.ensemble_context.tables.filter(
+        table_context = self._ensemble_context.tables.filter(
             content="lift_curves", realization=realization, iteration=self._iteration_name
         )
         table_count = await table_context.length_async()
@@ -64,7 +60,7 @@ class VfpAccess:
         and realization.
         """
 
-        table_context = self.ensemble_context.tables.filter(
+        table_context = self._ensemble_context.tables.filter(
             tagname=tagname, realization=realization, iteration=self._iteration_name
         )
 

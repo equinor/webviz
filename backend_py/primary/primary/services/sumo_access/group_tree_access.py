@@ -34,15 +34,11 @@ class GroupTreeAccess:
         sumo_client: SumoClient = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    @property
-    def ensemble_context(self) -> SearchContext:
-        return self._ensemble_context
-
     async def get_group_tree_table_for_realization(self, realization: int) -> Optional[pd.DataFrame]:
         """Get well group tree data for case and iteration"""
         timer = PerfTimer()
 
-        table_context = self.ensemble_context.filter(
+        table_context = self._ensemble_context.filter(
             cls="table", tagname=GroupTreeAccess.TAGNAME, realization=realization
         )
         table_count = await table_context.length_async()
