@@ -259,6 +259,11 @@ class SurfaceAccess:
         if surf_count == 0:
             LOGGER.warning(f"No statistical source surfaces found in Sumo for: {surf_str}")
             return None
+        if surf_count == 1:
+            # As of now, the Sumo aggregation service does not support single realization aggregation.
+            # For now return None. Alternatively we could fetch the single realization surface
+            LOGGER.warning(f"Could not calculate statistical surface, only one source surface found for: {surf_str}")
+            return None
 
         # Ensure that we got data for all the requested realizations
         realizations_found = await search_context._get_field_values_async("fmu.realization.id")
@@ -270,6 +275,7 @@ class SurfaceAccess:
                     f"Could not find source surfaces for realizations: {missing_reals} in Sumo for {surf_str}",
                     Service.SUMO,
                 )
+
         xtgeo_surf = await _compute_statistical_surface_async(statistic_function, search_context)
         perf_metrics.record_lap("calc-stat")
 
