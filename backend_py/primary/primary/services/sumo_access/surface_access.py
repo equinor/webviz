@@ -132,7 +132,7 @@ class SurfaceAccess:
         surf_str = self._make_real_surf_log_str(real_num, name, attribute, time_or_interval_str)
 
         time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
-        search_context = SearchContext(self._sumo_client).filter(
+        search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
             is_observation=False,
             aggregation=False,
@@ -175,15 +175,14 @@ class SurfaceAccess:
         """
         Get surface data for an observed surface
         """
-
         perf_metrics = PerfMetrics()
 
         surf_str = self._make_obs_surf_log_str(name, attribute, time_or_interval_str)
 
         time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
-        search_context = SearchContext(self._sumo_client).filter(
-            stage="case",
+        search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
+            stage="case",
             is_observation=True,
             name=name,
             tagname=attribute,
@@ -243,13 +242,14 @@ class SurfaceAccess:
 
         time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
 
-        search_context = SearchContext(self._sumo_client).filter(
+        search_context = SearchContext(self._sumo_client).surfaces.filter(
             uuid=self._case_uuid,
             is_observation=False,
-            # aggregation=True,
+            aggregation=False,
             iteration=self._iteration_name,
             name=name,
             tagname=attribute,
+            realization=realizations if realizations is not None else True,
             time=time_filter,
         )
 
@@ -264,7 +264,6 @@ class SurfaceAccess:
         realizations_found = await search_context._get_field_values_async("fmu.realization.id")
         perf_metrics.record_lap("collect-reals")
         if realizations is not None:
-
             missing_reals = list(set(realizations) - set(realizations_found))
             if len(missing_reals) > 0:
                 raise InvalidParameterError(
