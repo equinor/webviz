@@ -8,8 +8,11 @@ export type BBox = {
 };
 
 /**
-    Creates a new bounding box.
-    */
+ * Creates a new bounding box.
+ * @param min The minimum point of the bounding box.
+ * @param max The maximum point of the bounding box.
+ * @returns A new bounding box.
+ */
 export function create(min: vec3.Vec3, max: vec3.Vec3): BBox {
     return { min, max };
 }
@@ -18,6 +21,13 @@ export function fromBoundingBox3DApi(boundingBox: BoundingBox3D_api): BBox {
     return create(
         vec3.create(boundingBox.xmin, boundingBox.ymin, boundingBox.zmin),
         vec3.create(boundingBox.xmax, boundingBox.ymax, boundingBox.zmax)
+    );
+}
+
+export function fromBoundingBox2DApi(boundingBox: BoundingBox3D_api): BBox {
+    return create(
+        vec3.create(boundingBox.xmin, boundingBox.ymin, 0),
+        vec3.create(boundingBox.xmax, boundingBox.ymax, 0)
     );
 }
 

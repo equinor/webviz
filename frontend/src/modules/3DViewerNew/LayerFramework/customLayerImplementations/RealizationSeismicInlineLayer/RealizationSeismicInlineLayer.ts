@@ -1,6 +1,6 @@
 import { getInlineSliceOptions } from "@api";
 import * as bbox from "@lib/utils/boundingBox";
-import { Geometry, GeometryType } from "@lib/utils/geometry";
+import { Geometry, ShapeType } from "@lib/utils/geometry";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import * as vec3 from "@lib/utils/vec3";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
@@ -73,7 +73,7 @@ export class RealizationSeismicInlineLayer
         );
     }
 
-    predictNextGeometryAndBoundingBox(): [Geometry, bbox.BBox] | null {
+    predictNextGeometry(): Geometry | null {
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const seismicInlineNumber = settings[SettingType.SEISMIC_INLINE].getDelegate().getValue();
         const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
@@ -109,22 +109,24 @@ export class RealizationSeismicInlineLayer
         const rotatedMaxXY = rotatePoint2Around(maxXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
 
         const geometry: Geometry = {
-            type: GeometryType.POLYGON,
-            points: [
-                vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmin),
-                vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmin),
-                vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmax),
-                vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmax),
+            shapes: [
+                {
+                    type: ShapeType.POLYGON,
+                    points: [
+                        vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmin),
+                        vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmin),
+                        vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmax),
+                        vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmax),
+                    ],
+                },
             ],
-        };
-
-        return [
-            geometry,
-            bbox.create(
+            boundingBox: bbox.create(
                 vec3.create(Math.min(rotatedMinXY.x, rotatedMaxXY.x), Math.min(rotatedMinXY.y, rotatedMaxXY.y), zmin),
                 vec3.create(Math.max(rotatedMinXY.x, rotatedMaxXY.x), Math.max(rotatedMinXY.y, rotatedMaxXY.y), zmax)
             ),
-        ];
+        };
+
+        return geometry;
     }
 
     makeValueRange(): [number, number] | null {

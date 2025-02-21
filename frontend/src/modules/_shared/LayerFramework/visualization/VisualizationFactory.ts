@@ -30,7 +30,6 @@ export type VisualizationFunctionArgs<TSettings extends Settings, TData> = {
     settings: TSettings;
     isLoading: boolean;
     boundingBox: bbox.BBox | null;
-    predictedBoundingBox: bbox.BBox | null;
     predictedGeometry: Geometry | null;
 };
 
@@ -198,7 +197,6 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
             settings: layer.getLayerDelegate().getSettingsContext().getDelegate().getValues(),
             isLoading: layer.getLayerDelegate().getStatus() === LayerStatus.LOADING,
             boundingBox: layer.getLayerDelegate().getBoundingBox(),
-            predictedBoundingBox: layer.getLayerDelegate().getPredictedBoundingBox(),
             predictedGeometry: layer.getLayerDelegate().getPredictedGeometry(),
         });
     }

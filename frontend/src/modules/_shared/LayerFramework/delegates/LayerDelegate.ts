@@ -59,7 +59,6 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
     private _prevBoundingBox: bbox.BBox | null = null;
     private _boundingBox: bbox.BBox | null = null;
     private _predictedGeometry: Geometry | null = null;
-    private _predictedBoundingBox: bbox.BBox | null = null;
     private _valueRange: [number, number] | null = null;
     private _coloringType: LayerColoringType;
     private _isSubordinated: boolean = false;
@@ -134,10 +133,6 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
             return this._boundingBox;
         }
         return this._prevBoundingBox;
-    }
-
-    getPredictedBoundingBox(): bbox.BBox | null {
-        return this._predictedBoundingBox;
     }
 
     getPredictedGeometry(): Geometry | null {
@@ -249,10 +244,10 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
 
         this.invalidateBoundingBox();
         this.invalidateValueRange();
-        const prediction = this._owner.predictNextGeometryAndBoundingBox?.() ?? null;
+        const prediction = this._owner.predictNextGeometry?.() ?? null;
         if (prediction) {
-            this._predictedGeometry = prediction[0];
-            this._boundingBox = prediction[1];
+            this._predictedGeometry = prediction;
+            this._boundingBox = prediction.boundingBox;
         }
 
         this.setStatus(LayerStatus.LOADING);

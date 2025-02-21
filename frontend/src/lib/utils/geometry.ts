@@ -1,3 +1,4 @@
+import { BBox } from "./boundingBox";
 import type { Vec2 } from "./vec2";
 import { Vec3 } from "./vec3";
 
@@ -22,21 +23,26 @@ export type Rect3D = {
     depth: number;
 };
 
-export enum GeometryType {
+export enum ShapeType {
     POLYGON = "polygon",
     ELEVATED_POLYGON = "elevated_polygon",
 }
 
-export type Geometry =
+export type Shape =
     | {
-          type: GeometryType.POLYGON;
+          type: ShapeType.POLYGON;
           points: Vec3[];
       }
     | {
-          type: GeometryType.ELEVATED_POLYGON;
+          type: ShapeType.ELEVATED_POLYGON;
           points: Vec3[];
           height: number;
       };
+
+export type Geometry = {
+    shapes: Shape[];
+    boundingBox: BBox;
+};
 
 export const ORIGIN = Object.freeze({ x: 0, y: 0 });
 export const MANHATTAN_LENGTH = 13.11;

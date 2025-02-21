@@ -1,6 +1,6 @@
 import { getDepthSliceOptions } from "@api";
 import * as bbox from "@lib/utils/boundingBox";
-import { Geometry, GeometryType } from "@lib/utils/geometry";
+import { Geometry, ShapeType } from "@lib/utils/geometry";
 import { rotatePoint2Around } from "@lib/utils/vec2";
 import * as vec3 from "@lib/utils/vec3";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
@@ -83,7 +83,7 @@ export class RealizationSeismicDepthSliceLayer
         );
     }
 
-    predictNextGeometryAndBoundingBox(): [Geometry, bbox.BBox] | null {
+    predictNextGeometry(): Geometry | null {
         const settings = this.getSettingsContext().getDelegate().getSettings();
         const seismicDepthSliceNumber = settings[SettingType.SEISMIC_DEPTH_SLICE].getDelegate().getValue();
         const seismicAttribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
@@ -124,16 +124,21 @@ export class RealizationSeismicDepthSliceLayer
         );
 
         const geometry: Geometry = {
-            type: GeometryType.POLYGON,
-            points: [
-                vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmin),
-                vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmin),
-                vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmax),
-                vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmax),
+            shapes: [
+                {
+                    type: ShapeType.POLYGON,
+                    points: [
+                        vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmin),
+                        vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmin),
+                        vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmax),
+                        vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmax),
+                    ],
+                },
             ],
+            boundingBox,
         };
 
-        return [geometry, boundingBox];
+        return geometry;
     }
 
     doSettingsChangesRequireDataRefetch(

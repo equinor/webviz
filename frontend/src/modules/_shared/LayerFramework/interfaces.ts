@@ -126,7 +126,7 @@ export interface Layer<TSettings extends Settings, TData, TStoredData extends St
     /**
      * Implement this method if you want to provide a predicted geometry and an respective axis aligned bounding box for the layer. The geometry can be used to preview the layer before the actual data is fetched.
      */
-    predictNextGeometryAndBoundingBox?(): [Geometry, BBox] | null;
+    predictNextGeometry?(): Geometry | null;
     /**
      * Implement this method if you want to provide a value range for the layer. This can be used for adjusting the color scale.
      */
