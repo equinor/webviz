@@ -6,9 +6,11 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-
 from webviz_pkg.core_utils.perf_timer import PerfTimer
-from ._helpers import create_sumo_client, create_sumo_case_async
+
+from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
+
+from ._helpers import create_sumo_client
 from .parameter_types import (
     EnsembleParameter,
     EnsembleParameters,
@@ -38,21 +40,25 @@ class ParameterAccess:
         """Retrieve parameters for an ensemble"""
         timer = PerfTimer()
 
-        table_context = self._ensemble_context.dictionaries.filter(
+        table_context = self._ensemble_context.filter(
+            aggregation="collection",
             name="parameters",
+            tagname="all",
         )
-        table = await table_context.aggregation_async(operation="collection")
-        print(table)
-        length = await table_context.length_async()
-        print("****************************************************", length)
         if await table_context.length_async() == 0:
-            raise ValueError(f"No parameter tables found {self._case_uuid, self._iteration_name}")
+            raise NoDataError(
+                f"No parameter tables found {self._case_uuid, self._iteration_name}. "
+                "Please run parameter aggregation manually from the Sumo dashboard",
+                Service.SUMO,
+            )
         if await table_context.length_async() > 1:
-            raise ValueError(f"Multiple parameter tables found {self._case_uuid,self._iteration_name}")
+            raise MultipleDataMatchesError(
+                f"Multiple parameter tables found {self._case_uuid,self._iteration_name}", Service.SUMO
+            )
 
-        sumo_table = await table_context.getitem_async(0)
-
-        table = await sumo_table.to_arrow_async()
+        table = await table_context.getitem_async(0)
+        byte_stream: BytesIO = await table.blob_async
+        table = pq.read_table(byte_stream)
 
         et_download_arrow_table_ms = timer.lap_ms()
         LOGGER.debug(f"Downloaded arrow table in {et_download_arrow_table_ms}ms")
@@ -179,8 +185,9 @@ def _parameter_str_arr_to_parameter_group_dict(parameter_str_arr: List[str]) -> 
     for parameter_str in parameter_str_arr:
         parameter_name_components = parameter_str.split(":")
         if len(parameter_name_components) > 2:
-            raise ValueError(
-                f"Parameter {parameter_str} has too many componenents. Expected <groupname>:<parametername>"
+            raise InvalidDataError(
+                f"Parameter {parameter_str} has too many components. Expected <groupname>:<parametername>",
+                Service.SUMO,
             )
         if len(parameter_name_components) == 1:
             parameter_name = parameter_name_components[0]
