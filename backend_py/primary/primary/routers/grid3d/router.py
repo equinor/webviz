@@ -24,9 +24,6 @@ LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# pylint: disable=unused-argument
-# pylint: disable=unused-variable
-
 
 @router.get("/grid_models_info/")
 async def get_grid_models_info(
@@ -52,20 +49,6 @@ async def get_grid_models_info(
 
     LOGGER.debug(f"------------------ GRID3D - model_infos took: {perf_metrics.to_string_s()}")
     return ret_model_infos
-
-
-@router.get("/is_grid_geometry_shared/")
-async def get_is_grid_geometry_shared(
-    authenticated_user: Annotated[AuthenticatedUser, Depends(AuthHelper.get_authenticated_user)],
-    case_uuid: Annotated[str, Query(description="Sumo case uuid")],
-    ensemble_name: Annotated[str, Query(description="Ensemble name")],
-    grid_name: Annotated[str, Query(description="Grid name")],
-) -> bool:
-    """
-    Check if a 3D grid geometry is shared across realizations
-    """
-    access = Grid3dAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    return await access.is_geometry_shared_async(grid_name)
 
 
 # Primary backend

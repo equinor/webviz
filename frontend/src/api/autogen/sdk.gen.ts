@@ -45,9 +45,6 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataError_api,
     GetHistoricalVectorDataResponse_api,
-    GetIsGridGeometrySharedData_api,
-    GetIsGridGeometrySharedError_api,
-    GetIsGridGeometrySharedResponse_api,
     GetIsSensitivityRunData_api,
     GetIsSensitivityRunError_api,
     GetIsSensitivityRunResponse_api,
@@ -93,9 +90,6 @@ import type {
     GetRealizationVectorAtTimestampData_api,
     GetRealizationVectorAtTimestampError_api,
     GetRealizationVectorAtTimestampResponse_api,
-    GetRealizationsTablesAreEqualData_api,
-    GetRealizationsTablesAreEqualError_api,
-    GetRealizationsTablesAreEqualResponse_api,
     GetRealizationsVectorDataData_api,
     GetRealizationsVectorDataError_api,
     GetRealizationsVectorDataResponse_api,
@@ -709,21 +703,6 @@ export const getGridModelsInfo = <ThrowOnError extends boolean = false>(
 };
 
 /**
- * Get Is Grid Geometry Shared
- * Check if a 3D grid geometry is shared across realizations
- */
-export const getIsGridGeometryShared = <ThrowOnError extends boolean = false>(
-    options: Options<GetIsGridGeometrySharedData_api, ThrowOnError>
-) => {
-    return (options?.client ?? client).get<GetIsGridGeometrySharedResponse_api, GetIsGridGeometrySharedError_api, ThrowOnError>(
-        {
-            ...options,
-            url: "/grid3d/is_grid_geometry_shared/",
-        }
-    );
-};
-
-/**
  * Get Grid Surface
  * Get a grid
  */
@@ -795,23 +774,6 @@ export const getTableData = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetTableDataResponse_api, GetTableDataError_api, ThrowOnError>({
         ...options,
         url: "/pvt/table_data/",
-    });
-};
-
-/**
- * Get Realizations Tables Are Equal
- * Check if all realizations has the same pvt table
- */
-export const getRealizationsTablesAreEqual = <ThrowOnError extends boolean = false>(
-    options: Options<GetRealizationsTablesAreEqualData_api, ThrowOnError>
-) => {
-    return (options?.client ?? client).get<
-        GetRealizationsTablesAreEqualResponse_api,
-        GetRealizationsTablesAreEqualError_api,
-        ThrowOnError
-    >({
-        ...options,
-        url: "/pvt/realizations_tables_are_equal/",
     });
 };
 

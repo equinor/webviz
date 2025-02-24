@@ -1,11 +1,10 @@
 import logging
 from typing import List, Optional
+import asyncio
 
 from pydantic import BaseModel
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 
-from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from ._helpers import create_sumo_client
 
 
@@ -75,81 +74,54 @@ class Grid3dAccess:
 
         grid3d_context = self._ensemble_context.grids.filter(realization=realization)
 
-        grid_count = await grid3d_context.length_async()
+        length_grids = await grid3d_context.length_async()
 
-        timer = PerfMetrics()
-        grid3d_info_arr = []
-        for grid_no in range(grid_count):
+        async with asyncio.TaskGroup() as tg:
+            tasks = [tg.create_task(_get_grid_model_meta(grid3d_context, i)) for i in range(length_grids)]
+        grid_meta_arr: list[Grid3dInfo] = [task.result() for task in tasks]
 
-            grid3d_el = await grid3d_context.getitem_async(grid_no)
-            grid_metadata = grid3d_el.metadata
-
-            bbox = Grid3dBoundingBox(
-                xmin=grid_metadata["data"]["bbox"]["xmin"],
-                ymin=grid_metadata["data"]["bbox"]["ymin"],
-                zmin=grid_metadata["data"]["bbox"]["zmin"],
-                xmax=grid_metadata["data"]["bbox"]["xmax"],
-                ymax=grid_metadata["data"]["bbox"]["ymax"],
-                zmax=grid_metadata["data"]["bbox"]["zmax"],
-            )
-            timer.record_lap("get_bbox")
-            if grid_metadata.get("data").get("spec").get("zonation"):
-                subgrids = [
-                    Grid3dZone(name=zone["name"], start_layer=zone["min_layer_idx"], end_layer=zone["max_layer_idx"])
-                    for zone in grid_metadata["data"]["spec"]["zonation"]
-                ]
-            else:
-                subgrids = []
-            dimensions = Grid3dDimensions(
-                i_count=grid_metadata["data"]["spec"]["nrow"],
-                j_count=grid_metadata["data"]["spec"]["ncol"],
-                k_count=grid_metadata["data"]["spec"]["nlay"],
-                subgrids=subgrids,
-            )
-            timer.record_lap("get_dimensions")
-            grid_properties_context = grid3d_el.grid_properties
-            property_names = await grid_properties_context.names_async
-
-            timer.record_lap("get_property_names")
-            property_info_arr = []
-            for property_name in property_names:
-                property_info_arr.append(Grid3dPropertyInfo(property_name=property_name))
-            timer.record_lap("get_property_info")
-            grid3d_info = Grid3dInfo(
-                grid_name=grid_metadata["data"]["name"],
-                bbox=bbox,
-                dimensions=dimensions,
-                property_info_arr=property_info_arr,
-            )
-            timer.record_lap("create_grid3d_info")
-            grid3d_info_arr.append(grid3d_info)
-        LOGGER.debug(f"{timer.to_string()}, {self._case_uuid=}, {self._iteration_name=}")
-        return grid3d_info_arr
-
-    async def get_properties_info_arr_async(
-        self, grid3d_geometry_name: str, realization: int
-    ) -> List[Grid3dPropertyInfo]:
-        """Get metadata for grid properties belonging to a grid geometry"""
-        return []
-
-    async def is_geometry_shared_async(self, grid3d_geometry_name: str) -> bool:
-        """Check if a grid geometry is shared across all realizations"""
-
-        return True
-
-    async def get_geometry_blob_id_async(self, grid3d_geometry_name: str, realization: int) -> str:
-        """Get the blob id of a grid geometry"""
-
-        return ""
-
-    async def get_property_blob_id_async(self, grid3d_geometry_name: str, property_name: str, realization: int) -> str:
-        """Get the uuid of a grid property"""
-        return ""
+        return grid_meta_arr
 
 
-# async def get_grid_model_info_async(
-#     access_token: str, case_uuid: str, iteration_name: str, realization_num: int
-# ) -> List[Grid3dInfo]:
-#     """Get metadata for all 3D grid models, including bbox, dimensions and properties"""
-#     access = Grid3dAccess.from_iteration_name(access_token, case_uuid, iteration_name)
-#     return await access.get_models_info_arr_async(realization_num)
+async def _get_grid_model_meta(search_context: SearchContext, item_no=int) -> Grid3dInfo:
+    grid3d_el = await search_context.getitem_async(item_no)
+    grid_metadata = grid3d_el.metadata
+
+    bbox = Grid3dBoundingBox(
+        xmin=grid_metadata["data"]["bbox"]["xmin"],
+        ymin=grid_metadata["data"]["bbox"]["ymin"],
+        zmin=grid_metadata["data"]["bbox"]["zmin"],
+        xmax=grid_metadata["data"]["bbox"]["xmax"],
+        ymax=grid_metadata["data"]["bbox"]["ymax"],
+        zmax=grid_metadata["data"]["bbox"]["zmax"],
+    )
+    if grid_metadata.get("data").get("spec").get("zonation"):
+        subgrids = [
+            Grid3dZone(name=zone["name"], start_layer=zone["min_layer_idx"], end_layer=zone["max_layer_idx"])
+            for zone in grid_metadata["data"]["spec"]["zonation"]
+        ]
+    else:
+        subgrids = []
+
+    dimensions = Grid3dDimensions(
+        i_count=grid_metadata["data"]["spec"]["nrow"],
+        j_count=grid_metadata["data"]["spec"]["ncol"],
+        k_count=grid_metadata["data"]["spec"]["nlay"],
+        subgrids=subgrids,
+    )
+
+    grid_properties_context = grid3d_el.grid_properties
+    property_names = await grid_properties_context.names_async
+
+    property_info_arr = []
+    for property_name in property_names:
+        property_info_arr.append(Grid3dPropertyInfo(property_name=property_name))
+
+    grid3d_info = Grid3dInfo(
+        grid_name=grid_metadata["data"]["name"],
+        bbox=bbox,
+        dimensions=dimensions,
+        property_info_arr=property_info_arr,
+    )
+
+    return grid3d_info
