@@ -3,12 +3,11 @@ import logging
 from typing import List
 import asyncio
 from fmu.sumo.explorer import TimeFilter, TimeType
-from fmu.sumo.explorer.objects import Case
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from primary.services.service_exceptions import InvalidDataError, NoDataError, MultipleDataMatchesError, Service
 
-from ._helpers import create_sumo_client, create_sumo_case_async
+from ._helpers import create_sumo_client
 from .seismic_types import SeismicCubeMeta, VdsHandle
 
 LOGGER = logging.getLogger(__name__)
