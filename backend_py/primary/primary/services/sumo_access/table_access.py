@@ -11,6 +11,7 @@ from primary.services.service_exceptions import (
 
 from .generic_types import SumoTableSchema
 from ._helpers import create_sumo_client
+from ._arrow_table_loader import ArrowTableLoader
 
 
 class TableAccess:
@@ -51,16 +52,10 @@ class TableAccess:
     ) -> pa.Table:
         """Get a pyarrow table for a given realization"""
 
-        table_context = self._ensemble_context.tables.filter(
-            realization=realization,
-            name=table_schema.name,
-            tagname=table_schema.tagname,
-        )
-        table_count = await table_context.length_async()
-        if table_count == 0:
-            raise NoDataError(f"No table found for {table_schema=}", Service.SUMO)
-        if table_count > 1:
-            raise MultipleDataMatchesError(f"Multiple tables found for {table_schema=}", Service.SUMO)
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader.require_tagname(table_schema.tagname)
+        table_loader.require_table_name(table_schema.name)
 
-        sumo_table = await table_context.getitem_async(0)
-        return await sumo_table.to_arrow_async()
+        pa_table: pa.Table = await table_loader.get_single_realization_async(realization)
+
+        return pa_table

@@ -5,7 +5,7 @@ import numpy as np
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
-
+from ._arrow_table_loader import ArrowTableLoader
 from ._helpers import create_sumo_case_async, create_sumo_client
 from .vfp_types import (
     ALQ,
@@ -60,21 +60,9 @@ class VfpAccess:
         and realization.
         """
 
-        table_context = self._ensemble_context.tables.filter(
-            tagname=tagname, realization=realization, iteration=self._iteration_name
-        )
-
-        table_count = await table_context.length_async()
-        if table_count == 0:
-            raise NoDataError(
-                f"No VFP table found with tagname: {tagname} and realization: {realization}", Service.SUMO
-            )
-        if table_count > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple VFP tables found with tagname: {tagname} and realization: {realization}", Service.SUMO
-            )
-        sumo_table = await table_context.getitem_async(0)
-        pa_table: pa.Table = await sumo_table.to_arrow_async()
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader.require_tagname(tagname)
+        pa_table: pa.Table = await table_loader.get_single_realization_async(realization)
 
         return pa_table
 

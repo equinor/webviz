@@ -2,12 +2,13 @@ import logging
 from typing import Optional
 
 import pandas as pd
+import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from ._helpers import create_sumo_client, create_sumo_case_async
-
+from ._arrow_table_loader import ArrowTableLoader
 
 LOGGER = logging.getLogger(__name__)
 
@@ -36,24 +37,16 @@ class GroupTreeAccess:
         """Get well group tree data for case and iteration"""
         timer = PerfTimer()
 
-        table_context = self._ensemble_context.filter(
-            cls="table", tagname=GroupTreeAccess.TAGNAME, realization=realization
-        )
-        table_count = await table_context.length_async()
-        if table_count == 0:
-            return None
-        if table_count > 1:
-            raise MultipleDataMatchesError(
-                f"Multiple tables found for {realization=} {self._case_uuid},{self._iteration_name}, {GroupTreeAccess.TAGNAME}",
-                service=Service.SUMO,
-            )
-        table_context = await table_context.getitem_async(0)
-        group_tree_df = await table_context.to_pandas_async()
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader.require_tagname(GroupTreeAccess.TAGNAME)
 
-        _validate_group_tree_df(group_tree_df)
+        pa_table: pa.Table = await table_loader.get_single_realization_async(realization)
+
+        group_tree_df_pandas = pa_table.to_pandas()
+        _validate_group_tree_df(group_tree_df_pandas)
 
         LOGGER.debug(f"Loaded gruptree table from Sumo in: {timer.elapsed_ms()}ms")
-        return group_tree_df
+        return group_tree_df_pandas
 
 
 def _validate_group_tree_df(df: pd.DataFrame) -> None:

@@ -18,6 +18,7 @@ from primary.services.service_exceptions import (
 from .rft_types import RftTableDefinition, RftWellInfo, RftRealizationData
 from ._helpers import create_sumo_client
 from ._loaders import load_aggregated_arrow_table_multiple_columns_from_sumo
+from ._arrow_table_loader import ArrowTableLoader
 
 LOGGER = logging.getLogger(__name__)
 
@@ -61,12 +62,11 @@ class RftAccess:
         columns = await table_context.columns_async
         available_response_names = [col for col in columns if col in ALLOWED_RFT_RESPONSE_NAMES]
 
-        table = await load_aggregated_arrow_table_multiple_columns_from_sumo(
-            ensemble_context=self._ensemble_context,
-            table_content_name="rft",
-            table_name=table_names[0],
-            table_column_names=available_response_names,
-        )
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader.require_content_type("rft")
+        table_loader.require_table_name(table_names[0])
+        table: pa.Table = await table_loader.get_aggregated_multiple_columns_async(available_response_names)
+
         timer.record_lap("load_aggregated_arrow_table")
 
         rft_well_infos: list[RftWellInfo] = []
@@ -93,11 +93,11 @@ class RftAccess:
         timer = PerfMetrics()
         column_names = [response_name, "DEPTH"]
 
-        table = await load_aggregated_arrow_table_multiple_columns_from_sumo(
-            ensemble_context=self._ensemble_context,
-            table_content_name="rft",
-            table_column_names=column_names,
-        )
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader.require_content_type("rft")
+        # table_loader.require_table_name(table_names[0])
+        table: pa.Table = await table_loader.get_aggregated_multiple_columns_async(column_names)
+
         timer.record_lap("load_aggregated_arrow_table")
 
         if realizations is not None:

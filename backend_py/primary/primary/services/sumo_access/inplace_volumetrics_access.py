@@ -6,6 +6,7 @@ from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from ..service_exceptions import Service, InvalidDataError
 from ._helpers import create_sumo_client
 from ._loaders import load_aggregated_arrow_table_multiple_columns_from_sumo, load_single_realization_arrow_table
+from ._arrow_table_loader import ArrowTableLoader
 
 # Index column values to ignore, i.e. remove from the volumetric tables
 IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]
@@ -99,15 +100,12 @@ class InplaceVolumetricsAccess:
 
         requested_columns = available_response_names if column_names is None else list(column_names)
 
-        # Assemble tables into a single table
-        vol_table: pa.Table = await load_aggregated_arrow_table_multiple_columns_from_sumo(
-            ensemble_context=self._ensemble_context,
-            table_column_names=requested_columns,
-            table_content_name="volumes",
-            table_name=table_name,
-        )
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader.require_content_type("volumes")
+        table_loader.require_table_name(table_name)
+        pa_table: pa.Table = await table_loader.get_aggregated_multiple_columns_async(requested_columns)
 
-        return vol_table
+        return pa_table
 
     async def get_inplace_volumetrics_columns_async(self, table_name: str) -> dict[str, List[str]]:
         """
@@ -125,16 +123,14 @@ class InplaceVolumetricsAccess:
                 f"No realizations found in the ensemble {self._case_uuid}, {self._iteration_name}",
                 Service.SUMO,
             )
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader.require_content_type("volumes")
+        table_loader.require_table_name(table_name)
 
-        vol_table: pa.Table = await load_single_realization_arrow_table(
-            ensemble_context=self._ensemble_context,
-            table_content_name="volumes",
-            table_name=table_name,
-            realization_no=realizations[0],
-        )
+        pa_table: pa.Table = await table_loader.get_single_realization_async(realizations[0])
 
-        column_names = vol_table.column_names
+        column_names = pa_table.column_names
         column_names_and_values = {}
         for col in column_names:
-            column_names_and_values[col] = vol_table[col].unique().to_pylist()
+            column_names_and_values[col] = pa_table[col].unique().to_pylist()
         return column_names_and_values
