@@ -11,6 +11,8 @@ out vec3 cameraPosition;
 out vec4 position_commonspace;
 out float pointingTowardsCamera;
 
+const vec3 pickingColor = vec3(1.0, 1.0, 0.0);
+
 void main(void) {
     cameraPosition = project_uCameraPosition;
 
@@ -22,6 +24,7 @@ void main(void) {
     position_commonspace = vec4(project_position(positions), 0.0f);
 
     geometry.position = position_commonspace;
+    geometry.pickingColor = pickingColor;
 
     gl_Position = project_common_position_to_clipspace(position_commonspace);
 

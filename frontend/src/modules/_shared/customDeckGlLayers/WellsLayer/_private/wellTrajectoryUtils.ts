@@ -74,3 +74,37 @@ function interpolateDataOnTrajectory(coord: vec3.Vec3, data: number[], trajector
 export function getMd(coord: vec3.Vec3, mdArray: number[], trajectory: vec3.Vec3[]): number | null {
     return interpolateDataOnTrajectory(coord, mdArray, trajectory);
 }
+
+export function getCoordinateForMd(md: number, mdArray: number[], trajectory: vec3.Vec3[]): vec3.Vec3 | null {
+    const numPoints = mdArray.length;
+    if (numPoints < 2) {
+        return null;
+    }
+
+    let segmentIndex = 0;
+    for (let i = 0; i < numPoints - 1; i++) {
+        if (mdArray[i] <= md && md <= mdArray[i + 1]) {
+            segmentIndex = i;
+            break;
+        }
+    }
+
+    const md0 = mdArray[segmentIndex];
+    const md1 = mdArray[segmentIndex + 1];
+
+    const survey0 = trajectory[segmentIndex];
+    const survey1 = trajectory[segmentIndex + 1];
+
+    const dv = vec3.distance(survey0, survey1) as number;
+    if (dv === 0) {
+        return null;
+    }
+
+    const scalar_projection = (md - md0) / (md1 - md0);
+
+    return {
+        x: survey0.x + scalar_projection * (survey1.x - survey0.x),
+        y: survey0.y + scalar_projection * (survey1.y - survey0.y),
+        z: survey0.z + scalar_projection * (survey1.z - survey0.z),
+    };
+}

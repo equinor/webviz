@@ -5,7 +5,7 @@ import { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
 import { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 
 import { PipeLayer } from "./_private/PipeLayer";
-import { getMd } from "./_private/wellTrajectoryUtils";
+import { getCoordinateForMd, getMd } from "./_private/wellTrajectoryUtils";
 
 export type WellsLayerData = {
     coordinates: [number, number, number][];
@@ -44,29 +44,31 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
 
     getPickingInfo({ info }: GetPickingInfoParams): LayerPickInfo {
         if (!info.sourceLayer?.id.includes("pipe-layer")) {
+            this.setState({ mdCoordinate: null });
+
             return info;
         }
 
         const wellbore = this.props.data[info.index];
         if (!wellbore) {
+            this.setState({ mdCoordinate: null });
             return info;
         }
         info.object = this.props.data[info.index];
+
         const coordinate = info.coordinate ?? [0, 0, 0];
 
-        const zScale = this.props.modelMatrix ? this.props.modelMatrix[10] : 1;
-        if (typeof coordinate[2] !== "undefined") {
-            coordinate[2] /= Math.max(0.001, zScale);
-        }
+        const trajectory = wellbore.coordinates.map((coord) => vec3.fromArray(coord));
 
-        const md = getMd(
-            vec3.fromArray(coordinate),
-            wellbore.properties.mdArray,
-            wellbore.coordinates.map((coord) => vec3.fromArray(coord))
-        );
+        const md = getMd(vec3.fromArray(coordinate), wellbore.properties.mdArray, trajectory);
 
         if (md !== null) {
-            this.setState({ mdCoordinate: coordinate });
+            const mdCoordinate = getCoordinateForMd(md, wellbore.properties.mdArray, trajectory);
+            if (mdCoordinate === null) {
+                this.setState({ mdCoordinate: null });
+            } else {
+                this.setState({ mdCoordinate: [mdCoordinate?.x ?? 0, mdCoordinate?.y ?? 0, mdCoordinate?.z ?? 0] });
+            }
             return {
                 ...info,
                 properties: [
@@ -77,6 +79,7 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
                 ],
             };
         }
+        this.setState({ mdCoordinate: null });
 
         return info;
     }
@@ -102,10 +105,11 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
                 id: "hover-md-layer",
                 data: this.state.mdCoordinate ? [this.state.mdCoordinate] : [],
                 getPosition: (d: any) => d,
-                getColor: [0, 255, 0],
-                getRadius: 10,
+                getColor: [255, 0, 0],
+                getRadius: 5,
                 pickable: false,
                 billboard: true,
+                visible: this.state.mdCoordinate !== null,
             }),
             new PathLayer({
                 id: "path-layer",
@@ -129,6 +133,8 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
                 }),
                 material: true,
                 pickable: true,
+                // @ts-expect-error - This is how deck.gl expects the state to be defined
+                parameters: { depthTest: true },
             }),
         ];
     }
