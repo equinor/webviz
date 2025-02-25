@@ -7,8 +7,9 @@ from fmu.sumo.explorer.objects import Case
 
 from primary.services.service_exceptions import NoDataError, MultipleDataMatchesError, Service
 
-from ._helpers import create_sumo_client, create_sumo_case_async
+from ._helpers import create_sumo_case_async
 from .generic_types import SumoTableSchema
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 

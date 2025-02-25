@@ -9,15 +9,11 @@ import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import Case, TableCollection
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from primary.services.service_exceptions import (
-    Service,
-    NoDataError,
-    InvalidDataError,
-    MultipleDataMatchesError,
-)
+from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 
-from ._helpers import create_sumo_client, create_sumo_case_async
+from ._helpers import create_sumo_case_async
 from .rft_types import RftTableDefinition, RftWellInfo, RftRealizationData
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 
