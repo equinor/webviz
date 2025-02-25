@@ -12,7 +12,7 @@ function makePositionReadout(layerPickInfo: LayerPickInfo): ReadoutItem | null {
     if (layerPickInfo.coordinate === undefined || layerPickInfo.coordinate.length < 2) {
         return null;
     }
-    return {
+    const readout = {
         label: "Position",
         info: [
             {
@@ -27,6 +27,15 @@ function makePositionReadout(layerPickInfo: LayerPickInfo): ReadoutItem | null {
             },
         ],
     };
+    if (layerPickInfo.coordinate.length > 2) {
+        readout.info.push({
+            name: "z",
+            value: layerPickInfo.coordinate[2],
+            unit: "m",
+        });
+    }
+
+    return readout;
 }
 
 export type ReadoutBoxWrapperProps = {

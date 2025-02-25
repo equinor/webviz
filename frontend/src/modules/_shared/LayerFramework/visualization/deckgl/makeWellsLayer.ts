@@ -103,7 +103,11 @@ export function makeWellsLayer({
                 number,
                 number
             ][],
-            properties: { uuid: wellTrajectory.wellboreUuid, name: wellTrajectory.uniqueWellboreIdentifier },
+            properties: {
+                uuid: wellTrajectory.wellboreUuid,
+                name: wellTrajectory.uniqueWellboreIdentifier,
+                mdArray: wellTrajectory.mdArr,
+            },
         };
     });
 

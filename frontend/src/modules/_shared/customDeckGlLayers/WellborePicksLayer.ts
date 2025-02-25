@@ -38,7 +38,7 @@ type PointsData = { coordinates: [number, number, number]; properties: { name: s
 export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> {
     static layerName: string = "WellborePicksLayer";
 
-    // @ts-ignore - This is how deck.gl expects the state to be defined
+    // @ts-expect-error - This is how deck.gl expects the state to be defined
     // For instance, see her:
     // https://github.com/visgl/deck.gl/blob/master/modules/layers/src/point-cloud-layer/point-cloud-layer.ts#L123
     state!: {

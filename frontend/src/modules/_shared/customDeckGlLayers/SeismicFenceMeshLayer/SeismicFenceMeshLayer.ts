@@ -57,7 +57,8 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
         workerType: "web",
         maxWorkers: 10,
         workerOpts: {
-            // By default, Vite uses a module worker in dev mode, which can cause your application to fail. Therefore, we need to use a module worker in dev mode and a classic worker in prod mode.
+            // By default, Vite uses a module worker in dev mode, which can cause your application to fail.
+            // Therefore, we need to use a module worker in dev mode and a classic worker in prod mode.
             type: import.meta.env.PROD ? undefined : "module",
         },
     });
@@ -68,7 +69,7 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     private _sharedIndicesBuffer: SharedArrayBuffer | null = null;
     private _colorsArray: Float32Array = new Float32Array();
 
-    // @ts-expect-error - private
+    // @ts-expect-error - This is how deck.gl expects the state to be defined
     state!: {
         geometry: Geometry;
         isHovered: boolean;

@@ -1,42 +1,96 @@
-import { Layer, LayerContext, Material, UpdateParameters, picking, project32 } from "@deck.gl/core";
+import {
+    GetPickingInfoParams,
+    Layer,
+    LayerContext,
+    LayerProps,
+    Material,
+    PickingInfo,
+    UpdateParameters,
+    picking,
+    project32,
+} from "@deck.gl/core";
 import { Vec3 } from "@lib/utils/vec3";
 import * as vec3 from "@lib/utils/vec3";
 import { Geometry, Model } from "@luma.gl/engine";
 import { phongLighting } from "@luma.gl/shadertools";
 
+import { isEqual } from "lodash";
+
 import { Pipe } from "./Pipe";
 import fragmentShader from "./shaders/fragmentShader.glsl?raw";
+import { PipeProps, pipeUniforms } from "./shaders/uniforms";
 import vertexShader from "./shaders/vertexShader.glsl?raw";
 
 export type PipeLayerProps = {
     id: string;
-    data: Vec3[][];
+    data: {
+        id: string;
+        centerLinePath: Vec3[];
+    }[];
+    color: [number, number, number, number];
+    hoverColor: [number, number, number, number];
+    selectedColor: [number, number, number, number];
+    hoveredPipeIndex: number | null;
+    selectedPipeIndex: number | null;
     material?: Material;
-};
+} & LayerProps;
 
 export class PipeLayer extends Layer<PipeLayerProps> {
     static layerName: string = "PipeLayer";
 
-    // @ts-ignore - This is how deck.gl expects the state to be defined
+    // @ts-expect-error - This is how deck.gl expects the state to be defined
     state!: {
         models: Model[];
+        hoveredPipeIndex: number | null;
     };
 
     initializeState(context: LayerContext): void {
-        this.state = {
+        this.setState({
             models: this.makeModels(context),
+            hoveredPipeIndex: null,
+        });
+    }
+
+    getPickingInfo(params: GetPickingInfoParams): PickingInfo {
+        const info = super.getPickingInfo(params);
+
+        if (!info.color) {
+            this.setState({ hoveredPipeIndex: null });
+            return info;
+        }
+
+        const r = info.color[0];
+        const g = info.color[1];
+        const b = info.color[2];
+
+        const pipeIndex = r * 256 * 256 + g * 256 + b;
+
+        this.setState({ hoveredPipeIndex: pipeIndex });
+
+        return {
+            ...info,
+            picked: true,
+            index: pipeIndex,
+            object: this.props.data[pipeIndex],
         };
     }
 
     draw(): void {
-        const { models } = this.state;
-        for (const model of models) {
+        const { models, hoveredPipeIndex } = this.state;
+        for (const [idx, model] of models.entries()) {
+            model.shaderInputs.setProps({
+                pipe: {
+                    isHovered: hoveredPipeIndex === idx,
+                },
+            });
             model.draw(this.context.renderPass);
         }
     }
 
     updateState(params: UpdateParameters<Layer<PipeLayerProps>>): void {
-        if (params.changeFlags.dataChanged) {
+        super.updateState(params);
+
+        if (!isEqual(this.props.data, params.props.data)) {
             this.setState({
                 models: this.makeModels(params.context),
             });
@@ -49,15 +103,20 @@ export class PipeLayer extends Layer<PipeLayerProps> {
 
         const models: Model[] = [];
         for (const [idx, mesh] of meshes.entries()) {
-            models.push(
-                new Model(context.device, {
-                    id: `${this.id}-mesh-${idx}`,
-                    geometry: mesh,
-                    modules: [project32, phongLighting, picking],
-                    vs: vertexShader,
-                    fs: fragmentShader,
-                })
-            );
+            const pipeProps: PipeProps = {
+                pipeIndex: idx,
+                isHovered: false,
+            };
+            const model = new Model(context.device, {
+                id: `${this.id}-mesh-${idx}`,
+                geometry: mesh,
+                modules: [project32, phongLighting, picking, pipeUniforms],
+                vs: vertexShader,
+                fs: fragmentShader,
+            });
+            model.shaderInputs.setProps({ pipe: pipeProps });
+
+            models.push(model);
         }
 
         return models;
@@ -68,8 +127,8 @@ export class PipeLayer extends Layer<PipeLayerProps> {
         const circle = this.makeCircle(10, 16);
 
         const pipes: Pipe[] = [];
-        for (const points of data) {
-            pipes.push(new Pipe(points, circle));
+        for (const pipeData of data) {
+            pipes.push(new Pipe(pipeData.centerLinePath, circle));
         }
 
         return pipes;
@@ -91,8 +150,10 @@ export class PipeLayer extends Layer<PipeLayerProps> {
     }
 
     private makeMeshes(pipes: Pipe[]): Geometry[] {
+        const { data } = this.props;
+
         const geometries: Geometry[] = [];
-        for (const pipe of pipes) {
+        for (const [idx, pipe] of pipes.entries()) {
             const numContours = pipe.getContourCount();
             const numVerticesPerContour = pipe.getContours()[0].length;
 
@@ -209,6 +270,7 @@ export class PipeLayer extends Layer<PipeLayerProps> {
                         },
                     },
                     indices: indices,
+                    id: data[idx].id,
                 })
             );
         }
