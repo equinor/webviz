@@ -18,10 +18,11 @@ import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePr
 import { useAtomValue, useSetAtom } from "jotai";
 import _ from "lodash";
 
-import { userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
+import { layerManagerAtom, userSelectedFieldIdentifierAtom, userSelectedWellboreUuidAtom } from "./atoms/baseAtoms";
 import { selectedFieldIdentifierAtom, selectedWellboreHeaderAtom } from "./atoms/derivedAtoms";
 import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
-import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
+import { LayerManagerComponentWrapper } from "./components/LayerManagerComponentWrapper";
+// import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
 import { ViewerSettings } from "./components/ViewerSettings";
 
 import type { InterfaceTypes } from "../interfaces";
@@ -60,6 +61,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Utilities
     const syncedSettingKeys = props.settingsContext.useSyncedSettingKeys();
     const syncHelper = new SyncSettingsHelper(syncedSettingKeys, props.workbenchServices);
+    const layerManager = useAtomValue(layerManagerAtom);
 
     // Field selection
     const availableFields = useAtomValue(availableFieldsQueryAtom)?.data ?? [];
@@ -85,6 +87,14 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
     // Error messages
     const statusWriter = useSettingsStatusWriter(props.settingsContext);
     const wellboreHeadersErrorStatus = usePropagateApiErrorToStatusWriter(wellboreHeaders, statusWriter) ?? "";
+
+    React.useEffect(() => {
+        layerManager?.updateGlobalSetting("fieldId", selectedField);
+    }, [layerManager, selectedField]);
+
+    React.useEffect(() => {
+        layerManager?.updateGlobalSetting("wellboreUuid", selectedWellboreHeader?.wellboreUuid ?? null);
+    }, [layerManager, selectedWellboreHeader]);
 
     return (
         <div className="flex flex-col h-full gap-1">
@@ -112,11 +122,16 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
                 </Label>
             </CollapsibleGroup>
 
-            <CollapsibleGroup title="Log viewer settings" expanded>
+            <CollapsibleGroup title="Log viewer settings">
                 <ViewerSettings statusWriter={statusWriter} />
             </CollapsibleGroup>
 
-            <TemplateTrackSettings statusWriter={statusWriter} />
+            {/* <TemplateTrackSettings statusWriter={statusWriter} /> */}
+
+            <LayerManagerComponentWrapper
+                workbenchSession={props.workbenchSession}
+                workbenchSettings={props.workbenchSettings}
+            />
         </div>
     );
 }

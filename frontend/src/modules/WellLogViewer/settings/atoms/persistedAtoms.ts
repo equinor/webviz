@@ -1,5 +1,6 @@
 import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@modules/WellLogViewer/utils/atoms";
+import { SerializedLayerManager } from "@modules/_shared/LayerFramework/interfaces";
 
 import type { Getter, Setter } from "jotai";
 import { atom } from "jotai";
@@ -32,6 +33,11 @@ export const viewerHorizontalAtom = atom<boolean, [boolean], void>(
 export const padDataWithEmptyRowsAtom = atom<boolean, [boolean], void>(
     (get) => getPersistentModuleField(get, "padDataWithEmptyRows", true),
     (get, set, newVal) => setPersistentModuleField(get, set, "padDataWithEmptyRows", newVal),
+);
+
+export const serializedManagerStateAtom = atom<SerializedLayerManager, [SerializedLayerManager], void>(
+    (get) => getPersistentModuleField(get, "layerManagerState", undefined),
+    (get, set, newVal) => setPersistentModuleField(get, set, "layerManagerState", newVal)
 );
 
 export function clearStorageForInstance(instanceId: string) {

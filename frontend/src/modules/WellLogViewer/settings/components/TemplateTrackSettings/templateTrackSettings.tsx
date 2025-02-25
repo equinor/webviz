@@ -109,7 +109,7 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
     );
 
     return (
-        <div className="h-full">
+        <div className="max-h-72 flex flex-col overflow-auto">
             <div className="flex bg-slate-100 p-2 items-center border-b border-gray-300">
                 <input
                     ref={jsonImportInputRef}
@@ -143,18 +143,20 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
                 </Dropdown>
             </div>
 
-            <SortableList onItemMoved={handleTrackMove}>
-                {trackConfigs.map((config) => (
-                    <SortableTrackItem
-                        key={config._key}
-                        trackConfig={config}
-                        statusWriter={props.statusWriter}
-                        // Listeners
-                        onUpdateTrack={handleEditTrack}
-                        onDeleteTrack={handleDeleteTrack}
-                    />
-                ))}
-            </SortableList>
+            <div className="flex-grow">
+                <SortableList onItemMoved={handleTrackMove}>
+                    {trackConfigs.map((config) => (
+                        <SortableTrackItem
+                            key={config._key}
+                            trackConfig={config}
+                            statusWriter={props.statusWriter}
+                            // Listeners
+                            onUpdateTrack={handleEditTrack}
+                            onDeleteTrack={handleDeleteTrack}
+                        />
+                    ))}
+                </SortableList>
+            </div>
         </div>
     );
 }

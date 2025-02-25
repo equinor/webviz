@@ -1,4 +1,4 @@
-import type { SurfaceStatisticFunction_api, WellboreHeader_api } from "@api";
+import type { SurfaceStatisticFunction_api, WellboreHeader_api, WellborePick_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import type { ColorScaleSpecification } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import type { ColorSet } from "@lib/utils/ColorSet";
@@ -34,12 +34,16 @@ export enum Setting {
     POLYGONS_ATTRIBUTE = "polygonsAttribute",
     POLYGONS_NAME = "polygonsName",
     REALIZATION = "realization",
+    STRAT_COLUMN = "stratColumn",
     SEISMIC_CROSSLINE = "seismicCrossline",
     SEISMIC_DEPTH_SLICE = "seismicDepthSlice",
     SEISMIC_INLINE = "seismicInline",
     SENSITIVITY = "sensitivity",
     SHOW_GRID_LINES = "showGridLines",
+    SMDA_WELLBORE_HEADER = "smdaWellboreHeader",
     SMDA_WELLBORE_HEADERS = "smdaWellboreHeaders",
+    SMDA_INTERPRETER = "smdaInterpreter",
+    WELL_PICKS = "well_picks",
     SMDA_WELLBORE_PICKS = "smdaWellborePicks",
     STATISTIC_FUNCTION = "statisticFunction",
     SURFACE_NAME = "surfaceName",
@@ -65,11 +69,16 @@ export const settingCategories = {
     [Setting.SEISMIC_INLINE]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.SENSITIVITY]: SettingCategory.SINGLE_SELECT,
     [Setting.SHOW_GRID_LINES]: SettingCategory.BOOLEAN,
+    [Setting.SMDA_INTERPRETER]: SettingCategory.SINGLE_SELECT,
+    [Setting.SMDA_WELLBORE_HEADER]: SettingCategory.SINGLE_SELECT,
     [Setting.SMDA_WELLBORE_HEADERS]: SettingCategory.MULTI_SELECT,
     [Setting.SMDA_WELLBORE_PICKS]: SettingCategory.MULTI_SELECT,
     [Setting.STATISTIC_FUNCTION]: SettingCategory.SINGLE_SELECT,
+    [Setting.STRAT_COLUMN]: SettingCategory.SINGLE_SELECT,
     [Setting.SURFACE_NAME]: SettingCategory.SINGLE_SELECT,
     [Setting.TIME_OR_INTERVAL]: SettingCategory.SINGLE_SELECT,
+    // ? Use SMDA wellbore picks instead?
+    [Setting.WELL_PICKS]: SettingCategory.MULTI_SELECT,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
@@ -93,11 +102,15 @@ export type SettingTypes = {
     [Setting.SEISMIC_INLINE]: number | null;
     [Setting.SENSITIVITY]: SensitivityNameCasePair | null;
     [Setting.SHOW_GRID_LINES]: boolean;
+    [Setting.SMDA_WELLBORE_HEADER]: string | null;
     [Setting.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
     [Setting.SMDA_WELLBORE_PICKS]: string[] | null;
+    [Setting.SMDA_INTERPRETER]: string | null;
     [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
+    [Setting.STRAT_COLUMN]: string | null;
     [Setting.SURFACE_NAME]: string | null;
     [Setting.TIME_OR_INTERVAL]: string | null;
+    [Setting.WELL_PICKS]: WellborePick_api[] | null;
 };
 
 export type PossibleSettingsForCategory<TCategory extends SettingCategory> = {

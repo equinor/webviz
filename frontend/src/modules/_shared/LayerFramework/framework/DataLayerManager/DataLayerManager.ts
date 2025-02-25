@@ -44,6 +44,7 @@ export type LayerManagerTopicPayload = {
 
 export type GlobalSettings = {
     fieldId: string | null;
+    wellboreUuid: string | null;
     ensembles: readonly RegularEnsemble[];
     realizationFilterFunction: EnsembleRealizationFilterFunction;
     intersectionPolylines: IntersectionPolyline[];
@@ -229,6 +230,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
         const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
         return {
             fieldId: null,
+            wellboreUuid: null,
             ensembles,
             realizationFilterFunction: createEnsembleRealizationFilterFuncForWorkbenchSession(this._workbenchSession),
             intersectionPolylines: this._workbenchSession
