@@ -5,8 +5,9 @@ import numpy as np
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
+
 from ._arrow_table_loader import ArrowTableLoader
-from ._helpers import create_sumo_case_async, create_sumo_client
+from .sumo_client_factory import create_sumo_client
 from .vfp_types import (
     ALQ,
     GFR,

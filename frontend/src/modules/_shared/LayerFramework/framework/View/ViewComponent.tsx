@@ -1,9 +1,9 @@
 import { SortableListGroup } from "@lib/components/SortableList";
 
+import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { usePublishSubscribeTopicValue } from "../../delegates/PublishSubscribeDelegate";
 import { Group, Item } from "../../interfaces";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";

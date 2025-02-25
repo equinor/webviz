@@ -1,23 +1,23 @@
 import React from "react";
 
-export type TopicPayloads<TTopic extends string> = Record<TTopic, any>;
+export type TopicPayloads = Record<string, any>;
 
-export interface PublishSubscribe<TTopic extends string, TTopicPayloads extends TopicPayloads<TTopic>> {
-    makeSnapshotGetter<T extends TTopic>(topic: T): () => TTopicPayloads[T];
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<TTopic>;
+export interface PublishSubscribe<TTopicPayloads extends TopicPayloads> {
+    makeSnapshotGetter<T extends keyof TTopicPayloads>(topic: T): () => TTopicPayloads[T];
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<TTopicPayloads>;
 }
 
-export class PublishSubscribeDelegate<TTopic extends string> {
-    private _subscribers = new Map<TTopic, Set<() => void>>();
+export class PublishSubscribeDelegate<TTopicPayloads extends TopicPayloads> {
+    private _subscribers = new Map<keyof TTopicPayloads, Set<() => void>>();
 
-    notifySubscribers(topic: TTopic): void {
+    notifySubscribers(topic: keyof TTopicPayloads): void {
         const subscribers = this._subscribers.get(topic);
         if (subscribers) {
             subscribers.forEach((subscriber) => subscriber());
         }
     }
 
-    makeSubscriberFunction(topic: TTopic): (onStoreChangeCallback: () => void) => () => void {
+    makeSubscriberFunction(topic: keyof TTopicPayloads): (onStoreChangeCallback: () => void) => () => void {
         // Using arrow function in order to keep "this" in context
         const subscriber = (onStoreChangeCallback: () => void): (() => void) => {
             const subscribers = this._subscribers.get(topic) || new Set();
@@ -33,10 +33,10 @@ export class PublishSubscribeDelegate<TTopic extends string> {
     }
 }
 
-export function usePublishSubscribeTopicValue<TTopic extends string, TTopicPayloads extends TopicPayloads<TTopic>>(
-    publishSubscribe: PublishSubscribe<TTopic, TTopicPayloads>,
-    topic: TTopic
-): TTopicPayloads[TTopic] {
+export function usePublishSubscribeTopicValue<
+    TTopicPayloads extends TopicPayloads,
+    TTopic extends keyof TTopicPayloads
+>(publishSubscribe: PublishSubscribe<TTopicPayloads>, topic: TTopic): TTopicPayloads[TTopic] {
     const value = React.useSyncExternalStore<TTopicPayloads[TTopic]>(
         publishSubscribe.getPublishSubscribeDelegate().makeSubscriberFunction(topic),
         publishSubscribe.makeSnapshotGetter(topic)

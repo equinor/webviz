@@ -2,11 +2,13 @@ import logging
 from typing import List, Dict
 
 import json
-from fmu.sumo.explorer.objects import Case
+
 from fmu.sumo.explorer.objects.dictionary import Dictionary
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
-from ._helpers import create_sumo_client, create_sumo_case_async
+from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, Service
+
+from .sumo_client_factory import create_sumo_client
 from .observation_types import (
     Observations,
     SummaryVectorDateObservation,
@@ -43,7 +45,9 @@ class ObservationAccess:
         if await observation_context.length_async() == 0:
             return Observations()
         if await observation_context.length_async() > 1:
-            raise ValueError(f"More than one observations dictionary found. {observation_context.names}")
+            raise MultipleDataMatchesError(
+                f"More than one observations dictionary found. {observation_context.names}", Service.SUMO
+            )
 
         observations_handle: Dictionary = await observation_context.getitem_async(0)
         observations_byteio = await observations_handle.blob_async
@@ -74,7 +78,7 @@ def _create_summary_observations(observations_dict: dict) -> List[SummaryVectorO
             or len(observation_errors) != num_observations
             or len(observation_dates) != num_observations
         ):
-            raise ValueError(f"Inconsistent observations data for vector {vector_name}")
+            raise InvalidDataError(f"Inconsistent observations data for vector {vector_name}", Service.SUMO)
 
         summary_observations.append(
             SummaryVectorObservations(

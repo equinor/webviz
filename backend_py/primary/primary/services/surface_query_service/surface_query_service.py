@@ -10,7 +10,9 @@ from pydantic import BaseModel
 from sumo.wrapper import SumoClient
 
 from primary import config
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.services.sumo_access.sumo_blob_access import get_sas_token_and_blob_store_base_uri_for_case
+from primary.services.sumo_access.sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 
@@ -71,9 +73,10 @@ async def batch_sample_surface_in_points_async(
         yCoords=y_coords,
     )
 
-    async with httpx.AsyncClient(timeout=300) as client:
-        LOGGER.info(f"Running async go point sampling for surface: {surface_name}")
-        response: httpx.Response = await client.post(url=SERVICE_ENDPOINT, json=request_body.model_dump())
+    LOGGER.info(f"Running async go point sampling for surface: {surface_name}")
+    response: httpx.Response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.post(
+        url=SERVICE_ENDPOINT, json=request_body.model_dump(), timeout=300
+    )
 
     json_data: bytes = response.content
     response_body = _PointSamplingResponseBody.model_validate_json(json_data)

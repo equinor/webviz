@@ -5,15 +5,15 @@ from fmu.sumo.explorer.explorer import SumoClient
 from fmu.sumo.explorer.objects import Case, SearchContext
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from .queries.case import get_stratigraphic_column_identifier, get_field_identifiers
-from ._helpers import create_sumo_client, create_sumo_case_async
 from primary.services.service_exceptions import (
     Service,
     NoDataError,
-    InvalidDataError,
     MultipleDataMatchesError,
-    InvalidParameterError,
 )
+
+from ._helpers import create_sumo_case_async
+from .sumo_client_factory import create_sumo_client
+
 
 LOGGER = logging.getLogger(__name__)
 

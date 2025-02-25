@@ -2,9 +2,9 @@ import { getGridModelsInfoOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
+import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
-import { GridAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridAttributeSetting";
-import { GridLayerSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerSetting";
+import { GridLayerKSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridLayerKSetting";
 import { GridNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridNameSetting";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { ShowGridLinesSetting } from "@modules/_shared/LayerFramework/settings/implementations/ShowGridLinesSetting";
@@ -17,19 +17,15 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
     private _contextDelegate: SettingsContextDelegate<RealizationGridSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<RealizationGridSettings, keyof RealizationGridSettings>(
-            this,
-            layerManager,
-            {
-                [SettingType.ENSEMBLE]: new EnsembleSetting(),
-                [SettingType.REALIZATION]: new RealizationSetting(),
-                [SettingType.GRID_NAME]: new GridNameSetting(),
-                [SettingType.GRID_ATTRIBUTE]: new GridAttributeSetting(),
-                [SettingType.GRID_LAYER]: new GridLayerSetting(),
-                [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
-                [SettingType.SHOW_GRID_LINES]: new ShowGridLinesSetting(),
-            }
-        );
+        this._contextDelegate = new SettingsContextDelegate<RealizationGridSettings>(this, layerManager, {
+            [SettingType.ENSEMBLE]: new EnsembleSetting(),
+            [SettingType.REALIZATION]: new RealizationSetting(),
+            [SettingType.GRID_NAME]: new GridNameSetting(),
+            [SettingType.ATTRIBUTE]: new AttributeSetting(),
+            [SettingType.GRID_LAYER_K]: new GridLayerKSetting(),
+            [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
+            [SettingType.SHOW_GRID_LINES]: new ShowGridLinesSetting(),
+        });
     }
 
     areCurrentSettingsValid(settings: RealizationGridSettings): boolean {
@@ -37,8 +33,8 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
             settings[SettingType.ENSEMBLE] !== null &&
             settings[SettingType.REALIZATION] !== null &&
             settings[SettingType.GRID_NAME] !== null &&
-            settings[SettingType.GRID_ATTRIBUTE] !== null &&
-            settings[SettingType.GRID_LAYER] !== null &&
+            settings[SettingType.ATTRIBUTE] !== null &&
+            settings[SettingType.GRID_LAYER_K] !== null &&
             settings[SettingType.TIME_OR_INTERVAL] !== null
         );
     }
@@ -111,7 +107,7 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
             return availableGridNames;
         });
 
-        availableSettingsUpdater(SettingType.GRID_ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
+        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(SettingType.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
@@ -129,7 +125,7 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
             return availableGridAttributes;
         });
 
-        availableSettingsUpdater(SettingType.GRID_LAYER, ({ getLocalSetting, getHelperDependency }) => {
+        availableSettingsUpdater(SettingType.GRID_LAYER_K, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(SettingType.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
@@ -150,7 +146,7 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
 
         availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
             const gridName = getLocalSetting(SettingType.GRID_NAME);
-            const gridAttribute = getLocalSetting(SettingType.GRID_ATTRIBUTE);
+            const gridAttribute = getLocalSetting(SettingType.ATTRIBUTE);
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !gridAttribute || !data) {

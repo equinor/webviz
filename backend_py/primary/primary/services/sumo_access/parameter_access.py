@@ -10,7 +10,7 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 
-from ._helpers import create_sumo_client
+from .sumo_client_factory import create_sumo_client
 from .parameter_types import (
     EnsembleParameter,
     EnsembleParameters,
@@ -46,11 +46,7 @@ class ParameterAccess:
             tagname="all",
         )
         if await table_context.length_async() == 0:
-            raise NoDataError(
-                f"No parameter tables found {self._case_uuid, self._iteration_name}. "
-                "Please run parameter aggregation manually from the Sumo dashboard",
-                Service.SUMO,
-            )
+            raise NoDataError(f"No parameter tables found {self._case_uuid, self._iteration_name}", Service.SUMO)
         if await table_context.length_async() > 1:
             raise MultipleDataMatchesError(
                 f"Multiple parameter tables found {self._case_uuid,self._iteration_name}", Service.SUMO

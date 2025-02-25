@@ -40,7 +40,7 @@ async def get_polygons_directory(
         smda_access = DrogonSmdaAccess()
     else:
         smda_access = SmdaAccess(authenticated_user.get_smda_access_token())
-    strat_units = await smda_access.get_stratigraphic_units(strat_column_identifier)
+    strat_units = await smda_access.get_stratigraphic_units_async(strat_column_identifier)
     sorted_stratigraphic_surfaces = sort_stratigraphic_names_by_hierarchy(strat_units)
 
     return converters.to_api_polygons_directory(polygons_dir, sorted_stratigraphic_surfaces)

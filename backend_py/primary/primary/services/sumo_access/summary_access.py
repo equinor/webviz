@@ -5,7 +5,7 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.compute as pc
 from webviz_pkg.core_utils.perf_timer import PerfTimer
-from webviz_pkg.core_utils.perf_metrics import PerfMetrics
+
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from primary.services.utils.arrow_helpers import (
     find_first_non_increasing_date_pair,
@@ -25,8 +25,8 @@ from ._field_metadata import create_vector_metadata_from_field_meta
 from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
 from .generic_types import EnsembleScalarResponse
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
-from ._helpers import create_sumo_client
 from ._arrow_table_loader import ArrowTableLoader
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 

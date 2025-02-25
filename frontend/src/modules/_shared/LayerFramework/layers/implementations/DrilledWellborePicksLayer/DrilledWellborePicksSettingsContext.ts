@@ -13,10 +13,7 @@ export class DrilledWellborePicksSettingsContext implements SettingsContext<Dril
     private _contextDelegate: SettingsContextDelegate<DrilledWellborePicksSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<
-            DrilledWellborePicksSettings,
-            keyof DrilledWellborePicksSettings
-        >(this, layerManager, {
+        this._contextDelegate = new SettingsContextDelegate<DrilledWellborePicksSettings>(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.SMDA_WELLBORE_HEADERS]: new DrilledWellboresSetting(),
             [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),

@@ -7,7 +7,8 @@ from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-from ._helpers import create_sumo_client
+
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 

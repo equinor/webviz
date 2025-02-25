@@ -1,24 +1,21 @@
 import logging
 from typing import List, Optional, Sequence
 
-
 import pyarrow as pa
-import polars as pl
 import pyarrow.compute as pc
+import polars as pl
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
-
 from primary.services.service_exceptions import (
     Service,
     NoDataError,
     MultipleDataMatchesError,
 )
 
-from .rft_types import RftTableDefinition, RftWellInfo, RftRealizationData
-from ._helpers import create_sumo_client
-from ._loaders import load_aggregated_arrow_table_multiple_columns_from_sumo
 from ._arrow_table_loader import ArrowTableLoader
+from .rft_types import RftTableDefinition, RftWellInfo, RftRealizationData
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 

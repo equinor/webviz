@@ -6,9 +6,11 @@ import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
+from primary.services.service_exceptions import InvalidDataError, Service
 
-from ._helpers import create_sumo_client, create_sumo_case_async
 from ._arrow_table_loader import ArrowTableLoader
+from .sumo_client_factory import create_sumo_client
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,4 +55,4 @@ def _validate_group_tree_df(df: pd.DataFrame) -> None:
     expected_columns = {"DATE", "CHILD", "KEYWORD", "PARENT"}
 
     if not expected_columns.issubset(df.columns):
-        raise ValueError(f"Expected columns: {expected_columns} - got: {df.columns}")
+        raise InvalidDataError(f"Expected columns: {expected_columns} - got: {df.columns}", Service.SUMO)

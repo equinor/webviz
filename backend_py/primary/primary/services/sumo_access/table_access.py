@@ -10,8 +10,8 @@ from primary.services.service_exceptions import (
 )
 
 from .generic_types import SumoTableSchema
-from ._helpers import create_sumo_client
 from ._arrow_table_loader import ArrowTableLoader
+from .sumo_client_factory import create_sumo_client
 
 
 class TableAccess:

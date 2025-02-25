@@ -5,8 +5,8 @@ import asyncio
 from pydantic import BaseModel
 from fmu.sumo.explorer.explorer import SumoClient, SearchContext
 
-from ._helpers import create_sumo_client
 
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 

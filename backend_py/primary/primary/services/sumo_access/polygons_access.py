@@ -8,9 +8,9 @@ from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from ._helpers import create_sumo_client
-from .polygons_types import PolygonsMeta
 from .generic_types import SumoContent
+from .polygons_types import PolygonsMeta
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 

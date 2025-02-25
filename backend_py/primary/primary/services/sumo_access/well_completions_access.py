@@ -6,8 +6,8 @@ from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, Service, NoDataError
 
 
-from ._helpers import create_sumo_client, create_sumo_case_async
 from ._arrow_table_loader import ArrowTableLoader
+from .sumo_client_factory import create_sumo_client
 
 
 class WellCompletionsAccess:

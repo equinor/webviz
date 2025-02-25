@@ -2,11 +2,13 @@ from typing import List, Optional
 
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-
-from ..service_exceptions import Service, InvalidDataError
-from ._helpers import create_sumo_client
+from webviz_pkg.core_utils.perf_timer import PerfTimer
+from primary.services.service_exceptions import InvalidDataError, NoDataError, Service
 from ._loaders import load_aggregated_arrow_table_multiple_columns_from_sumo, load_single_realization_arrow_table
 from ._arrow_table_loader import ArrowTableLoader
+
+
+from .sumo_client_factory import create_sumo_client
 
 # Index column values to ignore, i.e. remove from the volumetric tables
 IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]

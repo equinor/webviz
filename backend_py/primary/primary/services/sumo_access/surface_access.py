@@ -13,11 +13,11 @@ from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from primary.services.utils.statistic_function import StatisticFunction
 from primary.services.service_exceptions import Service, MultipleDataMatchesError, InvalidParameterError
 
-from ._helpers import create_sumo_client
 from .surface_types import SurfaceMeta, SurfaceMetaSet
 from .generic_types import SumoContent
 from .queries.surface_queries import SurfTimeType, SurfInfo, TimePoint, TimeInterval
 from .queries.surface_queries import RealizationSurfQueries, ObservedSurfQueries
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 

@@ -1,14 +1,13 @@
 import logging
-
 from typing import List
 import asyncio
 from fmu.sumo.explorer import TimeFilter, TimeType
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
-from primary.services.service_exceptions import InvalidDataError, NoDataError, MultipleDataMatchesError, Service
+from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 
-from ._helpers import create_sumo_client
-from .seismic_types import SeismicCubeMeta, VdsHandle
+from .seismic_types import SeismicCubeMeta, SeismicCubeSpec, VdsHandle
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 
@@ -87,6 +86,7 @@ class SeismicAccess:
             raise MultipleDataMatchesError(
                 f"Multiple cubes found for {seismic_attribute} in case {self._case_uuid}", Service.SUMO
             )
+
         cube = cubes[0]
 
         sas_token, url = await asyncio.gather(cube.sas_async, cube.url_async)
@@ -115,10 +115,27 @@ async def _get_seismic_cube_meta(search_context: SearchContext, item_no=int) -> 
     else:
         iso_string_or_time_interval = f"{t_start}/{t_end}"
 
+    seismic_spec = SeismicCubeSpec(
+        num_cols=seismic_cube["data"]["spec"]["ncol"],
+        num_rows=seismic_cube["data"]["spec"]["nrow"],
+        num_layers=seismic_cube["data"]["spec"]["nlay"],
+        x_origin=seismic_cube["data"]["spec"]["xori"],
+        y_origin=seismic_cube["data"]["spec"]["yori"],
+        z_origin=seismic_cube["data"]["spec"]["zori"],
+        x_inc=seismic_cube["data"]["spec"]["xinc"],
+        y_inc=seismic_cube["data"]["spec"]["yinc"],
+        z_inc=seismic_cube["data"]["spec"]["zinc"],
+        y_flip=seismic_cube["data"]["spec"]["yflip"],
+        z_flip=seismic_cube["data"]["spec"]["zflip"],
+        rotation=seismic_cube["data"]["spec"]["rotation"],
+    )
     seismic_meta = SeismicCubeMeta(
         seismic_attribute=seismic_cube["data"].get("tagname"),
+        unit=seismic_cube["data"].get("unit"),
         iso_date_or_interval=iso_string_or_time_interval,
         is_observation=seismic_cube["data"]["is_observation"],
         is_depth=seismic_cube["data"].get("vertical_domain", "depth") == "depth",
+        bbox=seismic_cube["data"]["bbox"],
+        spec=seismic_spec,
     )
     return seismic_meta
