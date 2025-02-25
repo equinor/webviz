@@ -4,7 +4,7 @@ from typing import List
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary import config
-from primary.httpx_client import httpx_async_client
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.services.service_exceptions import ServiceRequestError, NoDataError, Service
 
 LOGGER = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ async def smda_get_request_async(access_token: str, endpoint: str, params: dict)
     results: List[dict] = []
     page: int = 1
     while True:
-        response = await httpx_async_client.client.get(urlstring, params=params, headers=headers, timeout=60)
+        response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.get(urlstring, params=params, headers=headers, timeout=60)
         LOGGER.debug(f"TIME SMDA fetch '{endpoint}', page {page}, took {single_lap_timer.lap_s():.2f} seconds")
         page += 1
         if response.status_code == 200:
@@ -80,7 +80,7 @@ async def smda_get_aggregation_request_async(access_token: str, endpoint: str, p
     if "_aggregation" not in params.keys():
         raise ValueError("Aggregations parameter required.")
 
-    response = await httpx_async_client.client.get(urlstring, params=params, headers=headers, timeout=60)
+    response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.get(urlstring, params=params, headers=headers, timeout=60)
 
     aggregations: dict[str, list[dict]] = {}
 
