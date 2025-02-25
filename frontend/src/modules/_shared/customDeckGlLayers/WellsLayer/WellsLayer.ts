@@ -42,7 +42,7 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
                         return { x: coord[0], y: coord[1], z: coord[2] };
                     });
                 }),
-                material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
+                material: true,
             }),
         ];
     }

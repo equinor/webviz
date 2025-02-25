@@ -1,7 +1,7 @@
 import { Layer, LayerContext, Material, UpdateParameters, picking, project32 } from "@deck.gl/core";
 import { Vec3 } from "@lib/utils/vec3";
+import * as vec3 from "@lib/utils/vec3";
 import { Geometry, Model } from "@luma.gl/engine";
-import { ParsedPBRMaterial } from "@luma.gl/gltf";
 import { phongLighting } from "@luma.gl/shadertools";
 
 import { Pipe } from "./Pipe";
@@ -19,7 +19,6 @@ export class PipeLayer extends Layer<PipeLayerProps> {
 
     // @ts-ignore - This is how deck.gl expects the state to be defined
     state!: {
-        parsedPBRMaterial?: ParsedPBRMaterial;
         models: Model[];
     };
 
@@ -97,20 +96,42 @@ export class PipeLayer extends Layer<PipeLayerProps> {
             const numContours = pipe.getContourCount();
             const numVerticesPerContour = pipe.getContours()[0].length;
 
-            const vertices = new Float32Array(numContours * numVerticesPerContour * 3 + 2 * 3);
+            const vertices = new Float32Array((numContours + 2) * numVerticesPerContour * 3 + 2 * 3);
             const indices = new Uint32Array(
                 (numContours - 1) * numVerticesPerContour * 6 + numVerticesPerContour * 2 * 3
             );
+            const normals = new Float32Array((numContours + 2) * numVerticesPerContour * 3 + 2 * 3);
+
             let verticesIndex: number = 0;
             let indicesIndex: number = 0;
+            let normalsIndex: number = 0;
+
+            const startVertex = pipe.getPath()[0];
+            vertices[verticesIndex++] = startVertex.x;
+            vertices[verticesIndex++] = startVertex.y;
+            vertices[verticesIndex++] = startVertex.z;
+
+            const normal = vec3.normalize(vec3.cross(pipe.getNormals()[0][1], pipe.getNormals()[0][0]));
+            normals[normalsIndex++] = normal.x;
+            normals[normalsIndex++] = normal.y;
+            normals[normalsIndex++] = normal.z;
+
+            for (let j = 0; j < numVerticesPerContour; j++) {
+                const vertex = pipe.getContours()[0][j];
+                vertices[verticesIndex++] = vertex.x;
+                vertices[verticesIndex++] = vertex.y;
+                vertices[verticesIndex++] = vertex.z;
+
+                normals[normalsIndex++] = normal.x;
+                normals[normalsIndex++] = normal.y;
+                normals[normalsIndex++] = normal.z;
+
+                indices[indicesIndex++] = 0;
+                indices[indicesIndex++] = j + 1;
+                indices[indicesIndex++] = j + 2 > numVerticesPerContour ? 1 : j + 2;
+            }
 
             for (let i = 0; i < numContours; i++) {
-                if (i === 0) {
-                    const vertex = pipe.getPath()[0];
-                    vertices[verticesIndex++] = vertex.x;
-                    vertices[verticesIndex++] = vertex.y;
-                    vertices[verticesIndex++] = vertex.z;
-                }
                 const contour = pipe.getContours()[i];
                 for (let j = 0; j < numVerticesPerContour; j++) {
                     const vertex = contour[j];
@@ -118,20 +139,21 @@ export class PipeLayer extends Layer<PipeLayerProps> {
                     vertices[verticesIndex++] = vertex.y;
                     vertices[verticesIndex++] = vertex.z;
 
-                    if (i === 0) {
-                        indices[indicesIndex++] = j + 2 > numVerticesPerContour ? 1 : j + 2;
-                        indices[indicesIndex++] = j + 1;
-                        indices[indicesIndex++] = 0;
-                    } else {
+                    const normal = pipe.getNormals()[i][j];
+                    normals[normalsIndex++] = normal.x;
+                    normals[normalsIndex++] = normal.y;
+                    normals[normalsIndex++] = normal.z;
+
+                    if (i > 0) {
+                        const index = 1 + (i + 1) * numVerticesPerContour + j;
                         if (j === numVerticesPerContour - 1) {
-                            indices[indicesIndex++] = i * numVerticesPerContour + j + 1;
-                            indices[indicesIndex++] = i * numVerticesPerContour + 1;
-                            indices[indicesIndex++] = i * numVerticesPerContour;
-                            indices[indicesIndex++] = i * numVerticesPerContour;
-                            indices[indicesIndex++] = i * numVerticesPerContour + 1;
-                            indices[indicesIndex++] = i * numVerticesPerContour + 1 - numVerticesPerContour;
+                            indices[indicesIndex++] = index - numVerticesPerContour;
+                            indices[indicesIndex++] = index;
+                            indices[indicesIndex++] = index - 2 * numVerticesPerContour + 1;
+                            indices[indicesIndex++] = index - 2 * numVerticesPerContour + 1;
+                            indices[indicesIndex++] = index;
+                            indices[indicesIndex++] = (i + 1) * numVerticesPerContour + 1;
                         } else {
-                            const index = i * numVerticesPerContour + j + 1;
                             indices[indicesIndex++] = index - numVerticesPerContour;
                             indices[indicesIndex++] = index;
                             indices[indicesIndex++] = index - numVerticesPerContour + 1;
@@ -143,13 +165,34 @@ export class PipeLayer extends Layer<PipeLayerProps> {
                 }
             }
 
-            const vertex = pipe.getPath()[pipe.getPath().length - 1];
-            vertices[verticesIndex++] = vertex.x;
-            vertices[verticesIndex++] = vertex.y;
-            vertices[verticesIndex++] = vertex.z;
+            const endNormal = vec3.normalize(
+                vec3.cross(
+                    pipe.getNormals()[pipe.getNormals().length - 1][0],
+                    pipe.getNormals()[pipe.getNormals().length - 1][1]
+                )
+            );
+            for (let j = 0; j < numVerticesPerContour; j++) {
+                const vertex = pipe.getContours()[numContours - 1][j];
+                vertices[verticesIndex++] = vertex.x;
+                vertices[verticesIndex++] = vertex.y;
+                vertices[verticesIndex++] = vertex.z;
+
+                normals[normalsIndex++] = endNormal.x;
+                normals[normalsIndex++] = endNormal.y;
+                normals[normalsIndex++] = endNormal.z;
+            }
+
+            const endVertex = pipe.getPath()[pipe.getPath().length - 1];
+            vertices[verticesIndex++] = endVertex.x;
+            vertices[verticesIndex++] = endVertex.y;
+            vertices[verticesIndex++] = endVertex.z;
+
+            normals[normalsIndex++] = endNormal.x;
+            normals[normalsIndex++] = endNormal.y;
+            normals[normalsIndex++] = endNormal.z;
 
             for (let j = 0; j < numVerticesPerContour; j++) {
-                const index = (numContours - 1) * numVerticesPerContour + 1;
+                const index = numContours * numVerticesPerContour + 1;
                 indices[indicesIndex++] = verticesIndex / 3 - 1;
                 indices[indicesIndex++] = index + j;
                 indices[indicesIndex++] = j + 1 >= numVerticesPerContour ? index : index + j + 1;
@@ -160,6 +203,10 @@ export class PipeLayer extends Layer<PipeLayerProps> {
                     topology: "triangle-list",
                     attributes: {
                         positions: vertices,
+                        normals: {
+                            size: 3,
+                            value: normals,
+                        },
                     },
                     indices: indices,
                 })
