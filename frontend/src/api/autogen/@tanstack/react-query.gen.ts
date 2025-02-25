@@ -45,7 +45,8 @@ import {
     getSensitivities,
     getStatisticalVectorData,
     getStatisticalVectorDataPerSensitivity,
-    getStratigraphicUnits,
+    getStratigraphicUnitsForCase,
+    getStratigraphicUnitsForStratColumn,
     getSurfaceData,
     getTableData,
     getTableDefinition,
@@ -115,7 +116,8 @@ import type {
     GetSensitivitiesData_api,
     GetStatisticalVectorDataData_api,
     GetStatisticalVectorDataPerSensitivityData_api,
-    GetStratigraphicUnitsData_api,
+    GetStratigraphicUnitsForCaseData_api,
+    GetStratigraphicUnitsForStratColumnData_api,
     GetSurfaceDataData_api,
     GetTableDataData_api,
     GetTableDefinitionData_api,
@@ -747,14 +749,14 @@ export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellb
     });
 };
 
-export const getStratigraphicUnitsQueryKey = (options: Options<GetStratigraphicUnitsData_api>) => [
-    createQueryKey("getStratigraphicUnits", options),
+export const getStratigraphicUnitsForCaseQueryKey = (options: Options<GetStratigraphicUnitsForCaseData_api>) => [
+    createQueryKey("getStratigraphicUnitsForCase", options),
 ];
 
-export const getStratigraphicUnitsOptions = (options: Options<GetStratigraphicUnitsData_api>) => {
+export const getStratigraphicUnitsForCaseOptions = (options: Options<GetStratigraphicUnitsForCaseData_api>) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getStratigraphicUnits({
+            const { data } = await getStratigraphicUnitsForCase({
                 ...options,
                 ...queryKey[0],
                 signal,
@@ -762,7 +764,28 @@ export const getStratigraphicUnitsOptions = (options: Options<GetStratigraphicUn
             });
             return data;
         },
-        queryKey: getStratigraphicUnitsQueryKey(options),
+        queryKey: getStratigraphicUnitsForCaseQueryKey(options),
+    });
+};
+
+export const getStratigraphicUnitsForStratColumnQueryKey = (
+    options: Options<GetStratigraphicUnitsForStratColumnData_api>
+) => [createQueryKey("getStratigraphicUnitsForStratColumn", options)];
+
+export const getStratigraphicUnitsForStratColumnOptions = (
+    options: Options<GetStratigraphicUnitsForStratColumnData_api>
+) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getStratigraphicUnitsForStratColumn({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getStratigraphicUnitsForStratColumnQueryKey(options),
     });
 };
 

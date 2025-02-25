@@ -2248,7 +2248,7 @@ export type GetWellboreStratigraphicColumnsResponses_api = {
 export type GetWellboreStratigraphicColumnsResponse_api =
     GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
 
-export type GetStratigraphicUnitsData_api = {
+export type GetStratigraphicUnitsForCaseData_api = {
     body?: never;
     path?: never;
     query: {
@@ -2257,26 +2257,60 @@ export type GetStratigraphicUnitsData_api = {
          */
         case_uuid: string;
     };
-    url: "/surface/stratigraphic_units";
+    url: "/surface/stratigraphic_units_for_case";
 };
 
-export type GetStratigraphicUnitsErrors_api = {
+export type GetStratigraphicUnitsForCaseErrors_api = {
     /**
      * Validation Error
      */
     422: HttpValidationError_api;
 };
 
-export type GetStratigraphicUnitsError_api = GetStratigraphicUnitsErrors_api[keyof GetStratigraphicUnitsErrors_api];
+export type GetStratigraphicUnitsForCaseError_api =
+    GetStratigraphicUnitsForCaseErrors_api[keyof GetStratigraphicUnitsForCaseErrors_api];
 
-export type GetStratigraphicUnitsResponses_api = {
+export type GetStratigraphicUnitsForCaseResponses_api = {
     /**
      * Successful Response
      */
     200: Array<StratigraphicUnit_api>;
 };
 
-export type GetStratigraphicUnitsResponse_api = GetStratigraphicUnitsResponses_api[keyof GetStratigraphicUnitsResponses_api];
+export type GetStratigraphicUnitsForCaseResponse_api =
+    GetStratigraphicUnitsForCaseResponses_api[keyof GetStratigraphicUnitsForCaseResponses_api];
+
+export type GetStratigraphicUnitsForStratColumnData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * SMDA stratigraphic column identifier
+         */
+        strat_column: string;
+    };
+    url: "/surface/stratigraphic_units_for_strat_column";
+};
+
+export type GetStratigraphicUnitsForStratColumnErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetStratigraphicUnitsForStratColumnError_api =
+    GetStratigraphicUnitsForStratColumnErrors_api[keyof GetStratigraphicUnitsForStratColumnErrors_api];
+
+export type GetStratigraphicUnitsForStratColumnResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<StratigraphicUnit_api>;
+};
+
+export type GetStratigraphicUnitsForStratColumnResponse_api =
+    GetStratigraphicUnitsForStratColumnResponses_api[keyof GetStratigraphicUnitsForStratColumnResponses_api];
 
 export type GetParameterNamesAndDescriptionData_api = {
     body?: never;
