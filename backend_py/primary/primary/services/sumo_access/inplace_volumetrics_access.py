@@ -2,17 +2,14 @@ import asyncio
 from typing import List, Optional
 
 from fmu.sumo.explorer.objects import Case, TableCollection
-
 import pyarrow as pa
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from ._helpers import create_sumo_client, create_sumo_case_async
-from ..service_exceptions import (
-    Service,
-    NoDataError,
-    InvalidDataError,
-)
+from primary.services.service_exceptions import InvalidDataError, NoDataError, Service
+
+from ._helpers import create_sumo_case_async
+from .sumo_client_factory import create_sumo_client
 
 # Index column values to ignore, i.e. remove from the volumetric tables
 IGNORED_IDENTIFIER_COLUMN_VALUES = ["Totals"]

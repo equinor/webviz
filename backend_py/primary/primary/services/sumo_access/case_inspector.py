@@ -3,9 +3,9 @@ from pydantic import BaseModel
 from fmu.sumo.explorer.explorer import SumoClient
 from fmu.sumo.explorer.objects import Case
 
+from ._helpers import create_sumo_case_async
 from .queries.case import get_stratigraphic_column_identifier, get_field_identifiers
-
-from ._helpers import create_sumo_client, create_sumo_case_async
+from .sumo_client_factory import create_sumo_client
 
 
 class IterationInfo(BaseModel):

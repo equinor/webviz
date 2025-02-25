@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from fmu.sumo.explorer.explorer import CaseCollection, SumoClient
 
-from ._helpers import create_sumo_client
+from .sumo_client_factory import create_sumo_client
 
 
 class FieldInfo(BaseModel):

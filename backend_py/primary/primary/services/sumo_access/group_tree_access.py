@@ -8,7 +8,8 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, Service
 
-from ._helpers import create_sumo_client, create_sumo_case_async
+from ._helpers import create_sumo_case_async
+from .sumo_client_factory import create_sumo_client
 
 
 LOGGER = logging.getLogger(__name__)

@@ -6,7 +6,8 @@ import pyarrow as pa
 from fmu.sumo.explorer.objects import Case
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
 
-from ._helpers import create_sumo_case_async, create_sumo_client
+from ._helpers import create_sumo_case_async
+from .sumo_client_factory import create_sumo_client
 from .vfp_types import (
     ALQ,
     GFR,

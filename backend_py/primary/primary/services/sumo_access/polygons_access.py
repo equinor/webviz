@@ -8,9 +8,10 @@ from fmu.sumo.explorer.objects import Case, PolygonsCollection
 
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from ._helpers import create_sumo_client, create_sumo_case_async
-from .polygons_types import PolygonsMeta
+from ._helpers import create_sumo_case_async
 from .generic_types import SumoContent
+from .polygons_types import PolygonsMeta
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 

@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from primary import config
 from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.services.sumo_access.sumo_blob_access import get_sas_token_and_blob_store_base_uri_for_case
-from primary.services.sumo_access._helpers import create_sumo_client
+from primary.services.sumo_access.sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 

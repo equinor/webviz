@@ -26,11 +26,11 @@ from primary.services.service_exceptions import (
 
 
 from ._field_metadata import create_vector_metadata_from_field_meta
-from ._helpers import create_sumo_client
 from ._resampling import resample_segmented_multi_real_table, resample_single_real_table
 from .generic_types import EnsembleScalarResponse
 from .summary_types import Frequency, VectorInfo, RealizationVector, HistoricalVector, VectorMetadata
 from .queries.summary import find_summary_vector_tables_async
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 
