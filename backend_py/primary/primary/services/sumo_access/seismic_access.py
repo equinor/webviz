@@ -1,5 +1,4 @@
 import logging
-
 from typing import List
 
 from fmu.sumo.explorer import TimeFilter, TimeType
@@ -8,8 +7,9 @@ from fmu.sumo.explorer.objects.cube_collection import CubeCollection
 
 from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 
-from ._helpers import create_sumo_client, create_sumo_case_async
+from ._helpers import create_sumo_case_async
 from .seismic_types import SeismicCubeMeta, SeismicCubeSpec, VdsHandle
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 

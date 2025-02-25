@@ -6,10 +6,10 @@ from fmu.sumo.explorer.explorer import SumoClient
 
 from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
 
-from ._helpers import create_sumo_client
 from .fmu_sumo_extensions.sumo_grid3d_geometry_class import Grid3dGeometry
 from .fmu_sumo_extensions.sumo_grid3d_geometry_collection_class import Grid3dGeometryCollection
 from .fmu_sumo_extensions.sumo_grid3d_property_collection_class import Grid3dPropertyCollection
+from .sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 
