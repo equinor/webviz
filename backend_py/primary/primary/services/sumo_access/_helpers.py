@@ -7,7 +7,7 @@ from webviz_pkg.core_utils.perf_timer import PerfTimer
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from primary import config
-from primary.httpx_client import httpx_async_client
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.services.service_exceptions import Service, NoDataError, MultipleDataMatchesError
 
 LOGGER = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ def create_sumo_client(access_token: str) -> SumoClient:
             env=config.SUMO_ENV,
             token=access_token,
             http_client=None,  # Until we update fmu-sumo > 2.0 we need to initialize a sync client.
-            async_http_client=httpx_async_client.client,
+            async_http_client=HTTPX_ASYNC_CLIENT_WRAPPER.client,
         )
     timer.record_lap("create_sumo_client()")
     LOGGER.debug(f"{timer.to_string()}ms")
