@@ -108,13 +108,24 @@ export class RealizationSeismicCrosslineLayer
         const geometry: Geometry = {
             shapes: [
                 {
-                    type: ShapeType.POLYGON,
-                    points: [
-                        vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmin),
-                        vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmin),
-                        vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmax),
-                        vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmax),
-                    ],
+                    type: ShapeType.RECTANGLE,
+                    centerPoint: vec3.create(
+                        (rotatedMinXY.x + rotatedMaxXY.x) / 2,
+                        (rotatedMinXY.y + rotatedMaxXY.y) / 2,
+                        (zmin + zmax) / 2
+                    ),
+                    dimensions: {
+                        width: vec3.length(
+                            vec3.create(rotatedMaxXY.x - rotatedMinXY.x, rotatedMaxXY.y - rotatedMinXY.y, 0)
+                        ),
+                        height: Math.abs(zmax - zmin),
+                    },
+                    normalizedEdgeVectors: {
+                        u: vec3.normalize(
+                            vec3.create(rotatedMaxXY.x - rotatedMinXY.x, rotatedMaxXY.y - rotatedMinXY.y, 0)
+                        ),
+                        v: vec3.create(0, 0, 1),
+                    },
                 },
             ],
             boundingBox: bbox.create(

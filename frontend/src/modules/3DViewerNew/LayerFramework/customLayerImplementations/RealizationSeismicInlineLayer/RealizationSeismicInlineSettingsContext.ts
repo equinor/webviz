@@ -52,6 +52,7 @@ export class RealizationSeismicInlineSettingsContext
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        storedDataUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationSeismicInlineSettings, RealizationSeismicInlineSliceStoredData>) {
         availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
@@ -94,6 +95,16 @@ export class RealizationSeismicInlineSettingsContext
                     signal: abortSignal,
                 }),
             });
+        });
+
+        storedDataUpdater("seismicCubeMeta", ({ getHelperDependency }) => {
+            const data = getHelperDependency(realizationSeismicInlineDataDep);
+
+            if (!data) {
+                return null;
+            }
+
+            return data;
         });
 
         availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getHelperDependency }) => {

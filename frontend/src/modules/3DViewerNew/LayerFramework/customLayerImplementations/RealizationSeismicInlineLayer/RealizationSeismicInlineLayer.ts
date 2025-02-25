@@ -92,11 +92,11 @@ export class RealizationSeismicInlineLayer
             return null;
         }
 
-        const xmin = meta.spec.xOrigin;
-        const xmax = meta.spec.xOrigin + meta.spec.xInc * (meta.spec.numCols - 1);
+        const xmin = meta.spec.xOrigin + meta.spec.yInc * seismicInlineNumber;
+        const xmax = xmin;
 
-        const ymin = meta.spec.yOrigin + meta.spec.yInc * meta.spec.yFlip * seismicInlineNumber;
-        const ymax = ymin;
+        const ymin = meta.spec.yOrigin;
+        const ymax = meta.spec.yOrigin + meta.spec.yInc * meta.spec.yFlip * (meta.spec.numRows - 1);
 
         const zmin = meta.spec.zOrigin;
         const zmax = meta.spec.zOrigin + meta.spec.zInc * meta.spec.zFlip * (meta.spec.numLayers - 1);
@@ -111,13 +111,24 @@ export class RealizationSeismicInlineLayer
         const geometry: Geometry = {
             shapes: [
                 {
-                    type: ShapeType.POLYGON,
-                    points: [
-                        vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmin),
-                        vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmin),
-                        vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmax),
-                        vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmax),
-                    ],
+                    type: ShapeType.RECTANGLE,
+                    centerPoint: vec3.create(
+                        (rotatedMinXY.x + rotatedMaxXY.x) / 2,
+                        (rotatedMinXY.y + rotatedMaxXY.y) / 2,
+                        (zmin + zmax) / 2
+                    ),
+                    dimensions: {
+                        width: vec3.length(
+                            vec3.create(rotatedMaxXY.x - rotatedMinXY.x, rotatedMaxXY.y - rotatedMinXY.y, 0)
+                        ),
+                        height: Math.abs(zmax - zmin),
+                    },
+                    normalizedEdgeVectors: {
+                        u: vec3.normalize(
+                            vec3.create(rotatedMaxXY.x - rotatedMinXY.x, rotatedMaxXY.y - rotatedMinXY.y, 0)
+                        ),
+                        v: vec3.create(0, 0, 1),
+                    },
                 },
             ],
             boundingBox: bbox.create(

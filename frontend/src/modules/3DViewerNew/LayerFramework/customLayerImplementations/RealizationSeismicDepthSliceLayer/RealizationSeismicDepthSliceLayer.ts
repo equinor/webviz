@@ -108,31 +108,36 @@ export class RealizationSeismicDepthSliceLayer
         const ymin = meta.spec.yOrigin;
         const ymax = meta.spec.yOrigin + meta.spec.yInc * meta.spec.yFlip * (meta.spec.numRows - 1);
 
-        const zmin = -seismicDepthSliceNumber;
+        const zmin = seismicDepthSliceNumber;
         const zmax = zmin;
 
         const maxXY = { x: xmax, y: ymax };
-        const minXY = { x: xmin, y: ymin };
+        const maxX = { x: xmax, y: ymin };
+        const maxY = { x: xmin, y: ymax };
         const origin = { x: meta.spec.xOrigin, y: meta.spec.yOrigin };
 
-        const rotatedMinXY = rotatePoint2Around(minXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
         const rotatedMaxXY = rotatePoint2Around(maxXY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
+        const rotatedMaxX = rotatePoint2Around(maxX, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
+        const rotatedMaxY = rotatePoint2Around(maxY, origin, (meta.spec.rotationDeg / 180.0) * Math.PI);
 
         const boundingBox = bbox.create(
-            vec3.create(Math.min(rotatedMinXY.x, rotatedMaxXY.x), Math.min(rotatedMinXY.y, rotatedMaxXY.y), zmin),
-            vec3.create(Math.max(rotatedMinXY.x, rotatedMaxXY.x), Math.max(rotatedMinXY.y, rotatedMaxXY.y), zmax)
+            vec3.create(Math.min(origin.x, rotatedMaxXY.x), Math.min(origin.y, rotatedMaxXY.y), zmin),
+            vec3.create(Math.max(origin.x, rotatedMaxXY.x), Math.max(origin.y, rotatedMaxXY.y), zmax)
         );
 
         const geometry: Geometry = {
             shapes: [
                 {
-                    type: ShapeType.POLYGON,
-                    points: [
-                        vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmin),
-                        vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmin),
-                        vec3.create(rotatedMaxXY.x, rotatedMaxXY.y, zmax),
-                        vec3.create(rotatedMinXY.x, rotatedMinXY.y, zmax),
-                    ],
+                    type: ShapeType.RECTANGLE,
+                    centerPoint: vec3.create((origin.x + rotatedMaxXY.x) / 2, (origin.y + rotatedMaxXY.y) / 2, zmin),
+                    dimensions: {
+                        width: Math.abs(rotatedMaxX.x - origin.x),
+                        height: Math.abs(rotatedMaxY.y - origin.y),
+                    },
+                    normalizedEdgeVectors: {
+                        u: vec3.normalize(vec3.create(rotatedMaxX.x - origin.x, rotatedMaxX.y - origin.y, 0)),
+                        v: vec3.normalize(vec3.create(rotatedMaxY.x - origin.x, rotatedMaxY.y - origin.y, 0)),
+                    },
                 },
             ],
             boundingBox,

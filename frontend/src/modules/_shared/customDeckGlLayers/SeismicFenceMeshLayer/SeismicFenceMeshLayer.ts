@@ -6,7 +6,7 @@ import {
     PickingInfo,
     UpdateParameters,
 } from "@deck.gl/core";
-import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
+import { Geometry as LoadingGeometry } from "@lib/utils/geometry";
 import { Geometry } from "@luma.gl/engine";
 import { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 import { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
@@ -16,6 +16,8 @@ import workerpool from "workerpool";
 
 import { ExtendedSimpleMeshLayer } from "./_private/ExtendedSimpleMeshLayer";
 import { WebworkerParameters, makeMesh } from "./_private/worker";
+
+import { PreviewLayer } from "../PreviewLayer/PreviewLayer";
 
 export type SeismicFenceMeshLayerPickingInfo = {
     properties?: { name: string; value: number }[];
@@ -36,6 +38,7 @@ export interface SeismicFenceMeshLayerProps extends ExtendedLayerProps {
     hoverable?: boolean;
     zIncreaseDownwards?: boolean;
     isLoading?: boolean;
+    loadingGeometry?: LoadingGeometry;
 
     // Non public properties:
     reportBoundingBox?: React.Dispatch<ReportBoundingBoxAction>;
@@ -311,54 +314,23 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
     }
 
     renderLayers() {
-        const { hoverable, isLoading, data, zIncreaseDownwards } = this.props;
+        const { hoverable, isLoading, data, zIncreaseDownwards, loadingGeometry } = this.props;
         const { geometry, isHovered, isLoaded } = this.state;
 
         const origin = this.calcOrigin();
 
         const layers: Layer<any>[] = [];
 
-        if (isLoading || !isLoaded) {
-            for (const section of data.sections) {
-                const vertices = new Float32Array(4 * 3);
-                const indices = new Uint32Array([0, 1, 2, 2, 3, 0]);
-
-                let verticesIndex = 0;
-                vertices[verticesIndex++] = section.boundingBox[0][0];
-                vertices[verticesIndex++] = section.boundingBox[0][1];
-                vertices[verticesIndex++] = (zIncreaseDownwards ? -1 : 1) * section.boundingBox[0][2];
-
-                vertices[verticesIndex++] = section.boundingBox[1][0];
-                vertices[verticesIndex++] = section.boundingBox[1][1];
-                vertices[verticesIndex++] = (zIncreaseDownwards ? -1 : 1) * section.boundingBox[1][2];
-
-                vertices[verticesIndex++] = section.boundingBox[3][0];
-                vertices[verticesIndex++] = section.boundingBox[3][1];
-                vertices[verticesIndex++] = (zIncreaseDownwards ? -1 : 1) * section.boundingBox[3][2];
-
-                vertices[verticesIndex++] = section.boundingBox[2][0];
-                vertices[verticesIndex++] = section.boundingBox[2][1];
-                vertices[verticesIndex++] = (zIncreaseDownwards ? -1 : 1) * section.boundingBox[2][2];
-
-                const placeholderGeometry = new Geometry({
-                    attributes: {
-                        positions: vertices,
+        if ((isLoading || !isLoaded) && loadingGeometry) {
+            layers.push(
+                new PreviewLayer({
+                    id: "seismic-fence-mesh-layer-loading",
+                    data: {
+                        geometry: loadingGeometry,
                     },
-                    topology: "triangle-list",
-                    indices,
-                });
-                layers.push(
-                    new SimpleMeshLayer({
-                        id: "seismic-fence-mesh-layer-loading",
-                        data: [0],
-                        mesh: placeholderGeometry,
-                        getPosition: [0, 0, 0],
-                        getColor: [100, 100, 100, 100],
-                        material: { ambient: 0.95, diffuse: 1, shininess: 0, specularColor: [0, 0, 0] },
-                        pickable: false,
-                    })
-                );
-            }
+                    zIncreaseDownwards,
+                })
+            );
         } else {
             layers.push(
                 new ExtendedSimpleMeshLayer({
@@ -372,26 +344,6 @@ export class SeismicFenceMeshLayer extends CompositeLayer<SeismicFenceMeshLayerP
                 })
             );
         }
-
-        /*
-        if (isHovered && hoverable) {
-            layers.push(
-                new PathLayer({
-                    id: "seismic-fence-mesh-layer-hovered",
-                    data: [[boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3], boundingBox[0]]],
-                    getPath: (d: number[]) => d,
-                    getColor: [0, 0, 255, 255],
-                    getWidth: 2,
-                    pickable: false,
-                    billboard: true,
-                    widthUnits: "pixels",
-                    parameters: {
-                        depthTest: false,
-                    },
-                })
-            );
-        }
-            */
 
         return layers;
     }

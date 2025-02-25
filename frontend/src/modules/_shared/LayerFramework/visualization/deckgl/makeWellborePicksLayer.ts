@@ -22,5 +22,6 @@ export function makeWellborePicksLayer({
         id,
         data: wellPicksData,
         pickable: true,
+        zIncreaseDownwards: true,
     });
 }

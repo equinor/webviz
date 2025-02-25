@@ -1,9 +1,18 @@
-import { CompositeLayer, CompositeLayerProps, FilterContext, Layer, UpdateParameters } from "@deck.gl/core";
-import { GeoJsonLayer } from "@deck.gl/layers";
+import {
+    CompositeLayer,
+    CompositeLayerProps,
+    FilterContext,
+    Layer,
+    LayerContext,
+    PickingInfo,
+    UpdateParameters,
+} from "@deck.gl/core";
+import { PointCloudLayer } from "@deck.gl/layers";
+import { COLORS } from "@lib/utils/colorConstants";
 import { ExtendedLayerProps } from "@webviz/subsurface-viewer";
 import { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
 
-import type { Feature, FeatureCollection } from "geojson";
+import { isEqual } from "lodash";
 
 export type WellborePickLayerData = {
     easting: number;
@@ -12,11 +21,6 @@ export type WellborePickLayerData = {
     tvdMsl: number;
     md: number;
     slotName: string;
-};
-
-type TextLayerData = {
-    coordinates: [number, number, number];
-    name: string;
 };
 
 export interface WellBorePicksLayerProps extends ExtendedLayerProps {
@@ -28,10 +32,28 @@ export interface WellBorePicksLayerProps extends ExtendedLayerProps {
     reportBoundingBox?: React.Dispatch<ReportBoundingBoxAction>;
 }
 
+// properties.name is required to trigger tooltip in Map.tsx component in subsurface-viewer
+type PointsData = { coordinates: [number, number, number]; properties: { name: string } };
+
 export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> {
     static layerName: string = "WellborePicksLayer";
-    private _textData: TextLayerData[] = [];
-    private _pointsData: FeatureCollection | null = null;
+
+    // @ts-ignore - This is how deck.gl expects the state to be defined
+    // For instance, see her:
+    // https://github.com/visgl/deck.gl/blob/master/modules/layers/src/point-cloud-layer/point-cloud-layer.ts#L123
+    state!: {
+        pointsData: PointsData[];
+        hoveredIndex: number | null;
+    };
+
+    initializeState(context: LayerContext): void {
+        super.initializeState(context);
+
+        this.state = {
+            pointsData: [],
+            hoveredIndex: null,
+        };
+    }
 
     filterSubLayer(context: FilterContext): boolean {
         if (context.layer.id.includes("text")) {
@@ -63,98 +85,72 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
         return [minX, minY, minZ, maxX, maxY, maxZ];
     }
 
-    updateState(params: UpdateParameters<Layer<WellBorePicksLayerProps & Required<CompositeLayerProps>>>): void {
-        const features: Feature[] = params.props.data.map((wellPick) => {
-            return {
-                type: "Feature",
-                geometry: {
-                    type: "Point",
-                    coordinates: [wellPick.easting, wellPick.northing, wellPick.tvdMsl],
-                },
-                properties: {
-                    name: `${wellPick.wellBoreUwi}, TVD_MSL: ${wellPick.tvdMsl}, MD: ${wellPick.md}`,
-                    color: [100, 100, 100, 100],
-                },
-            };
-        });
+    updateState({
+        changeFlags,
+        props,
+        oldProps,
+    }: UpdateParameters<Layer<WellBorePicksLayerProps & Required<CompositeLayerProps>>>): void {
+        if (!changeFlags.dataChanged) {
+            return;
+        }
 
-        const pointsData: FeatureCollection = {
-            type: "FeatureCollection",
-            features: features,
-        };
+        if (isEqual(props.data, oldProps.data)) {
+            return;
+        }
 
-        const textData: TextLayerData[] = this.props.data.map((wellPick) => {
+        const pointsData: PointsData[] = props.data.map((wellPick) => {
             return {
                 coordinates: [wellPick.easting, wellPick.northing, wellPick.tvdMsl],
-                name: wellPick.wellBoreUwi,
+                properties: {
+                    name: `${wellPick.wellBoreUwi}, TVD_MSL: ${wellPick.tvdMsl}, MD: ${wellPick.md}`,
+                },
             };
         });
 
-        this._pointsData = pointsData;
-        this._textData = textData;
+        this.setState({
+            pointsData,
+        });
 
         this.props.reportBoundingBox?.({
             layerBoundingBox: this.calcBoundingBox(),
         });
     }
 
+    onHover(info: PickingInfo): boolean {
+        const { index } = info;
+        this.setState({ hoveredIndex: index });
+
+        return false;
+    }
+
     renderLayers() {
-        const fontSize = 16;
-        const sizeMinPixels = 16;
-        const sizeMaxPixels = 16;
+        const { zIncreaseDownwards } = this.props;
+        const { pointsData, hoveredIndex } = this.state;
 
         return [
-            new GeoJsonLayer(
-                this.getSubLayerProps({
-                    id: "points",
-                    data: this._pointsData ?? undefined,
-                    filled: true,
-                    lineWidthMinPixels: 5,
-                    lineWidthMaxPixels: 5,
-                    lineWidthUnits: "meters",
-                    parameters: {
-                        depthTest: false,
-                    },
-                    getLineWidth: 1,
-                    depthTest: false,
-                    pickable: true,
-                    getText: (d: Feature) => d.properties?.wellBoreUwi,
-                    getLineColor: [50, 50, 50],
-                })
-            ),
+            new PointCloudLayer({
+                id: `${this.props.id}-points`,
+                data: pointsData,
+                pickable: true,
+                getPosition: (d) => {
+                    const zFactor = zIncreaseDownwards ? -1 : 1;
+                    return [d.coordinates[0], d.coordinates[1], d.coordinates[2] * zFactor];
+                },
+                getColor: (_, ctx) => {
+                    if (ctx.index === hoveredIndex) {
+                        return COLORS.hover;
+                    }
 
-            /*
-            new TextLayer(
-                this.getSubLayerProps({
-                    id: "text",
-                    data: this._textData,
-                    pickable: true,
-                    getColor: [255, 255, 255],
-                    fontWeight: 800,
-                    fontSettings: {
-                        fontSize: fontSize * 2,
-                        sdf: true,
-                    },
-                    outlineColor: [0, 0, 0],
-                    outlineWidth: 2,
-                    getSize: 12,
-                    sdf: true,
-                    sizeScale: fontSize,
-                    sizeUnits: "meters",
-                    sizeMinPixels: sizeMinPixels,
-                    sizeMaxPixels: sizeMaxPixels,
-                    getAlignmentBaseline: "top",
-                    getTextAnchor: "middle",
-                    getPosition: (d: TextLayerData) => d.coordinates,
-                    getText: (d: TextLayerData) => d.name,
-                    extensions: [
-                        new CollisionFilterExtension({
-                            collisionEnabled: true,
-                        }),
-                    ],
-                })
-            ),
-            */
+                    return [100, 100, 100];
+                },
+                pointSize: 15,
+                sizeUnits: "meters",
+                material: { ambient: 0.75, diffuse: 0.4, shininess: 0, specularColor: [0, 0, 0] },
+                updateTriggers: {
+                    getColor: [hoveredIndex],
+                    getPosition: [zIncreaseDownwards],
+                },
+            }),
         ];
     }
 }

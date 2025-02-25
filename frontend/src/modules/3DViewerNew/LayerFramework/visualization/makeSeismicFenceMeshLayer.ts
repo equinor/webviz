@@ -18,6 +18,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
         colorScale,
         settings,
         isLoading,
+        predictedGeometry,
     }: VisualizationFunctionArgs<any, SeismicSliceData_trans>): Layer<any> {
         let bbox: number[][] = [
             [data.bbox_utm[0][0], data.bbox_utm[0][1], data.u_min],
@@ -35,26 +36,6 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
             ];
         }
 
-        /*
-        if (isLoading && predictedNextBoundingBox) {
-            if (plane === Plane.DEPTH) {
-                bbox = [
-                    [predictedNextBoundingBox.x[0], predictedNextBoundingBox.y[0], settings.seismicDepthSlice],
-                    [predictedNextBoundingBox.x[1], predictedNextBoundingBox.y[1], settings.seismicDepthSlice],
-                    [predictedNextBoundingBox.x[0], predictedNextBoundingBox.y[0], settings.seismicDepthSlice],
-                    [predictedNextBoundingBox.x[1], predictedNextBoundingBox.y[1], settings.seismicDepthSlice],
-                ];
-            } else {
-                bbox = [
-                    [predictedNextBoundingBox.x[0], predictedNextBoundingBox.y[0], predictedNextBoundingBox.z[0]],
-                    [predictedNextBoundingBox.x[1], predictedNextBoundingBox.y[1], predictedNextBoundingBox.z[0]],
-                    [predictedNextBoundingBox.x[0], predictedNextBoundingBox.y[0], predictedNextBoundingBox.z[1]],
-                    [predictedNextBoundingBox.x[1], predictedNextBoundingBox.y[1], predictedNextBoundingBox.z[1]],
-                ];
-            }
-        }
-            */
-
         return new SeismicFenceMeshLayer({
             id,
             name,
@@ -71,6 +52,7 @@ export function makeSeismicFenceMeshLayerFunction(plane: Plane) {
             colorMapFunction: makeColorMapFunctionFromColorScale(colorScale, data.value_min, data.value_max, false),
             zIncreaseDownwards: true,
             isLoading,
+            loadingGeometry: predictedGeometry ?? undefined,
         });
     };
 }

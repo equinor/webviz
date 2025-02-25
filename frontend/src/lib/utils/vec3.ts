@@ -14,6 +14,10 @@ export function fromArray(array: ArrayLike<number> | [number, number, number]): 
     return { x: array[0], y: array[1], z: array[2] };
 }
 
+export function toArray(vector: Vec3): [number, number, number] {
+    return [vector.x, vector.y, vector.z];
+}
+
 export function length(vector: Vec3): number {
     return Math.sqrt(vector.x ** 2 + vector.y ** 2 + vector.z ** 2);
 }
@@ -41,6 +45,14 @@ export function abs(vector: Vec3): Vec3 {
 
 export function scale(vector: Vec3, scalar: number): Vec3 {
     return { x: vector.x * scalar, y: vector.y * scalar, z: vector.z * scalar };
+}
+
+export function scaleNonUniform(vector: Vec3, scalarX: number, scalarY: number, scalarZ: number): Vec3 {
+    return { x: vector.x * scalarX, y: vector.y * scalarY, z: vector.z * scalarZ };
+}
+
+export function multiplyElementWise(vecA: Vec3, vecB: Vec3): Vec3 {
+    return { x: vecA.x * vecB.x, y: vecA.y * vecB.y, z: vecA.z * vecB.z };
 }
 
 export function equal(vector1: Vec3, vector2: Vec3): boolean {

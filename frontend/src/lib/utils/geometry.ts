@@ -24,20 +24,20 @@ export type Rect3D = {
 };
 
 export enum ShapeType {
-    POLYGON = "polygon",
-    ELEVATED_POLYGON = "elevated_polygon",
+    RECTANGLE = "rectangle",
 }
 
-export type Shape =
-    | {
-          type: ShapeType.POLYGON;
-          points: Vec3[];
-      }
-    | {
-          type: ShapeType.ELEVATED_POLYGON;
-          points: Vec3[];
-          height: number;
-      };
+export type Shape = {
+    type: ShapeType.RECTANGLE;
+    centerPoint: Vec3;
+    dimensions: Size2D;
+    normalizedEdgeVectors: {
+        // along width
+        u: Vec3;
+        // along height
+        v: Vec3;
+    };
+};
 
 export type Geometry = {
     shapes: Shape[];

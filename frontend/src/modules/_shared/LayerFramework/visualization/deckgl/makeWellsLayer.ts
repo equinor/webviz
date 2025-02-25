@@ -1,9 +1,9 @@
 import { WellboreTrajectory_api } from "@api";
 import * as bbox from "@lib/utils/boundingBox";
+import { WellsLayer, WellsLayerData } from "@modules/_shared/customDeckGlLayers/WellsLayer/WellsLayer";
 
-import { Feature, FeatureCollection, GeoJsonProperties, GeometryCollection, LineString, Point } from "geojson";
+import { Feature, GeoJsonProperties, GeometryCollection, LineString, Point } from "geojson";
 
-import { AdvancedWellsLayer } from "../../../customDeckGlLayers/AdvancedWellsLayer";
 import { VisualizationFunctionArgs } from "../VisualizationFactory";
 
 function wellTrajectoryToGeojson(
@@ -52,6 +52,7 @@ function zipCoords(xArr: number[], yArr: number[], zArr: number[]): number[][] {
     return coords;
 }
 
+/* 
 export function makeWellsLayer({
     id,
     data,
@@ -82,6 +83,36 @@ export function makeWellsLayer({
         lineStyle: {
             width: 2,
         },
+        boundingBox: bbox3d,
+    });
+}
+    */
+export function makeWellsLayer({
+    id,
+    data,
+    name,
+    boundingBox,
+}: VisualizationFunctionArgs<any, WellboreTrajectory_api[]>): WellsLayer {
+    // Filter out some wellbores that are known to be not working - this is a temporary solution
+    const filteredData = data.filter((wellbore) => wellbore.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH");
+
+    const wellsData: WellsLayerData = filteredData.map((wellTrajectory) => {
+        return {
+            coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr) as [
+                number,
+                number,
+                number
+            ][],
+            properties: { uuid: wellTrajectory.wellboreUuid, name: wellTrajectory.uniqueWellboreIdentifier },
+        };
+    });
+
+    const bbox3d = boundingBox ? bbox.toNumArray(boundingBox) : undefined;
+
+    return new WellsLayer({
+        id,
+        data: wellsData,
+        name,
         boundingBox: bbox3d,
     });
 }
