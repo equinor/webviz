@@ -31,7 +31,7 @@ class HTTPXAsyncClientWrapper:
             self._async_client = httpx.AsyncClient()
             LOGGER.info(f"httpx AsyncClient instantiated. Id {id(self._async_client)}")
 
-    async def stop(self) -> None:
+    async def stop_async(self) -> None:
         """Gracefully shutdown. Call from FastAPI shutdown hook."""
         if self._async_client is not None:
             LOGGER.info(
@@ -46,4 +46,4 @@ class HTTPXAsyncClientWrapper:
 
 
 # Create a singleton instance of the async client
-httpx_async_client = HTTPXAsyncClientWrapper()
+HTTPX_ASYNC_CLIENT_WRAPPER = HTTPXAsyncClientWrapper()

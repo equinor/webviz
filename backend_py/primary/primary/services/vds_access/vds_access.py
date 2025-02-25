@@ -10,7 +10,7 @@ import httpx
 from primary.services.service_exceptions import InvalidDataError, Service
 
 from primary import config
-from primary.httpx_client import httpx_async_client
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 
 from .response_types import VdsArray, VdsAxis, VdsMetadata, VdsFenceMetadata, VdsSliceMetadata
 from .request_types import (
@@ -61,7 +61,7 @@ class VdsAccess:
     async def _query_async(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
         """Query the service"""
 
-        response = await httpx_async_client.client.post(
+        response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.post(
             f"{config.VDS_HOST_ADDRESS}/{endpoint}",
             headers={"Content-Type": "application/json"},
             content=json.dumps(request.request_parameters()),
