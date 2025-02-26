@@ -11,15 +11,15 @@ import {
 import { LayerRegistry } from "../../layers/LayerRegistry";
 import { SettingRegistry } from "../../settings/SettingRegistry";
 import { ColorScale } from "../ColorScale/ColorScale";
-import { LayerManager } from "../LayerManager/LayerManager";
+import { DataLayerManager } from "../LayerManager/DataLayerManager";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { View } from "../View/View";
 
 export class DeserializationFactory {
-    private _layerManager: LayerManager;
+    private _layerManager: DataLayerManager;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._layerManager = layerManager;
     }
 
@@ -32,7 +32,7 @@ export class DeserializationFactory {
 
         if (serialized.type === SerializedType.LAYER) {
             const serializedLayer = serialized as SerializedLayer<any>;
-            const layer = LayerRegistry.makeLayer(serializedLayer.layerClass, this._layerManager);
+            const layer = LayerRegistry.makeLayer(serializedLayer.customLayerImplClass, this._layerManager);
             layer.getLayerDelegate().deserializeState(serializedLayer);
             layer.getItemDelegate().setId(serializedLayer.id);
             layer.getItemDelegate().setName(serializedLayer.name);

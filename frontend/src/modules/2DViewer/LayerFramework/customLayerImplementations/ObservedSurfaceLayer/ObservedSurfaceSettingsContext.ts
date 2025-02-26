@@ -1,6 +1,6 @@
 import { SurfaceTimeType_api, getObservedSurfacesMetadataOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
 import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
@@ -13,7 +13,7 @@ import { ObservedSurfaceSettings } from "./types";
 export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedSurfaceSettings> {
     private _contextDelegate: SettingsContextDelegate<ObservedSurfaceSettings>;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._contextDelegate = new SettingsContextDelegate<ObservedSurfaceSettings>(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.ATTRIBUTE]: new AttributeSetting(),

@@ -1,8 +1,12 @@
 import { PolygonData_api, getPolygonsDataOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
-import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { DataLayer, LayerColoringType } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+import {
+    BoundingBox,
+    CustomDataLayerImplementation,
+    SerializedLayer,
+} from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -12,13 +16,15 @@ import { isEqual } from "lodash";
 import { RealizationPolygonsSettingsContext } from "./RealizationPolygonsSettingsContext";
 import { RealizationPolygonsSettings } from "./types";
 
-export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettings, PolygonData_api[]> {
-    private _layerDelegate: LayerDelegate<RealizationPolygonsSettings, PolygonData_api[]>;
+export class RealizationPolygonsLayer
+    implements CustomDataLayerImplementation<RealizationPolygonsSettings, PolygonData_api[]>
+{
+    private _layerDelegate: DataLayer<RealizationPolygonsSettings, PolygonData_api[]>;
     private _itemDelegate: ItemDelegate;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._itemDelegate = new ItemDelegate("Realization Polygons", layerManager);
-        this._layerDelegate = new LayerDelegate(
+        this._layerDelegate = new DataLayer(
             this,
             layerManager,
             new RealizationPolygonsSettingsContext(layerManager),
@@ -34,7 +40,7 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<RealizationPolygonsSettings, PolygonData_api[]> {
+    getLayerDelegate(): DataLayer<RealizationPolygonsSettings, PolygonData_api[]> {
         return this._layerDelegate;
     }
 

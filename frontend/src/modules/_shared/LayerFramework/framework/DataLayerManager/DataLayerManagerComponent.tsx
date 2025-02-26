@@ -8,7 +8,7 @@ import { Group, Item, instanceofGroup } from "@modules/_shared/LayerFramework/in
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Add } from "@mui/icons-material";
 
-import { LayerManager } from "./LayerManager";
+import { DataLayerManager } from "./DataLayerManager";
 
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { ColorScale } from "../ColorScale/ColorScale";
@@ -18,7 +18,7 @@ import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllB
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
 export type LayerManagerComponentProps = {
-    layerManager: LayerManager;
+    layerManager: DataLayerManager;
     additionalHeaderComponents: React.ReactNode;
     layerActions: LayersActionGroup[];
     onLayerAction: (identifier: string, groupDelegate: GroupDelegate) => void;

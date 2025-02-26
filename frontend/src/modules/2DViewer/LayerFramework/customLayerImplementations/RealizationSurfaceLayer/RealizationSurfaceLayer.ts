@@ -1,9 +1,13 @@
 import { SurfaceDataPng_api, SurfaceTimeType_api } from "@api";
 import { getSurfaceDataOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
-import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { DataLayer, LayerColoringType } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+import {
+    BoundingBox,
+    CustomDataLayerImplementation,
+    SerializedLayer,
+} from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
@@ -17,14 +21,14 @@ import { RealizationSurfaceSettingsContext } from "./RealizationSurfaceSettingsC
 import { RealizationSurfaceSettings } from "./types";
 
 export class RealizationSurfaceLayer
-    implements Layer<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
+    implements CustomDataLayerImplementation<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
 {
-    private _layerDelegate: LayerDelegate<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>;
+    private _layerDelegate: DataLayer<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>;
     private _itemDelegate: ItemDelegate;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._itemDelegate = new ItemDelegate("Realization Surface", layerManager);
-        this._layerDelegate = new LayerDelegate(
+        this._layerDelegate = new DataLayer(
             this,
             layerManager,
             new RealizationSurfaceSettingsContext(layerManager),
@@ -40,7 +44,7 @@ export class RealizationSurfaceLayer
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    getLayerDelegate(): DataLayer<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api> {
         return this._layerDelegate;
     }
 

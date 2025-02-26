@@ -1,6 +1,6 @@
 import { getDrilledWellboreHeadersOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellboresSetting } from "@modules/_shared/LayerFramework/settings/implementations/DrilledWellboresSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
@@ -11,7 +11,7 @@ import { DrilledWellTrajectoriesSettings } from "./types";
 export class DrilledWellTrajectoriesSettingsContext implements SettingsContext<DrilledWellTrajectoriesSettings> {
     private _contextDelegate: SettingsContextDelegate<DrilledWellTrajectoriesSettings>;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._contextDelegate = new SettingsContextDelegate<DrilledWellTrajectoriesSettings>(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.SMDA_WELLBORE_HEADERS]: new DrilledWellboresSetting(),

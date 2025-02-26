@@ -6,12 +6,12 @@ import { Link, Warning } from "@mui/icons-material";
 
 import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDelegate";
 import { SettingTopic } from "../delegates/SettingDelegate";
-import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import { DataLayerManager, LayerManagerTopic } from "../framework/LayerManager/DataLayerManager";
 import { Setting, SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";
 
 export type SettingComponentProps<TValue> = {
     setting: Setting<TValue>;
-    manager: LayerManager;
+    manager: DataLayerManager;
     sharedSetting: boolean;
 };
 

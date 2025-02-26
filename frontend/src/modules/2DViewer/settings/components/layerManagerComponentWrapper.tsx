@@ -19,7 +19,7 @@ import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
 import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManagerComponent";
 import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
@@ -47,7 +47,7 @@ import { useAtom } from "jotai";
 import { preferredViewLayoutAtom } from "../atoms/baseAtoms";
 
 export type LayerManagerComponentWrapperProps = {
-    layerManager: LayerManager;
+    layerManager: DataLayerManager;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
 };

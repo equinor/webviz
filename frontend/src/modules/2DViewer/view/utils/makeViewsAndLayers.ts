@@ -7,7 +7,12 @@ import { LayerColoringType, LayerStatus } from "@modules/_shared/LayerFramework/
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
 import { View } from "@modules/_shared/LayerFramework/framework/View/View";
-import { BoundingBox, Layer, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
+import {
+    BoundingBox,
+    CustomDataLayerImplementation,
+    instanceofGroup,
+    instanceofLayer,
+} from "@modules/_shared/LayerFramework/interfaces";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
@@ -128,7 +133,9 @@ export function recursivelyMakeViewsAndLayers(
     };
 }
 
-function findColorScale(layer: Layer<any, any>): { id: string; colorScale: ColorScaleWithName } | null {
+function findColorScale(
+    layer: CustomDataLayerImplementation<any, any>
+): { id: string; colorScale: ColorScaleWithName } | null {
     if (layer.getLayerDelegate().getColoringType() !== LayerColoringType.COLORSCALE) {
         return null;
     }

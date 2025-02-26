@@ -1,3 +1,5 @@
+import { AllSettingTypes, SettingType } from "./settingsTypes";
+
 import { Setting } from "../interfaces";
 
 export class SettingRegistry {
@@ -7,8 +9,8 @@ export class SettingRegistry {
         this._registeredSettings[ctor.name] = ctor;
     }
 
-    static makeSetting(settingName: string, params?: any[]): Setting<any> {
-        const ctor = this._registeredSettings[settingName];
+    static makeSetting<T extends SettingType>(settingType: T, params?: any[]): Setting<AllSettingTypes[T]> {
+        const ctor = this._registeredSettings[settingType];
         if (params) {
             return new ctor(...params);
         }

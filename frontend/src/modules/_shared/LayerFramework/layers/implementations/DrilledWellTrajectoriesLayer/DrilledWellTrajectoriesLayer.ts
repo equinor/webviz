@@ -1,8 +1,12 @@
 import { WellboreTrajectory_api, getWellTrajectoriesOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
-import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { DataLayer, LayerColoringType } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+import {
+    BoundingBox,
+    CustomDataLayerImplementation,
+    SerializedLayer,
+} from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -12,13 +16,15 @@ import { isEqual } from "lodash";
 import { DrilledWellTrajectoriesSettingsContext } from "./DrilledWellTrajectoriesSettingsContext";
 import { DrilledWellTrajectoriesSettings } from "./types";
 
-export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]> {
-    private _layerDelegate: LayerDelegate<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]>;
+export class DrilledWellTrajectoriesLayer
+    implements CustomDataLayerImplementation<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]>
+{
+    private _layerDelegate: DataLayer<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]>;
     private _itemDelegate: ItemDelegate;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._itemDelegate = new ItemDelegate("Drilled Wellbore trajectories", layerManager);
-        this._layerDelegate = new LayerDelegate(
+        this._layerDelegate = new DataLayer(
             this,
             layerManager,
             new DrilledWellTrajectoriesSettingsContext(layerManager),
@@ -34,7 +40,7 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]> {
+    getLayerDelegate(): DataLayer<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]> {
         return this._layerDelegate;
     }
 

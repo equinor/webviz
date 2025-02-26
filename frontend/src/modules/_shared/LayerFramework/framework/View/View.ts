@@ -1,16 +1,27 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { Group, SerializedType, SerializedView } from "../../interfaces";
-import { LayerManager } from "../LayerManager/LayerManager";
+import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
+
+export type ViewParams = {
+    name: string;
+    layerManager: DataLayerManager;
+    color?: string | null;
+    type?: string;
+};
 
 export class View implements Group {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
+    private _type: string;
 
-    constructor(name: string, layerManager: LayerManager, color: string | null = null) {
+    constructor(params: ViewParams) {
+        const { name, layerManager, color = null, type = "default" } = params;
         this._groupDelegate = new GroupDelegate(this);
         this._groupDelegate.setColor(color);
         this._itemDelegate = new ItemDelegate(name, layerManager);
+
+        this._type = type;
     }
 
     getItemDelegate(): ItemDelegate {
@@ -19,6 +30,10 @@ export class View implements Group {
 
     getGroupDelegate(): GroupDelegate {
         return this._groupDelegate;
+    }
+
+    getType(): string {
+        return this._type;
     }
 
     serializeState(): SerializedView {

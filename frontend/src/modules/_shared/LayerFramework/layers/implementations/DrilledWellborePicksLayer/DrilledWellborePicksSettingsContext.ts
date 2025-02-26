@@ -1,33 +1,15 @@
 import { getDrilledWellboreHeadersOptions, getWellborePickIdentifiersOptions } from "@api";
-import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
-import { DrilledWellboresSetting } from "@modules/_shared/LayerFramework/settings/implementations/DrilledWellboresSetting";
-import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
-import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceNameSetting";
+import {
+    CustomSettingsContextImplementation,
+    DefineDependenciesArgs,
+} from "@modules/_shared/LayerFramework/interfaces";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
-import { DrilledWellborePicksSettings } from "./types";
+import { DrilledWellborePicksSettings } from "./settingsTypes";
 
-export class DrilledWellborePicksSettingsContext implements SettingsContext<DrilledWellborePicksSettings> {
-    private _contextDelegate: SettingsContextDelegate<DrilledWellborePicksSettings>;
-
-    constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<DrilledWellborePicksSettings>(this, layerManager, {
-            [SettingType.ENSEMBLE]: new EnsembleSetting(),
-            [SettingType.SMDA_WELLBORE_HEADERS]: new DrilledWellboresSetting(),
-            [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),
-        });
-    }
-
-    getDelegate(): SettingsContextDelegate<DrilledWellborePicksSettings> {
-        return this._contextDelegate;
-    }
-
-    getSettings() {
-        return this._contextDelegate.getSettings();
-    }
-
+export class DrilledWellborePicksSettingsContext
+    implements CustomSettingsContextImplementation<DrilledWellborePicksSettings>
+{
     areCurrentSettingsValid(settings: DrilledWellborePicksSettings): boolean {
         return (
             settings[SettingType.ENSEMBLE] !== null &&

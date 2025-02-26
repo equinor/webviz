@@ -1,15 +1,15 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { Group, SerializedSettingsGroup, SerializedType } from "../../interfaces";
+import { Group, SerializedType, SerializedView } from "../../interfaces";
 import { DataLayerManager } from "../LayerManager/DataLayerManager";
 
-export class SettingsGroup implements Group {
+export class View implements Group {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
 
-    constructor(name: string, layerManager: DataLayerManager) {
+    constructor(name: string, layerManager: DataLayerManager, color: string | null = null) {
         this._groupDelegate = new GroupDelegate(this);
-        this._groupDelegate.setColor("rgb(196 181 253)");
+        this._groupDelegate.setColor(color);
         this._itemDelegate = new ItemDelegate(name, layerManager);
     }
 
@@ -21,16 +21,18 @@ export class SettingsGroup implements Group {
         return this._groupDelegate;
     }
 
-    serializeState(): SerializedSettingsGroup {
+    serializeState(): SerializedView {
         return {
             ...this._itemDelegate.serializeState(),
-            type: SerializedType.SETTINGS_GROUP,
+            type: SerializedType.VIEW,
+            color: this._groupDelegate.getColor() ?? "",
             children: this._groupDelegate.serializeChildren(),
         };
     }
 
-    deserializeState(serialized: SerializedSettingsGroup) {
+    deserializeState(serialized: SerializedView) {
         this._itemDelegate.deserializeState(serialized);
+        this._groupDelegate.setColor(serialized.color);
         this._groupDelegate.deserializeChildren(serialized.children);
     }
 }

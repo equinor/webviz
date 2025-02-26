@@ -1,8 +1,12 @@
 import { SurfaceDataPng_api, SurfaceTimeType_api, getSurfaceDataOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
-import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { DataLayer, LayerColoringType } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+import {
+    BoundingBox,
+    CustomDataLayerImplementation,
+    SerializedLayer,
+} from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
@@ -16,14 +20,14 @@ import { StatisticalSurfaceSettingsContext } from "./StatisticalSurfaceSettingsC
 import { StatisticalSurfaceSettings } from "./types";
 
 export class StatisticalSurfaceLayer
-    implements Layer<StatisticalSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
+    implements CustomDataLayerImplementation<StatisticalSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
 {
     private _itemDelegate: ItemDelegate;
-    private _layerDelegate: LayerDelegate<StatisticalSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>;
+    private _layerDelegate: DataLayer<StatisticalSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._itemDelegate = new ItemDelegate("Statistical Surface", layerManager);
-        this._layerDelegate = new LayerDelegate(
+        this._layerDelegate = new DataLayer(
             this,
             layerManager,
             new StatisticalSurfaceSettingsContext(layerManager),
@@ -39,7 +43,7 @@ export class StatisticalSurfaceLayer
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<StatisticalSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    getLayerDelegate(): DataLayer<StatisticalSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api> {
         return this._layerDelegate;
     }
 

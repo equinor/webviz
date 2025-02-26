@@ -1,23 +1,28 @@
 import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
+import { PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { QueryClient, isCancelledError } from "@tanstack/react-query";
 
-import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
-import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
-
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
-import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
+import { ItemDelegate } from "../../delegates/ItemDelegate";
+import { SettingsContextDelegate, SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
+import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import {
     BoundingBox,
-    Layer,
+    CustomDataLayerImplementation,
+    CustomSettingsContextImplementation,
+    DataLayerInformationAccessors,
+    Item,
     SerializedLayer,
     SerializedType,
+    Setting,
     Settings,
-    SettingsContext,
     StoredData,
-} from "../interfaces";
+} from "../../interfaces";
+import { SettingRegistry } from "../../settings/SettingRegistry";
+import { AllSettingTypes, SettingType } from "../../settings/settingsTypes";
+import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
+import { SharedSetting } from "../SharedSetting/SharedSetting";
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -44,17 +49,43 @@ export type LayerDelegatePayloads<TData> = {
     [LayerDelegateTopic.SUBORDINATED]: boolean;
 };
 
+export type DataLayerParams<
+    TSettings extends Settings,
+    TData,
+    TStoredData extends StoredData = Record<string, never>
+> = {
+    settings: TSettings;
+    layerManager: DataLayerManager;
+    name: string;
+    customSettingsContextImplementation: CustomSettingsContextImplementation<TSettings, TStoredData>;
+    customDataLayerImplementation: CustomDataLayerImplementation<TSettings, TData, TStoredData>;
+    coloringType: LayerColoringType;
+};
+
+function makeSettings<TSettings extends Settings>(
+    settings: TSettings
+): { [K in keyof TSettings & keyof AllSettingTypes]: Setting<AllSettingTypes[K]> } {
+    const returnValue: Record<string, unknown> = {} as Record<string, unknown>;
+    for (const key in settings) {
+        returnValue[key as SettingType] = SettingRegistry.makeSetting(key as SettingType) as Setting<
+            AllSettingTypes[SettingType]
+        >;
+    }
+    return returnValue as { [K in keyof TSettings & keyof AllSettingTypes]: Setting<AllSettingTypes[K]> };
+}
+
 /*
  * The LayerDelegate class is responsible for managing the state of a layer.
  * It is responsible for (re-)fetching the data whenever changes to settings make it necessary.
  * It also manages the status of the layer (loading, success, error).
  */
-export class LayerDelegate<TSettings extends Settings, TData, TStoredData extends StoredData = Record<string, never>>
-    implements PublishSubscribe<LayerDelegatePayloads<TData>>
+export class DataLayer<TSettings extends Settings, TData, TStoredData extends StoredData = Record<string, never>>
+    implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
 {
-    private _owner: Layer<TSettings, TData, TStoredData>;
-    private _settingsContext: SettingsContext<TSettings, TStoredData>;
-    private _layerManager: LayerManager;
+    private _customDataLayerImpl: CustomDataLayerImplementation<TSettings, TData, TStoredData>;
+    private _settingsContextDelegate: SettingsContextDelegate<TSettings, TStoredData>;
+    private _itemDelegate: ItemDelegate;
+    private _layerManager: DataLayerManager;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _cancellationPending: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<LayerDelegatePayloads<TData>>();
@@ -69,21 +100,22 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
     private _coloringType: LayerColoringType;
     private _isSubordinated: boolean = false;
 
-    constructor(
-        owner: Layer<TSettings, TData, TStoredData>,
-        layerManager: LayerManager,
-        settingsContext: SettingsContext<TSettings, TStoredData>,
-        coloringType: LayerColoringType
-    ) {
-        this._owner = owner;
+    constructor(params: DataLayerParams<TSettings, TData, TStoredData>) {
+        const { layerManager, name, customSettingsContextImplementation, customDataLayerImplementation, coloringType } =
+            params;
         this._layerManager = layerManager;
-        this._settingsContext = settingsContext;
+        this._settingsContextDelegate = new SettingsContextDelegate<TSettings, TStoredData>(
+            customSettingsContextImplementation,
+            layerManager,
+            makeSettings(params.settings) as { [key in keyof TSettings]: Setting<any> }
+        );
         this._coloringType = coloringType;
+        this._customDataLayerImpl = customDataLayerImplementation;
+        this._itemDelegate = new ItemDelegate(name, layerManager);
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "settings-context",
-            this._settingsContext
-                .getDelegate()
+            this._settingsContextDelegate
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
                 this.handleSettingsChange();
@@ -126,8 +158,12 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
         return this._data;
     }
 
-    getSettingsContext(): SettingsContext<TSettings, TStoredData> {
-        return this._settingsContext;
+    getItemDelegate() {
+        return this._itemDelegate;
+    }
+
+    getSettingsContextDelegate() {
+        return this._settingsContextDelegate;
     }
 
     getBoundingBox(): BoundingBox | null {
@@ -166,7 +202,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
     }
 
     handleSharedSettingsChanged(): void {
-        const parentGroup = this._owner.getItemDelegate().getParentGroup();
+        const parentGroup = this.getItemDelegate().getParentGroup();
         if (parentGroup) {
             const sharedSettings: SharedSetting[] = parentGroup.getAncestorAndSiblingItems(
                 (item) => item instanceof SharedSetting
@@ -176,7 +212,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
             };
             for (const sharedSetting of sharedSettings) {
                 const type = sharedSetting.getWrappedSetting().getType();
-                const setting = this._settingsContext.getDelegate().getSettings()[type];
+                const setting = this._settingsContextDelegate.getSettings()[type];
                 if (setting && overriddenSettings[type] === undefined) {
                     if (
                         sharedSetting.getWrappedSetting().getDelegate().isInitialized() &&
@@ -188,11 +224,11 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
                     }
                 }
             }
-            this._settingsContext.getDelegate().setOverriddenSettings(overriddenSettings);
+            this._settingsContextDelegate.setOverriddenSettings(overriddenSettings);
         }
     }
 
-    getLayerManager(): LayerManager {
+    getLayerManager(): DataLayerManager {
         return this._layerManager;
     }
 
@@ -221,7 +257,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
             return null;
         }
 
-        const name = this._owner.getItemDelegate().getName();
+        const name = this.getItemDelegate().getName();
 
         if (typeof this._error === "string") {
             return `${name}: ${this._error}`;
@@ -230,6 +266,16 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
         return {
             ...this._error,
             message: `${name}: ${this._error.message}`,
+        };
+    }
+
+    private makeAccessors(): DataLayerInformationAccessors<TSettings, TData, TStoredData> {
+        return {
+            getSetting: (settingName) =>
+                this._settingsContextDelegate.getSettings()[settingName].getDelegate().getValue(),
+            getGlobalSetting: (settingName) => this._layerManager.getGlobalSetting(settingName),
+            getStoredData: (key: keyof TStoredData) => this._settingsContextDelegate.getStoredData(key),
+            getData: () => this._data,
         };
     }
 
@@ -248,19 +294,25 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
             return;
         }
 
+        const accessors = this.makeAccessors();
+
         this.invalidateBoundingBox();
         this.invalidateValueRange();
-        this._predictedBoundingBox = this._owner.predictBoundingBox?.() ?? null;
+        this._predictedBoundingBox = this._customDataLayerImpl.predictBoundingBox?.(accessors) ?? null;
 
         this.setStatus(LayerStatus.LOADING);
 
         try {
-            this._data = await this._owner.fetchData(queryClient);
-            if (this._owner.makeBoundingBox) {
-                this._boundingBox = this._owner.makeBoundingBox();
+            this._data = await this._customDataLayerImpl.fetchData({
+                ...accessors,
+                queryClient,
+                registerQueryKey: (key) => this.registerQueryKey(key),
+            });
+            if (this._customDataLayerImpl.makeBoundingBox) {
+                this._boundingBox = this._customDataLayerImpl.makeBoundingBox(accessors);
             }
-            if (this._owner.makeValueRange) {
-                this._valueRange = this._owner.makeValueRange();
+            if (this._customDataLayerImpl.makeValueRange) {
+                this._valueRange = this._customDataLayerImpl.makeValueRange(accessors);
             }
             if (this._queryKeys.length === null && isDevMode()) {
                 console.warn(
@@ -286,22 +338,22 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
     }
 
     serializeState(): SerializedLayer<TSettings> {
-        const itemState = this._owner.getItemDelegate().serializeState();
+        const itemState = this.getItemDelegate().serializeState();
         return {
             ...itemState,
             type: SerializedType.LAYER,
-            layerClass: this._owner.constructor.name,
-            settings: this._settingsContext.getDelegate().serializeSettings(),
+            customLayerImplClass: this._customDataLayerImpl.constructor.name,
+            settings: this._settingsContextDelegate.serializeSettings(),
         };
     }
 
     deserializeState(serializedLayer: SerializedLayer<TSettings>): void {
-        this._owner.getItemDelegate().deserializeState(serializedLayer);
-        this._settingsContext.getDelegate().deserializeSettings(serializedLayer.settings);
+        this.getItemDelegate().deserializeState(serializedLayer);
+        this._settingsContextDelegate.deserializeSettings(serializedLayer.settings);
     }
 
     beforeDestroy(): void {
-        this._settingsContext.getDelegate().beforeDestroy();
+        this._settingsContextDelegate.beforeDestroy();
         this._unsubscribeHandler.unsubscribeAll();
     }
 

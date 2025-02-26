@@ -5,7 +5,7 @@ import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
 import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
-import { Layer as LayerInterface } from "@modules/_shared/LayerFramework/interfaces";
+import { CustomDataLayerImplementation as LayerInterface } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";

@@ -1,9 +1,13 @@
 import { getWellTrajectoriesOptions, postGetPolylineIntersectionOptions } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
-import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { DataLayer, LayerColoringType } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+import {
+    BoundingBox,
+    CustomDataLayerImplementation,
+    SerializedLayer,
+} from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import {
@@ -19,14 +23,14 @@ import { IntersectionRealizationGridSettingsContext } from "./IntersectionRealiz
 import { IntersectionRealizationGridSettings } from "./types";
 
 export class IntersectionRealizationGridLayer
-    implements Layer<IntersectionRealizationGridSettings, PolylineIntersection_trans>
+    implements CustomDataLayerImplementation<IntersectionRealizationGridSettings, PolylineIntersection_trans>
 {
-    private _layerDelegate: LayerDelegate<IntersectionRealizationGridSettings, PolylineIntersection_trans>;
+    private _layerDelegate: DataLayer<IntersectionRealizationGridSettings, PolylineIntersection_trans>;
     private _itemDelegate: ItemDelegate;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._itemDelegate = new ItemDelegate("Intersection Realization Grid", layerManager);
-        this._layerDelegate = new LayerDelegate(
+        this._layerDelegate = new DataLayer(
             this,
             layerManager,
             new IntersectionRealizationGridSettingsContext(layerManager),
@@ -42,7 +46,7 @@ export class IntersectionRealizationGridLayer
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<IntersectionRealizationGridSettings, PolylineIntersection_trans> {
+    getLayerDelegate(): DataLayer<IntersectionRealizationGridSettings, PolylineIntersection_trans> {
         return this._layerDelegate;
     }
 

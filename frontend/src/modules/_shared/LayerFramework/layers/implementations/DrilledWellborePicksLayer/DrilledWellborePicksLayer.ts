@@ -1,42 +1,26 @@
 import { WellborePick_api, getWellborePicksForPickIdentifierOptions } from "@api";
-import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
-import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import {
+    BoundingBox,
+    CustomDataLayerImplementation,
+    DataLayerInformationAccessors,
+    FetchDataParams,
+} from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
-import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { DrilledWellborePicksSettingsContext } from "./DrilledWellborePicksSettingsContext";
-import { DrilledWellborePicksSettings } from "./types";
+import { DrilledWellborePicksSettings } from "./settingsTypes";
 
-export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSettings, WellborePick_api[]> {
-    private _layerDelegate: LayerDelegate<DrilledWellborePicksSettings, WellborePick_api[]>;
-    private _itemDelegate: ItemDelegate;
-
-    constructor(layerManager: LayerManager) {
-        this._itemDelegate = new ItemDelegate("Drilled Wellbore picks", layerManager);
-        this._layerDelegate = new LayerDelegate(
-            this,
-            layerManager,
-            new DrilledWellborePicksSettingsContext(layerManager),
-            LayerColoringType.NONE
-        );
-    }
-
-    getSettingsContext() {
-        return this._layerDelegate.getSettingsContext();
-    }
-
-    getItemDelegate(): ItemDelegate {
-        return this._itemDelegate;
-    }
-
-    getLayerDelegate(): LayerDelegate<DrilledWellborePicksSettings, WellborePick_api[]> {
-        return this._layerDelegate;
-    }
+export class DrilledWellborePicksLayer
+    implements CustomDataLayerImplementation<DrilledWellborePicksSettings, WellborePick_api[]>
+{
+    settings!: [
+        SettingType.ENSEMBLE,
+        SettingType.SMDA_WELLBORE_HEADERS,
+        SettingType.SURFACE_NAME,
+        SettingType.ATTRIBUTE
+    ];
 
     doSettingsChangesRequireDataRefetch(
         prevSettings: DrilledWellborePicksSettings,
@@ -45,8 +29,10 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
-        const data = this._layerDelegate.getData();
+    makeBoundingBox({
+        getData,
+    }: DataLayerInformationAccessors<DrilledWellborePicksSettings, WellborePick_api[]>): BoundingBox | null {
+        const data = getData();
         if (!data) {
             return null;
         }
@@ -71,27 +57,22 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
         return bbox;
     }
 
-    fetchData(queryClient: QueryClient): Promise<WellborePick_api[]> {
-        const workbenchSession = this.getSettingsContext().getDelegate().getLayerManager().getWorkbenchSession();
-        const ensembleSet = workbenchSession.getEnsembleSet();
-        const settings = this.getSettingsContext().getDelegate().getSettings();
-        const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
-        const selectedWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
+    fetchData({
+        getSetting,
+        getGlobalSetting,
+        registerQueryKey,
+        queryClient,
+    }: FetchDataParams<DrilledWellborePicksSettings>): Promise<WellborePick_api[]> {
+        const selectedWellboreHeaders = getSetting(SettingType.SMDA_WELLBORE_HEADERS);
         let selectedWellboreUuids: string[] = [];
         if (selectedWellboreHeaders) {
             selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
         }
-        const selectedPickIdentifier = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
-        let fieldIdentifier: string | null = null;
-        if (ensembleIdent) {
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-            if (ensemble) {
-                fieldIdentifier = ensemble.getFieldIdentifier();
-            }
-        }
+        const selectedPickIdentifier = getSetting(SettingType.SURFACE_NAME);
+        const fieldIdentifier = getGlobalSetting("fieldId");
 
         const queryKey = ["getWellborePicksForPickIdentifier", fieldIdentifier, selectedPickIdentifier];
-        this._layerDelegate.registerQueryKey(queryKey);
+        registerQueryKey(queryKey);
 
         const promise = queryClient
             .fetchQuery({
@@ -107,14 +88,6 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
             });
 
         return promise;
-    }
-
-    serializeState(): SerializedLayer<DrilledWellborePicksSettings> {
-        return this._layerDelegate.serializeState();
-    }
-
-    deserializeState(state: SerializedLayer<DrilledWellborePicksSettings>): void {
-        this._layerDelegate.deserializeState(state);
     }
 }
 

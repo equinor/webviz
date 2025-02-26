@@ -52,7 +52,7 @@ export type GlobalSettings = {
  * It does also serve as a provider of the QueryClient and WorkbenchSession.
  */
 
-export class LayerManager implements Group, PublishSubscribe<LayerManagerTopicPayload> {
+export class DataLayerManager implements Group, PublishSubscribe<LayerManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
     private _workbenchSettings: WorkbenchSettings;
     private _groupDelegate: GroupDelegate;

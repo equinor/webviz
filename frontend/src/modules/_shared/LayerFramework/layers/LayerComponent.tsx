@@ -9,16 +9,16 @@ import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@
 
 import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
-import { LayerDelegateTopic, LayerStatus } from "../delegates/LayerDelegate";
 import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../delegates/SettingsContextDelegate";
+import { DataLayer, LayerDelegateTopic, LayerStatus } from "../framework/DataLayer/DataLayer";
 import { EditName } from "../framework/utilityComponents/EditName";
 import { RemoveItemButton } from "../framework/utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../framework/utilityComponents/VisibilityToggle";
-import { Layer, Setting } from "../interfaces";
+import { Setting } from "../interfaces";
 import { SettingComponent } from "../settings/SettingComponent";
 
 export type LayerComponentProps = {
-    layer: Layer<any, any, any>;
+    layer: DataLayer<any, any>;
 };
 
 export function LayerComponent(props: LayerComponentProps): React.ReactNode {
@@ -60,14 +60,14 @@ export function LayerComponent(props: LayerComponentProps): React.ReactNode {
                     hidden: !isExpanded,
                 })}
             >
-                {makeSettings(props.layer.getLayerDelegate().getSettingsContext().getDelegate().getSettings())}
+                {makeSettings(props.layer.getSettingsContextDelegate().getSettings())}
             </div>
         </SortableListItem>
     );
 }
 
 type StartActionProps = {
-    layer: Layer<any, any>;
+    layer: DataLayer<any, any>;
 };
 
 function StartActions(props: StartActionProps): React.ReactNode {
@@ -87,19 +87,16 @@ function StartActions(props: StartActionProps): React.ReactNode {
 }
 
 type EndActionProps = {
-    layer: Layer<any, any>;
+    layer: DataLayer<any, any>;
 };
 
 function EndActions(props: EndActionProps): React.ReactNode {
-    const status = usePublishSubscribeTopicValue(props.layer.getLayerDelegate(), LayerDelegateTopic.STATUS);
+    const status = usePublishSubscribeTopicValue(props.layer, LayerDelegateTopic.STATUS);
     const settingsStatus = usePublishSubscribeTopicValue(
-        props.layer.getLayerDelegate().getSettingsContext().getDelegate(),
+        props.layer.getSettingsContextDelegate(),
         SettingsContextDelegateTopic.LOADING_STATE_CHANGED
     );
-    const isSubordinated = usePublishSubscribeTopicValue(
-        props.layer.getLayerDelegate(),
-        LayerDelegateTopic.SUBORDINATED
-    );
+    const isSubordinated = usePublishSubscribeTopicValue(props.layer, LayerDelegateTopic.SUBORDINATED);
 
     function makeStatus(): React.ReactNode {
         if (isSubordinated) {
@@ -117,7 +114,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
             );
         }
         if (status === LayerStatus.ERROR) {
-            const error = props.layer.getLayerDelegate().getError();
+            const error = props.layer.getError();
             if (typeof error === "string") {
                 return (
                     <div title={error} className="text-red-700 p-0.5">
@@ -144,9 +141,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
             return (
                 <div
                     title={`Invalid settings: ${props.layer
-                        .getLayerDelegate()
-                        .getSettingsContext()
-                        .getDelegate()
+                        .getSettingsContextDelegate()
                         .getInvalidSettings()
                         .join(", ")}`}
                 >

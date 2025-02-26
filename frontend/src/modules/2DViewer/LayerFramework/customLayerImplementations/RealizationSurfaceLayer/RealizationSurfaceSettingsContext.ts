@@ -1,7 +1,7 @@
 import { SurfaceTimeType_api } from "@api";
 import { getRealizationSurfacesMetadataOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
 import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
@@ -15,7 +15,7 @@ import { RealizationSurfaceSettings } from "./types";
 export class RealizationSurfaceSettingsContext implements SettingsContext<RealizationSurfaceSettings> {
     private _contextDelegate: SettingsContextDelegate<RealizationSurfaceSettings>;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._contextDelegate = new SettingsContextDelegate<RealizationSurfaceSettings>(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),

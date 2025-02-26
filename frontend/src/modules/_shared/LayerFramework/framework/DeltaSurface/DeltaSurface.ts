@@ -1,18 +1,18 @@
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { LayerDelegate } from "../../delegates/LayerDelegate";
+import { DataLayer } from "../../delegates/LayerDelegate";
 import { SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import { Group, SerializedDeltaSurface, SerializedType, instanceofLayer } from "../../interfaces";
-import { LayerManager } from "../LayerManager/LayerManager";
+import { DataLayerManager } from "../LayerManager/DataLayerManager";
 
 export class DeltaSurface implements Group {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
-    private _childrenLayerDelegateSet: Set<LayerDelegate<any, any>> = new Set();
+    private _childrenLayerDelegateSet: Set<DataLayer<any, any>> = new Set();
 
-    constructor(name: string, layerManager: LayerManager) {
+    constructor(name: string, layerManager: DataLayerManager) {
         this._groupDelegate = new GroupDelegate(this);
 
         this._unsubscribeHandler.registerUnsubscribeFunction(

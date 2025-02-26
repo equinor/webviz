@@ -4,7 +4,7 @@ import { v4 } from "uuid";
 import { GroupDelegate } from "./GroupDelegate";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import { DataLayerManager, LayerManagerTopic } from "../framework/LayerManager/DataLayerManager";
 import { SerializedItem } from "../interfaces";
 
 export enum ItemDelegateTopic {
@@ -29,10 +29,10 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     private _visible: boolean = true;
     private _expanded: boolean = true;
     private _parentGroup: GroupDelegate | null = null;
-    private _layerManager: LayerManager;
+    private _layerManager: DataLayerManager;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<ItemDelegatePayloads>();
 
-    constructor(name: string, layerManager: LayerManager) {
+    constructor(name: string, layerManager: DataLayerManager) {
         this._id = v4();
         this._layerManager = layerManager;
         this._name = this.makeUniqueName(name);
@@ -70,7 +70,7 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         this._parentGroup = parentGroup;
     }
 
-    getLayerManager(): LayerManager {
+    getLayerManager(): DataLayerManager {
         return this._layerManager;
     }
 

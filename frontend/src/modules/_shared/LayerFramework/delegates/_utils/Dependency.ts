@@ -2,8 +2,9 @@ import { isCancelledError } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { GlobalSettings } from "../../framework/LayerManager/LayerManager";
-import { Settings, UpdateFunc } from "../../interfaces";
+import { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
+import { UpdateFunc } from "../../interfaces";
+import { AllSettingTypes } from "../../settings/settingsTypes";
 import { SettingsContextDelegate } from "../SettingsContextDelegate";
 
 /*
@@ -17,7 +18,7 @@ import { SettingsContextDelegate } from "../SettingsContextDelegate";
  * not when they are accessed.
  * The dependency can be subscribed to, and will notify its subscribers whenever its value changes.
  */
-export class Dependency<TReturnValue, TSettings extends Settings, TKey extends keyof TSettings> {
+export class Dependency<TReturnValue, TSettings extends Partial<AllSettingTypes>, TKey extends keyof TSettings> {
     private _updateFunc: UpdateFunc<TReturnValue, TSettings, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();

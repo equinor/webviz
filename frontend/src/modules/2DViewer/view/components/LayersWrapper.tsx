@@ -8,7 +8,10 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect2D, outerRectContainsInnerRect } from "@lib/utils/geometry";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import { LayerManager, LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import {
+    DataLayerManager,
+    LayerManagerTopic,
+} from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
 import { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
@@ -22,7 +25,7 @@ import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
 import { DeckGlLayerWithPosition, recursivelyMakeViewsAndLayers } from "../utils/makeViewsAndLayers";
 
 export type LayersWrapperProps = {
-    layerManager: LayerManager;
+    layerManager: DataLayerManager;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
 };

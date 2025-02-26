@@ -10,9 +10,9 @@ import { GroupDelegate } from "../delegates/GroupDelegate";
 import { LayerColoringType, LayerStatus } from "../delegates/LayerDelegate";
 import { ColorScale } from "../framework/ColorScale/ColorScale";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
-import { LayerManager } from "../framework/LayerManager/LayerManager";
+import { DataLayerManager } from "../framework/LayerManager/DataLayerManager";
 import { View } from "../framework/View/View";
-import { BoundingBox, Layer, Settings, instanceofGroup, instanceofLayer } from "../interfaces";
+import { BoundingBox, CustomDataLayerImplementation, Settings, instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum VisualizationTarget {
     DECK_GL = "deck_gl",
@@ -65,7 +65,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
     private _visualizationFunctions: Map<string, MakeVisualizationFunction<any, any, TTarget>> = new Map();
 
     registerVisualizationFunction<TSettings extends Settings, TData>(
-        layerCtor: { new (layerManager: LayerManager): Layer<TSettings, TData, any> },
+        layerCtor: { new (layerManager: DataLayerManager): CustomDataLayerImplementation<TSettings, TData, any> },
         func: MakeVisualizationFunction<TSettings, TData, TTarget>
     ): void {
         if (this._visualizationFunctions.has(layerCtor.name)) {
@@ -74,7 +74,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         this._visualizationFunctions.set(layerCtor.name, func);
     }
 
-    make(layerManager: LayerManager): FactoryProduct<TTarget> {
+    make(layerManager: DataLayerManager): FactoryProduct<TTarget> {
         return this.makeRecursively(layerManager.getGroupDelegate());
     }
 
@@ -170,7 +170,10 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         };
     }
 
-    private makeLayer(layer: Layer<any, any>, colorScale?: ColorScaleWithName): TargetReturnTypes[TTarget] {
+    private makeLayer(
+        layer: CustomDataLayerImplementation<any, any>,
+        colorScale?: ColorScaleWithName
+    ): TargetReturnTypes[TTarget] {
         const func = this._visualizationFunctions.get(layer.constructor.name);
         if (!func) {
             throw new Error(`No visualization function found for layer ${layer.constructor.name}`);
@@ -205,7 +208,9 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         };
     }
 
-    private findColorScale(layer: Layer<any, any>): { id: string; colorScale: ColorScaleWithName } | null {
+    private findColorScale(
+        layer: CustomDataLayerImplementation<any, any>
+    ): { id: string; colorScale: ColorScaleWithName } | null {
         if (layer.getLayerDelegate().getColoringType() !== LayerColoringType.COLORSCALE) {
             return null;
         }

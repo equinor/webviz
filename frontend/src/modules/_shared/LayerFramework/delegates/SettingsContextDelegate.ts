@@ -3,15 +3,15 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { Dependency } from "./_utils/Dependency";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { GlobalSettings, LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import { DataLayerManager, GlobalSettings, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import {
     AvailableValuesType,
+    CustomSettingsContextImplementation,
     EachAvailableValuesType,
     NullableStoredData,
     SerializedSettingsState,
     Setting,
     Settings,
-    SettingsContext,
     StoredData,
     UpdateFunc,
 } from "../interfaces";
@@ -58,8 +58,13 @@ export class SettingsContextDelegate<
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
-    private _parentContext: SettingsContext<TSettings, TStoredData, TKey, TStoredDataKey>;
-    private _layerManager: LayerManager;
+    private _customSettingsContextImpl: CustomSettingsContextImplementation<
+        TSettings,
+        TStoredData,
+        TKey,
+        TStoredDataKey
+    >;
+    private _layerManager: DataLayerManager;
     private _settings: { [K in TKey]: Setting<TSettings[K]> } = {} as { [K in TKey]: Setting<TSettings[K]> };
     private _overriddenSettings: { [K in TKey]: TSettings[K] } = {} as { [K in TKey]: TSettings[K] };
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegatePayloads>();
@@ -68,11 +73,11 @@ export class SettingsContextDelegate<
     private _storedData: NullableStoredData<TStoredData> = {} as NullableStoredData<TStoredData>;
 
     constructor(
-        context: SettingsContext<TSettings, TStoredData, TKey, TStoredDataKey>,
-        layerManager: LayerManager,
+        context: CustomSettingsContextImplementation<TSettings, TStoredData, TKey, TStoredDataKey>,
+        layerManager: DataLayerManager,
         settings: { [K in TKey]: Setting<TSettings[K]> }
     ) {
-        this._parentContext = context;
+        this._customSettingsContextImpl = context;
         this._layerManager = layerManager;
 
         for (const key in settings) {
@@ -101,7 +106,7 @@ export class SettingsContextDelegate<
         this.createDependencies();
     }
 
-    getLayerManager(): LayerManager {
+    getLayerManager(): DataLayerManager {
         return this._layerManager;
     }
 
@@ -136,7 +141,7 @@ export class SettingsContextDelegate<
             }
         }
 
-        if (!this._parentContext.areCurrentSettingsValid) {
+        if (!this._customSettingsContextImpl.areCurrentSettingsValid) {
             return true;
         }
 
@@ -145,7 +150,7 @@ export class SettingsContextDelegate<
             settings[key] = this._settings[key].getDelegate().getValue();
         }
 
-        return this._parentContext.areCurrentSettingsValid(settings);
+        return this._customSettingsContextImpl.areCurrentSettingsValid(settings);
     }
 
     areAllSettingsLoaded(): boolean {
@@ -369,8 +374,8 @@ export class SettingsContextDelegate<
             return dependency;
         };
 
-        if (this._parentContext.defineDependencies) {
-            this._parentContext.defineDependencies({
+        if (this._customSettingsContextImpl.defineDependencies) {
+            this._customSettingsContextImpl.defineDependencies({
                 availableSettingsUpdater,
                 storedDataUpdater,
                 helperDependency,

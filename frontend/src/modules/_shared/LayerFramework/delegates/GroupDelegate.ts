@@ -2,7 +2,7 @@ import { ItemDelegateTopic } from "./ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import { LayerManagerTopic } from "../framework/LayerManager/DataLayerManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationFactory } from "../framework/utils/DeserializationFactory";
 import { Item, SerializedItem, instanceofGroup, instanceofLayer } from "../interfaces";

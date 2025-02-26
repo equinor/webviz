@@ -1,8 +1,12 @@
 import { SurfaceDataPng_api, getSurfaceDataOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
-import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { DataLayer, LayerColoringType } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+import {
+    BoundingBox,
+    CustomDataLayerImplementation,
+    SerializedLayer,
+} from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
@@ -16,14 +20,14 @@ import { ObservedSurfaceSettingsContext } from "./ObservedSurfaceSettingsContext
 import { ObservedSurfaceSettings } from "./types";
 
 export class ObservedSurfaceLayer
-    implements Layer<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
+    implements CustomDataLayerImplementation<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
 {
-    private _layerDelegate: LayerDelegate<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>;
+    private _layerDelegate: DataLayer<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>;
     private _itemDelegate: ItemDelegate;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._itemDelegate = new ItemDelegate("Observed Surface", layerManager);
-        this._layerDelegate = new LayerDelegate(
+        this._layerDelegate = new DataLayer(
             this,
             layerManager,
             new ObservedSurfaceSettingsContext(layerManager),
@@ -39,7 +43,7 @@ export class ObservedSurfaceLayer
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    getLayerDelegate(): DataLayer<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api> {
         return this._layerDelegate;
     }
 

@@ -1,15 +1,16 @@
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingTopic } from "../../delegates/SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { Item, Layer, SerializedSharedSetting, SerializedType, Setting, instanceofLayer } from "../../interfaces";
-import { LayerManager, LayerManagerTopic } from "../LayerManager/LayerManager";
+import { Item, SerializedSharedSetting, SerializedType, Setting } from "../../interfaces";
+import { DataLayer } from "../DataLayer/DataLayer";
+import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 
 export class SharedSetting implements Item {
     private _wrappedSetting: Setting<any>;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _itemDelegate: ItemDelegate;
 
-    constructor(wrappedSetting: Setting<any>, layerManager: LayerManager) {
+    constructor(wrappedSetting: Setting<any>, layerManager: DataLayerManager) {
         this._wrappedSetting = wrappedSetting;
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
@@ -68,13 +69,11 @@ export class SharedSetting implements Item {
             return;
         }
 
-        const layers = parentGroup.getDescendantItems((item) => instanceofLayer(item)) as Layer<any, any>[];
+        const layers = parentGroup.getDescendantItems((item) => item instanceof DataLayer) as DataLayer<any, any>[];
         let index = 0;
         let availableValues: any[] = [];
         for (const item of layers) {
-            const setting = item.getLayerDelegate().getSettingsContext().getDelegate().getSettings()[
-                this._wrappedSetting.getType()
-            ];
+            const setting = item.getSettingsContextDelegate().getSettings()[this._wrappedSetting.getType()];
             if (setting) {
                 if (setting.getDelegate().isLoading()) {
                     this._wrappedSetting.getDelegate().setLoading(true);

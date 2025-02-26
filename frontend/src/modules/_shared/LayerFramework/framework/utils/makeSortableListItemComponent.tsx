@@ -1,8 +1,9 @@
 import { LayersActionGroup } from "../../LayersActions";
-import { Group, Item, instanceofLayer } from "../../interfaces";
+import { Group, Item } from "../../interfaces";
 import { LayerComponent } from "../../layers/LayerComponent";
 import { ColorScale } from "../ColorScale/ColorScale";
 import { ColorScaleComponent } from "../ColorScale/ColorScaleComponent";
+import { DataLayer } from "../DataLayer/DataLayer";
 import { DeltaSurface } from "../DeltaSurface/DeltaSurface";
 import { DeltaSurfaceComponent } from "../DeltaSurface/DeltaSurfaceComponent";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
@@ -17,7 +18,7 @@ export function makeSortableListItemComponent(
     layerActions?: LayersActionGroup[],
     onActionClick?: (identifier: string, group: Group) => void
 ): React.ReactElement {
-    if (instanceofLayer(item)) {
+    if (item instanceof DataLayer) {
         return <LayerComponent key={item.getItemDelegate().getId()} layer={item} />;
     }
     if (item instanceof SettingsGroup) {

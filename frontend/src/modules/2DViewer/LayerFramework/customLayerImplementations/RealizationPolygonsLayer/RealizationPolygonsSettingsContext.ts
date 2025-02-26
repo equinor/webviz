@@ -1,6 +1,6 @@
 import { getPolygonsDirectoryOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import { PolygonsAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/PolygonsAttributeSetting";
@@ -13,7 +13,7 @@ import { RealizationPolygonsSettings } from "./types";
 export class RealizationPolygonsSettingsContext implements SettingsContext<RealizationPolygonsSettings> {
     private _contextDelegate: SettingsContextDelegate<RealizationPolygonsSettings>;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._contextDelegate = new SettingsContextDelegate<RealizationPolygonsSettings>(this, layerManager, {
             [SettingType.ENSEMBLE]: new EnsembleSetting(),
             [SettingType.REALIZATION]: new RealizationSetting(),

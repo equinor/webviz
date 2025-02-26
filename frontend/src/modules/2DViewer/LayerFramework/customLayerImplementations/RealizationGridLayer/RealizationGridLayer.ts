@@ -6,9 +6,13 @@ import {
     transformGridSurface,
 } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
-import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import { DataLayer, LayerColoringType } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+import {
+    BoundingBox,
+    CustomDataLayerImplementation,
+    SerializedLayer,
+} from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { QueryClient } from "@tanstack/react-query";
@@ -20,7 +24,7 @@ import { RealizationGridSettings } from "./types";
 
 export class RealizationGridLayer
     implements
-        Layer<
+        CustomDataLayerImplementation<
             RealizationGridSettings,
             {
                 gridSurfaceData: GridSurface_trans;
@@ -28,7 +32,7 @@ export class RealizationGridLayer
             }
         >
 {
-    private _layerDelegate: LayerDelegate<
+    private _layerDelegate: DataLayer<
         RealizationGridSettings,
         {
             gridSurfaceData: GridSurface_trans;
@@ -37,9 +41,9 @@ export class RealizationGridLayer
     >;
     private _itemDelegate: ItemDelegate;
 
-    constructor(layerManager: LayerManager) {
+    constructor(layerManager: DataLayerManager) {
         this._itemDelegate = new ItemDelegate("Realization Grid layer", layerManager);
-        this._layerDelegate = new LayerDelegate(
+        this._layerDelegate = new DataLayer(
             this,
             layerManager,
             new RealizationGridSettingsContext(layerManager),
@@ -55,7 +59,7 @@ export class RealizationGridLayer
         return this._itemDelegate;
     }
 
-    getLayerDelegate(): LayerDelegate<
+    getLayerDelegate(): DataLayer<
         RealizationGridSettings,
         {
             gridSurfaceData: GridSurface_trans;

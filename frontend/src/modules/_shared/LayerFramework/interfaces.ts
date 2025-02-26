@@ -5,12 +5,10 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
-import { LayerDelegate } from "./delegates/LayerDelegate";
 import { SettingDelegate } from "./delegates/SettingDelegate";
-import { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
 import { Dependency } from "./delegates/_utils/Dependency";
-import { GlobalSettings } from "./framework/LayerManager/LayerManager";
-import { SettingType } from "./settings/settingsTypes";
+import { GlobalSettings } from "./framework/DataLayerManager/DataLayerManager";
+import { AllSettingTypes, SettingType } from "./settings/settingsTypes";
 
 export enum SerializedType {
     LAYER_MANAGER = "layer-manager",
@@ -34,7 +32,7 @@ export type SerializedSettingsState<TSettings> = Record<keyof TSettings, string>
 
 export interface SerializedLayer<TSettings> extends SerializedItem {
     type: SerializedType.LAYER;
-    layerClass: string;
+    customLayerImplClass: string;
     settings: SerializedSettingsState<TSettings>;
 }
 
@@ -110,29 +108,55 @@ export interface FetchDataFunction<TSettings extends Settings, TKey extends keyo
     ): Promise<FetchDataFunctionResult>;
 }
 
-export interface Layer<TSettings extends Settings, TData, TStoredData extends StoredData = Record<string, never>>
-    extends Item {
-    getLayerDelegate(): LayerDelegate<TSettings, TData, TStoredData>;
-    doSettingsChangesRequireDataRefetch(prevSettings: TSettings, newSettings: TSettings): boolean;
-    fetchData(queryClient: QueryClient): Promise<TData>;
-    makeBoundingBox?(): BoundingBox | null;
-    predictBoundingBox?(): BoundingBox | null;
-    makeValueRange?(): [number, number] | null;
+export type UniqueSettings<TSettings extends Settings> = (keyof TSettings)[] & { __unique: never };
+
+export interface CustomSettingsContextImplementation<
+    TSettings extends Partial<AllSettingTypes>,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettingKey extends keyof TSettings = keyof TSettings,
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData
+> {
+    areCurrentSettingsValid?: (settings: TSettings) => boolean;
+    defineDependencies(args: DefineDependenciesArgs<TSettings, TStoredData, TSettingKey, TStoredDataKey>): void;
 }
 
-export function instanceofLayer(item: Item): item is Layer<Settings, any, StoredData> {
-    return (
-        (item as Layer<Settings, any, StoredData>).getItemDelegate !== undefined &&
-        (item as Layer<Settings, any, StoredData>).doSettingsChangesRequireDataRefetch !== undefined &&
-        (item as Layer<Settings, any, StoredData>).fetchData !== undefined
-    );
+export type DataLayerInformationAccessors<
+    TSettings extends Settings,
+    TData,
+    TStoredData extends StoredData = Record<string, unknown>
+> = {
+    getData: () => TData | null;
+    getSetting: <K extends keyof TSettings>(settingName: K) => TSettings[K];
+    getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
+    getStoredData: <K extends keyof TStoredData>(key: K) => TStoredData[K] | null;
+};
+
+export type FetchDataParams<TSettings extends Settings, TStoredData extends StoredData = Record<string, unknown>> = {
+    queryClient: QueryClient;
+    registerQueryKey: (key: unknown[]) => void;
+} & Omit<DataLayerInformationAccessors<TSettings, TStoredData>, "getData">;
+
+export interface CustomDataLayerImplementation<
+    TSettings extends Settings,
+    TData,
+    TStoredData extends StoredData = Record<string, unknown>
+> {
+    doSettingsChangesRequireDataRefetch(
+        prevSettings: TSettings,
+        newSettings: TSettings,
+        accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>
+    ): boolean;
+    fetchData(params: FetchDataParams<TSettings, TStoredData>): Promise<TData>;
+    makeBoundingBox?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): BoundingBox | null;
+    predictBoundingBox?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): BoundingBox | null;
+    makeValueRange?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): [number, number] | null;
 }
 
-export interface GetHelperDependency<TSettings extends Settings, TKey extends keyof TSettings> {
+export interface GetHelperDependency<TSettings extends Partial<AllSettingTypes>, TKey extends keyof TSettings> {
     <TDep>(dep: Dependency<TDep, TSettings, TKey>): Awaited<TDep> | null;
 }
 
-export interface UpdateFunc<TReturnValue, TSettings extends Settings, TKey extends keyof TSettings> {
+export interface UpdateFunc<TReturnValue, TSettings extends Partial<AllSettingTypes>, TKey extends keyof TSettings> {
     (args: {
         getLocalSetting: <K extends TKey>(settingName: K) => TSettings[K];
         getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
@@ -142,7 +166,7 @@ export interface UpdateFunc<TReturnValue, TSettings extends Settings, TKey exten
 }
 
 export interface DefineDependenciesArgs<
-    TSettings extends Settings,
+    TSettings extends Partial<AllSettingTypes>,
     TStoredData extends StoredData = Record<string, never>,
     TKey extends keyof TSettings = keyof TSettings,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
@@ -166,17 +190,6 @@ export interface DefineDependenciesArgs<
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     queryClient: QueryClient;
-}
-
-export interface SettingsContext<
-    TSettings extends Settings,
-    TStoredData extends StoredData = Record<string, never>,
-    TKey extends keyof TSettings = keyof TSettings,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData
-> {
-    getDelegate(): SettingsContextDelegate<TSettings, TStoredData, TKey, TStoredDataKey>;
-    areCurrentSettingsValid?: (settings: TSettings) => boolean;
-    defineDependencies(args: DefineDependenciesArgs<TSettings, TStoredData, TKey, TStoredDataKey>): void;
 }
 
 // Required when making "AvailableValuesType" for all settings in an object ("TSettings")
@@ -220,7 +233,7 @@ export interface Setting<TValue> {
     getConstructorParams?: () => any[];
 }
 
-export type Settings = { [key in SettingType]?: any };
+export type Settings = { [key in keyof AllSettingTypes]?: any };
 
 export type StoredData = Record<string, any>;
 export type NullableStoredData<TStoredData extends StoredData> = {
