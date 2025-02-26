@@ -15,7 +15,7 @@ import {
 } from "@lib/utils/geometry";
 import {
     Vec2,
-    multiplyVec2,
+    multiplyElementWiseVec2,
     point2Distance,
     scaleVec2NonUniform,
     subtractVec2,
@@ -95,7 +95,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 setPosition(
                     subtractVec2(
                         relativePointerPosition,
-                        multiplyVec2(relativePointerToElementDiff, {
+                        multiplyElementWiseVec2(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
                         })
@@ -197,7 +197,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                 setPosition(
                     subtractVec2(
                         relativePointerPosition,
-                        multiplyVec2(relativePointerToElementDiff, {
+                        multiplyElementWiseVec2(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
                         })

@@ -1,6 +1,8 @@
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorScaleSerialization } from "@lib/utils/ColorScale";
+import { BBox } from "@lib/utils/boundingBox";
+import { Geometry } from "@lib/utils/geometry";
 import { QueryClient } from "@tanstack/react-query";
 
 import { GroupDelegate } from "./delegates/GroupDelegate";
@@ -91,12 +93,6 @@ export function instanceofGroup(item: Item): item is Group {
     return (item as Group).getItemDelegate !== undefined && (item as Group).getGroupDelegate !== undefined;
 }
 
-export type BoundingBox = {
-    x: [number, number];
-    y: [number, number];
-    z: [number, number];
-};
-
 export enum FetchDataFunctionResult {
     SUCCESS = "SUCCESS",
     IN_PROGRESS = "IN_PROGRESS",
@@ -113,10 +109,27 @@ export interface FetchDataFunction<TSettings extends Settings, TKey extends keyo
 export interface Layer<TSettings extends Settings, TData, TStoredData extends StoredData = Record<string, never>>
     extends Item {
     getLayerDelegate(): LayerDelegate<TSettings, TData, TStoredData>;
+    /**
+     * This method needs to be implemented by the layer. It should return true if the data needs to be refetched when the settings change.
+     * @param prevSettings The previous settings
+     * @param newSettings The new settings
+     */
     doSettingsChangesRequireDataRefetch(prevSettings: TSettings, newSettings: TSettings): boolean;
+    /**
+     * This method needs to be implemented by the layer. It should fetch the data for the layer and return a promise to it.
+     */
     fetchData(queryClient: QueryClient): Promise<TData>;
-    makeBoundingBox?(): BoundingBox | null;
-    predictBoundingBox?(): BoundingBox | null;
+    /**
+     * Implement this method if you want to provide an axis aligned bounding box for the layer. This can be used for adjusting the camera view.
+     */
+    makeBoundingBox?(): BBox | null;
+    /**
+     * Implement this method if you want to provide a predicted geometry and an respective axis aligned bounding box for the layer. The geometry can be used to preview the layer before the actual data is fetched.
+     */
+    predictNextGeometry?(): Geometry | null;
+    /**
+     * Implement this method if you want to provide a value range for the layer. This can be used for adjusting the color scale.
+     */
     makeValueRange?(): [number, number] | null;
 }
 

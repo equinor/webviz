@@ -1,6 +1,8 @@
 import { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
+import * as bbox from "@lib/utils/boundingBox";
 import { isDevMode } from "@lib/utils/devMode";
+import { Geometry } from "@lib/utils/geometry";
 import { QueryClient, isCancelledError } from "@tanstack/react-query";
 
 import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
@@ -9,15 +11,7 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
-import {
-    BoundingBox,
-    Layer,
-    SerializedLayer,
-    SerializedType,
-    Settings,
-    SettingsContext,
-    StoredData,
-} from "../interfaces";
+import { Layer, SerializedLayer, SerializedType, Settings, SettingsContext, StoredData } from "../interfaces";
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -62,9 +56,9 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
     private _status: LayerStatus = LayerStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
-    private _prevBoundingBox: BoundingBox | null = null;
-    private _predictedBoundingBox: BoundingBox | null = null;
-    private _boundingBox: BoundingBox | null = null;
+    private _prevBoundingBox: bbox.BBox | null = null;
+    private _boundingBox: bbox.BBox | null = null;
+    private _predictedGeometry: Geometry | null = null;
     private _valueRange: [number, number] | null = null;
     private _coloringType: LayerColoringType;
     private _isSubordinated: boolean = false;
@@ -130,19 +124,19 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
         return this._settingsContext;
     }
 
-    getBoundingBox(): BoundingBox | null {
+    getBoundingBox(): bbox.BBox | null {
         return this._boundingBox;
     }
 
-    getLastValidBoundingBox(): BoundingBox | null {
+    getLastValidBoundingBox(): bbox.BBox | null {
         if (this._boundingBox) {
             return this._boundingBox;
         }
         return this._prevBoundingBox;
     }
 
-    getPredictedBoundingBox(): BoundingBox | null {
-        return this._predictedBoundingBox;
+    getPredictedGeometry(): Geometry | null {
+        return this._predictedGeometry;
     }
 
     getColoringType(): LayerColoringType {
@@ -250,7 +244,11 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
 
         this.invalidateBoundingBox();
         this.invalidateValueRange();
-        this._predictedBoundingBox = this._owner.predictBoundingBox?.() ?? null;
+        const prediction = this._owner.predictNextGeometry?.() ?? null;
+        if (prediction) {
+            this._predictedGeometry = prediction;
+            this._boundingBox = prediction.boundingBox;
+        }
 
         this.setStatus(LayerStatus.LOADING);
 
@@ -321,11 +319,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
 
     private invalidateBoundingBox(): void {
         if (this._boundingBox) {
-            this._prevBoundingBox = {
-                x: [this._boundingBox.x[0], this._boundingBox.x[1]],
-                y: [this._boundingBox.y[0], this._boundingBox.y[1]],
-                z: [this._boundingBox.z[0], this._boundingBox.z[1]],
-            };
+            this._prevBoundingBox = bbox.clone(this._boundingBox);
         } else {
             this._prevBoundingBox = null;
         }
