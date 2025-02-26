@@ -1,5 +1,4 @@
 import { CompositeLayer, GetPickingInfoParams, LayersList, PickingInfo } from "@deck.gl/core";
-import { PathLayer, PointCloudLayer } from "@deck.gl/layers";
 import * as vec3 from "@lib/utils/vec3";
 import { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
 import { BoundingBox3D, ReportBoundingBoxAction } from "@webviz/subsurface-viewer/dist/components/Map";
@@ -101,16 +100,6 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
 
     renderLayers(): LayersList {
         return [
-            new PathLayer({
-                id: "path-layer",
-                data: this.props.data.map((well) => well.coordinates.map((coord) => [coord[0], coord[1], coord[2]])),
-                getPath: (d: any) => d,
-                getColor: [255, 0, 0],
-                getWidth: 5,
-                widthUnits: "meters",
-                pickable: false,
-                billboard: true,
-            }),
             new PipeLayer({
                 id: "pipe-layer",
                 data: this.props.data.map((well) => {
@@ -125,17 +114,6 @@ export class WellsLayer extends CompositeLayer<WellsLayerProps> {
                 pickable: true,
                 // @ts-expect-error - This is how deck.gl expects the state to be defined
                 parameters: { depthTest: true },
-            }),
-            new PointCloudLayer({
-                id: "hover-md-layer",
-                data: this.state.mdCoordinate ? [this.state.mdCoordinate] : [],
-                getPosition: (d: any) => d,
-                getColor: [255, 0, 0],
-                getRadius: 30,
-                sizeUnits: "meters",
-                pickable: false,
-                billboard: true,
-                visible: this.state.mdCoordinate !== null,
             }),
         ];
     }
