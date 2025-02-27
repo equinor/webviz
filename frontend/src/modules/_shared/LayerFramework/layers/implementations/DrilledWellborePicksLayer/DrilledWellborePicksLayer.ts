@@ -6,7 +6,7 @@ import {
     FetchDataParams,
 } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
-import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { SettingType, SettingTypes } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
 import { isEqual } from "lodash";
 
@@ -23,15 +23,18 @@ export class DrilledWellborePicksLayer
     ];
 
     doSettingsChangesRequireDataRefetch(
-        prevSettings: DrilledWellborePicksSettings,
-        newSettings: DrilledWellborePicksSettings
+        prevSettings: SettingTypes<DrilledWellborePicksSettings>,
+        newSettings: SettingTypes<DrilledWellborePicksSettings>
     ): boolean {
         return !isEqual(prevSettings, newSettings);
     }
 
     makeBoundingBox({
         getData,
-    }: DataLayerInformationAccessors<DrilledWellborePicksSettings, WellborePick_api[]>): BoundingBox | null {
+    }: DataLayerInformationAccessors<
+        SettingTypes<DrilledWellborePicksSettings>,
+        WellborePick_api[]
+    >): BoundingBox | null {
         const data = getData();
         if (!data) {
             return null;
@@ -62,7 +65,7 @@ export class DrilledWellborePicksLayer
         getGlobalSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<DrilledWellborePicksSettings>): Promise<WellborePick_api[]> {
+    }: FetchDataParams<SettingTypes<DrilledWellborePicksSettings>>): Promise<WellborePick_api[]> {
         const selectedWellboreHeaders = getSetting(SettingType.SMDA_WELLBORE_HEADERS);
         let selectedWellboreUuids: string[] = [];
         if (selectedWellboreHeaders) {

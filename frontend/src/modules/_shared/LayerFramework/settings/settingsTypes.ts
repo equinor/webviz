@@ -54,6 +54,6 @@ export type AllSettingTypes = {
     [K in keyof NonOptionalSettingTypes]: NonOptionalSettingTypes[K] | null;
 };
 
-export type SettingTypes<T extends (keyof NonOptionalSettingTypes)[]> = {
-    [K in T[number]]: NonOptionalSettingTypes[K];
+export type SettingTypes<T extends (keyof AllSettingTypes)[]> = {
+    [K in T[number]]: AllSettingTypes[K];
 };

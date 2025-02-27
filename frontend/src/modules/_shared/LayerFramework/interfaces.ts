@@ -8,7 +8,7 @@ import { ItemDelegate } from "./delegates/ItemDelegate";
 import { SettingDelegate } from "./delegates/SettingDelegate";
 import { Dependency } from "./delegates/_utils/Dependency";
 import { GlobalSettings } from "./framework/DataLayerManager/DataLayerManager";
-import { AllSettingTypes, SettingType } from "./settings/settingsTypes";
+import { AllSettingTypes, SettingType, SettingTypes } from "./settings/settingsTypes";
 
 export enum SerializedType {
     LAYER_MANAGER = "layer-manager",
@@ -111,17 +111,20 @@ export interface FetchDataFunction<TSettings extends Settings, TKey extends keyo
 export type UniqueSettings<TSettings extends Settings> = (keyof TSettings)[] & { __unique: never };
 
 export interface CustomSettingsContextImplementation<
-    TSettings extends Partial<AllSettingTypes>,
+    TSettingTypes extends Settings,
     TStoredData extends StoredData = Record<string, never>,
+    TSettings extends Partial<AllSettingTypes> = SettingTypes<TSettingTypes>,
     TSettingKey extends keyof TSettings = keyof TSettings,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > {
     areCurrentSettingsValid?: (settings: TSettings) => boolean;
-    defineDependencies(args: DefineDependenciesArgs<TSettings, TStoredData, TSettingKey, TStoredDataKey>): void;
+    defineDependencies(
+        args: DefineDependenciesArgs<TSettingTypes, TSettings, TStoredData, TSettingKey, TStoredDataKey>
+    ): void;
 }
 
 export type DataLayerInformationAccessors<
-    TSettings extends Settings,
+    TSettings extends Partial<AllSettingTypes>,
     TData,
     TStoredData extends StoredData = Record<string, unknown>
 > = {
@@ -131,15 +134,19 @@ export type DataLayerInformationAccessors<
     getStoredData: <K extends keyof TStoredData>(key: K) => TStoredData[K] | null;
 };
 
-export type FetchDataParams<TSettings extends Settings, TStoredData extends StoredData = Record<string, unknown>> = {
+export type FetchDataParams<
+    TSettings extends Partial<AllSettingTypes>,
+    TStoredData extends StoredData = Record<string, unknown>
+> = {
     queryClient: QueryClient;
     registerQueryKey: (key: unknown[]) => void;
 } & Omit<DataLayerInformationAccessors<TSettings, TStoredData>, "getData">;
 
 export interface CustomDataLayerImplementation<
-    TSettings extends Settings,
+    TSettingTypes extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, unknown>
+    TStoredData extends StoredData = Record<string, unknown>,
+    TSettings extends Partial<AllSettingTypes> = SettingTypes<TSettingTypes>
 > {
     doSettingsChangesRequireDataRefetch(
         prevSettings: TSettings,
@@ -152,20 +159,30 @@ export interface CustomDataLayerImplementation<
     makeValueRange?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): [number, number] | null;
 }
 
-export interface GetHelperDependency<TSettings extends Partial<AllSettingTypes>, TKey extends keyof TSettings> {
-    <TDep>(dep: Dependency<TDep, TSettings, TKey>): Awaited<TDep> | null;
+export interface GetHelperDependency<
+    TSettingTypes extends Settings,
+    TSettings extends Partial<AllSettingTypes>,
+    TKey extends keyof TSettings
+> {
+    <TDep>(dep: Dependency<TDep, TSettingTypes, TSettings, TKey>): Awaited<TDep> | null;
 }
 
-export interface UpdateFunc<TReturnValue, TSettings extends Partial<AllSettingTypes>, TKey extends keyof TSettings> {
+export interface UpdateFunc<
+    TReturnValue,
+    TSettingTypes extends Settings,
+    TSettings extends Partial<AllSettingTypes>,
+    TKey extends keyof TSettings
+> {
     (args: {
         getLocalSetting: <K extends TKey>(settingName: K) => TSettings[K];
         getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-        getHelperDependency: GetHelperDependency<TSettings, TKey>;
+        getHelperDependency: GetHelperDependency<TSettingTypes, TSettings, TKey>;
         abortSignal: AbortSignal;
     }): TReturnValue;
 }
 
 export interface DefineDependenciesArgs<
+    TSettingTypes extends Settings,
     TSettings extends Partial<AllSettingTypes>,
     TStoredData extends StoredData = Record<string, never>,
     TKey extends keyof TSettings = keyof TSettings,
@@ -173,20 +190,22 @@ export interface DefineDependenciesArgs<
 > {
     availableSettingsUpdater: (
         settingName: TKey,
-        update: UpdateFunc<EachAvailableValuesType<TSettings[TKey]>, TSettings, TKey>
-    ) => Dependency<EachAvailableValuesType<TSettings[TKey]>, TSettings, TKey>;
+        update: UpdateFunc<EachAvailableValuesType<TSettings[TKey]>, TSettingTypes, TSettings, TKey>
+    ) => Dependency<EachAvailableValuesType<TSettings[TKey]>, TSettingTypes, TSettings, TKey>;
     storedDataUpdater: (
         key: TStoredDataKey,
-        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TKey>
-    ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TKey>;
+        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettingTypes, TSettings, TKey>
+    ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettingTypes, TSettings, TKey>;
     helperDependency: <T>(
         update: (args: {
             getLocalSetting: <T extends TKey>(settingName: T) => TSettings[T];
             getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-            getHelperDependency: <TDep>(helperDependency: Dependency<TDep, TSettings, TKey>) => TDep | null;
+            getHelperDependency: <TDep>(
+                helperDependency: Dependency<TDep, TSettingTypes, TSettings, TKey>
+            ) => TDep | null;
             abortSignal: AbortSignal;
         }) => T
-    ) => Dependency<T, TSettings, TKey>;
+    ) => Dependency<T, TSettingTypes, TSettings, TKey>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     queryClient: QueryClient;
@@ -233,7 +252,7 @@ export interface Setting<TValue> {
     getConstructorParams?: () => any[];
 }
 
-export type Settings = { [key in keyof AllSettingTypes]?: any };
+export type Settings = SettingType[] & { readonly __settings?: never };
 
 export type StoredData = Record<string, any>;
 export type NullableStoredData<TStoredData extends StoredData> = {

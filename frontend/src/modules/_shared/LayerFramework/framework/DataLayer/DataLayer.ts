@@ -20,7 +20,7 @@ import {
     StoredData,
 } from "../../interfaces";
 import { SettingRegistry } from "../../settings/SettingRegistry";
-import { AllSettingTypes, SettingType } from "../../settings/settingsTypes";
+import { AllSettingTypes, SettingType, SettingTypes } from "../../settings/settingsTypes";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
@@ -50,15 +50,16 @@ export type LayerDelegatePayloads<TData> = {
 };
 
 export type DataLayerParams<
-    TSettings extends Settings,
+    TSettingTypes extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, never>
+    TStoredData extends StoredData = Record<string, never>,
+    TSettings extends Partial<AllSettingTypes> = SettingTypes<TSettingTypes>
 > = {
-    settings: TSettings;
+    settings: TSettingTypes;
     layerManager: DataLayerManager;
     name: string;
-    customSettingsContextImplementation: CustomSettingsContextImplementation<TSettings, TStoredData>;
-    customDataLayerImplementation: CustomDataLayerImplementation<TSettings, TData, TStoredData>;
+    customSettingsContextImplementation: CustomSettingsContextImplementation<TSettingTypes, TStoredData, TSettings>;
+    customDataLayerImplementation: CustomDataLayerImplementation<TSettingTypes, TData, TStoredData, TSettings>;
     coloringType: LayerColoringType;
 };
 
@@ -79,11 +80,15 @@ function makeSettings<TSettings extends Settings>(
  * It is responsible for (re-)fetching the data whenever changes to settings make it necessary.
  * It also manages the status of the layer (loading, success, error).
  */
-export class DataLayer<TSettings extends Settings, TData, TStoredData extends StoredData = Record<string, never>>
-    implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
+export class DataLayer<
+    TSettingTypes extends Settings,
+    TData,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettings extends Partial<AllSettingTypes> = SettingTypes<TSettingTypes>
+> implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
 {
-    private _customDataLayerImpl: CustomDataLayerImplementation<TSettings, TData, TStoredData>;
-    private _settingsContextDelegate: SettingsContextDelegate<TSettings, TStoredData>;
+    private _customDataLayerImpl: CustomDataLayerImplementation<TSettingTypes, TData, TStoredData, TSettings>;
+    private _settingsContextDelegate: SettingsContextDelegate<TSettingTypes, TStoredData, TSettings>;
     private _itemDelegate: ItemDelegate;
     private _layerManager: DataLayerManager;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
@@ -100,11 +105,11 @@ export class DataLayer<TSettings extends Settings, TData, TStoredData extends St
     private _coloringType: LayerColoringType;
     private _isSubordinated: boolean = false;
 
-    constructor(params: DataLayerParams<TSettings, TData, TStoredData>) {
+    constructor(params: DataLayerParams<TSettingTypes, TData, TStoredData, TSettings>) {
         const { layerManager, name, customSettingsContextImplementation, customDataLayerImplementation, coloringType } =
             params;
         this._layerManager = layerManager;
-        this._settingsContextDelegate = new SettingsContextDelegate<TSettings, TStoredData>(
+        this._settingsContextDelegate = new SettingsContextDelegate<TSettingTypes, TStoredData, TSettings>(
             customSettingsContextImplementation,
             layerManager,
             makeSettings(params.settings) as { [key in keyof TSettings]: Setting<any> }

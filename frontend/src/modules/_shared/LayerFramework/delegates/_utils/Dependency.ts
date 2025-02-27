@@ -3,7 +3,7 @@ import { isCancelledError } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
-import { UpdateFunc } from "../../interfaces";
+import { Settings, UpdateFunc } from "../../interfaces";
 import { AllSettingTypes } from "../../settings/settingsTypes";
 import { SettingsContextDelegate } from "../SettingsContextDelegate";
 
@@ -18,12 +18,17 @@ import { SettingsContextDelegate } from "../SettingsContextDelegate";
  * not when they are accessed.
  * The dependency can be subscribed to, and will notify its subscribers whenever its value changes.
  */
-export class Dependency<TReturnValue, TSettings extends Partial<AllSettingTypes>, TKey extends keyof TSettings> {
-    private _updateFunc: UpdateFunc<TReturnValue, TSettings, TKey>;
+export class Dependency<
+    TReturnValue,
+    TSettingTypes extends Settings,
+    TSettings extends Partial<AllSettingTypes>,
+    TKey extends keyof TSettings
+> {
+    private _updateFunc: UpdateFunc<TReturnValue, TSettingTypes, TSettings, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
 
-    private _contextDelegate: SettingsContextDelegate<TSettings, any, TKey, any>;
+    private _contextDelegate: SettingsContextDelegate<TSettingTypes, any, TSettings, TKey, any>;
 
     private _makeSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void;
     private _makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
@@ -32,7 +37,7 @@ export class Dependency<TReturnValue, TSettings extends Partial<AllSettingTypes>
     ) => void;
     private _cachedSettingsMap: Map<string, any> = new Map();
     private _cachedGlobalSettingsMap: Map<string, any> = new Map();
-    private _cachedDependenciesMap: Map<Dependency<any, TSettings, any>, any> = new Map();
+    private _cachedDependenciesMap: Map<Dependency<any, TSettingTypes, TSettings, any>, any> = new Map();
     private _cachedValue: Awaited<TReturnValue> | null = null;
     private _abortController: AbortController | null = null;
     private _isInitialized = false;
@@ -40,8 +45,8 @@ export class Dependency<TReturnValue, TSettings extends Partial<AllSettingTypes>
     private _numChildDependencies = 0;
 
     constructor(
-        contextDelegate: SettingsContextDelegate<TSettings, any, TKey, any>,
-        updateFunc: UpdateFunc<TReturnValue, TSettings, TKey>,
+        contextDelegate: SettingsContextDelegate<TSettingTypes, any, TSettings, TKey, any>,
+        updateFunc: UpdateFunc<TReturnValue, TSettingTypes, TSettings, TKey>,
         makeSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
             key: K,
@@ -137,7 +142,7 @@ export class Dependency<TReturnValue, TSettings extends Partial<AllSettingTypes>
         return this._cachedGlobalSettingsMap.get(settingName as string);
     }
 
-    private getHelperDependency<TDep>(dep: Dependency<TDep, TSettings, TKey>): Awaited<TDep> | null {
+    private getHelperDependency<TDep>(dep: Dependency<TDep, TSettingTypes, TSettings, TKey>): Awaited<TDep> | null {
         if (!this._isInitialized) {
             this._numParentDependencies++;
         }

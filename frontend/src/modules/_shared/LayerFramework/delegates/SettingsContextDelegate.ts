@@ -15,6 +15,7 @@ import {
     StoredData,
     UpdateFunc,
 } from "../interfaces";
+import { AllSettingTypes, SettingTypes } from "../settings/settingsTypes";
 
 export enum SettingsContextLoadingState {
     LOADING = "LOADING",
@@ -52,15 +53,17 @@ export type SettingsContextDelegateState<TSettings extends Settings, TKey extend
  *
  */
 export class SettingsContextDelegate<
-    TSettings extends Settings,
+    TSettingTypes extends Settings,
     TStoredData extends StoredData = Record<string, never>,
+    TSettings extends Partial<AllSettingTypes> = SettingTypes<TSettingTypes>,
     TKey extends keyof TSettings = keyof TSettings,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
     private _customSettingsContextImpl: CustomSettingsContextImplementation<
-        TSettings,
+        TSettingTypes,
         TStoredData,
+        TSettings,
         TKey,
         TStoredDataKey
     >;
@@ -73,7 +76,7 @@ export class SettingsContextDelegate<
     private _storedData: NullableStoredData<TStoredData> = {} as NullableStoredData<TStoredData>;
 
     constructor(
-        context: CustomSettingsContextImplementation<TSettings, TStoredData, TKey, TStoredDataKey>,
+        context: CustomSettingsContextImplementation<TSettingTypes, TStoredData, TSettings, TKey, TStoredDataKey>,
         layerManager: DataLayerManager,
         settings: { [K in TKey]: Setting<TSettings[K]> }
     ) {
@@ -304,10 +307,10 @@ export class SettingsContextDelegate<
 
         const availableSettingsUpdater = <K extends TKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<EachAvailableValuesType<TSettings[K]>, TSettings, K>
-        ): Dependency<EachAvailableValuesType<TSettings[K]>, TSettings, K> => {
-            const dependency = new Dependency<EachAvailableValuesType<TSettings[K]>, TSettings, K>(
-                this as unknown as SettingsContextDelegate<TSettings, TStoredData, K, TStoredDataKey>,
+            updateFunc: UpdateFunc<EachAvailableValuesType<TSettings[K]>, TSettingTypes, TSettings, K>
+        ): Dependency<EachAvailableValuesType<TSettings[K]>, TSettingTypes, TSettings, K> => {
+            const dependency = new Dependency<EachAvailableValuesType<TSettings[K]>, TSettingTypes, TSettings, K>(
+                this as unknown as SettingsContextDelegate<TSettingTypes, TStoredData, TSettings, K, TStoredDataKey>,
                 updateFunc,
                 makeSettingGetter,
                 makeGlobalSettingGetter
@@ -336,10 +339,10 @@ export class SettingsContextDelegate<
 
         const storedDataUpdater = <K extends TStoredDataKey>(
             key: K,
-            updateFunc: UpdateFunc<NullableStoredData<TStoredData>[K], TSettings, TKey>
-        ): Dependency<NullableStoredData<TStoredData>[K], TSettings, TKey> => {
-            const dependency = new Dependency<NullableStoredData<TStoredData>[K], TSettings, TKey>(
-                this as unknown as SettingsContextDelegate<TSettings, TStoredData, TKey, K>,
+            updateFunc: UpdateFunc<NullableStoredData<TStoredData>[K], TSettingTypes, TSettings, TKey>
+        ): Dependency<NullableStoredData<TStoredData>[K], TSettingTypes, TSettings, TKey> => {
+            const dependency = new Dependency<NullableStoredData<TStoredData>[K], TSettingTypes, TSettings, TKey>(
+                this as unknown as SettingsContextDelegate<TSettingTypes, TStoredData, TSettings, TKey, K>,
                 updateFunc,
                 makeSettingGetter,
                 makeGlobalSettingGetter
@@ -358,12 +361,12 @@ export class SettingsContextDelegate<
             update: (args: {
                 getLocalSetting: <T extends TKey>(settingName: T) => TSettings[T];
                 getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-                getHelperDependency: <TDep>(dep: Dependency<TDep, TSettings, TKey>) => TDep | null;
+                getHelperDependency: <TDep>(dep: Dependency<TDep, TSettingTypes, TSettings, TKey>) => TDep | null;
                 abortSignal: AbortSignal;
             }) => T
         ) => {
-            const dependency = new Dependency<T, TSettings, TKey>(
-                this as unknown as SettingsContextDelegate<TSettings, TStoredData, TKey, TStoredDataKey>,
+            const dependency = new Dependency<T, TSettingTypes, TSettings, TKey>(
+                this as unknown as SettingsContextDelegate<TSettingTypes, TStoredData, TSettings, TKey, TStoredDataKey>,
                 update,
                 makeSettingGetter,
                 makeGlobalSettingGetter
