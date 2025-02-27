@@ -11,7 +11,7 @@ import {
 import { LayerRegistry } from "../../layers/LayerRegistry";
 import { SettingRegistry } from "../../settings/SettingRegistry";
 import { ColorScale } from "../ColorScale/ColorScale";
-import { DataLayerManager } from "../LayerManager/DataLayerManager";
+import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { View } from "../View/View";
@@ -32,8 +32,8 @@ export class DeserializationFactory {
 
         if (serialized.type === SerializedType.LAYER) {
             const serializedLayer = serialized as SerializedLayer<any>;
-            const layer = LayerRegistry.makeLayer(serializedLayer.customLayerImplClass, this._layerManager);
-            layer.getLayerDelegate().deserializeState(serializedLayer);
+            const layer = LayerRegistry.makeLayer(serializedLayer.layerName, this._layerManager, serializedLayer.name);
+            layer.deserializeState(serializedLayer);
             layer.getItemDelegate().setId(serializedLayer.id);
             layer.getItemDelegate().setName(serializedLayer.name);
             return layer;
@@ -41,7 +41,11 @@ export class DeserializationFactory {
 
         if (serialized.type === SerializedType.VIEW) {
             const serializedView = serialized as SerializedView;
-            const view = new View(serializedView.name, this._layerManager, serializedView.color);
+            const view = new View({
+                name: serializedView.name,
+                layerManager: this._layerManager,
+                color: serializedView.color,
+            });
             view.deserializeState(serializedView);
             return view;
         }

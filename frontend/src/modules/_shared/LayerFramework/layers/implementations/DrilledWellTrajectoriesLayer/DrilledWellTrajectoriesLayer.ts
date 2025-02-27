@@ -1,58 +1,39 @@
-import { WellboreTrajectory_api, getWellTrajectoriesOptions } from "@api";
-import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
-import { DataLayer, LayerColoringType } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+import { WellboreTrajectory_api, getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@api";
 import {
     BoundingBox,
     CustomDataLayerImplementation,
-    SerializedLayer,
+    DataLayerInformationAccessors,
+    DefineDependenciesArgs,
+    FetchDataParams,
+    LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
-import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
-import { QueryClient } from "@tanstack/react-query";
+import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
 import { isEqual } from "lodash";
 
-import { DrilledWellTrajectoriesSettingsContext } from "./DrilledWellTrajectoriesSettingsContext";
 import { DrilledWellTrajectoriesSettings } from "./types";
 
+type SettingsWithTypes = MakeSettingTypesMap<DrilledWellTrajectoriesSettings>;
 export class DrilledWellTrajectoriesLayer
     implements CustomDataLayerImplementation<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]>
 {
-    private _layerDelegate: DataLayer<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]>;
-    private _itemDelegate: ItemDelegate;
-
-    constructor(layerManager: DataLayerManager) {
-        this._itemDelegate = new ItemDelegate("Drilled Wellbore trajectories", layerManager);
-        this._layerDelegate = new DataLayer(
-            this,
-            layerManager,
-            new DrilledWellTrajectoriesSettingsContext(layerManager),
-            LayerColoringType.NONE
-        );
+    settings: DrilledWellTrajectoriesSettings = [SettingType.ENSEMBLE, SettingType.SMDA_WELLBORE_HEADERS];
+    getDefaultName() {
+        return "Drilled Well Trajectories";
     }
 
-    getSettingsContext() {
-        return this._layerDelegate.getSettingsContext();
+    getColoringType(): LayerColoringType {
+        return LayerColoringType.NONE;
     }
 
-    getItemDelegate(): ItemDelegate {
-        return this._itemDelegate;
-    }
-
-    getLayerDelegate(): DataLayer<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]> {
-        return this._layerDelegate;
-    }
-
-    doSettingsChangesRequireDataRefetch(
-        prevSettings: DrilledWellTrajectoriesSettings,
-        newSettings: DrilledWellTrajectoriesSettings
-    ): boolean {
+    doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
-        const data = this._layerDelegate.getData();
+    makeBoundingBox({
+        getData,
+    }: DataLayerInformationAccessors<SettingsWithTypes, WellboreTrajectory_api[]>): BoundingBox | null {
+        const data = getData();
         if (!data) {
             return null;
         }
@@ -81,27 +62,22 @@ export class DrilledWellTrajectoriesLayer
         return bbox;
     }
 
-    fetchData(queryClient: QueryClient): Promise<WellboreTrajectory_api[]> {
-        const workbenchSession = this.getSettingsContext().getDelegate().getLayerManager().getWorkbenchSession();
-        const ensembleSet = workbenchSession.getEnsembleSet();
-        const settings = this.getSettingsContext().getDelegate().getSettings();
-        const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
-        const selectedWellboreHeaders = settings[SettingType.SMDA_WELLBORE_HEADERS].getDelegate().getValue();
+    fetchData({
+        getSetting,
+        getGlobalSetting,
+        registerQueryKey,
+        queryClient,
+    }: FetchDataParams<SettingsWithTypes, WellboreTrajectory_api[]>): Promise<WellboreTrajectory_api[]> {
+        const ensembleIdent = getSetting(SettingType.ENSEMBLE);
+        const fieldIdentifier = getGlobalSetting("fieldId");
+        const selectedWellboreHeaders = getSetting(SettingType.SMDA_WELLBORE_HEADERS);
         let selectedWellboreUuids: string[] = [];
         if (selectedWellboreHeaders) {
             selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
         }
 
-        let fieldIdentifier: string | null = null;
-        if (ensembleIdent) {
-            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
-            if (ensemble) {
-                fieldIdentifier = ensemble.getFieldIdentifier();
-            }
-        }
-
         const queryKey = ["getWellTrajectories", fieldIdentifier];
-        this._layerDelegate.registerQueryKey(queryKey);
+        registerQueryKey(queryKey);
 
         const promise = queryClient
             .fetchQuery({
@@ -118,13 +94,54 @@ export class DrilledWellTrajectoriesLayer
         return promise;
     }
 
-    serializeState(): SerializedLayer<DrilledWellTrajectoriesSettings> {
-        return this._layerDelegate.serializeState();
-    }
+    defineDependencies({
+        helperDependency,
+        availableSettingsUpdater,
+        workbenchSession,
+        queryClient,
+    }: DefineDependenciesArgs<DrilledWellTrajectoriesSettings, SettingsWithTypes>) {
+        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const ensembles = getGlobalSetting("ensembles");
 
-    deserializeState(serializedState: SerializedLayer<DrilledWellTrajectoriesSettings>): void {
-        this._layerDelegate.deserializeState(serializedState);
+            const ensembleIdents = ensembles
+                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .map((ensemble) => ensemble.getIdent());
+
+            return ensembleIdents;
+        });
+
+        const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
+            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+
+            if (!ensembleIdent) {
+                return null;
+            }
+
+            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+
+            if (!ensemble) {
+                return null;
+            }
+
+            const fieldIdentifier = ensemble.getFieldIdentifier();
+
+            return await queryClient.fetchQuery({
+                ...getDrilledWellboreHeadersOptions({
+                    query: { field_identifier: fieldIdentifier },
+                    signal: abortSignal,
+                }),
+            });
+        });
+        availableSettingsUpdater(SettingType.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
+
+            if (!wellboreHeaders) {
+                return [];
+            }
+
+            return wellboreHeaders;
+        });
     }
 }
-
-LayerRegistry.registerLayer(DrilledWellTrajectoriesLayer);

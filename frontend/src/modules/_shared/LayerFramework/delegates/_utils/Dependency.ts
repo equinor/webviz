@@ -45,7 +45,7 @@ export class Dependency<
     private _numChildDependencies = 0;
 
     constructor(
-        contextDelegate: SettingsContextDelegate<TSettingTypes, any, TSettings, TKey, any>,
+        contextDelegate: SettingsContextDelegate<TSettingTypes, TSettings, any, TKey, any>,
         updateFunc: UpdateFunc<TReturnValue, TSettingTypes, TSettings, TKey>,
         makeSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(

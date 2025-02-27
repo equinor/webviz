@@ -8,7 +8,7 @@ import { ItemDelegate } from "./delegates/ItemDelegate";
 import { SettingDelegate } from "./delegates/SettingDelegate";
 import { Dependency } from "./delegates/_utils/Dependency";
 import { GlobalSettings } from "./framework/DataLayerManager/DataLayerManager";
-import { AllSettingTypes, SettingType, SettingTypes } from "./settings/settingsTypes";
+import { AllSettingTypes, MakeSettingTypesMap, SettingType } from "./settings/settingsTypes";
 
 export enum SerializedType {
     LAYER_MANAGER = "layer-manager",
@@ -32,7 +32,7 @@ export type SerializedSettingsState<TSettings> = Record<keyof TSettings, string>
 
 export interface SerializedLayer<TSettings> extends SerializedItem {
     type: SerializedType.LAYER;
-    customLayerImplClass: string;
+    layerName: string;
     settings: SerializedSettingsState<TSettings>;
 }
 
@@ -56,7 +56,7 @@ export interface SerializedColorScale extends SerializedItem {
 export interface SerializedSharedSetting extends SerializedItem {
     type: SerializedType.SHARED_SETTING;
     settingType: SettingType;
-    wrappedSettingClass: string;
+    wrappedSettingClass: SettingType;
     wrappedSettingCtorParams: any[];
     value: string;
 }
@@ -108,21 +108,6 @@ export interface FetchDataFunction<TSettings extends Settings, TKey extends keyo
     ): Promise<FetchDataFunctionResult>;
 }
 
-export type UniqueSettings<TSettings extends Settings> = (keyof TSettings)[] & { __unique: never };
-
-export interface CustomSettingsContextImplementation<
-    TSettingTypes extends Settings,
-    TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = SettingTypes<TSettingTypes>,
-    TSettingKey extends keyof TSettings = keyof TSettings,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData
-> {
-    areCurrentSettingsValid?: (settings: TSettings) => boolean;
-    defineDependencies(
-        args: DefineDependenciesArgs<TSettingTypes, TSettings, TStoredData, TSettingKey, TStoredDataKey>
-    ): void;
-}
-
 export type DataLayerInformationAccessors<
     TSettings extends Partial<AllSettingTypes>,
     TData,
@@ -130,6 +115,7 @@ export type DataLayerInformationAccessors<
 > = {
     getData: () => TData | null;
     getSetting: <K extends keyof TSettings>(settingName: K) => TSettings[K];
+    getAvailableSettingValues: <K extends keyof TSettings>(settingName: K) => AvailableValuesType<TSettings[K]>;
     getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
     getStoredData: <K extends keyof TStoredData>(key: K) => TStoredData[K] | null;
 };
@@ -142,12 +128,23 @@ export type FetchDataParams<
     registerQueryKey: (key: unknown[]) => void;
 } & Omit<DataLayerInformationAccessors<TSettings, TStoredData>, "getData">;
 
+export enum LayerColoringType {
+    NONE = "NONE",
+    COLORSCALE = "COLORSCALE",
+    COLORSET = "COLORSET",
+}
+
 export interface CustomDataLayerImplementation<
     TSettingTypes extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, unknown>,
-    TSettings extends Partial<AllSettingTypes> = SettingTypes<TSettingTypes>
+    TStoredData extends StoredData = Record<string, never>,
+    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
+    TSettingKey extends keyof TSettings = keyof TSettings,
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > {
+    settings: TSettingTypes;
+    getDefaultName(): string;
+    getColoringType(): LayerColoringType;
     doSettingsChangesRequireDataRefetch(
         prevSettings: TSettings,
         newSettings: TSettings,
@@ -157,6 +154,10 @@ export interface CustomDataLayerImplementation<
     makeBoundingBox?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): BoundingBox | null;
     predictBoundingBox?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): BoundingBox | null;
     makeValueRange?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): [number, number] | null;
+    areCurrentSettingsValid?: (settings: TSettings) => boolean;
+    defineDependencies(
+        args: DefineDependenciesArgs<TSettingTypes, TSettings, TStoredData, TSettingKey, TStoredDataKey>
+    ): void;
 }
 
 export interface GetHelperDependency<
@@ -189,7 +190,7 @@ export interface DefineDependenciesArgs<
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > {
     availableSettingsUpdater: (
-        settingName: TKey,
+        settingKey: TKey,
         update: UpdateFunc<EachAvailableValuesType<TSettings[TKey]>, TSettingTypes, TSettings, TKey>
     ) => Dependency<EachAvailableValuesType<TSettings[TKey]>, TSettingTypes, TSettings, TKey>;
     storedDataUpdater: (

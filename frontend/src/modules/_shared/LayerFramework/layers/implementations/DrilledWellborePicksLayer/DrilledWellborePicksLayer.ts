@@ -1,40 +1,49 @@
-import { WellborePick_api, getWellborePicksForPickIdentifierOptions } from "@api";
+import {
+    WellborePick_api,
+    getDrilledWellboreHeadersOptions,
+    getWellborePickIdentifiersOptions,
+    getWellborePicksForPickIdentifierOptions,
+} from "@api";
 import {
     BoundingBox,
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
+    DefineDependenciesArgs,
     FetchDataParams,
+    LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
-import { SettingType, SettingTypes } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
 import { isEqual } from "lodash";
 
-import { DrilledWellborePicksSettings } from "./settingsTypes";
+import { DrilledWellborePicksSettings } from "./types";
+
+type SettingsWithTypes = MakeSettingTypesMap<DrilledWellborePicksSettings>;
 
 export class DrilledWellborePicksLayer
     implements CustomDataLayerImplementation<DrilledWellborePicksSettings, WellborePick_api[]>
 {
-    settings!: [
+    settings: DrilledWellborePicksSettings = [
         SettingType.ENSEMBLE,
         SettingType.SMDA_WELLBORE_HEADERS,
         SettingType.SURFACE_NAME,
-        SettingType.ATTRIBUTE
     ];
 
-    doSettingsChangesRequireDataRefetch(
-        prevSettings: SettingTypes<DrilledWellborePicksSettings>,
-        newSettings: SettingTypes<DrilledWellborePicksSettings>
-    ): boolean {
+    getDefaultName() {
+        return "Drilled Well Picks";
+    }
+
+    getColoringType(): LayerColoringType {
+        return LayerColoringType.NONE;
+    }
+
+    doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
     }
 
     makeBoundingBox({
         getData,
-    }: DataLayerInformationAccessors<
-        SettingTypes<DrilledWellborePicksSettings>,
-        WellborePick_api[]
-    >): BoundingBox | null {
+    }: DataLayerInformationAccessors<SettingsWithTypes, WellborePick_api[]>): BoundingBox | null {
         const data = getData();
         if (!data) {
             return null;
@@ -65,7 +74,7 @@ export class DrilledWellborePicksLayer
         getGlobalSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<SettingTypes<DrilledWellborePicksSettings>>): Promise<WellborePick_api[]> {
+    }: FetchDataParams<MakeSettingTypesMap<DrilledWellborePicksSettings>>): Promise<WellborePick_api[]> {
         const selectedWellboreHeaders = getSetting(SettingType.SMDA_WELLBORE_HEADERS);
         let selectedWellboreUuids: string[] = [];
         if (selectedWellboreHeaders) {
@@ -92,6 +101,99 @@ export class DrilledWellborePicksLayer
 
         return promise;
     }
-}
 
-LayerRegistry.registerLayer(DrilledWellborePicksLayer);
+    areCurrentSettingsValid(settings: SettingsWithTypes): boolean {
+        return (
+            settings[SettingType.ENSEMBLE] !== null &&
+            settings[SettingType.SMDA_WELLBORE_HEADERS] !== null &&
+            settings[SettingType.SMDA_WELLBORE_HEADERS].length > 0 &&
+            settings[SettingType.SURFACE_NAME] !== null
+        );
+    }
+
+    defineDependencies({
+        helperDependency,
+        availableSettingsUpdater,
+        workbenchSession,
+        queryClient,
+    }: DefineDependenciesArgs<DrilledWellborePicksSettings, SettingsWithTypes>) {
+        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const ensembles = getGlobalSetting("ensembles");
+
+            const ensembleIdents = ensembles
+                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .map((ensemble) => ensemble.getIdent());
+
+            return ensembleIdents;
+        });
+
+        const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
+            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+
+            if (!ensembleIdent) {
+                return null;
+            }
+
+            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+
+            if (!ensemble) {
+                return null;
+            }
+
+            const fieldIdentifier = ensemble.getFieldIdentifier();
+
+            return await queryClient.fetchQuery({
+                ...getDrilledWellboreHeadersOptions({
+                    query: { field_identifier: fieldIdentifier },
+                    signal: abortSignal,
+                }),
+            });
+        });
+
+        const pickIdentifiersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
+            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+
+            if (!ensembleIdent) {
+                return null;
+            }
+
+            const ensembleSet = workbenchSession.getEnsembleSet();
+            const ensemble = ensembleSet.findEnsemble(ensembleIdent);
+
+            if (!ensemble) {
+                return null;
+            }
+
+            const stratColumnIdentifier = ensemble.getStratigraphicColumnIdentifier();
+
+            return await queryClient.fetchQuery({
+                ...getWellborePickIdentifiersOptions({
+                    query: { strat_column_identifier: stratColumnIdentifier },
+                    signal: abortSignal,
+                }),
+            });
+        });
+
+        availableSettingsUpdater(SettingType.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+            const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
+
+            if (!wellboreHeaders) {
+                return [];
+            }
+
+            return wellboreHeaders;
+        });
+
+        availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency }) => {
+            const pickIdentifiers = getHelperDependency(pickIdentifiersDep);
+
+            if (!pickIdentifiers) {
+                return [];
+            }
+
+            return pickIdentifiers;
+        });
+    }
+}

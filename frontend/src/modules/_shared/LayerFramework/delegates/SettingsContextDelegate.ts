@@ -6,7 +6,7 @@ import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishS
 import { DataLayerManager, GlobalSettings, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import {
     AvailableValuesType,
-    CustomSettingsContextImplementation,
+    CustomDataLayerImplementation,
     EachAvailableValuesType,
     NullableStoredData,
     SerializedSettingsState,
@@ -15,7 +15,7 @@ import {
     StoredData,
     UpdateFunc,
 } from "../interfaces";
-import { AllSettingTypes, SettingTypes } from "../settings/settingsTypes";
+import { AllSettingTypes } from "../settings/settingsTypes";
 
 export enum SettingsContextLoadingState {
     LOADING = "LOADING",
@@ -54,14 +54,15 @@ export type SettingsContextDelegateState<TSettings extends Settings, TKey extend
  */
 export class SettingsContextDelegate<
     TSettingTypes extends Settings,
+    TSettings extends Partial<AllSettingTypes>,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = SettingTypes<TSettingTypes>,
     TKey extends keyof TSettings = keyof TSettings,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
-    private _customSettingsContextImpl: CustomSettingsContextImplementation<
+    private _customDataLayerImpl: CustomDataLayerImplementation<
         TSettingTypes,
+        any,
         TStoredData,
         TSettings,
         TKey,
@@ -76,11 +77,18 @@ export class SettingsContextDelegate<
     private _storedData: NullableStoredData<TStoredData> = {} as NullableStoredData<TStoredData>;
 
     constructor(
-        context: CustomSettingsContextImplementation<TSettingTypes, TStoredData, TSettings, TKey, TStoredDataKey>,
+        customDataLayerImpl: CustomDataLayerImplementation<
+            TSettingTypes,
+            any,
+            TStoredData,
+            TSettings,
+            TKey,
+            TStoredDataKey
+        >,
         layerManager: DataLayerManager,
         settings: { [K in TKey]: Setting<TSettings[K]> }
     ) {
-        this._customSettingsContextImpl = context;
+        this._customDataLayerImpl = customDataLayerImpl;
         this._layerManager = layerManager;
 
         for (const key in settings) {
@@ -144,7 +152,7 @@ export class SettingsContextDelegate<
             }
         }
 
-        if (!this._customSettingsContextImpl.areCurrentSettingsValid) {
+        if (!this._customDataLayerImpl.areCurrentSettingsValid) {
             return true;
         }
 
@@ -153,7 +161,7 @@ export class SettingsContextDelegate<
             settings[key] = this._settings[key].getDelegate().getValue();
         }
 
-        return this._customSettingsContextImpl.areCurrentSettingsValid(settings);
+        return this._customDataLayerImpl.areCurrentSettingsValid(settings);
     }
 
     areAllSettingsLoaded(): boolean {
@@ -310,7 +318,7 @@ export class SettingsContextDelegate<
             updateFunc: UpdateFunc<EachAvailableValuesType<TSettings[K]>, TSettingTypes, TSettings, K>
         ): Dependency<EachAvailableValuesType<TSettings[K]>, TSettingTypes, TSettings, K> => {
             const dependency = new Dependency<EachAvailableValuesType<TSettings[K]>, TSettingTypes, TSettings, K>(
-                this as unknown as SettingsContextDelegate<TSettingTypes, TStoredData, TSettings, K, TStoredDataKey>,
+                this as unknown as SettingsContextDelegate<TSettingTypes, TSettings, TStoredData, K, TStoredDataKey>,
                 updateFunc,
                 makeSettingGetter,
                 makeGlobalSettingGetter
@@ -342,7 +350,7 @@ export class SettingsContextDelegate<
             updateFunc: UpdateFunc<NullableStoredData<TStoredData>[K], TSettingTypes, TSettings, TKey>
         ): Dependency<NullableStoredData<TStoredData>[K], TSettingTypes, TSettings, TKey> => {
             const dependency = new Dependency<NullableStoredData<TStoredData>[K], TSettingTypes, TSettings, TKey>(
-                this as unknown as SettingsContextDelegate<TSettingTypes, TStoredData, TSettings, TKey, K>,
+                this as unknown as SettingsContextDelegate<TSettingTypes, TSettings, TStoredData, TKey, K>,
                 updateFunc,
                 makeSettingGetter,
                 makeGlobalSettingGetter
@@ -366,7 +374,7 @@ export class SettingsContextDelegate<
             }) => T
         ) => {
             const dependency = new Dependency<T, TSettingTypes, TSettings, TKey>(
-                this as unknown as SettingsContextDelegate<TSettingTypes, TStoredData, TSettings, TKey, TStoredDataKey>,
+                this as unknown as SettingsContextDelegate<TSettingTypes, TSettings, TStoredData, TKey, TStoredDataKey>,
                 update,
                 makeSettingGetter,
                 makeGlobalSettingGetter
@@ -377,8 +385,8 @@ export class SettingsContextDelegate<
             return dependency;
         };
 
-        if (this._customSettingsContextImpl.defineDependencies) {
-            this._customSettingsContextImpl.defineDependencies({
+        if (this._customDataLayerImpl.defineDependencies) {
+            this._customDataLayerImpl.defineDependencies({
                 availableSettingsUpdater,
                 storedDataUpdater,
                 helperDependency,

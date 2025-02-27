@@ -10,9 +10,9 @@ import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDe
 import {
     BoundingBox,
     CustomDataLayerImplementation,
-    CustomSettingsContextImplementation,
     DataLayerInformationAccessors,
     Item,
+    LayerColoringType,
     SerializedLayer,
     SerializedType,
     Setting,
@@ -20,7 +20,7 @@ import {
     StoredData,
 } from "../../interfaces";
 import { SettingRegistry } from "../../settings/SettingRegistry";
-import { AllSettingTypes, SettingType, SettingTypes } from "../../settings/settingsTypes";
+import { AllSettingTypes, MakeSettingTypesMap, SettingType } from "../../settings/settingsTypes";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
@@ -28,12 +28,6 @@ export enum LayerDelegateTopic {
     STATUS = "STATUS",
     DATA = "DATA",
     SUBORDINATED = "SUBORDINATED",
-}
-
-export enum LayerColoringType {
-    NONE = "NONE",
-    COLORSCALE = "COLORSCALE",
-    COLORSET = "COLORSET",
 }
 
 export enum LayerStatus {
@@ -53,14 +47,12 @@ export type DataLayerParams<
     TSettingTypes extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = SettingTypes<TSettingTypes>
+    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>
 > = {
-    settings: TSettingTypes;
+    layerName: string;
     layerManager: DataLayerManager;
-    name: string;
-    customSettingsContextImplementation: CustomSettingsContextImplementation<TSettingTypes, TStoredData, TSettings>;
+    instanceName?: string;
     customDataLayerImplementation: CustomDataLayerImplementation<TSettingTypes, TData, TStoredData, TSettings>;
-    coloringType: LayerColoringType;
 };
 
 function makeSettings<TSettings extends Settings>(
@@ -84,11 +76,12 @@ export class DataLayer<
     TSettingTypes extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = SettingTypes<TSettingTypes>
+    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>
 > implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
 {
+    private _layerName: string;
     private _customDataLayerImpl: CustomDataLayerImplementation<TSettingTypes, TData, TStoredData, TSettings>;
-    private _settingsContextDelegate: SettingsContextDelegate<TSettingTypes, TStoredData, TSettings>;
+    private _settingsContextDelegate: SettingsContextDelegate<TSettingTypes, TSettings, TStoredData>;
     private _itemDelegate: ItemDelegate;
     private _layerManager: DataLayerManager;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
@@ -102,21 +95,22 @@ export class DataLayer<
     private _predictedBoundingBox: BoundingBox | null = null;
     private _boundingBox: BoundingBox | null = null;
     private _valueRange: [number, number] | null = null;
-    private _coloringType: LayerColoringType;
     private _isSubordinated: boolean = false;
 
     constructor(params: DataLayerParams<TSettingTypes, TData, TStoredData, TSettings>) {
-        const { layerManager, name, customSettingsContextImplementation, customDataLayerImplementation, coloringType } =
-            params;
+        const { layerManager, layerName, instanceName, customDataLayerImplementation } = params;
+        this._layerName = layerName;
         this._layerManager = layerManager;
-        this._settingsContextDelegate = new SettingsContextDelegate<TSettingTypes, TStoredData, TSettings>(
-            customSettingsContextImplementation,
+        this._settingsContextDelegate = new SettingsContextDelegate<TSettingTypes, TSettings, TStoredData>(
+            customDataLayerImplementation,
             layerManager,
-            makeSettings(params.settings) as { [key in keyof TSettings]: Setting<any> }
+            makeSettings(customDataLayerImplementation.settings) as { [key in keyof TSettings]: Setting<any> }
         );
-        this._coloringType = coloringType;
         this._customDataLayerImpl = customDataLayerImplementation;
-        this._itemDelegate = new ItemDelegate(name, layerManager);
+        this._itemDelegate = new ItemDelegate(
+            instanceName ?? customDataLayerImplementation.getDefaultName(),
+            layerManager
+        );
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "settings-context",
@@ -187,7 +181,7 @@ export class DataLayer<
     }
 
     getColoringType(): LayerColoringType {
-        return this._coloringType;
+        return this._customDataLayerImpl.getColoringType();
     }
 
     isSubordinated(): boolean {
@@ -278,6 +272,8 @@ export class DataLayer<
         return {
             getSetting: (settingName) =>
                 this._settingsContextDelegate.getSettings()[settingName].getDelegate().getValue(),
+            getAvailableSettingValues: (settingName) =>
+                this._settingsContextDelegate.getSettings()[settingName].getDelegate().getAvailableValues(),
             getGlobalSetting: (settingName) => this._layerManager.getGlobalSetting(settingName),
             getStoredData: (key: keyof TStoredData) => this._settingsContextDelegate.getStoredData(key),
             getData: () => this._data,
@@ -347,7 +343,7 @@ export class DataLayer<
         return {
             ...itemState,
             type: SerializedType.LAYER,
-            customLayerImplClass: this._customDataLayerImpl.constructor.name,
+            layerName: this._customDataLayerImpl.constructor.name,
             settings: this._settingsContextDelegate.serializeSettings(),
         };
     }

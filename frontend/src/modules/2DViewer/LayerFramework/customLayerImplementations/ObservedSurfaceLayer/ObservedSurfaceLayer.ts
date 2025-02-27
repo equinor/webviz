@@ -1,61 +1,50 @@
-import { SurfaceDataPng_api, getSurfaceDataOptions } from "@api";
-import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
-import { DataLayer, LayerColoringType } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+import {
+    SurfaceDataPng_api,
+    SurfaceTimeType_api,
+    getObservedSurfacesMetadataOptions,
+    getSurfaceDataOptions,
+} from "@api";
 import {
     BoundingBox,
     CustomDataLayerImplementation,
-    SerializedLayer,
+    DataLayerInformationAccessors,
+    DefineDependenciesArgs,
+    FetchDataParams,
+    LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
-import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { ObservedSurfaceSettingsContext } from "./ObservedSurfaceSettingsContext";
 import { ObservedSurfaceSettings } from "./types";
 
-export class ObservedSurfaceLayer
-    implements CustomDataLayerImplementation<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
-{
-    private _layerDelegate: DataLayer<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>;
-    private _itemDelegate: ItemDelegate;
+type SettingsWithTypes = MakeSettingTypesMap<ObservedSurfaceSettings>;
+type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
+export class ObservedSurfaceLayer implements CustomDataLayerImplementation<ObservedSurfaceSettings, Data> {
+    settings: ObservedSurfaceSettings = [
+        SettingType.ENSEMBLE,
+        SettingType.ATTRIBUTE,
+        SettingType.SURFACE_NAME,
+        SettingType.TIME_OR_INTERVAL,
+    ];
 
-    constructor(layerManager: DataLayerManager) {
-        this._itemDelegate = new ItemDelegate("Observed Surface", layerManager);
-        this._layerDelegate = new DataLayer(
-            this,
-            layerManager,
-            new ObservedSurfaceSettingsContext(layerManager),
-            LayerColoringType.COLORSCALE
-        );
+    getDefaultName(): string {
+        return "Observed Surface";
     }
 
-    getSettingsContext() {
-        return this._layerDelegate.getSettingsContext();
+    getColoringType(): LayerColoringType {
+        return LayerColoringType.COLORSCALE;
     }
 
-    getItemDelegate(): ItemDelegate {
-        return this._itemDelegate;
-    }
-
-    getLayerDelegate(): DataLayer<ObservedSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api> {
-        return this._layerDelegate;
-    }
-
-    doSettingsChangesRequireDataRefetch(
-        prevSettings: ObservedSurfaceSettings,
-        newSettings: ObservedSurfaceSettings
-    ): boolean {
+    doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox(): BoundingBox | null {
-        const data = this._layerDelegate.getData();
+    makeBoundingBox({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): BoundingBox | null {
+        const data = getData();
         if (!data) {
             return null;
         }
@@ -67,8 +56,8 @@ export class ObservedSurfaceLayer
         };
     }
 
-    makeValueRange(): [number, number] | null {
-        const data = this._layerDelegate.getData();
+    makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {
+        const data = getData();
         if (!data) {
             return null;
         }
@@ -76,15 +65,120 @@ export class ObservedSurfaceLayer
         return [data.value_min, data.value_max];
     }
 
-    fetchData(queryClient: QueryClient): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    defineDependencies({
+        helperDependency,
+        availableSettingsUpdater,
+        workbenchSession,
+        queryClient,
+    }: DefineDependenciesArgs<ObservedSurfaceSettings, SettingsWithTypes>) {
+        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+            const fieldIdentifier = getGlobalSetting("fieldId");
+            const ensembleSet = workbenchSession.getEnsembleSet();
+
+            const ensembleIdents = ensembleSet
+                .getRegularEnsembleArray()
+                .filter((ensemble) => ensemble.getFieldIdentifier() === fieldIdentifier)
+                .map((ensemble) => ensemble.getIdent());
+
+            return ensembleIdents;
+        });
+
+        const observedSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
+            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+
+            if (!ensembleIdent) {
+                return null;
+            }
+
+            return await queryClient.fetchQuery({
+                ...getObservedSurfacesMetadataOptions({
+                    query: {
+                        case_uuid: ensembleIdent.getCaseUuid(),
+                    },
+                    signal: abortSignal,
+                }),
+            });
+        });
+
+        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getHelperDependency }) => {
+            const data = getHelperDependency(observedSurfaceMetadataDep);
+
+            if (!data) {
+                return [];
+            }
+
+            const availableAttributes = [
+                ...Array.from(new Set(data.surfaces.map((surface) => surface.attribute_name))),
+            ];
+
+            return availableAttributes;
+        });
+
+        availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
+            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
+            const data = getHelperDependency(observedSurfaceMetadataDep);
+
+            if (!attribute || !data) {
+                return [];
+            }
+
+            const availableSurfaceNames = [
+                ...Array.from(
+                    new Set(
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
+                    )
+                ),
+            ];
+
+            return availableSurfaceNames;
+        });
+
+        availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
+            const surfaceName = getLocalSetting(SettingType.SURFACE_NAME);
+            const data = getHelperDependency(observedSurfaceMetadataDep);
+
+            if (!attribute || !surfaceName || !data) {
+                return [];
+            }
+
+            const availableTimeOrIntervals: string[] = [];
+            const availableTimeTypes = [
+                ...Array.from(
+                    new Set(
+                        data.surfaces
+                            .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
+                            .map((el) => el.time_type)
+                    )
+                ),
+            ];
+
+            if (availableTimeTypes.includes(SurfaceTimeType_api.NO_TIME)) {
+                availableTimeOrIntervals.push(SurfaceTimeType_api.NO_TIME);
+            }
+            if (availableTimeTypes.includes(SurfaceTimeType_api.TIME_POINT)) {
+                availableTimeOrIntervals.push(...data.time_points_iso_str);
+            }
+            if (availableTimeTypes.includes(SurfaceTimeType_api.INTERVAL)) {
+                availableTimeOrIntervals.push(...data.time_intervals_iso_str);
+            }
+
+            return availableTimeOrIntervals;
+        });
+    }
+
+    fetchData({
+        getSetting,
+        registerQueryKey,
+        queryClient,
+    }: FetchDataParams<SettingsWithTypes, Data>): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 
-        const settings = this.getSettingsContext().getDelegate().getSettings();
-        const ensembleIdent = settings[SettingType.ENSEMBLE].getDelegate().getValue();
-        const surfaceName = settings[SettingType.SURFACE_NAME].getDelegate().getValue();
-        const attribute = settings[SettingType.ATTRIBUTE].getDelegate().getValue();
-        const timeOrInterval = settings[SettingType.TIME_OR_INTERVAL].getDelegate().getValue();
+        const ensembleIdent = getSetting(SettingType.ENSEMBLE);
+        const surfaceName = getSetting(SettingType.SURFACE_NAME);
+        const attribute = getSetting(SettingType.ATTRIBUTE);
+        const timeOrInterval = getSetting(SettingType.TIME_OR_INTERVAL);
 
         if (ensembleIdent && surfaceName && attribute && timeOrInterval) {
             addrBuilder.withEnsembleIdent(ensembleIdent);
@@ -99,7 +193,7 @@ export class ObservedSurfaceLayer
 
         const queryKey = ["getSurfaceData", surfAddrStr, null, "png"];
 
-        this._layerDelegate.registerQueryKey(queryKey);
+        registerQueryKey(queryKey);
 
         const promise = queryClient
             .fetchQuery({
@@ -115,14 +209,4 @@ export class ObservedSurfaceLayer
 
         return promise;
     }
-
-    serializeState(): SerializedLayer<ObservedSurfaceSettings> {
-        return this._layerDelegate.serializeState();
-    }
-
-    deserializeState(serializedState: SerializedLayer<ObservedSurfaceSettings>): void {
-        this._layerDelegate.deserializeState(serializedState);
-    }
 }
-
-LayerRegistry.registerLayer(ObservedSurfaceLayer);
