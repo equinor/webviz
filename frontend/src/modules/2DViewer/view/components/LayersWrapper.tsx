@@ -11,7 +11,7 @@ import { PreferredViewLayout } from "@modules/2DViewer/types";
 import {
     DataLayerManager,
     LayerManagerTopic,
-} from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+} from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";

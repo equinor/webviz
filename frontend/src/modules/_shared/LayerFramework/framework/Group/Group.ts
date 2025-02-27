@@ -1,12 +1,19 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegate } from "../../delegates/SettingsContextDelegate";
-import { CustomGroupImplementation, SerializedType, SerializedView, Settings, StoredData } from "../../interfaces";
+import {
+    CustomGroupImplementation,
+    SerializedGroup,
+    SerializedType,
+    Setting,
+    Settings,
+    StoredData,
+} from "../../interfaces";
 import { AllSettingTypes, MakeSettingTypesMap } from "../../settings/settingsTypes";
 import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { makeSettings } from "../utils/makeSettings";
 
-export type ViewParams<
+export type GroupParams<
     TSettingTypes extends Settings,
     TStoredData extends StoredData = Record<string, never>,
     TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>
@@ -28,7 +35,7 @@ export class Group<
     private _groupName: string;
     private _settingsContextDelegate: SettingsContextDelegate<TSettingTypes, TSettings, TStoredData> | null = null;
 
-    constructor(params: ViewParams<TSettingTypes, TStoredData, TSettings>) {
+    constructor(params: GroupParams<TSettingTypes, TStoredData, TSettings>) {
         const { name, layerManager, customGroupImplementation, color = null, type = "default" } = params;
         this._groupDelegate = new GroupDelegate(this);
         this._groupDelegate.setColor(color);
@@ -37,7 +44,7 @@ export class Group<
             this._settingsContextDelegate = new SettingsContextDelegate<TSettingTypes, TSettings, TStoredData>(
                 customGroupImplementation,
                 layerManager,
-                makeSettings(customGroupImplementation.settings)
+                makeSettings(customGroupImplementation.settings) as { [key in keyof TSettings]: Setting<any> }
             );
         }
         this._groupName = type;
@@ -51,20 +58,25 @@ export class Group<
         return this._groupDelegate;
     }
 
+    getSettingsContextDelegate() {
+        return this._settingsContextDelegate;
+    }
+
     getGroupName(): string {
         return this._groupName;
     }
 
-    serializeState(): SerializedView {
+    serializeState(): SerializedGroup {
         return {
             ...this._itemDelegate.serializeState(),
-            type: SerializedType.VIEW,
+            type: SerializedType.GROUP,
+            groupName: this._groupName,
             color: this._groupDelegate.getColor() ?? "",
             children: this._groupDelegate.serializeChildren(),
         };
     }
 
-    deserializeState(serialized: SerializedView) {
+    deserializeState(serialized: SerializedGroup) {
         this._itemDelegate.deserializeState(serialized);
         this._groupDelegate.setColor(serialized.color);
         this._groupDelegate.deserializeChildren(serialized.children);

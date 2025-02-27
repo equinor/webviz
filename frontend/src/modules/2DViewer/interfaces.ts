@@ -3,7 +3,7 @@ import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponen
 import { layerManagerAtom, preferredViewLayoutAtom } from "./settings/atoms/baseAtoms";
 import { PreferredViewLayout } from "./types";
 
-import { DataLayerManager } from "../_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+import { DataLayerManager } from "../_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 
 export type SettingsToViewInterface = {
     layerManager: DataLayerManager | null;

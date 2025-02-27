@@ -25,7 +25,7 @@ export class SettingRegistry {
         });
     }
 
-    static makeSetting<T extends SettingType>(type: T, params?: any[]): Setting<AllSettingTypes[T]> {
+    static makeSetting<T extends SettingType>(type: T): Setting<AllSettingTypes[T]> {
         const stored = this._registeredSettings.get(type);
         if (!stored) {
             throw new Error(`Setting ${type} not found`);

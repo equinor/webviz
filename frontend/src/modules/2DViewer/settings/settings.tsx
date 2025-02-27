@@ -16,7 +16,7 @@ import { LayerManagerComponentWrapper } from "./components/layerManagerComponent
 import {
     DataLayerManager,
     LayerManagerTopic,
-} from "../../_shared/LayerFramework/framework/LayerManager/DataLayerManager";
+} from "../../_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 
 export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

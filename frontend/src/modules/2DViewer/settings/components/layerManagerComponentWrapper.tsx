@@ -18,9 +18,9 @@ import { EnsembleSetting } from "@modules//_shared/LayerFramework/settings/imple
 import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
+import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
 import { GroupImpl } from "@modules/_shared/LayerFramework/framework/Group/Group";
-import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
 import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManagerComponent";
 import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";

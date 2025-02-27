@@ -1,18 +1,18 @@
 import {
     Item,
     SerializedColorScale,
+    SerializedGroup,
     SerializedItem,
     SerializedLayer,
     SerializedSettingsGroup,
     SerializedSharedSetting,
     SerializedType,
-    SerializedView,
 } from "../../interfaces";
 import { LayerRegistry } from "../../layers/LayerRegistry";
 import { SettingRegistry } from "../../settings/SettingRegistry";
 import { ColorScale } from "../ColorScale/ColorScale";
 import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
-import { GroupImpl } from "../Group/Group";
+import { Group } from "../Group/Group";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 
@@ -39,9 +39,9 @@ export class DeserializationFactory {
             return layer;
         }
 
-        if (serialized.type === SerializedType.VIEW) {
-            const serializedView = serialized as SerializedView;
-            const view = new GroupImpl({
+        if (serialized.type === SerializedType.GROUP) {
+            const serializedView = serialized as SerializedGroup;
+            const view = new Group({
                 name: serializedView.name,
                 layerManager: this._layerManager,
                 color: serializedView.color,
@@ -66,10 +66,7 @@ export class DeserializationFactory {
 
         if (serialized.type === SerializedType.SHARED_SETTING) {
             const serializedSharedSetting = serialized as SerializedSharedSetting;
-            const wrappedSetting = SettingRegistry.makeSetting(
-                serializedSharedSetting.wrappedSettingClass,
-                serializedSharedSetting.wrappedSettingCtorParams
-            );
+            const wrappedSetting = SettingRegistry.makeSetting(serializedSharedSetting.wrappedSettingClass);
             const setting = new SharedSetting(wrappedSetting, this._layerManager);
             setting.deserializeState(serializedSharedSetting);
             return setting;

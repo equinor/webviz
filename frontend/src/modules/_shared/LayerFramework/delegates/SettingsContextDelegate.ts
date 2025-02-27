@@ -6,7 +6,7 @@ import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishS
 import { DataLayerManager, GlobalSettings, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import {
     AvailableValuesType,
-    CustomDataLayerImplementation,
+    CustomSettingsHandler,
     EachAvailableValuesType,
     NullableStoredData,
     SerializedSettingsState,
@@ -60,14 +60,7 @@ export class SettingsContextDelegate<
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
-    private _customDataLayerImpl: CustomDataLayerImplementation<
-        TSettingTypes,
-        any,
-        TStoredData,
-        TSettings,
-        TKey,
-        TStoredDataKey
-    >;
+    private _customSettingsHandler: CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TKey, TStoredDataKey>;
     private _layerManager: DataLayerManager;
     private _settings: { [K in TKey]: Setting<TSettings[K]> } = {} as { [K in TKey]: Setting<TSettings[K]> };
     private _overriddenSettings: { [K in TKey]: TSettings[K] } = {} as { [K in TKey]: TSettings[K] };
@@ -77,18 +70,11 @@ export class SettingsContextDelegate<
     private _storedData: NullableStoredData<TStoredData> = {} as NullableStoredData<TStoredData>;
 
     constructor(
-        customDataLayerImpl: CustomDataLayerImplementation<
-            TSettingTypes,
-            any,
-            TStoredData,
-            TSettings,
-            TKey,
-            TStoredDataKey
-        >,
+        customSettingsHandler: CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TKey, TStoredDataKey>,
         layerManager: DataLayerManager,
         settings: { [K in TKey]: Setting<TSettings[K]> }
     ) {
-        this._customDataLayerImpl = customDataLayerImpl;
+        this._customSettingsHandler = customSettingsHandler;
         this._layerManager = layerManager;
 
         for (const key in settings) {
@@ -152,7 +138,7 @@ export class SettingsContextDelegate<
             }
         }
 
-        if (!this._customDataLayerImpl.areCurrentSettingsValid) {
+        if (!this._customSettingsHandler.areCurrentSettingsValid) {
             return true;
         }
 
@@ -161,7 +147,7 @@ export class SettingsContextDelegate<
             settings[key] = this._settings[key].getDelegate().getValue();
         }
 
-        return this._customDataLayerImpl.areCurrentSettingsValid(settings);
+        return this._customSettingsHandler.areCurrentSettingsValid(settings);
     }
 
     areAllSettingsLoaded(): boolean {
@@ -385,8 +371,8 @@ export class SettingsContextDelegate<
             return dependency;
         };
 
-        if (this._customDataLayerImpl.defineDependencies) {
-            this._customDataLayerImpl.defineDependencies({
+        if (this._customSettingsHandler.defineDependencies) {
+            this._customSettingsHandler.defineDependencies({
                 availableSettingsUpdater,
                 storedDataUpdater,
                 helperDependency,

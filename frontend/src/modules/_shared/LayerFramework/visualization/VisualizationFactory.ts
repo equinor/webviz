@@ -9,9 +9,9 @@ import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { GroupDelegate } from "../delegates/GroupDelegate";
 import { LayerColoringType, LayerStatus } from "../delegates/LayerDelegate";
 import { ColorScale } from "../framework/ColorScale/ColorScale";
+import { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
 import { GroupImpl } from "../framework/Group/Group";
-import { DataLayerManager } from "../framework/LayerManager/DataLayerManager";
 import { BoundingBox, CustomDataLayerImplementation, Settings, instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum VisualizationTarget {

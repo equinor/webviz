@@ -4,7 +4,7 @@ import { v4 } from "uuid";
 import { GroupDelegate } from "./GroupDelegate";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { DataLayerManager, LayerManagerTopic } from "../framework/LayerManager/DataLayerManager";
+import { DataLayerManager, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import { SerializedItem } from "../interfaces";
 
 export enum ItemDelegateTopic {

@@ -3,6 +3,7 @@ import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorScaleSerialization } from "@lib/utils/ColorScale";
 import { QueryClient } from "@tanstack/react-query";
 
+import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { SettingDelegate } from "./delegates/SettingDelegate";
 import { Dependency } from "./delegates/_utils/Dependency";
@@ -11,7 +12,7 @@ import { AllSettingTypes, MakeSettingTypesMap, SettingType } from "./settings/se
 
 export enum SerializedType {
     LAYER_MANAGER = "layer-manager",
-    VIEW = "view",
+    GROUP = "group",
     LAYER = "layer",
     SETTINGS_GROUP = "settings-group",
     COLOR_SCALE = "color-scale",
@@ -35,8 +36,9 @@ export interface SerializedLayer<TSettings> extends SerializedItem {
     settings: SerializedSettingsState<TSettings>;
 }
 
-export interface SerializedView extends SerializedItem {
-    type: SerializedType.VIEW;
+export interface SerializedGroup extends SerializedItem {
+    type: SerializedType.GROUP;
+    groupName: string;
     color: string;
     children: SerializedItem[];
 }
@@ -74,6 +76,10 @@ export interface Item {
     getItemDelegate(): ItemDelegate;
     serializeState(): SerializedItem;
     deserializeState(serialized: SerializedItem): void;
+}
+
+export interface ItemGroup {
+    getGroupDelegate(): GroupDelegate;
 }
 
 export function instanceofItem(item: any): item is Item {
@@ -125,7 +131,7 @@ export enum LayerColoringType {
     COLORSET = "COLORSET",
 }
 
-export interface CustomGroupImplementation<
+export interface CustomSettingsHandler<
     TSettingTypes extends Settings,
     TStoredData extends StoredData = Record<string, never>,
     TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
@@ -137,7 +143,15 @@ export interface CustomGroupImplementation<
     defineDependencies(
         args: DefineDependenciesArgs<TSettingTypes, TSettings, TStoredData, TSettingKey, TStoredDataKey>
     ): void;
+    areCurrentSettingsValid?: (settings: TSettings) => boolean;
 }
+export interface CustomGroupImplementation<
+    TSettingTypes extends Settings,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
+    TSettingKey extends keyof TSettings = keyof TSettings,
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData
+> extends CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TSettingKey, TStoredDataKey> {}
 
 export interface CustomDataLayerImplementation<
     TSettingTypes extends Settings,
@@ -146,9 +160,7 @@ export interface CustomDataLayerImplementation<
     TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
     TSettingKey extends keyof TSettings = keyof TSettings,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
-> {
-    settings: TSettingTypes;
-    getDefaultName(): string;
+> extends CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TSettingKey, TStoredDataKey> {
     getColoringType(): LayerColoringType;
     doSettingsChangesRequireDataRefetch(
         prevSettings: TSettings,
@@ -159,10 +171,6 @@ export interface CustomDataLayerImplementation<
     makeBoundingBox?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): BoundingBox | null;
     predictBoundingBox?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): BoundingBox | null;
     makeValueRange?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): [number, number] | null;
-    areCurrentSettingsValid?: (settings: TSettings) => boolean;
-    defineDependencies(
-        args: DefineDependenciesArgs<TSettingTypes, TSettings, TStoredData, TSettingKey, TStoredDataKey>
-    ): void;
 }
 
 export interface GetHelperDependency<

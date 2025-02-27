@@ -1,10 +1,12 @@
 import { SortableListGroup } from "@lib/components/SortableList";
 
+import { Group } from "./Group";
+
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Group, Item } from "../../interfaces";
+import { Item } from "../../interfaces";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
@@ -13,9 +15,9 @@ import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
 export type ViewComponentProps = {
-    group: Group;
+    group: Group<any, any, any>;
     actions?: LayersActionGroup[];
-    onActionClick?: (actionIdentifier: string, group: Group) => void;
+    onActionClick?: (actionIdentifier: string, group: Group<any, any, any>) => void;
 };
 
 export function ViewComponent(props: ViewComponentProps): React.ReactNode {

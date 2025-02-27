@@ -15,7 +15,7 @@ import { PublishSubscribe, PublishSubscribeDelegate } from "../../../utils/Publi
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { Group, Item, SerializedLayerManager, SerializedType } from "../../interfaces";
+import { Item, ItemGroup, SerializedLayerManager, SerializedType } from "../../interfaces";
 
 export enum LayerManagerTopic {
     ITEMS_CHANGED = "ITEMS_CHANGED",
@@ -52,7 +52,7 @@ export type GlobalSettings = {
  * It does also serve as a provider of the QueryClient and WorkbenchSession.
  */
 
-export class DataLayerManager implements Group, PublishSubscribe<LayerManagerTopicPayload> {
+export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManagerTopicPayload> {
     private _workbenchSession: WorkbenchSession;
     private _workbenchSettings: WorkbenchSettings;
     private _groupDelegate: GroupDelegate;
