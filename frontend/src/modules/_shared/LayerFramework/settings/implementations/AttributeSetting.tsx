@@ -4,7 +4,6 @@ import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
 import { Setting, SettingComponentProps } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 
 type ValueType = string | null;
@@ -49,5 +48,3 @@ export class AttributeSetting implements Setting<ValueType> {
         };
     }
 }
-
-SettingRegistry.registerSetting(AttributeSetting);

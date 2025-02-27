@@ -12,8 +12,8 @@ import { DataLayerManager } from "./DataLayerManager";
 
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { ColorScale } from "../ColorScale/ColorScale";
+import { GroupImpl } from "../Group/Group";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
-import { View } from "../View/View";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
@@ -55,7 +55,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
             return false;
         }
 
-        if (movedItem instanceof View && destinationItem instanceof View) {
+        if (movedItem instanceof GroupImpl && destinationItem instanceof GroupImpl) {
             return false;
         }
 

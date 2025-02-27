@@ -10,8 +10,8 @@ import { GroupDelegate } from "../delegates/GroupDelegate";
 import { LayerColoringType, LayerStatus } from "../delegates/LayerDelegate";
 import { ColorScale } from "../framework/ColorScale/ColorScale";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
+import { GroupImpl } from "../framework/Group/Group";
 import { DataLayerManager } from "../framework/LayerManager/DataLayerManager";
-import { View } from "../framework/View/View";
 import { BoundingBox, CustomDataLayerImplementation, Settings, instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum VisualizationTarget {
@@ -108,7 +108,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                 collectedNumLoadingLayers += numLoadingLayers;
                 maybeApplyBoundingBox(boundingBox);
 
-                if (child instanceof View) {
+                if (child instanceof GroupImpl) {
                     const view: VisualizationView<TTarget> = {
                         id: child.getItemDelegate().getId(),
                         color: child.getGroupDelegate().getColor(),

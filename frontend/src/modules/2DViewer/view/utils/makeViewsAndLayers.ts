@@ -6,7 +6,7 @@ import { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDe
 import { LayerColoringType, LayerStatus } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
-import { View } from "@modules/_shared/LayerFramework/framework/View/View";
+import { GroupImpl } from "@modules/_shared/LayerFramework/framework/Group/Group";
 import {
     BoundingBox,
     CustomDataLayerImplementation,
@@ -73,7 +73,7 @@ export function recursivelyMakeViewsAndLayers(
             collectedNumLoadingLayers += numLoadingLayers;
             maybeApplyBoundingBox(boundingBox);
 
-            if (child instanceof View) {
+            if (child instanceof GroupImpl) {
                 const view: DeckGlView = {
                     id: child.getItemDelegate().getId(),
                     color: child.getGroupDelegate().getColor(),

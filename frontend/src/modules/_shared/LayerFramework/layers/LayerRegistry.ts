@@ -17,15 +17,16 @@ export class LayerRegistry {
         TDataLayer extends { new (...params: any[]): CustomDataLayerImplementation<any, any, any, any> }
     >(
         name: string,
-        params: {
-            customDataLayerImplementation: TDataLayer;
-            customDataLayerImplementationParams?: ConstructorParameters<TDataLayer>;
-        }
+        customDataLayerImplementation: TDataLayer,
+        customDataLayerImplementationParams?: ConstructorParameters<TDataLayer>
     ): void {
         if (this._registeredLayers.has(name)) {
             throw new Error(`Layer ${name} already registered`);
         }
-        this._registeredLayers.set(name, params);
+        this._registeredLayers.set(name, {
+            customDataLayerImplementation,
+            customDataLayerImplementationParams,
+        });
     }
 
     static makeLayer(

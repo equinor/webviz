@@ -3,10 +3,5 @@ import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegis
 import { ObservedSurfaceLayer } from "./ObservedSurfaceLayer";
 import { RealizationGridLayer } from "./RealizationGridLayer";
 
-LayerRegistry.registerLayer("ObservedSurfaceLayer", {
-    customDataLayerImplementation: ObservedSurfaceLayer,
-});
-
-LayerRegistry.registerLayer("RealizationGridLayer", {
-    customDataLayerImplementation: RealizationGridLayer,
-});
+LayerRegistry.registerLayer("ObservedSurfaceLayer", ObservedSurfaceLayer);
+LayerRegistry.registerLayer("RealizationGridLayer", RealizationGridLayer);

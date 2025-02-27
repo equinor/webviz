@@ -3,7 +3,6 @@ import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorScaleSerialization } from "@lib/utils/ColorScale";
 import { QueryClient } from "@tanstack/react-query";
 
-import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
 import { SettingDelegate } from "./delegates/SettingDelegate";
 import { Dependency } from "./delegates/_utils/Dependency";
@@ -81,14 +80,6 @@ export function instanceofItem(item: any): item is Item {
     return (item as Item).getItemDelegate !== undefined;
 }
 
-export interface Group extends Item {
-    getGroupDelegate(): GroupDelegate;
-}
-
-export function instanceofGroup(item: Item): item is Group {
-    return (item as Group).getItemDelegate !== undefined && (item as Group).getGroupDelegate !== undefined;
-}
-
 export type BoundingBox = {
     x: [number, number];
     y: [number, number];
@@ -132,6 +123,20 @@ export enum LayerColoringType {
     NONE = "NONE",
     COLORSCALE = "COLORSCALE",
     COLORSET = "COLORSET",
+}
+
+export interface CustomGroupImplementation<
+    TSettingTypes extends Settings,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
+    TSettingKey extends keyof TSettings = keyof TSettings,
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData
+> {
+    settings: TSettingTypes;
+    getDefaultName(): string;
+    defineDependencies(
+        args: DefineDependenciesArgs<TSettingTypes, TSettings, TStoredData, TSettingKey, TStoredDataKey>
+    ): void;
 }
 
 export interface CustomDataLayerImplementation<

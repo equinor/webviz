@@ -12,9 +12,9 @@ import { LayerRegistry } from "../../layers/LayerRegistry";
 import { SettingRegistry } from "../../settings/SettingRegistry";
 import { ColorScale } from "../ColorScale/ColorScale";
 import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
+import { GroupImpl } from "../Group/Group";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
-import { View } from "../View/View";
 
 export class DeserializationFactory {
     private _layerManager: DataLayerManager;
@@ -41,7 +41,7 @@ export class DeserializationFactory {
 
         if (serialized.type === SerializedType.VIEW) {
             const serializedView = serialized as SerializedView;
-            const view = new View({
+            const view = new GroupImpl({
                 name: serializedView.name,
                 layerManager: this._layerManager,
                 color: serializedView.color,

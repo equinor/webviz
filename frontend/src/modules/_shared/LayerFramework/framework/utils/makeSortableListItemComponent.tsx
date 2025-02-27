@@ -6,12 +6,12 @@ import { ColorScaleComponent } from "../ColorScale/ColorScaleComponent";
 import { DataLayer } from "../DataLayer/DataLayer";
 import { DeltaSurface } from "../DeltaSurface/DeltaSurface";
 import { DeltaSurfaceComponent } from "../DeltaSurface/DeltaSurfaceComponent";
+import { GroupImpl } from "../Group/Group";
+import { ViewComponent } from "../Group/GroupComponent";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SettingsGroupComponent } from "../SettingsGroup/SettingsGroupComponent";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { SharedSettingComponent } from "../SharedSetting/SharedSettingComponent";
-import { View } from "../View/View";
-import { ViewComponent } from "../View/ViewComponent";
 
 export function makeSortableListItemComponent(
     item: Item,
@@ -31,7 +31,7 @@ export function makeSortableListItemComponent(
             />
         );
     }
-    if (item instanceof View) {
+    if (item instanceof GroupImpl) {
         return (
             <ViewComponent
                 key={item.getItemDelegate().getId()}

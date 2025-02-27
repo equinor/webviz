@@ -19,11 +19,11 @@ import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
+import { GroupImpl } from "@modules/_shared/LayerFramework/framework/Group/Group";
 import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/DataLayerManager";
 import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManagerComponent";
 import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
-import { View } from "@modules/_shared/LayerFramework/framework/View/View";
 import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
@@ -64,12 +64,16 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
             return item instanceof SharedSetting;
         }).length;
 
-        const numViews = groupDelegate.getDescendantItems((item) => item instanceof View).length;
+        const numViews = groupDelegate.getDescendantItems((item) => item instanceof GroupImpl).length;
 
         switch (identifier) {
             case "view":
                 groupDelegate.appendChild(
-                    new View(numViews > 0 ? `View (${numViews})` : "View", props.layerManager, colorSet.getNextColor())
+                    new GroupImpl(
+                        numViews > 0 ? `View (${numViews})` : "View",
+                        props.layerManager,
+                        colorSet.getNextColor()
+                    )
                 );
                 return;
             case "delta-surface":
@@ -145,7 +149,7 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
         return true;
     }
 
-    const hasView = groupDelegate.getDescendantItems((item) => item instanceof View).length > 0;
+    const hasView = groupDelegate.getDescendantItems((item) => item instanceof GroupImpl).length > 0;
     const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
 
     return (
