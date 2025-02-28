@@ -1,12 +1,10 @@
 import { SortableListGroup } from "@lib/components/SortableList";
 
-import { Group } from "./Group";
-
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Item } from "../../interfaces";
+import { Item, ItemGroup } from "../../interfaces";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
@@ -14,13 +12,13 @@ import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
-export type ViewComponentProps = {
-    group: Group<any, any, any>;
+export type GroupComponentProps = {
+    group: ItemGroup;
     actions?: LayersActionGroup[];
-    onActionClick?: (actionIdentifier: string, group: Group<any, any, any>) => void;
+    onActionClick?: (actionIdentifier: string, group: ItemGroup) => void;
 };
 
-export function ViewComponent(props: ViewComponentProps): React.ReactNode {
+export function GroupComponent(props: GroupComponentProps): React.ReactNode {
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
     const color = props.group.getGroupDelegate().getColor();

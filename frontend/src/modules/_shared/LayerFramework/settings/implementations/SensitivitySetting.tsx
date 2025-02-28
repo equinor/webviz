@@ -2,39 +2,16 @@ import React from "react";
 
 import { Dropdown } from "@lib/components/Dropdown";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
 
 export type SensitivityNameCasePair = {
     sensitivityName: string;
     sensitivityCase: string;
 };
 
-export class SensitivitySetting implements Setting<SensitivityNameCasePair | null> {
-    private _delegate: SettingDelegate<SensitivityNameCasePair | null>;
-
-    constructor() {
-        this._delegate = new SettingDelegate<SensitivityNameCasePair | null>(null, this);
-    }
-
-    getType(): SettingType {
-        return SettingType.STATISTIC_FUNCTION;
-    }
-
-    getLabel(): string {
-        return "Sensitivity";
-    }
-
-    getDelegate(): SettingDelegate<SensitivityNameCasePair | null> {
-        return this._delegate;
-    }
-
-    isValueValid(
-        availableValues: AvailableValuesType<SensitivityNameCasePair | null>,
-        value: SensitivityNameCasePair | null
-    ): boolean {
+type ValueType = SensitivityNameCasePair | null;
+export class SensitivitySetting implements CustomSettingImplementation<ValueType> {
+    isValueValid(availableValues: AvailableValuesType<ValueType>, value: ValueType): boolean {
         if (availableValues.length === 0) {
             return true;
         }
@@ -50,8 +27,8 @@ export class SensitivitySetting implements Setting<SensitivityNameCasePair | nul
             );
     }
 
-    makeComponent(): (props: SettingComponentProps<SensitivityNameCasePair | null>) => React.ReactNode {
-        return function Sensitivity(props: SettingComponentProps<SensitivityNameCasePair | null>) {
+    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
+        return function Sensitivity(props: SettingComponentProps<ValueType>) {
             const availableSensitivityNames: string[] = [
                 ...Array.from(new Set(props.availableValues.map((sensitivity) => sensitivity.sensitivityName))),
             ];
@@ -134,5 +111,3 @@ function fixupSensitivityCase(currentSensitivityCase: string | null, availableSe
 
     return currentSensitivityCase;
 }
-
-SettingRegistry.registerSetting(SensitivitySetting);

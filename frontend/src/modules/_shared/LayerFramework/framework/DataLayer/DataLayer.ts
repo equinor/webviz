@@ -4,25 +4,18 @@ import { isDevMode } from "@lib/utils/devMode";
 import { PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { QueryClient, isCancelledError } from "@tanstack/react-query";
 
+
+
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegate, SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import {
-    BoundingBox,
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
-    Item,
-    LayerColoringType,
-    SerializedLayer,
-    SerializedType,
-    Setting,
-    Settings,
-    StoredData,
-} from "../../interfaces";
-import { SettingRegistry } from "../../settings/SettingRegistry";
-import { AllSettingTypes, MakeSettingTypesMap, SettingType } from "../../settings/settingsTypes";
+import { BoundingBox, CustomDataLayerImplementation, DataLayerInformationAccessors, Item, LayerColoringType, SerializedLayer, SerializedType, Settings, StoredData } from "../../interfaces";
+import { MakeSettingTypesMap } from "../../settings/settingsTypes";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
+import { Setting } from "../Setting/Setting";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
+import { makeSettings } from "../utils/makeSettings";
+
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -47,25 +40,13 @@ export type DataLayerParams<
     TSettingTypes extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
 > = {
-    layerName: string;
+    type: string;
     layerManager: DataLayerManager;
     instanceName?: string;
     customDataLayerImplementation: CustomDataLayerImplementation<TSettingTypes, TData, TStoredData, TSettings>;
 };
-
-function makeSettings<TSettings extends Settings>(
-    settings: TSettings
-): { [K in keyof TSettings & keyof AllSettingTypes]: Setting<AllSettingTypes[K]> } {
-    const returnValue: Record<string, unknown> = {} as Record<string, unknown>;
-    for (const key in settings) {
-        returnValue[key as SettingType] = SettingRegistry.makeSetting(key as SettingType) as Setting<
-            AllSettingTypes[SettingType]
-        >;
-    }
-    return returnValue as { [K in keyof TSettings & keyof AllSettingTypes]: Setting<AllSettingTypes[K]> };
-}
 
 /*
  * The LayerDelegate class is responsible for managing the state of a layer.
@@ -73,13 +54,13 @@ function makeSettings<TSettings extends Settings>(
  * It also manages the status of the layer (loading, success, error).
  */
 export class DataLayer<
-    TSettingTypes extends Settings,
-    TData,
-    TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+    const TSettingTypes extends Settings,
+    const TData,
+    const TStoredData extends StoredData = Record<string, never>,
+    const TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
 > implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
 {
-    private _layerName: string;
+    private _type: string;
     private _customDataLayerImpl: CustomDataLayerImplementation<TSettingTypes, TData, TStoredData, TSettings>;
     private _settingsContextDelegate: SettingsContextDelegate<TSettingTypes, TSettings, TStoredData>;
     private _itemDelegate: ItemDelegate;
@@ -98,17 +79,23 @@ export class DataLayer<
     private _isSubordinated: boolean = false;
 
     constructor(params: DataLayerParams<TSettingTypes, TData, TStoredData, TSettings>) {
-        const { layerManager, layerName, instanceName, customDataLayerImplementation } = params;
-        this._layerName = layerName;
+        const { layerManager, type, instanceName, customDataLayerImplementation } = params;
+        this._type = type;
         this._layerManager = layerManager;
         this._settingsContextDelegate = new SettingsContextDelegate<TSettingTypes, TSettings, TStoredData>(
             customDataLayerImplementation,
             layerManager,
-            makeSettings(customDataLayerImplementation.settings) as { [key in keyof TSettings]: Setting<any> }
+            makeSettings(
+                customDataLayerImplementation.settings,
+                customDataLayerImplementation.getDefaultSettingsValues() as TSettings
+            ) as {
+                [key in keyof TSettings]: Setting<any>;
+            }
         );
         this._customDataLayerImpl = customDataLayerImplementation;
         this._itemDelegate = new ItemDelegate(
             instanceName ?? customDataLayerImplementation.getDefaultName(),
+            1,
             layerManager
         );
 
@@ -157,6 +144,10 @@ export class DataLayer<
         return this._data;
     }
 
+    getType(): string {
+        return this._type;
+    }
+
     getItemDelegate() {
         return this._itemDelegate;
     }
@@ -203,23 +194,21 @@ export class DataLayer<
     handleSharedSettingsChanged(): void {
         const parentGroup = this.getItemDelegate().getParentGroup();
         if (parentGroup) {
-            const sharedSettings: SharedSetting[] = parentGroup.getAncestorAndSiblingItems(
+            const sharedSettings: SharedSetting<any>[] = parentGroup.getAncestorAndSiblingItems(
                 (item) => item instanceof SharedSetting
-            ) as SharedSetting[];
-            const overriddenSettings: { [K in keyof TSettings]: TSettings[K] } = {} as {
-                [K in keyof TSettings]: TSettings[K];
-            };
+            ) as SharedSetting<any>[];
+            const overriddenSettings: Partial<TSettings> = {};
             for (const sharedSetting of sharedSettings) {
-                const type = sharedSetting.getWrappedSetting().getType();
-                const setting = this._settingsContextDelegate.getSettings()[type];
-                if (setting && overriddenSettings[type] === undefined) {
+                let type = sharedSetting.getWrappedSetting().getType();
+                const setting = this._settingsContextDelegate.getSettings()[type as keyof TSettings];
+                if (setting && overriddenSettings[type as keyof TSettings] === undefined) {
                     if (
-                        sharedSetting.getWrappedSetting().getDelegate().isInitialized() &&
-                        sharedSetting.getWrappedSetting().getDelegate().isValueValid()
+                        sharedSetting.getWrappedSetting().isInitialized() &&
+                        sharedSetting.getWrappedSetting().isValueValid()
                     ) {
-                        overriddenSettings[type] = sharedSetting.getWrappedSetting().getDelegate().getValue();
+                        overriddenSettings[type as keyof TSettings] = sharedSetting.getWrappedSetting().getValue();
                     } else {
-                        overriddenSettings[type] = null;
+                        overriddenSettings[type as keyof TSettings] = undefined;
                     }
                 }
             }
@@ -270,13 +259,14 @@ export class DataLayer<
 
     private makeAccessors(): DataLayerInformationAccessors<TSettings, TData, TStoredData> {
         return {
-            getSetting: (settingName) =>
-                this._settingsContextDelegate.getSettings()[settingName].getDelegate().getValue(),
+            getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
             getAvailableSettingValues: (settingName) =>
-                this._settingsContextDelegate.getSettings()[settingName].getDelegate().getAvailableValues(),
+                this._settingsContextDelegate.getSettings()[settingName].getAvailableValues(),
             getGlobalSetting: (settingName) => this._layerManager.getGlobalSetting(settingName),
             getStoredData: (key: keyof TStoredData) => this._settingsContextDelegate.getStoredData(key),
             getData: () => this._data,
+            getWorkbenchSession: () => this._layerManager.getWorkbenchSession(),
+            getWorkbenchSettings: () => this._layerManager.getWorkbenchSettings(),
         };
     }
 

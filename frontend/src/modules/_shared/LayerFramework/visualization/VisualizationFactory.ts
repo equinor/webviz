@@ -7,12 +7,18 @@ import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContai
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
 import { GroupDelegate } from "../delegates/GroupDelegate";
-import { LayerColoringType, LayerStatus } from "../delegates/LayerDelegate";
 import { ColorScale } from "../framework/ColorScale/ColorScale";
+import { DataLayer, LayerStatus } from "../framework/DataLayer/DataLayer";
 import { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
-import { GroupImpl } from "../framework/Group/Group";
-import { BoundingBox, CustomDataLayerImplementation, Settings, instanceofGroup, instanceofLayer } from "../interfaces";
+import { View } from "../groups/implementations/View";
+import {
+    BoundingBox,
+    CustomDataLayerImplementation,
+    LayerColoringType,
+    Settings,
+    instanceofItemGroup,
+} from "../interfaces";
 
 export enum VisualizationTarget {
     DECK_GL = "deck_gl",
@@ -100,7 +106,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                 continue;
             }
 
-            if (instanceofGroup(child) && !(child instanceof DeltaSurface)) {
+            if (instanceofItemGroup(child) && !(child instanceof DeltaSurface)) {
                 const { views, layers, boundingBox, colorScales, numLoadingLayers, errorMessages } =
                     this.makeRecursively(child.getGroupDelegate(), numCollectedLayers + collectedLayers.length);
 
@@ -108,7 +114,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                 collectedNumLoadingLayers += numLoadingLayers;
                 maybeApplyBoundingBox(boundingBox);
 
-                if (child instanceof GroupImpl) {
+                if (child instanceof View) {
                     const view: VisualizationView<TTarget> = {
                         id: child.getItemDelegate().getId(),
                         color: child.getGroupDelegate().getColor(),
@@ -125,20 +131,20 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                 collectedViews.push(...views);
             }
 
-            if (instanceofLayer(child)) {
-                if (child.getLayerDelegate().getStatus() === LayerStatus.LOADING) {
+            if (child instanceof DataLayer) {
+                if (child.getStatus() === LayerStatus.LOADING) {
                     collectedNumLoadingLayers++;
                 }
 
-                if (child.getLayerDelegate().getStatus() === LayerStatus.ERROR) {
-                    const error = child.getLayerDelegate().getError();
+                if (child.getStatus() === LayerStatus.ERROR) {
+                    const error = child.getError();
                     if (error) {
                         collectedErrorMessages.push(error);
                     }
                     continue;
                 }
 
-                if (child.getLayerDelegate().getData() === null) {
+                if (child.getData() === null) {
                     continue;
                 }
 
@@ -154,7 +160,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                     collectedColorScales.push(colorScale);
                 }
 
-                const boundingBox = child.getLayerDelegate().getBoundingBox();
+                const boundingBox = child.getBoundingBox();
                 maybeApplyBoundingBox(boundingBox);
                 collectedLayers.push({ layer, position: numCollectedLayers + collectedLayers.length });
             }
@@ -170,10 +176,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         };
     }
 
-    private makeLayer(
-        layer: CustomDataLayerImplementation<any, any>,
-        colorScale?: ColorScaleWithName
-    ): TargetReturnTypes[TTarget] {
+    private makeLayer(layer: DataLayer<any, any, any>, colorScale?: ColorScaleWithName): TargetReturnTypes[TTarget] {
         const func = this._visualizationFunctions.get(layer.constructor.name);
         if (!func) {
             throw new Error(`No visualization function found for layer ${layer.constructor.name}`);
@@ -192,11 +195,11 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         return func({
             id: layer.getItemDelegate().getId(),
             name: layer.getItemDelegate().getName(),
-            data: layer.getLayerDelegate().getData(),
+            data: layer.getData(),
             colorScale,
-            settings: layer.getLayerDelegate().getSettingsContext().getDelegate().getValues(),
-            isLoading: layer.getLayerDelegate().getStatus() === LayerStatus.LOADING,
-            predictedNextBoundingBox: layer.getLayerDelegate().getPredictedBoundingBox(),
+            settings: layer.getSettingsContextDelegate().getValues(),
+            isLoading: layer.getStatus() === LayerStatus.LOADING,
+            predictedNextBoundingBox: layer.getPredictedBoundingBox(),
         });
     }
 
@@ -208,10 +211,8 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         };
     }
 
-    private findColorScale(
-        layer: CustomDataLayerImplementation<any, any>
-    ): { id: string; colorScale: ColorScaleWithName } | null {
-        if (layer.getLayerDelegate().getColoringType() !== LayerColoringType.COLORSCALE) {
+    private findColorScale(layer: DataLayer<any, any, any>): { id: string; colorScale: ColorScaleWithName } | null {
+        if (layer.getColoringType() !== LayerColoringType.COLORSCALE) {
             return null;
         }
 
@@ -223,7 +224,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
             steps: 10,
         });
 
-        const range = layer.getLayerDelegate().getValueRange();
+        const range = layer.getValueRange();
         if (range) {
             colorScaleWithName.setRangeAndMidPoint(range[0], range[1], (range[0] + range[1]) / 2);
         }
@@ -242,7 +243,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                 );
 
                 if (!colorScaleItem.getAreBoundariesUserDefined()) {
-                    const range = layer.getLayerDelegate().getValueRange();
+                    const range = layer.getValueRange();
                     if (range) {
                         colorScaleWithName.setRangeAndMidPoint(range[0], range[1], (range[0] + range[1]) / 2);
                     }

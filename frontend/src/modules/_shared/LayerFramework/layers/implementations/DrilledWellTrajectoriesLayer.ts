@@ -11,13 +11,24 @@ import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramewor
 
 import { isEqual } from "lodash";
 
-import { DrilledWellTrajectoriesSettings } from "./types";
-
+const drilledWellTrajectoriesSettings = [SettingType.ENSEMBLE, SettingType.SMDA_WELLBORE_HEADERS] as const;
+type DrilledWellTrajectoriesSettings = typeof drilledWellTrajectoriesSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellTrajectoriesSettings>;
+
+type Data = WellboreTrajectory_api[];
+
 export class DrilledWellTrajectoriesLayer
-    implements CustomDataLayerImplementation<DrilledWellTrajectoriesSettings, WellboreTrajectory_api[]>
+    implements CustomDataLayerImplementation<DrilledWellTrajectoriesSettings, Data>
 {
-    settings: DrilledWellTrajectoriesSettings = [SettingType.ENSEMBLE, SettingType.SMDA_WELLBORE_HEADERS];
+    settings = drilledWellTrajectoriesSettings;
+
+    getDefaultSettingsValues(): MakeSettingTypesMap<DrilledWellTrajectoriesSettings> {
+        return {
+            [SettingType.ENSEMBLE]: null,
+            [SettingType.SMDA_WELLBORE_HEADERS]: null,
+        };
+    }
+
     getDefaultName() {
         return "Drilled Well Trajectories";
     }
@@ -30,9 +41,7 @@ export class DrilledWellTrajectoriesLayer
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox({
-        getData,
-    }: DataLayerInformationAccessors<SettingsWithTypes, WellboreTrajectory_api[]>): BoundingBox | null {
+    makeBoundingBox({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): BoundingBox | null {
         const data = getData();
         if (!data) {
             return null;
@@ -67,7 +76,7 @@ export class DrilledWellTrajectoriesLayer
         getGlobalSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<SettingsWithTypes, WellboreTrajectory_api[]>): Promise<WellboreTrajectory_api[]> {
+    }: FetchDataParams<SettingsWithTypes, Data>): Promise<Data> {
         const ensembleIdent = getSetting(SettingType.ENSEMBLE);
         const fieldIdentifier = getGlobalSetting("fieldId");
         const selectedWellboreHeaders = getSetting(SettingType.SMDA_WELLBORE_HEADERS);
@@ -87,7 +96,7 @@ export class DrilledWellTrajectoriesLayer
                 staleTime: 1800000, // TODO: Both stale and gcTime are set to 30 minutes for now since SMDA is quite slow for fields with many wells - this should be adjusted later
                 gcTime: 1800000,
             })
-            .then((response: WellboreTrajectory_api[]) => {
+            .then((response: Data) => {
                 return response.filter((trajectory) => selectedWellboreUuids.includes(trajectory.wellboreUuid));
             });
 

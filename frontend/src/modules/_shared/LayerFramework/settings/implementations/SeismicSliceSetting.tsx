@@ -3,52 +3,20 @@ import React from "react";
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
 
 type ValueType = number | null;
 
-export enum Direction {
+export enum SeismicSliceDirection {
     INLINE,
     CROSSLINE,
+    DEPTH,
 }
-export class SeismicSliceSetting implements Setting<ValueType> {
-    private _delegate: SettingDelegate<ValueType>;
-    private _params: [Direction];
-    private _direction: Direction;
+export class SeismicSliceSetting implements CustomSettingImplementation<ValueType> {
+    private _direction: SeismicSliceDirection;
 
-    constructor(params: [Direction]) {
-        this._delegate = new SettingDelegate<ValueType>(null, this);
-        this._params = params;
-        this._direction = params[0];
-    }
-
-    getConstructorParams() {
-        return this._params;
-    }
-
-    getType(): SettingType {
-        switch (this._direction) {
-            case Direction.INLINE:
-                return SettingType.SEISMIC_INLINE;
-            case Direction.CROSSLINE:
-                return SettingType.SEISMIC_CROSSLINE;
-        }
-    }
-
-    getLabel(): string {
-        switch (this._direction) {
-            case Direction.INLINE:
-                return "Seismic inline";
-            case Direction.CROSSLINE:
-                return "Seismic crossline";
-        }
-    }
-
-    getDelegate(): SettingDelegate<ValueType> {
-        return this._delegate;
+    constructor(direction: SeismicSliceDirection) {
+        this._direction = direction;
     }
 
     isValueValid(availableValues: AvailableValuesType<ValueType>, value: ValueType): boolean {
@@ -90,6 +58,7 @@ export class SeismicSliceSetting implements Setting<ValueType> {
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
+        const direction = this._direction;
         return function RangeSlider(props: SettingComponentProps<ValueType>) {
             function handleSliderChange(_: any, value: number | number[]) {
                 if (Array.isArray(value)) {
@@ -98,8 +67,25 @@ export class SeismicSliceSetting implements Setting<ValueType> {
 
                 props.onValueChange(value);
             }
+
             function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-                props.onValueChange(Number(event.target.value));
+                let value = Number(event.target.value);
+
+                if (direction === SeismicSliceDirection.DEPTH) {
+                    // Check if value is allowed (in increments of availableValues[2], if not return closest allowed value)
+                    const min = props.availableValues[0];
+                    const max = props.availableValues[1];
+                    const step = props.availableValues[2];
+                    const allowedValues = Array.from(
+                        { length: Math.floor((max - min) / step) + 1 },
+                        (_, i) => min + i * step
+                    );
+                    value = allowedValues.reduce((prev, curr) =>
+                        Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+                    );
+                }
+
+                props.onValueChange(value);
             }
 
             return (
@@ -122,5 +108,3 @@ export class SeismicSliceSetting implements Setting<ValueType> {
         };
     }
 }
-
-SettingRegistry.registerSetting(SeismicSliceSetting);

@@ -17,8 +17,16 @@ import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramewor
 
 import { isEqual } from "lodash";
 
-import { RealizationGridSettings } from "./types";
-
+const realizationGridSettings = [
+    SettingType.ENSEMBLE,
+    SettingType.REALIZATION,
+    SettingType.ATTRIBUTE,
+    SettingType.GRID_NAME,
+    SettingType.GRID_LAYER_K,
+    SettingType.TIME_OR_INTERVAL,
+    SettingType.SHOW_GRID_LINES,
+] as const;
+type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
 
 type Data = {
@@ -27,17 +35,21 @@ type Data = {
 };
 
 export class RealizationGridLayer implements CustomDataLayerImplementation<RealizationGridSettings, Data> {
-    settings: RealizationGridSettings = [
-        SettingType.ENSEMBLE,
-        SettingType.REALIZATION,
-        SettingType.ATTRIBUTE,
-        SettingType.GRID_NAME,
-        SettingType.GRID_LAYER_K,
-        SettingType.TIME_OR_INTERVAL,
-        SettingType.SHOW_GRID_LINES,
-    ];
+    settings = realizationGridSettings;
 
-    getDefaultName(): string {
+    getDefaultSettingsValues() {
+        return {
+            [SettingType.ENSEMBLE]: null,
+            [SettingType.REALIZATION]: null,
+            [SettingType.ATTRIBUTE]: null,
+            [SettingType.GRID_NAME]: null,
+            [SettingType.GRID_LAYER_K]: null,
+            [SettingType.TIME_OR_INTERVAL]: null,
+            [SettingType.SHOW_GRID_LINES]: true,
+        };
+    }
+
+    getDefaultName() {
         return "Realization Grid";
     }
 

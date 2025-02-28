@@ -3,10 +3,7 @@ import React from "react";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import { CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
 
 export type IntersectionSettingValue = {
     type: "wellbore" | "polyline";
@@ -14,25 +11,7 @@ export type IntersectionSettingValue = {
     uuid: string;
 };
 
-export class IntersectionSetting implements Setting<IntersectionSettingValue | null> {
-    private _delegate: SettingDelegate<IntersectionSettingValue | null>;
-
-    constructor() {
-        this._delegate = new SettingDelegate<IntersectionSettingValue | null>(null, this);
-    }
-
-    getType(): SettingType {
-        return SettingType.INTERSECTION;
-    }
-
-    getLabel(): string {
-        return "Intersection";
-    }
-
-    getDelegate(): SettingDelegate<IntersectionSettingValue | null> {
-        return this._delegate;
-    }
-
+export class IntersectionSetting implements CustomSettingImplementation<IntersectionSettingValue | null> {
     isValueValid(availableValues: any[], value: IntersectionSettingValue | null): boolean {
         if (value === null) {
             return false;
@@ -111,5 +90,3 @@ export class IntersectionSetting implements Setting<IntersectionSettingValue | n
         };
     }
 }
-
-SettingRegistry.registerSetting(IntersectionSetting);

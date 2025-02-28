@@ -1,16 +1,16 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { Group, SerializedSettingsGroup, SerializedType } from "../../interfaces";
-import { DataLayerManager } from "../LayerManager/DataLayerManager";
+import { ItemGroup, SerializedSettingsGroup, SerializedType } from "../../interfaces";
+import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 
-export class SettingsGroup implements Group {
+export class SettingsGroup implements ItemGroup {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
 
     constructor(name: string, layerManager: DataLayerManager) {
         this._groupDelegate = new GroupDelegate(this);
         this._groupDelegate.setColor("rgb(196 181 253)");
-        this._itemDelegate = new ItemDelegate(name, layerManager);
+        this._itemDelegate = new ItemDelegate(name, 1, layerManager);
     }
 
     getItemDelegate(): ItemDelegate {

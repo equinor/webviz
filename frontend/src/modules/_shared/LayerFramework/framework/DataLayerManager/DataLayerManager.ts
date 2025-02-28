@@ -68,7 +68,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
         this._workbenchSession = workbenchSession;
         this._workbenchSettings = workbenchSettings;
         this._queryClient = queryClient;
-        this._itemDelegate = new ItemDelegate("LayerManager", this);
+        this._itemDelegate = new ItemDelegate("LayerManager", 0, this);
         this._groupDelegate = new GroupDelegate(this);
 
         this._globalSettings = this.initializeGlobalSettings();

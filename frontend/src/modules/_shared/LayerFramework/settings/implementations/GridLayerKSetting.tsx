@@ -2,30 +2,15 @@ import React from "react";
 
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
 
 type ValueType = number | null;
 
-export class GridLayerKSetting implements Setting<ValueType> {
-    private _delegate: SettingDelegate<ValueType>;
-
-    constructor() {
-        this._delegate = new SettingDelegate<ValueType>(null, this);
-    }
-
-    getType(): SettingType {
-        return SettingType.GRID_LAYER_K;
-    }
+export class GridLayerKSetting implements CustomSettingImplementation<ValueType> {
+    defaultValue: ValueType = null;
 
     getLabel(): string {
         return "Grid layer K";
-    }
-
-    getDelegate(): SettingDelegate<ValueType> {
-        return this._delegate;
     }
 
     isValueValid(availableValues: AvailableValuesType<ValueType>, value: ValueType): boolean {
@@ -97,5 +82,3 @@ export class GridLayerKSetting implements Setting<ValueType> {
         };
     }
 }
-
-SettingRegistry.registerSetting(GridLayerKSetting);

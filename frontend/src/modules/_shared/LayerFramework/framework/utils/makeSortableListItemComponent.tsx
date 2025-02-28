@@ -1,13 +1,13 @@
 import { LayersActionGroup } from "../../LayersActions";
-import { Group, Item } from "../../interfaces";
+import { Item, ItemGroup } from "../../interfaces";
 import { LayerComponent } from "../../layers/LayerComponent";
 import { ColorScale } from "../ColorScale/ColorScale";
 import { ColorScaleComponent } from "../ColorScale/ColorScaleComponent";
 import { DataLayer } from "../DataLayer/DataLayer";
 import { DeltaSurface } from "../DeltaSurface/DeltaSurface";
 import { DeltaSurfaceComponent } from "../DeltaSurface/DeltaSurfaceComponent";
-import { GroupImpl } from "../Group/Group";
-import { ViewComponent } from "../Group/GroupComponent";
+import { Group } from "../Group/Group";
+import { GroupComponent } from "../Group/GroupComponent";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SettingsGroupComponent } from "../SettingsGroup/SettingsGroupComponent";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
@@ -16,7 +16,7 @@ import { SharedSettingComponent } from "../SharedSetting/SharedSettingComponent"
 export function makeSortableListItemComponent(
     item: Item,
     layerActions?: LayersActionGroup[],
-    onActionClick?: (identifier: string, group: Group) => void
+    onActionClick?: (identifier: string, group: ItemGroup) => void
 ): React.ReactElement {
     if (item instanceof DataLayer) {
         return <LayerComponent key={item.getItemDelegate().getId()} layer={item} />;
@@ -31,9 +31,9 @@ export function makeSortableListItemComponent(
             />
         );
     }
-    if (item instanceof GroupImpl) {
+    if (item instanceof Group) {
         return (
-            <ViewComponent
+            <GroupComponent
                 key={item.getItemDelegate().getId()}
                 group={item}
                 actions={layerActions ? filterAwayViewActions(layerActions) : undefined}

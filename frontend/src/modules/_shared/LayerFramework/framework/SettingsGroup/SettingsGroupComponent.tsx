@@ -5,16 +5,16 @@ import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDe
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Group, Item } from "../../interfaces";
+import { Item, ItemGroup } from "../../interfaces";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
 export type SettingsGroupComponentProps = {
-    group: Group;
+    group: ItemGroup;
     actions?: LayersActionGroup[];
-    onActionClick?: (actionIdentifier: string, group: Group) => void;
+    onActionClick?: (actionIdentifier: string, group: ItemGroup) => void;
 };
 
 export function SettingsGroupComponent(props: SettingsGroupComponentProps): React.ReactNode {

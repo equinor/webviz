@@ -9,8 +9,6 @@ import { MenuButton } from "@lib/components/MenuButton";
 import { MenuHeading } from "@lib/components/MenuHeading";
 import { MenuItem } from "@lib/components/MenuItem";
 import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
-import { RealizationGridLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationGridLayer";
-import { RealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationPolygonsLayer";
 import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
@@ -18,16 +16,17 @@ import { EnsembleSetting } from "@modules//_shared/LayerFramework/settings/imple
 import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
+import { DataLayer } from "@modules/_shared/LayerFramework/framework/DataLayer/DataLayer";
 import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
+import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManagerComponent";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
-import { GroupImpl } from "@modules/_shared/LayerFramework/framework/Group/Group";
-import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManagerComponent";
+import { Group } from "@modules/_shared/LayerFramework/framework/Group/Group";
 import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
-import { Group, Item, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
-import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
-import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
-import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
+import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
+import { Item, ItemGroup, instanceofItemGroup } from "@modules/_shared/LayerFramework/interfaces";
+import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
+import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/DropdownStringSetting";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceNameSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
@@ -60,74 +59,66 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
-        const numSharedSettings = groupDelegate.findChildren((item) => {
-            return item instanceof SharedSetting;
-        }).length;
-
-        const numViews = groupDelegate.getDescendantItems((item) => item instanceof GroupImpl).length;
+        const numViews = groupDelegate.getDescendantItems((item) => item instanceof Group).length;
 
         switch (identifier) {
             case "view":
-                groupDelegate.appendChild(
-                    new GroupImpl(
-                        numViews > 0 ? `View (${numViews})` : "View",
-                        props.layerManager,
-                        colorSet.getNextColor()
-                    )
-                );
+                groupDelegate.appendChild(GroupRegistry.makeGroup("View", props.layerManager, colorSet.getNextColor()));
                 return;
             case "delta-surface":
-                groupDelegate.insertChild(new DeltaSurface("Delta surface", props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(new DeltaSurface("Delta surface", props.layerManager));
                 return;
             case "settings-group":
-                groupDelegate.insertChild(new SettingsGroup("Settings group", props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(new SettingsGroup("Settings group", props.layerManager));
                 return;
             case "color-scale":
-                groupDelegate.prependChild(new ColorScale("Color scale", props.layerManager));
+                groupDelegate.appendChild(new ColorScale("Color scale", props.layerManager));
                 return;
             case "observed-surface":
-                groupDelegate.insertChild(new ObservedSurfaceLayer(props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(LayerRegistry.makeLayer("ObservedSurfaceLayer", props.layerManager));
                 return;
             case "statistical-surface":
-                groupDelegate.insertChild(new StatisticalSurfaceLayer(props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(LayerRegistry.makeLayer("StatisticalSurfaceLayer", props.layerManager));
                 return;
             case "realization-surface":
-                groupDelegate.insertChild(new RealizationSurfaceLayer(props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(LayerRegistry.makeLayer("RealizationSurfaceLayer", props.layerManager));
                 return;
             case "realization-polygons":
-                groupDelegate.insertChild(new RealizationPolygonsLayer(props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(LayerRegistry.makeLayer("RealizationPolygonsLayer", props.layerManager));
                 return;
             case "drilled-wellbore-trajectories":
-                groupDelegate.insertChild(new DrilledWellTrajectoriesLayer(props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(
+                    LayerRegistry.makeLayer("DrilledWellboreTrajectoriesLayer", props.layerManager)
+                );
                 return;
             case "drilled-wellbore-picks":
-                groupDelegate.insertChild(new DrilledWellborePicksLayer(props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(LayerRegistry.makeLayer("DrilledWellborePicksLayer", props.layerManager));
                 return;
             case "realization-grid":
-                groupDelegate.insertChild(new RealizationGridLayer(props.layerManager), numSharedSettings);
+                groupDelegate.appendChild(LayerRegistry.makeLayer("RealizationGridLayer", props.layerManager));
                 return;
             case "ensemble":
-                groupDelegate.prependChild(new SharedSetting(new EnsembleSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(new EnsembleSetting(), props.layerManager));
                 return;
             case "realization":
-                groupDelegate.prependChild(new SharedSetting(new RealizationSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(new RealizationSetting(), props.layerManager));
                 return;
             case "surface-name":
-                groupDelegate.prependChild(new SharedSetting(new SurfaceNameSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(new SurfaceNameSetting(), props.layerManager));
                 return;
             case "attribute":
-                groupDelegate.prependChild(new SharedSetting(new AttributeSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(new AttributeSetting(), props.layerManager));
                 return;
             case "Date":
-                groupDelegate.prependChild(new SharedSetting(new TimeOrIntervalSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(new TimeOrIntervalSetting(), props.layerManager));
                 return;
         }
     }
 
-    function checkIfItemMoveAllowed(movedItem: Item, destinationItem: Group): boolean {
+    function checkIfItemMoveAllowed(movedItem: Item, destinationItem: ItemGroup): boolean {
         if (destinationItem instanceof DeltaSurface) {
             if (
-                instanceofLayer(movedItem) &&
+                movedItem instanceof DataLayer &&
                 !(
                     movedItem instanceof RealizationSurfaceLayer ||
                     movedItem instanceof StatisticalSurfaceLayer ||
@@ -137,11 +128,11 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 return false;
             }
 
-            if (instanceofGroup(movedItem)) {
+            if (instanceofItemGroup(movedItem)) {
                 return false;
             }
 
-            if (destinationItem.getGroupDelegate().findChildren((item) => instanceofLayer(item)).length >= 2) {
+            if (destinationItem.getGroupDelegate().findChildren((item) => item instanceof DataLayer).length >= 2) {
                 return false;
             }
         }
@@ -149,7 +140,8 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
         return true;
     }
 
-    const hasView = groupDelegate.getDescendantItems((item) => item instanceof GroupImpl).length > 0;
+    const hasView =
+        groupDelegate.getDescendantItems((item) => item instanceof Group && item.getGroupType() === "View").length > 0;
     const adjustedLayerActions = hasView ? LAYER_ACTIONS : INITIAL_LAYER_ACTIONS;
 
     return (

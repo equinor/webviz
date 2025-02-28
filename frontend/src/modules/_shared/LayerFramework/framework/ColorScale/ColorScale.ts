@@ -4,7 +4,7 @@ import { ColorScale as ColorScaleImpl } from "@lib/utils/ColorScale";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { Item, SerializedColorScale, SerializedType } from "../../interfaces";
-import { DataLayerManager, LayerManagerTopic } from "../LayerManager/DataLayerManager";
+import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 
 export class ColorScale implements Item {
     private _itemDelegate: ItemDelegate;
@@ -17,7 +17,7 @@ export class ColorScale implements Item {
     private _areBoundariesUserDefined: boolean = false;
 
     constructor(name: string, layerManager: DataLayerManager) {
-        this._itemDelegate = new ItemDelegate(name, layerManager);
+        this._itemDelegate = new ItemDelegate(name, 0, layerManager);
     }
 
     getItemDelegate(): ItemDelegate {

@@ -16,27 +16,27 @@ export class LayerRegistry {
     static registerLayer<
         TDataLayer extends { new (...params: any[]): CustomDataLayerImplementation<any, any, any, any> }
     >(
-        name: string,
+        type: string,
         customDataLayerImplementation: TDataLayer,
         customDataLayerImplementationParams?: ConstructorParameters<TDataLayer>
     ): void {
-        if (this._registeredLayers.has(name)) {
-            throw new Error(`Layer ${name} already registered`);
+        if (this._registeredLayers.has(type)) {
+            throw new Error(`Layer ${type} already registered`);
         }
-        this._registeredLayers.set(name, {
+        this._registeredLayers.set(type, {
             customDataLayerImplementation,
             customDataLayerImplementationParams,
         });
     }
 
     static makeLayer(
-        layerName: string,
+        type: string,
         layerManager: DataLayerManager,
         instanceName?: string
     ): DataLayer<any, any, any, any> {
-        const stored = this._registeredLayers.get(layerName);
+        const stored = this._registeredLayers.get(type);
         if (!stored) {
-            throw new Error(`Layer ${layerName} not found`);
+            throw new Error(`Layer ${type} not found`);
         }
         const customDataLayerImplementation = new stored.customDataLayerImplementation(
             ...(stored.customDataLayerImplementationParams ?? [])
@@ -46,7 +46,7 @@ export class LayerRegistry {
             instanceName,
             layerManager,
             customDataLayerImplementation,
-            layerName,
+            type,
         });
     }
 }

@@ -4,15 +4,15 @@ import { IsMoveAllowedArgs, SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
-import { Group, Item, instanceofGroup } from "@modules/_shared/LayerFramework/interfaces";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Add } from "@mui/icons-material";
 
 import { DataLayerManager } from "./DataLayerManager";
 
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
+import { View } from "../../groups/implementations/View";
+import { Item, ItemGroup, instanceofItemGroup } from "../../interfaces";
 import { ColorScale } from "../ColorScale/ColorScale";
-import { GroupImpl } from "../Group/Group";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
@@ -22,7 +22,7 @@ export type LayerManagerComponentProps = {
     additionalHeaderComponents: React.ReactNode;
     layerActions: LayersActionGroup[];
     onLayerAction: (identifier: string, groupDelegate: GroupDelegate) => void;
-    isMoveAllowed?: (movedItem: Item, destinationGroup: Group) => boolean;
+    isMoveAllowed?: (movedItem: Item, destinationGroup: ItemGroup) => boolean;
 };
 
 export function LayerManagerComponent(props: LayerManagerComponentProps): React.ReactNode {
@@ -32,7 +32,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
     const groupDelegate = props.layerManager.getGroupDelegate();
     const items = usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
-    function handleLayerAction(identifier: string, group?: Group) {
+    function handleLayerAction(identifier: string, group?: ItemGroup) {
         let groupDelegate = props.layerManager.getGroupDelegate();
         if (group) {
             groupDelegate = group.getGroupDelegate();
@@ -51,11 +51,11 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
             ? groupDelegate.findDescendantById(args.destinationId)
             : props.layerManager;
 
-        if (!destinationItem || !instanceofGroup(destinationItem)) {
+        if (!destinationItem || !instanceofItemGroup(destinationItem)) {
             return false;
         }
 
-        if (movedItem instanceof GroupImpl && destinationItem instanceof GroupImpl) {
+        if (movedItem instanceof View && destinationItem instanceof View) {
             return false;
         }
 
@@ -103,7 +103,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
         let origin = props.layerManager.getGroupDelegate();
         if (originId) {
             const candidate = groupDelegate.findDescendantById(originId);
-            if (candidate && instanceofGroup(candidate)) {
+            if (candidate && instanceofItemGroup(candidate)) {
                 origin = candidate.getGroupDelegate();
             }
         }
@@ -111,7 +111,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
         let destination = props.layerManager.getGroupDelegate();
         if (destinationId) {
             const candidate = groupDelegate.findDescendantById(destinationId);
-            if (candidate && instanceofGroup(candidate)) {
+            if (candidate && instanceofItemGroup(candidate)) {
                 destination = candidate.getGroupDelegate();
             }
         }

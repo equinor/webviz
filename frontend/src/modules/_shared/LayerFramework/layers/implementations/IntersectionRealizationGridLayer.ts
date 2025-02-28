@@ -23,22 +23,36 @@ import {
 
 import { isEqual } from "lodash";
 
-import { IntersectionRealizationGridSettings } from "./types";
-
+const intersectionRealizationGridSettings = [
+    SettingType.INTERSECTION,
+    SettingType.ENSEMBLE,
+    SettingType.REALIZATION,
+    SettingType.ATTRIBUTE,
+    SettingType.GRID_NAME,
+    SettingType.TIME_OR_INTERVAL,
+    SettingType.SHOW_GRID_LINES,
+] as const;
+type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationGridSettings>;
 
+type Data = PolylineIntersection_trans;
+
 export class IntersectionRealizationGridLayer
-    implements CustomDataLayerImplementation<IntersectionRealizationGridSettings, PolylineIntersection_trans>
+    implements CustomDataLayerImplementation<IntersectionRealizationGridSettings, Data>
 {
-    settings: IntersectionRealizationGridSettings = [
-        SettingType.INTERSECTION,
-        SettingType.ENSEMBLE,
-        SettingType.REALIZATION,
-        SettingType.ATTRIBUTE,
-        SettingType.GRID_NAME,
-        SettingType.TIME_OR_INTERVAL,
-        SettingType.SHOW_GRID_LINES,
-    ];
+    settings = intersectionRealizationGridSettings;
+
+    getDefaultSettingsValues(): MakeSettingTypesMap<IntersectionRealizationGridSettings> {
+        return {
+            [SettingType.INTERSECTION]: null,
+            [SettingType.ENSEMBLE]: null,
+            [SettingType.REALIZATION]: null,
+            [SettingType.ATTRIBUTE]: null,
+            [SettingType.GRID_NAME]: null,
+            [SettingType.TIME_OR_INTERVAL]: null,
+            [SettingType.SHOW_GRID_LINES]: false,
+        };
+    }
 
     getDefaultName(): string {
         return "Intersection Realization Grid";
@@ -52,9 +66,7 @@ export class IntersectionRealizationGridLayer
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox({
-        getData,
-    }: DataLayerInformationAccessors<SettingsWithTypes, PolylineIntersection_trans>): BoundingBox | null {
+    makeBoundingBox({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): BoundingBox | null {
         const data = getData();
         if (!data) {
             return null;
@@ -68,9 +80,7 @@ export class IntersectionRealizationGridLayer
         return null;
     }
 
-    makeValueRange({
-        getData,
-    }: DataLayerInformationAccessors<SettingsWithTypes, PolylineIntersection_trans>): [number, number] | null {
+    makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -257,7 +267,7 @@ export class IntersectionRealizationGridLayer
         getGlobalSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<SettingsWithTypes, PolylineIntersection_trans>): Promise<PolylineIntersection_trans> {
+    }: FetchDataParams<SettingsWithTypes, Data>): Promise<Data> {
         const ensembleIdent = getSetting(SettingType.ENSEMBLE);
         const realizationNum = getSetting(SettingType.REALIZATION);
         const intersection = getSetting(SettingType.INTERSECTION);

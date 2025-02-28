@@ -1,12 +1,12 @@
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { DataLayer } from "../../delegates/LayerDelegate";
 import { SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { Group, SerializedDeltaSurface, SerializedType, instanceofLayer } from "../../interfaces";
-import { DataLayerManager } from "../LayerManager/DataLayerManager";
+import { ItemGroup, SerializedDeltaSurface, SerializedType } from "../../interfaces";
+import { DataLayer } from "../DataLayer/DataLayer";
+import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 
-export class DeltaSurface implements Group {
+export class DeltaSurface implements ItemGroup {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
@@ -25,7 +25,7 @@ export class DeltaSurface implements Group {
         );
 
         this._groupDelegate.setColor("rgb(220, 210, 180)");
-        this._itemDelegate = new ItemDelegate(name, layerManager);
+        this._itemDelegate = new ItemDelegate(name, 1, layerManager);
     }
 
     private handleChildrenChange(): void {
@@ -38,16 +38,14 @@ export class DeltaSurface implements Group {
         this._childrenLayerDelegateSet.clear();
 
         for (const child of this._groupDelegate.getChildren()) {
-            if (instanceofLayer(child)) {
-                child.getLayerDelegate().setIsSubordinated(true);
-                const layerDelegate = child.getLayerDelegate();
-                this._childrenLayerDelegateSet.add(layerDelegate);
+            if (child instanceof DataLayer) {
+                child.setIsSubordinated(true);
+                this._childrenLayerDelegateSet.add(child);
 
                 this._unsubscribeHandler.registerUnsubscribeFunction(
                     "layer-delegates",
-                    layerDelegate
-                        .getSettingsContext()
-                        .getDelegate()
+                    child
+                        .getSettingsContextDelegate()
                         .getPublishSubscribeDelegate()
                         .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
                         this.handleSettingsChange();

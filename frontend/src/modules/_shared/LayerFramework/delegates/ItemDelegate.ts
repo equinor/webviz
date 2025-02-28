@@ -28,14 +28,16 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
     private _name: string;
     private _visible: boolean = true;
     private _expanded: boolean = true;
+    private _order: number = 0;
     private _parentGroup: GroupDelegate | null = null;
     private _layerManager: DataLayerManager;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<ItemDelegatePayloads>();
 
-    constructor(name: string, layerManager: DataLayerManager) {
+    constructor(name: string, order: number, layerManager: DataLayerManager) {
         this._id = v4();
         this._layerManager = layerManager;
         this._name = this.makeUniqueName(name);
+        this._order = order;
     }
 
     setId(id: string): void {
@@ -60,6 +62,10 @@ export class ItemDelegate implements PublishSubscribe<ItemDelegatePayloads> {
         if (this._layerManager) {
             this._layerManager.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
         }
+    }
+
+    getOrder(): number {
+        return this._order;
     }
 
     getParentGroup(): GroupDelegate | null {

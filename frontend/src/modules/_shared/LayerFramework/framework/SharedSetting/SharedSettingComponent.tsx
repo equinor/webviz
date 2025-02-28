@@ -13,7 +13,7 @@ import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { SettingComponent } from "../../settings/SettingComponent";
 
 export type SharedSettingComponentProps = {
-    sharedSetting: SharedSetting;
+    sharedSetting: SharedSetting<any>;
 };
 
 export function SharedSettingComponent(props: SharedSettingComponentProps): React.ReactNode {
@@ -63,7 +63,7 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
 }
 
 type ActionProps = {
-    sharedSetting: SharedSetting;
+    sharedSetting: SharedSetting<any>;
 };
 
 function Actions(props: ActionProps): React.ReactNode {

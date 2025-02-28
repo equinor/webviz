@@ -5,30 +5,15 @@ import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Select, SelectOption } from "@lib/components/Select";
 import { Deselect, SelectAll } from "@mui/icons-material";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
 
 type ValueType = WellboreHeader_api[] | null;
 
-export class DrilledWellboresSetting implements Setting<ValueType> {
-    private _delegate: SettingDelegate<ValueType>;
-
-    constructor() {
-        this._delegate = new SettingDelegate<ValueType>(null, this);
-    }
-
-    getType(): SettingType {
-        return SettingType.SMDA_WELLBORE_HEADERS;
-    }
+export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType> {
+    defaultValue: ValueType = null;
 
     getLabel(): string {
         return "Drilled wellbores";
-    }
-
-    getDelegate(): SettingDelegate<ValueType> {
-        return this._delegate;
     }
 
     fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
@@ -103,5 +88,3 @@ export class DrilledWellboresSetting implements Setting<ValueType> {
         };
     }
 }
-
-SettingRegistry.registerSetting(DrilledWellboresSetting);

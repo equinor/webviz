@@ -3,30 +3,15 @@ import React from "react";
 import { SurfaceTimeType_api } from "@api";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import { CustomSettingImplementation, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
 
 type ValueType = string | null;
 
-export class TimeOrIntervalSetting implements Setting<ValueType> {
-    private _delegate: SettingDelegate<ValueType>;
-
-    constructor() {
-        this._delegate = new SettingDelegate<ValueType | null>(null, this);
-    }
-
-    getType(): SettingType {
-        return SettingType.TIME_OR_INTERVAL;
-    }
+export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType> {
+    defaultValue: ValueType = null;
 
     getLabel(): string {
         return "Date";
-    }
-
-    getDelegate(): SettingDelegate<ValueType> {
-        return this._delegate;
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
@@ -79,5 +64,3 @@ function isoIntervalStringToDateLabel(startIsoDateString: string, endIsoDateStri
     const endDate = endIsoDateString.split("T")[0];
     return `${startDate}/${endDate}`;
 }
-
-SettingRegistry.registerSetting(TimeOrIntervalSetting);

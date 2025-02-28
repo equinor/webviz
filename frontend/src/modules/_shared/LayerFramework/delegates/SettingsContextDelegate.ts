@@ -4,18 +4,18 @@ import { Dependency } from "./_utils/Dependency";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { DataLayerManager, GlobalSettings, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
+import { Setting } from "../framework/Setting/Setting";
 import {
     AvailableValuesType,
     CustomSettingsHandler,
     EachAvailableValuesType,
     NullableStoredData,
     SerializedSettingsState,
-    Setting,
     Settings,
     StoredData,
     UpdateFunc,
 } from "../interfaces";
-import { AllSettingTypes } from "../settings/settingsTypes";
+import { MakeSettingTypesMap } from "../settings/settingsTypes";
 
 export enum SettingsContextLoadingState {
     LOADING = "LOADING",
@@ -54,7 +54,7 @@ export type SettingsContextDelegateState<TSettings extends Settings, TKey extend
  */
 export class SettingsContextDelegate<
     TSettingTypes extends Settings,
-    TSettings extends Partial<AllSettingTypes>,
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
     TStoredData extends StoredData = Record<string, never>,
     TKey extends keyof TSettings = keyof TSettings,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
@@ -62,8 +62,10 @@ export class SettingsContextDelegate<
 {
     private _customSettingsHandler: CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TKey, TStoredDataKey>;
     private _layerManager: DataLayerManager;
-    private _settings: { [K in TKey]: Setting<TSettings[K]> } = {} as { [K in TKey]: Setting<TSettings[K]> };
-    private _overriddenSettings: { [K in TKey]: TSettings[K] } = {} as { [K in TKey]: TSettings[K] };
+    private _settings: { [K in TKey]: Setting<TSettings[K]> } = {} as {
+        [K in TKey]: Setting<TSettings[K]>;
+    };
+    private _overriddenSettings: Partial<TSettings> = {};
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegatePayloads>();
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _loadingState: SettingsContextLoadingState = SettingsContextLoadingState.LOADING;
@@ -80,21 +82,17 @@ export class SettingsContextDelegate<
         for (const key in settings) {
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "settings",
-                settings[key]
-                    .getDelegate()
-                    .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
+                settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
                     this.handleSettingChanged();
                 })
             );
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "settings",
-                settings[key]
-                    .getDelegate()
-                    .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(SettingTopic.LOADING_STATE_CHANGED)(() => {
-                    this.handleSettingsLoadingStateChanged();
-                })
+                settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.LOADING_STATE_CHANGED)(
+                    () => {
+                        this.handleSettingsLoadingStateChanged();
+                    }
+                )
             );
         }
 
@@ -110,30 +108,30 @@ export class SettingsContextDelegate<
     getValues(): { [K in TKey]?: TSettings[K] } {
         const settings: { [K in TKey]?: TSettings[K] } = {} as { [K in TKey]?: TSettings[K] };
         for (const key in this._settings) {
-            if (this._settings[key].getDelegate().isPersistedValue()) {
+            if (this._settings[key].isPersistedValue()) {
                 settings[key] = undefined;
                 continue;
             }
-            settings[key] = this._settings[key].getDelegate().getValue();
+            settings[key] = this._settings[key].getValue();
         }
 
         return settings;
     }
 
-    setOverriddenSettings(overriddenSettings: { [K in TKey]: TSettings[K] }): void {
+    setOverriddenSettings(overriddenSettings: Partial<TSettings>): void {
         this._overriddenSettings = overriddenSettings;
         for (const key in this._settings) {
             if (Object.keys(this._overriddenSettings).includes(key)) {
-                this._settings[key].getDelegate().setOverriddenValue(this._overriddenSettings[key]);
+                this._settings[key].setOverriddenValue(this._overriddenSettings[key]);
             } else {
-                this._settings[key].getDelegate().setOverriddenValue(undefined);
+                this._settings[key].setOverriddenValue(undefined);
             }
         }
     }
 
     areCurrentSettingsValid(): boolean {
         for (const key in this._settings) {
-            if (!this._settings[key].getDelegate().isValueValid()) {
+            if (!this._settings[key].isValueValid()) {
                 return false;
             }
         }
@@ -144,7 +142,7 @@ export class SettingsContextDelegate<
 
         const settings: TSettings = {} as TSettings;
         for (const key in this._settings) {
-            settings[key] = this._settings[key].getDelegate().getValue();
+            settings[key] = this._settings[key].getValue();
         }
 
         return this._customSettingsHandler.areCurrentSettingsValid(settings);
@@ -152,7 +150,7 @@ export class SettingsContextDelegate<
 
     areAllSettingsLoaded(): boolean {
         for (const key in this._settings) {
-            if (this._settings[key].getDelegate().isLoading()) {
+            if (this._settings[key].isLoading()) {
                 return false;
             }
         }
@@ -162,10 +160,7 @@ export class SettingsContextDelegate<
 
     areAllSettingsInitialized(): boolean {
         for (const key in this._settings) {
-            if (
-                !this._settings[key].getDelegate().isInitialized() ||
-                this._settings[key].getDelegate().isPersistedValue()
-            ) {
+            if (!this._settings[key].isInitialized() || this._settings[key].isPersistedValue()) {
                 return false;
             }
         }
@@ -176,10 +171,10 @@ export class SettingsContextDelegate<
     isSomePersistedSettingNotValid(): boolean {
         for (const key in this._settings) {
             if (
-                !this._settings[key].getDelegate().isLoading() &&
-                this._settings[key].getDelegate().isPersistedValue() &&
-                !this._settings[key].getDelegate().isValueValid() &&
-                this._settings[key].getDelegate().isInitialized()
+                !this._settings[key].isLoading() &&
+                this._settings[key].isPersistedValue() &&
+                !this._settings[key].isValueValid() &&
+                this._settings[key].isInitialized()
             ) {
                 return true;
             }
@@ -191,7 +186,7 @@ export class SettingsContextDelegate<
     getInvalidSettings(): string[] {
         const invalidSettings: string[] = [];
         for (const key in this._settings) {
-            if (!this._settings[key].getDelegate().isValueValid()) {
+            if (!this._settings[key].isValueValid()) {
                 invalidSettings.push(this._settings[key].getLabel());
             }
         }
@@ -200,7 +195,7 @@ export class SettingsContextDelegate<
     }
 
     setAvailableValues<K extends TKey>(key: K, availableValues: AvailableValuesType<TSettings[K]>): void {
-        const settingDelegate = this._settings[key].getDelegate();
+        const settingDelegate = this._settings[key];
         settingDelegate.setAvailableValues(availableValues);
 
         this.getLayerManager().publishTopic(LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED);
@@ -241,15 +236,15 @@ export class SettingsContextDelegate<
     serializeSettings(): SerializedSettingsState<TSettings> {
         const serializedSettings: SerializedSettingsState<TSettings> = {} as SerializedSettingsState<TSettings>;
         for (const key in this._settings) {
-            serializedSettings[key] = this._settings[key].getDelegate().serializeValue();
+            serializedSettings[key] = this._settings[key].serializeValue();
         }
         return serializedSettings;
     }
 
     deserializeSettings(serializedSettings: SerializedSettingsState<TSettings>): void {
         for (const [key, value] of Object.entries(serializedSettings)) {
-            const settingDelegate = this._settings[key as TKey].getDelegate();
-            settingDelegate.deserializeValue(value);
+            const settingDelegate = this._settings[key as TKey];
+            settingDelegate.deserializeValue(value as string);
             if (settingDelegate.isStatic()) {
                 settingDelegate.maybeResetPersistedValue();
             }
@@ -261,20 +256,19 @@ export class SettingsContextDelegate<
 
         const makeSettingGetter = <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => {
             const handleChange = (): void => {
-                handler(this._settings[key].getDelegate().getValue());
+                handler(this._settings[key].getValue());
             };
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "dependencies",
-                this._settings[key]
-                    .getDelegate()
-                    .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(handleChange)
+                this._settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(
+                    handleChange
+                )
             );
 
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "dependencies",
                 this._settings[key]
-                    .getDelegate()
+
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(SettingTopic.PERSISTED_STATE_CHANGED)(handleChange)
             );
@@ -319,7 +313,7 @@ export class SettingsContextDelegate<
             });
 
             dependency.subscribeLoading((loading: boolean, hasDependencies: boolean) => {
-                this._settings[settingKey].getDelegate().setLoading(loading);
+                this._settings[settingKey].setLoading(loading);
 
                 if (!hasDependencies) {
                     this.handleSettingChanged();
@@ -415,7 +409,7 @@ export class SettingsContextDelegate<
 
     private handleSettingsLoadingStateChanged() {
         for (const key in this._settings) {
-            if (this._settings[key].getDelegate().isLoading()) {
+            if (this._settings[key].isLoading()) {
                 this.setLoadingState(SettingsContextLoadingState.LOADING);
                 return;
             }

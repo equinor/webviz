@@ -6,7 +6,8 @@ import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDe
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Group, Item, instanceofLayer } from "../../interfaces";
+import { Item, ItemGroup } from "../../interfaces";
+import { DataLayer } from "../DataLayer/DataLayer";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
@@ -17,7 +18,7 @@ import { makeSortableListItemComponent } from "../utils/makeSortableListItemComp
 export type DeltaSurfaceComponentProps = {
     deltaSurface: DeltaSurface;
     actions?: LayersActionGroup[];
-    onActionClick?: (actionIdentifier: string, group: Group) => void;
+    onActionClick?: (actionIdentifier: string, group: ItemGroup) => void;
 };
 
 export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.ReactNode {
@@ -35,7 +36,7 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
         const adornment: React.ReactNode[] = [];
         if (
             props.actions &&
-            props.deltaSurface.getGroupDelegate().findChildren((item) => instanceofLayer(item)).length < 2
+            props.deltaSurface.getGroupDelegate().findChildren((item) => item instanceof DataLayer).length < 2
         ) {
             adornment.push(
                 <LayersActions

@@ -16,18 +16,26 @@ import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramewor
 
 import { isEqual } from "lodash";
 
-import { DrilledWellborePicksSettings } from "./types";
-
+const drilledWellborePicksSettings = [
+    SettingType.ENSEMBLE,
+    SettingType.SMDA_WELLBORE_HEADERS,
+    SettingType.SURFACE_NAME,
+] as const;
+type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellborePicksSettings>;
 
-export class DrilledWellborePicksLayer
-    implements CustomDataLayerImplementation<DrilledWellborePicksSettings, WellborePick_api[]>
-{
-    settings: DrilledWellborePicksSettings = [
-        SettingType.ENSEMBLE,
-        SettingType.SMDA_WELLBORE_HEADERS,
-        SettingType.SURFACE_NAME,
-    ];
+type Data = WellborePick_api[];
+
+export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<DrilledWellborePicksSettings, Data> {
+    settings = drilledWellborePicksSettings;
+
+    getDefaultSettingsValues() {
+        return {
+            [SettingType.ENSEMBLE]: null,
+            [SettingType.SMDA_WELLBORE_HEADERS]: null,
+            [SettingType.SURFACE_NAME]: null,
+        };
+    }
 
     getDefaultName() {
         return "Drilled Well Picks";
@@ -41,9 +49,7 @@ export class DrilledWellborePicksLayer
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeBoundingBox({
-        getData,
-    }: DataLayerInformationAccessors<SettingsWithTypes, WellborePick_api[]>): BoundingBox | null {
+    makeBoundingBox({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): BoundingBox | null {
         const data = getData();
         if (!data) {
             return null;
@@ -74,7 +80,7 @@ export class DrilledWellborePicksLayer
         getGlobalSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<MakeSettingTypesMap<DrilledWellborePicksSettings>>): Promise<WellborePick_api[]> {
+    }: FetchDataParams<SettingsWithTypes, Data>): Promise<WellborePick_api[]> {
         const selectedWellboreHeaders = getSetting(SettingType.SMDA_WELLBORE_HEADERS);
         let selectedWellboreUuids: string[] = [];
         if (selectedWellboreHeaders) {

@@ -27,33 +27,29 @@ export enum SettingType {
     TIME_OR_INTERVAL = "timeOrInterval",
 }
 
-export type NonOptionalSettingTypes = {
-    [SettingType.ATTRIBUTE]: string;
-    [SettingType.ENSEMBLE]: RegularEnsembleIdent;
-    [SettingType.GRID_LAYER_I_RANGE]: [number, number];
-    [SettingType.GRID_LAYER_J_RANGE]: [number, number];
-    [SettingType.GRID_LAYER_K]: number;
-    [SettingType.GRID_LAYER_K_RANGE]: [number, number];
-    [SettingType.GRID_NAME]: string;
-    [SettingType.INTERSECTION]: IntersectionSettingValue;
-    [SettingType.POLYGONS_ATTRIBUTE]: string;
-    [SettingType.POLYGONS_NAME]: string;
-    [SettingType.REALIZATION]: number;
-    [SettingType.SEISMIC_CROSSLINE]: number;
-    [SettingType.SEISMIC_DEPTH_SLICE]: number;
-    [SettingType.SEISMIC_INLINE]: number;
-    [SettingType.SENSITIVITY]: SensitivityNameCasePair;
+export type SettingTypes = {
+    [SettingType.ATTRIBUTE]: string | null;
+    [SettingType.ENSEMBLE]: RegularEnsembleIdent | null;
+    [SettingType.GRID_LAYER_I_RANGE]: [number, number] | null;
+    [SettingType.GRID_LAYER_J_RANGE]: [number, number] | null;
+    [SettingType.GRID_LAYER_K]: number | null;
+    [SettingType.GRID_LAYER_K_RANGE]: [number, number] | null;
+    [SettingType.GRID_NAME]: string | null;
+    [SettingType.INTERSECTION]: IntersectionSettingValue | null;
+    [SettingType.POLYGONS_ATTRIBUTE]: string | null;
+    [SettingType.POLYGONS_NAME]: string | null;
+    [SettingType.REALIZATION]: number | null;
+    [SettingType.SEISMIC_CROSSLINE]: number | null;
+    [SettingType.SEISMIC_DEPTH_SLICE]: number | null;
+    [SettingType.SEISMIC_INLINE]: number | null;
+    [SettingType.SENSITIVITY]: SensitivityNameCasePair | null;
     [SettingType.SHOW_GRID_LINES]: boolean;
-    [SettingType.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[];
+    [SettingType.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
     [SettingType.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
-    [SettingType.SURFACE_NAME]: string;
-    [SettingType.TIME_OR_INTERVAL]: string;
+    [SettingType.SURFACE_NAME]: string | null;
+    [SettingType.TIME_OR_INTERVAL]: string | null;
 };
 
-export type AllSettingTypes = {
-    [K in keyof NonOptionalSettingTypes]: NonOptionalSettingTypes[K] | null;
-};
-
-export type MakeSettingTypesMap<T extends (keyof AllSettingTypes)[]> = {
-    [K in T[number]]: AllSettingTypes[K];
+export type MakeSettingTypesMap<T extends readonly (keyof SettingTypes)[], AllowNull extends boolean = false> = {
+    [K in T[number]]: AllowNull extends false ? SettingTypes[K] : SettingTypes[K] | null;
 };

@@ -11,10 +11,10 @@ import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDeleg
 import { ItemDelegateTopic } from "../delegates/ItemDelegate";
 import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../delegates/SettingsContextDelegate";
 import { DataLayer, LayerDelegateTopic, LayerStatus } from "../framework/DataLayer/DataLayer";
+import { Setting } from "../framework/Setting/Setting";
 import { EditName } from "../framework/utilityComponents/EditName";
 import { RemoveItemButton } from "../framework/utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../framework/utilityComponents/VisibilityToggle";
-import { Setting } from "../interfaces";
 import { SettingComponent } from "../settings/SettingComponent";
 
 export type LayerComponentProps = {
@@ -29,14 +29,7 @@ export function LayerComponent(props: LayerComponentProps): React.ReactNode {
         if (!manager) {
             return null;
         }
-        return (
-            <SettingComponent
-                key={setting.getDelegate().getId()}
-                setting={setting}
-                manager={manager}
-                sharedSetting={false}
-            />
-        );
+        return <SettingComponent key={setting.getId()} setting={setting} manager={manager} sharedSetting={false} />;
     }
 
     function makeSettings(settings: Record<string, Setting<any>>): React.ReactNode[] {

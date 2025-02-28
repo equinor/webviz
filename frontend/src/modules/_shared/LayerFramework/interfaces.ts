@@ -5,10 +5,12 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
-import { SettingDelegate } from "./delegates/SettingDelegate";
 import { Dependency } from "./delegates/_utils/Dependency";
 import { GlobalSettings } from "./framework/DataLayerManager/DataLayerManager";
-import { AllSettingTypes, MakeSettingTypesMap, SettingType } from "./settings/settingsTypes";
+import { MakeSettingTypesMap, SettingType, SettingTypes } from "./settings/settingsTypes";
+
+// ----------------------------
+// The following interfaces/types are used to define the structure of the serialized state of the respective items in the data layer framework.
 
 export enum SerializedType {
     LAYER_MANAGER = "layer-manager",
@@ -28,9 +30,9 @@ export interface SerializedItem {
     visible: boolean;
 }
 
-export type SerializedSettingsState<TSettings> = Record<keyof TSettings, string>;
+export type SerializedSettingsState<TSettings extends Partial<SettingTypes>> = Record<keyof TSettings, string>;
 
-export interface SerializedLayer<TSettings> extends SerializedItem {
+export interface SerializedLayer<TSettings extends Partial<SettingTypes>> extends SerializedItem {
     type: SerializedType.LAYER;
     layerName: string;
     settings: SerializedSettingsState<TSettings>;
@@ -38,7 +40,7 @@ export interface SerializedLayer<TSettings> extends SerializedItem {
 
 export interface SerializedGroup extends SerializedItem {
     type: SerializedType.GROUP;
-    groupName: string;
+    groupType: string;
     color: string;
     children: SerializedItem[];
 }
@@ -56,9 +58,7 @@ export interface SerializedColorScale extends SerializedItem {
 
 export interface SerializedSharedSetting extends SerializedItem {
     type: SerializedType.SHARED_SETTING;
-    settingType: SettingType;
-    wrappedSettingClass: SettingType;
-    wrappedSettingCtorParams: any[];
+    wrappedSettingType: SettingType;
     value: string;
 }
 
@@ -72,18 +72,32 @@ export interface SerializedDeltaSurface extends SerializedItem {
     children: SerializedItem[];
 }
 
+// ----------------------------
+
+/**
+ * Each entity in the data layer framework is based upon the Item interface.
+ * It provides methods for serializing and deserializing the state of the entity.
+ * It also provides a delegate that can be used to interact with the item - e.g. changing its name, visibility, etc.
+ */
 export interface Item {
     getItemDelegate(): ItemDelegate;
     serializeState(): SerializedItem;
     deserializeState(serialized: SerializedItem): void;
 }
 
-export interface ItemGroup {
+export function instanceofItem(item: any): item is Item {
+    return (item as Item).getItemDelegate !== undefined;
+}
+
+/**
+ * A group is a special type of item that can contain other items.
+ */
+export interface ItemGroup extends Item {
     getGroupDelegate(): GroupDelegate;
 }
 
-export function instanceofItem(item: any): item is Item {
-    return (item as Item).getItemDelegate !== undefined;
+export function instanceofItemGroup(group: any): group is ItemGroup {
+    return (group as ItemGroup).getGroupDelegate !== undefined;
 }
 
 export type BoundingBox = {
@@ -92,90 +106,289 @@ export type BoundingBox = {
     z: [number, number];
 };
 
-export enum FetchDataFunctionResult {
-    SUCCESS = "SUCCESS",
-    IN_PROGRESS = "IN_PROGRESS",
-    ERROR = "ERROR",
-    NO_CHANGE = "NO_CHANGE",
-}
-export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
-    (
-        oldValues: { [K in TKey]?: TSettings[K] },
-        newValues: { [K in TKey]?: TSettings[K] }
-    ): Promise<FetchDataFunctionResult>;
-}
-
+/**
+ * This type is used to pass parameters to the fetchData method of a CustomDataLayerImplementation.
+ * It contains accessors to the data and settings of the layer and other useful information.
+ */
 export type DataLayerInformationAccessors<
-    TSettings extends Partial<AllSettingTypes>,
+    TSettings extends Partial<SettingTypes>,
     TData,
     TStoredData extends StoredData = Record<string, unknown>
 > = {
+    /**
+     * Access the data that the layer is currently storing.
+     * @returns The data that the layer is currently storing, or null if the layer has no data.
+     */
     getData: () => TData | null;
+
+    /**
+     * Access the settings of the layer.
+     * @param settingName The name of the setting to access.
+     * @returns The value of the setting.
+     *
+     * @example
+     * ```typescript
+     * const value = getSetting("settingName");
+     * ```
+     */
     getSetting: <K extends keyof TSettings>(settingName: K) => TSettings[K];
+
+    /**
+     * Access the available values of a setting.
+     * @param settingName The name of the setting to access.
+     * @returns The available values of the setting.
+     *
+     * @example
+     * ```typescript
+     * const availableValues = getAvailableSettingValues("settingName");
+     * ```
+     */
     getAvailableSettingValues: <K extends keyof TSettings>(settingName: K) => AvailableValuesType<TSettings[K]>;
+
+    /**
+     * Access the global settings of the data layer manager.
+     *
+     * @param settingName The name of the global setting to access.
+     * @returns The value of the global setting.
+     *
+     * @example
+     * ```typescript
+     * const value = getGlobalSetting("settingName");
+     * ```
+     */
     getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
+
+    /**
+     * Access the stored data of the layer.
+     *
+     * @param key The key of the stored data to access.
+     * @returns The stored data, or null if the stored data does not exist.
+     *
+     * @example
+     * ```typescript
+     * const storedData = getStoredData("key");
+     * ```
+     */
     getStoredData: <K extends keyof TStoredData>(key: K) => TStoredData[K] | null;
+
+    /**
+     * Access to the workbench session.
+     * @returns The workbench session.
+     */
+    getWorkbenchSession: () => WorkbenchSession;
+
+    /**
+     * Access to the workbench settings.
+     * @returns The workbench settings.
+     */
+    getWorkbenchSettings: () => WorkbenchSettings;
 };
 
+/**
+ * This type is used to pass parameters to the fetchData method of a CustomDataLayerImplementation.
+ * It contains accessors to the data and settings of the layer and other useful information.
+ */
 export type FetchDataParams<
-    TSettings extends Partial<AllSettingTypes>,
+    TSettings extends Partial<SettingTypes>,
+    TData,
     TStoredData extends StoredData = Record<string, unknown>
 > = {
     queryClient: QueryClient;
     registerQueryKey: (key: unknown[]) => void;
-} & Omit<DataLayerInformationAccessors<TSettings, TStoredData>, "getData">;
+} & DataLayerInformationAccessors<TSettings, TData, TStoredData>;
 
+/**
+ * An enum that defines the different types of coloring that a layer can use for visualization.
+ */
 export enum LayerColoringType {
     NONE = "NONE",
     COLORSCALE = "COLORSCALE",
     COLORSET = "COLORSET",
 }
 
+export function includesCustomSettingsHandler(
+    obj: any
+): obj is CustomSettingsHandler<
+    Settings,
+    StoredData,
+    MakeSettingTypesMap<Settings>,
+    keyof SettingTypes,
+    keyof StoredData
+> {
+    return obj.settings !== undefined && obj.defineDependencies !== undefined;
+}
+
+/**
+ * This interface is describing what methods and members a custom settings handler must implement.
+ * This can either be used by a data layer or by a group.
+ */
 export interface CustomSettingsHandler<
     TSettingTypes extends Settings,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
     TSettingKey extends keyof TSettings = keyof TSettings,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > {
+    /**
+     * The settings that this handler is using/providing.
+     */
     settings: TSettingTypes;
-    getDefaultName(): string;
+
+    /**
+     * A method that returns the default values of the settings.
+     * @returns The default values of the settings.
+     */
+    getDefaultSettingsValues(): TSettings;
+
+    /**
+     * A method that defines the dependencies of the settings of the layer.
+     * A dependency can either be an updater for the available values of a setting or a stored data object, or a helper dependency (e.g. a fetching operation).
+     *
+     * @param args An object containing the functions for defining the different dependencies.
+     *
+     * @example
+     * ```typescript
+     * defineDependencies({
+     *    availableSettingsUpdater,
+     *    storedDataUpdater,
+     *    helperDependency,
+     *    queryClient
+     * }: DefineDependenciesArgs<TSettings, SettingsWithTypes>) {
+     *   availableSettingsUpdater(SettingType.REALIZATION, ({ getGlobalSetting, getLocalSetting, getHelperDependency }) => {
+     *       // Get global settings
+     *       const fieldIdentifier = getGlobalSetting("fieldId");
+     *
+     *       // Or local settings
+     *       const ensembles = getLocalSetting(SettingType.ENSEMBLE);
+     *
+     *       // Or a helper dependency - note: defined within the same defineDependencies call
+     *       const data = getHelperDependency(dataDependency);
+     *
+     *       // Do something with the settings and data
+     *       ...
+     *
+     *       // Return the available values for the setting
+     *       return availableValues;
+     *     });
+     *
+     *     // The same can be done with stored data
+     *     storedDataUpdater("key", ({ getGlobalSetting, getLocalSetting, getHelperDependency }) => {
+     *         ...
+     *     });
+     *
+     *     // A helper dependency can be defined like this
+     *     const dataDependency = helperDependency(async ({ getLocalSetting, getGlobalSetting, abortSignal }) => {
+     *         // Get local or global settings
+     *         ...
+     *
+     *         // Use them to fetch data
+     *         const data = await queryClient.fetchQuery({
+     *             ...
+     *             // Use the abort signal to cancel the request if needed - this is automatically handled by the framework
+     *             signal: abortSignal,
+     *         });
+     *     });
+     * }
+     *
+     */
     defineDependencies(
         args: DefineDependenciesArgs<TSettingTypes, TSettings, TStoredData, TSettingKey, TStoredDataKey>
     ): void;
     areCurrentSettingsValid?: (settings: TSettings) => boolean;
 }
+
+/**
+ * This interface is describing what methods and members a custom group must implement.
+ * A custom group can contain settings but it does not have to.
+ */
 export interface CustomGroupImplementation<
-    TSettingTypes extends Settings,
+    TSettingTypes extends Settings = [],
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
     TSettingKey extends keyof TSettings = keyof TSettings,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
-> extends CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TSettingKey, TStoredDataKey> {}
+> {
+    /**
+     * @returns The default name of a group of this type.
+     */
+    getDefaultName(): string;
+}
+
+export interface CustomGroupImplementationWithSettings<
+    TSettingTypes extends Settings = [],
+    TStoredData extends StoredData = Record<string, never>,
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
+    TSettingKey extends keyof TSettings = keyof TSettings,
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData
+> extends CustomGroupImplementation<TSettingTypes, TStoredData, TSettings, TSettingKey, TStoredDataKey>,
+        CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TSettingKey, TStoredDataKey> {}
 
 export interface CustomDataLayerImplementation<
     TSettingTypes extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
     TSettingKey extends keyof TSettings = keyof TSettings,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > extends CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TSettingKey, TStoredDataKey> {
+    /**
+     * The default name of a layer of this type.
+     */
+    getDefaultName(): string;
+
+    /**
+     * The type of coloring that this layer uses for visualization.
+     */
     getColoringType(): LayerColoringType;
+
+    /**
+     * This method is called when the settings of the layer are changed. It should return true if the new settings
+     * require a refetch of the data, or false if the data can be reused.
+     *
+     * @param prevSettings The previous settings of the layer.
+     * @param newSettings The new settings of the layer.
+     * @param accessors Accessors to the data and settings of the layer.
+     */
     doSettingsChangesRequireDataRefetch(
         prevSettings: TSettings,
         newSettings: TSettings,
         accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>
     ): boolean;
-    fetchData(params: FetchDataParams<TSettings, TStoredData>): Promise<TData>;
+
+    /**
+     * This method must return a promise that resolves to the data that this data layer is providing.
+     * This could for example be a fetch request to a server.
+     *
+     * @param params An object containing accessors to the data and settings of the layer and other useful information.
+     */
+    fetchData(params: FetchDataParams<TSettings, TData, TStoredData>): Promise<TData>;
+
+    /**
+     * Used to determine the bounding box of the data in the layer in UTM coordinates.
+     *
+     * @param accessors Accessors to the data and settings of the layer.
+     */
     makeBoundingBox?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): BoundingBox | null;
+
+    /**
+     * Used to predict the next bounding box of the data in the layer in UTM coordinates. This bounding box can be used
+     * to show a preview of the layer while it's fetching data.
+     *
+     * @param accessors Accessors to the data and settings of the layer.
+     */
     predictBoundingBox?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): BoundingBox | null;
+
+    /**
+     * Used to determine the value range of the data in the layer. This is used for coloring the layer.
+     *
+     * @param accessors Accessors to the data and settings of the layer.
+     */
     makeValueRange?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): [number, number] | null;
 }
 
 export interface GetHelperDependency<
     TSettingTypes extends Settings,
-    TSettings extends Partial<AllSettingTypes>,
+    TSettings extends MakeSettingTypesMap<TSettingTypes>,
     TKey extends keyof TSettings
 > {
     <TDep>(dep: Dependency<TDep, TSettingTypes, TSettings, TKey>): Awaited<TDep> | null;
@@ -184,7 +397,7 @@ export interface GetHelperDependency<
 export interface UpdateFunc<
     TReturnValue,
     TSettingTypes extends Settings,
-    TSettings extends Partial<AllSettingTypes>,
+    TSettings extends MakeSettingTypesMap<TSettingTypes>,
     TKey extends keyof TSettings
 > {
     (args: {
@@ -197,7 +410,7 @@ export interface UpdateFunc<
 
 export interface DefineDependenciesArgs<
     TSettingTypes extends Settings,
-    TSettings extends Partial<AllSettingTypes>,
+    TSettings extends MakeSettingTypesMap<TSettingTypes>,
     TStoredData extends StoredData = Record<string, never>,
     TKey extends keyof TSettings = keyof TSettings,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
@@ -253,20 +466,17 @@ export type ValueToStringArgs<TValue> = {
     workbenchSettings: WorkbenchSettings;
 };
 
-export interface Setting<TValue> {
-    getType(): SettingType;
-    getLabel(): string;
+export interface CustomSettingImplementation<TValue> {
+    getIsStatic?: () => boolean;
     makeComponent(): (props: SettingComponentProps<TValue>) => React.ReactNode;
-    getDelegate(): SettingDelegate<TValue>;
     fixupValue?: (availableValues: AvailableValuesType<TValue>, currentValue: TValue) => TValue;
     isValueValid?: (availableValues: AvailableValuesType<TValue>, value: TValue) => boolean;
     serializeValue?: (value: TValue) => string;
     deserializeValue?: (serializedValue: string) => TValue;
     valueToString?: (args: ValueToStringArgs<TValue>) => string;
-    getConstructorParams?: () => any[];
 }
 
-export type Settings = SettingType[] & { readonly __settings?: never };
+export type Settings = readonly SettingType[] & { readonly __settings?: never };
 
 export type StoredData = Record<string, any>;
 export type NullableStoredData<TStoredData extends StoredData> = {

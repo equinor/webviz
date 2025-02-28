@@ -7,7 +7,8 @@ import { Link, Warning } from "@mui/icons-material";
 import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDelegate";
 import { SettingTopic } from "../delegates/SettingDelegate";
 import { DataLayerManager, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
-import { Setting, SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";
+import { Setting } from "../framework/Setting/Setting";
+import { SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";
 
 export type SettingComponentProps<TValue> = {
     setting: Setting<TValue>;
@@ -19,19 +20,13 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     const componentRef = React.useRef<(props: SettingComponentPropsInterface<TValue>) => React.ReactNode>(
         props.setting.makeComponent()
     );
-    const value = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.VALUE_CHANGED);
-    const isValid = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.VALIDITY_CHANGED);
-    const isPersisted = usePublishSubscribeTopicValue(
-        props.setting.getDelegate(),
-        SettingTopic.PERSISTED_STATE_CHANGED
-    );
-    const availableValues = usePublishSubscribeTopicValue(
-        props.setting.getDelegate(),
-        SettingTopic.AVAILABLE_VALUES_CHANGED
-    );
-    const overriddenValue = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.OVERRIDDEN_CHANGED);
-    const isLoading = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.LOADING_STATE_CHANGED);
-    const isInitialized = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.INIT_STATE_CHANGED);
+    const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_CHANGED);
+    const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALIDITY_CHANGED);
+    const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.PERSISTED_STATE_CHANGED);
+    const availableValues = usePublishSubscribeTopicValue(props.setting, SettingTopic.AVAILABLE_VALUES_CHANGED);
+    const overriddenValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.OVERRIDDEN_CHANGED);
+    const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.LOADING_STATE_CHANGED);
+    const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.INIT_STATE_CHANGED);
     const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
 
     let actuallyLoading = isLoading || !isInitialized;
@@ -40,12 +35,12 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     }
 
     function handleValueChanged(newValue: TValue) {
-        props.setting.getDelegate().setValue(newValue);
+        props.setting.setValue(newValue);
     }
 
     if (props.sharedSetting && availableValues.length === 0 && isInitialized) {
         return (
-            <React.Fragment key={props.setting.getDelegate().getId()}>
+            <React.Fragment key={props.setting.getId()}>
                 <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
                 <div className="p-0.5 px-2 w-full italic h-8 flex items-center text-orange-600">Empty intersection</div>
             </React.Fragment>
@@ -53,11 +48,13 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     }
 
     if (overriddenValue !== undefined) {
-        const valueAsString = props.setting
-            .getDelegate()
-            .valueToString(overriddenValue, props.manager.getWorkbenchSession(), props.manager.getWorkbenchSettings());
+        const valueAsString = props.setting.valueToString(
+            overriddenValue,
+            props.manager.getWorkbenchSession(),
+            props.manager.getWorkbenchSettings()
+        );
         return (
-            <React.Fragment key={props.setting.getDelegate().getId()}>
+            <React.Fragment key={props.setting.getId()}>
                 <div className="p-0.5 px-2 w-32 flex items-center gap-2 text-teal-600">
                     <span>{props.setting.getLabel()}</span>
                     <span className="text-base mb-1">
@@ -72,7 +69,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     }
 
     return (
-        <React.Fragment key={props.setting.getDelegate().getId()}>
+        <React.Fragment key={props.setting.getId()}>
             <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
             <div className="p-0.5 px-2 w-full">
                 <PendingWrapper isPending={actuallyLoading}>

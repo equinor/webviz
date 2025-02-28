@@ -48,12 +48,16 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     }
 
     prependChild(child: Item) {
-        this._children = [child, ...this._children];
+        const childOrder = child.getItemDelegate().getOrder();
+        const [startIndex] = this.getRangeOfChildrenWithOrder(childOrder);
+        this.insertChild(child, startIndex);
         this.takeOwnershipOfChild(child);
     }
 
     appendChild(child: Item) {
-        this._children = [...this._children, child];
+        const childOrder = child.getItemDelegate().getOrder();
+        const [, endIndex] = this.getRangeOfChildrenWithOrder(childOrder);
+        this.insertChild(child, endIndex);
         this.takeOwnershipOfChild(child);
     }
 
@@ -252,5 +256,20 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
         }
 
         this.publishTopic(GroupDelegateTopic.CHILDREN);
+    }
+
+    private getRangeOfChildrenWithOrder(order: number): [number, number] {
+        let startIndex = -1;
+        let endIndex = -1;
+        for (let i = 0; i < this._children.length; i++) {
+            if (this._children[i].getItemDelegate().getOrder() === order) {
+                if (startIndex === -1) {
+                    startIndex = i;
+                }
+                endIndex = i;
+            }
+        }
+
+        return [startIndex, endIndex];
     }
 }

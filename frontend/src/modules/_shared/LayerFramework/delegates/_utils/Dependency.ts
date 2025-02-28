@@ -4,7 +4,7 @@ import { isEqual } from "lodash";
 
 import { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
 import { Settings, UpdateFunc } from "../../interfaces";
-import { AllSettingTypes } from "../../settings/settingsTypes";
+import { MakeSettingTypesMap } from "../../settings/settingsTypes";
 import { SettingsContextDelegate } from "../SettingsContextDelegate";
 
 /*
@@ -21,7 +21,7 @@ import { SettingsContextDelegate } from "../SettingsContextDelegate";
 export class Dependency<
     TReturnValue,
     TSettingTypes extends Settings,
-    TSettings extends Partial<AllSettingTypes>,
+    TSettings extends MakeSettingTypesMap<TSettingTypes>,
     TKey extends keyof TSettings
 > {
     private _updateFunc: UpdateFunc<TReturnValue, TSettingTypes, TSettings, TKey>;
@@ -108,10 +108,7 @@ export class Dependency<
             this.callUpdateFunc();
         });
 
-        this._cachedSettingsMap.set(
-            settingName as string,
-            this._contextDelegate.getSettings()[settingName].getDelegate().getValue()
-        );
+        this._cachedSettingsMap.set(settingName as string, this._contextDelegate.getSettings()[settingName].getValue());
         return this._cachedSettingsMap.get(settingName as string);
     }
 

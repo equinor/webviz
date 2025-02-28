@@ -3,51 +3,60 @@ import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegate } from "../../delegates/SettingsContextDelegate";
 import {
     CustomGroupImplementation,
+    CustomGroupImplementationWithSettings,
+    CustomSettingsHandler,
     SerializedGroup,
     SerializedType,
-    Setting,
     Settings,
     StoredData,
+    includesCustomSettingsHandler,
 } from "../../interfaces";
-import { AllSettingTypes, MakeSettingTypesMap } from "../../settings/settingsTypes";
+import { MakeSettingTypesMap } from "../../settings/settingsTypes";
 import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
+import { Setting } from "../Setting/Setting";
 import { makeSettings } from "../utils/makeSettings";
 
 export type GroupParams<
     TSettingTypes extends Settings,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
 > = {
-    name: string;
     layerManager: DataLayerManager;
-    color?: string | null;
-    type?: string;
-    customGroupImplementation?: CustomGroupImplementation<TSettingTypes, TStoredData, TSettings>;
+    color?: string;
+    type: string;
+    customGroupImplementation:
+        | CustomGroupImplementation<TSettingTypes, TStoredData, TSettings>
+        | CustomGroupImplementationWithSettings<TSettingTypes, TStoredData, TSettings>;
 };
 
 export class Group<
     TSettingTypes extends Settings,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends Partial<AllSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
 > {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
-    private _groupName: string;
+    private _type: string;
     private _settingsContextDelegate: SettingsContextDelegate<TSettingTypes, TSettings, TStoredData> | null = null;
 
     constructor(params: GroupParams<TSettingTypes, TStoredData, TSettings>) {
-        const { name, layerManager, customGroupImplementation, color = null, type = "default" } = params;
+        const { layerManager, customGroupImplementation, color = null, type } = params;
         this._groupDelegate = new GroupDelegate(this);
         this._groupDelegate.setColor(color);
-        this._itemDelegate = new ItemDelegate(name, layerManager);
-        if (customGroupImplementation) {
+        this._itemDelegate = new ItemDelegate(customGroupImplementation.getDefaultName(), 1, layerManager);
+        if (includesCustomSettingsHandler(customGroupImplementation)) {
             this._settingsContextDelegate = new SettingsContextDelegate<TSettingTypes, TSettings, TStoredData>(
-                customGroupImplementation,
+                customGroupImplementation as unknown as CustomSettingsHandler<TSettingTypes, TStoredData, TSettings>,
                 layerManager,
-                makeSettings(customGroupImplementation.settings) as { [key in keyof TSettings]: Setting<any> }
+                makeSettings(
+                    customGroupImplementation.settings,
+                    customGroupImplementation.getDefaultSettingsValues()
+                ) as {
+                    [key in keyof TSettings]: Setting<any>;
+                }
             );
         }
-        this._groupName = type;
+        this._type = type;
     }
 
     getItemDelegate(): ItemDelegate {
@@ -62,15 +71,15 @@ export class Group<
         return this._settingsContextDelegate;
     }
 
-    getGroupName(): string {
-        return this._groupName;
+    getGroupType(): string {
+        return this._type;
     }
 
     serializeState(): SerializedGroup {
         return {
             ...this._itemDelegate.serializeState(),
             type: SerializedType.GROUP,
-            groupName: this._groupName,
+            groupType: this._type,
             color: this._groupDelegate.getColor() ?? "",
             children: this._groupDelegate.serializeChildren(),
         };

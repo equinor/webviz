@@ -2,10 +2,7 @@ import React from "react";
 
 import { Slider } from "@lib/components/Slider";
 
-import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
-import { SettingRegistry } from "../SettingRegistry";
-import { SettingType } from "../settingsTypes";
+import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
 
 type ValueType = [number, number] | null;
 
@@ -15,30 +12,13 @@ export enum Direction {
     K,
 }
 
-export class GridLayerRangeSetting implements Setting<ValueType> {
-    private _delegate: SettingDelegate<ValueType>;
+export class GridLayerRangeSetting implements CustomSettingImplementation<ValueType> {
+    defaultValue: ValueType = null;
+
     private _direction: Direction;
-    private _params: [Direction];
 
-    constructor(...params: [Direction]) {
-        this._delegate = new SettingDelegate<ValueType>(null, this);
-        this._params = params;
-        this._direction = params[0];
-    }
-
-    getConstructorParams() {
-        return this._params;
-    }
-
-    getType(): SettingType {
-        switch (this._direction) {
-            case Direction.I:
-                return SettingType.GRID_LAYER_I_RANGE;
-            case Direction.J:
-                return SettingType.GRID_LAYER_J_RANGE;
-            case Direction.K:
-                return SettingType.GRID_LAYER_K_RANGE;
-        }
+    constructor(direction: Direction) {
+        this._direction = direction;
     }
 
     getLabel(): string {
@@ -50,10 +30,6 @@ export class GridLayerRangeSetting implements Setting<ValueType> {
             case Direction.K:
                 return "Grid layer K";
         }
-    }
-
-    getDelegate(): SettingDelegate<ValueType> {
-        return this._delegate;
     }
 
     isValueValid(availableValues: AvailableValuesType<ValueType>, value: ValueType): boolean {
@@ -118,5 +94,3 @@ export class GridLayerRangeSetting implements Setting<ValueType> {
         };
     }
 }
-
-SettingRegistry.registerSetting(GridLayerRangeSetting);

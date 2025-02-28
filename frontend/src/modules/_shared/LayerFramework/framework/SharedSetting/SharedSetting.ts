@@ -1,28 +1,34 @@
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingTopic } from "../../delegates/SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { Item, SerializedSharedSetting, SerializedType, Setting } from "../../interfaces";
+import { AvailableValuesType, Item, SerializedSharedSetting, SerializedType } from "../../interfaces";
+import { SettingRegistry } from "../../settings/SettingRegistry";
+import { SettingType, SettingTypes } from "../../settings/settingsTypes";
 import { DataLayer } from "../DataLayer/DataLayer";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
+import { Setting } from "../Setting/Setting";
 
-export class SharedSetting implements Item {
-    private _wrappedSetting: Setting<any>;
+export class SharedSetting<TSettingType extends SettingType> implements Item {
+    private _wrappedSetting: Setting<SettingTypes[TSettingType]>;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _itemDelegate: ItemDelegate;
 
-    constructor(wrappedSetting: Setting<any>, layerManager: DataLayerManager) {
-        this._wrappedSetting = wrappedSetting;
+    constructor(
+        wrappedSettingType: TSettingType,
+        defaultValue: SettingTypes[TSettingType],
+        layerManager: DataLayerManager
+    ) {
+        this._wrappedSetting = SettingRegistry.makeSetting(wrappedSettingType, defaultValue);
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "setting",
-            this._wrappedSetting
-                .getDelegate()
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
-                this.publishValueChange();
-            })
+            this._wrappedSetting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(
+                () => {
+                    this.publishValueChange();
+                }
+            )
         );
-        this._itemDelegate = new ItemDelegate(wrappedSetting.getLabel(), layerManager);
+        this._itemDelegate = new ItemDelegate(this._wrappedSetting.getLabel(), 0, layerManager);
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
@@ -71,28 +77,30 @@ export class SharedSetting implements Item {
 
         const layers = parentGroup.getDescendantItems((item) => item instanceof DataLayer) as DataLayer<any, any>[];
         let index = 0;
-        let availableValues: any[] = [];
+        let availableValues: AvailableValuesType<SettingTypes[TSettingType]> = [] as unknown as AvailableValuesType<
+            SettingTypes[TSettingType]
+        >;
         for (const item of layers) {
             const setting = item.getSettingsContextDelegate().getSettings()[this._wrappedSetting.getType()];
             if (setting) {
-                if (setting.getDelegate().isLoading()) {
-                    this._wrappedSetting.getDelegate().setLoading(true);
+                if (setting.isLoading()) {
+                    this._wrappedSetting.setLoading(true);
                     return;
                 }
                 if (index === 0) {
-                    availableValues.push(...setting.getDelegate().getAvailableValues());
+                    availableValues.push(...setting.getAvailableValues());
                 } else {
                     availableValues = availableValues.filter((value) =>
-                        setting.getDelegate().getAvailableValues().includes(value)
-                    );
+                        setting.getAvailableValues().includes(value)
+                    ) as unknown as AvailableValuesType<SettingTypes[TSettingType]>;
                 }
                 index++;
             }
         }
 
-        this._wrappedSetting.getDelegate().setLoading(false);
+        this._wrappedSetting.setLoading(false);
 
-        this._wrappedSetting.getDelegate().setAvailableValues(availableValues);
+        this._wrappedSetting.setAvailableValues(availableValues);
         this.publishValueChange();
     }
 
@@ -100,16 +108,14 @@ export class SharedSetting implements Item {
         return {
             ...this._itemDelegate.serializeState(),
             type: SerializedType.SHARED_SETTING,
-            wrappedSettingClass: this._wrappedSetting.constructor.name,
-            wrappedSettingCtorParams: this._wrappedSetting.getConstructorParams?.() ?? [],
-            settingType: this._wrappedSetting.getType(),
-            value: this._wrappedSetting.getDelegate().serializeValue(),
+            wrappedSettingType: this._wrappedSetting.getType(),
+            value: this._wrappedSetting.serializeValue(),
         };
     }
 
     deserializeState(serialized: SerializedSharedSetting): void {
         this._itemDelegate.deserializeState(serialized);
-        this._wrappedSetting.getDelegate().deserializeValue(serialized.value);
+        this._wrappedSetting.deserializeValue(serialized.value);
     }
 
     beforeDestroy(): void {
