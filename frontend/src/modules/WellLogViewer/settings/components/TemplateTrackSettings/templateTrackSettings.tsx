@@ -19,7 +19,7 @@ import { v4 } from "uuid";
 
 import { SortableTrackItem } from "./private-components/SortableTrackItem";
 
-import { logViewerTrackConfigs } from "../../atoms/persistedAtoms";
+import { logViewerTrackConfigsAtom } from "../../atoms/persistedAtoms";
 import { AddItemButton } from "../AddItemButton";
 
 interface TemplateTrackSettingsProps {
@@ -41,7 +41,7 @@ const TRACK_OPTIONS: TrackSelectOption[] = [
 ];
 
 export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.ReactNode {
-    const [trackConfigs, setTrackConfigs] = useAtom(logViewerTrackConfigs);
+    const [trackConfigs, setTrackConfigs] = useAtom(logViewerTrackConfigsAtom);
     const jsonImportInputRef = React.useRef<HTMLInputElement | null>(null);
 
     const handleNewPlotTrack = React.useCallback(
