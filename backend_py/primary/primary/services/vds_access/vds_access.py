@@ -10,9 +10,9 @@ import httpx
 from primary.services.service_exceptions import InvalidDataError, Service
 
 from primary import config
-from primary.httpx_client import httpx_async_client
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 
-from .response_types import VdsArray, VdsMetadata, VdsFenceMetadata, VdsSliceMetadata
+from .response_types import VdsArray, VdsAxis, VdsMetadata, VdsFenceMetadata, VdsSliceMetadata
 from .request_types import (
     VdsCoordinates,
     VdsCoordinateSystem,
@@ -61,7 +61,7 @@ class VdsAccess:
     async def _query_async(endpoint: str, request: VdsRequestedResource) -> httpx.Response:
         """Query the service"""
 
-        response = await httpx_async_client.client.post(
+        response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.post(
             f"{config.VDS_HOST_ADDRESS}/{endpoint}",
             headers={"Content-Type": "application/json"},
             content=json.dumps(request.request_parameters()),
@@ -92,15 +92,8 @@ class VdsAccess:
             line_no=line_no,
         )
         response = await self._query_async(endpoint, slice_request)
-        decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
-        parts = decoder.parts
-        # Validate parts from decoded response
-        if len(parts) != 2 or not parts[0].content or not parts[1].content:
-            raise ValueError(f"Expected two parts, got {len(parts)}")
 
-        # Expect each part in parts tuple to be BodyPart
-        if not isinstance(parts[0], BodyPart) or not isinstance(parts[1], BodyPart):
-            raise ValueError(f"Expected parts to be BodyPart, got {type(parts[0])}, {type(parts[1])}")
+        parts = self._extract_and_validate_body_parts_from_response(response)
 
         metadata = VdsSliceMetadata(**json.loads(parts[0].content))
         self._assert_valid_metadata_format_and_shape(metadata)
@@ -121,17 +114,17 @@ class VdsAccess:
             line_no=line_no,
         )
         response = await self._query_async(endpoint, slice_request)
-        decoder = MultipartDecoder(content=response.content, content_type=response.headers["Content-Type"])
-        parts = decoder.parts
-        # Validate parts from decoded response
-        if len(parts) != 2 or not parts[0].content or not parts[1].content:
-            raise ValueError(f"Expected two parts, got {len(parts)}")
 
-        # Expect each part in parts tuple to be BodyPart
-        if not isinstance(parts[0], BodyPart) or not isinstance(parts[1], BodyPart):
-            raise ValueError(f"Expected parts to be BodyPart, got {type(parts[0])}, {type(parts[1])}")
+        parts = self._extract_and_validate_body_parts_from_response(response)
 
-        metadata = VdsSliceMetadata(**json.loads(parts[0].content))
+        response_metadata = json.loads(parts[0].content)
+        metadata = VdsSliceMetadata(
+            format=response_metadata["format"],
+            shape=response_metadata["shape"],
+            x_axis=VdsAxis(**response_metadata["x"]),
+            y_axis=VdsAxis(**response_metadata["y"]),
+            geospatial=response_metadata["geospatial"],
+        )
         self._assert_valid_metadata_format_and_shape(metadata)
 
         byte_array = parts[1].content
@@ -153,7 +146,14 @@ class VdsAccess:
 
         parts = self._extract_and_validate_body_parts_from_response(response)
 
-        metadata = VdsSliceMetadata(**json.loads(parts[0].content))
+        response_metadata = json.loads(parts[0].content)
+        metadata = VdsSliceMetadata(
+            format=response_metadata["format"],
+            shape=response_metadata["shape"],
+            x_axis=VdsAxis(**response_metadata["x"]),
+            y_axis=VdsAxis(**response_metadata["y"]),
+            geospatial=response_metadata["geospatial"],
+        )
         self._assert_valid_metadata_format_and_shape(metadata)
 
         byte_array = parts[1].content

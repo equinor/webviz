@@ -8,9 +8,9 @@ from fmu.sumo.explorer.objects import CaseCollection
 from pydantic import BaseModel
 
 from primary import config
-from primary.httpx_client import httpx_async_client
+from primary.services.utils.httpx_async_client_wrapper import HTTPX_ASYNC_CLIENT_WRAPPER
 from primary.services.sumo_access.sumo_blob_access import get_sas_token_and_blob_store_base_uri_for_case
-from primary.services.sumo_access._helpers import create_sumo_client
+from primary.services.sumo_access.sumo_client_factory import create_sumo_client
 
 LOGGER = logging.getLogger(__name__)
 
@@ -72,8 +72,8 @@ async def batch_sample_surface_in_points_async(
     )
 
     LOGGER.info(f"Running async go point sampling for surface: {surface_name}")
-    response: httpx.Response = await httpx_async_client.client.post(
-        url=SERVICE_ENDPOINT, json=request_body.model_dump()
+    response: httpx.Response = await HTTPX_ASYNC_CLIENT_WRAPPER.client.post(
+        url=SERVICE_ENDPOINT, json=request_body.model_dump(), timeout=300
     )
 
     json_data: bytes = response.content
