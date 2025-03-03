@@ -15,7 +15,10 @@ import { PublishSubscribe, PublishSubscribeDelegate } from "../../../utils/Publi
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
+import "../../groups/registerAllGroups";
 import { Item, ItemGroup, SerializedLayerManager, SerializedType } from "../../interfaces";
+import "../../layers/registerAllLayers";
+import "../../settings/registerAllSettings";
 
 export enum LayerManagerTopic {
     ITEMS_CHANGED = "ITEMS_CHANGED",

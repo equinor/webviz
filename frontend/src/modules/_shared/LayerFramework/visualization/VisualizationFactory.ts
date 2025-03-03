@@ -19,6 +19,7 @@ import {
     Settings,
     instanceofItemGroup,
 } from "../interfaces";
+import { MakeSettingTypesMap } from "../settings/settingsTypes";
 
 export enum VisualizationTarget {
     DECK_GL = "deck_gl",
@@ -31,7 +32,7 @@ export type VisualizationFunctionArgs<TSettings extends Settings, TData> = {
     name: string;
     data: TData;
     colorScale: ColorScaleWithName;
-    settings: TSettings;
+    settings: MakeSettingTypesMap<TSettings>;
     isLoading: boolean;
     predictedNextBoundingBox: BoundingBox | null;
 };
@@ -71,7 +72,9 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
     private _visualizationFunctions: Map<string, MakeVisualizationFunction<any, any, TTarget>> = new Map();
 
     registerVisualizationFunction<TSettings extends Settings, TData>(
-        layerCtor: { new (layerManager: DataLayerManager): CustomDataLayerImplementation<TSettings, TData, any> },
+        layerCtor: {
+            new (...params: any[]): CustomDataLayerImplementation<TSettings, TData, any>;
+        },
         func: MakeVisualizationFunction<TSettings, TData, TTarget>
     ): void {
         if (this._visualizationFunctions.has(layerCtor.name)) {

@@ -25,10 +25,10 @@ const observedSurfaceSettings = [
     SettingType.SURFACE_NAME,
     SettingType.TIME_OR_INTERVAL,
 ] as const;
-type ObservedSurfaceSettings = typeof observedSurfaceSettings;
+export type ObservedSurfaceSettings = typeof observedSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<ObservedSurfaceSettings>;
 
-type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
+export type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
 
 export class ObservedSurfaceLayer implements CustomDataLayerImplementation<ObservedSurfaceSettings, Data> {
     settings = observedSurfaceSettings;

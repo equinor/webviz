@@ -218,6 +218,37 @@ export function includesCustomSettingsHandler(
     return obj.settings !== undefined && obj.defineDependencies !== undefined;
 }
 
+export function includesSettings(obj: any): obj is CustomGroupImplementationWithSettings {
+    return obj.settings !== undefined && obj.getDefaultSettingsValues !== undefined;
+}
+
+/**
+ * This interface is describing what methods and members a custom group must implement.
+ * A custom group can contain settings but it does not have to.
+ */
+export interface CustomGroupImplementation {
+    /**
+     * @returns The default name of a group of this type.
+     */
+    getDefaultName(): string;
+}
+
+export interface CustomGroupImplementationWithSettings<
+    TSettingTypes extends Settings = [],
+    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+> extends CustomGroupImplementation {
+    /**
+     * The settings that this handler is using/providing.
+     */
+    settings: TSettingTypes;
+
+    /**
+     * A method that returns the default values of the settings.
+     * @returns The default values of the settings.
+     */
+    getDefaultSettingsValues(): TSettings;
+}
+
 /**
  * This interface is describing what methods and members a custom settings handler must implement.
  * This can either be used by a data layer or by a group.
@@ -296,33 +327,6 @@ export interface CustomSettingsHandler<
     ): void;
     areCurrentSettingsValid?: (settings: TSettings) => boolean;
 }
-
-/**
- * This interface is describing what methods and members a custom group must implement.
- * A custom group can contain settings but it does not have to.
- */
-export interface CustomGroupImplementation<
-    TSettingTypes extends Settings = [],
-    TStoredData extends StoredData = Record<string, never>,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
-    TSettingKey extends keyof TSettings = keyof TSettings,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData
-> {
-    /**
-     * @returns The default name of a group of this type.
-     */
-    getDefaultName(): string;
-}
-
-export interface CustomGroupImplementationWithSettings<
-    TSettingTypes extends Settings = [],
-    TStoredData extends StoredData = Record<string, never>,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
-    TSettingKey extends keyof TSettings = keyof TSettings,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData
-> extends CustomGroupImplementation<TSettingTypes, TStoredData, TSettings, TSettingKey, TStoredDataKey>,
-        CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TSettingKey, TStoredDataKey> {}
-
 export interface CustomDataLayerImplementation<
     TSettingTypes extends Settings,
     TData,
@@ -445,7 +449,7 @@ export type EachAvailableValuesType<T> = T extends any ? AvailableValuesType<T> 
 export type AvailableValuesType<TValue> = RemoveUnknownFromArray<MakeArrayIfNotArray<TValue>>;
 
 // "MakeArrayIfNotArray<T>" yields "unknown[] | any[]" for "T = any"  - we don't want "unknown[]"
-type RemoveUnknownFromArray<T> = T extends unknown[] | any[] ? any[] : T;
+type RemoveUnknownFromArray<T> = T extends (infer U)[] ? ([unknown] extends [U] ? any[] : T) : T;
 type MakeArrayIfNotArray<T> = Exclude<T, null> extends Array<infer V> ? Array<V> : Array<Exclude<T, null>>;
 
 export type SettingComponentProps<TValue> = {
@@ -476,7 +480,7 @@ export interface CustomSettingImplementation<TValue> {
     valueToString?: (args: ValueToStringArgs<TValue>) => string;
 }
 
-export type Settings = readonly SettingType[] & { readonly __settings?: never };
+export type Settings = ReadonlyArray<SettingType> & { __brand?: "MyType" };
 
 export type StoredData = Record<string, any>;
 export type NullableStoredData<TStoredData extends StoredData> = {

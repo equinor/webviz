@@ -6,6 +6,12 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { Rect2D, outerRectContainsInnerRect } from "@lib/utils/geometry";
+import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
+import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
+import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
+import { makeObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeObservedSurfaceLayer";
+import { makeRealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationSurfaceLayer";
+import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeStatisticalSurfaceLayer";
 import { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import {
@@ -13,6 +19,12 @@ import {
     LayerManagerTopic,
 } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
+import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import {
+    LayerWithPosition,
+    VisualizationFactory,
+    VisualizationTarget,
+} from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
@@ -22,13 +34,28 @@ import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
-import { DeckGlLayerWithPosition, recursivelyMakeViewsAndLayers } from "../utils/makeViewsAndLayers";
 
 export type LayersWrapperProps = {
     layerManager: DataLayerManager;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
 };
+
+type T = MakeSettingTypesMap<
+    | [
+          SettingType.ENSEMBLE,
+          SettingType.REALIZATION,
+          SettingType.ATTRIBUTE,
+          SettingType.SURFACE_NAME,
+          SettingType.TIME_OR_INTERVAL
+      ]
+    | [SettingType.ENSEMBLE, SettingType.REALIZATION, SettingType.ATTRIBUTE, SettingType.SURFACE_NAME]
+>;
+
+const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
+VISUALIZATION_FACTORY.registerVisualizationFunction(ObservedSurfaceLayer, makeObservedSurfaceLayer);
+VISUALIZATION_FACTORY.registerVisualizationFunction(RealizationSurfaceLayer, makeRealizationSurfaceLayer);
+VISUALIZATION_FACTORY.registerVisualizationFunction(StatisticalSurfaceLayer, makeStatisticalSurfaceLayer);
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
@@ -40,7 +67,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     usePublishSubscribeTopicValue(props.layerManager, LayerManagerTopic.LAYER_DATA_REVISION);
 
     const viewports: ViewportType[] = [];
-    const viewerLayers: DeckGlLayerWithPosition[] = [];
+    const viewerLayers: LayerWithPosition<VisualizationTarget.DECK_GL>[] = [];
     const viewportAnnotations: React.ReactNode[] = [];
     const globalColorScales: ColorScaleWithId[] = [];
 
@@ -55,7 +82,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     let numLoadingLayers = 0;
 
-    const viewsAndLayers = recursivelyMakeViewsAndLayers(props.layerManager.getGroupDelegate());
+    const viewsAndLayers = VISUALIZATION_FACTORY.make(props.layerManager);
 
     numCols = Math.ceil(Math.sqrt(viewsAndLayers.views.length));
     numRows = Math.ceil(viewsAndLayers.views.length / numCols);

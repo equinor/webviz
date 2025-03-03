@@ -1,59 +1,53 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { SettingsContextDelegate } from "../../delegates/SettingsContextDelegate";
+import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
 import {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
-    CustomSettingsHandler,
+    ItemGroup,
     SerializedGroup,
     SerializedType,
     Settings,
-    StoredData,
-    includesCustomSettingsHandler,
+    includesSettings,
 } from "../../interfaces";
-import { MakeSettingTypesMap } from "../../settings/settingsTypes";
+import { MakeSettingTuple, MakeSettingTypesMap } from "../../settings/settingsTypes";
 import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
-import { Setting } from "../Setting/Setting";
 import { makeSettings } from "../utils/makeSettings";
 
 export type GroupParams<
     TSettingTypes extends Settings,
-    TStoredData extends StoredData = Record<string, never>,
     TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
 > = {
     layerManager: DataLayerManager;
     color?: string;
     type: string;
     customGroupImplementation:
-        | CustomGroupImplementation<TSettingTypes, TStoredData, TSettings>
-        | CustomGroupImplementationWithSettings<TSettingTypes, TStoredData, TSettings>;
+        | CustomGroupImplementation
+        | CustomGroupImplementationWithSettings<TSettingTypes, TSettings>;
 };
 
 export class Group<
     TSettingTypes extends Settings,
-    TStoredData extends StoredData = Record<string, never>,
     TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
-> {
+> implements ItemGroup
+{
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
     private _type: string;
-    private _settingsContextDelegate: SettingsContextDelegate<TSettingTypes, TSettings, TStoredData> | null = null;
+    private _sharedSettingsDelegate: SharedSettingsDelegate<TSettingTypes> | null = null;
 
-    constructor(params: GroupParams<TSettingTypes, TStoredData, TSettings>) {
+    constructor(params: GroupParams<TSettingTypes, TSettings>) {
         const { layerManager, customGroupImplementation, color = null, type } = params;
         this._groupDelegate = new GroupDelegate(this);
         this._groupDelegate.setColor(color);
         this._itemDelegate = new ItemDelegate(customGroupImplementation.getDefaultName(), 1, layerManager);
-        if (includesCustomSettingsHandler(customGroupImplementation)) {
-            this._settingsContextDelegate = new SettingsContextDelegate<TSettingTypes, TSettings, TStoredData>(
-                customGroupImplementation as unknown as CustomSettingsHandler<TSettingTypes, TStoredData, TSettings>,
-                layerManager,
+        if (includesSettings(customGroupImplementation)) {
+            this._sharedSettingsDelegate = new SharedSettingsDelegate<TSettingTypes>(
                 makeSettings(
                     customGroupImplementation.settings,
                     customGroupImplementation.getDefaultSettingsValues()
-                ) as {
-                    [key in keyof TSettings]: Setting<any>;
-                }
+                ) as MakeSettingTuple<TSettingTypes>,
+                this
             );
         }
         this._type = type;
@@ -67,8 +61,8 @@ export class Group<
         return this._groupDelegate;
     }
 
-    getSettingsContextDelegate() {
-        return this._settingsContextDelegate;
+    getSharedSettingsDelegate(): SharedSettingsDelegate<TSettingTypes> | null {
+        return this._sharedSettingsDelegate;
     }
 
     getGroupType(): string {

@@ -29,10 +29,10 @@ const statisicalSurfaceSettings = [
     SettingType.SURFACE_NAME,
     SettingType.TIME_OR_INTERVAL,
 ] as const;
-type StatisticalSurfaceSettings = typeof statisicalSurfaceSettings;
+export type StatisticalSurfaceSettings = typeof statisicalSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<StatisticalSurfaceSettings>;
 
-type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
+export type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
 
 export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<StatisticalSurfaceSettings, Data> {
     settings = statisicalSurfaceSettings;

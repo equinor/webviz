@@ -22,10 +22,10 @@ const realizationSurfaceSettings = [
     SettingType.SURFACE_NAME,
     SettingType.TIME_OR_INTERVAL,
 ] as const;
-type RealizationSurfaceSettings = typeof realizationSurfaceSettings;
+export type RealizationSurfaceSettings = typeof realizationSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationSurfaceSettings>;
 
-type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
+export type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
 
 export class RealizationSurfaceLayer implements CustomDataLayerImplementation<RealizationSurfaceSettings, Data> {
     settings = realizationSurfaceSettings;

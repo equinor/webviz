@@ -4,6 +4,8 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
 
+import { Setting } from "../framework/Setting/Setting";
+
 export enum SettingType {
     ATTRIBUTE = "attribute",
     ENSEMBLE = "ensemble",
@@ -52,4 +54,8 @@ export type SettingTypes = {
 
 export type MakeSettingTypesMap<T extends readonly (keyof SettingTypes)[], AllowNull extends boolean = false> = {
     [K in T[number]]: AllowNull extends false ? SettingTypes[K] : SettingTypes[K] | null;
+};
+
+export type MakeSettingTuple<T extends readonly (keyof SettingTypes)[]> = {
+    [K in keyof T]: Setting<SettingTypes[T[K]]>;
 };

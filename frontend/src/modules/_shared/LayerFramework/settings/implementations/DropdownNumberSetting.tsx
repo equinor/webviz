@@ -12,7 +12,7 @@ export class DropdownNumberSetting implements CustomSettingImplementation<ValueT
             const options: DropdownOption<number>[] = props.availableValues.map((value) => {
                 return {
                     value: value,
-                    label: value === null ? "None" : value,
+                    label: value === null ? "None" : value.toString(),
                 };
             });
 

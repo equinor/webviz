@@ -12,7 +12,6 @@ import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLay
 import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import { EnsembleSetting } from "@modules//_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
@@ -26,10 +25,7 @@ import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedS
 import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
 import { Item, ItemGroup, instanceofItemGroup } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
-import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/DropdownStringSetting";
-import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
-import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceNameSetting";
-import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
+import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Dropdown } from "@mui/base";
 import {
@@ -59,8 +55,6 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
     usePublishSubscribeTopicValue(groupDelegate, GroupDelegateTopic.CHILDREN);
 
     function handleLayerAction(identifier: string, groupDelegate: GroupDelegate) {
-        const numViews = groupDelegate.getDescendantItems((item) => item instanceof Group).length;
-
         switch (identifier) {
             case "view":
                 groupDelegate.appendChild(GroupRegistry.makeGroup("View", props.layerManager, colorSet.getNextColor()));
@@ -87,9 +81,7 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 groupDelegate.appendChild(LayerRegistry.makeLayer("RealizationPolygonsLayer", props.layerManager));
                 return;
             case "drilled-wellbore-trajectories":
-                groupDelegate.appendChild(
-                    LayerRegistry.makeLayer("DrilledWellboreTrajectoriesLayer", props.layerManager)
-                );
+                groupDelegate.appendChild(LayerRegistry.makeLayer("DrilledWellTrajectoriesLayer", props.layerManager));
                 return;
             case "drilled-wellbore-picks":
                 groupDelegate.appendChild(LayerRegistry.makeLayer("DrilledWellborePicksLayer", props.layerManager));
@@ -98,19 +90,19 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 groupDelegate.appendChild(LayerRegistry.makeLayer("RealizationGridLayer", props.layerManager));
                 return;
             case "ensemble":
-                groupDelegate.appendChild(new SharedSetting(new EnsembleSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(SettingType.ENSEMBLE, null, props.layerManager));
                 return;
             case "realization":
-                groupDelegate.appendChild(new SharedSetting(new RealizationSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(SettingType.REALIZATION, null, props.layerManager));
                 return;
             case "surface-name":
-                groupDelegate.appendChild(new SharedSetting(new SurfaceNameSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(SettingType.SURFACE_NAME, null, props.layerManager));
                 return;
             case "attribute":
-                groupDelegate.appendChild(new SharedSetting(new AttributeSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(SettingType.ATTRIBUTE, null, props.layerManager));
                 return;
             case "Date":
-                groupDelegate.appendChild(new SharedSetting(new TimeOrIntervalSetting(), props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(SettingType.TIME_OR_INTERVAL, null, props.layerManager));
                 return;
         }
     }
