@@ -11,7 +11,7 @@ import { ColorScale } from "../framework/ColorScale/ColorScale";
 import { DataLayer, LayerStatus } from "../framework/DataLayer/DataLayer";
 import { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
-import { View } from "../groups/implementations/View";
+import { Group } from "../framework/Group/Group";
 import {
     BoundingBox,
     CustomDataLayerImplementation,
@@ -72,6 +72,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
     private _visualizationFunctions: Map<string, MakeVisualizationFunction<any, any, TTarget>> = new Map();
 
     registerVisualizationFunction<TSettings extends Settings, TData>(
+        layerName: string,
         layerCtor: {
             new (...params: any[]): CustomDataLayerImplementation<TSettings, TData, any>;
         },
@@ -80,7 +81,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         if (this._visualizationFunctions.has(layerCtor.name)) {
             throw new Error(`Visualization function for layer ${layerCtor.name} already registered`);
         }
-        this._visualizationFunctions.set(layerCtor.name, func);
+        this._visualizationFunctions.set(layerName, func);
     }
 
     make(layerManager: DataLayerManager): FactoryProduct<TTarget> {
@@ -117,7 +118,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                 collectedNumLoadingLayers += numLoadingLayers;
                 maybeApplyBoundingBox(boundingBox);
 
-                if (child instanceof View) {
+                if (child instanceof Group) {
                     const view: VisualizationView<TTarget> = {
                         id: child.getItemDelegate().getId(),
                         color: child.getGroupDelegate().getColor(),
@@ -180,9 +181,9 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
     }
 
     private makeLayer(layer: DataLayer<any, any, any>, colorScale?: ColorScaleWithName): TargetReturnTypes[TTarget] {
-        const func = this._visualizationFunctions.get(layer.constructor.name);
+        const func = this._visualizationFunctions.get(layer.getType());
         if (!func) {
-            throw new Error(`No visualization function found for layer ${layer.constructor.name}`);
+            throw new Error(`No visualization function found for layer ${layer.getType()}`);
         }
 
         if (colorScale === undefined) {

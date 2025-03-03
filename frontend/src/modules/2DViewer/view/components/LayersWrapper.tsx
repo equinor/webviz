@@ -33,6 +33,7 @@ import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
+import "../../LayerFramework/customLayerImplementations/registerAllLayers";
 import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
 
 export type LayersWrapperProps = {
@@ -53,9 +54,21 @@ type T = MakeSettingTypesMap<
 >;
 
 const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
-VISUALIZATION_FACTORY.registerVisualizationFunction(ObservedSurfaceLayer, makeObservedSurfaceLayer);
-VISUALIZATION_FACTORY.registerVisualizationFunction(RealizationSurfaceLayer, makeRealizationSurfaceLayer);
-VISUALIZATION_FACTORY.registerVisualizationFunction(StatisticalSurfaceLayer, makeStatisticalSurfaceLayer);
+VISUALIZATION_FACTORY.registerVisualizationFunction(
+    "ObservedSurfaceLayer",
+    ObservedSurfaceLayer,
+    makeObservedSurfaceLayer
+);
+VISUALIZATION_FACTORY.registerVisualizationFunction(
+    "RealizationSurfaceLayer",
+    RealizationSurfaceLayer,
+    makeRealizationSurfaceLayer
+);
+VISUALIZATION_FACTORY.registerVisualizationFunction(
+    "StatisticalSurfaceLayer",
+    StatisticalSurfaceLayer,
+    makeStatisticalSurfaceLayer
+);
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);

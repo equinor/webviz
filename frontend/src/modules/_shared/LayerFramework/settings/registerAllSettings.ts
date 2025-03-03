@@ -41,3 +41,5 @@ SettingRegistry.registerSetting(SettingType.SENSITIVITY, "Sensitivity", Sensitiv
 SettingRegistry.registerSetting(SettingType.SHOW_GRID_LINES, "Show Grid Lines", BooleanSetting);
 SettingRegistry.registerSetting(SettingType.SMDA_WELLBORE_HEADERS, "SMDA Wellbore Headers", DrilledWellboresSetting);
 SettingRegistry.registerSetting(SettingType.STATISTIC_FUNCTION, "Statistic Function", StatisticFunctionSetting);
+SettingRegistry.registerSetting(SettingType.SURFACE_NAME, "Surface Name", DropdownStringSetting);
+SettingRegistry.registerSetting(SettingType.TIME_OR_INTERVAL, "Time or Interval", DropdownStringSetting);
