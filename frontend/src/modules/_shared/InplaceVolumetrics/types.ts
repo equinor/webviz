@@ -1,10 +1,8 @@
 import type {
     InplaceStatisticalVolumetricTableDataPerFluidSelection_api,
-    InplaceVolumetricTableDataPerFluidSelection_api} from "@api";
-import {
-    InplaceVolumetricStatistic_api,
-    InplaceVolumetricsIdentifier_api,
+    InplaceVolumetricTableDataPerFluidSelection_api,
 } from "@api";
+import { InplaceVolumetricStatistic_api, InplaceVolumetricsIdentifier_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import type { Column } from "./Table";
@@ -37,9 +35,9 @@ export enum SourceIdentifier {
     FLUID_ZONE = "FLUID_ZONE",
 }
 
-const sourceAndTableIdentifiersUnion = { ...SourceIdentifier, ...InplaceVolumetricsIdentifier_api };
-export type SourceAndTableIdentifierUnion =
-    (typeof sourceAndTableIdentifiersUnion)[keyof typeof sourceAndTableIdentifiersUnion];
+// const sourceAndTableIdentifiersUnion = { ...SourceIdentifier, ...InplaceVolumetricsIdentifier_api };
+export type SourceAndTableIdentifierUnion = SourceIdentifier & InplaceVolumetricsIdentifier_api;
+// (typeof sourceAndTableIdentifiersUnion)[keyof typeof sourceAndTableIdentifiersUnion];
 
 export enum RealSelector {
     REAL = "REAL",

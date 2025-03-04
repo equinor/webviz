@@ -163,7 +163,7 @@ export class SurfaceAddressBuilder {
     buildAddressNoThrow(): AnySurfaceAddress | null {
         try {
             return this.buildAddress();
-        } catch (e) {
+        } catch {
             return null;
         }
     }
@@ -177,7 +177,7 @@ export class SurfaceAddressBuilder {
         try {
             const addr = this.buildAddress();
             return encodeSurfAddrStr(addr);
-        } catch (e) {
+        } catch {
             return null;
         }
     }

@@ -1,5 +1,3 @@
-import React from "react";
-
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import type { OptionalValues} from "../_component-utils/components";

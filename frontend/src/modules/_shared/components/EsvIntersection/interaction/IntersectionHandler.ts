@@ -117,8 +117,6 @@ export class IntersectionHandler {
 
         const referenceSystemCoordinates = [xScale.invert(x), yScale.invert(y)];
 
-        this._controller.currentStateAsEvent.xScale;
-
         const intersections: Intersection[] = [];
 
         const calcDistance = (point: number[]): number => {

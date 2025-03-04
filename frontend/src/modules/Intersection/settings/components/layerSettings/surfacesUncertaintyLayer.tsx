@@ -257,7 +257,6 @@ export function useSurfaceDirectoryQuery(
     caseUuid: string | undefined,
     ensembleName: string | undefined
 ): UseQueryResult<SurfaceMetaSet_api> {
-    getRealizationSurfacesMetadataOptions;
     return useQuery({
         ...getRealizationSurfacesMetadataOptions({
             query: {

@@ -10,9 +10,8 @@
  */
 
 /* eslint-disable react-hooks/rules-of-hooks */
-import type { GlobalTopicDefinitions, TopicDefinitionsType } from "@framework/WorkbenchServices";
+import type { GlobalTopicDefinitions, TopicDefinitionsType, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useSubscribedValueConditionally } from "@framework/WorkbenchServices";
-import type { WorkbenchServices } from "@framework/WorkbenchServices";
 
 import type { SettingsContext, ViewContext } from "./ModuleContext";
 

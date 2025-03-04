@@ -30,8 +30,6 @@ export const rftRealizationDataQueryAtom = atomWithQuery((get) => {
     const selectedResponseName = get(selectedRftResponseNameAtom);
     const selectedRftTimestampsUtcMs = get(selectedRftTimestampsUtcMsAtom);
 
-    getRealizationDataOptions;
-
     const query = {
         ...getRealizationDataOptions({
             query: {

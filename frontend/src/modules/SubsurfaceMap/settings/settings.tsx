@@ -18,9 +18,16 @@ import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import type { PolygonsAddress} from "@modules/_shared/Polygons";
+import type { PolygonsAddress } from "@modules/_shared/Polygons";
 import { PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
-import type { RealizationSurfaceAddress, StatisticalSurfaceAddress , SurfaceAddressBuilder, SurfaceDirectory, SurfaceTimeType , useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
+import {
+    type RealizationSurfaceAddress,
+    type StatisticalSurfaceAddress,
+    SurfaceAddressBuilder,
+    SurfaceDirectory,
+    SurfaceTimeType,
+    useRealizationSurfacesMetadataQuery,
+} from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
 import { useAtom, useSetAtom } from "jotai";
@@ -107,7 +114,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     // Mesh surface
     const meshSurfMetaQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName()
+        computedEnsembleIdent?.getEnsembleName(),
     );
     const meshSurfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: meshSurfMetaQuery.data,
@@ -126,7 +133,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             surfaceName: syncedValueSurface?.name || null,
             surfaceAttribute: syncedValueSurface?.attribute || null,
             timeOrInterval: null,
-        }
+        },
     );
     const computedMeshSurfaceName = fixedMeshSurfSpec.surfaceName;
     const computedMeshSurfaceAttribute = fixedMeshSurfSpec.surfaceAttribute;
@@ -148,7 +155,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     // Property surface
     const propertySurfMetaQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName()
+        computedEnsembleIdent?.getEnsembleName(),
     );
     const propertySurfaceDirectory = new SurfaceDirectory({
         realizationMetaSet: propertySurfMetaQuery.data,
@@ -167,7 +174,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             surfaceName: null,
             surfaceAttribute: null,
             timeOrInterval: null,
-        }
+        },
     );
     const computedPropertySurfaceName = fixedPropertySurfSpec.surfaceName;
     const computedPropertySurfaceAttribute = fixedPropertySurfSpec.surfaceAttribute;
@@ -205,7 +212,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
     // Polygon
     const polygonsDirectoryQuery = usePolygonsDirectoryQuery(
         computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName()
+        computedEnsembleIdent?.getEnsembleName(),
     );
 
     const polygonsDirectory = new PolygonsDirectory(
@@ -214,7 +221,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                   polygonsMetas: polygonsDirectoryQuery.data,
                   //   includeAttributeTypes: [PolygonsAttributeType_api.DEPTH],
               }
-            : null
+            : null,
     );
 
     const fixedPolygonsSpec = fixupPolygons(
@@ -223,7 +230,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             polygonsName: linkPolygonNameToSurfaceName ? selectedMeshSurfaceName : selectedPolygonName,
             polygonsAttribute: selectedPolygonAttribute,
         },
-        { polygonsName: null, polygonsAttribute: null }
+        { polygonsName: null, polygonsAttribute: null },
     );
 
     const computedPolygonsName = fixedPolygonsSpec.polygonsName;
@@ -274,7 +281,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedMeshSurfaceAttribute,
             settingsContext,
             setMeshSurfaceAddress,
-        ]
+        ],
     );
     React.useEffect(
         function propagatePropertySurfaceSelectionToView() {
@@ -315,7 +322,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedPropertyTimeOrInterval,
             settingsContext,
             setPropertySurfaceAddress,
-        ]
+        ],
     );
     React.useEffect(
         function propogatePolygonsSelectionToView() {
@@ -347,7 +354,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             computedPolygonsAttribute,
             settingsContext,
             setPolygonsAddress,
-        ]
+        ],
     );
     React.useEffect(
         function propogateSurfaceSettingsToView() {
@@ -367,7 +374,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
             showMaterial,
             settingsContext,
             setSurfaceSettings,
-        ]
+        ],
     );
     React.useEffect(
         function propogateSubsurfaceMapViewSettingsToView() {
@@ -375,14 +382,14 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
                 show3d: show3D,
             });
         },
-        [show3D, settingsContext, setViewSettings]
+        [show3D, settingsContext, setViewSettings],
     );
 
     let fieldIdentifier: null | string = null;
     if (computedEnsembleIdent) {
         const ensembleIdent = new RegularEnsembleIdent(
             computedEnsembleIdent.getCaseUuid(),
-            computedEnsembleIdent.getEnsembleName()
+            computedEnsembleIdent.getEnsembleName(),
         );
         fieldIdentifier = ensembleSet.findEnsemble(ensembleIdent)?.getFieldIdentifier() ?? null;
     }
@@ -398,7 +405,7 @@ export function Settings({ settingsContext, workbenchSession, workbenchServices 
 
     function handleWellsChange(selectedWellUuids: string[], allWellUuidsOptions: SelectOption[]) {
         const newSelectedWellUuids = selectedWellUuids.filter((wellUuid) =>
-            allWellUuidsOptions.some((wellHeader) => wellHeader.value === wellUuid)
+            allWellUuidsOptions.some((wellHeader) => wellHeader.value === wellUuid),
         );
         setSelectedWellUuids(newSelectedWellUuids);
     }
@@ -772,13 +779,13 @@ type PartialSurfSpec = {
 function fixupSurface(
     surfaceDirectory: SurfaceDirectory,
     selectedSurface: PartialSurfSpec,
-    syncedSurface: PartialSurfSpec
+    syncedSurface: PartialSurfSpec,
 ): PartialSurfSpec {
     const surfaceNames = surfaceDirectory.getSurfaceNames(null);
     const finalSurfaceName = fixupSyncedOrSelectedOrFirstValue(
         syncedSurface.surfaceName,
         selectedSurface.surfaceName,
-        surfaceNames
+        surfaceNames,
     );
     let finalSurfaceAttribute: string | null = null;
     let finalTimeOrInterval: string | null = null;
@@ -787,7 +794,7 @@ function fixupSurface(
         finalSurfaceAttribute = fixupSyncedOrSelectedOrFirstValue(
             syncedSurface.surfaceAttribute,
             selectedSurface.surfaceAttribute,
-            surfaceAttributes
+            surfaceAttributes,
         );
     }
     if (finalSurfaceName && finalSurfaceAttribute) {
@@ -795,7 +802,7 @@ function fixupSurface(
         finalTimeOrInterval = fixupSyncedOrSelectedOrFirstValue(
             syncedSurface.timeOrInterval,
             selectedSurface.timeOrInterval,
-            selectedTimeOrIntervals
+            selectedTimeOrIntervals,
         );
     }
     return {
@@ -812,13 +819,13 @@ type PartialPolygonsSpec = {
 function fixupPolygons(
     polygonsDirectory: PolygonsDirectory,
     selectedPolygons: PartialPolygonsSpec,
-    syncedPolygons: PartialPolygonsSpec
+    syncedPolygons: PartialPolygonsSpec,
 ): PartialPolygonsSpec {
     const polygonsNames = polygonsDirectory.getPolygonsNames(null);
     const finalPolygonsName = fixupSyncedOrSelectedOrFirstValue(
         syncedPolygons.polygonsName,
         selectedPolygons.polygonsName,
-        polygonsNames
+        polygonsNames,
     );
     let finalPolygonsAttribute: string | null = null;
     if (finalPolygonsName) {
@@ -826,7 +833,7 @@ function fixupPolygons(
         finalPolygonsAttribute = fixupSyncedOrSelectedOrFirstValue(
             syncedPolygons.polygonsAttribute,
             selectedPolygons.polygonsAttribute,
-            polygonsAttributes
+            polygonsAttributes,
         );
     }
 
@@ -838,7 +845,7 @@ function fixupPolygons(
 function fixupSyncedOrSelectedOrFirstValue(
     syncedValue: string | null,
     selectedValue: string | null,
-    values: string[]
+    values: string[],
 ): string | null {
     if (syncedValue && values.includes(syncedValue)) {
         return syncedValue;
