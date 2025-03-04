@@ -1,7 +1,6 @@
 import eslintCore from "@eslint/js";
 
 import configPrettier from "eslint-config-prettier";
-import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import * as importPlugin from "eslint-plugin-import";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
@@ -15,6 +14,19 @@ export default eslintTypescript.config(
     reactPlugin.configs.flat.recommended,
     reactPlugin.configs.flat["jsx-runtime"],
     importPlugin.flatConfigs.recommended,
+    // Configure typescript resolver
+    // ! Make sure "eslint-import-resolver-typescript" is installed
+    {
+        settings: {
+            "import/resolver": {
+                typescript: {
+                    alwaysTryTypes: true, // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
+                    // project: "./.tsconfig.json",
+                },
+            },
+        },
+    },
+
     // ! Currently unable to directly import recommended hooks-plugin config. Need to manually set them up for now
     // ! See: https://github.com/facebook/react/issues/32431
     // reactHooksPlugin.configs["recommended-latest"],
@@ -28,11 +40,12 @@ export default eslintTypescript.config(
     {
         files: ["**/*.{ts,tsx}"],
         extends: [importPlugin.flatConfigs.recommended, importPlugin.flatConfigs.typescript],
-        settings: { "import/resolver": { typescript: createTypeScriptImportResolver() } },
     },
 
     // ! Make sure prettier is *after* other plugins, so it can override
     configPrettier,
+
+    { ignores: ["scripts/", "playwright/", "coverage/", "dist/"] },
 
     // Other configs  -------------------------------------------------------------------
     {
