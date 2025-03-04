@@ -2,14 +2,19 @@ import { ResizablePanels } from "@lib/components/ResizablePanels";
 import { ResizablePanelsProps } from "@lib/components/ResizablePanels/resizablePanels";
 import { Size2D } from "@lib/utils/geometry";
 import { Vec2 } from "@lib/utils/vec2";
-import { ComponentFixtures, expect, test } from "@playwright/experimental-ct-react";
-import { Locator } from "@playwright/test";
+import { expect, test } from "@playwright/experimental-ct-react";
+import type { TestType, Locator } from "@playwright/experimental-ct-core";
 
 import { compareWithTolerance } from "tests/utils/compare";
 
 const viewPortSize = { width: 1920, height: 1080 };
 
 test.use({ viewport: viewPortSize });
+
+// The typing for Playwright's mount method is not nicely exposed, so we
+// need to extract it via this inference stuff
+type ExtractGeneric<t> = t extends TestType<infer X> ? X : never;
+type ComponentFixtures = ExtractGeneric<typeof test>;
 
 async function mountComponentAndAssertItsRenderedCorrectly(
     mount: ComponentFixtures["mount"],
