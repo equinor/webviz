@@ -46,6 +46,7 @@ export default eslintTypescript.config(
     // Custom rules ---------------------------------------------------------------------
     {
         rules: {
+            "@typescript-eslint/no-unused-expressions": ["warn", { allowShortCircuit: true, allowTernary: true }], // Allow some useful "unused" expressions, such as `foo && foo()`
             "@typescript-eslint/consistent-type-imports": "warn",
             "@typescript-eslint/no-explicit-any": "off",
             "react/prop-types": "off", // Causes issues in classes (and I don't see why you'd need this along with TS)
