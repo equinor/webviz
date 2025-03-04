@@ -25,7 +25,6 @@ import {
     getGridSurface,
     getHistoricalVectorData,
     getInlineSlice,
-    getIsGridGeometryShared,
     getIsSensitivityRun,
     getLogCurveData,
     getLoggedInUser,
@@ -41,7 +40,6 @@ import {
     getRealizationFlowNetwork,
     getRealizationSurfacesMetadata,
     getRealizationVectorAtTimestamp,
-    getRealizationsTablesAreEqual,
     getRealizationsVectorData,
     getSeismicCubeMetaList,
     getSensitivities,
@@ -97,7 +95,6 @@ import type {
     GetGridSurfaceData_api,
     GetHistoricalVectorDataData_api,
     GetInlineSliceData_api,
-    GetIsGridGeometrySharedData_api,
     GetIsSensitivityRunData_api,
     GetLogCurveDataData_api,
     GetLoggedInUserData_api,
@@ -113,7 +110,6 @@ import type {
     GetRealizationFlowNetworkData_api,
     GetRealizationSurfacesMetadataData_api,
     GetRealizationVectorAtTimestampData_api,
-    GetRealizationsTablesAreEqualData_api,
     GetRealizationsVectorDataData_api,
     GetSeismicCubeMetaListData_api,
     GetSensitivitiesData_api,
@@ -882,25 +878,6 @@ export const getGridModelsInfoOptions = (options: Options<GetGridModelsInfoData_
     });
 };
 
-export const getIsGridGeometrySharedQueryKey = (options: Options<GetIsGridGeometrySharedData_api>) => [
-    createQueryKey("getIsGridGeometryShared", options),
-];
-
-export const getIsGridGeometrySharedOptions = (options: Options<GetIsGridGeometrySharedData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getIsGridGeometryShared({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getIsGridGeometrySharedQueryKey(options),
-    });
-};
-
 export const getGridSurfaceQueryKey = (options: Options<GetGridSurfaceData_api>) => [
     createQueryKey("getGridSurface", options),
 ];
@@ -1009,25 +986,6 @@ export const getTableDataOptions = (options: Options<GetTableDataData_api>) => {
             return data;
         },
         queryKey: getTableDataQueryKey(options),
-    });
-};
-
-export const getRealizationsTablesAreEqualQueryKey = (options: Options<GetRealizationsTablesAreEqualData_api>) => [
-    createQueryKey("getRealizationsTablesAreEqual", options),
-];
-
-export const getRealizationsTablesAreEqualOptions = (options: Options<GetRealizationsTablesAreEqualData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getRealizationsTablesAreEqual({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getRealizationsTablesAreEqualQueryKey(options),
     });
 };
 

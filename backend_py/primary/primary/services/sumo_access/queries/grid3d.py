@@ -98,7 +98,17 @@ async def get_grid_geometry_and_property_blob_ids_async(
                             {"term": {"fmu.iteration.name.keyword": iteration}},
                             {"term": {"fmu.realization.id": realization}},
                             {"term": {"data.name.keyword": parameter_name}},
-                            {"term": {"data.tagname.keyword": grid_name}},
+                            {
+                                "bool": {
+                                    "should": [
+                                        {"term": {"data.geometry.name.keyword": grid_name}},
+                                        {
+                                            "term": {"data.tagname.keyword": grid_name}
+                                        },  # Old metadata has reference to geometry in tagname. Allow for now.
+                                    ],
+                                    "minimum_should_match": 1,
+                                }
+                            },
                         ]
                     }
                 },
