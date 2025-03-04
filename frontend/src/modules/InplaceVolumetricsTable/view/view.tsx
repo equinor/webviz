@@ -63,7 +63,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 }
             }
         },
-        [props.workbenchServices]
+        [props.workbenchServices],
     );
 
     function createErrorMessage(): string | null {

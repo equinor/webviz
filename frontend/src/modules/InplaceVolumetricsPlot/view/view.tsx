@@ -45,7 +45,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
         divBoundingRect.height,
         hoveredRegion?.regionName ?? null,
         hoveredZone?.zoneName ?? null,
-        hoveredFacies?.faciesName ?? null
+        hoveredFacies?.faciesName ?? null,
     );
 
     const table = plotAndTableData?.table;

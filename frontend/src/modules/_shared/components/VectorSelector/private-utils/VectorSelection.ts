@@ -1,4 +1,4 @@
-import type { TreeData} from "@lib/components/SmartNodeSelector";
+import type { TreeData } from "@lib/components/SmartNodeSelector";
 import { MatchType, TreeNodeSelection } from "@lib/components/SmartNodeSelector";
 
 export class VectorSelection extends TreeNodeSelection {

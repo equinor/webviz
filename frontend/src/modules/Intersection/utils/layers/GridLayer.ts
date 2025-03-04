@@ -3,17 +3,13 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
-import type {
-    AdjustedPolylineIntersection} from "@modules/_shared/utils/wellbore";
-import {
-    transformPolylineIntersection,
-    transformPolylineIntersectionResult,
-} from "@modules/_shared/utils/wellbore";
+import type { AdjustedPolylineIntersection } from "@modules/_shared/utils/wellbore";
+import { transformPolylineIntersection, transformPolylineIntersectionResult } from "@modules/_shared/utils/wellbore";
 import type { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
 
-import type { BoundingBox} from "./BaseLayer";
+import type { BoundingBox } from "./BaseLayer";
 import { BaseLayer, LayerTopic } from "./BaseLayer";
 
 export type GridLayerSettings = {
@@ -102,7 +98,7 @@ export class GridLayer extends BaseLayer<GridLayerSettings, AdjustedPolylineInte
 
     protected doSettingsChangesRequireDataRefetch(
         prevSettings: GridLayerSettings,
-        newSettings: GridLayerSettings
+        newSettings: GridLayerSettings,
     ): boolean {
         return (
             !isEqual(prevSettings.ensembleIdent, newSettings.ensembleIdent) ||
@@ -132,7 +128,7 @@ export class GridLayer extends BaseLayer<GridLayerSettings, AdjustedPolylineInte
     setUseCustomColorScaleBoundaries(useCustomColorScaleBoundaries: boolean): void {
         this._useCustomColorScaleBoundariesParameterMap.set(
             this._settings.parameterName ?? "",
-            useCustomColorScaleBoundaries
+            useCustomColorScaleBoundaries,
         );
         this.notifySubscribers(LayerTopic.DATA);
     }

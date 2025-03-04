@@ -1,4 +1,4 @@
-import type { Parameter} from "@framework/EnsembleParameters";
+import type { Parameter } from "@framework/EnsembleParameters";
 import { EnsembleParameters, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { MinMax } from "@lib/utils/MinMax";
 

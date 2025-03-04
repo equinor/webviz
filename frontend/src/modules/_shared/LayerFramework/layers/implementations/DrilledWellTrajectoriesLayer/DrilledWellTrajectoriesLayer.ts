@@ -1,4 +1,4 @@
-import type { WellboreTrajectory_api} from "@api";
+import type { WellboreTrajectory_api } from "@api";
 import { getWellTrajectoriesOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
@@ -23,7 +23,7 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
             this,
             layerManager,
             new DrilledWellTrajectoriesSettingsContext(layerManager),
-            LayerColoringType.NONE
+            LayerColoringType.NONE,
         );
     }
 
@@ -41,7 +41,7 @@ export class DrilledWellTrajectoriesLayer implements Layer<DrilledWellTrajectori
 
     doSettingsChangesRequireDataRefetch(
         prevSettings: DrilledWellTrajectoriesSettings,
-        newSettings: DrilledWellTrajectoriesSettings
+        newSettings: DrilledWellTrajectoriesSettings,
     ): boolean {
         return !isEqual(prevSettings, newSettings);
     }

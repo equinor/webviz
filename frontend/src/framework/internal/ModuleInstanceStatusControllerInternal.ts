@@ -4,10 +4,9 @@ import type {
     ModuleInstanceStatusController,
     Origin,
     StatusMessageType,
-    StatusMessageWithType} from "@framework/ModuleInstanceStatusController";
-import {
-    StatusSource,
+    StatusMessageWithType,
 } from "@framework/ModuleInstanceStatusController";
+import { StatusSource } from "@framework/ModuleInstanceStatusController";
 
 import type { InternalAxiosRequestConfig } from "axios";
 import { cloneDeep, filter, isEqual, keys } from "lodash";
@@ -87,7 +86,7 @@ export class ModuleInstanceStatusControllerInternal implements ModuleInstanceSta
 
     clearHotMessageCache(source: StatusSource): void {
         this._stateCandidates.hotMessageCache = this._stateCandidates.hotMessageCache.filter(
-            (msg) => msg.source !== source
+            (msg) => msg.source !== source,
         );
     }
 
@@ -121,7 +120,7 @@ export class ModuleInstanceStatusControllerInternal implements ModuleInstanceSta
                     message: message,
                     datetimeMs: Date.now(),
                     id: v4(),
-                }))
+                })),
             );
             break;
         }
@@ -235,7 +234,7 @@ export class ModuleInstanceStatusControllerInternal implements ModuleInstanceSta
     }
 
     makeSubscriberFunction<T extends keyof StatusControllerState>(
-        stateKey: T
+        stateKey: T,
     ): (onStoreChangeCallback: () => void) => () => void {
         // Using arrow function in order to keep "this" in context
         const subscriber = (onStoreChangeCallback: () => void): (() => void) => {
@@ -254,11 +253,11 @@ export class ModuleInstanceStatusControllerInternal implements ModuleInstanceSta
 
 export function useStatusControllerStateValue<T extends keyof StatusControllerState>(
     statusController: ModuleInstanceStatusControllerInternal,
-    stateKey: T
+    stateKey: T,
 ): StatusControllerState[T] {
     const value = React.useSyncExternalStore<StatusControllerState[T]>(
         statusController.makeSubscriberFunction(stateKey),
-        statusController.makeSnapshotGetter(stateKey)
+        statusController.makeSnapshotGetter(stateKey),
     );
 
     return value;

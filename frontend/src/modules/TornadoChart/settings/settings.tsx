@@ -36,7 +36,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         function propogateReferenceSensitivityName() {
             setModuleReferenceSensitivityName(referenceSensitivityName);
         },
-        [referenceSensitivityName, setModuleReferenceSensitivityName]
+        [referenceSensitivityName, setModuleReferenceSensitivityName],
     );
 
     const responseReceiver = settingsContext.useChannelReceiver({
@@ -60,7 +60,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             ...(ensemble
                                 .getSensitivities()
                                 ?.getSensitivityArr()
-                                .map((el) => el.name) ?? [])
+                                .map((el) => el.name) ?? []),
                         );
                     }
                 } catch (e) {

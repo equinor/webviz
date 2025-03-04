@@ -2,7 +2,11 @@
  * Utilities and constants used for generating well-log-viewer template configs
  */
 import { WellLogCurveTypeEnum_api } from "@api";
-import type { Template, TemplatePlot, TemplateTrack } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import type {
+    Template,
+    TemplatePlot,
+    TemplateTrack,
+} from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import _ from "lodash";
 import { v4 } from "uuid";
@@ -60,7 +64,7 @@ export function makeTrackPlot(plot: Partial<TemplatePlotConfig>): TemplatePlotCo
         config.colorMapFunctionName = "Continuous";
     } else if (plot.type === "stacked" && plot._curveHeader?.curveType === WellLogCurveTypeEnum_api.CONTINUOUS) {
         console.warn(
-            `Showing continuous curve ${plot._curveHeader.curveName} as a stacked plot. This is most likely a mistake`
+            `Showing continuous curve ${plot._curveHeader.curveName} as a stacked plot. This is most likely a mistake`,
         );
     }
 

@@ -1,9 +1,9 @@
 import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
 import type { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@tanstack/react-query";
 
-import type { Atom, Getter} from "jotai";
+import type { Atom, Getter } from "jotai";
 import { atom } from "jotai";
-import type { AtomWithQueryOptions} from "jotai-tanstack-query";
+import type { AtomWithQueryOptions } from "jotai-tanstack-query";
 import { atomWithQuery } from "jotai-tanstack-query";
 import { atomWithReducer } from "jotai/utils";
 
@@ -21,9 +21,9 @@ type QueriesOptions<
     TQueryFnData = unknown,
     TError = DefaultError,
     TData = TQueryFnData,
-    TQueryKey extends QueryKey = QueryKey
+    TQueryKey extends QueryKey = QueryKey,
 > = ((
-    get: Getter
+    get: Getter,
 ) =>
     | DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>
     | UndefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>
@@ -34,13 +34,13 @@ export function atomWithQueries<
     TError = DefaultError,
     TData = TQueryFnData,
     TQueryKey extends QueryKey = QueryKey,
-    TCombinedResult = QueryObserverResult<TData, TError>[]
+    TCombinedResult = QueryObserverResult<TData, TError>[],
 >(
     getOptions: (get: Getter) => {
         queries: readonly [...QueriesOptions<TQueryFnData, TError, TData, TQueryKey>];
         combine?: (result: QueryObserverResult<TData, TError>[]) => TCombinedResult;
     },
-    getQueryClient?: (get: Getter) => QueryClient
+    getQueryClient?: (get: Getter) => QueryClient,
 ): Atom<TCombinedResult> {
     const optionsAtom = atom(getOptions);
     const atoms = atom((get) => {

@@ -2,13 +2,11 @@ import React from "react";
 
 import type { EnsembleParameters } from "@framework/EnsembleParameters";
 import { RealizationFilter } from "@framework/RealizationFilter";
-import type {
-    ParameterValueSelection,
-    RealizationNumberSelection} from "@framework/types/realizationFilterTypes";
+import type { ParameterValueSelection, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 import {
     IncludeExcludeFilter,
     RealizationFilterType,
-    RealizationFilterTypeStringMapping
+    RealizationFilterTypeStringMapping,
 } from "@framework/types/realizationFilterTypes";
 import { Button } from "@lib/components/Button";
 import { Label } from "@lib/components/Label";
@@ -17,11 +15,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Check, Clear } from "@mui/icons-material";
 
 import { ByParameterValueFilter } from "./private-components/byParameterValueFilter";
-import type {
-    ByRealizationNumberFilterSelection} from "./private-components/byRealizationNumberFilter";
-import {
-    ByRealizationNumberFilter
-} from "./private-components/byRealizationNumberFilter";
+import type { ByRealizationNumberFilterSelection } from "./private-components/byRealizationNumberFilter";
+import { ByRealizationNumberFilter } from "./private-components/byRealizationNumberFilter";
 import { RealizationNumberDisplay } from "./private-components/realizationNumberDisplay";
 import { createBestSuggestedRealizationNumberSelections } from "./private-utils/conversionUtils";
 
@@ -81,7 +76,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
             selection.realizationNumberSelections,
             props.availableEnsembleRealizations,
-            selection.includeOrExcludeFilter
+            selection.includeOrExcludeFilter,
         );
 
         onFilterChange({
@@ -93,7 +88,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
     }
 
     function handleParameterValueFilterChanged(
-        newParameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection> | null
+        newParameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection> | null,
     ) {
         if (!onFilterChange) {
             return;
@@ -103,7 +98,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         const realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
             newParameterIdentStringToValueSelectionMap,
             props.ensembleParameters,
-            props.availableEnsembleRealizations
+            props.availableEnsembleRealizations,
         );
 
         onFilterChange({
@@ -129,14 +124,14 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
             realizationNumberArray = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
                 props.selections.realizationNumberSelections,
                 props.availableEnsembleRealizations,
-                props.selections.includeOrExcludeFilter
+                props.selections.includeOrExcludeFilter,
             );
         } else if (newFilterType === RealizationFilterType.BY_PARAMETER_VALUES) {
             // Create realization number array to display based on current parameters
             realizationNumberArray = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
                 props.selections.parameterIdentStringToValueSelectionReadonlyMap,
                 props.ensembleParameters,
-                props.availableEnsembleRealizations
+                props.availableEnsembleRealizations,
             );
         }
 
@@ -157,14 +152,14 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
         if (props.selections.includeOrExcludeFilter === IncludeExcludeFilter.EXCLUDE_FILTER) {
             // Invert selection for exclude filter
             candidateSelectedRealizationNumbers = props.availableEnsembleRealizations.filter(
-                (realization) => !displayRealizationNumbers.includes(realization)
+                (realization) => !displayRealizationNumbers.includes(realization),
             );
         }
 
         // Create realization number selections based on the current selection and available realization numbers
         const newRealizationNumberSelections = createBestSuggestedRealizationNumberSelections(
             candidateSelectedRealizationNumbers,
-            props.availableEnsembleRealizations
+            props.availableEnsembleRealizations,
         );
 
         onFilterChange({
@@ -243,7 +238,7 @@ export const EnsembleRealizationFilter: React.FC<EnsembleRealizationFilterProps>
                             "pr-2": !props.hasUnsavedSelections,
                             "opacity-20 group-hover:opacity-75 transition-opacity duration-100":
                                 !props.isActive && props.isAnotherFilterActive,
-                        }
+                        },
                     )}
                     title={props.isActive ? `Ensemble: ${props.ensembleName}` : undefined}
                     onClick={handleHeaderOnClick}

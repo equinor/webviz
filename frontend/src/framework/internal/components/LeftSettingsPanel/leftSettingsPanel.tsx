@@ -38,7 +38,7 @@ export const LeftSettingsPanel: React.FC<LeftSettingsPanelProps> = (props) => {
                 className={resolveClassNames(
                     drawerContent === LeftDrawerContent.ModuleSettings ? "block" : "hidden",
                     "h-full",
-                    "w-full"
+                    "w-full",
                 )}
             >
                 {moduleInstances.map((instance) => (

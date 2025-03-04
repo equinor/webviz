@@ -137,7 +137,7 @@ export class GuiMessageBroker {
                     this._storedValues.set(state, JSON.parse(value));
                 } catch {
                     console.warn(
-                        `Failed to parse value for state '${state}': ${value} - removing invalid state from local storage and using default value instead.`
+                        `Failed to parse value for state '${state}': ${value} - removing invalid state from local storage and using default value instead.`,
                     );
                     localStorage.removeItem(state);
                 }
@@ -160,7 +160,7 @@ export class GuiMessageBroker {
     subscribeToEvent<T extends Exclude<GuiEvent, keyof GuiEventPayloads>>(event: T, callback: () => void): () => void;
     subscribeToEvent<T extends keyof GuiEventPayloads>(
         event: T,
-        callback: (payload: GuiEventPayloads[T]) => void
+        callback: (payload: GuiEventPayloads[T]) => void,
     ): () => void;
     subscribeToEvent<T extends GuiEvent>(event: T, callback: (payload?: any) => void): () => void {
         const eventListeners = this._eventListeners.get(event) || new Set();
@@ -227,19 +227,19 @@ export class GuiMessageBroker {
 
 export function useGuiState<T extends GuiState>(
     guiMessageBroker: GuiMessageBroker,
-    state: T
+    state: T,
 ): [
     GuiStateValueTypes[T],
-    (value: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])) => void
+    (value: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])) => void,
 ] {
     const stateValue = React.useSyncExternalStore<GuiStateValueTypes[T]>(
         guiMessageBroker.makeStateSubscriberFunction(state),
-        guiMessageBroker.makeStateSnapshotGetter(state)
+        guiMessageBroker.makeStateSnapshotGetter(state),
     );
 
     const stateSetter = React.useCallback(
         function stateSetter(
-            valueOrFunc: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T])
+            valueOrFunc: GuiStateValueTypes[T] | ((prev: GuiStateValueTypes[T]) => GuiStateValueTypes[T]),
         ): void {
             if (valueOrFunc instanceof Function) {
                 const value = guiMessageBroker.getState(state);
@@ -248,7 +248,7 @@ export function useGuiState<T extends GuiState>(
             }
             guiMessageBroker.setState(state, valueOrFunc);
         },
-        [guiMessageBroker, state]
+        [guiMessageBroker, state],
     );
 
     return [stateValue, stateSetter];

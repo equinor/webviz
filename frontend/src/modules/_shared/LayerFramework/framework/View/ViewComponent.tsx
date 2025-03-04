@@ -1,7 +1,7 @@
 import { SortableListGroup } from "@lib/components/SortableList";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
-import type { LayersActionGroup} from "../../LayersActions";
+import type { LayersActionGroup } from "../../LayersActions";
 import { LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
@@ -38,7 +38,7 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
                     key="layers-actions"
                     layersActionGroups={props.actions}
                     onActionClick={handleActionClick}
-                />
+                />,
             );
         }
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);

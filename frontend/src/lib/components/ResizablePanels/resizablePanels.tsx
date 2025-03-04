@@ -44,7 +44,7 @@ const DragBar: React.FC<DragBarProps> = (props) => {
                     "border-transparent bg-gray-300": !props.isDragging,
                     "cursor-ew-resize w-px": props.direction === "horizontal",
                     "cursor-ns-resize h-px": props.direction === "vertical",
-                }
+                },
             )}
         >
             <div
@@ -142,11 +142,11 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                 const cursorWithinBounds: Vec2 = {
                     x: Math.max(
                         containerBoundingRect.left,
-                        Math.min(e.clientX, containerBoundingRect.left + containerBoundingRect.width)
+                        Math.min(e.clientX, containerBoundingRect.left + containerBoundingRect.width),
                     ),
                     y: Math.max(
                         containerBoundingRect.top,
-                        Math.min(e.clientY, containerBoundingRect.top + containerBoundingRect.height)
+                        Math.min(e.clientY, containerBoundingRect.top + containerBoundingRect.height),
                     ),
                 };
 
@@ -325,11 +325,9 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                 }}
             />
             {props.children.map((el: React.ReactNode, index: number) => (
-                 
                 <React.Fragment key={`resizable-panel-${index}`}>
                     <div
                         className="flex-grow overflow-hidden"
-                         
                         ref={(element) => (individualPanelRefs.current[index] = element)}
                         style={makeStyle(index)}
                     >

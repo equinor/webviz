@@ -24,7 +24,7 @@ export const DiscreteSlider = React.forwardRef(
                 ref={ref}
             />
         );
-    }
+    },
 );
 
 DiscreteSlider.displayName = "DiscreteSlider";

@@ -59,7 +59,7 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     "shadow",
                     "w-50",
                     "h-50",
-                    "pointer-events-auto"
+                    "pointer-events-auto",
                 )}
                 style={{
                     marginLeft: -dialogSize.width / 2,
@@ -85,6 +85,6 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                 <div className="p-4">{props.children}</div>
                 {props.actions && <div className="flex justify-end mt-4 bg-slate-100 p-4">{props.actions}</div>}
             </div>
-        </div>
+        </div>,
     );
 };

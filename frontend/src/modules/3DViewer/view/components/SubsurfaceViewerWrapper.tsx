@@ -2,7 +2,10 @@ import React from "react";
 
 import type { Layer, PickingInfo } from "@deck.gl/core";
 import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
-import type { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
+import type {
+    IntersectionPolyline,
+    IntersectionPolylineWithoutId,
+} from "@framework/userCreatedItems/IntersectionPolylines";
 import { Button } from "@lib/components/Button";
 import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -89,7 +92,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
 
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox2D | BoundingBox3D | undefined>(undefined);
     const [prevIntersectionPolyline, setPrevIntersectionPolyline] = React.useState<IntersectionPolyline | undefined>(
-        undefined
+        undefined,
     );
 
     const internalRef = React.useRef<HTMLDivElement>(null);
@@ -210,7 +213,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
             zExtension,
             polylineEditPointsModusActive ? selectedPolylinePointIndex : -1,
             hoveredPolylinePointIndex,
-            [255, 255, 255, 255]
+            [255, 255, 255, 255],
         );
 
         const userPolylinePolygonsData = currentlyEditedPolylineData.polygonData;
@@ -383,7 +386,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 });
             }
         },
-        [selectedPolylinePointIndex]
+        [selectedPolylinePointIndex],
     );
 
     const handleCurrentlySelectedPointChange = React.useCallback(
@@ -402,7 +405,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 });
             }
         },
-        [selectedPolylinePointIndex]
+        [selectedPolylinePointIndex],
     );
 
     React.useEffect(() => {
@@ -457,7 +460,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 return newVerticalScale;
             });
         },
-        [onVerticalScaleChange]
+        [onVerticalScaleChange],
     );
 
     const handleVerticalScaleDecrease = React.useCallback(
@@ -470,7 +473,7 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
                 return newVerticalScale;
             });
         },
-        [onVerticalScaleChange]
+        [onVerticalScaleChange],
     );
 
     function makeTooltip(info: PickingInfo): string | null {
@@ -521,21 +524,21 @@ export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): Re
             nodes.push(
                 <div>
                     Press <KeyboardButton text="Delete" /> to remove selected point
-                </div>
+                </div>,
             );
         } else if (selectedPolylinePointIndex === 0) {
             nodes.push(<div>Click on map to add new point to start of polyline</div>);
             nodes.push(
                 <div>
                     Press <KeyboardButton text="Delete" /> to remove selected point
-                </div>
+                </div>,
             );
         } else {
             nodes.push(<div>Select either end of polyline to add new point</div>);
             nodes.push(
                 <div>
                     Press <KeyboardButton text="Delete" /> to remove selected point
-                </div>
+                </div>,
             );
         }
 
@@ -727,7 +730,7 @@ function makePolylineData(
     zExtension: number,
     selectedPolylineIndex: number | null,
     hoveredPolylineIndex: number | null,
-    color: [number, number, number, number]
+    color: [number, number, number, number],
 ): {
     polygonData: { polygon: number[][]; color: number[] }[];
     columnData: { index: number; centroid: number[]; color: number[] }[];

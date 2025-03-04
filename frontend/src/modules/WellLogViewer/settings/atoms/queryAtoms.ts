@@ -1,6 +1,4 @@
-import type {
-    StratigraphicColumn_api,
-    WellboreLogCurveHeader_api} from "@api";
+import type { StratigraphicColumn_api, WellboreLogCurveHeader_api } from "@api";
 import {
     WellLogCurveSourceEnum_api,
     getDrilledWellboreHeadersOptions,

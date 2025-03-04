@@ -32,7 +32,7 @@ export function makeSurfaceStatisticalFanchartFromRealizationSurface(
         minMax: boolean;
         p10p90: boolean;
         p50: boolean;
-    }
+    },
 ): SurfaceStatisticalFanchart {
     const numPoints = realizationSamplePoints[0]?.length || 0;
 

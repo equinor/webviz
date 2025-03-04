@@ -1,7 +1,7 @@
 import type React from "react";
 
 import type { LayoutElement } from "@framework/Workbench";
-import type { Rect2D, Size2D} from "@lib/utils/geometry";
+import type { Rect2D, Size2D } from "@lib/utils/geometry";
 import { outerRectContainsInnerRect, rectContainsPoint, rectsAreEqual } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import type { Vec2 } from "@lib/utils/vec2";
@@ -60,7 +60,7 @@ export class LayoutBox {
         direction: LayoutDirection,
         parent: LayoutBox | null = null,
         level = 0,
-        children: LayoutBox[] = []
+        children: LayoutBox[] = [],
     ) {
         this._rectRelativeToParent = rect;
         this._children = children;
@@ -172,13 +172,13 @@ export class LayoutBox {
         if (containedElements.length === 1) {
             if (this._layoutDirection === LayoutDirection.MAIN) {
                 const elementsInRect = containedElements.filter((layoutElement) =>
-                    outerRectContainsInnerRect(this.getAbsoluteRect(), layoutElementToRect(layoutElement))
+                    outerRectContainsInnerRect(this.getAbsoluteRect(), layoutElementToRect(layoutElement)),
                 );
                 const childBox = new LayoutBox(
                     this._rectRelativeToParent,
                     LayoutDirection.SINGLE,
                     this,
-                    this._level + 1
+                    this._level + 1,
                 );
                 childBox._isWrapper = true;
                 childBox.makeChildren(elementsInRect);
@@ -219,13 +219,13 @@ export class LayoutBox {
                     height: y - lastY,
                 };
                 const elementsInRect = containedElements.filter((layoutElement) =>
-                    outerRectContainsInnerRect(rect, layoutElementToRect(layoutElement))
+                    outerRectContainsInnerRect(rect, layoutElementToRect(layoutElement)),
                 );
                 const childBox = new LayoutBox(
                     this.transformRectToRelative(rect),
                     LayoutDirection.HORIZONTAL,
                     this,
-                    this._level + 1
+                    this._level + 1,
                 );
                 childBox.makeChildren(elementsInRect);
                 layoutBoxes.push(childBox);
@@ -239,7 +239,7 @@ export class LayoutBox {
                     LayoutDirection.VERTICAL,
                     this,
                     1,
-                    this._children
+                    this._children,
                 );
                 this._children.forEach((child) => (child._parent = wrapper));
                 this._level = 0;
@@ -271,13 +271,13 @@ export class LayoutBox {
                     height: absoluteRect.height,
                 };
                 const elementsInRect = containedElements.filter((layoutElement) =>
-                    outerRectContainsInnerRect(rect, layoutElementToRect(layoutElement))
+                    outerRectContainsInnerRect(rect, layoutElementToRect(layoutElement)),
                 );
                 const childBox = new LayoutBox(
                     this.transformRectToRelative(rect),
                     LayoutDirection.VERTICAL,
                     this,
-                    this._level + 1
+                    this._level + 1,
                 );
                 childBox.makeChildren(elementsInRect);
                 layoutBoxes.push(childBox);
@@ -291,7 +291,7 @@ export class LayoutBox {
                     LayoutDirection.HORIZONTAL,
                     this,
                     1,
-                    this._children
+                    this._children,
                 );
                 this._children.forEach((child) => (child._parent = wrapper));
                 this._level = 0;
@@ -464,7 +464,7 @@ export class LayoutBox {
                 {
                     rect: { x: rect.x, y: rect.y, width: edgeWeight, height: rect.height },
                     edge: LayoutBoxEdgeType.LEFT,
-                }
+                },
             );
         }
         if (this._layoutDirection === LayoutDirection.VERTICAL) {
@@ -481,7 +481,7 @@ export class LayoutBox {
                         height: edgeWeight,
                     },
                     edge: LayoutBoxEdgeType.BOTTOM,
-                }
+                },
             );
         }
 
@@ -591,7 +591,7 @@ export class LayoutBox {
         pointerPoint: Vec2,
         realSize: Size2D,
         draggedModuleInstanceId: string,
-        isNewModule: boolean
+        isNewModule: boolean,
     ): LayoutBox | null {
         if (this._parent) {
             return null;
@@ -604,7 +604,7 @@ export class LayoutBox {
                 { x: 0, y: 0, width: 1, height: 1 },
                 LayoutDirection.SINGLE,
                 preview,
-                preview._level + 1
+                preview._level + 1,
             );
             draggedBox._moduleInstanceId = draggedModuleInstanceId;
             draggedBox._isWrapper = false;
@@ -630,7 +630,7 @@ export class LayoutBox {
                     { x: 0, y: 0, width: 1, height: 1 },
                     LayoutDirection.SINGLE,
                     preview,
-                    preview._level + 1
+                    preview._level + 1,
                 );
                 draggedBox._moduleInstanceId = draggedModuleInstanceId;
                 draggedBox._isWrapper = false;
@@ -654,7 +654,7 @@ export class LayoutBox {
             { x: 0, y: 0, width: 1, height: 1 },
             LayoutDirection.SINGLE,
             this,
-            this._level + 1
+            this._level + 1,
         );
 
         newLayoutBox._moduleInstanceId = this._moduleInstanceId;
@@ -688,13 +688,13 @@ export class LayoutBox {
     private positionToIndex(position: number, ignoreBoxes: LayoutBox[]): number {
         if (this._layoutDirection === LayoutDirection.HORIZONTAL) {
             const elementsBeforePosition = this._children.filter(
-                (child) => !ignoreBoxes.includes(child) && child._rectRelativeToParent.x < position
+                (child) => !ignoreBoxes.includes(child) && child._rectRelativeToParent.x < position,
             );
             return elementsBeforePosition.length;
         }
         if (this._layoutDirection === LayoutDirection.VERTICAL) {
             const elementsBeforePosition = this._children.filter(
-                (child) => !ignoreBoxes.includes(child) && child._rectRelativeToParent.y < position
+                (child) => !ignoreBoxes.includes(child) && child._rectRelativeToParent.y < position,
             );
             return elementsBeforePosition.length;
         }
@@ -907,7 +907,7 @@ export const LayoutBoxComponents: React.FC<{
             <div
                 className={resolveClassNames(
                     "absolute pointer-events-none flex justify-center items-center text-white",
-                    { "bg-blue-300": hovered, "bg-transparent": !hovered }
+                    { "bg-blue-300": hovered, "bg-transparent": !hovered },
                 )}
                 key={flatBoxes[0].toString()}
                 style={{

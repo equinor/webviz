@@ -69,10 +69,10 @@ export class Tag extends React.Component<TagProps> {
                 [invalid
                     ? "bg-red-200"
                     : duplicate
-                    ? "bg-yellow-200"
-                    : icons.length > 1
-                    ? "border-transparent bg-slate-50"
-                    : "border-transparent bg-slate-50"]: true,
+                      ? "bg-yellow-200"
+                      : icons.length > 1
+                        ? "border-transparent bg-slate-50"
+                        : "border-transparent bg-slate-50"]: true,
             });
         }
         return resolveClassNames(ret);
@@ -89,11 +89,11 @@ export class Tag extends React.Component<TagProps> {
                 [!this.addAdditionalClasses(invalid)
                     ? ""
                     : invalid
-                    ? "!border-red-600 !bg-red-200"
-                    : duplicate
-                    ? "!border-yellow-600 !bg-yellow-200"
-                    : ""]: true,
-            }
+                      ? "!border-red-600 !bg-red-200"
+                      : duplicate
+                        ? "!border-yellow-600 !bg-yellow-200"
+                        : ""]: true,
+            },
         );
     }
 
@@ -128,7 +128,7 @@ export class Tag extends React.Component<TagProps> {
                                 matches <= this.props.maxNumSelectedNodes || this.props.maxNumSelectedNodes === -1,
                             "bg-amber-600":
                                 matches > this.props.maxNumSelectedNodes && this.props.maxNumSelectedNodes !== -1,
-                        }
+                        },
                     )}
                     title={title}
                 >
@@ -161,7 +161,7 @@ export class Tag extends React.Component<TagProps> {
                         key={"TagPreviousButton_" + index}
                         className={resolveClassNames(
                             "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default text-xs",
-                            { "hover:bg-cyan-500": position !== 0 }
+                            { "hover:bg-cyan-500": position !== 0 },
                         )}
                         disabled={position === 0}
                         title="Previous option"
@@ -181,7 +181,7 @@ export class Tag extends React.Component<TagProps> {
                         key={"TagNextButton_" + index}
                         className={resolveClassNames(
                             "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default text-xs",
-                            { "hover:bg-cyan-500": position !== subgroups.length - 1 }
+                            { "hover:bg-cyan-500": position !== subgroups.length - 1 },
                         )}
                         disabled={position === subgroups.length - 1}
                         title="Next option"
@@ -291,7 +291,8 @@ export class Tag extends React.Component<TagProps> {
                 width = this.calculateTextWidth(currentText, 0, 0);
                 const splitByCurrentText = [
                     ...splitByDelimiter.filter(
-                        (_, index) => index < treeNodeSelection.getFocussedLevel() - treeNodeSelection.getNumMetaNodes()
+                        (_, index) =>
+                            index < treeNodeSelection.getFocussedLevel() - treeNodeSelection.getNumMetaNodes(),
                     ),
                     "",
                 ].join(treeNodeSelection.getDelimiter());

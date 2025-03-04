@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { UserInfo_api} from "@api";
+import type { UserInfo_api } from "@api";
 import { getLoggedInUser } from "@api";
 
 export enum AuthState {

@@ -66,7 +66,7 @@ export function makeSelectValueForCurveHeader(header: WellboreLogCurveHeader_api
 
 export function findCurveHeaderBySelectValue(
     headers: WellboreLogCurveHeader_api[],
-    uniqueKey: string
+    uniqueKey: string,
 ): WellboreLogCurveHeader_api | undefined {
     return headers.find((h) => makeSelectValueForCurveHeader(h) === uniqueKey);
 }

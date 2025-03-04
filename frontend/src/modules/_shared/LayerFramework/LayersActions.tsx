@@ -32,7 +32,7 @@ export type LayersActionsProps = {
 export function LayersActions(props: LayersActionsProps): React.ReactNode {
     function makeContent(
         layersActionGroups: (LayersActionGroup | LayersAction)[],
-        indentLevel: number = 0
+        indentLevel: number = 0,
     ): React.ReactNode[] {
         const content: React.ReactNode[] = [];
         for (const [index, item] of layersActionGroups.entries()) {
@@ -48,7 +48,7 @@ export function LayersActions(props: LayersActionsProps): React.ReactNode {
                     >
                         {item.icon}
                         {item.label}
-                    </MenuHeading>
+                    </MenuHeading>,
                 );
                 content.push(makeContent(item.children, indentLevel + 1));
             } else {
@@ -61,7 +61,7 @@ export function LayersActions(props: LayersActionsProps): React.ReactNode {
                     >
                         <span className="text-slate-700">{item.icon}</span>
                         {item.label}
-                    </MenuItem>
+                    </MenuItem>,
                 );
             }
         }

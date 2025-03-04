@@ -2,7 +2,7 @@ import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
 import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import type { Parameter} from "@framework/EnsembleParameters";
+import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { ModuleSettingsProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -152,7 +152,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     function handleFanchartStatisticsSelectionChange(
         event: React.ChangeEvent<HTMLInputElement>,
-        statistic: FanchartStatisticOption
+        statistic: FanchartStatisticOption,
     ) {
         setStatisticsSelection((prev) => {
             if (event.target.checked) {
@@ -176,17 +176,17 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const handleParameterListFilterChange = React.useCallback(
         function handleParameterListFilterChange(filteredParameters: Parameter[]) {
             const filteredParamIdents = filteredParameters.map((elm) =>
-                ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)
+                ParameterIdent.fromNameAndGroup(elm.name, elm.groupName),
             );
 
             setFilteredParameterIdentList(filteredParamIdents);
         },
-        [setFilteredParameterIdentList]
+        [setFilteredParameterIdentList],
     );
 
     function handleIndividualStatisticsSelectionChange(
         event: React.ChangeEvent<HTMLInputElement>,
-        statistic: StatisticFunction_api
+        statistic: StatisticFunction_api,
     ) {
         setStatisticsSelection((prev) => {
             if (event.target.checked) {

@@ -1,21 +1,9 @@
-import type {
-    ContinuousParameter,
-    DiscreteParameter,
-    Parameter} from "@framework/EnsembleParameters";
-import {
-    EnsembleParameters,
-    ParameterIdent,
-    ParameterType,
-} from "@framework/EnsembleParameters";
+import type { ContinuousParameter, DiscreteParameter, Parameter } from "@framework/EnsembleParameters";
+import { EnsembleParameters, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { RealizationFilter } from "@framework/RealizationFilter";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
-import type {
-    NumberRange,
-    ParameterValueSelection} from "@framework/types/realizationFilterTypes";
-import {
-    IncludeExcludeFilter,
-    RealizationFilterType,
-} from "@framework/types/realizationFilterTypes";
+import type { NumberRange, ParameterValueSelection } from "@framework/types/realizationFilterTypes";
+import { IncludeExcludeFilter, RealizationFilterType } from "@framework/types/realizationFilterTypes";
 
 import { describe, expect, test } from "vitest";
 
@@ -52,7 +40,7 @@ const FIRST_ENSEMBLE = new RegularEnsemble(
     FIRST_ENSEMBLE_REALIZATIONS,
     [FIRST_PARAMETER, SECOND_PARAMETER],
     null,
-    ""
+    "",
 );
 
 describe("Test functionality of Realization Filter class", () => {
@@ -127,21 +115,21 @@ describe("Test functionality of Realization Filter class", () => {
         let result = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
             [1, 2, 3],
             validRealizations,
-            IncludeExcludeFilter.INCLUDE_FILTER
+            IncludeExcludeFilter.INCLUDE_FILTER,
         );
         expect(result).toEqual([1, 2, 3]);
 
         result = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
             [1, 2, 3, { start: 9, end: 15 }],
             validRealizations,
-            IncludeExcludeFilter.INCLUDE_FILTER
+            IncludeExcludeFilter.INCLUDE_FILTER,
         );
         expect(result).toEqual([1, 2, 3, 9, 10, 15]);
 
         result = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
             null,
             validRealizations,
-            IncludeExcludeFilter.INCLUDE_FILTER
+            IncludeExcludeFilter.INCLUDE_FILTER,
         );
         expect(result).toEqual(validRealizations);
     });
@@ -152,21 +140,21 @@ describe("Test functionality of Realization Filter class", () => {
         let result = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
             [1, 2, 3],
             validRealizations,
-            IncludeExcludeFilter.EXCLUDE_FILTER
+            IncludeExcludeFilter.EXCLUDE_FILTER,
         );
         expect(result).toEqual([4, 5, 6, 7, 8, 9, 10, 15]);
 
         result = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
             [1, 2, 3, { start: 9, end: 15 }],
             validRealizations,
-            IncludeExcludeFilter.EXCLUDE_FILTER
+            IncludeExcludeFilter.EXCLUDE_FILTER,
         );
         expect(result).toEqual([4, 5, 6, 7, 8]);
 
         result = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
             null,
             validRealizations,
-            IncludeExcludeFilter.EXCLUDE_FILTER
+            IncludeExcludeFilter.EXCLUDE_FILTER,
         );
         expect(result).toEqual(validRealizations);
     });
@@ -177,21 +165,21 @@ describe("Test functionality of Realization Filter class", () => {
         let result = RealizationFilter.createIncludeOrExcludeFilteredRealizationsArray(
             IncludeExcludeFilter.INCLUDE_FILTER,
             [1, 2, 3],
-            validRealizations
+            validRealizations,
         );
         expect(result).toEqual([1, 2, 3]);
 
         result = RealizationFilter.createIncludeOrExcludeFilteredRealizationsArray(
             IncludeExcludeFilter.INCLUDE_FILTER,
             [1, 2, 3, 11],
-            validRealizations
+            validRealizations,
         );
         expect(result).toEqual([1, 2, 3]);
 
         result = RealizationFilter.createIncludeOrExcludeFilteredRealizationsArray(
             IncludeExcludeFilter.INCLUDE_FILTER,
             [],
-            validRealizations
+            validRealizations,
         );
         expect(result).toEqual([]);
     });
@@ -202,21 +190,21 @@ describe("Test functionality of Realization Filter class", () => {
         let result = RealizationFilter.createIncludeOrExcludeFilteredRealizationsArray(
             IncludeExcludeFilter.EXCLUDE_FILTER,
             [1, 2, 3],
-            validRealizations
+            validRealizations,
         );
         expect(result).toEqual([4, 5, 6, 7, 8, 9, 10, 15]);
 
         result = RealizationFilter.createIncludeOrExcludeFilteredRealizationsArray(
             IncludeExcludeFilter.EXCLUDE_FILTER,
             [1, 2, 3, 11],
-            validRealizations
+            validRealizations,
         );
         expect(result).toEqual([4, 5, 6, 7, 8, 9, 10, 15]);
 
         result = RealizationFilter.createIncludeOrExcludeFilteredRealizationsArray(
             IncludeExcludeFilter.EXCLUDE_FILTER,
             [],
-            validRealizations
+            validRealizations,
         );
         expect(result).toEqual(validRealizations);
     });
@@ -225,7 +213,7 @@ describe("Test functionality of Realization Filter class", () => {
         const realizationFilter = new RealizationFilter(FIRST_ENSEMBLE);
         const parameterIdentString = ParameterIdent.fromNameAndGroup(
             FIRST_PARAMETER.name,
-            FIRST_PARAMETER.groupName
+            FIRST_PARAMETER.groupName,
         ).toString();
         const valueRange: Readonly<NumberRange> = { start: 0, end: 2 };
         const parameterValueSelectionMap = new Map<string, ParameterValueSelection>();
@@ -234,7 +222,7 @@ describe("Test functionality of Realization Filter class", () => {
         expect(realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()).toBeNull();
         realizationFilter.setParameterIdentStringToValueSelectionReadonlyMap(parameterValueSelectionMap);
         expect(realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()).toEqual(
-            parameterValueSelectionMap
+            parameterValueSelectionMap,
         );
     });
 
@@ -244,7 +232,7 @@ describe("Test functionality of Realization Filter class", () => {
 
         const parameterIdentString = ParameterIdent.fromNameAndGroup(
             FIRST_PARAMETER.name,
-            FIRST_PARAMETER.groupName
+            FIRST_PARAMETER.groupName,
         ).toString();
         const valueRange: Readonly<NumberRange> = { start: 0, end: 2 };
         const parameterValueSelectionMap = new Map<string, ParameterValueSelection>();
@@ -263,11 +251,11 @@ describe("Test functionality of Realization Filter class", () => {
 
         const parameterIdentString1 = ParameterIdent.fromNameAndGroup(
             FIRST_PARAMETER.name,
-            FIRST_PARAMETER.groupName
+            FIRST_PARAMETER.groupName,
         ).toString();
         const parameterIdentString2 = ParameterIdent.fromNameAndGroup(
             SECOND_PARAMETER.name,
-            SECOND_PARAMETER.groupName
+            SECOND_PARAMETER.groupName,
         ).toString();
 
         const valueRange1: Readonly<NumberRange> = { start: 0, end: 2 };
@@ -282,14 +270,14 @@ describe("Test functionality of Realization Filter class", () => {
         let result = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
             parameterValueSelectionMap1,
             validEnsembleParameters,
-            validRealizations
+            validRealizations,
         );
         expect(result).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
 
         result = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
             parameterValueSelectionMap2,
             validEnsembleParameters,
-            validRealizations
+            validRealizations,
         );
         expect(result).toEqual([1, 2, 3, 4, 5]);
 
@@ -302,7 +290,7 @@ describe("Test functionality of Realization Filter class", () => {
         result = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
             combinedParameterValueSelectionMap,
             validEnsembleParameters,
-            validRealizations
+            validRealizations,
         );
         expect(result).toEqual([1, 2, 3, 5]);
     });
@@ -360,7 +348,7 @@ describe("Test functionality of Realization Filter class", () => {
         // Test with number values
         let result = RealizationFilter.getRealizationNumbersFromParameterValueArray(
             discreteParameterWithNumbers,
-            [1, 2]
+            [1, 2],
         );
         expect(result).toEqual([2, 3, 4, 5, 6, 7, 8]);
 
@@ -433,7 +421,7 @@ describe("Test functionality of Realization Filter class", () => {
         expect(() => {
             RealizationFilter.validateParameterAndValueSelection(discreteParameterWithNumbers, ["a", "b"]);
         }).toThrowError(
-            "Parameter discreteParamNumbers is discrete with number values, but value selection is strings"
+            "Parameter discreteParamNumbers is discrete with number values, but value selection is strings",
         );
 
         // Test discrete parameter with strings and invalid value selection
@@ -445,7 +433,7 @@ describe("Test functionality of Realization Filter class", () => {
         expect(() => {
             RealizationFilter.validateParameterAndValueSelection(discreteParameterWithStrings, [1, 2]);
         }).toThrowError(
-            "Parameter discreteParamStrings is discrete with string values, but value selection is numbers"
+            "Parameter discreteParamStrings is discrete with string values, but value selection is numbers",
         );
 
         // Test valid continuous parameter value selection

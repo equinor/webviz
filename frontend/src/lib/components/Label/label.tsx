@@ -35,7 +35,7 @@ export const Label: React.FC<LabelProps> = (props) => {
                     "mb-1",
                     "text-gray-500",
                     "leading-0",
-                    props.labelClassName ?? ""
+                    props.labelClassName ?? "",
                 )}
                 htmlFor={props.children.props.id ?? id.current}
             >

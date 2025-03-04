@@ -102,8 +102,8 @@ export class RealizationPolygonsSettingsContext implements SettingsContext<Reali
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.filter((polygonsMeta) => polygonsMeta.attribute_name === attribute).map((el) => el.name)
-                    )
+                        data.filter((polygonsMeta) => polygonsMeta.attribute_name === attribute).map((el) => el.name),
+                    ),
                 ),
             ];
 

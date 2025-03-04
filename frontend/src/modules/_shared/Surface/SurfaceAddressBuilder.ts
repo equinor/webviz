@@ -1,8 +1,15 @@
 import type { SurfaceStatisticFunction_api } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-import type { SurfaceAddressType , ObservedSurfaceAddress, RealizationSurfaceAddress, StatisticalSurfaceAddress , AnySurfaceAddress, PartialSurfaceAddress } from "./surfaceAddress";
-import { encodeSurfAddrStr } from "./surfaceAddress"
+import type {
+    AnySurfaceAddress,
+    ObservedSurfaceAddress,
+    PartialSurfaceAddress,
+    RealizationSurfaceAddress,
+    StatisticalSurfaceAddress,
+    SurfaceAddressType,
+} from "./surfaceAddress";
+import { encodeSurfAddrStr } from "./surfaceAddress";
 
 export class SurfaceAddressBuilder {
     private _addrType: SurfaceAddressType | null = null;

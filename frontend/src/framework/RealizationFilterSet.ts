@@ -48,7 +48,7 @@ export class RealizationFilterSet {
         const filter = this._ensembleIdentStringRealizationFilterMap.get(ensembleIdent.toString());
         if (filter === undefined) {
             throw new Error(
-                `We expect all ensembles to have a filter instance. No filter found for ${ensembleIdent.toString()}`
+                `We expect all ensembles to have a filter instance. No filter found for ${ensembleIdent.toString()}`,
             );
         }
 

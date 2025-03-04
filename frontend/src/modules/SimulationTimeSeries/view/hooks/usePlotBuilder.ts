@@ -10,7 +10,7 @@ import { useAtomValue } from "jotai";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
-import type { VectorSpec} from "../../typesAndEnums";
+import type { VectorSpec } from "../../typesAndEnums";
 import { GroupBy, VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
 import {
@@ -32,7 +32,7 @@ export function usePlotBuilder(
     wrapperDivSize: Size2D,
     colorSet: ColorSet,
     ensemblesParameterColoring: EnsemblesContinuousParameterColoring | null,
-    handlePlotOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined
+    handlePlotOnClick?: ((event: Readonly<Plotly.PlotMouseEvent>) => void) | undefined,
 ): React.ReactNode {
     const groupBy = viewContext.useSettingsToViewInterfaceValue("groupBy");
     const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
@@ -47,7 +47,7 @@ export function usePlotBuilder(
     const loadedVectorSpecificationsAndRealizationData = useAtomValue(loadedVectorSpecificationsAndRealizationDataAtom);
     const loadedVectorSpecificationsAndStatisticsData = useAtomValue(loadedVectorSpecificationsAndStatisticsDataAtom);
     const loadedRegularEnsembleVectorSpecificationsAndHistoricalData = useAtomValue(
-        loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom
+        loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom,
     );
     const colorByParameter = viewContext.useSettingsToViewInterfaceValue("colorByParameter");
     const activeTimestampUtcMs = useAtomValue(activeTimestampUtcMsAtom);
@@ -85,7 +85,7 @@ export function usePlotBuilder(
         ensemblesParameterColoring ?? undefined,
         subplotLimitation.direction,
         subplotLimitation.maxDirectionElements,
-        scatterType
+        scatterType,
     );
 
     // Add traces based on visualization mode
@@ -103,7 +103,7 @@ export function usePlotBuilder(
     if (visualizationMode === VisualizationMode.STATISTICAL_FANCHART) {
         const selectedVectorsFanchartStatisticData = filterVectorSpecificationAndFanchartStatisticsDataArray(
             loadedVectorSpecificationsAndStatisticsData,
-            statisticsSelection.FanchartStatisticsSelection
+            statisticsSelection.FanchartStatisticsSelection,
         );
         plotBuilder.addFanchartTraces(selectedVectorsFanchartStatisticData);
     }
@@ -111,7 +111,7 @@ export function usePlotBuilder(
         const highlightStatistics = false;
         const selectedVectorsIndividualStatisticData = filterVectorSpecificationAndIndividualStatisticsDataArray(
             loadedVectorSpecificationsAndStatisticsData,
-            statisticsSelection.IndividualStatisticsSelection
+            statisticsSelection.IndividualStatisticsSelection,
         );
         plotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);
     }
@@ -120,7 +120,7 @@ export function usePlotBuilder(
         const highlightStatistics = true;
         const selectedVectorsIndividualStatisticData = filterVectorSpecificationAndIndividualStatisticsDataArray(
             loadedVectorSpecificationsAndStatisticsData,
-            statisticsSelection.IndividualStatisticsSelection
+            statisticsSelection.IndividualStatisticsSelection,
         );
         plotBuilder.addRealizationsTraces(loadedVectorSpecificationsAndRealizationData, useIncreasedBrightness);
         plotBuilder.addStatisticsTraces(selectedVectorsIndividualStatisticData, highlightStatistics);

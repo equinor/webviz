@@ -86,14 +86,14 @@ export const Settings = ({
 
     const [userSelectedTimeAggregation, setUserSelectedTimeAggregation] = useAtom(userSelectedTimeAggregationAtom);
     const [userSelectedHideZeroCompletions, setUserSelectedHideZeroCompletions] = useAtom(
-        userSelectedHideZeroCompletionsAtom
+        userSelectedHideZeroCompletionsAtom,
     );
     const [userSelectedRealizationSelection, setUserSelectedRealizationSelection] = useAtom(
-        userSelectedRealizationSelectionAtom
+        userSelectedRealizationSelectionAtom,
     );
     const [userSelectedSortWellsBy, setUserSelectedSortWellsBy] = useAtom(userSelectedSortWellsByAtom);
     const [userSelectedSortWellsDirection, setUserSelectedSortWellsDirection] = useAtom(
-        userSelectedSortWellsDirectionAtom
+        userSelectedSortWellsDirectionAtom,
     );
 
     const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<RegularEnsembleIdent[] | null>(null);
@@ -138,7 +138,7 @@ export const Settings = ({
             return;
         }
         throw new Error(
-            "Invalid time step index selection, expected number or array of numbers length 2, got: " + newIndex
+            "Invalid time step index selection, expected number or array of numbers length 2, got: " + newIndex,
         );
     }
 
@@ -176,7 +176,7 @@ export const Settings = ({
             });
             return timeStep ?? "";
         },
-        [sortedCompletionDates]
+        [sortedCompletionDates],
     );
 
     function createErrorMessage(): string | null {
@@ -232,7 +232,7 @@ export const Settings = ({
                                 options={Object.values(TimeAggregationSelection).map(
                                     (elm: TimeAggregationSelection) => {
                                         return { value: elm, label: TimeAggregationSelectionEnumToStringMapping[elm] };
-                                    }
+                                    },
                                 )}
                                 direction={"horizontal"}
                                 value={userSelectedTimeAggregation}

@@ -53,7 +53,7 @@ export function WellpickSelect(props: WellpickSelectProps): React.ReactNode {
 
             setUserSelectedWellPicks(newVal);
         },
-        [userSelectedWellPicks, setUserSelectedWellPicks]
+        [userSelectedWellPicks, setUserSelectedWellPicks],
     );
 
     return (
@@ -107,7 +107,7 @@ function useStratColumnOptions(): DropdownOption[] {
         (colName): DropdownOption => ({
             label: colName,
             value: colName,
-        })
+        }),
     );
 }
 

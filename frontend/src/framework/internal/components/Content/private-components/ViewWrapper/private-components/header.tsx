@@ -1,15 +1,8 @@
 import React from "react";
 
-import type {
-    GuiMessageBroker} from "@framework/GuiMessageBroker";
-import {
-    GuiEvent,
-    GuiState,
-    LeftDrawerContent,
-    RightDrawerContent,
-    useGuiState,
-} from "@framework/GuiMessageBroker";
-import type { ModuleInstance} from "@framework/ModuleInstance";
+import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, LeftDrawerContent, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
+import type { ModuleInstance } from "@framework/ModuleInstance";
 import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
@@ -37,14 +30,14 @@ export const Header: React.FC<HeaderProps> = (props) => {
     const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
     const hotStatusMessages = useStatusControllerStateValue(
         props.moduleInstance.getStatusController(),
-        "hotMessageCache"
+        "hotMessageCache",
     );
     const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
     const [, setRightDrawerContent] = useGuiState(props.guiMessageBroker, GuiState.RightDrawerContent);
     const [, setActiveModuleInstanceId] = useGuiState(props.guiMessageBroker, GuiState.ActiveModuleInstanceId);
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         props.guiMessageBroker,
-        GuiState.RightSettingsPanelWidthInPercent
+        GuiState.RightSettingsPanelWidthInPercent,
     );
     const [statusMessagesVisible, setStatusMessagesVisible] = React.useState<boolean>(false);
 
@@ -123,7 +116,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     title="This module is currently loading new content."
                 >
                     <CircularProgress size="medium-small" />
-                </div>
+                </div>,
             );
         }
         const numErrors = hotStatusMessages.filter((message) => message.type === StatusMessageType.Error).length;
@@ -144,7 +137,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     key="header-status-messages"
                     className={resolveClassNames(
                         "flex items-center justify-center cursor-pointer px-1 hover:bg-blue-100",
-                        { "bg-blue-300 hover:bg-blue-400": statusMessagesVisible }
+                        { "bg-blue-300 hover:bg-blue-400": statusMessagesVisible },
                     )}
                     onPointerDown={handleStatusPointerDown}
                 >
@@ -165,7 +158,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                             />
                         </div>
                     </Badge>
-                </div>
+                </div>,
             );
         }
 
@@ -178,7 +171,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     title="Show complete log for this module"
                 >
                     <History fontSize="inherit" />
-                </div>
+                </div>,
             );
         }
 
@@ -310,7 +303,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                                 </Button>
                             </>
                         )}
-                    </div>
+                    </div>,
                 )}
         </div>
     );

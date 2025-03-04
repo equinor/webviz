@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { ModuleInstance } from "@framework/ModuleInstance";
-import type { Workbench} from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { WorkbenchEvents } from "@framework/Workbench";
 
 export function useModuleInstances(workbench: Workbench): ModuleInstance<any>[] {
@@ -14,7 +14,7 @@ export function useModuleInstances(workbench: Workbench): ModuleInstance<any>[] 
 
         const unsubscribeFunc = workbench.subscribe(
             WorkbenchEvents.ModuleInstancesChanged,
-            handleModuleInstancesChange
+            handleModuleInstancesChange,
         );
 
         return unsubscribeFunc;

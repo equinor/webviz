@@ -10,7 +10,7 @@ import { isEqual } from "lodash";
  */
 export function createBestSuggestedRealizationNumberSelections(
     selectedRealizationNumbers: readonly number[],
-    validRealizationNumbers: readonly number[]
+    validRealizationNumbers: readonly number[],
 ): readonly RealizationNumberSelection[] | null {
     // Sort arrays and remove duplicates
     const validRealizations = [...new Set(validRealizationNumbers)].sort((a, b) => a - b);

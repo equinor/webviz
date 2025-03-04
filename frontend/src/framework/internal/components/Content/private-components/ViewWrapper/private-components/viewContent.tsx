@@ -1,13 +1,8 @@
 import React from "react";
 
 import { ImportState } from "@framework/Module";
-import type {
-    ModuleInstance} from "@framework/ModuleInstance";
-import {
-    ModuleInstanceState,
-    ModuleInstanceTopic,
-    useModuleInstanceTopicValue,
-} from "@framework/ModuleInstance";
+import type { ModuleInstance } from "@framework/ModuleInstance";
+import { ModuleInstanceState, ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
 import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
@@ -35,7 +30,7 @@ export const ViewContent = React.memo((props: ViewContentProps) => {
         function handleModuleInstanceReload() {
             props.moduleInstance.reset();
         },
-        [props.moduleInstance]
+        [props.moduleInstance],
     );
 
     if (importState === ImportState.NotImported) {

@@ -48,10 +48,10 @@ const REALIZATION_RANGE_REGEX = /^\d+(-\d+)?$/;
 
 const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
     const [prevValidRealizations, setPrevValidRealizations] = React.useState<typeof props.validRealizations | null>(
-        null
+        null,
     );
     const [validityInfo, setValidityInfo] = React.useState<SelectionValidityInfo>(
-        props.checkValidity(props.initialValue)
+        props.checkValidity(props.initialValue),
     );
     const [value, setValue] = React.useState<string>(props.initialValue);
     const [hasFocus, setHasFocus] = React.useState<boolean>(false);
@@ -151,7 +151,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
                     "text-slate-800 hover:text-slate-600 text-sm cursor-pointer flex items-center",
                     {
                         invisible: hasFocus,
-                    }
+                    },
                 )}
                 onClick={props.onRemove}
             >
@@ -204,12 +204,12 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
             ? [...props.initialRangeTags].map((rangeTag) => {
                   return { value: rangeTag, uuid: v4() };
               })
-            : []
+            : [],
     );
     const [activeSelectionUuid, setActiveSelectionUuid] = React.useState<string | null>(null);
     const [caretPosition, setCaretPosition] = React.useState<CaretPosition>(CaretPosition.End);
     const [prevSelectedRangeTags, setPrevSelectedRangeTags] = React.useState<string[]>(
-        props.selectedRangeTags ? [...props.selectedRangeTags] : []
+        props.selectedRangeTags ? [...props.selectedRangeTags] : [],
     );
 
     const debounceTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -294,7 +294,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                 numMatchedValidRealizations: 1,
             };
         },
-        [props.validRealizations]
+        [props.validRealizations],
     );
 
     function handleSelectionsChange(newSelections: Selection[]) {
@@ -374,7 +374,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                 eventTarget.selectionEnd === eventTarget.value.length
             ) {
                 const currentSelectionIndex = selections.findIndex(
-                    (selection) => selection.uuid === activeSelectionUuid
+                    (selection) => selection.uuid === activeSelectionUuid,
                 );
                 if (currentSelectionIndex !== -1 && currentSelectionIndex < selections.length - 1) {
                     setActiveSelectionUuid(selections[currentSelectionIndex + 1].uuid);

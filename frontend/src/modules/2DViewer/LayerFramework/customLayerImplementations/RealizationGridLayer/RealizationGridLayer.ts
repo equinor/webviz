@@ -1,11 +1,6 @@
 import { getGridParameterOptions, getGridSurfaceOptions } from "@api";
-import type {
-    GridMappedProperty_trans,
-    GridSurface_trans} from "@modules/3DViewer/view/queries/queryDataTransforms";
-import {
-    transformGridMappedProperty,
-    transformGridSurface,
-} from "@modules/3DViewer/view/queries/queryDataTransforms";
+import type { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
+import { transformGridMappedProperty, transformGridSurface } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
@@ -44,7 +39,7 @@ export class RealizationGridLayer
             this,
             layerManager,
             new RealizationGridSettingsContext(layerManager),
-            LayerColoringType.COLORSCALE
+            LayerColoringType.COLORSCALE,
         );
     }
 
@@ -68,7 +63,7 @@ export class RealizationGridLayer
 
     doSettingsChangesRequireDataRefetch(
         prevSettings: RealizationGridSettings,
-        newSettings: RealizationGridSettings
+        newSettings: RealizationGridSettings,
     ): boolean {
         return !isEqual(prevSettings, newSettings);
     }

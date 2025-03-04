@@ -3,7 +3,7 @@ import React from "react";
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import type { Vec2} from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
@@ -48,7 +48,7 @@ export type SortableListProps = {
         movedItemId: string,
         originId: string | null,
         destinationId: string | null,
-        position: number
+        position: number,
     ) => void;
 };
 
@@ -197,7 +197,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 if (scrollDivRef.current) {
                     scrollDivRef.current.scrollTop = Math.min(
                         scrollDivRef.current.scrollHeight,
-                        scrollDivRef.current.scrollTop + 10
+                        scrollDivRef.current.scrollTop + 10,
                     );
                 }
                 if (doScroll) {
@@ -496,7 +496,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 setDraggedItemId(null);
             };
         },
-        [onItemMoved, isMoveAllowed, props.children]
+        [onItemMoved, isMoveAllowed, props.children],
     );
 
     function handleScroll(e: React.UIEvent<HTMLDivElement>) {
@@ -512,7 +512,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 children.push(
                     React.cloneElement(props.contentWhenEmpty, {
                         key: "contentWhenEmpty",
-                    })
+                    }),
                 );
             }
             return children;
@@ -526,13 +526,13 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 children.push(
                     React.cloneElement(child, {
                         key: child.props.id,
-                    })
+                    }),
                 );
             } else {
                 children.push(
                     React.cloneElement(child, {
                         key: child.props.id,
-                    })
+                    }),
                 );
             }
         }
@@ -576,7 +576,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                                 "cursor-not-allowed": !hoveredItemIdAndArea,
                                 "cursor-grabbing": hoveredItemIdAndArea !== null,
                             })}
-                        ></div>
+                        ></div>,
                     )}
             </SortableListContext.Provider>
         </div>
@@ -607,7 +607,7 @@ type HoveredItemIdAndArea = {
 };
 
 function assertTargetIsSortableListItemAndExtractProps(
-    target: EventTarget | null
+    target: EventTarget | null,
 ): { element: HTMLElement; id: string; parentElement: HTMLElement | null; parentId: string | null } | null {
     if (!target) {
         return null;

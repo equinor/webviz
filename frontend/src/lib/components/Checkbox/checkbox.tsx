@@ -33,7 +33,7 @@ function CheckboxComponent(props: CheckboxProps, ref: React.ForwardedRef<HTMLDiv
             }
             onChange && onChange(event, event.target.checked);
         },
-        [setChecked, onChange, props.checked]
+        [setChecked, onChange, props.checked],
     );
 
     return (
@@ -52,7 +52,7 @@ function CheckboxComponent(props: CheckboxProps, ref: React.ForwardedRef<HTMLDiv
                     "border-gray-300",
                     "rounded",
                     "focus:ring-blue-500",
-                    "cursor-pointer"
+                    "cursor-pointer",
                 )}
             />
             {props.label && (

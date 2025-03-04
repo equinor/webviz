@@ -3,7 +3,7 @@ import React from "react";
 import WebvizLogo from "@assets/webviz.svg";
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench} from "@framework/Workbench";
+import type { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench } from "@framework/Workbench";
 import { WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
@@ -42,11 +42,11 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
     const loadingEnsembleSet = useIsEnsembleSetLoading(props.workbench.getWorkbenchSession());
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.LeftDrawerContent
+        GuiState.LeftDrawerContent,
     );
     const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.LeftSettingsPanelWidthInPercent
+        GuiState.LeftSettingsPanelWidthInPercent,
     );
     const isAppInitialized = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.AppInitialized);
 
@@ -76,7 +76,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 unsubscribeFunc();
             };
         },
-        [drawerContent, props.workbench, setDrawerContent]
+        [drawerContent, props.workbench, setDrawerContent],
     );
 
     function ensureSettingsPanelIsVisible() {
@@ -125,7 +125,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
 
     function loadAndSetupEnsembles(
         ensembleItems: RegularEnsembleItem[],
-        createdDeltaEnsembles: DeltaEnsembleItem[]
+        createdDeltaEnsembles: DeltaEnsembleItem[],
     ): Promise<void> {
         setNewSelectedEnsembles(ensembleItems);
         setNewCreatedDeltaEnsembles(createdDeltaEnsembles);
@@ -137,11 +137,11 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         const deltaEnsembleSettings: UserDeltaEnsembleSetting[] = createdDeltaEnsembles.map((deltaEns) => ({
             comparisonEnsembleIdent: new RegularEnsembleIdent(
                 deltaEns.comparisonEnsemble.caseUuid,
-                deltaEns.comparisonEnsemble.ensembleName
+                deltaEns.comparisonEnsemble.ensembleName,
             ),
             referenceEnsembleIdent: new RegularEnsembleIdent(
                 deltaEns.referenceEnsemble.caseUuid,
-                deltaEns.referenceEnsemble.ensembleName
+                deltaEns.referenceEnsemble.ensembleName,
             ),
             customName: deltaEns.customName,
             color: deltaEns.color,
@@ -149,7 +149,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         return props.workbench.storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
             queryClient,
             ensembleSettings,
-            deltaEnsembleSettings
+            deltaEnsembleSettings,
         );
     }
 
@@ -193,7 +193,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
         <div
             className={resolveClassNames(
                 "bg-white p-2 border-r-2 border-slate-200 z-50 shadow-lg flex flex-col",
-                collapsed ? "w-[4.5rem]" : "w-64"
+                collapsed ? "w-[4.5rem]" : "w-64",
             )}
         >
             <div className="flex flex-col gap-2 flex-grow">
@@ -250,7 +250,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.ModuleSettings ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.ModuleSettings ? "text-cyan-600" : "!text-slate-800",
                     )}
                     disabled={layoutEmpty}
                 >
@@ -263,7 +263,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.SyncSettings ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.SyncSettings ? "text-cyan-600" : "!text-slate-800",
                     )}
                     disabled={layoutEmpty}
                 >
@@ -277,7 +277,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.ModulesList ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.ModulesList ? "text-cyan-600" : "!text-slate-800",
                     )}
                 >
                     {!collapsed ? "Add modules" : ""}
@@ -289,7 +289,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.TemplatesList ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.TemplatesList ? "text-cyan-600" : "!text-slate-800",
                     )}
                 >
                     {!collapsed ? "Use templates" : ""}
@@ -302,7 +302,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.ColorPaletteSettings ? "text-cyan-600" : "!text-slate-800"
+                        drawerContent === LeftDrawerContent.ColorPaletteSettings ? "text-cyan-600" : "!text-slate-800",
                     )}
                 >
                     {!collapsed ? "Color settings" : ""}

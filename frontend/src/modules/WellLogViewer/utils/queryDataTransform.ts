@@ -48,7 +48,7 @@ export function createWellLogSets(
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
     nonUniqueCurveNames?: Set<string>,
-    padDataWithEmptyRows = false
+    padDataWithEmptyRows = false,
 ): WellLogSet[] {
     // The well-log viewer always picks the axis from the first log set in the collection.
     // Adding a dedicated set for only the axes, so we always have a full set to show from.
@@ -82,7 +82,7 @@ export function createWellLogSets(
                 curveSet,
                 wellboreTrajectory,
                 referenceSystem,
-                padDataWithEmptyRows
+                padDataWithEmptyRows,
             );
 
             const header = createLogHeader(logName, data, wellboreTrajectory);
@@ -99,7 +99,7 @@ type LogCurveAndDataResult = { data: SafeWellLogDataRow[] } & Pick<WellLogSet, "
 
 function makeAxisOnlyLog(
     wellboreTrajectory: WellboreTrajectory_api,
-    referenceSystem: IntersectionReferenceSystem
+    referenceSystem: IntersectionReferenceSystem,
 ): WellLogSet {
     const data = wellboreTrajectory.mdArr.reduce<SafeWellLogDataRow[]>((acc, mdValue) => {
         const tvdValue = referenceSystem.project(mdValue)[1] ?? null;
@@ -116,7 +116,7 @@ function createLogCurvesAndData(
     curveData: WellboreLogCurveData_api[],
     wellboreTrajectory: WellboreTrajectory_api,
     referenceSystem: IntersectionReferenceSystem,
-    padDataWithEmptyRows?: boolean
+    padDataWithEmptyRows?: boolean,
 ): LogCurveAndDataResult {
     const curves: WellLogSet["curves"] = [...DATA_ROW_HEAD];
     const metadataDiscrete: WellLogSet["metadata_discrete"] = {};
@@ -210,7 +210,7 @@ function maybeInjectDataRow(
     rowAcc: DataRowAccumulatorMap,
     targetMdValue: number,
     rowLength: number,
-    referenceSystem: IntersectionReferenceSystem
+    referenceSystem: IntersectionReferenceSystem,
 ) {
     if (!rowAcc[targetMdValue]) {
         rowAcc[targetMdValue] = Array(rowLength).fill(null) as SafeWellLogDataRow;
@@ -222,7 +222,7 @@ function maybeInjectDataRow(
 function createLogHeader(
     logName: string,
     data: SafeWellLogDataRow[],
-    wellboreTrajectory: WellboreTrajectory_api
+    wellboreTrajectory: WellboreTrajectory_api,
 ): WellLogHeader {
     // TODO: Might want more data from https://api.equinor.com/api-details#api=equinor-subsurfacedata-api-v3&operation=get-api-v-api-version-welllog-wellboreuuid, which provides:
     /*

@@ -2,12 +2,8 @@ import type { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetrics
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
-import type {
-    SelectorColumn,
-    SourceAndTableIdentifierUnion} from "@modules/_shared/InplaceVolumetrics/types";
-import {
-    SourceIdentifier,
-} from "@modules/_shared/InplaceVolumetrics/types";
+import type { SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
 
@@ -23,5 +19,5 @@ export const userSelectedPlotTypeAtom = atom<PlotType>(PlotType.HISTOGRAM);
 export const userSelectedColorByAtom = atom<SourceAndTableIdentifierUnion>(SourceIdentifier.TABLE_NAME);
 
 export const selectedIdentifierValueCriteriaAtom = atom<IdentifierValueCriteria>(
-    IdentifierValueCriteria.REQUIRE_EQUALITY
+    IdentifierValueCriteria.REQUIRE_EQUALITY,
 );

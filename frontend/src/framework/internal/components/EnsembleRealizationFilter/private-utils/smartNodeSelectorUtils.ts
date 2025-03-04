@@ -1,4 +1,4 @@
-import type { Parameter} from "@framework/EnsembleParameters";
+import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent } from "@framework/EnsembleParameters";
 import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
@@ -13,7 +13,7 @@ const NON_GROUPED_PARENT_NODE = "Generic";
 export function addParameterNodeToTreeDataNodeList(
     treeDataNodeList: TreeDataNode[],
     parameterNode: TreeDataNode,
-    groupNodeName: string
+    groupNodeName: string,
 ) {
     const groupNode = treeDataNodeList.find((node) => node.id === groupNodeName);
 
@@ -46,7 +46,7 @@ export function addParameterNodeToTreeDataNodeList(
 export function createTreeDataNodeListFromParameters(
     parameters: readonly Parameter[],
     includeConstantParameters: boolean,
-    includeNodeDescription: boolean
+    includeNodeDescription: boolean,
 ): TreeDataNode[] {
     if (parameters.length === 0) {
         return [];
@@ -62,7 +62,7 @@ export function createTreeDataNodeListFromParameters(
         const newNode: TreeDataNode = {
             id: parameterIdentString,
             name: parameter.name,
-            description: includeNodeDescription ? parameter.description ?? undefined : undefined,
+            description: includeNodeDescription ? (parameter.description ?? undefined) : undefined,
             children: [],
         };
 

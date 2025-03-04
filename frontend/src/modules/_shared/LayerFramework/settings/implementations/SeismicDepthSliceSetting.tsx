@@ -84,10 +84,10 @@ export class SeismicDepthSliceSetting implements Setting<ValueType> {
                 const step = props.availableValues[2];
                 const allowedValues = Array.from(
                     { length: Math.floor((max - min) / step) + 1 },
-                    (_, i) => min + i * step
+                    (_, i) => min + i * step,
                 );
                 const closestValue = allowedValues.reduce((prev, curr) =>
-                    Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+                    Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev,
                 );
                 props.onValueChange(closestValue);
             }

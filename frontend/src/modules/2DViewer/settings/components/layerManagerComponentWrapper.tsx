@@ -16,7 +16,7 @@ import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/custom
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { EnsembleSetting } from "@modules//_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import type { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
-import type { GroupDelegate} from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import type { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
@@ -25,7 +25,7 @@ import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework
 import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
 import { View } from "@modules/_shared/LayerFramework/framework/View/View";
-import type { Group, Item} from "@modules/_shared/LayerFramework/interfaces";
+import type { Group, Item } from "@modules/_shared/LayerFramework/interfaces";
 import { instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
@@ -71,7 +71,7 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
         switch (identifier) {
             case "view":
                 groupDelegate.appendChild(
-                    new View(numViews > 0 ? `View (${numViews})` : "View", props.layerManager, colorSet.getNextColor())
+                    new View(numViews > 0 ? `View (${numViews})` : "View", props.layerManager, colorSet.getNextColor()),
                 );
                 return;
             case "delta-surface":

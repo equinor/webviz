@@ -1,7 +1,7 @@
 import type { B64FloatArray_api, B64UintArray_api } from "@api";
 
 export function b64DecodeUintArray(
-    base64Arr: B64UintArray_api
+    base64Arr: B64UintArray_api,
 ): Uint8Array | Uint16Array | Uint32Array | BigUint64Array {
     const arrayBuffer = base64StringToArrayBuffer(base64Arr.data_b64str);
     switch (base64Arr.element_type) {

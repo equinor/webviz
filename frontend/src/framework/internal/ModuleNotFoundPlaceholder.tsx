@@ -28,7 +28,7 @@ export class ModuleNotFoundPlaceholder extends Module<any> {
         function startDiscussion() {
             window.open(
                 "https://github.com/equinor/webviz/discussions/new?category=announcements&welcome_text=true",
-                "_blank"
+                "_blank",
             );
         }
 

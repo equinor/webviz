@@ -94,11 +94,11 @@ function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.layer.getLayerDelegate(), LayerDelegateTopic.STATUS);
     const settingsStatus = usePublishSubscribeTopicValue(
         props.layer.getLayerDelegate().getSettingsContext().getDelegate(),
-        SettingsContextDelegateTopic.LOADING_STATE_CHANGED
+        SettingsContextDelegateTopic.LOADING_STATE_CHANGED,
     );
     const isSubordinated = usePublishSubscribeTopicValue(
         props.layer.getLayerDelegate(),
-        LayerDelegateTopic.SUBORDINATED
+        LayerDelegateTopic.SUBORDINATED,
     );
 
     function makeStatus(): React.ReactNode {

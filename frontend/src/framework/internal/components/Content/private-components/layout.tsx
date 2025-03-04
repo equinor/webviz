@@ -3,28 +3,14 @@ import React from "react";
 import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent } from "@framework/GuiMessageBroker";
 import type { LayoutElement, Workbench } from "@framework/Workbench";
-import type { LayoutBox} from "@framework/components/LayoutBox";
+import type { LayoutBox } from "@framework/components/LayoutBox";
 import { LayoutBoxComponents, makeLayoutBoxes } from "@framework/components/LayoutBox";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import type {
-    Rect2D,
-    Size2D} from "@lib/utils/geometry";
-import {
-    MANHATTAN_LENGTH,
-    addMarginToRect,
-    pointRelativeToDomRect,
-    rectContainsPoint,
-} from "@lib/utils/geometry";
-import type {
-    Vec2} from "@lib/utils/vec2";
-import {
-    multiplyVec2,
-    point2Distance,
-    scaleVec2NonUniform,
-    subtractVec2,
-    vec2FromPointerEvent,
-} from "@lib/utils/vec2";
+import type { Rect2D, Size2D } from "@lib/utils/geometry";
+import { MANHATTAN_LENGTH, addMarginToRect, pointRelativeToDomRect, rectContainsPoint } from "@lib/utils/geometry";
+import type { Vec2 } from "@lib/utils/vec2";
+import { multiplyVec2, point2Distance, scaleVec2NonUniform, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 
 import { v4 } from "uuid";
 
@@ -85,7 +71,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     relativePointerPosition,
                     layoutDivSize,
                     moduleInstanceId,
-                    isNewModule
+                    isNewModule,
                 );
                 if (preview) {
                     currentLayout = preview.toLayout();
@@ -102,8 +88,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                         multiplyVec2(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
-                        })
-                    )
+                        }),
+                    ),
                 );
             }
             delayTimer = null;
@@ -186,7 +172,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                     relativePointerToElementDiff = scaleVec2NonUniform(
                         subtractVec2(pointerDownPoint, pointerDownElementPosition),
                         factorX,
-                        1
+                        1,
                     );
                     lastTimeStamp = e.timeStamp;
                     lastMovePosition = vec2FromPointerEvent(e);
@@ -204,8 +190,8 @@ export const Layout: React.FC<LayoutProps> = (props) => {
                         multiplyVec2(relativePointerToElementDiff, {
                             x: draggedElementSize.width,
                             y: 1,
-                        })
-                    )
+                        }),
+                    ),
                 );
                 setPointer(subtractVec2(vec2FromPointerEvent(e), rect));
                 const speed = point2Distance(vec2FromPointerEvent(e), lastMovePosition) / (e.timeStamp - lastTimeStamp);
@@ -312,15 +298,15 @@ export const Layout: React.FC<LayoutProps> = (props) => {
 
         const removeModuleHeaderPointerDownSubscriber = guiMessageBroker.subscribeToEvent(
             GuiEvent.ModuleHeaderPointerDown,
-            handleModuleHeaderPointerDown
+            handleModuleHeaderPointerDown,
         );
         const removeNewModulePointerDownSubscriber = guiMessageBroker.subscribeToEvent(
             GuiEvent.NewModulePointerDown,
-            handleNewModulePointerDown
+            handleNewModulePointerDown,
         );
         const removeRemoveModuleInstanceRequestSubscriber = guiMessageBroker.subscribeToEvent(
             GuiEvent.RemoveModuleInstanceRequest,
-            handleRemoveModuleInstanceRequest
+            handleRemoveModuleInstanceRequest,
         );
 
         return () => {

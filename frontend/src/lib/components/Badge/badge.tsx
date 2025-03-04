@@ -27,7 +27,7 @@ export const Badge: React.FC<BadgeProps> = (props) => {
                         "items-center",
                         "font-bold",
                         "min-w-[1.25rem]",
-                        "box-border"
+                        "box-border",
                     ),
                     style: {
                         fontSize: "0.75rem",

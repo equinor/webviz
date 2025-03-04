@@ -4,7 +4,7 @@ import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DisclaimerWrapper } from "@lib/components/DisclaimerWrapper";
-import { ContentError , ContentInfo } from "@modules/_shared/components/ContentMessage";
+import { ContentError, ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { WellCompletionsPlot } from "@webviz/well-completions-plot";
 
 import type { Interfaces } from "./interfaces";

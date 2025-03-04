@@ -44,7 +44,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
 
     const [selectedVisualizationType, setSelectedVisualizationType] = useAtom(selectedVisualizationTypeAtom);
     const [showIndividualRealizationValues, setShowIndividualRealizationValues] = useAtom(
-        showIndividualRealizationValuesAtom
+        showIndividualRealizationValuesAtom,
     );
     const [showPercentilesAndMeanLines, setShowPercentilesAndMeanLines] = useAtom(showPercentilesAndMeanLinesAtom);
 
@@ -54,7 +54,7 @@ export function Settings({ workbenchSession }: ModuleSettingsProps<Interfaces>) 
 
     function handleParameterIdentsChange(parameterIdentStrings: string[]) {
         const parameterIdents = parameterIdentStrings.map((parameterIdentString) =>
-            ParameterIdent.fromString(parameterIdentString)
+            ParameterIdent.fromString(parameterIdentString),
         );
         setSelectedParameterIdents(parameterIdents.slice(0, MAX_PARAMETERS));
     }

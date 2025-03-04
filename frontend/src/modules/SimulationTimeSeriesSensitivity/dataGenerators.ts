@@ -7,7 +7,7 @@ import { indexOf } from "lodash";
 export function makeVectorDataGenerator(
     ensemble: RegularEnsemble | null,
     vectorRealizationData: VectorRealizationData_api[] | null,
-    activeTimestampUtcMs: number | null
+    activeTimestampUtcMs: number | null,
 ): DataGenerator {
     return () => {
         const data: { key: number; value: number }[] = [];

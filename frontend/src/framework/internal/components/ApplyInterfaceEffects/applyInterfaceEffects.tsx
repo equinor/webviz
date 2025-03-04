@@ -11,14 +11,14 @@ export type ApplyInterfaceEffectsProps<TInterfaces extends ModuleInterfaceTypes>
 };
 
 export function ApplyInterfaceEffectsToView<TInterfaces extends ModuleInterfaceTypes>(
-    props: ApplyInterfaceEffectsProps<TInterfaces>
+    props: ApplyInterfaceEffectsProps<TInterfaces>,
 ) {
     useAtom(props.moduleInstance.getSettingsToViewInterfaceEffectsAtom());
     return <>{props.children}</>;
 }
 
 export function ApplyInterfaceEffectsToSettings<TInterfaces extends ModuleInterfaceTypes>(
-    props: ApplyInterfaceEffectsProps<TInterfaces>
+    props: ApplyInterfaceEffectsProps<TInterfaces>,
 ) {
     useAtom(props.moduleInstance.getViewToSettingsInterfaceEffectsAtom());
     return <>{props.children}</>;

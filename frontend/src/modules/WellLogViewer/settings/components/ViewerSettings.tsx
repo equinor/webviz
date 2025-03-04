@@ -29,7 +29,7 @@ export function ViewerSettings(props: ViewerSettingsProps): React.ReactNode {
 
             setAddingWellpicks(checked);
         },
-        [setUserSelectedWellPicks]
+        [setUserSelectedWellPicks],
     );
 
     return (

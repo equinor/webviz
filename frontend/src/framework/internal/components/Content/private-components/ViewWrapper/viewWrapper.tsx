@@ -5,7 +5,7 @@ import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
 import { pointRelativeToDomRect } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import type { Vec2} from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
@@ -36,18 +36,18 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
     const ref = React.useRef<HTMLDivElement>(null);
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.LeftDrawerContent
+        GuiState.LeftDrawerContent,
     );
     const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.LeftSettingsPanelWidthInPercent
+        GuiState.LeftSettingsPanelWidthInPercent,
     );
 
     const guiMessageBroker = props.workbench.getGuiMessageBroker();
 
     const dataChannelConnectionsLayerVisible = useGuiValue(
         guiMessageBroker,
-        GuiState.DataChannelConnectionLayerVisible
+        GuiState.DataChannelConnectionLayerVisible,
     );
 
     const [, setEditDataChannelConnections] = useGuiState(guiMessageBroker, GuiState.EditDataChannelConnections);
@@ -84,7 +84,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                 });
             }
         },
-        [props.moduleInstance, guiMessageBroker]
+        [props.moduleInstance, guiMessageBroker],
     );
 
     const handleRemoveClick = React.useCallback(
@@ -95,7 +95,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             e.preventDefault();
             e.stopPropagation();
         },
-        [props.moduleInstance, guiMessageBroker]
+        [props.moduleInstance, guiMessageBroker],
     );
 
     function handleModuleClick() {
@@ -190,7 +190,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         "relative bg-white h-full w-full flex flex-col box-border shadow p-1 border-slate-100",
                         {
                             "cursor-grabbing select-none": props.isDragged,
-                        }
+                        },
                     )}
                     onPointerDown={handlePointerDown}
                     onPointerUp={handlePointerUp}
@@ -201,7 +201,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                             {
                                 "border-blue-500": showAsActive,
                                 "border-transparent": !showAsActive,
-                            }
+                            },
                         )}
                     />
                     <Header

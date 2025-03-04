@@ -52,8 +52,8 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
     if (ensemblesParameterColoring) {
         ensemblesWithoutParameter.push(
             ...selectedEnsembles.filter(
-                (ensemble) => !ensemblesParameterColoring.hasParameterForEnsemble(ensemble.getIdent())
-            )
+                (ensemble) => !ensemblesParameterColoring.hasParameterForEnsemble(ensemble.getIdent()),
+            ),
         );
         parameterDisplayName = ensemblesParameterColoring.getParameterDisplayName();
         ensemblesWithoutParameter.push(...selectedDeltaEnsembles);

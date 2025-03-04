@@ -6,7 +6,7 @@ import { Link, Warning } from "@mui/icons-material";
 
 import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDelegate";
 import { SettingTopic } from "../delegates/SettingDelegate";
-import type { LayerManager} from "../framework/LayerManager/LayerManager";
+import type { LayerManager } from "../framework/LayerManager/LayerManager";
 import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import type { Setting, SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";
 
@@ -18,17 +18,17 @@ export type SettingComponentProps<TValue> = {
 
 export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): React.ReactNode {
     const componentRef = React.useRef<(props: SettingComponentPropsInterface<TValue>) => React.ReactNode>(
-        props.setting.makeComponent()
+        props.setting.makeComponent(),
     );
     const value = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.VALUE_CHANGED);
     const isValid = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.VALIDITY_CHANGED);
     const isPersisted = usePublishSubscribeTopicValue(
         props.setting.getDelegate(),
-        SettingTopic.PERSISTED_STATE_CHANGED
+        SettingTopic.PERSISTED_STATE_CHANGED,
     );
     const availableValues = usePublishSubscribeTopicValue(
         props.setting.getDelegate(),
-        SettingTopic.AVAILABLE_VALUES_CHANGED
+        SettingTopic.AVAILABLE_VALUES_CHANGED,
     );
     const overriddenValue = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.OVERRIDDEN_CHANGED);
     const isLoading = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.LOADING_STATE_CHANGED);

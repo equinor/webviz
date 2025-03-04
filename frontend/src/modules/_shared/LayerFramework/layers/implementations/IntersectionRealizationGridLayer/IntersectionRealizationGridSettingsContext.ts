@@ -5,11 +5,8 @@ import type { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/L
 import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import { GridNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridNameSetting";
-import type {
-    IntersectionSettingValue} from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
-import {
-    IntersectionSetting
-} from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
+import type { IntersectionSettingValue } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
+import { IntersectionSetting } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { ShowGridLinesSetting } from "@modules/_shared/LayerFramework/settings/implementations/ShowGridLinesSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
@@ -202,8 +199,8 @@ export class IntersectionRealizationGridSettingsContext
                     new Set(
                         gridAttributeArr
                             .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME")
-                    )
+                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                    ),
                 ),
             ];
 

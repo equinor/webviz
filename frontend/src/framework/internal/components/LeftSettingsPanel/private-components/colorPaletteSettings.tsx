@@ -19,10 +19,10 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
     const colorPalettes = props.workbench.getWorkbenchSettings().getColorPalettes();
     const drawerContent = useGuiValue(props.workbench.getGuiMessageBroker(), GuiState.LeftDrawerContent);
     const [selectedColorPaletteIds, setSelectedColorPaletteIds] = React.useState<Record<ColorPaletteType, string>>(
-        props.workbench.getWorkbenchSettings().getSelectedColorPaletteIds()
+        props.workbench.getWorkbenchSettings().getSelectedColorPaletteIds(),
     );
     const [steps, setSteps] = React.useState<Record<ColorScaleDiscreteSteps, number>>(
-        props.workbench.getWorkbenchSettings().getSteps()
+        props.workbench.getWorkbenchSettings().getSteps(),
     );
 
     function handleColorPaletteSelected(colorPalette: ColorPalette, type: ColorPaletteType) {
@@ -70,7 +70,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                             colorPalette={
                                 colorPalettes[ColorPaletteType.ContinuousSequential].find(
                                     (el) =>
-                                        el.getId() === selectedColorPaletteIds[ColorPaletteType.ContinuousSequential]
+                                        el.getId() === selectedColorPaletteIds[ColorPaletteType.ContinuousSequential],
                                 ) || colorPalettes[ColorPaletteType.ContinuousSequential][0]
                             }
                             steps={steps[ColorScaleDiscreteSteps.Sequential]}
@@ -84,7 +84,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                                 onChange={(e) =>
                                     handleColorPaletteStepsChanged(
                                         parseInt(e.target.value),
-                                        ColorScaleDiscreteSteps.Sequential
+                                        ColorScaleDiscreteSteps.Sequential,
                                     )
                                 }
                             />
@@ -104,7 +104,8 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                         <ColorGradient
                             colorPalette={
                                 colorPalettes[ColorPaletteType.ContinuousDiverging].find(
-                                    (el) => el.getId() === selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging]
+                                    (el) =>
+                                        el.getId() === selectedColorPaletteIds[ColorPaletteType.ContinuousDiverging],
                                 ) || colorPalettes[ColorPaletteType.ContinuousDiverging][0]
                             }
                             steps={steps[ColorScaleDiscreteSteps.Diverging]}
@@ -118,7 +119,7 @@ export const ColorPaletteSettings: React.FC<ColorPaletteSettingsProps> = (props)
                                 onChange={(e) =>
                                     handleColorPaletteStepsChanged(
                                         parseInt(e.target.value),
-                                        ColorScaleDiscreteSteps.Diverging
+                                        ColorScaleDiscreteSteps.Diverging,
                                     )
                                 }
                             />

@@ -25,7 +25,7 @@ export class RegularEnsemble {
         parameterArray: Parameter[],
         sensitivityArray: Sensitivity[] | null,
         color: string,
-        customName: string | null = null
+        customName: string | null = null,
     ) {
         this._ensembleIdent = new RegularEnsembleIdent(caseUuid, ensembleName);
         this._fieldIdentifier = fieldIdentifier;

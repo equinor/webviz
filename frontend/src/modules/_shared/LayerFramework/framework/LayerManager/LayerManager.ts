@@ -1,24 +1,22 @@
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
-import type {
-    EnsembleRealizationFilterFunction,
-    WorkbenchSession} from "@framework/WorkbenchSession";
+import type { EnsembleRealizationFilterFunction, WorkbenchSession } from "@framework/WorkbenchSession";
 import {
     WorkbenchSessionEvent,
     createEnsembleRealizationFilterFuncForWorkbenchSession,
 } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import type { IntersectionPolyline} from "@framework/userCreatedItems/IntersectionPolylines";
+import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import type { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import type { PublishSubscribe} from "../../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "../../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import type { Group, Item, SerializedLayerManager} from "../../interfaces";
+import type { Group, Item, SerializedLayerManager } from "../../interfaces";
 import { SerializedType } from "../../interfaces";
 
 export enum LayerManagerTopic {
@@ -81,22 +79,22 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopicPa
             "workbenchSession",
             this._workbenchSession.subscribe(
                 WorkbenchSessionEvent.EnsembleSetChanged,
-                this.handleEnsembleSetChanged.bind(this)
-            )
+                this.handleEnsembleSetChanged.bind(this),
+            ),
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession.subscribe(
                 WorkbenchSessionEvent.RealizationFilterSetChanged,
-                this.handleRealizationFilterSetChanged.bind(this)
-            )
+                this.handleRealizationFilterSetChanged.bind(this),
+            ),
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession
                 .getUserCreatedItems()
                 .getIntersectionPolylines()
-                .subscribe(IntersectionPolylinesEvent.CHANGE, this.handleIntersectionPolylinesChanged.bind(this))
+                .subscribe(IntersectionPolylinesEvent.CHANGE, this.handleIntersectionPolylinesChanged.bind(this)),
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "groupDelegate",
@@ -105,7 +103,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopicPa
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                 this.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
                 this.publishTopic(LayerManagerTopic.ITEMS_CHANGED);
-            })
+            }),
         );
     }
 
@@ -221,7 +219,7 @@ export class LayerManager implements Group, PublishSubscribe<LayerManagerTopicPa
 
     private handleRealizationFilterSetChanged() {
         this._globalSettings.realizationFilterFunction = createEnsembleRealizationFilterFuncForWorkbenchSession(
-            this._workbenchSession
+            this._workbenchSession,
         );
 
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);

@@ -33,7 +33,7 @@ function CollapsibleGroupComponent(props: CollapsibleGroupProps, ref: React.Forw
             <div
                 className={resolveClassNames(
                     "flex flex-row justify-between items-center bg-slate-100 cursor-pointer p-2 select-none gap-2",
-                    { "border-b": expanded }
+                    { "border-b": expanded },
                 )}
                 onClick={handleClick}
                 title={expanded ? "Collapse" : "Expand"}

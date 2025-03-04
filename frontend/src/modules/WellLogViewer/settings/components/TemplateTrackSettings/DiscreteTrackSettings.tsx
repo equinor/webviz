@@ -56,14 +56,14 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
     const curveHeadersError = usePropagateApiErrorToStatusWriter(
         // ! Cast is safe, since MergedQueryResult includes `.error`
         curveHeadersQuery as UseQueryResult,
-        props.statusWriter
+        props.statusWriter,
     );
 
     const availableDiscreteCurves = useAtomValue(availableDiscreteCurvesAtom);
     const availableFlagCurves = useAtomValue(availableFlagCurvesAtom);
     const availableCurveHeaders = React.useMemo(
         () => [...availableDiscreteCurves, ...availableFlagCurves],
-        [availableDiscreteCurves, availableFlagCurves]
+        [availableDiscreteCurves, availableFlagCurves],
     );
 
     const headersForSource = availableCurveHeaders.filter((header) => activeSource === header.source);
@@ -83,7 +83,7 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
 
             onFieldChange({ plots: [newTrackPlot] });
         },
-        [onFieldChange, discretePlotConfig, headersForSource]
+        [onFieldChange, discretePlotConfig, headersForSource],
     );
 
     const handlePlotSettingsChange = React.useCallback(
@@ -92,7 +92,7 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
 
             onFieldChange({ plots: [newPlot] });
         },
-        [discretePlotConfig, onFieldChange]
+        [discretePlotConfig, onFieldChange],
     );
 
     return (
@@ -170,7 +170,7 @@ function makeLogSourceOptions(headers: WellboreLogCurveHeader_api[]): DropdownOp
 
 function makeCurveOptions(
     chosenSource: WellLogCurveSourceEnum_api,
-    headers: WellboreLogCurveHeader_api[]
+    headers: WellboreLogCurveHeader_api[],
 ): SelectOption[] {
     return _.chain(headers)
         .filter(["source", chosenSource])

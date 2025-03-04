@@ -3,11 +3,11 @@ import { SortableListGroup } from "@lib/components/SortableList";
 import type { DeltaSurface } from "./DeltaSurface";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
-import type { LayersActionGroup} from "../../LayersActions";
+import type { LayersActionGroup } from "../../LayersActions";
 import { LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import type { Group, Item} from "../../interfaces";
+import type { Group, Item } from "../../interfaces";
 import { instanceofLayer } from "../../interfaces";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
@@ -44,7 +44,7 @@ export function DeltaSurfaceComponent(props: DeltaSurfaceComponentProps): React.
                     key="layers-actions"
                     layersActionGroups={props.actions}
                     onActionClick={handleActionClick}
-                />
+                />,
             );
         }
         adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.deltaSurface} />);

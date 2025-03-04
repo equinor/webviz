@@ -89,7 +89,7 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                     pickable: true,
                     getText: (d: Feature) => d.properties?.wellBoreUwi,
                     getLineColor: [50, 50, 50],
-                })
+                }),
             ),
 
             new TextLayer(
@@ -115,7 +115,7 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                     getTextAnchor: "middle",
                     getPosition: (d: TextLayerData) => d.coordinates,
                     getText: (d: TextLayerData) => d.name,
-                })
+                }),
             ),
         ];
     }

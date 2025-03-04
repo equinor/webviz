@@ -154,7 +154,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
                     {
                         silent: true,
                         revert: true,
-                    }
+                    },
                 );
                 await this._queryClient?.invalidateQueries({ queryKey });
                 this._queryClient?.removeQueries({ queryKey });
@@ -241,7 +241,7 @@ export class BaseLayer<TSettings extends LayerSettings, TData> {
             this._data = await this.fetchData(this._queryClient);
             if (this._queryKeys.length === null && isDevMode()) {
                 console.warn(
-                    "Did you forget to use 'setQueryKeys' in your layer implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour."
+                    "Did you forget to use 'setQueryKeys' in your layer implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour.",
                 );
             }
             this._queryKeys = [];
@@ -281,7 +281,7 @@ export function useLayerStatus(layer: BaseLayer<any, any>): LayerStatus {
 
             return unsubscribe;
         },
-        [layer]
+        [layer],
     );
 
     return status;
@@ -300,7 +300,7 @@ export function useLayerName(layer: BaseLayer<any, any>): string {
 
             return unsubscribe;
         },
-        [layer]
+        [layer],
     );
 
     return name;
@@ -319,7 +319,7 @@ export function useIsLayerVisible(layer: BaseLayer<any, any>): boolean {
 
             return unsubscribe;
         },
-        [layer]
+        [layer],
     );
 
     return isVisible;
@@ -338,7 +338,7 @@ export function useLayerSettings<T extends LayerSettings>(layer: BaseLayer<T, an
 
             return unsubscribe;
         },
-        [layer]
+        [layer],
     );
 
     return settings;
@@ -369,7 +369,7 @@ export function useLayers(layers: BaseLayer<any, any>[]): BaseLayer<any, any>[] 
                 }
             };
         },
-        [layers]
+        [layers],
     );
 
     return adjustedLayers;
@@ -379,7 +379,7 @@ export type LayerStatuses = { id: string; status: LayerStatus }[];
 
 export function useLayersStatuses(layers: BaseLayer<any, any>[]): { id: string; status: LayerStatus }[] {
     const [layersStatuses, setLayersStatuses] = React.useState<{ id: string; status: LayerStatus }[]>(
-        layers.map((layer) => ({ id: layer.getId(), status: layer.getStatus() }))
+        layers.map((layer) => ({ id: layer.getId(), status: layer.getStatus() })),
     );
 
     React.useEffect(
@@ -402,7 +402,7 @@ export function useLayersStatuses(layers: BaseLayer<any, any>[]): { id: string; 
                 }
             };
         },
-        [layers]
+        [layers],
     );
 
     return layersStatuses;

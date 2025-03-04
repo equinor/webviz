@@ -1,6 +1,10 @@
 import type { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
 import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import type { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
+import type {
+    SourceAndTableIdentifierUnion,
+    SourceIdentifier,
+    TableType,
+} from "@modules/_shared/InplaceVolumetrics/types";
 
 import { selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./settings/atoms/baseAtoms";
 import {

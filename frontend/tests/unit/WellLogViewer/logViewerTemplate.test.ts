@@ -266,7 +266,7 @@ describe("Other utilities", () => {
                     ],
                 },
             ],
-            nonUniqueNames
+            nonUniqueNames,
         );
 
         const plot1 = result.tracks[0].plots[0];
@@ -373,7 +373,7 @@ describe("settings import export tests", () => {
                     plots: [{ name: "Curve 1", type: "line", color: "#123456" }],
                 },
             ],
-            "text/plain"
+            "text/plain",
         );
 
         await expect(jsonFileToTrackConfigs(input as unknown as File)).rejects.toThrow("Invalid file extension");

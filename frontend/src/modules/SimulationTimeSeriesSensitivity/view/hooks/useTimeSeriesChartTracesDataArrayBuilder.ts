@@ -2,8 +2,7 @@ import type { VectorRealizationData_api, VectorStatisticSensitivityData_api } fr
 import { StatisticFunction_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { ColorSet } from "@lib/utils/ColorSet";
-import type {
-    TimeSeriesPlotlyTrace} from "@modules/SimulationTimeSeriesSensitivity/view/utils/createTracesUtils";
+import type { TimeSeriesPlotlyTrace } from "@modules/SimulationTimeSeriesSensitivity/view/utils/createTracesUtils";
 import {
     createLineTrace,
     createRealizationLineTraces,
@@ -58,7 +57,7 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
             // Add statistics traces
             if (showStatistics && statisticsQuery.data) {
                 const matchingCases: VectorStatisticSensitivityData_api[] = statisticsQuery.data.filter(
-                    (stat) => stat.sensitivityName === sensitivityName
+                    (stat) => stat.sensitivityName === sensitivityName,
                 );
                 const traces = createStatisticalLineTraces(matchingCases, StatisticFunction_api.MEAN, color);
                 traceDataArr.push(...traces);
@@ -70,7 +69,7 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
                 for (const sensCase of sensitivity.cases) {
                     const realsToInclude = sensCase.realizations;
                     const realizationData: VectorRealizationData_api[] = vectorDataQuery.data.filter((vec) =>
-                        realsToInclude.includes(vec.realization)
+                        realsToInclude.includes(vec.realization),
                     );
                     const traces = createRealizationLineTraces(realizationData, sensitivity.name, color);
                     traceDataArr.push(...traces);
@@ -89,7 +88,7 @@ export function useTimeSeriesChartTracesDataArrayBuilder(colorSet: ColorSet): Ti
                     showLegend: true,
                     lineColor: "black",
                     lineWidth: 2,
-                })
+                }),
             );
         }
     }

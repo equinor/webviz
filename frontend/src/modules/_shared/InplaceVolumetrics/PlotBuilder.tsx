@@ -1,10 +1,10 @@
 import type React from "react";
 
-import type { PlotData , Axis } from "plotly.js";
+import type { Axis, PlotData } from "plotly.js";
 
 import type { Table } from "./Table";
 
-import type { Figure, MakeSubplotOptions} from "../Figure";
+import type { Figure, MakeSubplotOptions } from "../Figure";
 import { CoordinateDomain, makeSubplots } from "../Figure";
 
 export class PlotBuilder {
@@ -90,7 +90,7 @@ export class PlotBuilder {
         options?: Pick<
             MakeSubplotOptions,
             "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin" | "sharedXAxes" | "sharedYAxes"
-        >
+        >,
     ): React.ReactNode {
         if (!this._groupByColumn) {
             const figure = this.buildSubplots(this._table, height, width, options ?? {});
@@ -118,7 +118,7 @@ export class PlotBuilder {
         table: Table,
         height: number,
         width: number,
-        options: Pick<MakeSubplotOptions, "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin">
+        options: Pick<MakeSubplotOptions, "horizontalSpacing" | "verticalSpacing" | "showGrid" | "margin">,
     ): Figure {
         if (!this._subplotByColumn) {
             const figure = makeSubplots({
@@ -206,7 +206,7 @@ export class PlotBuilder {
                 row,
                 col,
                 CoordinateDomain.SCENE,
-                CoordinateDomain.SCENE
+                CoordinateDomain.SCENE,
             );
         }
 

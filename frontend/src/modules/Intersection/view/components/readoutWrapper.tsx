@@ -2,18 +2,14 @@ import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { ViewContext } from "@framework/ModuleContext";
-import type { GlobalTopicDefinitions, WorkbenchServices} from "@framework/WorkbenchServices";
+import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 import type { Viewport } from "@framework/types/viewport";
 import type { Interfaces } from "@modules/Intersection/interfaces";
 import type { EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
-import type {
-    ReadoutItem as EsvReadoutItem,
-    HighlightItem} from "@modules/_shared/components/EsvIntersection/types";
-import {
-    HighlightItemShape,
-} from "@modules/_shared/components/EsvIntersection/types";
+import type { ReadoutItem as EsvReadoutItem, HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
+import { HighlightItemShape } from "@modules/_shared/components/EsvIntersection/types";
 import { isWellborepathLayer } from "@modules/_shared/components/EsvIntersection/utils/layers";
 import { esvReadoutToGenericReadout } from "@modules/_shared/components/EsvIntersection/utils/readoutItemUtils";
 import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
@@ -53,7 +49,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const syncedHoverMd = useSubscribedValue(
         "global.hoverMd",
         props.workbenchServices,
-        props.viewContext.getInstanceIdString()
+        props.viewContext.getInstanceIdString(),
     );
 
     if (!isEqual(syncedHoveredMd, prevSyncedHoveredMd)) {
@@ -76,21 +72,21 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             props.workbenchServices.publishGlobalData(
                 "global.hoverMd",
                 { wellboreUuid: props.wellboreHeaderUuid, md: readoutMd },
-                moduleInstanceId
+                moduleInstanceId,
             );
 
             return function resetPublishedHoverMd() {
                 props.workbenchServices.publishGlobalData("global.hoverMd", null, moduleInstanceId);
             };
         },
-        [readoutMd, props.workbenchServices, props.viewContext, props.wellboreHeaderUuid, moduleInstanceId]
+        [readoutMd, props.workbenchServices, props.viewContext, props.wellboreHeaderUuid, moduleInstanceId],
     );
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
             return esvReadoutToGenericReadout(item, index, props.layerIdToNameMap);
         },
-        [props.layerIdToNameMap]
+        [props.layerIdToNameMap],
     );
 
     const handleReadoutItemsChange = React.useCallback(
@@ -102,7 +98,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             setReadoutMd(md ?? null);
             setReadoutItems(event.readoutItems.map(formatEsvLayout));
         },
-        [formatEsvLayout]
+        [formatEsvLayout],
     );
 
     const highlightItems: HighlightItem[] = [];

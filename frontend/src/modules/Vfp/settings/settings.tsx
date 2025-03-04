@@ -254,7 +254,7 @@ function makeColorByOptions(vfpType: VfpType | null, vfpDataAccessor: VfpDataAcc
                 { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.WFR, false) ?? "WFR", value: VfpParam.WFR },
                 { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.GFR, false) ?? "GFR", value: VfpParam.GFR },
                 { label: vfpDataAccessor?.getVfpParamLabel(VfpParam.ALQ, false) ?? "ALQ", value: VfpParam.ALQ },
-            ]
+            ],
         );
     }
     return options;

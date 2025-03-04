@@ -1,6 +1,6 @@
 import type React from "react";
 
-import type { InplaceVolumetricResultName_api} from "@api";
+import type { InplaceVolumetricResultName_api } from "@api";
 import { InplaceVolumetricStatistic_api } from "@api";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -10,11 +10,10 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import type { SelectOption } from "@lib/components/Select";
 import { Select } from "@lib/components/Select";
-import type { TagOption} from "@lib/components/TagPicker";
+import type { TagOption } from "@lib/components/TagPicker";
 import { TagPicker } from "@lib/components/TagPicker";
 import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
-import type {
-    SourceAndTableIdentifierUnion} from "@modules/_shared/InplaceVolumetrics/types";
+import type { SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 import {
     InplaceVolumetricStatisticEnumToStringMapping,
     SourceIdentifier,
@@ -76,7 +75,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     const [selectedTableType, setSelectedTableType] = useAtom(selectedTableTypeAtom);
     const [selectedStatisticOptions, setSelectedStatisticOptions] = useAtom(selectedStatisticOptionsAtom);
     const [selectedIdentifierValueCriteria, setSelectedIdentifierValueCriteria] = useAtom(
-        selectedIdentifierValueCriteriaAtom
+        selectedIdentifierValueCriteriaAtom,
     );
 
     function handleFilterChange(newFilter: InplaceVolumetricsFilterSettings) {
@@ -87,7 +86,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIdentifierValueCriteria(
             newFilter.allowIdentifierValuesIntersection
                 ? IdentifierValueCriteria.ALLOW_INTERSECTION
-                : IdentifierValueCriteria.REQUIRE_EQUALITY
+                : IdentifierValueCriteria.REQUIRE_EQUALITY,
         );
     }
 
@@ -95,7 +94,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         newAccumulationOptions: Omit<
             SourceAndTableIdentifierUnion,
             SourceIdentifier.ENSEMBLE | SourceIdentifier.TABLE_NAME
-        >[]
+        >[],
     ) {
         setSelectedAccumulationOptions(newAccumulationOptions);
     }
@@ -120,7 +119,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
     }
 
     const statisticOptions: TagOption<InplaceVolumetricStatistic_api>[] = Object.values(
-        InplaceVolumetricStatistic_api
+        InplaceVolumetricStatistic_api,
     ).map((elm: InplaceVolumetricStatistic_api) => {
         return { label: InplaceVolumetricStatisticEnumToStringMapping[elm], value: elm };
     });

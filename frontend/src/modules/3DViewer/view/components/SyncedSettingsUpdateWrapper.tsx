@@ -25,7 +25,7 @@ export function SyncedSettingsUpdateWrapper(props: SyncedSettingsUpdateWrapperPr
         function handleVerticalScaleChange(verticalScale: number) {
             syncHelper.publishValue(SyncSettingKey.VERTICAL_SCALE, "global.syncValue.verticalScale", verticalScale);
         },
-        [syncHelper]
+        [syncHelper],
     );
 
     return (

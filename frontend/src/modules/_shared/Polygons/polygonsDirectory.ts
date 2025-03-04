@@ -50,7 +50,7 @@ export class PolygonsDirectory {
     public nameAttributePairExists(polygonsName: string | null, attributeName: string | null): boolean {
         if (!attributeName || !polygonsName) return false;
         return this._polygonsList.some(
-            (polygons) => polygons.name === polygonsName && polygons.attribute_name === attributeName
+            (polygons) => polygons.name === polygonsName && polygons.attribute_name === attributeName,
         );
     }
 }

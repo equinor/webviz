@@ -43,6 +43,6 @@ export const aggregatedTableDataQueriesAtom = atomWithQueries((get) => {
         groupByIdentifiers,
         doAccumulateFluidZones,
         identifiersValues,
-        enableQueries
+        enableQueries,
     );
 });

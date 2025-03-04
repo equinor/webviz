@@ -1,6 +1,6 @@
 import { CurrentModuleInstanceIdAtom } from "@framework/GlobalAtoms";
 
-import type { Getter} from "jotai";
+import type { Getter } from "jotai";
 import { atom } from "jotai";
 
 /**
@@ -30,7 +30,7 @@ export function atomWithModuleInstanceStorage<T>(storageKey: string, initialValu
 
             localStorage.setItem(fullStorageKey, JSON.stringify(newVal));
             set(instanceValueAtom, newVal);
-        }
+        },
     );
 }
 

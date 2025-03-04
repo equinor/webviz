@@ -1,6 +1,6 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import type { Group, SerializedSettingsGroup} from "../../interfaces";
+import type { Group, SerializedSettingsGroup } from "../../interfaces";
 import { SerializedType } from "../../interfaces";
 import type { LayerManager } from "../LayerManager/LayerManager";
 

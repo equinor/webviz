@@ -50,10 +50,10 @@ export default defineConfig(({ mode }) => {
                     ...prev,
                     [current.replace("/*", "")]: path.resolve(
                         __dirname,
-                        aliases.compilerOptions.paths[current][0].replace("/*", "")
+                        aliases.compilerOptions.paths[current][0].replace("/*", ""),
                     ),
                 }),
-                {}
+                {},
             ),
         },
         server: {

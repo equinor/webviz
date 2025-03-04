@@ -1,4 +1,4 @@
-import type { ChannelDefinition} from "@framework/DataChannelTypes";
+import type { ChannelDefinition } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";
 
 export enum ChannelIds {

@@ -8,7 +8,7 @@ import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
-import type { Intersection} from "@framework/types/intersection";
+import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -161,7 +161,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
         syncHelper.publishValue(
             SyncSettingKey.ENSEMBLE,
             "global.syncValue.ensembles",
-            ensembleIdent ? [ensembleIdent] : []
+            ensembleIdent ? [ensembleIdent] : [],
         );
     }
 
@@ -430,7 +430,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                                     >
                                         <Delete fontSize="small" />
                                     </div>
-                                </div>
+                                </div>,
                             )}
                             value={selectedCustomIntersectionPolylineId ? [selectedCustomIntersectionPolylineId] : []}
                             headerLabels={["Polyline name", "Actions"]}
@@ -513,7 +513,7 @@ function makeCustomIntersectionPolylineOptions(
     polylines: IntersectionPolyline[],
     selectedId: string | null,
     filter: string,
-    actions: React.ReactNode
+    actions: React.ReactNode,
 ): TableSelectOption[] {
     return polylines
         .filter((polyline) => polyline.name.includes(filter))

@@ -1,6 +1,6 @@
-import type { Parameter} from "@framework/EnsembleParameters";
+import type { Parameter } from "@framework/EnsembleParameters";
 import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters";
-import type { Sensitivity} from "@framework/EnsembleSensitivities";
+import type { Sensitivity } from "@framework/EnsembleSensitivities";
 import { EnsembleSensitivities, SensitivityType } from "@framework/EnsembleSensitivities";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
@@ -39,7 +39,7 @@ describe("RegularEnsemble", () => {
         parameterArray,
         sensitivityArray,
         color,
-        customName
+        customName,
     );
 
     test("should create an instance of RegularEnsemble", () => {
@@ -115,7 +115,7 @@ describe("RegularEnsemble", () => {
             realizationsArray,
             parameterArray,
             sensitivityArray,
-            color
+            color,
         );
         expect(ensemble.getDisplayName()).toBe(`${ensembleName} (${caseName})`);
         expect(ensemble.getCustomName()).toBeNull();

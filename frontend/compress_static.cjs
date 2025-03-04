@@ -38,5 +38,5 @@ const compressFile = (filePath) => {
 
 glob.glob(
     "dist/assets/*.{json,js,css,svg}",
-    async (_err, files) => await Promise.all(files.map((file) => compressFile(file)))
+    async (_err, files) => await Promise.all(files.map((file) => compressFile(file))),
 );

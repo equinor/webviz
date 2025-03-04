@@ -1,15 +1,15 @@
-import type { SurfaceRealizationSampleValues_api} from "@api";
+import type { SurfaceRealizationSampleValues_api } from "@api";
 import { postGetSampleSurfaceInPointsOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
-import type { Vec2} from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
 import type { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
 
-import type { BoundingBox} from "./BaseLayer";
+import type { BoundingBox } from "./BaseLayer";
 import { BaseLayer, LayerTopic } from "./BaseLayer";
 
 export type SurfacesUncertaintyLayerSettings = {
@@ -34,7 +34,7 @@ export type SurfaceUncertaintyData = {
 function transformData(
     cumulatedLengths: number[],
     surfaceName: string,
-    data: SurfaceRealizationSampleValues_api[]
+    data: SurfaceRealizationSampleValues_api[],
 ): SurfaceUncertaintyData {
     const sampledValues: number[][] = data.map((realization) => realization.sampled_values);
     return {
@@ -95,7 +95,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
                     {
                         x: this._settings.polyline.polylineUtmXy[i - 2],
                         y: this._settings.polyline.polylineUtmXy[i - 1],
-                    }
+                    },
                 );
             }
             minX = -this._settings.extensionLength;
@@ -140,7 +140,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
 
     protected doSettingsChangesRequireDataRefetch(
         prevSettings: SurfacesUncertaintyLayerSettings,
-        newSettings: SurfacesUncertaintyLayerSettings
+        newSettings: SurfacesUncertaintyLayerSettings,
     ): boolean {
         return (
             !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames) ||
@@ -168,7 +168,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: polyline[i - 2], y: polyline[i - 1] }
+                    { x: polyline[i - 2], y: polyline[i - 1] },
                 );
                 const actualDistance = this._settings.polyline.actualSectionLengths[i / 2 - 1];
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
@@ -193,7 +193,7 @@ export class SurfacesUncertaintyLayer extends BaseLayer<SurfacesUncertaintyLayer
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] }
+                    { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] },
                 );
 
                 cumulatedHorizontalPolylineLength += distance;

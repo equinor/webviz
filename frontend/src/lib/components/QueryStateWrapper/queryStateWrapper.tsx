@@ -30,7 +30,7 @@ export type QueryStatesWrapperProps = QueryStateWrapperBaseProps & {
 };
 
 export const QueryStateWrapper: React.FC<QueryStateWrapperProps | QueryStatesWrapperProps> = (
-    props: QueryStateWrapperProps | QueryStatesWrapperProps
+    props: QueryStateWrapperProps | QueryStatesWrapperProps,
 ) => {
     let showQueryLoading = false;
     let showQueryError = false;
@@ -54,7 +54,7 @@ export const QueryStateWrapper: React.FC<QueryStateWrapperProps | QueryStatesWra
                 "relative rounded",
                 { "outline outline-blue-100 outline-offset-2": showQueryLoading },
                 { "outline outline-red-100 outline-offset-2": showQueryError },
-                props.className ?? ""
+                props.className ?? "",
             )}
             style={props.style}
         >

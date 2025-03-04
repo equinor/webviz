@@ -17,7 +17,7 @@ export function makeVectorGroupDataGenerator(
         data: VectorRealizationData_api[];
     }[],
     activeTimestampUtcMs: number,
-    makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) => string
+    makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) => string,
 ): DataGenerator {
     return () => {
         const data: { key: number; value: number }[] = [];
@@ -30,7 +30,7 @@ export function makeVectorGroupDataGenerator(
         const vector = regularEnsembleVectorSpecificationsAndRealizationData.find(
             (vec) =>
                 vec.vectorSpecification.vectorName === regularEnsembleVectorSpecification.vectorName &&
-                vec.vectorSpecification.ensembleIdent.equals(regularEnsembleVectorSpecification.ensembleIdent)
+                vec.vectorSpecification.ensembleIdent.equals(regularEnsembleVectorSpecification.ensembleIdent),
         );
 
         if (vector) {
@@ -47,7 +47,7 @@ export function makeVectorGroupDataGenerator(
                 unit,
                 ensembleIdentString: vector.vectorSpecification.ensembleIdent.toString(),
                 displayString: `${simulationVectorDescription(
-                    vector.vectorSpecification.vectorName
+                    vector.vectorSpecification.vectorName,
                 )} (${makeEnsembleDisplayName(vector.vectorSpecification.ensembleIdent)})`,
             };
         }

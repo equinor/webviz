@@ -17,7 +17,7 @@ type TableDefinitionsForEnsembleIdent = {
 };
 
 export function makeUniqueTableNamesIntersection(
-    tableDefinitionsPerEnsembleIdent: TableDefinitionsForEnsembleIdent[]
+    tableDefinitionsPerEnsembleIdent: TableDefinitionsForEnsembleIdent[],
 ): string[] {
     if (tableDefinitionsPerEnsembleIdent.length === 0) {
         return [];
@@ -70,7 +70,7 @@ export class TableDefinitionsAccessor {
     constructor(
         tableDefinitionsPerEnsembleIdent: TableDefinitionsForEnsembleIdent[],
         tableNamesFilter: string[],
-        identifierValueCriteria: IdentifierValueCriteria
+        identifierValueCriteria: IdentifierValueCriteria,
     ) {
         this._tableDefinitions = tableDefinitionsPerEnsembleIdent.flatMap((data) => data.tableDefinitions);
         this._tableNamesFilter = tableNamesFilter;
@@ -130,7 +130,7 @@ export class TableDefinitionsAccessor {
             const identifiersToRemove = [];
             for (const [identifier, identifierWithValues] of commonIdentifiersWithValuesMap) {
                 const currentIdentifierWithValues = tableDefinition.identifiersWithValues.find(
-                    (item) => item.identifier === identifier
+                    (item) => item.identifier === identifier,
                 );
 
                 // Remove identifiers that are not present in all table definitions
@@ -142,7 +142,7 @@ export class TableDefinitionsAccessor {
                 // Tables are not comparable when identifier values are not equal
                 if (this._identifierValueCriteria === IdentifierValueCriteria.ALLOW_INTERSECTION) {
                     const valuesIntersection = identifierWithValues.values.filter((value) =>
-                        currentIdentifierWithValues.values.includes(value)
+                        currentIdentifierWithValues.values.includes(value),
                     );
 
                     // Set or update existing identifier with intersected values
@@ -244,7 +244,7 @@ export class TableDefinitionsAccessor {
         for (const identifierValue of identifiersWithValues) {
             const identifier = identifierValue.identifier;
             const tableDefinitionsIdentifier = this._commonIdentifiersWithValues.find(
-                (el) => el.identifier === identifier
+                (el) => el.identifier === identifier,
             );
             if (!tableDefinitionsIdentifier) {
                 return false;

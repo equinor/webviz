@@ -1,10 +1,5 @@
-import type {
-    WellboreLogCurveData_api,
-    WellboreTrajectory_api} from "@api";
-import {
-    getLogCurveDataOptions,
-    getWellTrajectoriesOptions,
-} from "@api";
+import type { WellboreLogCurveData_api, WellboreTrajectory_api } from "@api";
+import { getLogCurveDataOptions, getWellTrajectoriesOptions } from "@api";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { mergeResults } from "@modules/WellLogViewer/utils/queries";
 import type { QueryObserverResult } from "@tanstack/react-query";

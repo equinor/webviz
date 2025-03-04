@@ -29,7 +29,7 @@ export function AggregationDropdown(props: AggregationDropdownProps): JSX.Elemen
                 value={props.selectedAggregation ?? "SINGLE_REAL"}
                 onChange={(newVal: string) =>
                     props.onAggregationSelectionChange(
-                        newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction_api) : null
+                        newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction_api) : null,
                     )
                 }
             />

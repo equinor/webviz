@@ -7,8 +7,7 @@ import { preview } from "./preview";
 
 export const MODULE_NAME = "Vfp";
 
-const description =
-    "Visualizes Vfp tables from Eclipse.";
+const description = "Visualizes Vfp tables from Eclipse.";
 
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: MODULE_NAME,

@@ -35,16 +35,14 @@ import type {
     IntersectedItem,
     IntersectionCalculator,
     IntersectionItem,
-    ReadoutItem} from "../types/types";
-import {
-    HighlightItemShape,
-    IntersectionItemShape
+    ReadoutItem,
 } from "../types/types";
+import { HighlightItemShape, IntersectionItemShape } from "../types/types";
 
 export function makeIntersectionCalculatorFromIntersectionItem(
     intersectionItem: IntersectionItem,
     options: IntersectionHandlerOptions,
-    controller: Controller
+    controller: Controller,
 ): IntersectionCalculator {
     switch (intersectionItem.shape) {
         case IntersectionItemShape.POINT:
@@ -63,7 +61,7 @@ export function makeIntersectionCalculatorFromIntersectionItem(
             return new FanchartIntersectionCalculator(
                 intersectionItem.data.lines,
                 intersectionItem.data.hull,
-                options.threshold
+                options.threshold,
             );
         case IntersectionItemShape.RECTANGLE:
             return new RectangleIntersectionCalculator(intersectionItem.data);
@@ -111,7 +109,7 @@ export function getColorFromLayerData(layer: Layer<unknown>, index: number): str
 export function makeHighlightItemFromIntersectionResult(
     intersectionResult: IntersectedItem,
     layer: Layer<unknown>,
-    index: number
+    index: number,
 ): HighlightItem {
     const color = getColorFromLayerData(layer, index);
     if (isPointIntersectionResult(intersectionResult)) {
@@ -194,7 +192,7 @@ export function makeHighlightItemFromIntersectionResult(
 export function makeReadoutItemFromIntersectionResult(
     intersectionResult: IntersectedItem,
     layer: Layer<unknown>,
-    index: number
+    index: number,
 ): ReadoutItem {
     if (isPointIntersectionResult(intersectionResult)) {
         return {

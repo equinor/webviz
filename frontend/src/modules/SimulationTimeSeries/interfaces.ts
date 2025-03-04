@@ -21,7 +21,13 @@ import {
     selectedRegularEnsemblesAtom,
     vectorSpecificationsAtom,
 } from "./settings/atoms/derivedAtoms";
-import type { GroupBy, StatisticsSelection, SubplotLimitDirection, VectorSpec, VisualizationMode } from "./typesAndEnums";
+import type {
+    GroupBy,
+    StatisticsSelection,
+    SubplotLimitDirection,
+    VectorSpec,
+    VisualizationMode,
+} from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     groupBy: GroupBy;

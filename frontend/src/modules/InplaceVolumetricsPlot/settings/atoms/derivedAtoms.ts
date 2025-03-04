@@ -40,7 +40,7 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     }
 
     const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>
-        ensembleSet.hasEnsemble(ensemble)
+        ensembleSet.hasEnsemble(ensemble),
     );
 
     const validatedEnsembleIdents = fixupRegularEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
@@ -56,7 +56,7 @@ export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get)
     return new TableDefinitionsAccessor(
         tableDefinitions.isLoading ? [] : tableDefinitions.data,
         selectedTableNames,
-        selectedIdentifierValueCriteria
+        selectedIdentifierValueCriteria,
     );
 });
 
@@ -131,7 +131,7 @@ export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
     return fixupUserSelection(
         userSelectedFluidZones,
         tableDefinitionsAccessor.getFluidZonesIntersection(),
-        FixupSelection.SELECT_ALL
+        FixupSelection.SELECT_ALL,
     );
 });
 
@@ -148,7 +148,7 @@ export const selectedResultNameAtom = atom<InplaceVolumetricResultName_api | nul
 
     const fixedSelection = fixupUserSelection(
         [userSelectedResultName],
-        tableDefinitionsAccessor.getResultNamesIntersection()
+        tableDefinitionsAccessor.getResultNamesIntersection(),
     );
     if (fixedSelection.length === 0) {
         return null;
@@ -170,7 +170,7 @@ export const selectedResultName2Atom = atom<InplaceVolumetricResultName_api | nu
 
     const fixedSelection = fixupUserSelection(
         [userSelectedResultName],
-        tableDefinitionsAccessor.getResultNamesIntersection()
+        tableDefinitionsAccessor.getResultNamesIntersection(),
     );
     if (fixedSelection.length === 0) {
         return null;
@@ -208,7 +208,7 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
     const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = fixupUserSelectedIdentifierValues(
         userSelectedIdentifierValues,
         uniqueIdentifierValues,
-        FixupSelection.SELECT_ALL
+        FixupSelection.SELECT_ALL,
     );
 
     return fixedUpIdentifierValues;
@@ -232,7 +232,7 @@ export const selectedColorByAtom = atom<SourceAndTableIdentifierUnion>((get) => 
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     const validOptions = makeColorByOptions(tableDefinitionsAccessor, userSelectedSubplotBy, selectedTableNames).map(
-        (el) => el.value
+        (el) => el.value,
     );
     const fixedSelection = fixupUserSelection([userSelectedColorBy], validOptions);
 

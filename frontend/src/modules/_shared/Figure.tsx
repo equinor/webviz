@@ -97,7 +97,7 @@ export class Figure {
         row?: number,
         column?: number,
         xCoordinateDomain = CoordinateDomain.DATA,
-        yCoordinateDomain = CoordinateDomain.DATA
+        yCoordinateDomain = CoordinateDomain.DATA,
     ): void {
         if (row === undefined) {
             row = 1;
@@ -126,7 +126,7 @@ export class Figure {
         row?: number,
         column?: number,
         xCoordinateDomain = CoordinateDomain.DATA,
-        yCoordinateDomain = CoordinateDomain.DATA
+        yCoordinateDomain = CoordinateDomain.DATA,
     ): void {
         if (row === undefined) {
             row = 1;
@@ -223,7 +223,7 @@ function makeDomain(
     elementIndex: number,
     spacing: number,
     margin: { start: number; end: number },
-    reversedAxis?: boolean
+    reversedAxis?: boolean,
 ): [number, number] {
     const size = 1 - margin.start - margin.end;
 
@@ -247,7 +247,7 @@ function makeXDomain(
     numColumns: number,
     columnIndex: number,
     spacing: number,
-    margin: { left: number; right: number }
+    margin: { left: number; right: number },
 ): [number, number] {
     return makeDomain(numColumns, columnIndex, spacing, { start: margin.left, end: margin.right });
 }
@@ -256,7 +256,7 @@ function makeReversedYAxisDomain(
     numRows: number,
     rowIndex: number,
     spacing: number,
-    margin: { top: number; bottom: number }
+    margin: { top: number; bottom: number },
 ): [number, number] {
     return makeDomain(numRows, rowIndex, spacing, { start: margin.top, end: margin.bottom }, true);
 }

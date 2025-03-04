@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import type { SyncSettingKey} from "@framework/SyncSettings";
+import type { SyncSettingKey } from "@framework/SyncSettings";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import type { Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";

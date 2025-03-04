@@ -30,7 +30,7 @@ export class DeltaEnsemble {
         comparisonEnsemble: RegularEnsemble,
         referenceEnsemble: RegularEnsemble,
         color: string,
-        customName: string | null = null
+        customName: string | null = null,
     ) {
         this._deltaEnsembleIdent = new DeltaEnsembleIdent(comparisonEnsemble.getIdent(), referenceEnsemble.getIdent());
 

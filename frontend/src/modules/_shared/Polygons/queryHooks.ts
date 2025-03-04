@@ -1,19 +1,13 @@
-import type {
-    PolygonData_api,
-    PolygonsMeta_api} from "@api";
-import {
-    getPolygonsData,
-    getPolygonsDataQueryKey,
-    getPolygonsDirectoryOptions,
-} from "@api";
-import type { QueryFunction, QueryKey, UseQueryResult} from "@tanstack/react-query";
+import type { PolygonData_api, PolygonsMeta_api } from "@api";
+import { getPolygonsData, getPolygonsDataQueryKey, getPolygonsDirectoryOptions } from "@api";
+import type { QueryFunction, QueryKey, UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import type { PolygonsAddress } from "./polygonsAddress";
 
 export function usePolygonsDirectoryQuery(
     caseUuid: string | undefined,
-    ensembleName: string | undefined
+    ensembleName: string | undefined,
 ): UseQueryResult<PolygonsMeta_api[]> {
     return useQuery({
         ...getPolygonsDirectoryOptions({
@@ -27,7 +21,7 @@ export function usePolygonsDirectoryQuery(
 }
 
 export function usePolygonsDataQueryByAddress(
-    polygonsAddress: PolygonsAddress | null
+    polygonsAddress: PolygonsAddress | null,
 ): UseQueryResult<PolygonData_api[]> {
     function dummyApiCall(): Promise<PolygonData_api[]> {
         return new Promise((_resolve, reject) => {

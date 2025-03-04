@@ -8,14 +8,8 @@ import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils"
 import { atom } from "jotai";
 import { isEqual } from "lodash";
 
-import type {
-    StatisticsSelection} from "../../typesAndEnums";
-import {
-    FanchartStatisticOption,
-    GroupBy,
-    SubplotLimitDirection,
-    VisualizationMode,
-} from "../../typesAndEnums";
+import type { StatisticsSelection } from "../../typesAndEnums";
+import { FanchartStatisticOption, GroupBy, SubplotLimitDirection, VisualizationMode } from "../../typesAndEnums";
 
 export const resampleFrequencyAtom = atom<Frequency_api | null>(Frequency_api.MONTHLY);
 
@@ -40,7 +34,7 @@ export const statisticsSelectionAtom = atom<StatisticsSelection>({
 
 export const userSelectedEnsembleIdentsAtom = atomWithCompare<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>(
     [],
-    areEnsembleIdentListsEqual
+    areEnsembleIdentListsEqual,
 );
 
 export const selectedVectorNamesAtom = atomWithCompare<string[]>([], isEqual);

@@ -23,7 +23,7 @@ export function AddItemButton<TValue>(props: AddItemButtonProps<TValue>): React.
         function handleOptionClicked(item: SelectOption<TValue>) {
             if (onOptionClicked) onOptionClicked(item.value);
         },
-        [onOptionClicked]
+        [onOptionClicked],
     );
 
     if (!props.options) {

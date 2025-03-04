@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { GuiEventPayloads} from "@framework/GuiMessageBroker";
+import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { ModuleInstance } from "@framework/ModuleInstance";
 import type { Workbench } from "@framework/Workbench";
@@ -35,7 +35,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
 
     const [editDataChannelConnections, setEditDataChannelConnections] = useGuiState(
         guiMessageBroker,
-        GuiState.EditDataChannelConnections
+        GuiState.EditDataChannelConnections,
     );
 
     React.useEffect(() => {
@@ -65,7 +65,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
         }
 
         function handleEditDataChannelConnectionsChange(
-            payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]
+            payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest],
         ) {
             if (payload.moduleInstanceId !== props.moduleInstance.getId()) {
                 setVisible(false);
@@ -78,17 +78,17 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
 
         const removeEditDataChannelConnectionsHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest,
-            handleEditDataChannelConnectionsChange
+            handleEditDataChannelConnectionsChange,
         );
 
         const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.DataChannelOriginPointerDown,
-            handleDataChannelOriginPointerDown
+            handleDataChannelOriginPointerDown,
         );
 
         const removeDataChannelDoneHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.HideDataChannelConnectionsRequest,
-            handleDataChannelDone
+            handleDataChannelDone,
         );
 
         document.addEventListener("pointerup", handlePointerUp);
@@ -198,7 +198,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
             guiMessageBroker.publishEvent(GuiEvent.HideDataChannelConnectionsRequest);
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         },
-        [props.moduleInstance, props.workbench, guiMessageBroker]
+        [props.moduleInstance, props.workbench, guiMessageBroker],
     );
 
     const handleChannelDisconnect = React.useCallback(
@@ -206,7 +206,7 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
             props.moduleInstance.getChannelManager().getReceiver(receiverIdString)?.unsubscribeFromCurrentChannel();
             guiMessageBroker.publishEvent(GuiEvent.DataChannelConnectionsChange);
         },
-        [props.moduleInstance, guiMessageBroker]
+        [props.moduleInstance, guiMessageBroker],
     );
 
     function handleCancelChannelSelection() {
@@ -298,6 +298,6 @@ export const ChannelReceiverNodesWrapper: React.FC<ChannelReceiverNodesWrapperPr
                     selectedContents={prevSelectedContents ?? undefined}
                 />
             )}
-        </div>
+        </div>,
     );
 };

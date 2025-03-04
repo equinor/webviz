@@ -45,7 +45,7 @@ function ensureKeyboardSelectionInView(
     prevViewStartIndex: number,
     reportedViewStartIndex: number,
     keyboardFocusIndex: number,
-    viewSize: number
+    viewSize: number,
 ) {
     if (keyboardFocusIndex >= reportedViewStartIndex + viewSize) {
         return Math.max(0, keyboardFocusIndex - viewSize + 1);
@@ -111,7 +111,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                 onChange(values);
             }, props.debounceTimeMs);
         },
-        [onChange, props.debounceTimeMs]
+        [onChange, props.debounceTimeMs],
     );
 
     React.useEffect(function handleMount() {
@@ -204,7 +204,12 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     const newIndex = Math.max(0, currentFocusIndex - 1);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, sizeWithDefault)
+                        ensureKeyboardSelectionInView(
+                            prev,
+                            reportedVirtualizationStartIndex,
+                            newIndex,
+                            sizeWithDefault,
+                        ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
                 }
@@ -214,7 +219,12 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + 1);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, sizeWithDefault)
+                        ensureKeyboardSelectionInView(
+                            prev,
+                            reportedVirtualizationStartIndex,
+                            newIndex,
+                            sizeWithDefault,
+                        ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
                 }
@@ -229,7 +239,12 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     const newIndex = Math.min(filteredOptions.length - 1, currentFocusIndex + sizeWithDefault);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, sizeWithDefault)
+                        ensureKeyboardSelectionInView(
+                            prev,
+                            reportedVirtualizationStartIndex,
+                            newIndex,
+                            sizeWithDefault,
+                        ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
                 }
@@ -239,7 +254,12 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                     const newIndex = Math.max(0, currentFocusIndex - sizeWithDefault);
                     setCurrentFocusIndex(newIndex);
                     setVirtualizationStartIndex((prev) =>
-                        ensureKeyboardSelectionInView(prev, reportedVirtualizationStartIndex, newIndex, sizeWithDefault)
+                        ensureKeyboardSelectionInView(
+                            prev,
+                            reportedVirtualizationStartIndex,
+                            newIndex,
+                            sizeWithDefault,
+                        ),
                     );
                     makeKeyboardSelection(newIndex, modifiers);
                 }
@@ -279,7 +299,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
             selectionAnchor,
             selectedOptionValues,
             reportedVirtualizationStartIndex,
-        ]
+        ],
     );
 
     function handleOptionClick(e: React.MouseEvent<HTMLDivElement>, option: SelectOption<TValue>, index: number) {
@@ -327,13 +347,13 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
         }
 
         const newFilteredOptions = options.filter((option) =>
-            option.label.toLowerCase().includes(filterString.toLowerCase())
+            option.label.toLowerCase().includes(filterString.toLowerCase()),
         );
         setFilteredOptions(newFilteredOptions);
 
         if (currentlySelectedOption) {
             const firstSelectedOptionIndex = newFilteredOptions.findIndex(
-                (option) => option.value === currentlySelectedOption
+                (option) => option.value === currentlySelectedOption,
             );
             if (firstSelectedOptionIndex !== -1) {
                 newCurrentKeyboardFocusIndex = firstSelectedOptionIndex;
@@ -448,7 +468,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                                             "pointer-events-none": option.disabled,
                                             "text-gray-400": option.disabled,
                                             outline: index === currentFocusIndex && hasFocus,
-                                        }
+                                        },
                                     )}
                                     onClick={(e) => handleOptionClick(e, option, index)}
                                     style={{ height: 24 }}
@@ -473,5 +493,5 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
 }
 
 export const Select = React.forwardRef(SelectComponent) as <TValue = string>(
-    props: SelectProps<TValue> & { ref?: React.Ref<HTMLDivElement> }
+    props: SelectProps<TValue> & { ref?: React.Ref<HTMLDivElement> },
 ) => React.ReactElement;

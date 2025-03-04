@@ -8,7 +8,7 @@ function isPointInPolygon(
     point: number[],
     startOffset: number,
     vertices: Float32Array,
-    polygonIndices: Uint32Array | Uint16Array | Uint8Array
+    polygonIndices: Uint32Array | Uint16Array | Uint8Array,
 ): boolean {
     const numVertices = polygonIndices.length;
     const x = point[0];

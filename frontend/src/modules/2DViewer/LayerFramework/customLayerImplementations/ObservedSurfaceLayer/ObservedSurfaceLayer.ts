@@ -1,4 +1,4 @@
-import type { SurfaceDataPng_api} from "@api";
+import type { SurfaceDataPng_api } from "@api";
 import { getSurfaceDataOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
@@ -6,9 +6,9 @@ import type { LayerManager } from "@modules/_shared/LayerFramework/framework/Lay
 import type { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
-import type { FullSurfaceAddress} from "@modules/_shared/Surface";
+import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
-import type { SurfaceDataFloat_trans} from "@modules/_shared/Surface/queryDataTransforms";
+import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 import type { QueryClient } from "@tanstack/react-query";
@@ -30,7 +30,7 @@ export class ObservedSurfaceLayer
             this,
             layerManager,
             new ObservedSurfaceSettingsContext(layerManager),
-            LayerColoringType.COLORSCALE
+            LayerColoringType.COLORSCALE,
         );
     }
 
@@ -48,7 +48,7 @@ export class ObservedSurfaceLayer
 
     doSettingsChangesRequireDataRefetch(
         prevSettings: ObservedSurfaceSettings,
-        newSettings: ObservedSurfaceSettings
+        newSettings: ObservedSurfaceSettings,
     ): boolean {
         return !isEqual(prevSettings, newSettings);
     }

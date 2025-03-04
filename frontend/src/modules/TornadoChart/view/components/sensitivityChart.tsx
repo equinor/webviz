@@ -25,7 +25,7 @@ export type SensitivityChartProps = {
 
 const numFormat = (number: number): string => {
     return Intl.NumberFormat("en", { notation: "compact", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-        number
+        number,
     );
 };
 enum TraceGroup {
@@ -69,7 +69,7 @@ const computeLowLabel = (sensitivity: SensitivityResponse): string => {
     // Combine labels if they appear on the both side
     if (sensitivity.lowCaseReferenceDifference > 0 || sensitivity.highCaseReferenceDifference < 0) {
         return `${numFormat(sensitivity.lowCaseReferenceDifference)} <br> ${numFormat(
-            sensitivity.highCaseReferenceDifference
+            sensitivity.highCaseReferenceDifference,
         )}`;
     }
     return `${numFormat(sensitivity.lowCaseReferenceDifference)}`;
@@ -79,7 +79,7 @@ const computeHighLabel = (sensitivity: SensitivityResponse): string => {
     // Combine labels if they appear on the both side
     if (sensitivity.lowCaseReferenceDifference > 0 || sensitivity.highCaseReferenceDifference < 0) {
         return `${numFormat(sensitivity.lowCaseReferenceDifference)} <br> ${numFormat(
-            sensitivity.highCaseReferenceDifference
+            sensitivity.highCaseReferenceDifference,
         )}`;
     }
     return `${numFormat(sensitivity.highCaseReferenceDifference)}`;
@@ -109,7 +109,7 @@ const lowTrace = (
     sensitivityResponses: SensitivityResponse[],
     showLabels: boolean,
     selectedBar: SelectedBar | null,
-    sensitivitiesColorMap: SensitivityColorMap
+    sensitivitiesColorMap: SensitivityColorMap,
 ): Partial<SensitivityChartTraceData> => {
     const label = showLabels ? sensitivityResponses.map((s) => computeLowLabel(s)) : [];
 
@@ -118,7 +118,7 @@ const lowTrace = (
         y: sensitivityResponses.map((s) => s.sensitivityName),
         customdata: sensitivityResponses.map((s) => s.lowCaseName),
         base: sensitivityResponses.map((s) =>
-            calculateLowBase(s.lowCaseReferenceDifference, s.highCaseReferenceDifference)
+            calculateLowBase(s.lowCaseReferenceDifference, s.highCaseReferenceDifference),
         ),
         text: label,
         type: "bar",
@@ -134,7 +134,7 @@ const lowTrace = (
                 color: sensitivityResponses.map((s, idx) =>
                     selectedBar && idx === selectedBar.index && selectedBar.group === TraceGroup.LOW
                         ? "black"
-                        : "transparent"
+                        : "transparent",
                 ),
             },
             width: 1,
@@ -146,7 +146,7 @@ const highTrace = (
     sensitivityResponses: SensitivityResponse[],
     showLabels: boolean,
     selectedBar: SelectedBar | null,
-    sensitivitiesColorMap: SensitivityColorMap
+    sensitivitiesColorMap: SensitivityColorMap,
 ): Partial<SensitivityChartTraceData> => {
     // const label = showLabels
     //     ? sensitivityResponses.map(
@@ -163,7 +163,7 @@ const highTrace = (
         y: sensitivityResponses.map((s) => s.sensitivityName),
         customdata: sensitivityResponses.map((s) => s.highCaseName),
         base: sensitivityResponses.map((s) =>
-            calculateHighBase(s.lowCaseReferenceDifference, s.highCaseReferenceDifference)
+            calculateHighBase(s.lowCaseReferenceDifference, s.highCaseReferenceDifference),
         ),
         text: label,
         textposition: "auto",
@@ -179,7 +179,7 @@ const highTrace = (
                 color: sensitivityResponses.map((s, idx) =>
                     selectedBar && idx === selectedBar.index && selectedBar.group === TraceGroup.HIGH
                         ? "black"
-                        : "transparent"
+                        : "transparent",
                 ),
             },
             width: 1,
@@ -199,7 +199,7 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = (props) => {
         let filteredSensitivityResponses = sensitivityResponseDataset.sensitivityResponses;
         if (hideZeroY) {
             filteredSensitivityResponses = filteredSensitivityResponses.filter(
-                (s) => s.lowCaseReferenceDifference !== 0 || s.highCaseReferenceDifference !== 0
+                (s) => s.lowCaseReferenceDifference !== 0 || s.highCaseReferenceDifference !== 0,
             );
         }
 
@@ -212,8 +212,8 @@ export const SensitivityChart: React.FC<SensitivityChartProps> = (props) => {
         setXAxisRange(
             calculateXaxisRange(
                 filteredSensitivityResponses.map((s) => s.lowCaseReferenceDifference),
-                filteredSensitivityResponses.map((s) => s.highCaseReferenceDifference)
-            )
+                filteredSensitivityResponses.map((s) => s.highCaseReferenceDifference),
+            ),
         );
     }, [sensitivityResponseDataset, showLabels, hideZeroY, selectedBar, props.sensitivityColorMap]);
 

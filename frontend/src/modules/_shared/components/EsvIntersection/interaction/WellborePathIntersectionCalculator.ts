@@ -2,7 +2,7 @@ import type { Controller } from "@equinor/esv-intersection";
 
 import { BoundingBox2D } from "./BoundingBox2D";
 
-import type { IntersectedItem, IntersectionCalculator} from "../types/types";
+import type { IntersectedItem, IntersectionCalculator } from "../types/types";
 import { IntersectionItemShape } from "../types/types";
 
 export interface WellborePathIntersectedItem extends IntersectedItem {

@@ -42,7 +42,7 @@ export function SubsurfaceViewerWithCameraState(props: SubsurfaceViewerWithCamer
                 setCameraPosition(viewport);
             }
         },
-        [props.userCameraInteractionActive]
+        [props.userCameraInteractionActive],
     );
 
     return <SubsurfaceViewer {...props} cameraPosition={cameraPosition} getCameraPosition={handleCameraChange} />;

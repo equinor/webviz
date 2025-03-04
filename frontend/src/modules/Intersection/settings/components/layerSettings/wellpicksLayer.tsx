@@ -32,7 +32,7 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
         props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
-        newSettings
+        newSettings,
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent: fixupEnsembleIdent }));
@@ -43,7 +43,7 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
             props.layer.maybeUpdateSettings(newSettings);
             props.layer.maybeRefetchData();
         },
-        [newSettings, props.layer]
+        [newSettings, props.layer],
     );
 
     function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
@@ -71,13 +71,13 @@ export function WellpicksLayerSettingsComponent(props: WellpicksLayerSettingsCom
             ...Array.from(new Set(data.unitPicks.map((pick) => pick.name))).map((name) => ({
                 label: name,
                 value: name,
-            }))
+            })),
         );
         nonUnitPicksFilterOptions.push(
             ...Array.from(new Set(data.nonUnitPicks.map((pick) => pick.identifier))).map((identifier) => ({
                 label: identifier,
                 value: identifier,
-            }))
+            })),
         );
     }
 

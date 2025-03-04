@@ -3,9 +3,9 @@ import { v4 } from "uuid";
 
 import type { GroupDelegate } from "./GroupDelegate";
 
-import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import type { LayerManager} from "../framework/LayerManager/LayerManager";
+import type { LayerManager } from "../framework/LayerManager/LayerManager";
 import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import type { SerializedItem } from "../interfaces";
 

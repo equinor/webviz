@@ -232,7 +232,7 @@ describe("QueryDataTransform", () => {
                 mockTrajectoryWithExtraRows,
                 mockReferenceSystem,
                 new Set(),
-                true
+                true,
             )[1];
 
             expect(wellLog.data).toEqual([
@@ -314,7 +314,7 @@ describe("QueryDataTransform", () => {
             const sets = createWellLogSets(
                 [mockCurveData, otherCurve1, otherCurve2],
                 mockTrajectory,
-                mockReferenceSystem
+                mockReferenceSystem,
             );
 
             // Should be 3: 1 for the axis set, and one for each curve
@@ -342,7 +342,7 @@ describe("QueryDataTransform", () => {
                 [mockCurveData, otherCurve],
                 mockTrajectory,
                 mockReferenceSystem,
-                nonUniqueCurveNames
+                nonUniqueCurveNames,
             );
 
             const curve1 = sets[1].curves[2];

@@ -14,7 +14,7 @@ module.exports = {
             animation: {
                 "linear-indefinite": "linear-indefinite 3s cubic-bezier(1, 0.1, 0.1, 1) infinite",
             },
-        }
+        },
     },
     plugins: [],
 };

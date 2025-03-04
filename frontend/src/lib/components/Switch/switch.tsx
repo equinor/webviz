@@ -1,7 +1,7 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import type { UseSwitchParameters} from "@mui/base";
+import type { UseSwitchParameters } from "@mui/base";
 import { Switch as SwitchUnstyled, useSwitch } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
@@ -45,7 +45,7 @@ function SwitchComponent(props: SwitchProps, ref: React.ForwardedRef<HTMLDivElem
                             checked ? "bg-blue-500" : "bg-gray-400",
                             {
                                 "bg-blue-500": checked,
-                            }
+                            },
                         ),
                         ref: rootRef,
                     },
@@ -61,7 +61,7 @@ function SwitchComponent(props: SwitchProps, ref: React.ForwardedRef<HTMLDivElem
                             "p-0",
                             "opacity-0",
                             "z-1",
-                            "cursor-pointer"
+                            "cursor-pointer",
                         ),
                         ref: inputRef,
                     },
@@ -76,7 +76,7 @@ function SwitchComponent(props: SwitchProps, ref: React.ForwardedRef<HTMLDivElem
                             "bg-white",
                             "relative",
                             "transition-all",
-                            "z-2"
+                            "z-2",
                         ),
                         ref: thumbRef,
                     },

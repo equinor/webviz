@@ -29,7 +29,7 @@ export function ContinousTrackSettings(props: TrackSettingFragmentProps): React.
     const curveHeadersError = usePropagateApiErrorToStatusWriter(
         // ! Cast is safe, since MergedQueryResult includes `.error`
         curveHeadersQuery as UseQueryResult,
-        props.statusWriter
+        props.statusWriter,
     );
 
     const availableCurveHeaders = [

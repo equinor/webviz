@@ -49,7 +49,7 @@ function checkForEqualityWithoutAdornment(a: TableSelectOption[], b: TableSelect
         b.map((option) => ({
             ...option,
             values: option.values.map((value) => value.label),
-        }))
+        })),
     );
 }
 
@@ -95,7 +95,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                 });
             });
         },
-        [props.options, filters, props.filter]
+        [props.options, filters, props.filter],
     );
 
     if (!isEqual(prevValue, props.value)) {
@@ -148,7 +148,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                 onChange(values);
             }, props.debounceTimeMs);
         },
-        [onChange, props.debounceTimeMs]
+        [onChange, props.debounceTimeMs],
     );
 
     const toggleValue = React.useCallback(
@@ -182,7 +182,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
             setSelected(newSelected);
             handleOnChange(newSelected);
         },
-        [props.multiple, props.options, selected, keysPressed, lastShiftIndex, handleOnChange]
+        [props.multiple, props.options, selected, keysPressed, lastShiftIndex, handleOnChange],
     );
 
     React.useEffect(function handleMount() {
@@ -249,7 +249,7 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                 window.removeEventListener("keyup", handleKeyUp);
             };
         },
-        [currentIndex, selected, filteredOptions, props.size, hasFocus, startIndex, toggleValue]
+        [currentIndex, selected, filteredOptions, props.size, hasFocus, startIndex, toggleValue],
     );
 
     function handleFilterChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) {
@@ -333,12 +333,12 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                                         {
                                             "hover:bg-blue-100": !selected.includes(option.id),
                                             "bg-blue-600 text-white box-border hover:bg-blue-700": selected.includes(
-                                                option.id
+                                                option.id,
                                             ),
                                             "pointer-events-none": option.disabled,
                                             "text-gray-400": option.disabled,
                                             "bg-blue-300": option.disabled && index === currentIndex,
-                                        }
+                                        },
                                     )}
                                     onClick={() => {
                                         if (option.disabled) {

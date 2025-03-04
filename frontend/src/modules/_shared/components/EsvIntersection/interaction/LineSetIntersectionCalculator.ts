@@ -1,6 +1,6 @@
 import { LineIntersectionCalculator } from "./LineIntersectionCalculator";
 
-import type { IntersectedItem, IntersectionCalculator} from "../types/types";
+import type { IntersectedItem, IntersectionCalculator } from "../types/types";
 import { IntersectionItemShape } from "../types/types";
 import { calcDistance } from "../utils/geometry";
 

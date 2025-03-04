@@ -50,14 +50,14 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
 
             setTrackConfigs([...trackConfigs, newConfig]);
         },
-        [setTrackConfigs, trackConfigs]
+        [setTrackConfigs, trackConfigs],
     );
 
     const handleDeleteTrack = React.useCallback(
         function handleDeleteTrack(track: TemplateTrackConfig) {
             setTrackConfigs(trackConfigs.filter((configs) => configs._key !== track._key));
         },
-        [setTrackConfigs, trackConfigs]
+        [setTrackConfigs, trackConfigs],
     );
 
     const handleEditTrack = React.useCallback(
@@ -66,7 +66,7 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
 
             setTrackConfigs(newConfigs);
         },
-        [setTrackConfigs, trackConfigs]
+        [setTrackConfigs, trackConfigs],
     );
 
     const handleTrackMove = React.useCallback(
@@ -74,14 +74,14 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
             movedItemId: string,
             originId: string | null,
             destinationId: string | null,
-            newPosition: number
+            newPosition: number,
         ) {
             const currentPosition = trackConfigs.findIndex((cfg) => cfg._key === movedItemId);
             const newTrackCfg = arrayMove(trackConfigs, currentPosition, newPosition);
 
             setTrackConfigs(newTrackCfg);
         },
-        [setTrackConfigs, trackConfigs]
+        [setTrackConfigs, trackConfigs],
     );
 
     const encodedConfigJsonUrl = React.useMemo(() => configToJsonDataBlob(trackConfigs), [trackConfigs]);
@@ -105,7 +105,7 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
                 window.alert("Invalid JSON content\n\n" + errorMsg);
             }
         },
-        [setTrackConfigs]
+        [setTrackConfigs],
     );
 
     return (

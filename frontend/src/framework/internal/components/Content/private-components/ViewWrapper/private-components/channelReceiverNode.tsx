@@ -1,14 +1,14 @@
 import React from "react";
 
 import type { KeyKind } from "@framework/DataChannelTypes";
-import type { GuiEventPayloads} from "@framework/GuiMessageBroker";
+import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import type { Workbench } from "@framework/Workbench";
 import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
 import { IconButton } from "@lib/components/IconButton";
 import { rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import type { Vec2} from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { vec2FromPointerEvent } from "@lib/utils/vec2";
 import { Edit, Remove } from "@mui/icons-material";
 
@@ -37,7 +37,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
 
     const [editDataChannelConnections, setEditDataChannelConnections] = useGuiState(
         guiMessageBroker,
-        GuiState.EditDataChannelConnections
+        GuiState.EditDataChannelConnections,
     );
 
     React.useEffect(() => {
@@ -131,11 +131,11 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
 
         const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.DataChannelOriginPointerDown,
-            handleDataChannelOriginPointerDown
+            handleDataChannelOriginPointerDown,
         );
         const removeDataChannelDoneHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.HideDataChannelConnectionsRequest,
-            handleDataChannelDone
+            handleDataChannelDone,
         );
 
         document.addEventListener("pointerup", handlePointerUp, true);
@@ -198,7 +198,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
         props.onChannelConnect(
             props.idString,
             channel.getManager().getModuleInstanceId(),
-            vec2FromPointerEvent(e.nativeEvent)
+            vec2FromPointerEvent(e.nativeEvent),
         );
     }
 
@@ -231,7 +231,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
                     "bg-slate-100": !hoveredAndHoverable,
                     "text-white": hoveredAndHoverable,
                     "shadow-md": hasConnection,
-                }
+                },
             )}
             onPointerEnter={handlePointerEnter}
             onPointerLeave={handlePointerLeave}
@@ -242,7 +242,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
                     "flex gap-2 bg-slate-200 w-full rounded-b items-center justify-center p-1",
                     {
                         hidden: !editDataChannelConnections,
-                    }
+                    },
                 )}
             >
                 <IconButton

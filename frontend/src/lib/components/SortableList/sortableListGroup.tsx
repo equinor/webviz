@@ -92,7 +92,7 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
                     createPortal(
                         <div
                             className={resolveClassNames(
-                                "flex h-8 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50 opacity-75"
+                                "flex h-8 bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50 opacity-75",
                             )}
                             style={{
                                 left: dragPosition.x,
@@ -106,14 +106,14 @@ export function SortableListGroup(props: SortableListGroupProps): React.ReactNod
                                 hovered={isHeaderHovered}
                                 {...props}
                             />
-                        </div>
+                        </div>,
                     )}
                 <div
                     className={resolveClassNames(
                         "sortable-list-group-content pl-1 bg-white shadow-inner border-b border-b-gray-300",
                         {
                             hidden: !isExpanded,
-                        }
+                        },
                     )}
                     style={props.contentStyle}
                 >
@@ -145,7 +145,7 @@ function Header(props: HeaderProps): React.ReactNode {
                 {
                     "!bg-blue-300": props.hovered,
                     "bg-slate-300": !props.hovered,
-                }
+                },
             )}
             style={props.headerStyle}
         >

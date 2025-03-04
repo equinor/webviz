@@ -6,7 +6,7 @@ import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
-import type { Intersection} from "@framework/types/intersection";
+import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";

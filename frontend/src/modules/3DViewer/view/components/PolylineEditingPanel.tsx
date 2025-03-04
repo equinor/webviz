@@ -26,7 +26,7 @@ export type PolylineEditingPanelProps = {
 export function PolylineEditingPanel(props: PolylineEditingPanelProps): React.ReactNode {
     const [pointEditingFinished, setPointEditingFinished] = React.useState<boolean>(false);
     const [polylineName, setPolylineName] = React.useState<string>(
-        props.currentlyEditedPolylineName ?? makeUniquePolylineName(props.intersectionPolylines)
+        props.currentlyEditedPolylineName ?? makeUniquePolylineName(props.intersectionPolylines),
     );
 
     function handlePolylinePointSelectionChange(values: string[]): void {

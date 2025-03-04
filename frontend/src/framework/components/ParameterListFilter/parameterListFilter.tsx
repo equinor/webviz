@@ -1,8 +1,8 @@
 import React from "react";
 
 import type { Parameter } from "@framework/EnsembleParameters";
-import type { SmartNodeSelectorSelection , TreeDataNode } from "@lib/components/SmartNodeSelector";
-import { SmartNodeSelector  } from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isEqual } from "lodash";
@@ -33,7 +33,7 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
 
     const smartNodeSelectorId = React.useId();
     const [selectedTags, setSelectedTags] = React.useState<string[]>(
-        props.initialFilters ?? [ParameterParentNodeNames.IS_NONCONSTANT]
+        props.initialFilters ?? [ParameterParentNodeNames.IS_NONCONSTANT],
     );
     const [selectedNodes, setSelectedNodes] = React.useState<string[]>([]);
     const [numberOfMatchingParameters, setNumberOfMatchingParameters] = React.useState<number>(0);
@@ -63,14 +63,14 @@ export const ParameterListFilter: React.FC<ParameterListFilterProps> = (props: P
             const filteredParameters = getParametersMatchingSelectedNodes(
                 parameters,
                 selectedNodes,
-                smartNodeSelectorDelimiter
+                smartNodeSelectorDelimiter,
             );
             setNumberOfMatchingParameters(filteredParameters.length);
             if (onChange) {
                 onChange(filteredParameters);
             }
         },
-        [selectedNodes, parameters, onChange, smartNodeSelectorDelimiter]
+        [selectedNodes, parameters, onChange, smartNodeSelectorDelimiter],
     );
 
     function handleSmartNodeSelectorChange(selection: SmartNodeSelectorSelection) {

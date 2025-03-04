@@ -2,7 +2,7 @@ import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
 import { GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
-import type { LayoutElement} from "@framework/Workbench";
+import type { LayoutElement } from "@framework/Workbench";
 import { Workbench } from "@framework/Workbench";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
@@ -95,7 +95,7 @@ function App() {
                 workbench.resetModuleInstanceNumbers();
             };
         },
-        [authState, isMounted, queryClient, workbench]
+        [authState, isMounted, queryClient, workbench],
     );
 
     function makeStateMessages() {
@@ -107,7 +107,7 @@ function App() {
                         {
                             "opacity-0": initAppState !== InitAppState.CheckingIfUserIsSignedIn,
                             "opacity-100": initAppState === InitAppState.CheckingIfUserIsSignedIn,
-                        }
+                        },
                     )}
                 >
                     Checking if user is signed in...
@@ -118,7 +118,7 @@ function App() {
                         {
                             "opacity-0": initAppState !== InitAppState.LoadingEnsembles,
                             "opacity-100": initAppState === InitAppState.LoadingEnsembles,
-                        }
+                        },
                     )}
                 >
                     Restoring working session...
@@ -145,7 +145,7 @@ function App() {
                             "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8 z-50",
                             {
                                 hidden: !isInitializingApp,
-                            }
+                            },
                         )}
                     >
                         <WebvizSpinner size={100} />

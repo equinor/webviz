@@ -34,12 +34,12 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                 `<!-- ⚠️ DO NOT INCLUDE DATA/SCREENSHOTS THAT CAN'T BE PUBLICLY AVAILABLE.-->\n\n\
 **How to reproduce**\nPlease describe what you were doing when the error occurred.\n\n\
 **Screenshots**\nIf applicable, add screenshots to help explain your problem.\n\n\
-**Error stack**\n\`\`\`\n${errorStack}\n\`\`\``
+**Error stack**\n\`\`\`\n${errorStack}\n\`\`\``,
             );
             const label = encodeURIComponent("user reported error");
             window.open(
                 `https://github.com/equinor/webviz/issues/new?title=${title}&body=${body}&labels=${label}`,
-                "_blank"
+                "_blank",
             );
         }
 
@@ -76,7 +76,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                                         "h-2 m-2 whitespace-nowrap text-sm transition-opacity text-green-800",
                                         {
                                             "opacity-0": !this.state.copiedToClipboard,
-                                        }
+                                        },
                                     )}
                                 >
                                     Copied to clipboard
@@ -88,7 +88,7 @@ export class GlobalErrorBoundary extends React.Component<Props, State> {
                                 onClick={() =>
                                     reportIssue(
                                         `${this.state.error?.name ?? ""}: ${this.state.error?.message ?? ""}`,
-                                        this.state.error?.stack ?? ""
+                                        this.state.error?.stack ?? "",
                                     )
                                 }
                                 startIcon={<BugReport fontSize="small" />}

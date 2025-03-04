@@ -40,7 +40,7 @@ export const IconButton = React.forwardRef(
                                     "w-4 h-4": size === "small",
                                     "w-6 h-6": size === "medium" || !size,
                                     "w-12 h-12": size === "large",
-                                }
+                                },
                             ),
                         },
                     }}
@@ -49,7 +49,7 @@ export const IconButton = React.forwardRef(
                 </ButtonUnstyled>
             </BaseComponent>
         );
-    }
+    },
 );
 
 IconButton.displayName = "IconButton";

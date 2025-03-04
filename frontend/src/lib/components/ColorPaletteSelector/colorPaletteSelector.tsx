@@ -20,7 +20,7 @@ export enum ColorPaletteSelectorType {
 function makeColorPalettePreview(
     colorPalette: ColorPalette,
     type: ColorPaletteSelectorType,
-    steps?: number
+    steps?: number,
 ): React.ReactNode {
     switch (type) {
         case ColorPaletteSelectorType.Continuous:
@@ -78,7 +78,7 @@ export type ColorPaletteSelectorProps = {
 export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props) => {
     const [open, setOpen] = React.useState<boolean>(false);
     const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(
-        props.colorPalettes.find((el) => el.getId() === props.selectedColorPaletteId) || props.colorPalettes[0]
+        props.colorPalettes.find((el) => el.getId() === props.selectedColorPaletteId) || props.colorPalettes[0],
     );
 
     const ref = React.useRef<HTMLDivElement>(null);
@@ -161,7 +161,7 @@ export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props)
                         >
                             {renderColorPalettes()}
                         </div>
-                    </>
+                    </>,
                 )}
         </div>
     );

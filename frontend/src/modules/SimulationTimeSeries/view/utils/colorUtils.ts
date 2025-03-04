@@ -9,7 +9,7 @@ export function scaleHexColorLightness(
     hexColor: string,
     scale: number,
     minScale = 0.1,
-    maxScale = 1.5
+    maxScale = 1.5,
 ): string | undefined {
     // Convert min and max to scalar 0-1
     const min = Math.max(0.0, minScale);

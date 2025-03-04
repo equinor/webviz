@@ -167,7 +167,7 @@ export const selectedGridModelParameterNameAtom = atom((get) => {
         !gridModelInfos.data
             .find((gridModelInfo) => gridModelInfo.grid_name === selectedGridModelName)
             ?.property_info_arr.some(
-                (propertyInfo) => propertyInfo.property_name === userSelectedGridModelParameterName
+                (propertyInfo) => propertyInfo.property_name === userSelectedGridModelParameterName,
             )
     ) {
         return (
@@ -200,14 +200,14 @@ export const selectedGridModelParameterDateOrIntervalAtom = atom((get) => {
             ?.property_info_arr.some(
                 (propertyInfo) =>
                     propertyInfo.property_name === selectedGridModelParameterName &&
-                    propertyInfo.iso_date_or_interval === userSelectedGridModelParameterDateOrInterval
+                    propertyInfo.iso_date_or_interval === userSelectedGridModelParameterDateOrInterval,
             )
     ) {
         return (
             gridModelInfos.data
                 .find((gridModelInfo) => gridModelInfo.grid_name === selectedGridModelName)
                 ?.property_info_arr.find(
-                    (propertyInfo) => propertyInfo.property_name === selectedGridModelParameterName
+                    (propertyInfo) => propertyInfo.property_name === selectedGridModelParameterName,
                 )?.iso_date_or_interval || null
         );
     }
@@ -246,13 +246,13 @@ export const selectedGridCellIndexRangesAtom = atom<GridCellIndexRanges>((get) =
 
     return assertGridDimensionRangesContainedInGridDimensions(
         userSelectedGridCellIndexRanges as GridCellIndexRanges,
-        gridModelDimensions as Grid3dDimensions_api
+        gridModelDimensions as Grid3dDimensions_api,
     );
 });
 
 function assertGridDimensionRangesContainedInGridDimensions(
     cellIndexRanges: GridCellIndexRanges,
-    other: Grid3dDimensions_api
+    other: Grid3dDimensions_api,
 ): GridCellIndexRanges {
     const assertedGridDimensionRanges: GridCellIndexRanges = {
         ...cellIndexRanges,

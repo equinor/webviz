@@ -1,20 +1,12 @@
-import type {
-    EnsembleDetails_api,
-    EnsembleParameter_api,
-    EnsembleSensitivity_api} from "@api";
-import {
-    SensitivityType_api,
-    getEnsembleDetailsOptions,
-    getParametersOptions,
-    getSensitivitiesOptions,
-} from "@api";
+import type { EnsembleDetails_api, EnsembleParameter_api, EnsembleSensitivity_api } from "@api";
+import { SensitivityType_api, getEnsembleDetailsOptions, getParametersOptions, getSensitivitiesOptions } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { ContinuousParameter, DiscreteParameter, Parameter} from "../EnsembleParameters";
+import type { ContinuousParameter, DiscreteParameter, Parameter } from "../EnsembleParameters";
 import { ParameterType } from "../EnsembleParameters";
-import type { Sensitivity, SensitivityCase} from "../EnsembleSensitivities";
+import type { Sensitivity, SensitivityCase } from "../EnsembleSensitivities";
 import { SensitivityType } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 import { RegularEnsemble } from "../RegularEnsemble";
@@ -32,7 +24,7 @@ type EnsembleIdentStringToEnsembleApiDataMap = {
 export async function loadMetadataFromBackendAndCreateEnsembleSet(
     queryClient: QueryClient,
     userEnsembleSettings: UserEnsembleSetting[],
-    userDeltaEnsembleSettings: UserDeltaEnsembleSetting[]
+    userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
 ): Promise<EnsembleSet> {
     // Get ensemble idents to load
     const ensembleIdentsToLoad: RegularEnsembleIdent[] = userEnsembleSettings.map((setting) => setting.ensembleIdent);
@@ -71,8 +63,8 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                 parameterArray,
                 sensitivityArray,
                 ensembleSetting.color,
-                ensembleSetting.customName
-            )
+                ensembleSetting.customName,
+            ),
         );
     }
 
@@ -91,7 +83,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
         if (!comparisonEnsembleApiData || !referenceEnsembleApiData) {
             console.error(
                 "Error fetching delta ensemble data, dropping delta ensemble:",
-                deltaEnsembleSetting.customName ?? `${comparisonEnsembleIdentString} - ${referenceEnsembleIdentString}`
+                deltaEnsembleSetting.customName ?? `${comparisonEnsembleIdentString} - ${referenceEnsembleIdentString}`,
             );
             continue;
         }
@@ -105,10 +97,10 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 
         // Look for existing regular ensembles
         const existingComparisonEnsemble = outEnsembleArray.find((elm) =>
-            elm.getIdent().equals(deltaEnsembleSetting.comparisonEnsembleIdent)
+            elm.getIdent().equals(deltaEnsembleSetting.comparisonEnsembleIdent),
         );
         const existingReferenceEnsemble = outEnsembleArray.find((elm) =>
-            elm.getIdent().equals(deltaEnsembleSetting.referenceEnsembleIdent)
+            elm.getIdent().equals(deltaEnsembleSetting.referenceEnsembleIdent),
         );
 
         // Create delta ensemble
@@ -124,7 +116,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   emptyParameterArray,
                   nullSensitivityArray,
                   emptyColor,
-                  comparisonEnsembleCustomName
+                  comparisonEnsembleCustomName,
               );
 
         const referenceEnsemble = existingReferenceEnsemble
@@ -139,7 +131,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                   emptyParameterArray,
                   nullSensitivityArray,
                   emptyColor,
-                  referenceEnsembleCustomName
+                  referenceEnsembleCustomName,
               );
 
         outDeltaEnsembleArray.push(
@@ -147,8 +139,8 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
                 comparisonEnsemble,
                 referenceEnsemble,
                 deltaEnsembleSetting.color,
-                deltaEnsembleSetting.customName
-            )
+                deltaEnsembleSetting.customName,
+            ),
         );
     }
 
@@ -157,7 +149,7 @@ export async function loadMetadataFromBackendAndCreateEnsembleSet(
 
 async function loadEnsembleApiDataMapFromBackend(
     queryClient: QueryClient,
-    ensembleIdents: RegularEnsembleIdent[]
+    ensembleIdents: RegularEnsembleIdent[],
 ): Promise<EnsembleIdentStringToEnsembleApiDataMap> {
     console.debug("loadEnsembleIdentStringToApiDataMapFromBackend", ensembleIdents);
 

@@ -17,7 +17,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
     const [, setRightSettingsPanelWidth] = useGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const [numberOfUnsavedRealizationFilters] = useGuiState(
         guiMessageBroker,
-        GuiState.NumberOfUnsavedRealizationFilters
+        GuiState.NumberOfUnsavedRealizationFilters,
     );
 
     function handleOnClose() {

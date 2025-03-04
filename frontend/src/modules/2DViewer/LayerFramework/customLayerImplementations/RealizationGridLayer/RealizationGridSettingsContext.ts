@@ -161,8 +161,8 @@ export class RealizationGridSettingsContext implements SettingsContext<Realizati
                     new Set(
                         gridAttributeArr
                             .filter((attr) => attr.property_name === gridAttribute)
-                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME")
-                    )
+                            .map((gridAttribute) => gridAttribute.iso_date_or_interval ?? "NO_TIME"),
+                    ),
                 ),
             ];
 

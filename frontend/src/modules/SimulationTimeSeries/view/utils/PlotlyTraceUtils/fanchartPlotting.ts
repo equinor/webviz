@@ -84,25 +84,25 @@ function validateFanchartData(data: FanchartData): void {
 
     if (data.minimumMaximum !== undefined && samplesLength !== data.minimumMaximum.minimum.length) {
         throw new Error(
-            "Invalid fanchart minimum value data length. data.samples.length !== data.minimumMaximum.minimum.length"
+            "Invalid fanchart minimum value data length. data.samples.length !== data.minimumMaximum.minimum.length",
         );
     }
 
     if (data.minimumMaximum !== undefined && samplesLength !== data.minimumMaximum.maximum.length) {
         throw new Error(
-            "Invalid fanchart maximum value data length. data.samples.length !== data.minimumMaximum.maximum.length"
+            "Invalid fanchart maximum value data length. data.samples.length !== data.minimumMaximum.maximum.length",
         );
     }
 
     if (data.lowHigh !== undefined && samplesLength !== data.lowHigh.lowData.length) {
         throw new Error(
-            "Invalid fanchart low percentile value data length. data.samples.length !== data.lowHigh.lowData.length"
+            "Invalid fanchart low percentile value data length. data.samples.length !== data.lowHigh.lowData.length",
         );
     }
 
     if (data.lowHigh !== undefined && samplesLength !== data.lowHigh.highData.length) {
         throw new Error(
-            "Invalid fanchart high percentile value data length. data.samples.length !== data.lowHigh.highData.length"
+            "Invalid fanchart high percentile value data length. data.samples.length !== data.lowHigh.highData.length",
         );
     }
 }

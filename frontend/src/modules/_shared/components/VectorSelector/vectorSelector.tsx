@@ -1,16 +1,9 @@
 import type React from "react";
 
-import type { VectorDefinitionsType} from "@assets/vectorDefinitions";
+import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
 import { vectorDefinitions } from "@assets/vectorDefinitions";
-import type {
-    SmartNodeSelectorProps,
-    TreeDataNode} from "@lib/components/SmartNodeSelector";
-import {
-    Direction,
-    KeyEventType,
-    SmartNodeSelectorComponent,
-    TreeData
-} from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorProps, TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { Direction, KeyEventType, SmartNodeSelectorComponent, TreeData } from "@lib/components/SmartNodeSelector";
 
 import aquifer from "./private-assets/aquifer.svg";
 import block from "./private-assets/block.svg";
@@ -127,7 +120,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
                 },
                 () => {
                     this.updateSelectedTagsAndNodes();
-                }
+                },
             );
         }
 
@@ -171,7 +164,7 @@ export class VectorSelectorComponent extends SmartNodeSelectorComponent {
     private modifyTreeData(
         treeData: TreeDataNode[],
         numMetaNodes: number,
-        vectorDefinitions: VectorDefinitionsType
+        vectorDefinitions: VectorDefinitionsType,
     ): TreeDataNode[] {
         const typeIcons: Record<string, string> = {
             aquifer: aquifer,
@@ -305,7 +298,7 @@ export function addVectorToVectorSelectorData(
     vector: string,
     delimiter = ":",
     description?: string,
-    descriptionAtLastNode = false
+    descriptionAtLastNode = false,
 ): void {
     const nodes = vector.split(delimiter);
     let currentChildList = vectorSelectorData;

@@ -14,7 +14,7 @@ import React from "react";
 
 import { WorkbenchSettingsEvents } from "@framework/internal/PrivateWorkbenchSettings";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
-import type { ColorScaleOptions} from "@lib/utils/ColorScale";
+import type { ColorScaleOptions } from "@lib/utils/ColorScale";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 
@@ -89,7 +89,7 @@ export class WorkbenchSettings {
 
     useColorSet(): ColorSet {
         const [colorSet, setColorSet] = React.useState<ColorSet>(
-            new ColorSet(this.getSelectedColorPalette(ColorPaletteType.Categorical))
+            new ColorSet(this.getSelectedColorPalette(ColorPaletteType.Categorical)),
         );
 
         React.useEffect(() => {
@@ -100,7 +100,7 @@ export class WorkbenchSettings {
 
             const unsubscribeFunc = this.subscribe(
                 WorkbenchSettingsEvents.ColorPalettesChanged,
-                handleColorPalettesChanged
+                handleColorPalettesChanged,
             );
 
             return () => {
@@ -117,7 +117,7 @@ export class WorkbenchSettings {
             colorPalette: this.getSelectedColorPalette(
                 options.gradientType === ColorScaleGradientType.Sequential
                     ? ColorPaletteType.ContinuousSequential
-                    : ColorPaletteType.ContinuousDiverging
+                    : ColorPaletteType.ContinuousDiverging,
             ),
             gradientType: options.gradientType,
             steps: this._steps[
@@ -148,7 +148,7 @@ export class WorkbenchSettings {
                     colorPalette: this.getSelectedColorPalette(
                         options.gradientType === ColorScaleGradientType.Sequential
                             ? ColorPaletteType.ContinuousSequential
-                            : ColorPaletteType.ContinuousDiverging
+                            : ColorPaletteType.ContinuousDiverging,
                     ),
                 });
                 setColorScale(newColorScale);
@@ -156,7 +156,7 @@ export class WorkbenchSettings {
 
             const unsubscribeFunc = this.subscribe(
                 WorkbenchSettingsEvents.ColorPalettesChanged,
-                handleColorPalettesChanged
+                handleColorPalettesChanged,
             );
 
             handleColorPalettesChanged();
@@ -175,7 +175,7 @@ export class WorkbenchSettings {
             colorPalette: this.getSelectedColorPalette(
                 options.gradientType === ColorScaleGradientType.Sequential
                     ? ColorPaletteType.ContinuousSequential
-                    : ColorPaletteType.ContinuousDiverging
+                    : ColorPaletteType.ContinuousDiverging,
             ),
             gradientType: options.gradientType,
             steps: this._steps[
@@ -201,7 +201,7 @@ export class WorkbenchSettings {
                     colorPalette: this.getSelectedColorPalette(
                         options.gradientType === ColorScaleGradientType.Sequential
                             ? ColorPaletteType.ContinuousSequential
-                            : ColorPaletteType.ContinuousDiverging
+                            : ColorPaletteType.ContinuousDiverging,
                     ),
                 });
                 setColorScale(newColorScale);
@@ -209,7 +209,7 @@ export class WorkbenchSettings {
 
             const unsubscribeFunc = this.subscribe(
                 WorkbenchSettingsEvents.ColorPalettesChanged,
-                handleColorPalettesChanged
+                handleColorPalettesChanged,
             );
 
             handleColorPalettesChanged();

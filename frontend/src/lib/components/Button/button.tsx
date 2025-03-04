@@ -27,8 +27,8 @@ function ButtonComponent(props: ButtonProps, ref: React.ForwardedRef<HTMLDivElem
         ...(props.size === "medium"
             ? ["px-2", "py-1"]
             : props.size === "small"
-            ? ["px-1", "py-0.5"]
-            : ["px-4", "py-2"]),
+              ? ["px-1", "py-0.5"]
+              : ["px-4", "py-2"]),
         "font-medium",
         "rounded-md",
     ];

@@ -1,4 +1,4 @@
-import type { WellboreTrajectory_api} from "@api";
+import type { WellboreTrajectory_api } from "@api";
 import { getWellTrajectoriesOptions } from "@api";
 
 import { atomWithQuery } from "jotai-tanstack-query";

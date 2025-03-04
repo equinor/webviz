@@ -7,7 +7,7 @@ import { ParameterDistributionPlotType } from "@modules/ParameterDistributionMat
 import { atom } from "jotai";
 
 export const selectedVisualizationTypeAtom = atom<ParameterDistributionPlotType>(
-    ParameterDistributionPlotType.DISTRIBUTION_PLOT
+    ParameterDistributionPlotType.DISTRIBUTION_PLOT,
 );
 export const showIndividualRealizationValuesAtom = atom<boolean>(false);
 export const showPercentilesAndMeanLinesAtom = atom<boolean>(false);

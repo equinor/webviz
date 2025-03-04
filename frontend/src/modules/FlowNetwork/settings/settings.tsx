@@ -133,7 +133,7 @@ export function Settings({ workbenchSession, settingsContext }: ModuleSettingsPr
 
             return availableDateTimes[value];
         },
-        [availableDateTimes]
+        [availableDateTimes],
     );
 
     const selectedDateTimeIndex = selectedDateTime ? availableDateTimes.indexOf(selectedDateTime) : -1;

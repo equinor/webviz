@@ -9,7 +9,7 @@ export type HoldPressedIntervalCallbackButtonProps = Omit<ButtonProps, "ref"> & 
 
 function HoldPressedIntervalCallbackButtonComponent(
     props: HoldPressedIntervalCallbackButtonProps,
-    ref: React.ForwardedRef<HTMLDivElement>
+    ref: React.ForwardedRef<HTMLDivElement>,
 ): React.ReactNode {
     const { onHoldPressedIntervalCallback, ...other } = props;
 

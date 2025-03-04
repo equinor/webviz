@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { GuiMessageBroker} from "@framework/GuiMessageBroker";
+import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
 import { isDevMode } from "@lib/utils/devMode";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
@@ -32,7 +32,7 @@ export const ToggleDevToolsButton: React.FC<ToggleDevToolsButtonProps> = (props)
                 {
                     "bg-green-700 hover: hover:bg-green-600": devToolsVisible,
                     "bg-gray-800 hover:bg-gray-700": !devToolsVisible,
-                }
+                },
             )}
             title={devToolsVisible ? "Hide dev tools" : "Show dev tools"}
             onClick={() => {

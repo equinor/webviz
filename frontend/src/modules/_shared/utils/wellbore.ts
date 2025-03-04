@@ -23,7 +23,7 @@ export type SimplifiedWellboreTrajectoryInXyPlaneResult = {
 export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
     wellboreTrajectory: number[][],
     extensionLength: number = 0,
-    epsilon: number = 0.1
+    epsilon: number = 0.1,
 ): SimplifiedWellboreTrajectoryInXyPlaneResult {
     const simplifiedTrajectoryXy: number[][] = [];
     const actualSectionLengths: number[] = [];
@@ -44,7 +44,7 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
         for (let i = lastWellboreTrajectoryIndex + 1; i < wellboreTrajectory.length; i++) {
             sectionLength += point2Distance(
                 vec2FromArray(wellboreTrajectory[i]),
-                vec2FromArray(wellboreTrajectory[i - 1])
+                vec2FromArray(wellboreTrajectory[i - 1]),
             );
 
             if (wellboreTrajectory[i][0] === point[0] && wellboreTrajectory[i][1] === point[1]) {
@@ -86,10 +86,13 @@ export function calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
         simplifiedTrajectoryXy.push(extendedLastPoint);
 
         actualSectionLengths.unshift(
-            point2Distance(vec2FromArray(extendedFirstPoint), vec2FromArray(simplifiedCurve[0]))
+            point2Distance(vec2FromArray(extendedFirstPoint), vec2FromArray(simplifiedCurve[0])),
         );
         actualSectionLengths.push(
-            point2Distance(vec2FromArray(extendedLastPoint), vec2FromArray(simplifiedCurve[simplifiedCurve.length - 1]))
+            point2Distance(
+                vec2FromArray(extendedLastPoint),
+                vec2FromArray(simplifiedCurve[simplifiedCurve.length - 1]),
+            ),
         );
     }
 
@@ -172,7 +175,7 @@ export type AdjustedPolylineIntersection = Omit<PolylineIntersection_trans, "fen
 
 export function transformPolylineIntersectionResult(
     polylineIntersection: PolylineIntersection_trans,
-    actualSectionLengths: number[]
+    actualSectionLengths: number[],
 ): AdjustedPolylineIntersection {
     const fenceMeshSections: AdjustedFenceMeshSection[] = [];
 
@@ -189,7 +192,7 @@ export function transformPolylineIntersectionResult(
             {
                 x: section.end_utm_x,
                 y: section.end_utm_y,
-            }
+            },
         );
 
         const scale = actualSectionLength / simplifiedSectionLength;

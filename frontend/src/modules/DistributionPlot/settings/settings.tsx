@@ -77,7 +77,7 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                             valueLabelDisplay="auto"
                         />
                     </Label>
-                </CollapsibleGroup>
+                </CollapsibleGroup>,
             );
         }
 
@@ -100,7 +100,7 @@ export function Settings({ initialSettings }: ModuleSettingsProps<Interfaces>) {
                             value={orientation}
                         />
                     </Label>
-                </CollapsibleGroup>
+                </CollapsibleGroup>,
             );
         }
 

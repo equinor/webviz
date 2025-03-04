@@ -1,6 +1,6 @@
 import { BoundingBox2D } from "./BoundingBox2D";
 
-import type { IntersectedItem, IntersectionCalculator} from "../types/types";
+import type { IntersectedItem, IntersectionCalculator } from "../types/types";
 import { IntersectionItemShape } from "../types/types";
 
 class SubLine {
@@ -148,7 +148,7 @@ export class LineIntersectionCalculator implements IntersectionCalculator {
     private findLineSegment(
         point: number[],
         startIndex: number,
-        endIndex: number
+        endIndex: number,
     ): {
         p1: number[];
         p2: number[];
@@ -257,7 +257,7 @@ export class LineIntersectionCalculator implements IntersectionCalculator {
                 const result = this.interpolate(
                     point,
                     intersectedSubline.getStartIndex(),
-                    intersectedSubline.getEndIndex()
+                    intersectedSubline.getEndIndex(),
                 );
                 return {
                     point: result,

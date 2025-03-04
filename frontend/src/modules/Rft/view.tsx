@@ -41,7 +41,7 @@ export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
         content = <div className="w-full h-full flex justify-center items-center">Could not load RFT data</div>;
     } else {
         const filteredRftData = rftDataQuery.data.filter((realizationData) =>
-            realizationNums?.includes(realizationData.realization)
+            realizationNums?.includes(realizationData.realization),
         );
         const [minValue, maxValue] = getResponseValueRange(filteredRftData);
         const plotData: Partial<PlotData>[] = [];

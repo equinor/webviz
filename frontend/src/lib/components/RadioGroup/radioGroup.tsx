@@ -5,7 +5,7 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { v4 } from "uuid";
 
 import type { BaseComponentProps } from "../BaseComponent";
-import { BaseComponent  } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 
 type RadioProps<T extends string | number> = {
     name: string;
@@ -29,7 +29,7 @@ function Radio<T extends string | number>(props: RadioProps<T>): JSX.Element {
                         "flex",
                         "items-center",
                         "justify-center",
-                        props.checked ? "border-blue-500" : "border-gray-400 group-hover:border-blue-500"
+                        props.checked ? "border-blue-500" : "border-gray-400 group-hover:border-blue-500",
                     )}
                 >
                     <span
@@ -39,7 +39,7 @@ function Radio<T extends string | number>(props: RadioProps<T>): JSX.Element {
                             props.checked ? "h-2" : "h-0",
                             "bg-blue-500",
                             "block",
-                            "transition-all"
+                            "transition-all",
                         )}
                     />
                     <input
@@ -74,7 +74,7 @@ export type RadioGroupProps<T extends string | number> = {
 
 function RadioGroupComponent<T extends string | number>(
     props: RadioGroupProps<T>,
-    ref: React.ForwardedRef<HTMLDivElement>
+    ref: React.ForwardedRef<HTMLDivElement>,
 ) {
     const name = React.useRef<string>(props.name || v4());
     return (
@@ -102,5 +102,5 @@ function RadioGroupComponent<T extends string | number>(
 }
 
 export const RadioGroup = React.forwardRef(RadioGroupComponent) as <TValue extends string | number>(
-    props: RadioGroupProps<TValue> & { ref?: React.Ref<HTMLDivElement> }
+    props: RadioGroupProps<TValue> & { ref?: React.Ref<HTMLDivElement> },
 ) => React.ReactElement;

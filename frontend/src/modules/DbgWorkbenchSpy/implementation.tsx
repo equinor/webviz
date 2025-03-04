@@ -28,7 +28,7 @@ export function WorkbenchSpyView(props: ModuleViewProps<Interfaces>) {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
     const [hoverRealization, hoverRealization_TS] = useServiceValueWithTS(
         "global.hoverRealization",
-        props.workbenchServices
+        props.workbenchServices,
     );
     const [hoverTimestamp, hoverTimestamp_TS] = useServiceValueWithTS("global.hoverTimestamp", props.workbenchServices);
     const triggeredRefreshCounter = props.viewContext.useSettingsToViewInterfaceValue("triggeredRefreshCounter");
@@ -52,7 +52,7 @@ export function WorkbenchSpyView(props: ModuleViewProps<Interfaces>) {
                     {makeTableRow("hoverTimestamp", hoverTimestamp?.timestampUtcMs, hoverTimestamp_TS)}
                     {makeTableRow(
                         "hoverTimestamp isoStr",
-                        hoverTimestamp ? timestampUtcMsToIsoString(hoverTimestamp.timestampUtcMs) : "UNDEF"
+                        hoverTimestamp ? timestampUtcMsToIsoString(hoverTimestamp.timestampUtcMs) : "UNDEF",
                     )}
                 </tbody>
             </table>
@@ -108,7 +108,7 @@ function getTimestampString() {
 
 function useServiceValueWithTS<T extends keyof AllTopicDefinitions>(
     topic: T,
-    workbenchServices: WorkbenchServices
+    workbenchServices: WorkbenchServices,
 ): [data: AllTopicDefinitions[T] | null, updatedTS: string] {
     const [latestValue, setLatestValue] = React.useState<AllTopicDefinitions[T] | null>(null);
     const [lastUpdatedTS, setLastUpdatedTS] = React.useState("");
@@ -122,7 +122,7 @@ function useServiceValueWithTS<T extends keyof AllTopicDefinitions>(
             const unsubscribeFunc = workbenchServices.subscribe(topic, handleNewValue);
             return unsubscribeFunc;
         },
-        [topic, workbenchServices]
+        [topic, workbenchServices],
     );
 
     return [latestValue, lastUpdatedTS];

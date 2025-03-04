@@ -4,7 +4,7 @@ import type { WellboreHeader_api } from "@api";
 import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import type { Intersection} from "@framework/types/intersection";
+import type { Intersection } from "@framework/types/intersection";
 import { IntersectionType } from "@framework/types/intersection";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import type { DropdownOption } from "@lib/components/Dropdown";
@@ -27,7 +27,7 @@ import { ViewerSettings } from "./components/ViewerSettings";
 import type { InterfaceTypes } from "../interfaces";
 
 function useSyncedWellboreSetting(
-    syncHelper: SyncSettingsHelper
+    syncHelper: SyncSettingsHelper,
 ): [typeof selectedWellboreHeader, typeof setSelectedWellboreHeader] {
     const localSetSelectedWellboreHeader = useSetAtom(userSelectedWellboreUuidAtom);
     // Global syncronization
@@ -79,7 +79,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
         function handleWellboreSelectionChange(uuids: string[]) {
             setSelectedWellboreHeader(uuids[0] ?? null);
         },
-        [setSelectedWellboreHeader]
+        [setSelectedWellboreHeader],
     );
 
     // Error messages

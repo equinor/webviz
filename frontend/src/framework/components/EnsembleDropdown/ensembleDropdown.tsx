@@ -30,7 +30,7 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     const handleSelectionChange = React.useCallback(
         function handleSelectionChange(selectedEnsembleIdentStr: string) {
             const foundEnsemble = ensembles.find(
-                (ensemble) => ensemble.getIdent().toString() === selectedEnsembleIdentStr
+                (ensemble) => ensemble.getIdent().toString() === selectedEnsembleIdentStr,
             );
             if (!foundEnsemble) {
                 throw new Error(`Ensemble not found: ${selectedEnsembleIdentStr}`);
@@ -41,12 +41,12 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
             }
             if (foundEnsemble instanceof DeltaEnsemble) {
                 throw new Error(
-                    `Invalid ensemble selection: ${selectedEnsembleIdentStr}. Got delta ensemble when not allowed.`
+                    `Invalid ensemble selection: ${selectedEnsembleIdentStr}. Got delta ensemble when not allowed.`,
                 );
             }
             onChange(foundEnsemble.getIdent());
         },
-        [allowDeltaEnsembles, ensembles, onChange]
+        [allowDeltaEnsembles, ensembles, onChange],
     );
 
     const optionsArray: DropdownOption[] = [];

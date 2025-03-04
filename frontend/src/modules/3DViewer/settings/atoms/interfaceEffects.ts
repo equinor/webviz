@@ -6,7 +6,7 @@ import { editCustomIntersectionPolylineEditModeActiveAtom, intersectionTypeAtom 
 export const viewToSettingsInterfaceEffects: InterfaceEffects<ViewToSettingsInterface> = [
     (getInterfaceValue, setAtomValue) => {
         const editCustomIntersectionPolylineEditModeActive = getInterfaceValue(
-            "editCustomIntersectionPolylineEditModeActive"
+            "editCustomIntersectionPolylineEditModeActive",
         );
         setAtomValue(editCustomIntersectionPolylineEditModeActiveAtom, editCustomIntersectionPolylineEditModeActive);
     },

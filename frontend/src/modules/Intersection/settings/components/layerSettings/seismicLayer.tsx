@@ -3,7 +3,7 @@ import React from "react";
 import { getSeismicCubeMetaListOptions } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { WorkbenchSession} from "@framework/WorkbenchSession";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -16,13 +16,8 @@ import { RadioGroup } from "@lib/components/RadioGroup";
 import type { SelectOption } from "@lib/components/Select";
 import type { ColorScale } from "@lib/utils/ColorScale";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
-import type {
-    SeismicLayer,
-    SeismicLayerSettings} from "@modules/Intersection/utils/layers/SeismicLayer";
-import {
-    SeismicDataType,
-    SeismicSurveyType,
-} from "@modules/Intersection/utils/layers/SeismicLayer";
+import type { SeismicLayer, SeismicLayerSettings } from "@modules/Intersection/utils/layers/SeismicLayer";
+import { SeismicDataType, SeismicSurveyType } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 import { useQuery } from "@tanstack/react-query";
@@ -65,7 +60,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
         props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
-        newSettings
+        newSettings,
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent: fixupEnsembleIdent }));
@@ -101,9 +96,9 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                                         isIsoStringInterval(el.isoDateOrInterval)))
                             );
                         })
-                        .map((el) => el.seismicAttribute)
-                )
-            )
+                        .map((el) => el.seismicAttribute),
+                ),
+            ),
         );
 
         availableSeismicDateOrIntervalStrings.push(
@@ -121,9 +116,9 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                                         isIsoStringInterval(el.isoDateOrInterval)))
                             );
                         })
-                        .map((el) => el.isoDateOrInterval)
-                )
-            ).sort()
+                        .map((el) => el.isoDateOrInterval),
+                ),
+            ).sort(),
         );
     }
 
@@ -148,7 +143,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
         function propagateSettingsChange() {
             props.layer.maybeUpdateSettings(cloneDeep(newSettings));
         },
-        [newSettings, props.layer]
+        [newSettings, props.layer],
     );
 
     React.useEffect(
@@ -158,7 +153,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                 props.layer.maybeRefetchData();
             }
         },
-        [seismicCubeMetaListQuery.isFetching, props.layer, newSettings]
+        [seismicCubeMetaListQuery.isFetching, props.layer, newSettings],
     );
 
     function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {

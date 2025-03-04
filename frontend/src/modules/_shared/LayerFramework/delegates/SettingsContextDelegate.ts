@@ -2,9 +2,9 @@ import { SettingTopic } from "./SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { Dependency } from "./_utils/Dependency";
 
-import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import type { GlobalSettings, LayerManager} from "../framework/LayerManager/LayerManager";
+import type { GlobalSettings, LayerManager } from "../framework/LayerManager/LayerManager";
 import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import type {
     AvailableValuesType,
@@ -57,7 +57,7 @@ export class SettingsContextDelegate<
     TSettings extends Settings,
     TStoredData extends StoredData = Record<string, never>,
     TKey extends keyof TSettings = keyof TSettings,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
     private _parentContext: SettingsContext<TSettings, TStoredData, TKey, TStoredDataKey>;
@@ -72,7 +72,7 @@ export class SettingsContextDelegate<
     constructor(
         context: SettingsContext<TSettings, TStoredData, TKey, TStoredDataKey>,
         layerManager: LayerManager,
-        settings: { [K in TKey]: Setting<TSettings[K]> }
+        settings: { [K in TKey]: Setting<TSettings[K]> },
     ) {
         this._parentContext = context;
         this._layerManager = layerManager;
@@ -85,7 +85,7 @@ export class SettingsContextDelegate<
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
                     this.handleSettingChanged();
-                })
+                }),
             );
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "settings",
@@ -94,7 +94,7 @@ export class SettingsContextDelegate<
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(SettingTopic.LOADING_STATE_CHANGED)(() => {
                     this.handleSettingsLoadingStateChanged();
-                })
+                }),
             );
         }
 
@@ -268,7 +268,7 @@ export class SettingsContextDelegate<
                 this._settings[key]
                     .getDelegate()
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(handleChange)
+                    .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(handleChange),
             );
 
             this._unsubscribeHandler.registerUnsubscribeFunction(
@@ -276,7 +276,7 @@ export class SettingsContextDelegate<
                 this._settings[key]
                     .getDelegate()
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(SettingTopic.PERSISTED_STATE_CHANGED)(handleChange)
+                    .makeSubscriberFunction(SettingTopic.PERSISTED_STATE_CHANGED)(handleChange),
             );
 
             return handleChange;
@@ -284,7 +284,7 @@ export class SettingsContextDelegate<
 
         const makeGlobalSettingGetter = <K extends keyof GlobalSettings>(
             key: K,
-            handler: (value: GlobalSettings[K]) => void
+            handler: (value: GlobalSettings[K]) => void,
         ) => {
             const handleChange = (): void => {
                 handler(this.getLayerManager.bind(this)().getGlobalSetting(key));
@@ -293,7 +293,7 @@ export class SettingsContextDelegate<
                 "dependencies",
                 this.getLayerManager()
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED)(handleChange)
+                    .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED)(handleChange),
             );
 
             return handleChange;
@@ -301,13 +301,13 @@ export class SettingsContextDelegate<
 
         const availableSettingsUpdater = <K extends TKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<EachAvailableValuesType<TSettings[K]>, TSettings, K>
+            updateFunc: UpdateFunc<EachAvailableValuesType<TSettings[K]>, TSettings, K>,
         ): Dependency<EachAvailableValuesType<TSettings[K]>, TSettings, K> => {
             const dependency = new Dependency<EachAvailableValuesType<TSettings[K]>, TSettings, K>(
                 this as unknown as SettingsContextDelegate<TSettings, TStoredData, K, TStoredDataKey>,
                 updateFunc,
                 makeSettingGetter,
-                makeGlobalSettingGetter
+                makeGlobalSettingGetter,
             );
 
             dependency.subscribe((availableValues: AvailableValuesType<TSettings[K]> | null) => {
@@ -333,13 +333,13 @@ export class SettingsContextDelegate<
 
         const storedDataUpdater = <K extends TStoredDataKey>(
             key: K,
-            updateFunc: UpdateFunc<NullableStoredData<TStoredData>[K], TSettings, TKey>
+            updateFunc: UpdateFunc<NullableStoredData<TStoredData>[K], TSettings, TKey>,
         ): Dependency<NullableStoredData<TStoredData>[K], TSettings, TKey> => {
             const dependency = new Dependency<NullableStoredData<TStoredData>[K], TSettings, TKey>(
                 this as unknown as SettingsContextDelegate<TSettings, TStoredData, TKey, K>,
                 updateFunc,
                 makeSettingGetter,
-                makeGlobalSettingGetter
+                makeGlobalSettingGetter,
             );
 
             dependency.subscribe((storedData: TStoredData[K] | null) => {
@@ -357,13 +357,13 @@ export class SettingsContextDelegate<
                 getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
                 getHelperDependency: <TDep>(dep: Dependency<TDep, TSettings, TKey>) => TDep | null;
                 abortSignal: AbortSignal;
-            }) => T
+            }) => T,
         ) => {
             const dependency = new Dependency<T, TSettings, TKey>(
                 this as unknown as SettingsContextDelegate<TSettings, TStoredData, TKey, TStoredDataKey>,
                 update,
                 makeSettingGetter,
-                makeGlobalSettingGetter
+                makeGlobalSettingGetter,
             );
 
             dependency.initialize();

@@ -1,13 +1,8 @@
 import type React from "react";
 
 import { ImportState } from "@framework/Module";
-import type {
-    ModuleInstance} from "@framework/ModuleInstance";
-import {
-    ModuleInstanceState,
-    ModuleInstanceTopic,
-    useModuleInstanceTopicValue,
-} from "@framework/ModuleInstance";
+import type { ModuleInstance } from "@framework/ModuleInstance";
+import { ModuleInstanceState, ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
 import type { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
@@ -71,7 +66,7 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
             key={props.moduleInstance.getId()}
             className={resolveClassNames(
                 props.activeModuleInstanceId === props.moduleInstance.getId() ? "flex" : "hidden",
-                "flex-col h-full w-full relative"
+                "flex-col h-full w-full relative",
             )}
             style={{ contain: "content" }}
         >

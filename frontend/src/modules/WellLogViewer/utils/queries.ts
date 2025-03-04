@@ -41,7 +41,7 @@ export type MergedQueryResult<TData> =
 
 export function mergeResults<T, K = T[]>(
     results: UseQueryResult<T>[],
-    dataTransform?: (data: T[]) => NonNullable<K>
+    dataTransform?: (data: T[]) => NonNullable<K>,
 ): MergedQueryResult<K> {
     const error = _.find(results, "error")?.error ?? null;
 

@@ -38,7 +38,7 @@ export class DrilledWellboresSetting implements Setting<ValueType> {
         }
 
         const matchingValues = currentValue.filter((value) =>
-            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid)
+            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
         );
         if (matchingValues.length === 0) {
             return availableValues;
@@ -54,12 +54,12 @@ export class DrilledWellboresSetting implements Setting<ValueType> {
                         value: ident.wellboreUuid,
                         label: ident.uniqueWellboreIdentifier,
                     })),
-                [props.availableValues]
+                [props.availableValues],
             );
 
             function handleChange(selectedUuids: string[]) {
                 const selectedWellbores = props.availableValues.filter((ident) =>
-                    selectedUuids.includes(ident.wellboreUuid)
+                    selectedUuids.includes(ident.wellboreUuid),
                 );
                 props.onValueChange(selectedWellbores);
             }
@@ -75,7 +75,7 @@ export class DrilledWellboresSetting implements Setting<ValueType> {
 
             const selectedValues = React.useMemo(
                 () => props.value?.map((ident) => ident.wellboreUuid) ?? [],
-                [props.value]
+                [props.value],
             );
 
             return (

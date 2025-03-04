@@ -88,10 +88,10 @@ export type ChannelSelectorProps = {
 export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
     const { onCancel } = props;
     const [selectedChannelIdString, setSelectedChannelIdString] = React.useState<string | null>(
-        props.selectedChannelIdString ?? null
+        props.selectedChannelIdString ?? null,
     );
     const [selectedContents, setSelectedContents] = React.useState<SelectedContents | null>(
-        props.selectedContents ?? null
+        props.selectedContents ?? null,
     );
 
     React.useEffect(() => {
@@ -203,7 +203,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
     const left = Math.min(props.position.x, window.innerWidth - convertRemToPixels(10) - 10);
     const top = Math.max(
         10,
-        Math.min(props.position.y - calculatedHeight / 2, window.innerHeight - calculatedHeight - 10)
+        Math.min(props.position.y - calculatedHeight / 2, window.innerHeight - calculatedHeight - 10),
     );
     const maxHeight = Math.min(calculatedHeight, window.innerHeight - 20);
 
@@ -257,6 +257,6 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                 </div>
             </div>
         </>,
-        document.body
+        document.body,
     );
 };

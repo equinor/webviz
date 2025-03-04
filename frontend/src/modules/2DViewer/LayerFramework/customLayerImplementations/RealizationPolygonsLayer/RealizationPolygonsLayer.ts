@@ -1,4 +1,4 @@
-import type { PolygonData_api} from "@api";
+import type { PolygonData_api } from "@api";
 import { getPolygonsDataOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
@@ -23,7 +23,7 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
             this,
             layerManager,
             new RealizationPolygonsSettingsContext(layerManager),
-            LayerColoringType.NONE
+            LayerColoringType.NONE,
         );
     }
 
@@ -41,7 +41,7 @@ export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettin
 
     doSettingsChangesRequireDataRefetch(
         prevSettings: RealizationPolygonsSettings,
-        newSettings: RealizationPolygonsSettings
+        newSettings: RealizationPolygonsSettings,
     ): boolean {
         return !isEqual(prevSettings, newSettings);
     }

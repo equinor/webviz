@@ -15,11 +15,11 @@ export type SettingsContentPanelsProps = {
 export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (props) => {
     const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.LeftSettingsPanelWidthInPercent
+        GuiState.LeftSettingsPanelWidthInPercent,
     );
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.RightSettingsPanelWidthInPercent
+        GuiState.RightSettingsPanelWidthInPercent,
     );
 
     const handleResizablePanelsChange = React.useCallback(
@@ -27,7 +27,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             setLeftSettingsPanelWidth(sizes[0]);
             setRightSettingsPanelWidth(sizes[2]);
         },
-        [setLeftSettingsPanelWidth, setRightSettingsPanelWidth]
+        [setLeftSettingsPanelWidth, setRightSettingsPanelWidth],
     );
 
     return (

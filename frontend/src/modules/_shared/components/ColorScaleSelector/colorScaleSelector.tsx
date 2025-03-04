@@ -14,7 +14,7 @@ import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import type { Vec2} from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
@@ -32,7 +32,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
     const id = React.useId();
 
     const [colorScale, setColorScale] = React.useState<ColorScale>(
-        props.workbenchSettings.useContinuousColorScale({ gradientType: ColorScaleGradientType.Sequential })
+        props.workbenchSettings.useContinuousColorScale({ gradientType: ColorScaleGradientType.Sequential }),
     );
     const [prevColorScale, setPrevColorScale] = React.useState<ColorScale | undefined>(undefined);
 
@@ -42,12 +42,12 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
     const [lastSelectedSequentialColorPalette, setLastSelectedSequentialColorPalette] = React.useState<ColorPalette>(
         props.colorScale?.getGradientType() === ColorScaleGradientType.Sequential
             ? props.colorScale?.getColorPalette()
-            : props.workbenchSettings.getColorPalettes()[ColorPaletteType.ContinuousSequential][0] ?? ""
+            : (props.workbenchSettings.getColorPalettes()[ColorPaletteType.ContinuousSequential][0] ?? ""),
     );
     const [lastSelectedDivergingColorPalette, setLastSelectedDivergingColorPalette] = React.useState<ColorPalette>(
         props.colorScale?.getGradientType() === ColorScaleGradientType.Diverging
             ? props.colorScale?.getColorPalette()
-            : props.workbenchSettings.getColorPalettes()[ColorPaletteType.ContinuousDiverging][0] ?? ""
+            : (props.workbenchSettings.getColorPalettes()[ColorPaletteType.ContinuousDiverging][0] ?? ""),
     );
 
     if (!isEqual(props.colorScale, prevColorScale)) {
@@ -72,7 +72,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
             colorScale.getMax(),
             colorScale.getNumSteps(),
             colorScale.getDivMidPoint(),
-            areBoundariesUserDefined
+            areBoundariesUserDefined,
         );
     }
 
@@ -90,7 +90,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
             colorScale.getMax(),
             colorScale.getNumSteps(),
             colorScale.getDivMidPoint(),
-            areBoundariesUserDefined
+            areBoundariesUserDefined,
         );
     }
 
@@ -108,7 +108,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
             colorScale.getMax(),
             colorScale.getNumSteps(),
             colorScale.getDivMidPoint(),
-            areBoundariesUserDefined
+            areBoundariesUserDefined,
         );
     }
 
@@ -121,7 +121,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
             colorScale.getMax(),
             numSteps,
             colorScale.getDivMidPoint(),
-            areBoundariesUserDefined
+            areBoundariesUserDefined,
         );
     }
 
@@ -134,7 +134,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
             max: number,
             numSteps: number,
             divMid: number,
-            areBoundariesUserDefined: boolean
+            areBoundariesUserDefined: boolean,
         ) {
             const colorScale = new ColorScale({
                 colorPalette,
@@ -152,7 +152,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
                 onChange(colorScale, areBoundariesUserDefined);
             }
         },
-        [onChange]
+        [onChange],
     );
 
     const handleMinMaxDivMidPointChange = React.useCallback(
@@ -166,10 +166,10 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
                 max,
                 colorScale.getNumSteps(),
                 divMidPoint ?? colorScale.getDivMidPoint(),
-                areBoundariesUserDefined
+                areBoundariesUserDefined,
             );
         },
-        [colorScale, makeAndPropagateColorScale, areBoundariesUserDefined]
+        [colorScale, makeAndPropagateColorScale, areBoundariesUserDefined],
     );
 
     const handleAreBoundariesUserDefinedChange = React.useCallback(
@@ -179,7 +179,7 @@ export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactN
                 onChange(colorScale, areBoundariesUserDefined);
             }
         },
-        [colorScale, onChange]
+        [colorScale, onChange],
     );
 
     return (
@@ -283,15 +283,14 @@ function ColorScaleSetter(props: ColorScaleSetterProps): React.ReactNode {
     const handleMinMaxDivMidPointChange = React.useCallback(function handleMinMaxDivMidPointChange(
         min: number,
         max: number,
-        divMidPoint?: number
+        divMidPoint?: number,
     ) {
         setMin(min);
         setMax(max);
         if (divMidPoint !== undefined) {
             setDivMidPoint(divMidPoint);
         }
-    },
-    []);
+    }, []);
 
     return (
         <div>
@@ -342,10 +341,10 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
     const [divMidPoint, setDivMidPoint] = React.useState<number>(props.divMidPoint);
     const [prevDivMidPoint, setPrevDivMidPoint] = React.useState<number>(props.divMidPoint);
     const [areBoundariesUserDefined, setAreBoundariesUserDefined] = React.useState<boolean>(
-        props.areBoundariesUserDefined
+        props.areBoundariesUserDefined,
     );
     const [prevAreBoundariesUserDefined, setPrevAreBoundariesUserDefined] = React.useState<boolean>(
-        props.areBoundariesUserDefined
+        props.areBoundariesUserDefined,
     );
 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
@@ -423,7 +422,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
 
                 const newRelativeDivMidPoint = Math.min(
                     Math.max((dx + convertRemToPixels(0.75) - containerRect.left) / containerRect.width, 0),
-                    1
+                    1,
                 );
 
                 newDivMidPoint = min + newRelativeDivMidPoint * (max - min);
@@ -453,7 +452,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                 document.removeEventListener("pointerup", handlePointerUp);
             };
         },
-        [onChange, onChangePreview, min, max]
+        [onChange, onChangePreview, min, max],
     );
 
     function handleMinChange(value: string) {
@@ -512,7 +511,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                             "z-50": isDragging,
                             hidden:
                                 props.gradientType === ColorScaleGradientType.Sequential || !areBoundariesUserDefined,
-                        }
+                        },
                     )}
                     style={{ left: `${(Math.abs(divMidPoint - min) / Math.abs(max - min)) * 100}%` }}
                     ref={divMidPointRef}
@@ -580,7 +579,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
     const [open, setOpen] = React.useState<boolean>(false);
     const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(props.selectedColorPalette);
     const [prevSelectedColorPalette, setPrevSelectedColorPalette] = React.useState<ColorPalette>(
-        props.selectedColorPalette
+        props.selectedColorPalette,
     );
 
     if (prevSelectedColorPalette.getId() !== props.selectedColorPalette.getId()) {
@@ -657,7 +656,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
                     props.min,
                     props.max,
                     props.divMidPoint,
-                    props.id
+                    props.id,
                 )}
             </div>
             {open &&
@@ -677,7 +676,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
                         >
                             {renderColorPalettes()}
                         </div>
-                    </>
+                    </>,
                 )}
         </div>
     );
@@ -713,7 +712,7 @@ function makeColorScalePalettePreview(
     min: number,
     max: number,
     divMidPoint: number,
-    id: string
+    id: string,
 ): React.ReactNode {
     const colorScale = new ColorScale({
         colorPalette,
@@ -782,7 +781,7 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
                     props.min,
                     props.max,
                     props.divMid,
-                    props.id
+                    props.id,
                 )}
             </div>
         </div>

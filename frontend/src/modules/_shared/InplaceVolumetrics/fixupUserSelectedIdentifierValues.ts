@@ -1,11 +1,11 @@
 import type { InplaceVolumetricsIdentifierWithValues_api } from "@api";
-import type { FixupSelection} from "@lib/utils/fixupUserSelection";
+import type { FixupSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
 
 export function fixupUserSelectedIdentifierValues(
     userSelectedIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] | null,
     uniqueIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[],
-    fixupSelection: FixupSelection
+    fixupSelection: FixupSelection,
 ): InplaceVolumetricsIdentifierWithValues_api[] {
     const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = [];
     if (!userSelectedIdentifierValues) {
@@ -15,7 +15,7 @@ export function fixupUserSelectedIdentifierValues(
                 values: fixupUserSelection(
                     entry.values,
                     uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? [],
-                    fixupSelection
+                    fixupSelection,
                 ),
             });
         }
@@ -31,7 +31,7 @@ export function fixupUserSelectedIdentifierValues(
             values: fixupUserSelection(
                 entry.values,
                 uniqueIdentifierValues.find((el) => el.identifier === entry.identifier)?.values ?? [],
-                fixupSelection
+                fixupSelection,
             ),
         });
     }

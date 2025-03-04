@@ -1,14 +1,8 @@
 import React from "react";
 
 import type { SettingsContext, ViewContext } from "./ModuleContext";
-import type {
-    ModuleInstanceStatusController,
-    StatusMessage} from "./ModuleInstanceStatusController";
-import {
-    Origin,
-    StatusMessageType,
-    StatusSource,
-} from "./ModuleInstanceStatusController";
+import type { ModuleInstanceStatusController, StatusMessage } from "./ModuleInstanceStatusController";
+import { Origin, StatusMessageType, StatusSource } from "./ModuleInstanceStatusController";
 
 export class ViewStatusWriter {
     private _statusController: ModuleInstanceStatusController;

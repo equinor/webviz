@@ -5,11 +5,11 @@ import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import type { Rect2D} from "@lib/utils/geometry";
+import type { Rect2D } from "@lib/utils/geometry";
 import { outerRectContainsInnerRect } from "@lib/utils/geometry";
 import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
-import type { LayerManager} from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { LayerManagerTopic } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import type { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
@@ -21,7 +21,7 @@ import type { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer"
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
-import type { DeckGlLayerWithPosition} from "../utils/makeViewsAndLayers";
+import type { DeckGlLayerWithPosition } from "../utils/makeViewsAndLayers";
 import { recursivelyMakeViewsAndLayers } from "../utils/makeViewsAndLayers";
 
 export type LayersWrapperProps = {
@@ -97,7 +97,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                         <div className="">{view.name}</div>
                     </div>
                 </div>
-            </DeckGlView>
+            </DeckGlView>,
         );
     }
 

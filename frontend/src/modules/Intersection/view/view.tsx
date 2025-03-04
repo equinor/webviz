@@ -64,7 +64,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 }
             }
         },
-        [polyline, extensionLength, layers]
+        [polyline, extensionLength, layers],
     );
 
     React.useEffect(
@@ -79,7 +79,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 }
             }
         },
-        [layers, wellbore, fieldIdentifier, intersectionType]
+        [layers, wellbore, fieldIdentifier, intersectionType],
     );
 
     React.useEffect(
@@ -88,17 +88,17 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
 
             props.viewContext.setInstanceTitle(
                 `${wellboreHeader?.identifier ?? "Intersection"}
-            (${fieldName})`
+            (${fieldName})`,
             );
         },
-        [ensembleSet, fieldIdentifier, wellboreHeader?.identifier, props.viewContext]
+        [ensembleSet, fieldIdentifier, wellboreHeader?.identifier, props.viewContext],
     );
 
     // Status messages
     for (const layer of layers) {
         if (layer.getStatus() === LayerStatus.ERROR) {
             statusWriter.addError(
-                layer.getError() ?? `Layer "${layer.getName()}": ${layer.getError() ?? "Unknown error"}`
+                layer.getError() ?? `Layer "${layer.getName()}": ${layer.getError() ?? "Unknown error"}`,
             );
         }
     }
@@ -119,7 +119,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
             <div
                 className={resolveClassNames(
                     "absolute w-full h-full z-10 bg-white opacity-50 flex items-center justify-center",
-                    { hidden: !mainElementsLoading }
+                    { hidden: !mainElementsLoading },
                 )}
             >
                 <CircularProgress />
@@ -132,7 +132,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 intersectionType={intersectionType}
                 workbenchServices={props.workbenchServices}
                 viewContext={props.viewContext}
-                wellboreHeaderUuid={wellboreTrajectoryQuery.isFetching ? null : wellboreHeader?.uuid ?? null}
+                wellboreHeaderUuid={wellboreTrajectoryQuery.isFetching ? null : (wellboreHeader?.uuid ?? null)}
                 wellboreHeaderDepthReferencePoint={wellboreHeader?.depthReferencePoint ?? null}
                 wellboreHeaderDepthReferenceElevation={wellboreHeader?.depthReferenceElevation ?? null}
             />

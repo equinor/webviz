@@ -1,4 +1,4 @@
-import type { ColorPaletteType, ColorScaleDiscreteSteps} from "@framework/WorkbenchSettings";
+import type { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import type { ColorPalette } from "@lib/utils/ColorPalette";
 import type { ColorScaleGradientType } from "@lib/utils/ColorScale";

@@ -4,7 +4,7 @@ import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { isArray, isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
 import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import type { AvailableValuesType, Setting } from "../interfaces";
 

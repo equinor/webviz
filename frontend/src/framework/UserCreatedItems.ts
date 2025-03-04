@@ -53,7 +53,7 @@ export class UserCreatedItems {
 
 export function useIntersectionPolylines(workbenchSession: WorkbenchSession): IntersectionPolylines {
     const [storedIntersectionPolylines, setStoredIntersectionPolylines] = React.useState<IntersectionPolylines>(
-        workbenchSession.getUserCreatedItems().getIntersectionPolylines()
+        workbenchSession.getUserCreatedItems().getIntersectionPolylines(),
     );
 
     React.useEffect(() => {

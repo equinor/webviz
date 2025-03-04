@@ -1,10 +1,10 @@
 import React from "react";
 
-import type { SurfaceMetaSet_api} from "@api";
+import type { SurfaceMetaSet_api } from "@api";
 import { SurfaceAttributeType_api, getRealizationSurfacesMetadataOptions } from "@api";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { WorkbenchSession} from "@framework/WorkbenchSession";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -23,7 +23,7 @@ import type {
     SurfacesUncertaintyLayerSettings,
 } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
 import { SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
-import type { UseQueryResult} from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 
 import { cloneDeep, isEqual } from "lodash";
@@ -38,7 +38,7 @@ export type SurfacesUncertaintyLayerSettingsComponentProps = {
 };
 
 export function SurfacesUncertaintyLayerSettingsComponent(
-    props: SurfacesUncertaintyLayerSettingsComponentProps
+    props: SurfacesUncertaintyLayerSettingsComponentProps,
 ): React.ReactNode {
     const settings = useLayerSettings(props.layer);
     const [newSettings, setNewSettings] = React.useState<SurfacesUncertaintyLayerSettings>(cloneDeep(settings));
@@ -53,13 +53,13 @@ export function SurfacesUncertaintyLayerSettingsComponent(
 
     const surfaceDirectoryQuery = useSurfaceDirectoryQuery(
         newSettings.ensembleIdent?.getCaseUuid(),
-        newSettings.ensembleIdent?.getEnsembleName()
+        newSettings.ensembleIdent?.getEnsembleName(),
     );
 
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
         props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
-        newSettings
+        newSettings,
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent: fixupEnsembleIdent }));
@@ -68,7 +68,7 @@ export function SurfacesUncertaintyLayerSettingsComponent(
     if (fixupEnsembleIdent) {
         const fixupRealizationNums = fixupRealizationNumsSetting(
             newSettings.realizationNums,
-            ensembleFilterFunc(fixupEnsembleIdent)
+            ensembleFilterFunc(fixupEnsembleIdent),
         );
         if (!isEqual(fixupRealizationNums, newSettings.realizationNums)) {
             setNewSettings((prev) => ({ ...prev, realizationNums: fixupRealizationNums }));
@@ -110,7 +110,7 @@ export function SurfacesUncertaintyLayerSettingsComponent(
         function propagateSettingsChange() {
             props.layer.maybeUpdateSettings(cloneDeep(newSettings));
         },
-        [newSettings, props.layer]
+        [newSettings, props.layer],
     );
 
     React.useEffect(
@@ -120,7 +120,7 @@ export function SurfacesUncertaintyLayerSettingsComponent(
                 props.layer.maybeRefetchData();
             }
         },
-        [surfaceDirectoryQuery.isFetching, props.layer, newSettings]
+        [surfaceDirectoryQuery.isFetching, props.layer, newSettings],
     );
 
     function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {
@@ -255,7 +255,7 @@ function makeSurfaceNameOptions(surfaceNames: string[]): DropdownOption[] {
 
 export function useSurfaceDirectoryQuery(
     caseUuid: string | undefined,
-    ensembleName: string | undefined
+    ensembleName: string | undefined,
 ): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
         ...getRealizationSurfacesMetadataOptions({
@@ -270,7 +270,7 @@ export function useSurfaceDirectoryQuery(
 
 function fixupRealizationNumsSetting(
     currentRealizationNums: readonly number[],
-    validRealizationNums: readonly number[]
+    validRealizationNums: readonly number[],
 ): number[] {
     if (validRealizationNums.length === 0) {
         return [...currentRealizationNums];

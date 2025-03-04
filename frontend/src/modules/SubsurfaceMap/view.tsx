@@ -32,7 +32,7 @@ type Bounds = [number, number, number, number];
 const updateViewPortBounds = (
     existingViewPortBounds: Bounds | undefined,
     resetBounds: boolean,
-    surfaceBB: BoundingBox2D_api
+    surfaceBB: BoundingBox2D_api,
 ): Bounds => {
     const updatedBounds: Bounds = [surfaceBB.min_x, surfaceBB.min_y, surfaceBB.max_x, surfaceBB.max_y];
 
@@ -118,7 +118,7 @@ export function View({
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
             meshSurfDataQuery.data.surface_def,
             meshSurfDataQuery.data.valuesFloat32Arr,
-            surfaceSettings
+            surfaceSettings,
         );
         newLayers.push(surfaceLayer);
         colorRange = [meshSurfDataQuery.data.value_min, meshSurfDataQuery.data.value_max];
@@ -127,7 +127,7 @@ export function View({
             meshSurfDataQuery.data.surface_def,
             meshSurfDataQuery.data.valuesFloat32Arr,
             surfaceSettings,
-            propertySurfDataQuery.data.valuesFloat32Arr
+            propertySurfDataQuery.data.valuesFloat32Arr,
         );
         newLayers.push(surfaceLayer);
         colorRange = [propertySurfDataQuery.data.value_min, propertySurfDataQuery.data.value_max];
@@ -164,7 +164,7 @@ export function View({
     }
     if (wellTrajectoriesQuery.data) {
         const wellTrajectories: WellboreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
-            selectedWellUuids.includes(well.wellboreUuid)
+            selectedWellUuids.includes(well.wellboreUuid),
         );
         const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
         const wellBoreHeaderLayer: Record<string, unknown> = createWellBoreHeaderLayer(wellTrajectories);

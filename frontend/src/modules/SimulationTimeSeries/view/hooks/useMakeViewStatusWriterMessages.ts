@@ -19,7 +19,7 @@ export function useMakeViewStatusWriterMessages(
     viewContext: ViewContext<Interfaces>,
     statusWriter: ViewStatusWriter,
     parameterDisplayName: string | null,
-    ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[]
+    ensemblesWithoutParameter: (RegularEnsemble | DeltaEnsemble)[],
 ) {
     const ensembleSet = useAtomValue(EnsembleSetAtom);
     const showObservations = viewContext.useSettingsToViewInterfaceValue("showObservations");
@@ -55,7 +55,7 @@ export function useMakeViewStatusWriterMessages(
     if (parameterDisplayName) {
         for (const ensemble of ensemblesWithoutParameter) {
             statusWriter.addWarning(
-                `Ensemble ${ensemble.getDisplayName()} does not have parameter ${parameterDisplayName}.`
+                `Ensemble ${ensemble.getDisplayName()} does not have parameter ${parameterDisplayName}.`,
             );
         }
     }

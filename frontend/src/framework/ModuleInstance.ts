@@ -1,7 +1,7 @@
 import type { ErrorInfo } from "react";
 import React from "react";
 
-import type { Atom} from "jotai";
+import type { Atom } from "jotai";
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
@@ -10,11 +10,8 @@ import type { InitialSettings } from "./InitialSettings";
 import type { ImportState, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
 import { ModuleContext } from "./ModuleContext";
 import type { SyncSettingKey } from "./SyncSettings";
-import type {
-    InterfaceInitialization} from "./UniDirectionalModuleComponentsInterface";
-import {
-    UniDirectionalModuleComponentsInterface,
-} from "./UniDirectionalModuleComponentsInterface";
+import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
+import { UniDirectionalModuleComponentsInterface } from "./UniDirectionalModuleComponentsInterface";
 import type { Workbench } from "./Workbench";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
@@ -82,7 +79,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
                 options.channelReceiverDefinitions.map((el) => ({
                     ...el,
                     supportsMultiContents: el.supportsMultiContents ?? false,
-                }))
+                })),
             );
         }
 
@@ -120,7 +117,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     }
 
     makeSettingsToViewInterface(
-        interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>
+        interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>,
     ) {
         if (!interfaceInitialization) {
             return;
@@ -129,7 +126,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
     }
 
     makeViewToSettingsInterface(
-        interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>
+        interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>,
     ) {
         if (!interfaceInitialization) {
             return;
@@ -147,7 +144,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         for (const effectFunc of effectFuncs) {
             const effect = atomEffect((get, set) => {
                 function getAtomFromInterface<TKey extends keyof Exclude<TInterfaceTypes["settingsToView"], undefined>>(
-                    key: TKey
+                    key: TKey,
                 ): Exclude<TInterfaceTypes["settingsToView"], undefined>[TKey] {
                     return get(getUniDirectionalSettingsToViewInterface().getAtom(key));
                 }
@@ -172,7 +169,7 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
         for (const effectFunc of effectFuncs) {
             const effect = atomEffect((get, set) => {
                 function getAtomFromInterface<TKey extends keyof Exclude<TInterfaceTypes["viewToSettings"], undefined>>(
-                    key: TKey
+                    key: TKey,
                 ): Exclude<TInterfaceTypes["viewToSettings"], undefined>[TKey] {
                     return get(getUniDirectionalViewToSettingsInterface().getAtom(key));
                 }
@@ -360,11 +357,11 @@ export class ModuleInstance<TInterfaceTypes extends ModuleInterfaceTypes> {
 
 export function useModuleInstanceTopicValue<T extends ModuleInstanceTopic>(
     moduleInstance: ModuleInstance<any>,
-    topic: T
+    topic: T,
 ): ModuleInstanceTopicValueTypes[T] {
     const value = React.useSyncExternalStore<ModuleInstanceTopicValueTypes[T]>(
         moduleInstance.makeSubscriberFunction(topic),
-        moduleInstance.makeSnapshotGetter(topic)
+        moduleInstance.makeSnapshotGetter(topic),
     );
 
     return value;

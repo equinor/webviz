@@ -19,7 +19,7 @@ export function WellboreSelector(props: WellboreSelectorProps): React.ReactNode 
     const { onSelectedWellboreUuidsChange } = props;
     const availableWellboreStatuses = Array.from(new Set(props.wellboreHeaders.map((header) => header.wellboreStatus)));
     const availableWellborePurposes = Array.from(
-        new Set(props.wellboreHeaders.map((header) => header.wellborePurpose))
+        new Set(props.wellboreHeaders.map((header) => header.wellborePurpose)),
     );
     const [selectedWellboreStatuses, setSelectedWellboreStatuses] = useValidArrayState<string>({
         initialState: availableWellboreStatuses,
@@ -32,16 +32,16 @@ export function WellboreSelector(props: WellboreSelectorProps): React.ReactNode 
     React.useEffect(() => {
         onSelectedWellboreUuidsChange(
             filterWellboreHeaders(props.wellboreHeaders, selectedWellboreStatuses, selectedWellborePurposes).map(
-                (header) => header.wellboreUuid
-            )
+                (header) => header.wellboreUuid,
+            ),
         );
     }, [selectedWellborePurposes, selectedWellboreStatuses, onSelectedWellboreUuidsChange, props.wellboreHeaders]);
 
     function handleSelectAll() {
         props.onSelectedWellboreUuidsChange(
             filterWellboreHeaders(props.wellboreHeaders, selectedWellboreStatuses, selectedWellborePurposes).map(
-                (header) => header.wellboreUuid
-            )
+                (header) => header.wellboreUuid,
+            ),
         );
     }
     function handleUnselectAll() {
@@ -52,7 +52,7 @@ export function WellboreSelector(props: WellboreSelectorProps): React.ReactNode 
             (wellHeader) => ({
                 label: wellHeader.uniqueWellboreIdentifier,
                 value: wellHeader.wellboreUuid,
-            })
+            }),
         );
     }
 
@@ -135,7 +135,7 @@ function makeWellboreStatusOptions(wellHeaders: WellboreHeader_api[]): SelectOpt
 function filterWellboreHeaders(
     wellHeaders: WellboreHeader_api[],
     selectedWellboreStatuses: string[],
-    selectedWellborePurposes: string[]
+    selectedWellborePurposes: string[],
 ): WellboreHeader_api[] {
     return wellHeaders
         .filter((header) => selectedWellboreStatuses.includes(header.wellboreStatus))

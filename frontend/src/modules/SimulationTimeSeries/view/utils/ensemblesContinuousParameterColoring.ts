@@ -1,4 +1,4 @@
-import type { ContinuousParameter, ParameterIdent} from "@framework/EnsembleParameters";
+import type { ContinuousParameter, ParameterIdent } from "@framework/EnsembleParameters";
 import { ParameterType } from "@framework/EnsembleParameters";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
@@ -60,13 +60,13 @@ export class EnsemblesContinuousParameterColoring {
     getParameterRealizationValue(ensembleIdent: RegularEnsembleIdent, realization: number): number {
         if (!this.hasParameterRealizationValue(ensembleIdent, realization)) {
             throw new Error(
-                `Parameter ${this.getParameterDisplayName()} has no numerical value for realization ${realization} in ensemble ${ensembleIdent.toString()}`
+                `Parameter ${this.getParameterDisplayName()} has no numerical value for realization ${realization} in ensemble ${ensembleIdent.toString()}`,
             );
         }
         const parameter = this._ensembleContinuousParameterMap.get(ensembleIdent);
         if (parameter === undefined) {
             throw new Error(
-                `Parameter ${this.getParameterDisplayName()} not found in ensemble ${ensembleIdent.toString()}`
+                `Parameter ${this.getParameterDisplayName()} not found in ensemble ${ensembleIdent.toString()}`,
             );
         }
         const realizationIndex = parameter.realizations.indexOf(realization);

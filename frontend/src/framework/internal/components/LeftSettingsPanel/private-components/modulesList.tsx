@@ -1,8 +1,8 @@
 import React from "react";
 
-import type { GuiMessageBroker} from "@framework/GuiMessageBroker";
+import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import type { Module} from "@framework/Module";
+import type { Module } from "@framework/Module";
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
@@ -14,11 +14,11 @@ import { Checkbox } from "@lib/components/Checkbox";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
-import type { Size2D} from "@lib/utils/geometry";
+import type { Size2D } from "@lib/utils/geometry";
 import { MANHATTAN_LENGTH, pointRelativeToDomRect } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import type { Vec2} from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 import {
     Attribution,
@@ -197,7 +197,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                     {
                         "cursor-move": !isDragged,
                         "cursor-grabbing": isDragged,
-                    }
+                    },
                 )}
                 style={makeStyle(isDragged, dragSize, dragPosition)}
                 onMouseOver={handleHover}
@@ -396,7 +396,7 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
                 tags.push(
                     <div key={tag} className="font-bold text-indigo-600">
                         #{tagObj.name}
-                    </div>
+                    </div>,
                 );
             }
         }
@@ -564,7 +564,7 @@ export const ModulesList: React.FC<ModulesListProps> = (props) => {
                         onClose={handleHideDetails}
                         left={left}
                         top={detailsPosY}
-                    />
+                    />,
                 )}
         </div>
     );

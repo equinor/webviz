@@ -26,7 +26,7 @@ describe("RealizationFilterSet tests", () => {
         [],
         [],
         null,
-        ""
+        "",
     );
     const nonExistingDeltaEnsemble = new DeltaEnsemble(regularEnsembleArray[1], regularEnsembleArray[2], "", null);
 
@@ -58,7 +58,7 @@ describe("RealizationFilterSet tests", () => {
 
         const wantedEnsembleIdent = nonExistingRegularEnsemble.getIdent();
         expect(() => REALIZATION_FILTER_SET.getRealizationFilterForEnsembleIdent(wantedEnsembleIdent)).toThrowError(
-            `We expect all ensembles to have a filter instance. No filter found for ${wantedEnsembleIdent.toString()}`
+            `We expect all ensembles to have a filter instance. No filter found for ${wantedEnsembleIdent.toString()}`,
         );
     });
 
@@ -68,7 +68,7 @@ describe("RealizationFilterSet tests", () => {
 
         const wantedEnsembleIdent = nonExistingDeltaEnsemble.getIdent();
         expect(() => REALIZATION_FILTER_SET.getRealizationFilterForEnsembleIdent(wantedEnsembleIdent)).toThrowError(
-            `We expect all ensembles to have a filter instance. No filter found for ${wantedEnsembleIdent.toString()}`
+            `We expect all ensembles to have a filter instance. No filter found for ${wantedEnsembleIdent.toString()}`,
         );
     });
 
@@ -91,9 +91,9 @@ describe("RealizationFilterSet tests", () => {
 
         // Delta ensemble should no longer be in the filter set
         expect(() =>
-            REALIZATION_FILTER_SET.getRealizationFilterForEnsembleIdent(wantedDeltaEnsembleIdent)
+            REALIZATION_FILTER_SET.getRealizationFilterForEnsembleIdent(wantedDeltaEnsembleIdent),
         ).toThrowError(
-            `We expect all ensembles to have a filter instance. No filter found for ${wantedDeltaEnsembleIdent.toString()}`
+            `We expect all ensembles to have a filter instance. No filter found for ${wantedDeltaEnsembleIdent.toString()}`,
         );
     });
 });

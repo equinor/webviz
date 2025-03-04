@@ -4,10 +4,9 @@ import type {
     ModuleCategory,
     ModuleDevState,
     ModuleInterfaceTypes,
-    OnInstanceUnloadFunc} from "./Module";
-import {
-    Module
+    OnInstanceUnloadFunc,
 } from "./Module";
+import { Module } from "./Module";
 import type { ModuleDataTagId } from "./ModuleDataTags";
 import type { DrawPreviewFunc } from "./Preview";
 import type { SyncSettingKey } from "./SyncSettings";
@@ -32,7 +31,7 @@ export class ModuleNotFoundError extends Error {
     readonly moduleName: string;
     constructor(moduleName: string) {
         super(
-            `Module '${moduleName}' not found. Did you forget to register your module in 'src/modules/registerAllModules.ts'?`
+            `Module '${moduleName}' not found. Did you forget to register your module in 'src/modules/registerAllModules.ts'?`,
         );
         this.moduleName = moduleName;
     }
@@ -42,11 +41,10 @@ export class ModuleRegistry {
     private static _registeredModules: Record<string, Module<any>> = {};
     private static _moduleNotFoundPlaceholders: Record<string, Module<any>> = {};
 
-     
     private constructor() {}
 
     static registerModule<TInterfaceTypes extends ModuleInterfaceTypes>(
-        options: RegisterModuleOptions
+        options: RegisterModuleOptions,
     ): Module<TInterfaceTypes> {
         const module = new Module<TInterfaceTypes>({
             name: options.moduleName,
@@ -76,7 +74,7 @@ export class ModuleRegistry {
                 : InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
             viewToSettingsInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>>;
             settingsToViewInterfaceEffects?: InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>>;
-        }
+        },
     ): Module<TInterfaceTypes> {
         const module = this._registeredModules[moduleName];
         if (module) {

@@ -19,7 +19,7 @@ function makeColorSamples(steps: number, colorPalette: ColorPalette) {
                 style={{
                     backgroundColor: color,
                 }}
-            ></div>
+            ></div>,
         );
     }
     return samples;

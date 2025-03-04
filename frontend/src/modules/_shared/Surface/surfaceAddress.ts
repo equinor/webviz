@@ -131,7 +131,6 @@ export function peekSurfaceAddressType(surfAddrStr: string): SurfaceAddressType 
     return foundAddrType;
 }
 
-
 function assertThatNoComponentsContainDelimiter(componentArr: Array<string | number>): void {
     for (const comp of componentArr) {
         if (typeof comp === "string" && comp.includes(ADDR_COMP_DELIMITER)) {

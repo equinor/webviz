@@ -1,4 +1,4 @@
-import { SurfaceTimeType_api , getRealizationSurfacesMetadataOptions } from "@api";
+import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
 import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import type { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
@@ -104,8 +104,8 @@ export class RealizationSurfaceSettingsContext implements SettingsContext<Realiz
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
-                    )
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
+                    ),
                 ),
             ];
 
@@ -127,8 +127,8 @@ export class RealizationSurfaceSettingsContext implements SettingsContext<Realiz
                     new Set(
                         data.surfaces
                             .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
-                            .map((el) => el.time_type)
-                    )
+                            .map((el) => el.time_type),
+                    ),
                 ),
             ];
 

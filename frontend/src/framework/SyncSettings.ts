@@ -54,7 +54,7 @@ export class SyncSettingsHelper {
     constructor(
         activeSyncedKeys: SyncSettingKey[],
         workbenchServices: WorkbenchServices,
-        moduleContext?: SettingsContext<any> | ViewContext<any>
+        moduleContext?: SettingsContext<any> | ViewContext<any>,
     ) {
         this._activeSyncedKeys = activeSyncedKeys;
         this._workbenchServices = workbenchServices;
@@ -71,14 +71,14 @@ export class SyncSettingsHelper {
             topic,
             isSyncActiveForKey,
             this._workbenchServices,
-            this._moduleContext?.getInstanceIdString()
+            this._moduleContext?.getInstanceIdString(),
         );
     }
 
     publishValue<T extends keyof GlobalTopicDefinitions>(
         key: SyncSettingKey,
         topic: T,
-        value: TopicDefinitionsType<T>
+        value: TopicDefinitionsType<T>,
     ) {
         const isSyncActiveForKey = this._activeSyncedKeys.includes(key);
         if (isSyncActiveForKey) {

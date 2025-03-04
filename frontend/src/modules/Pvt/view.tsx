@@ -83,7 +83,7 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
 
         const pvtPlotBuilder = new PvtPlotBuilder(
             new PvtDataAccessor(pvtDataQueries.tableCollections),
-            makeEnsembleDisplayName
+            makeEnsembleDisplayName,
         );
         pvtPlotBuilder.makeLayout(selectedPhase, selectedPlots, wrapperDivSize);
         pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedColorBy, colorSet);

@@ -29,7 +29,7 @@ export function AggregationSelector(props: AggregationSelectorProps): JSX.Elemen
                 value={props.selectedAggregation ?? "SINGLE_REAL"}
                 onChange={(newVal: string) =>
                     props.onAggregationSelectorChange(
-                        newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction_api) : null
+                        newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction_api) : null,
                     )
                 }
             />

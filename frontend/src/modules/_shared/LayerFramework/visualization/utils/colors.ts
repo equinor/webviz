@@ -1,13 +1,13 @@
 import type { ColorScale } from "@lib/utils/ColorScale";
 
-import type { Rgb} from "culori";
+import type { Rgb } from "culori";
 import { parse } from "culori";
 
 export function makeColorMapFunctionFromColorScale(
     colorScale: ColorScale | undefined,
     valueMin: number,
     valueMax: number,
-    unnormalize = true
+    unnormalize = true,
 ): ((value: number) => [number, number, number]) | undefined {
     if (!colorScale) {
         return undefined;

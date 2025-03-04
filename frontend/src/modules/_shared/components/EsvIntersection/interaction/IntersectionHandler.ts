@@ -43,7 +43,7 @@ export class IntersectionHandler {
         const intersectionCalculator = makeIntersectionCalculatorFromIntersectionItem(
             intersectionItem,
             this._options,
-            this._controller
+            this._controller,
         );
         this._intersectionCalculators.set(intersectionItem.id, intersectionCalculator);
     }
@@ -54,7 +54,7 @@ export class IntersectionHandler {
 
     subscribe<T extends IntersectionHandlerTopic>(
         topic: T,
-        callback: (payload: IntersectionHandlerTopicPayload[T]) => void
+        callback: (payload: IntersectionHandlerTopicPayload[T]) => void,
     ): () => void {
         const subscribers = this._subscribers.get(topic) || new Set();
         subscribers.add(callback);

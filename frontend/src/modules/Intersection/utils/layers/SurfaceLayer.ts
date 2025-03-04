@@ -1,15 +1,15 @@
-import type { SurfaceIntersectionData_api} from "@api";
+import type { SurfaceIntersectionData_api } from "@api";
 import { postGetSurfaceIntersectionOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
-import type { Vec2} from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
 import type { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
 
-import type { BoundingBox} from "./BaseLayer";
+import type { BoundingBox } from "./BaseLayer";
 import { BaseLayer, LayerTopic } from "./BaseLayer";
 
 export type SurfaceLayerSettings = {
@@ -106,7 +106,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
 
     protected doSettingsChangesRequireDataRefetch(
         prevSettings: SurfaceLayerSettings,
-        newSettings: SurfaceLayerSettings
+        newSettings: SurfaceLayerSettings,
     ): boolean {
         return (
             !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames) ||
@@ -134,7 +134,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: polyline[i - 2], y: polyline[i - 1] }
+                    { x: polyline[i - 2], y: polyline[i - 1] },
                 );
                 const actualDistance = this._settings.polyline.actualSectionLengths[i / 2 - 1];
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
@@ -159,7 +159,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] }
+                    { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] },
                 );
 
                 cumulatedHorizontalPolylineLength += distance;

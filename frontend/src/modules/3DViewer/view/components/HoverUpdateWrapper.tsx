@@ -3,7 +3,7 @@ import React from "react";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { ViewContext } from "@framework/ModuleContext";
-import type { GlobalTopicDefinitions, WorkbenchServices} from "@framework/WorkbenchServices";
+import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useSubscribedValue } from "@framework/WorkbenchServices";
 
 import { isEqual } from "lodash";
@@ -25,7 +25,7 @@ export function HoverUpdateWrapper(props: HoverUpdateWrapperProps): React.ReactN
     const syncedHoveredMd = useSubscribedValue(
         "global.hoverMd",
         props.workbenchServices,
-        props.viewContext.getInstanceIdString()
+        props.viewContext.getInstanceIdString(),
     );
 
     if (!isEqual(syncedHoveredMd, prevHoveredMd)) {

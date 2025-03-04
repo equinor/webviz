@@ -79,7 +79,7 @@ export function ReadoutBox(props: ReadoutBoxProps): React.ReactNode {
                 document.removeEventListener("mousemove", maybeFlipBox);
             };
         },
-        [props.flipDisabled, edgeDistance]
+        [props.flipDisabled, edgeDistance],
     );
 
     // Guard. If there are no readout items, don't render the box

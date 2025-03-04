@@ -9,14 +9,14 @@ import { activeQueriesResultAtom, identifiersValuesAtom } from "../atoms/derived
 
 // Type guard for InplaceVolumetricTableData
 function isInplaceVolumetricTableData(
-    obj: InplaceVolumetricTableData_api | InplaceStatisticalVolumetricTableData_api
+    obj: InplaceVolumetricTableData_api | InplaceStatisticalVolumetricTableData_api,
 ): obj is InplaceVolumetricTableData_api {
     return obj && typeof obj === "object" && "resultColumns" in obj;
 }
 
 // Type guard for InplaceStatisticalVolumetricTableData
 function isInplaceStatisticalVolumetricTableData(
-    obj: InplaceVolumetricTableData_api | InplaceStatisticalVolumetricTableData_api
+    obj: InplaceVolumetricTableData_api | InplaceStatisticalVolumetricTableData_api,
 ): obj is InplaceStatisticalVolumetricTableData_api {
     return obj && typeof obj === "object" && "resultColumnStatistics" in obj;
 }
@@ -55,7 +55,7 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) 
             }
             if (isInplaceStatisticalVolumetricTableData(fluidSelectionTable)) {
                 fluidSelectionTable.resultColumnStatistics.forEach((col) =>
-                    tableResultColumnsUnion.add(col.columnName)
+                    tableResultColumnsUnion.add(col.columnName),
                 );
             }
         }
@@ -67,7 +67,7 @@ export function useMakeViewStatusWriterMessages(statusWriter: ViewStatusWriter) 
         // the result columns will be visible in the table component if they are present in any of the fluid selections
         if (missingResultNames.length > 0) {
             statusWriter.addWarning(
-                `Missing result names for Table "${tableData.tableName}": ${missingResultNames.join(", ")}`
+                `Missing result names for Table "${tableData.tableName}": ${missingResultNames.join(", ")}`,
             );
         }
     }

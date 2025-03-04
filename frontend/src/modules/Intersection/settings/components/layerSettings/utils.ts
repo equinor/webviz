@@ -5,7 +5,7 @@ import { isEqual } from "lodash";
 export function fixupSetting<TSettings extends LayerSettings, TKey extends keyof TSettings>(
     setting: TKey,
     validOptions: readonly TSettings[TKey][],
-    settings: TSettings
+    settings: TSettings,
 ): TSettings[TKey] {
     if (validOptions.length === 0) {
         return settings[setting];

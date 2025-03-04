@@ -20,7 +20,7 @@ export function makeRealizationPickerTagFromRealizationNumberSelection(selection
  * The selection can be be null, in which case an empty array is returned.
  */
 export function makeRealizationPickerTagsFromRealizationNumberSelections(
-    selections: readonly RealizationNumberSelection[] | null
+    selections: readonly RealizationNumberSelection[] | null,
 ): string[] {
     if (!selections) return [];
 

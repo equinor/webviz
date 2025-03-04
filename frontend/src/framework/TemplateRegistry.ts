@@ -25,7 +25,6 @@ export type Template = {
 export class TemplateRegistry {
     private static _registeredTemplates: Record<string, Template> = {};
 
-     
     private constructor() {}
 
     static registerTemplate(name: string, template: Template): void {

@@ -1,4 +1,4 @@
-import type { SurfaceDataFloat_api , SurfaceDataPng_api } from "@api";
+import type { SurfaceDataFloat_api, SurfaceDataPng_api } from "@api";
 import { b64DecodeFloatArrayToFloat32 } from "@modules_shared/base64";
 
 // Data structure for transformed data
@@ -8,7 +8,7 @@ export type SurfaceDataFloat_trans = Omit<SurfaceDataFloat_api, "values_b64arr">
 };
 
 export function transformSurfaceData(
-    apiData: SurfaceDataFloat_api | SurfaceDataPng_api
+    apiData: SurfaceDataFloat_api | SurfaceDataPng_api,
 ): SurfaceDataFloat_trans | SurfaceDataPng_api {
     const startTS = performance.now();
 

@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { ChannelReceiverChannelContent} from "@framework/DataChannelTypes";
+import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 import { KeyKind } from "@framework/DataChannelTypes";
 import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
@@ -97,7 +97,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 setContent(
                     <ContentInfo>
                         Connect a channel to <Tag label={receiverX.displayName} />
-                    </ContentInfo>
+                    </ContentInfo>,
                 );
                 return;
             }
@@ -106,7 +106,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 setContent(
                     <ContentInfo>
                         No data on <Tag label={receiverX.displayName} />
-                    </ContentInfo>
+                    </ContentInfo>,
                 );
                 return;
             }
@@ -116,7 +116,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     setContent(
                         <ContentInfo>
                             Connect a channel to <Tag label={receiverY.displayName} />
-                        </ContentInfo>
+                        </ContentInfo>,
                     );
                     return;
                 }
@@ -125,7 +125,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     setContent(
                         <ContentInfo>
                             No data on <Tag label={receiverY.displayName} />
-                        </ContentInfo>
+                        </ContentInfo>,
                     );
                     return;
                 }
@@ -136,7 +136,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     setContent(
                         <ContentInfo>
                             Connect a channel to <Tag label={receiverColorMapping.displayName} />
-                        </ContentInfo>
+                        </ContentInfo>,
                     );
                     return;
                 }
@@ -145,7 +145,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                     setContent(
                         <ContentInfo>
                             No data on <Tag label={receiverColorMapping.displayName} />
-                        </ContentInfo>
+                        </ContentInfo>,
                     );
                     return;
                 }
@@ -360,7 +360,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             keysX.length === keysY.length &&
                             (dataColor === null || keysColor.length === keysX.length) &&
                             !keysX.some(
-                                (el, index) => el !== keysY[index] || (dataColor !== null && el !== keysColor[index])
+                                (el, index) => el !== keysY[index] || (dataColor !== null && el !== keysColor[index]),
                             )
                         ) {
                             keysX.forEach((key) => {
@@ -399,7 +399,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                             hovertemplate: realizations.map((real) =>
                                 dataColor
                                     ? makeHoverTextWithColor(contentRow, contentCol, dataColor, real)
-                                    : makeHoverText(contentRow, contentCol, real)
+                                    : makeHoverText(contentRow, contentCol, real),
                             ),
                         };
 

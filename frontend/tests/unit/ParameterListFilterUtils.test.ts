@@ -1,4 +1,4 @@
-import type { ContinuousParameter, DiscreteParameter} from "@framework/EnsembleParameters";
+import type { ContinuousParameter, DiscreteParameter } from "@framework/EnsembleParameters";
 import { ParameterType } from "@framework/EnsembleParameters";
 import {
     createAndAddNode,
@@ -103,7 +103,7 @@ describe("Test of utility functions for ParameterListFilter", () => {
             CONTINUOUS_PARAMETER,
         ]);
         expect(
-            getParametersMatchingSelectedNodes(parameterList, ["Name/discrete parameter"], nonDefaultDelimiter)
+            getParametersMatchingSelectedNodes(parameterList, ["Name/discrete parameter"], nonDefaultDelimiter),
         ).toEqual([DISCRETE_PARAMETER]);
     });
 

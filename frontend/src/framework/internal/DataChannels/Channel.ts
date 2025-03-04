@@ -1,6 +1,6 @@
 import type { KeyKind } from "@framework/DataChannelTypes";
 
-import type { ChannelContentDefinition} from "./ChannelContent";
+import type { ChannelContentDefinition } from "./ChannelContent";
 import { ChannelContent, ChannelContentNotificationTopic } from "./ChannelContent";
 import type { ChannelManager } from "./ChannelManager";
 

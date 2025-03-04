@@ -89,8 +89,8 @@ export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedS
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
-                    )
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
+                    ),
                 ),
             ];
 
@@ -112,8 +112,8 @@ export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedS
                     new Set(
                         data.surfaces
                             .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
-                            .map((el) => el.time_type)
-                    )
+                            .map((el) => el.time_type),
+                    ),
                 ),
             ];
 

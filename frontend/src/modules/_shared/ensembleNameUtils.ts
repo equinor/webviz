@@ -5,7 +5,7 @@ import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export function makeDistinguishableEnsembleDisplayName(
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,
-    allEnsembles: readonly (RegularEnsemble | DeltaEnsemble)[]
+    allEnsembles: readonly (RegularEnsemble | DeltaEnsemble)[],
 ): string {
     const ensemble = allEnsembles.find((ensemble) => ensemble.getIdent().equals(ensembleIdent));
 
@@ -19,7 +19,7 @@ export function makeDistinguishableEnsembleDisplayName(
     }
 
     const ensembleNameCount = allEnsembles.filter(
-        (elm) => elm.getEnsembleName() === ensembleIdent.getEnsembleName()
+        (elm) => elm.getEnsembleName() === ensembleIdent.getEnsembleName(),
     ).length;
     if (ensembleNameCount === 1) {
         return ensembleIdent.getEnsembleName();

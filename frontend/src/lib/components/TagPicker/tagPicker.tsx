@@ -46,7 +46,7 @@ const NO_TAGS_TEXT = "No tags";
 
 export function TagPickerComponent<T>(
     props: TagPickerProps<T>,
-    ref: React.ForwardedRef<HTMLDivElement>
+    ref: React.ForwardedRef<HTMLDivElement>,
 ): React.ReactElement {
     const [selectedTags, setSelectedTags] = React.useState<T[]>(props.value);
     const [prevSelectedTags, setPrevSelectedTags] = React.useState<T[]>(props.value);
@@ -139,7 +139,7 @@ export function TagPickerComponent<T>(
             const newFilteredOptions = props.tags.filter((tag) => tag.label.toLowerCase().includes(filter || ""));
             setFilteredTags(newFilteredOptions);
         },
-        [props.tags, filter]
+        [props.tags, filter],
     );
 
     React.useEffect(
@@ -164,7 +164,7 @@ export function TagPickerComponent<T>(
                         newDropdownRect.top = divClientBoundingRect.y + divBoundingRect.height;
                         newDropdownRect.height = Math.min(
                             height,
-                            window.innerHeight - divClientBoundingRect.y - divBoundingRect.height
+                            window.innerHeight - divClientBoundingRect.y - divBoundingRect.height,
                         );
                     }
                     if (divClientBoundingRect.x + divBoundingRect.width > window.innerWidth / 2) {
@@ -181,14 +181,14 @@ export function TagPickerComponent<T>(
                             Math.round(
                                 (filteredTags.findIndex((tag) => tag.value === selectedTags[selectedTags.length - 1]) ||
                                     0) -
-                                    height / TAG_HEIGHT / 2
-                            )
-                        )
+                                    height / TAG_HEIGHT / 2,
+                            ),
+                        ),
                     );
                 }
             }
         },
-        [divBoundingRect, dropdownVisible, filteredTags, selectedTags, dropdownRect.width, props.tags]
+        [divBoundingRect, dropdownVisible, filteredTags, selectedTags, dropdownRect.width, props.tags],
     );
 
     function handleInputClick() {
@@ -223,7 +223,7 @@ export function TagPickerComponent<T>(
         const newFilter = event.target.value.toLowerCase();
         setFilter(newFilter);
         const newFilteredOptions = props.tags.filter((option) =>
-            option.label.toLowerCase().includes(newFilter.toLowerCase())
+            option.label.toLowerCase().includes(newFilter.toLowerCase()),
         );
         setFilteredTags(newFilteredOptions);
     }
@@ -319,14 +319,14 @@ export function TagPickerComponent<T>(
                                 />
                             )}
                         />
-                    </div>
+                    </div>,
                 )}
         </BaseComponent>
     );
 }
 
 export const TagPicker = React.forwardRef(TagPickerComponent) as <T>(
-    props: TagPickerProps<T> & { ref?: React.Ref<HTMLDivElement> }
+    props: TagPickerProps<T> & { ref?: React.Ref<HTMLDivElement> },
 ) => React.ReactElement;
 
 type TagProps<T> = {

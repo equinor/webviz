@@ -55,7 +55,7 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 
             onUpdatePlots([...props.plots, plotConfig]);
         },
-        [onUpdatePlots, props.plots]
+        [onUpdatePlots, props.plots],
     );
 
     const handlePlotChange = React.useCallback(
@@ -65,14 +65,14 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 
             onUpdatePlots(newPlots);
         },
-        [onUpdatePlots, props.plots]
+        [onUpdatePlots, props.plots],
     );
 
     const removePlot = React.useCallback(
         function removePlot(plot: TemplatePlotConfig) {
             onUpdatePlots(props.plots.filter((p) => p._key !== plot._key));
         },
-        [onUpdatePlots, props.plots]
+        [onUpdatePlots, props.plots],
     );
 
     const handleTrackMove = React.useCallback(
@@ -80,14 +80,14 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
             movedItemId: string,
             originId: string | null,
             destinationId: string | null,
-            newPosition: number
+            newPosition: number,
         ) {
             const currentPosition = props.plots.findIndex((p) => p.name === movedItemId);
             const newTrackCfg = arrayMove(props.plots, currentPosition, newPosition);
 
             onUpdatePlots(newTrackCfg);
         },
-        [onUpdatePlots, props.plots]
+        [onUpdatePlots, props.plots],
     );
 
     return (
@@ -128,7 +128,7 @@ function SortablePlotItem(props: SortablePlotItemProps) {
             const selectedOption = props.curveHeaderOptions.find(({ value }) => value === choice);
             return selectedOption?._curveHeader;
         },
-        [props.curveHeaderOptions]
+        [props.curveHeaderOptions],
     );
 
     const handlePlotSelectChange = React.useCallback(
@@ -151,7 +151,7 @@ function SortablePlotItem(props: SortablePlotItemProps) {
                 });
             }
         },
-        [getHeaderForPlotChoice, onPlotUpdate, props.plot]
+        [getHeaderForPlotChoice, onPlotUpdate, props.plot],
     );
 
     const plotForm = (

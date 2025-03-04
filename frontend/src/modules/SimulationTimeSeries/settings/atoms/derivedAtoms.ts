@@ -1,7 +1,7 @@
 import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
 import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import type { Parameter} from "@framework/EnsembleParameters";
+import type { Parameter } from "@framework/EnsembleParameters";
 import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import type { RegularEnsemble } from "@framework/RegularEnsemble";
@@ -23,7 +23,7 @@ import {
 } from "./baseAtoms";
 import { vectorListQueriesAtom } from "./queryAtoms";
 
-import type { VectorSpec} from "../../typesAndEnums";
+import type { VectorSpec } from "../../typesAndEnums";
 import { StatisticsType, VisualizationMode } from "../../typesAndEnums";
 import { EnsembleVectorListsHelper } from "../../utils/ensemblesVectorListHelper";
 
@@ -42,7 +42,7 @@ export const selectedEnsembleIdentsAtom = atom<(RegularEnsembleIdent | DeltaEnse
     const userSelectedEnsembleIdents = get(userSelectedEnsembleIdentsAtom);
 
     const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>
-        ensembleSet.hasEnsemble(ensemble)
+        ensembleSet.hasEnsemble(ensemble),
     );
     const validatedEnsembleIdents = fixupEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
 
@@ -110,7 +110,7 @@ export const continuousAndNonConstantParametersUnionAtom = atom<Parameter[]>((ge
         for (const parameter of continuousAndNonConstantParameters) {
             const parameterIdent = ParameterIdent.fromNameAndGroup(parameter.name, parameter.groupName);
             const isParameterInUnion = continuousAndNonConstantParametersUnion.some((elm) =>
-                parameterIdent.equals(ParameterIdent.fromNameAndGroup(elm.name, elm.groupName))
+                parameterIdent.equals(ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)),
             );
 
             if (isParameterInUnion) continue;
@@ -168,7 +168,7 @@ export const customVectorDefinitionsAtom = atom<VectorDefinitionsType | null>((g
         const sourceVectorBaseName = vector.derivedVectorInfo.sourceVector.split(":", 2)[0];
         const derivedVectorDescription = createDerivedVectorDescription(
             sourceVectorBaseName,
-            vector.derivedVectorInfo.type
+            vector.derivedVectorInfo.type,
         );
         const sourceBaseVectorType = simulationVectorDefinition(sourceVectorBaseName)?.type ?? "";
 
@@ -238,7 +238,7 @@ export const parameterIdentAtom = atom<ParameterIdent | null>((get) => {
     try {
         const newParameterIdent = ParameterIdent.fromString(selectedParameterIdentString);
         const isParameterAmongFiltered = filteredParameterIdentList.some((parameter) =>
-            parameter.equals(newParameterIdent)
+            parameter.equals(newParameterIdent),
         );
         if (isParameterAmongFiltered) {
             return newParameterIdent;

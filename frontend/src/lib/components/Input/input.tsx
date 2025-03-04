@@ -152,7 +152,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                     "rounded-l": props.rounded === "left",
                     "rounded-r": props.rounded === "right",
                     rounded: props.rounded === "all" || !props.rounded,
-                }
+                },
             )}
             style={wrapperStyle}
         >

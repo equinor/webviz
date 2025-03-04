@@ -1,11 +1,11 @@
 import React from "react";
 
-import type { ParameterIdent} from "@framework/EnsembleParameters";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
 import { ParameterType } from "@framework/EnsembleParameters";
 import type { EnsembleSet } from "@framework/EnsembleSet";
 import type { ModuleViewProps } from "@framework/Module";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import type { EnsembleRealizationFilterFunction} from "@framework/WorkbenchSession";
+import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
@@ -22,7 +22,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
     const selectedParameterIdents = props.viewContext.useSettingsToViewInterfaceValue("selectedParameterIdents");
     const selectedVisualizationType = props.viewContext.useSettingsToViewInterfaceValue("selectedVisualizationType");
     const showIndividualRealizationValues = props.viewContext.useSettingsToViewInterfaceValue(
-        "showIndividualRealizationValues"
+        "showIndividualRealizationValues",
     );
     const showPercentilesAndMeanLines =
         props.viewContext.useSettingsToViewInterfaceValue("showPercentilesAndMeanLines");
@@ -34,7 +34,7 @@ export function View(props: ModuleViewProps<Interfaces>) {
         ensembleSet,
         selectedEnsembleIdents,
         selectedParameterIdents,
-        filterEnsembleRealizationsFunc
+        filterEnsembleRealizationsFunc,
     );
 
     return (
@@ -55,7 +55,7 @@ function makeParameterDataArr(
     ensembleSet: EnsembleSet,
     ensembleIdents: RegularEnsembleIdent[],
     parameterIdents: ParameterIdent[],
-    filterEnsembleRealizations: EnsembleRealizationFilterFunction
+    filterEnsembleRealizations: EnsembleRealizationFilterFunction,
 ): ParameterDataArr[] {
     const parameterDataArr: ParameterDataArr[] = [];
 

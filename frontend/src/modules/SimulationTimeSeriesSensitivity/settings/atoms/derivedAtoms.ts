@@ -24,7 +24,7 @@ export const selectedRegularEnsembleIdentAtom = atom<RegularEnsembleIdent | null
 
     const candidateEnsembleIdent = maybeAssignFirstSyncedEnsemble(
         userSelectedRegularEnsembleIdent,
-        syncedRegularEnsembleIdents
+        syncedRegularEnsembleIdents,
     );
     const fixedUpEnsembleIdent = fixupRegularEnsembleIdent(candidateEnsembleIdent, ensembleSet);
     return fixedUpEnsembleIdent;

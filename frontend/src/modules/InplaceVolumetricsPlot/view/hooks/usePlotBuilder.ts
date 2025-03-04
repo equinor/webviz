@@ -30,7 +30,7 @@ export function useBuildPlotAndTable(
     height: number,
     hoveredRegion: string | null,
     hoveredZone: string | null,
-    hoveredFacies: string | null
+    hoveredFacies: string | null,
 ): { plots: React.ReactNode; table: Table } | null {
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
     const plotType = useAtomValue(plotTypeAtom);
@@ -62,7 +62,7 @@ export function useBuildPlotAndTable(
     }
     const plotbuilder = new PlotBuilder(
         table,
-        makePlotData(plotType, resultName ?? "", resultNameOrSelectorName ?? "", colorBy, ensembleSet, colorSet)
+        makePlotData(plotType, resultName ?? "", resultNameOrSelectorName ?? "", colorBy, ensembleSet, colorSet),
     );
 
     plotbuilder.setSubplotByColumn(subplotBy);

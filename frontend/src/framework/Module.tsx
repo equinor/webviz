@@ -47,7 +47,7 @@ export type ModuleSettingsProps<
     TInterfaceTypes extends ModuleInterfaceTypes = {
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
-    }
+    },
 > = {
     settingsContext: SettingsContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
@@ -60,7 +60,7 @@ export type ModuleViewProps<
     TInterfaceTypes extends ModuleInterfaceTypes = {
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
-    }
+    },
 > = {
     viewContext: ViewContext<TInterfaceTypes>;
     workbenchSession: WorkbenchSession;
@@ -72,21 +72,21 @@ export type ModuleViewProps<
 export type InterfaceEffects<TInterfaceType extends InterfaceBaseType> = ((
     getInterfaceValue: <TKey extends keyof TInterfaceType>(key: TKey) => TInterfaceType[TKey],
     setAtomValue: Setter,
-    getAtomValue: Getter
+    getAtomValue: Getter,
 ) => void)[];
 
 export type ModuleSettings<
     TInterfaceTypes extends ModuleInterfaceTypes = {
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
-    }
+    },
 > = React.FC<ModuleSettingsProps<TInterfaceTypes>>;
 
 export type ModuleView<
     TInterfaceTypes extends ModuleInterfaceTypes = {
         settingsToView: Record<string, never>;
         viewToSettings: Record<string, never>;
-    }
+    },
 > = React.FC<ModuleViewProps<TInterfaceTypes>>;
 
 export enum ImportState {
@@ -191,25 +191,25 @@ export class Module<TInterfaceTypes extends ModuleInterfaceTypes> {
     }
 
     setSettingsToViewInterfaceInitialization(
-        interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>
+        interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["settingsToView"], undefined>>,
     ): void {
         this._settingsToViewInterfaceInitialization = interfaceInitialization;
     }
 
     setViewToSettingsInterfaceInitialization(
-        interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>
+        interfaceInitialization: InterfaceInitialization<Exclude<TInterfaceTypes["viewToSettings"], undefined>>,
     ): void {
         this._viewToSettingsInterfaceInitialization = interfaceInitialization;
     }
 
     setViewToSettingsInterfaceEffects(
-        atomsInitialization: InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>>
+        atomsInitialization: InterfaceEffects<Exclude<TInterfaceTypes["settingsToView"], undefined>>,
     ): void {
         this._viewToSettingsInterfaceEffects = atomsInitialization;
     }
 
     setSettingsToViewInterfaceEffects(
-        atomsInitialization: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>>
+        atomsInitialization: InterfaceEffects<Exclude<TInterfaceTypes["viewToSettings"], undefined>>,
     ): void {
         this._settingsToViewInterfaceEffects = atomsInitialization;
     }

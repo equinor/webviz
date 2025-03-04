@@ -32,10 +32,10 @@ export function useMakeSettingsStatusWriterMessages(statusWriter: SettingsStatus
     // Set warning for vector names not existing in a selected ensemble
     function validateVectorNamesInEnsemble(
         vectorNames: string[],
-        ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent
+        ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,
     ) {
         const existingVectors = vectorNames.filter((vector) =>
-            ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector)
+            ensembleVectorListsHelper.isVectorInEnsemble(ensembleIdent, vector),
         );
         if (existingVectors.length === vectorNames.length) {
             return;

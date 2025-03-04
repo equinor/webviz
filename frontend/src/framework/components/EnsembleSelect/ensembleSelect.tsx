@@ -47,14 +47,14 @@ export function EnsembleSelect(props: EnsembleSelectProps): JSX.Element {
             // Filter to match the correct return type before calling onChange
             if (!allowDeltaEnsembles) {
                 const validIdentArray = identArray.filter((ident) =>
-                    isEnsembleIdentOfType(ident, RegularEnsembleIdent)
+                    isEnsembleIdentOfType(ident, RegularEnsembleIdent),
                 ) as RegularEnsembleIdent[];
                 onChange(validIdentArray);
                 return;
             }
             onChange(identArray);
         },
-        [allowDeltaEnsembles, ensembles, onChange]
+        [allowDeltaEnsembles, ensembles, onChange],
     );
 
     const optionsArray: SelectOption[] = [];

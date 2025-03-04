@@ -5,7 +5,7 @@ import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
 export function useMakeEnsembleDisplayNameFunc(
-    viewContext: ViewContext<Interfaces>
+    viewContext: ViewContext<Interfaces>,
 ): (ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent) => string {
     const selectedRegularEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedRegularEnsembles");
     const selectedDeltaEnsembles = viewContext.useSettingsToViewInterfaceValue("selectedDeltaEnsembles");

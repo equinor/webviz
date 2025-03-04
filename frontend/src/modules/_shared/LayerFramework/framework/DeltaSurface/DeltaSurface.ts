@@ -3,7 +3,7 @@ import { ItemDelegate } from "../../delegates/ItemDelegate";
 import type { LayerDelegate } from "../../delegates/LayerDelegate";
 import { SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import type { Group, SerializedDeltaSurface} from "../../interfaces";
+import type { Group, SerializedDeltaSurface } from "../../interfaces";
 import { SerializedType, instanceofLayer } from "../../interfaces";
 import type { LayerManager } from "../LayerManager/LayerManager";
 
@@ -21,8 +21,8 @@ export class DeltaSurface implements Group {
             this._groupDelegate.getPublishSubscribeDelegate().makeSubscriberFunction(GroupDelegateTopic.CHILDREN)(
                 () => {
                     this.handleChildrenChange();
-                }
-            )
+                },
+            ),
         );
 
         this._groupDelegate.setColor("rgb(220, 210, 180)");
@@ -52,7 +52,7 @@ export class DeltaSurface implements Group {
                         .getPublishSubscribeDelegate()
                         .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
                         this.handleSettingsChange();
-                    })
+                    }),
                 );
             }
         }

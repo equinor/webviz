@@ -62,7 +62,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
     const colorSet = workbenchSettings.useColorSet();
     const sensitivitiesColorMap = createSensitivityColorMap(
         sensitivities?.getSensitivityNames().sort() ?? [],
-        colorSet
+        colorSet,
     );
 
     let computedSensitivityResponseDataset: SensitivityResponseDataset | null = null;
@@ -75,7 +75,7 @@ export const View = ({ viewContext, workbenchSession, workbenchSettings }: Modul
                 name: responseReceiver.channel?.contents[0].displayName ?? "",
                 unit: "",
             },
-            referenceSensitivityName
+            referenceSensitivityName,
         );
         computedSensitivityResponseDataset = sensitivityResponseCalculator.computeSensitivitiesForResponse();
     }

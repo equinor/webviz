@@ -1,6 +1,6 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import type { InterfaceTypes} from "./interfaces";
+import type { InterfaceTypes } from "./interfaces";
 import { settingsToViewInterfaceInitialization } from "./interfaces";
 import { MODULE_NAME } from "./registerModule";
 import { Settings } from "./settings/settings";

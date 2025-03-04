@@ -38,7 +38,7 @@ export class EnsembleSetting implements Setting<RegularEnsembleIdent | null> {
     makeComponent(): (props: SettingComponentProps<RegularEnsembleIdent | null>) => React.ReactNode {
         return function Ensemble(props: SettingComponentProps<RegularEnsembleIdent | null>) {
             const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
-                props.availableValues.includes(ensemble.getIdent())
+                props.availableValues.includes(ensemble.getIdent()),
             );
 
             return (

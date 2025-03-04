@@ -15,7 +15,7 @@ function makeDataGeneratorFunc(
     tableName: string,
     fluidZone: string,
     table: Table,
-    resultName: string
+    resultName: string,
 ): DataGenerator {
     return () => {
         const realColumn = table.getColumn("REAL");
@@ -49,7 +49,7 @@ export function usePublishToDataChannels(
     viewContext: ViewContext<Interfaces>,
     ensembleSet: EnsembleSet,
     table?: Table,
-    resultName?: InplaceVolumetricResultName_api
+    resultName?: InplaceVolumetricResultName_api,
 ) {
     const contents: ChannelContentDefinition[] = [];
 
@@ -59,7 +59,7 @@ export function usePublishToDataChannels(
             const ensembleIdent = RegularEnsembleIdent.fromString(ensembleIdentStr.toString());
             const ensembleName = makeDistinguishableEnsembleDisplayName(
                 ensembleIdent,
-                ensembleSet.getRegularEnsembleArray()
+                ensembleSet.getRegularEnsembleArray(),
             );
 
             const tableCollection = ensembleTable.splitByColumn(SourceIdentifier.TABLE_NAME);
@@ -72,7 +72,7 @@ export function usePublishToDataChannels(
                         tableName.toString(),
                         fluidZone.toString(),
                         fluidZoneTable,
-                        resultName
+                        resultName,
                     );
                     contents.push({
                         contentIdString: `${fluidZone}-${tableName}-${ensembleIdentStr}`,

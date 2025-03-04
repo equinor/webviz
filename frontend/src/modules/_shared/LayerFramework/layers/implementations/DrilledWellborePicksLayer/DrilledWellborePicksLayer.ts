@@ -1,4 +1,4 @@
-import type { WellborePick_api} from "@api";
+import type { WellborePick_api } from "@api";
 import { getWellborePicksForPickIdentifierOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
@@ -23,7 +23,7 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
             this,
             layerManager,
             new DrilledWellborePicksSettingsContext(layerManager),
-            LayerColoringType.NONE
+            LayerColoringType.NONE,
         );
     }
 
@@ -41,7 +41,7 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
 
     doSettingsChangesRequireDataRefetch(
         prevSettings: DrilledWellborePicksSettings,
-        newSettings: DrilledWellborePicksSettings
+        newSettings: DrilledWellborePicksSettings,
     ): boolean {
         return !isEqual(prevSettings, newSettings);
     }

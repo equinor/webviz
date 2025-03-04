@@ -14,7 +14,7 @@ export class EnsembleVectorListsHelper {
 
     constructor(
         ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
-        vectorListQueryResults: UseQueryResult<VectorDescription_api[]>[]
+        vectorListQueryResults: UseQueryResult<VectorDescription_api[]>[],
     ) {
         if (ensembleIdents.length !== vectorListQueryResults.length) {
             throw new Error("Number of ensembles and vector list query results must be equal");
@@ -114,7 +114,7 @@ export class EnsembleVectorListsHelper {
      */
     hasAnyHistoricalVector(vectors: string[]): boolean {
         return this._ensembleIdents.some((ensemble) =>
-            vectors.some((vector) => this.hasHistoricalVector(ensemble, vector))
+            vectors.some((vector) => this.hasHistoricalVector(ensemble, vector)),
         );
     }
 

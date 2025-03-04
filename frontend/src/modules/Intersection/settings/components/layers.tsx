@@ -11,10 +11,9 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import type { Vec2} from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { point2Distance } from "@lib/utils/vec2";
-import type {
-    BaseLayer} from "@modules/Intersection/utils/layers/BaseLayer";
+import type { BaseLayer } from "@modules/Intersection/utils/layers/BaseLayer";
 import {
     LayerStatus,
     useIsLayerVisible,
@@ -23,12 +22,8 @@ import {
 } from "@modules/Intersection/utils/layers/BaseLayer";
 import { isGridLayer } from "@modules/Intersection/utils/layers/GridLayer";
 import { LayerFactory } from "@modules/Intersection/utils/layers/LayerFactory";
-import type {
-    LayerManager} from "@modules/Intersection/utils/layers/LayerManager";
-import {
-    LayerManagerTopic,
-    useLayerManagerTopicValue,
-} from "@modules/Intersection/utils/layers/LayerManager";
+import type { LayerManager } from "@modules/Intersection/utils/layers/LayerManager";
+import { LayerManagerTopic, useLayerManagerTopicValue } from "@modules/Intersection/utils/layers/LayerManager";
 import { isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer";
 import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
@@ -237,7 +232,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 if (scrollDivRef.current) {
                     scrollDivRef.current.scrollTop = Math.min(
                         scrollDivRef.current.scrollHeight,
-                        scrollDivRef.current.scrollTop + 10
+                        scrollDivRef.current.scrollTop + 10,
                     );
                 }
                 if (doScroll) {
@@ -294,7 +289,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 setDraggingLayerId(null);
             };
         },
-        [layers, props.layerManager]
+        [layers, props.layerManager],
     );
 
     function handleScroll(e: React.UIEvent<HTMLDivElement>) {
@@ -330,7 +325,7 @@ export function Layers(props: LayersProps): React.ReactNode {
             </div>
             {isDragging &&
                 createPortal(
-                    <div className="absolute z-40 transparent w-screen h-screen inset-0 cursor-grabbing select-none"></div>
+                    <div className="absolute z-40 transparent w-screen h-screen inset-0 cursor-grabbing select-none"></div>,
                 )}
             <div className="w-full flex-grow flex flex-col relative">
                 <div
@@ -556,7 +551,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                     {
                         "bg-red-100": props.layer.getStatus() === LayerStatus.ERROR,
                         "bg-white": props.layer.getStatus() !== LayerStatus.ERROR,
-                    }
+                    },
                 )}
             >
                 {makeLayerElement(dragIndicatorRef)}
@@ -565,7 +560,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                 createPortal(
                     <div
                         className={resolveClassNames(
-                            "flex h-10 px-1 hover:bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50"
+                            "flex h-10 px-1 hover:bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50",
                         )}
                         style={{
                             left: props.dragPosition.x,
@@ -574,7 +569,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                         }}
                     >
                         {makeLayerElement()}
-                    </div>
+                    </div>,
                 )}
             <div
                 className={resolveClassNames("border-b border-b-gray-300 bg-gray-50 shadow-inner", {

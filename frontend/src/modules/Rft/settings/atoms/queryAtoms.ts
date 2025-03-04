@@ -44,7 +44,7 @@ export const rftRealizationDataQueryAtom = atomWithQuery((get) => {
             selectedEnsembleIdent?.getCaseUuid() &&
                 selectedEnsembleIdent?.getEnsembleName() &&
                 selectedWellName &&
-                selectedResponseName
+                selectedResponseName,
         ),
     };
     return query;

@@ -12,7 +12,7 @@ import { isArrayOfNumbers, isArrayOfStrings } from "./arrayUtils";
  * Check if value selection is a number range
  */
 export function isValueSelectionANumberRange(
-    valueSelection: ParameterValueSelection
+    valueSelection: ParameterValueSelection,
 ): valueSelection is Readonly<NumberRange> {
     if (typeof valueSelection === "object" && valueSelection !== null) {
         return "start" in valueSelection && "end" in valueSelection;
@@ -24,7 +24,7 @@ export function isValueSelectionANumberRange(
  * Check if parameter value selection is an array of strings.
  */
 export function isValueSelectionAnArrayOfString(
-    valueSelection: ParameterValueSelection
+    valueSelection: ParameterValueSelection,
 ): valueSelection is readonly string[] {
     if (!isValueSelectionANumberRange(valueSelection) && isArrayOfStrings(valueSelection)) {
         return true;
@@ -36,7 +36,7 @@ export function isValueSelectionAnArrayOfString(
  * Check if parameter value selection is an array of numbers.
  */
 export function isValueSelectionAnArrayOfNumber(
-    valueSelection: ParameterValueSelection
+    valueSelection: ParameterValueSelection,
 ): valueSelection is readonly number[] {
     if (Array.isArray(valueSelection) && isArrayOfNumbers(valueSelection)) {
         return true;
@@ -51,7 +51,7 @@ export function isValueSelectionAnArrayOfNumber(
  */
 export function areParameterIdentStringToValueSelectionReadonlyMapsEqual(
     firstMap: ReadonlyMap<string, ParameterValueSelection>,
-    secondMap: ReadonlyMap<string, ParameterValueSelection>
+    secondMap: ReadonlyMap<string, ParameterValueSelection>,
 ): boolean {
     // Must have same amount of parameters
     if (firstMap.size !== secondMap.size) {
@@ -78,7 +78,7 @@ export function areParameterIdentStringToValueSelectionReadonlyMapsEqual(
  */
 export function areParameterIdentStringToValueSelectionMapCandidatesEqual(
     firstMap: ReadonlyMap<string, ParameterValueSelection> | null,
-    secondMap: ReadonlyMap<string, ParameterValueSelection> | null
+    secondMap: ReadonlyMap<string, ParameterValueSelection> | null,
 ): boolean {
     if (firstMap === null && secondMap === null) {
         return true;
@@ -95,7 +95,7 @@ export function areParameterIdentStringToValueSelectionMapCandidatesEqual(
  * Convert realization number selections to an array of realization numbers.
  */
 export function makeRealizationNumberArrayFromSelections(
-    selections: readonly RealizationNumberSelection[] | null
+    selections: readonly RealizationNumberSelection[] | null,
 ): number[] {
     if (!selections) return [];
 

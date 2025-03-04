@@ -6,27 +6,25 @@ import type {
     IntersectionReferenceSystem,
     ReferenceLine,
     SurfaceData,
-    SurfaceLine} from "@equinor/esv-intersection";
-import {
-    getPicksData,
-    getSeismicOptions,
+    SurfaceLine,
 } from "@equinor/esv-intersection";
+import { getPicksData, getSeismicOptions } from "@equinor/esv-intersection";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { IntersectionType } from "@framework/types/intersection";
 import type { Viewport } from "@framework/types/viewport";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import type { Interfaces } from "@modules/Intersection/interfaces";
-import type { BaseLayer} from "@modules/Intersection/utils/layers/BaseLayer";
+import type { BaseLayer } from "@modules/Intersection/utils/layers/BaseLayer";
 import { LayerStatus, useLayers } from "@modules/Intersection/utils/layers/BaseLayer";
-import type { GridLayer} from "@modules/Intersection/utils/layers/GridLayer";
+import type { GridLayer } from "@modules/Intersection/utils/layers/GridLayer";
 import { isGridLayer } from "@modules/Intersection/utils/layers/GridLayer";
-import type { SeismicLayer} from "@modules/Intersection/utils/layers/SeismicLayer";
+import type { SeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer";
 import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
-import type { LayerItem} from "@modules/_shared/components/EsvIntersection";
+import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { LayerType } from "@modules/_shared/components/EsvIntersection";
 import type { SurfaceStatisticalFanchart } from "@modules/_shared/components/EsvIntersection/layers/SurfaceStatisticalFanchartCanvasLayer";
 import { makeSurfaceStatisticalFanchartFromRealizationSurface } from "@modules/_shared/components/EsvIntersection/utils/surfaceStatisticalFancharts";
@@ -188,7 +186,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 colorScale.setRangeAndMidPoint(
                     data.min_grid_prop_value,
                     data.max_grid_prop_value,
-                    data.min_grid_prop_value + (data.max_grid_prop_value - data.min_grid_prop_value) / 2
+                    data.min_grid_prop_value + (data.max_grid_prop_value - data.min_grid_prop_value) / 2,
                 );
             }
 
@@ -339,7 +337,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                     surface.sampledValues,
                     surface.cumulatedLengths,
                     surface.surfaceName,
-                    currentColor
+                    currentColor,
                 );
                 labelData.push({
                     data: fanchart.data.mean,

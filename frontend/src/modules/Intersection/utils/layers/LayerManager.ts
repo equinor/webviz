@@ -102,11 +102,11 @@ export class LayerManager {
 
 export function useLayerManagerTopicValue<T extends LayerManagerTopic>(
     layerManager: LayerManager,
-    topic: T
+    topic: T,
 ): LayerManagerTopicValueTypes[T] {
     const value = React.useSyncExternalStore<LayerManagerTopicValueTypes[T]>(
         layerManager.makeSubscriberFunction(topic),
-        layerManager.makeSnapshotGetter(topic)
+        layerManager.makeSnapshotGetter(topic),
     );
 
     return value;
