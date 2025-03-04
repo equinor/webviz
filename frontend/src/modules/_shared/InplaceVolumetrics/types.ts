@@ -35,9 +35,7 @@ export enum SourceIdentifier {
     FLUID_ZONE = "FLUID_ZONE",
 }
 
-// const sourceAndTableIdentifiersUnion = { ...SourceIdentifier, ...InplaceVolumetricsIdentifier_api };
-export type SourceAndTableIdentifierUnion = SourceIdentifier & InplaceVolumetricsIdentifier_api;
-// (typeof sourceAndTableIdentifiersUnion)[keyof typeof sourceAndTableIdentifiersUnion];
+export type SourceAndTableIdentifierUnion = SourceIdentifier | InplaceVolumetricsIdentifier_api;
 
 export enum RealSelector {
     REAL = "REAL",

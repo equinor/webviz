@@ -9,7 +9,7 @@ import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
-import type { SelectorColumn , RealSelector } from "@modules/_shared/InplaceVolumetrics/types";
+import { RealSelector, type SelectorColumn } from "@modules/_shared/InplaceVolumetrics/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
@@ -80,7 +80,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const [selectedPlotType, setSelectedPlotType] = useAtom(userSelectedPlotTypeAtom);
     const [selectedIdentifierValueCriteria, setSelectedIdentifierValueCriteria] = useAtom(
-        selectedIdentifierValueCriteriaAtom
+        selectedIdentifierValueCriteriaAtom,
     );
 
     function handleFilterChange(newFilter: InplaceVolumetricsFilterSettings) {
@@ -91,7 +91,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIdentifierValueCriteria(
             newFilter.allowIdentifierValuesIntersection
                 ? IdentifierValueCriteria.ALLOW_INTERSECTION
-                : IdentifierValueCriteria.REQUIRE_EQUALITY
+                : IdentifierValueCriteria.REQUIRE_EQUALITY,
         );
     }
 

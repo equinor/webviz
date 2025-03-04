@@ -1,4 +1,4 @@
-import type { PvtData_api , getTableDataOptions } from "@api";
+import { type PvtData_api, getTableDataOptions } from "@api";
 import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import type { UseQueryResult } from "@tanstack/react-query";

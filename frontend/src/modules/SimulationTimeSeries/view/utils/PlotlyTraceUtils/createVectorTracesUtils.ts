@@ -8,7 +8,8 @@ import {
     StatisticFunction_api
 } from "@api";
 
-import type { FanchartData, FreeLineData, LowHighData, MinMaxData , createFanchartTraces } from "./fanchartPlotting";
+import type { FanchartData, FreeLineData, LowHighData, MinMaxData } from "./fanchartPlotting";
+import {createFanchartTraces} from "./fanchartPlotting";
 import type { LineData, StatisticsData} from "./statisticsPlotting";
 import { createStatisticsTraces } from "./statisticsPlotting";
 

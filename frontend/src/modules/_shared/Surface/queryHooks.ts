@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { SurfaceDataFloat_trans} from "./queryDataTransforms";
 import { transformSurfaceData } from "./queryDataTransforms";
-import type { FullSurfaceAddress , encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
+import { type FullSurfaceAddress , encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
 
 export function useRealizationSurfacesMetadataQuery(
     caseUuid: string | undefined,
