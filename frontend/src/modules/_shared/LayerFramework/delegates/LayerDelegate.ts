@@ -1,22 +1,26 @@
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
-import { QueryClient, isCancelledError } from "@tanstack/react-query";
+import type { QueryClient} from "@tanstack/react-query";
+import { isCancelledError } from "@tanstack/react-query";
 
 import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import type { LayerManager} from "../framework/LayerManager/LayerManager";
+import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
-import {
+import type {
     BoundingBox,
     Layer,
     SerializedLayer,
-    SerializedType,
     Settings,
     SettingsContext,
-    StoredData,
+    StoredData} from "../interfaces";
+import {
+    SerializedType
 } from "../interfaces";
 
 export enum LayerDelegateTopic {

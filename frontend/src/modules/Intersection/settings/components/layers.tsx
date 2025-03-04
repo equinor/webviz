@@ -1,9 +1,9 @@
 import React from "react";
 
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
@@ -11,9 +11,11 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2, point2Distance } from "@lib/utils/vec2";
+import type { Vec2} from "@lib/utils/vec2";
+import { point2Distance } from "@lib/utils/vec2";
+import type {
+    BaseLayer} from "@modules/Intersection/utils/layers/BaseLayer";
 import {
-    BaseLayer,
     LayerStatus,
     useIsLayerVisible,
     useLayerName,
@@ -21,8 +23,9 @@ import {
 } from "@modules/Intersection/utils/layers/BaseLayer";
 import { isGridLayer } from "@modules/Intersection/utils/layers/GridLayer";
 import { LayerFactory } from "@modules/Intersection/utils/layers/LayerFactory";
+import type {
+    LayerManager} from "@modules/Intersection/utils/layers/LayerManager";
 import {
-    LayerManager,
     LayerManagerTopic,
     useLayerManagerTopicValue,
 } from "@modules/Intersection/utils/layers/LayerManager";
@@ -30,7 +33,8 @@ import { isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer"
 import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer";
 import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
-import { LAYER_TYPE_TO_STRING_MAPPING, LayerType } from "@modules/Intersection/utils/layers/types";
+import type { LayerType } from "@modules/Intersection/utils/layers/types";
+import { LAYER_TYPE_TO_STRING_MAPPING } from "@modules/Intersection/utils/layers/types";
 import { Dropdown, MenuButton } from "@mui/base";
 import {
     Add,

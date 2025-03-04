@@ -1,6 +1,6 @@
-import { DeltaEnsembleIdent } from "../DeltaEnsembleIdent";
-import { EnsembleSet } from "../EnsembleSet";
-import { RegularEnsembleIdent } from "../RegularEnsembleIdent";
+import type { DeltaEnsembleIdent } from "../DeltaEnsembleIdent";
+import type { EnsembleSet } from "../EnsembleSet";
+import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 export function maybeAssignFirstSyncedEnsemble(
     currIdent: RegularEnsembleIdent | null,

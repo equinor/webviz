@@ -1,11 +1,12 @@
-import React from "react";
+import type React from "react";
 import Plot from "react-plotly.js";
 
 import { computeQuantile } from "@modules_shared/statistics";
 
-import { PlotType } from "plotly.js";
+import type { PlotType } from "plotly.js";
 
-import { ParameterDataArr, ParameterDistributionPlotType } from "../../typesAndEnums";
+import type { ParameterDataArr} from "../../typesAndEnums";
+import { ParameterDistributionPlotType } from "../../typesAndEnums";
 
 type ParameterDistributionPlotProps = {
     dataArr: ParameterDataArr[];

@@ -1,5 +1,4 @@
-import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
-import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
+import { encodePropertiesAsKeyValStr , encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 
 import { describe, expect, test } from "vitest";
 

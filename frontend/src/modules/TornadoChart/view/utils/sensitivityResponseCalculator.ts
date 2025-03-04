@@ -1,4 +1,5 @@
-import { EnsembleSensitivities, Sensitivity, SensitivityCase, SensitivityType } from "@framework/EnsembleSensitivities";
+import type { EnsembleSensitivities, Sensitivity, SensitivityCase} from "@framework/EnsembleSensitivities";
+import { SensitivityType } from "@framework/EnsembleSensitivities";
 import { computeQuantile } from "@modules_shared/statistics";
 
 export type EnsembleScalarResponse = {

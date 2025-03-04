@@ -1,8 +1,8 @@
-import { Size2D } from "@lib/utils/geometry";
-import { Layout, PlotData, PlotMarker } from "plotly.js";
+import type { Size2D } from "@lib/utils/geometry";
+import type { Layout, PlotData, PlotMarker } from "plotly.js";
 import { PressureOption, VfpParam } from "../types";
-import { VfpDataAccessor } from "./vfpDataAccessor";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { VfpDataAccessor } from "./vfpDataAccessor";
+import type { ColorScale } from "@lib/utils/ColorScale";
 
 export class VfpPlotBuilder {
     private _vfpDataAccessor: VfpDataAccessor;

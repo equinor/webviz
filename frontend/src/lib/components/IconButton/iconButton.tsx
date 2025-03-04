@@ -1,7 +1,8 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Button as ButtonUnstyled, ButtonProps as ButtonUnstyledProps } from "@mui/base";
+import type { ButtonProps as ButtonUnstyledProps } from "@mui/base";
+import { Button as ButtonUnstyled } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 

@@ -1,17 +1,18 @@
-import {
+import type {
     Item,
     SerializedColorScale,
     SerializedItem,
     SerializedLayer,
     SerializedSettingsGroup,
     SerializedSharedSetting,
-    SerializedType,
-    SerializedView,
+    SerializedView} from "../../interfaces";
+import {
+    SerializedType
 } from "../../interfaces";
 import { LayerRegistry } from "../../layers/LayerRegistry";
 import { SettingRegistry } from "../../settings/SettingRegistry";
 import { ColorScale } from "../ColorScale/ColorScale";
-import { LayerManager } from "../LayerManager/LayerManager";
+import type { LayerManager } from "../LayerManager/LayerManager";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { View } from "../View/View";

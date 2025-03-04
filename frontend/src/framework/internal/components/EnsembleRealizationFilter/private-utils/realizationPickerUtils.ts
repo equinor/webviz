@@ -1,4 +1,4 @@
-import { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
+import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 
 /**
  * Convert a realization number selection to a string tag for a realization picker.

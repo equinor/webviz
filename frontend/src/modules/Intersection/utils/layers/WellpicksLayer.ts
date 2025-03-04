@@ -1,7 +1,7 @@
 import { getStratigraphicUnitsOptions, getWellborePicksForWellboreOptions } from "@api";
 import { transformFormationData } from "@equinor/esv-intersection";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { QueryClient } from "@tanstack/query-core";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
 

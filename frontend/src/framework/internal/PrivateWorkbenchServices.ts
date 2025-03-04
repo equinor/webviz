@@ -1,6 +1,6 @@
-import { Workbench } from "../Workbench";
-import { TopicDefinitionsType, WorkbenchServices } from "../WorkbenchServices";
-import { NavigatorTopicDefinitions } from "../WorkbenchServices";
+import type { Workbench } from "../Workbench";
+import type { TopicDefinitionsType, NavigatorTopicDefinitions } from "../WorkbenchServices";
+import { WorkbenchServices  } from "../WorkbenchServices";
 
 export class PrivateWorkbenchServices extends WorkbenchServices {
     constructor(workbench: Workbench) {

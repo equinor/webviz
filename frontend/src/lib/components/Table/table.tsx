@@ -7,7 +7,8 @@ import { Close, ExpandLess, ExpandMore } from "@mui/icons-material";
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 

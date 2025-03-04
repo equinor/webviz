@@ -1,7 +1,7 @@
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { SettingsStatusWriter } from "@framework/StatusWriter";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { joinStringArrayToHumanReadableString } from "@modules/SimulationTimeSeries/utils/stringUtils";
 
 import { useAtomValue } from "jotai";

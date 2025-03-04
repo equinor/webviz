@@ -1,5 +1,5 @@
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { EnsembleRealizationFilterFunction } from "@framework/WorkbenchSession";
 
 export function computeRealizationsIntersection(
     ensembleIdents: RegularEnsembleIdent[],

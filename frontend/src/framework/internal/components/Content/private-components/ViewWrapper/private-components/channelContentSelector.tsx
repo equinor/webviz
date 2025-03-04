@@ -1,13 +1,13 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { ChannelContentDefinition } from "@framework/DataChannelTypes";
-import { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
+import type { ChannelContentDefinition } from "@framework/DataChannelTypes";
+import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Overlay } from "@lib/components/Overlay";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Vec2 } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { Close } from "@mui/icons-material";
 
 export type SelectableChannel = {

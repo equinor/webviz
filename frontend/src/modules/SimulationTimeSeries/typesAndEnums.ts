@@ -1,6 +1,7 @@
-import { Frequency_api, StatisticFunction_api, SummaryVectorObservations_api } from "@api";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SummaryVectorObservations_api } from "@api";
+import { Frequency_api, StatisticFunction_api } from "@api";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 /**
  * Definition of ensemble vector observation data

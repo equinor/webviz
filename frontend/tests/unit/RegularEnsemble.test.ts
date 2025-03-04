@@ -1,5 +1,7 @@
-import { EnsembleParameters, Parameter, ParameterType } from "@framework/EnsembleParameters";
-import { EnsembleSensitivities, Sensitivity, SensitivityType } from "@framework/EnsembleSensitivities";
+import type { Parameter} from "@framework/EnsembleParameters";
+import { EnsembleParameters, ParameterType } from "@framework/EnsembleParameters";
+import type { Sensitivity} from "@framework/EnsembleSensitivities";
+import { EnsembleSensitivities, SensitivityType } from "@framework/EnsembleSensitivities";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 
 import { describe, expect, test } from "vitest";

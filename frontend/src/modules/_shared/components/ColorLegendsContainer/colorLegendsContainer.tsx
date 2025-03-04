@@ -1,8 +1,9 @@
-import React from "react";
+import type React from "react";
 
-import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+import type { ColorScale} from "@lib/utils/ColorScale";
+import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
+import type { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
 
 const STYLE_CONSTANTS = {
     lineWidth: 6,

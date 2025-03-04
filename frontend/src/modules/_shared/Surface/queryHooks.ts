@@ -1,17 +1,18 @@
-import {
+import type {
     SurfaceDef_api,
     SurfaceMetaSet_api,
+ SurfaceDataPng_api } from "@api";
+import {
     getObservedSurfacesMetadataOptions,
     getRealizationSurfacesMetadataOptions,
-    getSurfaceDataOptions,
-} from "@api";
-import { SurfaceDataPng_api } from "@api";
+    getSurfaceDataOptions } from "@api";
 import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { UseQueryResult} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-import { SurfaceDataFloat_trans, transformSurfaceData } from "./queryDataTransforms";
-import { FullSurfaceAddress } from "./surfaceAddress";
-import { encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
+import type { SurfaceDataFloat_trans} from "./queryDataTransforms";
+import { transformSurfaceData } from "./queryDataTransforms";
+import type { FullSurfaceAddress , encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
 
 export function useRealizationSurfacesMetadataQuery(
     caseUuid: string | undefined,

@@ -1,10 +1,11 @@
 import { SortableListGroup } from "@lib/components/SortableList";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
-import { LayersActionGroup, LayersActions } from "../../LayersActions";
+import type { LayersActionGroup} from "../../LayersActions";
+import { LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Group, Item } from "../../interfaces";
+import type { Group, Item } from "../../interfaces";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";

@@ -1,21 +1,24 @@
-import {
+import type {
     EnsembleDetails_api,
     EnsembleParameter_api,
-    EnsembleSensitivity_api,
+    EnsembleSensitivity_api} from "@api";
+import {
     SensitivityType_api,
     getEnsembleDetailsOptions,
     getParametersOptions,
     getSensitivitiesOptions,
 } from "@api";
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
-import { QueryClient } from "@tanstack/react-query";
+import type { UserDeltaEnsembleSetting, UserEnsembleSetting } from "@framework/Workbench";
+import type { QueryClient } from "@tanstack/react-query";
 
-import { ContinuousParameter, DiscreteParameter, Parameter, ParameterType } from "../EnsembleParameters";
-import { Sensitivity, SensitivityCase, SensitivityType } from "../EnsembleSensitivities";
+import type { ContinuousParameter, DiscreteParameter, Parameter} from "../EnsembleParameters";
+import { ParameterType } from "../EnsembleParameters";
+import type { Sensitivity, SensitivityCase} from "../EnsembleSensitivities";
+import { SensitivityType } from "../EnsembleSensitivities";
 import { EnsembleSet } from "../EnsembleSet";
 import { RegularEnsemble } from "../RegularEnsemble";
-import { RegularEnsembleIdent } from "../RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 type EnsembleApiData = {
     ensembleDetails: EnsembleDetails_api;

@@ -1,11 +1,13 @@
 import { ItemDelegateTopic } from "./ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationFactory } from "../framework/utils/DeserializationFactory";
-import { Item, SerializedItem, instanceofGroup, instanceofLayer } from "../interfaces";
+import type { Item, SerializedItem} from "../interfaces";
+import { instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum GroupDelegateTopic {
     CHILDREN = "CHILDREN",

@@ -1,13 +1,15 @@
-import React from "react";
+import type React from "react";
 
-import { VectorDefinitionsType, vectorDefinitions } from "@assets/vectorDefinitions";
+import type { VectorDefinitionsType} from "@assets/vectorDefinitions";
+import { vectorDefinitions } from "@assets/vectorDefinitions";
+import type {
+    SmartNodeSelectorProps,
+    TreeDataNode} from "@lib/components/SmartNodeSelector";
 import {
     Direction,
     KeyEventType,
     SmartNodeSelectorComponent,
-    SmartNodeSelectorProps,
-    TreeData,
-    TreeDataNode,
+    TreeData
 } from "@lib/components/SmartNodeSelector";
 
 import aquifer from "./private-assets/aquifer.svg";

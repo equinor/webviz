@@ -1,10 +1,10 @@
 import React from "react";
 
-import { AtomStoreMaster } from "./AtomStoreMaster";
-import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
+import type { AtomStoreMaster } from "./AtomStoreMaster";
+import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilterSet } from "./RealizationFilterSet";
-import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import { UserCreatedItems } from "./UserCreatedItems";
 
 export type EnsembleRealizationFilterFunction = (

@@ -1,7 +1,8 @@
-import { InplaceVolumetricsTableDefinition_api, getTableDefinitionsOptions } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { InplaceVolumetricsTableDefinition_api} from "@api";
+import { getTableDefinitionsOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
-import { QueryObserverResult } from "@tanstack/query-core";
+import type { QueryObserverResult } from "@tanstack/query-core";
 
 import { selectedEnsembleIdentsAtom } from "./derivedAtoms";
 

@@ -1,13 +1,13 @@
 import React from "react";
 
-import { FluidZone_api, InplaceVolumetricsIdentifierWithValues_api, InplaceVolumetricsIdentifier_api } from "@api";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { SettingsContext } from "@framework/ModuleContext";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { FluidZone_api, InplaceVolumetricsIdentifierWithValues_api, InplaceVolumetricsIdentifier_api } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { SettingsContext } from "@framework/ModuleContext";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
-import { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
+import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { ErrorWrapper } from "@lib/components/ErrorWrapper";

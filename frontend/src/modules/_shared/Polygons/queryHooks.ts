@@ -1,13 +1,15 @@
-import {
+import type {
     PolygonData_api,
-    PolygonsMeta_api,
+    PolygonsMeta_api} from "@api";
+import {
     getPolygonsData,
     getPolygonsDataQueryKey,
     getPolygonsDirectoryOptions,
 } from "@api";
-import { QueryFunction, QueryKey, UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { QueryFunction, QueryKey, UseQueryResult} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-import { PolygonsAddress } from "./polygonsAddress";
+import type { PolygonsAddress } from "./polygonsAddress";
 
 export function usePolygonsDirectoryQuery(
     caseUuid: string | undefined,

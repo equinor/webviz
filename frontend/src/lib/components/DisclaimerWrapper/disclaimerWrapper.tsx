@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { Warning } from "@mui/icons-material";
 

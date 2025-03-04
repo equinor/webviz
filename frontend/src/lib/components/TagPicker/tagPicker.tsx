@@ -8,7 +8,8 @@ import { Close, ExpandMore } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 import { Checkbox } from "../Checkbox";
 import { IconButton } from "../IconButton";
 import { Virtualization } from "../Virtualization";

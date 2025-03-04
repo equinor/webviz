@@ -3,12 +3,13 @@ import React from "react";
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2, point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
+import type { Vec2} from "@lib/utils/vec2";
+import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
 
-import { SortableListGroupProps } from "./sortableListGroup";
-import { SortableListItemProps } from "./sortableListItem";
+import type { SortableListGroupProps } from "./sortableListGroup";
+import type { SortableListItemProps } from "./sortableListItem";
 
 export enum ItemType {
     ITEM = "item",

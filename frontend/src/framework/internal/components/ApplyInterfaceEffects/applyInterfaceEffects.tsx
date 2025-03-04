@@ -1,7 +1,7 @@
-import React from "react";
+import type React from "react";
 
-import { ModuleInterfaceTypes } from "@framework/Module";
-import { ModuleInstance } from "@framework/ModuleInstance";
+import type { ModuleInterfaceTypes } from "@framework/Module";
+import type { ModuleInstance } from "@framework/ModuleInstance";
 
 import { useAtom } from "jotai";
 

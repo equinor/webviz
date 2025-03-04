@@ -4,7 +4,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { v4 } from "uuid";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 
 export type CheckboxProps = {
     id?: string;

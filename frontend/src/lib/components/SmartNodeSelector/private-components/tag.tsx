@@ -6,7 +6,7 @@ import { Close, Error, ExpandLess, ExpandMore, Help, Warning } from "@mui/icons-
 
 import "animate.css";
 
-import { TreeNodeSelection } from "../private-utils/treeNodeSelection";
+import type { TreeNodeSelection } from "../private-utils/treeNodeSelection";
 
 type TagProps = {
     key: string;

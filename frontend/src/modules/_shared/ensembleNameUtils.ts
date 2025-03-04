@@ -1,7 +1,7 @@
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export function makeDistinguishableEnsembleDisplayName(
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,

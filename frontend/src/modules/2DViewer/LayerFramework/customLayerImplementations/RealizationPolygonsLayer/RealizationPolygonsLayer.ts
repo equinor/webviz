@@ -1,16 +1,17 @@
-import { PolygonData_api, getPolygonsDataOptions } from "@api";
+import type { PolygonData_api} from "@api";
+import { getPolygonsDataOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import type { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
 import { RealizationPolygonsSettingsContext } from "./RealizationPolygonsSettingsContext";
-import { RealizationPolygonsSettings } from "./types";
+import type { RealizationPolygonsSettings } from "./types";
 
 export class RealizationPolygonsLayer implements Layer<RealizationPolygonsSettings, PolygonData_api[]> {
     private _layerDelegate: LayerDelegate<RealizationPolygonsSettings, PolygonData_api[]>;

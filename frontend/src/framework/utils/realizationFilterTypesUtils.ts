@@ -1,4 +1,4 @@
-import {
+import type {
     NumberRange,
     ParameterValueSelection,
     RealizationNumberSelection,

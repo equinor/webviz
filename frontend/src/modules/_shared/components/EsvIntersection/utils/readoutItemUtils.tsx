@@ -1,4 +1,4 @@
-import {
+import type {
     Casing,
     Cement,
     Completion,
@@ -22,8 +22,9 @@ import {
     isWellborepathLayer,
 } from "./layers";
 
-import { ReadoutItem as GenericReadoutItem, InfoItem } from "../../ReadoutBox";
-import { AdditionalInformationItem, AdditionalInformationType, ReadoutItem } from "../types/types";
+import type { ReadoutItem as GenericReadoutItem, InfoItem } from "../../ReadoutBox";
+import type { AdditionalInformationItem, ReadoutItem } from "../types/types";
+import { AdditionalInformationType } from "../types/types";
 
 export function getLabelFromLayerData(readoutItem: ReadoutItem): string {
     const layer = readoutItem.layer;

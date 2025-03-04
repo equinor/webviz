@@ -1,8 +1,8 @@
 import React from "react";
 
-import { Parameter } from "@framework/EnsembleParameters";
-import { SmartNodeSelector, SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
-import { TreeDataNode } from "@lib/components/SmartNodeSelector";
+import type { Parameter } from "@framework/EnsembleParameters";
+import type { SmartNodeSelectorSelection , TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { SmartNodeSelector  } from "@lib/components/SmartNodeSelector";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isEqual } from "lodash";

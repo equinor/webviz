@@ -1,12 +1,12 @@
 import React from "react";
 
-import { BoundingBox2D_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
+import type { BoundingBox2D_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Wellbore } from "@framework/types/wellbore";
+import type { Wellbore } from "@framework/types/wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -25,7 +25,7 @@ import {
     createWellboreTrajectoryLayer,
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 
 type Bounds = [number, number, number, number];
 

@@ -8,7 +8,7 @@ import _ from "lodash";
 import { Suggestions } from "./private-components/suggestions";
 import { Tag } from "./private-components/tag";
 import { TreeData } from "./private-utils/treeData";
-import { TreeDataNode } from "./private-utils/treeDataNodeTypes";
+import type { TreeDataNode } from "./private-utils/treeDataNodeTypes";
 import { TreeNodeSelection } from "./private-utils/treeNodeSelection";
 
 export enum Direction {

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SettingsStatusWriter } from "@framework/StatusWriter";
+import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Label } from "@lib/components/Label";
 

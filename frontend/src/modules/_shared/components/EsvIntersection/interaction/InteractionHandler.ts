@@ -1,14 +1,15 @@
-import { Controller, Layer, SchematicData, SchematicLayer } from "@equinor/esv-intersection";
+import type { Controller, Layer, SchematicData, SchematicLayer } from "@equinor/esv-intersection";
 
 import { HighlightOverlay } from "./HighlightOverlay";
-import {
+import type {
     Intersection,
+    IntersectionHandlerOptions} from "./IntersectionHandler";
+import {
     IntersectionHandler,
-    IntersectionHandlerOptions,
     IntersectionHandlerTopic,
 } from "./IntersectionHandler";
 
-import { HighlightItem, LayerDataItem, ReadoutItem } from "../types/types";
+import type { HighlightItem, LayerDataItem, ReadoutItem } from "../types/types";
 import {
     makeHighlightItemFromIntersectionResult,
     makeReadoutItemFromIntersectionResult,

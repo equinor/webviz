@@ -1,7 +1,7 @@
-import React from "react";
+import type React from "react";
 
 import { GuiState, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { Badge } from "@lib/components/Badge";
 import { Button } from "@lib/components/Button";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

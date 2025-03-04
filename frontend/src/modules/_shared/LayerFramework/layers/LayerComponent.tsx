@@ -1,6 +1,6 @@
-import React from "react";
+import type React from "react";
 
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
@@ -14,7 +14,7 @@ import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../de
 import { EditName } from "../framework/utilityComponents/EditName";
 import { RemoveItemButton } from "../framework/utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../framework/utilityComponents/VisibilityToggle";
-import { Layer, Setting } from "../interfaces";
+import type { Layer, Setting } from "../interfaces";
 import { SettingComponent } from "../settings/SettingComponent";
 
 export type LayerComponentProps = {

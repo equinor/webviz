@@ -1,10 +1,11 @@
 import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
-import { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { Parameter} from "@framework/EnsembleParameters";
+import { ParameterIdent } from "@framework/EnsembleParameters";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
@@ -19,7 +20,7 @@ import { Label } from "@lib/components/Label";
 import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
-import { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
@@ -55,7 +56,7 @@ import {
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import {
     FanchartStatisticOption,
     FanchartStatisticOptionEnumToStringMapping,

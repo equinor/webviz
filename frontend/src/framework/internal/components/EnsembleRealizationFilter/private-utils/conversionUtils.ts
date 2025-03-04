@@ -1,4 +1,4 @@
-import { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
+import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 
 import { isEqual } from "lodash";
 

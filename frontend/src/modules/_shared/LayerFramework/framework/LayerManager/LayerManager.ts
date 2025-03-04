@@ -1,21 +1,25 @@
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import {
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type {
     EnsembleRealizationFilterFunction,
-    WorkbenchSession,
+    WorkbenchSession} from "@framework/WorkbenchSession";
+import {
     WorkbenchSessionEvent,
     createEnsembleRealizationFilterFuncForWorkbenchSession,
 } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { IntersectionPolyline, IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
-import { QueryClient } from "@tanstack/react-query";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { IntersectionPolyline} from "@framework/userCreatedItems/IntersectionPolylines";
+import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
+import type { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe} from "../../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { Group, Item, SerializedLayerManager, SerializedType } from "../../interfaces";
+import type { Group, Item, SerializedLayerManager} from "../../interfaces";
+import { SerializedType } from "../../interfaces";
 
 export enum LayerManagerTopic {
     ITEMS_CHANGED = "ITEMS_CHANGED",

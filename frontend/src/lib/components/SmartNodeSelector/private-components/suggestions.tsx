@@ -1,10 +1,11 @@
 import React from "react";
-import { Root, createRoot } from "react-dom/client";
+import type { Root} from "react-dom/client";
+import { createRoot } from "react-dom/client";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { TreeDataNodeMetaData } from "../private-utils/treeDataNodeTypes";
-import { TreeNodeSelection } from "../private-utils/treeNodeSelection";
+import type { TreeDataNodeMetaData } from "../private-utils/treeDataNodeTypes";
+import type { TreeNodeSelection } from "../private-utils/treeNodeSelection";
 
 type SuggestionsProps = {
     suggestionsRef: React.RefObject<HTMLDivElement>;

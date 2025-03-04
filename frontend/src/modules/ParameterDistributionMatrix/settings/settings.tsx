@@ -1,12 +1,13 @@
 import { ParameterIdent } from "@framework/EnsembleParameters";
-import { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 
@@ -24,7 +25,7 @@ import {
     selectedParameterIdentsAtom,
 } from "./atoms/derivedAtoms";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import {
     MAX_PARAMETERS,
     ParameterDistributionPlotType,

@@ -1,11 +1,12 @@
 import React from "react";
 
-import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Workbench } from "@framework/Workbench";
+import type { GuiEventPayloads} from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2 } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 
 export type DataChannelVisualizationProps = {
     workbench: Workbench;

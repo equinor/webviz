@@ -1,5 +1,5 @@
-import { ParameterIdent } from "@framework/EnsembleParameters";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { ParameterDistributionPlotType } from "@modules/ParameterDistributionMatrix/typesAndEnums";

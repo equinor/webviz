@@ -1,17 +1,18 @@
-import {
+import type {
     WellCompletionsData_api,
     WellCompletionsUnits_api,
     WellCompletionsWell_api,
     WellCompletionsZone_api,
 } from "@api";
-import { ColorSet } from "@lib/utils/ColorSet";
-import {
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type {
     CompletionPlotData,
     PlotData,
+    WellPlotData,
+    Zone} from "@webviz/well-completions-plot";
+import {
     SortDirection,
     SortWellsBy,
-    WellPlotData,
-    Zone,
     areCompletionsPlotDataValuesEqual,
     createSortedWells,
     createSortedWellsFromSequence,

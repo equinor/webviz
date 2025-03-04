@@ -1,13 +1,14 @@
 import React from "react";
 
-import { EnsembleParameters } from "@framework/EnsembleParameters";
+import type { EnsembleParameters } from "@framework/EnsembleParameters";
 import { RealizationFilter } from "@framework/RealizationFilter";
+import type {
+    ParameterValueSelection,
+    RealizationNumberSelection} from "@framework/types/realizationFilterTypes";
 import {
     IncludeExcludeFilter,
-    ParameterValueSelection,
     RealizationFilterType,
-    RealizationFilterTypeStringMapping,
-    RealizationNumberSelection,
+    RealizationFilterTypeStringMapping
 } from "@framework/types/realizationFilterTypes";
 import { Button } from "@lib/components/Button";
 import { Label } from "@lib/components/Label";
@@ -16,9 +17,10 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Check, Clear } from "@mui/icons-material";
 
 import { ByParameterValueFilter } from "./private-components/byParameterValueFilter";
+import type {
+    ByRealizationNumberFilterSelection} from "./private-components/byRealizationNumberFilter";
 import {
-    ByRealizationNumberFilter,
-    ByRealizationNumberFilterSelection,
+    ByRealizationNumberFilter
 } from "./private-components/byRealizationNumberFilter";
 import { RealizationNumberDisplay } from "./private-components/realizationNumberDisplay";
 import { createBestSuggestedRealizationNumberSelections } from "./private-utils/conversionUtils";

@@ -5,7 +5,7 @@ import { ColorTileGroup } from "@lib/components/ColorTileGroup";
 import { IconButton } from "@lib/components/IconButton";
 import { Overlay } from "@lib/components/Overlay";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";

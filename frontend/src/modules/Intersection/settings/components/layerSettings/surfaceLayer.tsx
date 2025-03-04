@@ -1,22 +1,26 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceMetaSet_api, getRealizationSurfacesMetadataOptions } from "@api";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { SurfaceMetaSet_api} from "@api";
+import { SurfaceAttributeType_api, getRealizationSurfacesMetadataOptions } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { WorkbenchSession} from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Select } from "@lib/components/Select";
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
-import { SurfaceLayer, SurfaceLayerSettings } from "@modules/Intersection/utils/layers/SurfaceLayer";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { SurfaceLayer, SurfaceLayerSettings } from "@modules/Intersection/utils/layers/SurfaceLayer";
+import type { UseQueryResult} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { cloneDeep, isEqual } from "lodash";
 

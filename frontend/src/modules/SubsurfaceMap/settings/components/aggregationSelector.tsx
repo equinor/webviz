@@ -1,5 +1,6 @@
 import { SurfaceStatisticFunction_api } from "@api";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 
 //

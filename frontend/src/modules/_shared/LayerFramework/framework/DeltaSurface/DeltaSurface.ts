@@ -1,10 +1,11 @@
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { LayerDelegate } from "../../delegates/LayerDelegate";
+import type { LayerDelegate } from "../../delegates/LayerDelegate";
 import { SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { Group, SerializedDeltaSurface, SerializedType, instanceofLayer } from "../../interfaces";
-import { LayerManager } from "../LayerManager/LayerManager";
+import type { Group, SerializedDeltaSurface} from "../../interfaces";
+import { SerializedType, instanceofLayer } from "../../interfaces";
+import type { LayerManager } from "../LayerManager/LayerManager";
 
 export class DeltaSurface implements Group {
     private _itemDelegate: ItemDelegate;

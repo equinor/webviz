@@ -1,5 +1,5 @@
-import { InterfaceEffects } from "@framework/Module";
-import { ViewToSettingsInterface } from "@modules/3DViewer/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { ViewToSettingsInterface } from "@modules/3DViewer/interfaces";
 
 import { editCustomIntersectionPolylineEditModeActiveAtom, intersectionTypeAtom } from "./baseAtoms";
 

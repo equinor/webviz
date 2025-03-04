@@ -1,7 +1,7 @@
 import { ResizablePanels } from "@lib/components/ResizablePanels";
-import { ResizablePanelsProps } from "@lib/components/ResizablePanels/resizablePanels";
-import { Size2D } from "@lib/utils/geometry";
-import { Vec2 } from "@lib/utils/vec2";
+import type { ResizablePanelsProps } from "@lib/components/ResizablePanels/resizablePanels";
+import type { Size2D } from "@lib/utils/geometry";
+import type { Vec2 } from "@lib/utils/vec2";
 import { expect, test } from "@playwright/experimental-ct-react";
 import type { TestType, Locator } from "@playwright/experimental-ct-core";
 

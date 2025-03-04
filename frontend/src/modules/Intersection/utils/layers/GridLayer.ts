@@ -1,18 +1,20 @@
 import { postGetPolylineIntersectionOptions } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
+import type {
+    AdjustedPolylineIntersection} from "@modules/_shared/utils/wellbore";
 import {
-    AdjustedPolylineIntersection,
     transformPolylineIntersection,
     transformPolylineIntersectionResult,
 } from "@modules/_shared/utils/wellbore";
-import { QueryClient } from "@tanstack/query-core";
+import type { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
 
-import { BaseLayer, BoundingBox, LayerTopic } from "./BaseLayer";
+import type { BoundingBox} from "./BaseLayer";
+import { BaseLayer, LayerTopic } from "./BaseLayer";
 
 export type GridLayerSettings = {
     ensembleIdent: RegularEnsembleIdent | null;

@@ -1,7 +1,7 @@
 import React from "react";
 
-import { AtomStoreMaster } from "./AtomStoreMaster";
-import { WorkbenchSession } from "./WorkbenchSession";
+import type { AtomStoreMaster } from "./AtomStoreMaster";
+import type { WorkbenchSession } from "./WorkbenchSession";
 import { IntersectionPolylines, IntersectionPolylinesEvent } from "./userCreatedItems/IntersectionPolylines";
 
 export interface UserCreatedItemSet {

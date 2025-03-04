@@ -2,7 +2,7 @@ import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2 } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
 
@@ -325,11 +325,11 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                 }}
             />
             {props.children.map((el: React.ReactNode, index: number) => (
-                /* eslint-disable react/no-array-index-key */
+                 
                 <React.Fragment key={`resizable-panel-${index}`}>
                     <div
                         className="flex-grow overflow-hidden"
-                        /* eslint-disable no-return-assign */
+                         
                         ref={(element) => (individualPanelRefs.current[index] = element)}
                         style={makeStyle(index)}
                     >

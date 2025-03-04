@@ -1,8 +1,10 @@
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingTopic } from "../../delegates/SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { Item, Layer, SerializedSharedSetting, SerializedType, Setting, instanceofLayer } from "../../interfaces";
-import { LayerManager, LayerManagerTopic } from "../LayerManager/LayerManager";
+import type { Item, Layer, SerializedSharedSetting, Setting} from "../../interfaces";
+import { SerializedType, instanceofLayer } from "../../interfaces";
+import type { LayerManager} from "../LayerManager/LayerManager";
+import { LayerManagerTopic } from "../LayerManager/LayerManager";
 
 export class SharedSetting implements Item {
     private _wrappedSetting: Setting<any>;

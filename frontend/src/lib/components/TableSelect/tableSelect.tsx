@@ -1,10 +1,12 @@
-import React, { Key } from "react";
+import type { Key } from "react";
+import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { isEqual } from "lodash";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
 import { withDefaults } from "../_component-utils/components";

@@ -1,9 +1,11 @@
 import React from "react";
 
-import { GuiMessageBroker, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import type { GuiMessageBroker} from "@framework/GuiMessageBroker";
+import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
+import type {
+    ModuleInstanceStatusControllerInternal} from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import {
-    ModuleInstanceStatusControllerInternal,
     useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { isDevMode } from "@lib/utils/devMode";

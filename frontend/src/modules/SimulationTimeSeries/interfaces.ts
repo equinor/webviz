@@ -1,8 +1,8 @@
-import { Frequency_api } from "@api";
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { ParameterIdent } from "@framework/EnsembleParameters";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { Frequency_api } from "@api";
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
     colorRealizationsByParameterAtom,
@@ -21,7 +21,7 @@ import {
     selectedRegularEnsemblesAtom,
     vectorSpecificationsAtom,
 } from "./settings/atoms/derivedAtoms";
-import { GroupBy, StatisticsSelection, SubplotLimitDirection, VectorSpec, VisualizationMode } from "./typesAndEnums";
+import type { GroupBy, StatisticsSelection, SubplotLimitDirection, VectorSpec, VisualizationMode } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     groupBy: GroupBy;

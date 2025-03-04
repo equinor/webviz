@@ -1,5 +1,5 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { VfpParam,} from "./types";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { VfpParam, PressureOption } from "./types";
 
 import {
     selectedAlqIndicesAtom,
@@ -7,12 +7,10 @@ import {
     selectedPressureOptionAtom,
     selectedThpIndicesAtom,
     selectedWfrIndicesAtom,
-} from "./settings/atoms/derivedAtoms";
+ selectedColorByAtom } from "./settings/atoms/derivedAtoms";
 import { vfpTableQueryAtom } from "./settings/atoms/queryAtoms";
-import { PressureOption } from "./types";
-import { selectedColorByAtom } from "./settings/atoms/derivedAtoms";
-import { UseQueryResult } from "@tanstack/react-query";
-import { VfpProdTable_api, VfpInjTable_api } from "@api";
+import type { UseQueryResult } from "@tanstack/react-query";
+import type { VfpProdTable_api, VfpInjTable_api } from "@api";
 
 type SettingsToViewInterface = {
     vfpDataQuery: UseQueryResult<VfpProdTable_api | VfpInjTable_api, Error>;

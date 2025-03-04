@@ -1,20 +1,21 @@
 import { getDrilledWellboreHeadersOptions, getGridModelsInfoOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
+import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import type { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
 import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
 import { GridNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/GridNameSetting";
+import type {
+    IntersectionSettingValue} from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
 import {
-    IntersectionSetting,
-    IntersectionSettingValue,
+    IntersectionSetting
 } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
 import { RealizationSetting } from "@modules/_shared/LayerFramework/settings/implementations/RealizationSetting";
 import { ShowGridLinesSetting } from "@modules/_shared/LayerFramework/settings/implementations/ShowGridLinesSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
-import { IntersectionRealizationGridSettings } from "./types";
+import type { IntersectionRealizationGridSettings } from "./types";
 
 export class IntersectionRealizationGridSettingsContext
     implements SettingsContext<IntersectionRealizationGridSettings>

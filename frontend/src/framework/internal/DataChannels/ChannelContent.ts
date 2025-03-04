@@ -1,4 +1,4 @@
-import { DataElement, KeyType } from "@framework/DataChannelTypes";
+import type { DataElement, KeyType } from "@framework/DataChannelTypes";
 
 export interface ChannelContentDefinition {
     readonly contentIdString: string;

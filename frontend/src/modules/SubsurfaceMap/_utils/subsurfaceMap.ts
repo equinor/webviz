@@ -1,4 +1,4 @@
-import { SurfaceDef_api, PolygonData_api, WellboreTrajectory_api } from "@api";
+import type { SurfaceDef_api, PolygonData_api, WellboreTrajectory_api } from "@api";
 
 export type SurfaceMeshLayerSettings = {
     contours?: boolean | number[];

@@ -1,10 +1,11 @@
 import React from "react";
 
-import { SettingsContext, ViewContext } from "./ModuleContext";
-import {
+import type { SettingsContext, ViewContext } from "./ModuleContext";
+import type {
     ModuleInstanceStatusController,
+    StatusMessage} from "./ModuleInstanceStatusController";
+import {
     Origin,
-    StatusMessage,
     StatusMessageType,
     StatusSource,
 } from "./ModuleInstanceStatusController";

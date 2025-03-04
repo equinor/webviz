@@ -1,6 +1,7 @@
-import { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
-import { InplaceVolumetricsFilterSelections } from "@modules/InplaceVolumetricsTable/types";
-import { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
+import type { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
+import type { InplaceVolumetricsFilterSelections } from "@modules/InplaceVolumetricsTable/types";
+import type { SourceAndTableIdentifierUnion, SourceIdentifier} from "@modules/_shared/InplaceVolumetrics/types";
+import { TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
 

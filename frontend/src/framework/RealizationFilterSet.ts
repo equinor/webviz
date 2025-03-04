@@ -1,5 +1,5 @@
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
-import { EnsembleSet } from "./EnsembleSet";
+import type { EnsembleSet } from "./EnsembleSet";
 import { RealizationFilter } from "./RealizationFilter";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 

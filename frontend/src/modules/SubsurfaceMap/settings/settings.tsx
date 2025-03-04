@@ -1,7 +1,8 @@
 import React from "react";
 
-import { SurfaceAttributeType_api, SurfaceStatisticFunction_api } from "@api";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { SurfaceStatisticFunction_api } from "@api";
+import { SurfaceAttributeType_api } from "@api";
+import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -15,11 +16,11 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
-import { PolygonsAddress, PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
-import { RealizationSurfaceAddress, StatisticalSurfaceAddress } from "@modules/_shared/Surface";
-import { SurfaceAddressBuilder, SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
-import { useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import type { PolygonsAddress} from "@modules/_shared/Polygons";
+import { PolygonsDirectory, usePolygonsDirectoryQuery } from "@modules/_shared/Polygons";
+import type { RealizationSurfaceAddress, StatisticalSurfaceAddress , SurfaceAddressBuilder, SurfaceDirectory, SurfaceTimeType , useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
 import { useDrilledWellboreHeadersQuery } from "@modules/_shared/WellBore/queryHooks";
 
 import { useAtom, useSetAtom } from "jotai";
@@ -34,7 +35,7 @@ import {
 } from "./atoms/baseAtoms";
 import { AggregationSelector } from "./components/aggregationSelector";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 //-----------------------------------------------------------------------------------------------------------
 type LabelledCheckboxProps = {

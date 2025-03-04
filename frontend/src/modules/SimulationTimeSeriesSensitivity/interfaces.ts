@@ -1,5 +1,5 @@
-import { Frequency_api } from "@api";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { Frequency_api } from "@api";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
     resamplingFrequencyAtom,
@@ -8,7 +8,7 @@ import {
     showStatisticsAtom,
 } from "./settings/atoms/baseAtoms";
 import { selectedSensitivityNamesAtom, vectorSpecificationAtom } from "./settings/atoms/derivedAtoms";
-import { VectorSpec } from "./typesAndEnums";
+import type { VectorSpec } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     vectorSpecification: VectorSpec | null;

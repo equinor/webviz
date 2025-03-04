@@ -3,11 +3,12 @@ import React from "react";
 import WebvizLogo from "@assets/webviz.svg";
 import { GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench, WorkbenchEvents } from "@framework/Workbench";
+import type { UserDeltaEnsembleSetting, UserEnsembleSetting, Workbench} from "@framework/Workbench";
+import { WorkbenchEvents } from "@framework/Workbench";
 import { useEnsembleSet, useIsEnsembleSetLoading } from "@framework/WorkbenchSession";
 import { LoginButton } from "@framework/internal/components/LoginButton";
 import { SelectEnsemblesDialog } from "@framework/internal/components/SelectEnsemblesDialog";
-import {
+import type {
     BaseEnsembleItem,
     DeltaEnsembleItem,
     RegularEnsembleItem,

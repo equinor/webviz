@@ -1,16 +1,17 @@
-import React from "react";
+import type React from "react";
 
-import { SummaryVectorObservations_api } from "@api";
-import { ViewContext } from "@framework/ModuleContext";
-import { ColorSet } from "@lib/utils/ColorSet";
-import { Size2D } from "@lib/utils/geometry";
-import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import type { SummaryVectorObservations_api } from "@api";
+import type { ViewContext } from "@framework/ModuleContext";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type { Size2D } from "@lib/utils/geometry";
+import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { useAtomValue } from "jotai";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
-import { GroupBy, VectorSpec, VisualizationMode } from "../../typesAndEnums";
+import type { VectorSpec} from "../../typesAndEnums";
+import { GroupBy, VisualizationMode } from "../../typesAndEnums";
 import { resampleFrequencyAtom } from "../atoms/baseAtoms";
 import {
     activeTimestampUtcMsAtom,
@@ -20,7 +21,7 @@ import {
 } from "../atoms/derivedAtoms";
 import { vectorObservationsQueriesAtom } from "../atoms/queryAtoms";
 import { PlotBuilder, SubplotOwner } from "../utils/PlotBuilder";
-import { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
+import type { EnsemblesContinuousParameterColoring } from "../utils/ensemblesContinuousParameterColoring";
 import {
     filterVectorSpecificationAndFanchartStatisticsDataArray,
     filterVectorSpecificationAndIndividualStatisticsDataArray,

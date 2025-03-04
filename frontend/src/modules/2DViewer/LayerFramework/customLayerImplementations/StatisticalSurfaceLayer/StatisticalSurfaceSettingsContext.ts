@@ -1,12 +1,12 @@
-import { SurfaceStatisticFunction_api, SurfaceTimeType_api } from "@api";
-import { getRealizationSurfacesMetadataOptions } from "@api";
+import { SurfaceStatisticFunction_api, SurfaceTimeType_api , getRealizationSurfacesMetadataOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
+import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import type { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
 import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
+import type {
+    SensitivityNameCasePair} from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
 import {
-    SensitivityNameCasePair,
     SensitivitySetting,
 } from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
 import { StatisticFunctionSetting } from "@modules/_shared/LayerFramework/settings/implementations/StatisticFunctionSetting";
@@ -14,7 +14,7 @@ import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/imp
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
-import { StatisticalSurfaceSettings } from "./types";
+import type { StatisticalSurfaceSettings } from "./types";
 
 export class StatisticalSurfaceSettingsContext implements SettingsContext<StatisticalSurfaceSettings> {
     private _contextDelegate: SettingsContextDelegate<StatisticalSurfaceSettings>;

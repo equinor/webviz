@@ -2,7 +2,7 @@ import React from "react";
 
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
-import { SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
 import { Button, Dropdown, MenuButton } from "@mui/base";
 import { Add } from "@mui/icons-material";
 

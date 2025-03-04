@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

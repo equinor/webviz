@@ -1,9 +1,10 @@
-import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
+import type { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelectedIdentifierValues } from "@modules/_shared/InplaceVolumetrics/fixupUserSelectedIdentifierValues";
-import { RealSelector, SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import type { SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import { RealSelector } from "@modules/_shared/InplaceVolumetrics/types";
 import {
     TableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,

@@ -1,7 +1,6 @@
-import { VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
-import { StatisticFunction_api } from "@api";
+import type { VectorRealizationData_api, VectorStatisticSensitivityData_api , StatisticFunction_api } from "@api";
 
-import { PlotData } from "plotly.js";
+import type { PlotData } from "plotly.js";
 
 export interface TimeSeriesPlotlyTrace extends Partial<PlotData> {
     realizationNumber?: number | null;

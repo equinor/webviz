@@ -1,12 +1,13 @@
-import { PvtData_api } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { ColorSet } from "@lib/utils/ColorSet";
-import { Size2D } from "@lib/utils/geometry";
-import { Figure, makeSubplots } from "@modules/_shared/Figure";
+import type { PvtData_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type { Size2D } from "@lib/utils/geometry";
+import type { Figure} from "@modules/_shared/Figure";
+import { makeSubplots } from "@modules/_shared/Figure";
 
-import { Layout, PlotData } from "plotly.js";
+import type { Layout, PlotData } from "plotly.js";
 
-import { PvtDataAccessor } from "./PvtDataAccessor";
+import type { PvtDataAccessor } from "./PvtDataAccessor";
 
 import {
     ColorBy,

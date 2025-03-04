@@ -10,11 +10,11 @@
  */
 
 /* eslint-disable react-hooks/rules-of-hooks */
-import { GlobalTopicDefinitions, TopicDefinitionsType } from "@framework/WorkbenchServices";
+import type { GlobalTopicDefinitions, TopicDefinitionsType } from "@framework/WorkbenchServices";
 import { useSubscribedValueConditionally } from "@framework/WorkbenchServices";
-import { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
 
-import { SettingsContext, ViewContext } from "./ModuleContext";
+import type { SettingsContext, ViewContext } from "./ModuleContext";
 
 export enum SyncSettingKey {
     ENSEMBLE = "ENSEMBLE",

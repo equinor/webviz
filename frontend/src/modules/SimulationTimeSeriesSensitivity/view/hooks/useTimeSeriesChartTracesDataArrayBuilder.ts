@@ -1,8 +1,10 @@
-import { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
+import type { VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
+import { StatisticFunction_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type {
+    TimeSeriesPlotlyTrace} from "@modules/SimulationTimeSeriesSensitivity/view/utils/createTracesUtils";
 import {
-    TimeSeriesPlotlyTrace,
     createLineTrace,
     createRealizationLineTraces,
     createStatisticalLineTraces,

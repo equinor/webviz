@@ -1,4 +1,4 @@
-import { SurfaceStatisticalFanchart } from "../layers/SurfaceStatisticalFanchartCanvasLayer";
+import type { SurfaceStatisticalFanchart } from "../layers/SurfaceStatisticalFanchartCanvasLayer";
 
 export type StratigraphyColorMap = { [name: string]: string };
 

@@ -1,5 +1,6 @@
-import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
-import { TreeDataNode } from "@lib/components/SmartNodeSelector";
+import type { Parameter} from "@framework/EnsembleParameters";
+import { ParameterIdent } from "@framework/EnsembleParameters";
+import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
 import folderIcon from "../private-assets/folder.svg";
 import miscIcon from "../private-assets/misc.svg";

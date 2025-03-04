@@ -1,6 +1,7 @@
 import { BoundingBox2D } from "./BoundingBox2D";
 
-import { IntersectedItem, IntersectionCalculator, IntersectionItemShape } from "../types/types";
+import type { IntersectedItem, IntersectionCalculator} from "../types/types";
+import { IntersectionItemShape } from "../types/types";
 
 class SubLine {
     private _startIndex: number;

@@ -1,12 +1,13 @@
 import React from "react";
 
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { ColorTile } from "@lib/components/ColorTile";
-import { Select, SelectOption, SelectProps } from "@lib/components/Select";
+import type { SelectOption, SelectProps } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 
 export type EnsembleSelectProps = (
     | {

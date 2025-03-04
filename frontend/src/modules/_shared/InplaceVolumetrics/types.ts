@@ -1,12 +1,13 @@
-import {
+import type {
     InplaceStatisticalVolumetricTableDataPerFluidSelection_api,
+    InplaceVolumetricTableDataPerFluidSelection_api} from "@api";
+import {
     InplaceVolumetricStatistic_api,
-    InplaceVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricsIdentifier_api,
 } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-import { Column } from "./Table";
+import type { Column } from "./Table";
 
 export type InplaceVolumetricsTableData = {
     ensembleIdent: RegularEnsembleIdent;

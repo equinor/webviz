@@ -1,13 +1,14 @@
-import { InplaceVolumetricStatistic_api } from "@api";
+import type { InplaceVolumetricStatistic_api } from "@api";
 
 import { Column, ColumnType, Table } from "./Table";
-import {
-    InplaceVolumetricStatisticEnumToStringMapping,
+import type {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
-    SourceIdentifier,
     StatisticalColumns,
-    StatisticalTableColumnData,
+    StatisticalTableColumnData} from "./types";
+import {
+    InplaceVolumetricStatisticEnumToStringMapping,
+    SourceIdentifier
 } from "./types";
 
 export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table {

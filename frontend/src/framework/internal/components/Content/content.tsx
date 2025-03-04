@@ -1,7 +1,7 @@
-import React from "react";
+import type React from "react";
 
 import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 
 import { DataChannelVisualizationLayer } from "./private-components/DataChannelVisualizationLayer";
 import { Layout } from "./private-components/layout";

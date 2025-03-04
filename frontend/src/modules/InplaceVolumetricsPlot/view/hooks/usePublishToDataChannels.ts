@@ -1,11 +1,11 @@
-import { InplaceVolumetricResultName_api } from "@api";
-import { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { ViewContext } from "@framework/ModuleContext";
+import type { InplaceVolumetricResultName_api } from "@api";
+import type { ChannelContentDefinition, ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ChannelIds } from "@modules/InplaceVolumetricsPlot/channelDefs";
-import { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
-import { Table } from "@modules/_shared/InplaceVolumetrics/Table";
+import type { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
+import type { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 

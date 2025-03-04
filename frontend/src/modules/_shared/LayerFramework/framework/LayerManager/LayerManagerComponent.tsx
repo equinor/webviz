@@ -1,16 +1,20 @@
 import React from "react";
 
-import { IsMoveAllowedArgs, SortableList } from "@lib/components/SortableList";
+import type { IsMoveAllowedArgs} from "@lib/components/SortableList";
+import { SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
-import { Group, Item, instanceofGroup } from "@modules/_shared/LayerFramework/interfaces";
+import type { GroupDelegate} from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import type { Group, Item} from "@modules/_shared/LayerFramework/interfaces";
+import { instanceofGroup } from "@modules/_shared/LayerFramework/interfaces";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Add } from "@mui/icons-material";
 
-import { LayerManager } from "./LayerManager";
+import type { LayerManager } from "./LayerManager";
 
-import { LayersActionGroup, LayersActions } from "../../LayersActions";
+import type { LayersActionGroup} from "../../LayersActions";
+import { LayersActions } from "../../LayersActions";
 import { ColorScale } from "../ColorScale/ColorScale";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { View } from "../View/View";

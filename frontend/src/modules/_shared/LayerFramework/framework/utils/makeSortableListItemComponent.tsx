@@ -1,5 +1,6 @@
-import { LayersActionGroup } from "../../LayersActions";
-import { Group, Item, instanceofLayer } from "../../interfaces";
+import type { LayersActionGroup } from "../../LayersActions";
+import type { Group, Item} from "../../interfaces";
+import { instanceofLayer } from "../../interfaces";
 import { LayerComponent } from "../../layers/LayerComponent";
 import { ColorScale } from "../ColorScale/ColorScale";
 import { ColorScaleComponent } from "../ColorScale/ColorScaleComponent";

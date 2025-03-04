@@ -1,10 +1,10 @@
-import React from "react";
+import type React from "react";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
+import type { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
 import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 

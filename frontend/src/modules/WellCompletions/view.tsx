@@ -1,14 +1,13 @@
 import React from "react";
 
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { DisclaimerWrapper } from "@lib/components/DisclaimerWrapper";
-import { ContentError } from "@modules/_shared/components/ContentMessage";
-import { ContentInfo } from "@modules/_shared/components/ContentMessage";
+import { ContentError , ContentInfo } from "@modules/_shared/components/ContentMessage";
 import { WellCompletionsPlot } from "@webviz/well-completions-plot";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 import { DataLoadingStatus } from "./typesAndEnums";
 
 export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {

@@ -1,4 +1,4 @@
-import { TreeDataNode, TreeDataNodeMetaData } from "./treeDataNodeTypes";
+import type { TreeDataNode, TreeDataNodeMetaData } from "./treeDataNodeTypes";
 
 export enum MatchType {
     openMatch = 0,

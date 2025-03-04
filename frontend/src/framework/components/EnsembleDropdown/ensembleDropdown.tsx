@@ -1,11 +1,12 @@
 import React from "react";
 
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorTile } from "@lib/components/ColorTile";
-import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdown";
+import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 
 export type EnsembleDropdownProps = (
     | {

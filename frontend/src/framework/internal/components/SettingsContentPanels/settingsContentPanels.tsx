@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { ResizablePanels } from "@lib/components/ResizablePanels";
 
 import { Content } from "../Content";

@@ -1,8 +1,8 @@
 import React from "react";
 
-import { QueryClient } from "@tanstack/query-core";
+import type { QueryClient } from "@tanstack/query-core";
 
-import { BaseLayer } from "./BaseLayer";
+import type { BaseLayer } from "./BaseLayer";
 
 export enum LayerManagerTopic {
     LAYERS_CHANGED = "layers-changed",

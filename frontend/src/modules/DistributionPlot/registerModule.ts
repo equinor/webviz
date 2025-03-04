@@ -2,7 +2,7 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 import { receiverDefs } from "./receiverDefs";
 

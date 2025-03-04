@@ -1,7 +1,8 @@
 import React from "react";
 
-import { ModuleInstance } from "@framework/ModuleInstance";
-import { Workbench, WorkbenchEvents } from "@framework/Workbench";
+import type { ModuleInstance } from "@framework/ModuleInstance";
+import type { Workbench} from "@framework/Workbench";
+import { WorkbenchEvents } from "@framework/Workbench";
 
 export function useModuleInstances(workbench: Workbench): ModuleInstance<any>[] {
     const [moduleInstances, setModuleInstances] = React.useState<ModuleInstance<any>[]>([]);

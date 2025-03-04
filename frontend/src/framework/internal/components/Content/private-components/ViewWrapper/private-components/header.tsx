@@ -1,14 +1,16 @@
 import React from "react";
 
+import type {
+    GuiMessageBroker} from "@framework/GuiMessageBroker";
 import {
     GuiEvent,
-    GuiMessageBroker,
     GuiState,
     LeftDrawerContent,
     RightDrawerContent,
     useGuiState,
 } from "@framework/GuiMessageBroker";
-import { ModuleInstance, ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
+import type { ModuleInstance} from "@framework/ModuleInstance";
+import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";

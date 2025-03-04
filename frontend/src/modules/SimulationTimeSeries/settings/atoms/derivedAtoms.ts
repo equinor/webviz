@@ -1,9 +1,10 @@
-import { VectorDefinitionsType } from "@assets/vectorDefinitions";
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import type { VectorDefinitionsType } from "@assets/vectorDefinitions";
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import type { Parameter} from "@framework/EnsembleParameters";
+import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { filterEnsembleIdentsByType } from "@framework/utils/ensembleIdentUtils";
 import { fixupEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
@@ -22,7 +23,8 @@ import {
 } from "./baseAtoms";
 import { vectorListQueriesAtom } from "./queryAtoms";
 
-import { StatisticsType, VectorSpec, VisualizationMode } from "../../typesAndEnums";
+import type { VectorSpec} from "../../typesAndEnums";
+import { StatisticsType, VisualizationMode } from "../../typesAndEnums";
 import { EnsembleVectorListsHelper } from "../../utils/ensemblesVectorListHelper";
 
 export const statisticsTypeAtom = atom<StatisticsType>((get) => {

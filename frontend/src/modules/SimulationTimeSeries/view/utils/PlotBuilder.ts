@@ -1,6 +1,6 @@
-import React from "react";
+import type React from "react";
 
-import {
+import type {
     DerivedVectorInfo_api,
     Frequency_api,
     SummaryVectorObservations_api,
@@ -8,21 +8,23 @@ import {
     VectorRealizationData_api,
     VectorStatisticData_api,
 } from "@api";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type {
+    VectorSpec} from "@modules/SimulationTimeSeries/typesAndEnums";
 import {
     FrequencyEnumToStringMapping,
-    SubplotLimitDirection,
-    VectorSpec,
+    SubplotLimitDirection
 } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
-import { CoordinateDomain, Figure, makeSubplots } from "@modules/_shared/Figure";
+import type { Figure} from "@modules/_shared/Figure";
+import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
-import { Annotations, PlotMarker, Shape } from "plotly.js";
+import type { Annotations, PlotMarker, Shape } from "plotly.js";
 
 import {
     createHistoricalVectorTrace,
@@ -34,8 +36,8 @@ import {
     getTraceLineShape,
 } from "./PlotlyTraceUtils/createVectorTracesUtils";
 import { scaleHexColorLightness } from "./colorUtils";
-import { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
-import { TimeSeriesPlotData } from "./timeSeriesPlotData";
+import type { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
+import type { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
 type VectorNameSubplotTitleMap = { [vectorName: string]: string };
 type HexColorMap = { [key: string]: string };

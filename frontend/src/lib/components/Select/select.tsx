@@ -5,7 +5,8 @@ import { Deselect, SelectAll } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 import { Button } from "../Button";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";

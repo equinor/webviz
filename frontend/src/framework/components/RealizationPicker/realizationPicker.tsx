@@ -1,6 +1,7 @@
 import React from "react";
 
-import { BaseComponent, BaseComponentProps } from "@lib/components/BaseComponent";
+import type { BaseComponentProps } from "@lib/components/BaseComponent";
+import { BaseComponent } from "@lib/components/BaseComponent";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { getTextWidthWithFont } from "@lib/utils/textSize";
 import { Close } from "@mui/icons-material";

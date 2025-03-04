@@ -9,7 +9,8 @@ import { ArrowDropDown, ArrowDropUp, ExpandLess, ExpandMore } from "@mui/icons-m
 
 import { isEqual } from "lodash";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";

@@ -1,14 +1,15 @@
-import React from "react";
+import type React from "react";
 
 import { ImportState } from "@framework/Module";
+import type {
+    ModuleInstance} from "@framework/ModuleInstance";
 import {
-    ModuleInstance,
     ModuleInstanceState,
     ModuleInstanceTopic,
     useModuleInstanceTopicValue,
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";

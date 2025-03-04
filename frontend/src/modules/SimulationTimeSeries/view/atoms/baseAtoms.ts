@@ -1,5 +1,6 @@
 import { Frequency_api } from "@api";
-import { VectorSpec, VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
+import type { VectorSpec} from "@modules/SimulationTimeSeries/typesAndEnums";
+import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
 
 import { atom } from "jotai";
 

@@ -1,58 +1,63 @@
 import React from "react";
 
-import {
+import type {
     Annotation,
     AxisOptions,
-    CalloutCanvasLayer,
     CalloutOptions,
-    Controller,
-    GeomodelCanvasLayer,
-    GeomodelLabelsLayer,
     GeomodelLayerLabelsOptions,
-    GeomodelLayerV2,
-    GridLayer,
-    ImageLayer,
     IntersectionReferenceSystem,
     Layer,
     LayerOptions,
     OnRescaleEvent,
-    PixiRenderApplication,
     ReferenceLine,
-    ReferenceLineLayer,
     SchematicData,
-    SchematicLayer,
     SchematicLayerOptions,
     SeismicCanvasData,
-    SeismicCanvasLayer,
     SurfaceData,
-    WellborepathLayer,
-    WellborepathLayerOptions,
+    WellborepathLayerOptions} from "@equinor/esv-intersection";
+import {
+    CalloutCanvasLayer,
+    Controller,
+    GeomodelCanvasLayer,
+    GeomodelLabelsLayer,
+    GeomodelLayerV2,
+    GridLayer,
+    ImageLayer,
+    PixiRenderApplication,
+    ReferenceLineLayer,
+    SchematicLayer,
+    SeismicCanvasLayer,
+    WellborepathLayer
 } from "@equinor/esv-intersection";
-import { Viewport } from "@framework/types/viewport";
+import type { Viewport } from "@framework/types/viewport";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { ColorScale } from "@lib/utils/ColorScale";
 import { fuzzyCompare } from "@lib/utils/fuzzyCompare";
-import { Size2D } from "@lib/utils/geometry";
+import type { Size2D } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { cloneDeep, isEqual } from "lodash";
 
+import type {
+    InteractionHandlerTopicPayload} from "./interaction/InteractionHandler";
 import {
     InteractionHandler,
-    InteractionHandlerTopic,
-    InteractionHandlerTopicPayload,
+    InteractionHandlerTopic
 } from "./interaction/InteractionHandler";
-import {
+import type {
     PolylineIntersectionData,
-    PolylineIntersectionLayer,
-    PolylineIntersectionLayerOptions,
-} from "./layers/PolylineIntersectionLayer";
-import { SeismicLayer, SeismicLayerData } from "./layers/SeismicLayer";
+    PolylineIntersectionLayerOptions} from "./layers/PolylineIntersectionLayer";
 import {
-    SurfaceStatisticalFanchartsCanvasLayer,
-    SurfaceStatisticalFanchartsData,
+    PolylineIntersectionLayer
+} from "./layers/PolylineIntersectionLayer";
+import type { SeismicLayerData } from "./layers/SeismicLayer";
+import { SeismicLayer } from "./layers/SeismicLayer";
+import type {
+    SurfaceStatisticalFanchartsData} from "./layers/SurfaceStatisticalFanchartCanvasLayer";
+import {
+    SurfaceStatisticalFanchartsCanvasLayer
 } from "./layers/SurfaceStatisticalFanchartCanvasLayer";
-import { HighlightItem, ReadoutItem } from "./types/types";
+import type { HighlightItem, ReadoutItem } from "./types/types";
 
 export enum LayerType {
     CALLOUT_CANVAS = "callout-canvas",

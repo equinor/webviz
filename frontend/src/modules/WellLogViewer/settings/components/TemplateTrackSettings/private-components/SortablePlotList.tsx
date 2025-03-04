@@ -1,18 +1,19 @@
 import React from "react";
 
-import { WellboreLogCurveHeader_api } from "@api";
+import type { WellboreLogCurveHeader_api } from "@api";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { SortableList, SortableListItem } from "@lib/components/SortableList";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { arrayMove } from "@lib/utils/arrays";
-import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
+import type { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { CURVE_COLOR_PALETTE } from "@modules/WellLogViewer/utils/logViewerColors";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
 import { Delete, SwapHoriz, Warning } from "@mui/icons-material";
-import { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import _ from "lodash";
 

@@ -2,9 +2,11 @@ import { SettingTopic } from "./SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { Dependency } from "./_utils/Dependency";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { GlobalSettings, LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
-import {
+import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import type { GlobalSettings, LayerManager} from "../framework/LayerManager/LayerManager";
+import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import type {
     AvailableValuesType,
     EachAvailableValuesType,
     NullableStoredData,

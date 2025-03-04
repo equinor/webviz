@@ -1,7 +1,8 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { Group, SerializedSettingsGroup, SerializedType } from "../../interfaces";
-import { LayerManager } from "../LayerManager/LayerManager";
+import type { Group, SerializedSettingsGroup} from "../../interfaces";
+import { SerializedType } from "../../interfaces";
+import type { LayerManager } from "../LayerManager/LayerManager";
 
 export class SettingsGroup implements Group {
     private _itemDelegate: ItemDelegate;

@@ -1,9 +1,10 @@
-import React from "react";
+import type React from "react";
 
-import { LayoutElement } from "@framework/Workbench";
-import { Rect2D, Size2D, outerRectContainsInnerRect, rectContainsPoint, rectsAreEqual } from "@lib/utils/geometry";
+import type { LayoutElement } from "@framework/Workbench";
+import type { Rect2D, Size2D} from "@lib/utils/geometry";
+import { outerRectContainsInnerRect, rectContainsPoint, rectsAreEqual } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2 } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 
 function layoutElementToRect(layoutElement: LayoutElement): Rect2D {
     return {

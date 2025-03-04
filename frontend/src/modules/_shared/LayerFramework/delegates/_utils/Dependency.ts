@@ -2,9 +2,9 @@ import { isCancelledError } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { GlobalSettings } from "../../framework/LayerManager/LayerManager";
-import { Settings, UpdateFunc } from "../../interfaces";
-import { SettingsContextDelegate } from "../SettingsContextDelegate";
+import type { GlobalSettings } from "../../framework/LayerManager/LayerManager";
+import type { Settings, UpdateFunc } from "../../interfaces";
+import type { SettingsContextDelegate } from "../SettingsContextDelegate";
 
 /*
  * Dependency class is used to represent a node in the dependency graph of a layer settings context.

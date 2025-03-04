@@ -1,6 +1,7 @@
 import { BoundingSphere2D } from "./BoundingSphere2D";
 
-import { IntersectedItem, IntersectionCalculator, IntersectionItemShape } from "../types/types";
+import type { IntersectedItem, IntersectionCalculator} from "../types/types";
+import { IntersectionItemShape } from "../types/types";
 
 export interface PointIntersectedItem extends IntersectedItem {
     shape: IntersectionItemShape.POINT;

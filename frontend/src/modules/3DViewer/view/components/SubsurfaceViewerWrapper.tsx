@@ -1,20 +1,20 @@
 import React from "react";
 
-import { Layer, PickingInfo } from "@deck.gl/core";
+import type { Layer, PickingInfo } from "@deck.gl/core";
 import { ColumnLayer, SolidPolygonLayer } from "@deck.gl/layers";
-import { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
+import type { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
 import { Button } from "@lib/components/Button";
 import { HoldPressedIntervalCallbackButton } from "@lib/components/HoldPressedIntervalCallbackButton/holdPressedIntervalCallbackButton";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
-import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
+import type { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 import { Add, FilterCenterFocus, Polyline, Remove } from "@mui/icons-material";
-import { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
-import { MapMouseEvent } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
-import { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
+import type { LayerPickInfo, ViewStateType } from "@webviz/subsurface-viewer";
+import type { MapMouseEvent } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import type { WellsPickInfo } from "@webviz/subsurface-viewer/dist/layers/wells/wellsLayer";
 
-import { Feature } from "geojson";
+import type { Feature } from "geojson";
 import { isEqual } from "lodash";
 
 import { PolylineEditingPanel } from "./PolylineEditingPanel";

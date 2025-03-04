@@ -1,13 +1,15 @@
 import React from "react";
 
-import { KeyKind } from "@framework/DataChannelTypes";
-import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Workbench } from "@framework/Workbench";
+import type { KeyKind } from "@framework/DataChannelTypes";
+import type { GuiEventPayloads} from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import type { Workbench } from "@framework/Workbench";
 import { ChannelReceiverNotificationTopic } from "@framework/internal/DataChannels/ChannelReceiver";
 import { IconButton } from "@lib/components/IconButton";
 import { rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2, vec2FromPointerEvent } from "@lib/utils/vec2";
+import type { Vec2} from "@lib/utils/vec2";
+import { vec2FromPointerEvent } from "@lib/utils/vec2";
 import { Edit, Remove } from "@mui/icons-material";
 
 export type ChannelReceiverNodeProps = {

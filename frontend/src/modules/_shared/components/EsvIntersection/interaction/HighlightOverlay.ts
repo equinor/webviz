@@ -1,8 +1,9 @@
-import { Controller, OnRescaleEvent } from "@equinor/esv-intersection";
+import type { Controller, OnRescaleEvent } from "@equinor/esv-intersection";
 
 import { isEqual } from "lodash";
 
-import { HighlightItem, HighlightItemShape } from "../types/types";
+import type { HighlightItem} from "../types/types";
+import { HighlightItemShape } from "../types/types";
 
 export class HighlightOverlay {
     private _container: HTMLElement;

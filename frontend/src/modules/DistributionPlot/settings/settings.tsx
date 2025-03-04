@@ -1,7 +1,7 @@
-import React from "react";
+import type React from "react";
 
 import { useApplyInitialSettingsToState } from "@framework/InitialSettings";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { ModuleSettingsProps } from "@framework/Module";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
@@ -12,7 +12,7 @@ import { useAtom } from "jotai";
 
 import { numBinsAtom, orientationAtom, plotTypeAtom } from "./atoms/baseAtoms";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { PlotType } from "../typesAndEnums";
 
 const plotTypes = [

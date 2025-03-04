@@ -1,11 +1,12 @@
 import React from "react";
 
 import { GuiEvent, GuiState, LeftDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
-import { ModuleInstance } from "@framework/ModuleInstance";
-import { Workbench } from "@framework/Workbench";
+import type { ModuleInstance } from "@framework/ModuleInstance";
+import type { Workbench } from "@framework/Workbench";
 import { pointRelativeToDomRect } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
+import type { Vec2} from "@lib/utils/vec2";
+import { subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 
 import { ChannelReceiverNodesWrapper } from "./private-components/channelReceiverNodesWrapper";
 import { Header } from "./private-components/header";

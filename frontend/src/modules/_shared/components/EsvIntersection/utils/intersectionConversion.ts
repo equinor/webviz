@@ -1,4 +1,4 @@
-import { Controller, Layer } from "@equinor/esv-intersection";
+import type { Controller, Layer } from "@equinor/esv-intersection";
 
 import {
     isFanchartIntersectionResult,
@@ -22,7 +22,7 @@ import {
 } from "./layers";
 
 import { FanchartIntersectionCalculator } from "../interaction/FanchartIntersectionCalculator";
-import { IntersectionHandlerOptions } from "../interaction/IntersectionHandler";
+import type { IntersectionHandlerOptions } from "../interaction/IntersectionHandler";
 import { LineIntersectionCalculator } from "../interaction/LineIntersectionCalculator";
 import { LineSetIntersectionCalculator } from "../interaction/LineSetIntersectionCalculator";
 import { PointIntersectionCalculator } from "../interaction/PointIntersectionCalculator";
@@ -30,14 +30,15 @@ import { PolygonIntersectionCalculator } from "../interaction/PolygonIntersectio
 import { PolygonsIntersectionCalculator } from "../interaction/PolygonsIntersectionCalculator";
 import { RectangleIntersectionCalculator } from "../interaction/RectangleIntersectionCalculator";
 import { WellborePathIntersectionCalculator } from "../interaction/WellborePathIntersectionCalculator";
-import {
+import type {
     HighlightItem,
-    HighlightItemShape,
     IntersectedItem,
     IntersectionCalculator,
     IntersectionItem,
-    IntersectionItemShape,
-    ReadoutItem,
+    ReadoutItem} from "../types/types";
+import {
+    HighlightItemShape,
+    IntersectionItemShape
 } from "../types/types";
 
 export function makeIntersectionCalculatorFromIntersectionItem(

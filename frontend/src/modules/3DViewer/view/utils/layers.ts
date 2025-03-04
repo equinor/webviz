@@ -1,12 +1,12 @@
-import { BoundingBox3D_api, WellboreTrajectory_api } from "@api";
-import { Layer } from "@deck.gl/core";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { BoundingBox3D_api, WellboreTrajectory_api } from "@api";
+import type { Layer } from "@deck.gl/core";
+import type { ColorScale } from "@lib/utils/ColorScale";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { AxesLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { Feature } from "geojson";
+import type { Feature } from "geojson";
 
-import {
+import type {
     FenceMeshSection_trans,
     GridMappedProperty_trans,
     GridSurface_trans,

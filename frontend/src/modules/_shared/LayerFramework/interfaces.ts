@@ -1,16 +1,16 @@
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { ColorScaleSerialization } from "@lib/utils/ColorScale";
-import { QueryClient } from "@tanstack/react-query";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { ColorScaleSerialization } from "@lib/utils/ColorScale";
+import type { QueryClient } from "@tanstack/react-query";
 
-import { GroupDelegate } from "./delegates/GroupDelegate";
-import { ItemDelegate } from "./delegates/ItemDelegate";
-import { LayerDelegate } from "./delegates/LayerDelegate";
-import { SettingDelegate } from "./delegates/SettingDelegate";
-import { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
-import { Dependency } from "./delegates/_utils/Dependency";
-import { GlobalSettings } from "./framework/LayerManager/LayerManager";
-import { SettingType } from "./settings/settingsTypes";
+import type { GroupDelegate } from "./delegates/GroupDelegate";
+import type { ItemDelegate } from "./delegates/ItemDelegate";
+import type { LayerDelegate } from "./delegates/LayerDelegate";
+import type { SettingDelegate } from "./delegates/SettingDelegate";
+import type { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
+import type { Dependency } from "./delegates/_utils/Dependency";
+import type { GlobalSettings } from "./framework/LayerManager/LayerManager";
+import type { SettingType } from "./settings/settingsTypes";
 
 export enum SerializedType {
     LAYER_MANAGER = "layer-manager",

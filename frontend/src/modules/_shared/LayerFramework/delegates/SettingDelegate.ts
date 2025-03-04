@@ -1,11 +1,12 @@
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
 import { isArray, isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { AvailableValuesType, Setting } from "../interfaces";
+import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import type { AvailableValuesType, Setting } from "../interfaces";
 
 export enum SettingTopic {
     VALUE_CHANGED = "VALUE_CHANGED",

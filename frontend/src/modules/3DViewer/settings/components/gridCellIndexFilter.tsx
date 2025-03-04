@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { Checkbox } from "@lib/components/Checkbox";
 import { Input } from "@lib/components/Input";

@@ -1,24 +1,26 @@
 import { isEqual } from "lodash";
 
-import { DeltaEnsemble } from "./DeltaEnsemble";
-import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
-import {
+import type { DeltaEnsemble } from "./DeltaEnsemble";
+import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
+import type {
     ContinuousParameter,
     DiscreteParameter,
     EnsembleParameters,
-    Parameter,
+    Parameter} from "./EnsembleParameters";
+import {
     ParameterIdent,
     ParameterType,
 } from "./EnsembleParameters";
-import { RegularEnsemble } from "./RegularEnsemble";
-import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import {
+import type { RegularEnsemble } from "./RegularEnsemble";
+import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+import type {
     DiscreteParameterValueSelection,
-    IncludeExcludeFilter,
     NumberRange,
     ParameterValueSelection,
-    RealizationFilterType,
-    RealizationNumberSelection,
+    RealizationNumberSelection} from "./types/realizationFilterTypes";
+import {
+    IncludeExcludeFilter,
+    RealizationFilterType
 } from "./types/realizationFilterTypes";
 import { isArrayOfNumbers, isArrayOfStrings } from "./utils/arrayUtils";
 import {

@@ -1,6 +1,7 @@
-import React from "react";
+import type React from "react";
 
-import { Menu as MuiMenu, MenuProps as MuiMenuProps, PopperPlacementType } from "@mui/base";
+import type { MenuProps as MuiMenuProps, PopperPlacementType } from "@mui/base";
+import { Menu as MuiMenu } from "@mui/base";
 
 export type MenuProps = {
     anchorOrigin?: PopperPlacementType;

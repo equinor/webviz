@@ -1,9 +1,9 @@
-import React from "react";
+import type React from "react";
 
 import { Dropdown } from "@lib/components/Dropdown";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
+import type { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
 import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 

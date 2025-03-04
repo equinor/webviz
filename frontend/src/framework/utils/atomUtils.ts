@@ -1,8 +1,10 @@
-import { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
-import { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@tanstack/react-query";
+import type { DefaultError, QueryClient, QueryKey, QueryObserverResult } from "@tanstack/query-core";
+import type { DefinedInitialDataOptions, UndefinedInitialDataOptions } from "@tanstack/react-query";
 
-import { Atom, Getter, atom } from "jotai";
-import { AtomWithQueryOptions, atomWithQuery } from "jotai-tanstack-query";
+import type { Atom, Getter} from "jotai";
+import { atom } from "jotai";
+import type { AtomWithQueryOptions} from "jotai-tanstack-query";
+import { atomWithQuery } from "jotai-tanstack-query";
 import { atomWithReducer } from "jotai/utils";
 
 export function atomWithCompare<Value>(initialValue: Value, areEqualFunc: (prev: Value, next: Value) => boolean) {

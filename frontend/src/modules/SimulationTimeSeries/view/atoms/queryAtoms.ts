@@ -1,6 +1,7 @@
+import type {
+    Observations_api} from "@api";
 import {
     Frequency_api,
-    Observations_api,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
     getHistoricalVectorData,
@@ -14,8 +15,9 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
-import { EnsembleVectorObservationDataMap, VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
-import { QueryObserverResult } from "@tanstack/react-query";
+import type { EnsembleVectorObservationDataMap} from "@modules/SimulationTimeSeries/typesAndEnums";
+import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
+import type { QueryObserverResult } from "@tanstack/react-query";
 
 import {
     resampleFrequencyAtom,

@@ -1,13 +1,16 @@
-import { SurfaceRealizationSampleValues_api, postGetSampleSurfaceInPointsOptions } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SurfaceRealizationSampleValues_api} from "@api";
+import { postGetSampleSurfaceInPointsOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
-import { QueryClient } from "@tanstack/query-core";
+import type { Vec2} from "@lib/utils/vec2";
+import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
+import type { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
 
-import { BaseLayer, BoundingBox, LayerTopic } from "./BaseLayer";
+import type { BoundingBox} from "./BaseLayer";
+import { BaseLayer, LayerTopic } from "./BaseLayer";
 
 export type SurfacesUncertaintyLayerSettings = {
     ensembleIdent: RegularEnsembleIdent | null;

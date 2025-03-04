@@ -1,7 +1,7 @@
 import React from "react";
 
-import { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -15,7 +15,7 @@ import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import { ArrowDownwardSharp, ArrowUpwardSharp } from "@mui/icons-material";
 import { SortDirection, SortWellsBy, SortWellsByEnumToStringMapping } from "@webviz/well-completions-plot";
 
@@ -49,7 +49,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import {
     RealizationSelection,
     RealizationSelectionEnumToStringMapping,

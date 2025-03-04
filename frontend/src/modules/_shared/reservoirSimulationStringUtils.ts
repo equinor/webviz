@@ -1,4 +1,5 @@
-import { VectorDefinition, vectorDefinitions } from "@assets/vectorDefinitions";
+import type { VectorDefinition} from "@assets/vectorDefinitions";
+import { vectorDefinitions } from "@assets/vectorDefinitions";
 
 import { reservoirSimulationUnitTerminology } from "./reservoirSimulationUnitTerminology";
 

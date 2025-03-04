@@ -1,19 +1,19 @@
-import React from "react";
+import type React from "react";
 
-import { Getter, Setter } from "jotai";
+import type { Getter, Setter } from "jotai";
 
-import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
-import { InitialSettings } from "./InitialSettings";
-import { SettingsContext, ViewContext } from "./ModuleContext";
-import { ModuleDataTagId } from "./ModuleDataTags";
+import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
+import type { InitialSettings } from "./InitialSettings";
+import type { SettingsContext, ViewContext } from "./ModuleContext";
+import type { ModuleDataTagId } from "./ModuleDataTags";
 import { ModuleInstance, ModuleInstanceTopic } from "./ModuleInstance";
-import { DrawPreviewFunc } from "./Preview";
-import { SyncSettingKey } from "./SyncSettings";
-import { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
-import { Workbench } from "./Workbench";
-import { WorkbenchServices } from "./WorkbenchServices";
-import { WorkbenchSession } from "./WorkbenchSession";
-import { WorkbenchSettings } from "./WorkbenchSettings";
+import type { DrawPreviewFunc } from "./Preview";
+import type { SyncSettingKey } from "./SyncSettings";
+import type { InterfaceBaseType, InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
+import type { Workbench } from "./Workbench";
+import type { WorkbenchServices } from "./WorkbenchServices";
+import type { WorkbenchSession } from "./WorkbenchSession";
+import type { WorkbenchSettings } from "./WorkbenchSettings";
 
 export type OnInstanceUnloadFunc = (instanceId: string) => void;
 

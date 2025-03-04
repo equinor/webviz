@@ -1,17 +1,22 @@
-import { SeismicFenceData_api, postGetSeismicFenceOptions } from "@api";
-import { SeismicInfo, findIndexOfSample, getSeismicInfo } from "@equinor/esv-intersection";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SeismicFenceData_api} from "@api";
+import { postGetSeismicFenceOptions } from "@api";
+import type { SeismicInfo} from "@equinor/esv-intersection";
+import { findIndexOfSample, getSeismicInfo } from "@equinor/esv-intersection";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
+import type { Vec2} from "@lib/utils/vec2";
+import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
 import { b64DecodeFloatArrayToFloat32 } from "@modules/_shared/base64";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
-import { QueryClient } from "@tanstack/query-core";
+import type { QueryClient } from "@tanstack/query-core";
 
-import { Rgb, parse } from "culori";
+import type { Rgb} from "culori";
+import { parse } from "culori";
 import { isEqual } from "lodash";
 
-import { BaseLayer, BoundingBox, LayerStatus, LayerTopic } from "./BaseLayer";
+import type { BoundingBox} from "./BaseLayer";
+import { BaseLayer, LayerStatus, LayerTopic } from "./BaseLayer";
 
 export type SeismicSliceImageOptions = {
     datapoints: number[][];

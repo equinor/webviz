@@ -13,8 +13,9 @@
 import React from "react";
 
 import { WorkbenchSettingsEvents } from "@framework/internal/PrivateWorkbenchSettings";
-import { ColorPalette } from "@lib/utils/ColorPalette";
-import { ColorScale, ColorScaleGradientType, ColorScaleOptions, ColorScaleType } from "@lib/utils/ColorScale";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorScaleOptions} from "@lib/utils/ColorScale";
+import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { ColorSet } from "@lib/utils/ColorSet";
 
 import { isEqual } from "lodash";

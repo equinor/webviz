@@ -1,12 +1,11 @@
-import { PvtData_api } from "@api";
-import { getTableDataOptions } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { PvtData_api , getTableDataOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 import { selectedEnsembleIdentsAtom, selectedRealizationsAtom } from "./derivedAtoms";
 
-import { CombinedPvtDataResult } from "../../typesAndEnums";
+import type { CombinedPvtDataResult } from "../../typesAndEnums";
 
 export const pvtDataQueriesAtom = atomWithQueries((get) => {
     const selectedEnsembleIdents = get(selectedEnsembleIdentsAtom);

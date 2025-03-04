@@ -1,5 +1,5 @@
-import { InterfaceEffects } from "@framework/Module";
-import { SettingsToViewInterface } from "@modules/Intersection/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { SettingsToViewInterface } from "@modules/Intersection/interfaces";
 
 import {
     intersectionExtensionLengthAtom,

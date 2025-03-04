@@ -1,12 +1,13 @@
-import {
+import type {
     WellboreLogCurveData_api,
-    WellboreTrajectory_api,
+    WellboreTrajectory_api} from "@api";
+import {
     getLogCurveDataOptions,
     getWellTrajectoriesOptions,
 } from "@api";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { mergeResults } from "@modules/WellLogViewer/utils/queries";
-import { QueryObserverResult } from "@tanstack/react-query";
+import type { QueryObserverResult } from "@tanstack/react-query";
 
 import { atomWithQuery } from "jotai-tanstack-query";
 

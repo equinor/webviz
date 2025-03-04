@@ -1,11 +1,12 @@
-import {
+import type {
     LayerOptions,
     OnRescaleEvent,
     OnUpdateEvent,
-    PixiLayer,
-    PixiRenderApplication,
+    PixiRenderApplication} from "@equinor/esv-intersection";
+import {
+    PixiLayer
 } from "@equinor/esv-intersection";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { ColorScale } from "@lib/utils/ColorScale";
 
 import { Graphics } from "pixi.js";
 

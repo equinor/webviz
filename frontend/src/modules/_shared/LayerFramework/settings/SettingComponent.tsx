@@ -6,8 +6,9 @@ import { Link, Warning } from "@mui/icons-material";
 
 import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDelegate";
 import { SettingTopic } from "../delegates/SettingDelegate";
-import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
-import { Setting, SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";
+import type { LayerManager} from "../framework/LayerManager/LayerManager";
+import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import type { Setting, SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";
 
 export type SettingComponentProps<TValue> = {
     setting: Setting<TValue>;

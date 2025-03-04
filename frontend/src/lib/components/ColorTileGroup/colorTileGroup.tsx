@@ -1,7 +1,7 @@
-import React from "react";
+import type React from "react";
 
 import { ColorTile } from "@lib/components/ColorTile";
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 export type ColorPaletteProps = {

@@ -1,6 +1,7 @@
 import React from "react";
 
-import { CaseInfo_api, getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
+import type { CaseInfo_api} from "@api";
+import { getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -13,9 +14,10 @@ import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
-import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
+import type { TableSelectOption } from "@lib/components/TableSelect";
+import { TableSelect } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Add, Check, Info, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";

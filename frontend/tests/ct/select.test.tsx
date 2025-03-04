@@ -1,4 +1,5 @@
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { expect, test } from "@playwright/experimental-ct-react";
 
 test.use({ viewport: { width: 1920, height: 1080 } });

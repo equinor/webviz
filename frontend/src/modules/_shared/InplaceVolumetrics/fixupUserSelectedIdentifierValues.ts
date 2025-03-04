@@ -1,5 +1,6 @@
-import { InplaceVolumetricsIdentifierWithValues_api } from "@api";
-import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
+import type { InplaceVolumetricsIdentifierWithValues_api } from "@api";
+import type { FixupSelection} from "@lib/utils/fixupUserSelection";
+import { fixupUserSelection } from "@lib/utils/fixupUserSelection";
 
 export function fixupUserSelectedIdentifierValues(
     userSelectedIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] | null,

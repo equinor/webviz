@@ -1,14 +1,14 @@
 import React from "react";
 
 import { WellLogCurveTypeEnum_api } from "@api";
-import { SettingsStatusWriter } from "@framework/StatusWriter";
+import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
-import { SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
 import { SortableList } from "@lib/components/SortableList";
 import { arrayMove } from "@lib/utils/arrays";
 import { TrackIcon } from "@modules/WellLogViewer/_shared/components/icons";
-import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { configToJsonDataBlob, jsonFileToTrackConfigs } from "@modules/WellLogViewer/utils/settingsImport";
 import { Dropdown, MenuButton } from "@mui/base";

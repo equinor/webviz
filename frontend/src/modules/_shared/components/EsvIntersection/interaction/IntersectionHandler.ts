@@ -1,8 +1,8 @@
-import { Controller, OverlayMouseMoveEvent } from "@equinor/esv-intersection";
+import type { Controller, OverlayMouseMoveEvent } from "@equinor/esv-intersection";
 
 import { isEqual } from "lodash";
 
-import { IntersectedItem, IntersectionCalculator, IntersectionItem } from "../types/types";
+import type { IntersectedItem, IntersectionCalculator, IntersectionItem } from "../types/types";
 import { makeIntersectionCalculatorFromIntersectionItem } from "../utils/intersectionConversion";
 
 export enum IntersectionHandlerTopic {

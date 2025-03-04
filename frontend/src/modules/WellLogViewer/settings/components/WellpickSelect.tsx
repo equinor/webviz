@@ -1,9 +1,11 @@
 import React from "react";
 
-import { SettingsStatusWriter } from "@framework/StatusWriter";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { SettingsStatusWriter } from "@framework/StatusWriter";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { Select, SelectOption, SelectProps } from "@lib/components/Select";
+import type { SelectOption, SelectProps } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";

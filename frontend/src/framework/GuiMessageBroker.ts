@@ -1,10 +1,10 @@
 import React from "react";
 
 import { isDevMode } from "@lib/utils/devMode";
-import { Size2D } from "@lib/utils/geometry";
-import { Vec2 } from "@lib/utils/vec2";
+import type { Size2D } from "@lib/utils/geometry";
+import type { Vec2 } from "@lib/utils/vec2";
 
-import { UnsavedChangesAction } from "./types/unsavedChangesAction";
+import type { UnsavedChangesAction } from "./types/unsavedChangesAction";
 
 export enum LeftDrawerContent {
     ModuleSettings = "ModuleSettings",

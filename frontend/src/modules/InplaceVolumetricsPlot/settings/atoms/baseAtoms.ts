@@ -1,10 +1,11 @@
-import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
-import {
+import type {
     SelectorColumn,
-    SourceAndTableIdentifierUnion,
+    SourceAndTableIdentifierUnion} from "@modules/_shared/InplaceVolumetrics/types";
+import {
     SourceIdentifier,
 } from "@modules/_shared/InplaceVolumetrics/types";
 

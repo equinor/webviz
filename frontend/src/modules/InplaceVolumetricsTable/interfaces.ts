@@ -1,6 +1,6 @@
-import { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
+import type { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { SourceAndTableIdentifierUnion, SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { selectedStatisticOptionsAtom, selectedTableTypeAtom } from "./settings/atoms/baseAtoms";
 import {
@@ -13,7 +13,7 @@ import {
     selectedResultNamesAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/derivedAtoms";
-import { InplaceVolumetricsFilterSelections } from "./types";
+import type { InplaceVolumetricsFilterSelections } from "./types";
 
 export type SettingsToViewInterface = {
     filter: InplaceVolumetricsFilterSelections;

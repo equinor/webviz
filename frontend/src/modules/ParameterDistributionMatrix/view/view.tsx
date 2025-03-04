@@ -1,16 +1,18 @@
 import React from "react";
 
-import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { ModuleViewProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { EnsembleRealizationFilterFunction, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
+import type { ParameterIdent} from "@framework/EnsembleParameters";
+import { ParameterType } from "@framework/EnsembleParameters";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { ModuleViewProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { EnsembleRealizationFilterFunction} from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
 import { useElementSize } from "@lib/hooks/useElementSize";
 
 import { ParameterDistributionPlot } from "./components/ParameterDistributionPlot";
 
-import { Interfaces } from "../interfaces";
-import { ParameterDataArr } from "../typesAndEnums";
+import type { Interfaces } from "../interfaces";
+import type { ParameterDataArr } from "../typesAndEnums";
 
 export function View(props: ModuleViewProps<Interfaces>) {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);

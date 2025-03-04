@@ -1,17 +1,19 @@
-import {
+import type {
     ContinuousParameter,
     DiscreteParameter,
+    Parameter} from "@framework/EnsembleParameters";
+import {
     EnsembleParameters,
-    Parameter,
     ParameterIdent,
     ParameterType,
 } from "@framework/EnsembleParameters";
 import { RealizationFilter } from "@framework/RealizationFilter";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
+import type {
+    NumberRange,
+    ParameterValueSelection} from "@framework/types/realizationFilterTypes";
 import {
     IncludeExcludeFilter,
-    NumberRange,
-    ParameterValueSelection,
     RealizationFilterType,
 } from "@framework/types/realizationFilterTypes";
 

@@ -1,5 +1,4 @@
-import { SurfaceDataFloat_api } from "@api";
-import { SurfaceDataPng_api } from "@api";
+import type { SurfaceDataFloat_api , SurfaceDataPng_api } from "@api";
 import { b64DecodeFloatArrayToFloat32 } from "@modules_shared/base64";
 
 // Data structure for transformed data

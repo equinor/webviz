@@ -1,7 +1,9 @@
-import { StatisticFunction_api, VectorStatisticData_api } from "@api";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { VectorStatisticData_api } from "@api";
+import { StatisticFunction_api } from "@api";
+import type { UseQueryResult } from "@tanstack/react-query";
 
-import { FanchartStatisticOption, VectorSpec } from "../../typesAndEnums";
+import type { VectorSpec } from "../../typesAndEnums";
+import { FanchartStatisticOption } from "../../typesAndEnums";
 
 /**
     Helper function to create an array with pair of vector specification and loaded query data

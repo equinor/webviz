@@ -1,6 +1,6 @@
-import { SurfaceMeshLayerSettings, ViewSettings } from "@modules/SubsurfaceMap/_utils";
-import { PolygonsAddress } from "@modules/_shared/Polygons";
-import { RealizationSurfaceAddress, StatisticalSurfaceAddress } from "@modules/_shared/Surface";
+import type { SurfaceMeshLayerSettings, ViewSettings } from "@modules/SubsurfaceMap/_utils";
+import type { PolygonsAddress } from "@modules/_shared/Polygons";
+import type { RealizationSurfaceAddress, StatisticalSurfaceAddress } from "@modules/_shared/Surface";
 
 import { atom } from "jotai";
 

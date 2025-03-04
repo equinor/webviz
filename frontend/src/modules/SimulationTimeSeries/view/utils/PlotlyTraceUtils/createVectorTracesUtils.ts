@@ -1,17 +1,18 @@
-import {
-    DerivedVectorType_api,
-    StatisticFunction_api,
+import type {
     SummaryVectorDateObservation_api,
     VectorHistoricalData_api,
     VectorRealizationData_api,
-    VectorStatisticData_api,
+    VectorStatisticData_api} from "@api";
+import {
+    DerivedVectorType_api,
+    StatisticFunction_api
 } from "@api";
 
-import { FanchartData, FreeLineData, LowHighData, MinMaxData } from "./fanchartPlotting";
-import { createFanchartTraces } from "./fanchartPlotting";
-import { LineData, StatisticsData, createStatisticsTraces } from "./statisticsPlotting";
+import type { FanchartData, FreeLineData, LowHighData, MinMaxData , createFanchartTraces } from "./fanchartPlotting";
+import type { LineData, StatisticsData} from "./statisticsPlotting";
+import { createStatisticsTraces } from "./statisticsPlotting";
 
-import { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 function isDerivedVectorOfType(
     vectorData: VectorRealizationData_api | VectorStatisticData_api | VectorHistoricalData_api,

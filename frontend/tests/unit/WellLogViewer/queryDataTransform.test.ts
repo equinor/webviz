@@ -1,5 +1,6 @@
-import { WellLogCurveSourceEnum_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
-import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
+import { WellLogCurveSourceEnum_api } from "@api";
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import {
     MAIN_AXIS_CURVE,
     SECONDARY_AXIS_CURVE,

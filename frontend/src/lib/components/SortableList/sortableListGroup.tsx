@@ -9,7 +9,7 @@ import { isEqual } from "lodash";
 
 import { HoveredArea, SortableListContext } from "./sortableList";
 import { SortableListDropIndicator } from "./sortableListDropIndicator";
-import { SortableListItemProps } from "./sortableListItem";
+import type { SortableListItemProps } from "./sortableListItem";
 
 import { DenseIconButton } from "../DenseIconButton";
 

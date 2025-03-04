@@ -1,10 +1,11 @@
 import React from "react";
 
-import { WellboreHeader_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 import { Button } from "@lib/components/Button";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Label } from "@lib/components/Label";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { useValidArrayState } from "@lib/hooks/useValidArrayState";
 import { Deselect, SelectAll } from "@mui/icons-material";
 

@@ -1,19 +1,21 @@
 import React from "react";
 
-import { ColorPaletteType, WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ColorPaletteType } from "@framework/WorkbenchSettings";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Overlay } from "@lib/components/Overlay";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Vec2, point2Distance } from "@lib/utils/vec2";
+import type { Vec2} from "@lib/utils/vec2";
+import { point2Distance } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
 

@@ -1,16 +1,17 @@
-import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
-import {
+import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
+import type {
     InterfaceEffects,
-    Module,
     ModuleCategory,
     ModuleDevState,
     ModuleInterfaceTypes,
-    OnInstanceUnloadFunc,
+    OnInstanceUnloadFunc} from "./Module";
+import {
+    Module
 } from "./Module";
-import { ModuleDataTagId } from "./ModuleDataTags";
-import { DrawPreviewFunc } from "./Preview";
-import { SyncSettingKey } from "./SyncSettings";
-import { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
+import type { ModuleDataTagId } from "./ModuleDataTags";
+import type { DrawPreviewFunc } from "./Preview";
+import type { SyncSettingKey } from "./SyncSettings";
+import type { InterfaceInitialization } from "./UniDirectionalModuleComponentsInterface";
 import { ModuleNotFoundPlaceholder } from "./internal/ModuleNotFoundPlaceholder";
 
 export type RegisterModuleOptions = {
@@ -41,7 +42,7 @@ export class ModuleRegistry {
     private static _registeredModules: Record<string, Module<any>> = {};
     private static _moduleNotFoundPlaceholders: Record<string, Module<any>> = {};
 
-    /* eslint-disable-next-line @typescript-eslint/no-empty-function */
+     
     private constructor() {}
 
     static registerModule<TInterfaceTypes extends ModuleInterfaceTypes>(

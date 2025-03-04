@@ -1,15 +1,15 @@
 import React from "react";
 
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { ModuleViewProps } from "@framework/Module";
-import { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { ModuleViewProps } from "@framework/Module";
+import type { AllTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { timestampUtcMsToIsoString } from "@framework/utils/timestampUtils";
 import { Button } from "@lib/components/Button";
 
 import { atom, useSetAtom } from "jotai";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 
 export const triggeredRefreshCounterAtom = atom<number>(0);
 

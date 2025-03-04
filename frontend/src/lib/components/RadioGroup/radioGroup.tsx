@@ -4,8 +4,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { v4 } from "uuid";
 
-import { BaseComponent } from "../BaseComponent";
-import { BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent  } from "../BaseComponent";
 
 type RadioProps<T extends string | number> = {
     name: string;

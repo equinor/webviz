@@ -1,15 +1,16 @@
 import React from "react";
 
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
 import { LayerStatus, useLayerSettings, useLayerStatus } from "@modules/Intersection/utils/layers/BaseLayer";
-import { WellpicksLayer, WellpicksLayerSettings } from "@modules/Intersection/utils/layers/WellpicksLayer";
+import type { WellpicksLayer, WellpicksLayerSettings } from "@modules/Intersection/utils/layers/WellpicksLayer";
 
 import { isEqual } from "lodash";
 

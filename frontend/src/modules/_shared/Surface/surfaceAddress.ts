@@ -1,4 +1,4 @@
-import { SurfaceStatisticFunction_api } from "@api";
+import type { SurfaceStatisticFunction_api } from "@api";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 
 export interface RealizationSurfaceAddress {

@@ -1,5 +1,5 @@
-import { InplaceStatisticalVolumetricTableData_api, InplaceVolumetricTableData_api } from "@api";
-import { ViewStatusWriter } from "@framework/StatusWriter";
+import type { InplaceStatisticalVolumetricTableData_api, InplaceVolumetricTableData_api } from "@api";
+import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
 import { useAtomValue } from "jotai";

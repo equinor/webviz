@@ -1,4 +1,4 @@
-import { PolygonsAttributeType_api, PolygonsMeta_api } from "@api";
+import type { PolygonsAttributeType_api, PolygonsMeta_api } from "@api";
 
 export type PolygonsDirectoryOptions = {
     polygonsMetas: PolygonsMeta_api[];

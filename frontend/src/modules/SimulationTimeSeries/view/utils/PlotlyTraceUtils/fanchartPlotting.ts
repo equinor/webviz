@@ -1,7 +1,7 @@
 import { formatRgb, modeRgb, useMode } from "culori";
-import { ScatterLine } from "plotly.js";
+import type { ScatterLine } from "plotly.js";
 
-import { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 /**
     Definition of statistics data for free line trace in fanchart

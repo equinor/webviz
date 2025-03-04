@@ -1,14 +1,15 @@
 import React from "react";
 
 import { ImportState } from "@framework/Module";
+import type {
+    ModuleInstance} from "@framework/ModuleInstance";
 import {
-    ModuleInstance,
     ModuleInstanceState,
     ModuleInstanceTopic,
     useModuleInstanceTopicValue,
 } from "@framework/ModuleInstance";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { ApplyInterfaceEffectsToView } from "@framework/internal/components/ApplyInterfaceEffects/applyInterfaceEffects";
 import { DebugProfiler } from "@framework/internal/components/DebugProfiler";
 import { ErrorBoundary } from "@framework/internal/components/ErrorBoundary";

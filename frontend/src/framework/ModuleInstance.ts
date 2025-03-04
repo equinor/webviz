@@ -1,18 +1,21 @@
-import React, { ErrorInfo } from "react";
+import type { ErrorInfo } from "react";
+import React from "react";
 
-import { Atom, atom } from "jotai";
+import type { Atom} from "jotai";
+import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
 
-import { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
-import { InitialSettings } from "./InitialSettings";
-import { ImportState, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
+import type { ChannelDefinition, ChannelReceiverDefinition } from "./DataChannelTypes";
+import type { InitialSettings } from "./InitialSettings";
+import type { ImportState, Module, ModuleInterfaceTypes, ModuleSettings, ModuleView } from "./Module";
 import { ModuleContext } from "./ModuleContext";
-import { SyncSettingKey } from "./SyncSettings";
+import type { SyncSettingKey } from "./SyncSettings";
+import type {
+    InterfaceInitialization} from "./UniDirectionalModuleComponentsInterface";
 import {
-    InterfaceInitialization,
     UniDirectionalModuleComponentsInterface,
 } from "./UniDirectionalModuleComponentsInterface";
-import { Workbench } from "./Workbench";
+import type { Workbench } from "./Workbench";
 import { ChannelManager } from "./internal/DataChannels/ChannelManager";
 import { ModuleInstanceStatusControllerInternal } from "./internal/ModuleInstanceStatusControllerInternal";
 

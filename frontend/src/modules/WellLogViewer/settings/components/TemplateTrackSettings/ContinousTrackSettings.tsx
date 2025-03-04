@@ -3,13 +3,13 @@ import React from "react";
 import { Dropdown, type DropdownOption } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
-import { UseQueryResult } from "@tanstack/react-query";
-import { TemplatePlotScale } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import type { UseQueryResult } from "@tanstack/react-query";
+import type { TemplatePlotScale } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { useAtomValue } from "jotai";
 
 import { SortablePlotList } from "./private-components/SortablePlotList";
-import { TrackSettingFragmentProps } from "./private-components/TrackSettings";
+import type { TrackSettingFragmentProps } from "./private-components/TrackSettings";
 
 import { availableContinuousCurvesAtom, availableFlagCurvesAtom } from "../../atoms/derivedAtoms";
 import { wellLogCurveHeadersQueryAtom } from "../../atoms/queryAtoms";

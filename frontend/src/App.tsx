@@ -2,7 +2,8 @@ import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
 import { GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
-import { LayoutElement, Workbench } from "@framework/Workbench";
+import type { LayoutElement} from "@framework/Workbench";
+import { Workbench } from "@framework/Workbench";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";

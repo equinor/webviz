@@ -1,9 +1,9 @@
-import { DeltaEnsemble } from "@framework/DeltaEnsemble";
+import type { DeltaEnsemble } from "@framework/DeltaEnsemble";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { ViewContext } from "@framework/ModuleContext";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { ViewStatusWriter } from "@framework/StatusWriter";
-import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import type { ViewContext } from "@framework/ModuleContext";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { ViewStatusWriter } from "@framework/StatusWriter";
+import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { useAtomValue } from "jotai";
 

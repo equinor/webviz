@@ -1,4 +1,5 @@
-import { EnsembleParameters, Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import type { Parameter} from "@framework/EnsembleParameters";
+import { EnsembleParameters, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
 import { MinMax } from "@lib/utils/MinMax";
 
 import { describe, expect, test } from "vitest";

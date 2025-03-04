@@ -1,15 +1,17 @@
-import { FluidZone_api, InplaceVolumetricStatistic_api } from "@api";
-import { EnsembleSet } from "@framework/EnsembleSet";
+import type { InplaceVolumetricStatistic_api } from "@api";
+import { FluidZone_api } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
 import { RegularEnsemble } from "@framework/RegularEnsemble";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { TableHeading, TableRow } from "@lib/components/Table/table";
-import { Column, ColumnType, Row, Table } from "@modules/_shared/InplaceVolumetrics/Table";
+import type { TableHeading, TableRow } from "@lib/components/Table/table";
+import type { Column, Row} from "@modules/_shared/InplaceVolumetrics/Table";
+import { ColumnType, Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import { sortResultNameStrings } from "@modules/_shared/InplaceVolumetrics/sortResultNames";
 import {
     makeStatisticalTableColumnDataFromApiData,
     makeTableFromApiData,
 } from "@modules/_shared/InplaceVolumetrics/tableUtils";
-import {
+import type {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
 } from "@modules/_shared/InplaceVolumetrics/types";

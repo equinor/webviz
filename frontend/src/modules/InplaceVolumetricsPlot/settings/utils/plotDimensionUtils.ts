@@ -1,6 +1,7 @@
-import { DropdownOption } from "@lib/components/Dropdown";
-import { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
-import { SourceAndTableIdentifierUnion, SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import type { TableDefinitionsAccessor } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
+import type { SourceAndTableIdentifierUnion} from "@modules/_shared/InplaceVolumetrics/types";
+import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
 export function makeSubplotByOptions(
     tableDefinitionsAccessor: TableDefinitionsAccessor,

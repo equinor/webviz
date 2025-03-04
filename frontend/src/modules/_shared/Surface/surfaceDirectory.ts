@@ -1,4 +1,5 @@
-import { SurfaceAttributeType_api, SurfaceMetaSet_api, SurfaceMeta_api, SurfaceTimeType_api } from "@api";
+import type { SurfaceAttributeType_api, SurfaceMetaSet_api, SurfaceMeta_api} from "@api";
+import { SurfaceTimeType_api } from "@api";
 
 export enum SurfaceTimeType {
     None = "None",

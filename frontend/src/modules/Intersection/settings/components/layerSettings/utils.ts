@@ -1,4 +1,4 @@
-import { LayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
+import type { LayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
 
 import { isEqual } from "lodash";
 

@@ -3,7 +3,8 @@ import React from "react";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 
 export type CollapsibleGroupProps = {
     icon?: React.ReactElement;

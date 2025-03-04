@@ -1,11 +1,12 @@
 import React from "react";
 
 import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { ModuleInstance } from "@framework/ModuleInstance";
+import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
+import type {
+    LogEntry} from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import {
-    LogEntry,
     LogEntryType,
     useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerInternal";

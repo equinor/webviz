@@ -1,9 +1,9 @@
 import React from "react";
 
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
-import { QueryClient } from "@tanstack/query-core";
+import type { QueryClient } from "@tanstack/query-core";
 
 import { cloneDeep, isEqual } from "lodash";
 import { v4 } from "uuid";

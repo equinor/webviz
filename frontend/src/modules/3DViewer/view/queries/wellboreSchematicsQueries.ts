@@ -1,12 +1,14 @@
-import {
+import type {
     WellboreCasing_api,
     WellboreCompletion_api,
-    WellborePerforation_api,
+    WellborePerforation_api} from "@api";
+import {
     getWellboreCasingsOptions,
     getWellboreCompletionsOptions,
     getWellborePerforationsOptions,
 } from "@api";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { UseQueryResult} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export function useWellboreCasingsQuery(wellboreUuid: string | undefined): UseQueryResult<WellboreCasing_api[]> {
     return useQuery({

@@ -1,21 +1,23 @@
 import React from "react";
 
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type {
+    GuiEventPayloads} from "@framework/GuiMessageBroker";
 import {
     GuiEvent,
-    GuiEventPayloads,
     GuiState,
     RightDrawerContent,
     useGuiState,
     useGuiValue,
 } from "@framework/GuiMessageBroker";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { Workbench } from "@framework/Workbench";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Drawer } from "@framework/internal/components/Drawer";
+import type {
+    EnsembleRealizationFilterSelections} from "@framework/internal/components/EnsembleRealizationFilter";
 import {
-    EnsembleRealizationFilter,
-    EnsembleRealizationFilterSelections,
+    EnsembleRealizationFilter
 } from "@framework/internal/components/EnsembleRealizationFilter";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import { areUnsortedArraysEqual } from "@framework/utils/arrayUtils";

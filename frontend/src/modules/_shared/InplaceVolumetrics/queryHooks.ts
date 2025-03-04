@@ -1,20 +1,21 @@
-import {
+import type {
     FluidZone_api,
     InplaceStatisticalVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricResultName_api,
     InplaceVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricsIdentifierWithValues_api,
-    InplaceVolumetricsIdentifier_api,
+    InplaceVolumetricsIdentifier_api} from "@api";
+import {
     postGetAggregatedPerRealizationTableDataOptions,
     postGetAggregatedStatisticalTableDataOptions,
 } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
-import {
+import type {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
 } from "@modules/_shared/InplaceVolumetrics/types";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 export type EnsembleIdentWithRealizations = {
     ensembleIdent: RegularEnsembleIdent;

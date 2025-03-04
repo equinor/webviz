@@ -1,13 +1,13 @@
 import React from "react";
 import Plot from "react-plotly.js";
-import { PlotData } from "plotly.js";
+import type { PlotData } from "plotly.js";
 
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 import { VfpDataAccessor } from "./utils/vfpDataAccessor";
 import { VfpPlotBuilder } from "./utils/vfpPlotBuilder";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";

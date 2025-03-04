@@ -1,6 +1,7 @@
 import React from "react";
 
-import { Button, ButtonProps } from "../Button/button";
+import type { ButtonProps } from "../Button/button";
+import { Button } from "../Button/button";
 
 export type HoldPressedIntervalCallbackButtonProps = Omit<ButtonProps, "ref"> & {
     onHoldPressedIntervalCallback: () => void;

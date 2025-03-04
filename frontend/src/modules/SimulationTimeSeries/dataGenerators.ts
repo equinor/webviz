@@ -1,9 +1,9 @@
-import { VectorRealizationData_api } from "@api";
-import { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { VectorRealizationData_api } from "@api";
+import type { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
-import { VectorSpec } from "./typesAndEnums";
+import type { VectorSpec } from "./typesAndEnums";
 
 // As of now, the publish to data channels only supports regular ensembles
 export interface RegularEnsembleVectorSpec extends VectorSpec {

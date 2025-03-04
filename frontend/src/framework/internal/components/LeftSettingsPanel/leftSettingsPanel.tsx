@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Settings as SettingsIcon } from "@mui/icons-material";

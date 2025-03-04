@@ -1,21 +1,25 @@
 import React from "react";
 
-import { GuiEvent, GuiMessageBroker, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { Module, ModuleCategory, ModuleDevState } from "@framework/Module";
+import type { GuiMessageBroker} from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
+import type { Module} from "@framework/Module";
+import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTags } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { DrawPreviewFunc } from "@framework/Preview";
-import { Workbench } from "@framework/Workbench";
+import type { DrawPreviewFunc } from "@framework/Preview";
+import type { Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { useModuleInstances } from "@framework/internal/hooks/workbenchHooks";
 import { Checkbox } from "@lib/components/Checkbox";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { isDevMode } from "@lib/utils/devMode";
-import { MANHATTAN_LENGTH, Size2D, pointRelativeToDomRect } from "@lib/utils/geometry";
+import type { Size2D} from "@lib/utils/geometry";
+import { MANHATTAN_LENGTH, pointRelativeToDomRect } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Vec2, point2Distance, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
+import type { Vec2} from "@lib/utils/vec2";
+import { point2Distance, subtractVec2, vec2FromPointerEvent } from "@lib/utils/vec2";
 import {
     Attribution,
     Close,

@@ -1,6 +1,6 @@
-import { VectorRealizationData_api } from "@api";
-import { DataGenerator } from "@framework/DataChannelTypes";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { VectorRealizationData_api } from "@api";
+import type { DataGenerator } from "@framework/DataChannelTypes";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
 
 import { indexOf } from "lodash";
 

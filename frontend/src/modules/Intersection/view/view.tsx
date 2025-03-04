@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { IntersectionType } from "@framework/types/intersection";
@@ -14,7 +14,7 @@ import { wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { LayersWrapper } from "./components/layersWrapper";
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { LayerStatus, useLayersStatuses } from "../utils/layers/BaseLayer";
 import { isGridLayer } from "../utils/layers/GridLayer";
 import { LayerManagerTopic, useLayerManagerTopicValue } from "../utils/layers/LayerManager";

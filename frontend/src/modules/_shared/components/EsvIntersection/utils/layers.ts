@@ -1,21 +1,23 @@
-import {
+import type {
     Annotation,
+    Layer,
+    SchematicData,
+    SurfaceData} from "@equinor/esv-intersection";
+import {
     CalloutCanvasLayer,
     GeomodelCanvasLayer,
     GeomodelLayerV2,
-    Layer,
-    SchematicData,
     SchematicLayer,
     SeismicCanvasLayer,
-    SurfaceData,
     WellborepathLayer,
 } from "@equinor/esv-intersection";
 
 import { PolylineIntersectionLayer } from "../layers/PolylineIntersectionLayer";
 import { SeismicLayer } from "../layers/SeismicLayer";
+import type {
+    SurfaceStatisticalFanchartsData} from "../layers/SurfaceStatisticalFanchartCanvasLayer";
 import {
-    SurfaceStatisticalFanchartsCanvasLayer,
-    SurfaceStatisticalFanchartsData,
+    SurfaceStatisticalFanchartsCanvasLayer
 } from "../layers/SurfaceStatisticalFanchartCanvasLayer";
 
 export function isSurfaceLayer(layer: Layer<unknown>): layer is Layer<SurfaceData> {

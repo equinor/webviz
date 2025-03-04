@@ -1,5 +1,5 @@
 import { ImportState, Module, ModuleCategory, ModuleDevState } from "@framework/Module";
-import { ModuleInstance } from "@framework/ModuleInstance";
+import type { ModuleInstance } from "@framework/ModuleInstance";
 import { Button } from "@lib/components/Button";
 import { Tag } from "@lib/components/Tag";
 import { BugReport, Forum, WebAssetOff } from "@mui/icons-material";

@@ -1,12 +1,12 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
-import { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
+import type { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
+import type { SensitivityColorMap } from "@modules/_shared/sensitivityColors";
 
-import { Layout, PlotData, PlotMouseEvent } from "plotly.js";
+import type { Layout, PlotData, PlotMouseEvent } from "plotly.js";
 
-import { SensitivityResponse, SensitivityResponseDataset } from "../utils/sensitivityResponseCalculator";
+import type { SensitivityResponse, SensitivityResponseDataset } from "../utils/sensitivityResponseCalculator";
 
 export type SensitivityColors = {
     sensitivityName: string;

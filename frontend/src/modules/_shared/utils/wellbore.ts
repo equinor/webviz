@@ -1,4 +1,4 @@
-import { FenceMeshSection_api, PolylineIntersection_api } from "@api";
+import type { FenceMeshSection_api, PolylineIntersection_api } from "@api";
 import { point2Distance, vec2FromArray } from "@lib/utils/vec2";
 
 import simplify from "simplify-js";

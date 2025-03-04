@@ -1,11 +1,11 @@
-import {
+import type {
     FluidZone_api,
     InplaceVolumetricResultName_api,
     InplaceVolumetricsIdentifierWithValues_api,
     InplaceVolumetricsIdentifier_api,
     InplaceVolumetricsTableDefinition_api,
 } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { isEqual } from "lodash";
 

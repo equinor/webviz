@@ -1,10 +1,11 @@
 import React from "react";
 
-import { ViewContext } from "@framework/ModuleContext";
+import type { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
 
-import { HoverUpdateWrapper, HoverUpdateWrapperProps } from "./HoverUpdateWrapper";
+import type { HoverUpdateWrapperProps } from "./HoverUpdateWrapper";
+import { HoverUpdateWrapper } from "./HoverUpdateWrapper";
 
 export type SyncedSettingsUpdateWrapperProps = {
     workbenchServices: WorkbenchServices;

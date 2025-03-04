@@ -1,12 +1,12 @@
 import React from "react";
 
-import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { ViewContext } from "@framework/ModuleContext";
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import type { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { WorkbenchServices } from "@framework/WorkbenchServices";
-import { Viewport } from "@framework/types/viewport";
-import { Interfaces } from "@modules/Intersection/interfaces";
-import { LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { Viewport } from "@framework/types/viewport";
+import type { Interfaces } from "@modules/Intersection/interfaces";
+import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 
 import { cloneDeep, isEqual } from "lodash";

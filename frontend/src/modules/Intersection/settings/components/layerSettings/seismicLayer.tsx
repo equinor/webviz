@@ -1,23 +1,26 @@
 import React from "react";
 
 import { getSeismicCubeMetaListOptions } from "@api";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { WorkbenchSession} from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { SelectOption } from "@lib/components/Select";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { SelectOption } from "@lib/components/Select";
+import type { ColorScale } from "@lib/utils/ColorScale";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
+import type {
+    SeismicLayer,
+    SeismicLayerSettings} from "@modules/Intersection/utils/layers/SeismicLayer";
 import {
     SeismicDataType,
-    SeismicLayer,
-    SeismicLayerSettings,
     SeismicSurveyType,
 } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";

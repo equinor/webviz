@@ -1,14 +1,15 @@
-import { Layer as DeckGlLayer } from "@deck.gl/core";
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { Layer as DeckGlLayer } from "@deck.gl/core";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import type { GroupDelegate } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { LayerColoringType, LayerStatus } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
 import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
 import { DeltaSurface } from "@modules/_shared/LayerFramework/framework/DeltaSurface/DeltaSurface";
 import { View } from "@modules/_shared/LayerFramework/framework/View/View";
-import { BoundingBox, Layer, instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
-import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import type { BoundingBox, Layer} from "@modules/_shared/LayerFramework/interfaces";
+import { instanceofGroup, instanceofLayer } from "@modules/_shared/LayerFramework/interfaces";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
 import { makeDeckGlLayer } from "./layerFactory";

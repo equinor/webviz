@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleSettingsProps } from "@framework/Module";
+import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";

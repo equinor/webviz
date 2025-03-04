@@ -1,6 +1,6 @@
-import React from "react";
+import type React from "react";
 
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorGradientProps = {
     colorPalette: ColorPalette;

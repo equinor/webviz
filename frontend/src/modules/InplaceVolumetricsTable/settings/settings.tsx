@@ -1,18 +1,22 @@
-import React from "react";
+import type React from "react";
 
-import { InplaceVolumetricResultName_api, InplaceVolumetricStatistic_api } from "@api";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { InplaceVolumetricResultName_api} from "@api";
+import { InplaceVolumetricStatistic_api } from "@api";
+import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
+import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { Select, SelectOption } from "@lib/components/Select";
-import { TagOption, TagPicker } from "@lib/components/TagPicker";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import type { TagOption} from "@lib/components/TagPicker";
+import { TagPicker } from "@lib/components/TagPicker";
 import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
+import type {
+    SourceAndTableIdentifierUnion} from "@modules/_shared/InplaceVolumetrics/types";
 import {
     InplaceVolumetricStatisticEnumToStringMapping,
-    SourceAndTableIdentifierUnion,
     SourceIdentifier,
     TableType,
     TableTypeToStringMapping,
@@ -44,7 +48,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);

@@ -1,14 +1,14 @@
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState } from "./Module";
-import { ModuleInstance } from "./ModuleInstance";
+import type { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import { Template } from "./TemplateRegistry";
-import { WorkbenchServices } from "./WorkbenchServices";
+import type { Template } from "./TemplateRegistry";
+import type { WorkbenchServices } from "./WorkbenchServices";
 import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";

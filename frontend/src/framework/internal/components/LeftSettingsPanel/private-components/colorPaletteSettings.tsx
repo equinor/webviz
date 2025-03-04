@@ -1,14 +1,14 @@
 import React from "react";
 
 import { GuiState, LeftDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { ColorPaletteType, ColorScaleDiscreteSteps } from "@framework/WorkbenchSettings";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { ColorGradient } from "@lib/components/ColorGradient";
 import { ColorPaletteSelector, ColorPaletteSelectorType } from "@lib/components/ColorPaletteSelector";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 import { Palette } from "@mui/icons-material";
 
 export type ColorPaletteSettingsProps = {

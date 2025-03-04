@@ -1,21 +1,24 @@
 import React from "react";
 
-import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api, WellboreLogCurveHeader_api } from "@api";
+import type { WellboreLogCurveHeader_api } from "@api";
+import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api } from "@api";
 import { Checkbox } from "@lib/components/Checkbox";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
-import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import type { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { ArrowDownward } from "@mui/icons-material";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 import { useAtomValue } from "jotai";
 import _ from "lodash";
 
-import { TrackSettingFragmentProps } from "./private-components/TrackSettings";
+import type { TrackSettingFragmentProps } from "./private-components/TrackSettings";
 
 import {
     curveSourceToText,

@@ -1,7 +1,8 @@
-import { ContinuousParameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { ContinuousParameter, ParameterIdent} from "@framework/EnsembleParameters";
+import { ParameterType } from "@framework/EnsembleParameters";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ColorScale } from "@lib/utils/ColorScale";
 import { MinMax } from "@lib/utils/MinMax";
 
 export class EnsemblesContinuousParameterColoring {

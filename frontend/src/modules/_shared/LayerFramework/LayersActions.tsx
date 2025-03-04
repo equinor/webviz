@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { Menu } from "@lib/components/Menu";
 import { MenuButton } from "@lib/components/MenuButton/menuButton";

@@ -1,4 +1,4 @@
-import { B64FloatArray_api, B64UintArray_api } from "@api";
+import type { B64FloatArray_api, B64UintArray_api } from "@api";
 
 export function b64DecodeUintArray(
     base64Arr: B64UintArray_api

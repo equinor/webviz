@@ -1,8 +1,8 @@
 import React from "react";
 import Plot from "react-plotly.js";
 
-import { RftRealizationData_api } from "@api";
-import { ModuleViewProps } from "@framework/Module";
+import type { RftRealizationData_api } from "@api";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -10,9 +10,9 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
-import { PlotData } from "plotly.js";
+import type { PlotData } from "plotly.js";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 
 export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);

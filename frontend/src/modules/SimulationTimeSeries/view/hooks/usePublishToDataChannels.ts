@@ -1,16 +1,17 @@
-import { VectorRealizationData_api } from "@api";
-import { ChannelContentDefinition } from "@framework/DataChannelTypes";
-import { ViewContext } from "@framework/ModuleContext";
+import type { VectorRealizationData_api } from "@api";
+import type { ChannelContentDefinition } from "@framework/DataChannelTypes";
+import type { ViewContext } from "@framework/ModuleContext";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
-import { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
+import type { Interfaces } from "@modules/SimulationTimeSeries/interfaces";
 
 import { useAtomValue } from "jotai";
 
 import { useMakeEnsembleDisplayNameFunc } from "./useMakeEnsembleDisplayNameFunc";
 
 import { ChannelIds } from "../../channelDefs";
-import { RegularEnsembleVectorSpec, makeVectorGroupDataGenerator } from "../../dataGenerators";
+import type { RegularEnsembleVectorSpec} from "../../dataGenerators";
+import { makeVectorGroupDataGenerator } from "../../dataGenerators";
 import {
     activeTimestampUtcMsAtom,
     loadedVectorSpecificationsAndRealizationDataAtom,

@@ -1,7 +1,8 @@
 import React from "react";
 
-import { EnsembleParameters, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import {
+import type { EnsembleParameters} from "@framework/EnsembleParameters";
+import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import type {
     DiscreteParameterValueSelection,
     NumberRange,
     ParameterValueSelection,
@@ -16,8 +17,9 @@ import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { Label } from "@lib/components/Label";
 import { Slider } from "@lib/components/Slider";
-import { SmartNodeSelector, SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
-import { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
+import type { SmartNodeSelectorSelection, TreeDataNode } from "@lib/components/SmartNodeSelector";
+import { SmartNodeSelector } from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorTag } from "@lib/components/SmartNodeSelector/smartNodeSelector";
 import { TagPicker } from "@lib/components/TagPicker";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { AddCircle, Delete, Report } from "@mui/icons-material";

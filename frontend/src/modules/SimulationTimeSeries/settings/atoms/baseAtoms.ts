@@ -1,17 +1,18 @@
 import { Frequency_api, StatisticFunction_api } from "@api";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { ParameterIdent } from "@framework/EnsembleParameters";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 
 import { atom } from "jotai";
 import { isEqual } from "lodash";
 
+import type {
+    StatisticsSelection} from "../../typesAndEnums";
 import {
     FanchartStatisticOption,
     GroupBy,
-    StatisticsSelection,
     SubplotLimitDirection,
     VisualizationMode,
 } from "../../typesAndEnums";

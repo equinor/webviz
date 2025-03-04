@@ -1,15 +1,17 @@
 import React from "react";
 
-import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { ModuleInstance } from "@framework/ModuleInstance";
-import { Workbench } from "@framework/Workbench";
-import { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
+import type { GuiEventPayloads} from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import type { ModuleInstance } from "@framework/ModuleInstance";
+import type { Workbench } from "@framework/Workbench";
+import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2 } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 
-import { ChannelSelector, SelectableChannel, SelectedContents } from "./channelContentSelector";
+import type { SelectableChannel, SelectedContents } from "./channelContentSelector";
+import { ChannelSelector } from "./channelContentSelector";
 import { ChannelReceiverNode } from "./channelReceiverNode";
 
 export type ChannelReceiverNodesWrapperProps = {

@@ -1,6 +1,7 @@
-import { ColorPaletteType, ColorScaleDiscreteSteps, WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { ColorPalette } from "@lib/utils/ColorPalette";
-import { ColorScaleGradientType } from "@lib/utils/ColorScale";
+import type { ColorPaletteType, ColorScaleDiscreteSteps} from "@framework/WorkbenchSettings";
+import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 export enum WorkbenchSettingsEvents {
     ColorPalettesChanged = "ColorPalettesChanged",

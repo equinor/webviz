@@ -1,14 +1,15 @@
 import React from "react";
 
-import { Layer } from "@deck.gl/core";
+import type { Layer } from "@deck.gl/core";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useIntersectionPolylines } from "@framework/UserCreatedItems";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Intersection, IntersectionType } from "@framework/types/intersection";
-import { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
+import type { Intersection} from "@framework/types/intersection";
+import { IntersectionType } from "@framework/types/intersection";
+import type { IntersectionPolyline, IntersectionPolylineWithoutId } from "@framework/userCreatedItems/IntersectionPolylines";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { useFieldWellboreTrajectoriesQuery } from "@modules/_shared/WellBore/queryHooks";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
@@ -25,7 +26,7 @@ import { useGridPolylineIntersection as useGridPolylineIntersectionQuery } from 
 import { useWellboreCasingsQuery } from "./queries/wellboreSchematicsQueries";
 import { makeAxesLayer, makeGrid3DLayer, makeIntersectionLayer, makeWellsLayer } from "./utils/layers";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { userSelectedCustomIntersectionPolylineIdAtom } from "../settings/atoms/baseAtoms";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
