@@ -4,11 +4,11 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Link, Warning } from "@mui/icons-material";
 
-import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDelegate";
-import { SettingTopic } from "../delegates/SettingDelegate";
-import { DataLayerManager, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
-import { Setting } from "../framework/Setting/Setting";
-import { SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";
+import { OverriddenValueProviderType, Setting, SettingTopic } from "./Setting";
+
+import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
+import { SettingComponentProps as SettingComponentPropsInterface } from "../../interfaces";
+import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 
 export type SettingComponentProps<TValue> = {
     setting: Setting<TValue>;
@@ -24,7 +24,11 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     const isValid = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALIDITY_CHANGED);
     const isPersisted = usePublishSubscribeTopicValue(props.setting, SettingTopic.PERSISTED_STATE_CHANGED);
     const availableValues = usePublishSubscribeTopicValue(props.setting, SettingTopic.AVAILABLE_VALUES_CHANGED);
-    const overriddenValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.OVERRIDDEN_CHANGED);
+    const overriddenValue = usePublishSubscribeTopicValue(props.setting, SettingTopic.OVERRIDDEN_VALUE_CHANGED);
+    const overriddenValueProvider = usePublishSubscribeTopicValue(
+        props.setting,
+        SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED
+    );
     const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.LOADING_STATE_CHANGED);
     const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.INIT_STATE_CHANGED);
     const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
@@ -48,11 +52,15 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
     }
 
     if (overriddenValue !== undefined) {
+        if (overriddenValueProvider !== OverriddenValueProviderType.SHARED_SETTING) {
+            return null;
+        }
         const valueAsString = props.setting.valueToString(
             overriddenValue,
             props.manager.getWorkbenchSession(),
             props.manager.getWorkbenchSettings()
         );
+
         return (
             <React.Fragment key={props.setting.getId()}>
                 <div className="p-0.5 px-2 w-32 flex items-center gap-2 text-teal-600">

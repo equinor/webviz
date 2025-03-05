@@ -7,21 +7,22 @@ import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDelegate";
-import { ItemDelegateTopic } from "../delegates/ItemDelegate";
-import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../delegates/SettingsContextDelegate";
-import { DataLayer, LayerDelegateTopic, LayerStatus } from "../framework/DataLayer/DataLayer";
-import { Setting } from "../framework/Setting/Setting";
-import { EditName } from "../framework/utilityComponents/EditName";
-import { RemoveItemButton } from "../framework/utilityComponents/RemoveItemButton";
-import { VisibilityToggle } from "../framework/utilityComponents/VisibilityToggle";
-import { SettingComponent } from "../settings/SettingComponent";
+import { DataLayer, LayerDelegateTopic, LayerStatus } from "./DataLayer";
 
-export type LayerComponentProps = {
+import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
+import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
+import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../../delegates/SettingsContextDelegate";
+import { Setting } from "../Setting/Setting";
+import { SettingComponent } from "../Setting/SettingComponent";
+import { EditName } from "../utilityComponents/EditName";
+import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
+import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
+
+export type DataLayerComponentProps = {
     layer: DataLayer<any, any>;
 };
 
-export function LayerComponent(props: LayerComponentProps): React.ReactNode {
+export function DataLayerComponent(props: DataLayerComponentProps): React.ReactNode {
     const isExpanded = usePublishSubscribeTopicValue(props.layer.getItemDelegate(), ItemDelegateTopic.EXPANDED);
 
     function makeSetting(setting: Setting<any>) {

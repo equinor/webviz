@@ -10,7 +10,7 @@ import { SharedSetting } from "./SharedSetting";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { SettingComponent } from "../../settings/SettingComponent";
+import { SettingComponent } from "../Setting/SettingComponent";
 
 export type SharedSettingComponentProps = {
     sharedSetting: SharedSetting<any>;

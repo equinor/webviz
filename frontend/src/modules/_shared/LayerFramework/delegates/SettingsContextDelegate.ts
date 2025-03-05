@@ -1,10 +1,12 @@
-import { SettingTopic } from "./SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { Dependency } from "./_utils/Dependency";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import { DataLayer } from "../framework/DataLayer/DataLayer";
 import { DataLayerManager, GlobalSettings, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
-import { Setting } from "../framework/Setting/Setting";
+import { Group } from "../framework/Group/Group";
+import { Setting, SettingTopic } from "../framework/Setting/Setting";
+import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import {
     AvailableValuesType,
     CustomSettingsHandler,
@@ -12,8 +14,10 @@ import {
     NullableStoredData,
     SerializedSettingsState,
     Settings,
+    SharedSettingsProvider,
     StoredData,
     UpdateFunc,
+    instanceofSharedSettingsProvider,
 } from "../interfaces";
 import { MakeSettingTypesMap } from "../settings/settingsTypes";
 
@@ -60,22 +64,24 @@ export class SettingsContextDelegate<
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > implements PublishSubscribe<SettingsContextDelegatePayloads>
 {
+    private _owner: DataLayer<TSettingTypes, any, TStoredData, TSettings>;
     private _customSettingsHandler: CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TKey, TStoredDataKey>;
     private _layerManager: DataLayerManager;
     private _settings: { [K in TKey]: Setting<TSettings[K]> } = {} as {
         [K in TKey]: Setting<TSettings[K]>;
     };
-    private _overriddenSettings: Partial<TSettings> = {};
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingsContextDelegatePayloads>();
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
     private _loadingState: SettingsContextLoadingState = SettingsContextLoadingState.LOADING;
     private _storedData: NullableStoredData<TStoredData> = {} as NullableStoredData<TStoredData>;
 
     constructor(
+        owner: DataLayer<TSettingTypes, any, TStoredData, TSettings>,
         customSettingsHandler: CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TKey, TStoredDataKey>,
         layerManager: DataLayerManager,
         settings: { [K in TKey]: Setting<TSettings[K]> }
     ) {
+        this._owner = owner;
         this._customSettingsHandler = customSettingsHandler;
         this._layerManager = layerManager;
 
@@ -91,6 +97,23 @@ export class SettingsContextDelegate<
                 settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.LOADING_STATE_CHANGED)(
                     () => {
                         this.handleSettingsLoadingStateChanged();
+                    }
+                )
+            );
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "layer-manager",
+                layerManager
+                    .getPublishSubscribeDelegate()
+                    .makeSubscriberFunction(LayerManagerTopic.SHARED_SETTINGS_CHANGED)(() => {
+                    this.handleSharedSettingsChanged();
+                })
+            );
+
+            this._unsubscribeHandler.registerUnsubscribeFunction(
+                "layer-manager",
+                layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(
+                    () => {
+                        this.handleSharedSettingsChanged();
                     }
                 )
             );
@@ -118,14 +141,23 @@ export class SettingsContextDelegate<
         return settings;
     }
 
-    setOverriddenSettings(overriddenSettings: Partial<TSettings>): void {
-        this._overriddenSettings = overriddenSettings;
+    handleSharedSettingsChanged() {
+        const parentGroup = this._owner.getItemDelegate().getParentGroup();
+        if (!parentGroup) {
+            return;
+        }
+
+        const sharedSettingsProviders: SharedSettingsProvider[] = parentGroup.getAncestorAndSiblingItems(
+            (item) => item instanceof SharedSetting
+        ) as unknown as SharedSettingsProvider[];
+
+        const ancestorGroups: SharedSettingsProvider[] = parentGroup.getAncestors(
+            (item) => item instanceof Group && instanceofSharedSettingsProvider(item)
+        ) as unknown as SharedSettingsProvider[];
+        sharedSettingsProviders.push(...ancestorGroups);
+
         for (const key in this._settings) {
-            if (Object.keys(this._overriddenSettings).includes(key)) {
-                this._settings[key].setOverriddenValue(this._overriddenSettings[key]);
-            } else {
-                this._settings[key].setOverriddenValue(undefined);
-            }
+            this._settings[key].checkForOverrides(sharedSettingsProviders);
         }
     }
 

@@ -16,8 +16,8 @@ export class SharedSetting<TSettingType extends SettingType> implements Item {
         layerManager: DataLayerManager
     ) {
         const wrappedSetting = SettingRegistry.makeSetting(wrappedSettingType, defaultValue);
-        this._sharedSettingsDelegate = new SharedSettingsDelegate([wrappedSetting], this);
         this._itemDelegate = new ItemDelegate(wrappedSetting.getLabel(), 0, layerManager);
+        this._sharedSettingsDelegate = new SharedSettingsDelegate([wrappedSetting], this);
     }
 
     getItemDelegate(): ItemDelegate {

@@ -37,15 +37,17 @@ export class Group<
     private _sharedSettingsDelegate: SharedSettingsDelegate<TSettingTypes> | null = null;
 
     constructor(params: GroupParams<TSettingTypes, TSettings>) {
-        const { layerManager, customGroupImplementation, color = null, type } = params;
+        const { layerManager, customGroupImplementation, type } = params;
         this._groupDelegate = new GroupDelegate(this);
-        this._groupDelegate.setColor(color);
+        this._groupDelegate.setColor(layerManager.makeGroupColor());
         this._itemDelegate = new ItemDelegate(customGroupImplementation.getDefaultName(), 1, layerManager);
         if (includesSettings(customGroupImplementation)) {
             this._sharedSettingsDelegate = new SharedSettingsDelegate<TSettingTypes>(
-                makeSettings(
-                    customGroupImplementation.settings,
-                    customGroupImplementation.getDefaultSettingsValues()
+                Object.values(
+                    makeSettings(
+                        customGroupImplementation.settings,
+                        customGroupImplementation.getDefaultSettingsValues()
+                    )
                 ) as MakeSettingTuple<TSettingTypes>,
                 this
             );
@@ -63,6 +65,13 @@ export class Group<
 
     getSharedSettingsDelegate(): SharedSettingsDelegate<TSettingTypes> | null {
         return this._sharedSettingsDelegate;
+    }
+
+    getWrappedSettings(): MakeSettingTuple<TSettingTypes> {
+        if (!this._sharedSettingsDelegate) {
+            throw new Error("Group does not have shared settings.");
+        }
+        return this._sharedSettingsDelegate.getWrappedSettings();
     }
 
     getGroupType(): string {

@@ -13,7 +13,6 @@ import { BoundingBox, CustomDataLayerImplementation, DataLayerInformationAccesso
 import { MakeSettingTypesMap } from "../../settings/settingsTypes";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 import { Setting } from "../Setting/Setting";
-import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { makeSettings } from "../utils/makeSettings";
 
 
@@ -83,6 +82,7 @@ export class DataLayer<
         this._type = type;
         this._layerManager = layerManager;
         this._settingsContextDelegate = new SettingsContextDelegate<TSettingTypes, TSettings, TStoredData>(
+            this,
             customDataLayerImplementation,
             layerManager,
             makeSettings(
@@ -105,22 +105,6 @@ export class DataLayer<
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
                 this.handleSettingsChange();
-            })
-        );
-
-        this._unsubscribeHandler.registerUnsubscribeFunction(
-            "layer-manager",
-            layerManager
-                .getPublishSubscribeDelegate()
-                .makeSubscriberFunction(LayerManagerTopic.SHARED_SETTINGS_CHANGED)(() => {
-                this.handleSharedSettingsChanged();
-            })
-        );
-
-        this._unsubscribeHandler.registerUnsubscribeFunction(
-            "layer-manager",
-            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(() => {
-                this.handleSharedSettingsChanged();
             })
         );
     }
@@ -189,31 +173,6 @@ export class DataLayer<
 
     getValueRange(): [number, number] | null {
         return this._valueRange;
-    }
-
-    handleSharedSettingsChanged(): void {
-        const parentGroup = this.getItemDelegate().getParentGroup();
-        if (parentGroup) {
-            const sharedSettings: SharedSetting<any>[] = parentGroup.getAncestorAndSiblingItems(
-                (item) => item instanceof SharedSetting
-            ) as SharedSetting<any>[];
-            const overriddenSettings: Partial<TSettings> = {};
-            for (const sharedSetting of sharedSettings) {
-                let type = sharedSetting.getWrappedSetting().getType();
-                const setting = this._settingsContextDelegate.getSettings()[type as keyof TSettings];
-                if (setting && overriddenSettings[type as keyof TSettings] === undefined) {
-                    if (
-                        sharedSetting.getWrappedSetting().isInitialized() &&
-                        sharedSetting.getWrappedSetting().isValueValid()
-                    ) {
-                        overriddenSettings[type as keyof TSettings] = sharedSetting.getWrappedSetting().getValue();
-                    } else {
-                        overriddenSettings[type as keyof TSettings] = undefined;
-                    }
-                }
-            }
-            this._settingsContextDelegate.setOverriddenSettings(overriddenSettings);
-        }
     }
 
     getLayerManager(): DataLayerManager {

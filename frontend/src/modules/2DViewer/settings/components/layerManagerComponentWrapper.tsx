@@ -59,6 +59,16 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
             case "view":
                 groupDelegate.appendChild(GroupRegistry.makeGroup("View", props.layerManager, colorSet.getNextColor()));
                 return;
+            case "intersection-view":
+                groupDelegate.appendChild(
+                    GroupRegistry.makeGroup("IntersectionView", props.layerManager, colorSet.getNextColor())
+                );
+                return;
+            case "realization-view":
+                groupDelegate.appendChild(
+                    GroupRegistry.makeGroup("RealizationView", props.layerManager, colorSet.getNextColor())
+                );
+                return;
             case "delta-surface":
                 groupDelegate.appendChild(new DeltaSurface("Delta surface", props.layerManager));
                 return;
@@ -211,6 +221,16 @@ const LAYER_ACTIONS: LayersActionGroup[] = [
                 identifier: "view",
                 icon: <Panorama fontSize="small" />,
                 label: "View",
+            },
+            {
+                identifier: "intersection-view",
+                icon: <Panorama fontSize="small" />,
+                label: "Intersection view",
+            },
+            {
+                identifier: "realization-view",
+                icon: <Panorama fontSize="small" />,
+                label: "Realization view",
             },
             {
                 identifier: "settings-group",

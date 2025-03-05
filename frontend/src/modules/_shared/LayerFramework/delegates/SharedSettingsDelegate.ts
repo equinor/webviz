@@ -1,8 +1,9 @@
-import { SettingTopic } from "./SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
 import { DataLayer } from "../framework/DataLayer/DataLayer";
 import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
+import { Group } from "../framework/Group/Group";
+import { SettingTopic } from "../framework/Setting/Setting";
 import { AvailableValuesType, Item } from "../interfaces";
 import { MakeSettingTuple, SettingTypes } from "../settings/settingsTypes";
 
@@ -68,18 +69,24 @@ export class SharedSettingsDelegate<
     }
 
     private makeIntersectionOfAvailableValues(): void {
-        const parentGroup = this._parentItem.getItemDelegate().getParentGroup();
+        let parentGroup = this._parentItem.getItemDelegate().getParentGroup();
+        if (this._parentItem instanceof Group) {
+            parentGroup = this._parentItem.getGroupDelegate();
+        }
+
         if (!parentGroup) {
             return;
         }
 
         const layers = parentGroup.getDescendantItems((item) => item instanceof DataLayer) as DataLayer<any, any>[];
-        let index = 0;
-        let availableValuesMap: { [K in TSettingTypes[number]]: AvailableValuesType<SettingTypes[K]> } = {} as {
+        const availableValuesMap: { [K in TSettingTypes[number]]: AvailableValuesType<SettingTypes[K]> } = {} as {
             [K in TSettingTypes[number]]: AvailableValuesType<SettingTypes[K]>;
         };
+        const indices: { [K in TSettingTypes[number]]: number } = {} as { [K in TSettingTypes[number]]: number };
+
         for (const item of layers) {
             for (const wrappedSetting of this._wrappedSettings) {
+                const index = indices[wrappedSetting.getType() as TSettingTypes[number]] ?? 0;
                 const setting = item.getSettingsContextDelegate().getSettings()[wrappedSetting.getType()];
                 if (setting) {
                     if (setting.isLoading()) {
@@ -96,14 +103,16 @@ export class SharedSettingsDelegate<
                             SettingTypes[TSettingTypes[number]]
                         >;
                     }
-                    index++;
+                    indices[wrappedSetting.getType() as TSettingTypes[number]] = index + 1;
                 }
             }
         }
 
         for (const wrappedSetting of this._wrappedSettings) {
             wrappedSetting.setLoading(false);
-            wrappedSetting.setAvailableValues(availableValuesMap[wrappedSetting.getType() as TSettingTypes[number]]);
+            wrappedSetting.setAvailableValues(
+                availableValuesMap[wrappedSetting.getType() as TSettingTypes[number]] ?? []
+            );
             this.publishValueChange();
         }
     }
@@ -112,14 +121,3 @@ export class SharedSettingsDelegate<
         this._unsubscribeHandler.unsubscribeAll();
     }
 }
-
-enum MyEnum {
-    Value1 = "Value1",
-    Value2 = "Value2",
-}
-
-export type MyType = readonly MyEnum[] & { __brand?: "MyType" };
-
-const myVar: MyType = [MyEnum.Value1, MyEnum.Value2];
-
-myVar.forEach((value) => console.log(value)); // ✅ Works now

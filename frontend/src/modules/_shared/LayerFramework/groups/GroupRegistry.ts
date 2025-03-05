@@ -11,7 +11,7 @@ export class GroupRegistry {
         }
     > = new Map();
 
-    static registerSetting<TGroup extends { new (params?: any): CustomGroupImplementation }>(
+    static registerGroup<TGroup extends { new (params?: any): CustomGroupImplementation }>(
         name: string,
         group: TGroup,
         customParams?: ConstructorParameters<TGroup>

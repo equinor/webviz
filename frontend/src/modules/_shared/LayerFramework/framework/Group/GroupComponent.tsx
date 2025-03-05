@@ -1,10 +1,15 @@
+import { ColorSelect } from "@lib/components/ColorSelect";
 import { SortableListGroup } from "@lib/components/SortableList";
+
+import { Group } from "./Group";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { Item, ItemGroup } from "../../interfaces";
+import { Setting } from "../Setting/Setting";
+import { SettingComponent } from "../Setting/SettingComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
@@ -13,7 +18,7 @@ import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
 
 export type GroupComponentProps = {
-    group: ItemGroup;
+    group: Group<any, any>;
     actions?: LayersActionGroup[];
     onActionClick?: (actionIdentifier: string, group: ItemGroup) => void;
 };
@@ -27,6 +32,22 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
         if (props.onActionClick) {
             props.onActionClick(actionIdentifier, props.group);
         }
+    }
+
+    function makeSetting(setting: Setting<any>) {
+        const manager = props.group.getItemDelegate().getLayerManager();
+        if (!manager) {
+            return null;
+        }
+        return <SettingComponent key={setting.getId()} setting={setting} manager={manager} sharedSetting={false} />;
+    }
+
+    function makeSettings(settings: Setting<any>[]): React.ReactNode[] {
+        const settingNodes: React.ReactNode[] = [];
+        for (const setting of settings) {
+            settingNodes.push(makeSetting(setting));
+        }
+        return settingNodes;
     }
 
     function makeEndAdornment() {
@@ -45,18 +66,17 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
         return adornments;
     }
 
+    function handleColorChange(color: string) {
+        props.group.getGroupDelegate().setColor(color);
+    }
+
     return (
         <SortableListGroup
             key={props.group.getItemDelegate().getId()}
             id={props.group.getItemDelegate().getId()}
             title={
                 <div className="flex gap-1 items-center relative min-w-0">
-                    <div
-                        className="w-2 h-5"
-                        style={{
-                            backgroundColor: color ?? undefined,
-                        }}
-                    />
+                    {color && <ColorSelect onChange={handleColorChange} value={color} dense />}
                     <div className="flex-grow min-w-0">
                         <EditName item={props.group} />
                     </div>
@@ -69,6 +89,13 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             startAdornment={<VisibilityToggle item={props.group} />}
             endAdornment={<>{makeEndAdornment()}</>}
             contentWhenEmpty={<EmptyContent>Drag a layer inside to add it to this view.</EmptyContent>}
+            content={
+                props.group.getSharedSettingsDelegate() ? (
+                    <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
+                        {makeSettings(props.group.getWrappedSettings())}
+                    </div>
+                ) : undefined
+            }
         >
             {children.map((child: Item) => makeSortableListItemComponent(child, props.actions, props.onActionClick))}
         </SortableListGroup>

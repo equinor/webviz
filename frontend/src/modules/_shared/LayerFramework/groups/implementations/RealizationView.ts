@@ -1,8 +1,8 @@
 import { CustomGroupImplementationWithSettings } from "../../interfaces";
 import { SettingType } from "../../settings/settingsTypes";
 
-export class IntersectionView implements CustomGroupImplementationWithSettings<[SettingType.INTERSECTION]> {
-    settings: [SettingType.INTERSECTION] = [SettingType.INTERSECTION];
+export class RealizationView implements CustomGroupImplementationWithSettings<[SettingType.REALIZATION]> {
+    settings: [SettingType.REALIZATION] = [SettingType.REALIZATION];
 
     getDefaultName(): string {
         return "Intersection view";
@@ -10,7 +10,7 @@ export class IntersectionView implements CustomGroupImplementationWithSettings<[
 
     getDefaultSettingsValues() {
         return {
-            intersection: null,
+            realization: null,
         };
     }
 }

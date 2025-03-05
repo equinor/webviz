@@ -5,6 +5,7 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { GroupDelegate } from "./delegates/GroupDelegate";
 import { ItemDelegate } from "./delegates/ItemDelegate";
+import { SharedSettingsDelegate } from "./delegates/SharedSettingsDelegate";
 import { Dependency } from "./delegates/_utils/Dependency";
 import { GlobalSettings } from "./framework/DataLayerManager/DataLayerManager";
 import { MakeSettingTypesMap, SettingType, SettingTypes } from "./settings/settingsTypes";
@@ -98,6 +99,14 @@ export interface ItemGroup extends Item {
 
 export function instanceofItemGroup(group: any): group is ItemGroup {
     return (group as ItemGroup).getGroupDelegate !== undefined;
+}
+
+export interface SharedSettingsProvider {
+    getSharedSettingsDelegate(): SharedSettingsDelegate<any>;
+}
+
+export function instanceofSharedSettingsProvider(item: Item): item is SharedSettingsProvider & Item {
+    return (item as any).getSharedSettingsDelegate !== undefined;
 }
 
 export type BoundingBox = {
@@ -325,6 +334,7 @@ export interface CustomSettingsHandler<
     defineDependencies(
         args: DefineDependenciesArgs<TSettingTypes, TSettings, TStoredData, TSettingKey, TStoredDataKey>
     ): void;
+
     areCurrentSettingsValid?: (settings: TSettings) => boolean;
 }
 export interface CustomDataLayerImplementation<

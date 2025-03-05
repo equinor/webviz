@@ -7,14 +7,14 @@ export class LayerRegistry {
         string,
         {
             customDataLayerImplementation: {
-                new (customParams?: any): CustomDataLayerImplementation<any, any, any, any>;
+                new (customParams?: any): CustomDataLayerImplementation<any, any, any, any, any, any>;
             };
             customDataLayerImplementationParams?: any;
         }
     > = new Map();
 
     static registerLayer<
-        TDataLayer extends { new (...params: any[]): CustomDataLayerImplementation<any, any, any, any> }
+        TDataLayer extends { new (...params: any[]): CustomDataLayerImplementation<any, any, any, any, any, any> }
     >(
         type: string,
         customDataLayerImplementation: TDataLayer,

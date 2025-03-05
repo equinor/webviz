@@ -5,7 +5,7 @@ import {
     WorkbenchSessionEvent,
     createEnsembleRealizationFilterFuncForWorkbenchSession,
 } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ColorPaletteType, WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { IntersectionPolyline, IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import { QueryClient } from "@tanstack/react-query";
 
@@ -66,6 +66,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
     private _globalSettings: GlobalSettings;
     private _subscriptionsHandler = new UnsubscribeHandlerDelegate();
     private _deserializing = false;
+    private _groupColorGenerator: Generator<string, string>;
 
     constructor(workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings, queryClient: QueryClient) {
         this._workbenchSession = workbenchSession;
@@ -106,6 +107,8 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
                 this.publishTopic(LayerManagerTopic.ITEMS_CHANGED);
             })
         );
+
+        this._groupColorGenerator = this.makeGroupColorGenerator();
     }
 
     getItemDelegate(): ItemDelegate {
@@ -203,6 +206,20 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
 
         this.publishTopic(LayerManagerTopic.ITEMS_CHANGED);
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+    }
+
+    makeGroupColor(): string {
+        return this._groupColorGenerator.next().value;
+    }
+
+    private *makeGroupColorGenerator(): Generator<string, string> {
+        const selectedColorPalette = this._workbenchSettings.getSelectedColorPalette(ColorPaletteType.Categorical);
+        const colors = selectedColorPalette.getColors();
+        let i = 0;
+        while (true) {
+            yield colors[i % colors.length];
+            i++;
+        }
     }
 
     private initializeGlobalSettings(): GlobalSettings {

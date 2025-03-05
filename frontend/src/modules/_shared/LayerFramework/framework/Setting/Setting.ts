@@ -5,14 +5,16 @@ import { PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/uti
 import { isArray, isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { AvailableValuesType, CustomSettingImplementation } from "../../interfaces";
+import { AvailableValuesType, CustomSettingImplementation, SharedSettingsProvider } from "../../interfaces";
 import { SettingType } from "../../settings/settingsTypes";
+import { Group } from "../Group/Group";
 
 export enum SettingTopic {
     VALUE_CHANGED = "VALUE_CHANGED",
     VALIDITY_CHANGED = "VALIDITY_CHANGED",
     AVAILABLE_VALUES_CHANGED = "AVAILABLE_VALUES_CHANGED",
-    OVERRIDDEN_CHANGED = "OVERRIDDEN_CHANGED",
+    OVERRIDDEN_VALUE_CHANGED = "OVERRIDDEN_VALUE_CHANGED",
+    OVERRIDDEN_VALUE_PROVIDER_CHANGED = "OVERRIDDEN_VALUE_PROVIDER_CHANGED",
     LOADING_STATE_CHANGED = "LOADING_STATE_CHANGED",
     INIT_STATE_CHANGED = "INIT_STATE_CHANGED",
     PERSISTED_STATE_CHANGED = "PERSISTED_STATE_CHANGED",
@@ -22,7 +24,8 @@ export type SettingTopicPayloads<TValue> = {
     [SettingTopic.VALUE_CHANGED]: TValue;
     [SettingTopic.VALIDITY_CHANGED]: boolean;
     [SettingTopic.AVAILABLE_VALUES_CHANGED]: AvailableValuesType<TValue>;
-    [SettingTopic.OVERRIDDEN_CHANGED]: TValue | undefined;
+    [SettingTopic.OVERRIDDEN_VALUE_CHANGED]: TValue | undefined;
+    [SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED]: OverriddenValueProviderType | undefined;
     [SettingTopic.LOADING_STATE_CHANGED]: boolean;
     [SettingTopic.INIT_STATE_CHANGED]: boolean;
     [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
@@ -34,6 +37,11 @@ export type SettingParams<TValue> = {
     defaultValue: TValue;
     customSettingImplementation: CustomSettingImplementation<TValue>;
 };
+
+export enum OverriddenValueProviderType {
+    GROUP = "GROUP",
+    SHARED_SETTING = "SHARED_SETTING",
+}
 
 /*
  * The Setting class is responsible for managing a setting.
@@ -51,6 +59,7 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TValue>>();
     private _availableValues: AvailableValuesType<TValue> = [] as unknown as AvailableValuesType<TValue>;
     private _overriddenValue: TValue | undefined = undefined;
+    private _overridenValueProviderType: OverriddenValueProviderType | undefined = undefined;
     private _loading: boolean = false;
     private _initialized: boolean = false;
     private _currentValueFromPersistence: TValue | null = null;
@@ -190,6 +199,31 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
         return "Value has no string representation";
     }
 
+    checkForOverrides(sharedSettingsProviders: SharedSettingsProvider[]) {
+        let overriddenValue: TValue | undefined;
+        let overriddenValueProviderType: OverriddenValueProviderType | undefined;
+
+        for (const provider of sharedSettingsProviders) {
+            if (!provider.getSharedSettingsDelegate()) {
+                continue;
+            }
+            for (const sharedSetting of provider.getSharedSettingsDelegate().getWrappedSettings()) {
+                if (sharedSetting.getType() === this._type) {
+                    overriddenValue = sharedSetting.getValue();
+                    overriddenValueProviderType = OverriddenValueProviderType.SHARED_SETTING;
+                    if (provider instanceof Group) {
+                        overriddenValueProviderType = OverriddenValueProviderType.GROUP;
+                    }
+                    break;
+                }
+            }
+        }
+
+        this.setOverriddenValue(overriddenValue);
+        this._overridenValueProviderType = overriddenValueProviderType;
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED);
+    }
+
     setOverriddenValue(overriddenValue: TValue | undefined): void {
         if (isEqual(this._overriddenValue, overriddenValue)) {
             return;
@@ -197,7 +231,7 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
 
         const prevValue = this._overriddenValue;
         this._overriddenValue = overriddenValue;
-        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_VALUE_CHANGED);
 
         if (overriddenValue === undefined) {
             // Keep overridden value, if invalid fix it
@@ -222,26 +256,25 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
 
     makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TValue>[T] {
         const snapshotGetter = (): any => {
-            if (topic === SettingTopic.VALUE_CHANGED) {
-                return this._value;
-            }
-            if (topic === SettingTopic.VALIDITY_CHANGED) {
-                return this._isValueValid;
-            }
-            if (topic === SettingTopic.AVAILABLE_VALUES_CHANGED) {
-                return this._availableValues;
-            }
-            if (topic === SettingTopic.OVERRIDDEN_CHANGED) {
-                return this._overriddenValue;
-            }
-            if (topic === SettingTopic.LOADING_STATE_CHANGED) {
-                return this._loading;
-            }
-            if (topic === SettingTopic.PERSISTED_STATE_CHANGED) {
-                return this.isPersistedValue();
-            }
-            if (topic === SettingTopic.INIT_STATE_CHANGED) {
-                return this._initialized;
+            switch (topic) {
+                case SettingTopic.VALUE_CHANGED:
+                    return this._value;
+                case SettingTopic.VALIDITY_CHANGED:
+                    return this._isValueValid;
+                case SettingTopic.AVAILABLE_VALUES_CHANGED:
+                    return this._availableValues;
+                case SettingTopic.OVERRIDDEN_VALUE_CHANGED:
+                    return this._overriddenValue;
+                case SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED:
+                    return this._overridenValueProviderType;
+                case SettingTopic.LOADING_STATE_CHANGED:
+                    return this._loading;
+                case SettingTopic.PERSISTED_STATE_CHANGED:
+                    return this.isPersistedValue();
+                case SettingTopic.INIT_STATE_CHANGED:
+                    return this._initialized;
+                default:
+                    throw new Error(`Unknown topic: ${topic}`);
             }
         };
 
