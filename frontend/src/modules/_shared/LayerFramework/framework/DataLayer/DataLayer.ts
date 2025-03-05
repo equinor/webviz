@@ -107,6 +107,13 @@ export class DataLayer<
                 this.handleSettingsChange();
             })
         );
+
+        this._unsubscribeHandler.registerUnsubscribeFunction(
+            "layer-manager",
+            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED)(() => {
+                this.handleSettingsChange();
+            })
+        );
     }
 
     handleSettingsChange(): void {
