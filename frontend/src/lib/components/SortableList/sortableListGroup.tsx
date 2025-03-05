@@ -143,7 +143,7 @@ function Header(props: HeaderProps): React.ReactNode {
             className={resolveClassNames(
                 "sortable-list-item-header flex w-full items-center gap-1 h-8 text-sm border-b border-b-gray-400 px-2",
                 {
-                    "!bg-blue-300": props.hovered,
+                    "bg-blue-300!": props.hovered,
                     "bg-slate-300": !props.hovered,
                 },
             )}
@@ -160,9 +160,9 @@ function Header(props: HeaderProps): React.ReactNode {
                     {props.expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
                 </DenseIconButton>
             )}
-            <div className="flex items-center gap-2 flex-grow min-w-0">
+            <div className="flex items-center gap-2 grow min-w-0">
                 {props.startAdornment}
-                <div className="flex-grow font-bold min-w-0">{props.title}</div>
+                <div className="grow font-bold min-w-0">{props.title}</div>
                 {props.endAdornment}
             </div>
         </div>

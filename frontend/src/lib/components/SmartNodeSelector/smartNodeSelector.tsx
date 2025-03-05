@@ -578,9 +578,9 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
             const blinkTimer = setInterval(() => {
                 numBlinks++;
                 if (numBlinks % 2 === 0) {
-                    numberOfTagsDiv.classList.add("!text-orange-500");
+                    numberOfTagsDiv.classList.add("text-orange-500!");
                 } else {
-                    numberOfTagsDiv.classList.remove("!text-orange-500");
+                    numberOfTagsDiv.classList.remove("text-orange-500!");
                 }
                 if (numBlinks === 7) {
                     clearInterval(blinkTimer);
@@ -1638,10 +1638,10 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                 {label && <label>{label}</label>}
                 <div
                     className={resolveClassNames(
-                        "border rounded p-2 pl-4 pr-12 flex flex-wrap cursor-text relative my-2 min-h-12 min-w-48",
+                        "border rounded-sm p-2 pl-4 pr-12 flex flex-wrap cursor-text relative my-2 min-h-12 min-w-48",
                         {
                             "border-0 p-0 pr-10": frameless,
-                            "!rounded-b-none": suggestionsVisible,
+                            "rounded-b-none!": suggestionsVisible,
                             "border-red-600":
                                 maxNumSelectedNodes > 0 && this.countValidSelections() > maxNumSelectedNodes,
                         },
@@ -1715,7 +1715,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                 {maxNumSelectedNodes > 1 && (
                     <div
                         className={resolveClassNames("text-right relative w-full mt-2 text-slate-600 text-sm", {
-                            "!text-red-600": this.countValidSelections() > maxNumSelectedNodes,
+                            "text-red-600!": this.countValidSelections() > maxNumSelectedNodes,
                         })}
                         ref={this.refNumberOfTags}
                     >

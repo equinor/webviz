@@ -75,13 +75,13 @@ export const ModuleSettings: React.FC<ModuleSettingsProps> = (props) => {
                     <SettingsIcon fontSize="small" className="mr-2" />{" "}
                     <span
                         title={props.moduleInstance.getTitle()}
-                        className="font-bold flex-grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm"
+                        className="font-bold grow p-0 text-ellipsis whitespace-nowrap overflow-hidden text-sm"
                     >
                         {props.moduleInstance.getTitle()}
                     </span>
                 </div>
-                <div className="flex flex-col gap-4 overflow-auto flex-grow">
-                    <div className="p-2 flex-grow">
+                <div className="flex flex-col gap-4 overflow-auto grow">
+                    <div className="p-2 grow">
                         <DebugProfiler
                             id={`${props.moduleInstance.getId()}-settings`}
                             source={StatusSource.Settings}

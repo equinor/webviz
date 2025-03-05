@@ -646,8 +646,8 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
     const marginTop = Math.max(-boundingRect.top, convertRemToPixels((-(props.colorPalettes.length - 1) * 3) / 2));
 
     return (
-        <div className="bg-slate-100 rounded flex items-center" ref={ref}>
-            <div className="flex-grow cursor-pointer" onClick={handleClick}>
+        <div className="bg-slate-100 rounded-sm flex items-center" ref={ref}>
+            <div className="grow cursor-pointer" onClick={handleClick}>
                 {makeColorScalePalettePreview(
                     selectedColorPalette,
                     props.gradientType,
@@ -665,7 +665,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
                         <Overlay visible={true} />
                         <div
                             ref={dropdownContentRef}
-                            className="absolute z-[60] shadow bg-white rounded overflow-hidden"
+                            className="absolute z-60 shadow-sm bg-white rounded-sm overflow-hidden"
                             style={{
                                 left: boundingRect.left,
                                 top: boundingRect.top,
@@ -772,7 +772,7 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
             >
                 {props.colorPalette.getName()}
             </span>
-            <div className="flex-grow">
+            <div className="grow">
                 {makeColorScalePalettePreview(
                     props.colorPalette,
                     props.gradientType,

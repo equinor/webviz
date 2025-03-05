@@ -411,7 +411,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         this._popupRoot.render(
             <div
                 ref={suggestionsRef}
-                className="box-border absolute top-full left-0 w-full border bg-white rounded-b shadow z-50 overflow-y-auto"
+                className="box-border absolute top-full left-0 w-full border bg-white rounded-b shadow-sm z-50 overflow-y-auto"
                 onScroll={this.handleScroll}
                 style={{
                     maxHeight: maxHeight,

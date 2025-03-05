@@ -58,7 +58,7 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
                             backgroundColor: color ?? undefined,
                         }}
                     />
-                    <div className="flex-grow min-w-0">
+                    <div className="grow min-w-0">
                         <EditName item={props.group} />
                     </div>
                 </div>

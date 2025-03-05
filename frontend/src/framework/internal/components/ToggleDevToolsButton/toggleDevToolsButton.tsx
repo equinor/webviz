@@ -28,7 +28,7 @@ export const ToggleDevToolsButton: React.FC<ToggleDevToolsButtonProps> = (props)
     return (
         <div
             className={resolveClassNames(
-                "absolute bottom-2 shadow left-3 z-50 m-2 p-2 rounded-full flex items-center justify-center w-8 h-8 bg-gray-800 text-white text-m cursor-pointer",
+                "absolute bottom-2 shadow-sm left-3 z-50 m-2 p-2 rounded-full flex items-center justify-center w-8 h-8 bg-gray-800 text-white text-m cursor-pointer",
                 {
                     "bg-green-700 hover: hover:bg-green-600": devToolsVisible,
                     "bg-gray-800 hover:bg-gray-700": !devToolsVisible,

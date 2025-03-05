@@ -57,7 +57,7 @@ export function AddItemButton<TValue>(props: AddItemButtonProps<TValue>): React.
 
 function ButtonContent(props: { text: string; multiple?: boolean }) {
     return (
-        <div className="flex items-center gap-1 py-0.5 pl-1 pr-2 text-sm rounded hover:bg-blue-100">
+        <div className="flex items-center gap-1 py-0.5 pl-1 pr-2 text-sm rounded-sm hover:bg-blue-100">
             <Add fontSize="inherit" />
             <span>{props.text}</span>
         </div>

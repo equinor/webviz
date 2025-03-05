@@ -297,7 +297,7 @@ export const Settings = ({
                         </Label>
                         <Label text="Sort wells by">
                             <div className="flex items-center gap-2">
-                                <div className="flex-grow">
+                                <div className="grow">
                                     <Dropdown
                                         options={Object.values(SortWellsBy).map((elm: SortWellsBy) => {
                                             return { value: elm, label: SortWellsByEnumToStringMapping[elm] };

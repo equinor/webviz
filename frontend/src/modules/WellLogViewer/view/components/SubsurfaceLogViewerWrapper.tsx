@@ -266,7 +266,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     return (
         // The weird tailwind-class hides the built-in hover tooltip
         <div
-            className="h-full [&_.welllogview_.overlay_.depth]:!invisible"
+            className="h-full [&_.welllogview_.overlay_.depth]:invisible!"
             onMouseEnter={handleMouseIn}
             onMouseLeave={handleMouseOut}
         >

@@ -212,7 +212,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
             <Overlay visible />
             <div
                 id="channel-selector"
-                className="absolute bg-white border rounded overflow-auto z-50 shadow flex flex-col w-80"
+                className="absolute bg-white border rounded-sm overflow-auto z-50 shadow-sm flex flex-col w-80"
                 style={{
                     left: `calc(${left}px - 10rem)`,
                     top: top,
@@ -224,7 +224,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                     id="channel-selector-header"
                     className="px-2 bg-slate-200 font-bold flex items-center text-sm h-12"
                 >
-                    <div className="flex-grow">
+                    <div className="grow">
                         Make <i className="font-bold text-green-700">{props.receiver.getDisplayName()}</i> subscribe
                         to...
                     </div>
@@ -232,7 +232,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                         <Close fontSize="small" />
                     </div>
                 </div>
-                <div className="flex-grow overflow-auto">
+                <div className="grow overflow-auto">
                     {props.selectableChannels.map((channel) => (
                         <ChannelContentSelector
                             multiSelect={props.receiver.getHasMultiContentSupport()}

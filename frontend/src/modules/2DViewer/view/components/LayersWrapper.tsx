@@ -89,7 +89,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                     position="left"
                 />
                 <div className="font-bold text-lg flex gap-2 justify-center items-center">
-                    <div className="flex gap-2 items-center bg-white p-2 backdrop-blur bg-opacity-50 rounded">
+                    <div className="flex gap-2 items-center bg-white/50 p-2 backdrop-blur-sm rounded-sm">
                         <div
                             className="rounded-full h-3 w-3 border border-white"
                             style={{ backgroundColor: view.color ?? undefined }}

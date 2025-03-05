@@ -301,7 +301,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 onClose={handleFilterSettingsClose}
             >
                 <div className="flex flex-col p-2 gap-4 overflow-y-auto">
-                    <div className="flex-grow space-y-4">
+                    <div className="grow space-y-4">
                         {ensembleSet.getEnsembleArray().map((ensemble) => {
                             const ensembleIdent = ensemble.getIdent();
                             const isActive =

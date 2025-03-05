@@ -8,7 +8,7 @@ export type TagProps = {
 export const Tag: React.FC<TagProps> = (props) => {
     return (
         <span
-            className="inline-flex items-center p-2 m-2 rounded border text-xs font-medium bg-gray-100 text-gray-800 font-mono"
+            className="inline-flex items-center p-2 m-2 rounded-sm border text-xs font-medium bg-gray-100 text-gray-800 font-mono"
             title={props.title}
         >
             {props.label}

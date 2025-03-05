@@ -259,12 +259,12 @@ export function TagPickerComponent<T>(
                 style={{ width: props.width }}
                 id={props.wrapperId}
                 ref={divRef}
-                className={resolveClassNames("flex w-full border p-1 px-2 rounded text-sm shadow-sm input-comp", {
+                className={resolveClassNames("flex w-full border p-1 px-2 rounded-sm text-sm shadow-xs input-comp", {
                     "outline outline-blue-500": focused,
                 })}
                 onClick={handleClick}
             >
-                <div className="min-h-6 flex-grow flex gap-2 justify-start flex-wrap">
+                <div className="min-h-6 grow flex gap-2 justify-start flex-wrap">
                     {selectedTags.map((tag) => {
                         const tagOption = props.tags.find((el) => el.value === tag);
                         if (!tagOption) {
@@ -274,7 +274,7 @@ export function TagPickerComponent<T>(
                     })}
                     <input
                         ref={inputRef}
-                        className="flex-grow outline-none min-w-0 h-8 w-0"
+                        className="grow outline-hidden min-w-0 h-8 w-0"
                         onClick={handleInputClick}
                         onChange={handleInputChange}
                         onFocus={handleFocus}
@@ -336,7 +336,7 @@ type TagProps<T> = {
 
 function Tag<T>(props: TagProps<T>): React.ReactNode {
     return (
-        <div className="bg-blue-200 p-1 pl-2 rounded flex gap-1 items-center input-comp">
+        <div className="bg-blue-200 p-1 pl-2 rounded-sm flex gap-1 items-center input-comp">
             <span>{props.tag.label}</span>
             {
                 <IconButton onClick={props.onRemove} title="Remove tag">

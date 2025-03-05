@@ -297,12 +297,12 @@ export function Layers(props: LayersProps): React.ReactNode {
     }
 
     return (
-        <div className="w-full flex-grow flex flex-col min-h-0">
+        <div className="w-full grow flex flex-col min-h-0">
             <div className="flex bg-slate-100 p-2 items-center border-b border-gray-300">
-                <div className="flex-grow font-bold text-sm">Layers</div>
+                <div className="grow font-bold text-sm">Layers</div>
                 <Dropdown>
                     <MenuButton>
-                        <div className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded text-sm flex items-center gap-2">
+                        <div className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded-sm text-sm flex items-center gap-2">
                             <Add fontSize="inherit" />
                             <span>Add layer</span>
                             <ArrowDropDown fontSize="inherit" />
@@ -327,7 +327,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 createPortal(
                     <div className="absolute z-40 transparent w-screen h-screen inset-0 cursor-grabbing select-none"></div>,
                 )}
-            <div className="w-full flex-grow flex flex-col relative">
+            <div className="w-full grow flex flex-col relative">
                 <div
                     className="absolute top-0 left-0 w-full h-5 z-50 pointer-events-none"
                     ref={upperScrollDivRef}
@@ -337,7 +337,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                     ref={lowerScrollDivRef}
                 ></div>
                 <div
-                    className="flex-grow overflow-auto min-h-0 bg-slate-200 relative"
+                    className="grow overflow-auto min-h-0 bg-slate-200 relative"
                     ref={scrollDivRef}
                     onScroll={handleScroll}
                 >
@@ -509,7 +509,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                     <DragIndicator fontSize="inherit" className="pointer-events-none" />
                 </div>
                 <div
-                    className={resolveClassNames("px-0.5 hover:cursor-pointer rounded", {
+                    className={resolveClassNames("px-0.5 hover:cursor-pointer rounded-sm", {
                         "hover:text-blue-800": !props.isDragging,
                     })}
                     onClick={handleToggleLayerVisibility}
@@ -520,7 +520,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                 <LayerName layer={props.layer} />
                 {makeStatus()}
                 <div
-                    className="hover:cursor-pointer hover:text-blue-800 p-0.5 rounded"
+                    className="hover:cursor-pointer hover:text-blue-800 p-0.5 rounded-sm"
                     onClick={handleToggleSettingsVisibility}
                     title={showSettings ? "Hide settings" : "Show settings"}
                 >
@@ -528,7 +528,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                     {showSettings ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
                 </div>
                 <div
-                    className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded"
+                    className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded-sm"
                     onClick={handleRemoveLayer}
                     title="Remove layer"
                 >
@@ -610,7 +610,7 @@ function LayerName(props: LayerNameProps): React.ReactNode {
 
     return (
         <div
-            className="flex-grow font-bold flex items-center pt-1"
+            className="grow font-bold flex items-center pt-1"
             onDoubleClick={handleNameDoubleClick}
             title="Double-click to edit name"
         >

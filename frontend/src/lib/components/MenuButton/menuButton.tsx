@@ -13,7 +13,7 @@ export function MenuButton(props: MenuButtonProps): React.ReactNode {
     return (
         <MuiMenuButton
             {...props}
-            className="hover:bg-blue-200 focus:outline-blue-600 p-1 text-sm rounded flex gap-1 items-center focus:outline focus:outline-1 hover:text-gray-900 text-gray-600"
+            className="hover:bg-blue-200 focus:outline-blue-600 p-1 text-sm rounded-sm flex gap-1 items-center focus:outline focus:outline-1 hover:text-gray-900 text-gray-600"
         />
     );
 }

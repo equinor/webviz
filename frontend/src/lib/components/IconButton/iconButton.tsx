@@ -35,7 +35,7 @@ export const IconButton = React.forwardRef(
                                 "justify-center",
                                 "rounded-full",
                                 "p-1",
-                                "focus:outline-none",
+                                "focus:outline-hidden",
                                 {
                                     "w-4 h-4": size === "small",
                                     "w-6 h-6": size === "medium" || !size,

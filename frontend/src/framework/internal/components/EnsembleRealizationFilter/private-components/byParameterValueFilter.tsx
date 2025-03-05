@@ -301,12 +301,12 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
         const displayParameterName = createSmartNodeSelectorTagTextFromParameterIdentString(parameterIdentString);
 
         return (
-            <div key={parameterIdentString} className="flex-grow border border-lightgrey rounded-md p-2">
+            <div key={parameterIdentString} className="grow border  rounded-md p-2">
                 <div className="flex flex-col gap-2 ">
                     <div className="flex flex-row items-center gap-2">
                         <div
                             title={`Parameter: ${displayParameterName}`}
-                            className="flex-grow text-sm text-gray-500 leading-none overflow-hidden whitespace-nowrap text-ellipsis"
+                            className="grow text-sm text-gray-500 leading-none overflow-hidden whitespace-nowrap text-ellipsis"
                         >
                             {displayParameterName}
                         </div>
@@ -319,7 +319,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                         </DenseIconButton>
                     </div>
                     <div className="flex items-center">
-                        <div className="flex-grow">
+                        <div className="grow">
                             {isValueSelectionAnArrayOfString(valueSelection) ||
                             isValueSelectionAnArrayOfNumber(valueSelection)
                                 ? createDiscreteParameterValueSelectionRow(parameterIdentString, valueSelection)
@@ -349,7 +349,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
     );
 
     return (
-        <div className="flex-grow flex-col gap-2">
+        <div className="grow flex-col gap-2">
             <div className="flex flex-col pb-2">
                 <div className="flex items-center gap-2 h-8">
                     <div
@@ -370,7 +370,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                     </div>
                 </div>
                 <div className="flex p-1 gap-1 items-center overflow-x-scroll">
-                    <div className="flex-grow">
+                    <div className="grow">
                         <SmartNodeSelector
                             data={smartNodeSelectorTreeDataNodes ?? []}
                             selectedTags={smartNodeSelectorSelection.selectedTags.map((tag) => tag.text)}
@@ -379,7 +379,7 @@ export const ByParameterValueFilter: React.FC<ByParameterValueFilterProps> = (pr
                             caseInsensitiveMatching={true}
                         />
                     </div>
-                    <div className="flex-grow-0" title={addButtonText ?? undefined}>
+                    <div className="grow-0" title={addButtonText ?? undefined}>
                         <Button
                             variant="contained"
                             disabled={isAddButtonDisabled}

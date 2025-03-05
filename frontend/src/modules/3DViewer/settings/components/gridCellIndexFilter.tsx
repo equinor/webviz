@@ -49,7 +49,7 @@ export function GridCellIndexFilter(props: GridCellIndexFilterProps): React.Reac
     return (
         <div className="flex flex-col gap-2 text-sm">
             <div className="flex gap-2 items-center">
-                <span className="flex-grow font-bold">{props.labelTitle}</span>
+                <span className="grow font-bold">{props.labelTitle}</span>
                 <Checkbox checked={props.pickSingle} onChange={handlePickSingleChange} label="Use single" />
             </div>
             <div className="flex gap-1">
@@ -60,7 +60,7 @@ export function GridCellIndexFilter(props: GridCellIndexFilterProps): React.Reac
                     className="w-12"
                     debounceTimeMs={600}
                 />
-                <div className="flex-grow">
+                <div className="grow">
                     <Slider
                         min={0}
                         max={props.max}

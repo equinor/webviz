@@ -366,8 +366,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             })}
                         >
                             <div className="flex flex-col">
-                                <div className="flex flex-row justify-center items-center p-2 bg-slate-100 shadow-sm border-b">
-                                    <h3 className="text-sm font-semibold flex-grow leading-none">Select Parameter</h3>
+                                <div className="flex flex-row justify-center items-center p-2 bg-slate-100 shadow-xs border-b">
+                                    <h3 className="text-sm font-semibold grow leading-none">Select Parameter</h3>
                                     <IconButton
                                         color="secondary"
                                         title="Filter list of parameters"

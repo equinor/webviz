@@ -484,14 +484,14 @@ export function SortableList(props: SortableListProps): React.ReactNode {
 
             currentListDivRef.addEventListener("pointerdown", handlePointerDown);
             document.addEventListener("keydown", handleKeyDown);
-            window.addEventListener("blur", handleWindowBlur);
+            window.addEventListener("blur-sm", handleWindowBlur);
 
             return function removeEventListeners() {
                 currentListDivRef.removeEventListener("pointerdown", handlePointerDown);
                 document.removeEventListener("pointermove", handlePointerMove);
                 document.removeEventListener("pointerup", handlePointerUp);
                 document.removeEventListener("keydown", handleKeyDown);
-                window.removeEventListener("blur", handleWindowBlur);
+                window.removeEventListener("blur-sm", handleWindowBlur);
                 setIsDragging(false);
                 setDraggedItemId(null);
             };
@@ -558,7 +558,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     ref={lowerScrollDivRef}
                 ></div>
                 <div
-                    className="flex-grow overflow-auto min-h-0 bg-slate-200 relative"
+                    className="grow overflow-auto min-h-0 bg-slate-200 relative"
                     ref={scrollDivRef}
                     onScroll={handleScroll}
                 >
@@ -572,7 +572,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 {isDragging &&
                     createPortal(
                         <div
-                            className={resolveClassNames("absolute z-[100] inset-0", {
+                            className={resolveClassNames("absolute z-100 inset-0", {
                                 "cursor-not-allowed": !hoveredItemIdAndArea,
                                 "cursor-grabbing": hoveredItemIdAndArea !== null,
                             })}

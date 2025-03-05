@@ -309,7 +309,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
             onMouseLeave={handleHideDetails}
         >
             {icon}
-            <span title={message} className="flex-grow text-black">
+            <span title={message} className="grow text-black">
                 {message}
                 {detailsString}
             </span>

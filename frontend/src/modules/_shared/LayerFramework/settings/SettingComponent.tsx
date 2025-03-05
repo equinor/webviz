@@ -101,7 +101,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
                                 title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."
                             >
                                 <Warning fontSize="inherit" />
-                                <span className="flex-grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                                <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                                     Persisted value not valid.
                                 </span>
                             </span>

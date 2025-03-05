@@ -43,7 +43,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             onSizesChange={handleResizablePanelsChange}
         >
             <LeftSettingsPanel workbench={props.workbench} />
-            <div className="flex flex-col flex-grow h-full">
+            <div className="flex flex-col grow h-full">
                 <Content workbench={props.workbench} />
             </div>
             <RightSettingsPanel workbench={props.workbench} />

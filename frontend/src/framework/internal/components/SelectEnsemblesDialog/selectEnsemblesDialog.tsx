@@ -595,7 +595,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 loadingComponent={<CircularProgress />}
                             >
                                 <div className="flex justify-end gap-4 items-center">
-                                    <span className="flex-grow text-sm text-slate-500">
+                                    <span className="grow text-sm text-slate-500">
                                         Select from {caseOpts.length} cases
                                     </span>
                                     <Label position="right" text="Keep" title="Show only cases marked as keep">
@@ -658,9 +658,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             </Button>
                         </div>
                     </div>
-                    <div className="flex flex-col flex-grow max-h-full gap-4 p-4">
+                    <div className="flex flex-col grow max-h-full gap-4 p-4">
                         <div className="flex-1 flex-col">
-                            <div className="flex-shrink">Selected Ensembles</div>
+                            <div className="shrink">Selected Ensembles</div>
                             <div className="flex-1 overflow-auto">
                                 <table className="w-full border border-collapse table-fixed text-sm">
                                     <thead className="sticky top-0">
@@ -743,12 +743,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             )}
                         </div>
                         <div className="flex-1 flex-col">
-                            <div className="flex-shrink flex flex-row">
+                            <div className="shrink flex flex-row">
                                 <Info
                                     fontSize="medium"
                                     titleAccess={`Create delta ensemble using selected ensembles:\n\n"Delta Ensemble" = "Comparison Ensemble" - "Reference Ensemble"`}
                                     className={
-                                        "rounded-md px-0.25 py-0.25 border border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
+                                        "rounded-md px-0.25 py-0.25 border  border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
                                     }
                                 />
                                 <div className="pl-2 pr-2">Delta Ensembles</div>

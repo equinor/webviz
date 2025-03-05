@@ -18,7 +18,7 @@ import "./templates/registerAllTemplates";
 
 function DevLabel() {
     return (
-        <div className="bg-orange-600 text-white p-2 rounded max-w-[400px] text-sm text-center mt-4 z-50 shadow">
+        <div className="bg-orange-600 text-white p-2 rounded-sm max-w-[400px] text-sm text-center mt-4 z-50 shadow-sm">
             <strong>NOTE:</strong> This application is still under heavy development and bugs are to be expected. Please
             help us improve Webviz by reporting any undesired behaviour either on{" "}
             <a href="https://equinor.slack.com/messages/webviz/" target="blank" className="underline cursor-pointer">

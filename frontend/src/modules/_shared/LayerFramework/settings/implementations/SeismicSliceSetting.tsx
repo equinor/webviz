@@ -103,8 +103,8 @@ export class SeismicSliceSetting implements Setting<ValueType> {
             }
 
             return (
-                <div className="flex items-center space-x-1">
-                    <div className="flex-grow">
+                <div className="flex items-center gap-x-1">
+                    <div className="grow">
                         <Slider
                             min={0}
                             max={props.availableValues[1] ?? 1}

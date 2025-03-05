@@ -51,7 +51,7 @@ export const QueryStateWrapper: React.FC<QueryStateWrapperProps | QueryStatesWra
     return (
         <div
             className={resolveClassNames(
-                "relative rounded",
+                "relative rounded-sm",
                 { "outline outline-blue-100 outline-offset-2": showQueryLoading },
                 { "outline outline-red-100 outline-offset-2": showQueryError },
                 props.className ?? "",
@@ -59,12 +59,12 @@ export const QueryStateWrapper: React.FC<QueryStateWrapperProps | QueryStatesWra
             style={props.style}
         >
             {showQueryLoading && (
-                <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                <div className="absolute left-0 right-0 w-full h-full bg-white/80 flex items-center justify-center z-10">
                     {props.loadingComponent}
                 </div>
             )}
             {showQueryError && (
-                <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                <div className="absolute left-0 right-0 w-full h-full bg-white/80 flex items-center justify-center z-10">
                     {props.errorComponent}
                 </div>
             )}

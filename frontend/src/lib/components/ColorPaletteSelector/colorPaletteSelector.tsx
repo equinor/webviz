@@ -62,7 +62,7 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
             >
                 {props.colorPalette.getName()}
             </span>
-            <div className="flex-grow">{makeColorPalettePreview(props.colorPalette, props.type, props.steps)}</div>
+            <div className="grow">{makeColorPalettePreview(props.colorPalette, props.type, props.steps)}</div>
         </div>
     );
 };
@@ -139,10 +139,10 @@ export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props)
     }
 
     return (
-        <div className="bg-slate-100 rounded p-2 flex items-center gap-4" ref={ref}>
-            <div className="flex-grow">{makeColorPalettePreview(selectedColorPalette, props.type, props.steps)}</div>
+        <div className="bg-slate-100 rounded-sm p-2 flex items-center gap-4" ref={ref}>
+            <div className="grow">{makeColorPalettePreview(selectedColorPalette, props.type, props.steps)}</div>
             <IconButton onClick={handleChevronClick}>
-                <ExpandMore fontSize="small" className="flex-grow-0" />
+                <ExpandMore fontSize="small" className="grow-0" />
             </IconButton>
             {open &&
                 createPortal(
@@ -150,7 +150,7 @@ export const ColorPaletteSelector: React.FC<ColorPaletteSelectorProps> = (props)
                         <Overlay visible={true} />
                         <div
                             ref={dropdownContentRef}
-                            className="absolute z-[60] shadow bg-white rounded overflow-hidden"
+                            className="absolute z-60 shadow-sm bg-white rounded-sm overflow-hidden"
                             style={{
                                 left: boundingRect.left,
                                 top: boundingRect.top,

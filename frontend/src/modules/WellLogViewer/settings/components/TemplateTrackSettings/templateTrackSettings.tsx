@@ -119,11 +119,11 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
                     onChange={handleConfigJsonImport}
                 />
 
-                <div className="flex-grow font-bold text-sm">Plot Tracks</div>
+                <div className="grow font-bold text-sm">Plot Tracks</div>
 
                 <AddItemButton buttonText="Add track" options={TRACK_OPTIONS} onOptionClicked={handleNewPlotTrack} />
                 <Dropdown>
-                    <MenuButton className="py-0.5 px-1 text-sm rounded hover:bg-blue-100">
+                    <MenuButton className="py-0.5 px-1 text-sm rounded-sm hover:bg-blue-100">
                         <MoreVert fontSize="inherit" />
                     </MenuButton>
                     <Menu anchorOrigin="bottom-end" className="text-sm">

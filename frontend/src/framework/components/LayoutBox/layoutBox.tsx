@@ -854,7 +854,7 @@ export const LayoutBoxComponents: React.FC<{
                 {edges.map((edge) => (
                     <div
                         key={`${edge.edge}-${edge.rect.x}-${edge.rect.y}-${edge.rect.width}-${edge.rect.height}`}
-                        className="absolute rounded bg-slate-400 justify-center items-center opacity-50"
+                        className="absolute rounded-sm bg-slate-400 justify-center items-center opacity-50"
                         style={{
                             left: edge.rect.x,
                             top: edge.rect.y,

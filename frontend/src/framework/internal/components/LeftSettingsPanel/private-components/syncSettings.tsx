@@ -83,7 +83,7 @@ export const SyncSettings: React.FC<ModulesListProps> = (props) => {
         return (
             <table className="w-full m-2">
                 <thead>
-                    <tr className="border-b">
+                    <tr className="border-b ">
                         <th className="border-r p-2 w-6" title="Sync for all module instances">
                             <Public fontSize="small" />
                         </th>

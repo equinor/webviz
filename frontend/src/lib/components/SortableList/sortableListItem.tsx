@@ -68,7 +68,7 @@ export function SortableListItem(props: SortableListItemProps): React.ReactNode 
                             <Header {...props} />
                         </div>,
                     )}
-                <div className={resolveClassNames("bg-white border-b shadow")}>{props.children}</div>
+                <div className={resolveClassNames("bg-white border-b shadow-sm")}>{props.children}</div>
             </div>
             {isHovered && sortableListContext.hoveredArea === HoveredArea.BOTTOM && <SortableListDropIndicator />}
         </>
@@ -93,9 +93,9 @@ function Header(props: HeaderProps): React.ReactNode {
             <div className={resolveClassNames("sortable-list-element-indicator hover:cursor-grab")}>
                 <DragIndicator fontSize="inherit" className="pointer-events-none" />
             </div>
-            <div className="flex items-center gap-2 flex-grow min-w-0">
+            <div className="flex items-center gap-2 grow min-w-0">
                 {props.startAdornment}
-                <div className="flex-grow min-w-0">{props.title}</div>
+                <div className="grow min-w-0">{props.title}</div>
                 {props.endAdornment}
             </div>
         </div>

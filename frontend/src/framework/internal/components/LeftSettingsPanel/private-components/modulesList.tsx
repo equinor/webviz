@@ -139,14 +139,14 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("pointercancel", handlePointerUp);
-            document.addEventListener("blur", handlePointerUp);
+            document.addEventListener("blur-sm", handlePointerUp);
         }
 
         function removeDraggingEventListeners() {
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("pointercancel", handlePointerUp);
-            document.removeEventListener("blur", handlePointerUp);
+            document.removeEventListener("blur-sm", handlePointerUp);
         }
 
         if (ref.current) {
@@ -193,7 +193,7 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
             <div
                 ref={isDragged ? undefined : ref}
                 className={resolveClassNames(
-                    "touch-none flex flex-col border-solid text-sm text-gray-700 w-full h-12 select-none hover:bg-blue-100 bg-white",
+                    "touch-none flex flex-col text-sm text-gray-700 w-full h-12 select-none hover:bg-blue-100 bg-white",
                     {
                         "cursor-move": !isDragged,
                         "cursor-grabbing": isDragged,
@@ -203,10 +203,8 @@ const ModulesListItem: React.FC<ModulesListItemProps> = (props) => {
                 onMouseOver={handleHover}
             >
                 <div ref={ref} className="px-2 flex items-center h-full text-sm gap-2" title={props.displayName}>
-                    <div className="h-12 w-12 min-w-12 overflow-hidden p-1 flex-shrink-0">{makePreviewImage()}</div>
-                    <span className="flex-grow text-ellipsis whitespace-nowrap overflow-hidden">
-                        {props.displayName}
-                    </span>
+                    <div className="h-12 w-12 min-w-12 overflow-hidden p-1 shrink-0">{makePreviewImage()}</div>
+                    <span className="grow text-ellipsis whitespace-nowrap overflow-hidden">{props.displayName}</span>
                     <span
                         className={resolveClassNames({
                             "text-green-600": props.devState === ModuleDevState.PROD,
@@ -252,7 +250,7 @@ function DevStatesFilter(props: DevStatesFilterProps): React.ReactNode {
     return (
         <div className="flex flex-col gap-1 text-sm">
             <div className="flex gap-2 cursor-pointer items-center" onClick={toggleExpanded}>
-                <span className="flex-grow font-bold">Filter by development state</span>
+                <span className="grow font-bold">Filter by development state</span>
                 {expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </div>
             {expanded && (
@@ -316,10 +314,10 @@ function ModulesListCategory(props: ModulesListCategoryProps): React.ReactNode {
     return (
         <div className="flex flex-col gap-1">
             <div
-                className="flex gap-2 cursor-pointer items-center bg-slate-100 p-2 text-sm shadow sticky top-0 z-20"
+                className="flex gap-2 cursor-pointer items-center bg-slate-100 p-2 text-sm shadow-sm sticky top-0 z-20"
                 onClick={toggleExpanded}
             >
-                <span className="flex-grow font-bold">{props.title}</span>
+                <span className="grow font-bold">{props.title}</span>
                 {expanded ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
             </div>
             {expanded && <div className="flex flex-col bg-slate-100 gap-0.5">{props.children}</div>}
@@ -419,9 +417,9 @@ function DetailsPopup(props: DetailsPopupProps): React.ReactNode {
             style={style}
         >
             <div>{previewFunc && previewFunc(64, 64)}</div>
-            <div className="flex-grow">
+            <div className="grow">
                 <div className="flex items-center">
-                    <span className="font-bold flex-grow">{props.module.getDefaultTitle()}</span>
+                    <span className="font-bold grow">{props.module.getDefaultTitle()}</span>
                     <div className="cursor-pointer hover:text-blue-600" onClick={props.onClose} title="Close popup">
                         <Close fontSize="inherit" />
                     </div>

@@ -60,7 +60,7 @@ export class Tag extends React.Component<TagProps> {
     private innerTagClasses(invalid = false, duplicate = false): string {
         const { treeNodeSelection } = this.props;
         let ret = {
-            "text-sm flex flex-wrap rounded justify-left items-center min-w-0 m-0.5 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-5 bg-no-repeat":
+            "text-sm flex flex-wrap rounded-sm justify-left items-center min-w-0 m-0.5 text-slate-600 border-2 border-transparent whitespace-pre-wrap z-5 bg-no-repeat":
                 true,
         };
         if (this.addAdditionalClasses(invalid)) {
@@ -80,7 +80,7 @@ export class Tag extends React.Component<TagProps> {
 
     private outerTagClasses(invalid: boolean, duplicate: boolean, frameless: boolean): string {
         return resolveClassNames(
-            "flex flex-wrap rounded justify-left items-center min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 whitespace-pre-wrap z-5",
+            "flex flex-wrap rounded-sm justify-left items-center min-w-0 relative mr-2 mt-1 mb-1 text-slate-600 border-2 whitespace-pre-wrap z-5",
             {
                 "border-slate-400 bg-slate-50 SmartNodeSelector__Tag": this.displayAsTag() || frameless,
                 "border-transparent bg-transparent": !this.displayAsTag() && !frameless,
@@ -89,9 +89,9 @@ export class Tag extends React.Component<TagProps> {
                 [!this.addAdditionalClasses(invalid)
                     ? ""
                     : invalid
-                      ? "!border-red-600 !bg-red-200"
+                      ? "border-red-600! bg-red-200!"
                       : duplicate
-                        ? "!border-yellow-600 !bg-yellow-200"
+                        ? "border-yellow-600! bg-yellow-200!"
                         : ""]: true,
             },
         );
@@ -122,7 +122,7 @@ export class Tag extends React.Component<TagProps> {
                 <span
                     key={"TagMatchesCounter_" + index}
                     className={resolveClassNames(
-                        "items-center text-white rounded-full h-5 justify-center mr-2 pl-1.5 pr-1.5 min-w-[5] flex outline-none relative text-center text-xs leading-none",
+                        "items-center text-white rounded-full h-5 justify-center mr-2 pl-1.5 pr-1.5 min-w-5 flex outline-hidden relative text-center text-xs leading-none",
                         {
                             "bg-blue-700":
                                 matches <= this.props.maxNumSelectedNodes || this.props.maxNumSelectedNodes === -1,
@@ -160,7 +160,7 @@ export class Tag extends React.Component<TagProps> {
                     <button
                         key={"TagPreviousButton_" + index}
                         className={resolveClassNames(
-                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default text-xs",
+                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-hidden p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default text-xs",
                             { "hover:bg-cyan-500": position !== 0 },
                         )}
                         disabled={position === 0}
@@ -180,7 +180,7 @@ export class Tag extends React.Component<TagProps> {
                     <button
                         key={"TagNextButton_" + index}
                         className={resolveClassNames(
-                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-none p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default text-xs",
+                            "appearance-none bg-cyan-600 border-0 cursor-pointer inline-block outline-hidden p-0 m-0 h-1/2 w-4 disabled:opacity-30 disabled:cursor-default text-xs",
                             { "hover:bg-cyan-500": position !== subgroups.length - 1 },
                         )}
                         disabled={position === subgroups.length - 1}
@@ -433,7 +433,7 @@ export class Tag extends React.Component<TagProps> {
                     {this.createMatchesCounter(treeNodeSelection, index)}
                     <div className="flex whitespace-nowrap relative">
                         <input
-                            className="border-0 bg-transparent outline-none p-0 w-12 inline-block text-sm"
+                            className="border-0 bg-transparent outline-hidden p-0 w-12 inline-block text-sm"
                             spellCheck="false"
                             key={"TagInput_" + index}
                             type="text"
@@ -465,7 +465,7 @@ export class Tag extends React.Component<TagProps> {
                     {treeNodeSelection.isSelected() && (
                         <div
                             key={"TagSelected_" + index}
-                            className="bg-blue-500 opacity-30 absolute left-0 top-0 w-full h-full block z-10 rounded"
+                            className="bg-blue-500 opacity-30 absolute left-0 top-0 w-full h-full block z-10 rounded-sm"
                         ></div>
                     )}
                 </div>

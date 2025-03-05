@@ -50,7 +50,7 @@ function CheckboxComponent(props: CheckboxProps, ref: React.ForwardedRef<HTMLDiv
                     "h-4",
                     "text-blue-600",
                     "border-gray-300",
-                    "rounded",
+                    "rounded-sm",
                     "focus:ring-blue-500",
                     "cursor-pointer",
                 )}

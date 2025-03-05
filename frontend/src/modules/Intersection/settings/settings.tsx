@@ -190,7 +190,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                     </Label>
                 </div>
             </CollapsibleGroup>
-            <div className="flex-grow flex flex-col min-h-0">
+            <div className="grow flex flex-col min-h-0">
                 <Layers
                     ensembleSet={filteredEnsembleSet}
                     workbenchSession={props.workbenchSession}

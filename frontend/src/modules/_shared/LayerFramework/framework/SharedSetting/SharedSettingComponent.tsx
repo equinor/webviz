@@ -49,7 +49,7 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
                 </div>
             }
             endAdornment={<Actions sharedSetting={props.sharedSetting} />}
-            headerClassNames="!bg-teal-200"
+            headerClassNames="bg-teal-200!"
         >
             <div
                 className={resolveClassNames("grid grid-cols-[auto_1fr] items-center text-xs border", {

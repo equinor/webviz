@@ -59,7 +59,7 @@ export function WellboreSelector(props: WellboreSelectorProps): React.ReactNode 
     return (
         <>
             <CollapsibleGroup title="Filter on well status and purpose">
-                <div className="flex gap-2 flex-grow items-center">
+                <div className="flex gap-2 grow items-center">
                     <Label text="Status">
                         <Select
                             options={makeWellboreStatusOptions(props.wellboreHeaders)}

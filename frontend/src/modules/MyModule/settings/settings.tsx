@@ -48,7 +48,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             value: ColorScaleType.Discrete,
                             label: (
                                 <div className="flex gap-4 items-center">
-                                    <div className="flex-grow w-24">
+                                    <div className="grow w-24">
                                         <ColorGradient colorPalette={colorScale.getColorPalette()} steps={10} />
                                     </div>
                                     <div>Discrete</div>
@@ -59,7 +59,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             value: ColorScaleType.Continuous,
                             label: (
                                 <div className="flex gap-4 items-center h-4">
-                                    <div className="flex-grow w-24">
+                                    <div className="grow w-24">
                                         <ColorGradient colorPalette={colorScale.getColorPalette()} />
                                     </div>
                                     <div>Continuous</div>

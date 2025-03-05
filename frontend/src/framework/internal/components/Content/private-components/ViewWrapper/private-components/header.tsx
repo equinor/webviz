@@ -206,7 +206,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames("flex items-center select-none shadow relative touch-none text-lg", {
+            className={resolveClassNames("flex items-center select-none shadow-sm relative touch-none text-lg", {
                 "cursor-grabbing": props.isDragged,
                 "cursor-move": !props.isDragged,
                 "bg-red-100": hasErrors,
@@ -221,10 +221,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     hidden: !isLoading,
                 })}
             >
-                <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded" />
+                <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
             </div>
-            <div className="flex-grow flex items-center text-sm font-bold min-w-0 p-1.5">
-                <span title={title} className="flex-grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0">
+            <div className="grow flex items-center text-sm font-bold min-w-0 p-1.5">
+                <span title={title} className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0">
                     {title}
                 </span>
                 {isDevMode() && (
@@ -239,7 +239,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     {syncedSettings.map((setting) => (
                         <span
                             key={setting}
-                            className="flex items-center justify-center rounded p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help"
+                            className="flex items-center justify-center rounded-sm p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help"
                             title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
                         >
                             {SyncSettingsMeta[setting].abbreviation}
@@ -285,7 +285,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             {statusMessagesVisible &&
                 createPortal(
                     <div
-                        className={"absolute shadow min-w-[200px] z-40 bg-white overflow-hidden text-sm"}
+                        className={"absolute shadow-sm min-w-[200px] z-40 bg-white overflow-hidden text-sm"}
                         style={{
                             top: boundingRect.bottom,
                             right: window.innerWidth - boundingRect.right,

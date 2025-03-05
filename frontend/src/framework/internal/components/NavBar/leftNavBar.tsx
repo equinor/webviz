@@ -196,12 +196,12 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 collapsed ? "w-[4.5rem]" : "w-64",
             )}
         >
-            <div className="flex flex-col gap-2 flex-grow">
+            <div className="flex flex-col gap-2 grow">
                 <div className="w-full flex justify-center mb-2 mt-1 p-2">
                     <img src={WebvizLogo} alt="Webviz logo" className="w-20 h-20" />
                 </div>
                 <div
-                    className="bg-orange-600 text-white p-1 rounded text-xs text-center cursor-help shadow"
+                    className="bg-orange-600 text-white p-1 rounded-sm text-xs text-center cursor-help shadow-sm"
                     title="NOTE: This application is still under heavy development and bugs are to be expected. Please help us improve Webviz by reporting any undesired behaviour either on Slack or Yammer."
                 >
                     BETA
@@ -209,7 +209,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <div className="flex justify-end">
                     <Button
                         onClick={handleCollapseOrExpand}
-                        className="!text-slate-800"
+                        className="text-slate-800!"
                         title={collapsed ? "Expand menu" : "Collapse menu"}
                     >
                         {collapsed ? <ChevronRight fontSize="small" /> : <ChevronLeft fontSize="small" />}
@@ -219,7 +219,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                 <Button
                     title="Open ensemble selection dialog"
                     onClick={handleEnsembleClick}
-                    className="w-full !text-slate-800 h-10"
+                    className="w-full text-slate-800! h-10"
                     startIcon={
                         selectedEnsembles.length === 0 && createdDeltaEnsembles.length === 0 && !loadingEnsembleSet ? (
                             <List fontSize="small" className="w-5 h-5 mr-2" />
@@ -250,7 +250,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.ModuleSettings ? "text-cyan-600" : "!text-slate-800",
+                        drawerContent === LeftDrawerContent.ModuleSettings ? "text-cyan-600" : "text-slate-800!",
                     )}
                     disabled={layoutEmpty}
                 >
@@ -263,7 +263,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.SyncSettings ? "text-cyan-600" : "!text-slate-800",
+                        drawerContent === LeftDrawerContent.SyncSettings ? "text-cyan-600" : "text-slate-800!",
                     )}
                     disabled={layoutEmpty}
                 >
@@ -277,7 +277,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.ModulesList ? "text-cyan-600" : "!text-slate-800",
+                        drawerContent === LeftDrawerContent.ModulesList ? "text-cyan-600" : "text-slate-800!",
                     )}
                 >
                     {!collapsed ? "Add modules" : ""}
@@ -289,7 +289,7 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.TemplatesList ? "text-cyan-600" : "!text-slate-800",
+                        drawerContent === LeftDrawerContent.TemplatesList ? "text-cyan-600" : "text-slate-800!",
                     )}
                 >
                     {!collapsed ? "Use templates" : ""}
@@ -302,14 +302,14 @@ export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {
                     className={resolveClassNames(
                         "w-full",
                         "h-10",
-                        drawerContent === LeftDrawerContent.ColorPaletteSettings ? "text-cyan-600" : "!text-slate-800",
+                        drawerContent === LeftDrawerContent.ColorPaletteSettings ? "text-cyan-600" : "text-slate-800!",
                     )}
                 >
                     {!collapsed ? "Color settings" : ""}
                 </Button>
                 <NavBarDivider />
-                <LoginButton className="w-full !text-slate-800 h-10" showText={!collapsed} />
-                <div className="flex-grow h-5" />
+                <LoginButton className="w-full text-slate-800! h-10" showText={!collapsed} />
+                <div className="grow h-5" />
                 <div className={isDevMode() ? "mb-16" : ""}>
                     <NavBarDivider />
                     <UserSessionState expanded={!collapsed} />

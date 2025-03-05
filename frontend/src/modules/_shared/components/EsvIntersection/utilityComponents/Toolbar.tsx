@@ -35,7 +35,7 @@ export function Toolbar(props: ToolbarProps): React.ReactNode {
     }
 
     return (
-        <div className="absolute left-0 top-0 bg-white p-1 rounded border-gray-300 border shadow z-30 text-sm flex flex-col gap-1 items-center">
+        <div className="absolute left-0 top-0 bg-white p-1 rounded-sm border-gray-300 border shadow-sm z-30 text-sm flex flex-col gap-1 items-center">
             <Button onClick={handleFitInViewClick} title="Focus top view">
                 <FilterCenterFocus fontSize="inherit" />
             </Button>

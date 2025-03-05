@@ -180,7 +180,7 @@ function makeCurveOptions(
                 label: _.startCase(header.curveName),
                 adornment: (
                     <span
-                        className="order-1 text-xs flex-shrink-[9999] overflow-hidden leading-tight block bg-gray-400 px-1 py-0.5 rounded text-white text-ellipsis whitespace-nowrap w-auto "
+                        className="order-1 text-xs shrink-9999 overflow-hidden leading-tight block bg-gray-400 px-1 py-0.5 rounded-sm text-white text-ellipsis whitespace-nowrap w-auto "
                         title={header.logName}
                     >
                         {simplifyLogName(header.logName, 12)}

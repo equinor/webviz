@@ -222,7 +222,7 @@ export const ChannelReceiverNode: React.FC<ChannelReceiverNodeProps> = (props) =
             ref={ref}
             data-channelconnector
             className={resolveClassNames(
-                "w-40 max-w-[25%] flex flex-col items-center justify-center rounded border h-20 max-h-[25%] m-2 gap-2 text-sm text-center",
+                "w-40 max-w-[25%] flex flex-col items-center justify-center rounded-sm border h-20 max-h-[25%] m-2 gap-2 text-sm text-center",
                 {
                     "bg-green-600 border-green-600": hoveredAndHoverable && connectable,
                     "bg-red-600 border-red-600": hoveredAndHoverable && !connectable && !editDataChannelConnections,

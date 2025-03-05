@@ -92,7 +92,7 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 
     return (
         <div>
-            <Label text="Plots" position="left" wrapperClassName="!justify-between" labelClassName="!mb-0">
+            <Label text="Plots" position="left" wrapperClassName="justify-between!" labelClassName="mb-0!">
                 <AddItemButton buttonText="Add plot" options={PLOT_TYPE_OPTIONS} onOptionClicked={addPlot} />
             </Label>
 
@@ -155,7 +155,7 @@ function SortablePlotItem(props: SortablePlotItemProps) {
     );
 
     const plotForm = (
-        <div className="flex-grow flex">
+        <div className="grow flex">
             <Dropdown
                 placeholder="Select a curve"
                 value={makeSelectValueForCurveHeader(props.plot._curveHeader)}
@@ -196,7 +196,7 @@ function SortablePlotItem(props: SortablePlotItemProps) {
 function PlotItemEndAdornment(props: SortablePlotItemProps) {
     return (
         <>
-            <div className="text-xs w-28 flex-shrink-0">
+            <div className="text-xs w-28 shrink-0">
                 <Dropdown
                     value={props.plot.type}
                     options={PLOT_TYPE_OPTIONS}
@@ -205,7 +205,7 @@ function PlotItemEndAdornment(props: SortablePlotItemProps) {
             </div>
 
             <button
-                className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded text-xs text-red-800"
+                className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded-sm text-xs text-red-800"
                 title="Remove Track"
                 onClick={() => props.onDeletePlot(props.plot)}
             >

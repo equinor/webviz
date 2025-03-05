@@ -307,7 +307,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                     <CollapsibleGroup title="Identifier filters" expanded>
                         <div className="flex flex-col gap-2">
                             <div className="flex flex-row items-center gap-2">
-                                <div className="flex-grow">Allow intersection of values</div>
+                                <div className="grow">Allow intersection of values</div>
                                 <Checkbox
                                     checked={props.selectedAllowIdentifierValuesIntersection}
                                     onChange={(_, checked) => handleAllowIdentifierValueIntersectionChange(checked)}

@@ -126,7 +126,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
 
     return (
         <li
-            className={resolveClassNames("flex items-center rounded px-2 py-0.5 mr-1", {
+            className={resolveClassNames("flex items-center rounded-sm px-2 py-0.5 mr-1", {
                 "bg-blue-200": !hasFocus,
                 "bg-red-300": validityInfo.validity === SelectionValidity.InputError && !hasFocus,
                 "bg-orange-300": validityInfo.validity === SelectionValidity.Invalid && !hasFocus,
@@ -137,7 +137,7 @@ const RealizationRangeTag: React.FC<RealizationRangeTagProps> = (props) => {
             {makeMatchCounter()}
             <input
                 ref={ref}
-                className="bg-transparent outline-none"
+                className="bg-transparent outline-hidden"
                 style={{ width: getTextWidthWithFont(value, "Equinor", 1.25) }}
                 type="text"
                 defaultValue={value}
@@ -412,7 +412,7 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
 
     return (
         <BaseComponent ref={ref} disabled={props.disabled}>
-            <div className="relative border border-gray-300 rounded p-2 pr-6 min-h-[3rem]">
+            <div className="relative border border-gray-300 rounded-sm p-2 pr-6 min-h-[3rem]">
                 <ul className="flex flex-wrap items-center cursor-text gap-1 h-full" onPointerDown={handlePointerDown}>
                     {selections.map((selection) => (
                         <RealizationRangeTag
@@ -429,11 +429,11 @@ function RealizationPickerComponent(props: RealizationPickerProps, ref: React.Fo
                             onChange={(value) => handleTagValueChange(selection.uuid, value)}
                         />
                     ))}
-                    <li className="flex-grow flex">
+                    <li className="grow flex">
                         <input
                             ref={inputRef}
                             type="text"
-                            className="outline-none flex-grow"
+                            className="outline-hidden grow"
                             onKeyDown={handleKeyDown}
                         />
                     </li>

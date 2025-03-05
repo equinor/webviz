@@ -214,12 +214,12 @@ export function View({
         <div className="relative w-full h-full flex flex-col">
             <div>
                 {isLoading && (
-                    <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                    <div className="absolute left-0 right-0 w-full h-full bg-white/80 flex items-center justify-center z-10">
                         <CircularProgress />
                     </div>
                 )}
                 {isError && (
-                    <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                    <div className="absolute left-0 right-0 w-full h-full bg-white/80 flex items-center justify-center z-10">
                         {"Error loading data"}
                     </div>
                 )}

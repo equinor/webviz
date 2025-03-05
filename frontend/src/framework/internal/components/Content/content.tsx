@@ -15,7 +15,7 @@ export const Content: React.FC<ContentProps> = (props) => {
     return (
         <>
             <DataChannelVisualizationLayer workbench={props.workbench} />
-            <div className="bg-slate-600 flex-grow">
+            <div className="bg-slate-600 grow">
                 <Layout workbench={props.workbench} activeModuleInstanceId={activeModuleInstanceId} />
             </div>
         </>

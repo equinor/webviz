@@ -481,7 +481,7 @@ export function TableComponent(
             headingCells.push(
                 <th
                     key={`${key}-filter`}
-                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left drop-shadow", additionalClassNames)}
+                    className={resolveClassNames("bg-slate-100 p-0 pb-1 text-left drop-shadow-sm", additionalClassNames)}
                     style={{
                         width: `${flattenedHeadings[key].sizeInPercent}%`,
                         minWidth: columnWidths[key],
@@ -550,8 +550,8 @@ export function TableComponent(
                     colSpan={cell.colSpan}
                 >
                     <div className="h-full flex flex-col">
-                        <div className="px-1 flex items-center gap-1 flex-grow">
-                            <span className="flex-grow pt-1" title={flattenedHeadings[cell.id].hoverText}>
+                        <div className="px-1 flex items-center gap-1 grow">
+                            <span className="grow pt-1" title={flattenedHeadings[cell.id].hoverText}>
                                 {flattenedHeadings[cell.id].label}
                             </span>
                             {!cell.hasSubHeaders ? makeSortButtons(cell.id) : null}

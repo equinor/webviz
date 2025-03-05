@@ -13,7 +13,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
         <MuiMenu
             slotProps={{
                 root: {
-                    className: "bg-white shadow-md z-50 border border-gray-200 py-2 rounded transition-opacity",
+                    className: "bg-white shadow-md z-50 border border-gray-200 py-2 rounded-sm transition-opacity",
                     placement: anchorOrigin,
                 },
             }}

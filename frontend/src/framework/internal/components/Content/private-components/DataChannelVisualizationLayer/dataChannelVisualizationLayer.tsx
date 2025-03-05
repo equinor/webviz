@@ -166,14 +166,14 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("pointercancel", handlePointerUp);
-            document.addEventListener("blur", handlePointerUp);
+            document.addEventListener("blur-sm", handlePointerUp);
         }
 
         function removeDraggingEventListeners() {
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("pointercancel", handlePointerUp);
-            document.removeEventListener("blur", handlePointerUp);
+            document.removeEventListener("blur-sm", handlePointerUp);
         }
 
         function addResizeObserver() {
@@ -373,7 +373,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     return createPortal(
         <svg
             ref={ref}
-            className={resolveClassNames("absolute bg-slate-50 left-0 top-0 h-full w-full z-40 bg-opacity-70", {
+            className={resolveClassNames("absolute bg-slate-50/70 left-0 top-0 h-full w-full z-40", {
                 invisible: !visible && !showDataChannelConnections,
             })}
         >

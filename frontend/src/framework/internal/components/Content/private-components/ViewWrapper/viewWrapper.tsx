@@ -161,7 +161,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         zIndex: props.isDragged ? 1 : 0,
                     }}
                 >
-                    <div className="bg-white h-full w-full flex flex-col border-solid border-2 box-border shadow">
+                    <div className="bg-white h-full w-full flex flex-col border-solid border-2 box-border shadow-sm">
                         <Header
                             moduleInstance={props.moduleInstance}
                             isDragged={props.isDragged}
@@ -187,7 +187,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
             >
                 <div
                     className={resolveClassNames(
-                        "relative bg-white h-full w-full flex flex-col box-border shadow p-1 border-slate-100",
+                        "relative bg-white h-full w-full flex flex-col box-border shadow-sm p-1 border border-slate-100",
                         {
                             "cursor-grabbing select-none": props.isDragged,
                         },
@@ -213,7 +213,7 @@ export const ViewWrapper: React.FC<ViewWrapperProps> = (props) => {
                         guiMessageBroker={guiMessageBroker}
                     />
                     <div
-                        className={resolveClassNames("flex-grow overflow-auto h-0", { hidden: props.changingLayout })}
+                        className={resolveClassNames("grow overflow-auto h-0", { hidden: props.changingLayout })}
                         onClick={handleModuleClick}
                     >
                         <ViewContent workbench={props.workbench} moduleInstance={props.moduleInstance} />

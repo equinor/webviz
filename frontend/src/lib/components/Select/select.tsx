@@ -281,12 +281,12 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
             }
 
             refCurrent?.addEventListener("focus", handleFocus);
-            refCurrent?.addEventListener("blur", handleBlur);
+            refCurrent?.addEventListener("blur-sm", handleBlur);
             refCurrent?.addEventListener("keydown", handleKeyDown);
 
             return function removeKeyboardEventListeners() {
                 refCurrent?.removeEventListener("focus", handleFocus);
-                refCurrent?.removeEventListener("blur", handleBlur);
+                refCurrent?.removeEventListener("blur-sm", handleBlur);
                 refCurrent?.removeEventListener("keydown", handleKeyDown);
             };
         },
@@ -476,7 +476,7 @@ function SelectComponent<TValue = string>(props: SelectProps<TValue>, ref: React
                                     {option.adornment}
                                     <span
                                         title={option.hoverText ?? option.label}
-                                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap flex-grow"
+                                        className="min-w-0 text-ellipsis overflow-hidden whitespace-nowrap grow"
                                     >
                                         {option.label}
                                     </span>

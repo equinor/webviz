@@ -484,8 +484,8 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 
     return (
         <BaseComponent ref={ref} disabled={props.disabled}>
-            <div style={{ width: props.width }} id={props.wrapperId} className="flex hover input-comp rounded">
-                <div className="flex-grow">
+            <div style={{ width: props.width }} id={props.wrapperId} className="flex hover input-comp rounded-sm">
+                <div className="grow">
                     <Input
                         ref={inputRef}
                         id={props.id}

@@ -265,7 +265,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("keydown", handleButtonClick);
             document.addEventListener("pointercancel", handlePointerUp);
-            document.addEventListener("blur", handlePointerUp);
+            document.addEventListener("blur-sm", handlePointerUp);
         }
 
         function removeDraggingEventListeners() {
@@ -273,7 +273,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("keydown", handleButtonClick);
             document.removeEventListener("pointercancel", handlePointerUp);
-            document.removeEventListener("blur", handlePointerUp);
+            document.removeEventListener("blur-sm", handlePointerUp);
         }
 
         function handleModuleHeaderPointerDown(payload: GuiEventPayloads[GuiEvent.ModuleHeaderPointerDown]) {
@@ -343,7 +343,7 @@ export const Layout: React.FC<LayoutProps> = (props) => {
 
     return (
         <div ref={mainRef} className="relative flex h-full w-full">
-            <div ref={ref} className="h-full flex-grow">
+            <div ref={ref} className="h-full grow">
                 {layoutBoxRef.current && draggedModuleInstanceId !== null && (
                     <LayoutBoxComponents
                         active={draggedModuleInstanceId}
