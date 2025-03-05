@@ -2,4 +2,4 @@
 export * from "./types.gen";
 export * from "./sdk.gen";
 
-export * from "./@tanstack/react-query.gen";
+export * from './@tanstack/react-query.gen';
