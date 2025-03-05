@@ -1,3 +1,4 @@
+import tailwindPlugin from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 
 import jotaiDebugLabel from "jotai/babel/plugin-debug-label";
@@ -28,6 +29,7 @@ export default defineConfig(({ mode }) => {
 
     return {
         plugins: [
+            tailwindPlugin(),
             react({
                 babel: {
                     plugins: [jotaiDebugLabel, jotaiReactRefresh],
