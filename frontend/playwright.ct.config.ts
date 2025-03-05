@@ -37,7 +37,12 @@ export default defineConfig({
         /* Port to use for Playwright component endpoint. */
         ctPort: 3100,
         ctViteConfig: {
-            plugins: [react(), vitePluginChecker({ typescript: true })],
+            plugins: [
+                // @ts-expect-error -- CT uses wrong version of vite, so types dont match
+                react(),
+                // @ts-expect-error -- se above
+                vitePluginChecker({ typescript: true })
+            ],
             resolve: {
                 alias: Object.keys(aliases.compilerOptions.paths).reduce(
                     (prev, current) => ({
