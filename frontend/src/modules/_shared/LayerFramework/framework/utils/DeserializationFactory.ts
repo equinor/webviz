@@ -31,7 +31,7 @@ export class DeserializationFactory {
 
         if (serialized.type === SerializedType.LAYER) {
             const serializedLayer = serialized as SerializedLayer<any>;
-            const layer = LayerRegistry.makeLayer(serializedLayer.layerName, this._layerManager, serializedLayer.name);
+            const layer = LayerRegistry.makeLayer(serializedLayer.layerType, this._layerManager, serializedLayer.name);
             layer.deserializeState(serializedLayer);
             layer.getItemDelegate().setId(serializedLayer.id);
             layer.getItemDelegate().setName(serializedLayer.name);

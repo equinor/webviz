@@ -6,7 +6,6 @@ import {
 } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import {
-    BoundingBox,
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
     DefineDependenciesArgs,
@@ -64,20 +63,6 @@ export class IntersectionRealizationGridLayer
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
-    }
-
-    makeBoundingBox({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): BoundingBox | null {
-        const data = getData();
-        if (!data) {
-            return null;
-        }
-
-        // TODO: Implement bounding box calculation
-        if (data) {
-            return null;
-        }
-
-        return null;
     }
 
     makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {

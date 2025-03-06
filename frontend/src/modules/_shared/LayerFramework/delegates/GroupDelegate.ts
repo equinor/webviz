@@ -48,7 +48,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
     setColor(color: string | null) {
         this._color = color;
         this.publishTopic(GroupDelegateTopic.COLOR);
-        this.publishTopic(GroupDelegateTopic.TREE_REVISION_NUMBER);
+        this.incrementTreeRevisionNumber();
     }
 
     prependChild(child: Item) {

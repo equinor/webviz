@@ -1,8 +1,6 @@
 import { WellboreTrajectory_api, getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@api";
 import {
-    BoundingBox,
     CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
     DefineDependenciesArgs,
     FetchDataParams,
     LayerColoringType,
@@ -39,36 +37,6 @@ export class DrilledWellTrajectoriesLayer
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
-    }
-
-    makeBoundingBox({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): BoundingBox | null {
-        const data = getData();
-        if (!data) {
-            return null;
-        }
-
-        const bbox: BoundingBox = {
-            x: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-            y: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-            z: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-        };
-
-        for (const trajectory of data) {
-            for (const point of trajectory.eastingArr) {
-                bbox.x[0] = Math.min(bbox.x[0], point);
-                bbox.x[1] = Math.max(bbox.x[1], point);
-            }
-            for (const point of trajectory.northingArr) {
-                bbox.y[0] = Math.min(bbox.y[0], point);
-                bbox.y[1] = Math.max(bbox.y[1], point);
-            }
-            for (const point of trajectory.tvdMslArr) {
-                bbox.z[0] = Math.min(bbox.z[0], point);
-                bbox.z[1] = Math.max(bbox.z[1], point);
-            }
-        }
-
-        return bbox;
     }
 
     fetchData({

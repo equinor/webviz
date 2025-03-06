@@ -6,7 +6,6 @@ import {
     transformGridSurface,
 } from "@modules/3DViewer/view/queries/queryDataTransforms";
 import {
-    BoundingBox,
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
     DefineDependenciesArgs,
@@ -26,10 +25,10 @@ const realizationGridSettings = [
     SettingType.TIME_OR_INTERVAL,
     SettingType.SHOW_GRID_LINES,
 ] as const;
-type RealizationGridSettings = typeof realizationGridSettings;
+export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
 
-type Data = {
+export type Data = {
     gridSurfaceData: GridSurface_trans;
     gridParameterData: GridMappedProperty_trans;
 };
@@ -59,25 +58,6 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
-    }
-
-    makeBoundingBox({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): BoundingBox | null {
-        const data = getData();
-        if (!data) {
-            return null;
-        }
-
-        return {
-            x: [
-                data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmin,
-                data.gridSurfaceData.origin_utm_x + data.gridSurfaceData.xmax,
-            ],
-            y: [
-                data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymin,
-                data.gridSurfaceData.origin_utm_y + data.gridSurfaceData.ymax,
-            ],
-            z: [data.gridSurfaceData.zmin, data.gridSurfaceData.zmax],
-        };
     }
 
     makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {

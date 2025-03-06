@@ -26,9 +26,15 @@ function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [n
 export function makeObservedSurfaceLayer({
     id,
     name,
-    data,
+    getData,
     colorScale,
-}: VisualizationFunctionArgs<ObservedSurfaceSettings, Data>): ColormapLayer | Grid3DLayer {
+}: VisualizationFunctionArgs<ObservedSurfaceSettings, Data>): ColormapLayer | Grid3DLayer | null {
+    const data = getData();
+
+    if (!data) {
+        return null;
+    }
+
     if ("valuesFloat32Arr" in data) {
         return new Grid3DLayer({
             id,

@@ -26,7 +26,7 @@ export type GroupComponentProps = {
 export function GroupComponent(props: GroupComponentProps): React.ReactNode {
     const children = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.CHILDREN);
     const isExpanded = usePublishSubscribeTopicValue(props.group.getItemDelegate(), ItemDelegateTopic.EXPANDED);
-    const color = props.group.getGroupDelegate().getColor();
+    const color = usePublishSubscribeTopicValue(props.group.getGroupDelegate(), GroupDelegateTopic.COLOR);
 
     function handleActionClick(actionIdentifier: string) {
         if (props.onActionClick) {

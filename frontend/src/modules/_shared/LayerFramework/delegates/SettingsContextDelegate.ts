@@ -347,7 +347,7 @@ export class SettingsContextDelegate<
             dependency.subscribeLoading((loading: boolean, hasDependencies: boolean) => {
                 this._settings[settingKey].setLoading(loading);
 
-                if (!hasDependencies) {
+                if (!hasDependencies && !loading) {
                     this.handleSettingChanged();
                 }
             });
@@ -423,8 +423,6 @@ export class SettingsContextDelegate<
     }
 
     private handleSettingChanged() {
-        // this.getLayerManager().publishTopic(LayerManagerTopic.SETTINGS_CHANGED);
-
         if (!this.areAllSettingsLoaded() || !this.areAllSettingsInitialized()) {
             this.setLoadingState(SettingsContextLoadingState.LOADING);
             return;

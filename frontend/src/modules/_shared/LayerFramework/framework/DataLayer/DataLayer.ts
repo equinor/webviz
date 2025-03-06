@@ -9,7 +9,7 @@ import { QueryClient, isCancelledError } from "@tanstack/react-query";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegate, SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { BoundingBox, CustomDataLayerImplementation, DataLayerInformationAccessors, Item, LayerColoringType, SerializedLayer, SerializedType, Settings, StoredData } from "../../interfaces";
+import { CustomDataLayerImplementation, DataLayerInformationAccessors, Item, LayerColoringType, SerializedLayer, SerializedType, Settings, StoredData } from "../../interfaces";
 import { MakeSettingTypesMap } from "../../settings/settingsTypes";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 import { Setting } from "../Setting/Setting";
@@ -71,11 +71,9 @@ export class DataLayer<
     private _status: LayerStatus = LayerStatus.IDLE;
     private _data: TData | null = null;
     private _error: StatusMessage | string | null = null;
-    private _prevBoundingBox: BoundingBox | null = null;
-    private _predictedBoundingBox: BoundingBox | null = null;
-    private _boundingBox: BoundingBox | null = null;
     private _valueRange: [number, number] | null = null;
     private _isSubordinated: boolean = false;
+    private _prevSettings: TSettings | null = null;
 
     constructor(params: DataLayerParams<TSettingTypes, TData, TStoredData, TSettings>) {
         const { layerManager, type, instanceName, customDataLayerImplementation } = params;
@@ -117,10 +115,12 @@ export class DataLayer<
     }
 
     handleSettingsChange(): void {
-        this._cancellationPending = true;
-        this.maybeCancelQuery().then(() => {
-            this.maybeRefetchData();
-        });
+        if (this._customDataLayerImpl.doSettingsChangesRequireDataRefetch?.(this._prevSettings, this._settingsContextDelegate.getSettings() as TSettings, this.makeAccessors())) {
+            this._cancellationPending = true;
+            this.maybeCancelQuery().then(() => {
+                this.maybeRefetchData();
+            });
+        }
     }
 
     registerQueryKey(queryKey: unknown[]): void {
@@ -145,21 +145,6 @@ export class DataLayer<
 
     getSettingsContextDelegate() {
         return this._settingsContextDelegate;
-    }
-
-    getBoundingBox(): BoundingBox | null {
-        return this._boundingBox;
-    }
-
-    getLastValidBoundingBox(): BoundingBox | null {
-        if (this._boundingBox) {
-            return this._boundingBox;
-        }
-        return this._prevBoundingBox;
-    }
-
-    getPredictedBoundingBox(): BoundingBox | null {
-        return this._predictedBoundingBox;
     }
 
     getColoringType(): LayerColoringType {
@@ -223,7 +208,7 @@ export class DataLayer<
         };
     }
 
-    private makeAccessors(): DataLayerInformationAccessors<TSettings, TData, TStoredData> {
+    makeAccessors(): DataLayerInformationAccessors<TSettings, TData, TStoredData> {
         return {
             getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
             getAvailableSettingValues: (settingName) =>
@@ -253,9 +238,7 @@ export class DataLayer<
 
         const accessors = this.makeAccessors();
 
-        this.invalidateBoundingBox();
         this.invalidateValueRange();
-        this._predictedBoundingBox = this._customDataLayerImpl.predictBoundingBox?.(accessors) ?? null;
 
         this.setStatus(LayerStatus.LOADING);
 
@@ -265,9 +248,6 @@ export class DataLayer<
                 queryClient,
                 registerQueryKey: (key) => this.registerQueryKey(key),
             });
-            if (this._customDataLayerImpl.makeBoundingBox) {
-                this._boundingBox = this._customDataLayerImpl.makeBoundingBox(accessors);
-            }
             if (this._customDataLayerImpl.makeValueRange) {
                 this._valueRange = this._customDataLayerImpl.makeValueRange(accessors);
             }
@@ -299,7 +279,7 @@ export class DataLayer<
         return {
             ...itemState,
             type: SerializedType.LAYER,
-            layerName: this._customDataLayerImpl.constructor.name,
+            layerType: this._type,
             settings: this._settingsContextDelegate.serializeSettings(),
         };
     }
@@ -326,19 +306,6 @@ export class DataLayer<
 
     private getQueryClient(): QueryClient | null {
         return this._layerManager?.getQueryClient() ?? null;
-    }
-
-    private invalidateBoundingBox(): void {
-        if (this._boundingBox) {
-            this._prevBoundingBox = {
-                x: [this._boundingBox.x[0], this._boundingBox.x[1]],
-                y: [this._boundingBox.y[0], this._boundingBox.y[1]],
-                z: [this._boundingBox.z[0], this._boundingBox.z[1]],
-            };
-        } else {
-            this._prevBoundingBox = null;
-        }
-        this._boundingBox = null;
     }
 
     private invalidateValueRange(): void {

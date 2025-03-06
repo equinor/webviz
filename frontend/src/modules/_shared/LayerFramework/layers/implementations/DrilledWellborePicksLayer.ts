@@ -5,9 +5,7 @@ import {
     getWellborePicksForPickIdentifierOptions,
 } from "@api";
 import {
-    BoundingBox,
     CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
     DefineDependenciesArgs,
     FetchDataParams,
     LayerColoringType,
@@ -21,10 +19,10 @@ const drilledWellborePicksSettings = [
     SettingType.SMDA_WELLBORE_HEADERS,
     SettingType.SURFACE_NAME,
 ] as const;
-type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
+export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellborePicksSettings>;
 
-type Data = WellborePick_api[];
+export type Data = WellborePick_api[];
 
 export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<DrilledWellborePicksSettings, Data> {
     settings = drilledWellborePicksSettings;
@@ -47,32 +45,6 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
-    }
-
-    makeBoundingBox({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): BoundingBox | null {
-        const data = getData();
-        if (!data) {
-            return null;
-        }
-
-        const bbox: BoundingBox = {
-            x: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-            y: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-            z: [Number.MAX_SAFE_INTEGER, Number.MIN_SAFE_INTEGER],
-        };
-
-        for (const trajectory of data) {
-            bbox.x[0] = Math.min(bbox.x[0], trajectory.easting);
-            bbox.x[1] = Math.max(bbox.x[1], trajectory.easting);
-
-            bbox.y[0] = Math.min(bbox.y[0], trajectory.northing);
-            bbox.y[1] = Math.max(bbox.y[1], trajectory.northing);
-
-            bbox.z[0] = Math.min(bbox.z[0], trajectory.tvdMsl);
-            bbox.z[1] = Math.max(bbox.z[1], trajectory.tvdMsl);
-        }
-
-        return bbox;
     }
 
     fetchData({

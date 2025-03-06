@@ -11,6 +11,7 @@ import { MenuItem } from "@lib/components/MenuItem";
 import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
 import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
+import { CustomLayerType } from "@modules/2DViewer/LayerFramework/customLayerImplementations/layerTypes";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
@@ -25,6 +26,7 @@ import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedS
 import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
 import { Item, ItemGroup, instanceofItemGroup } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
+import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Dropdown } from "@mui/base";
@@ -79,25 +81,39 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 groupDelegate.appendChild(new ColorScale("Color scale", props.layerManager));
                 return;
             case "observed-surface":
-                groupDelegate.appendChild(LayerRegistry.makeLayer("ObservedSurfaceLayer", props.layerManager));
+                groupDelegate.appendChild(
+                    LayerRegistry.makeLayer(CustomLayerType.OBSERVED_SURFACE, props.layerManager)
+                );
                 return;
             case "statistical-surface":
-                groupDelegate.appendChild(LayerRegistry.makeLayer("StatisticalSurfaceLayer", props.layerManager));
+                groupDelegate.appendChild(
+                    LayerRegistry.makeLayer(CustomLayerType.STATISTICAL_SURFACE, props.layerManager)
+                );
                 return;
             case "realization-surface":
-                groupDelegate.appendChild(LayerRegistry.makeLayer("RealizationSurfaceLayer", props.layerManager));
+                groupDelegate.appendChild(
+                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_SURFACE, props.layerManager)
+                );
                 return;
             case "realization-polygons":
-                groupDelegate.appendChild(LayerRegistry.makeLayer("RealizationPolygonsLayer", props.layerManager));
+                groupDelegate.appendChild(
+                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_POLYGONS, props.layerManager)
+                );
                 return;
             case "drilled-wellbore-trajectories":
-                groupDelegate.appendChild(LayerRegistry.makeLayer("DrilledWellTrajectoriesLayer", props.layerManager));
+                groupDelegate.appendChild(
+                    LayerRegistry.makeLayer(LayerType.DRILLED_WELL_TRAJECTORIES, props.layerManager)
+                );
                 return;
             case "drilled-wellbore-picks":
-                groupDelegate.appendChild(LayerRegistry.makeLayer("DrilledWellborePicksLayer", props.layerManager));
+                groupDelegate.appendChild(
+                    LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager)
+                );
                 return;
             case "realization-grid":
-                groupDelegate.appendChild(LayerRegistry.makeLayer("RealizationGridLayer", props.layerManager));
+                groupDelegate.appendChild(
+                    LayerRegistry.makeLayer(CustomLayerType.REALIZATION_GRID, props.layerManager)
+                );
                 return;
             case "ensemble":
                 groupDelegate.appendChild(new SharedSetting(SettingType.ENSEMBLE, null, props.layerManager));

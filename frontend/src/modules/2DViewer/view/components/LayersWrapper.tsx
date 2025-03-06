@@ -5,11 +5,19 @@ import { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
-import { Rect2D, outerRectContainsInnerRect } from "@lib/utils/geometry";
+import * as bbox from "@lib/utils/bbox";
+import { makePolygonDataBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makePolygonDataBoundingBox";
+import { makeRealizationGridBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makeRealizationGridBoundingBox";
+import { makeSurfaceLayerBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makeSurfaceBoundingBox";
 import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
+import { RealizationGridLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationGridLayer";
+import { RealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationPolygonsLayer";
 import { RealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
+import { CustomLayerType } from "@modules/2DViewer/LayerFramework/customLayerImplementations/layerTypes";
 import { makeObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeObservedSurfaceLayer";
+import { makeRealizationGridLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationGridLayer";
+import { makeRealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationPolygonsLayer";
 import { makeRealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationSurfaceLayer";
 import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeStatisticalSurfaceLayer";
 import { Interfaces } from "@modules/2DViewer/interfaces";
@@ -18,13 +26,19 @@ import {
     DataLayerManager,
     LayerManagerTopic,
 } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
-import { BoundingBox } from "@modules/_shared/LayerFramework/interfaces";
+import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
+import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
+import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
 import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import {
     LayerWithPosition,
     VisualizationFactory,
     VisualizationTarget,
 } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
+import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";
+import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
+import { makeDrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
@@ -33,8 +47,8 @@ import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
+import { PlaceholderLayer } from "../../../_shared/customDeckGlLayers/PlaceholderLayer";
 import "../../LayerFramework/customLayerImplementations/registerAllLayers";
-import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
 
 export type LayersWrapperProps = {
     layerManager: DataLayerManager;
@@ -54,24 +68,37 @@ type T = MakeSettingTypesMap<
 >;
 
 const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
-VISUALIZATION_FACTORY.registerVisualizationFunction(
-    "ObservedSurfaceLayer",
-    ObservedSurfaceLayer,
-    makeObservedSurfaceLayer
-);
-VISUALIZATION_FACTORY.registerVisualizationFunction(
-    "RealizationSurfaceLayer",
-    RealizationSurfaceLayer,
-    makeRealizationSurfaceLayer
-);
-VISUALIZATION_FACTORY.registerVisualizationFunction(
-    "StatisticalSurfaceLayer",
-    StatisticalSurfaceLayer,
-    makeStatisticalSurfaceLayer
-);
+VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.OBSERVED_SURFACE, ObservedSurfaceLayer, {
+    visualizationFunction: makeObservedSurfaceLayer,
+    boundingBoxCalculationFunction: makeSurfaceLayerBoundingBox,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_SURFACE, RealizationSurfaceLayer, {
+    visualizationFunction: makeRealizationSurfaceLayer,
+    boundingBoxCalculationFunction: makeSurfaceLayerBoundingBox,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurfaceLayer, {
+    visualizationFunction: makeStatisticalSurfaceLayer,
+    boundingBoxCalculationFunction: makeSurfaceLayerBoundingBox,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygonsLayer, {
+    visualizationFunction: makeRealizationPolygonsLayer,
+    boundingBoxCalculationFunction: makePolygonDataBoundingBox,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_GRID, RealizationGridLayer, {
+    visualizationFunction: makeRealizationGridLayer,
+    boundingBoxCalculationFunction: makeRealizationGridBoundingBox,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELLBORE_PICKS, DrilledWellborePicksLayer, {
+    visualizationFunction: makeDrilledWellborePicksLayer,
+    boundingBoxCalculationFunction: makeDrilledWellborePicksBoundingBox,
+});
+VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELL_TRAJECTORIES, DrilledWellTrajectoriesLayer, {
+    visualizationFunction: makeDrilledWellTrajectoriesLayer,
+    boundingBoxCalculationFunction: makeDrilledWellTrajectoriesBoundingBox,
+});
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
-    const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
+    const [prevBoundingBox, setPrevBoundingBox] = React.useState<bbox.BBox | null>(null);
 
     const mainDivRef = React.useRef<HTMLDivElement>(null);
     const mainDivSize = useElementSize(mainDivRef);
@@ -141,27 +168,13 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         );
     }
 
-    if (viewsAndLayers.boundingBox !== null) {
+    if (viewsAndLayers.combinedBoundingBox !== null) {
         if (prevBoundingBox !== null) {
-            const oldBoundingRect: Rect2D | null = {
-                x: prevBoundingBox.x[0],
-                y: prevBoundingBox.y[0],
-                width: prevBoundingBox.x[1] - prevBoundingBox.x[0],
-                height: prevBoundingBox.y[1] - prevBoundingBox.y[0],
-            };
-
-            const newBoundingRect: Rect2D = {
-                x: viewsAndLayers.boundingBox.x[0],
-                y: viewsAndLayers.boundingBox.y[0],
-                width: viewsAndLayers.boundingBox.x[1] - viewsAndLayers.boundingBox.x[0],
-                height: viewsAndLayers.boundingBox.y[1] - viewsAndLayers.boundingBox.y[0],
-            };
-
-            if (!outerRectContainsInnerRect(oldBoundingRect, newBoundingRect)) {
-                setPrevBoundingBox(viewsAndLayers.boundingBox);
+            if (!bbox.outerBoxcontainsInnerBox(prevBoundingBox, viewsAndLayers.combinedBoundingBox)) {
+                setPrevBoundingBox(viewsAndLayers.combinedBoundingBox);
             }
         } else {
-            setPrevBoundingBox(viewsAndLayers.boundingBox);
+            setPrevBoundingBox(viewsAndLayers.combinedBoundingBox);
         }
     }
 
@@ -174,7 +187,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
 
     let bounds: BoundingBox2D | undefined = undefined;
     if (prevBoundingBox) {
-        bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
+        bounds = [prevBoundingBox.min.x, prevBoundingBox.min.y, prevBoundingBox.max.x, prevBoundingBox.max.y];
     }
 
     const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);

@@ -1,8 +1,6 @@
 import { PolygonData_api, getPolygonsDataOptions, getPolygonsDirectoryOptions } from "@api";
 import {
-    BoundingBox,
     CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
     DefineDependenciesArgs,
     FetchDataParams,
     LayerColoringType,
@@ -17,10 +15,10 @@ const realizationPolygonsSettings = [
     SettingType.POLYGONS_ATTRIBUTE,
     SettingType.POLYGONS_NAME,
 ] as const;
-type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
+export type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;
 
-type Data = PolygonData_api[];
+export type Data = PolygonData_api[];
 export class RealizationPolygonsLayer implements CustomDataLayerImplementation<RealizationPolygonsSettings, Data> {
     settings = realizationPolygonsSettings;
 
@@ -43,36 +41,6 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
-    }
-
-    makeBoundingBox({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): BoundingBox | null {
-        const data = getData();
-        if (!data) {
-            return null;
-        }
-
-        const bbox: BoundingBox = {
-            x: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
-            y: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
-            z: [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY],
-        };
-
-        for (const polygon of data) {
-            for (const point of polygon.x_arr) {
-                bbox.x[0] = Math.min(bbox.x[0], point);
-                bbox.x[1] = Math.max(bbox.x[1], point);
-            }
-            for (const point of polygon.y_arr) {
-                bbox.y[0] = Math.min(bbox.y[0], point);
-                bbox.y[1] = Math.max(bbox.y[1], point);
-            }
-            for (const point of polygon.z_arr) {
-                bbox.z[0] = Math.min(bbox.z[0], point);
-                bbox.z[1] = Math.max(bbox.z[1], point);
-            }
-        }
-
-        return bbox;
     }
 
     defineDependencies({

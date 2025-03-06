@@ -35,7 +35,7 @@ export type SerializedSettingsState<TSettings extends Partial<SettingTypes>> = R
 
 export interface SerializedLayer<TSettings extends Partial<SettingTypes>> extends SerializedItem {
     type: SerializedType.LAYER;
-    layerName: string;
+    layerType: string;
     settings: SerializedSettingsState<TSettings>;
 }
 
@@ -108,12 +108,6 @@ export interface SharedSettingsProvider {
 export function instanceofSharedSettingsProvider(item: Item): item is SharedSettingsProvider & Item {
     return (item as any).getSharedSettingsDelegate !== undefined;
 }
-
-export type BoundingBox = {
-    x: [number, number];
-    y: [number, number];
-    z: [number, number];
-};
 
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataLayerImplementation.
@@ -364,7 +358,7 @@ export interface CustomDataLayerImplementation<
      * @param accessors Accessors to the data and settings of the layer.
      */
     doSettingsChangesRequireDataRefetch(
-        prevSettings: TSettings,
+        prevSettings: TSettings | null,
         newSettings: TSettings,
         accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>
     ): boolean;
@@ -376,21 +370,6 @@ export interface CustomDataLayerImplementation<
      * @param params An object containing accessors to the data and settings of the layer and other useful information.
      */
     fetchData(params: FetchDataParams<TSettings, TData, TStoredData>): Promise<TData>;
-
-    /**
-     * Used to determine the bounding box of the data in the layer in UTM coordinates.
-     *
-     * @param accessors Accessors to the data and settings of the layer.
-     */
-    makeBoundingBox?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): BoundingBox | null;
-
-    /**
-     * Used to predict the next bounding box of the data in the layer in UTM coordinates. This bounding box can be used
-     * to show a preview of the layer while it's fetching data.
-     *
-     * @param accessors Accessors to the data and settings of the layer.
-     */
-    predictBoundingBox?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): BoundingBox | null;
 
     /**
      * Used to determine the value range of the data in the layer. This is used for coloring the layer.

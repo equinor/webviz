@@ -1,7 +1,6 @@
 import { SurfaceDataPng_api, SurfaceTimeType_api, getRealizationSurfacesMetadataOptions } from "@api";
 import { getSurfaceDataOptions } from "@api";
 import {
-    BoundingBox,
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
     DefineDependenciesArgs,
@@ -50,19 +49,6 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
-    }
-
-    makeBoundingBox({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): BoundingBox | null {
-        const data = getData();
-        if (!data) {
-            return null;
-        }
-
-        return {
-            x: [data.transformed_bbox_utm.min_x, data.transformed_bbox_utm.max_x],
-            y: [data.transformed_bbox_utm.min_y, data.transformed_bbox_utm.max_y],
-            z: [0, 0],
-        };
     }
 
     makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {
