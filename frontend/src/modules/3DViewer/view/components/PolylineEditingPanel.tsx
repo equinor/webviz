@@ -186,7 +186,7 @@ export function PolylineEditingPanel(props: PolylineEditingPanelProps): React.Re
     return (
         <div className="w-64 absolute left-0 top-0 z-50 bg-white rounded-sm shadow-sm border border-gray-300 text-sm">
             <div className="bg-slate-300 p-2 font-bold">Polyline editing</div>
-            <div className="p-2 h-50">{makeContent()}</div>
+            <div className="p-2">{makeContent()}</div>
             <div className="bg-slate-100 flex items-center justify-between p-1">{makeButtons()}</div>
         </div>
     );

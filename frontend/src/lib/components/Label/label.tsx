@@ -34,7 +34,7 @@ export const Label: React.FC<LabelProps> = (props) => {
                     "text-sm",
                     "mb-1",
                     "text-gray-500",
-                    "leading-0",
+                    "leading-tight",
                     props.labelClassName ?? "",
                 )}
                 htmlFor={props.children.props.id ?? id.current}
@@ -49,9 +49,7 @@ export const Label: React.FC<LabelProps> = (props) => {
                 )}
                 {props.text}
             </label>
-            <div
-                className={resolveClassNames({ "grow": props.position === "left" || props.position === "right" })}
-            >
+            <div className={resolveClassNames({ grow: props.position === "left" || props.position === "right" })}>
                 {props.children.props.id ? props.children : React.cloneElement(props.children, { id: id.current })}
             </div>
         </div>

@@ -230,7 +230,7 @@ export function View({
                     Reset viewport bounds
                 </Button>
             </div>
-            <div className="z-1">
+            <div>
                 {show3D ? (
                     <SyncedSubsurfaceViewer
                         viewContext={viewContext}

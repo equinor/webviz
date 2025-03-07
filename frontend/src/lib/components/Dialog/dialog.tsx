@@ -57,7 +57,6 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     "bg-white",
                     "shadow-sm",
                     "w-50",
-                    "h-50",
                     "pointer-events-auto",
                 )}
                 style={{

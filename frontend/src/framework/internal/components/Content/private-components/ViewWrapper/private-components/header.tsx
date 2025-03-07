@@ -177,7 +177,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
         return (
             <div className="h-full flex items-center justify-center">
-                <span className="bg-slate-300 w-[1px] h-1/2 mx-0.5" />
+                <span className="bg-slate-300 w-px h-1/2 mx-0.5" />
                 {stateIndicators}
             </div>
         );
@@ -250,7 +250,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             {makeStatusIndicator()}
             {(props.moduleInstance.getChannelManager().getReceivers().length > 0 ||
                 props.moduleInstance.getChannelManager().getChannels().length > 0) && (
-                <span className="bg-slate-300 w-[1px] h-1/2 ml-1" />
+                <span className="bg-slate-300 w-px h-1/2 ml-1" />
             )}
             {props.moduleInstance.getChannelManager().getChannels().length > 0 && (
                 <div
@@ -273,7 +273,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     <Input fontSize="inherit" />
                 </div>
             )}
-            <span className="bg-slate-300 w-[1px] h-1/2 ml-1" />
+            <span className="bg-slate-300 w-px h-1/2 ml-1" />
             <div
                 className="hover:text-slate-500 cursor-pointer px-1"
                 onPointerDown={props.onRemoveClick}

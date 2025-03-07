@@ -719,7 +719,7 @@ function SubsurfaceViewerToolbar(props: SubsurfaceViewerToolbarProps): React.Rea
 }
 
 function ToolBarDivider(): React.ReactNode {
-    return <div className="w-full h-[1px] bg-gray-300" />;
+    return <div className="w-full h-px bg-gray-300" />;
 }
 
 function makePolylineData(

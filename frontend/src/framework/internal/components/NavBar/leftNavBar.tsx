@@ -28,7 +28,7 @@ type LeftNavBarProps = {
 };
 
 const NavBarDivider: React.FC = () => {
-    return <div className="bg-slate-200 h-[1px] w-full mt-4 mb-4" />;
+    return <div className="bg-slate-200 h-px w-full mt-4 mb-4" />;
 };
 
 export const LeftNavBar: React.FC<LeftNavBarProps> = (props) => {

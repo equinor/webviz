@@ -573,7 +573,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                 )}
             <div
                 className={resolveClassNames("border-b border-b-gray-300 bg-gray-50 shadow-inner", {
-                    "overflow-hidden h-[1px]": !showSettings,
+                    "overflow-hidden h-px": !showSettings,
                 })}
             >
                 {makeSettingsContainer(props.layer)}
