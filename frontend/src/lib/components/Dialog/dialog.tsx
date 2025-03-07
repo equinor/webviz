@@ -56,7 +56,8 @@ export const Dialog: React.FC<DialogProps> = (props) => {
                     "rounded-sm",
                     "bg-white",
                     "shadow-sm",
-                    "w-50",
+                    "min-w-lg",
+                    "max-w-[75vw]",
                     "pointer-events-auto",
                 )}
                 style={{
