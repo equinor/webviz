@@ -11,9 +11,10 @@ import { SettingsContextDelegate, SettingsContextDelegateTopic } from "../../del
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import { CustomDataLayerImplementation, DataLayerInformationAccessors, Item, LayerColoringType, SerializedLayer, SerializedType, Settings, StoredData } from "../../interfaces";
 import { MakeSettingTypesMap } from "../../settings/settingsTypes";
-import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
+import { DataLayerManager, LayerManagerTopic, log } from "../DataLayerManager/DataLayerManager";
 import { Setting } from "../Setting/Setting";
 import { makeSettings } from "../utils/makeSettings";
+import { isEqual } from "lodash";
 
 
 export enum LayerDelegateTopic {
@@ -87,7 +88,7 @@ export class DataLayer<
                 customDataLayerImplementation.settings,
                 customDataLayerImplementation.getDefaultSettingsValues() as TSettings
             ) as {
-                [key in keyof TSettings]: Setting<any>;
+                [key in keyof TSettings]: Setting<any, any>;
             }
         );
         this._customDataLayerImpl = customDataLayerImplementation;
@@ -115,12 +116,21 @@ export class DataLayer<
     }
 
     handleSettingsChange(): void {
-        if (this._customDataLayerImpl.doSettingsChangesRequireDataRefetch?.(this._prevSettings, this._settingsContextDelegate.getSettings() as TSettings, this.makeAccessors())) {
+        const refetchRequired = this._customDataLayerImpl.doSettingsChangesRequireDataRefetch?.(
+            this._prevSettings,
+            this._settingsContextDelegate.getValues() as TSettings,
+            this.makeAccessors()
+        ) ?? !isEqual(this._prevSettings, this._settingsContextDelegate.getValues() as TSettings);
+
+        if (!refetchRequired) {
+            return;
+        }
+
             this._cancellationPending = true;
             this.maybeCancelQuery().then(() => {
                 this.maybeRefetchData();
+                this._prevSettings = this._settingsContextDelegate.getValues() as TSettings;
             });
-        }
     }
 
     registerQueryKey(queryKey: unknown[]): void {
@@ -242,6 +252,8 @@ export class DataLayer<
 
         this.setStatus(LayerStatus.LOADING);
 
+        log.log(`Refetching data for layer ${this.getItemDelegate().getName()}. Settings: ${JSON.stringify(this._settingsContextDelegate.getValues())}`)();
+
         try {
             this._data = await this._customDataLayerImpl.fetchData({
                 ...accessors,
@@ -324,9 +336,6 @@ export class DataLayer<
                 await queryClient.cancelQueries(
                     {
                         queryKey,
-                        exact: true,
-                        fetchStatus: "fetching",
-                        type: "active",
                     },
                     {
                         silent: true,

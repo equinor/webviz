@@ -3,6 +3,7 @@ import { isCancelledError } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
+import { SettingTopic } from "../../framework/Setting/Setting";
 import { Settings, UpdateFunc } from "../../interfaces";
 import { MakeSettingTypesMap } from "../../settings/settingsTypes";
 import { SettingsContextDelegate } from "../SettingsContextDelegate";
@@ -27,10 +28,11 @@ export class Dependency<
     private _updateFunc: UpdateFunc<TReturnValue, TSettingTypes, TSettings, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
+    private _isLoading = false;
 
     private _contextDelegate: SettingsContextDelegate<TSettingTypes, any, TSettings, TKey, any>;
 
-    private _makeSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void;
+    private _makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void;
     private _makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
         key: K,
         handler: (value: GlobalSettings[K]) => void
@@ -47,7 +49,7 @@ export class Dependency<
     constructor(
         contextDelegate: SettingsContextDelegate<TSettingTypes, TSettings, any, TKey, any>,
         updateFunc: UpdateFunc<TReturnValue, TSettingTypes, TSettings, TKey>,
-        makeSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void,
+        makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
             key: K,
             handler: (value: GlobalSettings[K]) => void
@@ -55,7 +57,7 @@ export class Dependency<
     ) {
         this._contextDelegate = contextDelegate;
         this._updateFunc = updateFunc;
-        this._makeSettingGetter = makeSettingGetter;
+        this._makeLocalSettingGetter = makeLocalSettingGetter;
         this._makeGlobalSettingGetter = makeGlobalSettingGetter;
 
         this.getGlobalSetting = this.getGlobalSetting.bind(this);
@@ -69,6 +71,10 @@ export class Dependency<
 
     getValue(): Awaited<TReturnValue> | null {
         return this._cachedValue;
+    }
+
+    getIsLoading(): boolean {
+        return this._isLoading;
     }
 
     subscribe(callback: (value: Awaited<TReturnValue> | null) => void, childDependency: boolean = false): () => void {
@@ -99,20 +105,36 @@ export class Dependency<
             this._numParentDependencies++;
         }
 
+        // If the dependency has already subscribed to this setting, return the cached value
+        // that is updated when the setting changes
         if (this._cachedSettingsMap.has(settingName as string)) {
             return this._cachedSettingsMap.get(settingName as string);
         }
 
-        this._makeSettingGetter(settingName, (value) => {
+        const setting = this._contextDelegate.getSettings()[settingName];
+        const value = setting.getValue();
+        this._cachedSettingsMap.set(settingName as string, value);
+
+        this._makeLocalSettingGetter(settingName, (value) => {
             this._cachedSettingsMap.set(settingName as string, value);
             this.callUpdateFunc();
         });
 
-        this._cachedSettingsMap.set(settingName as string, this._contextDelegate.getSettings()[settingName].getValue());
+        setting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.LOADING_STATE_CHANGED)(() => {
+            const loading = setting.isLoading();
+            if (loading) {
+                this.setLoadingState(true);
+            }
+            // Not subscribing to loading state false as it will
+            // be set when this dependency is updated
+            // #Waterfall
+        });
+
         return this._cachedSettingsMap.get(settingName as string);
     }
 
     private setLoadingState(loading: boolean) {
+        this._isLoading = loading;
         for (const callback of this._loadingDependencies) {
             callback(loading, this.hasChildDependencies());
         }

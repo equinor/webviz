@@ -20,6 +20,7 @@ const realizationSurfaceSettings = [
     SettingType.ATTRIBUTE,
     SettingType.SURFACE_NAME,
     SettingType.TIME_OR_INTERVAL,
+    SettingType.COLOR_SCALE,
 ] as const;
 export type RealizationSurfaceSettings = typeof realizationSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationSurfaceSettings>;
@@ -36,6 +37,7 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
             [SettingType.ATTRIBUTE]: null,
             [SettingType.SURFACE_NAME]: null,
             [SettingType.TIME_OR_INTERVAL]: null,
+            [SettingType.COLOR_SCALE]: null,
         };
     }
 
@@ -49,6 +51,10 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
         return !isEqual(prevSettings, newSettings);
+    }
+
+    areCurrentSettingsValid(settings: SettingsWithTypes): boolean {
+        return Object.values(settings).every((setting) => setting !== null);
     }
 
     makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {

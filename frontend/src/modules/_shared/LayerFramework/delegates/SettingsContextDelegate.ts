@@ -286,7 +286,9 @@ export class SettingsContextDelegate<
     createDependencies(): void {
         this._unsubscribeHandler.unsubscribe("dependencies");
 
-        const makeSettingGetter = <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => {
+        const dependencies: Dependency<any, any, any, any>[] = [];
+
+        const makeLocalSettingGetter = <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => {
             const handleChange = (): void => {
                 handler(this._settings[key].getValue());
             };
@@ -332,9 +334,10 @@ export class SettingsContextDelegate<
             const dependency = new Dependency<EachAvailableValuesType<TSettings[K]>, TSettingTypes, TSettings, K>(
                 this as unknown as SettingsContextDelegate<TSettingTypes, TSettings, TStoredData, K, TStoredDataKey>,
                 updateFunc,
-                makeSettingGetter,
+                makeLocalSettingGetter,
                 makeGlobalSettingGetter
             );
+            dependencies.push(dependency);
 
             dependency.subscribe((availableValues: AvailableValuesType<TSettings[K]> | null) => {
                 if (availableValues === null) {
@@ -347,7 +350,9 @@ export class SettingsContextDelegate<
             dependency.subscribeLoading((loading: boolean, hasDependencies: boolean) => {
                 this._settings[settingKey].setLoading(loading);
 
-                if (!hasDependencies && !loading) {
+                const anyLoading = dependencies.some((dep) => dep.getIsLoading());
+
+                if (!hasDependencies && !loading && !anyLoading) {
                     this.handleSettingChanged();
                 }
             });
@@ -364,9 +369,10 @@ export class SettingsContextDelegate<
             const dependency = new Dependency<NullableStoredData<TStoredData>[K], TSettingTypes, TSettings, TKey>(
                 this as unknown as SettingsContextDelegate<TSettingTypes, TSettings, TStoredData, TKey, K>,
                 updateFunc,
-                makeSettingGetter,
+                makeLocalSettingGetter,
                 makeGlobalSettingGetter
             );
+            dependencies.push(dependency);
 
             dependency.subscribe((storedData: TStoredData[K] | null) => {
                 this.setStoredData(key, storedData);
@@ -388,9 +394,10 @@ export class SettingsContextDelegate<
             const dependency = new Dependency<T, TSettingTypes, TSettings, TKey>(
                 this as unknown as SettingsContextDelegate<TSettingTypes, TSettings, TStoredData, TKey, TStoredDataKey>,
                 update,
-                makeSettingGetter,
+                makeLocalSettingGetter,
                 makeGlobalSettingGetter
             );
+            dependencies.push(dependency);
 
             dependency.initialize();
 

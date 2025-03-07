@@ -1,14 +1,25 @@
 import { SurfaceStatisticFunction_api, WellboreHeader_api } from "@api";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { ColorScaleConfig } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import { ColorSet } from "@lib/utils/ColorSet";
 
 import { IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
 
 import { Setting } from "../framework/Setting/Setting";
 
+export enum SettingCategory {
+    OPTION = "option",
+    NUMBER = "number",
+    RANGE = "range",
+    OTHER = "other",
+}
+
 export enum SettingType {
     ATTRIBUTE = "attribute",
     ENSEMBLE = "ensemble",
+    COLOR_SCALE = "colorScale",
+    COLOR_SET = "colorSet",
     GRID_LAYER_I_RANGE = "gridLayerIRange",
     GRID_LAYER_J_RANGE = "gridLayerJRange",
     GRID_LAYER_K = "gridLayerK",
@@ -29,9 +40,38 @@ export enum SettingType {
     TIME_OR_INTERVAL = "timeOrInterval",
 }
 
+export const settingCategories = {
+    [SettingType.ATTRIBUTE]: SettingCategory.OPTION,
+    [SettingType.ENSEMBLE]: SettingCategory.OPTION,
+    [SettingType.COLOR_SCALE]: SettingCategory.OTHER,
+    [SettingType.COLOR_SET]: SettingCategory.OTHER,
+    [SettingType.GRID_LAYER_I_RANGE]: SettingCategory.RANGE,
+    [SettingType.GRID_LAYER_J_RANGE]: SettingCategory.RANGE,
+    [SettingType.GRID_LAYER_K]: SettingCategory.NUMBER,
+    [SettingType.GRID_LAYER_K_RANGE]: SettingCategory.RANGE,
+    [SettingType.GRID_NAME]: SettingCategory.OPTION,
+    [SettingType.INTERSECTION]: SettingCategory.OPTION,
+    [SettingType.POLYGONS_ATTRIBUTE]: SettingCategory.OPTION,
+    [SettingType.POLYGONS_NAME]: SettingCategory.OPTION,
+    [SettingType.REALIZATION]: SettingCategory.OPTION,
+    [SettingType.SEISMIC_CROSSLINE]: SettingCategory.OPTION,
+    [SettingType.SEISMIC_DEPTH_SLICE]: SettingCategory.OPTION,
+    [SettingType.SEISMIC_INLINE]: SettingCategory.OPTION,
+    [SettingType.SENSITIVITY]: SettingCategory.OPTION,
+    [SettingType.SHOW_GRID_LINES]: SettingCategory.OTHER,
+    [SettingType.SMDA_WELLBORE_HEADERS]: SettingCategory.OPTION,
+    [SettingType.STATISTIC_FUNCTION]: SettingCategory.OPTION,
+    [SettingType.SURFACE_NAME]: SettingCategory.OPTION,
+    [SettingType.TIME_OR_INTERVAL]: SettingCategory.OPTION,
+} as const;
+
+export type SettingCategories = typeof settingCategories;
+
 export type SettingTypes = {
     [SettingType.ATTRIBUTE]: string | null;
     [SettingType.ENSEMBLE]: RegularEnsembleIdent | null;
+    [SettingType.COLOR_SCALE]: ColorScaleConfig | null;
+    [SettingType.COLOR_SET]: ColorSet | null;
     [SettingType.GRID_LAYER_I_RANGE]: [number, number] | null;
     [SettingType.GRID_LAYER_J_RANGE]: [number, number] | null;
     [SettingType.GRID_LAYER_K]: number | null;
@@ -71,5 +111,5 @@ export type MakeSettingTypesMap<
       };
 
 export type MakeSettingTuple<T extends readonly (keyof SettingTypes)[]> = {
-    [K in keyof T]: Setting<SettingTypes[T[K]]>;
+    [K in keyof T]: Setting<SettingTypes[T[K]], SettingCategories[T[K]]>;
 };

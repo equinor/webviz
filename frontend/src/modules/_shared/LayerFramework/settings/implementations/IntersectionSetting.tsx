@@ -3,7 +3,8 @@ import React from "react";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
-import { CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
+import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
+import { SettingCategory } from "../settingsTypes";
 
 export type IntersectionSettingValue = {
     type: "wellbore" | "polyline";
@@ -11,8 +12,13 @@ export type IntersectionSettingValue = {
     uuid: string;
 };
 
-export class IntersectionSetting implements CustomSettingImplementation<IntersectionSettingValue | null> {
-    isValueValid(availableValues: any[], value: IntersectionSettingValue | null): boolean {
+type ValueType = IntersectionSettingValue | null;
+
+export class IntersectionSetting implements CustomSettingImplementation<ValueType, SettingCategory.OPTION> {
+    isValueValid(
+        availableValues: AvailableValuesType<ValueType, SettingCategory.OPTION>,
+        value: IntersectionSettingValue | null
+    ): boolean {
         if (value === null) {
             return false;
         }
@@ -20,7 +26,10 @@ export class IntersectionSetting implements CustomSettingImplementation<Intersec
         return availableValues.some((v) => v.uuid === value.uuid && v.type === value.type);
     }
 
-    fixupValue(availableValues: any[], currentValue: IntersectionSettingValue | null): IntersectionSettingValue | null {
+    fixupValue(
+        availableValues: AvailableValuesType<ValueType, SettingCategory.OPTION>,
+        currentValue: ValueType
+    ): ValueType {
         if (currentValue === null) {
             return availableValues.find((v) => v.type === "wellbore") ?? null;
         }
@@ -32,8 +41,8 @@ export class IntersectionSetting implements CustomSettingImplementation<Intersec
         return availableValues.find((v) => v.type === currentValue.type) ?? null;
     }
 
-    makeComponent(): (props: SettingComponentProps<IntersectionSettingValue | null>) => React.ReactNode {
-        return function Realization(props: SettingComponentProps<IntersectionSettingValue | null>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.OPTION>) => React.ReactNode {
+        return function Realization(props: SettingComponentProps<ValueType, SettingCategory.OPTION>) {
             const [type, setType] = React.useState<IntersectionSettingValue["type"]>(props.value?.type ?? "wellbore");
             function handleSelectionChange(selectedValue: string) {
                 const newValue = props.availableValues.find((v) => v.uuid === selectedValue) ?? null;

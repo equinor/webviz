@@ -7,6 +7,7 @@ import {
 } from "@framework/WorkbenchSession";
 import { ColorPaletteType, WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { IntersectionPolyline, IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
+import { GlobalLog } from "@lib/utils/GlobalLog";
 import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
@@ -19,6 +20,11 @@ import "../../groups/registerAllGroups";
 import { Item, ItemGroup, SerializedLayerManager, SerializedType } from "../../interfaces";
 import "../../layers/registerAllLayers";
 import "../../settings/registerAllSettings";
+
+export const log = GlobalLog.registerLog("LayerManager");
+export enum LogLevel {
+    UPDATE_FLOW = 1,
+}
 
 export enum LayerManagerTopic {
     ITEMS_CHANGED = "ITEMS_CHANGED",
@@ -125,6 +131,12 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
         }
 
         this._globalSettings[key] = value;
+
+        log.probe(
+            LogLevel.UPDATE_FLOW,
+            `LayerManager: Global settings updated. Current global settings: ${this._globalSettings}`
+        );
+
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
     }
 
@@ -140,6 +152,8 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
         if (topic === LayerManagerTopic.LAYER_DATA_REVISION) {
             this._layerDataRevision++;
         }
+
+        log.log(LogLevel.UPDATE_FLOW, `LayerManager: publishing topic ${topic}`)();
 
         this._publishSubscribeDelegate.notifySubscribers(topic);
     }

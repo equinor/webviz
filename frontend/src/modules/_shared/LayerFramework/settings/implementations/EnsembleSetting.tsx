@@ -4,25 +4,26 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 
 import { CustomSettingImplementation, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
+import { SettingCategory } from "../settingsTypes";
 
 type ValueType = RegularEnsembleIdent | null;
-export class EnsembleSetting implements CustomSettingImplementation<ValueType> {
+export class EnsembleSetting implements CustomSettingImplementation<ValueType, SettingCategory.OPTION> {
     defaultValue: ValueType = null;
 
     getLabel(): string {
         return "Ensemble";
     }
 
-    serializeValue(value: RegularEnsembleIdent | null): string {
+    serializeValue(value: ValueType): string {
         return value?.toString() ?? "";
     }
 
-    deserializeValue(serializedValue: string): RegularEnsembleIdent | null {
+    deserializeValue(serializedValue: string): ValueType {
         return serializedValue !== "" ? RegularEnsembleIdent.fromString(serializedValue) : null;
     }
 
-    makeComponent(): (props: SettingComponentProps<RegularEnsembleIdent | null>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<RegularEnsembleIdent | null>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.OPTION>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.OPTION>) {
             const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
                 props.availableValues.includes(ensemble.getIdent())
             );

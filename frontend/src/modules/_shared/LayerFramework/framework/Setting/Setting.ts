@@ -6,7 +6,7 @@ import { isArray, isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import { AvailableValuesType, CustomSettingImplementation, SharedSettingsProvider } from "../../interfaces";
-import { SettingType } from "../../settings/settingsTypes";
+import { SettingCategory, SettingType } from "../../settings/settingsTypes";
 import { Group } from "../Group/Group";
 
 export enum SettingTopic {
@@ -20,10 +20,10 @@ export enum SettingTopic {
     PERSISTED_STATE_CHANGED = "PERSISTED_STATE_CHANGED",
 }
 
-export type SettingTopicPayloads<TValue> = {
+export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
     [SettingTopic.VALUE_CHANGED]: TValue;
     [SettingTopic.VALIDITY_CHANGED]: boolean;
-    [SettingTopic.AVAILABLE_VALUES_CHANGED]: AvailableValuesType<TValue>;
+    [SettingTopic.AVAILABLE_VALUES_CHANGED]: AvailableValuesType<TValue, TCategory>;
     [SettingTopic.OVERRIDDEN_VALUE_CHANGED]: TValue | undefined;
     [SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED]: OverriddenValueProviderType | undefined;
     [SettingTopic.LOADING_STATE_CHANGED]: boolean;
@@ -31,11 +31,12 @@ export type SettingTopicPayloads<TValue> = {
     [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
 };
 
-export type SettingParams<TValue> = {
+export type SettingParams<TValue, TCategory extends SettingCategory> = {
     type: SettingType;
+    category: TCategory;
     label: string;
     defaultValue: TValue;
-    customSettingImplementation: CustomSettingImplementation<TValue>;
+    customSettingImplementation: CustomSettingImplementation<TValue, TCategory>;
 };
 
 export enum OverriddenValueProviderType {
@@ -49,15 +50,21 @@ export enum OverriddenValueProviderType {
  * It provides a method for setting available values, which are used to validate the setting value or applying a fixup if the value is invalid.
  * It provides methods for setting and getting the value and its states, checking if the value is valid, and setting the value as overridden or persisted.
  */
-export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TValue>> {
+export class Setting<TValue, TCategory extends SettingCategory>
+    implements PublishSubscribe<SettingTopicPayloads<TValue, TCategory>>
+{
     private _id: string;
     private _type: SettingType;
+    private _category: TCategory;
     private _label: string;
-    private _customSettingImplementation: CustomSettingImplementation<TValue>;
+    private _customSettingImplementation: CustomSettingImplementation<TValue, TCategory>;
     private _value: TValue;
     private _isValueValid: boolean = false;
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TValue>>();
-    private _availableValues: AvailableValuesType<TValue> = [] as unknown as AvailableValuesType<TValue>;
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TValue, TCategory>>();
+    private _availableValues: AvailableValuesType<TValue, TCategory> = [] as unknown as AvailableValuesType<
+        TValue,
+        TCategory
+    >;
     private _overriddenValue: TValue | undefined = undefined;
     private _overridenValueProviderType: OverriddenValueProviderType | undefined = undefined;
     private _loading: boolean = false;
@@ -65,9 +72,16 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
     private _currentValueFromPersistence: TValue | null = null;
     private _isStatic: boolean;
 
-    constructor({ type, customSettingImplementation, defaultValue, label }: SettingParams<TValue>) {
+    constructor({
+        type,
+        category,
+        customSettingImplementation,
+        defaultValue,
+        label,
+    }: SettingParams<TValue, TCategory>) {
         this._id = v4();
         this._type = type;
+        this._category = category;
         this._label = label;
         this._customSettingImplementation = customSettingImplementation;
         this._value = defaultValue;
@@ -172,7 +186,7 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
     }
 
     isInitialized(): boolean {
-        return this._initialized;
+        return this._initialized || this._isStatic;
     }
 
     isLoading(): boolean {
@@ -254,7 +268,7 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
     }
 
-    makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TValue>[T] {
+    makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TValue, TCategory>[T] {
         const snapshotGetter = (): any => {
             switch (topic) {
                 case SettingTopic.VALUE_CHANGED:
@@ -268,11 +282,11 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
                 case SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED:
                     return this._overridenValueProviderType;
                 case SettingTopic.LOADING_STATE_CHANGED:
-                    return this._loading;
+                    return this.isLoading();
                 case SettingTopic.PERSISTED_STATE_CHANGED:
                     return this.isPersistedValue();
                 case SettingTopic.INIT_STATE_CHANGED:
-                    return this._initialized;
+                    return this.isInitialized();
                 default:
                     throw new Error(`Unknown topic: ${topic}`);
             }
@@ -281,11 +295,11 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
         return snapshotGetter;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SettingTopicPayloads<TValue>> {
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SettingTopicPayloads<TValue, TCategory>> {
         return this._publishSubscribeDelegate;
     }
 
-    getAvailableValues(): AvailableValuesType<TValue> {
+    getAvailableValues(): AvailableValuesType<TValue, TCategory> {
         return this._availableValues;
     }
 
@@ -294,37 +308,15 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
             return false;
         }
 
-        if (this._customSettingImplementation.isValueValid) {
-            if (
-                this._customSettingImplementation.isValueValid(this._availableValues, this._currentValueFromPersistence)
-            ) {
-                this._value = this._currentValueFromPersistence;
-                this._currentValueFromPersistence = null;
-                return true;
-            }
-            return false;
-        }
-
-        if (Array.isArray(this._currentValueFromPersistence)) {
-            const currentValueFromPersistence = this._currentValueFromPersistence as TValue[];
-            if (currentValueFromPersistence.every((value) => this._availableValues.some((el) => isEqual(el, value)))) {
-                this._value = this._currentValueFromPersistence;
-                this._currentValueFromPersistence = null;
-                return true;
-            }
-            return false;
-        }
-
-        if (this._availableValues.some((el) => isEqual(this._currentValueFromPersistence as TValue, el))) {
+        if (this._customSettingImplementation.isValueValid(this._availableValues, this._currentValueFromPersistence)) {
             this._value = this._currentValueFromPersistence;
             this._currentValueFromPersistence = null;
             return true;
         }
-
         return false;
     }
 
-    setAvailableValues(availableValues: AvailableValuesType<TValue>): void {
+    setAvailableValues(availableValues: AvailableValuesType<TValue, TCategory>): void {
         if (isEqual(this._availableValues, availableValues) && this._initialized) {
             return;
         }
@@ -347,6 +339,97 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
         return this._customSettingImplementation.makeComponent();
     }
 
+    private fixupOptionValue(availableValues: AvailableValuesType<TValue, SettingCategory.OPTION>): boolean {
+        if (availableValues.length === 0) {
+            return false;
+        }
+
+        if (availableValues.some((el) => isEqual(el, this._value))) {
+            return false;
+        }
+
+        let candidate = this._value;
+
+        if (this._customSettingImplementation.fixupValue) {
+            candidate = this._customSettingImplementation.fixupValue(this._availableValues, this._value);
+        } else if (Array.isArray(this._value)) {
+            candidate = [availableValues[0]] as TValue;
+        } else {
+            candidate = availableValues[0] as TValue;
+        }
+
+        if (isEqual(candidate, this._value)) {
+            return false;
+        }
+
+        this._value = candidate;
+        return true;
+    }
+
+    private fixupRangeValue(availableValues: AvailableValuesType<TValue, SettingCategory.RANGE>): boolean {
+        if (!Array.isArray(availableValues) || availableValues.length < 2) {
+            return false;
+        }
+
+        const min = availableValues[0];
+        const max = availableValues[1];
+
+        if (max === null || min === null) {
+            return false;
+        }
+
+        let candidate = this._value;
+
+        if (this._customSettingImplementation.fixupValue) {
+            candidate = this._customSettingImplementation.fixupValue(this._availableValues, this._value);
+        }
+
+        if (candidate === null || candidate === undefined) {
+            candidate = [min, max] as TValue;
+            return true;
+        }
+
+        if (candidate < min) {
+            candidate = [min, candidate[1]] as TValue;
+            return true;
+        }
+
+        if (candidate > max) {
+            candidate = max;
+            return true;
+        }
+
+        if (isEqual(candidate, this._value)) {
+            return false;
+        }
+
+        this._value = candidate;
+        return true;
+    }
+
+    private maybeFixupNumberValue(availableValues: AvailableValuesType<TValue, SettingCategory.NUMBER>): boolean {
+        let candidate = this._value;
+
+        if (this._customSettingImplementation.fixupValue) {
+            candidate = this._customSettingImplementation.fixupValue(this._availableValues, this._value);
+        }
+        else {
+
+        }
+
+        if (candidate === null || candidate === undefined) {
+            return false;
+        }
+
+        if (isEqual(candidate, this._value)) {
+            return false;
+        }
+
+        this._value = candidate;
+        return true;
+    }
+
+
     private maybeFixupValue(): boolean {
         if (this.checkIfValueIsValid(this._value)) {
             return false;
@@ -356,30 +439,14 @@ export class Setting<TValue> implements PublishSubscribe<SettingTopicPayloads<TV
             return false;
         }
 
-        if (this._availableValues.length === 0) {
-            return false;
+        if (this._category === SettingCategory.OPTION) {
+            return this.fixupOptionValue(this._availableValues as AvailableValuesType<TValue, SettingCategory.OPTION>);
         }
-
-        if (this._availableValues.some((el) => isEqual(el, this._value))) {
-            return false;
+        if (this._category === SettingCategory.RANGE) {
+            return this.fixupRangeValue(this._availableValues as AvailableValuesType<TValue, SettingCategory.RANGE>);
         }
+        if (this._)
 
-        let candidate = this._value;
-
-        if (this._customSettingImplementation.fixupValue) {
-            candidate = this._customSettingImplementation.fixupValue(this._availableValues, this._value);
-        } else if (Array.isArray(this._value)) {
-            candidate = [this._availableValues[0]] as TValue;
-        } else {
-            candidate = this._availableValues[0] as TValue;
-        }
-
-        if (isEqual(candidate, this._value)) {
-            return false;
-        }
-
-        this._value = candidate;
-        return true;
     }
 
     private checkIfValueIsValid(value: TValue): boolean {

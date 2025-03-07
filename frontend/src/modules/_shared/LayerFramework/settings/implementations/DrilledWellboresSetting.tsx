@@ -6,17 +6,21 @@ import { Select, SelectOption } from "@lib/components/Select";
 import { Deselect, SelectAll } from "@mui/icons-material";
 
 import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
+import { SettingCategory } from "../settingsTypes";
 
 type ValueType = WellboreHeader_api[] | null;
 
-export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType> {
+export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType, SettingCategory.OPTION> {
     defaultValue: ValueType = null;
 
     getLabel(): string {
         return "Drilled wellbores";
     }
 
-    fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
+    fixupValue(
+        availableValues: AvailableValuesType<ValueType, SettingCategory.OPTION>,
+        currentValue: ValueType
+    ): ValueType {
         if (!currentValue) {
             return availableValues;
         }
@@ -30,8 +34,8 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
         return matchingValues;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function DrilledWellbores(props: SettingComponentProps<ValueType>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.OPTION>) => React.ReactNode {
+        return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.OPTION>) {
             const options: SelectOption[] = React.useMemo(
                 () =>
                     props.availableValues.map((ident) => ({

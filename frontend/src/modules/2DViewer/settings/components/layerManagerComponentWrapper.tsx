@@ -15,7 +15,6 @@ import { CustomLayerType } from "@modules/2DViewer/LayerFramework/customLayerImp
 import { PreferredViewLayout } from "@modules/2DViewer/types";
 import { LayersActionGroup } from "@modules/_shared/LayerFramework/LayersActions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
-import { ColorScale } from "@modules/_shared/LayerFramework/framework/ColorScale/ColorScale";
 import { DataLayer } from "@modules/_shared/LayerFramework/framework/DataLayer/DataLayer";
 import { DataLayerManager } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { LayerManagerComponent } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManagerComponent";
@@ -78,7 +77,7 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 groupDelegate.appendChild(new SettingsGroup("Settings group", props.layerManager));
                 return;
             case "color-scale":
-                groupDelegate.appendChild(new ColorScale("Color scale", props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(SettingType.COLOR_SCALE, null, props.layerManager));
                 return;
             case "observed-surface":
                 groupDelegate.appendChild(

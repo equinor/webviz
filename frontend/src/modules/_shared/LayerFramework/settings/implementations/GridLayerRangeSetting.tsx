@@ -3,6 +3,7 @@ import React from "react";
 import { Slider } from "@lib/components/Slider";
 
 import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
+import { SettingCategory } from "../settingsTypes";
 
 type ValueType = [number, number] | null;
 
@@ -12,7 +13,7 @@ export enum Direction {
     K,
 }
 
-export class GridLayerRangeSetting implements CustomSettingImplementation<ValueType> {
+export class GridLayerRangeSetting implements CustomSettingImplementation<ValueType, SettingCategory.RANGE> {
     defaultValue: ValueType = null;
 
     private _direction: Direction;
@@ -32,32 +33,35 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
         }
     }
 
-    isValueValid(availableValues: AvailableValuesType<ValueType>, value: ValueType): boolean {
+    isValueValid(availableValues: AvailableValuesType<ValueType, SettingCategory.RANGE>, value: ValueType): boolean {
         if (value === null) {
             return false;
         }
 
-        if (availableValues.length < 3) {
+        if (!availableValues) {
             return false;
         }
 
-        const min = 0;
-        const max = availableValues[this._direction];
+        const min = availableValues[0];
+        const max = availableValues[1];
 
-        if (max === null) {
+        if (max === null || min === null) {
             return false;
         }
 
         return value[0] >= min && value[0] <= max;
     }
 
-    fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
-        if (availableValues.length < 3) {
+    fixupValue(
+        availableValues: AvailableValuesType<ValueType, SettingCategory.RANGE>,
+        currentValue: ValueType
+    ): ValueType {
+        if (!availableValues) {
             return null;
         }
 
-        const min = 0;
-        const max = availableValues[this._direction];
+        const min = availableValues[0];
+        const max = availableValues[1];
 
         if (max === null) {
             return null;
@@ -70,9 +74,8 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
         return [Math.max(currentValue[0], min), Math.min(currentValue[1], max)];
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        const direction = this._direction;
-        return function RangeSlider(props: SettingComponentProps<ValueType>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.RANGE>) => React.ReactNode {
+        return function RangeSlider(props: SettingComponentProps<ValueType, SettingCategory.RANGE>) {
             function handleChange(_: any, value: number | number[]) {
                 if (!Array.isArray(value)) {
                     return;
@@ -83,10 +86,10 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
 
             return (
                 <Slider
-                    min={0}
-                    max={props.availableValues[direction] ?? 1}
+                    min={props.availableValues?.[0] ?? 0}
+                    max={props.availableValues?.[1] ?? 1}
                     onChange={handleChange}
-                    value={props.value ?? [0, props.availableValues[direction] ?? 1]}
+                    value={props.value ?? [props.availableValues?.[0] ?? 0, props.availableValues?.[1] ?? 1]}
                     debounceTimeMs={500}
                     valueLabelDisplay="auto"
                 />

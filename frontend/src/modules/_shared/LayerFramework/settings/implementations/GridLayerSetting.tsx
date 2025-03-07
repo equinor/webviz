@@ -3,44 +3,67 @@ import React from "react";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
 import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
+import { SettingCategory } from "../settingsTypes";
+
+export enum Direction {
+    I,
+    J,
+    K,
+}
 
 type ValueType = number | null;
 
-export class GridLayerKSetting implements CustomSettingImplementation<ValueType> {
+export class GridLayerSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER> {
     defaultValue: ValueType = null;
 
-    getLabel(): string {
-        return "Grid layer K";
+    private _direction: Direction;
+
+    constructor(direction: Direction) {
+        this._direction = direction;
     }
 
-    isValueValid(availableValues: AvailableValuesType<ValueType>, value: ValueType): boolean {
+    getLabel(): string {
+        switch (this._direction) {
+            case Direction.I:
+                return "Grid layer I";
+            case Direction.J:
+                return "Grid layer J";
+            case Direction.K:
+                return "Grid layer K";
+        }
+    }
+
+    isValueValid(availableValues: AvailableValuesType<ValueType, SettingCategory.NUMBER>, value: ValueType): boolean {
         if (value === null) {
             return false;
         }
 
-        if (availableValues.length < 3) {
+        if (!availableValues) {
             return false;
         }
 
-        const min = 0;
-        const max = availableValues[2];
+        const min = availableValues[0];
+        const max = availableValues[1];
 
-        if (max === null) {
+        if (max === null || min === null) {
             return false;
         }
 
         return value >= min && value <= max;
     }
 
-    fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
-        if (availableValues.length < 3) {
+    fixupValue(
+        availableValues: AvailableValuesType<ValueType, SettingCategory.NUMBER>,
+        currentValue: ValueType
+    ): ValueType {
+        if (!availableValues) {
             return null;
         }
 
-        const min = 0;
-        const max = availableValues[2];
+        const min = availableValues[0];
+        const max = availableValues[1];
 
-        if (max === null) {
+        if (max === null || min === null) {
             return null;
         }
 
@@ -59,9 +82,9 @@ export class GridLayerKSetting implements CustomSettingImplementation<ValueType>
         return currentValue;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType>) {
-            const kRange = props.availableValues ? Array.from({ length: props.availableValues[2] }, (_, i) => i) : [];
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.NUMBER>) {
+            const kRange = [props.availableValues?.[0] ?? 0, props.availableValues?.[1] ?? 0];
 
             const options: DropdownOption[] = kRange.map((value) => {
                 return {

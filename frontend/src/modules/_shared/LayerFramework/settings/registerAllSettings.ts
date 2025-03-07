@@ -1,10 +1,12 @@
 import { SettingRegistry } from "./SettingRegistry";
 import { BooleanSetting } from "./implementations/BooleanSetting";
+import { ColorScaleSetting } from "./implementations/ColorScaleSetting";
 import { DrilledWellboresSetting } from "./implementations/DrilledWellboresSetting";
 import { DropdownNumberSetting } from "./implementations/DropdownNumberSetting";
 import { DropdownStringSetting } from "./implementations/DropdownStringSetting";
 import { EnsembleSetting } from "./implementations/EnsembleSetting";
-import { Direction, GridLayerRangeSetting } from "./implementations/GridLayerRangeSetting";
+import { Direction as GridLayerRangeDirection, GridLayerRangeSetting } from "./implementations/GridLayerRangeSetting";
+import { Direction as GridLayerDirection, GridLayerSetting } from "./implementations/GridLayerSetting";
 import { IntersectionSetting } from "./implementations/IntersectionSetting";
 import { SeismicSliceDirection, SeismicSliceSetting } from "./implementations/SeismicSliceSetting";
 import { SensitivitySetting } from "./implementations/SensitivitySetting";
@@ -13,15 +15,17 @@ import { SettingType } from "./settingsTypes";
 
 SettingRegistry.registerSetting(SettingType.ATTRIBUTE, "Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(SettingType.ENSEMBLE, "Ensemble", EnsembleSetting);
-SettingRegistry.registerSetting(SettingType.GRID_LAYER_K, "Grid Layer K", DropdownNumberSetting);
+SettingRegistry.registerSetting(SettingType.COLOR_SCALE, "Color Scale", ColorScaleSetting);
+
+SettingRegistry.registerSetting(SettingType.GRID_LAYER_K, "Grid Layer K", GridLayerSetting, [GridLayerDirection.K]);
 SettingRegistry.registerSetting(SettingType.GRID_LAYER_K_RANGE, "Grid Layer K Range", GridLayerRangeSetting, [
-    Direction.I,
+    GridLayerRangeDirection.I,
 ]);
 SettingRegistry.registerSetting(SettingType.GRID_LAYER_I_RANGE, "Grid Layer I Range", GridLayerRangeSetting, [
-    Direction.J,
+    GridLayerRangeDirection.J,
 ]);
 SettingRegistry.registerSetting(SettingType.GRID_LAYER_J_RANGE, "Grid Layer J Range", GridLayerRangeSetting, [
-    Direction.K,
+    GridLayerRangeDirection.K,
 ]);
 SettingRegistry.registerSetting(SettingType.GRID_NAME, "Grid Name", DropdownStringSetting);
 SettingRegistry.registerSetting(SettingType.INTERSECTION, "Intersection", IntersectionSetting);

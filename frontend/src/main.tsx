@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { client } from "@api";
 import { AuthProvider } from "@framework/internal/providers/AuthProvider";
 import { CustomQueryClientProvider } from "@framework/internal/providers/QueryClientProvider";
+import { GlobalLog } from "@lib/utils/GlobalLog";
 
 import App from "./App";
 import { GlobalErrorBoundary } from "./GlobalErrorBoundary";
@@ -31,6 +32,19 @@ client.setConfig({
 });
 
 // --------------------------------------------------------------------
+
+/*
+    Initialize the global log.
+*/
+
+// @ts-expect-error - log is not defined in globalThis
+globalThis.log = GlobalLog;
+
+// --------------------------------------------------------------------
+
+/*
+    Render the application.
+*/
 
 const container = document.getElementById("root");
 

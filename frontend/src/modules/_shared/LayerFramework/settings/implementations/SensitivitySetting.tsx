@@ -3,6 +3,7 @@ import React from "react";
 import { Dropdown } from "@lib/components/Dropdown";
 
 import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
+import { SettingCategory } from "../settingsTypes";
 
 export type SensitivityNameCasePair = {
     sensitivityName: string;
@@ -10,8 +11,8 @@ export type SensitivityNameCasePair = {
 };
 
 type ValueType = SensitivityNameCasePair | null;
-export class SensitivitySetting implements CustomSettingImplementation<ValueType> {
-    isValueValid(availableValues: AvailableValuesType<ValueType>, value: ValueType): boolean {
+export class SensitivitySetting implements CustomSettingImplementation<ValueType, SettingCategory.OPTION> {
+    isValueValid(availableValues: AvailableValuesType<ValueType, SettingCategory.OPTION>, value: ValueType): boolean {
         if (availableValues.length === 0) {
             return true;
         }
@@ -27,8 +28,8 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
             );
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function Sensitivity(props: SettingComponentProps<ValueType>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.OPTION>) => React.ReactNode {
+        return function Sensitivity(props: SettingComponentProps<ValueType, SettingCategory.OPTION>) {
             const availableSensitivityNames: string[] = [
                 ...Array.from(new Set(props.availableValues.map((sensitivity) => sensitivity.sensitivityName))),
             ];

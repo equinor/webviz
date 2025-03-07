@@ -8,7 +8,13 @@ import { ItemDelegate } from "./delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "./delegates/SharedSettingsDelegate";
 import { Dependency } from "./delegates/_utils/Dependency";
 import { GlobalSettings } from "./framework/DataLayerManager/DataLayerManager";
-import { MakeSettingTypesMap, SettingType, SettingTypes } from "./settings/settingsTypes";
+import {
+    MakeSettingTypesMap,
+    SettingCategories,
+    SettingCategory,
+    SettingType,
+    SettingTypes,
+} from "./settings/settingsTypes";
 
 // ----------------------------
 // The following interfaces/types are used to define the structure of the serialized state of the respective items in the data layer framework.
@@ -146,7 +152,9 @@ export type DataLayerInformationAccessors<
      * const availableValues = getAvailableSettingValues("settingName");
      * ```
      */
-    getAvailableSettingValues: <K extends keyof TSettings>(settingName: K) => AvailableValuesType<TSettings[K]>;
+    getAvailableSettingValues: <K extends keyof TSettings & SettingType>(
+        settingName: K
+    ) => AvailableValuesType<TSettings[K], SettingCategories[K]>;
 
     /**
      * Access the global settings of the data layer manager.
@@ -260,7 +268,7 @@ export interface CustomSettingsHandler<
     TSettingTypes extends Settings,
     TStoredData extends StoredData = Record<string, never>,
     TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
-    TSettingKey extends keyof TSettings = keyof TSettings,
+    TSettingKey extends keyof TSettings & SettingType = keyof TSettings & SettingType,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > {
     /**
@@ -336,7 +344,7 @@ export interface CustomDataLayerImplementation<
     TData,
     TStoredData extends StoredData = Record<string, never>,
     TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
-    TSettingKey extends keyof TSettings = keyof TSettings,
+    TSettingKey extends keyof TSettings & SettingType = keyof TSettings & SettingType,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > extends CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TSettingKey, TStoredDataKey> {
     /**
@@ -405,13 +413,18 @@ export interface DefineDependenciesArgs<
     TSettingTypes extends Settings,
     TSettings extends MakeSettingTypesMap<TSettingTypes>,
     TStoredData extends StoredData = Record<string, never>,
-    TKey extends keyof TSettings = keyof TSettings,
+    TKey extends keyof TSettings & SettingType = keyof TSettings & SettingType,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > {
     availableSettingsUpdater: (
         settingKey: TKey,
-        update: UpdateFunc<EachAvailableValuesType<TSettings[TKey]>, TSettingTypes, TSettings, TKey>
-    ) => Dependency<EachAvailableValuesType<TSettings[TKey]>, TSettingTypes, TSettings, TKey>;
+        update: UpdateFunc<
+            AvailableValuesType<TSettings[TKey], SettingCategories[TKey]>,
+            TSettingTypes,
+            TSettings,
+            TKey
+        >
+    ) => Dependency<AvailableValuesType<TSettings[TKey], SettingCategories[TKey]>, TSettingTypes, TSettings, TKey>;
     storedDataUpdater: (
         key: TStoredDataKey,
         update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettingTypes, TSettings, TKey>
@@ -432,22 +445,38 @@ export interface DefineDependenciesArgs<
 }
 
 // Required when making "AvailableValuesType" for all settings in an object ("TSettings")
-export type EachAvailableValuesType<T> = T extends any ? AvailableValuesType<T> : never;
+export type EachAvailableValuesType<TValue, TCategory extends SettingCategory> = TValue extends never
+    ? never
+    : AvailableValuesType<TValue, TCategory>;
 
 // Returns an array of "TValue" if the "TValue" itself is not already an array
-export type AvailableValuesType<TValue> = RemoveUnknownFromArray<MakeArrayIfNotArray<TValue>>;
+export type AvailableValuesType<TValue, TCategory extends SettingCategory> = MakeAvailableValuesTypeBasedOnCategory<
+    TValue,
+    TCategory
+>;
 
 // "MakeArrayIfNotArray<T>" yields "unknown[] | any[]" for "T = any"  - we don't want "unknown[]"
 type RemoveUnknownFromArray<T> = T extends (infer U)[] ? ([unknown] extends [U] ? any[] : T) : T;
 type MakeArrayIfNotArray<T> = Exclude<T, null> extends Array<infer V> ? Array<V> : Array<Exclude<T, null>>;
 
-export type SettingComponentProps<TValue> = {
+type MakeAvailableValuesTypeBasedOnCategory<
+    TValue,
+    TCategory extends SettingCategory
+> = TCategory extends SettingCategory.OPTION
+    ? RemoveUnknownFromArray<MakeArrayIfNotArray<TValue>>
+    : TCategory extends SettingCategory.NUMBER
+    ? [TValue, TValue]
+    : TCategory extends SettingCategory.RANGE
+    ? Exclude<TValue, null>
+    : never;
+
+export type SettingComponentProps<TValue, TCategory extends SettingCategory> = {
     onValueChange: (newValue: TValue) => void;
     value: TValue;
     isValueValid: boolean;
     overriddenValue: TValue | null;
     isOverridden: boolean;
-    availableValues: AvailableValuesType<TValue>;
+    availableValues: AvailableValuesType<TValue, TCategory>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     globalSettings: GlobalSettings;
@@ -459,11 +488,11 @@ export type ValueToStringArgs<TValue> = {
     workbenchSettings: WorkbenchSettings;
 };
 
-export interface CustomSettingImplementation<TValue> {
+export interface CustomSettingImplementation<TValue, TCategory extends SettingCategory> {
     getIsStatic?: () => boolean;
-    makeComponent(): (props: SettingComponentProps<TValue>) => React.ReactNode;
-    fixupValue?: (availableValues: AvailableValuesType<TValue>, currentValue: TValue) => TValue;
-    isValueValid?: (availableValues: AvailableValuesType<TValue>, value: TValue) => boolean;
+    makeComponent(): (props: SettingComponentProps<TValue, TCategory>) => React.ReactNode;
+    fixupValue?: (availableValues: AvailableValuesType<TValue, TCategory>, currentValue: TValue) => TValue;
+    isValueValid: (availableValues: AvailableValuesType<TValue, TCategory>, value: TValue) => boolean;
     serializeValue?: (value: TValue) => string;
     deserializeValue?: (serializedValue: string) => TValue;
     valueToString?: (args: ValueToStringArgs<TValue>) => string;

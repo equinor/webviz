@@ -3,12 +3,13 @@ import React from "react";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
 import { CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
+import { SettingCategory } from "../settingsTypes";
 
 type ValueType = number | null;
 
-export class DropdownNumberSetting implements CustomSettingImplementation<ValueType> {
-    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType>) {
+export class DropdownNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.OPTION> {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.OPTION>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.OPTION>) {
             const options: DropdownOption<number>[] = props.availableValues.map((value) => {
                 return {
                     value: value,

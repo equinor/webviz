@@ -1,20 +1,14 @@
-import { SettingType, SettingTypes } from "./settingsTypes";
+import { SettingCategories, SettingType, SettingTypes } from "./settingsTypes";
 
 import { Setting } from "../framework/Setting/Setting";
 import { CustomSettingImplementation } from "../interfaces";
-
-type ExtractValueType<C extends new (...args: any) => CustomSettingImplementation<any>> = C extends new (
-    ...args: any
-) => CustomSettingImplementation<infer T>
-    ? T
-    : never;
 
 export class SettingRegistry {
     private static _registeredSettings: Map<
         SettingType,
         {
             label: string;
-            customSettingImplementation: { new (customParams?: any): CustomSettingImplementation<any> };
+            customSettingImplementation: { new (customParams?: any): CustomSettingImplementation<any, any> };
             customParams?: any;
         }
     > = new Map();
@@ -22,8 +16,9 @@ export class SettingRegistry {
     static registerSetting<
         TSetting extends SettingType,
         TSettingType extends SettingTypes[TSetting] = SettingTypes[TSetting],
-        TSettingImpl extends new (...args: any) => CustomSettingImplementation<TSettingType> = {
-            new (params?: any): CustomSettingImplementation<TSettingType>;
+        TSettingCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
+        TSettingImpl extends new (...args: any) => CustomSettingImplementation<TSettingType, TSettingCategory> = {
+            new (params?: any): CustomSettingImplementation<TSettingType, TSettingCategory>;
         }
     >(
         type: TSetting,
@@ -41,7 +36,10 @@ export class SettingRegistry {
         });
     }
 
-    static makeSetting<T extends SettingType>(type: T, defaultValue: SettingTypes[T]): Setting<SettingTypes[T]> {
+    static makeSetting<T extends SettingType>(
+        type: T,
+        defaultValue: SettingTypes[T]
+    ): Setting<SettingTypes[T], SettingCategories[T]> {
         const stored = this._registeredSettings.get(type);
         if (!stored) {
             throw new Error(`Setting ${type} not found`);

@@ -4,6 +4,7 @@ import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 
 import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
+import { SettingCategory } from "../settingsTypes";
 
 type ValueType = number | null;
 
@@ -12,14 +13,14 @@ export enum SeismicSliceDirection {
     CROSSLINE,
     DEPTH,
 }
-export class SeismicSliceSetting implements CustomSettingImplementation<ValueType> {
+export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, SettingCategory.OPTION> {
     private _direction: SeismicSliceDirection;
 
     constructor(direction: SeismicSliceDirection) {
         this._direction = direction;
     }
 
-    isValueValid(availableValues: AvailableValuesType<ValueType>, value: ValueType): boolean {
+    isValueValid(availableValues: AvailableValuesType<ValueType, SettingCategory.OPTION>, value: ValueType): boolean {
         if (value === null) {
             return false;
         }
@@ -38,7 +39,10 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
         return value >= min && value <= max;
     }
 
-    fixupValue(availableValues: AvailableValuesType<ValueType>, currentValue: ValueType): ValueType {
+    fixupValue(
+        availableValues: AvailableValuesType<ValueType, SettingCategory.OPTION>,
+        currentValue: ValueType
+    ): ValueType {
         if (availableValues.length < 2) {
             return null;
         }
@@ -57,9 +61,9 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
         return Math.min(Math.max(currentValue, min), max);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.OPTION>) => React.ReactNode {
         const direction = this._direction;
-        return function RangeSlider(props: SettingComponentProps<ValueType>) {
+        return function RangeSlider(props: SettingComponentProps<ValueType, SettingCategory.OPTION>) {
             function handleSliderChange(_: any, value: number | number[]) {
                 if (Array.isArray(value)) {
                     return value[0];
