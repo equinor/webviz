@@ -19,17 +19,15 @@ export default eslintTypescript.config(
     {
         settings: {
             "import/resolver": {
-                typescript: {
-                    alwaysTryTypes: true, // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
-                    // project: "./.tsconfig.json",
-                },
+                // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
+                typescript: { alwaysTryTypes: true },
             },
         },
     },
 
     // ! Currently unable to directly import recommended hooks-plugin config. Need to manually set them up for now
     // ! See: https://github.com/facebook/react/issues/32431
-    // reactHooksPlugin.configs["recommended-latest"],
+    // Once resolved, replace with this: reactHooksPlugin.configs["recommended-latest"],
     {
         plugins: { "react-hooks": reactHooksPlugin },
         rules: { ...reactHooksPlugin.configs.recommended.rules },
