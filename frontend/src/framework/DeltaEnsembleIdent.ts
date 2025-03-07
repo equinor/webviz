@@ -27,12 +27,12 @@ export class DeltaEnsembleIdent {
     }
 
     static readonly ensembleIdentRegExp = new RegExp(
-        `^~@@~(?<comparisonCaseUuid>${UUID_REGEX_STRING})::(?<comparisonEnsembleName>.*)~@@~(?<referenceCaseUuid>${UUID_REGEX_STRING})::(?<referenceEnsembleName>.*)~@@~$`
+        `^~@@~(?<comparisonCaseUuid>${UUID_REGEX_STRING})::(?<comparisonEnsembleName>.*)~@@~(?<referenceCaseUuid>${UUID_REGEX_STRING})::(?<referenceEnsembleName>.*)~@@~$`,
     );
 
     static comparisonEnsembleIdentAndReferenceEnsembleIdentToString(
         comparisonEnsembleIdent: RegularEnsembleIdent,
-        referenceEnsembleIdent: RegularEnsembleIdent
+        referenceEnsembleIdent: RegularEnsembleIdent,
     ): string {
         return `~@@~${comparisonEnsembleIdent.toString()}~@@~${referenceEnsembleIdent.toString()}~@@~`;
     }
@@ -62,7 +62,7 @@ export class DeltaEnsembleIdent {
 
         return new DeltaEnsembleIdent(
             new RegularEnsembleIdent(comparisonCaseUuid, comparisonEnsembleName),
-            new RegularEnsembleIdent(referenceCaseUuid, referenceEnsembleName)
+            new RegularEnsembleIdent(referenceCaseUuid, referenceEnsembleName),
         );
     }
 
@@ -81,7 +81,7 @@ export class DeltaEnsembleIdent {
     toString(): string {
         return DeltaEnsembleIdent.comparisonEnsembleIdentAndReferenceEnsembleIdentToString(
             this._comparisonEnsembleIdent,
-            this._referenceEnsembleIdent
+            this._referenceEnsembleIdent,
         );
     }
 

@@ -1,12 +1,12 @@
-import React from "react";
+import type React from "react";
 
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { ViewContext } from "@framework/ModuleContext";
-import { ColorSet } from "@lib/utils/ColorSet";
-import { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { ViewContext } from "@framework/ModuleContext";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type { Interfaces } from "@modules/InplaceVolumetricsPlot/interfaces";
 import { PlotType, plotTypeToStringMapping } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
 import { PlotBuilder } from "@modules/_shared/InplaceVolumetrics/PlotBuilder";
-import { Table } from "@modules/_shared/InplaceVolumetrics/Table";
+import type { Table } from "@modules/_shared/InplaceVolumetrics/Table";
 import { makeTableFromApiData } from "@modules/_shared/InplaceVolumetrics/tableUtils";
 
 import { useAtomValue } from "jotai";
@@ -30,7 +30,7 @@ export function useBuildPlotAndTable(
     height: number,
     hoveredRegion: string | null,
     hoveredZone: string | null,
-    hoveredFacies: string | null
+    hoveredFacies: string | null,
 ): { plots: React.ReactNode; table: Table } | null {
     const aggregatedTableDataQueries = useAtomValue(aggregatedTableDataQueriesAtom);
     const plotType = useAtomValue(plotTypeAtom);
@@ -62,7 +62,7 @@ export function useBuildPlotAndTable(
     }
     const plotbuilder = new PlotBuilder(
         table,
-        makePlotData(plotType, resultName ?? "", resultNameOrSelectorName ?? "", colorBy, ensembleSet, colorSet)
+        makePlotData(plotType, resultName ?? "", resultNameOrSelectorName ?? "", colorBy, ensembleSet, colorSet),
     );
 
     plotbuilder.setSubplotByColumn(subplotBy);

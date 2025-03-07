@@ -1,8 +1,8 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { PolygonsAddress } from "@modules/_shared/Polygons/polygonsAddress";
-import { RealizationSurfaceAddress, StatisticalSurfaceAddress } from "@modules/_shared/Surface";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { PolygonsAddress } from "@modules/_shared/Polygons/polygonsAddress";
+import type { RealizationSurfaceAddress, StatisticalSurfaceAddress } from "@modules/_shared/Surface";
 
-import { SurfaceMeshLayerSettings, ViewSettings } from "./_utils";
+import type { SurfaceMeshLayerSettings, ViewSettings } from "./_utils";
 import {
     meshSurfaceAddressAtom,
     polygonsAddressAtom,

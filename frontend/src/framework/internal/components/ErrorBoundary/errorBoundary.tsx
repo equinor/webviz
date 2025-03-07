@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleInstance } from "@framework/ModuleInstance";
+import type { ModuleInstance } from "@framework/ModuleInstance";
 
 export type Props = {
     moduleInstance: ModuleInstance<any>;

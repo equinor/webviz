@@ -1,11 +1,11 @@
 import React from "react";
 
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { ContentError } from "@modules/_shared/components/ContentMessage";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { CircularProgress } from "@mui/material";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 import { useAtomValue } from "jotai";
 
@@ -13,7 +13,7 @@ import { intersectionReferenceSystemAtom } from "./atoms/derivedAtoms";
 import { logCurveDataQueryAtom, wellboreTrajectoryQueryAtom } from "./atoms/queryAtoms";
 import { SubsurfaceLogViewerWrapper } from "./components/SubsurfaceLogViewerWrapper";
 
-import { InterfaceTypes } from "../interfaces";
+import type { InterfaceTypes } from "../interfaces";
 
 export function View(props: ModuleViewProps<InterfaceTypes>) {
     const statusWriter = useViewStatusWriter(props.viewContext);
@@ -39,7 +39,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
     usePropagateApiErrorToStatusWriter(
         // ! Cast is safe, since MergedQueryResult includes `.error`
         curveDataQueries as UseQueryResult,
-        statusWriter
+        statusWriter,
     );
 
     React.useEffect(
@@ -54,7 +54,7 @@ export function View(props: ModuleViewProps<InterfaceTypes>) {
 
             props.viewContext.setInstanceTitle(title);
         },
-        [props.viewContext, selectedWellboreHeader?.uniqueWellboreIdentifier]
+        [props.viewContext, selectedWellboreHeader?.uniqueWellboreIdentifier],
     );
 
     if (mainElementsLoading) {

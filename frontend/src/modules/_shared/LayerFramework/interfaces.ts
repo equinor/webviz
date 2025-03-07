@@ -1,16 +1,16 @@
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { ColorScaleSerialization } from "@lib/utils/ColorScale";
-import { QueryClient } from "@tanstack/react-query";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { ColorScaleSerialization } from "@lib/utils/ColorScale";
+import type { QueryClient } from "@tanstack/react-query";
 
-import { GroupDelegate } from "./delegates/GroupDelegate";
-import { ItemDelegate } from "./delegates/ItemDelegate";
-import { LayerDelegate } from "./delegates/LayerDelegate";
-import { SettingDelegate } from "./delegates/SettingDelegate";
-import { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
-import { Dependency } from "./delegates/_utils/Dependency";
-import { GlobalSettings } from "./framework/LayerManager/LayerManager";
-import { SettingType } from "./settings/settingsTypes";
+import type { GroupDelegate } from "./delegates/GroupDelegate";
+import type { ItemDelegate } from "./delegates/ItemDelegate";
+import type { LayerDelegate } from "./delegates/LayerDelegate";
+import type { SettingDelegate } from "./delegates/SettingDelegate";
+import type { SettingsContextDelegate } from "./delegates/SettingsContextDelegate";
+import type { Dependency } from "./delegates/_utils/Dependency";
+import type { GlobalSettings } from "./framework/LayerManager/LayerManager";
+import type { SettingType } from "./settings/settingsTypes";
 
 export enum SerializedType {
     LAYER_MANAGER = "layer-manager",
@@ -106,7 +106,7 @@ export enum FetchDataFunctionResult {
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
     (
         oldValues: { [K in TKey]?: TSettings[K] },
-        newValues: { [K in TKey]?: TSettings[K] }
+        newValues: { [K in TKey]?: TSettings[K] },
     ): Promise<FetchDataFunctionResult>;
 }
 
@@ -145,15 +145,15 @@ export interface DefineDependenciesArgs<
     TSettings extends Settings,
     TStoredData extends StoredData = Record<string, never>,
     TKey extends keyof TSettings = keyof TSettings,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > {
     availableSettingsUpdater: (
         settingName: TKey,
-        update: UpdateFunc<EachAvailableValuesType<TSettings[TKey]>, TSettings, TKey>
+        update: UpdateFunc<EachAvailableValuesType<TSettings[TKey]>, TSettings, TKey>,
     ) => Dependency<EachAvailableValuesType<TSettings[TKey]>, TSettings, TKey>;
     storedDataUpdater: (
         key: TStoredDataKey,
-        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TKey>
+        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TKey>,
     ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TKey>;
     helperDependency: <T>(
         update: (args: {
@@ -161,7 +161,7 @@ export interface DefineDependenciesArgs<
             getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
             getHelperDependency: <TDep>(helperDependency: Dependency<TDep, TSettings, TKey>) => TDep | null;
             abortSignal: AbortSignal;
-        }) => T
+        }) => T,
     ) => Dependency<T, TSettings, TKey>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
@@ -172,7 +172,7 @@ export interface SettingsContext<
     TSettings extends Settings,
     TStoredData extends StoredData = Record<string, never>,
     TKey extends keyof TSettings = keyof TSettings,
-    TStoredDataKey extends keyof TStoredData = keyof TStoredData
+    TStoredDataKey extends keyof TStoredData = keyof TStoredData,
 > {
     getDelegate(): SettingsContextDelegate<TSettings, TStoredData, TKey, TStoredDataKey>;
     areCurrentSettingsValid?: (settings: TSettings) => boolean;

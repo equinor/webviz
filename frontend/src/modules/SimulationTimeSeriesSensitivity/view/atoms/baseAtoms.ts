@@ -1,5 +1,5 @@
 import { Frequency_api } from "@api";
-import { VectorSpec } from "@modules/SimulationTimeSeriesSensitivity/typesAndEnums";
+import type { VectorSpec } from "@modules/SimulationTimeSeriesSensitivity/typesAndEnums";
 
 import { atom } from "jotai";
 

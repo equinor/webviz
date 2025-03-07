@@ -1,4 +1,4 @@
-import { DiscreteParameterValueSelection } from "@framework/types/realizationFilterTypes";
+import type { DiscreteParameterValueSelection } from "@framework/types/realizationFilterTypes";
 import { areUnsortedArraysEqual, isArrayOfNumbers, isArrayOfStrings } from "@framework/utils/arrayUtils";
 
 import { describe, expect, test } from "vitest";

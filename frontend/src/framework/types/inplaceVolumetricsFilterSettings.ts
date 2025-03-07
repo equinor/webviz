@@ -1,5 +1,5 @@
-import { FluidZone_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { FluidZone_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export type InplaceVolumetricsFilterSettings = {
     ensembleIdents: RegularEnsembleIdent[];

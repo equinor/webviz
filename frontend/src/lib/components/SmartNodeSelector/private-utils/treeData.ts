@@ -1,4 +1,4 @@
-import { TreeDataNode, TreeDataNodeMetaData } from "./treeDataNodeTypes";
+import type { TreeDataNode, TreeDataNodeMetaData } from "./treeDataNodeTypes";
 
 export enum MatchType {
     openMatch = 0,
@@ -64,7 +64,7 @@ export class TreeData {
                 for (let i = 0; i < node.children.length; i++) {
                     populateNode(
                         [...indices, i],
-                        `${nodePath}${nodePath != "" ? delimiter : ""}{${index}}${node.name}`
+                        `${nodePath}${nodePath != "" ? delimiter : ""}{${index}}${node.name}`,
                     );
                 }
             } else {
@@ -129,8 +129,8 @@ export class TreeData {
             this.replaceAll(
                 this.replaceAll(this.replaceAll(this.escapeRegExp(nodeName), ":", ""), "*", '[^:"]*'),
                 "?",
-                "."
-            )
+                ".",
+            ),
         );
     }
 
@@ -248,7 +248,7 @@ export class TreeData {
         }
 
         const re = RegExp(
-            `"${nodePathString}\\{(\\d+)\\}(${this.makeExpressionCaseInsensitive(lastNode)})("|${this._delimiter})`
+            `"${nodePathString}\\{(\\d+)\\}(${this.makeExpressionCaseInsensitive(lastNode)})("|${this._delimiter})`,
         );
 
         // Can be replaced with matchAll as soon as ECMAScript 2021 is declared standard in this project.
@@ -276,7 +276,7 @@ export class TreeData {
 
     findNodes(
         nodePath: string[],
-        matchType = MatchType.openMatch
+        matchType = MatchType.openMatch,
     ): { nodePaths: string[]; metaData: TreeDataNodeMetaData[][] } {
         let nodePathString = "";
         for (let i = 0; i < nodePath.length; i++) {
@@ -289,13 +289,13 @@ export class TreeData {
             matchType === MatchType.fullMatch
                 ? RegExp(`"(${nodePathString})"`, "g")
                 : matchType === MatchType.partialMatch
-                ? RegExp(
-                      `"(${nodePathString})[^"${this.escapeRegExp(this._delimiter)}]*["${this.escapeRegExp(
-                          this._delimiter
-                      )}]{1}`,
-                      "g"
-                  )
-                : RegExp(`"(${nodePathString})`, "g");
+                  ? RegExp(
+                        `"(${nodePathString})[^"${this.escapeRegExp(this._delimiter)}]*["${this.escapeRegExp(
+                            this._delimiter,
+                        )}]{1}`,
+                        "g",
+                    )
+                  : RegExp(`"(${nodePathString})`, "g");
 
         const metaData: TreeDataNodeMetaData[][] = [];
         const nodePaths: string[] = [];

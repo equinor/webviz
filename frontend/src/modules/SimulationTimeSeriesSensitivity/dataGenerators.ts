@@ -1,13 +1,13 @@
-import { VectorRealizationData_api } from "@api";
-import { DataGenerator } from "@framework/DataChannelTypes";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { VectorRealizationData_api } from "@api";
+import type { DataGenerator } from "@framework/DataChannelTypes";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
 
 import { indexOf } from "lodash";
 
 export function makeVectorDataGenerator(
     ensemble: RegularEnsemble | null,
     vectorRealizationData: VectorRealizationData_api[] | null,
-    activeTimestampUtcMs: number | null
+    activeTimestampUtcMs: number | null,
 ): DataGenerator {
     return () => {
         const data: { key: number; value: number }[] = [];

@@ -1,8 +1,8 @@
-import { Controller, OverlayMouseMoveEvent } from "@equinor/esv-intersection";
+import type { Controller, OverlayMouseMoveEvent } from "@equinor/esv-intersection";
 
 import { isEqual } from "lodash";
 
-import { IntersectedItem, IntersectionCalculator, IntersectionItem } from "../types/types";
+import type { IntersectedItem, IntersectionCalculator, IntersectionItem } from "../types/types";
 import { makeIntersectionCalculatorFromIntersectionItem } from "../utils/intersectionConversion";
 
 export enum IntersectionHandlerTopic {
@@ -43,7 +43,7 @@ export class IntersectionHandler {
         const intersectionCalculator = makeIntersectionCalculatorFromIntersectionItem(
             intersectionItem,
             this._options,
-            this._controller
+            this._controller,
         );
         this._intersectionCalculators.set(intersectionItem.id, intersectionCalculator);
     }
@@ -54,7 +54,7 @@ export class IntersectionHandler {
 
     subscribe<T extends IntersectionHandlerTopic>(
         topic: T,
-        callback: (payload: IntersectionHandlerTopicPayload[T]) => void
+        callback: (payload: IntersectionHandlerTopicPayload[T]) => void,
     ): () => void {
         const subscribers = this._subscribers.get(topic) || new Set();
         subscribers.add(callback);
@@ -116,8 +116,6 @@ export class IntersectionHandler {
         const { xScale, yScale } = this._controller.currentStateAsEvent;
 
         const referenceSystemCoordinates = [xScale.invert(x), yScale.invert(y)];
-
-        this._controller.currentStateAsEvent.xScale;
 
         const intersections: Intersection[] = [];
 

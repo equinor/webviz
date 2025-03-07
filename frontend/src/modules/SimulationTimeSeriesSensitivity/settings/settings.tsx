@@ -1,8 +1,8 @@
 import React from "react";
 
 import { Frequency_api } from "@api";
-import { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
@@ -13,7 +13,7 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
-import { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
 
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -39,7 +39,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { vectorListQueryAtom } from "./atoms/queryAtoms";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { FrequencyEnumToStringMapping } from "../typesAndEnums";
 
 //-----------------------------------------------------------------------------------------------------------

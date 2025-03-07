@@ -1,5 +1,4 @@
-import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
-import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
+import { encodeAsUintListStr, encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
 
 import { describe, expect, test } from "vitest";
 
@@ -12,7 +11,7 @@ describe("KeyValStr tests", () => {
             nullKey: null,
         };
         expect(encodePropertiesAsKeyValStr(srcObj)).toBe(
-            "boolKey~true~~nullKey~null~~numberKey~123.4~~stringKey~'myString'"
+            "boolKey~true~~nullKey~null~~numberKey~123.4~~stringKey~'myString'",
         );
     });
 
@@ -35,7 +34,7 @@ describe("KeyValStr tests", () => {
         srcMap.set("numberKey", 123.4);
         srcMap.set("nullKey", null);
         expect(encodePropertiesAsKeyValStr(srcMap)).toBe(
-            "boolKey~true~~nullKey~null~~numberKey~123.4~~stringKey~'myString'"
+            "boolKey~true~~nullKey~null~~numberKey~123.4~~stringKey~'myString'",
         );
     });
 

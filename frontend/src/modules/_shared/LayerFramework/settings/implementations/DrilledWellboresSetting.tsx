@@ -1,12 +1,13 @@
 import React from "react";
 
-import { WellboreHeader_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { Deselect, SelectAll } from "@mui/icons-material";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
+import type { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
 import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 
@@ -37,7 +38,7 @@ export class DrilledWellboresSetting implements Setting<ValueType> {
         }
 
         const matchingValues = currentValue.filter((value) =>
-            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid)
+            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
         );
         if (matchingValues.length === 0) {
             return availableValues;
@@ -53,12 +54,12 @@ export class DrilledWellboresSetting implements Setting<ValueType> {
                         value: ident.wellboreUuid,
                         label: ident.uniqueWellboreIdentifier,
                     })),
-                [props.availableValues]
+                [props.availableValues],
             );
 
             function handleChange(selectedUuids: string[]) {
                 const selectedWellbores = props.availableValues.filter((ident) =>
-                    selectedUuids.includes(ident.wellboreUuid)
+                    selectedUuids.includes(ident.wellboreUuid),
                 );
                 props.onValueChange(selectedWellbores);
             }
@@ -74,7 +75,7 @@ export class DrilledWellboresSetting implements Setting<ValueType> {
 
             const selectedValues = React.useMemo(
                 () => props.value?.map((ident) => ident.wellboreUuid) ?? [],
-                [props.value]
+                [props.value],
             );
 
             return (

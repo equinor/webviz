@@ -1,8 +1,8 @@
 import React from "react";
 
-import { SurfaceStatisticFunction_api } from "@api";
-import { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SurfaceStatisticFunction_api } from "@api";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -14,9 +14,16 @@ import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
-import { FullSurfaceAddress, SurfaceAddressBuilder, SurfaceDirectory, SurfaceTimeType } from "@modules/_shared/Surface";
-import { useObservedSurfacesMetadataQuery, useRealizationSurfacesMetadataQuery } from "@modules/_shared/Surface";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import type { FullSurfaceAddress } from "@modules/_shared/Surface";
+import {
+    SurfaceAddressBuilder,
+    SurfaceDirectory,
+    SurfaceTimeType,
+    useObservedSurfacesMetadataQuery,
+    useRealizationSurfacesMetadataQuery,
+} from "@modules/_shared/Surface";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useSetAtom } from "jotai";
@@ -24,7 +31,7 @@ import { useSetAtom } from "jotai";
 import { surfaceAddressAtom } from "./atoms/baseAtoms";
 
 import { AggregationDropdown } from "../UiComponents";
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 const SurfaceTimeTypeEnumToStringMapping = {
     [SurfaceTimeType.None]: "Static",
@@ -56,7 +63,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
     const computedEnsembleIdent = fixupRegularEnsembleIdent(candidateEnsembleIdent, ensembleSet);
     const realizationSurfacesMetaQuery = useRealizationSurfacesMetadataQuery(
         computedEnsembleIdent?.getCaseUuid(),
-        computedEnsembleIdent?.getEnsembleName()
+        computedEnsembleIdent?.getEnsembleName(),
     );
     const observedSurfacesMetaQuery = useObservedSurfacesMetadataQuery(computedEnsembleIdent?.getCaseUuid());
 
@@ -81,7 +88,7 @@ export function MapSettings(props: ModuleSettingsProps<Interfaces>) {
             surfaceName: syncedValueSurface?.name || null,
             surfaceAttribute: syncedValueSurface?.attribute || null,
             timeOrInterval: syncedValueDate?.timeOrInterval || null,
-        }
+        },
     );
     const computedSurfaceName = fixedSurfSpec.surfaceName;
     const computedSurfaceAttribute = fixedSurfSpec.surfaceAttribute;
@@ -308,13 +315,13 @@ type PartialSurfSpec = {
 function fixupSurface(
     surfaceDirectory: SurfaceDirectory,
     selectedSurface: PartialSurfSpec,
-    syncedSurface: PartialSurfSpec
+    syncedSurface: PartialSurfSpec,
 ): PartialSurfSpec {
     const surfaceNames = surfaceDirectory.getSurfaceNames(null);
     const finalSurfaceName = fixupSyncedOrSelectedOrFirstValue(
         syncedSurface.surfaceName,
         selectedSurface.surfaceName,
-        surfaceNames
+        surfaceNames,
     );
     let finalSurfaceAttribute: string | null = null;
     let finalTimeOrInterval: string | null = null;
@@ -323,7 +330,7 @@ function fixupSurface(
         finalSurfaceAttribute = fixupSyncedOrSelectedOrFirstValue(
             syncedSurface.surfaceAttribute,
             selectedSurface.surfaceAttribute,
-            surfaceAttributes
+            surfaceAttributes,
         );
     }
     if (finalSurfaceName && finalSurfaceAttribute) {
@@ -331,7 +338,7 @@ function fixupSurface(
         finalTimeOrInterval = fixupSyncedOrSelectedOrFirstValue(
             syncedSurface.timeOrInterval,
             selectedSurface.timeOrInterval,
-            selectedTimeOrIntervals
+            selectedTimeOrIntervals,
         );
     }
     return {
@@ -344,7 +351,7 @@ function fixupSurface(
 function fixupSyncedOrSelectedOrFirstValue(
     syncedValue: string | null,
     selectedValue: string | null,
-    values: string[]
+    values: string[],
 ): string | null {
     if (syncedValue && values.includes(syncedValue)) {
         return syncedValue;

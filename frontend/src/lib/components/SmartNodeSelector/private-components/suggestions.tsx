@@ -1,10 +1,11 @@
 import React from "react";
-import { Root, createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
+import { createRoot } from "react-dom/client";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { TreeDataNodeMetaData } from "../private-utils/treeDataNodeTypes";
-import { TreeNodeSelection } from "../private-utils/treeNodeSelection";
+import type { TreeDataNodeMetaData } from "../private-utils/treeDataNodeTypes";
+import type { TreeNodeSelection } from "../private-utils/treeNodeSelection";
 
 type SuggestionsProps = {
     suggestionsRef: React.RefObject<HTMLDivElement>;
@@ -167,7 +168,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                 this.markSuggestionAsHoveredAndMakeVisible(Math.max(0, this._currentlySelectedSuggestionIndex - 1));
             } else if (e.key === "ArrowDown") {
                 this.markSuggestionAsHoveredAndMakeVisible(
-                    Math.min(this._allOptions.length - 1, this._currentlySelectedSuggestionIndex + 1)
+                    Math.min(this._allOptions.length - 1, this._currentlySelectedSuggestionIndex + 1),
                 );
             }
             if (
@@ -189,7 +190,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         const height = Math.min(maxHeight, this._allOptions.length * this._rowHeight);
         const index = Math.min(
             Math.floor((suggestionsRef.current as HTMLDivElement).scrollTop / this._rowHeight),
-            this._allOptions.length - Math.floor(height / this._rowHeight)
+            this._allOptions.length - Math.floor(height / this._rowHeight),
         );
         const remainder = (suggestionsRef.current as HTMLDivElement).scrollTop - index * this._rowHeight;
         this._upperSpacerHeight = (suggestionsRef.current as HTMLDivElement).scrollTop - remainder;
@@ -214,7 +215,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
 
         const maxNumSuggestions = Math.min(
             Math.floor(maxHeight / this._rowHeight),
-            this._allOptions.length - this.state.fromIndex
+            this._allOptions.length - this.state.fromIndex,
         );
 
         const currentRangeStart = this.state.fromIndex;
@@ -290,14 +291,14 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         const matchedDescription = matchDescription
             ? option.metaData.description?.substring(
                   matchDescription.index as number,
-                  (matchDescription.index as number) + matchDescription[0].length
+                  (matchDescription.index as number) + matchDescription[0].length,
               )
             : "";
 
         const unmatchedDescriptionPartAfter = matchDescription
             ? option.metaData.description?.substring(
                   (matchDescription.index as number) + matchDescription[0].length,
-                  option.metaData.description.length
+                  option.metaData.description.length,
               )
             : "";
 
@@ -322,7 +323,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         if (!treeNodeSelection.focussedNodeNameContainsWildcard()) {
             const options = this._allOptions.slice(
                 this.state.fromIndex,
-                this.state.fromIndex + Math.ceil(maxHeight / this._rowHeight)
+                this.state.fromIndex + Math.ceil(maxHeight / this._rowHeight),
             );
             return (
                 <>
@@ -338,7 +339,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                                     "bg-[20px 20px] pl-8": option.metaData.icon !== undefined,
                                     "bg-blue-100 Suggestions__Suggestion--Selected":
                                         i === this._currentlySelectedSuggestionIndex - this.state.fromIndex,
-                                }
+                                },
                             )}
                             style={{
                                 color: option.metaData.color !== undefined ? option.metaData.color : "inherit",
@@ -410,7 +411,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
         this._popupRoot.render(
             <div
                 ref={suggestionsRef}
-                className="box-border absolute top-full left-0 w-full border bg-white rounded-b shadow z-50 overflow-y-auto"
+                className="box-border absolute top-full left-0 w-full border bg-white rounded-b shadow-sm z-50 overflow-y-auto"
                 onScroll={this.handleScroll}
                 style={{
                     maxHeight: maxHeight,
@@ -431,7 +432,7 @@ export class Suggestions extends React.Component<SuggestionsProps> {
                         height: lowerSpacerHeight + "px",
                     }}
                 ></div>
-            </div>
+            </div>,
         );
     }
 

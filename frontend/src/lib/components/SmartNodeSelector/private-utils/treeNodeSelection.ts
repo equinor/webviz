@@ -1,7 +1,8 @@
 import React from "react";
 
-import { MatchType, TreeData } from "./treeData";
-import { TreeDataNodeMetaData } from "./treeDataNodeTypes";
+import type { TreeData } from "./treeData";
+import { MatchType } from "./treeData";
+import type { TreeDataNodeMetaData } from "./treeDataNodeTypes";
 
 export class TreeNodeSelection {
     private _focussedLevel: number;

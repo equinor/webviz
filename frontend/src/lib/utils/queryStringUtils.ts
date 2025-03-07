@@ -12,7 +12,9 @@
 // Example:
 // encodedKeyValString = "key1~123.5~~key2~'someString'~~key3~false"
 //
-export function encodePropertiesAsKeyValStr(objOrMap: Record<string, string | number | boolean | null> | Map<string, string | number | boolean | null>): string {
+export function encodePropertiesAsKeyValStr(
+    objOrMap: Record<string, string | number | boolean | null> | Map<string, string | number | boolean | null>,
+): string {
     const KEYVAL_ASSIGN_SEP = "~";
     const KEYVAL_ELEMENT_SEP = "~~";
 
@@ -34,8 +36,7 @@ export function encodePropertiesAsKeyValStr(objOrMap: Record<string, string | nu
             }
             // Add quotes around string values
             elementArr.push(`${key}${KEYVAL_ASSIGN_SEP}'${value}'`);
-        }
-        else {
+        } else {
             throw new Error(`Only primitive value types are supported, offending value: ${value}`);
         }
     }

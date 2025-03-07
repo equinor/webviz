@@ -1,5 +1,5 @@
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
 export type ObservedSurfaceSettings = {
     [SettingType.ENSEMBLE]: RegularEnsembleIdent | null;

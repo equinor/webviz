@@ -1,9 +1,9 @@
-import React from "react";
+import type React from "react";
 
 import { Dropdown } from "@lib/components/Dropdown";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
+import type { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
 import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 
@@ -33,7 +33,7 @@ export class SensitivitySetting implements Setting<SensitivityNameCasePair | nul
 
     isValueValid(
         availableValues: AvailableValuesType<SensitivityNameCasePair | null>,
-        value: SensitivityNameCasePair | null
+        value: SensitivityNameCasePair | null,
     ): boolean {
         if (availableValues.length === 0) {
             return true;
@@ -46,7 +46,7 @@ export class SensitivitySetting implements Setting<SensitivityNameCasePair | nul
             .some(
                 (sensitivity) =>
                     sensitivity?.sensitivityName === value.sensitivityName &&
-                    sensitivity?.sensitivityCase === value.sensitivityCase
+                    sensitivity?.sensitivityCase === value.sensitivityCase,
             );
     }
 
@@ -63,7 +63,7 @@ export class SensitivitySetting implements Setting<SensitivityNameCasePair | nul
 
             const currentSensitivityCase = fixupSensitivityCase(
                 props.value?.sensitivityCase || null,
-                availableSensitiveCases
+                availableSensitiveCases,
             );
 
             const sensitivityNameOptions = availableSensitivityNames.map((sensitivityName) => ({

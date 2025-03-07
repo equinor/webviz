@@ -1,6 +1,7 @@
-import React from "react";
+import type React from "react";
 
-import { Menu as MuiMenu, MenuProps as MuiMenuProps, PopperPlacementType } from "@mui/base";
+import type { MenuProps as MuiMenuProps, PopperPlacementType } from "@mui/base";
+import { Menu as MuiMenu } from "@mui/base";
 
 export type MenuProps = {
     anchorOrigin?: PopperPlacementType;
@@ -12,7 +13,7 @@ export const Menu: React.FC<MenuProps> = (props) => {
         <MuiMenu
             slotProps={{
                 root: {
-                    className: "bg-white shadow-md z-50 border border-gray-200 py-2 rounded transition-opacity",
+                    className: "bg-white shadow-md z-50 border border-gray-200 py-2 rounded-sm transition-opacity",
                     placement: anchorOrigin,
                 },
             }}

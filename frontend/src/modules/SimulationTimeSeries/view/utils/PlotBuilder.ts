@@ -1,6 +1,6 @@
-import React from "react";
+import type React from "react";
 
-import {
+import type {
     DerivedVectorInfo_api,
     Frequency_api,
     SummaryVectorObservations_api,
@@ -8,21 +8,19 @@ import {
     VectorRealizationData_api,
     VectorStatisticData_api,
 } from "@api";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
-import { ColorSet } from "@lib/utils/ColorSet";
-import {
-    FrequencyEnumToStringMapping,
-    SubplotLimitDirection,
-    VectorSpec,
-} from "@modules/SimulationTimeSeries/typesAndEnums";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type { VectorSpec } from "@modules/SimulationTimeSeries/typesAndEnums";
+import { FrequencyEnumToStringMapping, SubplotLimitDirection } from "@modules/SimulationTimeSeries/typesAndEnums";
 import { createDerivedVectorDescription } from "@modules/SimulationTimeSeries/utils/vectorDescriptionUtils";
-import { CoordinateDomain, Figure, makeSubplots } from "@modules/_shared/Figure";
+import type { Figure } from "@modules/_shared/Figure";
+import { CoordinateDomain, makeSubplots } from "@modules/_shared/Figure";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
-import { Annotations, PlotMarker, Shape } from "plotly.js";
+import type { Annotations, PlotMarker, Shape } from "plotly.js";
 
 import {
     createHistoricalVectorTrace,
@@ -34,8 +32,8 @@ import {
     getTraceLineShape,
 } from "./PlotlyTraceUtils/createVectorTracesUtils";
 import { scaleHexColorLightness } from "./colorUtils";
-import { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
-import { TimeSeriesPlotData } from "./timeSeriesPlotData";
+import type { EnsemblesContinuousParameterColoring } from "./ensemblesContinuousParameterColoring";
+import type { TimeSeriesPlotData } from "./timeSeriesPlotData";
 
 type VectorNameSubplotTitleMap = { [vectorName: string]: string };
 type HexColorMap = { [key: string]: string };
@@ -106,7 +104,7 @@ export class PlotBuilder {
         ensemblesParameterColoring?: EnsemblesContinuousParameterColoring,
         limitDirection?: SubplotLimitDirection,
         limitDirectionMaxElements?: number,
-        scatterType: "scatter" | "scattergl" = "scatter"
+        scatterType: "scatter" | "scattergl" = "scatter",
     ) {
         this._selectedVectorSpecifications = selectedVectorSpecifications;
         this._width = width;
@@ -144,7 +142,7 @@ export class PlotBuilder {
         ({ numRows: this._numRows, numCols: this._numCols } = this.calcNumRowsAndCols(
             this._numberOfSubplots,
             this._limitDirection,
-            this._limitDirectionMaxElements
+            this._limitDirectionMaxElements,
         ));
         this._figure = makeSubplots({
             numCols: this._numCols,
@@ -162,7 +160,7 @@ export class PlotBuilder {
     private calcNumRowsAndCols(
         numSubplots: number,
         limitDirection: SubplotLimitDirection,
-        maxDirectionElements: number
+        maxDirectionElements: number,
     ): { numRows: number; numCols: number } {
         if (numSubplots === 1) {
             return { numRows: 1, numCols: 1 };
@@ -279,19 +277,19 @@ export class PlotBuilder {
     }
 
     addRealizationTracesColoredByParameter(
-        vectorsRealizationData: { vectorSpecification: VectorSpec; data: VectorRealizationData_api[] }[]
+        vectorsRealizationData: { vectorSpecification: VectorSpec; data: VectorRealizationData_api[] }[],
     ): void {
         if (!this._ensemblesParameterColoring) {
             throw new Error(
-                "EnsemblesParameterColoring is not defined. Must be provided in PlotBuilder constructor to add realization traces colored by parameter"
+                "EnsemblesParameterColoring is not defined. Must be provided in PlotBuilder constructor to add realization traces colored by parameter",
             );
         }
 
         // Only allow selected vectors
         const selectedVectorsRealizationData = vectorsRealizationData.filter((vec) =>
             this._selectedVectorSpecifications.some(
-                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName
-            )
+                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName,
+            ),
         );
 
         const addLegendForTraces = false;
@@ -313,13 +311,13 @@ export class PlotBuilder {
                 let parameterColor = this._parameterFallbackColor;
                 const hasParameterValueForRealization = this._ensemblesParameterColoring.hasParameterRealizationValue(
                     ensembleIdent,
-                    realizationData.realization
+                    realizationData.realization,
                 );
 
                 if (hasParameterForEnsemble && hasParameterValueForRealization) {
                     const value = this._ensemblesParameterColoring.getParameterRealizationValue(
                         ensembleIdent,
-                        realizationData.realization
+                        realizationData.realization,
                     );
                     parameterColor = this._ensemblesParameterColoring.getColorScale().getColorForValue(value);
                 }
@@ -344,7 +342,7 @@ export class PlotBuilder {
                 this.createVectorSubplotTitleAndInsertIntoMap(
                     elm.vectorSpecification.vectorName,
                     realizationData.unit,
-                    realizationData.derivedVectorInfo
+                    realizationData.derivedVectorInfo,
                 );
             }
         }
@@ -352,13 +350,13 @@ export class PlotBuilder {
 
     addRealizationsTraces(
         vectorsRealizationData: { vectorSpecification: VectorSpec; data: VectorRealizationData_api[] }[],
-        useIncreasedBrightness: boolean
+        useIncreasedBrightness: boolean,
     ): void {
         // Only allow selected vectors
         const selectedVectorsRealizationData = vectorsRealizationData.filter((vec) =>
             this._selectedVectorSpecifications.some(
-                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName
-            )
+                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName,
+            ),
         );
 
         const addLegendForTraces = false;
@@ -396,20 +394,20 @@ export class PlotBuilder {
                 this.createVectorSubplotTitleAndInsertIntoMap(
                     elm.vectorSpecification.vectorName,
                     elm.data[0].unit,
-                    elm.data[0].derivedVectorInfo
+                    elm.data[0].derivedVectorInfo,
                 );
             }
         }
     }
 
     addFanchartTraces(
-        vectorsStatisticData: { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[]
+        vectorsStatisticData: { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[],
     ): void {
         // Only allow selected vectors
         const selectedVectorsStatisticData = vectorsStatisticData.filter((vec) =>
             this._selectedVectorSpecifications.some(
-                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName
-            )
+                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName,
+            ),
         );
 
         // Create traces for each vector
@@ -438,20 +436,20 @@ export class PlotBuilder {
             this.createVectorSubplotTitleAndInsertIntoMap(
                 elm.vectorSpecification.vectorName,
                 elm.data.unit,
-                elm.data.derivedVectorInfo
+                elm.data.derivedVectorInfo,
             );
         }
     }
 
     addStatisticsTraces(
         vectorsStatisticData: { vectorSpecification: VectorSpec; data: VectorStatisticData_api }[],
-        highlightStatisticTraces: boolean
+        highlightStatisticTraces: boolean,
     ): void {
         // Only allow selected vectors
         const selectedVectorsStatisticData = vectorsStatisticData.filter((vec) =>
             this._selectedVectorSpecifications.some(
-                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName
-            )
+                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName,
+            ),
         );
 
         const lineWidth = highlightStatisticTraces ? 3 : 2;
@@ -483,7 +481,7 @@ export class PlotBuilder {
             this.createVectorSubplotTitleAndInsertIntoMap(
                 elm.vectorSpecification.vectorName,
                 elm.data.unit,
-                elm.data.derivedVectorInfo
+                elm.data.derivedVectorInfo,
             );
         }
     }
@@ -492,13 +490,13 @@ export class PlotBuilder {
         vectorsHistoricalData: {
             vectorSpecification: VectorSpec;
             data: VectorHistoricalData_api;
-        }[]
+        }[],
     ): void {
         // Only allow selected vectors
         const selectedVectorsHistoricalData = vectorsHistoricalData.filter((vec) =>
             this._selectedVectorSpecifications.some(
-                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName
-            )
+                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName,
+            ),
         );
 
         // Create traces for each vector
@@ -528,13 +526,13 @@ export class PlotBuilder {
         vectorsObservationData: {
             vectorSpecification: VectorSpec;
             data: SummaryVectorObservations_api;
-        }[]
+        }[],
     ): void {
         // Only allow selected vectors
         const selectedVectorsObservationData = vectorsObservationData.filter((vec) =>
             this._selectedVectorSpecifications.some(
-                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName
-            )
+                (selectedVec) => selectedVec.vectorName === vec.vectorSpecification.vectorName,
+            ),
         );
 
         // Create traces for each vector
@@ -614,7 +612,7 @@ export class PlotBuilder {
         legendRank: number,
         yaxis: string,
         xaxis: string,
-        includeMarkers = false
+        includeMarkers = false,
     ): Partial<TimeSeriesPlotData> {
         return {
             name: legendName,
@@ -660,8 +658,8 @@ export class PlotBuilder {
                             hexColor,
                             currentLegendRank++,
                             yAxisTopRight,
-                            xAxisTopRight
-                        )
+                            xAxisTopRight,
+                        ),
                     );
                 });
             }
@@ -679,8 +677,8 @@ export class PlotBuilder {
                             legendColor,
                             currentLegendRank++,
                             xAxisTopRight,
-                            yAxisTopRight
-                        )
+                            yAxisTopRight,
+                        ),
                     );
                 });
             }
@@ -696,8 +694,8 @@ export class PlotBuilder {
                     this._historyVectorColor,
                     currentLegendRank++,
                     yAxisTopRight,
-                    xAxisTopRight
-                )
+                    xAxisTopRight,
+                ),
             );
         }
 
@@ -713,8 +711,8 @@ export class PlotBuilder {
                     currentLegendRank++,
                     yAxisTopRight,
                     xAxisTopRight,
-                    includeMarkers
-                )
+                    includeMarkers,
+                ),
             );
         }
 
@@ -771,7 +769,7 @@ export class PlotBuilder {
     private createVectorSubplotTitleAndInsertIntoMap(
         vectorName: string,
         unit: string,
-        derivedVectorInfo?: DerivedVectorInfo_api | null
+        derivedVectorInfo?: DerivedVectorInfo_api | null,
     ): void {
         if (vectorName in this._vectorNameSubplotTitleMap) return;
 
@@ -785,7 +783,7 @@ export class PlotBuilder {
         if (derivedVectorInfo) {
             const derivedVectorDescription = createDerivedVectorDescription(
                 derivedVectorInfo.sourceVector,
-                derivedVectorInfo.type
+                derivedVectorInfo.type,
             );
             if (this._resampleFrequency) {
                 const frequencyString = FrequencyEnumToStringMapping[this._resampleFrequency];

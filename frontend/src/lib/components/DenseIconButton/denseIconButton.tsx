@@ -33,7 +33,7 @@ export function DenseIconButton(props: DenseIconButtonProps): React.ReactNode {
 
     return (
         <button
-            className={resolveClassNames("p-1 text-sm rounded flex gap-1 items-center", {
+            className={resolveClassNames("p-1 text-sm rounded-sm flex gap-1 items-center", {
                 [colorScheme + "text-gray-600 focus:outline focus:outline-1 hover:text-gray-900"]: !props.disabled,
                 "text-gray-300": props.disabled,
             })}

@@ -1,4 +1,4 @@
-import { SettingsStatusWriter } from "@framework/StatusWriter";
+import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtomValue } from "jotai";

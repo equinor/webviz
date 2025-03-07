@@ -1,7 +1,8 @@
-import React from "react";
+import type React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Badge as MuiBadge, BadgeProps as MuiBadgeProps } from "@mui/base";
+import type { BadgeProps as MuiBadgeProps } from "@mui/base";
+import { Badge as MuiBadge } from "@mui/base";
 
 export type BadgeProps = MuiBadgeProps;
 
@@ -26,7 +27,7 @@ export const Badge: React.FC<BadgeProps> = (props) => {
                         "items-center",
                         "font-bold",
                         "min-w-[1.25rem]",
-                        "box-border"
+                        "box-border",
                     ),
                     style: {
                         fontSize: "0.75rem",

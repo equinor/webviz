@@ -11,7 +11,7 @@ export function MenuHeading(props: MenuHeadingProps): React.ReactNode {
         <div
             className={resolveClassNames(
                 "text-xs text-gray-500 uppercase font-semibold tracking-wider px-3 py-1",
-                props.classNames ?? ""
+                props.classNames ?? "",
             )}
             style={props.style}
         >

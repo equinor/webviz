@@ -1,11 +1,13 @@
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { GroupDelegate } from "./GroupDelegate";
+import type { GroupDelegate } from "./GroupDelegate";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
-import { SerializedItem } from "../interfaces";
+import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import type { LayerManager } from "../framework/LayerManager/LayerManager";
+import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import type { SerializedItem } from "../interfaces";
 
 export enum ItemDelegateTopic {
     NAME = "NAME",

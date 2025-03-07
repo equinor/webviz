@@ -1,4 +1,4 @@
-import { PolygonsAttributeType_api, PolygonsMeta_api } from "@api";
+import type { PolygonsAttributeType_api, PolygonsMeta_api } from "@api";
 
 export type PolygonsDirectoryOptions = {
     polygonsMetas: PolygonsMeta_api[];
@@ -50,7 +50,7 @@ export class PolygonsDirectory {
     public nameAttributePairExists(polygonsName: string | null, attributeName: string | null): boolean {
         if (!attributeName || !polygonsName) return false;
         return this._polygonsList.some(
-            (polygons) => polygons.name === polygonsName && polygons.attribute_name === attributeName
+            (polygons) => polygons.name === polygonsName && polygons.attribute_name === attributeName,
         );
     }
 }

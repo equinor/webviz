@@ -19,7 +19,7 @@ export const BaseComponent = React.forwardRef((props: BaseComponentProps, ref: R
                     "pointer-events-none": props.disabled,
                     "cursor-default": props.disabled,
                 },
-                props.className ?? ""
+                props.className ?? "",
             )}
             style={props.style}
         >

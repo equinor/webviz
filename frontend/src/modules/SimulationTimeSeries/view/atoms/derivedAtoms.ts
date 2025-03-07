@@ -77,7 +77,7 @@ export const loadedRegularEnsembleVectorSpecificationsAndHistoricalDataAtom = at
 
     return createLoadedVectorSpecificationAndDataArray(
         regularEnsembleVectorSpecifications,
-        regularEnsembleHistoricalVectorDataQueries
+        regularEnsembleHistoricalVectorDataQueries,
     );
 });
 

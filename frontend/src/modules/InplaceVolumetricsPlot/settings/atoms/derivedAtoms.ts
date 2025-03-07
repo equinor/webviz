@@ -1,9 +1,10 @@
-import { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
+import type { FluidZone_api, InplaceVolumetricResultName_api, InplaceVolumetricsIdentifierWithValues_api } from "@api";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
 import { fixupRegularEnsembleIdents } from "@framework/utils/ensembleUiHelpers";
 import { FixupSelection, fixupUserSelection } from "@lib/utils/fixupUserSelection";
 import { fixupUserSelectedIdentifierValues } from "@modules/_shared/InplaceVolumetrics/fixupUserSelectedIdentifierValues";
-import { RealSelector, SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import type { SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import { RealSelector } from "@modules/_shared/InplaceVolumetrics/types";
 import {
     TableDefinitionsAccessor,
     makeUniqueTableNamesIntersection,
@@ -39,7 +40,7 @@ export const selectedEnsembleIdentsAtom = atom((get) => {
     }
 
     const newSelectedEnsembleIdents = userSelectedEnsembleIdents.filter((ensemble) =>
-        ensembleSet.hasEnsemble(ensemble)
+        ensembleSet.hasEnsemble(ensemble),
     );
 
     const validatedEnsembleIdents = fixupRegularEnsembleIdents(newSelectedEnsembleIdents, ensembleSet);
@@ -55,7 +56,7 @@ export const tableDefinitionsAccessorAtom = atom<TableDefinitionsAccessor>((get)
     return new TableDefinitionsAccessor(
         tableDefinitions.isLoading ? [] : tableDefinitions.data,
         selectedTableNames,
-        selectedIdentifierValueCriteria
+        selectedIdentifierValueCriteria,
     );
 });
 
@@ -130,7 +131,7 @@ export const selectedFluidZonesAtom = atom<FluidZone_api[]>((get) => {
     return fixupUserSelection(
         userSelectedFluidZones,
         tableDefinitionsAccessor.getFluidZonesIntersection(),
-        FixupSelection.SELECT_ALL
+        FixupSelection.SELECT_ALL,
     );
 });
 
@@ -147,7 +148,7 @@ export const selectedResultNameAtom = atom<InplaceVolumetricResultName_api | nul
 
     const fixedSelection = fixupUserSelection(
         [userSelectedResultName],
-        tableDefinitionsAccessor.getResultNamesIntersection()
+        tableDefinitionsAccessor.getResultNamesIntersection(),
     );
     if (fixedSelection.length === 0) {
         return null;
@@ -169,7 +170,7 @@ export const selectedResultName2Atom = atom<InplaceVolumetricResultName_api | nu
 
     const fixedSelection = fixupUserSelection(
         [userSelectedResultName],
-        tableDefinitionsAccessor.getResultNamesIntersection()
+        tableDefinitionsAccessor.getResultNamesIntersection(),
     );
     if (fixedSelection.length === 0) {
         return null;
@@ -207,7 +208,7 @@ export const selectedIdentifiersValuesAtom = atom<InplaceVolumetricsIdentifierWi
     const fixedUpIdentifierValues: InplaceVolumetricsIdentifierWithValues_api[] = fixupUserSelectedIdentifierValues(
         userSelectedIdentifierValues,
         uniqueIdentifierValues,
-        FixupSelection.SELECT_ALL
+        FixupSelection.SELECT_ALL,
     );
 
     return fixedUpIdentifierValues;
@@ -231,7 +232,7 @@ export const selectedColorByAtom = atom<SourceAndTableIdentifierUnion>((get) => 
     const tableDefinitionsAccessor = get(tableDefinitionsAccessorAtom);
 
     const validOptions = makeColorByOptions(tableDefinitionsAccessor, userSelectedSubplotBy, selectedTableNames).map(
-        (el) => el.value
+        (el) => el.value,
     );
     const fixedSelection = fixupUserSelection([userSelectedColorBy], validOptions);
 

@@ -1,4 +1,4 @@
-import { ParameterValueSelection, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
+import type { ParameterValueSelection, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 import {
     areParameterIdentStringToValueSelectionMapCandidatesEqual,
     areParameterIdentStringToValueSelectionReadonlyMapsEqual,

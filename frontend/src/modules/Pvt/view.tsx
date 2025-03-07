@@ -1,8 +1,8 @@
 import React from "react";
 
-import { ModuleViewProps } from "@framework/Module";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ModuleViewProps } from "@framework/Module";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
@@ -11,7 +11,7 @@ import { useElementSize } from "@lib/hooks/useElementSize";
 import { ContentMessage, ContentMessageType } from "@modules/_shared/components/ContentMessage/contentMessage";
 import { makeDistinguishableEnsembleDisplayName } from "@modules/_shared/ensembleNameUtils";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 import { PvtDataAccessor } from "./utils/PvtDataAccessor";
 import { PvtPlotBuilder } from "./utils/PvtPlotBuilder";
 
@@ -83,7 +83,7 @@ export function View({ viewContext, workbenchSettings, workbenchSession }: Modul
 
         const pvtPlotBuilder = new PvtPlotBuilder(
             new PvtDataAccessor(pvtDataQueries.tableCollections),
-            makeEnsembleDisplayName
+            makeEnsembleDisplayName,
         );
         pvtPlotBuilder.makeLayout(selectedPhase, selectedPlots, wrapperDivSize);
         pvtPlotBuilder.makeTraces(selectedPlots, selectedPvtNums, selectedPhase, selectedColorBy, colorSet);

@@ -1,6 +1,6 @@
-import { ScatterLine } from "plotly.js";
+import type { ScatterLine } from "plotly.js";
 
-import { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 /**
     Definition of line trace data for statistics plot
@@ -52,37 +52,37 @@ function validateStatisticsData(data: StatisticsData): void {
 
     if (data.freeLine !== undefined && samplesLength !== data.freeLine.data.length) {
         throw new Error(
-            `Invalid statistics mean value data length. data.samples.length (${samplesLength}) != data.freeLine.data.length (${data.freeLine.data.length})`
+            `Invalid statistics mean value data length. data.samples.length (${samplesLength}) != data.freeLine.data.length (${data.freeLine.data.length})`,
         );
     }
 
     if (data.minimum !== undefined && samplesLength !== data.minimum.length) {
         throw new Error(
-            `Invalid statistics minimum value data length. data.samples.length (${samplesLength}) != data.minimum.length (${data.minimum.length})`
+            `Invalid statistics minimum value data length. data.samples.length (${samplesLength}) != data.minimum.length (${data.minimum.length})`,
         );
     }
 
     if (data.maximum !== undefined && samplesLength !== data.maximum.length) {
         throw new Error(
-            `Invalid statistics maximum value data length. data.samples.length (${samplesLength}) != data.maximum.length (${data.maximum.length})`
+            `Invalid statistics maximum value data length. data.samples.length (${samplesLength}) != data.maximum.length (${data.maximum.length})`,
         );
     }
 
     if (data.lowPercentile !== undefined && samplesLength !== data.lowPercentile.data.length) {
         throw new Error(
-            `Invalid statistics low percentile value data length. data.samples.length (${samplesLength}) != data.lowPercentile.data.length (${data.lowPercentile.data.length})`
+            `Invalid statistics low percentile value data length. data.samples.length (${samplesLength}) != data.lowPercentile.data.length (${data.lowPercentile.data.length})`,
         );
     }
 
     if (data.midPercentile !== undefined && samplesLength !== data.midPercentile.data.length) {
         throw new Error(
-            `Invalid statistics middle percentile value data length. data.samples.length (${samplesLength}) != data.midPercentile.data.length (${data.midPercentile.data.length})`
+            `Invalid statistics middle percentile value data length. data.samples.length (${samplesLength}) != data.midPercentile.data.length (${data.midPercentile.data.length})`,
         );
     }
 
     if (data.highPercentile !== undefined && samplesLength !== data.highPercentile.data.length) {
         throw new Error(
-            `Invalid statistics high percentile value data length. data.samples.length (${samplesLength}) != data.highPercentile.data.length (${data.highPercentile.data.length})`
+            `Invalid statistics high percentile value data length. data.samples.length (${samplesLength}) != data.highPercentile.data.length (${data.highPercentile.data.length})`,
         );
     }
 }

@@ -1,11 +1,12 @@
 import React from "react";
 
-import { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
+import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { Button } from "@lib/components/Button";
 import { IconButton } from "@lib/components/IconButton";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { ArrowBack, ArrowForward, Delete, Save } from "@mui/icons-material";
 
 export type PolylineEditingPanelProps = {
@@ -25,7 +26,7 @@ export type PolylineEditingPanelProps = {
 export function PolylineEditingPanel(props: PolylineEditingPanelProps): React.ReactNode {
     const [pointEditingFinished, setPointEditingFinished] = React.useState<boolean>(false);
     const [polylineName, setPolylineName] = React.useState<string>(
-        props.currentlyEditedPolylineName ?? makeUniquePolylineName(props.intersectionPolylines)
+        props.currentlyEditedPolylineName ?? makeUniquePolylineName(props.intersectionPolylines),
     );
 
     function handlePolylinePointSelectionChange(values: string[]): void {
@@ -95,7 +96,7 @@ export function PolylineEditingPanel(props: PolylineEditingPanelProps): React.Re
         return (
             <>
                 <div className="flex gap-2">
-                    <div className="flex-grow flex flex-col gap-1">
+                    <div className="grow flex flex-col gap-1">
                         <Select
                             value={props.selectedPolylineIndex !== null ? [props.selectedPolylineIndex.toString()] : []}
                             options={makeSelectOptionsFromPoints(props.currentlyEditedPolyline)}
@@ -136,7 +137,7 @@ export function PolylineEditingPanel(props: PolylineEditingPanelProps): React.Re
                             </Label>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-2 rounded bg-slate-50">
+                    <div className="flex flex-col gap-2 rounded-sm bg-slate-50">
                         <IconButton
                             onClick={handleDeleteCurrentlySelectedPoint}
                             disabled={props.selectedPolylineIndex === null}
@@ -183,9 +184,9 @@ export function PolylineEditingPanel(props: PolylineEditingPanelProps): React.Re
     }
 
     return (
-        <div className="w-64 absolute left-0 top-0 z-50 bg-white rounded shadow border border-gray-300 text-sm">
+        <div className="w-64 absolute left-0 top-0 z-50 bg-white rounded-sm shadow-sm border border-gray-300 text-sm">
             <div className="bg-slate-300 p-2 font-bold">Polyline editing</div>
-            <div className="p-2 h-50">{makeContent()}</div>
+            <div className="p-2">{makeContent()}</div>
             <div className="bg-slate-100 flex items-center justify-between p-1">{makeButtons()}</div>
         </div>
     );

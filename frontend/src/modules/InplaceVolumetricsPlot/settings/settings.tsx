@@ -1,15 +1,15 @@
-import React from "react";
+import type React from "react";
 
-import { InplaceVolumetricResultName_api } from "@api";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { InplaceVolumetricResultName_api } from "@api";
+import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
+import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { IdentifierValueCriteria } from "@modules/_shared/InplaceVolumetrics/TableDefinitionsAccessor";
-import { SelectorColumn } from "@modules/_shared/InplaceVolumetrics/types";
-import { RealSelector } from "@modules/_shared/InplaceVolumetrics/types";
+import { RealSelector, type SelectorColumn } from "@modules/_shared/InplaceVolumetrics/types";
 import { createHoverTextForVolume } from "@modules/_shared/InplaceVolumetrics/volumetricStringUtils";
 import { InplaceVolumetricsFilterComponent } from "@modules/_shared/components/InplaceVolumetricsFilterComponent";
 
@@ -43,7 +43,7 @@ import {
 import { tableDefinitionsQueryAtom } from "./atoms/queryAtoms";
 import { makeColorByOptions, makeSubplotByOptions } from "./utils/plotDimensionUtils";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { PlotType, plotTypeToStringMapping } from "../typesAndEnums";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
@@ -80,7 +80,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
 
     const [selectedPlotType, setSelectedPlotType] = useAtom(userSelectedPlotTypeAtom);
     const [selectedIdentifierValueCriteria, setSelectedIdentifierValueCriteria] = useAtom(
-        selectedIdentifierValueCriteriaAtom
+        selectedIdentifierValueCriteriaAtom,
     );
 
     function handleFilterChange(newFilter: InplaceVolumetricsFilterSettings) {
@@ -91,7 +91,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
         setSelectedIdentifierValueCriteria(
             newFilter.allowIdentifierValuesIntersection
                 ? IdentifierValueCriteria.ALLOW_INTERSECTION
-                : IdentifierValueCriteria.REQUIRE_EQUALITY
+                : IdentifierValueCriteria.REQUIRE_EQUALITY,
         );
     }
 

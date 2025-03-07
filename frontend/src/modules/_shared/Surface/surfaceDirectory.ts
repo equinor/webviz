@@ -1,4 +1,5 @@
-import { SurfaceAttributeType_api, SurfaceMetaSet_api, SurfaceMeta_api, SurfaceTimeType_api } from "@api";
+import type { SurfaceAttributeType_api, SurfaceMetaSet_api, SurfaceMeta_api } from "@api";
+import { SurfaceTimeType_api } from "@api";
 
 export enum SurfaceTimeType {
     None = "None",
@@ -50,8 +51,7 @@ export class SurfaceDirectory {
 
         if (options.timeType === SurfaceTimeType.TimePoint) {
             this._isoDateOrIntervalStringArr = srcMetaSet.time_points_iso_str;
-        }
-        else if (options.timeType === SurfaceTimeType.Interval) {
+        } else if (options.timeType === SurfaceTimeType.Interval) {
             this._isoDateOrIntervalStringArr = srcMetaSet.time_intervals_iso_str;
         }
     }
@@ -73,7 +73,7 @@ export class SurfaceDirectory {
 
         const uniqueRequiredSurfaceNames = [...new Set(requireSurfaceNames)];
         const filteredSurfaceList = this._surfaceList.filter((surface) =>
-            uniqueRequiredSurfaceNames.includes(surface.name)
+            uniqueRequiredSurfaceNames.includes(surface.name),
         );
         const uniqueAttributeNames = [...new Set(filteredSurfaceList.map((surface) => surface.attribute_name))].sort();
 
@@ -90,7 +90,7 @@ export class SurfaceDirectory {
             const isAttributeInAllRequiredSurfaces = uniqueRequiredSurfaceNames.every((surfaceName) => {
                 return (
                     filteredSurfaceList.find(
-                        (surface) => surface.name === surfaceName && surface.attribute_name === attributeName
+                        (surface) => surface.name === surfaceName && surface.attribute_name === attributeName,
                     ) !== undefined
                 );
             });
@@ -131,7 +131,7 @@ export class SurfaceDirectory {
     public nameAttributePairExists(surfaceName: string | null, attributeName: string | null): boolean {
         if (!attributeName || !surfaceName) return false;
         return this._surfaceList.some(
-            (surface) => surface.name === surfaceName && surface.attribute_name === attributeName
+            (surface) => surface.name === surfaceName && surface.attribute_name === attributeName,
         );
     }
 

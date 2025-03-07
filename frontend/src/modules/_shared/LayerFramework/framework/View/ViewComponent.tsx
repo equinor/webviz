@@ -1,10 +1,11 @@
 import { SortableListGroup } from "@lib/components/SortableList";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
-import { LayersActionGroup, LayersActions } from "../../LayersActions";
+import type { LayersActionGroup } from "../../LayersActions";
+import { LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Group, Item } from "../../interfaces";
+import type { Group, Item } from "../../interfaces";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
@@ -37,7 +38,7 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
                     key="layers-actions"
                     layersActionGroups={props.actions}
                     onActionClick={handleActionClick}
-                />
+                />,
             );
         }
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
@@ -57,7 +58,7 @@ export function ViewComponent(props: ViewComponentProps): React.ReactNode {
                             backgroundColor: color ?? undefined,
                         }}
                     />
-                    <div className="flex-grow min-w-0">
+                    <div className="grow min-w-0">
                         <EditName item={props.group} />
                     </div>
                 </div>

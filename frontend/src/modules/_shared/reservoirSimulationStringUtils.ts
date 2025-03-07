@@ -1,4 +1,5 @@
-import { VectorDefinition, vectorDefinitions } from "@assets/vectorDefinitions";
+import type { VectorDefinition } from "@assets/vectorDefinitions";
+import { vectorDefinitions } from "@assets/vectorDefinitions";
 
 import { reservoirSimulationUnitTerminology } from "./reservoirSimulationUnitTerminology";
 
@@ -66,7 +67,7 @@ export function simulationVectorDescription(
     vector: string,
     vectorBasePrefix = "",
     vectorBaseSuffix = "",
-    excludeTypeDescription = false
+    excludeTypeDescription = false,
 ): string {
     const [vectorName, node] = vector.includes(":") ? vector.split(":", 2) : [vector, null];
     const vectorDefinition = simulationVectorDefinition(vectorName);

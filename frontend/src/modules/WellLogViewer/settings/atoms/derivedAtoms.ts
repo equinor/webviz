@@ -1,5 +1,6 @@
-import { WellLogCurveTypeEnum_api, WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
-import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
+import { WellLogCurveTypeEnum_api } from "@api";
+import type { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
 
 import { atom } from "jotai";

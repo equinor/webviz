@@ -8,7 +8,7 @@ import _ from "lodash";
 import { Suggestions } from "./private-components/suggestions";
 import { Tag } from "./private-components/tag";
 import { TreeData } from "./private-utils/treeData";
-import { TreeDataNode } from "./private-utils/treeDataNodeTypes";
+import type { TreeDataNode } from "./private-utils/treeDataNodeTypes";
 import { TreeNodeSelection } from "./private-utils/treeNodeSelection";
 
 export enum Direction {
@@ -271,11 +271,11 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     hasError: error !== undefined,
                     error: error || "",
                 },
-                () => this.updateSelectedTagsAndNodes()
+                () => this.updateSelectedTagsAndNodes(),
             );
         }
         const selectedTags = this.state.nodeSelections.map((nodeSelection) =>
-            nodeSelection.getCompleteNodePathAsString()
+            nodeSelection.getCompleteNodePathAsString(),
         );
         if (
             this.props.selectedTags &&
@@ -339,7 +339,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                     if (setSelection !== undefined) {
                         inputField.setSelectionRange(
                             setSelection === Direction.Left ? 0 : inputField.value.length,
-                            setSelection === Direction.Left ? 0 : inputField.value.length
+                            setSelection === Direction.Left ? 0 : inputField.value.length,
                         );
                     }
                 }
@@ -360,7 +360,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     protected incrementCurrentTagIndex(
         callback: () => void = () => {
             return undefined;
-        }
+        },
     ): boolean {
         if (this.currentTagIndex() < this.countTags() - 1) {
             this.updateState({
@@ -375,7 +375,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     protected decrementCurrentTagIndex(
         callback: () => void = () => {
             return undefined;
-        }
+        },
     ): boolean {
         if (this.currentTagIndex() > 0) {
             this.updateState({
@@ -449,7 +449,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
             currentTagIndex !== this.currentTagIndex()
         ) {
             this.nodeSelection(this.currentTagIndex()).setFocussedLevel(
-                this.nodeSelection(this.currentTagIndex()).countLevel() - 1
+                this.nodeSelection(this.currentTagIndex()).countLevel() - 1,
             );
         }
         const newNodeSelections = nodeSelections === undefined ? this.state.nodeSelections : nodeSelections;
@@ -488,7 +488,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                 () => {
                     callback();
                     this.updateSelectedTagsAndNodes();
-                }
+                },
             );
         } else {
             callback();
@@ -502,7 +502,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
         if ((this.currentNodeSelection() !== undefined && !this.currentNodeSelection().isValid()) || showAll) {
             this.suggestionTimer = setTimeout(
                 () => this.showSuggestions(showAll),
-                numSecondsUntilSuggestionsAreShown * 1000
+                numSecondsUntilSuggestionsAreShown * 1000,
             );
         }
     }
@@ -578,9 +578,9 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
             const blinkTimer = setInterval(() => {
                 numBlinks++;
                 if (numBlinks % 2 === 0) {
-                    numberOfTagsDiv.classList.add("!text-orange-500");
+                    numberOfTagsDiv.classList.add("text-orange-500!");
                 } else {
-                    numberOfTagsDiv.classList.remove("!text-orange-500");
+                    numberOfTagsDiv.classList.remove("text-orange-500!");
                 }
                 if (numBlinks === 7) {
                     clearInterval(blinkTimer);
@@ -598,7 +598,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
 
     protected checkIfSelectionIsDuplicate(nodeSelection: TreeNodeSelection, index: number): boolean {
         const duplicateSelections = this.state.nodeSelections.filter(
-            (entry, i) => i < index && entry.containsOrIsContainedBy(nodeSelection)
+            (entry, i) => i < index && entry.containsOrIsContainedBy(nodeSelection),
         );
         return duplicateSelections.length > 0;
     }
@@ -822,7 +822,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
     protected removeTag(
         index: number,
         setNewFocus: boolean,
-        e?: React.MouseEvent<HTMLButtonElement, globalThis.MouseEvent>
+        e?: React.MouseEvent<HTMLButtonElement, globalThis.MouseEvent>,
     ): void {
         let newSelections = [...this.state.nodeSelections];
         let newTagIndex =
@@ -896,7 +896,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
             if (e.key === "ArrowRight") {
                 const firstNotSelectedTagIndex = Math.min(
                     this.lastSelectedTagIndex + 1,
-                    this.props.maxNumSelectedNodes - 1
+                    this.props.maxNumSelectedNodes - 1,
                 );
                 if (firstNotSelectedTagIndex > this.countTags() - 1 && this.canAddSelection()) {
                     this.updateState({
@@ -1039,7 +1039,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
             if (!tag.isFocusOnMetaData()) {
                 tag.setFocussedLevel(
                     val.slice(0, eventTarget.selectionStart).split(this.props.delimiter).length - 1,
-                    false
+                    false,
                 );
             }
             const selection = eventTarget.value.substring(eventTarget.selectionStart, eventTarget.selectionEnd);
@@ -1047,12 +1047,12 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                 if (eventTarget.selectionDirection === "backward") {
                     eventTarget.setSelectionRange(
                         eventTarget.selectionStart + selection.indexOf(this.props.delimiter) + 1,
-                        eventTarget.selectionEnd
+                        eventTarget.selectionEnd,
                     );
                 } else {
                     eventTarget.setSelectionRange(
                         eventTarget.selectionStart,
-                        eventTarget.selectionStart + selection.indexOf(this.props.delimiter)
+                        eventTarget.selectionStart + selection.indexOf(this.props.delimiter),
                     );
                 }
             }
@@ -1283,7 +1283,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                         this.updateState({
                             currentTagShaking: false,
                         }),
-                    300
+                    300,
                 );
             },
         });
@@ -1313,7 +1313,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                         modifiedVal.split(this.props.delimiter)[
                             this.currentNodeSelection().getFocussedLevel() -
                                 this.currentNodeSelection().getNumMetaNodes()
-                        ]
+                        ],
                     );
                     if (this.currentNodeSelection().incrementFocussedLevel()) {
                         this.updateState({ forceUpdate: true });
@@ -1638,13 +1638,13 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                 {label && <label>{label}</label>}
                 <div
                     className={resolveClassNames(
-                        "border rounded p-2 pl-4 pr-12 flex flex-wrap cursor-text relative my-2 min-h-12 min-w-48",
+                        "border rounded-sm p-2 pl-4 pr-12 flex flex-wrap cursor-text relative my-2 min-h-12 min-w-48",
                         {
                             "border-0 p-0 pr-10": frameless,
-                            "!rounded-b-none": suggestionsVisible,
+                            "rounded-b-none!": suggestionsVisible,
                             "border-red-600":
                                 maxNumSelectedNodes > 0 && this.countValidSelections() > maxNumSelectedNodes,
-                        }
+                        },
                     )}
                     onClick={this.selectLastInput}
                     onMouseDown={this.handleMouseDown}
@@ -1715,7 +1715,7 @@ export class SmartNodeSelectorComponent extends React.Component<SmartNodeSelecto
                 {maxNumSelectedNodes > 1 && (
                     <div
                         className={resolveClassNames("text-right relative w-full mt-2 text-slate-600 text-sm", {
-                            "!text-red-600": this.countValidSelections() > maxNumSelectedNodes,
+                            "text-red-600!": this.countValidSelections() > maxNumSelectedNodes,
                         })}
                         ref={this.refNumberOfTags}
                     >

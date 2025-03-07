@@ -1,8 +1,7 @@
-import React from "react";
-
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
-import { OptionalValues, withDefaults } from "../_component-utils/components";
+import type { OptionalValues } from "../_component-utils/components";
+import { withDefaults } from "../_component-utils/components";
 
 export type CircularProgressProps = {
     size?: "extra-small" | "small" | "medium-small" | "medium" | "large";
@@ -33,7 +32,7 @@ export const CircularProgress = withDefaults<CircularProgressProps>()(defaultPro
                     "h-12": props.size === "large",
                 },
                 "relative",
-                props.className ?? ""
+                props.className ?? "",
             )}
         >
             <svg

@@ -35,11 +35,11 @@ export class PublishSubscribeDelegate<TTopicPayloads extends TopicPayloads> {
 
 export function usePublishSubscribeTopicValue<
     TTopicPayloads extends TopicPayloads,
-    TTopic extends keyof TTopicPayloads
+    TTopic extends keyof TTopicPayloads,
 >(publishSubscribe: PublishSubscribe<TTopicPayloads>, topic: TTopic): TTopicPayloads[TTopic] {
     const value = React.useSyncExternalStore<TTopicPayloads[TTopic]>(
         publishSubscribe.getPublishSubscribeDelegate().makeSubscriberFunction(topic),
-        publishSubscribe.makeSnapshotGetter(topic)
+        publishSubscribe.makeSnapshotGetter(topic),
     );
 
     return value;

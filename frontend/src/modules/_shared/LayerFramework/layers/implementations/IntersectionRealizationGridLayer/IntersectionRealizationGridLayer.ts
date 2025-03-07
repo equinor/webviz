@@ -2,21 +2,21 @@ import { getWellTrajectoriesOptions, postGetPolylineIntersectionOptions } from "
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import type { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import type { PolylineIntersection_trans } from "@modules/_shared/utils/wellbore";
 import {
-    PolylineIntersection_trans,
     calcExtendedSimplifiedWellboreTrajectoryInXYPlane,
     transformPolylineIntersection,
 } from "@modules/_shared/utils/wellbore";
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
 import { IntersectionRealizationGridSettingsContext } from "./IntersectionRealizationGridSettingsContext";
-import { IntersectionRealizationGridSettings } from "./types";
+import type { IntersectionRealizationGridSettings } from "./types";
 
 export class IntersectionRealizationGridLayer
     implements Layer<IntersectionRealizationGridSettings, PolylineIntersection_trans>
@@ -30,7 +30,7 @@ export class IntersectionRealizationGridLayer
             this,
             layerManager,
             new IntersectionRealizationGridSettingsContext(layerManager),
-            LayerColoringType.COLORSCALE
+            LayerColoringType.COLORSCALE,
         );
     }
 
@@ -48,7 +48,7 @@ export class IntersectionRealizationGridLayer
 
     doSettingsChangesRequireDataRefetch(
         prevSettings: IntersectionRealizationGridSettings,
-        newSettings: IntersectionRealizationGridSettings
+        newSettings: IntersectionRealizationGridSettings,
     ): boolean {
         return !isEqual(prevSettings, newSettings);
     }
@@ -139,8 +139,8 @@ export class IntersectionRealizationGridLayer
                                 ...calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
                                     path,
                                     0,
-                                    5
-                                ).simplifiedWellboreTrajectoryXy.flat()
+                                    5,
+                                ).simplifiedWellboreTrajectoryXy.flat(),
                             );
 
                             resolve(polylineUtmXy);
@@ -181,7 +181,7 @@ export class IntersectionRealizationGridLayer
                         },
                         body: { polyline_utm_xy },
                     }),
-                })
+                }),
             )
             .then(transformPolylineIntersection);
 

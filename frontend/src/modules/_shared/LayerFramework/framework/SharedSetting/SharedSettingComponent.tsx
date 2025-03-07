@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
@@ -6,7 +6,7 @@ import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Delete, ExpandLess, ExpandMore, Link } from "@mui/icons-material";
 
-import { SharedSetting } from "./SharedSetting";
+import type { SharedSetting } from "./SharedSetting";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
@@ -49,7 +49,7 @@ export function SharedSettingComponent(props: SharedSettingComponentProps): Reac
                 </div>
             }
             endAdornment={<Actions sharedSetting={props.sharedSetting} />}
-            headerClassNames="!bg-teal-200"
+            headerClassNames="bg-teal-200!"
         >
             <div
                 className={resolveClassNames("grid grid-cols-[auto_1fr] items-center text-xs border", {

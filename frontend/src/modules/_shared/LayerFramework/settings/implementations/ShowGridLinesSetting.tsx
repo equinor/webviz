@@ -1,9 +1,10 @@
-import React, { ChangeEvent } from "react";
+import type { ChangeEvent } from "react";
+import type React from "react";
 
 import { Switch } from "@lib/components/Switch";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps } from "../../interfaces";
+import type { Setting, SettingComponentProps } from "../../interfaces";
 import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 

@@ -1,23 +1,23 @@
 import React from "react";
 
-import { WellboreHeader_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
-import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { ModuleViewProps } from "@framework/Module";
+import type { WellboreHeader_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
-import { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
+import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
 import { createContinuousColorScaleForMap } from "@modules/3DViewer/view/utils/colorTables";
-import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { WellLogViewer } from "@webviz/well-log-viewer";
-import { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
-import { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
+import type { Info } from "@webviz/well-log-viewer/dist/components/InfoTypes";
+import type { WellLogController } from "@webviz/well-log-viewer/dist/components/WellLogView";
 
 import { useAtomValue } from "jotai";
 import { isEqual } from "lodash";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
-import { InterfaceTypes } from "../../interfaces";
+import type { InterfaceTypes } from "../../interfaces";
 import { createLogTemplate } from "../../utils/logViewerTemplate";
 import { createLogViewerWellPicks, createWellLogSets } from "../../utils/queryDataTransform";
 import { nonUniqueCurveNamesAtom } from "../atoms/derivedAtoms";
@@ -57,7 +57,7 @@ function useSubscribeToGlobalHoverMdChange(
     workbenchServices: WorkbenchServices,
     wellLogController: WellLogController | null,
     instanceId: string,
-    wellboreUuid: string
+    wellboreUuid: string,
 ) {
     const lastReceivedChange = React.useRef<GlobalHoverMd>(null);
 
@@ -75,14 +75,14 @@ function useSubscribeToGlobalHoverMdChange(
 
             return workbenchServices.subscribe("global.hoverMd", handleGlobalValueChange, instanceId);
         },
-        [instanceId, wellboreUuid, workbenchServices, wellLogController]
+        [instanceId, wellboreUuid, workbenchServices, wellLogController],
     );
 }
 
 function useCreateGlobalHoverMdBroadcastFunc(
     workbenchServices: WorkbenchServices,
     instanceId: string,
-    wellboreUuid: string
+    wellboreUuid: string,
 ) {
     const broadcastGlobalMdChange = React.useCallback(
         (newMd: number | null) => {
@@ -90,7 +90,7 @@ function useCreateGlobalHoverMdBroadcastFunc(
 
             workbenchServices.publishGlobalData("global.hoverMd", payload, instanceId);
         },
-        [instanceId, wellboreUuid, workbenchServices]
+        [instanceId, wellboreUuid, workbenchServices],
     );
 
     return broadcastGlobalMdChange;
@@ -100,7 +100,7 @@ function useSubscribeToGlobalVerticalScaleChange(
     workbenchServices: WorkbenchServices,
     wellLogController: WellLogController | null,
     syncableSettingKeys: SyncSettingKey[],
-    instanceId: string
+    instanceId: string,
 ) {
     const verticalSyncActive = syncableSettingKeys.includes(SyncSettingKey.VERTICAL_SCALE);
 
@@ -117,7 +117,7 @@ function useSubscribeToGlobalVerticalScaleChange(
             const unsubscribe = workbenchServices.subscribe(
                 "global.syncValue.verticalScale",
                 handleGlobalVertScaleChange,
-                instanceId
+                instanceId,
             );
 
             return unsubscribe;
@@ -128,7 +128,7 @@ function useSubscribeToGlobalVerticalScaleChange(
 function useCreateGlobalVerticalScaleBroadcastFunc(
     workbenchServices: WorkbenchServices,
     syncableSettingKeys: SyncSettingKey[],
-    instanceId: string
+    instanceId: string,
 ) {
     // TODO: This value DOES NOT update properly when you ENABLE the setting. So something else needs to trigger a re-render
     const verticalSyncActive = syncableSettingKeys.includes(SyncSettingKey.VERTICAL_SCALE);
@@ -139,7 +139,7 @@ function useCreateGlobalVerticalScaleBroadcastFunc(
 
             workbenchServices.publishGlobalData("global.syncValue.verticalScale", newScale, instanceId);
         },
-        [workbenchServices, instanceId, verticalSyncActive]
+        [workbenchServices, instanceId, verticalSyncActive],
     );
 
     return broadcastVerticalScaleChange;
@@ -159,7 +159,7 @@ export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
     // Curve data transform is a bit heavy, so we use Memo-hooks to reduce re-render overhead
     const template = React.useMemo(
         () => createLogTemplate(trackConfigs, nonUniqueCurveNames),
-        [trackConfigs, nonUniqueCurveNames]
+        [trackConfigs, nonUniqueCurveNames],
     );
 
     const welllog = React.useMemo(() => {
@@ -168,7 +168,7 @@ export function useViewerDataTransform(props: SubsurfaceLogViewerWrapperProps) {
             trajectoryData,
             intersectionReferenceSystem,
             nonUniqueCurveNames,
-            padDataWithEmptyRows
+            padDataWithEmptyRows,
         );
     }, [curveData, trajectoryData, intersectionReferenceSystem, padDataWithEmptyRows, nonUniqueCurveNames]);
 
@@ -197,7 +197,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const broadcastGlobalMdChange = useCreateGlobalHoverMdBroadcastFunc(
         props.moduleProps.workbenchServices,
         instanceId,
-        wellboreUuid
+        wellboreUuid,
     );
 
     // Set up global vertical scale synchronization
@@ -205,12 +205,12 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         props.moduleProps.workbenchServices,
         wellLogController,
         syncableSettingKeys,
-        instanceId
+        instanceId,
     );
     const broadcastVerticalScaleChange = useCreateGlobalVerticalScaleBroadcastFunc(
         props.moduleProps.workbenchServices,
         syncableSettingKeys,
-        instanceId
+        instanceId,
     );
 
     const handleMouseOut = React.useCallback(
@@ -218,7 +218,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
             broadcastGlobalMdChange(null);
             setShowReadoutBox(false);
         },
-        [broadcastGlobalMdChange]
+        [broadcastGlobalMdChange],
     );
 
     const handleMouseIn = React.useCallback(function handleMouseIn() {
@@ -238,7 +238,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
 
             if (currentScale) broadcastVerticalScaleChange(currentScale);
         },
-        [broadcastVerticalScaleChange, wellLogController]
+        [broadcastVerticalScaleChange, wellLogController],
     );
 
     const handleSelection = React.useCallback(
@@ -249,7 +249,7 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
 
             // TODO: It's possible to pin and select a range, should we have that color a section of other synced intersections?
         },
-        [broadcastGlobalMdChange, wellLogController]
+        [broadcastGlobalMdChange, wellLogController],
     );
 
     const handleInfoFilled = React.useCallback(function handleInfoFilled(infos: Info[]) {
@@ -260,13 +260,13 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
         (/* welllogView: WellLogView, e: TrackMouseEvent */) => {
             // ! No-op method. Passed to the viewer to make it not show the context menu for tracks
         },
-        []
+        [],
     );
 
     return (
         // The weird tailwind-class hides the built-in hover tooltip
         <div
-            className="h-full [&_.welllogview_.overlay_.depth]:!invisible"
+            className="h-full [&_.welllogview_.overlay_.depth]:invisible!"
             onMouseEnter={handleMouseIn}
             onMouseLeave={handleMouseOut}
         >

@@ -1,4 +1,4 @@
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export class ColorSet {
     private _colorPalette: ColorPalette;

@@ -1,4 +1,4 @@
-import { TreeDataNode } from "@lib/components/SmartNodeSelector";
+import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 import {
     addVectorToVectorSelectorData,
     createVectorSelectorDataFromVectors,

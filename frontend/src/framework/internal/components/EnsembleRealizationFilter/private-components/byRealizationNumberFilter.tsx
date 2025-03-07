@@ -1,7 +1,9 @@
 import React from "react";
 
-import { RealizationPicker, RealizationPickerSelection } from "@framework/components/RealizationPicker";
-import { IncludeExcludeFilter, RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
+import type { RealizationPickerSelection } from "@framework/components/RealizationPicker";
+import { RealizationPicker } from "@framework/components/RealizationPicker";
+import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
+import { IncludeExcludeFilter } from "@framework/types/realizationFilterTypes";
 import { Label } from "@lib/components/Label";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
@@ -39,12 +41,12 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
     const [initialRangeTags, setInitialRangeTags] = React.useState<string[]>(
         props.initialRealizationNumberSelections
             ? makeRealizationPickerTagsFromRealizationNumberSelections(props.initialRealizationNumberSelections)
-            : []
+            : [],
     );
     const [selectedRangeTags, setSelectedRangeTags] = React.useState<string[]>(
         props.realizationNumberSelections
             ? makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
-            : []
+            : [],
     );
 
     if (!isEqual(props.initialRealizationNumberSelections, prevInitialRealizationNumberSelections)) {
@@ -53,7 +55,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
             setPrevInitialRealizationNumberSelections(null);
         } else {
             setInitialRangeTags(
-                makeRealizationPickerTagsFromRealizationNumberSelections(props.initialRealizationNumberSelections)
+                makeRealizationPickerTagsFromRealizationNumberSelections(props.initialRealizationNumberSelections),
             );
             setPrevInitialRealizationNumberSelections(props.initialRealizationNumberSelections);
         }
@@ -64,7 +66,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
             setSelectedRangeTags([]);
         } else {
             setSelectedRangeTags(
-                makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections)
+                makeRealizationPickerTagsFromRealizationNumberSelections(props.realizationNumberSelections),
             );
         }
         setPrevRealizationNumberSelections(props.realizationNumberSelections);
@@ -83,7 +85,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
                 includeOrExcludeFilter: newFilter,
             });
         },
-        [onFilterChange, selectedRangeTags]
+        [onFilterChange, selectedRangeTags],
     );
 
     const handleRealizationPickChange = React.useCallback(
@@ -98,7 +100,7 @@ export const ByRealizationNumberFilter: React.FC<ByRealizationNumberFilterProps>
                 includeOrExcludeFilter: props.selectedIncludeOrExcludeFilter,
             });
         },
-        [onFilterChange, props.selectedIncludeOrExcludeFilter]
+        [onFilterChange, props.selectedIncludeOrExcludeFilter],
     );
 
     return (

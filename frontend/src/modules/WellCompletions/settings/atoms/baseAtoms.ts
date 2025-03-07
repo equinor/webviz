@@ -1,5 +1,5 @@
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import { RealizationSelection, TimeAggregationSelection } from "@modules/WellCompletions/typesAndEnums";
 import { SortDirection, SortWellsBy } from "@webviz/well-completions-plot";
 

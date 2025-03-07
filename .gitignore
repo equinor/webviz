@@ -115,8 +115,8 @@ dist
 
 # playwright results
 playwright-report/
-/test-results/
-/playwright/.cache/
+test-results/
+playwright/.cache/
 
 # Ignore Jupyter Notebook files
 *.ipynb

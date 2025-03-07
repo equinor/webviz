@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { Warning } from "@mui/icons-material";
 
@@ -18,7 +18,7 @@ export const DisclaimerWrapper: React.FC<DisclaimerWrapperProps> = (props) => {
                 <Warning />
                 <p className="overflow-hidden text-ellipsis whitespace-nowrap">{props.disclaimerText}</p>
             </div>
-            <div className="flex-grow">{props.children ?? null}</div>
+            <div className="grow">{props.children ?? null}</div>
         </div>
     );
 };

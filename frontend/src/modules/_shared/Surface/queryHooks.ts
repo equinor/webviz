@@ -1,21 +1,16 @@
-import {
-    SurfaceDef_api,
-    SurfaceMetaSet_api,
-    getObservedSurfacesMetadataOptions,
-    getRealizationSurfacesMetadataOptions,
-    getSurfaceDataOptions,
-} from "@api";
-import { SurfaceDataPng_api } from "@api";
+import type { SurfaceDataPng_api, SurfaceDef_api, SurfaceMetaSet_api } from "@api";
+import { getObservedSurfacesMetadataOptions, getRealizationSurfacesMetadataOptions, getSurfaceDataOptions } from "@api";
 import { encodePropertiesAsKeyValStr } from "@lib/utils/queryStringUtils";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-import { SurfaceDataFloat_trans, transformSurfaceData } from "./queryDataTransforms";
-import { FullSurfaceAddress } from "./surfaceAddress";
-import { encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
+import type { SurfaceDataFloat_trans } from "./queryDataTransforms";
+import { transformSurfaceData } from "./queryDataTransforms";
+import { type FullSurfaceAddress, encodeSurfAddrStr, peekSurfaceAddressType } from "./surfaceAddress";
 
 export function useRealizationSurfacesMetadataQuery(
     caseUuid: string | undefined,
-    ensembleName: string | undefined
+    ensembleName: string | undefined,
 ): UseQueryResult<SurfaceMetaSet_api> {
     return useQuery({
         ...getRealizationSurfacesMetadataOptions({
@@ -46,7 +41,7 @@ export function useSurfaceDataQuery(
     surfAddrStr: string | null,
     format: "float" | "png",
     resampleTo: SurfaceDef_api | null,
-    allowEnable: boolean
+    allowEnable: boolean,
 ): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api> {
     if (surfAddrStr) {
         const surfAddrType = peekSurfaceAddressType(surfAddrStr);
@@ -79,7 +74,7 @@ export function useSurfaceDataQueryByAddress(
     surfAddr: FullSurfaceAddress | null,
     format: "float" | "png",
     resampleTo: SurfaceDef_api | null,
-    allowEnable: boolean
+    allowEnable: boolean,
 ): UseQueryResult<SurfaceDataFloat_trans | SurfaceDataPng_api> {
     const surfAddrStr = surfAddr ? encodeSurfAddrStr(surfAddr) : null;
     return useSurfaceDataQuery(surfAddrStr, format, resampleTo, allowEnable);

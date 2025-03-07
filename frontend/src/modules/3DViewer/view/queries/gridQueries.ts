@@ -1,12 +1,9 @@
 import { getGridParameterOptions, getGridSurfaceOptions } from "@api";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-import {
-    GridMappedProperty_trans,
-    GridSurface_trans,
-    transformGridMappedProperty,
-    transformGridSurface,
-} from "./queryDataTransforms";
+import type { GridMappedProperty_trans, GridSurface_trans } from "./queryDataTransforms";
+import { transformGridMappedProperty, transformGridSurface } from "./queryDataTransforms";
 
 export function useGridSurfaceQuery(options: {
     caseUuid: string | null;
@@ -37,7 +34,7 @@ export function useGridSurfaceQuery(options: {
         }),
         select: transformGridSurface,
         enabled: Boolean(
-            options.caseUuid && options.ensembleName && options.gridName && options.realizationNum !== null
+            options.caseUuid && options.ensembleName && options.gridName && options.realizationNum !== null,
         ),
     });
 }
@@ -79,7 +76,7 @@ export function useGridParameterQuery(options: {
                 options.ensembleName &&
                 options.gridName &&
                 options.parameterName &&
-                options.realizationNum !== null
+                options.realizationNum !== null,
         ),
     });
 }

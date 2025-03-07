@@ -1,5 +1,5 @@
-import { InterfaceEffects } from "@framework/Module";
-import { ViewToSettingsInterface } from "@modules/TornadoChart/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { ViewToSettingsInterface } from "@modules/TornadoChart/interfaces";
 
 import { selectedSensitivityAtom } from "./baseAtoms";
 

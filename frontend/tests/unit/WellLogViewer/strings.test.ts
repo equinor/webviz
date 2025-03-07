@@ -1,5 +1,5 @@
 import { WellLogCurveSourceEnum_api } from "@api";
-import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
+import type { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import {
     curveSourceToText,
     getUniqueCurveNameForPlotConfig,

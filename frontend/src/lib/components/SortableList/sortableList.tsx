@@ -3,12 +3,13 @@ import React from "react";
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2, point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
+import { point2Distance, vec2FromPointerEvent } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
 
-import { SortableListGroupProps } from "./sortableListGroup";
-import { SortableListItemProps } from "./sortableListItem";
+import type { SortableListGroupProps } from "./sortableListGroup";
+import type { SortableListItemProps } from "./sortableListItem";
 
 export enum ItemType {
     ITEM = "item",
@@ -47,7 +48,7 @@ export type SortableListProps = {
         movedItemId: string,
         originId: string | null,
         destinationId: string | null,
-        position: number
+        position: number,
     ) => void;
 };
 
@@ -196,7 +197,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 if (scrollDivRef.current) {
                     scrollDivRef.current.scrollTop = Math.min(
                         scrollDivRef.current.scrollHeight,
-                        scrollDivRef.current.scrollTop + 10
+                        scrollDivRef.current.scrollTop + 10,
                     );
                 }
                 if (doScroll) {
@@ -483,19 +484,19 @@ export function SortableList(props: SortableListProps): React.ReactNode {
 
             currentListDivRef.addEventListener("pointerdown", handlePointerDown);
             document.addEventListener("keydown", handleKeyDown);
-            window.addEventListener("blur", handleWindowBlur);
+            window.addEventListener("blur-sm", handleWindowBlur);
 
             return function removeEventListeners() {
                 currentListDivRef.removeEventListener("pointerdown", handlePointerDown);
                 document.removeEventListener("pointermove", handlePointerMove);
                 document.removeEventListener("pointerup", handlePointerUp);
                 document.removeEventListener("keydown", handleKeyDown);
-                window.removeEventListener("blur", handleWindowBlur);
+                window.removeEventListener("blur-sm", handleWindowBlur);
                 setIsDragging(false);
                 setDraggedItemId(null);
             };
         },
-        [onItemMoved, isMoveAllowed, props.children]
+        [onItemMoved, isMoveAllowed, props.children],
     );
 
     function handleScroll(e: React.UIEvent<HTMLDivElement>) {
@@ -511,7 +512,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 children.push(
                     React.cloneElement(props.contentWhenEmpty, {
                         key: "contentWhenEmpty",
-                    })
+                    }),
                 );
             }
             return children;
@@ -525,13 +526,13 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 children.push(
                     React.cloneElement(child, {
                         key: child.props.id,
-                    })
+                    }),
                 );
             } else {
                 children.push(
                     React.cloneElement(child, {
                         key: child.props.id,
-                    })
+                    }),
                 );
             }
         }
@@ -557,7 +558,7 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                     ref={lowerScrollDivRef}
                 ></div>
                 <div
-                    className="flex-grow overflow-auto min-h-0 bg-slate-200 relative"
+                    className="grow overflow-auto min-h-0 bg-slate-200 relative"
                     ref={scrollDivRef}
                     onScroll={handleScroll}
                 >
@@ -571,11 +572,11 @@ export function SortableList(props: SortableListProps): React.ReactNode {
                 {isDragging &&
                     createPortal(
                         <div
-                            className={resolveClassNames("absolute z-[100] inset-0", {
+                            className={resolveClassNames("absolute z-100 inset-0", {
                                 "cursor-not-allowed": !hoveredItemIdAndArea,
                                 "cursor-grabbing": hoveredItemIdAndArea !== null,
                             })}
-                        ></div>
+                        ></div>,
                     )}
             </SortableListContext.Provider>
         </div>
@@ -606,7 +607,7 @@ type HoveredItemIdAndArea = {
 };
 
 function assertTargetIsSortableListItemAndExtractProps(
-    target: EventTarget | null
+    target: EventTarget | null,
 ): { element: HTMLElement; id: string; parentElement: HTMLElement | null; parentId: string | null } | null {
     if (!target) {
         return null;

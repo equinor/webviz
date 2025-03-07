@@ -1,4 +1,5 @@
-import { Atom, Getter, atom, useAtomValue } from "jotai";
+import type { Atom, Getter } from "jotai";
+import { atom, useAtomValue } from "jotai";
 
 export type InterfaceBaseType = Record<string, unknown>;
 export type InterfaceInitialization<T extends InterfaceBaseType> = {
@@ -13,7 +14,7 @@ export class UniDirectionalModuleComponentsInterface<TInterfaceType extends Inte
             const value = initialization[key];
             this._atoms.set(
                 key,
-                atom((get) => value(get))
+                atom((get) => value(get)),
             );
         }
     }
@@ -30,7 +31,7 @@ export class UniDirectionalModuleComponentsInterface<TInterfaceType extends Inte
 
 export function useInterfaceValue<InterfaceType extends InterfaceBaseType, K extends keyof InterfaceType>(
     interfaceInstance: UniDirectionalModuleComponentsInterface<InterfaceType>,
-    key: K
+    key: K,
 ): InterfaceType[K] {
     return useAtomValue(interfaceInstance.getAtom(key));
 }

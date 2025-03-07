@@ -1,4 +1,4 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { textAtom } from "./atoms";
 

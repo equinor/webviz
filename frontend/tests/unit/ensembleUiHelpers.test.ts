@@ -45,7 +45,7 @@ describe("fixupEnsembleIdent", () => {
     test("should return first regular ensemble ident if currIdent is invalid regular ensemble ident", () => {
         const nonExistingRegularEnsembleIdent = new RegularEnsembleIdent(
             "55555555-aaaa-4444-aaaa-aaaaaaaaaaaa",
-            "ens4"
+            "ens4",
         );
         // Fixup non-existing regular ensemble ident
         expect(fixupEnsembleIdent(nonExistingRegularEnsembleIdent, ENSEMBLE_SET)).toBe(ensembleArray[0].getIdent());
@@ -54,7 +54,7 @@ describe("fixupEnsembleIdent", () => {
     test("should return first regular ensemble ident if currIdent is invalid delta ensemble ident", () => {
         const nonExistingDeltaEnsembleIdent = new DeltaEnsembleIdent(
             ensembleArray[2].getIdent(),
-            ensembleArray[1].getIdent()
+            ensembleArray[1].getIdent(),
         );
 
         // Fixup non-existing delta ensemble ident
@@ -72,22 +72,22 @@ describe("fixupEnsembleIdent", () => {
 
         const nonExistingDeltaEnsembleIdent = new DeltaEnsembleIdent(
             ensembleArray[2].getIdent(),
-            ensembleArray[1].getIdent()
+            ensembleArray[1].getIdent(),
         );
 
         // Fetch existing delta ensemble ident
         expect(fixupEnsembleIdent(deltaEnsembleArray[1].getIdent(), ensembleSetWithoutRegularEnsembles)).toBe(
-            deltaEnsembleArray[1].getIdent()
+            deltaEnsembleArray[1].getIdent(),
         );
 
         // Fixup non-existing delta ensemble ident (pick first delta ensemble)
         expect(fixupEnsembleIdent(nonExistingDeltaEnsembleIdent, ensembleSetWithoutRegularEnsembles)).toBe(
-            deltaEnsembleArray[0].getIdent()
+            deltaEnsembleArray[0].getIdent(),
         );
 
         // Fixup regular ensemble ident (pick first delta ensemble)
         expect(fixupEnsembleIdent(ensembleArray[0].getIdent(), ensembleSetWithoutRegularEnsembles)).toBe(
-            deltaEnsembleArray[0].getIdent()
+            deltaEnsembleArray[0].getIdent(),
         );
     });
 
@@ -96,7 +96,7 @@ describe("fixupEnsembleIdent", () => {
 
         // Fetch existing regular ensemble ident
         expect(fixupEnsembleIdent(ensembleArray[1].getIdent(), ensembleSetWithoutDeltaEnsembles)).toBe(
-            ensembleArray[1].getIdent()
+            ensembleArray[1].getIdent(),
         );
 
         // Fixup null
@@ -104,7 +104,7 @@ describe("fixupEnsembleIdent", () => {
 
         // Fixup DeltaEnsembleIdent
         expect(fixupEnsembleIdent(deltaEnsembleArray[0].getIdent(), ensembleSetWithoutDeltaEnsembles)).toBe(
-            ensembleArray[0].getIdent()
+            ensembleArray[0].getIdent(),
         );
     });
 });
@@ -182,15 +182,15 @@ describe("fixupEnsembleIdents", () => {
 
         const nonExistingRegularEnsembleIdent = new RegularEnsembleIdent(
             "55555555-aaaa-4444-aaaa-aaaaaaaaaaaa",
-            "ens4"
+            "ens4",
         );
         const nonExistingDeltaEnsembleIdent = new DeltaEnsembleIdent(
             ensembleArray[2].getIdent(),
-            ensembleArray[1].getIdent()
+            ensembleArray[1].getIdent(),
         );
 
         expect(fixupEnsembleIdents([validRegularEnsembleIdent, nonExistingRegularEnsembleIdent], ENSEMBLE_SET)).toEqual(
-            [validRegularEnsembleIdent]
+            [validRegularEnsembleIdent],
         );
 
         expect(fixupEnsembleIdents([validDeltaEnsembleIdent, nonExistingDeltaEnsembleIdent], ENSEMBLE_SET)).toEqual([
@@ -200,8 +200,8 @@ describe("fixupEnsembleIdents", () => {
         expect(
             fixupEnsembleIdents(
                 [validDeltaEnsembleIdent, nonExistingDeltaEnsembleIdent, validRegularEnsembleIdent],
-                ENSEMBLE_SET
-            )
+                ENSEMBLE_SET,
+            ),
         ).toEqual([validDeltaEnsembleIdent, validRegularEnsembleIdent]);
     });
 });
@@ -241,12 +241,12 @@ describe("fixupRegularEnsembleIdents", () => {
         const validRegularEnsembleIdent = ensembleArray[0].getIdent();
         const nonExistingRegularEnsembleIdent = new RegularEnsembleIdent(
             "55555555-aaaa-4444-aaaa-aaaaaaaaaaaa",
-            "ens4"
+            "ens4",
         );
 
         expect(fixupRegularEnsembleIdents([nonExistingRegularEnsembleIdent], ENSEMBLE_SET)).toEqual([]);
         expect(
-            fixupRegularEnsembleIdents([validRegularEnsembleIdent, nonExistingRegularEnsembleIdent], ENSEMBLE_SET)
+            fixupRegularEnsembleIdents([validRegularEnsembleIdent, nonExistingRegularEnsembleIdent], ENSEMBLE_SET),
         ).toEqual([validRegularEnsembleIdent]);
     });
 });

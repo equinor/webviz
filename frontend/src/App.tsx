@@ -2,7 +2,8 @@ import React from "react";
 
 import WebvizLogo from "@assets/webviz.svg";
 import { GuiState, LeftDrawerContent } from "@framework/GuiMessageBroker";
-import { LayoutElement, Workbench } from "@framework/Workbench";
+import type { LayoutElement } from "@framework/Workbench";
+import { Workbench } from "@framework/Workbench";
 import { LeftNavBar, RightNavBar } from "@framework/internal/components/NavBar";
 import { SettingsContentPanels } from "@framework/internal/components/SettingsContentPanels";
 import { ToggleDevToolsButton } from "@framework/internal/components/ToggleDevToolsButton";
@@ -17,7 +18,7 @@ import "./templates/registerAllTemplates";
 
 function DevLabel() {
     return (
-        <div className="bg-orange-600 text-white p-2 rounded max-w-[400px] text-sm text-center mt-4 z-50 shadow">
+        <div className="bg-orange-600 text-white p-2 rounded-sm max-w-[400px] text-sm text-center mt-4 z-50 shadow-sm">
             <strong>NOTE:</strong> This application is still under heavy development and bugs are to be expected. Please
             help us improve Webviz by reporting any undesired behaviour either on{" "}
             <a href="https://equinor.slack.com/messages/webviz/" target="blank" className="underline cursor-pointer">
@@ -94,7 +95,7 @@ function App() {
                 workbench.resetModuleInstanceNumbers();
             };
         },
-        [authState, isMounted, queryClient, workbench]
+        [authState, isMounted, queryClient, workbench],
     );
 
     function makeStateMessages() {
@@ -106,7 +107,7 @@ function App() {
                         {
                             "opacity-0": initAppState !== InitAppState.CheckingIfUserIsSignedIn,
                             "opacity-100": initAppState === InitAppState.CheckingIfUserIsSignedIn,
-                        }
+                        },
                     )}
                 >
                     Checking if user is signed in...
@@ -117,7 +118,7 @@ function App() {
                         {
                             "opacity-0": initAppState !== InitAppState.LoadingEnsembles,
                             "opacity-100": initAppState === InitAppState.LoadingEnsembles,
-                        }
+                        },
                     )}
                 >
                     Restoring working session...
@@ -144,7 +145,7 @@ function App() {
                             "absolute inset-0 w-screen h-screen flex flex-col items-center justify-center gap-8 z-50",
                             {
                                 hidden: !isInitializingApp,
-                            }
+                            },
                         )}
                     >
                         <WebvizSpinner size={100} />

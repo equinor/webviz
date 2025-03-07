@@ -1,12 +1,11 @@
-import {
+import type {
     InplaceStatisticalVolumetricTableDataPerFluidSelection_api,
-    InplaceVolumetricStatistic_api,
     InplaceVolumetricTableDataPerFluidSelection_api,
-    InplaceVolumetricsIdentifier_api,
 } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { InplaceVolumetricStatistic_api, InplaceVolumetricsIdentifier_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-import { Column } from "./Table";
+import type { Column } from "./Table";
 
 export type InplaceVolumetricsTableData = {
     ensembleIdent: RegularEnsembleIdent;
@@ -36,9 +35,7 @@ export enum SourceIdentifier {
     FLUID_ZONE = "FLUID_ZONE",
 }
 
-const sourceAndTableIdentifiersUnion = { ...SourceIdentifier, ...InplaceVolumetricsIdentifier_api };
-export type SourceAndTableIdentifierUnion =
-    (typeof sourceAndTableIdentifiersUnion)[keyof typeof sourceAndTableIdentifiersUnion];
+export type SourceAndTableIdentifierUnion = SourceIdentifier | InplaceVolumetricsIdentifier_api;
 
 export enum RealSelector {
     REAL = "REAL",

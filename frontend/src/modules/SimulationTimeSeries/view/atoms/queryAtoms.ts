@@ -1,6 +1,6 @@
+import type { Observations_api } from "@api";
 import {
     Frequency_api,
-    Observations_api,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
     getHistoricalVectorData,
@@ -14,8 +14,9 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithQueries } from "@framework/utils/atomUtils";
 import { isEnsembleIdentOfType } from "@framework/utils/ensembleIdentUtils";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
-import { EnsembleVectorObservationDataMap, VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
-import { QueryObserverResult } from "@tanstack/react-query";
+import type { EnsembleVectorObservationDataMap } from "@modules/SimulationTimeSeries/typesAndEnums";
+import { VisualizationMode } from "@modules/SimulationTimeSeries/typesAndEnums";
+import type { QueryObserverResult } from "@tanstack/react-query";
 
 import {
     resampleFrequencyAtom,
@@ -72,7 +73,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                     enabled &&
                         vectorSpecification.vectorName &&
                         vectorSpecification.ensembleIdent.getCaseUuid() &&
-                        vectorSpecification.ensembleIdent.getEnsembleName()
+                        vectorSpecification.ensembleIdent.getEnsembleName(),
                 ),
             });
         }
@@ -124,7 +125,7 @@ export const vectorDataQueriesAtom = atomWithQueries((get) => {
                         vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid() &&
                         vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName() &&
                         vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid() &&
-                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName()
+                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
                 ),
             });
         }
@@ -184,7 +185,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                     enabled &&
                         vectorSpecification.vectorName &&
                         vectorSpecification.ensembleIdent.getCaseUuid() &&
-                        vectorSpecification.ensembleIdent.getEnsembleName()
+                        vectorSpecification.ensembleIdent.getEnsembleName(),
                 ),
             });
         }
@@ -236,7 +237,7 @@ export const vectorStatisticsQueriesAtom = atomWithQueries((get) => {
                         vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getCaseUuid() &&
                         vectorSpecification.ensembleIdent.getComparisonEnsembleIdent().getEnsembleName() &&
                         vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getCaseUuid() &&
-                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName()
+                        vectorSpecification.ensembleIdent.getReferenceEnsembleIdent().getEnsembleName(),
                 ),
             });
         }
@@ -285,7 +286,7 @@ export const regularEnsembleHistoricalVectorDataQueriesAtom = atomWithQueries((g
                 enabled &&
                     vectorSpecification.vectorName &&
                     vectorSpecification.ensembleIdent.getCaseUuid() &&
-                    vectorSpecification.ensembleIdent.getEnsembleName()
+                    vectorSpecification.ensembleIdent.getEnsembleName(),
             ),
         });
     });
@@ -334,7 +335,7 @@ export const vectorObservationsQueriesAtom = atomWithQueries((get) => {
                 if (!ensembleIdent) return;
 
                 const ensembleVectorSpecifications = vectorSpecifications.filter(
-                    (item) => item.ensembleIdent === ensembleIdent
+                    (item) => item.ensembleIdent === ensembleIdent,
                 );
 
                 const ensembleHasObservations = result.data?.summary.length !== 0;

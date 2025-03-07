@@ -1,5 +1,6 @@
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdown";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 
 type FieldDropdownProps = {
     ensembleSet: EnsembleSet;

@@ -2,10 +2,11 @@ import { SortableListGroup } from "@lib/components/SortableList";
 import { SettingsApplications } from "@mui/icons-material";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
-import { LayersActionGroup, LayersActions } from "../../LayersActions";
+import type { LayersActionGroup } from "../../LayersActions";
+import { LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Group, Item } from "../../interfaces";
+import type { Group, Item } from "../../interfaces";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
@@ -36,7 +37,7 @@ export function SettingsGroupComponent(props: SettingsGroupComponentProps): Reac
                     key="layers-actions"
                     layersActionGroups={props.actions}
                     onActionClick={handleActionClick}
-                />
+                />,
             );
         }
         adornment.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);

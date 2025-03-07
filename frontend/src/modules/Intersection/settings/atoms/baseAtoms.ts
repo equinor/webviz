@@ -1,5 +1,5 @@
 import { IntersectionType } from "@framework/types/intersection";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { ColorScale } from "@lib/utils/ColorScale";
 
 import { atom } from "jotai";
 

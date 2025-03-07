@@ -1,9 +1,14 @@
-import { SurfaceStatisticFunction_api } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SurfaceStatisticFunction_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
-import { SurfaceAddressType } from "./surfaceAddress";
-import { ObservedSurfaceAddress, RealizationSurfaceAddress, StatisticalSurfaceAddress } from "./surfaceAddress";
-import { AnySurfaceAddress, PartialSurfaceAddress } from "./surfaceAddress";
+import type {
+    AnySurfaceAddress,
+    ObservedSurfaceAddress,
+    PartialSurfaceAddress,
+    RealizationSurfaceAddress,
+    StatisticalSurfaceAddress,
+    SurfaceAddressType,
+} from "./surfaceAddress";
 import { encodeSurfAddrStr } from "./surfaceAddress";
 
 export class SurfaceAddressBuilder {
@@ -166,7 +171,7 @@ export class SurfaceAddressBuilder {
     buildAddressNoThrow(): AnySurfaceAddress | null {
         try {
             return this.buildAddress();
-        } catch (e) {
+        } catch {
             return null;
         }
     }
@@ -180,7 +185,7 @@ export class SurfaceAddressBuilder {
         try {
             const addr = this.buildAddress();
             return encodeSurfAddrStr(addr);
-        } catch (e) {
+        } catch {
             return null;
         }
     }

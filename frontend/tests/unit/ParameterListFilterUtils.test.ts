@@ -1,11 +1,12 @@
-import { ContinuousParameter, DiscreteParameter, ParameterType } from "@framework/EnsembleParameters";
+import type { ContinuousParameter, DiscreteParameter } from "@framework/EnsembleParameters";
+import { ParameterType } from "@framework/EnsembleParameters";
 import {
     createAndAddNode,
     createTreeDataNodeListFromParameters,
     getChildNodeNamesFromParentNodeName,
     getParametersMatchingSelectedNodes,
 } from "@framework/components/ParameterListFilter/private-utils/smartNodeSelectorUtils";
-import { TreeDataNode } from "@lib/components/SmartNodeSelector";
+import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
 import { describe, expect, test } from "vitest";
 
@@ -102,7 +103,7 @@ describe("Test of utility functions for ParameterListFilter", () => {
             CONTINUOUS_PARAMETER,
         ]);
         expect(
-            getParametersMatchingSelectedNodes(parameterList, ["Name/discrete parameter"], nonDefaultDelimiter)
+            getParametersMatchingSelectedNodes(parameterList, ["Name/discrete parameter"], nonDefaultDelimiter),
         ).toEqual([DISCRETE_PARAMETER]);
     });
 

@@ -33,7 +33,7 @@ export function calcDistance(p1: number[], p2: number[]): number {
 export function polygonFromVerticesAndIndices(
     startOffset: number,
     vertices: Float32Array,
-    indices: Uint32Array | Uint16Array | Uint8Array
+    indices: Uint32Array | Uint16Array | Uint8Array,
 ): number[][] {
     const polygon: number[][] = [];
     for (let i = 0; i < indices.length; i++) {

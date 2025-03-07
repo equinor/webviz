@@ -1,4 +1,4 @@
-import { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
+import type { RealizationNumberSelection } from "@framework/types/realizationFilterTypes";
 
 /**
  * Convert a realization number selection to a string tag for a realization picker.
@@ -20,7 +20,7 @@ export function makeRealizationPickerTagFromRealizationNumberSelection(selection
  * The selection can be be null, in which case an empty array is returned.
  */
 export function makeRealizationPickerTagsFromRealizationNumberSelections(
-    selections: readonly RealizationNumberSelection[] | null
+    selections: readonly RealizationNumberSelection[] | null,
 ): string[] {
     if (!selections) return [];
 

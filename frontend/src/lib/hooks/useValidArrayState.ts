@@ -34,7 +34,7 @@ export function useValidArrayState<T>(options: {
                 setState(computedNewState);
             }
         },
-        [state, validStateArray]
+        [state, validStateArray],
     );
 
     return [validState, stateSetter];

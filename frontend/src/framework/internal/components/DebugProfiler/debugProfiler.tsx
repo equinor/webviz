@@ -1,11 +1,10 @@
 import React from "react";
 
-import { GuiMessageBroker, GuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
+import { GuiState, useGuiValue } from "@framework/GuiMessageBroker";
 import { StatusSource } from "@framework/ModuleInstanceStatusController";
-import {
-    ModuleInstanceStatusControllerInternal,
-    useStatusControllerStateValue,
-} from "@framework/internal/ModuleInstanceStatusControllerInternal";
+import type { ModuleInstanceStatusControllerInternal } from "@framework/internal/ModuleInstanceStatusControllerInternal";
+import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import { isDevMode } from "@lib/utils/devMode";
 
 type DebugProfilerRenderInfoProps = {
@@ -89,11 +88,11 @@ export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
     const [renderInfo, setRenderInfo] = React.useState<RenderInfo | null>(null);
     const reportedRenderCount = useStatusControllerStateValue(
         props.statusController,
-        props.source === StatusSource.View ? "viewRenderCount" : "settingsRenderCount"
+        props.source === StatusSource.View ? "viewRenderCount" : "settingsRenderCount",
     );
     const customDebugMessage = useStatusControllerStateValue(
         props.statusController,
-        props.source === StatusSource.View ? "viewDebugMessage" : "settingsDebugMessage"
+        props.source === StatusSource.View ? "viewDebugMessage" : "settingsDebugMessage",
     );
     const debugInfoVisible = useGuiValue(props.guiMessageBroker, GuiState.DevToolsVisible);
 
@@ -121,7 +120,7 @@ export const DebugProfiler: React.FC<DebugProfilerProps> = (props) => {
                 avgTime: ((prev?.totalTime ?? 0) + actualDuration) / ((prev?.renderCount ?? 0) + 1),
             }));
         },
-        []
+        [],
     );
 
     if (isDevMode()) {

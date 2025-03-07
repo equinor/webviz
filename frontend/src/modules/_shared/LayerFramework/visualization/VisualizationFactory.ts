@@ -1,18 +1,19 @@
-import { Layer as DeckGlLayer } from "@deck.gl/core";
-import { Layer as EsvLayer } from "@equinor/esv-intersection";
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { Layer as DeckGlLayer } from "@deck.gl/core";
+import type { Layer as EsvLayer } from "@equinor/esv-intersection";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { defaultColorPalettes, defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
-import { GroupDelegate } from "../delegates/GroupDelegate";
+import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { LayerColoringType, LayerStatus } from "../delegates/LayerDelegate";
 import { ColorScale } from "../framework/ColorScale/ColorScale";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
-import { LayerManager } from "../framework/LayerManager/LayerManager";
+import type { LayerManager } from "../framework/LayerManager/LayerManager";
 import { View } from "../framework/View/View";
-import { BoundingBox, Layer, Settings, instanceofGroup, instanceofLayer } from "../interfaces";
+import type { BoundingBox, Layer, Settings } from "../interfaces";
+import { instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum VisualizationTarget {
     DECK_GL = "deck_gl",
@@ -36,7 +37,7 @@ export type TargetReturnTypes = {
 };
 
 export type MakeVisualizationFunction<TSettings extends Settings, TData, TTarget extends VisualizationTarget> = (
-    args: VisualizationFunctionArgs<TSettings, TData>
+    args: VisualizationFunctionArgs<TSettings, TData>,
 ) => TargetReturnTypes[TTarget];
 
 export type LayerWithPosition<TTarget extends VisualizationTarget> = {
@@ -66,7 +67,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
 
     registerVisualizationFunction<TSettings extends Settings, TData>(
         layerCtor: { new (layerManager: LayerManager): Layer<TSettings, TData, any> },
-        func: MakeVisualizationFunction<TSettings, TData, TTarget>
+        func: MakeVisualizationFunction<TSettings, TData, TTarget>,
     ): void {
         if (this._visualizationFunctions.has(layerCtor.name)) {
             throw new Error(`Visualization function for layer ${layerCtor.name} already registered`);
@@ -233,7 +234,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
             if (colorScaleItem instanceof ColorScale) {
                 colorScaleWithName = ColorScaleWithName.fromColorScale(
                     colorScaleItem.getColorScale(),
-                    layer.getItemDelegate().getName()
+                    layer.getItemDelegate().getName(),
                 );
 
                 if (!colorScaleItem.getAreBoundariesUserDefined()) {

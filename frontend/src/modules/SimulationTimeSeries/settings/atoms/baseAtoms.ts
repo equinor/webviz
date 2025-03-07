@@ -1,20 +1,15 @@
 import { Frequency_api, StatisticFunction_api } from "@api";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { ParameterIdent } from "@framework/EnsembleParameters";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 
 import { atom } from "jotai";
 import { isEqual } from "lodash";
 
-import {
-    FanchartStatisticOption,
-    GroupBy,
-    StatisticsSelection,
-    SubplotLimitDirection,
-    VisualizationMode,
-} from "../../typesAndEnums";
+import type { StatisticsSelection } from "../../typesAndEnums";
+import { FanchartStatisticOption, GroupBy, SubplotLimitDirection, VisualizationMode } from "../../typesAndEnums";
 
 export const resampleFrequencyAtom = atom<Frequency_api | null>(Frequency_api.MONTHLY);
 
@@ -39,7 +34,7 @@ export const statisticsSelectionAtom = atom<StatisticsSelection>({
 
 export const userSelectedEnsembleIdentsAtom = atomWithCompare<(RegularEnsembleIdent | DeltaEnsembleIdent)[]>(
     [],
-    areEnsembleIdentListsEqual
+    areEnsembleIdentListsEqual,
 );
 
 export const selectedVectorNamesAtom = atomWithCompare<string[]>([], isEqual);

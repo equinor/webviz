@@ -1,11 +1,12 @@
 import React from "react";
 
-import { DataElement, KeyKind, KeyKindToKeyTypeMapping } from "@framework/DataChannelTypes";
+import type { DataElement, KeyKind, KeyKindToKeyTypeMapping } from "@framework/DataChannelTypes";
 
 import { isEqual } from "lodash";
 
-import { ChannelContentMetaData } from "../ChannelContent";
-import { ChannelReceiver, ChannelReceiverNotificationTopic } from "../ChannelReceiver";
+import type { ChannelContentMetaData } from "../ChannelContent";
+import type { ChannelReceiver } from "../ChannelReceiver";
+import { ChannelReceiverNotificationTopic } from "../ChannelReceiver";
 
 export interface ChannelReceiverChannelContent<TKeyKinds extends KeyKind[]> {
     idString: string;
@@ -30,7 +31,7 @@ export type ChannelReceiverReturnData<TKeyKinds extends KeyKind[]> = {
 
 export function useChannelReceiver<TKeyKinds extends KeyKind[]>(
     receiver: ChannelReceiver,
-    expectedKindsOfKeys: TKeyKinds
+    expectedKindsOfKeys: TKeyKinds,
 ): ChannelReceiverReturnData<typeof expectedKindsOfKeys> {
     const [isPending, startTransition] = React.useTransition();
     const [contents, setContents] = React.useState<ChannelReceiverChannelContent<typeof expectedKindsOfKeys>[]>([]);
@@ -58,8 +59,8 @@ export function useChannelReceiver<TKeyKinds extends KeyKind[]>(
                 if (!prevExpectedKindsOfKeys.includes(channel.getKindOfKey())) {
                     throw new Error(
                         `Kind of key '${channel.getKindOfKey()}' is not one of the expected kinds of keys '${prevExpectedKindsOfKeys.join(
-                            ", "
-                        )}'`
+                            ", ",
+                        )}'`,
                     );
                 }
 
@@ -90,12 +91,12 @@ export function useChannelReceiver<TKeyKinds extends KeyKind[]>(
 
             const unsubscribeFromContentsChangeFunc = receiver?.subscribe(
                 ChannelReceiverNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE,
-                handleContentsDataArrayOrChannelChange
+                handleContentsDataArrayOrChannelChange,
             );
 
             const unsubscribeFromCurrentChannelFunc = receiver?.subscribe(
                 ChannelReceiverNotificationTopic.CHANNEL_CHANGE,
-                handleContentsDataArrayOrChannelChange
+                handleContentsDataArrayOrChannelChange,
             );
 
             handleContentsDataArrayOrChannelChange();
@@ -109,7 +110,7 @@ export function useChannelReceiver<TKeyKinds extends KeyKind[]>(
                 }
             };
         },
-        [receiver, prevExpectedKindsOfKeys]
+        [receiver, prevExpectedKindsOfKeys],
     );
 
     if (!receiver) {

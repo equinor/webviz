@@ -34,14 +34,14 @@ export const Label: React.FC<LabelProps> = (props) => {
                     "text-sm",
                     "mb-1",
                     "text-gray-500",
-                    "leading-0",
-                    props.labelClassName ?? ""
+                    "leading-tight",
+                    props.labelClassName ?? "",
                 )}
                 htmlFor={props.children.props.id ?? id.current}
             >
                 {props.synced && (
                     <span
-                        className="bg-indigo-700 w-5 h-5 flex justify-center items-center rounded mr-2"
+                        className="bg-indigo-700 w-5 h-5 flex justify-center items-center rounded-sm mr-2"
                         title={`"${props.text}" is synced on the current page`}
                     >
                         <Link fontSize="small" className="text-white" />
@@ -49,9 +49,7 @@ export const Label: React.FC<LabelProps> = (props) => {
                 )}
                 {props.text}
             </label>
-            <div
-                className={resolveClassNames({ "flex-grow": props.position === "left" || props.position === "right" })}
-            >
+            <div className={resolveClassNames({ grow: props.position === "left" || props.position === "right" })}>
                 {props.children.props.id ? props.children : React.cloneElement(props.children, { id: id.current })}
             </div>
         </div>

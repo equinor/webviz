@@ -1,4 +1,4 @@
-import { ViewStatusWriter } from "@framework/StatusWriter";
+import type { ViewStatusWriter } from "@framework/StatusWriter";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 
 import { useAtomValue } from "jotai";

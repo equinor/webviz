@@ -1,4 +1,5 @@
-import { WritableAtom, createStore } from "jotai";
+import type { WritableAtom } from "jotai";
+import { createStore } from "jotai";
 
 import { CurrentModuleInstanceIdAtom } from "./GlobalAtoms";
 

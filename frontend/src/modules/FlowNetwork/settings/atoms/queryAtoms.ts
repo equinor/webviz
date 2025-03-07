@@ -25,7 +25,7 @@ export const realizationFlowNetworkQueryAtom = atomWithQuery((get) => {
             selectedEnsembleIdent?.getCaseUuid() &&
                 selectedEnsembleIdent?.getEnsembleName() &&
                 selectedRealizationNumber !== null &&
-                selectedNodeTypes.size > 0
+                selectedNodeTypes.size > 0,
         ),
     };
     return query;

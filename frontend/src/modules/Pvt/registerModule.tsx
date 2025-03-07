@@ -2,7 +2,7 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
 export const MODULE_NAME = "Pvt";

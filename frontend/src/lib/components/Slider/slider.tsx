@@ -3,12 +3,8 @@ import React from "react";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import {
-    Popper as PopperUnstyled,
-    Slider as SliderUnstyled,
-    SliderProps as SliderUnstyledProps,
-    SliderValueLabelSlotProps,
-} from "@mui/base";
+import type { SliderProps as SliderUnstyledProps, SliderValueLabelSlotProps } from "@mui/base";
+import { Popper as PopperUnstyled, Slider as SliderUnstyled } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
@@ -29,7 +25,7 @@ function SliderValueLabel(props: SliderValueLabelSlotProps) {
                     className={resolveClassNames(
                         "pointer-events-none",
                         "inline-block",
-                        "rounded",
+                        "rounded-sm",
                         "bg-blue-600",
                         "text-white",
                         "p-2",
@@ -47,7 +43,7 @@ function SliderValueLabel(props: SliderValueLabelSlotProps) {
                         "before:w-2",
                         "before:h-2",
                         "before:bg-blue-600",
-                        "before:rotate-45"
+                        "before:rotate-45",
                     )}
                 >
                     {props.children}
@@ -184,7 +180,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
 
             return adjustedValue.toString();
         },
-        [scale, valueLabelFormat]
+        [scale, valueLabelFormat],
     );
 
     return (
@@ -216,7 +212,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             "touch-action-none",
                             "inline-block",
                             "relative",
-                            orientation === "vertical" ? "px-4" : ""
+                            orientation === "vertical" ? "px-4" : "",
                         ),
                     },
                     rail: {
@@ -225,10 +221,10 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             orientation === "vertical" ? "w-1" : "w-full",
                             orientation === "vertical" ? "h-full" : "h-1",
                             track === "inverted" ? "bg-blue-600" : "bg-blue-200",
-                            "rounded",
+                            "rounded-sm",
                             orientation === "vertical" ? "top-0" : "left-0",
                             "transform",
-                            orientation === "vertical" ? "-translate-y-1" : "translate-y-1"
+                            orientation === "vertical" ? "-translate-y-1" : "translate-y-1",
                         ),
                     },
                     track: {
@@ -236,13 +232,13 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             "block",
                             orientation === "vertical" ? "w-1" : "h-1",
                             track !== "inverted" ? "bg-blue-600" : "bg-blue-200",
-                            "rounded",
+                            "rounded-sm",
                             "absolute",
                             "transform",
                             orientation === "vertical" ? "translate-x-1/2" : "",
                             orientation === "vertical" ? "-translate-y-1" : "",
                             orientation === "vertical" ? "-ml-0.5" : "",
-                            track === false ? "hidden" : ""
+                            track === false ? "hidden" : "",
                         ),
                     },
                     thumb: {
@@ -254,7 +250,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             "block",
                             "bg-blue-600",
                             "z-5",
-                            "shadow-sm",
+                            "shadow-xs",
                             "rounded-full",
                             "transform",
                             orientation === "vertical" ? "translate-x-1/2" : "-translate-x-1/2",
@@ -262,8 +258,8 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             orientation === "vertical" ? "left-0" : "top-0",
                             orientation === "vertical" ? "-ml-0.5" : "ml-0.5",
                             "cursor-pointer",
-                            "outline-none",
-                            "focus:outline-none",
+                            "outline-hidden",
+                            "focus:outline-hidden",
                             "hover:shadow-md",
                             "active:shadow-lg",
                             "after:absolute",
@@ -280,15 +276,15 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                             "after:transform",
                             "after:scale-0",
                             "after:opacity-0",
-                            "after:hover:opacity-10",
-                            "after:hover:scale-100",
+                            "hover:after:opacity-10",
+                            "hover:after:scale-100",
                             "after:z-50",
-                            "after:active:scale-110",
-                            "after:active:opacity-15",
-                            "after:active:-left-[0.4em]",
-                            "after:active:-top-[0.4em]",
-                            "after:active:w-8",
-                            "after:active:h-8"
+                            "active:after:scale-110",
+                            "active:after:opacity-15",
+                            "active:after:-left-[0.4em]",
+                            "active:after:-top-[0.4em]",
+                            "active:after:w-8",
+                            "active:after:h-8",
                         ),
                     },
                     mark: {
@@ -309,7 +305,7 @@ function SliderComponent(props: SliderProps, ref: React.ForwardedRef<HTMLDivElem
                                         ((orientation === "vertical" ? sliderRect.height : sliderRect.width) -
                                             convertRemToPixels(6 / 4)) /
                                             8,
-                            }
+                            },
                         ),
                     },
                 }}

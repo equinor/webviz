@@ -1,12 +1,12 @@
 import React from "react";
 
-import { BoundingBox2D_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
+import type { BoundingBox2D_api, PolygonData_api, SurfaceDef_api, WellboreTrajectory_api } from "@api";
 import { ContinuousLegend } from "@emerson-eps/color-tables";
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
-import { Wellbore } from "@framework/types/wellbore";
+import type { Wellbore } from "@framework/types/wellbore";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { ColorScaleGradientType } from "@lib/utils/ColorScale";
@@ -25,14 +25,14 @@ import {
     createWellboreTrajectoryLayer,
 } from "./_utils";
 import { SyncedSubsurfaceViewer } from "./components/SyncedSubsurfaceViewer";
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 
 type Bounds = [number, number, number, number];
 
 const updateViewPortBounds = (
     existingViewPortBounds: Bounds | undefined,
     resetBounds: boolean,
-    surfaceBB: BoundingBox2D_api
+    surfaceBB: BoundingBox2D_api,
 ): Bounds => {
     const updatedBounds: Bounds = [surfaceBB.min_x, surfaceBB.min_y, surfaceBB.max_x, surfaceBB.max_y];
 
@@ -118,7 +118,7 @@ export function View({
         const surfaceLayer: Record<string, unknown> = createSurfaceMeshLayer(
             meshSurfDataQuery.data.surface_def,
             meshSurfDataQuery.data.valuesFloat32Arr,
-            surfaceSettings
+            surfaceSettings,
         );
         newLayers.push(surfaceLayer);
         colorRange = [meshSurfDataQuery.data.value_min, meshSurfDataQuery.data.value_max];
@@ -127,7 +127,7 @@ export function View({
             meshSurfDataQuery.data.surface_def,
             meshSurfDataQuery.data.valuesFloat32Arr,
             surfaceSettings,
-            propertySurfDataQuery.data.valuesFloat32Arr
+            propertySurfDataQuery.data.valuesFloat32Arr,
         );
         newLayers.push(surfaceLayer);
         colorRange = [propertySurfDataQuery.data.value_min, propertySurfDataQuery.data.value_max];
@@ -164,7 +164,7 @@ export function View({
     }
     if (wellTrajectoriesQuery.data) {
         const wellTrajectories: WellboreTrajectory_api[] = wellTrajectoriesQuery.data.filter((well) =>
-            selectedWellUuids.includes(well.wellboreUuid)
+            selectedWellUuids.includes(well.wellboreUuid),
         );
         const wellTrajectoryLayer: Record<string, unknown> = createWellboreTrajectoryLayer(wellTrajectories);
         const wellBoreHeaderLayer: Record<string, unknown> = createWellBoreHeaderLayer(wellTrajectories);
@@ -214,12 +214,12 @@ export function View({
         <div className="relative w-full h-full flex flex-col">
             <div>
                 {isLoading && (
-                    <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                    <div className="absolute left-0 right-0 w-full h-full bg-white/80 flex items-center justify-center z-10">
                         <CircularProgress />
                     </div>
                 )}
                 {isError && (
-                    <div className="absolute left-0 right-0 w-full h-full bg-white bg-opacity-80 flex items-center justify-center z-10">
+                    <div className="absolute left-0 right-0 w-full h-full bg-white/80 flex items-center justify-center z-10">
                         {"Error loading data"}
                     </div>
                 )}
@@ -230,7 +230,7 @@ export function View({
                     Reset viewport bounds
                 </Button>
             </div>
-            <div className="z-1">
+            <div>
                 {show3D ? (
                     <SyncedSubsurfaceViewer
                         viewContext={viewContext}

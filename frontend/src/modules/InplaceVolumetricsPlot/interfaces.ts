@@ -1,6 +1,6 @@
-import { InplaceVolumetricResultName_api } from "@api";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import type { InplaceVolumetricResultName_api } from "@api";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { userSelectedPlotTypeAtom } from "./settings/atoms/baseAtoms";
 import {
@@ -16,7 +16,7 @@ import {
     selectedSubplotByAtom,
     selectedTableNamesAtom,
 } from "./settings/atoms/derivedAtoms";
-import { InplaceVolumetricsFilterSelections, PlotType } from "./typesAndEnums";
+import type { InplaceVolumetricsFilterSelections, PlotType } from "./typesAndEnums";
 
 export type SettingsToViewInterface = {
     filter: InplaceVolumetricsFilterSelections;

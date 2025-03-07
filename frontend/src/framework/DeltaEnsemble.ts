@@ -1,8 +1,8 @@
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
 import { EnsembleParameters } from "./EnsembleParameters";
-import { EnsembleSensitivities } from "./EnsembleSensitivities";
-import { RegularEnsemble } from "./RegularEnsemble";
-import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+import type { EnsembleSensitivities } from "./EnsembleSensitivities";
+import type { RegularEnsemble } from "./RegularEnsemble";
+import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
 /**
  * Delta ensemble class.
@@ -30,7 +30,7 @@ export class DeltaEnsemble {
         comparisonEnsemble: RegularEnsemble,
         referenceEnsemble: RegularEnsemble,
         color: string,
-        customName: string | null = null
+        customName: string | null = null,
     ) {
         this._deltaEnsembleIdent = new DeltaEnsembleIdent(comparisonEnsemble.getIdent(), referenceEnsemble.getIdent());
 

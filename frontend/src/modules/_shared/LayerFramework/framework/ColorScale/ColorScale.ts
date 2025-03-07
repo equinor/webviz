@@ -1,10 +1,11 @@
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
-import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { ColorScale as ColorScaleImpl } from "@lib/utils/ColorScale";
+import { ColorScaleGradientType, ColorScale as ColorScaleImpl, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { Item, SerializedColorScale, SerializedType } from "../../interfaces";
-import { LayerManager, LayerManagerTopic } from "../LayerManager/LayerManager";
+import type { Item, SerializedColorScale } from "../../interfaces";
+import { SerializedType } from "../../interfaces";
+import type { LayerManager } from "../LayerManager/LayerManager";
+import { LayerManagerTopic } from "../LayerManager/LayerManager";
 
 export class ColorScale implements Item {
     private _itemDelegate: ItemDelegate;

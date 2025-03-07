@@ -1,21 +1,24 @@
 import React from "react";
 
-import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api, WellboreLogCurveHeader_api } from "@api";
+import type { WellboreLogCurveHeader_api } from "@api";
+import { WellLogCurveSourceEnum_api, WellLogCurveTypeEnum_api } from "@api";
 import { Checkbox } from "@lib/components/Checkbox";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
-import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
+import type { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 import { ArrowDownward } from "@mui/icons-material";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 import { useAtomValue } from "jotai";
 import _ from "lodash";
 
-import { TrackSettingFragmentProps } from "./private-components/TrackSettings";
+import type { TrackSettingFragmentProps } from "./private-components/TrackSettings";
 
 import {
     curveSourceToText,
@@ -53,14 +56,14 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
     const curveHeadersError = usePropagateApiErrorToStatusWriter(
         // ! Cast is safe, since MergedQueryResult includes `.error`
         curveHeadersQuery as UseQueryResult,
-        props.statusWriter
+        props.statusWriter,
     );
 
     const availableDiscreteCurves = useAtomValue(availableDiscreteCurvesAtom);
     const availableFlagCurves = useAtomValue(availableFlagCurvesAtom);
     const availableCurveHeaders = React.useMemo(
         () => [...availableDiscreteCurves, ...availableFlagCurves],
-        [availableDiscreteCurves, availableFlagCurves]
+        [availableDiscreteCurves, availableFlagCurves],
     );
 
     const headersForSource = availableCurveHeaders.filter((header) => activeSource === header.source);
@@ -80,7 +83,7 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
 
             onFieldChange({ plots: [newTrackPlot] });
         },
-        [onFieldChange, discretePlotConfig, headersForSource]
+        [onFieldChange, discretePlotConfig, headersForSource],
     );
 
     const handlePlotSettingsChange = React.useCallback(
@@ -89,7 +92,7 @@ export function DiscreteTrackSettings(props: TrackSettingFragmentProps): React.R
 
             onFieldChange({ plots: [newPlot] });
         },
-        [discretePlotConfig, onFieldChange]
+        [discretePlotConfig, onFieldChange],
     );
 
     return (
@@ -167,7 +170,7 @@ function makeLogSourceOptions(headers: WellboreLogCurveHeader_api[]): DropdownOp
 
 function makeCurveOptions(
     chosenSource: WellLogCurveSourceEnum_api,
-    headers: WellboreLogCurveHeader_api[]
+    headers: WellboreLogCurveHeader_api[],
 ): SelectOption[] {
     return _.chain(headers)
         .filter(["source", chosenSource])
@@ -177,7 +180,7 @@ function makeCurveOptions(
                 label: _.startCase(header.curveName),
                 adornment: (
                     <span
-                        className="order-1 text-xs flex-shrink-[9999] overflow-hidden leading-tight block bg-gray-400 px-1 py-0.5 rounded text-white text-ellipsis whitespace-nowrap w-auto "
+                        className="order-1 text-xs shrink-9999 overflow-hidden leading-tight block bg-gray-400 px-1 py-0.5 rounded-sm text-white text-ellipsis whitespace-nowrap w-auto "
                         title={header.logName}
                     >
                         {simplifyLogName(header.logName, 12)}

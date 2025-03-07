@@ -1,14 +1,14 @@
 import React from "react";
 
 import { WellLogCurveTypeEnum_api } from "@api";
-import { SettingsStatusWriter } from "@framework/StatusWriter";
+import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
-import { SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
 import { SortableList } from "@lib/components/SortableList";
 import { arrayMove } from "@lib/utils/arrays";
 import { TrackIcon } from "@modules/WellLogViewer/_shared/components/icons";
-import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { configToJsonDataBlob, jsonFileToTrackConfigs } from "@modules/WellLogViewer/utils/settingsImport";
 import { Dropdown, MenuButton } from "@mui/base";
@@ -50,14 +50,14 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
 
             setTrackConfigs([...trackConfigs, newConfig]);
         },
-        [setTrackConfigs, trackConfigs]
+        [setTrackConfigs, trackConfigs],
     );
 
     const handleDeleteTrack = React.useCallback(
         function handleDeleteTrack(track: TemplateTrackConfig) {
             setTrackConfigs(trackConfigs.filter((configs) => configs._key !== track._key));
         },
-        [setTrackConfigs, trackConfigs]
+        [setTrackConfigs, trackConfigs],
     );
 
     const handleEditTrack = React.useCallback(
@@ -66,7 +66,7 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
 
             setTrackConfigs(newConfigs);
         },
-        [setTrackConfigs, trackConfigs]
+        [setTrackConfigs, trackConfigs],
     );
 
     const handleTrackMove = React.useCallback(
@@ -74,14 +74,14 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
             movedItemId: string,
             originId: string | null,
             destinationId: string | null,
-            newPosition: number
+            newPosition: number,
         ) {
             const currentPosition = trackConfigs.findIndex((cfg) => cfg._key === movedItemId);
             const newTrackCfg = arrayMove(trackConfigs, currentPosition, newPosition);
 
             setTrackConfigs(newTrackCfg);
         },
-        [setTrackConfigs, trackConfigs]
+        [setTrackConfigs, trackConfigs],
     );
 
     const encodedConfigJsonUrl = React.useMemo(() => configToJsonDataBlob(trackConfigs), [trackConfigs]);
@@ -105,7 +105,7 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
                 window.alert("Invalid JSON content\n\n" + errorMsg);
             }
         },
-        [setTrackConfigs]
+        [setTrackConfigs],
     );
 
     return (
@@ -119,11 +119,11 @@ export function TemplateTrackSettings(props: TemplateTrackSettingsProps): React.
                     onChange={handleConfigJsonImport}
                 />
 
-                <div className="flex-grow font-bold text-sm">Plot Tracks</div>
+                <div className="grow font-bold text-sm">Plot Tracks</div>
 
                 <AddItemButton buttonText="Add track" options={TRACK_OPTIONS} onOptionClicked={handleNewPlotTrack} />
                 <Dropdown>
-                    <MenuButton className="py-0.5 px-1 text-sm rounded hover:bg-blue-100">
+                    <MenuButton className="py-0.5 px-1 text-sm rounded-sm hover:bg-blue-100">
                         <MoreVert fontSize="inherit" />
                     </MenuButton>
                     <Menu anchorOrigin="bottom-end" className="text-sm">

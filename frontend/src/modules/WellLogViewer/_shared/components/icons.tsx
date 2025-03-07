@@ -1,5 +1,5 @@
 import { WellLogCurveTypeEnum_api } from "@api";
-import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { ShowChart, ViewDay } from "@mui/icons-material";
 
 export function TrackIcon(props: { type: TemplateTrackConfig["_type"] }) {

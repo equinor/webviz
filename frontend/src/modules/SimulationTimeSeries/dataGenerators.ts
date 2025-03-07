@@ -1,9 +1,9 @@
-import { VectorRealizationData_api } from "@api";
-import { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { VectorRealizationData_api } from "@api";
+import type { ChannelContentMetaData, DataGenerator } from "@framework/DataChannelTypes";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { simulationUnitReformat, simulationVectorDescription } from "@modules/_shared/reservoirSimulationStringUtils";
 
-import { VectorSpec } from "./typesAndEnums";
+import type { VectorSpec } from "./typesAndEnums";
 
 // As of now, the publish to data channels only supports regular ensembles
 export interface RegularEnsembleVectorSpec extends VectorSpec {
@@ -17,7 +17,7 @@ export function makeVectorGroupDataGenerator(
         data: VectorRealizationData_api[];
     }[],
     activeTimestampUtcMs: number,
-    makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) => string
+    makeEnsembleDisplayName: (ensembleIdent: RegularEnsembleIdent) => string,
 ): DataGenerator {
     return () => {
         const data: { key: number; value: number }[] = [];
@@ -30,7 +30,7 @@ export function makeVectorGroupDataGenerator(
         const vector = regularEnsembleVectorSpecificationsAndRealizationData.find(
             (vec) =>
                 vec.vectorSpecification.vectorName === regularEnsembleVectorSpecification.vectorName &&
-                vec.vectorSpecification.ensembleIdent.equals(regularEnsembleVectorSpecification.ensembleIdent)
+                vec.vectorSpecification.ensembleIdent.equals(regularEnsembleVectorSpecification.ensembleIdent),
         );
 
         if (vector) {
@@ -47,7 +47,7 @@ export function makeVectorGroupDataGenerator(
                 unit,
                 ensembleIdentString: vector.vectorSpecification.ensembleIdent.toString(),
                 displayString: `${simulationVectorDescription(
-                    vector.vectorSpecification.vectorName
+                    vector.vectorSpecification.vectorName,
                 )} (${makeEnsembleDisplayName(vector.vectorSpecification.ensembleIdent)})`,
             };
         }

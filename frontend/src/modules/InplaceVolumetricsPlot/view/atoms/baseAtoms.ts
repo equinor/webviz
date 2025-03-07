@@ -1,10 +1,8 @@
-import { InplaceVolumetricResultName_api } from "@api";
-import { InplaceVolumetricsFilterSelections, PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
-import {
-    SelectorColumn,
-    SourceAndTableIdentifierUnion,
-    SourceIdentifier,
-} from "@modules/_shared/InplaceVolumetrics/types";
+import type { InplaceVolumetricResultName_api } from "@api";
+import type { InplaceVolumetricsFilterSelections } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
+import { PlotType } from "@modules/InplaceVolumetricsPlot/typesAndEnums";
+import type { SelectorColumn, SourceAndTableIdentifierUnion } from "@modules/_shared/InplaceVolumetrics/types";
+import { SourceIdentifier } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";
 

@@ -1,4 +1,5 @@
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { expect, test } from "@playwright/experimental-ct-react";
 
 test.use({ viewport: { width: 1920, height: 1080 } });
@@ -121,7 +122,7 @@ test.describe("Select", () => {
                 selectOptions1[0].value,
                 selectOptions1[1].value,
                 selectOptions1[2].value,
-            ])
+            ]),
         ).toBeTruthy();
 
         // Make sure Home is working
@@ -179,8 +180,8 @@ test.describe("Select", () => {
         expect(
             arrayContainsOtherArray(
                 selection,
-                selectOptions1.map((el) => el.value)
-            )
+                selectOptions1.map((el) => el.value),
+            ),
         ).toBeTruthy();
         for (let i = selectOptions1.length - SIZE; i < selectOptions1.length; i++) {
             expect(select).toContainText(selectOptions1[i].value);
@@ -194,8 +195,8 @@ test.describe("Select", () => {
         expect(
             arrayContainsOtherArray(
                 selection,
-                selectOptions1.map((el) => el.value)
-            )
+                selectOptions1.map((el) => el.value),
+            ),
         ).toBeTruthy();
     });
 
@@ -237,7 +238,7 @@ test.describe("Select", () => {
                 showQuickSelectButtons={true}
                 onChange={handleChange}
                 multiple={true}
-            />
+            />,
         );
 
         // Find the "Select all" button and click it
@@ -249,8 +250,8 @@ test.describe("Select", () => {
         expect(
             arrayContainsOtherArray(
                 selection,
-                selectOptions1.map((option) => option.value)
-            )
+                selectOptions1.map((option) => option.value),
+            ),
         ).toBeTruthy();
 
         // Find the "Unselect all" button and click it

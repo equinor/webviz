@@ -1,12 +1,12 @@
-import { BoundingBox3D_api, WellboreTrajectory_api } from "@api";
-import { Layer } from "@deck.gl/core";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { BoundingBox3D_api, WellboreTrajectory_api } from "@api";
+import type { Layer } from "@deck.gl/core";
+import type { ColorScale } from "@lib/utils/ColorScale";
 import { TGrid3DColoringMode } from "@webviz/subsurface-viewer";
 import { AxesLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { Feature } from "geojson";
+import type { Feature } from "geojson";
 
-import {
+import type {
     FenceMeshSection_trans,
     GridMappedProperty_trans,
     GridSurface_trans,
@@ -45,7 +45,7 @@ export function makeGrid3DLayer(
     gridSurfaceData: GridSurface_trans,
     gridParameterData: GridMappedProperty_trans,
     showGridLines: boolean,
-    colorScale: ColorScale
+    colorScale: ColorScale,
 ): WorkingGrid3dLayer {
     const offsetXyz = [gridSurfaceData.origin_utm_x, gridSurfaceData.origin_utm_y, 0];
     const pointsNumberArray = gridSurfaceData.pointsFloat32Arr.map((val, i) => val + offsetXyz[i % 3]);
@@ -80,7 +80,7 @@ export function makeGrid3DLayer(
 export function makeIntersectionLayer(
     polylineIntersectionData: PolylineIntersection_trans,
     showGridLines: boolean,
-    colorScale: ColorScale
+    colorScale: ColorScale,
 ): WorkingGrid3dLayer {
     const polyData = buildVtkStylePolyDataFromFenceSections(polylineIntersectionData.fenceMeshSections);
     const grid3dIntersectionLayer = new Grid3DLayer({
@@ -102,13 +102,13 @@ export function makeIntersectionLayer(
 
 export function makeWellsLayer(
     fieldWellboreTrajectoriesData: WellboreTrajectory_api[],
-    selectedWellboreUuid: string | null
+    selectedWellboreUuid: string | null,
 ): WellsLayer {
     const tempWorkingWellsData = fieldWellboreTrajectoriesData.filter(
-        (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH"
+        (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH",
     );
     const wellLayerDataFeatures = tempWorkingWellsData.map((well) =>
-        wellTrajectoryToGeojson(well, selectedWellboreUuid)
+        wellTrajectoryToGeojson(well, selectedWellboreUuid),
     );
 
     function getLineStyleWidth(object: Feature): number {
@@ -151,7 +151,7 @@ export function makeWellsLayer(
 
 export function wellTrajectoryToGeojson(
     wellTrajectory: WellboreTrajectory_api,
-    selectedWellboreUuid: string | null
+    selectedWellboreUuid: string | null,
 ): Record<string, unknown> {
     const point: Record<string, unknown> = {
         type: "Point",

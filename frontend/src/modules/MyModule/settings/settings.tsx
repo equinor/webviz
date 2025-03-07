@@ -1,6 +1,6 @@
-import React from "react";
+import type React from "react";
 
-import { ModuleSettingsProps } from "@framework/Module";
+import type { ModuleSettingsProps } from "@framework/Module";
 import { ColorGradient } from "@lib/components/ColorGradient/colorGradient";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
@@ -11,7 +11,7 @@ import { useAtom } from "jotai";
 
 import { divMidPointAtom, gradientTypeAtom, maxAtom, minAtom, typeAtom } from "./atoms/baseAtoms";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNode {
     const [type, setType] = useAtom(typeAtom);
@@ -48,7 +48,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             value: ColorScaleType.Discrete,
                             label: (
                                 <div className="flex gap-4 items-center">
-                                    <div className="flex-grow w-24">
+                                    <div className="grow w-24">
                                         <ColorGradient colorPalette={colorScale.getColorPalette()} steps={10} />
                                     </div>
                                     <div>Discrete</div>
@@ -59,7 +59,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): React.ReactNod
                             value: ColorScaleType.Continuous,
                             label: (
                                 <div className="flex gap-4 items-center h-4">
-                                    <div className="flex-grow w-24">
+                                    <div className="grow w-24">
                                         <ColorGradient colorPalette={colorScale.getColorPalette()} />
                                     </div>
                                     <div>Continuous</div>

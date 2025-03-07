@@ -1,6 +1,7 @@
-import React from "react";
+import type React from "react";
 
-import { MenuItem as MuiMenuItem, MenuItemProps as MuiMenuItemProps } from "@mui/base";
+import type { MenuItemProps as MuiMenuItemProps } from "@mui/base";
+import { MenuItem as MuiMenuItem } from "@mui/base";
 
 export type MenuItemProps = MuiMenuItemProps;
 

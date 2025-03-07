@@ -6,7 +6,7 @@ export function resolveClassNames(...classNamesOrLists: (Record<string, boolean 
             acc.push(
                 ...Object.entries(curr)
                     .filter(([, value]) => value)
-                    .map(([key]) => key)
+                    .map(([key]) => key),
             );
         }
         return acc;

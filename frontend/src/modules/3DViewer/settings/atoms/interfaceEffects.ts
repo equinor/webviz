@@ -1,12 +1,12 @@
-import { InterfaceEffects } from "@framework/Module";
-import { ViewToSettingsInterface } from "@modules/3DViewer/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { ViewToSettingsInterface } from "@modules/3DViewer/interfaces";
 
 import { editCustomIntersectionPolylineEditModeActiveAtom, intersectionTypeAtom } from "./baseAtoms";
 
 export const viewToSettingsInterfaceEffects: InterfaceEffects<ViewToSettingsInterface> = [
     (getInterfaceValue, setAtomValue) => {
         const editCustomIntersectionPolylineEditModeActive = getInterfaceValue(
-            "editCustomIntersectionPolylineEditModeActive"
+            "editCustomIntersectionPolylineEditModeActive",
         );
         setAtomValue(editCustomIntersectionPolylineEditModeActiveAtom, editCustomIntersectionPolylineEditModeActive);
     },

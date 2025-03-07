@@ -40,7 +40,7 @@ export const perRealizationTableDataResultsAtom = atomWithQueries((get) => {
         groupByIdentifiers,
         accumulateFluidZones,
         identifiersValues,
-        enableQueries
+        enableQueries,
     );
 });
 
@@ -68,6 +68,6 @@ export const statisticalTableDataResultsAtom = atomWithQueries((get) => {
         groupByIdentifiers,
         accumulateFluidZones,
         identifiersValues,
-        enableQueries
+        enableQueries,
     );
 });

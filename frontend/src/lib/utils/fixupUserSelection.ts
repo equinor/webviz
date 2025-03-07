@@ -7,7 +7,7 @@ export enum FixupSelection {
 export function fixupUserSelection<TSelection>(
     userSelection: TSelection[],
     validOptions: TSelection[],
-    fixupSelection: FixupSelection = FixupSelection.SELECT_FIRST
+    fixupSelection: FixupSelection = FixupSelection.SELECT_FIRST,
 ): TSelection[] {
     const newSelections = userSelection.filter((selection) => validOptions.includes(selection));
     if (newSelections.length === 0 && validOptions.length > 0) {

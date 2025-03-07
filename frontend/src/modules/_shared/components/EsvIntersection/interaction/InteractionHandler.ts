@@ -1,14 +1,10 @@
-import { Controller, Layer, SchematicData, SchematicLayer } from "@equinor/esv-intersection";
+import type { Controller, Layer, SchematicData, SchematicLayer } from "@equinor/esv-intersection";
 
 import { HighlightOverlay } from "./HighlightOverlay";
-import {
-    Intersection,
-    IntersectionHandler,
-    IntersectionHandlerOptions,
-    IntersectionHandlerTopic,
-} from "./IntersectionHandler";
+import type { Intersection, IntersectionHandlerOptions } from "./IntersectionHandler";
+import { IntersectionHandler, IntersectionHandlerTopic } from "./IntersectionHandler";
 
-import { HighlightItem, LayerDataItem, ReadoutItem } from "../types/types";
+import type { HighlightItem, LayerDataItem, ReadoutItem } from "../types/types";
 import {
     makeHighlightItemFromIntersectionResult,
     makeReadoutItemFromIntersectionResult,
@@ -65,7 +61,7 @@ export class InteractionHandler {
         }
 
         const layerDataObjectsToRemove = this._layerDataItems.filter(
-            (layerDataObject) => layerDataObject.layer.id === layerId
+            (layerDataObject) => layerDataObject.layer.id === layerId,
         );
         this._layerDataItems = this._layerDataItems.filter((layerDataObject) => layerDataObject.layer.id !== layerId);
 
@@ -89,7 +85,7 @@ export class InteractionHandler {
 
     subscribe<T extends InteractionHandlerTopic>(
         topic: T,
-        callback: (payload: InteractionHandlerTopicPayload[T]) => void
+        callback: (payload: InteractionHandlerTopicPayload[T]) => void,
     ): () => void {
         const subscribers = this._subscribers.get(topic) || new Set();
         subscribers.add(callback);
@@ -120,20 +116,20 @@ export class InteractionHandler {
 
         for (const intersection of payload.intersections) {
             const layerDataObject = this._layerDataItems.find(
-                (layerDataObject) => layerDataObject.id === intersection.id
+                (layerDataObject) => layerDataObject.id === intersection.id,
             );
             if (layerDataObject) {
                 const highlightItem = makeHighlightItemFromIntersectionResult(
                     intersection.item,
                     layerDataObject.layer,
-                    layerDataObject.index
+                    layerDataObject.index,
                 );
                 highlightItems.push(highlightItem);
 
                 const readoutItem = makeReadoutItemFromIntersectionResult(
                     intersection.item,
                     layerDataObject.layer,
-                    layerDataObject.index
+                    layerDataObject.index,
                 );
                 readoutItems.push(readoutItem);
 

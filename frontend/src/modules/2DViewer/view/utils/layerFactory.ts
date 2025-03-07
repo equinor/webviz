@@ -1,18 +1,27 @@
-import { PolygonData_api, SurfaceDataPng_api, SurfaceDef_api, WellborePick_api, WellboreTrajectory_api } from "@api";
-import { Layer } from "@deck.gl/core";
+import type {
+    PolygonData_api,
+    SurfaceDataPng_api,
+    SurfaceDef_api,
+    WellborePick_api,
+    WellboreTrajectory_api,
+} from "@api";
+import type { Layer } from "@deck.gl/core";
 import { GeoJsonLayer } from "@deck.gl/layers";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
-import { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
-import { Layer as LayerInterface } from "@modules/_shared/LayerFramework/interfaces";
+import type { Vec2 } from "@lib/utils/vec2";
+import { rotatePoint2Around } from "@lib/utils/vec2";
+import type { GridMappedProperty_trans, GridSurface_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
+import type { Layer as LayerInterface } from "@modules/_shared/LayerFramework/interfaces";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
-import { ColormapLayer, Grid3DLayer, WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import type { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { Rgb, parse } from "culori";
-import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
+import type { Rgb } from "culori";
+import { parse } from "culori";
+import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
 import { ObservedSurfaceLayer } from "../../LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
@@ -20,7 +29,8 @@ import { RealizationPolygonsLayer } from "../../LayerFramework/customLayerImplem
 import { RealizationSurfaceLayer } from "../../LayerFramework/customLayerImplementations/RealizationSurfaceLayer";
 import { StatisticalSurfaceLayer } from "../../LayerFramework/customLayerImplementations/StatisticalSurfaceLayer";
 import { AdvancedWellsLayer } from "../customDeckGlLayers/AdvancedWellsLayer";
-import { WellBorePickLayerData, WellborePicksLayer } from "../customDeckGlLayers/WellborePicksLayer";
+import type { WellBorePickLayerData } from "../customDeckGlLayers/WellborePicksLayer";
+import { WellborePicksLayer } from "../customDeckGlLayers/WellborePicksLayer";
 
 export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: ColorScaleWithName): Layer | null {
     const data = layer.getLayerDelegate().getData();
@@ -43,7 +53,7 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
             data,
             layer.getItemDelegate().getId(),
             layer.getItemDelegate().getName(),
-            colorScale
+            colorScale,
         );
     }
     if (layer instanceof RealizationSurfaceLayer) {
@@ -51,7 +61,7 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
             data,
             layer.getItemDelegate().getId(),
             layer.getItemDelegate().getName(),
-            colorScale
+            colorScale,
         );
     }
     if (layer instanceof StatisticalSurfaceLayer) {
@@ -59,7 +69,7 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
             data,
             layer.getItemDelegate().getId(),
             layer.getItemDelegate().getName(),
-            colorScale
+            colorScale,
         );
     }
     if (layer instanceof RealizationPolygonsLayer) {
@@ -77,7 +87,7 @@ export function makeDeckGlLayer(layer: LayerInterface<any, any>, colorScale?: Co
             data.gridSurfaceData,
             data.gridParameterData,
             layer.getSettingsContext().getDelegate().getSettings().showGridLines.getDelegate().getValue(),
-            colorScale
+            colorScale,
         );
     }
     return null;
@@ -105,7 +115,7 @@ function createMapImageLayer(
     layerData: SurfaceDataPng_api,
     id: string,
     name: string,
-    colorScale?: ColorScaleWithName
+    colorScale?: ColorScaleWithName,
 ): ColormapLayer {
     return new ColormapLayer({
         id: id,
@@ -175,13 +185,13 @@ function polygonsToGeojson(polygons: PolygonData_api): Feature<Geometry, GeoJson
 function makeWellsLayer(
     fieldWellboreTrajectoriesData: WellboreTrajectory_api[],
     id: string,
-    selectedWellboreUuid: string | null
+    selectedWellboreUuid: string | null,
 ): WellsLayer {
     const tempWorkingWellsData = fieldWellboreTrajectoriesData.filter(
-        (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH"
+        (el) => el.uniqueWellboreIdentifier !== "NO 34/4-K-3 AH",
     );
     const wellLayerDataFeatures = tempWorkingWellsData.map((well) =>
-        wellTrajectoryToGeojson(well, selectedWellboreUuid)
+        wellTrajectoryToGeojson(well, selectedWellboreUuid),
     );
 
     function getLineStyleWidth(object: Feature): number {
@@ -227,7 +237,7 @@ function makeWellsLayer(
 
 function wellTrajectoryToGeojson(
     wellTrajectory: WellboreTrajectory_api,
-    selectedWellboreUuid: string | null
+    selectedWellboreUuid: string | null,
 ): Record<string, unknown> {
     const point: Record<string, unknown> = {
         type: "Point",
@@ -288,7 +298,7 @@ function makeGrid3DLayer(
     gridSurfaceData: GridSurface_trans,
     gridParameterData: GridMappedProperty_trans,
     showGridLines: boolean,
-    colorScale?: ColorScaleWithName
+    colorScale?: ColorScaleWithName,
 ): WorkingGrid3dLayer {
     const offsetXyz = [gridSurfaceData.origin_utm_x, gridSurfaceData.origin_utm_y, 0];
     const pointsNumberArray = gridSurfaceData.pointsFloat32Arr.map((val, i) => val + offsetXyz[i % 3]);
@@ -308,7 +318,7 @@ function makeGrid3DLayer(
         colorMapFunction: makeColorMapFunction(
             colorScale,
             gridParameterData.min_grid_prop_value,
-            gridParameterData.max_grid_prop_value
+            gridParameterData.max_grid_prop_value,
         ),
     });
     return grid3dLayer as unknown as WorkingGrid3dLayer;
@@ -317,7 +327,7 @@ function makeGrid3DLayer(
 function makeColorMapFunction(
     colorScale: ColorScaleWithName | undefined,
     valueMin: number,
-    valueMax: number
+    valueMax: number,
 ): ((value: number) => [number, number, number]) | undefined {
     if (!colorScale) {
         return undefined;

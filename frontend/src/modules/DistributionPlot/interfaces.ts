@@ -1,7 +1,7 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { numBinsAtom, orientationAtom, plotTypeAtom } from "./settings/atoms/baseAtoms";
-import { PlotType } from "./typesAndEnums";
+import type { PlotType } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     plotType: PlotType | null;

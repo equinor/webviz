@@ -1,5 +1,5 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
 import { divMidPointAtom, gradientTypeAtom, maxAtom, minAtom, typeAtom } from "./settings/atoms/baseAtoms";
 

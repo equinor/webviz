@@ -1,8 +1,9 @@
-import { Controller, OnRescaleEvent } from "@equinor/esv-intersection";
+import type { Controller, OnRescaleEvent } from "@equinor/esv-intersection";
 
 import { isEqual } from "lodash";
 
-import { HighlightItem, HighlightItemShape } from "../types/types";
+import type { HighlightItem } from "../types/types";
+import { HighlightItemShape } from "../types/types";
 
 export class HighlightOverlay {
     private _container: HTMLElement;
@@ -127,7 +128,7 @@ export class HighlightOverlay {
                     });
                     polygonElement.setAttribute(
                         "points",
-                        adjustedPoints.map((point) => `${point.x},${point.y}`).join(" ")
+                        adjustedPoints.map((point) => `${point.x},${point.y}`).join(" "),
                     );
                     polygonElement.setAttribute("style", `fill:${item.color};`);
                     svgLayer.appendChild(polygonElement);

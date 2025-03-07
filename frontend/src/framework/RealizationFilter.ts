@@ -1,25 +1,18 @@
 import { isEqual } from "lodash";
 
-import { DeltaEnsemble } from "./DeltaEnsemble";
-import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
-import {
-    ContinuousParameter,
-    DiscreteParameter,
-    EnsembleParameters,
-    Parameter,
-    ParameterIdent,
-    ParameterType,
-} from "./EnsembleParameters";
-import { RegularEnsemble } from "./RegularEnsemble";
-import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import {
+import type { DeltaEnsemble } from "./DeltaEnsemble";
+import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
+import type { ContinuousParameter, DiscreteParameter, EnsembleParameters, Parameter } from "./EnsembleParameters";
+import { ParameterIdent, ParameterType } from "./EnsembleParameters";
+import type { RegularEnsemble } from "./RegularEnsemble";
+import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+import type {
     DiscreteParameterValueSelection,
-    IncludeExcludeFilter,
     NumberRange,
     ParameterValueSelection,
-    RealizationFilterType,
     RealizationNumberSelection,
 } from "./types/realizationFilterTypes";
+import { IncludeExcludeFilter, RealizationFilterType } from "./types/realizationFilterTypes";
 import { isArrayOfNumbers, isArrayOfStrings } from "./utils/arrayUtils";
 import {
     isValueSelectionAnArrayOfNumber,
@@ -56,7 +49,7 @@ export class RealizationFilter {
     constructor(
         assignedEnsemble: RegularEnsemble | DeltaEnsemble,
         initialIncludeExcludeFilter = IncludeExcludeFilter.INCLUDE_FILTER,
-        initialFilterType = RealizationFilterType.BY_REALIZATION_NUMBER
+        initialFilterType = RealizationFilterType.BY_REALIZATION_NUMBER,
     ) {
         this._assignedEnsemble = assignedEnsemble;
         this._includeExcludeFilter = initialIncludeExcludeFilter;
@@ -76,7 +69,7 @@ export class RealizationFilter {
     }
 
     setParameterIdentStringToValueSelectionReadonlyMap(
-        newMap: ReadonlyMap<string, ParameterValueSelection> | null
+        newMap: ReadonlyMap<string, ParameterValueSelection> | null,
     ): void {
         // Validate parameterIdent strings
         if (newMap !== null) {
@@ -85,7 +78,7 @@ export class RealizationFilter {
                 const parameter = this._assignedEnsemble.getParameters().findParameter(parameterIdent);
                 if (!parameter) {
                     throw new Error(
-                        `Invalid parameterIdent string "${parameterIdentStr}" for ensemble ${this._assignedEnsemble.getIdent()}`
+                        `Invalid parameterIdent string "${parameterIdentStr}" for ensemble ${this._assignedEnsemble.getIdent()}`,
                     );
                 }
 
@@ -148,7 +141,7 @@ export class RealizationFilter {
     static createFilteredRealizationsFromRealizationNumberSelection(
         realizationNumberSelections: readonly RealizationNumberSelection[] | null,
         validRealizations: readonly number[],
-        includeOrExclude: IncludeExcludeFilter
+        includeOrExclude: IncludeExcludeFilter,
     ): readonly number[] {
         let newFilteredRealizations = validRealizations;
 
@@ -161,7 +154,7 @@ export class RealizationFilter {
             newFilteredRealizations = RealizationFilter.createIncludeOrExcludeFilteredRealizationsArray(
                 includeOrExclude,
                 selectedRealizationNumbers,
-                validRealizations
+                validRealizations,
             );
         }
         return newFilteredRealizations;
@@ -170,7 +163,7 @@ export class RealizationFilter {
     static createIncludeOrExcludeFilteredRealizationsArray(
         includeOrExclude: IncludeExcludeFilter,
         selectedRealizations: readonly number[],
-        validRealizations: readonly number[]
+        validRealizations: readonly number[],
     ): readonly number[] {
         if (includeOrExclude === IncludeExcludeFilter.INCLUDE_FILTER) {
             return selectedRealizations.filter((elm) => validRealizations.includes(elm));
@@ -184,7 +177,7 @@ export class RealizationFilter {
         const newFilteredRealizations = RealizationFilter.createFilteredRealizationsFromRealizationNumberSelection(
             this._realizationNumberSelections,
             this._assignedEnsemble.getRealizations(),
-            this._includeExcludeFilter
+            this._includeExcludeFilter,
         );
 
         if (!isEqual(newFilteredRealizations, this._filteredRealizations)) {
@@ -195,7 +188,7 @@ export class RealizationFilter {
     static createFilteredRealizationsFromParameterValueSelections(
         parameterIdentStringToValueSelectionMap: ReadonlyMap<string, ParameterValueSelection> | null,
         validParameters: EnsembleParameters,
-        validRealizations: readonly number[]
+        validRealizations: readonly number[],
     ): readonly number[] {
         let newFilteredRealizations = validRealizations;
 
@@ -219,13 +212,13 @@ export class RealizationFilter {
                     // Run discrete parameter filtering
                     realizationsFromValueSelection = this.getRealizationNumbersFromParameterValueArray(
                         parameter,
-                        valueSelection
+                        valueSelection,
                     );
                 } else if (parameter.type === ParameterType.CONTINUOUS && !isValueSelectionArray) {
                     // Run continuous parameter filtering
                     realizationsFromValueSelection = this.getRealizationNumbersFromParameterValueRange(
                         parameter,
-                        valueSelection
+                        valueSelection,
                     );
                 }
 
@@ -250,7 +243,7 @@ export class RealizationFilter {
         const newFilteredRealizations = RealizationFilter.createFilteredRealizationsFromParameterValueSelections(
             this._parameterIdentStringToValueSelectionMap,
             this._assignedEnsemble.getParameters(),
-            this._assignedEnsemble.getRealizations()
+            this._assignedEnsemble.getRealizations(),
         );
 
         if (!isEqual(newFilteredRealizations, this._filteredRealizations)) {
@@ -260,7 +253,7 @@ export class RealizationFilter {
 
     static getRealizationNumbersFromParameterValueRange(
         parameter: ContinuousParameter,
-        valueRange: Readonly<NumberRange>
+        valueRange: Readonly<NumberRange>,
     ): number[] {
         // Get indices of values within range
         const valueIndicesWithinRange: number[] = [];
@@ -277,7 +270,7 @@ export class RealizationFilter {
 
     static getRealizationNumbersFromParameterValueArray(
         parameter: DiscreteParameter,
-        selectedValueArray: DiscreteParameterValueSelection
+        selectedValueArray: DiscreteParameterValueSelection,
     ): number[] {
         if (selectedValueArray.length === 0 || parameter.values.length === 0) {
             return [];
@@ -287,7 +280,7 @@ export class RealizationFilter {
         const isNumberValues = isArrayOfNumbers(parameter.values);
         if (isStringValueSelection && isNumberValues) {
             throw new Error(
-                `Parameter ${parameter.name} is discrete with number values, but value selection is string`
+                `Parameter ${parameter.name} is discrete with number values, but value selection is string`,
             );
         }
 
@@ -295,7 +288,7 @@ export class RealizationFilter {
         const isStringValues = isArrayOfStrings(parameter.values);
         if (isNumberValueSelection && isStringValues) {
             throw new Error(
-                `Parameter ${parameter.name} is discrete with string values, but value selection is number`
+                `Parameter ${parameter.name} is discrete with string values, but value selection is number`,
             );
         }
 
@@ -340,7 +333,7 @@ export class RealizationFilter {
             // Using !isValueSelectionAnArrayOfNumber, as isValueSelectionAnArrayOfString(valueSelection) is true
             // for empty array
             throw new Error(
-                `Parameter ${parameter.name} is discrete with number values, but value selection is strings`
+                `Parameter ${parameter.name} is discrete with number values, but value selection is strings`,
             );
         }
         if (
@@ -351,7 +344,7 @@ export class RealizationFilter {
             // Using !isValueSelectionAnArrayOfString, as isValueSelectionAnArrayOfNumber(valueSelection) is true
             // for empty array
             throw new Error(
-                `Parameter ${parameter.name} is discrete with string values, but value selection is numbers`
+                `Parameter ${parameter.name} is discrete with string values, but value selection is numbers`,
             );
         }
     }

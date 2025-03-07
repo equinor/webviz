@@ -67,12 +67,12 @@ export const CrashView: React.FC<FormattedErrorProps> = (props) => {
 **How to reproduce**\nPlease describe what you were doing when the error occurred.\n\n\
 **Screenshots**\nIf applicable, add screenshots to help explain your problem.\n\n\
 **Error stack**\n\`\`\`\n${props.error.stack}\n\`\`\`\n\n\
-**Component stack**\n\`\`\`${props.errorInfo.componentStack}\n\`\`\``
+**Component stack**\n\`\`\`${props.errorInfo.componentStack}\n\`\`\``,
         );
         const label = encodeURIComponent("user reported error");
         window.open(
             `https://github.com/equinor/webviz/issues/new?title=${title}&body=${body}&labels=${label}`,
-            "_blank"
+            "_blank",
         );
     };
 

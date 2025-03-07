@@ -1,20 +1,19 @@
-import {
+import type {
     FluidZone_api,
     InplaceStatisticalVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricResultName_api,
     InplaceVolumetricTableDataPerFluidSelection_api,
     InplaceVolumetricsIdentifierWithValues_api,
     InplaceVolumetricsIdentifier_api,
-    postGetAggregatedPerRealizationTableDataOptions,
-    postGetAggregatedStatisticalTableDataOptions,
 } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import { postGetAggregatedPerRealizationTableDataOptions, postGetAggregatedStatisticalTableDataOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
-import {
+import type {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
 } from "@modules/_shared/InplaceVolumetrics/types";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
 
 export type EnsembleIdentWithRealizations = {
     ensembleIdent: RegularEnsembleIdent;
@@ -45,7 +44,7 @@ export function useGetAggregatedStatisticalTableDataQueries(
     groupByIdentifiers: InplaceVolumetricsIdentifier_api[],
     accumulateFluidZones: boolean,
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
-    allowEnable: boolean
+    allowEnable: boolean,
 ) {
     const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
         [];
@@ -85,13 +84,13 @@ export function useGetAggregatedStatisticalTableDataQueries(
                     validRealizations?.length &&
                     fluidZones.length &&
                     resultNames.length &&
-                    eachIdentifierHasValues
+                    eachIdentifierHasValues,
             ),
         });
     });
 
     function combine(
-        results: UseQueryResult<InplaceStatisticalVolumetricTableDataPerFluidSelection_api, Error>[]
+        results: UseQueryResult<InplaceStatisticalVolumetricTableDataPerFluidSelection_api, Error>[],
     ): AggregatedStatisticalTableDataResults {
         const tablesData: InplaceVolumetricsStatisticalTableData[] = [];
         const errors: Error[] = [];
@@ -131,7 +130,7 @@ export function useGetAggregatedPerRealizationTableDataQueries(
     groupByIdentifiers: InplaceVolumetricsIdentifier_api[],
     accumulateFluidZones: boolean,
     identifiersWithValues: InplaceVolumetricsIdentifierWithValues_api[],
-    allowEnable: boolean
+    allowEnable: boolean,
 ) {
     const uniqueSources: { ensembleIdent: RegularEnsembleIdent; realizations: readonly number[]; tableName: string }[] =
         [];
@@ -171,13 +170,13 @@ export function useGetAggregatedPerRealizationTableDataQueries(
                     validRealizations?.length &&
                     fluidZones.length &&
                     resultNames.length &&
-                    eachIdentifierHasValues
+                    eachIdentifierHasValues,
             ),
         });
     });
 
     function combine(
-        results: UseQueryResult<InplaceVolumetricTableDataPerFluidSelection_api, Error>[]
+        results: UseQueryResult<InplaceVolumetricTableDataPerFluidSelection_api, Error>[],
     ): AggregatedTableDataResults {
         const tablesData: InplaceVolumetricsTableData[] = [];
         const errors: Error[] = [];

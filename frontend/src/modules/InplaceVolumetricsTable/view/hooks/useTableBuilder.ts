@@ -1,5 +1,5 @@
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { TableHeading, TableRow } from "@lib/components/Table/table";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { TableHeading, TableRow } from "@lib/components/Table/table";
 import { TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { useAtomValue } from "jotai";
@@ -23,7 +23,7 @@ export function useTableBuilder(ensembleSet: EnsembleSet): { headings: TableHead
     if (tableType === TableType.PER_REALIZATION) {
         const tableHeadingsAndRows = createTableHeadingsAndRowsFromTablesData(
             perRealizationTableDataResults.tablesData,
-            ensembleSet
+            ensembleSet,
         );
         headings = tableHeadingsAndRows.headings;
         tableRows = tableHeadingsAndRows.rows;
@@ -33,7 +33,7 @@ export function useTableBuilder(ensembleSet: EnsembleSet): { headings: TableHead
         const tableHeadingsAndRows = createStatisticalTableHeadingsAndRowsFromTablesData(
             statisticalTableDataResults.tablesData,
             statisticOptions,
-            ensembleSet
+            ensembleSet,
         );
 
         headings = tableHeadingsAndRows.headings;

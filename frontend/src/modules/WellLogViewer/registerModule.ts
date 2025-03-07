@@ -7,7 +7,7 @@ import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
-import { InterfaceTypes } from "./interfaces";
+import type { InterfaceTypes } from "./interfaces";
 import { preview } from "./preview";
 import { clearStorageForInstance } from "./settings/atoms/persistedAtoms";
 

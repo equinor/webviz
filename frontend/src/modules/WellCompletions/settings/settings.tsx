@@ -1,7 +1,7 @@
 import React from "react";
 
-import { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
@@ -15,7 +15,7 @@ import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Switch } from "@lib/components/Switch";
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import { ArrowDownwardSharp, ArrowUpwardSharp } from "@mui/icons-material";
 import { SortDirection, SortWellsBy, SortWellsByEnumToStringMapping } from "@webviz/well-completions-plot";
 
@@ -49,7 +49,7 @@ import {
 } from "./atoms/derivedAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import {
     RealizationSelection,
     RealizationSelectionEnumToStringMapping,
@@ -86,14 +86,14 @@ export const Settings = ({
 
     const [userSelectedTimeAggregation, setUserSelectedTimeAggregation] = useAtom(userSelectedTimeAggregationAtom);
     const [userSelectedHideZeroCompletions, setUserSelectedHideZeroCompletions] = useAtom(
-        userSelectedHideZeroCompletionsAtom
+        userSelectedHideZeroCompletionsAtom,
     );
     const [userSelectedRealizationSelection, setUserSelectedRealizationSelection] = useAtom(
-        userSelectedRealizationSelectionAtom
+        userSelectedRealizationSelectionAtom,
     );
     const [userSelectedSortWellsBy, setUserSelectedSortWellsBy] = useAtom(userSelectedSortWellsByAtom);
     const [userSelectedSortWellsDirection, setUserSelectedSortWellsDirection] = useAtom(
-        userSelectedSortWellsDirectionAtom
+        userSelectedSortWellsDirectionAtom,
     );
 
     const [prevSyncedEnsembleIdents, setPrevSyncedEnsembleIdents] = React.useState<RegularEnsembleIdent[] | null>(null);
@@ -138,7 +138,7 @@ export const Settings = ({
             return;
         }
         throw new Error(
-            "Invalid time step index selection, expected number or array of numbers length 2, got: " + newIndex
+            "Invalid time step index selection, expected number or array of numbers length 2, got: " + newIndex,
         );
     }
 
@@ -176,7 +176,7 @@ export const Settings = ({
             });
             return timeStep ?? "";
         },
-        [sortedCompletionDates]
+        [sortedCompletionDates],
     );
 
     function createErrorMessage(): string | null {
@@ -232,7 +232,7 @@ export const Settings = ({
                                 options={Object.values(TimeAggregationSelection).map(
                                     (elm: TimeAggregationSelection) => {
                                         return { value: elm, label: TimeAggregationSelectionEnumToStringMapping[elm] };
-                                    }
+                                    },
                                 )}
                                 direction={"horizontal"}
                                 value={userSelectedTimeAggregation}
@@ -297,7 +297,7 @@ export const Settings = ({
                         </Label>
                         <Label text="Sort wells by">
                             <div className="flex items-center gap-2">
-                                <div className="flex-grow">
+                                <div className="grow">
                                     <Dropdown
                                         options={Object.values(SortWellsBy).map((elm: SortWellsBy) => {
                                             return { value: elm, label: SortWellsByEnumToStringMapping[elm] };

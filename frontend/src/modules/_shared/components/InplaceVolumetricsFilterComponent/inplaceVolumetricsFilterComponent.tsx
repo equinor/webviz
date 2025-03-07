@@ -1,13 +1,13 @@
 import React from "react";
 
-import { FluidZone_api, InplaceVolumetricsIdentifierWithValues_api, InplaceVolumetricsIdentifier_api } from "@api";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { SettingsContext } from "@framework/ModuleContext";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { FluidZone_api, InplaceVolumetricsIdentifierWithValues_api, InplaceVolumetricsIdentifier_api } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { SettingsContext } from "@framework/ModuleContext";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
-import { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
+import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { ErrorWrapper } from "@lib/components/ErrorWrapper";
@@ -41,11 +41,11 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     const [tableNames, setTableNames] = React.useState<string[]>(props.selectedTableNames);
     const [fluidZones, setFluidZones] = React.useState<FluidZone_api[]>(props.selectedFluidZones);
     const [identifiersValues, setIdentifiersValues] = React.useState<InplaceVolumetricsIdentifierWithValues_api[]>(
-        props.selectedIdentifiersValues
+        props.selectedIdentifiersValues,
     );
 
     const [prevEnsembleIdents, setPrevEnsembleIdents] = React.useState<RegularEnsembleIdent[]>(
-        props.selectedEnsembleIdents
+        props.selectedEnsembleIdents,
     );
     const [prevTableNames, setPrevTableNames] = React.useState<string[]>(props.selectedTableNames);
     const [prevFluidZones, setPrevFluidZones] = React.useState<string[]>(props.selectedFluidZones);
@@ -78,7 +78,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                 if (
                     !isEqual(
                         prevIdentifiersValues.find((filter) => filter.identifier === identifier.identifier)?.values,
-                        identifier.values
+                        identifier.values,
                     )
                 ) {
                     newIdentifiersValues[index] = { ...identifier };
@@ -94,7 +94,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
 
     const syncedFilter = syncHelper.useValue(
         SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
-        "global.syncValue.inplaceVolumetricsFilterSettings"
+        "global.syncValue.inplaceVolumetricsFilterSettings",
     );
 
     if (!isEqual(syncedFilter, prevSyncedFilter)) {
@@ -128,7 +128,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
 
                 for (const identifier of syncedFilter.identifiersValues) {
                     const identifierValues = newIdentifiersValues.find(
-                        (filter) => filter.identifier === identifier.identifier
+                        (filter) => filter.identifier === identifier.identifier,
                     );
                     if (!identifierValues) {
                         newIdentifiersValues.push({ ...identifier });
@@ -164,7 +164,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
             syncHelper.publishValue(
                 SyncSettingKey.INPLACE_VOLUMETRICS_FILTER,
                 "global.syncValue.inplaceVolumetricsFilterSettings",
-                filter
+                filter,
             );
         }
     }
@@ -172,7 +172,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     function maybeDebounceOnChange(
         filter: InplaceVolumetricsFilterSettings,
         publish: boolean,
-        dropDebounce?: boolean
+        dropDebounce?: boolean,
     ): void {
         if (debounceTimeoutRef.current) {
             clearTimeout(debounceTimeoutRef.current);
@@ -240,7 +240,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
     function handleIdentifierValuesChange(
         identifier: InplaceVolumetricsIdentifier_api,
         values: (string | number)[],
-        publish = true
+        publish = true,
     ): void {
         const newIdentifiersValues = cloneDeep(identifiersValues);
         const identifierValues = newIdentifiersValues.find((filter) => filter.identifier === identifier);
@@ -307,7 +307,7 @@ export function InplaceVolumetricsFilterComponent(props: InplaceVolumetricsFilte
                     <CollapsibleGroup title="Identifier filters" expanded>
                         <div className="flex flex-col gap-2">
                             <div className="flex flex-row items-center gap-2">
-                                <div className="flex-grow">Allow intersection of values</div>
+                                <div className="grow">Allow intersection of values</div>
                                 <Checkbox
                                     checked={props.selectedAllowIdentifierValuesIntersection}
                                     onChange={(_, checked) => handleAllowIdentifierValueIntersectionChange(checked)}

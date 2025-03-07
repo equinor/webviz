@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { createPortal } from "@lib/utils/createPortal";
 
@@ -8,10 +8,7 @@ export type OverlayProps = {
 
 export const Overlay: React.FC<OverlayProps> = (props: OverlayProps) => {
     return createPortal(
-        <div
-            className="fixed inset-0 z-50 bg-black bg-opacity-50"
-            style={{ display: props.visible ? "block" : "none" }}
-        />
+        <div className="fixed inset-0 z-50 bg-black/50" style={{ display: props.visible ? "block" : "none" }} />,
     );
 };
 

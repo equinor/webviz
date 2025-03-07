@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { ResizablePanels } from "@lib/components/ResizablePanels";
 
 import { Content } from "../Content";
@@ -15,11 +15,11 @@ export type SettingsContentPanelsProps = {
 export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (props) => {
     const [leftSettingsPanelWidth, setLeftSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.LeftSettingsPanelWidthInPercent
+        GuiState.LeftSettingsPanelWidthInPercent,
     );
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.RightSettingsPanelWidthInPercent
+        GuiState.RightSettingsPanelWidthInPercent,
     );
 
     const handleResizablePanelsChange = React.useCallback(
@@ -27,7 +27,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             setLeftSettingsPanelWidth(sizes[0]);
             setRightSettingsPanelWidth(sizes[2]);
         },
-        [setLeftSettingsPanelWidth, setRightSettingsPanelWidth]
+        [setLeftSettingsPanelWidth, setRightSettingsPanelWidth],
     );
 
     return (
@@ -43,7 +43,7 @@ export const SettingsContentPanels: React.FC<SettingsContentPanelsProps> = (prop
             onSizesChange={handleResizablePanelsChange}
         >
             <LeftSettingsPanel workbench={props.workbench} />
-            <div className="flex flex-col flex-grow h-full">
+            <div className="flex flex-col grow h-full">
                 <Content workbench={props.workbench} />
             </div>
             <RightSettingsPanel workbench={props.workbench} />

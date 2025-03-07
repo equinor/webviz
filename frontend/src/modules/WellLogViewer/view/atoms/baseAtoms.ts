@@ -1,4 +1,4 @@
-import { WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
+import type { WellboreHeader_api, WellboreLogCurveHeader_api } from "@api";
 
 import { atom } from "jotai";
 

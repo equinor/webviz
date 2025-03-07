@@ -21,7 +21,7 @@ export const Drawer: React.FC<DrawerProps> = (props) => {
         <div className={`flex flex-col bg-white min-h-0 h-full${props.visible ? "" : " hidden"}`}>
             <div className="flex justify-center items-center p-2 bg-slate-100 h-10">
                 {props.icon && React.cloneElement(props.icon, { fontSize: "small", className: "mr-2" })}
-                <span className="font-bold flex-grow p-0 text-sm">{props.title}</span>
+                <span className="font-bold grow p-0 text-sm">{props.title}</span>
                 {props.actions}
                 {props.onClose && (
                     <div className="hover:text-slate-500 cursor-pointer mr-2" onClick={props.onClose}>
@@ -29,7 +29,7 @@ export const Drawer: React.FC<DrawerProps> = (props) => {
                     </div>
                 )}
             </div>
-            <div className="flex-grow flex flex-col h-auto">
+            <div className="grow flex flex-col h-auto">
                 {props.showFilter && (
                     <div className="p-2 bg-slate-50">
                         <Input
@@ -40,7 +40,7 @@ export const Drawer: React.FC<DrawerProps> = (props) => {
                     </div>
                 )}
                 {props.headerChildren && <div className="p-2 bg-slate-50">{props.headerChildren}</div>}
-                <div className="flex-grow min-h-0 overflow-y-auto max-h-full h-0">{props.children}</div>
+                <div className="grow min-h-0 overflow-y-auto max-h-full h-0">{props.children}</div>
             </div>
         </div>
     );

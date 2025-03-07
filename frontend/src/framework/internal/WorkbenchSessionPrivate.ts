@@ -1,6 +1,6 @@
-import { AtomStoreMaster } from "@framework/AtomStoreMaster";
+import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
 
-import { EnsembleSet } from "../EnsembleSet";
+import type { EnsembleSet } from "../EnsembleSet";
 import { EnsembleSetAtom, RealizationFilterSetAtom } from "../GlobalAtoms";
 import { WorkbenchSession, WorkbenchSessionEvent } from "../WorkbenchSession";
 

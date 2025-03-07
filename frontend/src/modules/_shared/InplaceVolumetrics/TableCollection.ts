@@ -1,4 +1,4 @@
-import { Table } from "./Table";
+import type { Table } from "./Table";
 
 export class TableCollection {
     private _collectedBy: string;

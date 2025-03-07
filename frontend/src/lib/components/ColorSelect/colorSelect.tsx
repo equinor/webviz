@@ -49,7 +49,7 @@ export function ColorSelect(props: ColorSelectProps): JSX.Element {
                         type="color"
                         value={selectedColor}
                         onChange={handleInputColorChange}
-                        className="absolute w-[1px] h-[1px] inset-0 z-1 invisible"
+                        className="absolute w-px h-px inset-0 invisible"
                     />
                 </>
             );

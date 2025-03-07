@@ -1,4 +1,5 @@
-import { ColorScale, ColorScaleGradientType, ColorScaleOptions } from "@lib/utils/ColorScale";
+import type { ColorScaleOptions } from "@lib/utils/ColorScale";
+import { ColorScale, ColorScaleGradientType } from "@lib/utils/ColorScale";
 
 export class ColorScaleWithName extends ColorScale {
     private _name: string;

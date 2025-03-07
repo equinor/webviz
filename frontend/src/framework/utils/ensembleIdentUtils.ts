@@ -7,7 +7,7 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
  * @returns RegularEnsembleIdent | DeltaEnsembleIdent | null
  */
 export function getEnsembleIdentFromString(
-    ensembleIdentString: string
+    ensembleIdentString: string,
 ): RegularEnsembleIdent | DeltaEnsembleIdent | null {
     let ensembleIdent = null;
     if (RegularEnsembleIdent.isValidEnsembleIdentString(ensembleIdentString)) {
@@ -24,7 +24,7 @@ export function getEnsembleIdentFromString(
  */
 export function areEnsembleIdentsEqual(
     a: RegularEnsembleIdent | DeltaEnsembleIdent | null,
-    b: RegularEnsembleIdent | DeltaEnsembleIdent | null
+    b: RegularEnsembleIdent | DeltaEnsembleIdent | null,
 ): boolean {
     if (a === null) {
         return b === null;
@@ -37,7 +37,7 @@ export function areEnsembleIdentsEqual(
  */
 export function areEnsembleIdentListsEqual(
     a: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
-    b: (RegularEnsembleIdent | DeltaEnsembleIdent)[]
+    b: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
 ): boolean {
     if (a.length !== b.length) {
         return false;
@@ -55,7 +55,7 @@ export function areEnsembleIdentListsEqual(
  */
 export function isEnsembleIdentOfType<T extends RegularEnsembleIdent | DeltaEnsembleIdent>(
     ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,
-    type: new (...args: any[]) => T
+    type: new (...args: any[]) => T,
 ): ensembleIdent is T {
     return ensembleIdent instanceof type;
 }
@@ -71,7 +71,7 @@ export function isEnsembleIdentOfType<T extends RegularEnsembleIdent | DeltaEnse
  */
 export function filterEnsembleIdentsByType<T extends RegularEnsembleIdent | DeltaEnsembleIdent>(
     ensembleIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[],
-    type: new (...args: any[]) => T
+    type: new (...args: any[]) => T,
 ): T[] {
     return ensembleIdents.filter((ensembleIdent) => isEnsembleIdentOfType(ensembleIdent, type)) as T[];
 }

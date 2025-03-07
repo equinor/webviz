@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Size2D } from "@lib/utils/geometry";
+import type { Size2D } from "@lib/utils/geometry";
 import { elementIsVisible } from "@lib/utils/htmlElementUtils";
 
 export function useElementSize(ref: React.RefObject<HTMLElement>): Size2D {

@@ -1,11 +1,11 @@
 import React from "react";
 
 import { GuiState, RightDrawerContent, useGuiValue } from "@framework/GuiMessageBroker";
-import { ModuleInstance } from "@framework/ModuleInstance";
+import type { ModuleInstance } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
+import type { LogEntry } from "@framework/internal/ModuleInstanceStatusControllerInternal";
 import {
-    LogEntry,
     LogEntryType,
     useStatusControllerStateValue,
 } from "@framework/internal/ModuleInstanceStatusControllerInternal";
@@ -80,15 +80,14 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
 
     const handleShowDetails = React.useCallback(function handleShowDetails(
         details: Record<string, unknown>,
-        posY: number
+        posY: number,
     ) {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
         }
         setDetails(details);
         setDetailsPosY(posY);
-    },
-    []);
+    }, []);
 
     const handleHideDetails = React.useCallback(
         function handleHideDetails() {
@@ -97,7 +96,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
             }
             setDetails(null);
         },
-        [pointerOverDetails]
+        [pointerOverDetails],
     );
 
     const handleDetailsPointerEnter = React.useCallback(function handleDetailsPointerEnter() {
@@ -156,7 +155,7 @@ export function ModuleInstanceLog(props: ModuleInstanceLogProps): React.ReactNod
                         top={detailsPosY}
                         onPointerEnter={handleDetailsPointerEnter}
                         onPointerLeave={handleDetailsPointerLeave}
-                    />
+                    />,
                 )}
         </div>
     );
@@ -230,7 +229,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
                 clearTimeout(timeoutRef.current);
             }
         },
-        [props.onHideDetails]
+        [props.onHideDetails],
     );
 
     function handleShowDetails(e: React.MouseEvent<HTMLDivElement>) {
@@ -247,7 +246,7 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
                     props.onShowDetails(
                         // @ts-expect-error - query is always present
                         props.logEntry.message.request["query"] ?? {},
-                        target.getBoundingClientRect().top
+                        target.getBoundingClientRect().top,
                     );
                 }
             }
@@ -304,13 +303,13 @@ function LogEntryComponent(props: LogEntryProps): React.ReactNode {
                 "text-transparent py-1 flex gap-3 items-center p-2 hover:text-gray-400 hover:bg-blue-100",
                 {
                     "cursor-help": Boolean(detailsObject),
-                }
+                },
             )}
             onMouseEnter={handleShowDetails}
             onMouseLeave={handleHideDetails}
         >
             {icon}
-            <span title={message} className="flex-grow text-black">
+            <span title={message} className="grow text-black">
                 {message}
                 {detailsString}
             </span>

@@ -1,4 +1,5 @@
-import { ORDERED_VOLUME_DEFINITIONS, VolumeDefinition } from "@assets/volumeDefinitions";
+import type { VolumeDefinition } from "@assets/volumeDefinitions";
+import { ORDERED_VOLUME_DEFINITIONS } from "@assets/volumeDefinitions";
 
 /**
  * Returns volume definition for vector if it exists, otherwise returns null.

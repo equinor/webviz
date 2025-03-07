@@ -1,4 +1,4 @@
-import { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
+import type { InplaceVolumetricsFilterSettings } from "@framework/types/inplaceVolumetricsFilterSettings";
 
 export enum PlotType {
     HISTOGRAM = "histogram",

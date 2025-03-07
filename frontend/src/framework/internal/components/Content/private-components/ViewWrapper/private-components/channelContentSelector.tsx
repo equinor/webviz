@@ -1,13 +1,13 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
-import { ChannelContentDefinition } from "@framework/DataChannelTypes";
-import { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
+import type { ChannelContentDefinition } from "@framework/DataChannelTypes";
+import type { ChannelReceiver } from "@framework/internal/DataChannels/ChannelReceiver";
 import { Button } from "@lib/components/Button";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Overlay } from "@lib/components/Overlay";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { Vec2 } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 import { Close } from "@mui/icons-material";
 
 export type SelectableChannel = {
@@ -88,10 +88,10 @@ export type ChannelSelectorProps = {
 export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
     const { onCancel } = props;
     const [selectedChannelIdString, setSelectedChannelIdString] = React.useState<string | null>(
-        props.selectedChannelIdString ?? null
+        props.selectedChannelIdString ?? null,
     );
     const [selectedContents, setSelectedContents] = React.useState<SelectedContents | null>(
-        props.selectedContents ?? null
+        props.selectedContents ?? null,
     );
 
     React.useEffect(() => {
@@ -203,7 +203,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
     const left = Math.min(props.position.x, window.innerWidth - convertRemToPixels(10) - 10);
     const top = Math.max(
         10,
-        Math.min(props.position.y - calculatedHeight / 2, window.innerHeight - calculatedHeight - 10)
+        Math.min(props.position.y - calculatedHeight / 2, window.innerHeight - calculatedHeight - 10),
     );
     const maxHeight = Math.min(calculatedHeight, window.innerHeight - 20);
 
@@ -212,7 +212,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
             <Overlay visible />
             <div
                 id="channel-selector"
-                className="absolute bg-white border rounded overflow-auto z-50 shadow flex flex-col w-80"
+                className="absolute bg-white border rounded-sm overflow-auto z-50 shadow-sm flex flex-col w-80"
                 style={{
                     left: `calc(${left}px - 10rem)`,
                     top: top,
@@ -224,7 +224,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                     id="channel-selector-header"
                     className="px-2 bg-slate-200 font-bold flex items-center text-sm h-12"
                 >
-                    <div className="flex-grow">
+                    <div className="grow">
                         Make <i className="font-bold text-green-700">{props.receiver.getDisplayName()}</i> subscribe
                         to...
                     </div>
@@ -232,7 +232,7 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                         <Close fontSize="small" />
                     </div>
                 </div>
-                <div className="flex-grow overflow-auto">
+                <div className="grow overflow-auto">
                     {props.selectableChannels.map((channel) => (
                         <ChannelContentSelector
                             multiSelect={props.receiver.getHasMultiContentSupport()}
@@ -257,6 +257,6 @@ export const ChannelSelector: React.FC<ChannelSelectorProps> = (props) => {
                 </div>
             </div>
         </>,
-        document.body
+        document.body,
     );
 };

@@ -1,22 +1,14 @@
 import React from "react";
 
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import {
-    GuiEvent,
-    GuiEventPayloads,
-    GuiState,
-    RightDrawerContent,
-    useGuiState,
-    useGuiValue,
-} from "@framework/GuiMessageBroker";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { Workbench } from "@framework/Workbench";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, RightDrawerContent, useGuiState, useGuiValue } from "@framework/GuiMessageBroker";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { Workbench } from "@framework/Workbench";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { Drawer } from "@framework/internal/components/Drawer";
-import {
-    EnsembleRealizationFilter,
-    EnsembleRealizationFilterSelections,
-} from "@framework/internal/components/EnsembleRealizationFilter";
+import type { EnsembleRealizationFilterSelections } from "@framework/internal/components/EnsembleRealizationFilter";
+import { EnsembleRealizationFilter } from "@framework/internal/components/EnsembleRealizationFilter";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import { areUnsortedArraysEqual } from "@framework/utils/arrayUtils";
 import { getEnsembleIdentFromString } from "@framework/utils/ensembleIdentUtils";
@@ -36,7 +28,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
     const realizationFilterSet = props.workbench.getWorkbenchSession().getRealizationFilterSet();
     const [, setNumberOfUnsavedRealizationFilters] = useGuiState(
         guiMessageBroker,
-        GuiState.NumberOfUnsavedRealizationFilters
+        GuiState.NumberOfUnsavedRealizationFilters,
     );
 
     const [activeFilterEnsembleIdent, setActiveFilterEnsembleIdent] = React.useState<
@@ -126,7 +118,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 realizationFilter.setIncludeOrExcludeFilter(selections.includeOrExcludeFilter);
                 realizationFilter.setRealizationNumberSelections(selections.realizationNumberSelections);
                 realizationFilter.setParameterIdentStringToValueSelectionReadonlyMap(
-                    selections.parameterIdentStringToValueSelectionReadonlyMap
+                    selections.parameterIdentStringToValueSelectionReadonlyMap,
                 );
 
                 // Run filtering
@@ -147,7 +139,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             realizationFilterSet,
             setNumberOfUnsavedRealizationFilters,
             props.workbench,
-        ]
+        ],
     );
 
     const handleDiscardAllClick = React.useCallback(
@@ -182,12 +174,12 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             ensembleIdentStringToRealizationFilterSelectionsMap,
             realizationFilterSet,
             setNumberOfUnsavedRealizationFilters,
-        ]
+        ],
     );
 
     React.useEffect(() => {
         function handleUnsavedChangesAction(
-            payload: GuiEventPayloads[GuiEvent.UnsavedRealizationFilterSettingsAction]
+            payload: GuiEventPayloads[GuiEvent.UnsavedRealizationFilterSettingsAction],
         ) {
             if (payload.action === UnsavedChangesAction.Save) {
                 handleApplyAllClick();
@@ -200,7 +192,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
         const removeUnsavedChangesActionHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.UnsavedRealizationFilterSettingsAction,
-            handleUnsavedChangesAction
+            handleUnsavedChangesAction,
         );
 
         return () => {
@@ -222,7 +214,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
         realizationFilter.setIncludeOrExcludeFilter(selections.includeOrExcludeFilter);
         realizationFilter.setRealizationNumberSelections(selections.realizationNumberSelections);
         realizationFilter.setParameterIdentStringToValueSelectionReadonlyMap(
-            selections.parameterIdentStringToValueSelectionReadonlyMap
+            selections.parameterIdentStringToValueSelectionReadonlyMap,
         );
 
         // Run filtering
@@ -260,7 +252,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
 
     function handleFilterChange(
         ensembleIdent: RegularEnsembleIdent | DeltaEnsembleIdent,
-        selections: EnsembleRealizationFilterSelections
+        selections: EnsembleRealizationFilterSelections,
     ) {
         const ensembleIdentString = ensembleIdent.toString();
 
@@ -276,7 +268,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
             !isEqual(selections.realizationNumberSelections, realizationFilter.getRealizationNumberSelections()) ||
             !areParameterIdentStringToValueSelectionMapCandidatesEqual(
                 selections.parameterIdentStringToValueSelectionReadonlyMap,
-                realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap()
+                realizationFilter.getParameterIdentStringToValueSelectionReadonlyMap(),
             ) ||
             selections.filterType !== realizationFilter.getFilterType() ||
             selections.includeOrExcludeFilter !== realizationFilter.getIncludeOrExcludeFilter();
@@ -309,7 +301,7 @@ export const RealizationFilterSettings: React.FC<RealizationFilterSettingsProps>
                 onClose={handleFilterSettingsClose}
             >
                 <div className="flex flex-col p-2 gap-4 overflow-y-auto">
-                    <div className="flex-grow space-y-4">
+                    <div className="grow space-y-4">
                         {ensembleSet.getEnsembleArray().map((ensemble) => {
                             const ensembleIdent = ensemble.getIdent();
                             const isActive =

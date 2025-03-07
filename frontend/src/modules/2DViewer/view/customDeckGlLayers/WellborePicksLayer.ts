@@ -1,4 +1,5 @@
-import { CompositeLayer, CompositeLayerProps, FilterContext, Layer, UpdateParameters } from "@deck.gl/core";
+import type { CompositeLayerProps, FilterContext, Layer, UpdateParameters } from "@deck.gl/core";
+import { CompositeLayer } from "@deck.gl/core";
 import { GeoJsonLayer, TextLayer } from "@deck.gl/layers";
 
 import type { Feature, FeatureCollection } from "geojson";
@@ -88,7 +89,7 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                     pickable: true,
                     getText: (d: Feature) => d.properties?.wellBoreUwi,
                     getLineColor: [50, 50, 50],
-                })
+                }),
             ),
 
             new TextLayer(
@@ -114,7 +115,7 @@ export class WellborePicksLayer extends CompositeLayer<WellBorePicksLayerProps> 
                     getTextAnchor: "middle",
                     getPosition: (d: TextLayerData) => d.coordinates,
                     getText: (d: TextLayerData) => d.name,
-                })
+                }),
             ),
         ];
     }

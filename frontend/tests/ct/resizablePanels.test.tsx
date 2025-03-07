@@ -1,9 +1,9 @@
 import { ResizablePanels } from "@lib/components/ResizablePanels";
-import { ResizablePanelsProps } from "@lib/components/ResizablePanels/resizablePanels";
-import { Size2D } from "@lib/utils/geometry";
-import { Vec2 } from "@lib/utils/vec2";
-import { ComponentFixtures, expect, test } from "@playwright/experimental-ct-react";
-import { Locator } from "@playwright/test";
+import type { ResizablePanelsProps } from "@lib/components/ResizablePanels/resizablePanels";
+import type { Size2D } from "@lib/utils/geometry";
+import type { Vec2 } from "@lib/utils/vec2";
+import type { Locator, TestType } from "@playwright/experimental-ct-core";
+import { expect, test } from "@playwright/experimental-ct-react";
 
 import { compareWithTolerance } from "tests/utils/compare";
 
@@ -11,10 +11,15 @@ const viewPortSize = { width: 1920, height: 1080 };
 
 test.use({ viewport: viewPortSize });
 
+// The typing for Playwright's mount method is not nicely exposed, so we
+// need to extract it via this inference stuff
+type ExtractGeneric<t> = t extends TestType<infer X> ? X : never;
+type ComponentFixtures = ExtractGeneric<typeof test>;
+
 async function mountComponentAndAssertItsRenderedCorrectly(
     mount: ComponentFixtures["mount"],
     props: Omit<ResizablePanelsProps, "children" | "id">,
-    size: Size2D = viewPortSize
+    size: Size2D = viewPortSize,
 ): ReturnType<ComponentFixtures["mount"]> {
     const resizablePanels = await mount(
         <div
@@ -38,7 +43,7 @@ async function mountComponentAndAssertItsRenderedCorrectly(
                     Content 3
                 </div>
             </ResizablePanels>
-        </div>
+        </div>,
     );
 
     const resizablePanelByDivs = await resizablePanels.locator("div").first().locator("div");
@@ -51,7 +56,7 @@ async function mountComponentAndAssertItsRenderedCorrectly(
 }
 
 async function makeContentLocatorsAndAssertTheirExistence(
-    resizablePanels: Locator
+    resizablePanels: Locator,
 ): Promise<[Locator, Locator, Locator]> {
     const content1 = resizablePanels.locator("#first");
     const content2 = resizablePanels.locator("#second");
@@ -78,7 +83,7 @@ function assertExpectedPositionAndSize(
     locator: Locator,
     position: Vec2,
     size: Size2D,
-    tolerance = 1.0
+    tolerance = 1.0,
 ): Promise<boolean> {
     return locator.boundingBox().then((boundingBox) => {
         if (boundingBox === null) {
@@ -106,22 +111,22 @@ test.describe("ResizablePanels", () => {
             await assertExpectedPositionAndSize(
                 content1,
                 { x: 0, y: 0 },
-                { width: expectedWidths[0], height: viewPortSize.height }
-            )
+                { width: expectedWidths[0], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
         expect(
             await assertExpectedPositionAndSize(
                 content2,
                 { x: expectedWidths[0] + 1, y: 0 },
-                { width: expectedWidths[1], height: viewPortSize.height }
-            )
+                { width: expectedWidths[1], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
         expect(
             await assertExpectedPositionAndSize(
                 content3,
                 { x: expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
-                { width: expectedWidths[2], height: viewPortSize.height }
-            )
+                { width: expectedWidths[2], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
     });
 
@@ -141,22 +146,22 @@ test.describe("ResizablePanels", () => {
             await assertExpectedPositionAndSize(
                 content1,
                 { x: 0, y: 0 },
-                { width: viewPortSize.width, height: expectedHeight[0] }
-            )
+                { width: viewPortSize.width, height: expectedHeight[0] },
+            ),
         ).toBeTruthy();
         expect(
             await assertExpectedPositionAndSize(
                 content2,
                 { x: 0, y: expectedHeight[0] + 1 },
-                { width: viewPortSize.width, height: expectedHeight[1] }
-            )
+                { width: viewPortSize.width, height: expectedHeight[1] },
+            ),
         ).toBeTruthy();
         expect(
             await assertExpectedPositionAndSize(
                 content3,
                 { x: 0, y: expectedHeight[0] + expectedHeight[1] + 2 },
-                { width: viewPortSize.width, height: expectedHeight[2] }
-            )
+                { width: viewPortSize.width, height: expectedHeight[2] },
+            ),
         ).toBeTruthy();
     });
 
@@ -177,22 +182,22 @@ test.describe("ResizablePanels", () => {
             await assertExpectedPositionAndSize(
                 content1,
                 { x: 0, y: 0 },
-                { width: expectedWidths[0], height: viewPortSize.height }
-            )
+                { width: expectedWidths[0], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
         expect(
             await assertExpectedPositionAndSize(
                 content2,
                 { x: expectedWidths[0] + 1, y: 0 },
-                { width: expectedWidths[1], height: viewPortSize.height }
-            )
+                { width: expectedWidths[1], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
         expect(
             await assertExpectedPositionAndSize(
                 content3,
                 { x: expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
-                { width: expectedWidths[2], height: viewPortSize.height }
-            )
+                { width: expectedWidths[2], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
 
         await resizablePanels.update(
@@ -202,7 +207,7 @@ test.describe("ResizablePanels", () => {
                     <div id="second" className="w-full h-full" />
                     <div id="third" className="w-full h-full" />
                 </ResizablePanels>
-            </div>
+            </div>,
         );
 
         expectedWidths = [
@@ -215,22 +220,22 @@ test.describe("ResizablePanels", () => {
             await assertExpectedPositionAndSize(
                 content1,
                 { x: 0, y: 0 },
-                { width: expectedWidths[0], height: viewPortSize.height }
-            )
+                { width: expectedWidths[0], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
         expect(
             await assertExpectedPositionAndSize(
                 content2,
                 { x: expectedWidths[0] + 1, y: 0 },
-                { width: expectedWidths[1], height: viewPortSize.height }
-            )
+                { width: expectedWidths[1], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
         expect(
             await assertExpectedPositionAndSize(
                 content3,
                 { x: expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
-                { width: expectedWidths[2], height: viewPortSize.height }
-            )
+                { width: expectedWidths[2], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
     });
 
@@ -255,24 +260,24 @@ test.describe("ResizablePanels", () => {
             await assertExpectedPositionAndSize(
                 content1,
                 { x: 0, y: 0 },
-                { width: viewPortSize.width, height: expectedHeights[0] }
-            )
+                { width: viewPortSize.width, height: expectedHeights[0] },
+            ),
         ).toBeTruthy();
 
         expect(
             await assertExpectedPositionAndSize(
                 content2,
                 { x: 0, y: expectedHeights[0] + 1 },
-                { width: viewPortSize.width, height: expectedHeights[1] }
-            )
+                { width: viewPortSize.width, height: expectedHeights[1] },
+            ),
         ).toBeTruthy();
 
         expect(
             await assertExpectedPositionAndSize(
                 content3,
                 { x: 0, y: expectedHeights[0] + expectedHeights[1] + 2 },
-                { width: viewPortSize.width, height: expectedHeights[2] }
-            )
+                { width: viewPortSize.width, height: expectedHeights[2] },
+            ),
         ).toBeTruthy();
 
         await resizablePanels.update(
@@ -282,7 +287,7 @@ test.describe("ResizablePanels", () => {
                     <div id="second" className="w-full h-full" />
                     <div id="third" className="w-full h-full" />
                 </ResizablePanels>
-            </div>
+            </div>,
         );
 
         expectedHeights = [
@@ -295,24 +300,24 @@ test.describe("ResizablePanels", () => {
             await assertExpectedPositionAndSize(
                 content1,
                 { x: 0, y: 0 },
-                { width: viewPortSize.width, height: expectedHeights[0] }
-            )
+                { width: viewPortSize.width, height: expectedHeights[0] },
+            ),
         ).toBeTruthy();
 
         expect(
             await assertExpectedPositionAndSize(
                 content2,
                 { x: 0, y: expectedHeights[0] + 1 },
-                { width: viewPortSize.width, height: expectedHeights[1] }
-            )
+                { width: viewPortSize.width, height: expectedHeights[1] },
+            ),
         ).toBeTruthy();
 
         expect(
             await assertExpectedPositionAndSize(
                 content3,
                 { x: 0, y: expectedHeights[0] + expectedHeights[1] + 2 },
-                { width: viewPortSize.width, height: expectedHeights[2] }
-            )
+                { width: viewPortSize.width, height: expectedHeights[2] },
+            ),
         ).toBeTruthy();
     });
 
@@ -334,24 +339,24 @@ test.describe("ResizablePanels", () => {
             await assertExpectedPositionAndSize(
                 content1,
                 { x: 0, y: 0 },
-                { width: expectedWidths[0], height: viewPortSize.height }
-            )
+                { width: expectedWidths[0], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
 
         expect(
             await assertExpectedPositionAndSize(
                 content2,
                 { x: expectedWidths[0] + 1, y: 0 },
-                { width: expectedWidths[1], height: viewPortSize.height }
-            )
+                { width: expectedWidths[1], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
 
         expect(
             await assertExpectedPositionAndSize(
                 content3,
                 { x: expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
-                { width: expectedWidths[2], height: viewPortSize.height }
-            )
+                { width: expectedWidths[2], height: viewPortSize.height },
+            ),
         ).toBeTruthy();
     });
 
@@ -369,24 +374,24 @@ test.describe("ResizablePanels", () => {
             await assertExpectedPositionAndSize(
                 content1,
                 { x: 0, y: 0 },
-                { width: viewPortSize.width, height: expectedHeights[0] }
-            )
+                { width: viewPortSize.width, height: expectedHeights[0] },
+            ),
         ).toBeTruthy();
 
         expect(
             await assertExpectedPositionAndSize(
                 content2,
                 { x: 0, y: expectedHeights[0] + 1 },
-                { width: viewPortSize.width, height: expectedHeights[1] }
-            )
+                { width: viewPortSize.width, height: expectedHeights[1] },
+            ),
         ).toBeTruthy();
 
         expect(
             await assertExpectedPositionAndSize(
                 content3,
                 { x: 0, y: expectedHeights[0] + expectedHeights[1] + 2 },
-                { width: viewPortSize.width, height: expectedHeights[2] }
-            )
+                { width: viewPortSize.width, height: expectedHeights[2] },
+            ),
         ).toBeTruthy();
     });
 
@@ -406,12 +411,12 @@ test.describe("ResizablePanels", () => {
 
         await page.mouse.move(
             dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2,
-            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2
+            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2,
         );
         await page.mouse.down();
         await page.mouse.move(
             dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2 + 100,
-            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2
+            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2,
         );
         await page.mouse.up();
 
@@ -426,8 +431,8 @@ test.describe("ResizablePanels", () => {
                 content1,
                 { x: 0, y: 0 },
                 { width: expectedWidths[0], height: viewPortSize.height },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -435,8 +440,8 @@ test.describe("ResizablePanels", () => {
                 content2,
                 { x: expectedWidths[0] + 1, y: 0 },
                 { width: expectedWidths[1], height: viewPortSize.height },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -444,8 +449,8 @@ test.describe("ResizablePanels", () => {
                 content3,
                 { x: expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
                 { width: expectedWidths[2], height: viewPortSize.height },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
     });
 
@@ -465,12 +470,12 @@ test.describe("ResizablePanels", () => {
 
         await page.mouse.move(
             dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2,
-            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2
+            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2,
         );
         await page.mouse.down();
         await page.mouse.move(
             dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2,
-            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2 + 100
+            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2 + 100,
         );
         await page.mouse.up();
 
@@ -485,8 +490,8 @@ test.describe("ResizablePanels", () => {
                 content1,
                 { x: 0, y: 0 },
                 { width: viewPortSize.width, height: expectedHeights[0] },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -494,8 +499,8 @@ test.describe("ResizablePanels", () => {
                 content2,
                 { x: 0, y: expectedHeights[0] + 1 },
                 { width: viewPortSize.width, height: expectedHeights[1] },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -503,8 +508,8 @@ test.describe("ResizablePanels", () => {
                 content3,
                 { x: 0, y: expectedHeights[0] + expectedHeights[1] + 2 },
                 { width: viewPortSize.width, height: expectedHeights[2] },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
     });
 
@@ -526,7 +531,7 @@ test.describe("ResizablePanels", () => {
 
         await page.mouse.move(
             dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2,
-            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2
+            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2,
         );
         await page.mouse.down();
         await page.mouse.move(-100, dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2);
@@ -539,8 +544,8 @@ test.describe("ResizablePanels", () => {
                 content1,
                 { x: 0, y: 0 },
                 { width: expectedWidths[0], height: viewPortSize.height },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -548,8 +553,8 @@ test.describe("ResizablePanels", () => {
                 content2,
                 { x: expectedWidths[0] + 1, y: 0 },
                 { width: expectedWidths[1], height: viewPortSize.height },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -557,8 +562,8 @@ test.describe("ResizablePanels", () => {
                 content3,
                 { x: expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
                 { width: expectedWidths[2], height: viewPortSize.height },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
     });
 
@@ -571,7 +576,7 @@ test.describe("ResizablePanels", () => {
                 minSizes: [0, 0, 300],
                 sizesInPercent: [10, 80, 10],
             },
-            resizablePanelsSize
+            resizablePanelsSize,
         );
         const [content1, content2, content3] = await makeContentLocatorsAndAssertTheirExistence(resizablePanels);
         const [, dragHandle2] = await makeDragHandleLocatorsAndAssertTheirExistence(resizablePanels);
@@ -585,7 +590,7 @@ test.describe("ResizablePanels", () => {
 
         await page.mouse.move(
             dragHandle2BoundingBox.x + dragHandle2BoundingBox.width / 2,
-            dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2
+            dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2,
         );
         await page.mouse.down();
         await page.mouse.move(viewPortSize.width, dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2);
@@ -602,8 +607,8 @@ test.describe("ResizablePanels", () => {
                 content1,
                 { x: 50, y: 0 },
                 { width: expectedWidths[0], height: resizablePanelsSize.height },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -611,8 +616,8 @@ test.describe("ResizablePanels", () => {
                 content2,
                 { x: 50 + expectedWidths[0] + 1, y: 0 },
                 { width: expectedWidths[1], height: resizablePanelsSize.height },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -620,8 +625,8 @@ test.describe("ResizablePanels", () => {
                 content3,
                 { x: 50 + expectedWidths[0] + expectedWidths[1] + 2, y: 0 },
                 { width: expectedWidths[2], height: resizablePanelsSize.height },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
     });
 
@@ -643,7 +648,7 @@ test.describe("ResizablePanels", () => {
 
         await page.mouse.move(
             dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2,
-            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2
+            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2,
         );
         await page.mouse.down();
         await page.mouse.move(dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2, -100);
@@ -660,8 +665,8 @@ test.describe("ResizablePanels", () => {
                 content1,
                 { x: 0, y: 0 },
                 { width: viewPortSize.width, height: expectedHeights[0] },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -669,8 +674,8 @@ test.describe("ResizablePanels", () => {
                 content2,
                 { x: 0, y: expectedHeights[0] + 1 },
                 { width: viewPortSize.width, height: expectedHeights[1] },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -678,8 +683,8 @@ test.describe("ResizablePanels", () => {
                 content3,
                 { x: 0, y: expectedHeights[0] + expectedHeights[1] + 2 },
                 { width: viewPortSize.width, height: expectedHeights[2] },
-                10.0
-            )
+                10.0,
+            ),
         ).toBeTruthy();
     });
 
@@ -692,7 +697,7 @@ test.describe("ResizablePanels", () => {
                 minSizes: [0, 0, 300],
                 sizesInPercent: [10, 80, 10],
             },
-            resizablePanelsSize
+            resizablePanelsSize,
         );
         const [content1, content2, content3] = await makeContentLocatorsAndAssertTheirExistence(resizablePanels);
         const [, dragHandle2] = await makeDragHandleLocatorsAndAssertTheirExistence(resizablePanels);
@@ -706,7 +711,7 @@ test.describe("ResizablePanels", () => {
 
         await page.mouse.move(
             dragHandle2BoundingBox.x + dragHandle2BoundingBox.width / 2,
-            dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2
+            dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2,
         );
         await page.mouse.down();
         await page.mouse.move(dragHandle2BoundingBox.x + dragHandle2BoundingBox.width / 2, viewPortSize.height);
@@ -723,8 +728,8 @@ test.describe("ResizablePanels", () => {
                 content1,
                 { x: 0, y: 50 },
                 { width: viewPortSize.width, height: expectedHeights[0] },
-                3.0
-            )
+                3.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -732,8 +737,8 @@ test.describe("ResizablePanels", () => {
                 content2,
                 { x: 0, y: 50 + expectedHeights[0] + 1 },
                 { width: viewPortSize.width, height: expectedHeights[1] },
-                3.0
-            )
+                3.0,
+            ),
         ).toBeTruthy();
 
         expect(
@@ -741,8 +746,8 @@ test.describe("ResizablePanels", () => {
                 content3,
                 { x: 0, y: 50 + expectedHeights[0] + expectedHeights[1] + 2 },
                 { width: viewPortSize.width, height: expectedHeights[2] },
-                3.0
-            )
+                3.0,
+            ),
         ).toBeTruthy();
     });
 
@@ -772,12 +777,12 @@ test.describe("ResizablePanels", () => {
 
         await page.mouse.move(
             dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2,
-            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2
+            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2,
         );
         await page.mouse.down();
         await page.mouse.move(
             dragHandle1BoundingBox.x + dragHandle1BoundingBox.width / 2 - 100,
-            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2
+            dragHandle1BoundingBox.y + dragHandle1BoundingBox.height / 2,
         );
         await page.mouse.up();
 
@@ -789,18 +794,18 @@ test.describe("ResizablePanels", () => {
 
         for (let i = 0; i < 3; i++) {
             expect(
-                compareWithTolerance(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 10.0)
+                compareWithTolerance(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 10.0),
             ).toBeTruthy();
         }
 
         await page.mouse.move(
             dragHandle2BoundingBox.x + dragHandle2BoundingBox.width / 2,
-            dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2
+            dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2,
         );
         await page.mouse.down();
         await page.mouse.move(
             dragHandle2BoundingBox.x + dragHandle2BoundingBox.width / 2 + 100,
-            dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2
+            dragHandle2BoundingBox.y + dragHandle2BoundingBox.height / 2,
         );
         await page.mouse.up();
 
@@ -812,7 +817,7 @@ test.describe("ResizablePanels", () => {
 
         for (let i = 0; i < 3; i++) {
             expect(
-                compareWithTolerance(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 10.0)
+                compareWithTolerance(callbackSizes[i], (expectedWidths[i] / viewPortSize.width) * 100, 10.0),
             ).toBeTruthy();
         }
     });

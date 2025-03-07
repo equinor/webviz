@@ -1,4 +1,5 @@
-import { CanvasLayer, OnMountEvent, OnRescaleEvent, OnUpdateEvent, SeismicCanvasData } from "@equinor/esv-intersection";
+import type { OnMountEvent, OnRescaleEvent, OnUpdateEvent, SeismicCanvasData } from "@equinor/esv-intersection";
+import { CanvasLayer } from "@equinor/esv-intersection";
 
 export type SeismicLayerData = SeismicCanvasData & {
     minFenceDepth: number;

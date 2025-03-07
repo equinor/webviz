@@ -1,5 +1,5 @@
-import { PvtData_api } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { PvtData_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 export enum ColorBy {
     ENSEMBLE = "ensemble",

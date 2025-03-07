@@ -1,15 +1,15 @@
-import React from "react";
+import type React from "react";
 
 import { Icon } from "@equinor/eds-core-react";
 import { color_palette } from "@equinor/eds-icons";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { SortableListItem } from "@lib/components/SortableList";
-import { ColorScale as ColorScaleImpl } from "@lib/utils/ColorScale";
+import type { ColorScale as ColorScaleImpl } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { ColorScaleSelector } from "@modules/_shared/components/ColorScaleSelector/colorScaleSelector";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import { ColorScale } from "./ColorScale";
+import type { ColorScale } from "./ColorScale";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";

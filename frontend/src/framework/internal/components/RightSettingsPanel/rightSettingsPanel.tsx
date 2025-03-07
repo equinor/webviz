@@ -1,7 +1,7 @@
 import React from "react";
 
 import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Workbench } from "@framework/Workbench";
+import type { Workbench } from "@framework/Workbench";
 import { UnsavedChangesAction } from "@framework/types/unsavedChangesAction";
 import { Button } from "@lib/components/Button";
 import { Dialog } from "@lib/components/Dialog";
@@ -17,7 +17,7 @@ export const RightSettingsPanel: React.FC<RightSettingsPanelProps> = (props) => 
     const [, setRightSettingsPanelWidth] = useGuiState(guiMessageBroker, GuiState.RightSettingsPanelWidthInPercent);
     const [numberOfUnsavedRealizationFilters] = useGuiState(
         guiMessageBroker,
-        GuiState.NumberOfUnsavedRealizationFilters
+        GuiState.NumberOfUnsavedRealizationFilters,
     );
 
     function handleOnClose() {

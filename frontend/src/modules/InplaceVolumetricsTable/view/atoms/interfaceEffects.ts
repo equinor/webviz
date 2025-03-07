@@ -1,5 +1,5 @@
-import { InterfaceEffects } from "@framework/Module";
-import { SettingsToViewInterface } from "@modules/InplaceVolumetricsTable/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { SettingsToViewInterface } from "@modules/InplaceVolumetricsTable/interfaces";
 
 import {
     accumulationOptionsAtom,

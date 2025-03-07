@@ -1,9 +1,10 @@
 import React from "react";
 
-import { Table, TableHeading, TableProps } from "@lib/components/Table/table";
-import { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
+import type { TableHeading, TableProps } from "@lib/components/Table/table";
+import { Table } from "@lib/components/Table/table";
+import type { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
 
-import { SensitivityResponseDataset } from "../utils/sensitivityResponseCalculator";
+import type { SensitivityResponseDataset } from "../utils/sensitivityResponseCalculator";
 
 export interface SensitivityTableProps {
     sensitivityResponseDataset: SensitivityResponseDataset;
@@ -12,7 +13,7 @@ export interface SensitivityTableProps {
 }
 const numFormat = (number: number): string => {
     return Intl.NumberFormat("en", { notation: "compact", minimumFractionDigits: 2, maximumFractionDigits: 3 }).format(
-        number
+        number,
     );
 };
 enum TableColumns {
@@ -45,7 +46,7 @@ const SensitivityTable: React.FC<SensitivityTableProps> = (props) => {
         let filteredSensitivityResponses = props.sensitivityResponseDataset.sensitivityResponses;
         if (props.hideZeroY) {
             filteredSensitivityResponses = filteredSensitivityResponses.filter(
-                (s) => s.lowCaseReferenceDifference !== 0.0 || s.highCaseReferenceDifference !== 0.0
+                (s) => s.lowCaseReferenceDifference !== 0.0 || s.highCaseReferenceDifference !== 0.0,
             );
         }
         const rows = filteredSensitivityResponses

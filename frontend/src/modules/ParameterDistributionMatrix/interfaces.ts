@@ -1,6 +1,6 @@
-import { ParameterIdent } from "@framework/EnsembleParameters";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
     selectedVisualizationTypeAtom,
@@ -8,7 +8,7 @@ import {
     showPercentilesAndMeanLinesAtom,
 } from "./settings/atoms/baseAtoms";
 import { selectedEnsembleIdentsAtom, selectedParameterIdentsAtom } from "./settings/atoms/derivedAtoms";
-import { ParameterDistributionPlotType } from "./typesAndEnums";
+import type { ParameterDistributionPlotType } from "./typesAndEnums";
 
 type SettingsToViewInterface = {
     selectedVisualizationType: ParameterDistributionPlotType;

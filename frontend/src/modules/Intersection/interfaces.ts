@@ -1,6 +1,6 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { IntersectionType } from "@framework/types/intersection";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { IntersectionType } from "@framework/types/intersection";
+import type { ColorScale } from "@lib/utils/ColorScale";
 
 import {
     gridLayerAtom,
@@ -17,8 +17,8 @@ import {
     selectedFieldIdentifierAtom,
     selectedWellboreAtom,
 } from "./settings/atoms/derivedAtoms";
-import { WellboreHeader } from "./typesAndEnums";
-import { LayerManager } from "./utils/layers/LayerManager";
+import type { WellboreHeader } from "./typesAndEnums";
+import type { LayerManager } from "./utils/layers/LayerManager";
 
 export type SettingsToViewInterface = {
     fieldIdentifier: string | null;

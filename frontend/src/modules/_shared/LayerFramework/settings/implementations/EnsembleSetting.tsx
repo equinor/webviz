@@ -1,10 +1,10 @@
-import React from "react";
+import type React from "react";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
+import type { Setting, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
 import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 
@@ -38,7 +38,7 @@ export class EnsembleSetting implements Setting<RegularEnsembleIdent | null> {
     makeComponent(): (props: SettingComponentProps<RegularEnsembleIdent | null>) => React.ReactNode {
         return function Ensemble(props: SettingComponentProps<RegularEnsembleIdent | null>) {
             const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
-                props.availableValues.includes(ensemble.getIdent())
+                props.availableValues.includes(ensemble.getIdent()),
             );
 
             return (

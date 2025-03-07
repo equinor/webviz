@@ -1,4 +1,5 @@
-import { DisplayComponentType, SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
+import type { SelectedSensitivity } from "@modules/TornadoChart/typesAndEnums";
+import { DisplayComponentType } from "@modules/TornadoChart/typesAndEnums";
 
 import { atom } from "jotai";
 

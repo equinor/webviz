@@ -1,7 +1,6 @@
-import { VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
-import { StatisticFunction_api } from "@api";
+import type { StatisticFunction_api, VectorRealizationData_api, VectorStatisticSensitivityData_api } from "@api";
 
-import { PlotData } from "plotly.js";
+import type { PlotData } from "plotly.js";
 
 export interface TimeSeriesPlotlyTrace extends Partial<PlotData> {
     realizationNumber?: number | null;
@@ -11,7 +10,7 @@ export interface TimeSeriesPlotlyTrace extends Partial<PlotData> {
 export function createStatisticalLineTraces(
     sensitivityData: VectorStatisticSensitivityData_api[],
     statisticsFunction: StatisticFunction_api,
-    color: string
+    color: string,
 ): TimeSeriesPlotlyTrace[] {
     const traces: TimeSeriesPlotlyTrace[] = [];
     sensitivityData.forEach((aCase, index) => {
@@ -29,7 +28,7 @@ export function createStatisticalLineTraces(
                     lineColor: color,
                     lineWidth: 3,
                     hoverTemplate: `Sensitivity:<b>${aCase.sensitivityName}</b> <br> Case: <b>${aCase.sensitivityName}</b> <br> Value: %{y} <br> Date: %{x}<extra></extra>`,
-                })
+                }),
             );
         }
     });
@@ -40,7 +39,7 @@ export function createRealizationLineTraces(
     realizationData: VectorRealizationData_api[],
     sensitivityName: string,
     color: string,
-    highlightedRealization?: number | undefined
+    highlightedRealization?: number | undefined,
 ): TimeSeriesPlotlyTrace[] {
     const traces: TimeSeriesPlotlyTrace[] = [];
     let highlightedTrace: TimeSeriesPlotlyTrace | null = null;

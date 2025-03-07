@@ -1,4 +1,4 @@
-import { ParameterIdent } from "@framework/EnsembleParameters";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
 
 export type EnsembleParameterRealizationsAndValues = {
     ensembleDisplayName: string;

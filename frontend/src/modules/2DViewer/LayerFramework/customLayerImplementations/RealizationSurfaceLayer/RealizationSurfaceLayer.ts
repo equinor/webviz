@@ -1,20 +1,22 @@
-import { SurfaceDataPng_api, SurfaceTimeType_api } from "@api";
-import { getSurfaceDataOptions } from "@api";
+import type { SurfaceDataPng_api } from "@api";
+import { SurfaceTimeType_api, getSurfaceDataOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import type { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
-import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
-import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
+import type { FullSurfaceAddress } from "@modules/_shared/Surface";
+import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
+import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
+import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
 import { RealizationSurfaceSettingsContext } from "./RealizationSurfaceSettingsContext";
-import { RealizationSurfaceSettings } from "./types";
+import type { RealizationSurfaceSettings } from "./types";
 
 export class RealizationSurfaceLayer
     implements Layer<RealizationSurfaceSettings, SurfaceDataFloat_trans | SurfaceDataPng_api>
@@ -28,7 +30,7 @@ export class RealizationSurfaceLayer
             this,
             layerManager,
             new RealizationSurfaceSettingsContext(layerManager),
-            LayerColoringType.COLORSCALE
+            LayerColoringType.COLORSCALE,
         );
     }
 
@@ -46,7 +48,7 @@ export class RealizationSurfaceLayer
 
     doSettingsChangesRequireDataRefetch(
         prevSettings: RealizationSurfaceSettings,
-        newSettings: RealizationSurfaceSettings
+        newSettings: RealizationSurfaceSettings,
     ): boolean {
         return !isEqual(prevSettings, newSettings);
     }
