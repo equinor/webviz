@@ -22,13 +22,13 @@ LOGGER = logging.getLogger(__name__)
 
 class ObservationAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str):
-        self._sumo_client: SumoClient = sumo_client
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._case_context = SearchContext(sumo=self._sumo_client).filter(uuid=self._case_uuid)
 
     @classmethod
     def from_case_uuid(cls, access_token: str, case_uuid: str) -> "ObservationAccess":
-        sumo_client: SumoClient = create_sumo_client(access_token)
+        sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid)
 
     @property

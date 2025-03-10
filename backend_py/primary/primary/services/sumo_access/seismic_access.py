@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 class SeismicAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = sumo_client
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
@@ -23,7 +23,7 @@ class SeismicAccess:
 
     @classmethod
     def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SeismicAccess":
-        sumo_client: SumoClient = create_sumo_client(access_token)
+        sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_seismic_cube_meta_list_async(self) -> List[SeismicCubeMeta]:
@@ -35,7 +35,7 @@ class SeismicAccess:
 
         length_cubes = await seismic_context.length_async()
         async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(_get_seismic_cube_meta(seismic_context, i)) for i in range(length_cubes)]
+            tasks = [tg.create_task(_get_seismic_cube_meta_async(seismic_context, i)) for i in range(length_cubes)]
         cube_meta_arr: list[SeismicCubeMeta] = [task.result() for task in tasks]
 
         return cube_meta_arr
@@ -101,7 +101,7 @@ def clean_vds_url(vds_url: str) -> str:
     return vds_url.replace(":443", "")
 
 
-async def _get_seismic_cube_meta(search_context: SearchContext, item_no: int) -> SeismicCubeMeta:
+async def _get_seismic_cube_meta_async(search_context: SearchContext, item_no: int) -> SeismicCubeMeta:
     seismic_cube = await search_context.getitem_async(item_no)
     t_start = seismic_cube["data"].get("time", {}).get("t0", {}).get("value", None)
     t_end = seismic_cube["data"].get("time", {}).get("t1", {}).get("value", None)

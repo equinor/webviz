@@ -24,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 
 class ParameterAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = sumo_client
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
@@ -33,7 +33,7 @@ class ParameterAccess:
 
     @classmethod
     def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "ParameterAccess":
-        sumo_client: SumoClient = create_sumo_client(access_token)
+        sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_parameters_and_sensitivities(self) -> EnsembleParameters:

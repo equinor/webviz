@@ -54,7 +54,7 @@ class SumoInspector:
         async with asyncio.TaskGroup() as tg:
             tasks = [tg.create_task(self._get_case_info_async(search_context, case_uuid)) for case_uuid in case_uuids]
 
-        case_info_arr: list[CaseInfo] = [task.result() for task in tasks]
+        case_info_arr = [task.result() for task in tasks]
 
         timer.record_lap("get_cases_for_field")
         case_info_arr = sorted(case_info_arr, key=lambda case_info: case_info.name)

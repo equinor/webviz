@@ -33,19 +33,19 @@ LOGGER = logging.getLogger(__name__)
 
 class SummaryAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = sumo_client
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
 
     @classmethod
     def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SummaryAccess":
-        sumo_client: SumoClient = create_sumo_client(access_token)
+        sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_available_vectors_async(self) -> List[VectorInfo]:
         timer = PerfTimer()
 
-        table_context: SearchContext = SearchContext(sumo=self._sumo_client).tables.filter(
+        table_context = SearchContext(sumo=self._sumo_client).tables.filter(
             uuid=self._case_uuid, iteration=self._iteration_name, tagname="summary"
         )
 
@@ -108,7 +108,7 @@ class SummaryAccess:
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
         # New metadata uses simulationtimeseries, but most existing cases use timeseries
         table_loader.require_content_type(["timeseries", "simulationtimeseries"])
-        table: pa.Table = await table_loader.get_aggregated_single_column_async(vector_name)
+        table = await table_loader.get_aggregated_single_column_async(vector_name)
         _validate_single_vector_table(table, vector_name)
         et_loading_ms = timer.lap_ms()
 
@@ -205,12 +205,12 @@ class SummaryAccess:
         timer = PerfTimer()
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
         table_loader.require_content_type(["timeseries", "simulationtimeseries"])
-        table: pa.Table = await table_loader.get_single_realization_async(realization)
+        table = await table_loader.get_single_realization_async(realization)
 
         # Verify that we got the expected DATE column
         if not "DATE" in table.column_names:
             raise InvalidDataError("Table does not contain a DATE column", Service.SUMO)
-        date_field: pa.Field = table.field("DATE")
+        date_field = table.field("DATE")
         if date_field.type != pa.timestamp("ms"):
             raise InvalidDataError(f"Unexpected type for DATE column {date_field.type=}", Service.SUMO)
 
@@ -267,7 +267,7 @@ class SummaryAccess:
 
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
         table_loader.require_content_type(["timeseries", "simulationtimeseries"])
-        table: pa.Table = await table_loader.get_aggregated_single_column_async(hist_vec_name)
+        table = await table_loader.get_aggregated_single_column_async(hist_vec_name)
         _validate_single_vector_table(table, hist_vec_name)
         et_load_table_ms = timer.lap_ms()
 

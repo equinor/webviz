@@ -57,7 +57,7 @@ class Grid3dInfo(BaseModel):
 
 class Grid3dAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = sumo_client
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
@@ -66,7 +66,7 @@ class Grid3dAccess:
 
     @classmethod
     def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "Grid3dAccess":
-        sumo_client: SumoClient = create_sumo_client(access_token)
+        sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_models_info_arr_async(self, realization: int) -> List[Grid3dInfo]:
@@ -77,13 +77,13 @@ class Grid3dAccess:
         length_grids = await grid3d_context.length_async()
 
         async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(_get_grid_model_meta(grid3d_context, i)) for i in range(length_grids)]
+            tasks = [tg.create_task(_get_grid_model_meta_async(grid3d_context, i)) for i in range(length_grids)]
         grid_meta_arr: list[Grid3dInfo] = [task.result() for task in tasks]
 
         return grid_meta_arr
 
 
-async def _get_grid_model_meta(search_context: SearchContext, item_no: int) -> Grid3dInfo:
+async def _get_grid_model_meta_async(search_context: SearchContext, item_no: int) -> Grid3dInfo:
     """
     Retrieve metadata for a grid model. This is a helper function for Grid3dAccess.get_models_info_arr_async
     Note that in fmu-sumo the grid properties metadata are related to a grid geometry via data.geometry.relative_path.keyword

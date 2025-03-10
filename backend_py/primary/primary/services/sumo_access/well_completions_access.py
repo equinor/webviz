@@ -17,7 +17,7 @@ class WellCompletionsAccess:
     TAGNAME = "wellcompletiondata"
 
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = sumo_client
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
@@ -26,7 +26,7 @@ class WellCompletionsAccess:
 
     @classmethod
     def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "WellCompletionsAccess":
-        sumo_client: SumoClient = create_sumo_client(access_token)
+        sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_well_completions_single_realization_table_async(self, realization: int) -> pa.Table | None:
@@ -35,7 +35,7 @@ class WellCompletionsAccess:
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
         table_loader.require_tagname(WellCompletionsAccess.TAGNAME)
 
-        pa_table: pa.Table = await table_loader.get_single_realization_async(realization)
+        pa_table = await table_loader.get_single_realization_async(realization)
 
         return pa_table
 
@@ -48,7 +48,7 @@ class WellCompletionsAccess:
 
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
         table_loader.require_tagname(WellCompletionsAccess.TAGNAME)
-        table: pa.Table = await table_loader.get_aggregated_multiple_columns_async(["OP/SH", "KH"])
+        table = await table_loader.get_aggregated_multiple_columns_async(["OP/SH", "KH"])
 
         expected_columns = ["OP/SH", "KH"] + index_columns
 

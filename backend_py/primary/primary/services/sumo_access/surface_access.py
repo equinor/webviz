@@ -24,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 
 class SurfaceAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str | None):
-        self._sumo_client: SumoClient = sumo_client
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str | None = iteration_name
 
@@ -78,7 +78,6 @@ class SurfaceAccess:
         LOGGER.debug(
             f"Got metadata for realization surfaces in: {perf_metrics.to_string()} [{len(surf_meta_arr)} entries]"
         )
-        print("*******************************", surf_meta_set)
         return surf_meta_set
 
     async def get_observed_surfaces_metadata_async(self) -> SurfaceMetaSet:

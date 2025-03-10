@@ -17,7 +17,7 @@ LOGGER = logging.getLogger(__name__)
 
 class PolygonsAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = sumo_client
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
@@ -26,7 +26,7 @@ class PolygonsAccess:
 
     @classmethod
     def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "PolygonsAccess":
-        sumo_client: SumoClient = create_sumo_client(access_token)
+        sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_polygons_directory_async(self) -> List[PolygonsMeta]:
@@ -37,7 +37,7 @@ class PolygonsAccess:
         )
         length_polys = await polygons_context.length_async()
         async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(_get_polygons_meta(polygons_context, i)) for i in range(length_polys)]
+            tasks = [tg.create_task(_get_polygons_meta_async(polygons_context, i)) for i in range(length_polys)]
         poly_meta_arr: list[PolygonsMeta] = [task.result() for task in tasks]
 
         return poly_meta_arr
@@ -102,7 +102,7 @@ class PolygonsAccess:
         return addr_str
 
 
-async def _get_polygons_meta(search_context: SearchContext, item_no: int) -> PolygonsMeta:
+async def _get_polygons_meta_async(search_context: SearchContext, item_no: int) -> PolygonsMeta:
     polygons = await search_context.getitem_async(item_no)
     content = polygons["data"].get("content", SumoContent.DEPTH)
 
@@ -110,7 +110,7 @@ async def _get_polygons_meta(search_context: SearchContext, item_no: int) -> Pol
     # https://github.com/equinor/webviz/issues/433
 
     if content == "unset":
-        LOGGER.info(
+        LOGGER.warning(
             f"Polygons {polygons['data']['name']} has unset content. Defaulting temporarily to depth until enforced by dataio."
         )
         content = SumoContent.DEPTH
@@ -119,7 +119,7 @@ async def _get_polygons_meta(search_context: SearchContext, item_no: int) -> Pol
     # https://github.com/equinor/webviz/issues/433
     tagname = polygons["data"].get("tagname", "")
     if tagname == "":
-        LOGGER.info(
+        LOGGER.warning(
             f"Surface {polygons['data']['name']} has empty tagname. Defaulting temporarily to Unknown until enforced by dataio."
         )
         tagname = "Unknown"

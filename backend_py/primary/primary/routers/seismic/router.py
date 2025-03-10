@@ -1,4 +1,3 @@
-import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
@@ -12,8 +11,6 @@ from primary.services.vds_access.response_types import VdsMetadata
 from primary.services.vds_access.vds_access import VdsAccess
 from . import schemas
 from . import converters
-
-LOGGER = logging.getLogger(__name__)
 
 router = APIRouter()
 

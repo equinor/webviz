@@ -32,7 +32,7 @@ class VfpAccess:
     """
 
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
-        self._sumo_client: SumoClient = sumo_client
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
         self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
@@ -41,7 +41,7 @@ class VfpAccess:
 
     @classmethod
     def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "VfpAccess":
-        sumo_client: SumoClient = create_sumo_client(access_token)
+        sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_all_vfp_table_names_for_realization(self, realization: int) -> List[str]:
@@ -63,7 +63,7 @@ class VfpAccess:
 
         table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
         table_loader.require_tagname(tagname)
-        pa_table: pa.Table = await table_loader.get_single_realization_async(realization)
+        pa_table = await table_loader.get_single_realization_async(realization)
 
         return pa_table
 

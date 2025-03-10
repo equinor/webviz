@@ -34,7 +34,7 @@ class CaseInspector:
         sumo_client: SumoClient = create_sumo_client(access_token)
         return CaseInspector(sumo_client=sumo_client, case_uuid=case_uuid)
 
-    async def _get_or_create_case_context(self) -> Case:
+    async def _get_or_create_case_context_async(self) -> Case:
         if self._cached_case_context is None:
             self._cached_case_context = await create_sumo_case_async(
                 client=self._sumo_client, case_uuid=self._case_uuid
@@ -44,10 +44,10 @@ class CaseInspector:
 
     async def get_case_name_async(self) -> str:
         """Get name of the case"""
-        case: Case = await self._get_or_create_case_context()
+        case = await self._get_or_create_case_context_async()
         return case.name
 
-    async def _get_iteration_info(self, iteration_uuid: str) -> IterationInfo:
+    async def _get_iteration_info_async(self, iteration_uuid: str) -> IterationInfo:
         search_context = SearchContext(self._sumo_client)
         iteration = await search_context.get_iteration_by_uuid_async(iteration_uuid)
         realization_count = len(await iteration.realizations_async)
@@ -56,14 +56,16 @@ class CaseInspector:
     async def get_iterations_async(self) -> list[IterationInfo]:
         """Get list of iterations for a case"""
         timer = PerfMetrics()
-        case: Case = await self._get_or_create_case_context()
+        case = await self._get_or_create_case_context_async()
         timer.record_lap("get_case_obj")
         iterations = await case.iterations_async
         iteration_uuids = iterations.uuids
         timer.record_lap("get_iteration uuids")
 
         async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(self._get_iteration_info(iteration_uuid)) for iteration_uuid in iteration_uuids]
+            tasks = [
+                tg.create_task(self._get_iteration_info_async(iteration_uuid)) for iteration_uuid in iteration_uuids
+            ]
 
         iter_info_arr: list[IterationInfo] = [task.result() for task in tasks]
 
@@ -77,7 +79,7 @@ class CaseInspector:
     async def get_realizations_in_iteration_async(self, iteration_name: str) -> list[int]:
         """Get list of realizations for the specified iteration"""
         timer = PerfMetrics()
-        case: Case = await self._get_or_create_case_context()
+        case: Case = await self._get_or_create_case_context_async()
 
         ensemble = case.filter(iteration=iteration_name, realization=True)
         realization_list = await ensemble.get_field_values_async("fmu.realization.id")
@@ -88,7 +90,7 @@ class CaseInspector:
 
     async def get_stratigraphic_column_identifier_async(self) -> str:
         """Retrieve the stratigraphic column identifier for a case"""
-        case: Case = await self._get_or_create_case_context()
+        case: Case = await self._get_or_create_case_context_async()
         strat_identifier = await case.get_field_values_async("masterdata.smda.stratigraphic_column.identifier.keyword")
         if len(strat_identifier) == 0:
             raise NoDataError(f"No stratigraphic column identifier found for {case.name}", Service.SUMO)
@@ -100,6 +102,6 @@ class CaseInspector:
 
     async def get_field_identifiers_async(self) -> list[str]:
         """Retrieve the field identifiers for a case"""
-        case: Case = await self._get_or_create_case_context()
+        case: Case = await self._get_or_create_case_context_async()
         field_identifiers = await case.get_field_values_async("masterdata.smda.field.identifier.keyword")
         return field_identifiers
