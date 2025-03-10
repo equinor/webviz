@@ -2,12 +2,13 @@ import React from "react";
 
 import type { WellboreLogCurveHeader_api } from "@api";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
+import type { DropdownOption, DropdownOptionGroup } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { SortableList, SortableListItem } from "@lib/components/SortableList";
 import { ColorSet } from "@lib/utils/ColorSet";
 import { arrayMove } from "@lib/utils/arrays";
+import { missingCurvesAtom } from "@modules/WellLogViewer/settings/atoms/derivedAtoms";
 import type { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 import { CURVE_COLOR_PALETTE } from "@modules/WellLogViewer/utils/logViewerColors";
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
@@ -15,6 +16,7 @@ import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/stri
 import { Delete, SwapHoriz, Warning } from "@mui/icons-material";
 import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
+import { useAtomValue } from "jotai";
 import _ from "lodash";
 
 import { PLOT_TYPE_OPTIONS } from "./plotTypeOptions";
@@ -35,15 +37,13 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 
     const curveHeaderOptions = makeCurveNameOptions(props.availableCurveHeaders);
 
-    // If the current selection does not exist, keep it in the selection, with a warning. This can happen when the user is importing a config, or swapping between wellbores
-    props.plots.forEach((plot) => {
-        // Check both possible curveHeaders
-        [plot._curveHeader, plot._curveHeader2].forEach((header) => {
-            if (header && !curveHeaderOptions.some(({ value }) => value === makeSelectValueForCurveHeader(header))) {
-                curveHeaderOptions.push(makeMissingCurveOption(header));
-            }
-        });
-    });
+    const missingCurves = useAtomValue(missingCurvesAtom);
+
+    if (missingCurves.length) {
+        // If the current selection does not exist, keep it in the dropdown options, but with a warning.
+        // This can happen when the user is importing a config, or swapping between wellbores.
+        curveHeaderOptions.push(makeMissingCurveGroup(missingCurves));
+    }
 
     const addPlot = React.useCallback(
         function addPlot(plotType: TemplatePlotType) {
@@ -111,9 +111,17 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
     );
 }
 
+type CurveDropdownOptionGroup = Omit<DropdownOptionGroup, "options"> & {
+    options: CurveDropdownOption[];
+};
+type CurveDropdownOption = DropdownOption & {
+    _curveHeader: WellboreLogCurveHeader_api;
+    _curveHeader2?: WellboreLogCurveHeader_api;
+};
+
 type SortablePlotItemProps = {
     plot: TemplatePlotConfig;
-    curveHeaderOptions: CurveDropdownOption[];
+    curveHeaderOptions: CurveDropdownOptionGroup[];
     onPlotUpdate: (plot: TemplatePlotConfig, changes: Partial<TemplatePlotConfig>) => void;
     onDeletePlot: (plot: TemplatePlotConfig) => void;
 };
@@ -123,35 +131,31 @@ function SortablePlotItem(props: SortablePlotItemProps) {
     const secondCurveNeeded = props.plot.type === "differential";
     const endAdornment = <PlotItemEndAdornment {...props} />;
 
-    const getHeaderForPlotChoice = React.useCallback(
-        function getHeaderForPlotChoice(choice: string) {
-            const selectedOption = props.curveHeaderOptions.find(({ value }) => value === choice);
-            return selectedOption?._curveHeader;
-        },
-        [props.curveHeaderOptions],
-    );
-
     const handlePlotSelectChange = React.useCallback(
         function handlePlotSelectChange(choice: string, isSecondaryCurve?: boolean) {
-            const selectedHeader = getHeaderForPlotChoice(choice);
+            const selectedCurveHeader = _.chain(props.curveHeaderOptions)
+                .flatMap<CurveDropdownOption>("options")
+                .find(["value", choice])
+                .get("_curveHeader")
+                .value();
 
-            if (!selectedHeader) return;
+            if (!selectedCurveHeader) return;
 
             if (isSecondaryCurve) {
                 onPlotUpdate(props.plot, {
                     _key: props.plot._key,
-                    _curveHeader2: selectedHeader,
-                    name2: selectedHeader.curveName,
+                    _curveHeader2: selectedCurveHeader,
+                    name2: selectedCurveHeader.curveName,
                 });
             } else {
                 onPlotUpdate(props.plot, {
                     _key: props.plot._key,
-                    _curveHeader: selectedHeader,
-                    name: selectedHeader.curveName,
+                    _curveHeader: selectedCurveHeader,
+                    name: selectedCurveHeader.curveName,
                 });
             }
         },
-        [getHeaderForPlotChoice, onPlotUpdate, props.plot],
+        [onPlotUpdate, props.plot, props.curveHeaderOptions],
     );
 
     const plotForm = (
@@ -216,42 +220,54 @@ function PlotItemEndAdornment(props: SortablePlotItemProps) {
 }
 
 // It's my understanding that the STAT logs are the main curves users' would care about, so sorting them to the top first
-function sortStatLogsToTop(o: WellboreLogCurveHeader_api) {
-    if (o.logName.startsWith("STAT_")) return 0;
+function sortStatLogsToTop(group: CurveDropdownOptionGroup) {
+    if (group.label.startsWith("STAT_")) return 0;
     else return 1;
 }
 
 // The select value string needs a specific pattern
-type CurveDropdownOption = DropdownOption & {
-    _curveHeader: WellboreLogCurveHeader_api;
-};
 
-function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): CurveDropdownOption[] {
-    return _.chain(curveHeaders)
-        .sortBy([sortStatLogsToTop, "logName", "curveName"])
-        .map<CurveDropdownOption>((curveHeader) => {
-            return {
-                value: makeSelectValueForCurveHeader(curveHeader),
-                label: curveHeader.curveName,
-                group: curveHeader.logName,
-                _curveHeader: curveHeader,
-            };
-        })
-        .value();
+function curveHeaderToDropdownOption(curveHeader: WellboreLogCurveHeader_api): CurveDropdownOption {
+    return {
+        value: makeSelectValueForCurveHeader(curveHeader),
+        label: curveHeader.curveName,
+        _curveHeader: curveHeader,
+    };
+}
+
+function makeCurveNameOptions(curveHeaders: WellboreLogCurveHeader_api[]): CurveDropdownOptionGroup[] {
+    return (
+        _.chain(curveHeaders)
+            .groupBy("logName")
+            .entries()
+            .map<CurveDropdownOptionGroup>(([logName, headers]) => ({
+                label: logName,
+                options: _.sortBy(headers, "curveName").map(curveHeaderToDropdownOption),
+            }))
+            // Sort each log group by name
+            .sortBy([sortStatLogsToTop, "label"])
+            .value()
+    );
 }
 
 // Helper method to show a missing curve as a disabled option
-function makeMissingCurveOption(curveHeader: WellboreLogCurveHeader_api): CurveDropdownOption {
-    // @ts-expect-error We don't care about the _header field here, since the choice is always disabled
+function makeMissingCurveGroup(curveHeaders: WellboreLogCurveHeader_api[]): CurveDropdownOptionGroup {
     return {
-        label: curveHeader.curveName,
-        value: makeSelectValueForCurveHeader(curveHeader),
-        group: "Unavailable curves!",
-        disabled: true,
+        label: "Unavailable curves!",
+        options: curveHeaders.map(makeMissingCurveOption),
         adornment: (
             <span title="This plot is is not available for this wellbore!" className="text-yellow-500">
                 <Warning fontSize="inherit" />
             </span>
         ),
+    };
+}
+
+function makeMissingCurveOption(curveHeader: WellboreLogCurveHeader_api): CurveDropdownOption {
+    return {
+        _curveHeader: curveHeader,
+        label: curveHeader.curveName,
+        value: makeSelectValueForCurveHeader(curveHeader),
+        disabled: true,
     };
 }
