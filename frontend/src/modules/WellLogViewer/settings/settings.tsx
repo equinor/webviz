@@ -1,15 +1,18 @@
 import React from "react";
 
-import { WellboreHeader_api } from "@api";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { WellboreHeader_api } from "@api";
+import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { Intersection, IntersectionType } from "@framework/types/intersection";
+import type { Intersection } from "@framework/types/intersection";
+import { IntersectionType } from "@framework/types/intersection";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
 import { useAtomValue, useSetAtom } from "jotai";
@@ -21,10 +24,10 @@ import { availableFieldsQueryAtom, drilledWellboreHeadersQueryAtom } from "./ato
 import { TemplateTrackSettings } from "./components/TemplateTrackSettings";
 import { ViewerSettings } from "./components/ViewerSettings";
 
-import { InterfaceTypes } from "../interfaces";
+import type { InterfaceTypes } from "../interfaces";
 
 function useSyncedWellboreSetting(
-    syncHelper: SyncSettingsHelper
+    syncHelper: SyncSettingsHelper,
 ): [typeof selectedWellboreHeader, typeof setSelectedWellboreHeader] {
     const localSetSelectedWellboreHeader = useSetAtom(userSelectedWellboreUuidAtom);
     // Global syncronization
@@ -76,7 +79,7 @@ export function Settings(props: ModuleSettingsProps<InterfaceTypes>) {
         function handleWellboreSelectionChange(uuids: string[]) {
             setSelectedWellboreHeader(uuids[0] ?? null);
         },
-        [setSelectedWellboreHeader]
+        [setSelectedWellboreHeader],
     );
 
     // Error messages

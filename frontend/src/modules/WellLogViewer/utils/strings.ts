@@ -1,5 +1,6 @@
-import { WellLogCurveSourceEnum_api, WellboreLogCurveData_api, WellboreLogCurveHeader_api } from "@api";
-import { TemplatePlotConfig } from "@modules/WellLogViewer/types";
+import type { WellboreLogCurveData_api, WellboreLogCurveHeader_api } from "@api";
+import { WellLogCurveSourceEnum_api } from "@api";
+import type { TemplatePlotConfig } from "@modules/WellLogViewer/types";
 
 /**
  * Translates a well log curve data source to a more readable string
@@ -65,7 +66,7 @@ export function makeSelectValueForCurveHeader(header: WellboreLogCurveHeader_api
 
 export function findCurveHeaderBySelectValue(
     headers: WellboreLogCurveHeader_api[],
-    uniqueKey: string
+    uniqueKey: string,
 ): WellboreLogCurveHeader_api | undefined {
     return headers.find((h) => makeSelectValueForCurveHeader(h) === uniqueKey);
 }

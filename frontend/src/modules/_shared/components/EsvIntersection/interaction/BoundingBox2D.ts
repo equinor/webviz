@@ -1,4 +1,4 @@
-import { BoundingVolume } from "../types/types";
+import type { BoundingVolume } from "../types/types";
 
 export class BoundingBox2D implements BoundingVolume {
     private _minPoint: number[];

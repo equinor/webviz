@@ -1,4 +1,4 @@
-import { Setting } from "../interfaces";
+import type { Setting } from "../interfaces";
 
 export class SettingRegistry {
     private static _registeredSettings: Record<string, { new (params?: any): Setting<any> }> = {};

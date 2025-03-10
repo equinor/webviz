@@ -1,7 +1,7 @@
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { IntersectionType } from "@framework/types/intersection";
-import { ColorScale } from "@lib/utils/ColorScale";
-import { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
+import type { ColorScale } from "@lib/utils/ColorScale";
+import type { GridCellIndexRanges } from "@modules/3DViewer/typesAndEnums";
 
 import { atom } from "jotai";
 

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { SettingsStatusWriter } from "@framework/StatusWriter";
+import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { Checkbox } from "@lib/components/Checkbox";
 import { Label } from "@lib/components/Label";
 
@@ -29,17 +29,17 @@ export function ViewerSettings(props: ViewerSettingsProps): React.ReactNode {
 
             setAddingWellpicks(checked);
         },
-        [setUserSelectedWellPicks]
+        [setUserSelectedWellPicks],
     );
 
     return (
         <div className="space-y-2">
             {/* TODO: Other settings, like, color, max cols, etc */}
-            <Label text="Horizontal:" position="left" labelClassName="!mb-0">
+            <Label text="Horizontal:" position="left" labelClassName="mb-0!">
                 <Checkbox checked={horizontal} onChange={(e, checked) => setHorizontal(checked)} />
             </Label>
 
-            <Label text="Limit zoom to data:" position="left" labelClassName="!mb-0">
+            <Label text="Limit zoom to data:" position="left" labelClassName="mb-0!">
                 <Checkbox checked={!padWithEmptyRows} onChange={(e, checked) => setPadWithEmptyRows(!checked)} />
             </Label>
 

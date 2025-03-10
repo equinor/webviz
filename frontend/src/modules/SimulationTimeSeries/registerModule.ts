@@ -3,7 +3,7 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
 import { channelDefs } from "./channelDefs";
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 import { preview } from "./preview";
 
 export const MODULE_NAME = "SimulationTimeSeries";

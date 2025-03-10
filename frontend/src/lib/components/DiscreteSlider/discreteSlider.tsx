@@ -1,7 +1,7 @@
 import React from "react";
 
 import { Slider } from "../Slider";
-import { SliderProps } from "../Slider/slider";
+import type { SliderProps } from "../Slider/slider";
 
 export type DiscreteSliderProps = {
     values: number[];
@@ -24,7 +24,7 @@ export const DiscreteSlider = React.forwardRef(
                 ref={ref}
             />
         );
-    }
+    },
 );
 
 DiscreteSlider.displayName = "DiscreteSlider";

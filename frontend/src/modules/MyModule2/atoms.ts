@@ -1,7 +1,7 @@
 import { getVectorListOptions } from "@api";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 
 import { atom } from "jotai";
 import { atomWithQuery } from "jotai-tanstack-query";

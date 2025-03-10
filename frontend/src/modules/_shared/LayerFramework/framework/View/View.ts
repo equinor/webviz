@@ -1,7 +1,8 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { Group, SerializedType, SerializedView } from "../../interfaces";
-import { LayerManager } from "../LayerManager/LayerManager";
+import type { Group, SerializedView } from "../../interfaces";
+import { SerializedType } from "../../interfaces";
+import type { LayerManager } from "../LayerManager/LayerManager";
 
 export class View implements Group {
     private _itemDelegate: ItemDelegate;

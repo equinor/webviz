@@ -1,7 +1,8 @@
 import React from "react";
 
-import { InfoItem, ReadoutBox, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
-import { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
+import type { InfoItem, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
+import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
+import type { ExtendedLayerProps, LayerPickInfo } from "@webviz/subsurface-viewer";
 
 import { isEqual } from "lodash";
 

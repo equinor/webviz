@@ -1,19 +1,21 @@
 import React from "react";
 
-import { WellboreHeader_api } from "@api";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { WellboreHeader_api } from "@api";
+import type { ModuleSettingsProps } from "@framework/Module";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
-import { Intersection, IntersectionType } from "@framework/types/intersection";
-import { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
+import type { Intersection } from "@framework/types/intersection";
+import { IntersectionType } from "@framework/types/intersection";
+import type { IntersectionPolyline } from "@framework/userCreatedItems/IntersectionPolylines";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { usePropagateApiErrorToStatusWriter } from "@modules/_shared/hooks/usePropagateApiErrorToStatusWriter";
 
@@ -38,7 +40,7 @@ import {
 import { drilledWellboreHeadersQueryAtom } from "./atoms/queryAtoms";
 import { Layers } from "./components/layers";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -188,7 +190,7 @@ export function Settings(props: ModuleSettingsProps<Interfaces>): JSX.Element {
                     </Label>
                 </div>
             </CollapsibleGroup>
-            <div className="flex-grow flex flex-col min-h-0">
+            <div className="grow flex flex-col min-h-0">
                 <Layers
                     ensembleSet={filteredEnsembleSet}
                     workbenchSession={props.workbenchSession}

@@ -1,11 +1,12 @@
 import React from "react";
 
-import { GuiEvent, GuiEventPayloads, GuiState, useGuiState } from "@framework/GuiMessageBroker";
-import { Workbench } from "@framework/Workbench";
+import type { GuiEventPayloads } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, useGuiState } from "@framework/GuiMessageBroker";
+import type { Workbench } from "@framework/Workbench";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2 } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 
 export type DataChannelVisualizationProps = {
     workbench: Workbench;
@@ -30,7 +31,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     const [currentChannelName, setCurrentChannelName] = React.useState<string | null>(null);
     const [showDataChannelConnections, setShowDataChannelConnections] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.DataChannelConnectionLayerVisible
+        GuiState.DataChannelConnectionLayerVisible,
     );
     const [highlightedDataChannelConnection, setHighlightedDataChannelConnection] = React.useState<{
         moduleInstanceId: string;
@@ -143,7 +144,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         }
 
         function handleEditDataChannelConnectionsRequest(
-            payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest]
+            payload: GuiEventPayloads[GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest],
         ) {
             localEditDataChannelConnections = true;
             setEditDataChannelConnectionsForModuleInstanceId(payload.moduleInstanceId);
@@ -153,7 +154,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
         }
 
         function handleHighlightDataChannelConnectionRequest(
-            payload: GuiEventPayloads[GuiEvent.HighlightDataChannelConnectionRequest]
+            payload: GuiEventPayloads[GuiEvent.HighlightDataChannelConnectionRequest],
         ) {
             setHighlightedDataChannelConnection({
                 moduleInstanceId: payload.moduleInstanceId,
@@ -165,14 +166,14 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
             document.addEventListener("pointerup", handlePointerUp);
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("pointercancel", handlePointerUp);
-            document.addEventListener("blur", handlePointerUp);
+            document.addEventListener("blur-sm", handlePointerUp);
         }
 
         function removeDraggingEventListeners() {
             document.removeEventListener("pointerup", handlePointerUp);
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("pointercancel", handlePointerUp);
-            document.removeEventListener("blur", handlePointerUp);
+            document.removeEventListener("blur-sm", handlePointerUp);
         }
 
         function addResizeObserver() {
@@ -200,34 +201,34 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
         const removeHighlightDataChannelConnectionRequestHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.HighlightDataChannelConnectionRequest,
-            handleHighlightDataChannelConnectionRequest
+            handleHighlightDataChannelConnectionRequest,
         );
 
         const removeUnhighlightDataChannelConnectionRequestHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.UnhighlightDataChannelConnectionRequest,
-            handleUnhighlightDataChannelConnectionRequest
+            handleUnhighlightDataChannelConnectionRequest,
         );
 
         const removeEditDataChannelConnectionsRequestHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.EditDataChannelConnectionsForModuleInstanceRequest,
-            handleEditDataChannelConnectionsRequest
+            handleEditDataChannelConnectionsRequest,
         );
 
         const removeDataChannelOriginPointerDownHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.DataChannelOriginPointerDown,
-            handleDataChannelOriginPointerDown
+            handleDataChannelOriginPointerDown,
         );
         const removeDataChannelPointerUpHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.DataChannelPointerUp,
-            handlePointerUp
+            handlePointerUp,
         );
         const removeDataChannelDoneHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.HideDataChannelConnectionsRequest,
-            handleDataChannelDone
+            handleDataChannelDone,
         );
         const removeConnectionChangeHandler = guiMessageBroker.subscribeToEvent(
             GuiEvent.DataChannelConnectionsChange,
-            handleConnectionChange
+            handleConnectionChange,
         );
 
         return () => {
@@ -287,10 +288,10 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                 }
 
                 const originElement = document.getElementById(
-                    `moduleinstance-${originModuleInstanceId}-data-channel-origin`
+                    `moduleinstance-${originModuleInstanceId}-data-channel-origin`,
                 );
                 const destinationElement = document.getElementById(
-                    `channel-connector-${moduleInstance.getId()}-${receiver.getIdString()}`
+                    `channel-connector-${moduleInstance.getId()}-${receiver.getIdString()}`,
                 );
                 if (!originElement || !destinationElement) {
                     continue;
@@ -352,7 +353,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
 
                 dataChannelPaths.push({
                     key: `${originModuleInstanceId}-${moduleInstance.getId()}-${receiver.getIdString()}-${JSON.stringify(
-                        boundingRect
+                        boundingRect,
                     )}`,
                     origin: originPoint,
                     midPoint1: midPoint1,
@@ -372,7 +373,7 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
     return createPortal(
         <svg
             ref={ref}
-            className={resolveClassNames("absolute bg-slate-50 left-0 top-0 h-full w-full z-40 bg-opacity-70", {
+            className={resolveClassNames("absolute bg-slate-50/70 left-0 top-0 h-full w-full z-40", {
                 invisible: !visible && !showDataChannelConnections,
             })}
         >
@@ -535,6 +536,6 @@ export const DataChannelVisualizationLayer: React.FC<DataChannelVisualizationPro
                     )}
                 </g>
             )}
-        </svg>
+        </svg>,
     );
 };

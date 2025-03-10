@@ -1,10 +1,11 @@
 import React from "react";
 
 import { Frequency_api, StatisticFunction_api } from "@api";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { Parameter, ParameterIdent } from "@framework/EnsembleParameters";
-import { ModuleSettingsProps } from "@framework/Module";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { Parameter } from "@framework/EnsembleParameters";
+import { ParameterIdent } from "@framework/EnsembleParameters";
+import type { ModuleSettingsProps } from "@framework/Module";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { useSettingsStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { EnsembleSelect } from "@framework/components/EnsembleSelect";
@@ -19,7 +20,7 @@ import { Label } from "@lib/components/Label";
 import { QueriesErrorCriteria, QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
 import { Select } from "@lib/components/Select";
-import { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
+import type { SmartNodeSelectorSelection } from "@lib/components/SmartNodeSelector";
 import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { VectorSelector } from "@modules/_shared/components/VectorSelector";
@@ -55,7 +56,7 @@ import {
 import { vectorListQueriesAtom } from "./atoms/queryAtoms";
 import { useMakeSettingsStatusWriterMessages } from "./hooks/useMakeSettingsStatusWriterMessages";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import {
     FanchartStatisticOption,
     FanchartStatisticOptionEnumToStringMapping,
@@ -151,7 +152,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
 
     function handleFanchartStatisticsSelectionChange(
         event: React.ChangeEvent<HTMLInputElement>,
-        statistic: FanchartStatisticOption
+        statistic: FanchartStatisticOption,
     ) {
         setStatisticsSelection((prev) => {
             if (event.target.checked) {
@@ -175,17 +176,17 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
     const handleParameterListFilterChange = React.useCallback(
         function handleParameterListFilterChange(filteredParameters: Parameter[]) {
             const filteredParamIdents = filteredParameters.map((elm) =>
-                ParameterIdent.fromNameAndGroup(elm.name, elm.groupName)
+                ParameterIdent.fromNameAndGroup(elm.name, elm.groupName),
             );
 
             setFilteredParameterIdentList(filteredParamIdents);
         },
-        [setFilteredParameterIdentList]
+        [setFilteredParameterIdentList],
     );
 
     function handleIndividualStatisticsSelectionChange(
         event: React.ChangeEvent<HTMLInputElement>,
-        statistic: StatisticFunction_api
+        statistic: StatisticFunction_api,
     ) {
         setStatisticsSelection((prev) => {
             if (event.target.checked) {
@@ -365,8 +366,8 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             })}
                         >
                             <div className="flex flex-col">
-                                <div className="flex flex-row justify-center items-center p-2 bg-slate-100 shadow-sm border-b">
-                                    <h3 className="text-sm font-semibold flex-grow leading-none">Select Parameter</h3>
+                                <div className="flex flex-row justify-center items-center p-2 bg-slate-100 shadow-xs border-b">
+                                    <h3 className="text-sm font-semibold grow leading-none">Select Parameter</h3>
                                     <IconButton
                                         color="secondary"
                                         title="Filter list of parameters"

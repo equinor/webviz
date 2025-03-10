@@ -30,8 +30,6 @@ export const rftRealizationDataQueryAtom = atomWithQuery((get) => {
     const selectedResponseName = get(selectedRftResponseNameAtom);
     const selectedRftTimestampsUtcMs = get(selectedRftTimestampsUtcMsAtom);
 
-    getRealizationDataOptions;
-
     const query = {
         ...getRealizationDataOptions({
             query: {
@@ -46,7 +44,7 @@ export const rftRealizationDataQueryAtom = atomWithQuery((get) => {
             selectedEnsembleIdent?.getCaseUuid() &&
                 selectedEnsembleIdent?.getEnsembleName() &&
                 selectedWellName &&
-                selectedResponseName
+                selectedResponseName,
         ),
     };
     return query;

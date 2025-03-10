@@ -1,4 +1,4 @@
-import { DrawPreviewFunc } from "@framework/Preview";
+import type { DrawPreviewFunc } from "@framework/Preview";
 
 import previewImg from "./preview.svg";
 

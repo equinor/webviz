@@ -1,5 +1,5 @@
-import { WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
     requiredCurvesAtom,
@@ -9,7 +9,7 @@ import {
     wellLogTemplateTracksAtom,
 } from "./settings/atoms/derivedAtoms";
 import { padDataWithEmptyRowsAtom, viewerHorizontalAtom } from "./settings/atoms/persistedAtoms";
-import { TemplateTrackConfig } from "./types";
+import type { TemplateTrackConfig } from "./types";
 
 export type InterfaceTypes = {
     settingsToView: SettingsToViewInterface;

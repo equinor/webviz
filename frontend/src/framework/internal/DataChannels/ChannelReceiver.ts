@@ -1,7 +1,8 @@
-import { KeyKind } from "@framework/DataChannelTypes";
+import type { KeyKind } from "@framework/DataChannelTypes";
 
-import { Channel, ChannelNotificationTopic } from "./Channel";
-import { ChannelManager } from "./ChannelManager";
+import type { Channel } from "./Channel";
+import { ChannelNotificationTopic } from "./Channel";
+import type { ChannelManager } from "./ChannelManager";
 
 export interface ChannelReceiverDefinition {
     readonly idString: string;
@@ -72,7 +73,7 @@ export class ChannelReceiver {
         this._channel.subscribe(ChannelNotificationTopic.CHANNEL_ABOUT_TO_BE_REMOVED, this.handleChannelRemove);
         this._channel.subscribe(
             ChannelNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE,
-            this.handleContentsDataArrayChange
+            this.handleContentsDataArrayChange,
         );
         this._channel.subscribe(ChannelNotificationTopic.CONTENTS_ARRAY_CHANGE, this.handleContentsDataArrayChange);
 
@@ -101,7 +102,7 @@ export class ChannelReceiver {
             this._channel.unsubscribe(ChannelNotificationTopic.CHANNEL_ABOUT_TO_BE_REMOVED, this.handleChannelRemove);
             this._channel.unsubscribe(
                 ChannelNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE,
-                this.handleContentsDataArrayChange
+                this.handleContentsDataArrayChange,
             );
             this._channel.unsubscribe(ChannelNotificationTopic.CONTENTS_ARRAY_CHANGE, this.handleContentsArrayChange);
             this._channel = null;
@@ -154,7 +155,7 @@ export class ChannelReceiver {
         this._channel?.unsubscribe(ChannelNotificationTopic.CHANNEL_ABOUT_TO_BE_REMOVED, this.handleChannelRemove);
         this._channel?.unsubscribe(
             ChannelNotificationTopic.CONTENTS_DATA_ARRAY_CHANGE,
-            this.handleContentsDataArrayChange
+            this.handleContentsDataArrayChange,
         );
         this._channel?.unsubscribe(ChannelNotificationTopic.CONTENTS_ARRAY_CHANGE, this.handleContentsArrayChange);
         this._channel = null;

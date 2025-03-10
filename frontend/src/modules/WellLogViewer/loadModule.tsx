@@ -1,6 +1,7 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { InterfaceTypes, settingsToViewInterfaceInitialization } from "./interfaces";
+import type { InterfaceTypes } from "./interfaces";
+import { settingsToViewInterfaceInitialization } from "./interfaces";
 import { MODULE_NAME } from "./registerModule";
 import { Settings } from "./settings/settings";
 import { settingsToViewInterfaceEffects } from "./view/atoms/interfaceEffects";

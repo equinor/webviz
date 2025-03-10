@@ -1,4 +1,4 @@
-import { DrawPreviewFunc } from "@framework/Preview";
+import type { DrawPreviewFunc } from "@framework/Preview";
 
 export const preview: DrawPreviewFunc = function (width: number, height: number) {
     const barHeights = [height / 5, height / 3, (height * 5) / 8, (height * 6) / 8, height / 3, height / 6];

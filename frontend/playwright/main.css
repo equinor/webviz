@@ -1,0 +1,9 @@
+/* 
+    Tailwind defaults to only search for class names downwards from the 
+    root folder (which here is the `playwright` folder). `source` specifies
+    that tailwind should search from the parent folder
+*/
+@import "tailwindcss" source("..");
+
+/* Import the main project css to get custom rules and such */
+@import "../src/main.css";

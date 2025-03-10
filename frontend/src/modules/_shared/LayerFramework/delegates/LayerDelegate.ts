@@ -1,23 +1,19 @@
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
-import { QueryClient, isCancelledError } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
+import { isCancelledError } from "@tanstack/react-query";
 
 import { SettingsContextDelegateTopic } from "./SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import type { LayerManager } from "../framework/LayerManager/LayerManager";
+import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
-import {
-    BoundingBox,
-    Layer,
-    SerializedLayer,
-    SerializedType,
-    Settings,
-    SettingsContext,
-    StoredData,
-} from "../interfaces";
+import type { BoundingBox, Layer, SerializedLayer, Settings, SettingsContext, StoredData } from "../interfaces";
+import { SerializedType } from "../interfaces";
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -73,7 +69,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
         owner: Layer<TSettings, TData, TStoredData>,
         layerManager: LayerManager,
         settingsContext: SettingsContext<TSettings, TStoredData>,
-        coloringType: LayerColoringType
+        coloringType: LayerColoringType,
     ) {
         this._owner = owner;
         this._layerManager = layerManager;
@@ -87,7 +83,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
                 this.handleSettingsChange();
-            })
+            }),
         );
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
@@ -96,14 +92,14 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(LayerManagerTopic.SHARED_SETTINGS_CHANGED)(() => {
                 this.handleSharedSettingsChanged();
-            })
+            }),
         );
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
             layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(() => {
                 this.handleSharedSettingsChanged();
-            })
+            }),
         );
     }
 
@@ -169,7 +165,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
         const parentGroup = this._owner.getItemDelegate().getParentGroup();
         if (parentGroup) {
             const sharedSettings: SharedSetting[] = parentGroup.getAncestorAndSiblingItems(
-                (item) => item instanceof SharedSetting
+                (item) => item instanceof SharedSetting,
             ) as SharedSetting[];
             const overriddenSettings: { [K in keyof TSettings]: TSettings[K] } = {} as {
                 [K in keyof TSettings]: TSettings[K];
@@ -264,7 +260,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
             }
             if (this._queryKeys.length === null && isDevMode()) {
                 console.warn(
-                    "Did you forget to use 'setQueryKeys' in your layer implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour."
+                    "Did you forget to use 'setQueryKeys' in your layer implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour.",
                 );
             }
             this._queryKeys = [];
@@ -355,7 +351,7 @@ export class LayerDelegate<TSettings extends Settings, TData, TStoredData extend
                     {
                         silent: true,
                         revert: true,
-                    }
+                    },
                 );
                 await queryClient.invalidateQueries({ queryKey });
                 queryClient.removeQueries({ queryKey });

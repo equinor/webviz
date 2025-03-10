@@ -1,8 +1,9 @@
-ARG NODE_TAG="18.8-alpine@sha256:f08168de449131d96a16a9c042f96dc3169678907f120eee8d5ecc10ca75bb48"
+ARG NODE_TAG="18.20-alpine@sha256:b33d7471a6a5106cceb3b6e4368841e06338ff6e5e8b2ff345e2e17f15902d7d"
 
 FROM node:${NODE_TAG}
 
 USER node
+
 
 COPY --chown=node:node . /usr/src/app
 

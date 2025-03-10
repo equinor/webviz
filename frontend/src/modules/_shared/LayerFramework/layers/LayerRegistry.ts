@@ -1,5 +1,5 @@
-import { LayerManager } from "../framework/LayerManager/LayerManager";
-import { Layer } from "../interfaces";
+import type { LayerManager } from "../framework/LayerManager/LayerManager";
+import type { Layer } from "../interfaces";
 
 export class LayerRegistry {
     private static _registeredLayers: Map<string, { new (layerManager: LayerManager): Layer<any, any, any> }> =
