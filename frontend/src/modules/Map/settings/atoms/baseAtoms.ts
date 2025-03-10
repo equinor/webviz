@@ -1,4 +1,4 @@
-import { FullSurfaceAddress } from "@modules/_shared/Surface";
+import type { FullSurfaceAddress } from "@modules/_shared/Surface";
 
 import { atom } from "jotai";
 

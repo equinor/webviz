@@ -49,5 +49,5 @@ root.render(
                 </CustomQueryClientProvider>
             </AuthProvider>
         </GlobalErrorBoundary>
-    </React.StrictMode>
+    </React.StrictMode>,
 );

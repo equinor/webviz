@@ -1,4 +1,4 @@
-import { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
+import type { ChannelReceiverChannelContent } from "@framework/DataChannelTypes";
 
 export function makeTitleFromChannelContent(content: ChannelReceiverChannelContent<any>, useLineBreak = true): string {
     let title = "";
@@ -19,7 +19,7 @@ export function makeTitleFromChannelContent(content: ChannelReceiverChannelConte
 export function makeHoverText(
     contentX: ChannelReceiverChannelContent<any>,
     contentY: ChannelReceiverChannelContent<any>,
-    realization: number
+    realization: number,
 ): string {
     const nameX = makeTitleFromChannelContent(contentX, false);
     const nameY = makeTitleFromChannelContent(contentY, false);
@@ -31,7 +31,7 @@ export function makeHoverTextWithColor(
     contentX: ChannelReceiverChannelContent<any>,
     contentY: ChannelReceiverChannelContent<any>,
     contentColor: ChannelReceiverChannelContent<any>,
-    realization: number
+    realization: number,
 ): string {
     const nameX = makeTitleFromChannelContent(contentX, false);
     const nameY = makeTitleFromChannelContent(contentY, false);

@@ -105,7 +105,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                 props.containerRef.current.scrollLeft = initialScrollPositions.left;
             }
         },
-        [props.containerRef, initialScrollPositions]
+        [props.containerRef, initialScrollPositions],
     );
 
     React.useEffect(
@@ -133,7 +133,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
                     const startIndex = Math.max(0, Math.floor(scrollPosition / props.itemSize) - 1);
                     const endIndex = Math.min(
                         props.items.length - 1,
-                        Math.ceil((scrollPosition + size) / props.itemSize) + 1
+                        Math.ceil((scrollPosition + size) / props.itemSize) + 1,
                     );
 
                     setRange({ start: startIndex, end: endIndex });
@@ -168,7 +168,7 @@ export const Virtualization = withDefaults<VirtualizationProps>()(defaultProps, 
             containerSize.width,
             onScroll,
             isProgrammaticScroll,
-        ]
+        ],
     );
 
     function makeStyle(size: number) {

@@ -3,7 +3,7 @@ import { ModuleDataTagId } from "@framework/ModuleDataTags";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 import { SyncSettingKey } from "@framework/SyncSettings";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 
 const description = "Visualizes surfaces in a 3D view.";
 

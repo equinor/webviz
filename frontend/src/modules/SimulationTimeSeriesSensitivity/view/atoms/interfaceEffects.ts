@@ -1,5 +1,5 @@
-import { InterfaceEffects } from "@framework/Module";
-import { SettingsToViewInterface } from "@modules/SimulationTimeSeriesSensitivity/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { SettingsToViewInterface } from "@modules/SimulationTimeSeriesSensitivity/interfaces";
 
 import {
     resamplingFrequencyAtom,

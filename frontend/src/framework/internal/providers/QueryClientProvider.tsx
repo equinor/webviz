@@ -40,7 +40,7 @@ export const CustomQueryClientProvider: React.FC<{ children: React.ReactElement 
                     }
                 },
             }),
-        })
+        }),
     );
 
     return (

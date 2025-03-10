@@ -22,7 +22,7 @@ export const filteredEnsembleSetAtom = atom((get) => {
     }
 
     return new EnsembleSet(
-        ensembleSet.getRegularEnsembleArray().filter((el) => el.getFieldIdentifier() === fieldIdentifier)
+        ensembleSet.getRegularEnsembleArray().filter((el) => el.getFieldIdentifier() === fieldIdentifier),
     );
 });
 

@@ -1,20 +1,17 @@
-import { SurfaceStatisticFunction_api, SurfaceTimeType_api } from "@api";
-import { getRealizationSurfacesMetadataOptions } from "@api";
+import { SurfaceStatisticFunction_api, SurfaceTimeType_api, getRealizationSurfacesMetadataOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
+import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import type { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
 import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
-import {
-    SensitivityNameCasePair,
-    SensitivitySetting,
-} from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
+import type { SensitivityNameCasePair } from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
+import { SensitivitySetting } from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
 import { StatisticFunctionSetting } from "@modules/_shared/LayerFramework/settings/implementations/StatisticFunctionSetting";
 import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceNameSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
-import { StatisticalSurfaceSettings } from "./types";
+import type { StatisticalSurfaceSettings } from "./types";
 
 export class StatisticalSurfaceSettingsContext implements SettingsContext<StatisticalSurfaceSettings> {
     private _contextDelegate: SettingsContextDelegate<StatisticalSurfaceSettings>;
@@ -75,7 +72,7 @@ export class StatisticalSurfaceSettingsContext implements SettingsContext<Statis
                         sensitivityName: sensitivity.name,
                         sensitivityCase: sensitivityCase.name,
                     });
-                })
+                }),
             );
             return availableSensitivityPairs;
         });
@@ -122,8 +119,8 @@ export class StatisticalSurfaceSettingsContext implements SettingsContext<Statis
             const availableSurfaceNames = [
                 ...Array.from(
                     new Set(
-                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name)
-                    )
+                        data.surfaces.filter((surface) => surface.attribute_name === attribute).map((el) => el.name),
+                    ),
                 ),
             ];
 
@@ -145,8 +142,8 @@ export class StatisticalSurfaceSettingsContext implements SettingsContext<Statis
                     new Set(
                         data.surfaces
                             .filter((surface) => surface.attribute_name === attribute && surface.name === surfaceName)
-                            .map((el) => el.time_type)
-                    )
+                            .map((el) => el.time_type),
+                    ),
                 ),
             ];
 

@@ -42,7 +42,7 @@ describe("RegularEnsembleIdent", () => {
     test("should throw an error for an invalid ensemble ident string", () => {
         const ensembleIdentString = "invalidString";
         expect(() => RegularEnsembleIdent.fromString(ensembleIdentString)).toThrowError(
-            `Invalid ensemble ident: ${ensembleIdentString}`
+            `Invalid ensemble ident: ${ensembleIdentString}`,
         );
     });
 

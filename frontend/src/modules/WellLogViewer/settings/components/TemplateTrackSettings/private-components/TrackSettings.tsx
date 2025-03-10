@@ -1,8 +1,8 @@
 import React from "react";
 
-import { SettingsStatusWriter } from "@framework/StatusWriter";
+import type { SettingsStatusWriter } from "@framework/StatusWriter";
 import { Input } from "@lib/components/Input";
-import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 
 import { ContinousTrackSettings } from "../ContinousTrackSettings";
 import { DiscreteTrackSettings } from "../DiscreteTrackSettings";
@@ -28,7 +28,7 @@ export function TrackSettings(props: TrackSettingsProps): React.ReactNode {
         function applyConfigChange(configChanges: Partial<TemplateTrackConfig>) {
             onUpdateTrack({ ...props.trackConfig, ...configChanges } as TemplateTrackConfig);
         },
-        [props.trackConfig, onUpdateTrack]
+        [props.trackConfig, onUpdateTrack],
     );
 
     return (

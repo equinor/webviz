@@ -1,13 +1,14 @@
 import { BoundingBox2D } from "./BoundingBox2D";
 
-import { IntersectedItem, IntersectionCalculator, IntersectionItemShape, PolygonData } from "../types/types";
+import type { IntersectedItem, IntersectionCalculator, PolygonData } from "../types/types";
+import { IntersectionItemShape } from "../types/types";
 import { polygonFromVerticesAndIndices } from "../utils/geometry";
 
 function isPointInPolygon(
     point: number[],
     startOffset: number,
     vertices: Float32Array,
-    polygonIndices: Uint32Array | Uint16Array | Uint8Array
+    polygonIndices: Uint32Array | Uint16Array | Uint8Array,
 ): boolean {
     const numVertices = polygonIndices.length;
     const x = point[0];

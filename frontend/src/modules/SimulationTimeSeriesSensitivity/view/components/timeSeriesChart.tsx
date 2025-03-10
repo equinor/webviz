@@ -1,11 +1,11 @@
-import React from "react";
+import type React from "react";
 import Plot from "react-plotly.js";
 
 import { timestampUtcMsToCompactIsoString } from "@framework/utils/timestampUtils";
 
-import { Layout, PlotDatum, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
+import type { Layout, PlotDatum, PlotHoverEvent, PlotMouseEvent } from "plotly.js";
 
-import { TimeSeriesPlotlyTrace } from "../utils/createTracesUtils";
+import type { TimeSeriesPlotlyTrace } from "../utils/createTracesUtils";
 
 export type TimeSeriesChartHoverInfo = {
     timestampUtcMs: number;

@@ -1,4 +1,4 @@
-import { Layer, SchematicData } from "@equinor/esv-intersection";
+import type { Layer, SchematicData } from "@equinor/esv-intersection";
 
 export interface BoundingVolume {
     contains(point: number[]): boolean;

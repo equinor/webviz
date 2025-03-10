@@ -1,11 +1,12 @@
 import React from "react";
 
 import { DeltaEnsemble } from "@framework/DeltaEnsemble";
-import { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
-import { RegularEnsemble } from "@framework/RegularEnsemble";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { DeltaEnsembleIdent } from "@framework/DeltaEnsembleIdent";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorTile } from "@lib/components/ColorTile";
-import { Dropdown, DropdownOption, DropdownProps } from "@lib/components/Dropdown";
+import type { DropdownOption, DropdownProps } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 
 export type EnsembleDropdownProps = (
     | {
@@ -29,7 +30,7 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
     const handleSelectionChange = React.useCallback(
         function handleSelectionChange(selectedEnsembleIdentStr: string) {
             const foundEnsemble = ensembles.find(
-                (ensemble) => ensemble.getIdent().toString() === selectedEnsembleIdentStr
+                (ensemble) => ensemble.getIdent().toString() === selectedEnsembleIdentStr,
             );
             if (!foundEnsemble) {
                 throw new Error(`Ensemble not found: ${selectedEnsembleIdentStr}`);
@@ -40,12 +41,12 @@ export function EnsembleDropdown(props: EnsembleDropdownProps): JSX.Element {
             }
             if (foundEnsemble instanceof DeltaEnsemble) {
                 throw new Error(
-                    `Invalid ensemble selection: ${selectedEnsembleIdentStr}. Got delta ensemble when not allowed.`
+                    `Invalid ensemble selection: ${selectedEnsembleIdentStr}. Got delta ensemble when not allowed.`,
                 );
             }
             onChange(foundEnsemble.getIdent());
         },
-        [allowDeltaEnsembles, ensembles, onChange]
+        [allowDeltaEnsembles, ensembles, onChange],
     );
 
     const optionsArray: DropdownOption[] = [];

@@ -1,7 +1,7 @@
 import React from "react";
 
-import { AtomStoreMaster } from "./AtomStoreMaster";
-import { WorkbenchSession } from "./WorkbenchSession";
+import type { AtomStoreMaster } from "./AtomStoreMaster";
+import type { WorkbenchSession } from "./WorkbenchSession";
 import { IntersectionPolylines, IntersectionPolylinesEvent } from "./userCreatedItems/IntersectionPolylines";
 
 export interface UserCreatedItemSet {
@@ -53,7 +53,7 @@ export class UserCreatedItems {
 
 export function useIntersectionPolylines(workbenchSession: WorkbenchSession): IntersectionPolylines {
     const [storedIntersectionPolylines, setStoredIntersectionPolylines] = React.useState<IntersectionPolylines>(
-        workbenchSession.getUserCreatedItems().getIntersectionPolylines()
+        workbenchSession.getUserCreatedItems().getIntersectionPolylines(),
     );
 
     React.useEffect(() => {

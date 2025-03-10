@@ -53,7 +53,7 @@ export const intersectionReferenceSystemAtom = atom((get) => {
             return null;
         }
         const referenceSystem = new IntersectionReferenceSystem(
-            customIntersectionPolyline.path.map((point) => [point[0], point[1], 0])
+            customIntersectionPolyline.path.map((point) => [point[0], point[1], 0]),
         );
         referenceSystem.offset = 0;
 
@@ -78,7 +78,7 @@ export const polylineAtom = atom((get) => {
             const simplifiedCurveResult = calcExtendedSimplifiedWellboreTrajectoryInXYPlane(
                 path,
                 intersectionExtensionLength,
-                CURVE_FITTING_EPSILON
+                CURVE_FITTING_EPSILON,
             );
             polylineUtmXy.push(...simplifiedCurveResult.simplifiedWellboreTrajectoryXy.flat());
             actualSectionLengths.push(...simplifiedCurveResult.actualSectionLengths);

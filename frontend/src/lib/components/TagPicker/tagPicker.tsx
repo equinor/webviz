@@ -8,7 +8,8 @@ import { Close, ExpandMore } from "@mui/icons-material";
 
 import { isEqual } from "lodash";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 import { Checkbox } from "../Checkbox";
 import { IconButton } from "../IconButton";
 import { Virtualization } from "../Virtualization";
@@ -45,7 +46,7 @@ const NO_TAGS_TEXT = "No tags";
 
 export function TagPickerComponent<T>(
     props: TagPickerProps<T>,
-    ref: React.ForwardedRef<HTMLDivElement>
+    ref: React.ForwardedRef<HTMLDivElement>,
 ): React.ReactElement {
     const [selectedTags, setSelectedTags] = React.useState<T[]>(props.value);
     const [prevSelectedTags, setPrevSelectedTags] = React.useState<T[]>(props.value);
@@ -138,7 +139,7 @@ export function TagPickerComponent<T>(
             const newFilteredOptions = props.tags.filter((tag) => tag.label.toLowerCase().includes(filter || ""));
             setFilteredTags(newFilteredOptions);
         },
-        [props.tags, filter]
+        [props.tags, filter],
     );
 
     React.useEffect(
@@ -163,7 +164,7 @@ export function TagPickerComponent<T>(
                         newDropdownRect.top = divClientBoundingRect.y + divBoundingRect.height;
                         newDropdownRect.height = Math.min(
                             height,
-                            window.innerHeight - divClientBoundingRect.y - divBoundingRect.height
+                            window.innerHeight - divClientBoundingRect.y - divBoundingRect.height,
                         );
                     }
                     if (divClientBoundingRect.x + divBoundingRect.width > window.innerWidth / 2) {
@@ -180,14 +181,14 @@ export function TagPickerComponent<T>(
                             Math.round(
                                 (filteredTags.findIndex((tag) => tag.value === selectedTags[selectedTags.length - 1]) ||
                                     0) -
-                                    height / TAG_HEIGHT / 2
-                            )
-                        )
+                                    height / TAG_HEIGHT / 2,
+                            ),
+                        ),
                     );
                 }
             }
         },
-        [divBoundingRect, dropdownVisible, filteredTags, selectedTags, dropdownRect.width, props.tags]
+        [divBoundingRect, dropdownVisible, filteredTags, selectedTags, dropdownRect.width, props.tags],
     );
 
     function handleInputClick() {
@@ -222,7 +223,7 @@ export function TagPickerComponent<T>(
         const newFilter = event.target.value.toLowerCase();
         setFilter(newFilter);
         const newFilteredOptions = props.tags.filter((option) =>
-            option.label.toLowerCase().includes(newFilter.toLowerCase())
+            option.label.toLowerCase().includes(newFilter.toLowerCase()),
         );
         setFilteredTags(newFilteredOptions);
     }
@@ -258,12 +259,12 @@ export function TagPickerComponent<T>(
                 style={{ width: props.width }}
                 id={props.wrapperId}
                 ref={divRef}
-                className={resolveClassNames("flex w-full border p-1 px-2 rounded text-sm shadow-sm input-comp", {
+                className={resolveClassNames("flex w-full border p-1 px-2 rounded-sm text-sm shadow-xs input-comp", {
                     "outline outline-blue-500": focused,
                 })}
                 onClick={handleClick}
             >
-                <div className="min-h-6 flex-grow flex gap-2 justify-start flex-wrap">
+                <div className="min-h-6 grow flex gap-2 justify-start flex-wrap">
                     {selectedTags.map((tag) => {
                         const tagOption = props.tags.find((el) => el.value === tag);
                         if (!tagOption) {
@@ -273,7 +274,7 @@ export function TagPickerComponent<T>(
                     })}
                     <input
                         ref={inputRef}
-                        className="flex-grow outline-none min-w-0 h-8 w-0"
+                        className="grow outline-hidden min-w-0 h-8 w-0"
                         onClick={handleInputClick}
                         onChange={handleInputChange}
                         onFocus={handleFocus}
@@ -318,14 +319,14 @@ export function TagPickerComponent<T>(
                                 />
                             )}
                         />
-                    </div>
+                    </div>,
                 )}
         </BaseComponent>
     );
 }
 
 export const TagPicker = React.forwardRef(TagPickerComponent) as <T>(
-    props: TagPickerProps<T> & { ref?: React.Ref<HTMLDivElement> }
+    props: TagPickerProps<T> & { ref?: React.Ref<HTMLDivElement> },
 ) => React.ReactElement;
 
 type TagProps<T> = {
@@ -335,7 +336,7 @@ type TagProps<T> = {
 
 function Tag<T>(props: TagProps<T>): React.ReactNode {
     return (
-        <div className="bg-blue-200 p-1 pl-2 rounded flex gap-1 items-center input-comp">
+        <div className="bg-blue-200 p-1 pl-2 rounded-sm flex gap-1 items-center input-comp">
             <span>{props.tag.label}</span>
             {
                 <IconButton onClick={props.onRemove} title="Remove tag">

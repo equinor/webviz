@@ -1,8 +1,8 @@
-import { BoundingBox3D_api } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { IntersectionType } from "@framework/types/intersection";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { BoundingBox3D_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { IntersectionType } from "@framework/types/intersection";
+import type { ColorScale } from "@lib/utils/ColorScale";
 
 import {
     addCustomIntersectionPolylineEditModeActiveAtom,
@@ -27,7 +27,7 @@ import {
     selectedRealizationAtom,
     selectedWellboreUuidsAtom,
 } from "./settings/atoms/derivedAtoms";
-import { GridCellIndexRanges } from "./typesAndEnums";
+import type { GridCellIndexRanges } from "./typesAndEnums";
 import {
     editCustomIntersectionPolylineEditModeActiveAtom as viewEditCustomIntersectionPolylineEditModeActiveAtom,
     intersectionTypeAtom as viewIntersectionTypeAtom,

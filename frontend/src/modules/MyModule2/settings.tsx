@@ -99,7 +99,7 @@ export function Settings(): React.ReactNode {
             itemId: string,
             originId: string | null,
             destinationid: string | null,
-            position: number
+            position: number,
         ) {
             const newItems = [...items];
 
@@ -126,7 +126,7 @@ export function Settings(): React.ReactNode {
 
             originArr.splice(
                 originArr.findIndex((i) => i.id === itemId),
-                1
+                1,
             );
 
             if (position === -1) {
@@ -137,7 +137,7 @@ export function Settings(): React.ReactNode {
 
             setItems(newItems);
         },
-        [items]
+        [items],
     );
 
     function makeChildren(items: Item[]): React.ReactElement[] {
