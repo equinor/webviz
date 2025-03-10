@@ -75,11 +75,15 @@ export const wellLogTemplateTracksAtom = atom<TemplateTrackConfig[]>((get) => {
 export const requiredCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
     const templateTracks = get(logViewerTrackConfigs);
 
+    const logCurveHeaders = get(wellLogCurveHeadersQueryAtom).data ?? [];
+    const availableCurves = _.map(logCurveHeaders, "curveName");
+
     return _.chain(templateTracks)
         .flatMap<TemplatePlotConfig>("plots")
         .filter("_isValid") // Do not bother with invalid configs
         .flatMap(({ _curveHeader, _curveHeader2 }) => [_curveHeader, _curveHeader2])
         .filter((header): header is WellboreLogCurveHeader_api => !!header)
+        .filter((header) => availableCurves.includes(header.curveName))
         .uniqBy(makeSelectValueForCurveHeader)
         .value();
 });
