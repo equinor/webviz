@@ -23,6 +23,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
         value: propsValue,
         onValueChange,
         debounceTimeMs,
+        inputRef,
         ...other
     } = props;
 
@@ -39,7 +40,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
     React.useImperativeHandle<
         HTMLInputElement | HTMLTextAreaElement | null,
         HTMLInputElement | HTMLTextAreaElement | null
-    >(props.inputRef, () => internalRef.current);
+    >(inputRef, () => internalRef.current);
 
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -62,6 +63,11 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
         if (event.key === "Enter") {
             handleInputEditingDone();
         }
+    }
+
+    function handleInputBlur(evt: React.FocusEvent<HTMLInputElement>) {
+        handleInputEditingDone();
+        props.onBlur?.(evt);
     }
 
     function handleInputEditingDone() {
@@ -163,14 +169,14 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                 {...other}
                 value={value}
                 onChange={handleInputChange}
-                onBlur={handleInputEditingDone}
+                onBlur={handleInputBlur}
                 onKeyUp={handleKeyUp}
                 slotProps={{
                     root: {
                         className: "grow",
                     },
                     input: {
-                        className: resolveClassNames("h-full block w-full sm:text-sm outline-hidden"),
+                        className: resolveClassNames("h-full block w-full sm:text-sm outline-none truncate"),
                         ref: internalRef,
                     },
                 }}
