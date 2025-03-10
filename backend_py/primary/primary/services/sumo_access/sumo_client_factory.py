@@ -14,7 +14,7 @@ class _FakeSyncHttpClient:
     This is needed as we do not want to allow any synchronous HTTP calls in the primary service.
     Ideally this should be handled by the SumoClient. https://github.com/equinor/fmu-sumo/issues/369"""
 
-    def __getattribute__(self, _name):
+    def __getattribute__(self, _name: str) -> None:
         # Raise an error on access to this instance. It should not be touched!
         # It should be used merely as a placeholder since we cannot pass None when initializing the SumoClient
         raise RuntimeError("This is a fake sync http client and should not be called!!!")

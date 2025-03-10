@@ -83,7 +83,7 @@ class Grid3dAccess:
         return grid_meta_arr
 
 
-async def _get_grid_model_meta(search_context: SearchContext, item_no=int) -> Grid3dInfo:
+async def _get_grid_model_meta(search_context: SearchContext, item_no: int) -> Grid3dInfo:
     """
     Retrieve metadata for a grid model. This is a helper function for Grid3dAccess.get_models_info_arr_async
     Note that in fmu-sumo the grid properties metadata are related to a grid geometry via data.geometry.relative_path.keyword

@@ -102,7 +102,7 @@ class PolygonsAccess:
         return addr_str
 
 
-async def _get_polygons_meta(search_context: SearchContext, item_no=int) -> PolygonsMeta:
+async def _get_polygons_meta(search_context: SearchContext, item_no: int) -> PolygonsMeta:
     polygons = await search_context.getitem_async(item_no)
     content = polygons["data"].get("content", SumoContent.DEPTH)
 

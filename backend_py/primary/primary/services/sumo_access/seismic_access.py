@@ -101,7 +101,7 @@ def clean_vds_url(vds_url: str) -> str:
     return vds_url.replace(":443", "")
 
 
-async def _get_seismic_cube_meta(search_context: SearchContext, item_no=int) -> SeismicCubeMeta:
+async def _get_seismic_cube_meta(search_context: SearchContext, item_no: int) -> SeismicCubeMeta:
     seismic_cube = await search_context.getitem_async(item_no)
     t_start = seismic_cube["data"].get("time", {}).get("t0", {}).get("value", None)
     t_end = seismic_cube["data"].get("time", {}).get("t1", {}).get("value", None)

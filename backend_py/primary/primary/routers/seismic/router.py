@@ -47,7 +47,7 @@ async def get_inline_slice(
     inline_no: int = Query(description="Inline number"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic inline from a seismic cube."""
-    seismic_access = await SeismicAccess.from_iteration_name(
+    seismic_access = SeismicAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -86,7 +86,7 @@ async def get_crossline_slice(
     crossline_no: int = Query(description="Crossline number"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic crossline from a seismic cube."""
-    seismic_access = await SeismicAccess.from_iteration_name(
+    seismic_access = SeismicAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
@@ -125,7 +125,7 @@ async def get_depth_slice(
     depth_slice_no: int = Query(description="Depth slice no"),
 ) -> schemas.SeismicSliceData:
     """Get a seismic depth slice from a seismic cube."""
-    seismic_access = await SeismicAccess.from_iteration_name(
+    seismic_access = SeismicAccess.from_iteration_name(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
