@@ -13,6 +13,7 @@ from primary.auth.auth_helper import AuthHelper
 from primary.utils.drogon import is_drogon_identifier
 
 from primary.services.ssdl_access.well_access import WellAccess as SsdlWellAccess
+from primary.services.ssdl_access.drogon import DrogonWellAccess
 
 
 from primary.middleware.add_browser_cache import add_custom_cache_time
@@ -244,10 +245,6 @@ async def get_wellbore_log_curve_headers(
     # pylint: disable=fixme
     # TODO: Future work -- Add wellbore survey sample endpoint. for last set of curves (for now) SSDL might be best
 
-    # Handle DROGON
-    if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
-        return []
-
     curve_headers = []
 
     if schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG in sources:
@@ -265,7 +262,9 @@ async def get_wellbore_log_curve_headers(
 async def _get_headers_from_ssdl_well_log_async(
     authenticated_user: AuthenticatedUser, wellbore_uuid: str
 ) -> list[schemas.WellboreLogCurveHeader]:
-    well_access = SsdlWellAccess(authenticated_user.get_ssdl_access_token())
+    well_access_cls = DrogonWellAccess if is_drogon_identifier(wellbore_uuid=wellbore_uuid) else SsdlWellAccess
+    well_access = well_access_cls(authenticated_user.get_ssdl_access_token())
+
     headers = await well_access.get_log_curve_headers_for_wellbore_async(wellbore_uuid)
 
     # Missing log name implies garbage data, so we drop them
@@ -316,7 +315,10 @@ async def get_log_curve_data(
 
     # Handle DROGON
     if is_drogon_identifier(wellbore_uuid=wellbore_uuid):
-        raise NotImplementedError("DROGON log curve data not implemented")
+        well_access_drogon = DrogonWellAccess(authenticated_user.get_ssdl_access_token())
+        curve_data = await well_access_drogon.get_log_curve_data_async(wellbore_uuid, curve_name)
+
+        return converters.convert_wellbore_log_curve_data_to_schema(curve_data)
 
     if source == schemas.WellLogCurveSourceEnum.SSDL_WELL_LOG:
         # Note that log name is not used on SSDL; but afaik curve names are not unique across all logs...
