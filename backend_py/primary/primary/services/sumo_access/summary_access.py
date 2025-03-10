@@ -66,6 +66,8 @@ class SummaryAccess:
         hist_vectors: Set[str] = set()
 
         for vec_name in column_names:
+            if vec_name == "YEARS":  # Drop the YEARS column. We do not use it.
+                continue
             if vec_name not in ["DATE", "REAL"]:
                 if _is_historical_vector_name(vec_name):
                     hist_vectors.add(vec_name)

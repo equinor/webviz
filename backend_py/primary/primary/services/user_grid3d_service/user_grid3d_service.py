@@ -112,7 +112,9 @@ class UserGrid3dService:
         sumo_client = create_sumo_client(sumo_access_token)
         perf_metrics.record_lap("sumo-client")
 
-        sas_token, blob_store_base_uri = await get_sas_token_and_blob_base_uri_for_case_async(sumo_access_token, case_uuid)
+        sas_token, blob_store_base_uri = await get_sas_token_and_blob_base_uri_for_case_async(
+            sumo_access_token, case_uuid
+        )
         perf_metrics.record_lap("sas-token")
 
         service_object = UserGrid3dService(
