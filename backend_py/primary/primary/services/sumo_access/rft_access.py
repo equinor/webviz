@@ -111,8 +111,10 @@ async def get_concatenated_rft_table(case: Case, iteration_name: str, column_nam
 
         if concatenated_table is None:
             concatenated_table = table
-        else:
+        elif table is not None:
             concatenated_table = concatenated_table.append_column(column_name, table[column_name])
+        else:
+            raise ValueError('Expected "table" to be a defined')
 
     return concatenated_table
 
