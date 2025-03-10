@@ -13,13 +13,13 @@ from webviz_pkg.core_utils.b64 import b64_encode_float_array_as_float32
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics, make_metrics_string_s
 from webviz_pkg.server_schemas.user_grid3d_ri import api_schemas as server_api_schemas
 
-from primary import config
 from primary.auth.auth_helper import AuthenticatedUser
 from primary.services.service_exceptions import Service
 from primary.services.service_exceptions import ServiceRequestError, ServiceTimeoutError, ServiceUnavailableError
 from primary.services.sumo_access.queries.grid3d import get_grid_geometry_and_property_blob_ids_async
 from primary.services.sumo_access.queries.grid3d import get_grid_geometry_blob_id_async
-from primary.services.sumo_access.sumo_blob_access import get_sas_token_and_blob_store_base_uri_for_case
+from primary.services.sumo_access.sumo_blob_access import get_sas_token_and_blob_base_uri_for_case_async
+from primary.services.sumo_access.sumo_client_factory import create_sumo_client
 from primary.services.user_session_manager.user_session_manager import UserComponent, UserSessionManager
 
 LOGGER = logging.getLogger(__name__)
@@ -109,10 +109,12 @@ class UserGrid3dService:
         perf_metrics.record_lap("get-session")
 
         sumo_access_token = authenticated_user.get_sumo_access_token()
-        sumo_client = SumoClient(env=config.SUMO_ENV, token=sumo_access_token, interactive=False)
+        sumo_client = create_sumo_client(sumo_access_token)
         perf_metrics.record_lap("sumo-client")
 
-        sas_token, blob_store_base_uri = get_sas_token_and_blob_store_base_uri_for_case(sumo_access_token, case_uuid)
+        sas_token, blob_store_base_uri = await get_sas_token_and_blob_base_uri_for_case_async(
+            sumo_access_token, case_uuid
+        )
         perf_metrics.record_lap("sas-token")
 
         service_object = UserGrid3dService(
