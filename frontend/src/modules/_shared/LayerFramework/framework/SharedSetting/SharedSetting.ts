@@ -1,8 +1,10 @@
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingTopic } from "../../delegates/SettingDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { Item, Layer, SerializedSharedSetting, SerializedType, Setting, instanceofLayer } from "../../interfaces";
-import { LayerManager, LayerManagerTopic } from "../LayerManager/LayerManager";
+import type { Item, Layer, SerializedSharedSetting, Setting } from "../../interfaces";
+import { SerializedType, instanceofLayer } from "../../interfaces";
+import type { LayerManager } from "../LayerManager/LayerManager";
+import { LayerManagerTopic } from "../LayerManager/LayerManager";
 
 export class SharedSetting implements Item {
     private _wrappedSetting: Setting<any>;
@@ -19,7 +21,7 @@ export class SharedSetting implements Item {
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
                 this.publishValueChange();
-            })
+            }),
         );
         this._itemDelegate = new ItemDelegate(wrappedSetting.getLabel(), layerManager);
 
@@ -27,15 +29,15 @@ export class SharedSetting implements Item {
             "layer-manager",
             layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(() => {
                 this.makeIntersectionOfAvailableValues();
-            })
+            }),
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
             layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.SETTINGS_CHANGED)(
                 () => {
                     this.makeIntersectionOfAvailableValues();
-                }
-            )
+                },
+            ),
         );
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
@@ -43,7 +45,7 @@ export class SharedSetting implements Item {
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED)(() => {
                 this.makeIntersectionOfAvailableValues();
-            })
+            }),
         );
     }
 
@@ -84,7 +86,7 @@ export class SharedSetting implements Item {
                     availableValues.push(...setting.getDelegate().getAvailableValues());
                 } else {
                     availableValues = availableValues.filter((value) =>
-                        setting.getDelegate().getAvailableValues().includes(value)
+                        setting.getDelegate().getAvailableValues().includes(value),
                     );
                 }
                 index++;

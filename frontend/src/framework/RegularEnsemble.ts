@@ -1,5 +1,7 @@
-import { EnsembleParameters, Parameter } from "./EnsembleParameters";
-import { EnsembleSensitivities, Sensitivity } from "./EnsembleSensitivities";
+import type { Parameter } from "./EnsembleParameters";
+import { EnsembleParameters } from "./EnsembleParameters";
+import type { Sensitivity } from "./EnsembleSensitivities";
+import { EnsembleSensitivities } from "./EnsembleSensitivities";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 
 export class RegularEnsemble {
@@ -23,7 +25,7 @@ export class RegularEnsemble {
         parameterArray: Parameter[],
         sensitivityArray: Sensitivity[] | null,
         color: string,
-        customName: string | null = null
+        customName: string | null = null,
     ) {
         this._ensembleIdent = new RegularEnsembleIdent(caseUuid, ensembleName);
         this._fieldIdentifier = fieldIdentifier;

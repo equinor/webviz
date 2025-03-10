@@ -1,6 +1,6 @@
 import React from "react";
 
-import { WellboreLogCurveHeader_api } from "@api";
+import type { WellboreLogCurveHeader_api } from "@api";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 import { DropdownOptionGroup } from "@lib/components/Dropdown/dropdown";
@@ -14,7 +14,7 @@ import { CURVE_COLOR_PALETTE } from "@modules/WellLogViewer/utils/logViewerColor
 import { makeTrackPlot } from "@modules/WellLogViewer/utils/logViewerTemplate";
 import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
 import { Delete, SwapHoriz, Warning } from "@mui/icons-material";
-import { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
+import type { TemplatePlotType } from "@webviz/well-log-viewer/dist/components/WellLogTemplateTypes";
 
 import { useAtomValue } from "jotai";
 import _ from "lodash";
@@ -55,7 +55,7 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 
             onUpdatePlots([...props.plots, plotConfig]);
         },
-        [onUpdatePlots, props.plots]
+        [onUpdatePlots, props.plots],
     );
 
     const handlePlotChange = React.useCallback(
@@ -65,14 +65,14 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
 
             onUpdatePlots(newPlots);
         },
-        [onUpdatePlots, props.plots]
+        [onUpdatePlots, props.plots],
     );
 
     const removePlot = React.useCallback(
         function removePlot(plot: TemplatePlotConfig) {
             onUpdatePlots(props.plots.filter((p) => p._key !== plot._key));
         },
-        [onUpdatePlots, props.plots]
+        [onUpdatePlots, props.plots],
     );
 
     const handleTrackMove = React.useCallback(
@@ -80,19 +80,19 @@ export function SortablePlotList(props: SortablePlotListProps): React.ReactNode 
             movedItemId: string,
             originId: string | null,
             destinationId: string | null,
-            newPosition: number
+            newPosition: number,
         ) {
             const currentPosition = props.plots.findIndex((p) => p.name === movedItemId);
             const newTrackCfg = arrayMove(props.plots, currentPosition, newPosition);
 
             onUpdatePlots(newTrackCfg);
         },
-        [onUpdatePlots, props.plots]
+        [onUpdatePlots, props.plots],
     );
 
     return (
         <div>
-            <Label text="Plots" position="left" wrapperClassName="!justify-between" labelClassName="!mb-0">
+            <Label text="Plots" position="left" wrapperClassName="justify-between!" labelClassName="mb-0!">
                 <AddItemButton buttonText="Add plot" options={PLOT_TYPE_OPTIONS} onOptionClicked={addPlot} />
             </Label>
 
@@ -155,11 +155,11 @@ function SortablePlotItem(props: SortablePlotItemProps) {
                 });
             }
         },
-        [onPlotUpdate, props.plot, props.curveHeaderOptions]
+        [onPlotUpdate, props.plot, props.curveHeaderOptions],
     );
 
     const plotForm = (
-        <div className="flex-grow flex">
+        <div className="grow flex">
             <Dropdown
                 placeholder="Select a curve"
                 value={makeSelectValueForCurveHeader(props.plot._curveHeader)}
@@ -200,7 +200,7 @@ function SortablePlotItem(props: SortablePlotItemProps) {
 function PlotItemEndAdornment(props: SortablePlotItemProps) {
     return (
         <>
-            <div className="text-xs w-28 flex-shrink-0">
+            <div className="text-xs w-28 shrink-0">
                 <Dropdown
                     value={props.plot.type}
                     options={PLOT_TYPE_OPTIONS}
@@ -209,7 +209,7 @@ function PlotItemEndAdornment(props: SortablePlotItemProps) {
             </div>
 
             <button
-                className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded text-xs text-red-800"
+                className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded-sm text-xs text-red-800"
                 title="Remove Track"
                 onClick={() => props.onDeletePlot(props.plot)}
             >

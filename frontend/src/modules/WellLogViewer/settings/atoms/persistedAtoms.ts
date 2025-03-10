@@ -1,8 +1,9 @@
-import { TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { atomWithModuleInstanceStorage, clearModuleInstanceStorage } from "@modules/WellLogViewer/utils/atoms";
 
-import { Getter, Setter, atom } from "jotai";
-import { Dictionary } from "lodash";
+import type { Getter, Setter } from "jotai";
+import { atom } from "jotai";
+import type { Dictionary } from "lodash";
 
 const STORAGE_KEY = "moduleSettings";
 const moduleSettingsAtom = atomWithModuleInstanceStorage<Dictionary<any>>(STORAGE_KEY, {});
@@ -20,17 +21,17 @@ function setPersistentModuleField(get: Getter, set: Setter, valueKey: string, ne
 
 export const logViewerTrackConfigsAtom = atom<TemplateTrackConfig[], [TemplateTrackConfig[]], void>(
     (get) => getPersistentModuleField(get, "logViewerTrackConfigs", []),
-    (get, set, newVal) => setPersistentModuleField(get, set, "logViewerTrackConfigs", newVal)
+    (get, set, newVal) => setPersistentModuleField(get, set, "logViewerTrackConfigs", newVal),
 );
 
 export const viewerHorizontalAtom = atom<boolean, [boolean], void>(
     (get) => getPersistentModuleField(get, "viewerHorizontal", false),
-    (get, set, newVal) => setPersistentModuleField(get, set, "viewerHorizontal", newVal)
+    (get, set, newVal) => setPersistentModuleField(get, set, "viewerHorizontal", newVal),
 );
 
 export const padDataWithEmptyRowsAtom = atom<boolean, [boolean], void>(
     (get) => getPersistentModuleField(get, "padDataWithEmptyRows", true),
-    (get, set, newVal) => setPersistentModuleField(get, set, "padDataWithEmptyRows", newVal)
+    (get, set, newVal) => setPersistentModuleField(get, set, "padDataWithEmptyRows", newVal),
 );
 
 export function clearStorageForInstance(instanceId: string) {

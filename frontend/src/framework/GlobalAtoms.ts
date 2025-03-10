@@ -3,10 +3,10 @@ import { EnsembleSet } from "@framework/EnsembleSet";
 import { atom } from "jotai";
 import { isEqual } from "lodash";
 
-import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
-import { RealizationFilterSet } from "./RealizationFilterSet";
-import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import { EnsembleRealizationFilterFunction } from "./WorkbenchSession";
+import type { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
+import type { RealizationFilterSet } from "./RealizationFilterSet";
+import type { RegularEnsembleIdent } from "./RegularEnsembleIdent";
+import type { EnsembleRealizationFilterFunction } from "./WorkbenchSession";
 import { atomWithCompare } from "./utils/atomUtils";
 
 /** A module's instance-id. Available in the jotai-store of each module, otherwise null */

@@ -1,14 +1,9 @@
 import React from "react";
 
-import {
-    GuiEvent,
-    GuiMessageBroker,
-    GuiState,
-    LeftDrawerContent,
-    RightDrawerContent,
-    useGuiState,
-} from "@framework/GuiMessageBroker";
-import { ModuleInstance, ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
+import type { GuiMessageBroker } from "@framework/GuiMessageBroker";
+import { GuiEvent, GuiState, LeftDrawerContent, RightDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
+import type { ModuleInstance } from "@framework/ModuleInstance";
+import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "@framework/ModuleInstance";
 import { StatusMessageType } from "@framework/ModuleInstanceStatusController";
 import { SyncSettingsMeta } from "@framework/SyncSettings";
 import { useStatusControllerStateValue } from "@framework/internal/ModuleInstanceStatusControllerInternal";
@@ -35,14 +30,14 @@ export const Header: React.FC<HeaderProps> = (props) => {
     const isLoading = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "loading");
     const hotStatusMessages = useStatusControllerStateValue(
         props.moduleInstance.getStatusController(),
-        "hotMessageCache"
+        "hotMessageCache",
     );
     const log = useStatusControllerStateValue(props.moduleInstance.getStatusController(), "log");
     const [, setRightDrawerContent] = useGuiState(props.guiMessageBroker, GuiState.RightDrawerContent);
     const [, setActiveModuleInstanceId] = useGuiState(props.guiMessageBroker, GuiState.ActiveModuleInstanceId);
     const [rightSettingsPanelWidth, setRightSettingsPanelWidth] = useGuiState(
         props.guiMessageBroker,
-        GuiState.RightSettingsPanelWidthInPercent
+        GuiState.RightSettingsPanelWidthInPercent,
     );
     const [statusMessagesVisible, setStatusMessagesVisible] = React.useState<boolean>(false);
 
@@ -121,7 +116,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     title="This module is currently loading new content."
                 >
                     <CircularProgress size="medium-small" />
-                </div>
+                </div>,
             );
         }
         const numErrors = hotStatusMessages.filter((message) => message.type === StatusMessageType.Error).length;
@@ -142,7 +137,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     key="header-status-messages"
                     className={resolveClassNames(
                         "flex items-center justify-center cursor-pointer px-1 hover:bg-blue-100",
-                        { "bg-blue-300 hover:bg-blue-400": statusMessagesVisible }
+                        { "bg-blue-300 hover:bg-blue-400": statusMessagesVisible },
                     )}
                     onPointerDown={handleStatusPointerDown}
                 >
@@ -163,7 +158,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                             />
                         </div>
                     </Badge>
-                </div>
+                </div>,
             );
         }
 
@@ -176,13 +171,13 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     title="Show complete log for this module"
                 >
                     <History fontSize="inherit" />
-                </div>
+                </div>,
             );
         }
 
         return (
             <div className="h-full flex items-center justify-center">
-                <span className="bg-slate-300 w-[1px] h-1/2 mx-0.5" />
+                <span className="bg-slate-300 w-px h-1/2 mx-0.5" />
                 {stateIndicators}
             </div>
         );
@@ -211,7 +206,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
 
     return (
         <div
-            className={resolveClassNames("flex items-center select-none shadow relative touch-none text-lg", {
+            className={resolveClassNames("flex items-center select-none shadow-sm relative touch-none text-lg", {
                 "cursor-grabbing": props.isDragged,
                 "cursor-move": !props.isDragged,
                 "bg-red-100": hasErrors,
@@ -226,10 +221,10 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     hidden: !isLoading,
                 })}
             >
-                <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded" />
+                <div className="bg-blue-600 animate-linear-indefinite h-0.5 w-full rounded-sm" />
             </div>
-            <div className="flex-grow flex items-center text-sm font-bold min-w-0 p-1.5">
-                <span title={title} className="flex-grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0">
+            <div className="grow flex items-center text-sm font-bold min-w-0 p-1.5">
+                <span title={title} className="grow text-ellipsis whitespace-nowrap overflow-hidden min-w-0">
                     {title}
                 </span>
                 {isDevMode() && (
@@ -244,7 +239,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     {syncedSettings.map((setting) => (
                         <span
                             key={setting}
-                            className="flex items-center justify-center rounded p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help"
+                            className="flex items-center justify-center rounded-sm p-1 leading-none bg-indigo-700 text-white ml-1 text-xs mr-1 cursor-help"
                             title={`This module syncs its "${SyncSettingsMeta[setting].name}" setting on the current page.`}
                         >
                             {SyncSettingsMeta[setting].abbreviation}
@@ -255,7 +250,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             {makeStatusIndicator()}
             {(props.moduleInstance.getChannelManager().getReceivers().length > 0 ||
                 props.moduleInstance.getChannelManager().getChannels().length > 0) && (
-                <span className="bg-slate-300 w-[1px] h-1/2 ml-1" />
+                <span className="bg-slate-300 w-px h-1/2 ml-1" />
             )}
             {props.moduleInstance.getChannelManager().getChannels().length > 0 && (
                 <div
@@ -278,7 +273,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     <Input fontSize="inherit" />
                 </div>
             )}
-            <span className="bg-slate-300 w-[1px] h-1/2 ml-1" />
+            <span className="bg-slate-300 w-px h-1/2 ml-1" />
             <div
                 className="hover:text-slate-500 cursor-pointer px-1"
                 onPointerDown={props.onRemoveClick}
@@ -290,7 +285,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
             {statusMessagesVisible &&
                 createPortal(
                     <div
-                        className={"absolute shadow min-w-[200px] z-40 bg-white overflow-hidden text-sm"}
+                        className={"absolute shadow-sm min-w-[200px] z-40 bg-white overflow-hidden text-sm"}
                         style={{
                             top: boundingRect.bottom,
                             right: window.innerWidth - boundingRect.right,
@@ -308,7 +303,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                                 </Button>
                             </>
                         )}
-                    </div>
+                    </div>,
                 )}
         </div>
     );

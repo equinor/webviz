@@ -10,17 +10,14 @@
  */
 
 /* eslint-disable react-hooks/rules-of-hooks */
-import { ChannelContentDefinition, KeyKind } from "./DataChannelTypes";
-import { ModuleInterfaceTypes } from "./Module";
-import {
-    ModuleInstance,
-    ModuleInstanceTopic,
-    ModuleInstanceTopicValueTypes,
-    useModuleInstanceTopicValue,
-} from "./ModuleInstance";
-import { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
-import { SyncSettingKey } from "./SyncSettings";
-import { InterfaceBaseType, useInterfaceValue } from "./UniDirectionalModuleComponentsInterface";
+import type { ChannelContentDefinition, KeyKind } from "./DataChannelTypes";
+import type { ModuleInterfaceTypes } from "./Module";
+import type { ModuleInstance, ModuleInstanceTopicValueTypes } from "./ModuleInstance";
+import { ModuleInstanceTopic, useModuleInstanceTopicValue } from "./ModuleInstance";
+import type { ModuleInstanceStatusController } from "./ModuleInstanceStatusController";
+import type { SyncSettingKey } from "./SyncSettings";
+import type { InterfaceBaseType } from "./UniDirectionalModuleComponentsInterface";
+import { useInterfaceValue } from "./UniDirectionalModuleComponentsInterface";
 import { useChannelReceiver } from "./internal/DataChannels/hooks/useChannelReceiver";
 import { usePublishChannelContents } from "./internal/DataChannels/hooks/usePublishChannelContents";
 
@@ -83,13 +80,13 @@ export class ModuleContext<TInterfaceTypes extends ModuleInterfaceTypes> {
     }
 
     useSettingsToViewInterfaceValue<TKey extends keyof TInterfaceTypes["settingsToView"]>(
-        key: TKey
+        key: TKey,
     ): TInterfaceTypes["settingsToView"][TKey] {
         return useInterfaceValue(this._moduleInstance.getUniDirectionalSettingsToViewInterface(), key);
     }
 
     useViewToSettingsInterfaceValue<TKey extends keyof TInterfaceTypes["viewToSettings"]>(
-        key: TKey
+        key: TKey,
     ): TInterfaceTypes["viewToSettings"][TKey] {
         return useInterfaceValue(this._moduleInstance.getUniDirectionalViewToSettingsInterface(), key);
     }

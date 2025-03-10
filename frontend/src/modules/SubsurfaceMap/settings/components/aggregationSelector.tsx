@@ -1,5 +1,6 @@
 import { SurfaceStatisticFunction_api } from "@api";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 
 //
@@ -28,7 +29,7 @@ export function AggregationSelector(props: AggregationSelectorProps): JSX.Elemen
                 value={props.selectedAggregation ?? "SINGLE_REAL"}
                 onChange={(newVal: string) =>
                     props.onAggregationSelectorChange(
-                        newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction_api) : null
+                        newVal != "SINGLE_REAL" ? (newVal as SurfaceStatisticFunction_api) : null,
                     )
                 }
             />

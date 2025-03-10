@@ -1,5 +1,5 @@
-import { AtomStoreMaster } from "@framework/AtomStoreMaster";
-import { UserCreatedItemSet } from "@framework/UserCreatedItems";
+import type { AtomStoreMaster } from "@framework/AtomStoreMaster";
+import type { UserCreatedItemSet } from "@framework/UserCreatedItems";
 
 import { atom } from "jotai";
 import { cloneDeep } from "lodash";

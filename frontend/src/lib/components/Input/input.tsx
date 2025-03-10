@@ -1,7 +1,8 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Input as InputUnstyled, InputProps as InputUnstyledProps } from "@mui/base";
+import type { InputProps as InputUnstyledProps } from "@mui/base";
+import { Input as InputUnstyled } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
@@ -140,24 +141,22 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                 "justify-center",
                 "gap-2",
                 "bg-white",
-                "border",
-                "border-gray-300",
-                "shadow-sm",
+                "shadow-xs",
                 "focus-within:border-indigo-500",
                 "w-full",
                 "h-full",
                 "sm:text-sm",
                 "px-2",
                 "py-1.5",
-                "outline-none",
+                "outline-hidden",
                 "cursor-text",
                 {
-                    "border-red-300": props.error,
-                    "border-2": props.error,
+                    "border border-gray-300": !props.error,
+                    "border-2 border-red-300": props.error,
                     "rounded-l": props.rounded === "left",
                     "rounded-r": props.rounded === "right",
                     rounded: props.rounded === "all" || !props.rounded,
-                }
+                },
             )}
             style={wrapperStyle}
         >

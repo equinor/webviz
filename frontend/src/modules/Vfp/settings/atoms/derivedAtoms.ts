@@ -1,5 +1,5 @@
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { fixupRegularEnsembleIdent } from "@framework/utils/ensembleUiHelpers";
 import { isProdTable } from "@modules/Vfp/utils/vfpTableClassifier";
 

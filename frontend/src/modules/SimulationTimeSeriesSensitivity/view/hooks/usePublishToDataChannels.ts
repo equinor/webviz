@@ -1,7 +1,7 @@
 import { EnsembleSetAtom } from "@framework/GlobalAtoms";
-import { ViewContext } from "@framework/ModuleContext";
+import type { ViewContext } from "@framework/ModuleContext";
 import { makeVectorDataGenerator } from "@modules/SimulationTimeSeriesSensitivity/dataGenerators";
-import { Interfaces } from "@modules/SimulationTimeSeriesSensitivity/interfaces";
+import type { Interfaces } from "@modules/SimulationTimeSeriesSensitivity/interfaces";
 
 import { useAtomValue } from "jotai";
 

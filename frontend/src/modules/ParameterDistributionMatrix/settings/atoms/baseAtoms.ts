@@ -1,5 +1,5 @@
-import { ParameterIdent } from "@framework/EnsembleParameters";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ParameterIdent } from "@framework/EnsembleParameters";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentListsEqual } from "@framework/utils/ensembleIdentUtils";
 import { ParameterDistributionPlotType } from "@modules/ParameterDistributionMatrix/typesAndEnums";
@@ -7,7 +7,7 @@ import { ParameterDistributionPlotType } from "@modules/ParameterDistributionMat
 import { atom } from "jotai";
 
 export const selectedVisualizationTypeAtom = atom<ParameterDistributionPlotType>(
-    ParameterDistributionPlotType.DISTRIBUTION_PLOT
+    ParameterDistributionPlotType.DISTRIBUTION_PLOT,
 );
 export const showIndividualRealizationValuesAtom = atom<boolean>(false);
 export const showPercentilesAndMeanLinesAtom = atom<boolean>(false);

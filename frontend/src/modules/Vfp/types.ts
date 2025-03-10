@@ -1,4 +1,3 @@
-
 export enum QueryStatus {
     Loading = "Loading",
     Error = "Error",

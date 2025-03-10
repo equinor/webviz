@@ -9,7 +9,8 @@ import { ArrowDropDown, ArrowDropUp, ExpandLess, ExpandMore } from "@mui/icons-m
 
 import _ from "lodash";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 import { IconButton } from "../IconButton";
 import { Input } from "../Input";
 import { Virtualization } from "../Virtualization";
@@ -90,7 +91,7 @@ function isOptionOfValue<T>(opt: OptionOrTitle<T>, targetValue: T): opt is Optio
 function makeOptionListItemsRecursively<TValue>(
     options: DropdownOptionOrGroup<TValue>[],
     filter?: string | null,
-    parentGroup?: DropdownOptionGroup<TValue>
+    parentGroup?: DropdownOptionGroup<TValue>,
 ): OptionOrTitle<TValue>[] {
     return options.flatMap((option) => {
         if (isDropdownOptionGroup(option)) {
@@ -154,7 +155,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 
     const allOptionsWithSeparators = React.useMemo(
         () => makeOptionListItemsRecursively(props.options),
-        [props.options]
+        [props.options],
     );
     const filteredOptionsWithSeparators = React.useMemo(() => {
         if (!filter) return allOptionsWithSeparators;
@@ -185,13 +186,13 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
     const setOptionIndexWithFocusToCurrentSelection = React.useCallback(
         function handleFilteredOptionsChange() {
             const index = filteredOptionsWithSeparators.findIndex((option) =>
-                isOptionOfValue(option, valueWithDefault)
+                isOptionOfValue(option, valueWithDefault),
             );
 
             setSelectionIndex(index);
             setOptionIndexWithFocus(index);
         },
-        [filteredOptionsWithSeparators, valueWithDefault]
+        [filteredOptionsWithSeparators, valueWithDefault],
     );
 
     const firstItemIsGroupTitle = allOptionsWithSeparators[selectionIndex]?.type === ItemType.GROUP_TITLE;
@@ -242,7 +243,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                 dropdownWrapper?.removeEventListener("focusout", handleWrapperFocusOut);
             };
         },
-        [closePopover]
+        [closePopover],
     );
 
     React.useEffect(
@@ -276,7 +277,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 
             setDropdownRect((prev) => ({ ...prev, width: longestOptionWidth + 32 }));
         },
-        [allOptionsWithSeparators, filter, popoverMaxWidthOrDefault]
+        [allOptionsWithSeparators, filter, popoverMaxWidthOrDefault],
     );
 
     React.useEffect(
@@ -287,7 +288,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                 const preferredHeight =
                     Math.min(
                         MIN_HEIGHT,
-                        Math.max(filteredOptionsWithSeparators.length * OPTION_HEIGHT, OPTION_HEIGHT)
+                        Math.max(filteredOptionsWithSeparators.length * OPTION_HEIGHT, OPTION_HEIGHT),
                     ) + 2;
 
                 if (inputBoundingRect && bodyClientBoundingRect) {
@@ -305,7 +306,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                         newDropdownRect.top = inputBoundingRect.y + inputBoundingRect.height;
                         newDropdownRect.height = Math.min(
                             preferredHeight,
-                            window.innerHeight - inputBoundingRect.y - inputBoundingRect.height
+                            window.innerHeight - inputBoundingRect.y - inputBoundingRect.height,
                         );
                     }
                     if (inputBoundingRect.x + inputBoundingRect.width > window.innerWidth / 2) {
@@ -317,7 +318,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                     setDropdownRect((prev) => ({ ...newDropdownRect, width: prev.width }));
 
                     const selectedIndex = filteredOptionsWithSeparators.findIndex((opt) =>
-                        isOptionOfValue(opt, selection)
+                        isOptionOfValue(opt, selection),
                     );
                     const selectedIndexOrDefault = selectedIndex !== -1 ? selectedIndex : 0;
                     const visibleOptions = Math.round(preferredHeight / OPTION_HEIGHT / 2);
@@ -335,7 +336,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
             dropdownRect.width,
             popoverMaxWidthOrDefault,
             setOptionIndexWithFocusToCurrentSelection,
-        ]
+        ],
     );
 
     const handleOnChange = React.useCallback(
@@ -357,7 +358,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                 onChange(value);
             }, props.debounceTimeMs);
         },
-        [onChange, props.debounceTimeMs]
+        [onChange, props.debounceTimeMs],
     );
 
     const handleOptionClick = React.useCallback(
@@ -367,7 +368,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
             closePopover();
             handleOnChange(value);
         },
-        [allOptionsWithSeparators, handleOnChange, closePopover]
+        [allOptionsWithSeparators, handleOnChange, closePopover],
     );
 
     React.useEffect(
@@ -397,7 +398,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                     const newSelectionIndex = findValidDropdownIndex(
                         allOptionsWithSeparators,
                         currentIndex,
-                        selectionMove
+                        selectionMove,
                     );
 
                     if (!dropdownVisible || !dropdownRef.current) {
@@ -449,7 +450,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
             keyboardFocus,
             closePopover,
             handleOptionClick,
-        ]
+        ],
     );
 
     const handleInputClick = React.useCallback(function handleInputClick() {
@@ -478,7 +479,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
         }
 
         const selectedOption = allOptionsWithSeparators.find((opt): opt is OptionItem<TValue> =>
-            isOptionOfValue(opt, selection)
+            isOptionOfValue(opt, selection),
         );
 
         // Prioritize own adornment, fallback to parent group, if any
@@ -530,8 +531,8 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 
     return (
         <BaseComponent ref={ref} disabled={props.disabled}>
-            <div style={{ width: props.width }} id={props.wrapperId} className="flex hover input-comp rounded">
-                <div className="flex-grow">
+            <div style={{ width: props.width }} id={props.wrapperId} className="flex hover input-comp rounded-sm">
+                <div className="grow">
                     <Input
                         id={props.id}
                         ref={inputWrapperRef}
@@ -571,7 +572,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                                 {
                                     "pointer-events-none": selectionIndex <= (firstItemIsGroupTitle ? 1 : 0),
                                     "text-gray-400": selectionIndex <= (firstItemIsGroupTitle ? 1 : 0),
-                                }
+                                },
                             )}
                             onClick={handleSelectPreviousOption}
                         >
@@ -583,7 +584,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                                 {
                                     "pointer-events-none": selectionIndex >= filteredOptionsWithSeparators.length - 1,
                                     "text-gray-400": selectionIndex >= filteredOptionsWithSeparators.length - 1,
-                                }
+                                },
                             )}
                             onClick={handleSelectNextOption}
                         >
@@ -615,7 +616,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
                                     renderItem={renderItem}
                                 />
                             </ul>
-                        </div>
+                        </div>,
                     )}
             </div>
         </BaseComponent>
@@ -623,7 +624,7 @@ function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: R
 }
 
 export const Dropdown = React.forwardRef(DropdownComponent) as <TValue = string>(
-    props: DropdownProps<TValue> & { ref?: React.Ref<HTMLDivElement> }
+    props: DropdownProps<TValue> & { ref?: React.Ref<HTMLDivElement> },
 ) => React.ReactElement;
 
 type OptionProps<TValue> = DropdownOption<TValue> & {

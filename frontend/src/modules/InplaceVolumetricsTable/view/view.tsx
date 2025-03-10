@@ -1,12 +1,12 @@
 import React from "react";
 
 import { InplaceVolumetricsIdentifier_api } from "@api";
-import { ModuleViewProps } from "@framework/Module";
+import type { ModuleViewProps } from "@framework/Module";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Table as TableComponent } from "@lib/components/Table";
-import { TableHeading, TableRow } from "@lib/components/Table/table";
+import type { TableHeading, TableRow } from "@lib/components/Table/table";
 import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 
 import { useAtomValue } from "jotai";
@@ -15,7 +15,7 @@ import { areSelectedTablesComparableAtom, haveAllQueriesFailedAtom, isQueryFetch
 import { useMakeViewStatusWriterMessages } from "./hooks/useMakeViewStatusWriterMessages";
 import { useTableBuilder } from "./hooks/useTableBuilder";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 
 export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
     const ensembleSet = useEnsembleSet(props.workbenchSession);
@@ -63,7 +63,7 @@ export function View(props: ModuleViewProps<Interfaces>): React.ReactNode {
                 }
             }
         },
-        [props.workbenchServices]
+        [props.workbenchServices],
     );
 
     function createErrorMessage(): string | null {

@@ -1,5 +1,7 @@
-import { Channel, ChannelDefinition } from "./Channel";
-import { ChannelReceiver, ChannelReceiverDefinition } from "./ChannelReceiver";
+import type { ChannelDefinition } from "./Channel";
+import { Channel } from "./Channel";
+import type { ChannelReceiverDefinition } from "./ChannelReceiver";
+import { ChannelReceiver } from "./ChannelReceiver";
 
 export enum ChannelManagerNotificationTopic {
     CHANNELS_CHANGE = "channels-change",

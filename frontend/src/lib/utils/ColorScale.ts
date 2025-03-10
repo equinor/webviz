@@ -1,4 +1,5 @@
-import { ColorPalette, ColorPaletteSerialization } from "@lib/utils/ColorPalette";
+import type { ColorPaletteSerialization } from "@lib/utils/ColorPalette";
+import { ColorPalette } from "@lib/utils/ColorPalette";
 
 export enum ColorScaleType {
     Discrete = "discrete",

@@ -2,7 +2,7 @@ import React from "react";
 
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2 } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
 
 import { isEqual } from "lodash";
 
@@ -38,13 +38,13 @@ const DragBar: React.FC<DragBarProps> = (props) => {
     return (
         <div
             className={resolveClassNames(
-                "relative z-40 transition-colors ease-in-out duration-100 hover:bg-sky-500 hover:outline hover:outline-2 hover:outline-sky-500 touch-none",
+                "relative z-40 transition-colors ease-in-out duration-100 hover:bg-sky-500 outline-sky-500 hover:outline-2 touch-none",
                 {
-                    "bg-sky-500 outline outline-2 outline-sky-500": props.isDragging,
+                    "bg-sky-500 outline-2 outline-sky-500": props.isDragging,
                     "border-transparent bg-gray-300": !props.isDragging,
                     "cursor-ew-resize w-px": props.direction === "horizontal",
                     "cursor-ns-resize h-px": props.direction === "vertical",
-                }
+                },
             )}
         >
             <div
@@ -142,11 +142,11 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                 const cursorWithinBounds: Vec2 = {
                     x: Math.max(
                         containerBoundingRect.left,
-                        Math.min(e.clientX, containerBoundingRect.left + containerBoundingRect.width)
+                        Math.min(e.clientX, containerBoundingRect.left + containerBoundingRect.width),
                     ),
                     y: Math.max(
                         containerBoundingRect.top,
-                        Math.min(e.clientY, containerBoundingRect.top + containerBoundingRect.height)
+                        Math.min(e.clientY, containerBoundingRect.top + containerBoundingRect.height),
                     ),
                 };
 
@@ -232,13 +232,13 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
         function addEventListeners() {
             document.addEventListener("pointermove", handlePointerMove);
             document.addEventListener("pointerup", handlePointerUp);
-            window.addEventListener("blur", handlePointerUp);
+            window.addEventListener("blur-sm", handlePointerUp);
         }
 
         function removeEventListeners() {
             document.removeEventListener("pointermove", handlePointerMove);
             document.removeEventListener("pointerup", handlePointerUp);
-            window.removeEventListener("blur", handlePointerUp);
+            window.removeEventListener("blur-sm", handlePointerUp);
         }
 
         document.addEventListener("pointerdown", handlePointerDown);
@@ -325,11 +325,9 @@ export const ResizablePanels: React.FC<ResizablePanelsProps> = (props) => {
                 }}
             />
             {props.children.map((el: React.ReactNode, index: number) => (
-                /* eslint-disable react/no-array-index-key */
                 <React.Fragment key={`resizable-panel-${index}`}>
                     <div
-                        className="flex-grow overflow-hidden"
-                        /* eslint-disable no-return-assign */
+                        className="grow overflow-hidden"
                         ref={(element) => (individualPanelRefs.current[index] = element)}
                         style={makeStyle(index)}
                     >

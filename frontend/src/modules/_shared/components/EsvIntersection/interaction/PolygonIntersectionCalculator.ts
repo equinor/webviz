@@ -1,4 +1,5 @@
-import { IntersectedItem, IntersectionCalculator, IntersectionItemShape } from "../types/types";
+import type { IntersectedItem, IntersectionCalculator } from "../types/types";
+import { IntersectionItemShape } from "../types/types";
 import { isPointInPolygon } from "../utils/geometry";
 
 export interface PolygonIntersectedItem extends IntersectedItem {

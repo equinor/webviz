@@ -1,16 +1,17 @@
-import { WellborePick_api, getWellborePicksForPickIdentifierOptions } from "@api";
+import type { WellborePick_api } from "@api";
+import { getWellborePicksForPickIdentifierOptions } from "@api";
 import { ItemDelegate } from "@modules/_shared/LayerFramework/delegates/ItemDelegate";
 import { LayerColoringType, LayerDelegate } from "@modules/_shared/LayerFramework/delegates/LayerDelegate";
-import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
-import { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
+import type { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
+import type { BoundingBox, Layer, SerializedLayer } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
 import { DrilledWellborePicksSettingsContext } from "./DrilledWellborePicksSettingsContext";
-import { DrilledWellborePicksSettings } from "./types";
+import type { DrilledWellborePicksSettings } from "./types";
 
 export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSettings, WellborePick_api[]> {
     private _layerDelegate: LayerDelegate<DrilledWellborePicksSettings, WellborePick_api[]>;
@@ -22,7 +23,7 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
             this,
             layerManager,
             new DrilledWellborePicksSettingsContext(layerManager),
-            LayerColoringType.NONE
+            LayerColoringType.NONE,
         );
     }
 
@@ -40,7 +41,7 @@ export class DrilledWellborePicksLayer implements Layer<DrilledWellborePicksSett
 
     doSettingsChangesRequireDataRefetch(
         prevSettings: DrilledWellborePicksSettings,
-        newSettings: DrilledWellborePicksSettings
+        newSettings: DrilledWellborePicksSettings,
     ): boolean {
         return !isEqual(prevSettings, newSettings);
     }
