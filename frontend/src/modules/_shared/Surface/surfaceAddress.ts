@@ -1,4 +1,4 @@
-import { SurfaceStatisticFunction_api } from "@api";
+import type { SurfaceStatisticFunction_api } from "@api";
 import { encodeAsUintListStr } from "@lib/utils/queryStringUtils";
 
 export interface RealizationSurfaceAddress {
@@ -130,7 +130,6 @@ export function peekSurfaceAddressType(surfAddrStr: string): SurfaceAddressType 
 
     return foundAddrType;
 }
-
 
 function assertThatNoComponentsContainDelimiter(componentArr: Array<string | number>): void {
     for (const comp of componentArr) {

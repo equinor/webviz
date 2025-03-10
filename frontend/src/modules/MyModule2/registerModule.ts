@@ -1,7 +1,7 @@
 import { ModuleCategory, ModuleDevState } from "@framework/Module";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Interfaces } from "./interfaces";
+import type { Interfaces } from "./interfaces";
 
 ModuleRegistry.registerModule<Interfaces>({
     moduleName: "MyModule2",

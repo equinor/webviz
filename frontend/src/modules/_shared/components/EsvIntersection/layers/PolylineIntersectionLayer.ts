@@ -1,11 +1,6 @@
-import {
-    LayerOptions,
-    OnRescaleEvent,
-    OnUpdateEvent,
-    PixiLayer,
-    PixiRenderApplication,
-} from "@equinor/esv-intersection";
-import { ColorScale } from "@lib/utils/ColorScale";
+import type { LayerOptions, OnRescaleEvent, OnUpdateEvent, PixiRenderApplication } from "@equinor/esv-intersection";
+import { PixiLayer } from "@equinor/esv-intersection";
+import type { ColorScale } from "@lib/utils/ColorScale";
 
 import { Graphics } from "pixi.js";
 
@@ -166,7 +161,7 @@ export class PolylineIntersectionLayer extends PixiLayer<PolylineIntersectionDat
             }
             const polygonIndices = sectionData.polyIndicesArr.subarray(
                 firstVerticeIndex,
-                firstVerticeIndex + numVertices
+                firstVerticeIndex + numVertices,
             );
 
             let polygon = polygonFromVerticesAndIndices(startOffset, sectionData.verticesUzArr, polygonIndices);

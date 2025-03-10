@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 // type WithDefaults<T, U> =
 type OptionalKeys<T> = {
@@ -14,7 +14,7 @@ type WithDefaults<T, U extends OptionalValues<T>> = Omit<T, keyof U> & Pick<U, k
 
 export function withDefaults<T extends { [key: string]: unknown }>(): <U extends OptionalValues<T>>(
     defaults: U,
-    fc: React.FC<WithDefaults<T, U>>
+    fc: React.FC<WithDefaults<T, U>>,
 ) => React.FC<T> {
     return <U extends OptionalValues<T>>(defaults: U, fc: React.FC<WithDefaults<T, U>>) => {
         return (props: T) => {
@@ -29,7 +29,7 @@ export function withDefaults<T extends { [key: string]: unknown }>(): <U extends
             const adjustedProps: WithDefaults<T, U> = Object.assign(
                 {},
                 adjustedDefaults,
-                props
+                props,
             ) as unknown as WithDefaults<T, U>;
             return fc(adjustedProps);
         };

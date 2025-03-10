@@ -1,7 +1,7 @@
-import { SurfaceStatisticFunction_api } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { SensitivityNameCasePair } from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
-import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import type { SurfaceStatisticFunction_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SensitivityNameCasePair } from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
+import type { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
 export type StatisticalSurfaceSettings = {
     [SettingType.ENSEMBLE]: RegularEnsembleIdent | null;

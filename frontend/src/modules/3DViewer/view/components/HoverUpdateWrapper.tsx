@@ -1,13 +1,15 @@
 import React from "react";
 
 import { GeoJsonLayer } from "@deck.gl/layers";
-import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { ViewContext } from "@framework/ModuleContext";
-import { GlobalTopicDefinitions, WorkbenchServices, useSubscribedValue } from "@framework/WorkbenchServices";
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import type { ViewContext } from "@framework/ModuleContext";
+import type { GlobalTopicDefinitions, WorkbenchServices } from "@framework/WorkbenchServices";
+import { useSubscribedValue } from "@framework/WorkbenchServices";
 
 import { isEqual } from "lodash";
 
-import { SubsurfaceViewerWrapper, SubsurfaceViewerWrapperProps } from "./SubsurfaceViewerWrapper";
+import type { SubsurfaceViewerWrapperProps } from "./SubsurfaceViewerWrapper";
+import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 export type HoverUpdateWrapperProps = {
     wellboreUuid: string | null;
@@ -23,7 +25,7 @@ export function HoverUpdateWrapper(props: HoverUpdateWrapperProps): React.ReactN
     const syncedHoveredMd = useSubscribedValue(
         "global.hoverMd",
         props.workbenchServices,
-        props.viewContext.getInstanceIdString()
+        props.viewContext.getInstanceIdString(),
     );
 
     if (!isEqual(syncedHoveredMd, prevHoveredMd)) {

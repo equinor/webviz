@@ -1,6 +1,6 @@
-import { InplaceVolumetricsIdentifier_api } from "@api";
+import type { InplaceVolumetricsIdentifier_api } from "@api";
 import { ValidEnsembleRealizationsFunctionAtom } from "@framework/GlobalAtoms";
-import { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumetrics/queryHooks";
+import type { EnsembleIdentWithRealizations } from "@modules/_shared/InplaceVolumetrics/queryHooks";
 import { SourceIdentifier, TableType } from "@modules/_shared/InplaceVolumetrics/types";
 
 import { atom } from "jotai";

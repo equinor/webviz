@@ -1,17 +1,17 @@
-import {
+import type {
     Item,
     SerializedColorScale,
     SerializedItem,
     SerializedLayer,
     SerializedSettingsGroup,
     SerializedSharedSetting,
-    SerializedType,
     SerializedView,
 } from "../../interfaces";
+import { SerializedType } from "../../interfaces";
 import { LayerRegistry } from "../../layers/LayerRegistry";
 import { SettingRegistry } from "../../settings/SettingRegistry";
 import { ColorScale } from "../ColorScale/ColorScale";
-import { LayerManager } from "../LayerManager/LayerManager";
+import type { LayerManager } from "../LayerManager/LayerManager";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { View } from "../View/View";
@@ -26,7 +26,7 @@ export class DeserializationFactory {
     makeItem(serialized: SerializedItem): Item {
         if (serialized.type === SerializedType.LAYER_MANAGER) {
             throw new Error(
-                "Cannot deserialize a LayerManager in DeserializationFactory. A LayerManager can never be a descendant of a LayerManager."
+                "Cannot deserialize a LayerManager in DeserializationFactory. A LayerManager can never be a descendant of a LayerManager.",
             );
         }
 
@@ -64,7 +64,7 @@ export class DeserializationFactory {
             const serializedSharedSetting = serialized as SerializedSharedSetting;
             const wrappedSetting = SettingRegistry.makeSetting(
                 serializedSharedSetting.wrappedSettingClass,
-                serializedSharedSetting.wrappedSettingCtorParams
+                serializedSharedSetting.wrappedSettingCtorParams,
             );
             const setting = new SharedSetting(wrappedSetting, this._layerManager);
             setting.deserializeState(serializedSharedSetting);

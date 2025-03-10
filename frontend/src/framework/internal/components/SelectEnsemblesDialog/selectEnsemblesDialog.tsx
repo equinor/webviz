@@ -1,6 +1,7 @@
 import React from "react";
 
-import { CaseInfo_api, getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
+import type { CaseInfo_api } from "@api";
+import { getCasesOptions, getEnsemblesOptions, getFieldsOptions } from "@api";
 import { useAuthProvider } from "@framework/internal/providers/AuthProvider";
 import { Button } from "@lib/components/Button";
 import { CircularProgress } from "@lib/components/CircularProgress";
@@ -13,9 +14,10 @@ import { Label } from "@lib/components/Label";
 import { QueryStateWrapper } from "@lib/components/QueryStateWrapper";
 import { Select } from "@lib/components/Select";
 import { Switch } from "@lib/components/Switch";
-import { TableSelect, TableSelectOption } from "@lib/components/TableSelect";
+import type { TableSelectOption } from "@lib/components/TableSelect";
+import { TableSelect } from "@lib/components/TableSelect";
 import { useValidState } from "@lib/hooks/useValidState";
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { ColorSet } from "@lib/utils/ColorSet";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Add, Check, Info, Remove } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
@@ -62,7 +64,7 @@ export type RegularEnsembleItem = BaseEnsembleItem & {
 export type SelectEnsemblesDialogProps = {
     loadAndSetupEnsembles: (
         selectedRegularEnsembles: RegularEnsembleItem[],
-        createdDeltaEnsembles: DeltaEnsembleItem[]
+        createdDeltaEnsembles: DeltaEnsembleItem[],
     ) => Promise<void>;
     onClose: () => void;
     selectedRegularEnsembles: RegularEnsembleItem[];
@@ -114,7 +116,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 uuid: v4(),
                 color: elm.color,
                 customName: elm.customName,
-            }))
+            })),
         );
     }, [props.createdDeltaEnsembles]);
 
@@ -180,7 +182,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
             !selectedCaseId ||
             !selectedRegularEnsembleName ||
             !newlySelectedRegularEnsembles.some(
-                (e) => e.caseUuid === selectedCaseId && e.ensembleName === selectedRegularEnsembleName
+                (e) => e.caseUuid === selectedCaseId && e.ensembleName === selectedRegularEnsembleName,
             )
         ) {
             return false;
@@ -204,14 +206,15 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
 
     function handleDeltaEnsembleComparisonEnsembleChange(
         deltaEnsembleUuid: string,
-        newCaseUuidAndEnsembleNameString: string
+        newCaseUuidAndEnsembleNameString: string,
     ) {
         const { caseUuid: newComparisonEnsembleCaseUuid, ensembleName: newComparisonEnsembleEnsembleName } =
             createCaseUuidAndEnsembleNameFromString(newCaseUuidAndEnsembleNameString);
 
         const comparisonEnsemble = newlySelectedRegularEnsembles.find(
             (elm) =>
-                elm.caseUuid === newComparisonEnsembleCaseUuid && elm.ensembleName === newComparisonEnsembleEnsembleName
+                elm.caseUuid === newComparisonEnsembleCaseUuid &&
+                elm.ensembleName === newComparisonEnsembleEnsembleName,
         );
         if (!comparisonEnsemble) {
             return;
@@ -230,19 +233,19 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     };
                 }
                 return elm;
-            })
+            }),
         );
     }
 
     function handleDeltaEnsembleReferenceEnsembleChange(
         deltaEnsembleUuid: string,
-        newCaseUuidAndEnsembleNameString: string
+        newCaseUuidAndEnsembleNameString: string,
     ) {
         const { caseUuid: newReferenceEnsembleCaseUuid, ensembleName: newReferenceEnsembleEnsembleName } =
             createCaseUuidAndEnsembleNameFromString(newCaseUuidAndEnsembleNameString);
 
         const referenceEnsemble = newlySelectedRegularEnsembles.find(
-            (e) => e.caseUuid === newReferenceEnsembleCaseUuid && e.ensembleName === newReferenceEnsembleEnsembleName
+            (e) => e.caseUuid === newReferenceEnsembleCaseUuid && e.ensembleName === newReferenceEnsembleEnsembleName,
         );
         if (!referenceEnsemble) {
             return;
@@ -261,7 +264,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     };
                 }
                 return elm;
-            })
+            }),
         );
     }
 
@@ -368,7 +371,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                 validDeltaEnsembles.some(
                     (elm) =>
                         isEqual(elm.comparisonEnsemble, deltaEnsemble.comparisonEnsemble) &&
-                        isEqual(elm.referenceEnsemble, deltaEnsemble.referenceEnsemble)
+                        isEqual(elm.referenceEnsemble, deltaEnsemble.referenceEnsemble),
                 )
             ) {
                 continue;
@@ -453,7 +456,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
         }
         if (casesFilteringOptions.onlyMyCases) {
             filteredCases = filteredCases.filter(
-                (c) => c.user.toLowerCase() === userInfo?.username.replace("@equinor.com", "").toLowerCase()
+                (c) => c.user.toLowerCase() === userInfo?.username.replace("@equinor.com", "").toLowerCase(),
             );
         } else if (casesFilteringOptions.users.length > 0) {
             filteredCases = filteredCases.filter((c) => casesFilteringOptions.users.includes(c.user));
@@ -468,7 +471,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     return { ...elm, color: color };
                 }
                 return elm;
-            })
+            }),
         );
     }
 
@@ -479,7 +482,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     return { ...elm, color: color };
                 }
                 return elm;
-            })
+            }),
         );
     }
 
@@ -490,7 +493,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                     return { ...elm, customName: customName === "" ? null : customName };
                 }
                 return elm;
-            })
+            }),
         );
     }
 
@@ -592,7 +595,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                 loadingComponent={<CircularProgress />}
                             >
                                 <div className="flex justify-end gap-4 items-center">
-                                    <span className="flex-grow text-sm text-slate-500">
+                                    <span className="grow text-sm text-slate-500">
                                         Select from {caseOpts.length} cases
                                     </span>
                                     <Label position="right" text="Keep" title="Show only cases marked as keep">
@@ -655,9 +658,9 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             </Button>
                         </div>
                     </div>
-                    <div className="flex flex-col flex-grow max-h-full gap-4 p-4">
+                    <div className="flex flex-col grow max-h-full gap-4 p-4">
                         <div className="flex-1 flex-col">
-                            <div className="flex-shrink">Selected Ensembles</div>
+                            <div className="shrink">Selected Ensembles</div>
                             <div className="flex-1 overflow-auto">
                                 <table className="w-full border border-collapse table-fixed text-sm">
                                     <thead className="sticky top-0">
@@ -682,7 +685,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                             handleRegularEnsembleColorChange(
                                                                 item.caseUuid,
                                                                 item.ensembleName,
-                                                                value
+                                                                value,
                                                             )
                                                         }
                                                     />
@@ -695,7 +698,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                             handleRegularEnsembleCustomNameChange(
                                                                 item.caseUuid,
                                                                 item.ensembleName,
-                                                                e.target.value
+                                                                e.target.value,
                                                             )
                                                         }
                                                     />
@@ -721,7 +724,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                         onClick={() =>
                                                             handleRemoveRegularEnsemble(
                                                                 item.caseUuid,
-                                                                item.ensembleName
+                                                                item.ensembleName,
                                                             )
                                                         }
                                                         color="danger"
@@ -740,12 +743,12 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                             )}
                         </div>
                         <div className="flex-1 flex-col">
-                            <div className="flex-shrink flex flex-row">
+                            <div className="shrink flex flex-row">
                                 <Info
                                     fontSize="medium"
                                     titleAccess={`Create delta ensemble using selected ensembles:\n\n"Delta Ensemble" = "Comparison Ensemble" - "Reference Ensemble"`}
                                     className={
-                                        "rounded-md px-0.25 py-0.25 border border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
+                                        "rounded-md px-0.25 py-0.25 border  border-transparent text-white bg-indigo-600 hover:bg-indigo-700 cursor-help"
                                     }
                                 />
                                 <div className="pl-2 pr-2">Delta Ensembles</div>
@@ -784,7 +787,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                         e.referenceEnsemble?.caseUuid ===
                                                             elm.referenceEnsemble?.caseUuid &&
                                                         e.referenceEnsemble?.ensembleName ===
-                                                            elm.referenceEnsemble?.ensembleName
+                                                            elm.referenceEnsemble?.ensembleName,
                                                 ).length > 1;
                                             return (
                                                 <tr
@@ -799,7 +802,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                                 isDeltaEnsembleValid && isDuplicateDeltaEnsemble,
                                                             "hover:bg-slate-100 odd:bg-slate-50":
                                                                 isDeltaEnsembleValid && !isDuplicateDeltaEnsemble,
-                                                        }
+                                                        },
                                                     )}
                                                 >
                                                     <td className="p-2">
@@ -817,7 +820,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                                                 handleDeltaEnsembleCustomNameChange(
                                                                     elm.uuid,
-                                                                    e.target.value
+                                                                    e.target.value,
                                                                 )
                                                             }
                                                         />
@@ -828,7 +831,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                                 return {
                                                                     value: createCaseUuidAndEnsembleNameString(
                                                                         elm.caseUuid,
-                                                                        elm.ensembleName
+                                                                        elm.ensembleName,
                                                                     ),
                                                                     label:
                                                                         elm.customName ??
@@ -839,14 +842,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                                 elm.comparisonEnsemble
                                                                     ? createCaseUuidAndEnsembleNameString(
                                                                           elm.comparisonEnsemble.caseUuid,
-                                                                          elm.comparisonEnsemble.ensembleName
+                                                                          elm.comparisonEnsemble.ensembleName,
                                                                       )
                                                                     : undefined
                                                             }
                                                             onChange={(newCaseUuidAndEnsembleNameString) => {
                                                                 handleDeltaEnsembleComparisonEnsembleChange(
                                                                     elm.uuid,
-                                                                    newCaseUuidAndEnsembleNameString
+                                                                    newCaseUuidAndEnsembleNameString,
                                                                 );
                                                             }}
                                                         />
@@ -857,7 +860,7 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                                 return {
                                                                     value: createCaseUuidAndEnsembleNameString(
                                                                         elm.caseUuid,
-                                                                        elm.ensembleName
+                                                                        elm.ensembleName,
                                                                     ),
                                                                     label:
                                                                         elm.customName ??
@@ -868,14 +871,14 @@ export const SelectEnsemblesDialog: React.FC<SelectEnsemblesDialogProps> = (prop
                                                                 elm.referenceEnsemble
                                                                     ? createCaseUuidAndEnsembleNameString(
                                                                           elm.referenceEnsemble.caseUuid,
-                                                                          elm.referenceEnsemble.ensembleName
+                                                                          elm.referenceEnsemble.ensembleName,
                                                                       )
                                                                     : undefined
                                                             }
                                                             onChange={(value) => {
                                                                 handleDeltaEnsembleReferenceEnsembleChange(
                                                                     elm.uuid,
-                                                                    value
+                                                                    value,
                                                                 );
                                                             }}
                                                         />

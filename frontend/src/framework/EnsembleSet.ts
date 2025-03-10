@@ -1,6 +1,6 @@
-import { DeltaEnsemble } from "./DeltaEnsemble";
+import type { DeltaEnsemble } from "./DeltaEnsemble";
 import { DeltaEnsembleIdent } from "./DeltaEnsembleIdent";
-import { RegularEnsemble } from "./RegularEnsemble";
+import type { RegularEnsemble } from "./RegularEnsemble";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
 import { isEnsembleIdentOfType } from "./utils/ensembleIdentUtils";
 

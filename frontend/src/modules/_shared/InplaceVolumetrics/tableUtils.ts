@@ -1,14 +1,13 @@
-import { InplaceVolumetricStatistic_api } from "@api";
+import type { InplaceVolumetricStatistic_api } from "@api";
 
 import { Column, ColumnType, Table } from "./Table";
-import {
-    InplaceVolumetricStatisticEnumToStringMapping,
+import type {
     InplaceVolumetricsStatisticalTableData,
     InplaceVolumetricsTableData,
-    SourceIdentifier,
     StatisticalColumns,
     StatisticalTableColumnData,
 } from "./types";
+import { InplaceVolumetricStatisticEnumToStringMapping, SourceIdentifier } from "./types";
 
 export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table {
     const columns: Map<string, Column<any>> = new Map();
@@ -76,14 +75,14 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
                 const untouchedColumns = Array.from(columns.values()).filter(
                     (column) =>
                         !fluidZoneTable.selectorColumns.some(
-                            (selectorColumn) => selectorColumn.columnName === column.getName()
+                            (selectorColumn) => selectorColumn.columnName === column.getName(),
                         ) &&
                         !fluidZoneTable.resultColumns.some(
-                            (resultColumn) => resultColumn.columnName === column.getName()
+                            (resultColumn) => resultColumn.columnName === column.getName(),
                         ) &&
                         column.getType() !== ColumnType.ENSEMBLE &&
                         column.getType() !== ColumnType.TABLE &&
-                        column.getType() !== ColumnType.FLUID_ZONE
+                        column.getType() !== ColumnType.FLUID_ZONE,
                 );
                 for (const column of untouchedColumns) {
                     for (let i = 0; i < numAddedRows; i++) {
@@ -99,7 +98,7 @@ export function makeTableFromApiData(data: InplaceVolumetricsTableData[]): Table
 
 export function makeStatisticalTableColumnDataFromApiData(
     data: InplaceVolumetricsStatisticalTableData[],
-    statisticOptions: InplaceVolumetricStatistic_api[]
+    statisticOptions: InplaceVolumetricStatistic_api[],
 ): StatisticalTableColumnData {
     // Result statistical tables
     const resultStatisticalColumns: Map<string, StatisticalColumns> = new Map();
@@ -165,17 +164,17 @@ export function makeStatisticalTableColumnDataFromApiData(
 
             // Build selector columns
             const selectorColumnsInTable = fluidZoneTableData.selectorColumns.map(
-                (selectorColumn) => selectorColumn.columnName
+                (selectorColumn) => selectorColumn.columnName,
             );
             const untouchedSelectorColumns = Array.from(allSelectorColumns).filter(
-                (elm) => !selectorColumnsInTable.includes(elm)
+                (elm) => !selectorColumnsInTable.includes(elm),
             );
             for (const selectorColumn of fluidZoneTableData.selectorColumns) {
                 for (const valueIndex of selectorColumn.indices) {
                     const rowValue = selectorColumn.uniqueValues.at(valueIndex);
                     if (!rowValue) {
                         throw new Error(
-                            `Expected value at index ${valueIndex} for ${selectorColumn.columnName} not found`
+                            `Expected value at index ${valueIndex} for ${selectorColumn.columnName} not found`,
                         );
                     }
 
@@ -192,10 +191,10 @@ export function makeStatisticalTableColumnDataFromApiData(
 
             // Build statistical columns per result across each unique table set
             const resultStatisticsInTableData = fluidZoneTableData.resultColumnStatistics.map(
-                (resultColumn) => resultColumn.columnName
+                (resultColumn) => resultColumn.columnName,
             );
             const untouchedResultStatistics = Array.from(resultStatisticalColumns.keys()).filter(
-                (elm) => !resultStatisticsInTableData.includes(elm)
+                (elm) => !resultStatisticsInTableData.includes(elm),
             );
             for (const resultColumn of fluidZoneTableData.resultColumnStatistics) {
                 const statisticalColumns = resultStatisticalColumns.get(resultColumn.columnName);

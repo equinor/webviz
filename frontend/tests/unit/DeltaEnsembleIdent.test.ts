@@ -6,11 +6,11 @@ import { RegularEnsembleIdent } from "../../src/framework/RegularEnsembleIdent";
 describe("DeltaEnsembleIdent", () => {
     const comparisonEnsembleIdent = new RegularEnsembleIdent(
         "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
-        "comparison-ensemble-name"
+        "comparison-ensemble-name",
     );
     const referenceEnsembleIdent = new RegularEnsembleIdent(
         "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa",
-        "reference-ensemble-name"
+        "reference-ensemble-name",
     );
 
     test("should create a valid DeltaEnsembleIdent instance", () => {
@@ -22,7 +22,7 @@ describe("DeltaEnsembleIdent", () => {
     test("should convert comparison and reference ensemble idents to a string", () => {
         const result = DeltaEnsembleIdent.comparisonEnsembleIdentAndReferenceEnsembleIdentToString(
             comparisonEnsembleIdent,
-            referenceEnsembleIdent
+            referenceEnsembleIdent,
         );
         expect(result).toBe(`~@@~${comparisonEnsembleIdent.toString()}~@@~${referenceEnsembleIdent.toString()}~@@~`);
     });
@@ -72,7 +72,7 @@ describe("DeltaEnsembleIdent", () => {
         const deltaEnsembleIdent1 = new DeltaEnsembleIdent(comparisonEnsembleIdent, referenceEnsembleIdent);
         const deltaEnsembleIdent2 = new DeltaEnsembleIdent(
             comparisonEnsembleIdent,
-            new RegularEnsembleIdent("33333333-aaaa-4444-aaaa-aaaaaaaaaaaa", "NewReferenceEnsemble")
+            new RegularEnsembleIdent("33333333-aaaa-4444-aaaa-aaaaaaaaaaaa", "NewReferenceEnsemble"),
         );
         expect(deltaEnsembleIdent1.equals(deltaEnsembleIdent2)).toBe(false);
     });

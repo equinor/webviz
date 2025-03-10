@@ -6,8 +6,9 @@ import { Link, Warning } from "@mui/icons-material";
 
 import { usePublishSubscribeTopicValue } from "../../utils/PublishSubscribeDelegate";
 import { SettingTopic } from "../delegates/SettingDelegate";
-import { LayerManager, LayerManagerTopic } from "../framework/LayerManager/LayerManager";
-import { Setting, SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";
+import type { LayerManager } from "../framework/LayerManager/LayerManager";
+import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
+import type { Setting, SettingComponentProps as SettingComponentPropsInterface } from "../interfaces";
 
 export type SettingComponentProps<TValue> = {
     setting: Setting<TValue>;
@@ -17,17 +18,17 @@ export type SettingComponentProps<TValue> = {
 
 export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): React.ReactNode {
     const componentRef = React.useRef<(props: SettingComponentPropsInterface<TValue>) => React.ReactNode>(
-        props.setting.makeComponent()
+        props.setting.makeComponent(),
     );
     const value = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.VALUE_CHANGED);
     const isValid = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.VALIDITY_CHANGED);
     const isPersisted = usePublishSubscribeTopicValue(
         props.setting.getDelegate(),
-        SettingTopic.PERSISTED_STATE_CHANGED
+        SettingTopic.PERSISTED_STATE_CHANGED,
     );
     const availableValues = usePublishSubscribeTopicValue(
         props.setting.getDelegate(),
-        SettingTopic.AVAILABLE_VALUES_CHANGED
+        SettingTopic.AVAILABLE_VALUES_CHANGED,
     );
     const overriddenValue = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.OVERRIDDEN_CHANGED);
     const isLoading = usePublishSubscribeTopicValue(props.setting.getDelegate(), SettingTopic.LOADING_STATE_CHANGED);
@@ -100,7 +101,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
                                 title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."
                             >
                                 <Warning fontSize="inherit" />
-                                <span className="flex-grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                                <span className="grow min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                                     Persisted value not valid.
                                 </span>
                             </span>
