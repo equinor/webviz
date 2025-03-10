@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Dropdown, type DropdownOptionOrGroup } from "@lib/components/Dropdown/dropdown";
+import { Dropdown, type DropdownOptionOrGroup } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
 import { ArrowBackIosNew, ImageAspectRatioTwoTone } from "@mui/icons-material";
 
