@@ -19,7 +19,7 @@ function setPersistentModuleField(get: Getter, set: Setter, valueKey: string, ne
     set(moduleSettingsAtom, storageCopy);
 }
 
-export const logViewerTrackConfigs = atom<TemplateTrackConfig[], [TemplateTrackConfig[]], void>(
+export const logViewerTrackConfigsAtom = atom<TemplateTrackConfig[], [TemplateTrackConfig[]], void>(
     (get) => getPersistentModuleField(get, "logViewerTrackConfigs", []),
     (get, set, newVal) => setPersistentModuleField(get, set, "logViewerTrackConfigs", newVal),
 );
