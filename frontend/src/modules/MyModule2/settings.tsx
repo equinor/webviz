@@ -1,196 +1,112 @@
 import React from "react";
 
-import { Input } from "@lib/components/Input";
+import { Dropdown, type DropdownOptionOrGroup } from "@lib/components/Dropdown";
 import { Label } from "@lib/components/Label";
-import { SortableListGroup, SortableListItem } from "@lib/components/SortableList";
-import { SortableList } from "@lib/components/SortableList/sortableList";
-
-import { useAtom } from "jotai";
-
-import { textAtom } from "./atoms";
-
-type Item = {
-    id: string;
-    type: "item" | "group";
-    title: string;
-    children: Item[];
-};
+import { ArrowBackIosNew, ImageAspectRatioTwoTone } from "@mui/icons-material";
 
 export function Settings(): React.ReactNode {
-    const [atomText, setAtomText] = useAtom(textAtom);
-    const [items, setItems] = React.useState<Item[]>([
+    const [selectedItem, setSelectedItem] = React.useState<string>();
+
+    const options: DropdownOptionOrGroup<string>[] = [
         {
-            id: "1",
-            type: "item",
-            title: "Item 1",
-            children: [],
-        },
-        {
-            id: "2",
-            type: "item",
-            title: "Item 2",
-            children: [],
-        },
-        {
-            id: "3",
-            type: "group",
-            title: "Group 1",
-            children: [
+            label: "GROUP 1",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" className="align-sub" />,
+            options: [
                 {
-                    id: "4",
-                    type: "item",
-                    title: "Item 3",
-                    children: [],
+                    value: "v1",
+                    label: "V:1 with a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long name",
                 },
                 {
-                    id: "5",
-                    type: "item",
-                    title: "Item 4",
-                    children: [],
+                    value: "v2",
+                    label: "V:2",
                 },
             ],
         },
         {
-            id: "6",
-            type: "item",
-            title: "Item 5",
-            children: [],
-        },
-        {
-            id: "7",
-            type: "group",
-            title: "Group 2",
-            children: [
+            label: "GROUP 2 with a very very very very very very very very very very very very very very very very very very very very very very long name",
+            adornment: <ArrowBackIosNew fontSize="inherit" />,
+            options: [
                 {
-                    id: "8",
-                    type: "item",
-                    title: "Item 6",
-                    children: [],
+                    value: "v3",
+                    label: "V:3",
                 },
                 {
-                    id: "9",
-                    type: "item",
-                    title: "Item 7",
-                    children: [],
-                },
-                {
-                    id: "10",
-                    type: "group",
-                    title: "Group 3",
-                    children: [
-                        {
-                            id: "11",
-                            type: "item",
-                            title: "Item 8",
-                            children: [],
-                        },
-                    ],
+                    value: "v4",
+                    label: "V:4",
                 },
             ],
         },
-    ]);
-
-    function handleAtomTextChange(event: React.ChangeEvent<HTMLInputElement>) {
-        setAtomText(event.target.value);
-    }
-
-    const handleItemMove = React.useCallback(
-        function handleItemMove(
-            itemId: string,
-            originId: string | null,
-            destinationid: string | null,
-            position: number,
-        ) {
-            const newItems = [...items];
-
-            const item = findItemById(itemId, newItems);
-            if (!item) {
-                return;
-            }
-
-            const origin = originId ? findItemById(originId, newItems) : null;
-            let originArr: Item[] = [];
-            if (origin) {
-                originArr = origin.children;
-            } else {
-                originArr = newItems;
-            }
-
-            const destination = findItemById(destinationid!, newItems);
-            let destinationArr: Item[] = [];
-            if (destination) {
-                destinationArr = destination.children;
-            } else {
-                destinationArr = newItems;
-            }
-
-            originArr.splice(
-                originArr.findIndex((i) => i.id === itemId),
-                1,
-            );
-
-            if (position === -1) {
-                destinationArr.unshift(item);
-            } else {
-                destinationArr.splice(position, 0, item);
-            }
-
-            setItems(newItems);
+        {
+            // This empty group will log a warning
+            label: "Empty group",
+            options: [],
         },
-        [items],
-    );
-
-    function makeChildren(items: Item[]): React.ReactElement[] {
-        return items.map((item, idx) => {
-            if (item.type === "item") {
-                return (
-                    <SortableListItem key={item.id} title={item.title} id={item.id}>
-                        {idx % 2 === 0 ? item.title : undefined}
-                    </SortableListItem>
-                );
-            } else {
-                return (
-                    <SortableListGroup
-                        key={item.id}
-                        title={item.title}
-                        id={item.id}
-                        contentWhenEmpty={<div className="p-2">No items</div>}
-                    >
-                        {makeChildren(item.children)}
-                    </SortableListGroup>
-                );
-            }
-        });
-    }
+        {
+            value: "x1",
+            label: "X:1",
+        },
+        {
+            value: "x2",
+            label: "X:2",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x3",
+            label: "X:3",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x4",
+            label: "X:4",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x5",
+            label: "X:5",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x6",
+            label: "X:6",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x7",
+            label: "X:7",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x8",
+            label: "X:8",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x9",
+            label: "X:9",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+        {
+            value: "x10",
+            label: "X:10",
+            adornment: <ImageAspectRatioTwoTone fontSize="inherit" />,
+        },
+    ];
 
     return (
         <>
-            <Label text="Atom text">
-                <Input value={atomText} onChange={handleAtomTextChange} />
+            <Label text="Dropdown">
+                <Dropdown value={selectedItem} options={options} onChange={setSelectedItem} showArrows />
             </Label>
 
-            <div className="h-96">
-                <SortableList contentWhenEmpty="No items" onItemMoved={handleItemMove}>
-                    {makeChildren(items)}
-                </SortableList>
-            </div>
+            <Label text="Dropdown">
+                <Dropdown value={selectedItem} options={options} onChange={setSelectedItem} />
+            </Label>
+
+            <Label text="Dropdown">
+                <p>Selection: {selectedItem ?? ""}</p>
+            </Label>
         </>
     );
 }
 
 Settings.displayName = "Settings";
-
-function findItemById(id: string, items: Item[]): Item | null {
-    for (const item of items) {
-        if (item.id === id) {
-            return item;
-        }
-        if (item.children.length > 0) {
-            const foundItem = findItemById(id, item.children);
-            if (foundItem) {
-                return foundItem;
-            }
-        }
-    }
-    return null;
-}
