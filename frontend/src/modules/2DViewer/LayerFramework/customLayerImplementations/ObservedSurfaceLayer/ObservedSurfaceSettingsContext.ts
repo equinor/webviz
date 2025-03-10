@@ -2,8 +2,8 @@ import { SurfaceTimeType_api, getObservedSurfacesMetadataOptions } from "@api";
 import { SettingsContextDelegate } from "@modules/_shared/LayerFramework/delegates/SettingsContextDelegate";
 import { LayerManager } from "@modules/_shared/LayerFramework/framework/LayerManager/LayerManager";
 import { DefineDependenciesArgs, SettingsContext } from "@modules/_shared/LayerFramework/interfaces";
+import { AttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/AttributeSetting";
 import { EnsembleSetting } from "@modules/_shared/LayerFramework/settings/implementations/EnsembleSetting";
-import { SurfaceAttributeSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceAttributeSetting";
 import { SurfaceNameSetting } from "@modules/_shared/LayerFramework/settings/implementations/SurfaceNameSetting";
 import { TimeOrIntervalSetting } from "@modules/_shared/LayerFramework/settings/implementations/TimeOrIntervalSetting";
 import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
@@ -14,16 +14,12 @@ export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedS
     private _contextDelegate: SettingsContextDelegate<ObservedSurfaceSettings>;
 
     constructor(layerManager: LayerManager) {
-        this._contextDelegate = new SettingsContextDelegate<ObservedSurfaceSettings, keyof ObservedSurfaceSettings>(
-            this,
-            layerManager,
-            {
-                [SettingType.ENSEMBLE]: new EnsembleSetting(),
-                [SettingType.SURFACE_ATTRIBUTE]: new SurfaceAttributeSetting(),
-                [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),
-                [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
-            }
-        );
+        this._contextDelegate = new SettingsContextDelegate<ObservedSurfaceSettings>(this, layerManager, {
+            [SettingType.ENSEMBLE]: new EnsembleSetting(),
+            [SettingType.ATTRIBUTE]: new AttributeSetting(),
+            [SettingType.SURFACE_NAME]: new SurfaceNameSetting(),
+            [SettingType.TIME_OR_INTERVAL]: new TimeOrIntervalSetting(),
+        });
     }
 
     getDelegate(): SettingsContextDelegate<ObservedSurfaceSettings> {
@@ -68,7 +64,7 @@ export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedS
             });
         });
 
-        availableSettingsUpdater(SettingType.SURFACE_ATTRIBUTE, ({ getHelperDependency }) => {
+        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(observedSurfaceMetadataDep);
 
             if (!data) {
@@ -83,7 +79,7 @@ export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedS
         });
 
         availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
-            const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
+            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
             const data = getHelperDependency(observedSurfaceMetadataDep);
 
             if (!attribute || !data) {
@@ -102,7 +98,7 @@ export class ObservedSurfaceSettingsContext implements SettingsContext<ObservedS
         });
 
         availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const attribute = getLocalSetting(SettingType.SURFACE_ATTRIBUTE);
+            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
             const surfaceName = getLocalSetting(SettingType.SURFACE_NAME);
             const data = getHelperDependency(observedSurfaceMetadataDep);
 

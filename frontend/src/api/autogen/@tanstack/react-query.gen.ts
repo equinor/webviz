@@ -10,10 +10,12 @@ import {
     getAlive,
     getAliveProtected,
     getCases,
+    getCrosslineSlice,
     getDeltaEnsembleRealizationsVectorData,
     getDeltaEnsembleStatisticalVectorData,
     getDeltaEnsembleVectorList,
     getDeltaSurfaceData,
+    getDepthSlice,
     getDrilledWellboreHeaders,
     getEnsembleDetails,
     getEnsembles,
@@ -22,6 +24,7 @@ import {
     getGridParameter,
     getGridSurface,
     getHistoricalVectorData,
+    getInlineSlice,
     getIsGridGeometryShared,
     getIsSensitivityRun,
     getLogCurveData,
@@ -63,6 +66,8 @@ import {
     getWellborePickIdentifiers,
     getWellborePicksForPickIdentifier,
     getWellborePicksForWellbore,
+    getWellborePicksInStratColumn,
+    getWellboreStratigraphicColumns,
     loginRoute,
     postGetAggregatedPerRealizationTableData,
     postGetAggregatedStatisticalTableData,
@@ -77,10 +82,12 @@ import type {
     GetAliveData_api,
     GetAliveProtectedData_api,
     GetCasesData_api,
+    GetCrosslineSliceData_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleStatisticalVectorDataData_api,
     GetDeltaEnsembleVectorListData_api,
     GetDeltaSurfaceDataData_api,
+    GetDepthSliceData_api,
     GetDrilledWellboreHeadersData_api,
     GetEnsembleDetailsData_api,
     GetEnsemblesData_api,
@@ -89,6 +96,7 @@ import type {
     GetGridParameterData_api,
     GetGridSurfaceData_api,
     GetHistoricalVectorDataData_api,
+    GetInlineSliceData_api,
     GetIsGridGeometrySharedData_api,
     GetIsSensitivityRunData_api,
     GetLogCurveDataData_api,
@@ -130,6 +138,8 @@ import type {
     GetWellborePickIdentifiersData_api,
     GetWellborePicksForPickIdentifierData_api,
     GetWellborePicksForWellboreData_api,
+    GetWellborePicksInStratColumnData_api,
+    GetWellboreStratigraphicColumnsData_api,
     LoginRouteData_api,
     PostGetAggregatedPerRealizationTableDataData_api,
     PostGetAggregatedPerRealizationTableDataError_api,
@@ -722,6 +732,25 @@ export const getMisfitSurfaceDataOptions = (options: Options<GetMisfitSurfaceDat
     });
 };
 
+export const getWellboreStratigraphicColumnsQueryKey = (options: Options<GetWellboreStratigraphicColumnsData_api>) => [
+    createQueryKey("getWellboreStratigraphicColumns", options),
+];
+
+export const getWellboreStratigraphicColumnsOptions = (options: Options<GetWellboreStratigraphicColumnsData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getWellboreStratigraphicColumns({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getWellboreStratigraphicColumnsQueryKey(options),
+    });
+};
+
 export const getStratigraphicUnitsQueryKey = (options: Options<GetStratigraphicUnitsData_api>) => [
     createQueryKey("getStratigraphicUnits", options),
 ];
@@ -1116,6 +1145,25 @@ export const getWellborePicksForWellboreOptions = (options: Options<GetWellboreP
     });
 };
 
+export const getWellborePicksInStratColumnQueryKey = (options: Options<GetWellborePicksInStratColumnData_api>) => [
+    createQueryKey("getWellborePicksInStratColumn", options),
+];
+
+export const getWellborePicksInStratColumnOptions = (options: Options<GetWellborePicksInStratColumnData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getWellborePicksInStratColumn({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getWellborePicksInStratColumnQueryKey(options),
+    });
+};
+
 export const getWellboreCompletionsQueryKey = (options: Options<GetWellboreCompletionsData_api>) => [
     createQueryKey("getWellboreCompletions", options),
 ];
@@ -1227,6 +1275,63 @@ export const getSeismicCubeMetaListOptions = (options: Options<GetSeismicCubeMet
             return data;
         },
         queryKey: getSeismicCubeMetaListQueryKey(options),
+    });
+};
+
+export const getInlineSliceQueryKey = (options: Options<GetInlineSliceData_api>) => [
+    createQueryKey("getInlineSlice", options),
+];
+
+export const getInlineSliceOptions = (options: Options<GetInlineSliceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getInlineSlice({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getInlineSliceQueryKey(options),
+    });
+};
+
+export const getCrosslineSliceQueryKey = (options: Options<GetCrosslineSliceData_api>) => [
+    createQueryKey("getCrosslineSlice", options),
+];
+
+export const getCrosslineSliceOptions = (options: Options<GetCrosslineSliceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getCrosslineSlice({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getCrosslineSliceQueryKey(options),
+    });
+};
+
+export const getDepthSliceQueryKey = (options: Options<GetDepthSliceData_api>) => [
+    createQueryKey("getDepthSlice", options),
+];
+
+export const getDepthSliceOptions = (options: Options<GetDepthSliceData_api>) => {
+    return queryOptions({
+        queryFn: async ({ queryKey, signal }) => {
+            const { data } = await getDepthSlice({
+                ...options,
+                ...queryKey[0],
+                signal,
+                throwOnError: true,
+            });
+            return data;
+        },
+        queryKey: getDepthSliceQueryKey(options),
     });
 };
 

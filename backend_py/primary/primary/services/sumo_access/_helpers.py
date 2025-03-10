@@ -4,15 +4,10 @@ from fmu.sumo.explorer.explorer import SumoClient, Pit
 from fmu.sumo.explorer.objects import CaseCollection, Case
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
-from primary import config
 from primary.services.service_exceptions import Service, NoDataError, MultipleDataMatchesError
 
+
 LOGGER = logging.getLogger(__name__)
-
-
-def create_sumo_client(access_token: str) -> SumoClient:
-    sumo_client = SumoClient(env=config.SUMO_ENV, token=access_token, interactive=False)
-    return sumo_client
 
 
 async def create_sumo_case_async(client: SumoClient, case_uuid: str, want_keepalive_pit: bool) -> Case:

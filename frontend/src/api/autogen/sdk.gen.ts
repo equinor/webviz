@@ -10,6 +10,9 @@ import type {
     GetCasesData_api,
     GetCasesError_api,
     GetCasesResponse_api,
+    GetCrosslineSliceData_api,
+    GetCrosslineSliceError_api,
+    GetCrosslineSliceResponse_api,
     GetDeltaEnsembleRealizationsVectorDataData_api,
     GetDeltaEnsembleRealizationsVectorDataError_api,
     GetDeltaEnsembleRealizationsVectorDataResponse_api,
@@ -22,6 +25,9 @@ import type {
     GetDeltaSurfaceDataData_api,
     GetDeltaSurfaceDataError_api,
     GetDeltaSurfaceDataResponse_api,
+    GetDepthSliceData_api,
+    GetDepthSliceError_api,
+    GetDepthSliceResponse_api,
     GetDrilledWellboreHeadersData_api,
     GetDrilledWellboreHeadersError_api,
     GetDrilledWellboreHeadersResponse_api,
@@ -45,6 +51,9 @@ import type {
     GetHistoricalVectorDataData_api,
     GetHistoricalVectorDataError_api,
     GetHistoricalVectorDataResponse_api,
+    GetInlineSliceData_api,
+    GetInlineSliceError_api,
+    GetInlineSliceResponse_api,
     GetIsGridGeometrySharedData_api,
     GetIsGridGeometrySharedError_api,
     GetIsGridGeometrySharedResponse_api,
@@ -168,6 +177,12 @@ import type {
     GetWellborePicksForWellboreData_api,
     GetWellborePicksForWellboreError_api,
     GetWellborePicksForWellboreResponse_api,
+    GetWellborePicksInStratColumnData_api,
+    GetWellborePicksInStratColumnError_api,
+    GetWellborePicksInStratColumnResponse_api,
+    GetWellboreStratigraphicColumnsData_api,
+    GetWellboreStratigraphicColumnsError_api,
+    GetWellboreStratigraphicColumnsResponse_api,
     LoginRouteData_api,
     LoginRouteError_api,
     PostGetAggregatedPerRealizationTableDataData_api,
@@ -245,6 +260,8 @@ export const getEnsembleDetails = <ThrowOnError extends boolean = false>(
 /**
  * Get Vector List
  * Get list of all vectors in a given Sumo ensemble, excluding any historical vectors
+ *
+ * Optionally include derived vectors.
  */
 export const getVectorList = <ThrowOnError extends boolean = false>(
     options: Options<GetVectorListData_api, ThrowOnError>
@@ -614,6 +631,22 @@ export const getMisfitSurfaceData = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get Wellbore Stratigraphic Columns
+ */
+export const getWellboreStratigraphicColumns = <ThrowOnError extends boolean = false>(
+    options: Options<GetWellboreStratigraphicColumnsData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetWellboreStratigraphicColumnsResponse_api,
+        GetWellboreStratigraphicColumnsError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/surface/wellbore_stratigraphic_columns/",
+    });
+};
+
+/**
  * Get Stratigraphic Units
  */
 export const getStratigraphicUnits = <ThrowOnError extends boolean = false>(
@@ -907,6 +940,22 @@ export const getWellborePicksForWellbore = <ThrowOnError extends boolean = false
 };
 
 /**
+ * Get Wellbore Picks In Strat Column
+ */
+export const getWellborePicksInStratColumn = <ThrowOnError extends boolean = false>(
+    options: Options<GetWellborePicksInStratColumnData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<
+        GetWellborePicksInStratColumnResponse_api,
+        GetWellborePicksInStratColumnError_api,
+        ThrowOnError
+    >({
+        ...options,
+        url: "/well/wellbore_picks_in_strat_column",
+    });
+};
+
+/**
  * Get Wellbore Completions
  * Get well bore completions for a single well bore
  */
@@ -949,7 +998,8 @@ export const getWellborePerforations = <ThrowOnError extends boolean = false>(
 
 /**
  * Get Wellbore Log Curve Headers
- * Get all log curve headers for a single well bore
+ * Get all log curve headers for a single well bore.
+ * Logs are available from multiple sources, which can be specificed by the "sources" parameter.
  */
 export const getWellboreLogCurveHeaders = <ThrowOnError extends boolean = false>(
     options: Options<GetWellboreLogCurveHeadersData_api, ThrowOnError>
@@ -987,6 +1037,45 @@ export const getSeismicCubeMetaList = <ThrowOnError extends boolean = false>(
     return (options?.client ?? client).get<GetSeismicCubeMetaListResponse_api, GetSeismicCubeMetaListError_api, ThrowOnError>({
         ...options,
         url: "/seismic/seismic_cube_meta_list/",
+    });
+};
+
+/**
+ * Get Inline Slice
+ * Get a seismic inline from a seismic cube.
+ */
+export const getInlineSlice = <ThrowOnError extends boolean = false>(
+    options: Options<GetInlineSliceData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetInlineSliceResponse_api, GetInlineSliceError_api, ThrowOnError>({
+        ...options,
+        url: "/seismic/get_inline_slice/",
+    });
+};
+
+/**
+ * Get Crossline Slice
+ * Get a seismic crossline from a seismic cube.
+ */
+export const getCrosslineSlice = <ThrowOnError extends boolean = false>(
+    options: Options<GetCrosslineSliceData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetCrosslineSliceResponse_api, GetCrosslineSliceError_api, ThrowOnError>({
+        ...options,
+        url: "/seismic/get_crossline_slice/",
+    });
+};
+
+/**
+ * Get Depth Slice
+ * Get a seismic depth slice from a seismic cube.
+ */
+export const getDepthSlice = <ThrowOnError extends boolean = false>(
+    options: Options<GetDepthSliceData_api, ThrowOnError>
+) => {
+    return (options?.client ?? client).get<GetDepthSliceResponse_api, GetDepthSliceError_api, ThrowOnError>({
+        ...options,
+        url: "/seismic/get_depth_slice/",
     });
 };
 

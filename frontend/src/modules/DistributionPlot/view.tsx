@@ -246,7 +246,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                         const valueData = data.dataArray.map((el: any) => el.value);
 
                         const dataTitle = makeTitleFromChannelContent(data);
-                        const kindOfKeyTitle = `${receiverX.channel.kindOfKey}` ?? "";
+                        const kindOfKeyTitle = `${receiverX.channel.kindOfKey}`;
 
                         const trace: Partial<PlotData> = {
                             x: orientation === "h" ? valueData : keyData,
@@ -324,10 +324,13 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
                 };
 
                 let cellIndex = 0;
-                receiverX.channel.contents.forEach((contentRow, rowIndex) => {
+
+                receiverX.channel.contents.forEach((contentRow, rowIndex, rowArr) => {
                     if (!receiverY.channel) {
                         return;
                     }
+
+                    const numRows = rowArr.length;
                     receiverY.channel.contents.forEach((contentCol, colIndex) => {
                         cellIndex++;
 
@@ -401,7 +404,7 @@ export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfa
 
                         figure.addTrace(trace, rowIndex + 1, colIndex + 1);
 
-                        if (rowIndex === 0) {
+                        if (rowIndex === numRows - 1) {
                             const patch: Partial<Layout> = {
                                 [`xaxis${cellIndex}`]: {
                                     title: makeTitleFromChannelContent(contentCol),

@@ -92,13 +92,32 @@ export type DatedFlowNetwork_api = {
     network: NetworkNode_api;
 };
 
+export type DerivedVectorInfo_api = {
+    type: DerivedVectorType_api;
+    sourceVector: string;
+};
+
+export enum DerivedVectorType_api {
+    PER_DAY = "PER_DAY",
+    PER_INTVL = "PER_INTVL",
+}
+
+/**
+ * Holds information that describes how a discrete curve value should be presented to the user.
+ */
+export type DiscreteValueMetadata_api = {
+    code: number;
+    identifier: string;
+    rgbColor: [number, number, number];
+};
+
 export type EnsembleDetails_api = {
     name: string;
     field_identifier: string;
-    stratigraphic_column_identifier: string;
     case_name: string;
     case_uuid: string;
     realizations: Array<number>;
+    stratigraphic_column_identifier: string;
 };
 
 export type EnsembleInfo_api = {
@@ -179,6 +198,7 @@ export type FlowNetworkData_api = {
 export type FlowNetworkMetadata_api = {
     key: string;
     label: string;
+    unit: string | null;
 };
 
 export enum FlowRateType_api {
@@ -544,11 +564,49 @@ export type RftWellInfo_api = {
     timestamps_utc_ms: Array<number>;
 };
 
+/**
+ * Metadata for a seismic cube.
+ */
 export type SeismicCubeMeta_api = {
-    seismic_attribute: string;
-    iso_date_or_interval: string;
-    is_observation: boolean;
-    is_depth: boolean;
+    seismicAttribute: string;
+    unit: string;
+    isoDateOrInterval: string;
+    isObservation: boolean;
+    isDepth: boolean;
+    bbox: BoundingBox3D_api;
+    spec: SeismicCubeSpec_api;
+};
+
+/**
+ * Specification for a seismic cube.
+ *
+ * `Properties:`
+ * - `numCols`: The number of columns in the seismic cube.
+ * - `numRows`: The number of rows in the seismic cube.
+ * - `numLayers`: The number of layers in the seismic cube.
+ * - `xOrigin`: The x-coordinate of the origin of the cube [m].
+ * - `yOrigin`: The y-coordinate of the origin of the cube [m].
+ * - `zOrigin`: The z-coordinate of the origin of the cube [m].
+ * - `xInc`: The increment in the x-direction [m].
+ * - `yInc`: The increment in the y-direction [m].
+ * - `zInc`: The increment in the z-direction [m].
+ * - `yFlip`: {-1, 1} - The flip factor for the y-direction (1 if not flipped, -1 if flipped).
+ * - `zFlip`: {-1, 1} - The flip factor for the z-direction (1 if not flipped, -1 if flipped).
+ * - `rotationDeg`: The rotation angle of the cube [deg].
+ */
+export type SeismicCubeSpec_api = {
+    numCols: number;
+    numRows: number;
+    numLayers: number;
+    xOrigin: number;
+    yOrigin: number;
+    zOrigin: number;
+    xInc: number;
+    yInc: number;
+    zInc: number;
+    yFlip: number;
+    zFlip: number;
+    rotationDeg: number;
 };
 
 /**
@@ -600,6 +658,43 @@ export type SeismicFencePolyline_api = {
     y_points: Array<number>;
 };
 
+/**
+ * Definition of a seismic slice from a seismic cube. This could be an inline, crossline, or depth slice.
+ * u and v axes are the respective domain coordinate system axes, and the slice traces are the seismic data values.
+ * The SeismicCubeMeta_api specification object (not part of this schema) provides a transformation matrix for converting
+ * the slice data from its own coordinate system (u,v) to the global coordinate system.
+ *
+ * `Properties:`
+ * - `slice_traces_b64arr`: The slice trace array is base64 encoded 1D float array - where data is stored trace by trace.
+ * - `bbox_utm`: The bounding box of the slice in UTM coordinates.
+ * - `u_min`: The minimum value of the u-axis.
+ * - `u_max`: The maximum value of the u-axis.
+ * - `u_num_samples`: The number of samples along the u-axis.
+ * - `u_unit`: The unit of the u-axis.
+ * - `v_min`: The minimum value of the v-axis.
+ * - `v_max`: The maximum value of the v-axis.
+ * - `v_num_samples`: The number of samples along the v-axis.
+ * - `v_unit`: The unit of the v-axis.
+ * - `value_min`: The minimum value of the seismic data values.
+ * - `value_max`: The maximum value of the seismic data values.
+ *
+ * Fence traces 1D array: [trace_1_sample_1, trace_1_sample_2, ..., trace_1_sample_n, ..., trace_m_sample_1, trace_m_sample_2, ..., trace_m_sample_n]
+ */
+export type SeismicSliceData_api = {
+    slice_traces_b64arr: B64FloatArray_api;
+    bbox_utm: Array<Array<number>>;
+    u_min: number;
+    u_max: number;
+    u_num_samples: number;
+    u_unit: string;
+    v_min: number;
+    v_max: number;
+    v_num_samples: number;
+    v_unit: string;
+    value_min: number;
+    value_max: number;
+};
+
 export enum SensitivityType_api {
     MONTECARLO = "montecarlo",
     SCENARIO = "scenario",
@@ -615,8 +710,18 @@ export enum StatisticFunction_api {
 }
 
 export type StatisticValueObject_api = {
-    statistic_function: StatisticFunction_api;
+    statisticFunction: StatisticFunction_api;
     values: Array<number>;
+};
+
+/**
+ * Stratigraphic column from SMDA
+ */
+export type StratigraphicColumn_api = {
+    identifier: string;
+    areaType: string;
+    status: string;
+    type: string | null;
 };
 
 /**
@@ -839,45 +944,48 @@ export type ValidationError_api = {
 
 export type VectorDescription_api = {
     name: string;
-    descriptive_name: string;
-    has_historical: boolean;
+    descriptiveName: string;
+    hasHistorical: boolean;
+    derivedVectorInfo: DerivedVectorInfo_api | null;
 };
 
 export type VectorHistoricalData_api = {
-    timestamps_utc_ms: Array<number>;
+    timestampsUtcMs: Array<number>;
     values: Array<number>;
     unit: string;
-    is_rate: boolean;
+    isRate: boolean;
 };
 
 export type VectorRealizationData_api = {
     realization: number;
-    timestamps_utc_ms: Array<number>;
+    timestampsUtcMs: Array<number>;
     values: Array<number>;
     unit: string;
-    is_rate: boolean;
+    isRate: boolean;
+    derivedVectorInfo: DerivedVectorInfo_api | null;
 };
 
 export type VectorStatisticData_api = {
     realizations: Array<number>;
-    timestamps_utc_ms: Array<number>;
-    value_objects: Array<StatisticValueObject_api>;
+    timestampsUtcMs: Array<number>;
+    valueObjects: Array<StatisticValueObject_api>;
     unit: string;
-    is_rate: boolean;
+    isRate: boolean;
+    derivedVectorInfo: DerivedVectorInfo_api | null;
 };
 
 export type VectorStatisticSensitivityData_api = {
     realizations: Array<number>;
-    timestamps_utc_ms: Array<number>;
-    value_objects: Array<StatisticValueObject_api>;
+    timestampsUtcMs: Array<number>;
+    valueObjects: Array<StatisticValueObject_api>;
     unit: string;
-    is_rate: boolean;
-    sensitivity_name: string;
-    sensitivity_case: string;
+    isRate: boolean;
+    sensitivityName: string;
+    sensitivityCase: string;
 };
 
 export type VfpInjTable_api = {
-    isInjTable: boolean;
+    vfpType: "INJ";
     tableNumber: number;
     datum: number;
     flowRateType: FlowRateType_api;
@@ -892,28 +1000,28 @@ export type VfpInjTable_api = {
 };
 
 export type VfpProdTable_api = {
-    isProdTable: boolean;
+    vfpType: "PROD";
     tableNumber: number;
     datum: number;
-    thpType: Thp_api;
-    wfrType: Wfr_api;
-    gfrType: Gfr_api;
-    alqType: Alq_api;
     flowRateType: FlowRateType_api;
     unitType: UnitType_api;
     tabType: TabType_api;
     thpValues: Array<number>;
-    wfrValues: Array<number>;
-    gfrValues: Array<number>;
-    alqValues: Array<number>;
     flowRateValues: Array<number>;
     bhpValues: Array<number>;
     flowRateUnit: string;
     thpUnit: string;
+    bhpUnit: string;
+    thpType: Thp_api;
+    wfrType: Wfr_api;
+    gfrType: Gfr_api;
+    alqType: Alq_api;
+    wfrValues: Array<number>;
+    gfrValues: Array<number>;
+    alqValues: Array<number>;
     wfrUnit: string;
     gfrUnit: string;
     alqUnit: string;
-    bhpUnit: string;
 };
 
 export enum Wfr_api {
@@ -959,6 +1067,18 @@ export type WellCompletionsZone_api = {
     subzones: Array<WellCompletionsZone_api> | null;
 };
 
+export enum WellLogCurveSourceEnum_api {
+    SSDL_WELL_LOG = "ssdl.well_log",
+    SMDA_GEOLOGY = "smda.geology",
+    SMDA_STRATIGRAPHY = "smda.stratigraphy",
+}
+
+export enum WellLogCurveTypeEnum_api {
+    CONTINUOUS = "continuous",
+    DISCRETE = "discrete",
+    FLAG = "flag",
+}
+
 export type WellboreCasing_api = {
     itemType: string;
     diameterNumeric: number;
@@ -996,21 +1116,26 @@ export type WellboreHeader_api = {
 };
 
 export type WellboreLogCurveData_api = {
+    source: WellLogCurveSourceEnum_api;
     name: string;
+    logName: string;
     indexMin: number;
     indexMax: number;
-    minCurveValue: number;
-    maxCurveValue: number;
+    minCurveValue: number | null;
+    maxCurveValue: number | null;
     curveAlias: string | null;
     curveDescription: string | null;
     indexUnit: string;
     noDataValue: number | null;
-    unit: string;
+    unit: string | null;
     curveUnitDesc: string | null;
-    dataPoints: Array<Array<number | null>>;
+    dataPoints: Array<[number, number | string | null]>;
+    discreteValueMetadata: Array<DiscreteValueMetadata_api> | null;
 };
 
 export type WellboreLogCurveHeader_api = {
+    source: WellLogCurveSourceEnum_api;
+    curveType: WellLogCurveTypeEnum_api;
     logName: string;
     curveName: string;
     curveUnit: string | null;
@@ -1043,6 +1168,7 @@ export type WellborePick_api = {
     confidence: string | null;
     depthReferencePoint: string;
     mdUnit: string;
+    interpreter: string | null;
 };
 
 export type WellboreTrajectory_api = {
@@ -1176,6 +1302,10 @@ export type GetVectorListData_api = {
          * Ensemble name
          */
         ensemble_name: string;
+        /**
+         * Include derived vectors
+         */
+        include_derived_vectors?: boolean | null;
     };
     url: "/timeseries/vector_list/";
 };
@@ -1218,6 +1348,10 @@ export type GetDeltaEnsembleVectorListData_api = {
          * Reference ensemble name
          */
         reference_ensemble_name: string;
+        /**
+         * Include derived vectors
+         */
+        include_derived_vectors?: boolean | null;
     };
     url: "/timeseries/delta_ensemble_vector_list/";
 };
@@ -2082,6 +2216,38 @@ export type GetMisfitSurfaceDataResponses_api = {
 
 export type GetMisfitSurfaceDataResponse_api = GetMisfitSurfaceDataResponses_api[keyof GetMisfitSurfaceDataResponses_api];
 
+export type GetWellboreStratigraphicColumnsData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Wellbore uuid
+         */
+        wellbore_uuid: string;
+    };
+    url: "/surface/wellbore_stratigraphic_columns/";
+};
+
+export type GetWellboreStratigraphicColumnsErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetWellboreStratigraphicColumnsError_api =
+    GetWellboreStratigraphicColumnsErrors_api[keyof GetWellboreStratigraphicColumnsErrors_api];
+
+export type GetWellboreStratigraphicColumnsResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<StratigraphicColumn_api>;
+};
+
+export type GetWellboreStratigraphicColumnsResponse_api =
+    GetWellboreStratigraphicColumnsResponses_api[keyof GetWellboreStratigraphicColumnsResponses_api];
+
 export type GetStratigraphicUnitsData_api = {
     body?: never;
     path?: never;
@@ -2765,7 +2931,7 @@ export type GetWellTrajectoriesData_api = {
         /**
          * Optional subset of wellbore uuids
          */
-        wellbore_uuids?: Array<string>;
+        wellbore_uuids?: Array<string> | null;
     };
     url: "/well/well_trajectories/";
 };
@@ -2887,6 +3053,42 @@ export type GetWellborePicksForWellboreResponses_api = {
 export type GetWellborePicksForWellboreResponse_api =
     GetWellborePicksForWellboreResponses_api[keyof GetWellborePicksForWellboreResponses_api];
 
+export type GetWellborePicksInStratColumnData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Wellbore uuid
+         */
+        wellbore_uuid: string;
+        /**
+         * Optional - Filter by stratigraphic column
+         */
+        strat_column: string;
+    };
+    url: "/well/wellbore_picks_in_strat_column";
+};
+
+export type GetWellborePicksInStratColumnErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetWellborePicksInStratColumnError_api =
+    GetWellborePicksInStratColumnErrors_api[keyof GetWellborePicksInStratColumnErrors_api];
+
+export type GetWellborePicksInStratColumnResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: Array<WellborePick_api>;
+};
+
+export type GetWellborePicksInStratColumnResponse_api =
+    GetWellborePicksInStratColumnResponses_api[keyof GetWellborePicksInStratColumnResponses_api];
+
 export type GetWellboreCompletionsData_api = {
     body?: never;
     path?: never;
@@ -2985,6 +3187,10 @@ export type GetWellboreLogCurveHeadersData_api = {
          * Wellbore uuid
          */
         wellbore_uuid: string;
+        /**
+         * Sources to fetch well-logs from.
+         */
+        sources?: Array<WellLogCurveSourceEnum_api>;
     };
     url: "/well/wellbore_log_curve_headers/";
 };
@@ -3017,9 +3223,17 @@ export type GetLogCurveDataData_api = {
          */
         wellbore_uuid: string;
         /**
-         * Log curve name
+         * Log identifier
          */
-        log_curve_name: string;
+        log_name: string;
+        /**
+         * Curve identifier
+         */
+        curve_name: string;
+        /**
+         * Source to fetch well-logs from.
+         */
+        source?: WellLogCurveSourceEnum_api;
     };
     url: "/well/log_curve_data/";
 };
@@ -3075,6 +3289,168 @@ export type GetSeismicCubeMetaListResponses_api = {
 };
 
 export type GetSeismicCubeMetaListResponse_api = GetSeismicCubeMetaListResponses_api[keyof GetSeismicCubeMetaListResponses_api];
+
+export type GetInlineSliceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * Inline number
+         */
+        inline_no: number;
+    };
+    url: "/seismic/get_inline_slice/";
+};
+
+export type GetInlineSliceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetInlineSliceError_api = GetInlineSliceErrors_api[keyof GetInlineSliceErrors_api];
+
+export type GetInlineSliceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SeismicSliceData_api;
+};
+
+export type GetInlineSliceResponse_api = GetInlineSliceResponses_api[keyof GetInlineSliceResponses_api];
+
+export type GetCrosslineSliceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * Crossline number
+         */
+        crossline_no: number;
+    };
+    url: "/seismic/get_crossline_slice/";
+};
+
+export type GetCrosslineSliceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetCrosslineSliceError_api = GetCrosslineSliceErrors_api[keyof GetCrosslineSliceErrors_api];
+
+export type GetCrosslineSliceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SeismicSliceData_api;
+};
+
+export type GetCrosslineSliceResponse_api = GetCrosslineSliceResponses_api[keyof GetCrosslineSliceResponses_api];
+
+export type GetDepthSliceData_api = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Sumo case uuid
+         */
+        case_uuid: string;
+        /**
+         * Ensemble name
+         */
+        ensemble_name: string;
+        /**
+         * Realization number
+         */
+        realization_num: number;
+        /**
+         * Seismic cube attribute
+         */
+        seismic_attribute: string;
+        /**
+         * Timestamp or timestep
+         */
+        time_or_interval_str: string;
+        /**
+         * Observed or simulated
+         */
+        observed: boolean;
+        /**
+         * Depth slice no
+         */
+        depth_slice_no: number;
+    };
+    url: "/seismic/get_depth_slice/";
+};
+
+export type GetDepthSliceErrors_api = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError_api;
+};
+
+export type GetDepthSliceError_api = GetDepthSliceErrors_api[keyof GetDepthSliceErrors_api];
+
+export type GetDepthSliceResponses_api = {
+    /**
+     * Successful Response
+     */
+    200: SeismicSliceData_api;
+};
+
+export type GetDepthSliceResponse_api = GetDepthSliceResponses_api[keyof GetDepthSliceResponses_api];
 
 export type PostGetSeismicFenceData_api = {
     body: BodyPostGetSeismicFence_api;

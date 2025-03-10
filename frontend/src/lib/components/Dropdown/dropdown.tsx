@@ -78,7 +78,7 @@ function makeOptionListItems<TValue>(options: DropdownOption<TValue>[]): OptionL
     return optionsWithSeperators;
 }
 
-export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
+function DropdownComponent<TValue = string>(props: DropdownProps<TValue>, ref: React.ForwardedRef<HTMLDivElement>) {
     const { onChange } = props;
 
     const valueWithDefault = props.value ?? null;
@@ -103,7 +103,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     const [startIndex, setStartIndex] = React.useState<number>(0);
     const [keyboardFocus, setKeyboardFocus] = React.useState<boolean>(false);
 
-    const inputRef = React.useRef<HTMLInputElement>(null);
+    const inputRef = React.useRef<HTMLDivElement>(null);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -482,7 +482,7 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     }
 
     return (
-        <BaseComponent disabled={props.disabled}>
+        <BaseComponent ref={ref} disabled={props.disabled}>
             <div style={{ width: props.width }} id={props.wrapperId} className="flex hover input-comp rounded">
                 <div className="flex-grow">
                     <Input
@@ -569,6 +569,10 @@ export function Dropdown<TValue = string>(props: DropdownProps<TValue>) {
     );
 }
 
+export const Dropdown = React.forwardRef(DropdownComponent) as <TValue = string>(
+    props: DropdownProps<TValue> & { ref?: React.Ref<HTMLDivElement> }
+) => React.ReactElement;
+
 type OptionProps<TValue> = DropdownOption<TValue> & {
     isSelected: boolean;
     isFocused: boolean;
@@ -613,5 +617,3 @@ function SeparatorItem(props: { text: string }): React.ReactNode {
         </div>
     );
 }
-
-Dropdown.displayName = "Dropdown";

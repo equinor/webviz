@@ -6,9 +6,12 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from fmu.sumo.explorer.objects import Case
-
 from webviz_pkg.core_utils.perf_timer import PerfTimer
-from ._helpers import create_sumo_client, create_sumo_case_async
+
+from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
+
+from ._helpers import create_sumo_case_async
+from .sumo_client_factory import create_sumo_client
 from .parameter_types import (
     EnsembleParameter,
     EnsembleParameters,
@@ -42,9 +45,11 @@ class ParameterAccess:
             tagname="all",
         )
         if await table_collection.length_async() == 0:
-            raise ValueError(f"No parameter tables found {self._case.name, self._iteration_name}")
+            raise NoDataError(f"No parameter tables found {self._case.name, self._iteration_name}", Service.SUMO)
         if await table_collection.length_async() > 1:
-            raise ValueError(f"Multiple parameter tables found {self._case.name,self._iteration_name}")
+            raise MultipleDataMatchesError(
+                f"Multiple parameter tables found {self._case.name,self._iteration_name}", Service.SUMO
+            )
 
         table = await table_collection.getitem_async(0)
         byte_stream: BytesIO = await table.blob_async
@@ -175,8 +180,9 @@ def _parameter_str_arr_to_parameter_group_dict(parameter_str_arr: List[str]) -> 
     for parameter_str in parameter_str_arr:
         parameter_name_components = parameter_str.split(":")
         if len(parameter_name_components) > 2:
-            raise ValueError(
-                f"Parameter {parameter_str} has too many componenents. Expected <groupname>:<parametername>"
+            raise InvalidDataError(
+                f"Parameter {parameter_str} has too many components. Expected <groupname>:<parametername>",
+                Service.SUMO,
             )
         if len(parameter_name_components) == 1:
             parameter_name = parameter_name_components[0]

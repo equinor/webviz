@@ -286,14 +286,16 @@ export const TableSelect = withDefaults<TableSelectProps>()(defaultProps, (props
                             >
                                 {headerLabel}
                                 <br />
-                                <Input
-                                    id={props.id}
-                                    type="text"
-                                    value={filters[index]}
-                                    onChange={(e) => handleFilterChange(e, index)}
-                                    placeholder={`Filter ${headerLabel}...`}
-                                    title={`Filter ${headerLabel}...`}
-                                />
+                                <div className="h-8">
+                                    <Input
+                                        id={props.id}
+                                        type="text"
+                                        value={filters[index]}
+                                        onChange={(e) => handleFilterChange(e, index)}
+                                        placeholder={`Filter ${headerLabel}...`}
+                                        title={`Filter ${headerLabel}...`}
+                                    />
+                                </div>
                             </div>
                         ))}
                     </div>

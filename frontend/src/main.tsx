@@ -7,7 +7,6 @@ import { CustomQueryClientProvider } from "@framework/internal/providers/QueryCl
 
 import App from "./App";
 import { GlobalErrorBoundary } from "./GlobalErrorBoundary";
-import { TempMovedToAmsterdamNotifier } from "./tempMoved/TempMovedToAmsterdamNotifier";
 
 /*
     If the `cleanStart` query parameter is given, 
@@ -41,22 +40,14 @@ if (!container) {
 
 const root = createRoot(container);
 
-if (window.location.hostname === "webviz.app.radix.equinor.com") {
-    root.render(
-        <React.StrictMode>
-            <TempMovedToAmsterdamNotifier />
-        </React.StrictMode>
-    );
-} else {
-    root.render(
-        <React.StrictMode>
-            <GlobalErrorBoundary>
-                <AuthProvider>
-                    <CustomQueryClientProvider>
-                        <App />
-                    </CustomQueryClientProvider>
-                </AuthProvider>
-            </GlobalErrorBoundary>
-        </React.StrictMode>
-    );
-}
+root.render(
+    <React.StrictMode>
+        <GlobalErrorBoundary>
+            <AuthProvider>
+                <CustomQueryClientProvider>
+                    <App />
+                </CustomQueryClientProvider>
+            </AuthProvider>
+        </GlobalErrorBoundary>
+    </React.StrictMode>
+);

@@ -3,9 +3,9 @@ from pydantic import BaseModel
 from fmu.sumo.explorer.explorer import SumoClient
 from fmu.sumo.explorer.objects import Case
 
+from ._helpers import create_sumo_case_async
 from .queries.case import get_stratigraphic_column_identifier, get_field_identifiers
-
-from ._helpers import create_sumo_client, create_sumo_case_async
+from .sumo_client_factory import create_sumo_client
 
 
 class IterationInfo(BaseModel):
@@ -40,8 +40,7 @@ class CaseInspector:
     async def get_iterations_async(self) -> list[IterationInfo]:
         case: Case = await self._get_or_create_case_obj()
 
-        # Stick with the sync version for now, since there is a bug in the async version of SumoExplorer
-        # See: https://github.com/equinor/fmu-sumo/issues/326
+        # Until we update fmu-sumo > 2.0 we need to fetch iterations synchronously.
         iterations = case.iterations
 
         iter_info_arr: list[IterationInfo] = []

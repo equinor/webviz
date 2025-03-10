@@ -1,4 +1,5 @@
 import {
+    DerivedVectorType_api,
     StatisticFunction_api,
     SummaryVectorDateObservation_api,
     VectorHistoricalData_api,
@@ -12,11 +13,33 @@ import { LineData, StatisticsData, createStatisticsTraces } from "./statisticsPl
 
 import { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
+function isDerivedVectorOfType(
+    vectorData: VectorRealizationData_api | VectorStatisticData_api | VectorHistoricalData_api,
+    type: DerivedVectorType_api
+): boolean {
+    return "derivedVectorInfo" in vectorData && vectorData.derivedVectorInfo?.type === type;
+}
+
 /**
-    Get line shape - "vh" for rate data, "linear" for non-rate data
+ * Utility function for getting the shape of the trace line for given vector data.
+ *
+ * Default is "linear", rate vectors are "vh", and custom calculated vectors are "hv".
  */
-export function getLineShape(isRate: boolean): "linear" | "vh" {
-    return isRate ? "vh" : "linear";
+export function getTraceLineShape(
+    vectorData: VectorRealizationData_api | VectorStatisticData_api | VectorHistoricalData_api
+): "linear" | "hv" | "vh" {
+    if (
+        isDerivedVectorOfType(vectorData, DerivedVectorType_api.PER_DAY) ||
+        isDerivedVectorOfType(vectorData, DerivedVectorType_api.PER_INTVL)
+    ) {
+        // Custom calculated vectors valid forward in time
+        return "hv";
+    }
+    if (vectorData.isRate) {
+        // Rate vectors are valid backward in time
+        return "vh";
+    }
+    return "linear";
 }
 
 /**
@@ -27,7 +50,7 @@ type CreateRealizationTraceBaseOptions = {
     color: string;
     legendGroup: string;
     hoverTemplate?: string;
-    // lineShape?: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv";
+    lineShape?: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv";
     showLegend?: boolean;
     yaxis?: string;
     xaxis?: string;
@@ -47,6 +70,7 @@ export function createVectorRealizationTrace({
     color,
     legendGroup,
     hoverTemplate = "",
+    lineShape = "linear",
     showLegend = false,
     yaxis = "y",
     xaxis = "x",
@@ -55,13 +79,11 @@ export function createVectorRealizationTrace({
     // TODO:
     // - type: "scattergl" or "scatter"? Maximum 8 WebGL contexts in Chrome gives issues?
     //         "scattergl" hides traces when zooming and panning for Ruben on work computer.
-    // - lineShape - Each VectorRealizationData_api element has its own `is_rate` property. Should we
-    //               use that to determine the line shape or provide a lineShape argument?
 
     return {
-        x: vectorRealizationData.timestamps_utc_ms,
+        x: vectorRealizationData.timestampsUtcMs,
         y: vectorRealizationData.values,
-        line: { width: 1, color: color, shape: getLineShape(vectorRealizationData.is_rate) },
+        line: { width: 1, color: color, shape: lineShape },
         mode: "lines",
         type: type,
         hovertemplate: `${hoverTemplate}Realization: ${vectorRealizationData.realization}`,
@@ -81,27 +103,25 @@ export type CreateVectorRealizationTracesOptions = CreateRealizationTraceBaseOpt
     vectorRealizationsData: VectorRealizationData_api[];
 };
 export function createVectorRealizationTraces({
-    vectorRealizationsData,
+    vectorRealizationsData: vectorRealizationDataArray,
     name,
     color,
     legendGroup,
     hoverTemplate = "",
+    lineShape = "linear",
     showLegend = false,
     yaxis = "y",
     xaxis = "x",
     type = "scatter",
 }: CreateVectorRealizationTracesOptions): Partial<TimeSeriesPlotData>[] {
-    // TODO:
-    // - lineShape - Each VectorRealizationData_api element has its own `is_rate` property. Should we
-    //               use that to determine the line shape or provide a lineShape argument?
-
-    return vectorRealizationsData.map((realization) => {
+    return vectorRealizationDataArray.map((realization) => {
         return createVectorRealizationTrace({
             vectorRealizationData: realization,
             name,
             color,
             legendGroup,
             hoverTemplate,
+            lineShape,
             showLegend,
             yaxis,
             xaxis,
@@ -120,7 +140,7 @@ export type CreateHistoricalVectorTraceOptions = {
     xaxis?: string;
     showLegend?: boolean;
     type?: "scatter" | "scattergl";
-    // lineShape?: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv";
+    lineShape?: "linear" | "spline" | "hv" | "vh" | "hvh" | "vhv";
     name?: string;
     legendRank?: number;
 };
@@ -131,15 +151,16 @@ export function createHistoricalVectorTrace({
     xaxis = "x",
     showLegend = false,
     type = "scatter",
+    lineShape = "linear",
     name: name,
     legendRank,
 }: CreateHistoricalVectorTraceOptions): Partial<TimeSeriesPlotData> {
     const hoverText = name ? `History: ${name}` : "History";
     return {
-        line: { shape: getLineShape(vectorHistoricalData.is_rate), color: color },
+        line: { shape: lineShape, color: color },
         mode: "lines",
         type: type,
-        x: vectorHistoricalData.timestamps_utc_ms,
+        x: vectorHistoricalData.timestampsUtcMs,
         y: vectorHistoricalData.values,
         hovertext: hoverText,
         hoverinfo: "y+x+text",
@@ -223,7 +244,8 @@ export type CreateVectorFanchartTracesOptions = {
     legendGroup: string;
     name?: string;
     yaxis?: string;
-    // lineShape?: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv";
+    xaxis?: string;
+    lineShape?: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv";
     hoverTemplate?: string;
     showLegend?: boolean;
     legendRank?: number;
@@ -235,25 +257,27 @@ export function createVectorFanchartTraces({
     legendGroup,
     name = undefined,
     yaxis = "y",
+    xaxis = "x",
+    lineShape = "linear",
     hoverTemplate = "(%{x}, %{y})<br>",
     showLegend = false,
     type = "scatter",
     legendRank,
 }: CreateVectorFanchartTracesOptions): Partial<TimeSeriesPlotData>[] {
-    const lowData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.P90);
-    const highData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.P10);
+    const lowData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.P90);
+    const highData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.P10);
     let lowHighData: LowHighData | undefined = undefined;
     if (lowData && highData) {
         lowHighData = {
-            highName: highData.statistic_function.toString(),
+            highName: highData.statisticFunction.toString(),
             highData: highData.values,
-            lowName: lowData.statistic_function.toString(),
+            lowName: lowData.statisticFunction.toString(),
             lowData: lowData.values,
         };
     }
 
-    const minData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.MIN);
-    const maxData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.MAX);
+    const minData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.MIN);
+    const maxData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.MAX);
     let minMaxData: MinMaxData | undefined = undefined;
     if (minData && maxData) {
         minMaxData = {
@@ -262,17 +286,17 @@ export function createVectorFanchartTraces({
         };
     }
 
-    const meanData = vectorStatisticData.value_objects.find((v) => v.statistic_function === StatisticFunction_api.MEAN);
+    const meanData = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === StatisticFunction_api.MEAN);
     let meanFreeLineData: FreeLineData | undefined = undefined;
     if (meanData) {
         meanFreeLineData = {
-            name: meanData.statistic_function.toString(),
+            name: meanData.statisticFunction.toString(),
             data: meanData.values,
         };
     }
 
     const fanchartData: FanchartData = {
-        samples: vectorStatisticData.timestamps_utc_ms,
+        samples: vectorStatisticData.timestampsUtcMs,
         lowHigh: lowHighData,
         minimumMaximum: minMaxData,
         freeLine: meanFreeLineData,
@@ -283,11 +307,12 @@ export function createVectorFanchartTraces({
         hexColor: hexColor,
         legendGroup: legendGroup,
         name: name,
-        lineShape: getLineShape(vectorStatisticData.is_rate),
+        lineShape: lineShape,
         showLegend: showLegend,
         hoverTemplate: hoverTemplate,
         legendRank: legendRank,
         yaxis: yaxis,
+        xaxis: xaxis,
         type: type,
     });
 }
@@ -304,7 +329,8 @@ export type CreateVectorStatisticsTracesOptions = {
     legendGroup: string;
     name?: string;
     yaxis?: string;
-    // lineShape?: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv";
+    xaxis?: string;
+    lineShape?: "vh" | "linear" | "spline" | "hv" | "hvh" | "vhv";
     lineWidth?: number;
     hoverTemplate?: string;
     showLegend?: boolean;
@@ -317,49 +343,26 @@ export function createVectorStatisticsTraces({
     legendGroup,
     name = undefined,
     yaxis = "y",
+    xaxis = "x",
+    lineShape = "linear",
     lineWidth = 2,
     hoverTemplate = "(%{x}, %{y})<br>",
     showLegend = false,
     type = "scatter",
     legendRank,
 }: CreateVectorStatisticsTracesOptions): Partial<TimeSeriesPlotData>[] {
-    const lowValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.P90
-    );
-    const midValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.P50
-    );
-    const highValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.P10
-    );
-    const minValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.MIN
-    );
-    const maxValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.MAX
-    );
-    const meanValueObject = vectorStatisticData.value_objects.find(
-        (v) => v.statistic_function === StatisticFunction_api.MEAN
-    );
-
-    const lowData: LineData | undefined = lowValueObject
-        ? { data: lowValueObject.values, name: lowValueObject.statistic_function.toString() }
-        : undefined;
-    const midData: LineData | undefined = midValueObject
-        ? { data: midValueObject.values, name: midValueObject.statistic_function.toString() }
-        : undefined;
-    const highData: LineData | undefined = highValueObject
-        ? { data: highValueObject.values, name: highValueObject.statistic_function.toString() }
-        : undefined;
-    const meanData: LineData | undefined = meanValueObject
-        ? { data: meanValueObject.values, name: meanValueObject.statistic_function.toString() }
-        : undefined;
+    const lowData = getVectorStatisticLineDataForFunction(vectorStatisticData, StatisticFunction_api.P90);
+    const midData = getVectorStatisticLineDataForFunction(vectorStatisticData, StatisticFunction_api.P50);
+    const highData = getVectorStatisticLineDataForFunction(vectorStatisticData, StatisticFunction_api.P10);
+    const minData = getVectorStatisticLineDataForFunction(vectorStatisticData, StatisticFunction_api.MIN);
+    const maxData = getVectorStatisticLineDataForFunction(vectorStatisticData, StatisticFunction_api.MAX);
+    const meanData = getVectorStatisticLineDataForFunction(vectorStatisticData, StatisticFunction_api.MEAN);
 
     const statisticsData: StatisticsData = {
-        samples: vectorStatisticData.timestamps_utc_ms,
+        samples: vectorStatisticData.timestampsUtcMs,
         freeLine: meanData,
-        minimum: minValueObject ? minValueObject.values : undefined,
-        maximum: maxValueObject ? maxValueObject.values : undefined,
+        minimum: minData ? minData.data : undefined,
+        maximum: maxData ? maxData.data : undefined,
         lowPercentile: lowData,
         highPercentile: highData,
         midPercentile: midData,
@@ -370,12 +373,29 @@ export function createVectorStatisticsTraces({
         color: hexColor,
         legendGroup: legendGroup,
         name: name,
-        lineShape: getLineShape(vectorStatisticData.is_rate),
+        lineShape: lineShape,
         lineWidth: lineWidth,
         showLegend: showLegend,
         hoverTemplate: hoverTemplate,
         legendRank: legendRank,
         yaxis: yaxis,
+        xaxis: xaxis,
         type: type,
     });
+}
+
+function getVectorStatisticLineDataForFunction(
+    vectorStatisticData: VectorStatisticData_api,
+    statisticFunction: StatisticFunction_api
+): LineData | undefined {
+    const valueObject = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === statisticFunction);
+
+    if (!valueObject) {
+        return undefined;
+    }
+
+    return {
+        data: valueObject.values,
+        name: statisticFunction.toString(),
+    };
 }
