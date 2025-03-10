@@ -1,4 +1,5 @@
-import { PressureDependentVariable, PvtTableCollection } from "../typesAndEnums";
+import type { PvtTableCollection } from "../typesAndEnums";
+import { PressureDependentVariable } from "../typesAndEnums";
 
 export class PvtDataAccessor {
     private _tableCollections: PvtTableCollection[];

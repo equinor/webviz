@@ -41,7 +41,7 @@ export const intersectedParameterIdentsAtom = atom((get) => {
             .getParameterArr()
             .filter(
                 (parameter) =>
-                    (showConstantParameters || !parameter.isConstant) && parameter.type === ParameterType.CONTINUOUS
+                    (showConstantParameters || !parameter.isConstant) && parameter.type === ParameterType.CONTINUOUS,
             );
         const identArr: ParameterIdent[] = [];
         for (const parameter of parameters) {
@@ -69,6 +69,6 @@ export const selectedParameterIdentsAtom = atom((get) => {
     const userSelectedParameterIdents = get(userSelectedParameterIdentsAtom);
     if (userSelectedParameterIdents.length === 0) return intersectedParameterIdents.slice(0, MAX_PARAMETERS);
     return userSelectedParameterIdents.filter((ident) =>
-        intersectedParameterIdents.some((intersectIdent) => intersectIdent.equals(ident))
+        intersectedParameterIdents.some((intersectIdent) => intersectIdent.equals(ident)),
     );
 });

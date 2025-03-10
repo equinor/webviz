@@ -1,12 +1,12 @@
 import React from "react";
 
-import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { ViewContext } from "@framework/ModuleContext";
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import type { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { WorkbenchServices } from "@framework/WorkbenchServices";
-import { Viewport } from "@framework/types/viewport";
-import { Interfaces } from "@modules/Intersection/interfaces";
-import { LayerItem } from "@modules/_shared/components/EsvIntersection";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { Viewport } from "@framework/types/viewport";
+import type { Interfaces } from "@modules/Intersection/interfaces";
+import type { LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { Toolbar } from "@modules/_shared/components/EsvIntersection/utilityComponents/Toolbar";
 
 import { cloneDeep, isEqual } from "lodash";
@@ -42,7 +42,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
 
     const syncedCameraPosition = syncHelper.useValue(
         SyncSettingKey.CAMERA_POSITION_INTERSECTION,
-        "global.syncValue.cameraPositionIntersection"
+        "global.syncValue.cameraPositionIntersection",
     );
 
     if (!isEqual(syncedCameraPosition, prevSyncedViewport)) {
@@ -59,7 +59,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
             props.workbenchServices.publishGlobalData(
                 "global.syncValue.cameraPositionIntersection",
                 props.viewport,
-                props.viewContext.getInstanceIdString()
+                props.viewContext.getInstanceIdString(),
             );
         }
     }
@@ -84,10 +84,10 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
             props.workbenchServices.publishGlobalData(
                 "global.syncValue.cameraPositionIntersection",
                 newViewport,
-                props.viewContext.getInstanceIdString()
+                props.viewContext.getInstanceIdString(),
             );
         },
-        [props.workbenchServices, props.viewContext]
+        [props.workbenchServices, props.viewContext],
     );
 
     const handleFitInViewClick = React.useCallback(
@@ -107,7 +107,7 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 setViewport(newViewport);
             }
         },
-        [props.referenceSystem]
+        [props.referenceSystem],
     );
 
     const handleShowGridToggle = React.useCallback(function handleGridLinesToggle(active: boolean): void {
@@ -122,12 +122,12 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 props.workbenchServices.publishGlobalData(
                     "global.syncValue.verticalScale",
                     newVerticalScale,
-                    props.viewContext.getInstanceIdString()
+                    props.viewContext.getInstanceIdString(),
                 );
                 return newVerticalScale;
             });
         },
-        [props.viewContext, props.workbenchServices]
+        [props.viewContext, props.workbenchServices],
     );
 
     const handleVerticalScaleDecrease = React.useCallback(
@@ -138,12 +138,12 @@ export function ViewportWrapper(props: ViewportWrapperProps): React.ReactNode {
                 props.workbenchServices.publishGlobalData(
                     "global.syncValue.verticalScale",
                     newVerticalScale,
-                    props.viewContext.getInstanceIdString()
+                    props.viewContext.getInstanceIdString(),
                 );
                 return newVerticalScale;
             });
         },
-        [props.viewContext, props.workbenchServices]
+        [props.viewContext, props.workbenchServices],
     );
 
     return (

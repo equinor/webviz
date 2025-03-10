@@ -1,10 +1,10 @@
-import React from "react";
+import type React from "react";
 
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
+import type { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
 import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 
@@ -84,17 +84,17 @@ export class SeismicDepthSliceSetting implements Setting<ValueType> {
                 const step = props.availableValues[2];
                 const allowedValues = Array.from(
                     { length: Math.floor((max - min) / step) + 1 },
-                    (_, i) => min + i * step
+                    (_, i) => min + i * step,
                 );
                 const closestValue = allowedValues.reduce((prev, curr) =>
-                    Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev
+                    Math.abs(curr - value) < Math.abs(prev - value) ? curr : prev,
                 );
                 props.onValueChange(closestValue);
             }
 
             return (
-                <div className="flex items-center space-x-1">
-                    <div className="flex-grow">
+                <div className="flex items-center gap-x-1">
+                    <div className="grow">
                         <Slider
                             min={props.availableValues[0]}
                             max={props.availableValues[1]}

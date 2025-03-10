@@ -1,7 +1,8 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Input as InputUnstyled, InputProps as InputUnstyledProps } from "@mui/base";
+import type { InputProps as InputUnstyledProps } from "@mui/base";
+import { Input as InputUnstyled } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
@@ -22,6 +23,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
         value: propsValue,
         onValueChange,
         debounceTimeMs,
+        inputRef,
         ...other
     } = props;
 
@@ -38,7 +40,7 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
     React.useImperativeHandle<
         HTMLInputElement | HTMLTextAreaElement | null,
         HTMLInputElement | HTMLTextAreaElement | null
-    >(props.inputRef, () => internalRef.current);
+    >(inputRef, () => internalRef.current);
 
     const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -61,6 +63,11 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
         if (event.key === "Enter") {
             handleInputEditingDone();
         }
+    }
+
+    function handleInputBlur(evt: React.FocusEvent<HTMLInputElement>) {
+        handleInputEditingDone();
+        props.onBlur?.(evt);
     }
 
     function handleInputEditingDone() {
@@ -134,24 +141,22 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                 "justify-center",
                 "gap-2",
                 "bg-white",
-                "border",
-                "border-gray-300",
-                "shadow-sm",
+                "shadow-xs",
                 "focus-within:border-indigo-500",
                 "w-full",
                 "h-full",
                 "sm:text-sm",
                 "px-2",
                 "py-1.5",
-                "outline-none",
+                "outline-hidden",
                 "cursor-text",
                 {
-                    "border-red-300": props.error,
-                    "border-2": props.error,
+                    "border border-gray-300": !props.error,
+                    "border-2 border-red-300": props.error,
                     "rounded-l": props.rounded === "left",
                     "rounded-r": props.rounded === "right",
                     rounded: props.rounded === "all" || !props.rounded,
-                }
+                },
             )}
             style={wrapperStyle}
         >
@@ -164,14 +169,14 @@ function InputComponent(props: InputProps, ref: React.ForwardedRef<HTMLDivElemen
                 {...other}
                 value={value}
                 onChange={handleInputChange}
-                onBlur={handleInputEditingDone}
+                onBlur={handleInputBlur}
                 onKeyUp={handleKeyUp}
                 slotProps={{
                     root: {
                         className: "grow",
                     },
                     input: {
-                        className: resolveClassNames("h-full block w-full sm:text-sm outline-none"),
+                        className: resolveClassNames("h-full block w-full sm:text-sm outline-none truncate"),
                         ref: internalRef,
                     },
                 }}

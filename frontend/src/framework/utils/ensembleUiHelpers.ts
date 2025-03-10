@@ -1,10 +1,10 @@
-import { DeltaEnsembleIdent } from "../DeltaEnsembleIdent";
-import { EnsembleSet } from "../EnsembleSet";
-import { RegularEnsembleIdent } from "../RegularEnsembleIdent";
+import type { DeltaEnsembleIdent } from "../DeltaEnsembleIdent";
+import type { EnsembleSet } from "../EnsembleSet";
+import type { RegularEnsembleIdent } from "../RegularEnsembleIdent";
 
 export function maybeAssignFirstSyncedEnsemble(
     currIdent: RegularEnsembleIdent | null,
-    syncedEnsembleValues: RegularEnsembleIdent[] | null
+    syncedEnsembleValues: RegularEnsembleIdent[] | null,
 ): RegularEnsembleIdent | null {
     if (!syncedEnsembleValues || syncedEnsembleValues.length < 1) {
         return currIdent;
@@ -30,7 +30,7 @@ export function maybeAssignFirstSyncedEnsemble(
  */
 export function fixupEnsembleIdent(
     currIdent: RegularEnsembleIdent | DeltaEnsembleIdent | null,
-    ensembleSet: EnsembleSet | null
+    ensembleSet: EnsembleSet | null,
 ): RegularEnsembleIdent | DeltaEnsembleIdent | null {
     if (!ensembleSet?.hasAnyEnsembles()) {
         return null;
@@ -55,7 +55,7 @@ export function fixupEnsembleIdent(
  */
 export function fixupRegularEnsembleIdent(
     currIdent: RegularEnsembleIdent | null,
-    ensembleSet: EnsembleSet | null
+    ensembleSet: EnsembleSet | null,
 ): RegularEnsembleIdent | null {
     if (!ensembleSet?.hasAnyRegularEnsembles()) {
         return null;
@@ -81,7 +81,7 @@ export function fixupRegularEnsembleIdent(
  */
 export function fixupEnsembleIdents(
     currIdents: (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null,
-    ensembleSet: EnsembleSet | null
+    ensembleSet: EnsembleSet | null,
 ): (RegularEnsembleIdent | DeltaEnsembleIdent)[] | null {
     if (!ensembleSet?.hasAnyEnsembles()) {
         return null;
@@ -106,7 +106,7 @@ export function fixupEnsembleIdents(
  */
 export function fixupRegularEnsembleIdents(
     currIdents: RegularEnsembleIdent[] | null,
-    ensembleSet: EnsembleSet | null
+    ensembleSet: EnsembleSet | null,
 ): RegularEnsembleIdent[] | null {
     if (!ensembleSet?.hasAnyRegularEnsembles()) {
         return null;

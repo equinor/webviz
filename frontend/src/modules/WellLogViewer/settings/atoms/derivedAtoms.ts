@@ -1,5 +1,6 @@
-import { WellLogCurveTypeEnum_api, WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
-import { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
+import type { WellboreHeader_api, WellboreLogCurveHeader_api, WellborePick_api } from "@api";
+import { WellLogCurveTypeEnum_api } from "@api";
+import type { TemplatePlotConfig, TemplateTrackConfig } from "@modules/WellLogViewer/types";
 import { makeSelectValueForCurveHeader } from "@modules/WellLogViewer/utils/strings";
 
 import { atom } from "jotai";
@@ -12,7 +13,7 @@ import {
     userSelectedWellPicksAtom,
     userSelectedWellboreUuidAtom,
 } from "./baseAtoms";
-import { logViewerTrackConfigs } from "./persistedAtoms";
+import { logViewerTrackConfigsAtom } from "./persistedAtoms";
 import {
     availableFieldsQueryAtom,
     drilledWellboreHeadersQueryAtom,
@@ -61,7 +62,7 @@ export const availableFlagCurvesAtom = atom((get) => {
 });
 
 export const wellLogTemplateTracksAtom = atom<TemplateTrackConfig[]>((get) => {
-    const templateTrackConfigs = get(logViewerTrackConfigs);
+    const templateTrackConfigs = get(logViewerTrackConfigsAtom);
 
     return templateTrackConfigs.map((config) => {
         return {
@@ -72,7 +73,7 @@ export const wellLogTemplateTracksAtom = atom<TemplateTrackConfig[]>((get) => {
 });
 
 export const requiredCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
-    const templateTracks = get(logViewerTrackConfigs);
+    const templateTracks = get(logViewerTrackConfigsAtom);
 
     return _.chain(templateTracks)
         .flatMap<TemplatePlotConfig>("plots")
@@ -124,4 +125,27 @@ export const selectedWellborePicksAtom = atom<WellborePick_api[]>((get) => {
     const interpreterPicks = wellPicksByInterpreter[selectedInterpreter] ?? [];
 
     return interpreterPicks.filter(({ pickIdentifier }) => selectedWellPicks.includes(pickIdentifier));
+});
+
+export const missingCurvesAtom = atom<WellboreLogCurveHeader_api[]>((get) => {
+    const templateTracks = get(logViewerTrackConfigsAtom) ?? [];
+    const availableCurvesQuery = get(wellLogCurveHeadersQueryAtom);
+    if (availableCurvesQuery.isPending || availableCurvesQuery.isError) return [];
+
+    // Prepare all header select values for faster lookup
+    const allCurveSelectValues = new Set(availableCurvesQuery.data.map(makeSelectValueForCurveHeader));
+
+    const missingCurves: WellboreLogCurveHeader_api[] = [];
+
+    const allPlots = _.flatMap(templateTracks, "plots") as TemplatePlotConfig[];
+
+    allPlots.forEach(({ _curveHeader, _curveHeader2 }) => {
+        const selectValue1 = makeSelectValueForCurveHeader(_curveHeader);
+        const selectValue2 = makeSelectValueForCurveHeader(_curveHeader2);
+
+        if (_curveHeader && !allCurveSelectValues.has(selectValue1)) missingCurves.push(_curveHeader!);
+        if (_curveHeader2 && !allCurveSelectValues.has(selectValue2)) missingCurves.push(_curveHeader2!);
+    });
+
+    return missingCurves;
 });

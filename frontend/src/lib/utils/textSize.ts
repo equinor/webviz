@@ -1,7 +1,7 @@
 type CharWidths = Map<string, number>;
 
 const charsToMeasureWidthFor =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.!~*'()[]{}/?:@#$%^&*+=`|\\\"<>";
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.!~*' ()[]{}/?:@#$%^&*+=`|\\\"<>";
 const storedFontWidths: Map<string, CharWidths> = new Map();
 
 function calcAndStoreCharWidths(font: string): CharWidths {

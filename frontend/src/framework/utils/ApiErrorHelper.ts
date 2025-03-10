@@ -1,7 +1,9 @@
-import { Origin, StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { UseQueryResult } from "@tanstack/react-query";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import { Origin } from "@framework/ModuleInstanceStatusController";
+import type { UseQueryResult } from "@tanstack/react-query";
 
-import { AxiosError, InternalAxiosRequestConfig } from "axios";
+import type { InternalAxiosRequestConfig } from "axios";
+import { AxiosError } from "axios";
 import { isObject } from "lodash";
 
 export class ApiErrorHelper {

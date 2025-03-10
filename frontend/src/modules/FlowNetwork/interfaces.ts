@@ -1,5 +1,5 @@
-import { DatedFlowNetwork_api, FlowNetworkMetadata_api } from "@api";
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { DatedFlowNetwork_api, FlowNetworkMetadata_api } from "@api";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
     datedNetworksAtom,
@@ -10,7 +10,7 @@ import {
     selectedEdgeKeyAtom,
     selectedNodeKeyAtom,
 } from "./settings/atoms/derivedAtoms";
-import { QueryStatus } from "./types";
+import type { QueryStatus } from "./types";
 
 type SettingsToViewInterface = {
     edgeMetadataList: FlowNetworkMetadata_api[];

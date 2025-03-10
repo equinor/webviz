@@ -1,4 +1,5 @@
-import { Oklab, formatHex, interpolate, oklab } from "culori";
+import type { Oklab } from "culori";
+import { formatHex, interpolate, oklab } from "culori";
 
 type ColorStop = {
     hexColor: string;

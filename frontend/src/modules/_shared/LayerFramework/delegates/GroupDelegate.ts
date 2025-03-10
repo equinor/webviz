@@ -1,11 +1,13 @@
 import { ItemDelegateTopic } from "./ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { LayerManagerTopic } from "../framework/LayerManager/LayerManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationFactory } from "../framework/utils/DeserializationFactory";
-import { Item, SerializedItem, instanceofGroup, instanceofLayer } from "../interfaces";
+import type { Item, SerializedItem } from "../interfaces";
+import { instanceofGroup, instanceofLayer } from "../interfaces";
 
 export enum GroupDelegateTopic {
     CHILDREN = "CHILDREN",
@@ -205,7 +207,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(ItemDelegateTopic.EXPANDED)(() => {
                     this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
-                })
+                }),
             );
         }
 
@@ -217,7 +219,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                     this.incrementTreeRevisionNumber();
-                })
+                }),
             );
             this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
                 child.getItemDelegate().getId(),
@@ -226,7 +228,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(() => {
                     this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
-                })
+                }),
             );
         }
 

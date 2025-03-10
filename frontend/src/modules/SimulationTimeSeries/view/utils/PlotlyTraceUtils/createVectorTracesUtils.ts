@@ -1,21 +1,21 @@
-import {
-    DerivedVectorType_api,
-    StatisticFunction_api,
+import type {
     SummaryVectorDateObservation_api,
     VectorHistoricalData_api,
     VectorRealizationData_api,
     VectorStatisticData_api,
 } from "@api";
+import { DerivedVectorType_api, StatisticFunction_api } from "@api";
 
-import { FanchartData, FreeLineData, LowHighData, MinMaxData } from "./fanchartPlotting";
+import type { FanchartData, FreeLineData, LowHighData, MinMaxData } from "./fanchartPlotting";
 import { createFanchartTraces } from "./fanchartPlotting";
-import { LineData, StatisticsData, createStatisticsTraces } from "./statisticsPlotting";
+import type { LineData, StatisticsData } from "./statisticsPlotting";
+import { createStatisticsTraces } from "./statisticsPlotting";
 
-import { TimeSeriesPlotData } from "../timeSeriesPlotData";
+import type { TimeSeriesPlotData } from "../timeSeriesPlotData";
 
 function isDerivedVectorOfType(
     vectorData: VectorRealizationData_api | VectorStatisticData_api | VectorHistoricalData_api,
-    type: DerivedVectorType_api
+    type: DerivedVectorType_api,
 ): boolean {
     return "derivedVectorInfo" in vectorData && vectorData.derivedVectorInfo?.type === type;
 }
@@ -26,7 +26,7 @@ function isDerivedVectorOfType(
  * Default is "linear", rate vectors are "vh", and custom calculated vectors are "hv".
  */
 export function getTraceLineShape(
-    vectorData: VectorRealizationData_api | VectorStatisticData_api | VectorHistoricalData_api
+    vectorData: VectorRealizationData_api | VectorStatisticData_api | VectorHistoricalData_api,
 ): "linear" | "hv" | "vh" {
     if (
         isDerivedVectorOfType(vectorData, DerivedVectorType_api.PER_DAY) ||
@@ -386,7 +386,7 @@ export function createVectorStatisticsTraces({
 
 function getVectorStatisticLineDataForFunction(
     vectorStatisticData: VectorStatisticData_api,
-    statisticFunction: StatisticFunction_api
+    statisticFunction: StatisticFunction_api,
 ): LineData | undefined {
     const valueObject = vectorStatisticData.valueObjects.find((v) => v.statisticFunction === statisticFunction);
 

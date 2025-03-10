@@ -1,5 +1,6 @@
-import { Parameter, ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
-import { TreeDataNode } from "@lib/components/SmartNodeSelector";
+import type { Parameter } from "@framework/EnsembleParameters";
+import { ParameterIdent, ParameterType } from "@framework/EnsembleParameters";
+import type { TreeDataNode } from "@lib/components/SmartNodeSelector";
 
 export const ParameterParentNodeNames = {
     NAME: "Name",
@@ -21,7 +22,7 @@ export function createAndAddNode(treeNodeDataList: TreeDataNode[], nodeName: str
 export function createTreeDataNodeListFromParameters(
     parameters: Parameter[],
     checkIcon?: string,
-    parentIcon?: string
+    parentIcon?: string,
 ): TreeDataNode[] {
     if (parameters.length === 0) {
         return [];
@@ -76,7 +77,7 @@ export function createTreeDataNodeListFromParameters(
 export function getChildNodeNamesFromParentNodeName(
     nodes: string[],
     parentNodeName: string,
-    delimiter = ":"
+    delimiter = ":",
 ): string[] {
     return nodes
         .filter((node) => node.split(delimiter, 1)[0] === parentNodeName)
@@ -86,7 +87,7 @@ export function getChildNodeNamesFromParentNodeName(
 export function getParametersMatchingSelectedNodes(
     parameters: Parameter[],
     selectedNodes: string[],
-    delimiter = ":"
+    delimiter = ":",
 ): Parameter[] {
     // No selection implies no filtering
     if (selectedNodes.length === 0) {
@@ -108,12 +109,12 @@ export function getParametersMatchingSelectedNodes(
     const selectedParameterNames = getChildNodeNamesFromParentNodeName(
         selectedNodes,
         ParameterParentNodeNames.NAME,
-        delimiter
+        delimiter,
     );
     const selectedParameterGroups = getChildNodeNamesFromParentNodeName(
         selectedNodes,
         ParameterParentNodeNames.GROUP,
-        delimiter
+        delimiter,
     );
 
     const isNoParameterPropertyAmongSelectedNodes =
@@ -164,7 +165,7 @@ export function getParametersMatchingSelectedNodes(
         const parameterIdent = ParameterIdent.fromNameAndGroup(parameter.name, parameter.groupName);
         if (
             selectedEnsembleParameters.some((elm) =>
-                ParameterIdent.fromNameAndGroup(elm.name, elm.groupName).equals(parameterIdent)
+                ParameterIdent.fromNameAndGroup(elm.name, elm.groupName).equals(parameterIdent),
             )
         ) {
             continue;

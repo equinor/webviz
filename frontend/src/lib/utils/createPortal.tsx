@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import ReactDOM from "react-dom";
 
 export function createPortal(children: React.ReactNode, key?: string | null | undefined) {

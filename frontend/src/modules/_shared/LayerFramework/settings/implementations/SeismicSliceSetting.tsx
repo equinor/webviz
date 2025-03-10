@@ -1,10 +1,10 @@
-import React from "react";
+import type React from "react";
 
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 
 import { SettingDelegate } from "../../delegates/SettingDelegate";
-import { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
+import type { AvailableValuesType, Setting, SettingComponentProps } from "../../interfaces";
 import { SettingRegistry } from "../SettingRegistry";
 import { SettingType } from "../settingsTypes";
 
@@ -103,8 +103,8 @@ export class SeismicSliceSetting implements Setting<ValueType> {
             }
 
             return (
-                <div className="flex items-center space-x-1">
-                    <div className="flex-grow">
+                <div className="flex items-center gap-x-1">
+                    <div className="grow">
                         <Slider
                             min={0}
                             max={props.availableValues[1] ?? 1}

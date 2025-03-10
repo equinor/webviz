@@ -1,7 +1,7 @@
 import React from "react";
 
 import { KeyKind } from "@framework/DataChannelTypes";
-import { ModuleSettingsProps } from "@framework/Module";
+import type { ModuleSettingsProps } from "@framework/Module";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { Checkbox } from "@lib/components/Checkbox";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -18,7 +18,7 @@ import {
     showRealizationPointsAtom,
 } from "./atoms/baseAtoms";
 
-import { Interfaces } from "../interfaces";
+import type { Interfaces } from "../interfaces";
 import { DisplayComponentType } from "../typesAndEnums";
 
 export function Settings({ settingsContext, workbenchSession }: ModuleSettingsProps<Interfaces>): React.ReactNode {
@@ -36,7 +36,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
         function propogateReferenceSensitivityName() {
             setModuleReferenceSensitivityName(referenceSensitivityName);
         },
-        [referenceSensitivityName, setModuleReferenceSensitivityName]
+        [referenceSensitivityName, setModuleReferenceSensitivityName],
     );
 
     const responseReceiver = settingsContext.useChannelReceiver({
@@ -60,7 +60,7 @@ export function Settings({ settingsContext, workbenchSession }: ModuleSettingsPr
                             ...(ensemble
                                 .getSensitivities()
                                 ?.getSensitivityArr()
-                                .map((el) => el.name) ?? [])
+                                .map((el) => el.name) ?? []),
                         );
                     }
                 } catch (e) {

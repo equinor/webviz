@@ -1,17 +1,22 @@
-import { SeismicFenceData_api, postGetSeismicFenceOptions } from "@api";
-import { SeismicInfo, findIndexOfSample, getSeismicInfo } from "@equinor/esv-intersection";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SeismicFenceData_api } from "@api";
+import { postGetSeismicFenceOptions } from "@api";
+import type { SeismicInfo } from "@equinor/esv-intersection";
+import { findIndexOfSample, getSeismicInfo } from "@equinor/esv-intersection";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultContinuousDivergingColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
-import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
+import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
 import { b64DecodeFloatArrayToFloat32 } from "@modules/_shared/base64";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
-import { QueryClient } from "@tanstack/query-core";
+import type { QueryClient } from "@tanstack/query-core";
 
-import { Rgb, parse } from "culori";
+import type { Rgb } from "culori";
+import { parse } from "culori";
 import { isEqual } from "lodash";
 
-import { BaseLayer, BoundingBox, LayerStatus, LayerTopic } from "./BaseLayer";
+import type { BoundingBox } from "./BaseLayer";
+import { BaseLayer, LayerStatus, LayerTopic } from "./BaseLayer";
 
 export type SeismicSliceImageOptions = {
     datapoints: number[][];
@@ -184,7 +189,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
     setUseCustomColorScaleBoundaries(useCustomColorScaleBoundaries: boolean): void {
         this._useCustomColorScaleBoundariesParameterMap.set(
             this._settings.attribute ?? "",
-            useCustomColorScaleBoundaries
+            useCustomColorScaleBoundaries,
         );
         this.notifySubscribers(LayerTopic.DATA);
     }
@@ -205,7 +210,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
 
     protected doSettingsChangesRequireDataRefetch(
         prevSettings: SeismicLayerSettings,
-        newSettings: SeismicLayerSettings
+        newSettings: SeismicLayerSettings,
     ): boolean {
         return (
             !isEqual(prevSettings.ensembleIdent, newSettings.ensembleIdent) ||
@@ -236,7 +241,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
         for (let i = 2; i < polyline.length; i += 2) {
             const distance = point2Distance(
                 { x: polyline[i], y: polyline[i + 1] },
-                { x: polyline[i - 2], y: polyline[i - 1] }
+                { x: polyline[i - 2], y: polyline[i - 1] },
             );
             const actualDistance = this._settings.polyline.actualSectionLengths[i / 2 - 1];
             const numPoints = Math.floor(distance / this._settings.resolution) - 1;
@@ -264,7 +269,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             useCustomColorScaleBoundaries,
             {
                 isLeftToRight: true,
-            }
+            },
         )
             .then((result) => {
                 return result;
@@ -291,7 +296,7 @@ export class SeismicLayer extends BaseLayer<SeismicLayerSettings, SeismicLayerDa
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: polyline[i - 2], y: polyline[i - 1] }
+                    { x: polyline[i - 2], y: polyline[i - 1] },
                 );
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
                 const vector: Vec2 = {
@@ -378,7 +383,7 @@ export function isSeismicLayer(layer: BaseLayer<any, any>): layer is SeismicLaye
  */
 export function createSeismicSliceImageDatapointsArrayFromFenceData(
     fenceData: SeismicFenceData_trans,
-    fillValue = 0
+    fillValue = 0,
 ): number[][] {
     const datapoints: number[][] = [];
 
@@ -426,7 +431,7 @@ export async function generateSeismicSliceImage(
         seismicRange?: number;
         seismicMin?: number;
         seismicMax?: number;
-    } = { isLeftToRight: true }
+    } = { isLeftToRight: true },
 ): Promise<ImageBitmap | null> {
     if (!(data.datapoints.length > 0 && trajectory.length > 1)) {
         return null;

@@ -1,5 +1,6 @@
-import { WellLogCurveSourceEnum_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
-import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import type { WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
+import { WellLogCurveSourceEnum_api } from "@api";
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import {
     MAIN_AXIS_CURVE,
     SECONDARY_AXIS_CURVE,
@@ -231,7 +232,7 @@ describe("QueryDataTransform", () => {
                 mockTrajectoryWithExtraRows,
                 mockReferenceSystem,
                 new Set(),
-                true
+                true,
             )[1];
 
             expect(wellLog.data).toEqual([
@@ -313,7 +314,7 @@ describe("QueryDataTransform", () => {
             const sets = createWellLogSets(
                 [mockCurveData, otherCurve1, otherCurve2],
                 mockTrajectory,
-                mockReferenceSystem
+                mockReferenceSystem,
             );
 
             // Should be 3: 1 for the axis set, and one for each curve
@@ -341,7 +342,7 @@ describe("QueryDataTransform", () => {
                 [mockCurveData, otherCurve],
                 mockTrajectory,
                 mockReferenceSystem,
-                nonUniqueCurveNames
+                nonUniqueCurveNames,
             );
 
             const curve1 = sets[1].curves[2];

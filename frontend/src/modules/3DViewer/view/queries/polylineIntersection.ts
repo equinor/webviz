@@ -1,10 +1,9 @@
 import { postGetPolylineIntersectionOptions } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import {
-    PolylineIntersection_trans,
-    transformPolylineIntersection,
-} from "@modules/3DViewer/view/queries/queryDataTransforms";
-import { UseQueryResult, useQuery } from "@tanstack/react-query";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { PolylineIntersection_trans } from "@modules/3DViewer/view/queries/queryDataTransforms";
+import { transformPolylineIntersection } from "@modules/3DViewer/view/queries/queryDataTransforms";
+import type { UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export function useGridPolylineIntersection(
     ensembleIdent: RegularEnsembleIdent | null,
@@ -13,7 +12,7 @@ export function useGridPolylineIntersection(
     gridModelDateOrInterval: string | null,
     realizationNum: number | null,
     polyline_utm_xy: number[],
-    enabled: boolean
+    enabled: boolean,
 ): UseQueryResult<PolylineIntersection_trans> {
     return useQuery({
         ...postGetPolylineIntersectionOptions({
@@ -29,7 +28,7 @@ export function useGridPolylineIntersection(
         }),
         select: transformPolylineIntersection,
         enabled: Boolean(
-            ensembleIdent && gridModelName && realizationNum !== null && polyline_utm_xy.length && enabled
+            ensembleIdent && gridModelName && realizationNum !== null && polyline_utm_xy.length && enabled,
         ),
     });
 }

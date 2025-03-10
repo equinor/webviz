@@ -1,14 +1,14 @@
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 
 import { AtomStoreMaster } from "./AtomStoreMaster";
 import { GuiMessageBroker, GuiState } from "./GuiMessageBroker";
 import { InitialSettings } from "./InitialSettings";
 import { ImportState } from "./Module";
-import { ModuleInstance } from "./ModuleInstance";
+import type { ModuleInstance } from "./ModuleInstance";
 import { ModuleRegistry } from "./ModuleRegistry";
 import { RegularEnsembleIdent } from "./RegularEnsembleIdent";
-import { Template } from "./TemplateRegistry";
-import { WorkbenchServices } from "./WorkbenchServices";
+import type { Template } from "./TemplateRegistry";
+import type { WorkbenchServices } from "./WorkbenchServices";
 import { loadMetadataFromBackendAndCreateEnsembleSet } from "./internal/EnsembleSetLoader";
 import { PrivateWorkbenchServices } from "./internal/PrivateWorkbenchServices";
 import { PrivateWorkbenchSettings } from "./internal/PrivateWorkbenchSettings";
@@ -251,14 +251,14 @@ export class Workbench {
         await this.loadAndSetupEnsembleSetInSession(
             queryClient,
             storedUserEnsembleSettings ?? [],
-            storedUserDeltaEnsembleSettings ?? []
+            storedUserDeltaEnsembleSettings ?? [],
         );
     }
 
     async storeSettingsInLocalStorageAndLoadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
         userEnsembleSettings: UserEnsembleSetting[],
-        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[]
+        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
     ): Promise<void> {
         this.storeEnsembleSetInLocalStorage(userEnsembleSettings);
         this.storeDeltaEnsembleSetInLocalStorage(userDeltaEnsembleSettings);
@@ -269,14 +269,14 @@ export class Workbench {
     private async loadAndSetupEnsembleSetInSession(
         queryClient: QueryClient,
         userEnsembleSettings: UserEnsembleSetting[],
-        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[]
+        userDeltaEnsembleSettings: UserDeltaEnsembleSetting[],
     ): Promise<void> {
         console.debug("loadAndSetupEnsembleSetInSession - starting load");
         this._workbenchSession.setEnsembleSetLoadingState(true);
         const newEnsembleSet = await loadMetadataFromBackendAndCreateEnsembleSet(
             queryClient,
             userEnsembleSettings,
-            userDeltaEnsembleSettings
+            userDeltaEnsembleSettings,
         );
         console.debug("loadAndSetupEnsembleSetInSession - loading done");
         console.debug("loadAndSetupEnsembleSetInSession - publishing");
@@ -298,7 +298,7 @@ export class Workbench {
                 ...el,
                 comparisonEnsembleIdent: el.comparisonEnsembleIdent.toString(),
                 referenceEnsembleIdent: el.referenceEnsembleIdent.toString(),
-            })
+            }),
         );
         localStorage.setItem("userDeltaEnsembleSettings", JSON.stringify(deltaEnsembleSettingsArrayToStore));
     }
@@ -355,7 +355,7 @@ export class Workbench {
                     const dataChannel = templateModule.dataChannelsToInitialSettingsMapping[propName];
 
                     const moduleInstanceIndex = template.moduleInstances.findIndex(
-                        (el) => el.instanceRef === dataChannel.listensToInstanceRef
+                        (el) => el.instanceRef === dataChannel.listensToInstanceRef,
                     );
                     if (moduleInstanceIndex === -1) {
                         throw new Error("Could not find module instance for data channel");

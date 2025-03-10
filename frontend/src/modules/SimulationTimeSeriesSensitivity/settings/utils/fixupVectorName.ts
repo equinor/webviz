@@ -1,6 +1,6 @@
 export function fixupVectorName(
     currVectorName: string | null,
-    availableVectorNames: string[] | undefined
+    availableVectorNames: string[] | undefined,
 ): string | null {
     if (!availableVectorNames?.length) {
         return null;
