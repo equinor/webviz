@@ -118,7 +118,7 @@ class InplaceVolumetricsAccess:
         pa.Table with columns: ZONE, REGION, FACIES, REAL, and the requested column names.
         """
 
-        realizations = await self._ensemble_context._get_field_values_async("fmu.realization.id")
+        realizations = await self._ensemble_context.get_field_values_async("fmu.realization.id")
         if len(realizations) == 0:
             raise InvalidDataError(
                 f"No realizations found in the ensemble {self._case_uuid}, {self._iteration_name}",

@@ -80,7 +80,7 @@ class CaseInspector:
         case: Case = await self._get_or_create_case_context()
 
         ensemble = case.filter(iteration=iteration_name, realization=True)
-        realization_list = await ensemble._get_field_values_async("fmu.realization.id")
+        realization_list = await ensemble.get_field_values_async("fmu.realization.id")
         timer.record_lap("get_realizations")
 
         LOGGER.debug(f"get_realizations_in_iteration_async {timer.to_string()}")
@@ -89,7 +89,7 @@ class CaseInspector:
     async def get_stratigraphic_column_identifier_async(self) -> str:
         """Retrieve the stratigraphic column identifier for a case"""
         case: Case = await self._get_or_create_case_context()
-        strat_identifier = await case._get_field_values_async("masterdata.smda.stratigraphic_column.identifier.keyword")
+        strat_identifier = await case.get_field_values_async("masterdata.smda.stratigraphic_column.identifier.keyword")
         if len(strat_identifier) == 0:
             raise NoDataError(f"No stratigraphic column identifier found for {case.name}", Service.SUMO)
         if len(strat_identifier) > 1:
@@ -101,5 +101,5 @@ class CaseInspector:
     async def get_field_identifiers_async(self) -> list[str]:
         """Retrieve the field identifiers for a case"""
         case: Case = await self._get_or_create_case_context()
-        field_identifiers = await case._get_field_values_async("masterdata.smda.field.identifier.keyword")
+        field_identifiers = await case.get_field_values_async("masterdata.smda.field.identifier.keyword")
         return field_identifiers

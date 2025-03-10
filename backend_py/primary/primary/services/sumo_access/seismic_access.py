@@ -27,7 +27,7 @@ class SeismicAccess:
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
     async def get_seismic_cube_meta_list_async(self) -> List[SeismicCubeMeta]:
-        realizations = await self._ensemble_context._get_field_values_async("fmu.realization.id")
+        realizations = await self._ensemble_context.get_field_values_async("fmu.realization.id")
 
         seismic_context = self._ensemble_context.cubes.filter(
             realization=realizations[0],

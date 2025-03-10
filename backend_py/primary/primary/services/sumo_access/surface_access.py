@@ -266,7 +266,7 @@ class SurfaceAccess:
             return None
 
         # Ensure that we got data for all the requested realizations
-        realizations_found = await search_context._get_field_values_async("fmu.realization.id")
+        realizations_found = await search_context.get_field_values_async("fmu.realization.id")
         perf_metrics.record_lap("collect-reals")
         if realizations is not None:
             missing_reals = list(set(realizations) - set(realizations_found))
