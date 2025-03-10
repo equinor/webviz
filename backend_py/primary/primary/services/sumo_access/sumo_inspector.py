@@ -1,11 +1,10 @@
 from typing import List
-from pydantic import BaseModel
 import logging
 
 import asyncio
+from pydantic import BaseModel
+
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-
-
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 
 from .sumo_client_factory import create_sumo_client

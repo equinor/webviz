@@ -3,11 +3,6 @@ from typing import List
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
-from primary.services.service_exceptions import (
-    Service,
-    MultipleDataMatchesError,
-    NoDataError,
-)
 
 from .generic_types import SumoTableSchema
 from ._arrow_table_loader import ArrowTableLoader

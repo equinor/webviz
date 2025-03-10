@@ -46,7 +46,7 @@ class ObservationAccess:
             return Observations()
         if await observation_context.length_async() > 1:
             raise MultipleDataMatchesError(
-                f"More than one observations dictionary found. {observation_context.names}", Service.SUMO
+                f"More than one observations dictionary found for case {self._case_uuid}", Service.SUMO
             )
 
         observations_handle: Dictionary = await observation_context.getitem_async(0)

@@ -2,9 +2,8 @@ from typing import List, Optional
 
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-from webviz_pkg.core_utils.perf_timer import PerfTimer
-from primary.services.service_exceptions import InvalidDataError, NoDataError, Service
-from ._loaders import load_aggregated_arrow_table_multiple_columns_from_sumo, load_single_realization_arrow_table
+
+from primary.services.service_exceptions import InvalidDataError, Service
 from ._arrow_table_loader import ArrowTableLoader
 
 

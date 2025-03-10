@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 import pyarrow as pa
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
-from primary.services.service_exceptions import MultipleDataMatchesError, NoDataError, Service
+from primary.services.service_exceptions import NoDataError, Service
 
 from ._arrow_table_loader import ArrowTableLoader
 from .sumo_client_factory import create_sumo_client
@@ -52,7 +52,7 @@ class VfpAccess:
         table_count = await table_context.length_async()
         if table_count == 0:
             raise NoDataError(f"No VFP tables found for realization: {realization}", Service.SUMO)
-        tagnames = await table_context._get_field_values_async("data.tagname.keyword")
+        tagnames = await table_context.tagnames_async
 
         return tagnames
 

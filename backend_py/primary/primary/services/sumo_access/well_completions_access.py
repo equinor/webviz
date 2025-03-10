@@ -1,9 +1,8 @@
-import asyncio
 import pyarrow as pa
-from fmu.sumo.explorer.objects import Case
+
 from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
-from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, Service, NoDataError
+from primary.services.service_exceptions import InvalidDataError, Service
 
 
 from ._arrow_table_loader import ArrowTableLoader

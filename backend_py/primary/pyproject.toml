@@ -52,7 +52,7 @@ line-length = 120
 [tool.pylint]
 disable = ["missing-docstring", "line-too-long", "logging-fstring-interpolation", "duplicate-code"]
 extension-pkg-whitelist = "pydantic"
-ignored-modules = "pyarrow.compute"
+ignored-modules = ["pyarrow.compute", "fmu.sumo.explorer"]
 good-names = ["i", "x", "df", "xy", "tg"]
 min-public-methods = 0
 max-args = 9

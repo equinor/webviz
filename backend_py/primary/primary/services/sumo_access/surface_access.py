@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from io import BytesIO
-from typing import Sequence, Any
+from typing import Sequence
 
 import xtgeo
 
