@@ -2500,44 +2500,6 @@ export type GetGridModelsInfoResponses_api = {
 
 export type GetGridModelsInfoResponse_api = GetGridModelsInfoResponses_api[keyof GetGridModelsInfoResponses_api];
 
-export type GetIsGridGeometrySharedData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble name
-         */
-        ensemble_name: string;
-        /**
-         * Grid name
-         */
-        grid_name: string;
-    };
-    url: "/grid3d/is_grid_geometry_shared/";
-};
-
-export type GetIsGridGeometrySharedErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetIsGridGeometrySharedError_api = GetIsGridGeometrySharedErrors_api[keyof GetIsGridGeometrySharedErrors_api];
-
-export type GetIsGridGeometrySharedResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: boolean;
-};
-
-export type GetIsGridGeometrySharedResponse_api = GetIsGridGeometrySharedResponses_api[keyof GetIsGridGeometrySharedResponses_api];
-
 export type GetGridSurfaceData_api = {
     body?: never;
     path?: never;
@@ -2814,42 +2776,6 @@ export type GetTableDataResponses_api = {
 };
 
 export type GetTableDataResponse_api = GetTableDataResponses_api[keyof GetTableDataResponses_api];
-
-export type GetRealizationsTablesAreEqualData_api = {
-    body?: never;
-    path?: never;
-    query: {
-        /**
-         * Sumo case uuid
-         */
-        case_uuid: string;
-        /**
-         * Ensemble name
-         */
-        ensemble_name: string;
-    };
-    url: "/pvt/realizations_tables_are_equal/";
-};
-
-export type GetRealizationsTablesAreEqualErrors_api = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError_api;
-};
-
-export type GetRealizationsTablesAreEqualError_api =
-    GetRealizationsTablesAreEqualErrors_api[keyof GetRealizationsTablesAreEqualErrors_api];
-
-export type GetRealizationsTablesAreEqualResponses_api = {
-    /**
-     * Successful Response
-     */
-    200: boolean;
-};
-
-export type GetRealizationsTablesAreEqualResponse_api =
-    GetRealizationsTablesAreEqualResponses_api[keyof GetRealizationsTablesAreEqualResponses_api];
 
 export type GetWellCompletionsDataData_api = {
     body?: never;
