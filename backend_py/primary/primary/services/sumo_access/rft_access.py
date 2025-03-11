@@ -37,7 +37,7 @@ class RftAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_rft_info(self) -> RftTableDefinition:
+    async def get_rft_info_async(self) -> RftTableDefinition:
         """Get a collection of rft tables for a case and iteration"""
         timer = PerfMetrics()
 
@@ -79,7 +79,7 @@ class RftAccess:
         LOGGER.debug(f"{timer.to_string()}, {self._case_uuid=}, {self._iteration_name=}")
         return RftTableDefinition(response_names=available_response_names, well_infos=rft_well_infos)
 
-    async def get_rft_well_realization_data(
+    async def get_rft_well_realization_data_async(
         self,
         well_name: str,
         response_name: str,

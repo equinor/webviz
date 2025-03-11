@@ -36,7 +36,7 @@ class ParameterAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_parameters_and_sensitivities(self) -> EnsembleParameters:
+    async def get_parameters_and_sensitivities_async(self) -> EnsembleParameters:
         """Retrieve parameters for an ensemble"""
         timer = PerfTimer()
 
@@ -67,9 +67,9 @@ class ParameterAccess:
             sensitivities=sensitivities,
         )
 
-    async def get_parameter(self, parameter_name: str) -> EnsembleParameter:
+    async def get_parameter_async(self, parameter_name: str) -> EnsembleParameter:
         """Retrieve a single parameter for an ensemble"""
-        parameters = await self.get_parameters_and_sensitivities()
+        parameters = await self.get_parameters_and_sensitivities_async()
         return next(parameter for parameter in parameters.parameters if parameter.name == parameter_name)
 
 

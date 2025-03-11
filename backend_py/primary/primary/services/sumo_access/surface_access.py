@@ -48,11 +48,11 @@ class SurfaceAccess:
 
         async with asyncio.TaskGroup() as tg:
             queries = RealizationSurfQueries(self._sumo_client, self._case_uuid, self._iteration_name)
-            static_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.NO_TIME))
-            time_point_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.TIME_POINT))
-            interval_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.INTERVAL))
-            time_points_task = tg.create_task(queries.find_surf_time_points())
-            intervals_task = tg.create_task(queries.find_surf_time_intervals())
+            static_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.NO_TIME))
+            time_point_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.TIME_POINT))
+            interval_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.INTERVAL))
+            time_points_task = tg.create_task(queries.find_surf_time_points_async())
+            intervals_task = tg.create_task(queries.find_surf_time_intervals_async())
 
         perf_metrics.record_lap("queries")
 
@@ -85,10 +85,10 @@ class SurfaceAccess:
 
         async with asyncio.TaskGroup() as tg:
             queries = ObservedSurfQueries(self._sumo_client, self._case_uuid)
-            time_point_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.TIME_POINT))
-            interval_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.INTERVAL))
-            time_points_task = tg.create_task(queries.find_surf_time_points())
-            intervals_task = tg.create_task(queries.find_surf_time_intervals())
+            time_point_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.TIME_POINT))
+            interval_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.INTERVAL))
+            time_points_task = tg.create_task(queries.find_surf_time_points_async())
+            intervals_task = tg.create_task(queries.find_surf_time_intervals_async())
 
         perf_metrics.record_lap("queries")
 
