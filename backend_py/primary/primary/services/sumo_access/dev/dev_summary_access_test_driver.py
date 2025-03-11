@@ -132,7 +132,7 @@ async def main() -> None:
         print(iteration_info)
 
     iteration_name = iteration_list[0].name
-    summary_access = SummaryAccess.from_case_uuid(
+    summary_access = SummaryAccess.from_iteration_name(
         access_token=access_token, case_uuid=sumo_case_id, iteration_name=iteration_name
     )
     await test_summary_access(summary_access)

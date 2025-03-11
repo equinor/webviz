@@ -21,7 +21,7 @@ async def get_observations(
     # fmt:on
 ) -> schemas.Observations:
     """Retrieve all observations found in sumo case"""
-    access = await ObservationAccess.from_case_uuid_async(authenticated_user.get_sumo_access_token(), case_uuid)
+    access = ObservationAccess.from_case_uuid(authenticated_user.get_sumo_access_token(), case_uuid)
     observations = await access.get_observations()
 
     ret_observations = schemas.Observations.model_validate(observations.model_dump())
