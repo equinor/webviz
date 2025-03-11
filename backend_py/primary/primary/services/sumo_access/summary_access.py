@@ -109,7 +109,7 @@ class SummaryAccess:
         """
         timer = PerfTimer()
 
-        table = await _load_all_real_arrow_table_from_sumo(
+        table = await _load_all_real_arrow_table_from_sumo_async(
             self._sumo_client, self._case_uuid, self._iteration_name, vector_name
         )
         et_loading_ms = timer.lap_ms()
@@ -206,7 +206,7 @@ class SummaryAccess:
 
         timer = PerfTimer()
 
-        table: pa.Table = await _load_single_real_arrow_table_from_sumo(
+        table: pa.Table = await _load_single_real_arrow_table_from_sumo_async(
             self._sumo_client, self._case_uuid, self._iteration_name, vector_names, realization
         )
         et_loading_ms = timer.lap_ms()
@@ -260,7 +260,7 @@ class SummaryAccess:
         if not hist_vec_name:
             return None
 
-        table = await _load_all_real_arrow_table_from_sumo(
+        table = await _load_all_real_arrow_table_from_sumo_async(
             self._sumo_client, self._case_uuid, self._iteration_name, hist_vec_name
         )
         et_load_table_ms = timer.lap_ms()
@@ -336,12 +336,12 @@ class SummaryAccess:
         return pc.unique(table.column("DATE")).to_numpy().astype(int).tolist()
 
 
-async def _load_all_real_arrow_table_from_sumo(
+async def _load_all_real_arrow_table_from_sumo_async(
     sumo_client: SumoClient, case_uuid: str, iteration_name: str, vector_name: str
 ) -> pa.Table:
     timer = PerfTimer()
 
-    sumo_table = await _locate_all_real_combined_sumo_table(
+    sumo_table = await _locate_all_real_combined_sumo_table_async(
         sumo_client, case_uuid, iteration_name, column_name=vector_name
     )
     et_locate_ms = timer.lap_ms()
@@ -392,12 +392,12 @@ async def _load_all_real_arrow_table_from_sumo(
     return table
 
 
-async def _load_single_real_arrow_table_from_sumo(
+async def _load_single_real_arrow_table_from_sumo_async(
     sumo_client: SumoClient, case_uuid: str, iteration_name: str, vector_names: Sequence[str], realization: int
 ) -> pa.Table:
     timer = PerfTimer()
 
-    sumo_table: Table = await _locate_single_real_sumo_table(sumo_client, case_uuid, iteration_name, realization)
+    sumo_table: Table = await _locate_single_real_sumo_table_async(sumo_client, case_uuid, iteration_name, realization)
     et_locate_ms = timer.lap_ms()
 
     # print(f"{sumo_table.format=}")
@@ -456,7 +456,7 @@ def _construct_historical_vector_name(non_historical_vector_name: str) -> Option
     return None
 
 
-async def _locate_all_real_combined_sumo_table(
+async def _locate_all_real_combined_sumo_table_async(
     sumo_client: SumoClient, case_uuid: str, iteration_name: str, column_name: str
 ) -> Table:
     """Locate sumo table that has concatenated summary data for all realizations for a single vector"""
@@ -480,7 +480,7 @@ async def _locate_all_real_combined_sumo_table(
     return await table_collection.getitem_async(0)
 
 
-async def _locate_single_real_sumo_table(
+async def _locate_single_real_sumo_table_async(
     sumo_client: SumoClient, case_uuid: str, iteration_name: str, realization: int
 ) -> Table:
     """Locate the sumo table with summary data for all vectors for the for the specified single realization"""

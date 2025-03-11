@@ -32,12 +32,12 @@ class RftAccess:
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return RftAccess(case=case, iteration_name=iteration_name)
 
-    async def get_rft_info(self) -> RftTableDefinition:
-        rft_table_collection = await get_rft_table_collection(self._case, self._iteration_name, column_name=None)
+    async def get_rft_info_async(self) -> RftTableDefinition:
+        rft_table_collection = await get_rft_table_collection_async(self._case, self._iteration_name, column_name=None)
 
         columns = await rft_table_collection.columns_async
         available_response_names = [col for col in columns if col in ALLOWED_RFT_RESPONSE_NAMES]
-        table = await get_concatenated_rft_table(
+        table = await get_concatenated_rft_table_async(
             self._case, self._iteration_name, column_names=available_response_names
         )
         rft_well_infos: list[RftWellInfo] = []
@@ -51,7 +51,7 @@ class RftAccess:
 
         return RftTableDefinition(response_names=available_response_names, well_infos=rft_well_infos)
 
-    async def get_rft_well_realization_data(
+    async def get_rft_well_realization_data_async(
         self,
         well_name: str,
         response_name: str,
@@ -59,7 +59,7 @@ class RftAccess:
         realizations: Optional[Sequence[int]],
     ) -> List[RftRealizationData]:
         column_names = [response_name, "DEPTH"]
-        table = await self.get_rft_table(
+        table = await self.get_rft_table_async(
             well_names=[well_name],
             column_names=column_names,
             timestamps_utc_ms=timestamps_utc_ms,
@@ -83,14 +83,14 @@ class RftAccess:
 
         return ret_arr
 
-    async def get_rft_table(
+    async def get_rft_table_async(
         self,
         well_names: List[str],
         column_names: List[str],
         timestamps_utc_ms: Optional[Sequence[int]],
         realizations: Optional[Sequence[int]],
     ) -> pa.table:
-        table = await get_concatenated_rft_table(self._case, self._iteration_name, column_names)
+        table = await get_concatenated_rft_table_async(self._case, self._iteration_name, column_names)
 
         if realizations is not None:
             mask = pc.is_in(table["REAL"], value_set=pa.array(realizations))
@@ -104,10 +104,10 @@ class RftAccess:
         return table
 
 
-async def get_concatenated_rft_table(case: Case, iteration_name: str, column_names: List[str]) -> pa.Table:
+async def get_concatenated_rft_table_async(case: Case, iteration_name: str, column_names: List[str]) -> pa.Table:
     concatenated_table = None
     for column_name in column_names:
-        table = await _load_arrow_table_for_from_sumo(case, iteration_name, column_name=column_name)
+        table = await _load_arrow_table_for_from_sumo_async(case, iteration_name, column_name=column_name)
 
         if concatenated_table is None:
             concatenated_table = table
@@ -119,10 +119,12 @@ async def get_concatenated_rft_table(case: Case, iteration_name: str, column_nam
     return concatenated_table
 
 
-async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, column_name: str) -> Optional[pa.Table]:
+async def _load_arrow_table_for_from_sumo_async(
+    case: Case, iteration_name: str, column_name: str
+) -> Optional[pa.Table]:
     timer = PerfTimer()
 
-    rft_table_collection = await get_rft_table_collection(case, iteration_name, column_name=column_name)
+    rft_table_collection = await get_rft_table_collection_async(case, iteration_name, column_name=column_name)
     if await rft_table_collection.length_async() == 0:
         return None
     if await rft_table_collection.length_async() > 1:
@@ -180,7 +182,7 @@ async def _load_arrow_table_for_from_sumo(case: Case, iteration_name: str, colum
     return table
 
 
-async def get_rft_table_collection(
+async def get_rft_table_collection_async(
     case: Case, iteration_name: str, column_name: Optional[str] = None
 ) -> TableCollection:
     """Get a collection of rft tables for a case and iteration"""

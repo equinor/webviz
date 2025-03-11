@@ -31,7 +31,7 @@ class ObservationAccess:
         case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
         return cls(case=case, case_uuid=case_uuid)
 
-    async def get_observations(self) -> Observations:
+    async def get_observations_async(self) -> Observations:
         """Retrieve all observations found in sumo case"""
         observations_collection = self._case.dictionaries.filter(
             stage="case",

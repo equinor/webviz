@@ -32,7 +32,7 @@ class GroupTreeAccess:
         case: Case = await create_sumo_case_async(sumo_client, case_uuid, want_keepalive_pit=False)
         return GroupTreeAccess(case, iteration_name)
 
-    async def get_group_tree_table(self, realization: Optional[int]) -> Optional[pd.DataFrame]:
+    async def get_group_tree_table_async(self, realization: Optional[int]) -> Optional[pd.DataFrame]:
         """Get well group tree data for case and iteration"""
         timer = PerfTimer()
 

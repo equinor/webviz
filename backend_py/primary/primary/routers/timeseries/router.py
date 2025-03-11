@@ -506,7 +506,7 @@ async def get_statistical_vector_data_per_sensitivity(
     parameter_access = await ParameterAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    sensitivities = (await parameter_access.get_parameters_and_sensitivities()).sensitivities
+    sensitivities = (await parameter_access.get_parameters_and_sensitivities_async()).sensitivities
 
     service_freq = Frequency.from_string_value(resampling_frequency.value)
     service_stat_funcs_to_compute = converters.to_service_statistic_functions(statistic_functions)

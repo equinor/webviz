@@ -29,7 +29,7 @@ async def get_parameter_names_and_description(
     access = await ParameterAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    parameters = (await access.get_parameters_and_sensitivities()).parameters
+    parameters = (await access.get_parameters_and_sensitivities_async()).parameters
     if exclude_all_values_constant:
         parameters = [p for p in parameters if not p.is_constant]
     if sort_order == "alphabetically":
@@ -59,7 +59,7 @@ async def get_parameter(
     access = await ParameterAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    parameters = (await access.get_parameters_and_sensitivities()).parameters
+    parameters = (await access.get_parameters_and_sensitivities_async()).parameters
     for parameter in parameters:
         if parameter.name == parameter_name:
             return parameter
@@ -75,7 +75,7 @@ async def get_parameters(
     access = await ParameterAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    parameters = (await access.get_parameters_and_sensitivities()).parameters
+    parameters = (await access.get_parameters_and_sensitivities_async()).parameters
     return [parameter for parameter in parameters]
 
 
@@ -90,7 +90,7 @@ async def get_is_sensitivity_run(
     access = await ParameterAccess.from_case_uuid_async(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
-    parameters = await access.get_parameters_and_sensitivities()
+    parameters = await access.get_parameters_and_sensitivities_async()
     return parameters.sensitivities is not None
 
 
@@ -106,5 +106,5 @@ async def get_sensitivities(
         authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
     )
 
-    sensitivities = (await access.get_parameters_and_sensitivities()).sensitivities
+    sensitivities = (await access.get_parameters_and_sensitivities_async()).sensitivities
     return sensitivities if sensitivities else []

@@ -41,7 +41,7 @@ class VfpAccess:
         case: Case = await create_sumo_case_async(sumo_client, case_uuid, want_keepalive_pit=False)
         return VfpAccess(case, iteration_name)
 
-    async def get_all_vfp_table_names_for_realization(self, realization: int) -> List[str]:
+    async def get_all_vfp_table_names_for_realization_async(self, realization: int) -> List[str]:
         """Returns all VFP table names/tagnames for a realization."""
         table_collection = self._case.tables.filter(
             content="lift_curves", realization=realization, iteration=self._iteration_name
@@ -51,7 +51,7 @@ class VfpAccess:
             raise NoDataError(f"No VFP tables found for realization: {realization}", Service.SUMO)
         return table_collection.tagnames
 
-    async def get_vfp_table_from_tagname_as_pyarrow(self, tagname: str, realization: int) -> pa.Table:
+    async def get_vfp_table_from_tagname_as_pyarrow_async(self, tagname: str, realization: int) -> pa.Table:
         """Returns a VFP table as a pyarrow table for a specific tagname (table name)
         and realization.
         """
@@ -74,7 +74,7 @@ class VfpAccess:
 
         return pa_table
 
-    async def get_vfp_table_from_tagname(self, tagname: str, realization: int) -> VfpProdTable | VfpInjTable:
+    async def get_vfp_table_from_tagname_async(self, tagname: str, realization: int) -> VfpProdTable | VfpInjTable:
         """Returns a VFP table as a VFP table object for a specific tagname (table name)
         and realization.
 
@@ -82,7 +82,7 @@ class VfpAccess:
         If the VFP table type is VFPPROD then a VfpProdTable object is returned
         """
 
-        pa_table = await self.get_vfp_table_from_tagname_as_pyarrow(tagname, realization)
+        pa_table = await self.get_vfp_table_from_tagname_as_pyarrow_async(tagname, realization)
 
         # Extracting data valid for both VFPPROD and VFPINJ
         vfp_type = VfpType[pa_table.schema.metadata[b"VFP_TYPE"].decode("utf-8")]
