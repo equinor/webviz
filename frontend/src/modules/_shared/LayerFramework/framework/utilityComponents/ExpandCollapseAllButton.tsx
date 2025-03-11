@@ -1,9 +1,9 @@
-import React from "react";
+import type React from "react";
 
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { UnfoldLessDouble, UnfoldMoreDouble } from "@mui/icons-material";
 
-import { Group } from "../../interfaces";
+import type { Group } from "../../interfaces";
 
 export type ExpandCollapseAllButtonProps = {
     group: Group;

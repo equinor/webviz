@@ -25,7 +25,6 @@ import {
     getGridSurface,
     getHistoricalVectorData,
     getInlineSlice,
-    getIsGridGeometryShared,
     getIsSensitivityRun,
     getLogCurveData,
     getLoggedInUser,
@@ -41,7 +40,6 @@ import {
     getRealizationFlowNetwork,
     getRealizationSurfacesMetadata,
     getRealizationVectorAtTimestamp,
-    getRealizationsTablesAreEqual,
     getRealizationsVectorData,
     getSeismicCubeMetaList,
     getSensitivities,
@@ -97,7 +95,6 @@ import type {
     GetGridSurfaceData_api,
     GetHistoricalVectorDataData_api,
     GetInlineSliceData_api,
-    GetIsGridGeometrySharedData_api,
     GetIsSensitivityRunData_api,
     GetLogCurveDataData_api,
     GetLoggedInUserData_api,
@@ -113,7 +110,6 @@ import type {
     GetRealizationFlowNetworkData_api,
     GetRealizationSurfacesMetadataData_api,
     GetRealizationVectorAtTimestampData_api,
-    GetRealizationsTablesAreEqualData_api,
     GetRealizationsVectorDataData_api,
     GetSeismicCubeMetaListData_api,
     GetSensitivitiesData_api,
@@ -166,13 +162,13 @@ type QueryKey<TOptions extends Options> = [
     Pick<TOptions, "baseURL" | "body" | "headers" | "path" | "query"> & {
         _id: string;
         _infinite?: boolean;
-    }
+    },
 ];
 
 const createQueryKey = <TOptions extends Options>(
     id: string,
     options?: TOptions,
-    infinite?: boolean
+    infinite?: boolean,
 ): QueryKey<TOptions>[0] => {
     const params: QueryKey<TOptions>[0] = {
         _id: id,
@@ -324,11 +320,11 @@ export const getRealizationsVectorDataOptions = (options: Options<GetRealization
 };
 
 export const getDeltaEnsembleRealizationsVectorDataQueryKey = (
-    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>
+    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>,
 ) => [createQueryKey("getDeltaEnsembleRealizationsVectorData", options)];
 
 export const getDeltaEnsembleRealizationsVectorDataOptions = (
-    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>
+    options: Options<GetDeltaEnsembleRealizationsVectorDataData_api>,
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -402,11 +398,11 @@ export const getStatisticalVectorDataOptions = (options: Options<GetStatisticalV
 };
 
 export const getDeltaEnsembleStatisticalVectorDataQueryKey = (
-    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>
+    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>,
 ) => [createQueryKey("getDeltaEnsembleStatisticalVectorData", options)];
 
 export const getDeltaEnsembleStatisticalVectorDataOptions = (
-    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>
+    options: Options<GetDeltaEnsembleStatisticalVectorDataData_api>,
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -423,11 +419,11 @@ export const getDeltaEnsembleStatisticalVectorDataOptions = (
 };
 
 export const getStatisticalVectorDataPerSensitivityQueryKey = (
-    options: Options<GetStatisticalVectorDataPerSensitivityData_api>
+    options: Options<GetStatisticalVectorDataPerSensitivityData_api>,
 ) => [createQueryKey("getStatisticalVectorDataPerSensitivity", options)];
 
 export const getStatisticalVectorDataPerSensitivityOptions = (
-    options: Options<GetStatisticalVectorDataPerSensitivityData_api>
+    options: Options<GetStatisticalVectorDataPerSensitivityData_api>,
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -482,11 +478,11 @@ export const getTableDefinitionsOptions = (options: Options<GetTableDefinitionsD
 };
 
 export const postGetAggregatedPerRealizationTableDataQueryKey = (
-    options: Options<PostGetAggregatedPerRealizationTableDataData_api>
+    options: Options<PostGetAggregatedPerRealizationTableDataData_api>,
 ) => [createQueryKey("postGetAggregatedPerRealizationTableData", options)];
 
 export const postGetAggregatedPerRealizationTableDataOptions = (
-    options: Options<PostGetAggregatedPerRealizationTableDataData_api>
+    options: Options<PostGetAggregatedPerRealizationTableDataData_api>,
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -503,7 +499,7 @@ export const postGetAggregatedPerRealizationTableDataOptions = (
 };
 
 export const postGetAggregatedPerRealizationTableDataMutation = (
-    options?: Partial<Options<PostGetAggregatedPerRealizationTableDataData_api>>
+    options?: Partial<Options<PostGetAggregatedPerRealizationTableDataData_api>>,
 ) => {
     const mutationOptions: UseMutationOptions<
         PostGetAggregatedPerRealizationTableDataResponse_api,
@@ -523,11 +519,11 @@ export const postGetAggregatedPerRealizationTableDataMutation = (
 };
 
 export const postGetAggregatedStatisticalTableDataQueryKey = (
-    options: Options<PostGetAggregatedStatisticalTableDataData_api>
+    options: Options<PostGetAggregatedStatisticalTableDataData_api>,
 ) => [createQueryKey("postGetAggregatedStatisticalTableData", options)];
 
 export const postGetAggregatedStatisticalTableDataOptions = (
-    options: Options<PostGetAggregatedStatisticalTableDataData_api>
+    options: Options<PostGetAggregatedStatisticalTableDataData_api>,
 ) => {
     return queryOptions({
         queryFn: async ({ queryKey, signal }) => {
@@ -544,7 +540,7 @@ export const postGetAggregatedStatisticalTableDataOptions = (
 };
 
 export const postGetAggregatedStatisticalTableDataMutation = (
-    options?: Partial<Options<PostGetAggregatedStatisticalTableDataData_api>>
+    options?: Partial<Options<PostGetAggregatedStatisticalTableDataData_api>>,
 ) => {
     const mutationOptions: UseMutationOptions<
         PostGetAggregatedStatisticalTableDataResponse_api,
@@ -882,25 +878,6 @@ export const getGridModelsInfoOptions = (options: Options<GetGridModelsInfoData_
     });
 };
 
-export const getIsGridGeometrySharedQueryKey = (options: Options<GetIsGridGeometrySharedData_api>) => [
-    createQueryKey("getIsGridGeometryShared", options),
-];
-
-export const getIsGridGeometrySharedOptions = (options: Options<GetIsGridGeometrySharedData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getIsGridGeometryShared({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getIsGridGeometrySharedQueryKey(options),
-    });
-};
-
 export const getGridSurfaceQueryKey = (options: Options<GetGridSurfaceData_api>) => [
     createQueryKey("getGridSurface", options),
 ];
@@ -1009,25 +986,6 @@ export const getTableDataOptions = (options: Options<GetTableDataData_api>) => {
             return data;
         },
         queryKey: getTableDataQueryKey(options),
-    });
-};
-
-export const getRealizationsTablesAreEqualQueryKey = (options: Options<GetRealizationsTablesAreEqualData_api>) => [
-    createQueryKey("getRealizationsTablesAreEqual", options),
-];
-
-export const getRealizationsTablesAreEqualOptions = (options: Options<GetRealizationsTablesAreEqualData_api>) => {
-    return queryOptions({
-        queryFn: async ({ queryKey, signal }) => {
-            const { data } = await getRealizationsTablesAreEqual({
-                ...options,
-                ...queryKey[0],
-                signal,
-                throwOnError: true,
-            });
-            return data;
-        },
-        queryKey: getRealizationsTablesAreEqualQueryKey(options),
     });
 };
 

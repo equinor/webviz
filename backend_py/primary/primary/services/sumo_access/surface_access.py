@@ -6,8 +6,8 @@ from typing import Sequence
 import xtgeo
 
 from fmu.sumo.explorer import TimeFilter, TimeType
-from fmu.sumo.explorer.explorer import SumoClient
-from fmu.sumo.explorer.objects import SurfaceCollection, Surface
+from fmu.sumo.explorer.explorer import SumoClient, SearchContext
+from fmu.sumo.explorer.objects import Surface
 
 from webviz_pkg.core_utils.perf_metrics import PerfMetrics
 from primary.services.utils.statistic_function import StatisticFunction
@@ -24,12 +24,12 @@ LOGGER = logging.getLogger(__name__)
 
 class SurfaceAccess:
     def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str | None):
-        self._sumo_client: SumoClient = sumo_client
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
         self._iteration_name: str | None = iteration_name
 
     @classmethod
-    def from_case_uuid(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SurfaceAccess":
+    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "SurfaceAccess":
         sumo_client = create_sumo_client(access_token)
         return SurfaceAccess(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
@@ -48,11 +48,11 @@ class SurfaceAccess:
 
         async with asyncio.TaskGroup() as tg:
             queries = RealizationSurfQueries(self._sumo_client, self._case_uuid, self._iteration_name)
-            static_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.NO_TIME))
-            time_point_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.TIME_POINT))
-            interval_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.INTERVAL))
-            time_points_task = tg.create_task(queries.find_surf_time_points())
-            intervals_task = tg.create_task(queries.find_surf_time_intervals())
+            static_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.NO_TIME))
+            time_point_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.TIME_POINT))
+            interval_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.INTERVAL))
+            time_points_task = tg.create_task(queries.find_surf_time_points_async())
+            intervals_task = tg.create_task(queries.find_surf_time_intervals_async())
 
         perf_metrics.record_lap("queries")
 
@@ -78,7 +78,6 @@ class SurfaceAccess:
         LOGGER.debug(
             f"Got metadata for realization surfaces in: {perf_metrics.to_string()} [{len(surf_meta_arr)} entries]"
         )
-
         return surf_meta_set
 
     async def get_observed_surfaces_metadata_async(self) -> SurfaceMetaSet:
@@ -86,10 +85,10 @@ class SurfaceAccess:
 
         async with asyncio.TaskGroup() as tg:
             queries = ObservedSurfQueries(self._sumo_client, self._case_uuid)
-            time_point_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.TIME_POINT))
-            interval_surfs_task = tg.create_task(queries.find_surf_info(SurfTimeType.INTERVAL))
-            time_points_task = tg.create_task(queries.find_surf_time_points())
-            intervals_task = tg.create_task(queries.find_surf_time_intervals())
+            time_point_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.TIME_POINT))
+            interval_surfs_task = tg.create_task(queries.find_surf_info_async(SurfTimeType.INTERVAL))
+            time_points_task = tg.create_task(queries.find_surf_time_points_async())
+            intervals_task = tg.create_task(queries.find_surf_time_intervals_async())
 
         perf_metrics.record_lap("queries")
 
@@ -132,8 +131,8 @@ class SurfaceAccess:
         surf_str = self._make_real_surf_log_str(real_num, name, attribute, time_or_interval_str)
 
         time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
-
-        surface_collection = SurfaceCollection(self._sumo_client, self._case_uuid).filter(
+        search_context = SearchContext(self._sumo_client).surfaces.filter(
+            uuid=self._case_uuid,
             is_observation=False,
             aggregation=False,
             iteration=self._iteration_name,
@@ -143,7 +142,7 @@ class SurfaceAccess:
             time=time_filter,
         )
 
-        surf_count = await surface_collection.length_async()
+        surf_count = await search_context.length_async()
         if surf_count > 1:
             raise MultipleDataMatchesError(
                 f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
@@ -152,7 +151,7 @@ class SurfaceAccess:
             LOGGER.warning(f"No realization surface found in Sumo for: {surf_str}")
             return None
 
-        sumo_surf: Surface = await surface_collection.getitem_async(0)
+        sumo_surf: Surface = await search_context.getitem_async(0)
         perf_metrics.record_lap("locate")
 
         byte_stream: BytesIO = await sumo_surf.blob_async
@@ -180,7 +179,8 @@ class SurfaceAccess:
         surf_str = self._make_obs_surf_log_str(name, attribute, time_or_interval_str)
 
         time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
-        surface_collection = SurfaceCollection(self._sumo_client, self._case_uuid).filter(
+        search_context = SearchContext(self._sumo_client).surfaces.filter(
+            uuid=self._case_uuid,
             stage="case",
             is_observation=True,
             name=name,
@@ -188,7 +188,7 @@ class SurfaceAccess:
             time=time_filter,
         )
 
-        surf_count = await surface_collection.length_async()
+        surf_count = await search_context.length_async()
         if surf_count > 1:
             raise MultipleDataMatchesError(
                 f"Multiple ({surf_count}) surfaces found in Sumo for: {surf_str}", Service.SUMO
@@ -197,7 +197,7 @@ class SurfaceAccess:
             LOGGER.warning(f"No observed surface found in Sumo for: {surf_str}")
             return None
 
-        sumo_surf: Surface = await surface_collection.getitem_async(0)
+        sumo_surf: Surface = await search_context.getitem_async(0)
         perf_metrics.record_lap("locate")
 
         byte_stream: BytesIO = await sumo_surf.blob_async
@@ -241,26 +241,32 @@ class SurfaceAccess:
 
         time_filter = _time_or_interval_str_to_time_filter(time_or_interval_str)
 
-        surface_collection = SurfaceCollection(self._sumo_client, self._case_uuid).filter(
+        search_context = SearchContext(self._sumo_client).surfaces.filter(
+            uuid=self._case_uuid,
             is_observation=False,
             aggregation=False,
             iteration=self._iteration_name,
             name=name,
             tagname=attribute,
-            realization=realizations,
+            realization=realizations if realizations is not None else True,
             time=time_filter,
         )
 
-        surf_count = await surface_collection.length_async()
+        surf_count = await search_context.length_async()
+        perf_metrics.record_lap("locate")
+
         if surf_count == 0:
             LOGGER.warning(f"No statistical source surfaces found in Sumo for: {surf_str}")
             return None
-        perf_metrics.record_lap("locate")
-
-        realizations_found = await surface_collection.realizations_async
-        perf_metrics.record_lap("collect-reals")
+        if surf_count == 1:
+            # As of now, the Sumo aggregation service does not support single realization aggregation.
+            # For now return None. Alternatively we could fetch the single realization surface
+            LOGGER.warning(f"Could not calculate statistical surface, only one source surface found for: {surf_str}")
+            return None
 
         # Ensure that we got data for all the requested realizations
+        realizations_found = await search_context.get_field_values_async("fmu.realization.id")
+        perf_metrics.record_lap("collect-reals")
         if realizations is not None:
             missing_reals = list(set(realizations) - set(realizations_found))
             if len(missing_reals) > 0:
@@ -269,7 +275,7 @@ class SurfaceAccess:
                     Service.SUMO,
                 )
 
-        xtgeo_surf = await _compute_statistical_surface_async(statistic_function, surface_collection)
+        xtgeo_surf = await _compute_statistical_surface_async(statistic_function, search_context)
         perf_metrics.record_lap("calc-stat")
 
         if not xtgeo_surf:
@@ -364,24 +370,24 @@ def _time_or_interval_str_to_time_filter(time_or_interval_str: str | None) -> Ti
 
 
 async def _compute_statistical_surface_async(
-    statistic: StatisticFunction, surface_coll: SurfaceCollection
+    statistic: StatisticFunction, surface_context: SearchContext
 ) -> xtgeo.RegularSurface:
     xtgeo_surf: xtgeo.RegularSurface = None
     if statistic == StatisticFunction.MIN:
-        xtgeo_surf = await surface_coll.min_async()
+        xtgeo_surf = await surface_context.aggregate_async(operation="min")
     elif statistic == StatisticFunction.MAX:
-        xtgeo_surf = await surface_coll.max_async()
+        xtgeo_surf = await surface_context.aggregate_async(operation="max")
     elif statistic == StatisticFunction.MEAN:
-        xtgeo_surf = await surface_coll.mean_async()
+        xtgeo_surf = await surface_context.aggregate_async(operation="mean")
     elif statistic == StatisticFunction.P10:
-        xtgeo_surf = await surface_coll.p10_async()
+        xtgeo_surf = await surface_context.aggregate_async(operation="p10")
     elif statistic == StatisticFunction.P90:
-        xtgeo_surf = await surface_coll.p90_async()
+        xtgeo_surf = await surface_context.aggregate_async(operation="p90")
     elif statistic == StatisticFunction.P50:
-        xtgeo_surf = await surface_coll.p50_async()
+        xtgeo_surf = await surface_context.aggregate_async(operation="p50")
     elif statistic == StatisticFunction.STD:
-        xtgeo_surf = await surface_coll.std_async()
+        xtgeo_surf = await surface_context.aggregate_async(operation="std")
     else:
         raise ValueError("Unhandled statistic function")
 
-    return xtgeo_surf
+    return await xtgeo_surf.to_regular_surface_async()

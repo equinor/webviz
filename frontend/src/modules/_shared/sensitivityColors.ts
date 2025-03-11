@@ -1,4 +1,4 @@
-import { ColorSet } from "@lib/utils/ColorSet";
+import type { ColorSet } from "@lib/utils/ColorSet";
 
 export type SensitivityColorMap = { [name: string]: string };
 

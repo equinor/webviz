@@ -2,8 +2,9 @@ import React from "react";
 
 import { GuiState, LeftDrawerContent, useGuiState } from "@framework/GuiMessageBroker";
 import { ModuleRegistry } from "@framework/ModuleRegistry";
-import { Template, TemplateRegistry } from "@framework/TemplateRegistry";
-import { Workbench } from "@framework/Workbench";
+import type { Template } from "@framework/TemplateRegistry";
+import { TemplateRegistry } from "@framework/TemplateRegistry";
+import type { Workbench } from "@framework/Workbench";
 import { Drawer } from "@framework/internal/components/Drawer";
 import { GridView } from "@mui/icons-material";
 
@@ -95,7 +96,7 @@ type TemplatesListProps = {
 export const TemplatesList: React.FC<TemplatesListProps> = (props) => {
     const [drawerContent, setDrawerContent] = useGuiState(
         props.workbench.getGuiMessageBroker(),
-        GuiState.LeftDrawerContent
+        GuiState.LeftDrawerContent,
     );
     const [searchQuery, setSearchQuery] = React.useState("");
 

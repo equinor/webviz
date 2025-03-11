@@ -1,19 +1,20 @@
 import React from "react";
 
-import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { HoverService, HoverTopic, useHoverValue } from "@framework/HoverService";
-import { ViewContext } from "@framework/ModuleContext";
-import { Viewport } from "@framework/types/viewport";
-import { Interfaces } from "@modules/Intersection/interfaces";
-import { EsvIntersection, EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
-import {
-    ReadoutItem as EsvReadoutItem,
-    HighlightItem,
-    HighlightItemShape,
-} from "@modules/_shared/components/EsvIntersection/types";
+import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
+import type { HoverService} from "@framework/HoverService";
+import { HoverTopic, useHoverValue } from "@framework/HoverService";
+import type { ViewContext } from "@framework/ModuleContext";
+import type { Viewport } from "@framework/types/viewport";
+
+import type { Interfaces } from "@modules/Intersection/interfaces";
+import type { EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
+import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
+import type { ReadoutItem as EsvReadoutItem, HighlightItem } from "@modules/_shared/components/EsvIntersection/types";
+import { HighlightItemShape } from "@modules/_shared/components/EsvIntersection/types";
 import { isWellborepathLayer } from "@modules/_shared/components/EsvIntersection/utils/layers";
 import { esvReadoutToGenericReadout } from "@modules/_shared/components/EsvIntersection/utils/readoutItemUtils";
-import { ReadoutBox, ReadoutItem } from "@modules/_shared/components/ReadoutBox";
+import type { ReadoutItem } from "@modules/_shared/components/ReadoutBox";
+import { ReadoutBox } from "@modules/_shared/components/ReadoutBox";
 
 // Needs extra distance for the left side; this avoids overlapping with legend elements
 const READOUT_EDGE_DISTANCE_REM = { left: 6 };
@@ -52,7 +53,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
             return esvReadoutToGenericReadout(item, index, props.layerIdToNameMap);
         },
-        [props.layerIdToNameMap]
+        [props.layerIdToNameMap],
     );
 
     const publishHoverEvent = React.useCallback(

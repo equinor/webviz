@@ -1,6 +1,6 @@
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { IntersectionSettingValue } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
-import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { IntersectionSettingValue } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
+import type { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
 export type IntersectionRealizationGridSettings = {
     [SettingType.INTERSECTION]: IntersectionSettingValue | null;

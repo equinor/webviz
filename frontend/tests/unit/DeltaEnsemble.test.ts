@@ -28,7 +28,7 @@ describe("DeltaEnsemble", () => {
         ],
         [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }],
         "blue",
-        "Custom Name First Ensemble"
+        "Custom Name First Ensemble",
     );
 
     const REFERENCE_ENSEMBLE = new RegularEnsemble(
@@ -52,14 +52,14 @@ describe("DeltaEnsemble", () => {
         ],
         [{ name: "sens1", type: SensitivityType.MONTECARLO, cases: [] }],
         "green",
-        "Custom Name Second Ensemble"
+        "Custom Name Second Ensemble",
     );
 
     const DELTA_ENSEMBLE = new DeltaEnsemble(
         COMPARISON_ENSEMBLE,
         REFERENCE_ENSEMBLE,
         "red",
-        "Custom Name Delta Ensemble"
+        "Custom Name Delta Ensemble",
     );
 
     test("should create a DeltaEnsemble instance", () => {
@@ -68,7 +68,7 @@ describe("DeltaEnsemble", () => {
 
     test("should return the correct ident", () => {
         expect(DELTA_ENSEMBLE.getIdent()).toEqual(
-            new DeltaEnsembleIdent(COMPARISON_ENSEMBLE.getIdent(), REFERENCE_ENSEMBLE.getIdent())
+            new DeltaEnsembleIdent(COMPARISON_ENSEMBLE.getIdent(), REFERENCE_ENSEMBLE.getIdent()),
         );
     });
 
@@ -78,7 +78,7 @@ describe("DeltaEnsemble", () => {
         // Use display name of comparison and reference ensemble if no custom name is provided
         const DeltaEnsembleWithoutCustomName = new DeltaEnsemble(COMPARISON_ENSEMBLE, REFERENCE_ENSEMBLE, "red");
         expect(DeltaEnsembleWithoutCustomName.getDisplayName()).toBe(
-            "(Custom Name First Ensemble) - (Custom Name Second Ensemble)"
+            "(Custom Name First Ensemble) - (Custom Name Second Ensemble)",
         );
     });
 

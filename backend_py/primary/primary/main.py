@@ -49,6 +49,7 @@ logging.getLogger("primary.services.sumo_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.smda_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.ssdl_access").setLevel(logging.DEBUG)
 logging.getLogger("primary.services.user_grid3d_service").setLevel(logging.DEBUG)
+logging.getLogger("primary.services.surface_query_service").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.grid3d").setLevel(logging.DEBUG)
 logging.getLogger("primary.routers.dev").setLevel(logging.DEBUG)
 # logging.getLogger("uvicorn.error").setLevel(logging.DEBUG)
@@ -76,12 +77,12 @@ else:
 
 # Start the httpx client on startup and stop it on shutdown of the app
 @app.on_event("startup")
-async def startup_event() -> None:
+async def startup_event_async() -> None:
     HTTPX_ASYNC_CLIENT_WRAPPER.start()
 
 
 @app.on_event("shutdown")
-async def shutdown_event() -> None:
+async def shutdown_event_async() -> None:
     await HTTPX_ASYNC_CLIENT_WRAPPER.stop_async()
 
 

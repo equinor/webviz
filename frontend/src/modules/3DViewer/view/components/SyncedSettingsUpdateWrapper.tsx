@@ -1,10 +1,11 @@
 import React from "react";
 
-import { ViewContext } from "@framework/ModuleContext";
+import type { ViewContext } from "@framework/ModuleContext";
 import { SyncSettingKey, SyncSettingsHelper } from "@framework/SyncSettings";
-import { WorkbenchServices } from "@framework/WorkbenchServices";
+import type { WorkbenchServices } from "@framework/WorkbenchServices";
 
-import { HoverUpdateWrapper, HoverUpdateWrapperProps } from "./HoverUpdateWrapper";
+import type { HoverUpdateWrapperProps } from "./HoverUpdateWrapper";
+import { HoverUpdateWrapper } from "./HoverUpdateWrapper";
 
 export type SyncedSettingsUpdateWrapperProps = {
     workbenchServices: WorkbenchServices;
@@ -24,7 +25,7 @@ export function SyncedSettingsUpdateWrapper(props: SyncedSettingsUpdateWrapperPr
         function handleVerticalScaleChange(verticalScale: number) {
             syncHelper.publishValue(SyncSettingKey.VERTICAL_SCALE, "global.syncValue.verticalScale", verticalScale);
         },
-        [syncHelper]
+        [syncHelper],
     );
 
     return (

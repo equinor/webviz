@@ -1,6 +1,7 @@
 import { ModuleRegistry } from "@framework/ModuleRegistry";
 
-import { Interfaces, settingsToViewInterfaceInitialization } from "./interfaces";
+import type { Interfaces } from "./interfaces";
+import { settingsToViewInterfaceInitialization } from "./interfaces";
 import { MapSettings } from "./settings/settings";
 import { MapView } from "./view";
 

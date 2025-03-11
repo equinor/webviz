@@ -1,4 +1,5 @@
-import { ChannelDefinition, KeyKind } from "@framework/DataChannelTypes";
+import type { ChannelDefinition } from "@framework/DataChannelTypes";
+import { KeyKind } from "@framework/DataChannelTypes";
 
 export enum ChannelIds {
     TIME_SERIES = "TimeSeries (with value per realization)",

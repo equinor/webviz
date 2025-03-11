@@ -1,4 +1,5 @@
-import { Table, TableHeading, TableRow } from "@lib/components/Table/table";
+import type { TableHeading, TableRow } from "@lib/components/Table/table";
+import { Table } from "@lib/components/Table/table";
 
 export const View = () => {
     const heading: TableHeading = {

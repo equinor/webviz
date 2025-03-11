@@ -1,6 +1,6 @@
-import React from "react";
+import type React from "react";
 
-import { ColorPalette } from "@lib/utils/ColorPalette";
+import type { ColorPalette } from "@lib/utils/ColorPalette";
 
 export type ColorGradientProps = {
     colorPalette: ColorPalette;
@@ -19,7 +19,7 @@ function makeColorSamples(steps: number, colorPalette: ColorPalette) {
                 style={{
                     backgroundColor: color,
                 }}
-            ></div>
+            ></div>,
         );
     }
     return samples;
@@ -36,7 +36,7 @@ export const ColorGradient: React.FC<ColorGradientProps> = (props) => {
 
     return (
         <div
-            className="rounded border border-slate-600 h-5 w-full"
+            className="rounded-sm border border-slate-600 h-5 w-full"
             style={{
                 backgroundImage: props.colorPalette.getGradient(),
             }}

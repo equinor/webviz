@@ -1,9 +1,9 @@
 import React from "react";
 
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { CircularProgress } from "@lib/components/CircularProgress";
 import { Menu } from "@lib/components/Menu";
 import { MenuItem } from "@lib/components/MenuItem";
@@ -11,9 +11,10 @@ import { useElementBoundingRect } from "@lib/hooks/useElementBoundingRect";
 import { createPortal } from "@lib/utils/createPortal";
 import { MANHATTAN_LENGTH, rectContainsPoint } from "@lib/utils/geometry";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Vec2, point2Distance } from "@lib/utils/vec2";
+import type { Vec2 } from "@lib/utils/vec2";
+import { point2Distance } from "@lib/utils/vec2";
+import type { BaseLayer } from "@modules/Intersection/utils/layers/BaseLayer";
 import {
-    BaseLayer,
     LayerStatus,
     useIsLayerVisible,
     useLayerName,
@@ -21,16 +22,14 @@ import {
 } from "@modules/Intersection/utils/layers/BaseLayer";
 import { isGridLayer } from "@modules/Intersection/utils/layers/GridLayer";
 import { LayerFactory } from "@modules/Intersection/utils/layers/LayerFactory";
-import {
-    LayerManager,
-    LayerManagerTopic,
-    useLayerManagerTopicValue,
-} from "@modules/Intersection/utils/layers/LayerManager";
+import type { LayerManager } from "@modules/Intersection/utils/layers/LayerManager";
+import { LayerManagerTopic, useLayerManagerTopicValue } from "@modules/Intersection/utils/layers/LayerManager";
 import { isSeismicLayer } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { isSurfaceLayer } from "@modules/Intersection/utils/layers/SurfaceLayer";
 import { isSurfacesUncertaintyLayer } from "@modules/Intersection/utils/layers/SurfacesUncertaintyLayer";
 import { isWellpicksLayer } from "@modules/Intersection/utils/layers/WellpicksLayer";
-import { LAYER_TYPE_TO_STRING_MAPPING, LayerType } from "@modules/Intersection/utils/layers/types";
+import type { LayerType } from "@modules/Intersection/utils/layers/types";
+import { LAYER_TYPE_TO_STRING_MAPPING } from "@modules/Intersection/utils/layers/types";
 import { Dropdown, MenuButton } from "@mui/base";
 import {
     Add,
@@ -233,7 +232,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 if (scrollDivRef.current) {
                     scrollDivRef.current.scrollTop = Math.min(
                         scrollDivRef.current.scrollHeight,
-                        scrollDivRef.current.scrollTop + 10
+                        scrollDivRef.current.scrollTop + 10,
                     );
                 }
                 if (doScroll) {
@@ -290,7 +289,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                 setDraggingLayerId(null);
             };
         },
-        [layers, props.layerManager]
+        [layers, props.layerManager],
     );
 
     function handleScroll(e: React.UIEvent<HTMLDivElement>) {
@@ -298,12 +297,12 @@ export function Layers(props: LayersProps): React.ReactNode {
     }
 
     return (
-        <div className="w-full flex-grow flex flex-col min-h-0">
+        <div className="w-full grow flex flex-col min-h-0">
             <div className="flex bg-slate-100 p-2 items-center border-b border-gray-300">
-                <div className="flex-grow font-bold text-sm">Layers</div>
+                <div className="grow font-bold text-sm">Layers</div>
                 <Dropdown>
                     <MenuButton>
-                        <div className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded text-sm flex items-center gap-2">
+                        <div className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded-sm text-sm flex items-center gap-2">
                             <Add fontSize="inherit" />
                             <span>Add layer</span>
                             <ArrowDropDown fontSize="inherit" />
@@ -326,9 +325,9 @@ export function Layers(props: LayersProps): React.ReactNode {
             </div>
             {isDragging &&
                 createPortal(
-                    <div className="absolute z-40 transparent w-screen h-screen inset-0 cursor-grabbing select-none"></div>
+                    <div className="absolute z-40 transparent w-screen h-screen inset-0 cursor-grabbing select-none"></div>,
                 )}
-            <div className="w-full flex-grow flex flex-col relative">
+            <div className="w-full grow flex flex-col relative">
                 <div
                     className="absolute top-0 left-0 w-full h-5 z-50 pointer-events-none"
                     ref={upperScrollDivRef}
@@ -338,7 +337,7 @@ export function Layers(props: LayersProps): React.ReactNode {
                     ref={lowerScrollDivRef}
                 ></div>
                 <div
-                    className="flex-grow overflow-auto min-h-0 bg-slate-200 relative"
+                    className="grow overflow-auto min-h-0 bg-slate-200 relative"
                     ref={scrollDivRef}
                     onScroll={handleScroll}
                 >
@@ -510,7 +509,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                     <DragIndicator fontSize="inherit" className="pointer-events-none" />
                 </div>
                 <div
-                    className={resolveClassNames("px-0.5 hover:cursor-pointer rounded", {
+                    className={resolveClassNames("px-0.5 hover:cursor-pointer rounded-sm", {
                         "hover:text-blue-800": !props.isDragging,
                     })}
                     onClick={handleToggleLayerVisibility}
@@ -521,7 +520,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                 <LayerName layer={props.layer} />
                 {makeStatus()}
                 <div
-                    className="hover:cursor-pointer hover:text-blue-800 p-0.5 rounded"
+                    className="hover:cursor-pointer hover:text-blue-800 p-0.5 rounded-sm"
                     onClick={handleToggleSettingsVisibility}
                     title={showSettings ? "Hide settings" : "Show settings"}
                 >
@@ -529,7 +528,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                     {showSettings ? <ExpandLess fontSize="inherit" /> : <ExpandMore fontSize="inherit" />}
                 </div>
                 <div
-                    className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded"
+                    className="hover:cursor-pointer hover:bg-blue-100 p-0.5 rounded-sm"
                     onClick={handleRemoveLayer}
                     title="Remove layer"
                 >
@@ -552,7 +551,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                     {
                         "bg-red-100": props.layer.getStatus() === LayerStatus.ERROR,
                         "bg-white": props.layer.getStatus() !== LayerStatus.ERROR,
-                    }
+                    },
                 )}
             >
                 {makeLayerElement(dragIndicatorRef)}
@@ -561,7 +560,7 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                 createPortal(
                     <div
                         className={resolveClassNames(
-                            "flex h-10 px-1 hover:bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50"
+                            "flex h-10 px-1 hover:bg-blue-50 text-sm items-center gap-1 border-b border-b-gray-300 absolute z-50",
                         )}
                         style={{
                             left: props.dragPosition.x,
@@ -570,11 +569,11 @@ function LayerItem(props: LayerItemProps): React.ReactNode {
                         }}
                     >
                         {makeLayerElement()}
-                    </div>
+                    </div>,
                 )}
             <div
                 className={resolveClassNames("border-b border-b-gray-300 bg-gray-50 shadow-inner", {
-                    "overflow-hidden h-[1px]": !showSettings,
+                    "overflow-hidden h-px": !showSettings,
                 })}
             >
                 {makeSettingsContainer(props.layer)}
@@ -611,7 +610,7 @@ function LayerName(props: LayerNameProps): React.ReactNode {
 
     return (
         <div
-            className="flex-grow font-bold flex items-center pt-1"
+            className="grow font-bold flex items-center pt-1"
             onDoubleClick={handleNameDoubleClick}
             title="Double-click to edit name"
         >

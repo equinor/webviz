@@ -1,7 +1,8 @@
 import React from "react";
 
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { Button as ButtonUnstyled, ButtonProps as ButtonUnstyledProps } from "@mui/base";
+import type { ButtonProps as ButtonUnstyledProps } from "@mui/base";
+import { Button as ButtonUnstyled } from "@mui/base";
 
 import { BaseComponent } from "../BaseComponent";
 
@@ -34,12 +35,12 @@ export const IconButton = React.forwardRef(
                                 "justify-center",
                                 "rounded-full",
                                 "p-1",
-                                "focus:outline-none",
+                                "focus:outline-hidden",
                                 {
                                     "w-4 h-4": size === "small",
                                     "w-6 h-6": size === "medium" || !size,
                                     "w-12 h-12": size === "large",
-                                }
+                                },
                             ),
                         },
                     }}
@@ -48,7 +49,7 @@ export const IconButton = React.forwardRef(
                 </ButtonUnstyled>
             </BaseComponent>
         );
-    }
+    },
 );
 
 IconButton.displayName = "IconButton";

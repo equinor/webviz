@@ -1,5 +1,5 @@
 import { IntersectionType } from "@framework/types/intersection";
-import { WellboreHeader } from "@modules/Intersection/typesAndEnums";
+import type { WellboreHeader } from "@modules/Intersection/typesAndEnums";
 
 import { atom } from "jotai";
 

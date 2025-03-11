@@ -1,7 +1,7 @@
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { atomWithCompare } from "@framework/utils/atomUtils";
 import { areEnsembleIdentsEqual } from "@framework/utils/ensembleIdentUtils";
-import { PressureOption, VfpParam } from "@modules/Vfp/types";
+import type { PressureOption, VfpParam } from "@modules/Vfp/types";
 
 import { atom } from "jotai";
 

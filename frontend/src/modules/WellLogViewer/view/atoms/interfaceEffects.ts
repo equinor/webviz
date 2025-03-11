@@ -1,5 +1,5 @@
-import { InterfaceEffects } from "@framework/Module";
-import { SettingsToViewInterface } from "@modules/WellLogViewer/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { SettingsToViewInterface } from "@modules/WellLogViewer/interfaces";
 
 import { lockQueriesAtom, requiredCurvesAtom, selectedFieldIdentAtom, wellboreHeaderAtom } from "./baseAtoms";
 
