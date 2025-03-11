@@ -35,7 +35,7 @@ class ObservationAccess:
     def case_context(self) -> SearchContext:
         return self._case_context
 
-    async def get_observations(self) -> Observations:
+    async def get_observations_async(self) -> Observations:
         """Retrieve all observations found in sumo case"""
         observation_context = self.case_context.dictionaries.filter(
             stage="case",
