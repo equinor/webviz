@@ -34,7 +34,7 @@
         "@webviz/well-completions-plot": "^1.5.11",
         "@webviz/well-log-viewer": "^2.1.0",
         "animate.css": "^4.1.1",
-        "axios": "^1.7.8",
+        "axios": "^1.8.2",
         "culori": "^3.2.0",
         "geojson": "^0.5.0",
         "jotai": "^2.6.2",
