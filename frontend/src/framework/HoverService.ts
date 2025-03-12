@@ -75,18 +75,23 @@ export class HoverService {
     }
 
     makeSnapshotGetter<T extends keyof HoverData>(topic: T, moduleInstanceId: string): () => HoverData[T] | null {
-        // ? Should  this be an  opt-in functionality?
-        // ! The module that is currently hovering will always see the data updated immedietally
-        if (this._lastHoveredModule && moduleInstanceId === this._lastHoveredModule) {
-            return () => this._hoverData[topic] ?? null;
-        } else {
-            return () => this._throttledHoverData[topic] ?? null;
-        }
+        return () => {
+            // ? Should  this be an  opt-in functionality?
+            // ! The module that is currently hovering will always see the data updated immedietally
+            if (this._lastHoveredModule && moduleInstanceId === this._lastHoveredModule) {
+                return this._hoverData[topic] ?? null;
+            } else {
+                return this._throttledHoverData[topic] ?? null;
+            }
+        };
     }
 
     updateHoverValue<T extends keyof HoverData>(topic: T, newValue: HoverData[T]): void {
         this._hoverData[topic] = newValue;
         this._getOrCreateTopicThrottleMethod(topic)(topic, newValue);
+
+        // Notify changes (do note that only the hovering module will see any changes at this point)
+        this.getPublishSubscribeDelegate().notifySubscribers(topic);
     }
 
     setLastHoveredModule(moduleInstanceId: string | null) {
