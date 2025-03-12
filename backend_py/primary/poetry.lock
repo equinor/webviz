@@ -793,13 +793,13 @@ files = [
 
 [[package]]
 name = "fmu-sumo"
-version = "2.3.5"
+version = "2.3.6"
 description = "Python package for interacting with Sumo in an FMU setting"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "fmu_sumo-2.3.5-py3-none-any.whl", hash = "sha256:1e9c6729d2a324bb156364cc669c81f5d12c9f8290cbadf4704541bfaf7ed6be"},
-    {file = "fmu_sumo-2.3.5.tar.gz", hash = "sha256:9bae7eb263c3e625898f849f5f7db48ae36cca206f6be7743bd22f986119b12c"},
+    {file = "fmu_sumo-2.3.6-py3-none-any.whl", hash = "sha256:3a260841187c2a96df6af7907873b9358eefa2c81cf55d41b0c72469f76579d6"},
+    {file = "fmu_sumo-2.3.6.tar.gz", hash = "sha256:8c5e96746a1b56e9ec2b44f4efea85532e04fb9533f83b2ad1156de844c7d4c0"},
 ]
 
 [package.dependencies]
@@ -3568,4 +3568,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "51a8a94661a0a7d2ef11e39a5945f10839f9db9b0627ed4df14f532f8316124d"
+content-hash = "5d05d8c8996443bb4d678a131b94f6bd31aede75b855e93d2ecf3fc2b7ac8163"
