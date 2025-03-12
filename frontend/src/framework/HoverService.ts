@@ -1,6 +1,6 @@
 import React from "react";
 
-import { PublishSubscribeDelegate } from "@modules/_shared/LayerFramework/delegates/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
 import _ from "lodash";
 
@@ -34,70 +34,65 @@ export type ThrottledPublishFunc = _.DebouncedFunc<
 export class HoverService {
     // Currently available hover-data. The two objects are updated at different rates, but will contain the same data
     // when the system is not actively hovering
-    #hoverData: Partial<HoverData> = {};
-    #throttledHoverData: Partial<HoverData> = {};
+    private _hoverData: Partial<HoverData> = {};
+    private _throttledHoverData: Partial<HoverData> = {};
 
-    #lastHoveredModule: string | null = null;
+    private _lastHoveredModule: string | null = null;
 
     // Throttling. Each topic is updated with its own throttle method.
-    #topicThrottleMap = new Map<keyof HoverData, ThrottledPublishFunc>();
-    #dataUpdateThrottleMs = 100;
+    private _topicThrottleMap = new Map<keyof HoverData, ThrottledPublishFunc>();
+    private _dataUpdateThrottleMs = 100;
 
     // Delegate to handle update notifications
-    #publishSubscribeDelegate = new PublishSubscribeDelegate<keyof HoverData>();
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<HoverData>();
 
-    #getOrCreateTopicThrottleMethod(topic: keyof HoverData): ThrottledPublishFunc {
-        if (!this.#topicThrottleMap.has(topic)) {
+    private _getOrCreateTopicThrottleMethod(topic: keyof HoverData): ThrottledPublishFunc {
+        if (!this._topicThrottleMap.has(topic)) {
             const throttledMethod = _.throttle(
-                this.#doThrottledHoverDataUpdate.bind(this),
-                this.#dataUpdateThrottleMs,
+                this._doThrottledHoverDataUpdate.bind(this),
+                this._dataUpdateThrottleMs,
                 {
                     // These settings make it so notifications are only pushed *after* the throttle timer elapses
                     leading: false,
                     trailing: true,
-                }
+                },
             );
 
-            this.#topicThrottleMap.set(topic, throttledMethod);
+            this._topicThrottleMap.set(topic, throttledMethod);
         }
 
         // If-block above gurantees this is non-null
-        return this.#topicThrottleMap.get(topic)!;
+        return this._topicThrottleMap.get(topic)!;
     }
 
-    #doThrottledHoverDataUpdate<T extends keyof HoverData>(topic: T, value: HoverData[T]): void {
-        this.#throttledHoverData[topic] = value;
+    private _doThrottledHoverDataUpdate<T extends keyof HoverData>(topic: T, value: HoverData[T]): void {
+        this._throttledHoverData[topic] = value;
         this.getPublishSubscribeDelegate().notifySubscribers(topic);
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<keyof HoverData> {
-        return this.#publishSubscribeDelegate;
+    getPublishSubscribeDelegate(): PublishSubscribeDelegate<HoverData> {
+        return this._publishSubscribeDelegate;
     }
 
     makeSnapshotGetter<T extends keyof HoverData>(topic: T, moduleInstanceId: string): () => HoverData[T] | null {
         // ? Should  this be an  opt-in functionality?
         // ! The module that is currently hovering will always see the data updated immedietally
-        if (this.#lastHoveredModule && moduleInstanceId === this.#lastHoveredModule) {
-            return () => this.#hoverData[topic] ?? null;
+        if (this._lastHoveredModule && moduleInstanceId === this._lastHoveredModule) {
+            return () => this._hoverData[topic] ?? null;
         } else {
-            return () => this.#throttledHoverData[topic] ?? null;
+            return () => this._throttledHoverData[topic] ?? null;
         }
     }
 
     updateHoverValue<T extends keyof HoverData>(topic: T, newValue: HoverData[T]): void {
-        this.#hoverData[topic] = newValue;
-        this.#getOrCreateTopicThrottleMethod(topic)(topic, newValue);
+        this._hoverData[topic] = newValue;
+        this._getOrCreateTopicThrottleMethod(topic)(topic, newValue);
     }
 
     setLastHoveredModule(moduleInstanceId: string | null) {
-        if (this.#lastHoveredModule === moduleInstanceId) return;
+        if (this._lastHoveredModule === moduleInstanceId) return;
 
-        this.#lastHoveredModule = moduleInstanceId;
-
-        // This might change what data-object a subscriber should get info from. Therefore, each subscriber needs to be
-        // notified that they should check their snapshots again.
-        // ? It seems to be fine without this? Is it because the modules are being re-rendered anyways?
-        // _.values(HoverTopic).forEach((topic) => this.getPublishSubscribeDelegate().notifySubscribers(topic));
+        this._lastHoveredModule = moduleInstanceId;
     }
 
     // ? Currently, the md and wellbore hovers are "cleared" when the module implementer sets them to null.
@@ -113,11 +108,11 @@ export class HoverService {
 export function useHoverValue<T extends keyof HoverData>(
     topic: T,
     hoverService: HoverService,
-    moduleInstanceId: string
+    moduleInstanceId: string,
 ): [HoverData[T], (v: HoverData[T]) => void] {
     const latestValue = React.useSyncExternalStore<HoverData[T]>(
         hoverService.getPublishSubscribeDelegate().makeSubscriberFunction(topic),
-        hoverService.makeSnapshotGetter(topic, moduleInstanceId)
+        hoverService.makeSnapshotGetter(topic, moduleInstanceId),
     );
 
     const updateValue = React.useCallback(
@@ -125,7 +120,7 @@ export function useHoverValue<T extends keyof HoverData>(
             hoverService.setLastHoveredModule(moduleInstanceId);
             hoverService.updateHoverValue(topic, newValue);
         },
-        [hoverService, moduleInstanceId, topic]
+        [hoverService, moduleInstanceId, topic],
     );
 
     return [latestValue, updateValue];
