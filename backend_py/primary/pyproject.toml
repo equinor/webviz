@@ -20,7 +20,7 @@ numpy = "^1.24.1"
 orjson = "^3.8.10"
 pandas = {version = "2.0.1", extras = ["performance"]}
 httpx = "^0.24.0"
-fmu-sumo = "^2.3.4"
+fmu-sumo = "2.3.6"
 sumo-wrapper-python = "1.0.24"
 azure-monitor-opentelemetry = "1.1.0"
 requests-toolbelt = "^1.0.0"
@@ -55,7 +55,7 @@ disable = ["missing-docstring", "line-too-long", "logging-fstring-interpolation"
 extension-pkg-whitelist = "pydantic"
 init-hook='import sys; sys.path.append("./pylint/plugins")'
 load-plugins="async_suffix_checker"
-ignored-modules = ["pyarrow.compute", "fmu.sumo.explorer"]
+ignored-modules = ["pyarrow.compute"]
 good-names = ["i", "x", "df", "xy", "tg"]
 min-public-methods = 0
 max-args = 9
