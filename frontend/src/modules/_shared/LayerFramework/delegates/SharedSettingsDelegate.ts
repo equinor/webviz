@@ -3,7 +3,7 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { DataLayer } from "../framework/DataLayer/DataLayer";
 import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import { Group } from "../framework/Group/Group";
-import { SettingTopic } from "../framework/Setting/Setting";
+import { SettingTopic } from "../framework/SettingManager/Setting";
 import { AvailableValuesType, Item } from "../interfaces";
 import { MakeSettingTuple, SettingTypes } from "../settings/settingsTypes";
 

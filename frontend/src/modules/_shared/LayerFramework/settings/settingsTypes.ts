@@ -6,8 +6,6 @@ import { ColorSet } from "@lib/utils/ColorSet";
 import { IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
 
-import { Setting } from "../framework/Setting/Setting";
-
 export enum SettingCategory {
     OPTION = "option",
     NUMBER = "number",
@@ -15,7 +13,7 @@ export enum SettingCategory {
     OTHER = "other",
 }
 
-export enum SettingType {
+export enum Setting {
     ATTRIBUTE = "attribute",
     ENSEMBLE = "ensemble",
     COLOR_SCALE = "colorScale",
@@ -41,55 +39,55 @@ export enum SettingType {
 }
 
 export const settingCategories = {
-    [SettingType.ATTRIBUTE]: SettingCategory.OPTION,
-    [SettingType.ENSEMBLE]: SettingCategory.OPTION,
-    [SettingType.COLOR_SCALE]: SettingCategory.OTHER,
-    [SettingType.COLOR_SET]: SettingCategory.OTHER,
-    [SettingType.GRID_LAYER_I_RANGE]: SettingCategory.RANGE,
-    [SettingType.GRID_LAYER_J_RANGE]: SettingCategory.RANGE,
-    [SettingType.GRID_LAYER_K]: SettingCategory.NUMBER,
-    [SettingType.GRID_LAYER_K_RANGE]: SettingCategory.RANGE,
-    [SettingType.GRID_NAME]: SettingCategory.OPTION,
-    [SettingType.INTERSECTION]: SettingCategory.OPTION,
-    [SettingType.POLYGONS_ATTRIBUTE]: SettingCategory.OPTION,
-    [SettingType.POLYGONS_NAME]: SettingCategory.OPTION,
-    [SettingType.REALIZATION]: SettingCategory.OPTION,
-    [SettingType.SEISMIC_CROSSLINE]: SettingCategory.OPTION,
-    [SettingType.SEISMIC_DEPTH_SLICE]: SettingCategory.OPTION,
-    [SettingType.SEISMIC_INLINE]: SettingCategory.OPTION,
-    [SettingType.SENSITIVITY]: SettingCategory.OPTION,
-    [SettingType.SHOW_GRID_LINES]: SettingCategory.OTHER,
-    [SettingType.SMDA_WELLBORE_HEADERS]: SettingCategory.OPTION,
-    [SettingType.STATISTIC_FUNCTION]: SettingCategory.OPTION,
-    [SettingType.SURFACE_NAME]: SettingCategory.OPTION,
-    [SettingType.TIME_OR_INTERVAL]: SettingCategory.OPTION,
+    [Setting.ATTRIBUTE]: SettingCategory.OPTION,
+    [Setting.ENSEMBLE]: SettingCategory.OPTION,
+    [Setting.COLOR_SCALE]: SettingCategory.OTHER,
+    [Setting.COLOR_SET]: SettingCategory.OTHER,
+    [Setting.GRID_LAYER_I_RANGE]: SettingCategory.RANGE,
+    [Setting.GRID_LAYER_J_RANGE]: SettingCategory.RANGE,
+    [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
+    [Setting.GRID_LAYER_K_RANGE]: SettingCategory.RANGE,
+    [Setting.GRID_NAME]: SettingCategory.OPTION,
+    [Setting.INTERSECTION]: SettingCategory.OPTION,
+    [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.OPTION,
+    [Setting.POLYGONS_NAME]: SettingCategory.OPTION,
+    [Setting.REALIZATION]: SettingCategory.OPTION,
+    [Setting.SEISMIC_CROSSLINE]: SettingCategory.OPTION,
+    [Setting.SEISMIC_DEPTH_SLICE]: SettingCategory.OPTION,
+    [Setting.SEISMIC_INLINE]: SettingCategory.OPTION,
+    [Setting.SENSITIVITY]: SettingCategory.OPTION,
+    [Setting.SHOW_GRID_LINES]: SettingCategory.OTHER,
+    [Setting.SMDA_WELLBORE_HEADERS]: SettingCategory.OPTION,
+    [Setting.STATISTIC_FUNCTION]: SettingCategory.OPTION,
+    [Setting.SURFACE_NAME]: SettingCategory.OPTION,
+    [Setting.TIME_OR_INTERVAL]: SettingCategory.OPTION,
 } as const;
 
 export type SettingCategories = typeof settingCategories;
 
 export type SettingTypes = {
-    [SettingType.ATTRIBUTE]: string | null;
-    [SettingType.ENSEMBLE]: RegularEnsembleIdent | null;
-    [SettingType.COLOR_SCALE]: ColorScaleConfig | null;
-    [SettingType.COLOR_SET]: ColorSet | null;
-    [SettingType.GRID_LAYER_I_RANGE]: [number, number] | null;
-    [SettingType.GRID_LAYER_J_RANGE]: [number, number] | null;
-    [SettingType.GRID_LAYER_K]: number | null;
-    [SettingType.GRID_LAYER_K_RANGE]: [number, number] | null;
-    [SettingType.GRID_NAME]: string | null;
-    [SettingType.INTERSECTION]: IntersectionSettingValue | null;
-    [SettingType.POLYGONS_ATTRIBUTE]: string | null;
-    [SettingType.POLYGONS_NAME]: string | null;
-    [SettingType.REALIZATION]: number | null;
-    [SettingType.SEISMIC_CROSSLINE]: number | null;
-    [SettingType.SEISMIC_DEPTH_SLICE]: number | null;
-    [SettingType.SEISMIC_INLINE]: number | null;
-    [SettingType.SENSITIVITY]: SensitivityNameCasePair | null;
-    [SettingType.SHOW_GRID_LINES]: boolean;
-    [SettingType.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
-    [SettingType.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
-    [SettingType.SURFACE_NAME]: string | null;
-    [SettingType.TIME_OR_INTERVAL]: string | null;
+    [Setting.ATTRIBUTE]: string | null;
+    [Setting.ENSEMBLE]: RegularEnsembleIdent | null;
+    [Setting.COLOR_SCALE]: ColorScaleConfig | null;
+    [Setting.COLOR_SET]: ColorSet | null;
+    [Setting.GRID_LAYER_I_RANGE]: [number, number] | null;
+    [Setting.GRID_LAYER_J_RANGE]: [number, number] | null;
+    [Setting.GRID_LAYER_K]: number | null;
+    [Setting.GRID_LAYER_K_RANGE]: [number, number] | null;
+    [Setting.GRID_NAME]: string | null;
+    [Setting.INTERSECTION]: IntersectionSettingValue | null;
+    [Setting.POLYGONS_ATTRIBUTE]: string | null;
+    [Setting.POLYGONS_NAME]: string | null;
+    [Setting.REALIZATION]: number | null;
+    [Setting.SEISMIC_CROSSLINE]: number | null;
+    [Setting.SEISMIC_DEPTH_SLICE]: number | null;
+    [Setting.SEISMIC_INLINE]: number | null;
+    [Setting.SENSITIVITY]: SensitivityNameCasePair | null;
+    [Setting.SHOW_GRID_LINES]: boolean;
+    [Setting.SMDA_WELLBORE_HEADERS]: WellboreHeader_api[] | null;
+    [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api;
+    [Setting.SURFACE_NAME]: string | null;
+    [Setting.TIME_OR_INTERVAL]: string | null;
 };
 
 // From: https://stackoverflow.com/a/50375286/62076
@@ -109,7 +107,3 @@ export type MakeSettingTypesMap<
     : {
           [K in T[number]]: AllowNull extends false ? SettingTypes[K] : SettingTypes[K] | null;
       };
-
-export type MakeSettingTuple<T extends readonly (keyof SettingTypes)[]> = {
-    [K in keyof T]: Setting<SettingTypes[T[K]], SettingCategories[T[K]]>;
-};

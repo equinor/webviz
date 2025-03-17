@@ -1,8 +1,8 @@
 import { CustomGroupImplementationWithSettings } from "../../interfaces";
-import { SettingType } from "../../settings/settingsTypes";
+import { Setting } from "../../settings/settingsTypes";
 
-export class RealizationView implements CustomGroupImplementationWithSettings<[SettingType.REALIZATION]> {
-    settings: [SettingType.REALIZATION] = [SettingType.REALIZATION];
+export class RealizationView implements CustomGroupImplementationWithSettings<[Setting.REALIZATION]> {
+    settings: [Setting.REALIZATION] = [Setting.REALIZATION];
 
     getDefaultName(): string {
         return "Intersection view";

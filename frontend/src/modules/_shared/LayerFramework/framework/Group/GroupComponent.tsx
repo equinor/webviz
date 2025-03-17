@@ -8,8 +8,8 @@ import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { Item, ItemGroup } from "../../interfaces";
-import { Setting } from "../Setting/Setting";
-import { SettingComponent } from "../Setting/SettingComponent";
+import { SettingManager } from "../SettingManager/Setting";
+import { SettingComponent } from "../SettingManager/SettingComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
@@ -34,7 +34,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
         }
     }
 
-    function makeSetting(setting: Setting<any>) {
+    function makeSetting(setting: SettingManager<any>) {
         const manager = props.group.getItemDelegate().getLayerManager();
         if (!manager) {
             return null;
@@ -42,7 +42,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
         return <SettingComponent key={setting.getId()} setting={setting} manager={manager} sharedSetting={false} />;
     }
 
-    function makeSettings(settings: Setting<any>[]): React.ReactNode[] {
+    function makeSettings(settings: SettingManager<any>[]): React.ReactNode[] {
         const settingNodes: React.ReactNode[] = [];
         for (const setting of settings) {
             settingNodes.push(makeSetting(setting));

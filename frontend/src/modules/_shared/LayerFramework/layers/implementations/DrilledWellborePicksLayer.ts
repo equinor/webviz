@@ -10,15 +10,11 @@ import {
     FetchDataParams,
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
 import { isEqual } from "lodash";
 
-const drilledWellborePicksSettings = [
-    SettingType.ENSEMBLE,
-    SettingType.SMDA_WELLBORE_HEADERS,
-    SettingType.SURFACE_NAME,
-] as const;
+const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
 type SettingsWithTypes = MakeSettingTypesMap<DrilledWellborePicksSettings>;
 
@@ -29,9 +25,9 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
 
     getDefaultSettingsValues() {
         return {
-            [SettingType.ENSEMBLE]: null,
-            [SettingType.SMDA_WELLBORE_HEADERS]: null,
-            [SettingType.SURFACE_NAME]: null,
+            [Setting.ENSEMBLE]: null,
+            [Setting.SMDA_WELLBORE_HEADERS]: null,
+            [Setting.SURFACE_NAME]: null,
         };
     }
 
@@ -53,12 +49,12 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
         registerQueryKey,
         queryClient,
     }: FetchDataParams<SettingsWithTypes, Data>): Promise<WellborePick_api[]> {
-        const selectedWellboreHeaders = getSetting(SettingType.SMDA_WELLBORE_HEADERS);
+        const selectedWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
         let selectedWellboreUuids: string[] = [];
         if (selectedWellboreHeaders) {
             selectedWellboreUuids = selectedWellboreHeaders.map((header) => header.wellboreUuid);
         }
-        const selectedPickIdentifier = getSetting(SettingType.SURFACE_NAME);
+        const selectedPickIdentifier = getSetting(Setting.SURFACE_NAME);
         const fieldIdentifier = getGlobalSetting("fieldId");
 
         const queryKey = ["getWellborePicksForPickIdentifier", fieldIdentifier, selectedPickIdentifier];
@@ -82,10 +78,10 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
 
     areCurrentSettingsValid(settings: SettingsWithTypes): boolean {
         return (
-            settings[SettingType.ENSEMBLE] !== null &&
-            settings[SettingType.SMDA_WELLBORE_HEADERS] !== null &&
-            settings[SettingType.SMDA_WELLBORE_HEADERS].length > 0 &&
-            settings[SettingType.SURFACE_NAME] !== null
+            settings[Setting.ENSEMBLE] !== null &&
+            settings[Setting.SMDA_WELLBORE_HEADERS] !== null &&
+            settings[Setting.SMDA_WELLBORE_HEADERS].length > 0 &&
+            settings[Setting.SURFACE_NAME] !== null
         );
     }
 
@@ -95,7 +91,7 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<DrilledWellborePicksSettings, SettingsWithTypes>) {
-        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -107,7 +103,7 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
         });
 
         const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
             if (!ensembleIdent) {
                 return null;
@@ -131,7 +127,7 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
         });
 
         const pickIdentifiersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
             if (!ensembleIdent) {
                 return null;
@@ -154,7 +150,7 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
             });
         });
 
-        availableSettingsUpdater(SettingType.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
+        availableSettingsUpdater(Setting.SMDA_WELLBORE_HEADERS, ({ getHelperDependency }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
 
             if (!wellboreHeaders) {
@@ -164,7 +160,7 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
             return wellboreHeaders;
         });
 
-        availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency }) => {
+        availableSettingsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency }) => {
             const pickIdentifiers = getHelperDependency(pickIdentifiersDep);
 
             if (!pickIdentifiers) {

@@ -1,11 +1,11 @@
-import { SettingCategories, SettingType, SettingTypes } from "./settingsTypes";
+import { Setting, SettingCategories, SettingTypes } from "./settingsTypes";
 
-import { Setting } from "../framework/Setting/Setting";
+import { SettingManager } from "../framework/SettingManager/Setting";
 import { CustomSettingImplementation } from "../interfaces";
 
 export class SettingRegistry {
     private static _registeredSettings: Map<
-        SettingType,
+        Setting,
         {
             label: string;
             customSettingImplementation: { new (customParams?: any): CustomSettingImplementation<any, any> };
@@ -14,7 +14,7 @@ export class SettingRegistry {
     > = new Map();
 
     static registerSetting<
-        TSetting extends SettingType,
+        TSetting extends Setting,
         TSettingType extends SettingTypes[TSetting] = SettingTypes[TSetting],
         TSettingCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
         TSettingImpl extends new (...args: any) => CustomSettingImplementation<TSettingType, TSettingCategory> = {
@@ -36,17 +36,17 @@ export class SettingRegistry {
         });
     }
 
-    static makeSetting<T extends SettingType>(
+    static makeSetting<T extends Setting>(
         type: T,
         defaultValue: SettingTypes[T]
-    ): Setting<SettingTypes[T], SettingCategories[T]> {
+    ): SettingManager<SettingTypes[T], SettingCategories[T]> {
         const stored = this._registeredSettings.get(type);
         if (!stored) {
             throw new Error(`Setting ${type} not found`);
         }
         const customSettingImpl = new stored.customSettingImplementation(...(stored.customParams ?? []));
 
-        return new Setting({
+        return new SettingManager({
             type,
             label: stored.label,
             defaultValue,

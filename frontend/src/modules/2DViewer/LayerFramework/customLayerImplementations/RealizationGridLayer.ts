@@ -12,18 +12,18 @@ import {
     FetchDataParams,
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
 import { isEqual } from "lodash";
 
 const realizationGridSettings = [
-    SettingType.ENSEMBLE,
-    SettingType.REALIZATION,
-    SettingType.ATTRIBUTE,
-    SettingType.GRID_NAME,
-    SettingType.GRID_LAYER_K,
-    SettingType.TIME_OR_INTERVAL,
-    SettingType.SHOW_GRID_LINES,
+    Setting.ENSEMBLE,
+    Setting.REALIZATION,
+    Setting.ATTRIBUTE,
+    Setting.GRID_NAME,
+    Setting.GRID_LAYER_K,
+    Setting.TIME_OR_INTERVAL,
+    Setting.SHOW_GRID_LINES,
 ] as const;
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
@@ -38,13 +38,13 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
 
     getDefaultSettingsValues() {
         return {
-            [SettingType.ENSEMBLE]: null,
-            [SettingType.REALIZATION]: null,
-            [SettingType.ATTRIBUTE]: null,
-            [SettingType.GRID_NAME]: null,
-            [SettingType.GRID_LAYER_K]: null,
-            [SettingType.TIME_OR_INTERVAL]: null,
-            [SettingType.SHOW_GRID_LINES]: true,
+            [Setting.ENSEMBLE]: null,
+            [Setting.REALIZATION]: null,
+            [Setting.ATTRIBUTE]: null,
+            [Setting.GRID_NAME]: null,
+            [Setting.GRID_LAYER_K]: null,
+            [Setting.TIME_OR_INTERVAL]: null,
+            [Setting.SHOW_GRID_LINES]: true,
         };
     }
 
@@ -78,19 +78,19 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
     }> {
-        const ensembleIdent = getSetting(SettingType.ENSEMBLE);
-        const realizationNum = getSetting(SettingType.REALIZATION);
-        const gridName = getSetting(SettingType.GRID_NAME);
-        const attribute = getSetting(SettingType.ATTRIBUTE);
-        let timeOrInterval = getSetting(SettingType.TIME_OR_INTERVAL);
+        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const realizationNum = getSetting(Setting.REALIZATION);
+        const gridName = getSetting(Setting.GRID_NAME);
+        const attribute = getSetting(Setting.ATTRIBUTE);
+        let timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;
         }
-        let availableDimensions = getAvailableSettingValues(SettingType.GRID_LAYER_K);
+        let availableDimensions = getAvailableSettingValues(Setting.GRID_LAYER_K);
         if (!availableDimensions.length || availableDimensions[0] === null) {
             availableDimensions = [0, 0, 0];
         }
-        const layerIndex = getSetting(SettingType.GRID_LAYER_K);
+        const layerIndex = getSetting(Setting.GRID_LAYER_K);
         const iMin = 0;
         const iMax = availableDimensions[0] || 0;
         const jMin = 0;
@@ -161,12 +161,12 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
 
     areCurrentSettingsValid(settings: SettingsWithTypes): boolean {
         return (
-            settings[SettingType.ENSEMBLE] !== null &&
-            settings[SettingType.REALIZATION] !== null &&
-            settings[SettingType.GRID_NAME] !== null &&
-            settings[SettingType.ATTRIBUTE] !== null &&
-            settings[SettingType.GRID_LAYER_K] !== null &&
-            settings[SettingType.TIME_OR_INTERVAL] !== null
+            settings[Setting.ENSEMBLE] !== null &&
+            settings[Setting.REALIZATION] !== null &&
+            settings[Setting.GRID_NAME] !== null &&
+            settings[Setting.ATTRIBUTE] !== null &&
+            settings[Setting.GRID_LAYER_K] !== null &&
+            settings[Setting.TIME_OR_INTERVAL] !== null
         );
     }
 
@@ -175,7 +175,7 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         availableSettingsUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationGridSettings, SettingsWithTypes>) {
-        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -186,8 +186,8 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
             return ensembleIdents;
         });
 
-        availableSettingsUpdater(SettingType.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
             if (!ensembleIdent) {
@@ -199,8 +199,8 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
             return [...realizations];
         });
         const realizationGridDataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
-            const realization = getLocalSetting(SettingType.REALIZATION);
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+            const realization = getLocalSetting(Setting.REALIZATION);
 
             if (!ensembleIdent || realization === null) {
                 return null;
@@ -218,7 +218,7 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
             });
         });
 
-        availableSettingsUpdater(SettingType.GRID_NAME, ({ getHelperDependency }) => {
+        availableSettingsUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!data) {
@@ -230,8 +230,8 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
             return availableGridNames;
         });
 
-        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(SettingType.GRID_NAME);
+        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
+            const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
@@ -248,8 +248,8 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
             return availableGridAttributes;
         });
 
-        availableSettingsUpdater(SettingType.GRID_LAYER_K, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(SettingType.GRID_NAME);
+        availableSettingsUpdater(Setting.GRID_LAYER_K, ({ getLocalSetting, getHelperDependency }) => {
+            const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
@@ -267,9 +267,9 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
             return availableGridLayers;
         });
 
-        availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(SettingType.GRID_NAME);
-            const gridAttribute = getLocalSetting(SettingType.ATTRIBUTE);
+        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+            const gridName = getLocalSetting(Setting.GRID_NAME);
+            const gridAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !gridAttribute || !data) {

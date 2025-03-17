@@ -2,11 +2,11 @@ import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
 import { Item, SerializedSharedSetting, SerializedType } from "../../interfaces";
 import { SettingRegistry } from "../../settings/SettingRegistry";
-import { SettingType, SettingTypes } from "../../settings/settingsTypes";
+import { Setting, SettingTypes } from "../../settings/settingsTypes";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
-import { Setting } from "../Setting/Setting";
+import { SettingManager } from "../SettingManager/Setting";
 
-export class SharedSetting<TSettingType extends SettingType> implements Item {
+export class SharedSetting<TSettingType extends Setting> implements Item {
     private _sharedSettingsDelegate: SharedSettingsDelegate<[TSettingType]>;
     private _itemDelegate: ItemDelegate;
 
@@ -31,7 +31,7 @@ export class SharedSetting<TSettingType extends SettingType> implements Item {
         }
     }
 
-    getWrappedSetting(): Setting<any> {
+    getWrappedSetting(): SettingManager<any> {
         return this._sharedSettingsDelegate.getWrappedSettings()[0];
     }
 

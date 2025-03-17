@@ -9,10 +9,9 @@ import { QueryClient, isCancelledError } from "@tanstack/react-query";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegate, SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { CustomDataLayerImplementation, DataLayerInformationAccessors, Item, LayerColoringType, SerializedLayer, SerializedType, Settings, StoredData } from "../../interfaces";
+import { CustomDataLayerImplementation, DataLayerInformationAccessors, Item, LayerColoringType, SerializedLayer, SerializedType, Settings, StoredData, TupleIndices } from "../../interfaces";
 import { MakeSettingTypesMap } from "../../settings/settingsTypes";
 import { DataLayerManager, LayerManagerTopic, log } from "../DataLayerManager/DataLayerManager";
-import { Setting } from "../Setting/Setting";
 import { makeSettings } from "../utils/makeSettings";
 import { isEqual } from "lodash";
 
@@ -37,15 +36,16 @@ export type LayerDelegatePayloads<TData> = {
 };
 
 export type DataLayerParams<
-    TSettingTypes extends Settings,
+    TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    TSettingKey extends TupleIndices<TSettings> = TupleIndices<TSettings>
 > = {
     type: string;
     layerManager: DataLayerManager;
     instanceName?: string;
-    customDataLayerImplementation: CustomDataLayerImplementation<TSettingTypes, TData, TStoredData, TSettings>;
+    customDataLayerImplementation: CustomDataLayerImplementation<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>;
 };
 
 /*
@@ -54,15 +54,16 @@ export type DataLayerParams<
  * It also manages the status of the layer (loading, success, error).
  */
 export class DataLayer<
-    const TSettingTypes extends Settings,
+    const TSettings extends Settings,
     const TData,
     const TStoredData extends StoredData = Record<string, never>,
-    const TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+    const TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    const TSettingKey extends TupleIndices<TSettings> = TupleIndices<TSettings>
 > implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
 {
     private _type: string;
-    private _customDataLayerImpl: CustomDataLayerImplementation<TSettingTypes, TData, TStoredData, TSettings>;
-    private _settingsContextDelegate: SettingsContextDelegate<TSettingTypes, TSettings, TStoredData>;
+    private _customDataLayerImpl: CustomDataLayerImplementation<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>;
+    private _settingsContextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>;
     private _itemDelegate: ItemDelegate;
     private _layerManager: DataLayerManager;
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
@@ -74,22 +75,20 @@ export class DataLayer<
     private _error: StatusMessage | string | null = null;
     private _valueRange: [number, number] | null = null;
     private _isSubordinated: boolean = false;
-    private _prevSettings: TSettings | null = null;
+    private _prevSettings: TSettingTypes | null = null;
 
-    constructor(params: DataLayerParams<TSettingTypes, TData, TStoredData, TSettings>) {
+    constructor(params: DataLayerParams<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>) {
         const { layerManager, type, instanceName, customDataLayerImplementation } = params;
         this._type = type;
         this._layerManager = layerManager;
-        this._settingsContextDelegate = new SettingsContextDelegate<TSettingTypes, TSettings, TStoredData>(
+        this._settingsContextDelegate = new SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>(
             this,
             customDataLayerImplementation,
             layerManager,
-            makeSettings(
+            makeSettings<TSettings, TSettingTypes, TSettingKey>(
                 customDataLayerImplementation.settings,
-                customDataLayerImplementation.getDefaultSettingsValues() as TSettings
-            ) as {
-                [key in keyof TSettings]: Setting<any, any>;
-            }
+                customDataLayerImplementation.getDefaultSettingsValues()
+            )
         );
         this._customDataLayerImpl = customDataLayerImplementation;
         this._itemDelegate = new ItemDelegate(
@@ -115,12 +114,20 @@ export class DataLayer<
         );
     }
 
+    areCurrentSettingsValid(): boolean {
+        if (!this._customDataLayerImpl.areCurrentSettingsValid) {
+            return true;
+        }
+
+        return this._customDataLayerImpl.areCurrentSettingsValid(this.makeAccessors());
+    }
+
     handleSettingsChange(): void {
         const refetchRequired = this._customDataLayerImpl.doSettingsChangesRequireDataRefetch?.(
             this._prevSettings,
-            this._settingsContextDelegate.getValues() as TSettings,
+            this._settingsContextDelegate.getValues() as TSettingTypes,
             this.makeAccessors()
-        ) ?? !isEqual(this._prevSettings, this._settingsContextDelegate.getValues() as TSettings);
+        ) ?? !isEqual(this._prevSettings, this._settingsContextDelegate.getValues() as TSettingTypes);
 
         if (!refetchRequired) {
             return;
@@ -129,7 +136,7 @@ export class DataLayer<
             this._cancellationPending = true;
             this.maybeCancelQuery().then(() => {
                 this.maybeRefetchData();
-                this._prevSettings = this._settingsContextDelegate.getValues() as TSettings;
+                this._prevSettings = this._settingsContextDelegate.getValues() as TSettingTypes;
             });
     }
 
@@ -218,7 +225,7 @@ export class DataLayer<
         };
     }
 
-    makeAccessors(): DataLayerInformationAccessors<TSettings, TData, TStoredData> {
+    makeAccessors(): DataLayerInformationAccessors<TSettings, TData, TStoredData, TSettingKey> {
         return {
             getSetting: (settingName) => this._settingsContextDelegate.getSettings()[settingName].getValue(),
             getAvailableSettingValues: (settingName) =>
@@ -286,7 +293,7 @@ export class DataLayer<
         }
     }
 
-    serializeState(): SerializedLayer<TSettings> {
+    serializeState(): SerializedLayer<TSettingTypes> {
         const itemState = this.getItemDelegate().serializeState();
         return {
             ...itemState,
@@ -296,7 +303,7 @@ export class DataLayer<
         };
     }
 
-    deserializeState(serializedLayer: SerializedLayer<TSettings>): void {
+    deserializeState(serializedLayer: SerializedLayer<TSettingTypes>): void {
         this.getItemDelegate().deserializeState(serializedLayer);
         this._settingsContextDelegate.deserializeSettings(serializedLayer.settings);
     }

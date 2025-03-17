@@ -7,7 +7,7 @@ import {
     FetchDataParams,
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
@@ -15,12 +15,12 @@ import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 import { isEqual } from "lodash";
 
 const realizationSurfaceSettings = [
-    SettingType.ENSEMBLE,
-    SettingType.REALIZATION,
-    SettingType.ATTRIBUTE,
-    SettingType.SURFACE_NAME,
-    SettingType.TIME_OR_INTERVAL,
-    SettingType.COLOR_SCALE,
+    Setting.ENSEMBLE,
+    Setting.REALIZATION,
+    Setting.ATTRIBUTE,
+    Setting.SURFACE_NAME,
+    Setting.TIME_OR_INTERVAL,
+    Setting.COLOR_SCALE,
 ] as const;
 export type RealizationSurfaceSettings = typeof realizationSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationSurfaceSettings>;
@@ -32,12 +32,12 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
 
     getDefaultSettingsValues() {
         return {
-            [SettingType.ENSEMBLE]: null,
-            [SettingType.REALIZATION]: null,
-            [SettingType.ATTRIBUTE]: null,
-            [SettingType.SURFACE_NAME]: null,
-            [SettingType.TIME_OR_INTERVAL]: null,
-            [SettingType.COLOR_SCALE]: null,
+            [Setting.ENSEMBLE]: null,
+            [Setting.REALIZATION]: null,
+            [Setting.ATTRIBUTE]: null,
+            [Setting.SURFACE_NAME]: null,
+            [Setting.TIME_OR_INTERVAL]: null,
+            [Setting.COLOR_SCALE]: null,
         };
     }
 
@@ -71,7 +71,7 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
         availableSettingsUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationSurfaceSettings, SettingsWithTypes>) {
-        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -82,8 +82,8 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
             return ensembleIdents;
         });
 
-        availableSettingsUpdater(SettingType.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
             if (!ensembleIdent) {
@@ -96,7 +96,7 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
         });
 
         const realizationSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
             if (!ensembleIdent) {
                 return null;
@@ -113,7 +113,7 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
             });
         });
 
-        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getHelperDependency }) => {
+        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!data) {
@@ -127,8 +127,8 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
             return availableAttributes;
         });
 
-        availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
-            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
+        availableSettingsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
+            const attribute = getLocalSetting(Setting.ATTRIBUTE);
             const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!attribute || !data) {
@@ -146,9 +146,9 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
             return availableSurfaceNames;
         });
 
-        availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
-            const surfaceName = getLocalSetting(SettingType.SURFACE_NAME);
+        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+            const attribute = getLocalSetting(Setting.ATTRIBUTE);
+            const surfaceName = getLocalSetting(Setting.SURFACE_NAME);
             const data = getHelperDependency(realizationSurfaceMetadataDep);
 
             if (!attribute || !surfaceName || !data) {
@@ -188,11 +188,11 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 
-        const ensembleIdent = getSetting(SettingType.ENSEMBLE);
-        const realizationNum = getSetting(SettingType.REALIZATION);
-        const surfaceName = getSetting(SettingType.SURFACE_NAME);
-        const attribute = getSetting(SettingType.ATTRIBUTE);
-        const timeOrInterval = getSetting(SettingType.TIME_OR_INTERVAL);
+        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const realizationNum = getSetting(Setting.REALIZATION);
+        const surfaceName = getSetting(Setting.SURFACE_NAME);
+        const attribute = getSetting(Setting.ATTRIBUTE);
+        const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
 
         if (ensembleIdent && surfaceName && attribute && realizationNum !== null) {
             addrBuilder.withEnsembleIdent(ensembleIdent);

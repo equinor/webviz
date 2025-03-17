@@ -26,7 +26,7 @@ import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegis
 import { Item, ItemGroup, instanceofItemGroup } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
-import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Dropdown } from "@mui/base";
 import {
@@ -77,7 +77,7 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 groupDelegate.appendChild(new SettingsGroup("Settings group", props.layerManager));
                 return;
             case "color-scale":
-                groupDelegate.appendChild(new SharedSetting(SettingType.COLOR_SCALE, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
                 return;
             case "observed-surface":
                 groupDelegate.appendChild(
@@ -115,19 +115,19 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 );
                 return;
             case "ensemble":
-                groupDelegate.appendChild(new SharedSetting(SettingType.ENSEMBLE, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.ENSEMBLE, null, props.layerManager));
                 return;
             case "realization":
-                groupDelegate.appendChild(new SharedSetting(SettingType.REALIZATION, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.REALIZATION, null, props.layerManager));
                 return;
             case "surface-name":
-                groupDelegate.appendChild(new SharedSetting(SettingType.SURFACE_NAME, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.SURFACE_NAME, null, props.layerManager));
                 return;
             case "attribute":
-                groupDelegate.appendChild(new SharedSetting(SettingType.ATTRIBUTE, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.ATTRIBUTE, null, props.layerManager));
                 return;
             case "Date":
-                groupDelegate.appendChild(new SharedSetting(SettingType.TIME_OR_INTERVAL, null, props.layerManager));
+                groupDelegate.appendChild(new SharedSetting(Setting.TIME_OR_INTERVAL, null, props.layerManager));
                 return;
         }
     }

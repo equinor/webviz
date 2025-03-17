@@ -13,7 +13,7 @@ import {
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
 import { IntersectionSettingValue } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
-import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import {
     PolylineIntersection_trans,
     calcExtendedSimplifiedWellboreTrajectoryInXYPlane,
@@ -23,13 +23,13 @@ import {
 import { isEqual } from "lodash";
 
 const intersectionRealizationGridSettings = [
-    SettingType.INTERSECTION,
-    SettingType.ENSEMBLE,
-    SettingType.REALIZATION,
-    SettingType.ATTRIBUTE,
-    SettingType.GRID_NAME,
-    SettingType.TIME_OR_INTERVAL,
-    SettingType.SHOW_GRID_LINES,
+    Setting.INTERSECTION,
+    Setting.ENSEMBLE,
+    Setting.REALIZATION,
+    Setting.ATTRIBUTE,
+    Setting.GRID_NAME,
+    Setting.TIME_OR_INTERVAL,
+    Setting.SHOW_GRID_LINES,
 ] as const;
 type IntersectionRealizationGridSettings = typeof intersectionRealizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationGridSettings>;
@@ -43,13 +43,13 @@ export class IntersectionRealizationGridLayer
 
     getDefaultSettingsValues(): MakeSettingTypesMap<IntersectionRealizationGridSettings> {
         return {
-            [SettingType.INTERSECTION]: null,
-            [SettingType.ENSEMBLE]: null,
-            [SettingType.REALIZATION]: null,
-            [SettingType.ATTRIBUTE]: null,
-            [SettingType.GRID_NAME]: null,
-            [SettingType.TIME_OR_INTERVAL]: null,
-            [SettingType.SHOW_GRID_LINES]: false,
+            [Setting.INTERSECTION]: null,
+            [Setting.ENSEMBLE]: null,
+            [Setting.REALIZATION]: null,
+            [Setting.ATTRIBUTE]: null,
+            [Setting.GRID_NAME]: null,
+            [Setting.TIME_OR_INTERVAL]: null,
+            [Setting.SHOW_GRID_LINES]: false,
         };
     }
 
@@ -80,12 +80,12 @@ export class IntersectionRealizationGridLayer
 
     areCurrentSettingsValid(settings: SettingsWithTypes): boolean {
         return (
-            settings[SettingType.INTERSECTION] !== null &&
-            settings[SettingType.ENSEMBLE] !== null &&
-            settings[SettingType.REALIZATION] !== null &&
-            settings[SettingType.GRID_NAME] !== null &&
-            settings[SettingType.ATTRIBUTE] !== null &&
-            settings[SettingType.TIME_OR_INTERVAL] !== null
+            settings[Setting.INTERSECTION] !== null &&
+            settings[Setting.ENSEMBLE] !== null &&
+            settings[Setting.REALIZATION] !== null &&
+            settings[Setting.GRID_NAME] !== null &&
+            settings[Setting.ATTRIBUTE] !== null &&
+            settings[Setting.TIME_OR_INTERVAL] !== null
         );
     }
 
@@ -95,7 +95,7 @@ export class IntersectionRealizationGridLayer
         queryClient,
         workbenchSession,
     }: DefineDependenciesArgs<IntersectionRealizationGridSettings, SettingsWithTypes>) {
-        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -106,8 +106,8 @@ export class IntersectionRealizationGridLayer
             return ensembleIdents;
         });
 
-        availableSettingsUpdater(SettingType.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
             if (!ensembleIdent) {
@@ -120,8 +120,8 @@ export class IntersectionRealizationGridLayer
         });
 
         const realizationGridDataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
-            const realization = getLocalSetting(SettingType.REALIZATION);
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
+            const realization = getLocalSetting(Setting.REALIZATION);
 
             if (!ensembleIdent || realization === null) {
                 return null;
@@ -139,7 +139,7 @@ export class IntersectionRealizationGridLayer
             });
         });
 
-        availableSettingsUpdater(SettingType.GRID_NAME, ({ getHelperDependency }) => {
+        availableSettingsUpdater(Setting.GRID_NAME, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!data) {
@@ -151,8 +151,8 @@ export class IntersectionRealizationGridLayer
             return availableGridNames;
         });
 
-        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(SettingType.GRID_NAME);
+        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getLocalSetting, getHelperDependency }) => {
+            const gridName = getLocalSetting(Setting.GRID_NAME);
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
@@ -170,7 +170,7 @@ export class IntersectionRealizationGridLayer
         });
 
         const wellboreHeadersDep = helperDependency(async function fetchData({ getLocalSetting, abortSignal }) {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
             if (!ensembleIdent) {
                 return null;
@@ -193,7 +193,7 @@ export class IntersectionRealizationGridLayer
             });
         });
 
-        availableSettingsUpdater(SettingType.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
+        availableSettingsUpdater(Setting.INTERSECTION, ({ getHelperDependency, getGlobalSetting }) => {
             const wellboreHeaders = getHelperDependency(wellboreHeadersDep);
             const intersectionPolylines = getGlobalSetting("intersectionPolylines");
 
@@ -221,9 +221,9 @@ export class IntersectionRealizationGridLayer
             return intersectionOptions;
         });
 
-        availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const gridName = getLocalSetting(SettingType.GRID_NAME);
-            const gridAttribute = getLocalSetting(SettingType.ATTRIBUTE);
+        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+            const gridName = getLocalSetting(Setting.GRID_NAME);
+            const gridAttribute = getLocalSetting(Setting.ATTRIBUTE);
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !gridAttribute || !data) {
@@ -253,12 +253,12 @@ export class IntersectionRealizationGridLayer
         registerQueryKey,
         queryClient,
     }: FetchDataParams<SettingsWithTypes, Data>): Promise<Data> {
-        const ensembleIdent = getSetting(SettingType.ENSEMBLE);
-        const realizationNum = getSetting(SettingType.REALIZATION);
-        const intersection = getSetting(SettingType.INTERSECTION);
-        const gridName = getSetting(SettingType.GRID_NAME);
-        const parameterName = getSetting(SettingType.ATTRIBUTE);
-        let timeOrInterval = getSetting(SettingType.TIME_OR_INTERVAL);
+        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const realizationNum = getSetting(Setting.REALIZATION);
+        const intersection = getSetting(Setting.INTERSECTION);
+        const gridName = getSetting(Setting.GRID_NAME);
+        const parameterName = getSetting(Setting.ATTRIBUTE);
+        let timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;
         }

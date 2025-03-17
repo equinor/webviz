@@ -12,8 +12,8 @@ import { DataLayer, LayerDelegateTopic, LayerStatus } from "./DataLayer";
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../../delegates/SettingsContextDelegate";
-import { Setting } from "../Setting/Setting";
-import { SettingComponent } from "../Setting/SettingComponent";
+import { SettingManager } from "../SettingManager/Setting";
+import { SettingComponent } from "../SettingManager/SettingComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
@@ -25,7 +25,7 @@ export type DataLayerComponentProps = {
 export function DataLayerComponent(props: DataLayerComponentProps): React.ReactNode {
     const isExpanded = usePublishSubscribeTopicValue(props.layer.getItemDelegate(), ItemDelegateTopic.EXPANDED);
 
-    function makeSetting(setting: Setting<any>) {
+    function makeSetting(setting: SettingManager<any>) {
         const manager = props.layer.getItemDelegate().getLayerManager();
         if (!manager) {
             return null;
@@ -33,7 +33,7 @@ export function DataLayerComponent(props: DataLayerComponentProps): React.ReactN
         return <SettingComponent key={setting.getId()} setting={setting} manager={manager} sharedSetting={false} />;
     }
 
-    function makeSettings(settings: Record<string, Setting<any>>): React.ReactNode[] {
+    function makeSettings(settings: Record<string, SettingManager<any>>): React.ReactNode[] {
         const settingNodes: React.ReactNode[] = [];
         for (const key of Object.keys(settings)) {
             settingNodes.push(makeSetting(settings[key]));

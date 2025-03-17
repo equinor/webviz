@@ -1,22 +1,23 @@
-import { Settings } from "../../interfaces";
+import { Settings, TupleIndices } from "../../interfaces";
 import { SettingRegistry } from "../../settings/SettingRegistry";
-import { SettingTypes } from "../../settings/settingsTypes";
-import { Setting } from "../Setting/Setting";
+import { MakeSettingTypesMap, SettingTypes } from "../../settings/settingsTypes";
+import { SettingManager } from "../SettingManager/SettingManager";
 
 
 export function makeSettings<
-    const TSettingTypes extends Settings,
-    const TSettings extends {[K in TSettingTypes[number]]: SettingTypes[K]}
+    const TSettings extends Settings,
+    const TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    const TSettingKey extends TupleIndices<TSettings> = TupleIndices<TSettings>
 >(
-    settings: TSettingTypes,
-    defaultValues: TSettings
-): { [K in keyof TSettingTypes & keyof SettingTypes]: Setting<SettingTypes[K]> } {
-    const returnValue: Record<string, Setting<any>> = {} as Record<string, Setting<any>>;
+    settings: TSettings,
+    defaultValues: TSettingTypes
+): { [K in TSettingKey]: SettingManager<TSettings[K]> } {
+    const returnValue: Record<string, SettingManager<any>> = {} as Record<string, SettingManager<any>>;
     for (let i = 0; i < settings.length; i++) {
         const key = settings[i];
-        returnValue[key] = SettingRegistry.makeSetting(key, defaultValues[key as keyof TSettings] as SettingTypes[typeof key]);
+        returnValue[key] = SettingRegistry.makeSetting(key, defaultValues[key as keyof TSettingTypes] as SettingTypes[typeof key]);
     }
     return returnValue as {
-        [K in keyof TSettingTypes & keyof SettingTypes]: Setting<SettingTypes[K]>;
+        [K in TSettingKey]: SettingManager<TSettings[K]>;
     };
 }

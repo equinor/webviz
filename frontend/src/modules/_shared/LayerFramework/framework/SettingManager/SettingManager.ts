@@ -6,7 +6,7 @@ import { isArray, isEqual } from "lodash";
 import { v4 } from "uuid";
 
 import { AvailableValuesType, CustomSettingImplementation, SharedSettingsProvider } from "../../interfaces";
-import { SettingCategory, SettingType } from "../../settings/settingsTypes";
+import { SettingCategories, SettingCategory, Setting, SettingTypes } from "../../settings/settingsTypes";
 import { Group } from "../Group/Group";
 
 export enum SettingTopic {
@@ -20,10 +20,10 @@ export enum SettingTopic {
     PERSISTED_STATE_CHANGED = "PERSISTED_STATE_CHANGED",
 }
 
-export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
+export type SettingTopicPayloads<TSetting extends Setting, TValue extends SettingTypes[TSetting]> = {
     [SettingTopic.VALUE_CHANGED]: TValue;
     [SettingTopic.VALIDITY_CHANGED]: boolean;
-    [SettingTopic.AVAILABLE_VALUES_CHANGED]: AvailableValuesType<TValue, TCategory>;
+    [SettingTopic.AVAILABLE_VALUES_CHANGED]: AvailableValuesType<TSetting>;
     [SettingTopic.OVERRIDDEN_VALUE_CHANGED]: TValue | undefined;
     [SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED]: OverriddenValueProviderType | undefined;
     [SettingTopic.LOADING_STATE_CHANGED]: boolean;
@@ -31,12 +31,12 @@ export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
     [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
 };
 
-export type SettingParams<TValue, TCategory extends SettingCategory> = {
-    type: SettingType;
-    category: TCategory;
+export type SettingManagerParams<TSetting extends Setting, TValue extends SettingTypes[TSetting] > = {
+    type: Setting;
+    category: SettingCategories[TSetting];
     label: string;
     defaultValue: TValue;
-    customSettingImplementation: CustomSettingImplementation<TValue, TCategory>;
+    customSettingImplementation: CustomSettingImplementation<TSetting, TValue>;
 };
 
 export enum OverriddenValueProviderType {
@@ -50,20 +50,19 @@ export enum OverriddenValueProviderType {
  * It provides a method for setting available values, which are used to validate the setting value or applying a fixup if the value is invalid.
  * It provides methods for setting and getting the value and its states, checking if the value is valid, and setting the value as overridden or persisted.
  */
-export class Setting<TValue, TCategory extends SettingCategory>
-    implements PublishSubscribe<SettingTopicPayloads<TValue, TCategory>>
+export class SettingManager<TSetting extends Setting, TValue extends SettingTypes[TSetting] = SettingTypes[TSetting], TCategory extends SettingCategory = SettingCategories[TSetting]>
+    implements PublishSubscribe<SettingTopicPayloads<TSetting, TValue>>
 {
     private _id: string;
-    private _type: SettingType;
-    private _category: TCategory;
+    private _type: Setting;
+    private _category: SettingCategories[Setting];
     private _label: string;
-    private _customSettingImplementation: CustomSettingImplementation<TValue, TCategory>;
+    private _customSettingImplementation: CustomSettingImplementation<TSetting, TValue>;
     private _value: TValue;
     private _isValueValid: boolean = false;
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TValue, TCategory>>();
-    private _availableValues: AvailableValuesType<TValue, TCategory> = [] as unknown as AvailableValuesType<
-        TValue,
-        TCategory
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TSetting, TValue>>();
+    private _availableValues: AvailableValuesType<TSetting> = [] as unknown as AvailableValuesType<
+        TSetting
     >;
     private _overriddenValue: TValue | undefined = undefined;
     private _overridenValueProviderType: OverriddenValueProviderType | undefined = undefined;
@@ -78,7 +77,7 @@ export class Setting<TValue, TCategory extends SettingCategory>
         customSettingImplementation,
         defaultValue,
         label,
-    }: SettingParams<TValue, TCategory>) {
+    }: SettingManagerParams<TSetting, TValue>) {
         this._id = v4();
         this._type = type;
         this._category = category;
@@ -96,7 +95,7 @@ export class Setting<TValue, TCategory extends SettingCategory>
         return this._id;
     }
 
-    getType(): SettingType {
+    getType(): Setting {
         return this._type;
     }
 
@@ -268,7 +267,7 @@ export class Setting<TValue, TCategory extends SettingCategory>
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
     }
 
-    makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TValue, TCategory>[T] {
+    makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TSetting, TValue>[T] {
         const snapshotGetter = (): any => {
             switch (topic) {
                 case SettingTopic.VALUE_CHANGED:
@@ -295,11 +294,11 @@ export class Setting<TValue, TCategory extends SettingCategory>
         return snapshotGetter;
     }
 
-    getPublishSubscribeDelegate(): PublishSubscribeDelegate<SettingTopicPayloads<TValue, TCategory>> {
+    getPublishSubscribeDelegate() {
         return this._publishSubscribeDelegate;
     }
 
-    getAvailableValues(): AvailableValuesType<TValue, TCategory> {
+    getAvailableValues(): AvailableValuesType<TSetting> {
         return this._availableValues;
     }
 
@@ -316,7 +315,7 @@ export class Setting<TValue, TCategory extends SettingCategory>
         return false;
     }
 
-    setAvailableValues(availableValues: AvailableValuesType<TValue, TCategory>): void {
+    setAvailableValues(availableValues: AvailableValuesType<TSetting>): void {
         if (isEqual(this._availableValues, availableValues) && this._initialized) {
             return;
         }
@@ -339,7 +338,7 @@ export class Setting<TValue, TCategory extends SettingCategory>
         return this._customSettingImplementation.makeComponent();
     }
 
-    private fixupOptionValue(availableValues: AvailableValuesType<TValue, SettingCategory.OPTION>): boolean {
+    private fixupOptionValue(availableValues: AvailableValuesType<TSetting>): boolean {
         if (availableValues.length === 0) {
             return false;
         }
@@ -366,7 +365,7 @@ export class Setting<TValue, TCategory extends SettingCategory>
         return true;
     }
 
-    private fixupRangeValue(availableValues: AvailableValuesType<TValue, SettingCategory.RANGE>): boolean {
+    private fixupRangeValue(availableValues: AvailableValuesType<TSetting>): boolean {
         if (!Array.isArray(availableValues) || availableValues.length < 2) {
             return false;
         }

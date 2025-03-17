@@ -5,15 +5,15 @@ import {
     FetchDataParams,
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 
 import { isEqual } from "lodash";
 
 const realizationPolygonsSettings = [
-    SettingType.ENSEMBLE,
-    SettingType.REALIZATION,
-    SettingType.POLYGONS_ATTRIBUTE,
-    SettingType.POLYGONS_NAME,
+    Setting.ENSEMBLE,
+    Setting.REALIZATION,
+    Setting.POLYGONS_ATTRIBUTE,
+    Setting.POLYGONS_NAME,
 ] as const;
 export type RealizationPolygonsSettings = typeof realizationPolygonsSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationPolygonsSettings>;
@@ -24,10 +24,10 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
 
     getDefaultSettingsValues() {
         return {
-            [SettingType.ENSEMBLE]: null,
-            [SettingType.REALIZATION]: null,
-            [SettingType.POLYGONS_ATTRIBUTE]: null,
-            [SettingType.POLYGONS_NAME]: null,
+            [Setting.ENSEMBLE]: null,
+            [Setting.REALIZATION]: null,
+            [Setting.POLYGONS_ATTRIBUTE]: null,
+            [Setting.POLYGONS_NAME]: null,
         };
     }
 
@@ -48,7 +48,7 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
         availableSettingsUpdater,
         queryClient,
     }: DefineDependenciesArgs<RealizationPolygonsSettings, SettingsWithTypes>) {
-        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
 
@@ -59,8 +59,8 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
             return ensembleIdents;
         });
 
-        availableSettingsUpdater(SettingType.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+        availableSettingsUpdater(Setting.REALIZATION, ({ getLocalSetting, getGlobalSetting }) => {
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
             const realizationFilterFunc = getGlobalSetting("realizationFilterFunction");
 
             if (!ensembleIdent) {
@@ -73,7 +73,7 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
         });
 
         const realizationPolygonsMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
             if (!ensembleIdent) {
                 return null;
@@ -90,7 +90,7 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
             });
         });
 
-        availableSettingsUpdater(SettingType.POLYGONS_ATTRIBUTE, ({ getHelperDependency }) => {
+        availableSettingsUpdater(Setting.POLYGONS_ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(realizationPolygonsMetadataDep);
 
             if (!data) {
@@ -104,8 +104,8 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
             return availableAttributes;
         });
 
-        availableSettingsUpdater(SettingType.POLYGONS_NAME, ({ getHelperDependency, getLocalSetting }) => {
-            const attribute = getLocalSetting(SettingType.POLYGONS_ATTRIBUTE);
+        availableSettingsUpdater(Setting.POLYGONS_NAME, ({ getHelperDependency, getLocalSetting }) => {
+            const attribute = getLocalSetting(Setting.POLYGONS_ATTRIBUTE);
             const data = getHelperDependency(realizationPolygonsMetadataDep);
 
             if (!attribute || !data) {
@@ -129,10 +129,10 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
         registerQueryKey,
         queryClient,
     }: FetchDataParams<SettingsWithTypes, Data>): Promise<PolygonData_api[]> {
-        const ensembleIdent = getSetting(SettingType.ENSEMBLE);
-        const realizationNum = getSetting(SettingType.REALIZATION);
-        const polygonsName = getSetting(SettingType.POLYGONS_NAME);
-        const polygonsAttribute = getSetting(SettingType.POLYGONS_ATTRIBUTE);
+        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const realizationNum = getSetting(Setting.REALIZATION);
+        const polygonsName = getSetting(Setting.POLYGONS_NAME);
+        const polygonsAttribute = getSetting(Setting.POLYGONS_ATTRIBUTE);
 
         const queryOptions = getPolygonsDataOptions({
             query: {

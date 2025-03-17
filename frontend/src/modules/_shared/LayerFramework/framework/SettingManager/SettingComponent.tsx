@@ -4,14 +4,14 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Link, Warning } from "@mui/icons-material";
 
-import { OverriddenValueProviderType, Setting, SettingTopic } from "./Setting";
+import { OverriddenValueProviderType, SettingManager, SettingTopic } from "./Setting";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { SettingComponentProps as SettingComponentPropsInterface } from "../../interfaces";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 
 export type SettingComponentProps<TValue> = {
-    setting: Setting<TValue>;
+    setting: SettingManager<TValue>;
     manager: DataLayerManager;
     sharedSetting: boolean;
 };

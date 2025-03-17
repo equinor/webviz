@@ -10,9 +10,9 @@ import { Dependency } from "./delegates/_utils/Dependency";
 import { GlobalSettings } from "./framework/DataLayerManager/DataLayerManager";
 import {
     MakeSettingTypesMap,
+    Setting,
     SettingCategories,
     SettingCategory,
-    SettingType,
     SettingTypes,
 } from "./settings/settingsTypes";
 
@@ -65,7 +65,7 @@ export interface SerializedColorScale extends SerializedItem {
 
 export interface SerializedSharedSetting extends SerializedItem {
     type: SerializedType.SHARED_SETTING;
-    wrappedSettingType: SettingType;
+    wrappedSettingType: Setting;
     value: string;
 }
 
@@ -120,9 +120,11 @@ export function instanceofSharedSettingsProvider(item: Item): item is SharedSett
  * It contains accessors to the data and settings of the layer and other useful information.
  */
 export type DataLayerInformationAccessors<
-    TSettings extends Partial<SettingTypes>,
+    TSettings extends Settings,
     TData,
-    TStoredData extends StoredData = Record<string, unknown>
+    TStoredData extends StoredData = Record<string, unknown>,
+    TSettingKey extends TupleIndices<TSettings> = TupleIndices<TSettings>,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>
 > = {
     /**
      * Access the data that the layer is currently storing.
@@ -140,7 +142,7 @@ export type DataLayerInformationAccessors<
      * const value = getSetting("settingName");
      * ```
      */
-    getSetting: <K extends keyof TSettings>(settingName: K) => TSettings[K];
+    getSetting: <K extends TSettingKey>(settingName: TSettings[K]) => TSettingTypes[TSettings[K]];
 
     /**
      * Access the available values of a setting.
@@ -152,9 +154,7 @@ export type DataLayerInformationAccessors<
      * const availableValues = getAvailableSettingValues("settingName");
      * ```
      */
-    getAvailableSettingValues: <K extends keyof TSettings & SettingType>(
-        settingName: K
-    ) => AvailableValuesType<TSettings[K], SettingCategories[K]>;
+    getAvailableSettingValues: <K extends TSettingKey>(settingName: K) => AvailableValuesType<TSettings[K]>;
 
     /**
      * Access the global settings of the data layer manager.
@@ -200,7 +200,7 @@ export type DataLayerInformationAccessors<
  * It contains accessors to the data and settings of the layer and other useful information.
  */
 export type FetchDataParams<
-    TSettings extends Partial<SettingTypes>,
+    TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, unknown>
 > = {
@@ -219,13 +219,7 @@ export enum LayerColoringType {
 
 export function includesCustomSettingsHandler(
     obj: any
-): obj is CustomSettingsHandler<
-    Settings,
-    StoredData,
-    MakeSettingTypesMap<Settings>,
-    keyof SettingTypes,
-    keyof StoredData
-> {
+): obj is CustomSettingsHandler<Settings, StoredData, MakeSettingTypesMap<Settings>> {
     return obj.settings !== undefined && obj.defineDependencies !== undefined;
 }
 
@@ -265,22 +259,22 @@ export interface CustomGroupImplementationWithSettings<
  * This can either be used by a data layer or by a group.
  */
 export interface CustomSettingsHandler<
-    TSettingTypes extends Settings,
+    TSettings extends Settings,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
-    TSettingKey extends keyof TSettings & SettingType = keyof TSettings & SettingType,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    TSettingKey extends TupleIndices<TSettings> = TupleIndices<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > {
     /**
      * The settings that this handler is using/providing.
      */
-    settings: TSettingTypes;
+    settings: TSettings;
 
     /**
      * A method that returns the default values of the settings.
      * @returns The default values of the settings.
      */
-    getDefaultSettingsValues(): TSettings;
+    getDefaultSettingsValues(): TSettingTypes;
 
     /**
      * A method that defines the dependencies of the settings of the layer.
@@ -334,19 +328,17 @@ export interface CustomSettingsHandler<
      *
      */
     defineDependencies(
-        args: DefineDependenciesArgs<TSettingTypes, TSettings, TStoredData, TSettingKey, TStoredDataKey>
+        args: DefineDependenciesArgs<TSettings, TSettingTypes, TStoredData, TSettingKey, TStoredDataKey>
     ): void;
-
-    areCurrentSettingsValid?: (settings: TSettings) => boolean;
 }
 export interface CustomDataLayerImplementation<
-    TSettingTypes extends Settings,
+    TSettings extends Settings,
     TData,
     TStoredData extends StoredData = Record<string, never>,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>,
-    TSettingKey extends keyof TSettings & SettingType = keyof TSettings & SettingType,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    TSettingKey extends TupleIndices<TSettings> = TupleIndices<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
-> extends CustomSettingsHandler<TSettingTypes, TStoredData, TSettings, TSettingKey, TStoredDataKey> {
+> extends CustomSettingsHandler<TSettings, TStoredData, TSettingTypes, TSettingKey, TStoredDataKey> {
     /**
      * The default name of a layer of this type.
      */
@@ -366,8 +358,8 @@ export interface CustomDataLayerImplementation<
      * @param accessors Accessors to the data and settings of the layer.
      */
     doSettingsChangesRequireDataRefetch(
-        prevSettings: TSettings | null,
-        newSettings: TSettings,
+        prevSettings: TSettingTypes | null,
+        newSettings: TSettingTypes,
         accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>
     ): boolean;
 
@@ -385,74 +377,79 @@ export interface CustomDataLayerImplementation<
      * @param accessors Accessors to the data and settings of the layer.
      */
     makeValueRange?(accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>): [number, number] | null;
+
+    /**
+     * This method is called to check if the current settings are valid. It should return true if the settings are valid
+     * and false if they are not.
+     * As long as the settings are not valid, the layer will not fetch data.
+     *
+     * @param accessors Accessors to the data and settings of the layer.
+     * @returns
+     */
+    areCurrentSettingsValid?: (accessors: DataLayerInformationAccessors<TSettings, TData, TStoredData>) => boolean;
 }
 
 export interface GetHelperDependency<
-    TSettingTypes extends Settings,
-    TSettings extends MakeSettingTypesMap<TSettingTypes>,
-    TKey extends keyof TSettings
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends TupleIndices<TSettings>
 > {
-    <TDep>(dep: Dependency<TDep, TSettingTypes, TSettings, TKey>): Awaited<TDep> | null;
+    <TDep>(dep: Dependency<TDep, TSettings, TSettingTypes, TKey>): Awaited<TDep> | null;
 }
+
+export type TupleIndices<T extends readonly any[]> = Extract<keyof T, `${number}`>;
 
 export interface UpdateFunc<
     TReturnValue,
-    TSettingTypes extends Settings,
-    TSettings extends MakeSettingTypesMap<TSettingTypes>,
-    TKey extends keyof TSettings
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends TupleIndices<TSettings>
 > {
     (args: {
-        getLocalSetting: <K extends TKey>(settingName: K) => TSettings[K];
+        getLocalSetting: <K extends TKey>(settingName: K) => TSettingTypes[TSettings[K]];
         getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
-        getHelperDependency: GetHelperDependency<TSettingTypes, TSettings, TKey>;
+        getHelperDependency: GetHelperDependency<TSettings, TSettingTypes, TKey>;
         abortSignal: AbortSignal;
     }): TReturnValue;
 }
 
 export interface DefineDependenciesArgs<
-    TSettingTypes extends Settings,
-    TSettings extends MakeSettingTypesMap<TSettingTypes>,
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
     TStoredData extends StoredData = Record<string, never>,
-    TKey extends keyof TSettings & SettingType = keyof TSettings & SettingType,
+    TKey extends Extract<keyof TSettings, `${number}`> = Extract<keyof TSettings, `${number}`>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > {
     availableSettingsUpdater: (
         settingKey: TKey,
-        update: UpdateFunc<
-            AvailableValuesType<TSettings[TKey], SettingCategories[TKey]>,
-            TSettingTypes,
-            TSettings,
-            TKey
-        >
-    ) => Dependency<AvailableValuesType<TSettings[TKey], SettingCategories[TKey]>, TSettingTypes, TSettings, TKey>;
+        update: UpdateFunc<AvailableValuesType<TSettings[TKey]>, TSettings, TSettingTypes, TKey>
+    ) => Dependency<AvailableValuesType<TSettings[TKey]>, TSettings, TSettingTypes, TKey>;
     storedDataUpdater: (
         key: TStoredDataKey,
-        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettingTypes, TSettings, TKey>
-    ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettingTypes, TSettings, TKey>;
+        update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>
+    ) => Dependency<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>;
     helperDependency: <T>(
         update: (args: {
-            getLocalSetting: <T extends TKey>(settingName: T) => TSettings[T];
+            getLocalSetting: <T extends TKey>(settingName: T) => TSettingTypes[TSettings[T]];
             getGlobalSetting: <T extends keyof GlobalSettings>(settingName: T) => GlobalSettings[T];
             getHelperDependency: <TDep>(
-                helperDependency: Dependency<TDep, TSettingTypes, TSettings, TKey>
+                helperDependency: Dependency<TDep, TSettings, TSettingTypes, TKey>
             ) => TDep | null;
             abortSignal: AbortSignal;
         }) => T
-    ) => Dependency<T, TSettingTypes, TSettings, TKey>;
+    ) => Dependency<T, TSettings, TSettingTypes, TKey>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     queryClient: QueryClient;
 }
 
 // Required when making "AvailableValuesType" for all settings in an object ("TSettings")
-export type EachAvailableValuesType<TValue, TCategory extends SettingCategory> = TValue extends never
-    ? never
-    : AvailableValuesType<TValue, TCategory>;
+export type EachAvailableValuesType<TSetting> = TSetting extends Setting ? AvailableValuesType<TSetting> : never;
 
 // Returns an array of "TValue" if the "TValue" itself is not already an array
-export type AvailableValuesType<TValue, TCategory extends SettingCategory> = MakeAvailableValuesTypeBasedOnCategory<
-    TValue,
-    TCategory
+export type AvailableValuesType<TSetting extends Setting> = MakeAvailableValuesTypeBasedOnCategory<
+    SettingTypes[TSetting],
+    SettingCategories[TSetting]
 >;
 
 // "MakeArrayIfNotArray<T>" yields "unknown[] | any[]" for "T = any"  - we don't want "unknown[]"
@@ -470,13 +467,13 @@ type MakeAvailableValuesTypeBasedOnCategory<
     ? Exclude<TValue, null>
     : never;
 
-export type SettingComponentProps<TValue, TCategory extends SettingCategory> = {
+export type SettingComponentProps<TSetting extends Setting, TValue = SettingTypes[TSetting]> = {
     onValueChange: (newValue: TValue) => void;
     value: TValue;
     isValueValid: boolean;
     overriddenValue: TValue | null;
     isOverridden: boolean;
-    availableValues: AvailableValuesType<TValue, TCategory>;
+    availableValues: AvailableValuesType<TSetting>;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     globalSettings: GlobalSettings;
@@ -488,17 +485,17 @@ export type ValueToStringArgs<TValue> = {
     workbenchSettings: WorkbenchSettings;
 };
 
-export interface CustomSettingImplementation<TValue, TCategory extends SettingCategory> {
+export interface CustomSettingImplementation<TSetting extends Setting, TValue = SettingTypes[TSetting]> {
     getIsStatic?: () => boolean;
-    makeComponent(): (props: SettingComponentProps<TValue, TCategory>) => React.ReactNode;
-    fixupValue?: (availableValues: AvailableValuesType<TValue, TCategory>, currentValue: TValue) => TValue;
-    isValueValid: (availableValues: AvailableValuesType<TValue, TCategory>, value: TValue) => boolean;
+    makeComponent(): (props: SettingComponentProps<TSetting>) => React.ReactNode;
+    fixupValue?: (availableValues: AvailableValuesType<TSetting>, currentValue: TValue) => TValue;
+    isValueValid: (availableValues: AvailableValuesType<TSetting>, value: TValue) => boolean;
     serializeValue?: (value: TValue) => string;
     deserializeValue?: (serializedValue: string) => TValue;
     valueToString?: (args: ValueToStringArgs<TValue>) => string;
 }
 
-export type Settings = ReadonlyArray<SettingType> & { __brand?: "MyType" };
+export type Settings = ReadonlyArray<Setting> & { __brand?: "MyType" };
 
 export type StoredData = Record<string, any>;
 export type NullableStoredData<TStoredData extends StoredData> = {

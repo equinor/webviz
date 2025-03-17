@@ -11,7 +11,7 @@ import {
     FetchDataParams,
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { MakeSettingTypesMap, SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
@@ -19,10 +19,10 @@ import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 import { isEqual } from "lodash";
 
 const observedSurfaceSettings = [
-    SettingType.ENSEMBLE,
-    SettingType.ATTRIBUTE,
-    SettingType.SURFACE_NAME,
-    SettingType.TIME_OR_INTERVAL,
+    Setting.ENSEMBLE,
+    Setting.ATTRIBUTE,
+    Setting.SURFACE_NAME,
+    Setting.TIME_OR_INTERVAL,
 ] as const;
 export type ObservedSurfaceSettings = typeof observedSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<ObservedSurfaceSettings>;
@@ -34,10 +34,10 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
 
     getDefaultSettingsValues() {
         return {
-            [SettingType.ENSEMBLE]: null,
-            [SettingType.ATTRIBUTE]: null,
-            [SettingType.SURFACE_NAME]: null,
-            [SettingType.TIME_OR_INTERVAL]: null,
+            [Setting.ENSEMBLE]: null,
+            [Setting.ATTRIBUTE]: null,
+            [Setting.SURFACE_NAME]: null,
+            [Setting.TIME_OR_INTERVAL]: null,
         };
     }
 
@@ -68,7 +68,7 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
         workbenchSession,
         queryClient,
     }: DefineDependenciesArgs<ObservedSurfaceSettings, SettingsWithTypes>) {
-        availableSettingsUpdater(SettingType.ENSEMBLE, ({ getGlobalSetting }) => {
+        availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembleSet = workbenchSession.getEnsembleSet();
 
@@ -81,7 +81,7 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
         });
 
         const observedSurfaceMetadataDep = helperDependency(async ({ getLocalSetting, abortSignal }) => {
-            const ensembleIdent = getLocalSetting(SettingType.ENSEMBLE);
+            const ensembleIdent = getLocalSetting(Setting.ENSEMBLE);
 
             if (!ensembleIdent) {
                 return null;
@@ -97,7 +97,7 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
             });
         });
 
-        availableSettingsUpdater(SettingType.ATTRIBUTE, ({ getHelperDependency }) => {
+        availableSettingsUpdater(Setting.ATTRIBUTE, ({ getHelperDependency }) => {
             const data = getHelperDependency(observedSurfaceMetadataDep);
 
             if (!data) {
@@ -111,8 +111,8 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
             return availableAttributes;
         });
 
-        availableSettingsUpdater(SettingType.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
-            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
+        availableSettingsUpdater(Setting.SURFACE_NAME, ({ getHelperDependency, getLocalSetting }) => {
+            const attribute = getLocalSetting(Setting.ATTRIBUTE);
             const data = getHelperDependency(observedSurfaceMetadataDep);
 
             if (!attribute || !data) {
@@ -130,9 +130,9 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
             return availableSurfaceNames;
         });
 
-        availableSettingsUpdater(SettingType.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
-            const attribute = getLocalSetting(SettingType.ATTRIBUTE);
-            const surfaceName = getLocalSetting(SettingType.SURFACE_NAME);
+        availableSettingsUpdater(Setting.TIME_OR_INTERVAL, ({ getLocalSetting, getHelperDependency }) => {
+            const attribute = getLocalSetting(Setting.ATTRIBUTE);
+            const surfaceName = getLocalSetting(Setting.SURFACE_NAME);
             const data = getHelperDependency(observedSurfaceMetadataDep);
 
             if (!attribute || !surfaceName || !data) {
@@ -168,10 +168,10 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 
-        const ensembleIdent = getSetting(SettingType.ENSEMBLE);
-        const surfaceName = getSetting(SettingType.SURFACE_NAME);
-        const attribute = getSetting(SettingType.ATTRIBUTE);
-        const timeOrInterval = getSetting(SettingType.TIME_OR_INTERVAL);
+        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const surfaceName = getSetting(Setting.SURFACE_NAME);
+        const attribute = getSetting(Setting.ATTRIBUTE);
+        const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
 
         if (ensembleIdent && surfaceName && attribute && timeOrInterval) {
             addrBuilder.withEnsembleIdent(ensembleIdent);

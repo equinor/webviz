@@ -3,8 +3,8 @@ import { isCancelledError } from "@tanstack/react-query";
 import { isEqual } from "lodash";
 
 import { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
-import { SettingTopic } from "../../framework/Setting/Setting";
-import { Settings, UpdateFunc } from "../../interfaces";
+import { SettingTopic } from "../../framework/SettingManager/SettingManager";
+import { Settings, TupleIndices, UpdateFunc } from "../../interfaces";
 import { MakeSettingTypesMap } from "../../settings/settingsTypes";
 import { SettingsContextDelegate } from "../SettingsContextDelegate";
 
@@ -21,25 +21,28 @@ import { SettingsContextDelegate } from "../SettingsContextDelegate";
  */
 export class Dependency<
     TReturnValue,
-    TSettingTypes extends Settings,
-    TSettings extends MakeSettingTypesMap<TSettingTypes>,
-    TKey extends keyof TSettings
+    TSettings extends Settings,
+    TSettingTypes extends MakeSettingTypesMap<TSettings>,
+    TKey extends TupleIndices<TSettings>
 > {
-    private _updateFunc: UpdateFunc<TReturnValue, TSettingTypes, TSettings, TKey>;
+    private _updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
     private _loadingDependencies: Set<(loading: boolean, hasDependencies: boolean) => void> = new Set();
     private _isLoading = false;
 
-    private _contextDelegate: SettingsContextDelegate<TSettingTypes, any, TSettings, TKey, any>;
+    private _contextDelegate: SettingsContextDelegate<TSettings, any, TSettingTypes, TKey, any>;
 
-    private _makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void;
+    private _makeLocalSettingGetter: <K extends TKey>(
+        key: K,
+        handler: (value: TSettingTypes[TSettings[K]]) => void
+    ) => void;
     private _makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
         key: K,
         handler: (value: GlobalSettings[K]) => void
     ) => void;
     private _cachedSettingsMap: Map<string, any> = new Map();
     private _cachedGlobalSettingsMap: Map<string, any> = new Map();
-    private _cachedDependenciesMap: Map<Dependency<any, TSettingTypes, TSettings, any>, any> = new Map();
+    private _cachedDependenciesMap: Map<Dependency<any, TSettings, TSettingTypes, any>, any> = new Map();
     private _cachedValue: Awaited<TReturnValue> | null = null;
     private _abortController: AbortController | null = null;
     private _isInitialized = false;
@@ -47,9 +50,9 @@ export class Dependency<
     private _numChildDependencies = 0;
 
     constructor(
-        contextDelegate: SettingsContextDelegate<TSettingTypes, TSettings, any, TKey, any>,
-        updateFunc: UpdateFunc<TReturnValue, TSettingTypes, TSettings, TKey>,
-        makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettings[K]) => void) => void,
+        contextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, any, TKey, any>,
+        updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>,
+        makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[TSettings[K]]) => void) => void,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
             key: K,
             handler: (value: GlobalSettings[K]) => void
@@ -100,7 +103,7 @@ export class Dependency<
         };
     }
 
-    private getLocalSetting<K extends TKey>(settingName: K): TSettings[K] {
+    private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[TSettings[K]] {
         if (!this._isInitialized) {
             this._numParentDependencies++;
         }
@@ -161,7 +164,7 @@ export class Dependency<
         return this._cachedGlobalSettingsMap.get(settingName as string);
     }
 
-    private getHelperDependency<TDep>(dep: Dependency<TDep, TSettingTypes, TSettings, TKey>): Awaited<TDep> | null {
+    private getHelperDependency<TDep>(dep: Dependency<TDep, TSettings, TSettingTypes, TKey>): Awaited<TDep> | null {
         if (!this._isInitialized) {
             this._numParentDependencies++;
         }

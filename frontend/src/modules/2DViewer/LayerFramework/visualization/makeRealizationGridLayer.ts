@@ -1,4 +1,4 @@
-import { SettingType } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -19,7 +19,7 @@ export function makeRealizationGridLayer({
     }
 
     const { gridSurfaceData, gridParameterData } = data;
-    const showGridLines = getSetting(SettingType.SHOW_GRID_LINES);
+    const showGridLines = getSetting(Setting.SHOW_GRID_LINES);
 
     const offsetXyz = [gridSurfaceData.origin_utm_x, gridSurfaceData.origin_utm_y, 0];
     const pointsNumberArray = gridSurfaceData.pointsFloat32Arr.map((val, i) => val + offsetXyz[i % 3]);
