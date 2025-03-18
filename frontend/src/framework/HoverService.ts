@@ -100,6 +100,10 @@ export class HoverService {
         this._lastHoveredModule = moduleInstanceId;
     }
 
+    getLastHoveredModule(): string | null {
+        return this._lastHoveredModule;
+    }
+
     // ? Currently, the md and wellbore hovers are "cleared" when the module implementer sets them to null.
     // ? Should there be a more explicit way to stop hovering?
     // endHoverEffect(): void {

@@ -40,13 +40,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const [readoutItems, setReadoutItems] = React.useState<ReadoutItem[]>([]);
 
     // Hover synchronization
-    const [hoverIsLocal, setHoverIsLocal] = React.useState<boolean>(false);
-    const [hoveredMd, setHoveredMd] = useHoverValue(HoverTopic.MD, props.hoverService, moduleInstanceId);
-    const [hoveredWellbore, setHoveredWellbore] = useHoverValue(
-        HoverTopic.WELLBORE,
-        props.hoverService,
-        moduleInstanceId
-    );
+    const hoverIsLocal = props.hoverService.getLastHoveredModule() === moduleInstanceId;
     const [hoveredMd, setHoveredMd] = useHover(HoverTopic.MD, props.hoverService, moduleInstanceId);
     const [hoveredWellbore, setHoveredWellbore] = useHover(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
 
@@ -62,8 +56,6 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         function publishHoverEvent(md: number | null): void {
             setHoveredWellbore(props.wellboreHeaderUuid);
             setHoveredMd(md);
-            // ? Should we instead have a "hoverService.getCurrentlyHoveredModule" method for things like this?
-            setHoverIsLocal(md != null);
         },
         [props.wellboreHeaderUuid, setHoveredMd, setHoveredWellbore]
     );
