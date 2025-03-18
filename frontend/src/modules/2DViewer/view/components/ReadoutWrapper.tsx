@@ -1,13 +1,18 @@
 import React from "react";
 
 import type { Layer as DeckGlLayer } from "@deck.gl/core";
+import type { HoverService } from "@framework/HoverService";
+import { HoverTopic, usePublishHoverValue } from "@framework/HoverService";
 import { SubsurfaceViewerWithCameraState } from "@modules/_shared/components/SubsurfaceViewerWithCameraState";
+import { getHoverTopicValuesInEvent } from "@modules/_shared/utils/subsurfaceViewerLayers";
 import type { BoundingBox2D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsType } from "@webviz/subsurface-viewer";
 
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
 
 export type ReadooutWrapperProps = {
+    hoverService: HoverService;
+    instanceId: string;
     views: ViewsType;
     viewportAnnotations: React.ReactNode[];
     layers: DeckGlLayer[];
@@ -21,12 +26,22 @@ export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
     const [triggerHomeCounter, setTriggerHomeCounter] = React.useState<number>(0);
     const [layerPickingInfo, setLayerPickingInfo] = React.useState<LayerPickInfo[]>([]);
 
+    const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS, props.hoverService, props.instanceId);
+    const setHoveredWellbore = usePublishHoverValue(HoverTopic.WELLBORE, props.hoverService, props.instanceId);
+    const setHoveredMd = usePublishHoverValue(HoverTopic.MD, props.hoverService, props.instanceId);
+
     function handleFitInViewClick() {
         setTriggerHomeCounter((prev) => prev + 1);
     }
 
     function handleMouseHover(event: MapMouseEvent): void {
         setLayerPickingInfo(event.infos);
+
+        const hoverData = getHoverTopicValuesInEvent(event, HoverTopic.MD, HoverTopic.WELLBORE, HoverTopic.WORLD_POS);
+
+        setHoveredWorldPos(hoverData[HoverTopic.WORLD_POS]);
+        setHoveredWellbore(hoverData[HoverTopic.WELLBORE]);
+        setHoveredMd(hoverData[HoverTopic.MD]);
     }
 
     function handleMouseEvent(event: MapMouseEvent): void {

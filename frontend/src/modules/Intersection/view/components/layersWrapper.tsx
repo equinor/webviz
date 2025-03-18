@@ -9,6 +9,7 @@ import type {
     SurfaceLine,
 } from "@equinor/esv-intersection";
 import { getPicksData, getSeismicOptions } from "@equinor/esv-intersection";
+import type { HoverService } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
 import { IntersectionType } from "@framework/types/intersection";
@@ -43,6 +44,7 @@ export type LayersWrapperProps = {
     intersectionExtensionLength: number;
     intersectionType: IntersectionType;
     workbenchServices: WorkbenchServices;
+    hoverService: HoverService;
     viewContext: ViewContext<Interfaces>;
     wellboreHeaderUuid: string | null;
     wellboreHeaderDepthReferencePoint: string | null;
@@ -439,6 +441,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                 bounds={bounds}
                 viewport={viewport}
                 workbenchServices={props.workbenchServices}
+                hoverService={props.hoverService}
                 viewContext={props.viewContext}
                 wellboreHeaderUuid={props.wellboreHeaderUuid}
             />

@@ -1,6 +1,8 @@
 import React from "react";
 
 import { View as DeckGlView } from "@deck.gl/core";
+import { GeoJsonLayer } from "@deck.gl/layers";
+import { type HoverService, HoverTopic, useHoverValue } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
@@ -18,6 +20,9 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
 import type { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
+import type { Feature } from "geojson";
+import _ from "lodash";
+
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
 import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
@@ -26,9 +31,45 @@ import { recursivelyMakeViewsAndLayers } from "../utils/makeViewsAndLayers";
 
 export type LayersWrapperProps = {
     layerManager: LayerManager;
+    hoverService: HoverService;
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
 };
+
+const HIGHLIGHT_LAYER_ID = "2d-hover-highlights";
+
+function useHighlightLayer(
+    boundingBox: BoundingBox2D | undefined,
+    hoverService: HoverService,
+    instanceId: string,
+): GeoJsonLayer {
+    const { x, y } = useHoverValue(HoverTopic.WORLD_POS, hoverService, instanceId) ?? {};
+
+    const highlightFeatures: Feature[] = [];
+
+    const xInRange = boundingBox && x && _.inRange(x, boundingBox[0], boundingBox[2]);
+    const yInRange = boundingBox && y && _.inRange(y, boundingBox[1], boundingBox[3]);
+
+    if (xInRange && yInRange) {
+        highlightFeatures.push({
+            type: "Feature",
+            properties: {},
+            geometry: { type: "Point", coordinates: [x, y] },
+        });
+    }
+
+    return new GeoJsonLayer({
+        id: HIGHLIGHT_LAYER_ID,
+        pointRadiusMinPixels: 5,
+        pointRadiusMaxPixels: 5,
+        getFillColor: [255, 0, 0, 170],
+        data: {
+            type: "FeatureCollection",
+            unit: "m",
+            features: highlightFeatures,
+        },
+    });
+}
 
 export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const [prevBoundingBox, setPrevBoundingBox] = React.useState<BoundingBox | null>(null);
@@ -75,7 +116,12 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             id: view.id,
             name: view.name,
             isSync: true,
-            layerIds: [...globalLayerIds, ...view.layers.map((layer) => layer.layer.id), "placeholder"],
+            layerIds: [
+                ...globalLayerIds,
+                ...view.layers.map((layer) => layer.layer.id),
+                HIGHLIGHT_LAYER_ID,
+                "placeholder",
+            ],
         });
         viewerLayers.push(...view.layers);
 
@@ -137,14 +183,19 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
         bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
     }
 
+    const highlightLayer = useHighlightLayer(bounds, props.hoverService, props.viewContext.getInstanceIdString());
+
     const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);
     layers.push(new PlaceholderLayer({ id: "placeholder" }));
+    layers.push(highlightLayer);
 
     return (
         <div ref={mainDivRef} className="relative w-full h-full flex flex-col">
             <PendingWrapper isPending={numLoadingLayers > 0}>
                 <div style={{ height: mainDivSize.height, width: mainDivSize.width }}>
                     <ReadoutWrapper
+                        instanceId={props.viewContext.getInstanceIdString()}
+                        hoverService={props.hoverService}
                         views={views}
                         viewportAnnotations={viewportAnnotations}
                         layers={layers}
