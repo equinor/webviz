@@ -1,11 +1,10 @@
 import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import type { HoverService} from "@framework/HoverService";
-import { HoverTopic, useHoverValue } from "@framework/HoverService";
+import type { HoverService } from "@framework/HoverService";
+import { HoverTopic, useHover } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { Viewport } from "@framework/types/viewport";
-
 import type { Interfaces } from "@modules/Intersection/interfaces";
 import type { EsvIntersectionReadoutEvent, LayerItem } from "@modules/_shared/components/EsvIntersection";
 import { EsvIntersection } from "@modules/_shared/components/EsvIntersection";
@@ -48,6 +47,9 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
         props.hoverService,
         moduleInstanceId
     );
+    const [hoveredMd, setHoveredMd] = useHover(HoverTopic.MD, props.hoverService, moduleInstanceId);
+    const [hoveredWellbore, setHoveredWellbore] = useHover(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
+
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
@@ -75,7 +77,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
             publishHoverEvent(md ?? null);
             setReadoutItems(event.readoutItems.map(formatEsvLayout));
         },
-        [formatEsvLayout, publishHoverEvent]
+        [formatEsvLayout, publishHoverEvent],
     );
 
     const highlightItems: HighlightItem[] = [];

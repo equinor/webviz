@@ -114,19 +114,36 @@ export function useHoverValue<T extends keyof HoverData>(
     topic: T,
     hoverService: HoverService,
     moduleInstanceId: string,
-): [HoverData[T], (v: HoverData[T]) => void] {
+) {
     const latestValue = React.useSyncExternalStore<HoverData[T]>(
         hoverService.getPublishSubscribeDelegate().makeSubscriberFunction(topic),
         hoverService.makeSnapshotGetter(topic, moduleInstanceId),
     );
 
-    const updateValue = React.useCallback(
+    return latestValue;
+}
+
+export function usePublishHoverValue<T extends keyof HoverData>(
+    topic: T,
+    hoverService: HoverService,
+    moduleInstanceId: string,
+): (v: HoverData[T]) => void {
+    return React.useCallback(
         function updateHoverValue(newValue: HoverData[T]) {
             hoverService.setLastHoveredModule(moduleInstanceId);
             hoverService.updateHoverValue(topic, newValue);
         },
         [hoverService, moduleInstanceId, topic],
     );
+}
+
+export function useHover<T extends keyof HoverData>(
+    topic: T,
+    hoverService: HoverService,
+    moduleInstanceId: string,
+): [HoverData[T], (v: HoverData[T]) => void] {
+    const latestValue = useHoverValue(topic, hoverService, moduleInstanceId);
+    const updateValue = usePublishHoverValue(topic, hoverService, moduleInstanceId);
 
     return [latestValue, updateValue];
 }

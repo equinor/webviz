@@ -3,7 +3,7 @@ import React from "react";
 import type { WellboreHeader_api, WellboreLogCurveData_api, WellborePick_api, WellboreTrajectory_api } from "@api";
 import type { colorTablesObj } from "@emerson-eps/color-tables";
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { HoverTopic, useHoverValue } from "@framework/HoverService";
+import { HoverTopic, useHover } from "@framework/HoverService";
 import type { ModuleViewProps } from "@framework/Module";
 import { SyncSettingKey } from "@framework/SyncSettings";
 import type { WorkbenchServices } from "@framework/WorkbenchServices";
@@ -157,8 +157,8 @@ export function SubsurfaceLogViewerWrapper(props: SubsurfaceLogViewerWrapperProp
     const [wellLogController, setWellLogController] = React.useState<WellLogController | null>(null);
     const [wellLogReadout, setWellLogReadout] = React.useState<Info[]>([]);
 
-    const [hoveredMd, setHoveredMd] = useHoverValue(HoverTopic.MD, hoverService, moduleInstanceId);
-    const [hoveredWellbore, setHoveredWellbore] = useHoverValue(HoverTopic.WELLBORE, hoverService, moduleInstanceId);
+    const [hoveredMd, setHoveredMd] = useHover(HoverTopic.MD, hoverService, moduleInstanceId);
+    const [hoveredWellbore, setHoveredWellbore] = useHover(HoverTopic.WELLBORE, hoverService, moduleInstanceId);
 
     const isHoveringThisWellbore = hoveredWellbore === wellboreUuid && hoveredMd != null;
 
