@@ -33,7 +33,15 @@ export type Data = {
     gridParameterData: GridMappedProperty_trans;
 };
 
-export class RealizationGridLayer implements CustomDataLayerImplementation<RealizationGridSettings, Data> {
+type StoredData = {
+    availableGridDimensions: {
+        i: number;
+        j: number;
+        k: number;
+    };
+};
+
+export class RealizationGridLayer implements CustomDataLayerImplementation<RealizationGridSettings, Data, StoredData> {
     settings = realizationGridSettings;
 
     getDefaultSettingsValues() {
@@ -71,10 +79,10 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
 
     fetchData({
         getSetting,
-        getAvailableSettingValues,
+        getStoredData,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<RealizationGridSettings, Data>): Promise<{
+    }: FetchDataParams<RealizationGridSettings, Data, StoredData>): Promise<{
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
     }> {
@@ -86,15 +94,12 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         if (timeOrInterval === "NO_TIME") {
             timeOrInterval = null;
         }
-        let availableDimensions = getAvailableSettingValues(Setting.GRID_LAYER_K);
-        if (!availableDimensions.length || availableDimensions[0] === null) {
-            availableDimensions = [0, 0];
-        }
+        const availableDimensions = getStoredData("availableGridDimensions");
         const layerIndex = getSetting(Setting.GRID_LAYER_K);
         const iMin = 0;
-        const iMax = availableDimensions[0] || 0;
+        const iMax = availableDimensions?.i ?? 0;
         const jMin = 0;
-        const jMax = availableDimensions[1] || 0;
+        const jMax = availableDimensions?.j ?? 0;
         const kMin = layerIndex || 0;
         const kMax = layerIndex || 0;
         const queryKey = [
@@ -173,8 +178,9 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
     defineDependencies({
         helperDependency,
         availableSettingsUpdater,
+        storedDataUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationGridSettings>) {
+    }: DefineDependenciesArgs<RealizationGridSettings, StoredData>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -288,6 +294,26 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
             ];
 
             return availableTimeOrIntervals;
+        });
+
+        storedDataUpdater("availableGridDimensions", ({ getHelperDependency }) => {
+            const data = getHelperDependency(realizationGridDataDep);
+
+            if (!data) {
+                return {
+                    i: 0,
+                    j: 0,
+                    k: 0,
+                };
+            }
+
+            const gridDimensions = data[0].dimensions;
+
+            return {
+                i: gridDimensions.i_count,
+                j: gridDimensions.j_count,
+                k: gridDimensions.k_count,
+            };
         });
     }
 }

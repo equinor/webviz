@@ -131,11 +131,11 @@ export class DataLayer<
             return;
         }
 
-            this._cancellationPending = true;
-            this.maybeCancelQuery().then(() => {
-                this.maybeRefetchData();
-                this._prevSettings = this._settingsContextDelegate.getValues() as TSettingTypes;
-            });
+        this._cancellationPending = true;
+        this.maybeCancelQuery().then(() => {
+            this.maybeRefetchData();
+            this._prevSettings = this._settingsContextDelegate.getValues() as TSettingTypes;
+        });
     }
 
     registerQueryKey(queryKey: unknown[]): void {
