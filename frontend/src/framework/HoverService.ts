@@ -12,6 +12,7 @@ export enum HoverTopic {
     ZONE = "hover.zone",
     REGION = "hover.region",
     FACIES = "hover.facies",
+    WORLD_POS = "hover.world_pos",
 }
 
 export type HoverData = {
@@ -22,6 +23,7 @@ export type HoverData = {
     [HoverTopic.ZONE]: string | null;
     [HoverTopic.REGION]: string | null;
     [HoverTopic.FACIES]: string | null;
+    [HoverTopic.WORLD_POS]: { x?: number; y?: number; z?: number } | null;
 };
 
 // Possible future functionality

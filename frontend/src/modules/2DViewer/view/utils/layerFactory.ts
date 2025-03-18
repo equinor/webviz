@@ -250,8 +250,8 @@ function wellTrajectoryToGeojson(
     };
 
     let color = [100, 100, 100];
-    let lineWidth = 2;
-    let wellHeadSize = 1;
+    let lineWidth = 200;
+    let wellHeadSize = 20;
     if (wellTrajectory.wellboreUuid === selectedWellboreUuid) {
         color = [255, 0, 0];
         lineWidth = 5;
