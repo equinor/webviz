@@ -4,20 +4,29 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Link, Warning } from "@mui/icons-material";
 
-import { OverriddenValueProviderType, SettingManager, SettingTopic } from "./Setting";
+import { OverriddenValueProviderType, SettingManager, SettingTopic } from "./SettingManager";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { SettingComponentProps as SettingComponentPropsInterface } from "../../interfaces";
+import { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 
-export type SettingComponentProps<TValue> = {
-    setting: SettingManager<TValue>;
+export type SettingComponentProps<
+    TSetting extends Setting,
+    TValue extends SettingTypes[TSetting],
+    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting]
+> = {
+    setting: SettingManager<TSetting, TValue, TCategory>;
     manager: DataLayerManager;
     sharedSetting: boolean;
 };
 
-export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): React.ReactNode {
-    const componentRef = React.useRef<(props: SettingComponentPropsInterface<TValue>) => React.ReactNode>(
+export function SettingComponent<
+    TSetting extends Setting,
+    TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
+    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting]
+>(props: SettingComponentProps<TSetting, TValue, TCategory>): React.ReactNode {
+    const componentRef = React.useRef<(props: SettingComponentPropsInterface<TValue, TCategory>) => React.ReactNode>(
         props.setting.makeComponent()
     );
     const value = usePublishSubscribeTopicValue(props.setting, SettingTopic.VALUE_CHANGED);
@@ -42,7 +51,7 @@ export function SettingComponent<TValue>(props: SettingComponentProps<TValue>): 
         props.setting.setValue(newValue);
     }
 
-    if (props.sharedSetting && availableValues.length === 0 && isInitialized) {
+    if (props.sharedSetting && isInitialized) {
         return (
             <React.Fragment key={props.setting.getId()}>
                 <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>

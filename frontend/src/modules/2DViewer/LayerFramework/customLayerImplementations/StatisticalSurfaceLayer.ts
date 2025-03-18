@@ -13,7 +13,7 @@ import {
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
 import { SensitivityNameCasePair } from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
@@ -59,7 +59,9 @@ export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<St
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {
+    makeValueRange({
+        getData,
+    }: DataLayerInformationAccessors<StatisticalSurfaceSettings, Data>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -73,7 +75,7 @@ export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<St
         availableSettingsUpdater,
         workbenchSession,
         queryClient,
-    }: DefineDependenciesArgs<StatisticalSurfaceSettings, SettingsWithTypes>) {
+    }: DefineDependenciesArgs<StatisticalSurfaceSettings>) {
         availableSettingsUpdater(Setting.STATISTIC_FUNCTION, () => Object.values(SurfaceStatisticFunction_api));
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
@@ -199,7 +201,7 @@ export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<St
         getWorkbenchSession,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<SettingsWithTypes, Data>): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    }: FetchDataParams<StatisticalSurfaceSettings, Data>): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 

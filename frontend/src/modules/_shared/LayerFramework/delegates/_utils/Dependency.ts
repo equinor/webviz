@@ -4,8 +4,8 @@ import { isEqual } from "lodash";
 
 import { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
 import { SettingTopic } from "../../framework/SettingManager/SettingManager";
-import { Settings, TupleIndices, UpdateFunc } from "../../interfaces";
-import { MakeSettingTypesMap } from "../../settings/settingsTypes";
+import { Settings, SettingsKeysFromTuple, UpdateFunc } from "../../interfaces";
+import { MakeSettingTypesMap } from "../../settings/settingsDefinitions";
 import { SettingsContextDelegate } from "../SettingsContextDelegate";
 
 /*
@@ -23,7 +23,7 @@ export class Dependency<
     TReturnValue,
     TSettings extends Settings,
     TSettingTypes extends MakeSettingTypesMap<TSettings>,
-    TKey extends TupleIndices<TSettings>
+    TKey extends SettingsKeysFromTuple<TSettings>
 > {
     private _updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>;
     private _dependencies: Set<(value: Awaited<TReturnValue> | null) => void> = new Set();
@@ -32,10 +32,7 @@ export class Dependency<
 
     private _contextDelegate: SettingsContextDelegate<TSettings, any, TSettingTypes, TKey, any>;
 
-    private _makeLocalSettingGetter: <K extends TKey>(
-        key: K,
-        handler: (value: TSettingTypes[TSettings[K]]) => void
-    ) => void;
+    private _makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void;
     private _makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
         key: K,
         handler: (value: GlobalSettings[K]) => void
@@ -52,7 +49,7 @@ export class Dependency<
     constructor(
         contextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, any, TKey, any>,
         updateFunc: UpdateFunc<TReturnValue, TSettings, TSettingTypes, TKey>,
-        makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[TSettings[K]]) => void) => void,
+        makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
             key: K,
             handler: (value: GlobalSettings[K]) => void
@@ -103,7 +100,7 @@ export class Dependency<
         };
     }
 
-    private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[TSettings[K]] {
+    private getLocalSetting<K extends TKey>(settingName: K): TSettingTypes[K] {
         if (!this._isInitialized) {
             this._numParentDependencies++;
         }

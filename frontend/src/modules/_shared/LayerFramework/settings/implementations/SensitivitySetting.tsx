@@ -2,8 +2,12 @@ import React from "react";
 
 import { Dropdown } from "@lib/components/Dropdown";
 
-import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
-import { SettingCategory } from "../settingsTypes";
+import {
+    CustomSettingImplementation,
+    MakeAvailableValuesTypeBasedOnCategory,
+    SettingComponentProps,
+} from "../../interfaces";
+import { SettingCategory } from "../settingsDefinitions";
 
 export type SensitivityNameCasePair = {
     sensitivityName: string;
@@ -11,8 +15,11 @@ export type SensitivityNameCasePair = {
 };
 
 type ValueType = SensitivityNameCasePair | null;
-export class SensitivitySetting implements CustomSettingImplementation<ValueType, SettingCategory.OPTION> {
-    isValueValid(availableValues: AvailableValuesType<ValueType, SettingCategory.OPTION>, value: ValueType): boolean {
+export class SensitivitySetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
+    isValueValid(
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>,
+        value: ValueType
+    ): boolean {
         if (availableValues.length === 0) {
             return true;
         }
@@ -28,8 +35,8 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
             );
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.OPTION>) => React.ReactNode {
-        return function Sensitivity(props: SettingComponentProps<ValueType, SettingCategory.OPTION>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
+        return function Sensitivity(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
             const availableSensitivityNames: string[] = [
                 ...Array.from(new Set(props.availableValues.map((sensitivity) => sensitivity.sensitivityName))),
             ];

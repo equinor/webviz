@@ -12,7 +12,7 @@ import {
     FetchDataParams,
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
 
@@ -60,7 +60,7 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {
+    makeValueRange({ getData }: DataLayerInformationAccessors<RealizationGridSettings, Data>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -74,7 +74,7 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         getAvailableSettingValues,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<SettingsWithTypes, Data>): Promise<{
+    }: FetchDataParams<RealizationGridSettings, Data>): Promise<{
         gridSurfaceData: GridSurface_trans;
         gridParameterData: GridMappedProperty_trans;
     }> {
@@ -88,7 +88,7 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         }
         let availableDimensions = getAvailableSettingValues(Setting.GRID_LAYER_K);
         if (!availableDimensions.length || availableDimensions[0] === null) {
-            availableDimensions = [0, 0, 0];
+            availableDimensions = [0, 0];
         }
         const layerIndex = getSetting(Setting.GRID_LAYER_K);
         const iMin = 0;
@@ -159,14 +159,14 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         }));
     }
 
-    areCurrentSettingsValid(settings: SettingsWithTypes): boolean {
+    areCurrentSettingsValid({ getSetting }: DataLayerInformationAccessors<RealizationGridSettings, Data>): boolean {
         return (
-            settings[Setting.ENSEMBLE] !== null &&
-            settings[Setting.REALIZATION] !== null &&
-            settings[Setting.GRID_NAME] !== null &&
-            settings[Setting.ATTRIBUTE] !== null &&
-            settings[Setting.GRID_LAYER_K] !== null &&
-            settings[Setting.TIME_OR_INTERVAL] !== null
+            getSetting(Setting.ENSEMBLE) !== null &&
+            getSetting(Setting.REALIZATION) !== null &&
+            getSetting(Setting.GRID_NAME) !== null &&
+            getSetting(Setting.ATTRIBUTE) !== null &&
+            getSetting(Setting.GRID_LAYER_K) !== null &&
+            getSetting(Setting.TIME_OR_INTERVAL) !== null
         );
     }
 
@@ -174,7 +174,7 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
         helperDependency,
         availableSettingsUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationGridSettings, SettingsWithTypes>) {
+    }: DefineDependenciesArgs<RealizationGridSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -253,15 +253,13 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
             const data = getHelperDependency(realizationGridDataDep);
 
             if (!gridName || !data) {
-                return [];
+                return [0, 0];
             }
 
             const gridDimensions = data.find((gridModel) => gridModel.grid_name === gridName)?.dimensions ?? null;
-            const availableGridLayers: number[] = [];
+            const availableGridLayers: [number, number] = [0, 0];
             if (gridDimensions) {
-                availableGridLayers.push(gridDimensions.i_count);
-                availableGridLayers.push(gridDimensions.j_count);
-                availableGridLayers.push(gridDimensions.k_count);
+                availableGridLayers[1] = gridDimensions.k_count;
             }
 
             return availableGridLayers;

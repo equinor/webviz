@@ -4,13 +4,11 @@ import { isDevMode } from "@lib/utils/devMode";
 import { PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { QueryClient, isCancelledError } from "@tanstack/react-query";
 
-
-
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegate, SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { CustomDataLayerImplementation, DataLayerInformationAccessors, Item, LayerColoringType, SerializedLayer, SerializedType, Settings, StoredData, TupleIndices } from "../../interfaces";
-import { MakeSettingTypesMap } from "../../settings/settingsTypes";
+import { CustomDataLayerImplementation, DataLayerInformationAccessors, Item, LayerColoringType, SerializedLayer, SerializedType, Settings, SettingsKeysFromTuple, StoredData } from "../../interfaces";
+import { MakeSettingTypesMap } from "../../settings/settingsDefinitions";
 import { DataLayerManager, LayerManagerTopic, log } from "../DataLayerManager/DataLayerManager";
 import { makeSettings } from "../utils/makeSettings";
 import { isEqual } from "lodash";
@@ -40,7 +38,7 @@ export type DataLayerParams<
     TData,
     TStoredData extends StoredData = Record<string, never>,
     TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    TSettingKey extends TupleIndices<TSettings> = TupleIndices<TSettings>
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
 > = {
     type: string;
     layerManager: DataLayerManager;
@@ -58,7 +56,7 @@ export class DataLayer<
     const TData,
     const TStoredData extends StoredData = Record<string, never>,
     const TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    const TSettingKey extends TupleIndices<TSettings> = TupleIndices<TSettings>
+    const TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
 > implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
 {
     private _type: string;
@@ -293,7 +291,7 @@ export class DataLayer<
         }
     }
 
-    serializeState(): SerializedLayer<TSettingTypes> {
+    serializeState(): SerializedLayer<TSettings, TSettingKey> {
         const itemState = this.getItemDelegate().serializeState();
         return {
             ...itemState,
@@ -303,7 +301,7 @@ export class DataLayer<
         };
     }
 
-    deserializeState(serializedLayer: SerializedLayer<TSettingTypes>): void {
+    deserializeState(serializedLayer: SerializedLayer<TSettings, TSettingKey>): void {
         this.getItemDelegate().deserializeState(serializedLayer);
         this._settingsContextDelegate.deserializeSettings(serializedLayer.settings);
     }

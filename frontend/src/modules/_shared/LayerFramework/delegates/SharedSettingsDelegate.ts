@@ -3,19 +3,21 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { DataLayer } from "../framework/DataLayer/DataLayer";
 import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import { Group } from "../framework/Group/Group";
-import { SettingTopic } from "../framework/SettingManager/Setting";
-import { AvailableValuesType, Item } from "../interfaces";
-import { MakeSettingTuple, SettingTypes } from "../settings/settingsTypes";
+import { SettingManager, SettingTopic } from "../framework/SettingManager/SettingManager";
+import { AvailableValuesType, Item, Settings, SettingsKeysFromTuple } from "../interfaces";
+import { SettingTypes, settingCategoryAvailableValuesIntersectionReducerMap } from "../settings/settingsDefinitions";
 
 export class SharedSettingsDelegate<
-    TSettingTypes extends readonly (keyof SettingTypes)[],
-    TSettings extends MakeSettingTuple<TSettingTypes> = MakeSettingTuple<TSettingTypes>
+    TSettings extends Settings,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
 > {
     private _parentItem: Item;
-    private _wrappedSettings: TSettings;
+    private _wrappedSettings: { [K in TSettingKey]: SettingManager<K, SettingTypes[K]> } = {} as {
+        [K in TSettingKey]: SettingManager<K, SettingTypes[K]>;
+    };
     private _unsubscribeHandler: UnsubscribeHandlerDelegate = new UnsubscribeHandlerDelegate();
 
-    constructor(wrappedSettings: TSettings, parentItem: Item) {
+    constructor(parentItem: Item, wrappedSettings: { [K in TSettingKey]: SettingManager<K> }) {
         this._wrappedSettings = wrappedSettings;
         this._parentItem = parentItem;
 
@@ -24,12 +26,14 @@ export class SharedSettingsDelegate<
             throw new Error("SharedSettingDelegate must have a parent item with a layer manager.");
         }
 
-        for (const setting of wrappedSettings) {
+        for (const key in wrappedSettings) {
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "setting",
-                setting.getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
-                    this.publishValueChange();
-                })
+                wrappedSettings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(
+                    () => {
+                        this.publishValueChange();
+                    }
+                )
             );
         }
 
@@ -57,7 +61,7 @@ export class SharedSettingsDelegate<
         );
     }
 
-    getWrappedSettings(): TSettings {
+    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K, SettingTypes[K]> } {
         return this._wrappedSettings;
     }
 
@@ -79,40 +83,41 @@ export class SharedSettingsDelegate<
         }
 
         const layers = parentGroup.getDescendantItems((item) => item instanceof DataLayer) as DataLayer<any, any>[];
-        const availableValuesMap: { [K in TSettingTypes[number]]: AvailableValuesType<SettingTypes[K]> } = {} as {
-            [K in TSettingTypes[number]]: AvailableValuesType<SettingTypes[K]>;
+        const availableValuesMap: { [K in TSettingKey]: AvailableValuesType<K> } = {} as {
+            [K in TSettingKey]: AvailableValuesType<K>;
         };
-        const indices: { [K in TSettingTypes[number]]: number } = {} as { [K in TSettingTypes[number]]: number };
+        const indices: { [K in TSettingKey]: number } = {} as { [K in TSettings[number]]: number };
 
         for (const item of layers) {
-            for (const wrappedSetting of this._wrappedSettings) {
-                const index = indices[wrappedSetting.getType() as TSettingTypes[number]] ?? 0;
+            for (const key in this._wrappedSettings) {
+                const wrappedSetting = this._wrappedSettings[key];
+                const category = wrappedSetting.getCategory();
+                const index = indices[key] ?? 0;
                 const setting = item.getSettingsContextDelegate().getSettings()[wrappedSetting.getType()];
                 if (setting) {
                     if (setting.isLoading()) {
-                        this._wrappedSettings[index].setLoading(true);
+                        wrappedSetting.setLoading(true);
                         return;
                     }
-                    if (index === 0) {
-                        availableValuesMap[wrappedSetting.getType() as TSettingTypes[number]] =
-                            setting.getAvailableValues() as AvailableValuesType<SettingTypes[TSettingTypes[number]]>;
-                    } else {
-                        availableValuesMap[setting.getType() as TSettingTypes[number]] = availableValuesMap[
-                            setting.getType() as TSettingTypes[number]
-                        ].filter((value) => setting.getAvailableValues().includes(value)) as AvailableValuesType<
-                            SettingTypes[TSettingTypes[number]]
-                        >;
+
+                    const reducerDefinition = settingCategoryAvailableValuesIntersectionReducerMap[category];
+                    if (reducerDefinition) {
+                        const { reducer, startingValue } = reducerDefinition;
+                        availableValuesMap[key] = reducer(
+                            startingValue,
+                            setting.getAvailableValues(),
+                            index
+                        ) as AvailableValuesType<typeof key>;
                     }
-                    indices[wrappedSetting.getType() as TSettingTypes[number]] = index + 1;
+                    indices[key] = index + 1;
                 }
             }
         }
 
-        for (const wrappedSetting of this._wrappedSettings) {
+        for (const key in this._wrappedSettings) {
+            const wrappedSetting = this._wrappedSettings[key];
             wrappedSetting.setLoading(false);
-            wrappedSetting.setAvailableValues(
-                availableValuesMap[wrappedSetting.getType() as TSettingTypes[number]] ?? []
-            );
+            wrappedSetting.setAvailableValues(availableValuesMap[key] ?? []);
             this.publishValueChange();
         }
     }

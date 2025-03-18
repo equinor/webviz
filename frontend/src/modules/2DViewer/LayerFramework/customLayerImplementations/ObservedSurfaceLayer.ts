@@ -11,7 +11,7 @@ import {
     FetchDataParams,
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
@@ -53,7 +53,7 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {
+    makeValueRange({ getData }: DataLayerInformationAccessors<ObservedSurfaceSettings, Data>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -67,7 +67,7 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
         availableSettingsUpdater,
         workbenchSession,
         queryClient,
-    }: DefineDependenciesArgs<ObservedSurfaceSettings, SettingsWithTypes>) {
+    }: DefineDependenciesArgs<ObservedSurfaceSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembleSet = workbenchSession.getEnsembleSet();
@@ -164,7 +164,11 @@ export class ObservedSurfaceLayer implements CustomDataLayerImplementation<Obser
         });
     }
 
-    fetchData({ getSetting, registerQueryKey, queryClient }: FetchDataParams<SettingsWithTypes, Data>): Promise<Data> {
+    fetchData({
+        getSetting,
+        registerQueryKey,
+        queryClient,
+    }: FetchDataParams<ObservedSurfaceSettings, Data>): Promise<Data> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 

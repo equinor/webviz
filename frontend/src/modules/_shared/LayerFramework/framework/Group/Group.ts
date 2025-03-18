@@ -8,10 +8,12 @@ import {
     SerializedGroup,
     SerializedType,
     Settings,
+    SettingsKeysFromTuple,
     includesSettings,
 } from "../../interfaces";
-import { MakeSettingTuple, MakeSettingTypesMap } from "../../settings/settingsTypes";
+import { MakeSettingTypesMap, SettingTypes } from "../../settings/settingsDefinitions";
 import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
+import { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export type GroupParams<
@@ -27,29 +29,28 @@ export type GroupParams<
 };
 
 export class Group<
-    TSettingTypes extends Settings,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
+    TSettings extends Settings = [],
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
 > implements ItemGroup
 {
     private _itemDelegate: ItemDelegate;
     private _groupDelegate: GroupDelegate;
     private _type: string;
-    private _sharedSettingsDelegate: SharedSettingsDelegate<TSettingTypes> | null = null;
+    private _sharedSettingsDelegate: SharedSettingsDelegate<TSettings, TSettingKey> | null = null;
 
-    constructor(params: GroupParams<TSettingTypes, TSettings>) {
+    constructor(params: GroupParams<TSettings, TSettingTypes>) {
         const { layerManager, customGroupImplementation, type } = params;
         this._groupDelegate = new GroupDelegate(this);
         this._groupDelegate.setColor(layerManager.makeGroupColor());
         this._itemDelegate = new ItemDelegate(customGroupImplementation.getDefaultName(), 1, layerManager);
         if (includesSettings(customGroupImplementation)) {
-            this._sharedSettingsDelegate = new SharedSettingsDelegate<TSettingTypes>(
-                Object.values(
-                    makeSettings(
-                        customGroupImplementation.settings,
-                        customGroupImplementation.getDefaultSettingsValues()
-                    )
-                ) as MakeSettingTuple<TSettingTypes>,
-                this
+            this._sharedSettingsDelegate = new SharedSettingsDelegate<TSettings, TSettingKey>(
+                this,
+                makeSettings<TSettings, TSettingTypes, TSettingKey>(
+                    customGroupImplementation.settings as unknown as TSettings,
+                    customGroupImplementation.getDefaultSettingsValues() as unknown as TSettingTypes
+                )
             );
         }
         this._type = type;
@@ -63,11 +64,11 @@ export class Group<
         return this._groupDelegate;
     }
 
-    getSharedSettingsDelegate(): SharedSettingsDelegate<TSettingTypes> | null {
+    getSharedSettingsDelegate(): SharedSettingsDelegate<TSettings, TSettingKey> | null {
         return this._sharedSettingsDelegate;
     }
 
-    getWrappedSettings(): MakeSettingTuple<TSettingTypes> {
+    getWrappedSettings(): { [K in TSettingKey]: SettingManager<K, SettingTypes[K]> } {
         if (!this._sharedSettingsDelegate) {
             throw new Error("Group does not have shared settings.");
         }

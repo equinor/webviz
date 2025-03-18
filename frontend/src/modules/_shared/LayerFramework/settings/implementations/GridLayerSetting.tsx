@@ -2,8 +2,12 @@ import React from "react";
 
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
-import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
-import { SettingCategory } from "../settingsTypes";
+import {
+    CustomSettingImplementation,
+    MakeAvailableValuesTypeBasedOnCategory,
+    SettingComponentProps,
+} from "../../interfaces";
+import { SettingCategory } from "../settingsDefinitions";
 
 export enum Direction {
     I,
@@ -33,7 +37,10 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
         }
     }
 
-    isValueValid(availableValues: AvailableValuesType<ValueType, SettingCategory.NUMBER>, value: ValueType): boolean {
+    isValueValid(
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
+        value: ValueType
+    ): boolean {
         if (value === null) {
             return false;
         }
@@ -53,7 +60,7 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
     }
 
     fixupValue(
-        availableValues: AvailableValuesType<ValueType, SettingCategory.NUMBER>,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
         currentValue: ValueType
     ): ValueType {
         if (!availableValues) {

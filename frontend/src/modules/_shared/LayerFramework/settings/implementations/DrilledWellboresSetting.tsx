@@ -5,12 +5,16 @@ import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { Select, SelectOption } from "@lib/components/Select";
 import { Deselect, SelectAll } from "@mui/icons-material";
 
-import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
-import { SettingCategory } from "../settingsTypes";
+import {
+    CustomSettingImplementation,
+    MakeAvailableValuesTypeBasedOnCategory,
+    SettingComponentProps,
+} from "../../interfaces";
+import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = WellboreHeader_api[] | null;
 
-export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType, SettingCategory.OPTION> {
+export class DrilledWellboresSetting implements CustomSettingImplementation<ValueType, SettingCategory.MULTI_OPTION> {
     defaultValue: ValueType = null;
 
     getLabel(): string {
@@ -18,7 +22,7 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
     }
 
     fixupValue(
-        availableValues: AvailableValuesType<ValueType, SettingCategory.OPTION>,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_OPTION>,
         currentValue: ValueType
     ): ValueType {
         if (!currentValue) {
@@ -34,8 +38,8 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
         return matchingValues;
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.OPTION>) => React.ReactNode {
-        return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.OPTION>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_OPTION>) => React.ReactNode {
+        return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.MULTI_OPTION>) {
             const options: SelectOption[] = React.useMemo(
                 () =>
                     props.availableValues.map((ident) => ({

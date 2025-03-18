@@ -13,7 +13,7 @@ import {
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
 import { IntersectionSettingValue } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import {
     PolylineIntersection_trans,
     calcExtendedSimplifiedWellboreTrajectoryInXYPlane,
@@ -36,8 +36,12 @@ type SettingsWithTypes = MakeSettingTypesMap<IntersectionRealizationGridSettings
 
 type Data = PolylineIntersection_trans;
 
+type StoredData = {
+    polyline: number[];
+};
+
 export class IntersectionRealizationGridLayer
-    implements CustomDataLayerImplementation<IntersectionRealizationGridSettings, Data>
+    implements CustomDataLayerImplementation<IntersectionRealizationGridSettings, Data, StoredData>
 {
     settings = intersectionRealizationGridSettings;
 
@@ -65,7 +69,9 @@ export class IntersectionRealizationGridLayer
         return !isEqual(prevSettings, newSettings);
     }
 
-    makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {
+    makeValueRange({
+        getData,
+    }: DataLayerInformationAccessors<IntersectionRealizationGridSettings, Data>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -78,14 +84,16 @@ export class IntersectionRealizationGridLayer
         return null;
     }
 
-    areCurrentSettingsValid(settings: SettingsWithTypes): boolean {
+    areCurrentSettingsValid({
+        getSetting,
+    }: DataLayerInformationAccessors<IntersectionRealizationGridSettings, Data>): boolean {
         return (
-            settings[Setting.INTERSECTION] !== null &&
-            settings[Setting.ENSEMBLE] !== null &&
-            settings[Setting.REALIZATION] !== null &&
-            settings[Setting.GRID_NAME] !== null &&
-            settings[Setting.ATTRIBUTE] !== null &&
-            settings[Setting.TIME_OR_INTERVAL] !== null
+            getSetting(Setting.INTERSECTION) !== null &&
+            getSetting(Setting.ENSEMBLE) !== null &&
+            getSetting(Setting.REALIZATION) !== null &&
+            getSetting(Setting.GRID_NAME) !== null &&
+            getSetting(Setting.ATTRIBUTE) !== null &&
+            getSetting(Setting.TIME_OR_INTERVAL) !== null
         );
     }
 
@@ -94,7 +102,7 @@ export class IntersectionRealizationGridLayer
         availableSettingsUpdater,
         queryClient,
         workbenchSession,
-    }: DefineDependenciesArgs<IntersectionRealizationGridSettings, SettingsWithTypes>) {
+    }: DefineDependenciesArgs<IntersectionRealizationGridSettings, StoredData>): void {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -252,7 +260,7 @@ export class IntersectionRealizationGridLayer
         getGlobalSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<SettingsWithTypes, Data>): Promise<Data> {
+    }: FetchDataParams<IntersectionRealizationGridSettings, Data>): Promise<Data> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
         const intersection = getSetting(Setting.INTERSECTION);

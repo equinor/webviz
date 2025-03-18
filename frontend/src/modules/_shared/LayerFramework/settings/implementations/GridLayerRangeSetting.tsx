@@ -2,8 +2,12 @@ import React from "react";
 
 import { Slider } from "@lib/components/Slider";
 
-import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
-import { SettingCategory } from "../settingsTypes";
+import {
+    CustomSettingImplementation,
+    MakeAvailableValuesTypeBasedOnCategory,
+    SettingComponentProps,
+} from "../../interfaces";
+import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = [number, number] | null;
 
@@ -33,7 +37,10 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
         }
     }
 
-    isValueValid(availableValues: AvailableValuesType<ValueType, SettingCategory.RANGE>, value: ValueType): boolean {
+    isValueValid(
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.RANGE>,
+        value: ValueType
+    ): boolean {
         if (value === null) {
             return false;
         }
@@ -53,7 +60,7 @@ export class GridLayerRangeSetting implements CustomSettingImplementation<ValueT
     }
 
     fixupValue(
-        availableValues: AvailableValuesType<ValueType, SettingCategory.RANGE>,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.RANGE>,
         currentValue: ValueType
     ): ValueType {
         if (!availableValues) {

@@ -3,7 +3,7 @@ import React from "react";
 import { ColorScaleConfig, ColorScaleSelector } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 
 import { CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
-import { SettingCategory } from "../settingsTypes";
+import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = ColorScaleConfig | null;
 

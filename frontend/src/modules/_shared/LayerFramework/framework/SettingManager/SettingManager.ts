@@ -2,11 +2,23 @@ import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 
-import { isArray, isEqual } from "lodash";
+import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { AvailableValuesType, CustomSettingImplementation, SharedSettingsProvider } from "../../interfaces";
-import { SettingCategories, SettingCategory, Setting, SettingTypes } from "../../settings/settingsTypes";
+import {
+    AvailableValuesType,
+    CustomSettingImplementation,
+    MakeAvailableValuesTypeBasedOnCategory,
+    SharedSettingsProvider,
+} from "../../interfaces";
+import {
+    Setting,
+    SettingCategories,
+    SettingCategory,
+    SettingTypes,
+    settingCategoryFixupMap,
+    settingCategoryIsValueValidMap,
+} from "../../settings/settingsDefinitions";
 import { Group } from "../Group/Group";
 
 export enum SettingTopic {
@@ -20,10 +32,10 @@ export enum SettingTopic {
     PERSISTED_STATE_CHANGED = "PERSISTED_STATE_CHANGED",
 }
 
-export type SettingTopicPayloads<TSetting extends Setting, TValue extends SettingTypes[TSetting]> = {
+export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
     [SettingTopic.VALUE_CHANGED]: TValue;
     [SettingTopic.VALIDITY_CHANGED]: boolean;
-    [SettingTopic.AVAILABLE_VALUES_CHANGED]: AvailableValuesType<TSetting>;
+    [SettingTopic.AVAILABLE_VALUES_CHANGED]: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>;
     [SettingTopic.OVERRIDDEN_VALUE_CHANGED]: TValue | undefined;
     [SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED]: OverriddenValueProviderType | undefined;
     [SettingTopic.LOADING_STATE_CHANGED]: boolean;
@@ -31,12 +43,16 @@ export type SettingTopicPayloads<TSetting extends Setting, TValue extends Settin
     [SettingTopic.PERSISTED_STATE_CHANGED]: boolean;
 };
 
-export type SettingManagerParams<TSetting extends Setting, TValue extends SettingTypes[TSetting] > = {
-    type: Setting;
-    category: SettingCategories[TSetting];
+export type SettingManagerParams<
+    TSetting extends Setting,
+    TValue extends SettingTypes[TSetting] | null,
+    TCategory extends SettingCategories[TSetting]
+> = {
+    type: TSetting;
+    category: TCategory;
     label: string;
     defaultValue: TValue;
-    customSettingImplementation: CustomSettingImplementation<TSetting, TValue>;
+    customSettingImplementation: CustomSettingImplementation<TValue, TCategory>;
 };
 
 export enum OverriddenValueProviderType {
@@ -50,20 +66,22 @@ export enum OverriddenValueProviderType {
  * It provides a method for setting available values, which are used to validate the setting value or applying a fixup if the value is invalid.
  * It provides methods for setting and getting the value and its states, checking if the value is valid, and setting the value as overridden or persisted.
  */
-export class SettingManager<TSetting extends Setting, TValue extends SettingTypes[TSetting] = SettingTypes[TSetting], TCategory extends SettingCategory = SettingCategories[TSetting]>
-    implements PublishSubscribe<SettingTopicPayloads<TSetting, TValue>>
+export class SettingManager<
+    TSetting extends Setting,
+    TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
+    TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting]
+> implements PublishSubscribe<SettingTopicPayloads<TValue, TCategory>>
 {
     private _id: string;
-    private _type: Setting;
-    private _category: SettingCategories[Setting];
+    private _type: TSetting;
+    private _category: TCategory;
     private _label: string;
-    private _customSettingImplementation: CustomSettingImplementation<TSetting, TValue>;
+    private _customSettingImplementation: CustomSettingImplementation<TValue, TCategory>;
     private _value: TValue;
     private _isValueValid: boolean = false;
-    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TSetting, TValue>>();
-    private _availableValues: AvailableValuesType<TSetting> = [] as unknown as AvailableValuesType<
-        TSetting
-    >;
+    private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TValue, TCategory>>();
+    private _availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> =
+        [] as unknown as MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>;
     private _overriddenValue: TValue | undefined = undefined;
     private _overridenValueProviderType: OverriddenValueProviderType | undefined = undefined;
     private _loading: boolean = false;
@@ -77,7 +95,7 @@ export class SettingManager<TSetting extends Setting, TValue extends SettingType
         customSettingImplementation,
         defaultValue,
         label,
-    }: SettingManagerParams<TSetting, TValue>) {
+    }: SettingManagerParams<TSetting, TValue, TCategory>) {
         this._id = v4();
         this._type = type;
         this._category = category;
@@ -97,6 +115,10 @@ export class SettingManager<TSetting extends Setting, TValue extends SettingType
 
     getType(): Setting {
         return this._type;
+    }
+
+    getCategory(): TCategory {
+        return this._category;
     }
 
     getLabel(): string {
@@ -220,7 +242,8 @@ export class SettingManager<TSetting extends Setting, TValue extends SettingType
             if (!provider.getSharedSettingsDelegate()) {
                 continue;
             }
-            for (const sharedSetting of provider.getSharedSettingsDelegate().getWrappedSettings()) {
+            for (const sharedSettingKey in provider.getSharedSettingsDelegate().getWrappedSettings()) {
+                const sharedSetting = provider.getSharedSettingsDelegate().getWrappedSettings()[sharedSettingKey];
                 if (sharedSetting.getType() === this._type) {
                     overriddenValue = sharedSetting.getValue();
                     overriddenValueProviderType = OverriddenValueProviderType.SHARED_SETTING;
@@ -267,7 +290,7 @@ export class SettingManager<TSetting extends Setting, TValue extends SettingType
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
     }
 
-    makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TSetting, TValue>[T] {
+    makeSnapshotGetter<T extends SettingTopic>(topic: T): () => SettingTopicPayloads<TValue, TCategory>[T] {
         const snapshotGetter = (): any => {
             switch (topic) {
                 case SettingTopic.VALUE_CHANGED:
@@ -307,15 +330,16 @@ export class SettingManager<TSetting extends Setting, TValue extends SettingType
             return false;
         }
 
-        if (this._customSettingImplementation.isValueValid(this._availableValues, this._currentValueFromPersistence)) {
-            this._value = this._currentValueFromPersistence;
-            this._currentValueFromPersistence = null;
-            return true;
+        const customCheck = this._customSettingImplementation.isValueValid;
+        if (customCheck) {
+            return !customCheck(this._availableValues, this._currentValueFromPersistence);
         }
-        return false;
+
+        const categoryIsValueValidCheck = settingCategoryIsValueValidMap[this._category];
+        return !categoryIsValueValidCheck(this._currentValueFromPersistence as any, this._availableValues as any);
     }
 
-    setAvailableValues(availableValues: AvailableValuesType<TSetting>): void {
+    setAvailableValues(availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>): void {
         if (isEqual(this._availableValues, availableValues) && this._initialized) {
             return;
         }
@@ -338,97 +362,6 @@ export class SettingManager<TSetting extends Setting, TValue extends SettingType
         return this._customSettingImplementation.makeComponent();
     }
 
-    private fixupOptionValue(availableValues: AvailableValuesType<TSetting>): boolean {
-        if (availableValues.length === 0) {
-            return false;
-        }
-
-        if (availableValues.some((el) => isEqual(el, this._value))) {
-            return false;
-        }
-
-        let candidate = this._value;
-
-        if (this._customSettingImplementation.fixupValue) {
-            candidate = this._customSettingImplementation.fixupValue(this._availableValues, this._value);
-        } else if (Array.isArray(this._value)) {
-            candidate = [availableValues[0]] as TValue;
-        } else {
-            candidate = availableValues[0] as TValue;
-        }
-
-        if (isEqual(candidate, this._value)) {
-            return false;
-        }
-
-        this._value = candidate;
-        return true;
-    }
-
-    private fixupRangeValue(availableValues: AvailableValuesType<TSetting>): boolean {
-        if (!Array.isArray(availableValues) || availableValues.length < 2) {
-            return false;
-        }
-
-        const min = availableValues[0];
-        const max = availableValues[1];
-
-        if (max === null || min === null) {
-            return false;
-        }
-
-        let candidate = this._value;
-
-        if (this._customSettingImplementation.fixupValue) {
-            candidate = this._customSettingImplementation.fixupValue(this._availableValues, this._value);
-        }
-
-        if (candidate === null || candidate === undefined) {
-            candidate = [min, max] as TValue;
-            return true;
-        }
-
-        if (candidate < min) {
-            candidate = [min, candidate[1]] as TValue;
-            return true;
-        }
-
-        if (candidate > max) {
-            candidate = max;
-            return true;
-        }
-
-        if (isEqual(candidate, this._value)) {
-            return false;
-        }
-
-        this._value = candidate;
-        return true;
-    }
-
-    private maybeFixupNumberValue(availableValues: AvailableValuesType<TValue, SettingCategory.NUMBER>): boolean {
-        let candidate = this._value;
-
-        if (this._customSettingImplementation.fixupValue) {
-            candidate = this._customSettingImplementation.fixupValue(this._availableValues, this._value);
-        }
-        else {
-
-        }
-
-        if (candidate === null || candidate === undefined) {
-            return false;
-        }
-
-        if (isEqual(candidate, this._value)) {
-            return false;
-        }
-
-        this._value = candidate;
-        return true;
-    }
-
-
     private maybeFixupValue(): boolean {
         if (this.checkIfValueIsValid(this._value)) {
             return false;
@@ -438,32 +371,28 @@ export class SettingManager<TSetting extends Setting, TValue extends SettingType
             return false;
         }
 
-        if (this._category === SettingCategory.OPTION) {
-            return this.fixupOptionValue(this._availableValues as AvailableValuesType<TValue, SettingCategory.OPTION>);
+        let candidate: TValue;
+        if (this._customSettingImplementation.fixupValue) {
+            candidate = this._customSettingImplementation.fixupValue(this._availableValues, this._value);
+        } else {
+            candidate = settingCategoryFixupMap[this._category](
+                this._value as any,
+                this._availableValues as any
+            ) as TValue;
         }
-        if (this._category === SettingCategory.RANGE) {
-            return this.fixupRangeValue(this._availableValues as AvailableValuesType<TValue, SettingCategory.RANGE>);
-        }
-        if (this._)
 
+        if (isEqual(candidate, this._value)) {
+            return false;
+        }
+        this._value = candidate;
+        return true;
     }
 
     private checkIfValueIsValid(value: TValue): boolean {
         if (this._customSettingImplementation.isValueValid) {
             return this._customSettingImplementation.isValueValid(this._availableValues, value);
+        } else {
+            return settingCategoryIsValueValidMap[this._category](value as any, this._availableValues as any);
         }
-        if (typeof value === "boolean") {
-            return true;
-        }
-        if (this._availableValues.length === 0) {
-            return false;
-        }
-        if (this._availableValues.some((el) => isEqual(el, value))) {
-            return true;
-        }
-        if (isArray(value) && value.every((value) => this._availableValues.some((el) => isEqual(value, el)))) {
-            return true;
-        }
-        return false;
     }
 }

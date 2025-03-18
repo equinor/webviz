@@ -20,7 +20,6 @@ import {
     Settings,
     instanceofItemGroup,
 } from "../interfaces";
-import { MakeSettingTypesMap } from "../settings/settingsTypes";
 
 export enum VisualizationTarget {
     DECK_GL = "deck_gl",
@@ -28,11 +27,10 @@ export enum VisualizationTarget {
     // VIDEX = "videx",
 }
 
-export type VisualizationFunctionArgs<
-    TSettingTypes extends Settings,
-    TData,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
-> = DataLayerInformationAccessors<TSettings, TData> & {
+export type VisualizationFunctionArgs<TSettings extends Settings, TData> = DataLayerInformationAccessors<
+    TSettings,
+    TData
+> & {
     id: string;
     name: string;
     colorScale: ColorScaleWithName;
@@ -44,21 +42,18 @@ export type TargetReturnTypes = {
     [VisualizationTarget.ESV]: EsvLayer<any>;
 };
 
-export type MakeLayerBoundingBoxFunctionArgs<
-    TSettingTypes extends Settings,
-    TData,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
-> = DataLayerInformationAccessors<TSettings, TData>;
+export type MakeLayerBoundingBoxFunctionArgs<TSettings extends Settings, TData> = DataLayerInformationAccessors<
+    TSettings,
+    TData
+>;
 
 export type MakeVisualizationFunction<TSettingTypes extends Settings, TData, TTarget extends VisualizationTarget> = (
     args: VisualizationFunctionArgs<TSettingTypes, TData>
 ) => TargetReturnTypes[TTarget] | null;
 
-export type MakeLayerBoundingBoxFunction<
-    TSettingTypes extends Settings,
-    TData,
-    TSettings extends MakeSettingTypesMap<TSettingTypes> = MakeSettingTypesMap<TSettingTypes>
-> = (args: MakeLayerBoundingBoxFunctionArgs<TSettingTypes, TData, TSettings>) => bbox.BBox | null;
+export type MakeLayerBoundingBoxFunction<TSettings extends Settings, TData> = (
+    args: MakeLayerBoundingBoxFunctionArgs<TSettings, TData>
+) => bbox.BBox | null;
 
 export type LayerWithPosition<TTarget extends VisualizationTarget> = {
     layer: TargetReturnTypes[TTarget];

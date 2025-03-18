@@ -54,7 +54,6 @@ function zipCoords(xArr: number[], yArr: number[], zArr: number[]): number[][] {
 
 export function makeDrilledWellTrajectoriesLayer({
     id,
-    name,
     getData,
 }: VisualizationFunctionArgs<any, WellboreTrajectory_api[]>): WellsLayer | null {
     const fieldWellboreTrajectoriesData = getData();

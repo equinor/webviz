@@ -26,7 +26,7 @@ import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegis
 import { Item, ItemGroup, instanceofItemGroup } from "@modules/_shared/LayerFramework/interfaces";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Dropdown } from "@mui/base";
 import {

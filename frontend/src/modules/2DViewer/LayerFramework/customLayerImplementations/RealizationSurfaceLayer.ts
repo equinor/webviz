@@ -7,7 +7,7 @@ import {
     FetchDataParams,
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
@@ -53,11 +53,25 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
         return !isEqual(prevSettings, newSettings);
     }
 
-    areCurrentSettingsValid(settings: SettingsWithTypes): boolean {
-        return Object.values(settings).every((setting) => setting !== null);
+    areCurrentSettingsValid({ getSetting }: DataLayerInformationAccessors<RealizationSurfaceSettings, Data>): boolean {
+        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+        const realizationNum = getSetting(Setting.REALIZATION);
+        const surfaceName = getSetting(Setting.SURFACE_NAME);
+        const attribute = getSetting(Setting.ATTRIBUTE);
+        const timeOrInterval = getSetting(Setting.TIME_OR_INTERVAL);
+
+        return (
+            ensembleIdent !== null &&
+            realizationNum !== null &&
+            surfaceName !== null &&
+            attribute !== null &&
+            timeOrInterval !== null
+        );
     }
 
-    makeValueRange({ getData }: DataLayerInformationAccessors<SettingsWithTypes, Data>): [number, number] | null {
+    makeValueRange({
+        getData,
+    }: DataLayerInformationAccessors<RealizationSurfaceSettings, Data>): [number, number] | null {
         const data = getData();
         if (!data) {
             return null;
@@ -70,7 +84,7 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
         helperDependency,
         availableSettingsUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationSurfaceSettings, SettingsWithTypes>) {
+    }: DefineDependenciesArgs<RealizationSurfaceSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -184,7 +198,7 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
         getSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<SettingsWithTypes, Data>): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
+    }: FetchDataParams<RealizationSurfaceSettings, Data>): Promise<SurfaceDataFloat_trans | SurfaceDataPng_api> {
         let surfaceAddress: FullSurfaceAddress | null = null;
         const addrBuilder = new SurfaceAddressBuilder();
 

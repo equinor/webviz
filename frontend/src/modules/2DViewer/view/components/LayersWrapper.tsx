@@ -29,7 +29,6 @@ import {
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
 import {
     LayerWithPosition,
     VisualizationFactory,
@@ -55,11 +54,6 @@ export type LayersWrapperProps = {
     preferredViewLayout: PreferredViewLayout;
     viewContext: ViewContext<Interfaces>;
 };
-
-type T = MakeSettingTypesMap<
-    | [Setting.ENSEMBLE, Setting.REALIZATION, Setting.ATTRIBUTE, Setting.SURFACE_NAME, Setting.TIME_OR_INTERVAL]
-    | [Setting.ENSEMBLE, Setting.REALIZATION, Setting.ATTRIBUTE, Setting.SURFACE_NAME]
->;
 
 const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_GL>();
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.OBSERVED_SURFACE, ObservedSurfaceLayer, {

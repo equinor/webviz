@@ -5,7 +5,7 @@ import {
     FetchDataParams,
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
 
@@ -44,8 +44,7 @@ export class DrilledWellTrajectoriesLayer
         getGlobalSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<SettingsWithTypes, Data>): Promise<Data> {
-        const ensembleIdent = getSetting(Setting.ENSEMBLE);
+    }: FetchDataParams<DrilledWellTrajectoriesSettings, Data>): Promise<Data> {
         const fieldIdentifier = getGlobalSetting("fieldId");
         const selectedWellboreHeaders = getSetting(Setting.SMDA_WELLBORE_HEADERS);
         let selectedWellboreUuids: string[] = [];
@@ -76,7 +75,7 @@ export class DrilledWellTrajectoriesLayer
         availableSettingsUpdater,
         workbenchSession,
         queryClient,
-    }: DefineDependenciesArgs<DrilledWellTrajectoriesSettings, SettingsWithTypes>) {
+    }: DefineDependenciesArgs<DrilledWellTrajectoriesSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");

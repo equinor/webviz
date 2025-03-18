@@ -1,4 +1,4 @@
-import { Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
 import { Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -7,7 +7,6 @@ import type { Data, RealizationGridSettings } from "../customLayerImplementation
 
 export function makeRealizationGridLayer({
     id,
-    name,
     getData,
     getSetting,
     colorScale,

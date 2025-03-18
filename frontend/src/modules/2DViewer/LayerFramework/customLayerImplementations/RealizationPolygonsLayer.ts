@@ -5,7 +5,7 @@ import {
     FetchDataParams,
     LayerColoringType,
 } from "@modules/_shared/LayerFramework/interfaces";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsTypes";
+import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
 
@@ -47,7 +47,7 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
         helperDependency,
         availableSettingsUpdater,
         queryClient,
-    }: DefineDependenciesArgs<RealizationPolygonsSettings, SettingsWithTypes>) {
+    }: DefineDependenciesArgs<RealizationPolygonsSettings>) {
         availableSettingsUpdater(Setting.ENSEMBLE, ({ getGlobalSetting }) => {
             const fieldIdentifier = getGlobalSetting("fieldId");
             const ensembles = getGlobalSetting("ensembles");
@@ -128,7 +128,7 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
         getSetting,
         registerQueryKey,
         queryClient,
-    }: FetchDataParams<SettingsWithTypes, Data>): Promise<PolygonData_api[]> {
+    }: FetchDataParams<RealizationPolygonsSettings, Data>): Promise<PolygonData_api[]> {
         const ensembleIdent = getSetting(Setting.ENSEMBLE);
         const realizationNum = getSetting(Setting.REALIZATION);
         const polygonsName = getSetting(Setting.POLYGONS_NAME);

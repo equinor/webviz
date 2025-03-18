@@ -3,8 +3,12 @@ import React from "react";
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
 
-import { AvailableValuesType, CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
-import { SettingCategory } from "../settingsTypes";
+import {
+    CustomSettingImplementation,
+    MakeAvailableValuesTypeBasedOnCategory,
+    SettingComponentProps,
+} from "../../interfaces";
+import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = number | null;
 
@@ -13,14 +17,17 @@ export enum SeismicSliceDirection {
     CROSSLINE,
     DEPTH,
 }
-export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, SettingCategory.OPTION> {
+export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
     private _direction: SeismicSliceDirection;
 
     constructor(direction: SeismicSliceDirection) {
         this._direction = direction;
     }
 
-    isValueValid(availableValues: AvailableValuesType<ValueType, SettingCategory.OPTION>, value: ValueType): boolean {
+    isValueValid(
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>,
+        value: ValueType
+    ): boolean {
         if (value === null) {
             return false;
         }
@@ -40,7 +47,7 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
     }
 
     fixupValue(
-        availableValues: AvailableValuesType<ValueType, SettingCategory.OPTION>,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>,
         currentValue: ValueType
     ): ValueType {
         if (availableValues.length < 2) {
@@ -61,9 +68,9 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
         return Math.min(Math.max(currentValue, min), max);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.OPTION>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
         const direction = this._direction;
-        return function RangeSlider(props: SettingComponentProps<ValueType, SettingCategory.OPTION>) {
+        return function RangeSlider(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
             function handleSliderChange(_: any, value: number | number[]) {
                 if (Array.isArray(value)) {
                     return value[0];

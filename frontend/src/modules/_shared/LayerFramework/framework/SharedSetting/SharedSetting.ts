@@ -2,22 +2,22 @@ import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
 import { Item, SerializedSharedSetting, SerializedType } from "../../interfaces";
 import { SettingRegistry } from "../../settings/SettingRegistry";
-import { Setting, SettingTypes } from "../../settings/settingsTypes";
+import { Setting, SettingTypes } from "../../settings/settingsDefinitions";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
-import { SettingManager } from "../SettingManager/Setting";
+import { SettingManager } from "../SettingManager/SettingManager";
 
-export class SharedSetting<TSettingType extends Setting> implements Item {
-    private _sharedSettingsDelegate: SharedSettingsDelegate<[TSettingType]>;
+export class SharedSetting<TSetting extends Setting> implements Item {
+    private _sharedSettingsDelegate: SharedSettingsDelegate<[TSetting]>;
     private _itemDelegate: ItemDelegate;
 
-    constructor(
-        wrappedSettingType: TSettingType,
-        defaultValue: SettingTypes[TSettingType],
-        layerManager: DataLayerManager
-    ) {
+    constructor(wrappedSettingType: TSetting, defaultValue: SettingTypes[TSetting], layerManager: DataLayerManager) {
         const wrappedSetting = SettingRegistry.makeSetting(wrappedSettingType, defaultValue);
         this._itemDelegate = new ItemDelegate(wrappedSetting.getLabel(), 0, layerManager);
-        this._sharedSettingsDelegate = new SharedSettingsDelegate([wrappedSetting], this);
+
+        const settingMap: { [K in TSetting]: SettingManager<K> } = {
+            [wrappedSettingType]: wrappedSetting,
+        } as unknown as { [K in TSetting]: SettingManager<K> };
+        this._sharedSettingsDelegate = new SharedSettingsDelegate(this, settingMap);
     }
 
     getItemDelegate(): ItemDelegate {
@@ -31,8 +31,8 @@ export class SharedSetting<TSettingType extends Setting> implements Item {
         }
     }
 
-    getWrappedSetting(): SettingManager<any> {
-        return this._sharedSettingsDelegate.getWrappedSettings()[0];
+    getWrappedSetting(): SettingManager<TSetting> {
+        return Object.values(this._sharedSettingsDelegate.getWrappedSettings())[0] as SettingManager<TSetting>;
     }
 
     serializeState(): SerializedSharedSetting {

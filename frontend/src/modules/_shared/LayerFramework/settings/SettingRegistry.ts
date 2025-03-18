@@ -1,6 +1,6 @@
-import { Setting, SettingCategories, SettingTypes } from "./settingsTypes";
+import { Setting, SettingCategories, SettingTypes, settingCategories } from "./settingsDefinitions";
 
-import { SettingManager } from "../framework/SettingManager/Setting";
+import { SettingManager } from "../framework/SettingManager/SettingManager";
 import { CustomSettingImplementation } from "../interfaces";
 
 export class SettingRegistry {
@@ -15,10 +15,10 @@ export class SettingRegistry {
 
     static registerSetting<
         TSetting extends Setting,
-        TSettingType extends SettingTypes[TSetting] = SettingTypes[TSetting],
-        TSettingCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
-        TSettingImpl extends new (...args: any) => CustomSettingImplementation<TSettingType, TSettingCategory> = {
-            new (params?: any): CustomSettingImplementation<TSettingType, TSettingCategory>;
+        TValue extends SettingTypes[TSetting] = SettingTypes[TSetting],
+        TCategory extends SettingCategories[TSetting] = SettingCategories[TSetting],
+        TSettingImpl extends new (...args: any) => CustomSettingImplementation<TValue, TCategory> = {
+            new (params?: any): CustomSettingImplementation<TValue, TCategory>;
         }
     >(
         type: TSetting,
@@ -36,18 +36,19 @@ export class SettingRegistry {
         });
     }
 
-    static makeSetting<T extends Setting>(
-        type: T,
-        defaultValue: SettingTypes[T]
-    ): SettingManager<SettingTypes[T], SettingCategories[T]> {
+    static makeSetting<TSetting extends Setting>(
+        type: TSetting,
+        defaultValue: SettingTypes[TSetting]
+    ): SettingManager<TSetting> {
         const stored = this._registeredSettings.get(type);
         if (!stored) {
             throw new Error(`Setting ${type} not found`);
         }
         const customSettingImpl = new stored.customSettingImplementation(...(stored.customParams ?? []));
 
-        return new SettingManager({
+        return new SettingManager<TSetting>({
             type,
+            category: settingCategories[type],
             label: stored.label,
             defaultValue,
             customSettingImplementation: customSettingImpl,

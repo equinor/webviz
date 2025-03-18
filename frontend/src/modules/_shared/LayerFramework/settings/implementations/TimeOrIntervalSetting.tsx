@@ -4,19 +4,19 @@ import { SurfaceTimeType_api } from "@api";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
 import { CustomSettingImplementation, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
-import { SettingCategory } from "../settingsTypes";
+import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = string | null;
 
-export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType, SettingCategory.OPTION> {
+export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
     defaultValue: ValueType = null;
 
     getLabel(): string {
         return "Date";
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.OPTION>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.OPTION>) {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
+        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
             const options: DropdownOption[] = props.availableValues.map((value) => {
                 return {
                     value: value.toString(),

@@ -11,7 +11,7 @@ import { IntersectionSetting } from "./implementations/IntersectionSetting";
 import { SeismicSliceDirection, SeismicSliceSetting } from "./implementations/SeismicSliceSetting";
 import { SensitivitySetting } from "./implementations/SensitivitySetting";
 import { StatisticFunctionSetting } from "./implementations/StatisticFunctionSetting";
-import { Setting } from "./settingsTypes";
+import { Setting } from "./settingsDefinitions";
 
 SettingRegistry.registerSetting(Setting.ATTRIBUTE, "Attribute", DropdownStringSetting);
 SettingRegistry.registerSetting(Setting.ENSEMBLE, "Ensemble", EnsembleSetting);

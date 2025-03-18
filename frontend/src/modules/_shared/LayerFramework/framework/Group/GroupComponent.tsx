@@ -8,8 +8,8 @@ import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { Item, ItemGroup } from "../../interfaces";
-import { SettingManager } from "../SettingManager/Setting";
 import { SettingComponent } from "../SettingManager/SettingComponent";
+import { SettingManager } from "../SettingManager/SettingManager";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
@@ -92,7 +92,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             content={
                 props.group.getSharedSettingsDelegate() ? (
                     <div className="!bg-slate-100 border text-xs gap-2 grid grid-cols-[auto_1fr] items-center">
-                        {makeSettings(props.group.getWrappedSettings())}
+                        {makeSettings(Object.values(props.group.getWrappedSettings()))}
                     </div>
                 ) : undefined
             }
