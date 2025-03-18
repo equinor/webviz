@@ -2,7 +2,7 @@ import React from "react";
 
 import type { IntersectionReferenceSystem } from "@equinor/esv-intersection";
 import type { HoverService } from "@framework/HoverService";
-import { HoverTopic, useHover } from "@framework/HoverService";
+import { HoverTopic, useHover, usePublishHoverValue } from "@framework/HoverService";
 import type { ViewContext } from "@framework/ModuleContext";
 import type { Viewport } from "@framework/types/viewport";
 import type { Interfaces } from "@modules/Intersection/interfaces";
@@ -43,7 +43,7 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
     const hoverIsLocal = props.hoverService.getLastHoveredModule() === moduleInstanceId;
     const [hoveredMd, setHoveredMd] = useHover(HoverTopic.MD, props.hoverService, moduleInstanceId);
     const [hoveredWellbore, setHoveredWellbore] = useHover(HoverTopic.WELLBORE, props.hoverService, moduleInstanceId);
-
+    const setHoveredWorldPos = usePublishHoverValue(HoverTopic.WORLD_POS, props.hoverService, moduleInstanceId);
 
     const formatEsvLayout = React.useCallback(
         function formatEsvLayout(item: EsvReadoutItem, index: number): ReadoutItem {
@@ -54,10 +54,19 @@ export function ReadoutWrapper(props: ReadoutWrapperProps): React.ReactNode {
 
     const publishHoverEvent = React.useCallback(
         function publishHoverEvent(md: number | null): void {
+            if (md !== null && props.referenceSystem) {
+                const [x, y] = props.referenceSystem.getPosition(md);
+                const [, z] = props.referenceSystem.project(md);
+                // ! We need to flip z since reference system increases downwards
+                setHoveredWorldPos({ x, y, z: -z });
+            } else {
+                setHoveredWorldPos(null);
+            }
+
             setHoveredWellbore(props.wellboreHeaderUuid);
             setHoveredMd(md);
         },
-        [props.wellboreHeaderUuid, setHoveredMd, setHoveredWellbore]
+        [props.referenceSystem, props.wellboreHeaderUuid, setHoveredMd, setHoveredWellbore, setHoveredWorldPos],
     );
 
     const handleReadoutItemsChange = React.useCallback(
