@@ -16,12 +16,13 @@ import type { Layer as LayerInterface } from "@modules/_shared/LayerFramework/in
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
+import type { WellboreGeoFeature } from "@modules/_shared/utils/subsurfaceViewerLayers";
 import type { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
 import type { Rgb } from "culori";
 import { parse } from "culori";
-import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
+import type { Feature, FeatureCollection, GeoJsonProperties, Geometry, LineString, Point } from "geojson";
 
 import { ObservedSurfaceLayer } from "../../LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "../../LayerFramework/customLayerImplementations/RealizationGridLayer";
@@ -238,12 +239,12 @@ function makeWellsLayer(
 function wellTrajectoryToGeojson(
     wellTrajectory: WellboreTrajectory_api,
     selectedWellboreUuid: string | null,
-): Record<string, unknown> {
-    const point: Record<string, unknown> = {
+): WellboreGeoFeature {
+    const point: Point = {
         type: "Point",
         coordinates: [wellTrajectory.eastingArr[0], wellTrajectory.northingArr[0], -wellTrajectory.tvdMslArr[0]],
     };
-    const coordinates: Record<string, unknown> = {
+    const coordinates: LineString = {
         type: "LineString",
         coordinates: zipCoords(wellTrajectory.eastingArr, wellTrajectory.northingArr, wellTrajectory.tvdMslArr),
     };
@@ -257,7 +258,7 @@ function wellTrajectoryToGeojson(
         wellHeadSize = 10;
     }
 
-    const geometryCollection: Record<string, unknown> = {
+    const geometryCollection: WellboreGeoFeature = {
         type: "Feature",
         geometry: {
             type: "GeometryCollection",

@@ -1,13 +1,13 @@
 import type { FilterContext, LayersList } from "@deck.gl/core";
 import { Layer } from "@deck.gl/core";
 import { GeoJsonLayer } from "@deck.gl/layers";
-import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import { WellsLayer, type WellsLayerProps } from "@webviz/subsurface-viewer/dist/layers";
 
 export class AdvancedWellsLayer extends WellsLayer {
     static layerName: string = "WellsLayer";
 
-    constructor(props: any) {
-        super(props);
+    constructor(...propObjects: Partial<WellsLayerProps>[]) {
+        super(...propObjects);
     }
 
     filterSubLayer(context: FilterContext): boolean {

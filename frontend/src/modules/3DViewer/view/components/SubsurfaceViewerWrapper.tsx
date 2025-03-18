@@ -43,7 +43,7 @@ export type BoundingBox2D = {
 
 export type SubsurfaceViewerWrapperProps = {
     ref?: React.ForwardedRef<HTMLDivElement>;
-    boundingBox: BoundingBox2D | BoundingBox3D;
+    boundingBox: BoundingBox3D;
     layers: Layer[];
     show3D?: boolean;
     verticalScale?: number;
