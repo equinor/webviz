@@ -21,6 +21,7 @@ import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
 import type { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
 import type { Feature } from "geojson";
+import _ from "lodash";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
@@ -35,21 +36,30 @@ export type LayersWrapperProps = {
     viewContext: ViewContext<Interfaces>;
 };
 
-function useHighlightLayer(hoverService: HoverService, instanceId: string): GeoJsonLayer {
-    const hoveredWorldPos = useHoverValue(HoverTopic.WORLD_POS, hoverService, instanceId);
+const HIGHLIGHT_LAYER_ID = "2d-hover-highlights";
+
+function useHighlightLayer(
+    boundingBox: BoundingBox2D | undefined,
+    hoverService: HoverService,
+    instanceId: string,
+): GeoJsonLayer {
+    const { x, y } = useHoverValue(HoverTopic.WORLD_POS, hoverService, instanceId) ?? {};
 
     const highlightFeatures: Feature[] = [];
 
-    if (hoveredWorldPos?.x && hoveredWorldPos?.y) {
+    const xInRange = boundingBox && x && _.inRange(x, boundingBox[0], boundingBox[2]);
+    const yInRange = boundingBox && y && _.inRange(y, boundingBox[1], boundingBox[3]);
+
+    if (xInRange && yInRange) {
         highlightFeatures.push({
             type: "Feature",
             properties: {},
-            geometry: { type: "Point", coordinates: [hoveredWorldPos.x, hoveredWorldPos.y] },
+            geometry: { type: "Point", coordinates: [x, y] },
         });
     }
 
     return new GeoJsonLayer({
-        id: "2d-hover-highlights",
+        id: HIGHLIGHT_LAYER_ID,
         pointRadiusMinPixels: 5,
         pointRadiusMaxPixels: 5,
         getFillColor: [255, 0, 0, 170],
@@ -87,7 +97,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     let numLoadingLayers = 0;
 
     const viewsAndLayers = recursivelyMakeViewsAndLayers(props.layerManager.getGroupDelegate());
-    const highlightLayer = useHighlightLayer(props.hoverService, props.viewContext.getInstanceIdString());
+
     numCols = Math.ceil(Math.sqrt(viewsAndLayers.views.length));
     numRows = Math.ceil(viewsAndLayers.views.length / numCols);
 
@@ -109,8 +119,8 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             layerIds: [
                 ...globalLayerIds,
                 ...view.layers.map((layer) => layer.layer.id),
+                HIGHLIGHT_LAYER_ID,
                 "placeholder",
-                highlightLayer.id,
             ],
         });
         viewerLayers.push(...view.layers);
@@ -172,6 +182,8 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     if (prevBoundingBox) {
         bounds = [prevBoundingBox.x[0], prevBoundingBox.y[0], prevBoundingBox.x[1], prevBoundingBox.y[1]];
     }
+
+    const highlightLayer = useHighlightLayer(bounds, props.hoverService, props.viewContext.getInstanceIdString());
 
     const layers = viewerLayers.toSorted((a, b) => b.position - a.position).map((layer) => layer.layer);
     layers.push(new PlaceholderLayer({ id: "placeholder" }));
