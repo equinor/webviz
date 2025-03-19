@@ -18,7 +18,7 @@ import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSub
 import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
 import type { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
-import { ReadoutWrapper } from "./ReadoutWrapper";
+import { SubsurfaceViewerWrapper } from "./SubsurfaceViewerWrapper";
 
 import { PlaceholderLayer } from "../customDeckGlLayers/PlaceholderLayer";
 import type { DeckGlLayerWithPosition } from "../utils/makeViewsAndLayers";

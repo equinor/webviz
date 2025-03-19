@@ -7,14 +7,14 @@ import type { BoundingBox2D, LayerPickInfo, MapMouseEvent, ViewStateType, ViewsT
 import { ReadoutBoxWrapper } from "./ReadoutBoxWrapper";
 import { Toolbar } from "./Toolbar";
 
-export type ReadooutWrapperProps = {
+export type SubsurfaceViewerWrapperProps = {
     views: ViewsType;
     viewportAnnotations: React.ReactNode[];
     layers: DeckGlLayer[];
     bounds?: BoundingBox2D;
 };
 
-export function ReadoutWrapper(props: ReadooutWrapperProps): React.ReactNode {
+export function SubsurfaceViewerWrapper(props: SubsurfaceViewerWrapperProps): React.ReactNode {
     const id = React.useId();
 
     const [cameraPositionSetByAction, setCameraPositionSetByAction] = React.useState<ViewStateType | null>(null);
