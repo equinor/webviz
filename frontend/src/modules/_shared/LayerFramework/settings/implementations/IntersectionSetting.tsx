@@ -20,8 +20,8 @@ type ValueType = IntersectionSettingValue | null;
 
 export class IntersectionSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
     isValueValid(
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>,
-        value: IntersectionSettingValue | null
+        value: IntersectionSettingValue | null,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>
     ): boolean {
         if (value === null) {
             return false;
@@ -31,8 +31,8 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
     }
 
     fixupValue(
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>,
-        currentValue: ValueType
+        currentValue: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>
     ): ValueType {
         if (currentValue === null) {
             return availableValues.find((v) => v.type === "wellbore") ?? null;
@@ -47,15 +47,17 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
         return function Realization(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+            const availableValues = props.availableValues ?? [];
+
             const [type, setType] = React.useState<IntersectionSettingValue["type"]>(props.value?.type ?? "wellbore");
             function handleSelectionChange(selectedValue: string) {
-                const newValue = props.availableValues.find((v) => v.uuid === selectedValue) ?? null;
+                const newValue = availableValues.find((v) => v.uuid === selectedValue) ?? null;
                 props.onValueChange(newValue);
             }
 
             function handleCategoryChange(_: any, value: IntersectionSettingValue["type"]) {
                 setType(value);
-                const firstValue = props.availableValues.find((v) => v.type === value);
+                const firstValue = availableValues.find((v) => v.type === value);
                 if (firstValue) {
                     props.onValueChange({
                         ...firstValue,
@@ -66,7 +68,7 @@ export class IntersectionSetting implements CustomSettingImplementation<ValueTyp
                 props.onValueChange(null);
             }
 
-            const options: DropdownOption<string>[] = props.availableValues
+            const options: DropdownOption<string>[] = availableValues
                 .filter((value) => value.type === type)
                 .map((value) => {
                     return {

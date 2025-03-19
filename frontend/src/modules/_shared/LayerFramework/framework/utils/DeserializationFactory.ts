@@ -1,7 +1,6 @@
 import { GroupRegistry } from "../../groups/GroupRegistry";
 import {
     Item,
-    SerializedColorScale,
     SerializedGroup,
     SerializedItem,
     SerializedLayer,
@@ -10,7 +9,6 @@ import {
     SerializedType,
 } from "../../interfaces";
 import { LayerRegistry } from "../../layers/LayerRegistry";
-import { ColorScale } from "../ColorScale/ColorScale";
 import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
@@ -50,13 +48,6 @@ export class DeserializationFactory {
             const settingsGroup = new SettingsGroup(serializedSettingsGroup.name, this._layerManager);
             settingsGroup.deserializeState(serializedSettingsGroup);
             return settingsGroup;
-        }
-
-        if (serialized.type === SerializedType.COLOR_SCALE) {
-            const serializedColorScale = serialized as SerializedColorScale;
-            const colorScale = new ColorScale(serializedColorScale.name, this._layerManager);
-            colorScale.deserializeState(serializedColorScale);
-            return colorScale;
         }
 
         if (serialized.type === SerializedType.SHARED_SETTING) {

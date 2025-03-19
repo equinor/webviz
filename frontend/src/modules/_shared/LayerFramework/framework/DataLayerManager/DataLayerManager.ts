@@ -27,20 +27,20 @@ export enum LogLevel {
 }
 
 export enum LayerManagerTopic {
-    ITEMS_CHANGED = "ITEMS_CHANGED",
+    ITEMS = "ITEMS_CHANGED",
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
     AVAILABLE_SETTINGS_CHANGED = "AVAILABLE_SETTINGS_CHANGED",
     LAYER_DATA_REVISION = "LAYER_DATA_REVISION",
-    GLOBAL_SETTINGS_CHANGED = "GLOBAL_SETTINGS_CHANGED",
+    GLOBAL_SETTINGS = "GLOBAL_SETTINGS_CHANGED",
     SHARED_SETTINGS_CHANGED = "SHARED_SETTINGS_CHANGED",
 }
 
 export type LayerManagerTopicPayload = {
-    [LayerManagerTopic.ITEMS_CHANGED]: Item[];
+    [LayerManagerTopic.ITEMS]: Item[];
     [LayerManagerTopic.SETTINGS_CHANGED]: void;
     [LayerManagerTopic.AVAILABLE_SETTINGS_CHANGED]: void;
     [LayerManagerTopic.LAYER_DATA_REVISION]: number;
-    [LayerManagerTopic.GLOBAL_SETTINGS_CHANGED]: GlobalSettings;
+    [LayerManagerTopic.GLOBAL_SETTINGS]: GlobalSettings;
     [LayerManagerTopic.SHARED_SETTINGS_CHANGED]: void;
 };
 
@@ -110,7 +110,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                 this.publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
-                this.publishTopic(LayerManagerTopic.ITEMS_CHANGED);
+                this.publishTopic(LayerManagerTopic.ITEMS);
             })
         );
 
@@ -137,7 +137,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
             `LayerManager: Global settings updated. Current global settings: ${this._globalSettings}`
         );
 
-        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS);
     }
 
     getGlobalSetting<T extends keyof GlobalSettings>(key: T): GlobalSettings[T] {
@@ -172,7 +172,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
 
     makeSnapshotGetter<T extends LayerManagerTopic>(topic: T): () => LayerManagerTopicPayload[T] {
         const snapshotGetter = (): any => {
-            if (topic === LayerManagerTopic.ITEMS_CHANGED) {
+            if (topic === LayerManagerTopic.ITEMS) {
                 return this._groupDelegate.getChildren();
             }
             if (topic === LayerManagerTopic.SETTINGS_CHANGED) {
@@ -184,7 +184,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
             if (topic === LayerManagerTopic.LAYER_DATA_REVISION) {
                 return this._layerDataRevision;
             }
-            if (topic === LayerManagerTopic.GLOBAL_SETTINGS_CHANGED) {
+            if (topic === LayerManagerTopic.GLOBAL_SETTINGS) {
                 return this._globalSettings;
             }
             if (topic === LayerManagerTopic.SHARED_SETTINGS_CHANGED) {
@@ -218,8 +218,8 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
         this._groupDelegate.deserializeChildren(serializedState.children);
         this._deserializing = false;
 
-        this.publishTopic(LayerManagerTopic.ITEMS_CHANGED);
-        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+        this.publishTopic(LayerManagerTopic.ITEMS);
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS);
     }
 
     makeGroupColor(): string {
@@ -254,14 +254,14 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
             this._workbenchSession
         );
 
-        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS);
     }
 
     private handleEnsembleSetChanged() {
         const ensembles = this._workbenchSession.getEnsembleSet().getRegularEnsembleArray();
         this._globalSettings.ensembles = ensembles;
 
-        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS);
     }
 
     private handleIntersectionPolylinesChanged() {
@@ -269,6 +269,6 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
             .getUserCreatedItems()
             .getIntersectionPolylines()
             .getPolylines();
-        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+        this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS);
     }
 }

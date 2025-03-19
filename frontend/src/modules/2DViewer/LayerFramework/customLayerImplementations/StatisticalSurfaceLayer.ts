@@ -27,6 +27,7 @@ const statisicalSurfaceSettings = [
     Setting.ATTRIBUTE,
     Setting.SURFACE_NAME,
     Setting.TIME_OR_INTERVAL,
+    Setting.COLOR_SCALE,
 ] as const;
 export type StatisticalSurfaceSettings = typeof statisicalSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<StatisticalSurfaceSettings>;
@@ -38,12 +39,7 @@ export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<St
 
     getDefaultSettingsValues() {
         return {
-            [Setting.ENSEMBLE]: null,
             [Setting.STATISTIC_FUNCTION]: SurfaceStatisticFunction_api.MEAN,
-            [Setting.SENSITIVITY]: null,
-            [Setting.ATTRIBUTE]: null,
-            [Setting.SURFACE_NAME]: null,
-            [Setting.TIME_OR_INTERVAL]: null,
         };
     }
 

@@ -9,9 +9,9 @@ export function makeRealizationGridLayer({
     id,
     getData,
     getSetting,
-    colorScale,
 }: VisualizationFunctionArgs<RealizationGridSettings, Data>): Grid3DLayer | null {
     const data = getData();
+    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
 
     if (!data) {
         return null;

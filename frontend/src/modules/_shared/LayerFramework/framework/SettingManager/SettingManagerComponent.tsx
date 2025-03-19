@@ -40,7 +40,7 @@ export function SettingComponent<
     );
     const isLoading = usePublishSubscribeTopicValue(props.setting, SettingTopic.LOADING_STATE_CHANGED);
     const isInitialized = usePublishSubscribeTopicValue(props.setting, SettingTopic.INIT_STATE_CHANGED);
-    const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS_CHANGED);
+    const globalSettings = usePublishSubscribeTopicValue(props.manager, LayerManagerTopic.GLOBAL_SETTINGS);
 
     let actuallyLoading = isLoading || !isInitialized;
     if (!isLoading && isPersisted && !isValid) {
@@ -51,7 +51,7 @@ export function SettingComponent<
         props.setting.setValue(newValue);
     }
 
-    if (props.sharedSetting && isInitialized) {
+    if (props.sharedSetting && isInitialized && availableValues === null) {
         return (
             <React.Fragment key={props.setting.getId()}>
                 <div className="p-0.5 px-2 w-32">{props.setting.getLabel()}</div>
@@ -64,7 +64,7 @@ export function SettingComponent<
         if (overriddenValueProvider !== OverriddenValueProviderType.SHARED_SETTING) {
             return null;
         }
-        const valueAsString = props.setting.valueToString(
+        const valueAsString = props.setting.valueToRepresentation(
             overriddenValue,
             props.manager.getWorkbenchSession(),
             props.manager.getWorkbenchSettings()
@@ -108,7 +108,7 @@ export function SettingComponent<
                                 workbenchSettings={props.manager.getWorkbenchSettings()}
                             />
                         </div>
-                        {isPersisted && !isLoading && isInitialized && (
+                        {isPersisted && !isLoading && isInitialized && !isValid && (
                             <span
                                 className="text-xs flex items-center gap-1 text-orange-600"
                                 title="The persisted value for this setting is not valid in the current context. It could also be that the data source has changed."

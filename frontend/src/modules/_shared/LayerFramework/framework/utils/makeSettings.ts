@@ -10,7 +10,7 @@ export function makeSettings<
     const TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
 >(
     settings: TSettings,
-    defaultValues: TSettingTypes
+    defaultValues: Partial<TSettingTypes>
 ): { [K in TSettingKey]: SettingManager<K> } {
     const returnValue: Record<string, SettingManager<any>> = {} as Record<string, SettingManager<any>>;
     for (let i = 0; i < settings.length; i++) {

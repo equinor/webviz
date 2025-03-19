@@ -1,6 +1,9 @@
 import React from "react";
 
 import { ColorPaletteType, WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { Button } from "@lib/components/Button";
+import { ColorScalePreview } from "@lib/components/ColorScalePreview";
+import { Dialog } from "@lib/components/Dialog";
 import { Input } from "@lib/components/Input";
 import { Label } from "@lib/components/Label";
 import { Overlay } from "@lib/components/Overlay";
@@ -29,6 +32,89 @@ export type ColorScaleSelectorProps = {
 };
 
 export function ColorScaleSelector(props: ColorScaleSelectorProps): React.ReactNode {
+    const id = React.useId();
+
+    const [colorScaleConfig, setColorScaleConfig] = React.useState<ColorScaleConfig>({
+        colorScale: props.workbenchSettings.useContinuousColorScale({
+            gradientType: ColorScaleGradientType.Sequential,
+        }),
+        areBoundariesUserDefined: false,
+    });
+    const [tempColorScaleConfig, setTempColorScaleConfig] = React.useState<ColorScaleConfig>(colorScaleConfig);
+    const [prevColorScaleConfig, setPrevColorScaleConfig] = React.useState<ColorScaleConfig | undefined>(undefined);
+    const [dialogOpen, setDialogOpen] = React.useState<boolean>(false);
+
+    if (!isEqual(props.colorScaleConfig, prevColorScaleConfig)) {
+        setPrevColorScaleConfig(props.colorScaleConfig);
+        if (props.colorScaleConfig) {
+            setColorScaleConfig(props.colorScaleConfig);
+        }
+    }
+
+    function handleClick() {
+        setDialogOpen(true);
+    }
+
+    function handleAcceptChanges() {
+        setColorScaleConfig(tempColorScaleConfig);
+        setDialogOpen(false);
+        props.onChange?.(tempColorScaleConfig);
+    }
+
+    function handleDiscardChanges() {
+        setTempColorScaleConfig(colorScaleConfig);
+        setDialogOpen(false);
+    }
+
+    function handleColorScaleChange(colorScaleConfig: ColorScaleConfig) {
+        setTempColorScaleConfig(colorScaleConfig);
+    }
+
+    return (
+        <>
+            <div
+                className="flex-grow cursor-pointer border border-slate-400 hover:outline hover:outline-1 hover:outline-blue-300 rounded overflow-hidden"
+                onClick={handleClick}
+            >
+                <ColorScalePreview
+                    colorPalette={colorScaleConfig.colorScale.getColorPalette()}
+                    gradientType={colorScaleConfig.colorScale.getGradientType()}
+                    discrete={colorScaleConfig.colorScale.getType() === ColorScaleType.Discrete}
+                    steps={colorScaleConfig.colorScale.getNumSteps()}
+                    min={colorScaleConfig.colorScale.getMin()}
+                    max={colorScaleConfig.colorScale.getMax()}
+                    divMidPoint={colorScaleConfig.colorScale.getDivMidPoint()}
+                    id={id}
+                />
+            </div>
+            <Dialog
+                open={dialogOpen}
+                onClose={handleDiscardChanges}
+                title="Color Scale Selector"
+                width={"33%"}
+                modal
+                actions={
+                    <>
+                        <Button color="primary" onClick={handleAcceptChanges}>
+                            OK
+                        </Button>
+                        <Button color="danger" onClick={handleDiscardChanges}>
+                            Discard
+                        </Button>
+                    </>
+                }
+            >
+                <ColorScaleSelectorDialog
+                    {...props}
+                    colorScaleConfig={tempColorScaleConfig}
+                    onChange={handleColorScaleChange}
+                />
+            </Dialog>
+        </>
+    );
+}
+
+function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNode {
     const { onChange } = props;
 
     const id = React.useId();
@@ -636,7 +722,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
                 gradientType={props.gradientType}
                 min={props.min}
                 max={props.max}
-                divMid={props.divMidPoint}
+                divMidPoint={props.divMidPoint}
                 steps={props.steps}
                 onClick={() => {
                     handleColorPaletteSelected(colorPalette);
@@ -648,20 +734,16 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
     }
 
     const marginTop = Math.max(-boundingRect.top, convertRemToPixels((-(props.colorPalettes.length - 1) * 3) / 2));
+    console.debug(boundingRect);
 
     return (
         <div className="bg-slate-100 rounded flex items-center" ref={ref}>
             <div className="flex-grow cursor-pointer" onClick={handleClick}>
-                {makeColorScalePalettePreview(
-                    selectedColorPalette,
-                    props.gradientType,
-                    props.type === ColorScaleType.Discrete,
-                    props.steps,
-                    props.min,
-                    props.max,
-                    props.divMidPoint,
-                    props.id
-                )}
+                <ColorScalePreview
+                    {...props}
+                    colorPalette={props.selectedColorPalette}
+                    discrete={props.type === ColorScaleType.Discrete}
+                />
             </div>
             {open &&
                 createPortal(
@@ -686,61 +768,6 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
     );
 };
 
-function makeGradientId(id: string, colorPalette: ColorPalette): string {
-    return `${id}-color-scale-gradient-${colorPalette.getId()}`;
-}
-
-type GradientDefProps = {
-    id: string;
-    colorScale: ColorScale;
-};
-
-function GradientDef(props: GradientDefProps): React.ReactNode {
-    const colorStops = props.colorScale.getColorStops();
-    const gradientId = makeGradientId(props.id, props.colorScale.getColorPalette());
-
-    return (
-        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
-            {colorStops.map((colorStop, index) => (
-                <stop key={index} offset={`${(colorStop.offset * 100).toFixed(2)}%`} stopColor={colorStop.color} />
-            ))}
-        </linearGradient>
-    );
-}
-
-function makeColorScalePalettePreview(
-    colorPalette: ColorPalette,
-    gradientType: ColorScaleGradientType,
-    discrete: boolean,
-    steps: number,
-    min: number,
-    max: number,
-    divMidPoint: number,
-    id: string
-): React.ReactNode {
-    const colorScale = new ColorScale({
-        colorPalette,
-        type: discrete ? ColorScaleType.Discrete : ColorScaleType.Continuous,
-        gradientType: gradientType,
-        steps,
-    });
-
-    if (gradientType === ColorScaleGradientType.Diverging) {
-        colorScale.setRangeAndMidPoint(min, max, divMidPoint);
-    }
-
-    const colorScaleGradientId = makeGradientId(id, colorPalette);
-
-    return (
-        <svg className="w-full h-5" version="1.1" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <GradientDef id={id} colorScale={colorScale} />
-            </defs>
-            <rect height="1.25rem" width="100%" fill={`url(#${colorScaleGradientId})`} stroke="#555" />
-        </svg>
-    );
-}
-
 type ColorPaletteItemProps = {
     id: string;
     colorPalette: ColorPalette;
@@ -750,7 +777,7 @@ type ColorPaletteItemProps = {
     gradientType: ColorScaleGradientType;
     min: number;
     max: number;
-    divMid: number;
+    divMidPoint: number;
     steps: number;
 };
 
@@ -777,16 +804,7 @@ const ColorPaletteItem: React.FC<ColorPaletteItemProps> = (props) => {
                 {props.colorPalette.getName()}
             </span>
             <div className="flex-grow">
-                {makeColorScalePalettePreview(
-                    props.colorPalette,
-                    props.gradientType,
-                    props.discrete,
-                    props.steps,
-                    props.min,
-                    props.max,
-                    props.divMid,
-                    props.id
-                )}
+                <ColorScalePreview {...props} />
             </div>
         </div>
     );

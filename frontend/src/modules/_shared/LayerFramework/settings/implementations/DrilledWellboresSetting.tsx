@@ -22,8 +22,8 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
     }
 
     fixupValue(
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_OPTION>,
-        currentValue: ValueType
+        currentValue: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.MULTI_OPTION>
     ): ValueType {
         if (!currentValue) {
             return availableValues;
@@ -40,24 +40,24 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.MULTI_OPTION>) => React.ReactNode {
         return function DrilledWellbores(props: SettingComponentProps<ValueType, SettingCategory.MULTI_OPTION>) {
+            const availableValues = React.useMemo(() => props.availableValues ?? [], [props.availableValues]);
+
             const options: SelectOption[] = React.useMemo(
                 () =>
-                    props.availableValues.map((ident) => ({
+                    availableValues.map((ident) => ({
                         value: ident.wellboreUuid,
                         label: ident.uniqueWellboreIdentifier,
                     })),
-                [props.availableValues]
+                [availableValues]
             );
 
             function handleChange(selectedUuids: string[]) {
-                const selectedWellbores = props.availableValues.filter((ident) =>
-                    selectedUuids.includes(ident.wellboreUuid)
-                );
+                const selectedWellbores = availableValues.filter((ident) => selectedUuids.includes(ident.wellboreUuid));
                 props.onValueChange(selectedWellbores);
             }
 
             function selectAll() {
-                const allUuids = props.availableValues.map((ident) => ident.wellboreUuid);
+                const allUuids = availableValues.map((ident) => ident.wellboreUuid);
                 handleChange(allUuids);
             }
 

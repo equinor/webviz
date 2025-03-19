@@ -30,13 +30,13 @@ export enum SettingsContextLoadingState {
 export enum SettingsContextDelegateTopic {
     SETTINGS_CHANGED = "SETTINGS_CHANGED",
     LAYER_MANAGER_CHANGED = "LAYER_MANAGER_CHANGED",
-    LOADING_STATE_CHANGED = "LOADING_STATE_CHANGED",
+    LOADING_STATE = "LOADING_STATE_CHANGED",
 }
 
 export type SettingsContextDelegatePayloads = {
     [SettingsContextDelegateTopic.SETTINGS_CHANGED]: void;
     [SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED]: void;
-    [SettingsContextDelegateTopic.LOADING_STATE_CHANGED]: SettingsContextLoadingState;
+    [SettingsContextDelegateTopic.LOADING_STATE]: SettingsContextLoadingState;
 };
 
 export interface FetchDataFunction<TSettings extends Settings, TKey extends keyof TSettings> {
@@ -123,11 +123,9 @@ export class SettingsContextDelegate<
 
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "layer-manager",
-                layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(
-                    () => {
-                        this.handleSharedSettingsChanged();
-                    }
-                )
+                layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS)(() => {
+                    this.handleSharedSettingsChanged();
+                })
             );
         }
 
@@ -258,7 +256,7 @@ export class SettingsContextDelegate<
             if (topic === SettingsContextDelegateTopic.LAYER_MANAGER_CHANGED) {
                 return;
             }
-            if (topic === SettingsContextDelegateTopic.LOADING_STATE_CHANGED) {
+            if (topic === SettingsContextDelegateTopic.LOADING_STATE) {
                 return this._loadingState;
             }
         };
@@ -287,6 +285,7 @@ export class SettingsContextDelegate<
             settingDelegate.deserializeValue(value as string);
             if (settingDelegate.isStatic()) {
                 settingDelegate.maybeResetPersistedValue();
+                settingDelegate.initialize();
             }
         }
     }
@@ -329,7 +328,7 @@ export class SettingsContextDelegate<
                 "dependencies",
                 this.getLayerManager()
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED)(handleChange)
+                    .makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS)(handleChange)
             );
 
             return handleChange;
@@ -337,10 +336,10 @@ export class SettingsContextDelegate<
 
         const availableSettingsUpdater = <K extends TSettingKey>(
             settingKey: K,
-            updateFunc: UpdateFunc<AvailableValuesType<K>, TSettings, TSettingTypes, K>
-        ): Dependency<AvailableValuesType<K>, TSettings, TSettingTypes, K> => {
-            const dependency = new Dependency<AvailableValuesType<K>, TSettings, TSettingTypes, K>(
-                this as unknown as SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, K, TStoredDataKey>,
+            updateFunc: UpdateFunc<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey>
+        ): Dependency<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey> => {
+            const dependency = new Dependency<AvailableValuesType<K>, TSettings, TSettingTypes, TSettingKey>(
+                this,
                 updateFunc,
                 makeLocalSettingGetter,
                 makeGlobalSettingGetter
@@ -379,12 +378,7 @@ export class SettingsContextDelegate<
                 TSettings,
                 TSettingTypes,
                 TSettingKey
-            >(
-                this as unknown as SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey, K>,
-                updateFunc,
-                makeLocalSettingGetter,
-                makeGlobalSettingGetter
-            );
+            >(this, updateFunc, makeLocalSettingGetter, makeGlobalSettingGetter);
             dependencies.push(dependency);
 
             dependency.subscribe((storedData: TStoredData[K] | null) => {
@@ -407,13 +401,7 @@ export class SettingsContextDelegate<
             }) => T
         ) => {
             const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
-                this as unknown as SettingsContextDelegate<
-                    TSettings,
-                    TSettingTypes,
-                    TStoredData,
-                    TSettingKey,
-                    TStoredDataKey
-                >,
+                this,
                 update,
                 makeLocalSettingGetter,
                 makeGlobalSettingGetter
@@ -447,7 +435,7 @@ export class SettingsContextDelegate<
         }
 
         this._loadingState = loadingState;
-        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE_CHANGED);
+        this._publishSubscribeDelegate.notifySubscribers(SettingsContextDelegateTopic.LOADING_STATE);
     }
 
     private handleSettingChanged() {

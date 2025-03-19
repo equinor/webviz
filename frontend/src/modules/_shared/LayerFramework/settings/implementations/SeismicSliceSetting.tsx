@@ -17,7 +17,7 @@ export enum SeismicSliceDirection {
     CROSSLINE,
     DEPTH,
 }
-export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
+export class SeismicSliceSetting implements CustomSettingImplementation<ValueType, SettingCategory.NUMBER_WITH_STEP> {
     private _direction: SeismicSliceDirection;
 
     constructor(direction: SeismicSliceDirection) {
@@ -25,8 +25,8 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
     }
 
     isValueValid(
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>,
-        value: ValueType
+        value: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>
     ): boolean {
         if (value === null) {
             return false;
@@ -47,8 +47,8 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
     }
 
     fixupValue(
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>,
-        currentValue: ValueType
+        currentValue: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER_WITH_STEP>
     ): ValueType {
         if (availableValues.length < 2) {
             return null;
@@ -68,9 +68,11 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
         return Math.min(Math.max(currentValue, min), max);
     }
 
-    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
+    makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.NUMBER_WITH_STEP>) => React.ReactNode {
         const direction = this._direction;
-        return function RangeSlider(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+        return function RangeSlider(props: SettingComponentProps<ValueType, SettingCategory.NUMBER_WITH_STEP>) {
+            const availableValues = props.availableValues ?? [0, 0, 0];
+
             function handleSliderChange(_: any, value: number | number[]) {
                 if (Array.isArray(value)) {
                     return value[0];
@@ -84,9 +86,9 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
 
                 if (direction === SeismicSliceDirection.DEPTH) {
                     // Check if value is allowed (in increments of availableValues[2], if not return closest allowed value)
-                    const min = props.availableValues[0];
-                    const max = props.availableValues[1];
-                    const step = props.availableValues[2];
+                    const min = availableValues[0];
+                    const max = availableValues[1];
+                    const step = availableValues[2];
                     const allowedValues = Array.from(
                         { length: Math.floor((max - min) / step) + 1 },
                         (_, i) => min + i * step
@@ -103,12 +105,13 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
                 <div className="flex items-center space-x-1">
                     <div className="flex-grow">
                         <Slider
-                            min={0}
-                            max={props.availableValues[1] ?? 1}
+                            min={availableValues[0]}
+                            max={availableValues[1]}
                             onChange={handleSliderChange}
-                            value={props.value ?? props.availableValues[0] ?? 1}
+                            value={props.value ?? availableValues[0]}
                             debounceTimeMs={500}
                             valueLabelDisplay="auto"
+                            step={availableValues[2]}
                         />
                     </div>
                     <div className="w-1/5">

@@ -80,37 +80,37 @@ export function LayerManagerComponentWrapper(props: LayerManagerComponentWrapper
                 groupDelegate.appendChild(new SharedSetting(Setting.COLOR_SCALE, null, props.layerManager));
                 return;
             case "observed-surface":
-                groupDelegate.appendChild(
+                groupDelegate.prependChild(
                     LayerRegistry.makeLayer(CustomLayerType.OBSERVED_SURFACE, props.layerManager)
                 );
                 return;
             case "statistical-surface":
-                groupDelegate.appendChild(
+                groupDelegate.prependChild(
                     LayerRegistry.makeLayer(CustomLayerType.STATISTICAL_SURFACE, props.layerManager)
                 );
                 return;
             case "realization-surface":
-                groupDelegate.appendChild(
+                groupDelegate.prependChild(
                     LayerRegistry.makeLayer(CustomLayerType.REALIZATION_SURFACE, props.layerManager)
                 );
                 return;
             case "realization-polygons":
-                groupDelegate.appendChild(
+                groupDelegate.prependChild(
                     LayerRegistry.makeLayer(CustomLayerType.REALIZATION_POLYGONS, props.layerManager)
                 );
                 return;
             case "drilled-wellbore-trajectories":
-                groupDelegate.appendChild(
+                groupDelegate.prependChild(
                     LayerRegistry.makeLayer(LayerType.DRILLED_WELL_TRAJECTORIES, props.layerManager)
                 );
                 return;
             case "drilled-wellbore-picks":
-                groupDelegate.appendChild(
+                groupDelegate.prependChild(
                     LayerRegistry.makeLayer(LayerType.DRILLED_WELLBORE_PICKS, props.layerManager)
                 );
                 return;
             case "realization-grid":
-                groupDelegate.appendChild(
+                groupDelegate.prependChild(
                     LayerRegistry.makeLayer(CustomLayerType.REALIZATION_GRID, props.layerManager)
                 );
                 return;

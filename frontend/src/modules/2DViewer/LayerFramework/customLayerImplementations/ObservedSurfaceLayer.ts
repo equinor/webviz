@@ -23,6 +23,7 @@ const observedSurfaceSettings = [
     Setting.ATTRIBUTE,
     Setting.SURFACE_NAME,
     Setting.TIME_OR_INTERVAL,
+    Setting.COLOR_SCALE,
 ] as const;
 export type ObservedSurfaceSettings = typeof observedSurfaceSettings;
 type SettingsWithTypes = MakeSettingTypesMap<ObservedSurfaceSettings>;
@@ -31,15 +32,6 @@ export type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
 
 export class ObservedSurfaceLayer implements CustomDataLayerImplementation<ObservedSurfaceSettings, Data> {
     settings = observedSurfaceSettings;
-
-    getDefaultSettingsValues() {
-        return {
-            [Setting.ENSEMBLE]: null,
-            [Setting.ATTRIBUTE]: null,
-            [Setting.SURFACE_NAME]: null,
-            [Setting.TIME_OR_INTERVAL]: null,
-        };
-    }
 
     getDefaultName() {
         return "Observed Surface";

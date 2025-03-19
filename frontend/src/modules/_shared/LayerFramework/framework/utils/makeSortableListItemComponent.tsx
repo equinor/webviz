@@ -1,7 +1,5 @@
 import { LayersActionGroup } from "../../LayersActions";
 import { Item, ItemGroup } from "../../interfaces";
-import { ColorScale } from "../ColorScale/ColorScale";
-import { ColorScaleComponent } from "../ColorScale/ColorScaleComponent";
 import { DataLayer } from "../DataLayer/DataLayer";
 import { DataLayerComponent } from "../DataLayer/DataLayerComponent";
 import { DeltaSurface } from "../DeltaSurface/DeltaSurface";
@@ -53,9 +51,6 @@ export function makeSortableListItemComponent(
     }
     if (item instanceof SharedSetting) {
         return <SharedSettingComponent key={item.getItemDelegate().getId()} sharedSetting={item} />;
-    }
-    if (item instanceof ColorScale) {
-        return <ColorScaleComponent key={item.getItemDelegate().getId()} colorScale={item} />;
     }
 
     throw new Error(`Unsupported item type: ${item.constructor.name}`);

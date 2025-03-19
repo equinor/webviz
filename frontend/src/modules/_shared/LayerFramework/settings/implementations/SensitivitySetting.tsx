@@ -17,8 +17,8 @@ export type SensitivityNameCasePair = {
 type ValueType = SensitivityNameCasePair | null;
 export class SensitivitySetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
     isValueValid(
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>,
-        value: ValueType
+        value: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.SINGLE_OPTION>
     ): boolean {
         if (availableValues.length === 0) {
             return true;
@@ -37,12 +37,14 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
         return function Sensitivity(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+            const availableValues = props.availableValues ?? [];
+
             const availableSensitivityNames: string[] = [
-                ...Array.from(new Set(props.availableValues.map((sensitivity) => sensitivity.sensitivityName))),
+                ...Array.from(new Set(availableValues.map((sensitivity) => sensitivity.sensitivityName))),
             ];
 
             const currentSensitivityName = props.value?.sensitivityName;
-            const availableSensitiveCases = props.availableValues
+            const availableSensitiveCases = availableValues
                 .filter((sensitivity) => sensitivity.sensitivityName === currentSensitivityName)
                 .map((sensitivity) => sensitivity.sensitivityCase);
 
@@ -71,7 +73,7 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
             }
 
             function handleSensitivityNameChange(selectedValue: string) {
-                const availableSensitiveCases = props.availableValues
+                const availableSensitiveCases = availableValues
                     .filter((sensitivity) => sensitivity.sensitivityName === selectedValue)
                     .map((sensitivity) => sensitivity.sensitivityCase);
 
@@ -91,7 +93,7 @@ export class SensitivitySetting implements CustomSettingImplementation<ValueType
                     sensitivityCase: selectedValue,
                 });
             }
-            if (props.availableValues.length === 0) {
+            if (availableValues.length === 0) {
                 return "No sensitivities available";
             }
             return (

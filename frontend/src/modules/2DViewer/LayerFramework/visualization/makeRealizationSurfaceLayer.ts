@@ -1,5 +1,6 @@
 import { SurfaceDef_api } from "@api";
 import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
 import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
@@ -27,9 +28,10 @@ export function makeRealizationSurfaceLayer({
     id,
     name,
     getData,
-    colorScale,
+    getSetting,
 }: VisualizationFunctionArgs<RealizationSurfaceSettings, Data>): ColormapLayer | Grid3DLayer | null {
     const data = getData();
+    const colorScale = getSetting(Setting.COLOR_SCALE)?.colorScale;
 
     if (!data) {
         return null;

@@ -1,12 +1,12 @@
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
-import { Item, SerializedSharedSetting, SerializedType } from "../../interfaces";
+import { Item, SerializedSharedSetting, SerializedType, SharedSettingsProvider } from "../../interfaces";
 import { SettingRegistry } from "../../settings/SettingRegistry";
 import { Setting, SettingTypes } from "../../settings/settingsDefinitions";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 import { SettingManager } from "../SettingManager/SettingManager";
 
-export class SharedSetting<TSetting extends Setting> implements Item {
+export class SharedSetting<TSetting extends Setting> implements Item, SharedSettingsProvider {
     private _sharedSettingsDelegate: SharedSettingsDelegate<[TSetting]>;
     private _itemDelegate: ItemDelegate;
 
@@ -22,6 +22,10 @@ export class SharedSetting<TSetting extends Setting> implements Item {
 
     getItemDelegate(): ItemDelegate {
         return this._itemDelegate;
+    }
+
+    getSharedSettingsDelegate(): SharedSettingsDelegate<any> {
+        return this._sharedSettingsDelegate;
     }
 
     publishValueChange(): void {

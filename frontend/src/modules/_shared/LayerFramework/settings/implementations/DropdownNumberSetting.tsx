@@ -9,8 +9,10 @@ type ValueType = number | null;
 
 export class DropdownNumberSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
-            const options: DropdownOption<number>[] = props.availableValues.map((value) => {
+        return function DropdownNumberSetting(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+            const availableValues = props.availableValues ?? [];
+
+            const options: DropdownOption<number>[] = availableValues.map((value) => {
                 return {
                     value: value,
                     label: value === null ? "None" : value.toString(),

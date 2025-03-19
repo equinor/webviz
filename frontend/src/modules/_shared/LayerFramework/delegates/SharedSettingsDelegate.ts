@@ -39,7 +39,7 @@ export class SharedSettingsDelegate<
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
-            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS_CHANGED)(() => {
+            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.ITEMS)(() => {
                 this.makeIntersectionOfAvailableValues();
             })
         );
@@ -97,14 +97,21 @@ export class SharedSettingsDelegate<
                 if (setting) {
                     if (setting.isLoading()) {
                         wrappedSetting.setLoading(true);
-                        return;
+                        continue;
+                    }
+
+                    if (setting.getAvailableValues() === null) {
+                        continue;
                     }
 
                     const reducerDefinition = settingCategoryAvailableValuesIntersectionReducerMap[category];
                     if (reducerDefinition) {
                         const { reducer, startingValue } = reducerDefinition;
+                        if (index === 0) {
+                            availableValuesMap[key] = startingValue as AvailableValuesType<typeof key>;
+                        }
                         availableValuesMap[key] = reducer(
-                            startingValue,
+                            availableValuesMap[key] as any,
                             setting.getAvailableValues(),
                             index
                         ) as AvailableValuesType<typeof key>;

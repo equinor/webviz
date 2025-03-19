@@ -4,15 +4,25 @@ import { isDevMode } from "@lib/utils/devMode";
 import { PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { QueryClient, isCancelledError } from "@tanstack/react-query";
 
+import { isEqual } from "lodash";
+
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegate, SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import { CustomDataLayerImplementation, DataLayerInformationAccessors, Item, LayerColoringType, SerializedLayer, SerializedType, Settings, SettingsKeysFromTuple, StoredData } from "../../interfaces";
+import {
+    CustomDataLayerImplementation,
+    DataLayerInformationAccessors,
+    Item,
+    LayerColoringType,
+    SerializedLayer,
+    SerializedType,
+    Settings,
+    SettingsKeysFromTuple,
+    StoredData,
+} from "../../interfaces";
 import { MakeSettingTypesMap } from "../../settings/settingsDefinitions";
 import { DataLayerManager, LayerManagerTopic, log } from "../DataLayerManager/DataLayerManager";
 import { makeSettings } from "../utils/makeSettings";
-import { isEqual } from "lodash";
-
 
 export enum LayerDelegateTopic {
     STATUS = "STATUS",
@@ -43,7 +53,13 @@ export type DataLayerParams<
     type: string;
     layerManager: DataLayerManager;
     instanceName?: string;
-    customDataLayerImplementation: CustomDataLayerImplementation<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>;
+    customDataLayerImplementation: CustomDataLayerImplementation<
+        TSettings,
+        TData,
+        TStoredData,
+        TSettingTypes,
+        TSettingKey
+    >;
 };
 
 /*
@@ -52,15 +68,21 @@ export type DataLayerParams<
  * It also manages the status of the layer (loading, success, error).
  */
 export class DataLayer<
-    const TSettings extends Settings,
-    const TData,
-    const TStoredData extends StoredData = Record<string, never>,
-    const TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
-    const TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
+    TSettings extends Settings,
+    TData,
+    TStoredData extends StoredData = Record<string, never>,
+    TSettingTypes extends MakeSettingTypesMap<TSettings> = MakeSettingTypesMap<TSettings>,
+    TSettingKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>
 > implements Item, PublishSubscribe<LayerDelegatePayloads<TData>>
 {
     private _type: string;
-    private _customDataLayerImpl: CustomDataLayerImplementation<TSettings, TData, TStoredData, TSettingTypes, TSettingKey>;
+    private _customDataLayerImpl: CustomDataLayerImplementation<
+        TSettings,
+        TData,
+        TStoredData,
+        TSettingTypes,
+        TSettingKey
+    >;
     private _settingsContextDelegate: SettingsContextDelegate<TSettings, TSettingTypes, TStoredData, TSettingKey>;
     private _itemDelegate: ItemDelegate;
     private _layerManager: DataLayerManager;
@@ -85,7 +107,7 @@ export class DataLayer<
             layerManager,
             makeSettings<TSettings, TSettingTypes, TSettingKey>(
                 customDataLayerImplementation.settings,
-                customDataLayerImplementation.getDefaultSettingsValues()
+                customDataLayerImplementation.getDefaultSettingsValues?.() ?? {}
             )
         );
         this._customDataLayerImpl = customDataLayerImplementation;
@@ -106,7 +128,7 @@ export class DataLayer<
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
             "layer-manager",
-            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS_CHANGED)(() => {
+            layerManager.getPublishSubscribeDelegate().makeSubscriberFunction(LayerManagerTopic.GLOBAL_SETTINGS)(() => {
                 this.handleSettingsChange();
             })
         );
@@ -121,13 +143,15 @@ export class DataLayer<
     }
 
     handleSettingsChange(): void {
-        const refetchRequired = this._customDataLayerImpl.doSettingsChangesRequireDataRefetch?.(
-            this._prevSettings,
-            this._settingsContextDelegate.getValues() as TSettingTypes,
-            this.makeAccessors()
-        ) ?? !isEqual(this._prevSettings, this._settingsContextDelegate.getValues() as TSettingTypes);
+        const refetchRequired =
+            this._customDataLayerImpl.doSettingsChangesRequireDataRefetch?.(
+                this._prevSettings,
+                this._settingsContextDelegate.getValues() as TSettingTypes,
+                this.makeAccessors()
+            ) ?? !isEqual(this._prevSettings, this._settingsContextDelegate.getValues() as TSettingTypes);
 
         if (!refetchRequired) {
+            this._itemDelegate.getLayerManager().publishTopic(LayerManagerTopic.LAYER_DATA_REVISION);
             return;
         }
 
@@ -257,7 +281,11 @@ export class DataLayer<
 
         this.setStatus(LayerStatus.LOADING);
 
-        log.log(`Refetching data for layer ${this.getItemDelegate().getName()}. Settings: ${JSON.stringify(this._settingsContextDelegate.getValues())}`)();
+        log.log(
+            `Refetching data for layer ${this.getItemDelegate().getName()}. Settings: ${JSON.stringify(
+                this._settingsContextDelegate.getValues()
+            )}`
+        )();
 
         try {
             this._data = await this._customDataLayerImpl.fetchData({

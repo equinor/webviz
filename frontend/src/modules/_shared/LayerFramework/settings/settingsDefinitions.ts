@@ -3,6 +3,8 @@ import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { ColorScaleConfig } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { ColorSet } from "@lib/utils/ColorSet";
 
+import { isEqual } from "lodash";
+
 import { IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
 
@@ -13,8 +15,9 @@ export enum SettingCategory {
     MULTI_OPTION = "multiOption",
     NUMBER = "number",
     RANGE = "range",
+    NUMBER_WITH_STEP = "numberWithStep",
     BOOLEAN = "boolean",
-    OTHER = "other",
+    STATIC = "static",
 }
 
 export enum Setting {
@@ -45,8 +48,8 @@ export enum Setting {
 export const settingCategories = {
     [Setting.ATTRIBUTE]: SettingCategory.SINGLE_OPTION,
     [Setting.ENSEMBLE]: SettingCategory.SINGLE_OPTION,
-    [Setting.COLOR_SCALE]: SettingCategory.OTHER,
-    [Setting.COLOR_SET]: SettingCategory.OTHER,
+    [Setting.COLOR_SCALE]: SettingCategory.STATIC,
+    [Setting.COLOR_SET]: SettingCategory.STATIC,
     [Setting.GRID_LAYER_I_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_LAYER_J_RANGE]: SettingCategory.RANGE,
     [Setting.GRID_LAYER_K]: SettingCategory.NUMBER,
@@ -56,9 +59,9 @@ export const settingCategories = {
     [Setting.POLYGONS_ATTRIBUTE]: SettingCategory.SINGLE_OPTION,
     [Setting.POLYGONS_NAME]: SettingCategory.SINGLE_OPTION,
     [Setting.REALIZATION]: SettingCategory.SINGLE_OPTION,
-    [Setting.SEISMIC_CROSSLINE]: SettingCategory.SINGLE_OPTION,
-    [Setting.SEISMIC_DEPTH_SLICE]: SettingCategory.SINGLE_OPTION,
-    [Setting.SEISMIC_INLINE]: SettingCategory.SINGLE_OPTION,
+    [Setting.SEISMIC_CROSSLINE]: SettingCategory.NUMBER_WITH_STEP,
+    [Setting.SEISMIC_DEPTH_SLICE]: SettingCategory.NUMBER_WITH_STEP,
+    [Setting.SEISMIC_INLINE]: SettingCategory.NUMBER_WITH_STEP,
     [Setting.SENSITIVITY]: SettingCategory.SINGLE_OPTION,
     [Setting.SHOW_GRID_LINES]: SettingCategory.BOOLEAN,
     [Setting.SMDA_WELLBORE_HEADERS]: SettingCategory.MULTI_OPTION,
@@ -145,7 +148,7 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
             return availableValues[0];
         }
 
-        if (availableValues.includes(value)) {
+        if (availableValues.some((v) => isEqual(v, value))) {
             return value;
         }
 
@@ -160,7 +163,7 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
             return [availableValues[0]];
         }
 
-        return value.filter((v) => availableValues.includes(v));
+        return value.filter((v) => availableValues.some((av) => isEqual(av, v)));
     },
     [SettingCategory.NUMBER]: (value, availableValues) => {
         if (value === null) {
@@ -179,6 +182,24 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
 
         return value;
     },
+    [SettingCategory.NUMBER_WITH_STEP]: (value, availableValues) => {
+        if (value === null) {
+            return availableValues[0];
+        }
+
+        const [min, max, step] = availableValues;
+
+        if (value < min) {
+            return min;
+        }
+
+        if (value > max) {
+            return max;
+        }
+
+        const steps = Math.round((value - min) / step);
+        return min + steps * step;
+    },
     [SettingCategory.RANGE]: (value, availableValues) => {
         if (value === null) {
             return availableValues;
@@ -196,7 +217,7 @@ export const settingCategoryFixupMap: SettingCategoryFixupMap = {
 
         return value;
     },
-    [SettingCategory.OTHER]: (value) => value,
+    [SettingCategory.STATIC]: (value) => value,
     [SettingCategory.BOOLEAN]: (value) => value,
 };
 
@@ -205,13 +226,13 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
         if (value === null) {
             return false;
         }
-        return availableValues.includes(value);
+        return availableValues.some((v) => isEqual(v, value));
     },
     [SettingCategory.MULTI_OPTION]: (value, availableValues) => {
         if (value === null) {
             return false;
         }
-        return value.every((v) => availableValues.includes(v));
+        return value.every((v) => availableValues.some((av) => isEqual(av, v)));
     },
     [SettingCategory.NUMBER]: (value, availableValues) => {
         if (value === null) {
@@ -220,6 +241,13 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
         const [min, max] = availableValues;
         return value >= min && value <= max;
     },
+    [SettingCategory.NUMBER_WITH_STEP]: (value, availableValues) => {
+        if (value === null) {
+            return false;
+        }
+        const [min, max, step] = availableValues;
+        return value >= min && value <= max && (value - min) % step === 0;
+    },
     [SettingCategory.RANGE]: (value, availableValues) => {
         if (value === null) {
             return false;
@@ -227,7 +255,7 @@ export const settingCategoryIsValueValidMap: SettingCategoryIsValueValidMap = {
         const [min, max] = availableValues;
         return value[0] >= min && value[1] <= max;
     },
-    [SettingCategory.OTHER]: () => true,
+    [SettingCategory.STATIC]: () => true,
     [SettingCategory.BOOLEAN]: () => true,
 };
 
@@ -238,7 +266,7 @@ export const settingCategoryAvailableValuesIntersectionReducerMap: SettingCatego
                 if (accumulator.length === 0) {
                     return currentAvailableValues;
                 }
-                return accumulator.filter((value) => currentAvailableValues.includes(value));
+                return accumulator.filter((value) => currentAvailableValues.some((av) => isEqual(av, value)));
             },
             startingValue: [],
         },
@@ -247,7 +275,7 @@ export const settingCategoryAvailableValuesIntersectionReducerMap: SettingCatego
                 if (accumulator.length === 0) {
                     return currentAvailableValues;
                 }
-                return accumulator.filter((value) => currentAvailableValues.includes(value));
+                return accumulator.filter((value) => currentAvailableValues.some((av) => isEqual(av, value)));
             },
             startingValue: [],
         },

@@ -12,7 +12,6 @@ import { DataLayerManager } from "./DataLayerManager";
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { View } from "../../groups/implementations/View";
 import { Item, ItemGroup, instanceofItemGroup } from "../../interfaces";
-import { ColorScale } from "../ColorScale/ColorScale";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";
@@ -65,22 +64,22 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
             }
         }
 
-        const numSharedSettingsAndColorScales =
+        const numSharedSettings =
             destinationItem.getGroupDelegate().findChildren((item) => {
-                return item instanceof SharedSetting || item instanceof ColorScale;
+                return item instanceof SharedSetting;
             }).length ?? 0;
 
-        if (!(movedItem instanceof SharedSetting || movedItem instanceof ColorScale)) {
-            if (args.position < numSharedSettingsAndColorScales) {
+        if (!(movedItem instanceof SharedSetting)) {
+            if (args.position < numSharedSettings) {
                 return false;
             }
         } else {
             if (args.originId === args.destinationId) {
-                if (args.position >= numSharedSettingsAndColorScales) {
+                if (args.position >= numSharedSettings) {
                     return false;
                 }
             } else {
-                if (args.position > numSharedSettingsAndColorScales) {
+                if (args.position > numSharedSettings) {
                     return false;
                 }
             }

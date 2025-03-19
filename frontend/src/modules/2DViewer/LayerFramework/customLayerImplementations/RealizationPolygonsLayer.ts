@@ -22,15 +22,6 @@ export type Data = PolygonData_api[];
 export class RealizationPolygonsLayer implements CustomDataLayerImplementation<RealizationPolygonsSettings, Data> {
     settings = realizationPolygonsSettings;
 
-    getDefaultSettingsValues() {
-        return {
-            [Setting.ENSEMBLE]: null,
-            [Setting.REALIZATION]: null,
-            [Setting.POLYGONS_ATTRIBUTE]: null,
-            [Setting.POLYGONS_NAME]: null,
-        };
-    }
-
     getDefaultName(): string {
         return "Realization Polygons";
     }

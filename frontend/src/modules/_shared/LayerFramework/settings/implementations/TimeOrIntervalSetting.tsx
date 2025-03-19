@@ -3,7 +3,11 @@ import React from "react";
 import { SurfaceTimeType_api } from "@api";
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
-import { CustomSettingImplementation, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
+import {
+    CustomSettingImplementation,
+    OverriddenValueRepresentationArgs,
+    SettingComponentProps,
+} from "../../interfaces";
 import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = string | null;
@@ -17,7 +21,9 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
         return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
-            const options: DropdownOption[] = props.availableValues.map((value) => {
+            const availableValues = props.availableValues ?? [];
+
+            const options: DropdownOption[] = availableValues.map((value) => {
                 return {
                     value: value.toString(),
                     label: timeTypeToLabel(value),
@@ -36,7 +42,7 @@ export class TimeOrIntervalSetting implements CustomSettingImplementation<ValueT
         };
     }
 
-    valueToString(args: ValueToStringArgs<ValueType>): string {
+    overriddenValueRepresentation(args: OverriddenValueRepresentationArgs<ValueType>): React.ReactNode {
         const { value } = args;
         if (value === null) {
             return "-";

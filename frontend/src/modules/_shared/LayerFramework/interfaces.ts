@@ -1,3 +1,5 @@
+import React from "react";
+
 import { WorkbenchSession } from "@framework/WorkbenchSession";
 import { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorScaleSerialization } from "@lib/utils/ColorScale";
@@ -162,7 +164,7 @@ export type DataLayerInformationAccessors<
      * const availableValues = getAvailableSettingValues("settingName");
      * ```
      */
-    getAvailableSettingValues: <K extends TSettingKey>(settingName: K) => AvailableValuesType<K>;
+    getAvailableSettingValues: <K extends TSettingKey>(settingName: K) => AvailableValuesType<K> | null;
 
     /**
      * Access the global settings of the data layer manager.
@@ -282,7 +284,7 @@ export interface CustomSettingsHandler<
      * A method that returns the default values of the settings.
      * @returns The default values of the settings.
      */
-    getDefaultSettingsValues(): TSettingTypes;
+    getDefaultSettingsValues?(): Partial<TSettingTypes>;
 
     /**
      * A method that defines the dependencies of the settings of the layer.
@@ -428,10 +430,10 @@ export interface DefineDependenciesArgs<
     TKey extends SettingsKeysFromTuple<TSettings> = SettingsKeysFromTuple<TSettings>,
     TStoredDataKey extends keyof TStoredData = keyof TStoredData
 > {
-    availableSettingsUpdater: <K extends TKey>(
-        settingKey: K,
-        update: UpdateFunc<AvailableValuesType<K>, TSettings, TSettingTypes, TKey>
-    ) => Dependency<AvailableValuesType<TKey>, TSettings, TSettingTypes, TKey>;
+    availableSettingsUpdater: <TSettingKey extends TKey>(
+        settingKey: TSettingKey,
+        update: UpdateFunc<AvailableValuesType<TSettingKey>, TSettings, TSettingTypes, TKey>
+    ) => Dependency<AvailableValuesType<TSettingKey>, TSettings, TSettingTypes, TKey>;
     storedDataUpdater: <K extends TStoredDataKey>(
         key: K,
         update: UpdateFunc<NullableStoredData<TStoredData>[TStoredDataKey], TSettings, TSettingTypes, TKey>
@@ -470,6 +472,8 @@ export type MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory extends Set
     ? RemoveUnknownFromArray<MakeArrayIfNotArray<TValue>>
     : TCategory extends SettingCategory.NUMBER
     ? [Exclude<TValue, null>, Exclude<TValue, null>]
+    : TCategory extends SettingCategory.NUMBER_WITH_STEP
+    ? [Exclude<TValue, null>, Exclude<TValue, null>, Exclude<TValue, null>]
     : TCategory extends SettingCategory.RANGE
     ? Exclude<TValue, null>
     : never;
@@ -480,7 +484,7 @@ export type SettingComponentProps<TValue, TCategory extends SettingCategory> = {
     isValueValid: boolean;
     overriddenValue: TValue | null;
     isOverridden: boolean;
-    availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>;
+    availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null;
     workbenchSession: WorkbenchSession;
     workbenchSettings: WorkbenchSettings;
     globalSettings: GlobalSettings;
@@ -493,20 +497,27 @@ export type ValueToStringArgs<TValue> = {
 };
 
 export interface CustomSettingImplementation<TValue, TCategory extends SettingCategory> {
+    defaultValue?: TValue;
     getIsStatic?: () => boolean;
     makeComponent(): (props: SettingComponentProps<TValue, TCategory>) => React.ReactNode;
     fixupValue?: (
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>,
-        currentValue: TValue
+        currentValue: TValue,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>
     ) => TValue;
     isValueValid?: (
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>,
-        value: TValue
+        value: TValue,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>
     ) => boolean;
     serializeValue?: (value: TValue) => string;
     deserializeValue?: (serializedValue: string) => TValue;
-    valueToString?: (args: ValueToStringArgs<TValue>) => string;
+    overriddenValueRepresentation?: (args: OverriddenValueRepresentationArgs<TValue>) => React.ReactNode;
 }
+
+export type OverriddenValueRepresentationArgs<TValue> = {
+    value: TValue;
+    workbenchSession: WorkbenchSession;
+    workbenchSettings: WorkbenchSettings;
+};
 
 export type Settings = ReadonlyArray<Setting> & { __brand?: "MyType" };
 

@@ -3,7 +3,11 @@ import React from "react";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 
-import { CustomSettingImplementation, SettingComponentProps, ValueToStringArgs } from "../../interfaces";
+import {
+    CustomSettingImplementation,
+    OverriddenValueRepresentationArgs,
+    SettingComponentProps,
+} from "../../interfaces";
 import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = RegularEnsembleIdent | null;
@@ -23,9 +27,11 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, S
     }
 
     makeComponent(): (props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) => React.ReactNode {
-        return function Ensemble(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+        return function EnsembleSelect(props: SettingComponentProps<ValueType, SettingCategory.SINGLE_OPTION>) {
+            const availableValues = props.availableValues ?? [];
+
             const ensembles = props.globalSettings.ensembles.filter((ensemble) =>
-                props.availableValues.includes(ensemble.getIdent())
+                availableValues.includes(ensemble.getIdent())
             );
 
             return (
@@ -40,7 +46,7 @@ export class EnsembleSetting implements CustomSettingImplementation<ValueType, S
         };
     }
 
-    valueToString(args: ValueToStringArgs<RegularEnsembleIdent | null>): string {
+    overriddenValueRepresentation(args: OverriddenValueRepresentationArgs<ValueType>): React.ReactNode {
         const { value, workbenchSession } = args;
         if (value === null) {
             return "-";

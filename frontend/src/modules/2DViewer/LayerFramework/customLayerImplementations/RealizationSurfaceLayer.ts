@@ -30,17 +30,6 @@ export type Data = SurfaceDataFloat_trans | SurfaceDataPng_api;
 export class RealizationSurfaceLayer implements CustomDataLayerImplementation<RealizationSurfaceSettings, Data> {
     settings = realizationSurfaceSettings;
 
-    getDefaultSettingsValues() {
-        return {
-            [Setting.ENSEMBLE]: null,
-            [Setting.REALIZATION]: null,
-            [Setting.ATTRIBUTE]: null,
-            [Setting.SURFACE_NAME]: null,
-            [Setting.TIME_OR_INTERVAL]: null,
-            [Setting.COLOR_SCALE]: null,
-        };
-    }
-
     getDefaultName(): string {
         return "Realization Surface";
     }
@@ -50,7 +39,13 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {
-        return !isEqual(prevSettings, newSettings);
+        return !isEqual(
+            {
+                ...prevSettings,
+                colorScale: null,
+            },
+            { ...newSettings, colorScale: null }
+        );
     }
 
     areCurrentSettingsValid({ getSetting }: DataLayerInformationAccessors<RealizationSurfaceSettings, Data>): boolean {

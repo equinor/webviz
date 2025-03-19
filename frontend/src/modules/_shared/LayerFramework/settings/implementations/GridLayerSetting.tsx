@@ -38,8 +38,8 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
     }
 
     isValueValid(
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
-        value: ValueType
+        value: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>
     ): boolean {
         if (value === null) {
             return false;
@@ -60,8 +60,8 @@ export class GridLayerSetting implements CustomSettingImplementation<ValueType, 
     }
 
     fixupValue(
-        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>,
-        currentValue: ValueType
+        currentValue: ValueType,
+        availableValues: MakeAvailableValuesTypeBasedOnCategory<ValueType, SettingCategory.NUMBER>
     ): ValueType {
         if (!availableValues) {
             return null;

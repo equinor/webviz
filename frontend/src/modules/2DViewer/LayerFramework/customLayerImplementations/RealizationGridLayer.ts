@@ -24,6 +24,7 @@ const realizationGridSettings = [
     Setting.GRID_LAYER_K,
     Setting.TIME_OR_INTERVAL,
     Setting.SHOW_GRID_LINES,
+    Setting.COLOR_SCALE,
 ] as const;
 export type RealizationGridSettings = typeof realizationGridSettings;
 type SettingsWithTypes = MakeSettingTypesMap<RealizationGridSettings>;
@@ -46,13 +47,7 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
 
     getDefaultSettingsValues() {
         return {
-            [Setting.ENSEMBLE]: null,
-            [Setting.REALIZATION]: null,
-            [Setting.ATTRIBUTE]: null,
-            [Setting.GRID_NAME]: null,
-            [Setting.GRID_LAYER_K]: null,
-            [Setting.TIME_OR_INTERVAL]: null,
-            [Setting.SHOW_GRID_LINES]: true,
+            [Setting.SHOW_GRID_LINES]: false,
         };
     }
 

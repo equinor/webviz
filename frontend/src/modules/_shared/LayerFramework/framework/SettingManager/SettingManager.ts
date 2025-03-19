@@ -35,7 +35,7 @@ export enum SettingTopic {
 export type SettingTopicPayloads<TValue, TCategory extends SettingCategory> = {
     [SettingTopic.VALUE_CHANGED]: TValue;
     [SettingTopic.VALIDITY_CHANGED]: boolean;
-    [SettingTopic.AVAILABLE_VALUES_CHANGED]: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>;
+    [SettingTopic.AVAILABLE_VALUES_CHANGED]: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null;
     [SettingTopic.OVERRIDDEN_VALUE_CHANGED]: TValue | undefined;
     [SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED]: OverriddenValueProviderType | undefined;
     [SettingTopic.LOADING_STATE_CHANGED]: boolean;
@@ -80,10 +80,9 @@ export class SettingManager<
     private _value: TValue;
     private _isValueValid: boolean = false;
     private _publishSubscribeDelegate = new PublishSubscribeDelegate<SettingTopicPayloads<TValue, TCategory>>();
-    private _availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> =
-        [] as unknown as MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>;
+    private _availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory> | null = null;
     private _overriddenValue: TValue | undefined = undefined;
-    private _overridenValueProviderType: OverriddenValueProviderType | undefined = undefined;
+    private _overriddenValueProviderType: OverriddenValueProviderType | undefined = undefined;
     private _loading: boolean = false;
     private _initialized: boolean = false;
     private _currentValueFromPersistence: TValue | null = null;
@@ -102,11 +101,10 @@ export class SettingManager<
         this._label = label;
         this._customSettingImplementation = customSettingImplementation;
         this._value = defaultValue;
-        if (typeof this._value === "boolean") {
-            this._isValueValid = true;
-        }
-
         this._isStatic = customSettingImplementation.getIsStatic?.() ?? false;
+        if (this._isStatic) {
+            this.setValueValid(this.checkIfValueIsValid(this._value));
+        }
     }
 
     getId(): string {
@@ -198,7 +196,7 @@ export class SettingManager<
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.LOADING_STATE_CHANGED);
     }
 
-    setInitialized(): void {
+    initialize(): void {
         if (this._initialized) {
             return;
         }
@@ -214,9 +212,17 @@ export class SettingManager<
         return this._loading;
     }
 
-    valueToString(value: TValue, workbenchSession: WorkbenchSession, workbenchSettings: WorkbenchSettings): string {
-        if (this._customSettingImplementation.valueToString) {
-            return this._customSettingImplementation.valueToString({ value, workbenchSession, workbenchSettings });
+    valueToRepresentation(
+        value: TValue,
+        workbenchSession: WorkbenchSession,
+        workbenchSettings: WorkbenchSettings
+    ): React.ReactNode {
+        if (this._customSettingImplementation.overriddenValueRepresentation) {
+            return this._customSettingImplementation.overriddenValueRepresentation({
+                value,
+                workbenchSession,
+                workbenchSettings,
+            });
         }
 
         if (typeof value === "boolean") {
@@ -256,7 +262,7 @@ export class SettingManager<
         }
 
         this.setOverriddenValue(overriddenValue);
-        this._overridenValueProviderType = overriddenValueProviderType;
+        this._overriddenValueProviderType = overriddenValueProviderType;
         this._publishSubscribeDelegate.notifySubscribers(SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED);
     }
 
@@ -294,7 +300,7 @@ export class SettingManager<
         const snapshotGetter = (): any => {
             switch (topic) {
                 case SettingTopic.VALUE_CHANGED:
-                    return this._value;
+                    return this.getValue();
                 case SettingTopic.VALIDITY_CHANGED:
                     return this._isValueValid;
                 case SettingTopic.AVAILABLE_VALUES_CHANGED:
@@ -302,7 +308,7 @@ export class SettingManager<
                 case SettingTopic.OVERRIDDEN_VALUE_CHANGED:
                     return this._overriddenValue;
                 case SettingTopic.OVERRIDDEN_VALUE_PROVIDER_CHANGED:
-                    return this._overridenValueProviderType;
+                    return this._overriddenValueProviderType;
                 case SettingTopic.LOADING_STATE_CHANGED:
                     return this.isLoading();
                 case SettingTopic.PERSISTED_STATE_CHANGED:
@@ -321,22 +327,48 @@ export class SettingManager<
         return this._publishSubscribeDelegate;
     }
 
-    getAvailableValues(): AvailableValuesType<TSetting> {
+    getAvailableValues(): AvailableValuesType<TSetting> | null {
         return this._availableValues;
     }
 
     maybeResetPersistedValue(): boolean {
-        if (this._currentValueFromPersistence === null) {
+        if (this._isStatic) {
+            if (this._currentValueFromPersistence !== null) {
+                this._value = this._currentValueFromPersistence;
+                this._currentValueFromPersistence = null;
+                this.setValueValid(true);
+            }
+            return true;
+        }
+        if (this._currentValueFromPersistence === null || this._availableValues === null) {
             return false;
         }
 
-        const customCheck = this._customSettingImplementation.isValueValid;
-        if (customCheck) {
-            return !customCheck(this._availableValues, this._currentValueFromPersistence);
+        let isPersistedValueValid = false;
+
+        const customIsValueValidFunction = this._customSettingImplementation.isValueValid;
+        if (customIsValueValidFunction) {
+            isPersistedValueValid = customIsValueValidFunction(
+                this._currentValueFromPersistence,
+                this._availableValues
+            );
+        } else {
+            isPersistedValueValid = settingCategoryIsValueValidMap[this._category](
+                this._currentValueFromPersistence as any,
+                this._availableValues as any
+            );
         }
 
-        const categoryIsValueValidCheck = settingCategoryIsValueValidMap[this._category];
-        return !categoryIsValueValidCheck(this._currentValueFromPersistence as any, this._availableValues as any);
+        if (isPersistedValueValid) {
+            this._value = this._currentValueFromPersistence;
+            this._currentValueFromPersistence = null;
+            this.setValueValid(true);
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
+            this._publishSubscribeDelegate.notifySubscribers(SettingTopic.PERSISTED_STATE_CHANGED);
+            return true;
+        }
+
+        return false;
     }
 
     setAvailableValues(availableValues: MakeAvailableValuesTypeBasedOnCategory<TValue, TCategory>): void {
@@ -349,9 +381,9 @@ export class SettingManager<
         if ((!this.checkIfValueIsValid(this.getValue()) && this.maybeFixupValue()) || this.maybeResetPersistedValue()) {
             valueChanged = true;
         }
-        this.setValueValid(this.checkIfValueIsValid(this.getValue()));
-        this.setInitialized();
         const prevIsValid = this._isValueValid;
+        this.setValueValid(this.checkIfValueIsValid(this.getValue()));
+        this.initialize();
         if (valueChanged || this._isValueValid !== prevIsValid) {
             this._publishSubscribeDelegate.notifySubscribers(SettingTopic.VALUE_CHANGED);
         }
@@ -371,9 +403,13 @@ export class SettingManager<
             return false;
         }
 
+        if (this._availableValues === null) {
+            return false;
+        }
+
         let candidate: TValue;
         if (this._customSettingImplementation.fixupValue) {
-            candidate = this._customSettingImplementation.fixupValue(this._availableValues, this._value);
+            candidate = this._customSettingImplementation.fixupValue(this._value, this._availableValues);
         } else {
             candidate = settingCategoryFixupMap[this._category](
                 this._value as any,
@@ -389,8 +425,17 @@ export class SettingManager<
     }
 
     private checkIfValueIsValid(value: TValue): boolean {
+        if (value === null) {
+            return false;
+        }
+        if (this._isStatic) {
+            return true;
+        }
+        if (this._availableValues === null) {
+            return false;
+        }
         if (this._customSettingImplementation.isValueValid) {
-            return this._customSettingImplementation.isValueValid(this._availableValues, value);
+            return this._customSettingImplementation.isValueValid(value, this._availableValues);
         } else {
             return settingCategoryIsValueValidMap[this._category](value as any, this._availableValues as any);
         }

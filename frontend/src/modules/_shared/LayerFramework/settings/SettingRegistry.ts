@@ -8,8 +8,10 @@ export class SettingRegistry {
         Setting,
         {
             label: string;
-            customSettingImplementation: { new (customParams?: any): CustomSettingImplementation<any, any> };
-            customParams?: any;
+            customSettingImplementation: {
+                new (customConstructorParameters?: any): CustomSettingImplementation<any, any>;
+            };
+            customConstructorParameters?: any;
         }
     > = new Map();
 
@@ -24,7 +26,9 @@ export class SettingRegistry {
         type: TSetting,
         label: string,
         customSettingImplementation: TSettingImpl,
-        customParams?: ConstructorParameters<TSettingImpl>
+        options?: {
+            customConstructorParameters?: ConstructorParameters<TSettingImpl>;
+        }
     ): void {
         if (this._registeredSettings.has(type)) {
             throw new Error(`Setting ${type} already registered`);
@@ -32,25 +36,25 @@ export class SettingRegistry {
         this._registeredSettings.set(type, {
             label,
             customSettingImplementation,
-            customParams,
+            customConstructorParameters: options?.customConstructorParameters,
         });
     }
 
     static makeSetting<TSetting extends Setting>(
         type: TSetting,
-        defaultValue: SettingTypes[TSetting]
+        defaultValue?: SettingTypes[TSetting]
     ): SettingManager<TSetting> {
         const stored = this._registeredSettings.get(type);
         if (!stored) {
             throw new Error(`Setting ${type} not found`);
         }
-        const customSettingImpl = new stored.customSettingImplementation(...(stored.customParams ?? []));
+        const customSettingImpl = new stored.customSettingImplementation(...(stored.customConstructorParameters ?? []));
 
         return new SettingManager<TSetting>({
             type,
             category: settingCategories[type],
             label: stored.label,
-            defaultValue,
+            defaultValue: defaultValue ?? customSettingImpl.defaultValue ?? null,
             customSettingImplementation: customSettingImpl,
         });
     }

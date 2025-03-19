@@ -6,9 +6,10 @@ import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import * as bbox from "@lib/utils/bbox";
+import { makeColorScaleAnnotation } from "@modules/2DViewer/LayerFramework/annotations/makeColorScaleAnnotation";
 import { makePolygonDataBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makePolygonDataBoundingBox";
 import { makeRealizationGridBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makeRealizationGridBoundingBox";
-import { makeSurfaceLayerBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makeSurfaceBoundingBox";
+import { makeSurfaceLayerBoundingBox } from "@modules/2DViewer/LayerFramework/boundingBoxes/makeSurfaceLayerBoundingBox";
 import { ObservedSurfaceLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/ObservedSurfaceLayer";
 import { RealizationGridLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationGridLayer";
 import { RealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/customLayerImplementations/RealizationPolygonsLayer";
@@ -30,6 +31,7 @@ import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/la
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
 import {
+    Annotation,
     LayerWithPosition,
     VisualizationFactory,
     VisualizationTarget,
@@ -39,7 +41,6 @@ import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFrame
 import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellTrajectoriesLayer";
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
-import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
 import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
@@ -59,22 +60,27 @@ const VISUALIZATION_FACTORY = new VisualizationFactory<VisualizationTarget.DECK_
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.OBSERVED_SURFACE, ObservedSurfaceLayer, {
     visualizationFunction: makeObservedSurfaceLayer,
     boundingBoxCalculationFunction: makeSurfaceLayerBoundingBox,
+    makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_SURFACE, RealizationSurfaceLayer, {
     visualizationFunction: makeRealizationSurfaceLayer,
     boundingBoxCalculationFunction: makeSurfaceLayerBoundingBox,
+    makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.STATISTICAL_SURFACE, StatisticalSurfaceLayer, {
     visualizationFunction: makeStatisticalSurfaceLayer,
     boundingBoxCalculationFunction: makeSurfaceLayerBoundingBox,
+    makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_POLYGONS, RealizationPolygonsLayer, {
     visualizationFunction: makeRealizationPolygonsLayer,
     boundingBoxCalculationFunction: makePolygonDataBoundingBox,
+    makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(CustomLayerType.REALIZATION_GRID, RealizationGridLayer, {
     visualizationFunction: makeRealizationGridLayer,
     boundingBoxCalculationFunction: makeRealizationGridBoundingBox,
+    makeAnnotationsFunction: makeColorScaleAnnotation,
 });
 VISUALIZATION_FACTORY.registerLayerFunctions(LayerType.DRILLED_WELLBORE_PICKS, DrilledWellborePicksLayer, {
     visualizationFunction: makeDrilledWellborePicksLayer,
@@ -97,7 +103,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     const viewports: ViewportType[] = [];
     const viewerLayers: LayerWithPosition<VisualizationTarget.DECK_GL>[] = [];
     const viewportAnnotations: React.ReactNode[] = [];
-    const globalColorScales: ColorScaleWithId[] = [];
+    const globalAnnotations: Annotation[] = [];
 
     const views: ViewsType = {
         layout: [1, 1],
@@ -122,7 +128,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
     views.layout = [numCols, numRows];
 
     viewerLayers.push(...viewsAndLayers.layers);
-    globalColorScales.push(...viewsAndLayers.colorScales);
+    globalAnnotations.push(...viewsAndLayers.annotations);
     const globalLayerIds = viewsAndLayers.layers.map((layer) => layer.layer.id);
 
     for (const view of viewsAndLayers.views) {
@@ -139,7 +145,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
             /* @ts-expect-error */
             <DeckGlView key={view.id} id={view.id}>
                 <ColorLegendsContainer
-                    colorScales={[...view.colorScales, ...globalColorScales]}
+                    colorScales={[...view.annotations.filter((el) => "colorScale" in el), ...globalAnnotations]}
                     height={((mainDivSize.height / 3) * 2) / numCols - 20}
                     position="left"
                 />

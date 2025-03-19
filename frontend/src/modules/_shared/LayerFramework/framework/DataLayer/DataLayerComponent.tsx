@@ -12,8 +12,8 @@ import { DataLayer, LayerDelegateTopic, LayerStatus } from "./DataLayer";
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../../delegates/SettingsContextDelegate";
-import { SettingComponent } from "../SettingManager/SettingComponent";
 import { SettingManager } from "../SettingManager/SettingManager";
+import { SettingComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";
 import { VisibilityToggle } from "../utilityComponents/VisibilityToggle";
@@ -88,7 +88,7 @@ function EndActions(props: EndActionProps): React.ReactNode {
     const status = usePublishSubscribeTopicValue(props.layer, LayerDelegateTopic.STATUS);
     const settingsStatus = usePublishSubscribeTopicValue(
         props.layer.getSettingsContextDelegate(),
-        SettingsContextDelegateTopic.LOADING_STATE_CHANGED
+        SettingsContextDelegateTopic.LOADING_STATE
     );
     const isSubordinated = usePublishSubscribeTopicValue(props.layer, LayerDelegateTopic.SUBORDINATED);
 

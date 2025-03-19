@@ -1,14 +1,10 @@
 import { Layer as DeckGlLayer } from "@deck.gl/core";
 import { Layer as EsvLayer } from "@equinor/esv-intersection";
 import { StatusMessage } from "@framework/ModuleInstanceStatusController";
-import { defaultColorPalettes, defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
-import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import * as bbox from "@lib/utils/bbox";
 import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
-import { ColorScaleWithName } from "@modules/_shared/utils/ColorScaleWithName";
 
 import { GroupDelegate } from "../delegates/GroupDelegate";
-import { ColorScale } from "../framework/ColorScale/ColorScale";
 import { DataLayer, LayerStatus } from "../framework/DataLayer/DataLayer";
 import { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
@@ -16,7 +12,6 @@ import { Group } from "../framework/Group/Group";
 import {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
-    LayerColoringType,
     Settings,
     instanceofItemGroup,
 } from "../interfaces";
@@ -33,7 +28,6 @@ export type VisualizationFunctionArgs<TSettings extends Settings, TData> = DataL
 > & {
     id: string;
     name: string;
-    colorScale: ColorScaleWithName;
     isLoading: boolean;
 };
 
@@ -47,6 +41,23 @@ export type MakeLayerBoundingBoxFunctionArgs<TSettings extends Settings, TData> 
     TData
 >;
 
+export type MakeAnnotationsFunctionArgs<TSettings extends Settings, TData> = DataLayerInformationAccessors<
+    TSettings,
+    TData
+> & {
+    id: string;
+    name: string;
+};
+
+export type Annotation = ColorScaleWithId; // Add more possible annotation types here, e.g. ColorSets etc.
+
+export type LayerVisualizationFunctions<TSettings extends Settings, TData, TTarget extends VisualizationTarget> = {
+    visualizationFunction: MakeVisualizationFunction<TSettings, TData, TTarget>;
+    boundingBoxCalculationFunction?: MakeLayerBoundingBoxFunction<TSettings, TData>;
+    makeAnnotationsFunction?: MakeAnnotationsFunction<TSettings, TData>;
+    hoverVisualizationFunction?: MakeVisualizationFunction<TSettings, TData, TTarget>;
+};
+
 export type MakeVisualizationFunction<TSettingTypes extends Settings, TData, TTarget extends VisualizationTarget> = (
     args: VisualizationFunctionArgs<TSettingTypes, TData>
 ) => TargetReturnTypes[TTarget] | null;
@@ -54,6 +65,10 @@ export type MakeVisualizationFunction<TSettingTypes extends Settings, TData, TTa
 export type MakeLayerBoundingBoxFunction<TSettings extends Settings, TData> = (
     args: MakeLayerBoundingBoxFunctionArgs<TSettings, TData>
 ) => bbox.BBox | null;
+
+export type MakeAnnotationsFunction<TSettings extends Settings, TData> = (
+    args: MakeAnnotationsFunctionArgs<TSettings, TData>
+) => Annotation[];
 
 export type LayerWithPosition<TTarget extends VisualizationTarget> = {
     layer: TargetReturnTypes[TTarget];
@@ -65,7 +80,7 @@ export type VisualizationView<TTarget extends VisualizationTarget> = {
     color: string | null;
     name: string;
     layers: LayerWithPosition<TTarget>[];
-    colorScales: ColorScaleWithId[];
+    annotations: Annotation[];
 };
 
 export type FactoryProduct<TTarget extends VisualizationTarget> = {
@@ -73,32 +88,24 @@ export type FactoryProduct<TTarget extends VisualizationTarget> = {
     layers: LayerWithPosition<TTarget>[];
     errorMessages: (StatusMessage | string)[];
     combinedBoundingBox: bbox.BBox | null;
-    colorScales: ColorScaleWithId[];
     numLoadingLayers: number;
+    annotations: Annotation[];
 };
 
 export class VisualizationFactory<TTarget extends VisualizationTarget> {
-    private _visualizationFunctions: Map<string, MakeVisualizationFunction<any, any, TTarget>> = new Map();
-    private _layerBoundingBoxCalculationFunctions: Map<string, MakeLayerBoundingBoxFunction<any, any>> = new Map();
+    private _visualizationFunctions: Map<string, LayerVisualizationFunctions<any, any, TTarget>> = new Map();
 
-    registerLayerFunctions<TSettingTypes extends Settings, TData>(
+    registerLayerFunctions<TSettings extends Settings, TData>(
         layerName: string,
         layerCtor: {
-            new (...params: any[]): CustomDataLayerImplementation<TSettingTypes, TData, any>;
+            new (...params: any[]): CustomDataLayerImplementation<TSettings, TData, any>;
         },
-        funcs: {
-            visualizationFunction: MakeVisualizationFunction<TSettingTypes, TData, TTarget>;
-            boundingBoxCalculationFunction?: MakeLayerBoundingBoxFunction<TSettingTypes, TData>;
-        }
+        funcs: LayerVisualizationFunctions<TSettings, TData, TTarget>
     ): void {
         if (this._visualizationFunctions.has(layerCtor.name)) {
             throw new Error(`Visualization function for layer ${layerCtor.name} already registered`);
         }
-        this._visualizationFunctions.set(layerName, funcs.visualizationFunction);
-
-        if (funcs.boundingBoxCalculationFunction) {
-            this._layerBoundingBoxCalculationFunctions.set(layerName, funcs.boundingBoxCalculationFunction);
-        }
+        this._visualizationFunctions.set(layerName, funcs);
     }
 
     make(layerManager: DataLayerManager): FactoryProduct<TTarget> {
@@ -108,7 +115,7 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
     private makeRecursively(groupDelegate: GroupDelegate, numCollectedLayers: number = 0): FactoryProduct<TTarget> {
         const collectedViews: VisualizationView<TTarget>[] = [];
         const collectedLayers: LayerWithPosition<TTarget>[] = [];
-        const collectedColorScales: ColorScaleWithId[] = [];
+        const collectedAnnotations: Annotation[] = [];
         const collectedErrorMessages: (StatusMessage | string)[] = [];
         let collectedNumLoadingLayers = 0;
         let globalBoundingBox: bbox.BBox | null = null;
@@ -132,9 +139,9 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                     views,
                     layers,
                     combinedBoundingBox: boundingBox,
-                    colorScales,
                     numLoadingLayers,
                     errorMessages,
+                    annotations,
                 } = this.makeRecursively(child.getGroupDelegate(), numCollectedLayers + collectedLayers.length);
 
                 collectedErrorMessages.push(...errorMessages);
@@ -146,8 +153,8 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                         id: child.getItemDelegate().getId(),
                         color: child.getGroupDelegate().getColor(),
                         name: child.getItemDelegate().getName(),
-                        layers: layers,
-                        colorScales,
+                        layers,
+                        annotations,
                     };
 
                     collectedViews.push(view);
@@ -175,21 +182,16 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
                     continue;
                 }
 
-                const colorScale = this.findColorScale(child);
-
-                const layer = this.makeLayer(child, colorScale?.colorScale ?? undefined);
+                const layer = this.makeLayer(child);
 
                 if (!layer) {
                     continue;
                 }
 
-                if (colorScale) {
-                    collectedColorScales.push(colorScale);
-                }
-
                 const layerBoundingBox = this.makeLayerBoundingBox(child);
                 maybeApplyBoundingBox(layerBoundingBox);
                 collectedLayers.push({ layer, position: numCollectedLayers + collectedLayers.length });
+                collectedAnnotations.push(...this.makeLayerAnnotations(child));
             }
         }
 
@@ -198,41 +200,27 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
             layers: collectedLayers,
             errorMessages: collectedErrorMessages,
             combinedBoundingBox: globalBoundingBox,
-            colorScales: collectedColorScales,
+            annotations: collectedAnnotations,
             numLoadingLayers: collectedNumLoadingLayers,
         };
     }
 
-    private makeLayer(
-        layer: DataLayer<any, any, any>,
-        colorScale?: ColorScaleWithName
-    ): TargetReturnTypes[TTarget] | null {
-        const func = this._visualizationFunctions.get(layer.getType());
+    private makeLayer(layer: DataLayer<any, any, any>): TargetReturnTypes[TTarget] | null {
+        const func = this._visualizationFunctions.get(layer.getType())?.visualizationFunction;
         if (!func) {
             throw new Error(`No visualization function found for layer ${layer.getType()}`);
-        }
-
-        if (colorScale === undefined) {
-            colorScale = new ColorScaleWithName({
-                colorPalette: defaultColorPalettes[0],
-                gradientType: ColorScaleGradientType.Sequential,
-                name: "Default",
-                type: ColorScaleType.Continuous,
-                steps: 10,
-            });
         }
 
         return func({
             id: layer.getItemDelegate().getId(),
             name: layer.getItemDelegate().getName(),
-            colorScale,
             isLoading: layer.getStatus() === LayerStatus.LOADING,
             ...layer.makeAccessors(),
         });
     }
 
     private makeLayerBoundingBox(layer: DataLayer<any, any, any>): bbox.BBox | null {
-        const func = this._layerBoundingBoxCalculationFunctions.get(layer.getType());
+        const func = this._visualizationFunctions.get(layer.getType())?.boundingBoxCalculationFunction;
         if (!func) {
             return null;
         }
@@ -240,49 +228,16 @@ export class VisualizationFactory<TTarget extends VisualizationTarget> {
         return func(layer.makeAccessors());
     }
 
-    private findColorScale(layer: DataLayer<any, any, any>): { id: string; colorScale: ColorScaleWithName } | null {
-        if (layer.getColoringType() !== LayerColoringType.COLORSCALE) {
-            return null;
+    private makeLayerAnnotations(layer: DataLayer<any, any, any>): Annotation[] {
+        const func = this._visualizationFunctions.get(layer.getType())?.makeAnnotationsFunction;
+        if (!func) {
+            return [];
         }
 
-        let colorScaleWithName = new ColorScaleWithName({
-            colorPalette: defaultContinuousSequentialColorPalettes[0],
-            gradientType: ColorScaleGradientType.Sequential,
-            name: layer.getItemDelegate().getName(),
-            type: ColorScaleType.Continuous,
-            steps: 10,
-        });
-
-        const range = layer.getValueRange();
-        if (range) {
-            colorScaleWithName.setRangeAndMidPoint(range[0], range[1], (range[0] + range[1]) / 2);
-        }
-
-        const colorScaleItemArr = layer
-            .getItemDelegate()
-            .getParentGroup()
-            ?.getAncestorAndSiblingItems((item) => item instanceof ColorScale);
-
-        if (colorScaleItemArr && colorScaleItemArr.length > 0) {
-            const colorScaleItem = colorScaleItemArr[0];
-            if (colorScaleItem instanceof ColorScale) {
-                colorScaleWithName = ColorScaleWithName.fromColorScale(
-                    colorScaleItem.getColorScale(),
-                    layer.getItemDelegate().getName()
-                );
-
-                if (!colorScaleItem.getAreBoundariesUserDefined()) {
-                    const range = layer.getValueRange();
-                    if (range) {
-                        colorScaleWithName.setRangeAndMidPoint(range[0], range[1], (range[0] + range[1]) / 2);
-                    }
-                }
-            }
-        }
-
-        return {
+        return func({
             id: layer.getItemDelegate().getId(),
-            colorScale: colorScaleWithName,
-        };
+            name: layer.getItemDelegate().getName(),
+            ...layer.makeAccessors(),
+        });
     }
 }
