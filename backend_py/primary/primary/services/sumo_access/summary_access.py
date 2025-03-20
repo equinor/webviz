@@ -184,6 +184,31 @@ class SummaryAccess:
 
         return ret_arr
 
+    async def get_single_real_full_table_async(
+        self,
+        # resampling_frequency: Optional[Frequency],
+        realization: int,
+    ) -> Tuple[pa.Table, List[VectorMetadata]]:
+        """
+        Get pyarrow.
+        Table containing values for all vectors and the single specified realization.
+        This function will fetch per-realization summary data from Sumo.
+        The returned table will always contain a 'DATE' column in addition to the requested vectors.
+        """
+        timer = PerfTimer()
+        table_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        table_loader.require_content_type(["timeseries", "simulationtimeseries"])
+        table = await table_loader.get_single_realization_async(realization)
+        et_loading_ms = timer.lap_ms()
+
+        # Verify that we got the expected DATE column
+        if not "DATE" in table.column_names:
+            raise InvalidDataError("Table does not contain a DATE column", Service.SUMO)
+        date_field = table.field("DATE")
+        if date_field.type != pa.timestamp("ms"):
+            raise InvalidDataError(f"Unexpected type for DATE column {date_field.type=}", Service.SUMO)
+        return table
+
     async def get_single_real_vectors_table_async(
         self,
         vector_names: Sequence[str],
