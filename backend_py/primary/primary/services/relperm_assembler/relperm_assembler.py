@@ -93,8 +93,8 @@ class RelPermAssembler:
     def __init__(self, relperm_access: RelPermAccess):
         self._relperm_access = relperm_access
 
-    async def get_relperm_table_info(self, relperm_table_name: str):
-        single_realization_table = await self._relperm_access.get_single_realization_table(relperm_table_name)
+    async def get_relperm_table_info_async(self, relperm_table_name: str):
+        single_realization_table = await self._relperm_access.get_single_realization_table_async(relperm_table_name)
         table_columns = single_realization_table.columns
         satnums = extract_satnums_from_relperm_table(single_realization_table)
         all_keywords = extract_keywords_from_relperm_table(single_realization_table)
@@ -105,10 +105,10 @@ class RelPermAssembler:
             table_name=relperm_table_name, saturation_axes=saturation_infos, satnums=sorted(satnums)
         )
 
-    async def get_relperm_realization_data(
+    async def get_relperm_realization_data_async(
         self, relperm_table_name: str, saturation_axis_name: str, curve_names: List[str], satnum: int
     ) -> RelPermRealizationData:
-        realizations_table: pl.DataFrame = await self._relperm_access.get_relperm_table(relperm_table_name)
+        realizations_table: pl.DataFrame = await self._relperm_access.get_relperm_table_async(relperm_table_name)
 
         table_columns = realizations_table.columns
 
@@ -160,10 +160,10 @@ class RelPermAssembler:
             saturation_number=satnum,
         )
 
-    async def get_relperm_statistics_data(
+    async def get_relperm_statistics_data_async(
         self, relperm_table_name: str, saturation_axis_name: str, curve_names: List[str], satnums: List[int]
     ) -> RelPermStatisticalDataForSaturation:
-        realizations_table: pl.DataFrame = await self._relperm_access.get_relperm_table(relperm_table_name)
+        realizations_table: pl.DataFrame = await self._relperm_access.get_relperm_table_async(relperm_table_name)
         satnum = satnums[0]
         table_columns = realizations_table.columns
 

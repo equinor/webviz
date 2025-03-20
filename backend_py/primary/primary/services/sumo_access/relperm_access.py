@@ -22,7 +22,7 @@ from .queries.relperm import (
     get_relperm_realization_table_blob_uuids,
 )
 from .relperm_types import RelPermTableInfo, RealizationBlobid
-
+from ._arrow_table_loader import ArrowTableLoader
 
 SATURATIONS = ["SW", "SO", "SG", "SL"]
 
@@ -61,7 +61,7 @@ class RelPermAccess:
         sumo_client = create_sumo_client(access_token)
         return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_relperm_table_names(self) -> List[str]:
+    async def get_relperm_table_names_async(self) -> List[str]:
         table_names_and_columns = await get_relperm_table_names_and_columns(
             self._sumo_client, self._case_uuid, self._iteration_name
         )
@@ -71,48 +71,40 @@ class RelPermAccess:
                 table_names.append(table_info.table_name)
         return table_names
 
-    async def get_single_realization_table(self, table_name: str) -> pl.DataFrame:
+    async def get_single_realization_table_async(self, table_name: str) -> pl.DataFrame:
         realization_blob_ids = await get_relperm_realization_table_blob_uuids(
             self._sumo_client, self._case_uuid, self._iteration_name, table_name
         )
         single_realization_blob_id = realization_blob_ids[0]
-        res = await self.fetch_realization_table(single_realization_blob_id)
+        res = await self.fetch_realization_table_async(single_realization_blob_id)
         blob = BytesIO(res.content)
         real_df = pl.read_parquet(blob)
         # Add realization id to the dataframe
         real_df = real_df.with_columns(pl.lit(single_realization_blob_id.realization_id).alias("REAL"))
         return real_df
 
-    async def get_relperm_table(
+    async def get_relperm_table_async(
         self,
         table_name: str,
         realizations: Sequence[int] | None = None,
     ) -> pl.DataFrame:
         perf_metrics = PerfMetrics()
-        realization_blob_ids = await get_relperm_realization_table_blob_uuids(
-            self._sumo_client, self._case_uuid, self._iteration_name, table_name
+
+        table_context = SearchContext(sumo=self._sumo_client).filter(
+            uuid=self._case_uuid, iteration=self._iteration_name, content="relperm"
         )
-        perf_metrics.record_lap("get_relperm_realization_table_blob_uuids")
+        table_names = await table_context.names_async
 
-        tasks = [asyncio.create_task(self.fetch_realization_table(table)) for table in realization_blob_ids]
+        columns = await table_context.columns_async
+        arrow_loader = ArrowTableLoader(self._sumo_client, self._case_uuid, self._iteration_name)
+        arrow_loader.require_content_type("relperm")
+        if "REAL" in columns:
+            columns.remove("REAL")
+        arrow_table = await arrow_loader.get_aggregated_multiple_columns_async(columns)
+        pl_table = pl.DataFrame(arrow_table)
+        return pl_table
 
-        realization_tables_res = await asyncio.gather(*tasks)
-        perf_metrics.record_lap("fetch_realization_tables")
-        realization_tables = []
-        for res, realization_blob_id in zip(realization_tables_res, realization_blob_ids):
-            blob = BytesIO(res.content)
-            real_df = pl.read_parquet(blob)
-            # Add realization id to the dataframe
-            real_df = real_df.with_columns(pl.lit(realization_blob_id.realization_id).alias("REAL"))
-            realization_tables.append(real_df)
-
-        table = pl.concat(realization_tables)
-        perf_metrics.record_lap("concat_realization_tables")
-
-        LOGGER.debug(f"RelPermAccess.get_relperm_table: {perf_metrics.to_string()}")
-        return table
-
-    async def fetch_realization_table(self, realization_blob_id: RealizationBlobid) -> Any:
+    async def fetch_realization_table_async(self, realization_blob_id: RealizationBlobid) -> Any:
         res = await self._sumo_client.get_async(f"/objects('{realization_blob_id.blob_name}')/blob")
         return res
 

@@ -52,7 +52,9 @@ class ArrowTableLoader:
         perf_metrics.record_lap("locate")
 
         if existing_agg_table_count > 1:
-            raise MultipleDataMatchesError(f"Multiple tables found for: {self._make_req_info_str()}", Service.SUMO)
+            raise MultipleDataMatchesError(
+                f"Multiple tables found for: {self._make_req_info_str()} {column_name}", Service.SUMO
+            )
 
         sumo_table_obj: Table
         if existing_agg_table_count == 1:
@@ -69,7 +71,7 @@ class ArrowTableLoader:
                 existing_agg_table_names = await sc_existing_agg_tables.names_async
                 if len(existing_agg_table_names) > 1:
                     raise MultipleDataMatchesError(
-                        f"Multiple tables found for {self._make_req_info_str()}", Service.SUMO
+                        f"Multiple tables found for {self._make_req_info_str()} {column_name}", Service.SUMO
                     )
 
             # Does the aggregation and gets the blob (also writes the resulting aggregation back into Sumo)

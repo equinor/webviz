@@ -80,11 +80,11 @@ export function createVectorRealizationTrace({
     // TODO:
     // - type: "scattergl" or "scatter"? Maximum 8 WebGL contexts in Chrome gives issues?
     //         "scattergl" hides traces when zooming and panning for Ruben on work computer.
-
+    console.log(color);
     return {
         x: vectorRealizationData.timestampsUtcMs,
         y: vectorRealizationData.values,
-        line: { width: 1, color: color, shape: lineShape },
+        line: { width: 1, shape: lineShape, color: "rgba(255, 177, 132, 0.2)" },
         mode: "lines",
         type: type,
         hovertemplate: `${hoverTemplate}Realization: ${vectorRealizationData.realization}`,

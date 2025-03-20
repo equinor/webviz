@@ -23,7 +23,7 @@ async def get_relperm_table_names(
     ensemble_name: Annotated[str, Query(description="Ensemble name")],
 ) -> List[str]:
     access = RelPermAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
-    return await access.get_relperm_table_names()
+    return await access.get_relperm_table_names_async()
 
 
 @router.get("/relperm_table_info")
@@ -35,8 +35,8 @@ async def get_relperm_table_info(
 ) -> schemas.RelPermTableInfo:
     access = RelPermAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     assembler = RelPermAssembler(access)
-    relperm_table_info = await assembler.get_relperm_table_info(table_name)
-    print("*****************************", relperm_table_info)
+    relperm_table_info = await assembler.get_relperm_table_info_async(table_name)
+
     return converters.to_api_relperm_table_info(relperm_table_info)
 
 
@@ -53,7 +53,9 @@ async def get_relperm_realizations_curve_data(
 
     access = RelPermAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     assembler = RelPermAssembler(access)
-    relperm_data = await assembler.get_relperm_realization_data(table_name, saturation_axis_name, curve_names, satnum)
+    relperm_data = await assembler.get_relperm_realization_data_async(
+        table_name, saturation_axis_name, curve_names, satnum
+    )
 
     return converters.to_api_relperm_realization_data(relperm_data)
 
@@ -71,6 +73,8 @@ async def get_relperm_statistical_curve_data(
 
     access = RelPermAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
     assembler = RelPermAssembler(access)
-    relperm_data = await assembler.get_relperm_statistics_data(table_name, saturation_axis_name, curve_names, satnums)
+    relperm_data = await assembler.get_relperm_statistics_data_async(
+        table_name, saturation_axis_name, curve_names, satnums
+    )
 
     return converters.to_api_relperm_statistical_data(relperm_data)

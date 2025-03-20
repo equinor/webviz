@@ -30,29 +30,34 @@ import {
     loadedRelPermSpecificationsAndRealizationDataAtom,
     loadedRelPermSpecificationsAndStatisticalDataAtom,
 } from "./atoms/derivedAtoms";
+import { usePlotBuilder } from "./hooks/usePlotBuilder";
 
 import { Interfaces } from "../interfaces";
-import { RelPermSpec, VisualizationType } from "../typesAndEnums";
+import { RelPermSpec, VisualizationMode } from "../typesAndEnums";
 
-export const View = ({ viewContext }: ModuleViewProps<Interfaces>) => {
+export const View = ({ viewContext, workbenchSettings }: ModuleViewProps<Interfaces>) => {
     const wrapperDivRef = React.useRef<HTMLDivElement>(null);
     const wrapperDivSize = useElementSize(wrapperDivRef);
 
-    const visualizationType = viewContext.useSettingsToViewInterfaceValue("visualizationType");
+    const statusWriter = useViewStatusWriter(viewContext);
+
+    const colorSet = workbenchSettings.useColorSet();
+
+    const plot = usePlotBuilder(viewContext, wrapperDivSize, colorSet);
+    const visualizationMode = viewContext.useSettingsToViewInterfaceValue("visualizationMode");
     const loadedRelPermSpecificationsAndRealizationData = useAtomValue(
         loadedRelPermSpecificationsAndRealizationDataAtom,
     );
     const loadedRelPermSpecificationsAndStatisticalData = useAtomValue(
         loadedRelPermSpecificationsAndStatisticalDataAtom,
     );
-    const statusWriter = useViewStatusWriter(viewContext);
 
     let content = null;
     let plotData: Partial<PlotData>[] = [];
-    if (visualizationType === VisualizationType.INDIVIDUAL_REALIZATIONS) {
+    if (visualizationMode === VisualizationMode.INDIVIDUAL_REALIZATIONS) {
         plotData = createRealizationsTraces(loadedRelPermSpecificationsAndRealizationData);
     }
-    // if (visualizationType === VisualizationType.STATISTICAL_FANCHART) {
+    // if (visualizationMode === visualizationMode.STATISTICAL_FANCHART) {
     //     plotData = createRelPermFanchartTraces(loadedRelPermSpecificationsAndStatisticalData);
     // }
     content = (

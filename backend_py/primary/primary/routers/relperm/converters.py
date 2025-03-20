@@ -82,7 +82,7 @@ def _convert_statistic_enum_to_statistic_enum(
 def to_api_relperm_statistical_data(
     data: RelPermStatisticalDataForSaturation,
 ) -> schemas.RelPermStatisticalDataForSaturation:
-    print(data)
+
     return schemas.RelPermStatisticalDataForSaturation(
         saturation_axis_data=schemas.CurveData(
             curve_name=data.saturation_axis_data.curve_name,

@@ -8,6 +8,7 @@ import "./InplaceVolumetricsPlot/registerModule";
 import "./InplaceVolumetricsTable/registerModule";
 import "./Intersection/registerModule";
 import "./Map/registerModule";
+import "./NewRelPerm/registerModule";
 import "./ParameterDistributionMatrix/registerModule";
 import "./Pvt/registerModule";
 import "./RelPerm/registerModule";
