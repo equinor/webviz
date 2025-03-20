@@ -1,7 +1,8 @@
-import React from "react";
+import type React from "react";
 
 import { SurfaceTimeType_api } from "@api";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 
 import {
     CustomSettingImplementation,

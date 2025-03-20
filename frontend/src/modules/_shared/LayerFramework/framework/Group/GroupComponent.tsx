@@ -4,7 +4,8 @@ import { SortableListGroup } from "@lib/components/SortableList";
 import { Group } from "./Group";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
-import { LayersActionGroup, LayersActions } from "../../LayersActions";
+import type { LayersActionGroup } from "../../LayersActions";
+import { LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
@@ -58,7 +59,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
                     key="layers-actions"
                     layersActionGroups={props.actions}
                     onActionClick={handleActionClick}
-                />
+                />,
             );
         }
         adornments.push(<ExpandCollapseAllButton key="expand-collapse" group={props.group} />);
@@ -77,7 +78,7 @@ export function GroupComponent(props: GroupComponentProps): React.ReactNode {
             title={
                 <div className="flex gap-1 items-center relative min-w-0">
                     {color && <ColorSelect onChange={handleColorChange} value={color} dense />}
-                    <div className="flex-grow min-w-0">
+                    <div className="grow min-w-0">
                         <EditName item={props.group} />
                     </div>
                 </div>

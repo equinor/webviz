@@ -95,7 +95,7 @@ export class SettingsContextDelegate<
                 "settings",
                 settings[key].getPublishSubscribeDelegate().makeSubscriberFunction(SettingTopic.VALUE_CHANGED)(() => {
                     this.handleSettingChanged();
-                })
+                }),
             );
             this._unsubscribeHandler.registerUnsubscribeFunction(
                 "settings",
@@ -304,7 +304,7 @@ export class SettingsContextDelegate<
                 this._settings[key]
 
                     .getPublishSubscribeDelegate()
-                    .makeSubscriberFunction(SettingTopic.PERSISTED_STATE_CHANGED)(handleChange)
+                    .makeSubscriberFunction(SettingTopic.PERSISTED_STATE_CHANGED)(handleChange),
             );
 
             return handleChange;
@@ -312,7 +312,7 @@ export class SettingsContextDelegate<
 
         const makeGlobalSettingGetter = <K extends keyof GlobalSettings>(
             key: K,
-            handler: (value: GlobalSettings[K]) => void
+            handler: (value: GlobalSettings[K]) => void,
         ) => {
             const handleChange = (): void => {
                 handler(this.getLayerManager.bind(this)().getGlobalSetting(key));
@@ -391,7 +391,7 @@ export class SettingsContextDelegate<
                     dep: Dependency<TDep, TSettings, TSettingTypes, TSettingKey>
                 ) => TDep | null;
                 abortSignal: AbortSignal;
-            }) => T
+            }) => T,
         ) => {
             const dependency = new Dependency<T, TSettings, TSettingTypes, TSettingKey>(
                 this,

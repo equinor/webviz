@@ -36,7 +36,7 @@ export class Dependency<
     private _makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void;
     private _makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
         key: K,
-        handler: (value: GlobalSettings[K]) => void
+        handler: (value: GlobalSettings[K]) => void,
     ) => void;
     private _cachedSettingsMap: Map<string, any> = new Map();
     private _cachedGlobalSettingsMap: Map<string, any> = new Map();
@@ -53,8 +53,8 @@ export class Dependency<
         makeLocalSettingGetter: <K extends TKey>(key: K, handler: (value: TSettingTypes[K]) => void) => void,
         makeGlobalSettingGetter: <K extends keyof GlobalSettings>(
             key: K,
-            handler: (value: GlobalSettings[K]) => void
-        ) => void
+            handler: (value: GlobalSettings[K]) => void,
+        ) => void,
     ) {
         this._contextDelegate = contextDelegate;
         this._updateFunc = updateFunc;
@@ -157,7 +157,7 @@ export class Dependency<
 
         this._cachedGlobalSettingsMap.set(
             settingName as string,
-            this._contextDelegate.getLayerManager().getGlobalSetting(settingName)
+            this._contextDelegate.getLayerManager().getGlobalSetting(settingName),
         );
         return this._cachedGlobalSettingsMap.get(settingName as string);
     }

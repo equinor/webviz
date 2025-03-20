@@ -1,6 +1,7 @@
 import React from "react";
 
-import { IsMoveAllowedArgs, SortableList } from "@lib/components/SortableList";
+import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
+import { SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
 import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
@@ -92,7 +93,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
         movedItemId: string,
         originId: string | null,
         destinationId: string | null,
-        position: number
+        position: number,
     ) {
         const movedItem = groupDelegate.findDescendantById(movedItemId);
         if (!movedItem) {
@@ -125,16 +126,16 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
     }
 
     return (
-        <div className="flex-grow flex flex-col min-h-0">
-            <div className="w-full flex-grow flex flex-col min-h-0" ref={layerListRef}>
+        <div className="grow flex flex-col min-h-0">
+            <div className="w-full grow flex flex-col min-h-0" ref={layerListRef}>
                 <div className="flex bg-slate-100 h-12 p-2 items-center border-b border-gray-300 gap-2">
-                    <div className="flex-grow font-bold text-sm">Layers</div>
+                    <div className="grow font-bold text-sm">Layers</div>
                     <LayersActions layersActionGroups={props.layerActions} onActionClick={handleLayerAction} />
                     <ExpandCollapseAllButton group={props.layerManager} />
                     {props.additionalHeaderComponents}
                 </div>
                 <div
-                    className="w-full flex-grow flex flex-col relative"
+                    className="w-full grow flex flex-col relative"
                     style={{ height: layerListSize.height - convertRemToPixels(12) }}
                 >
                     <SortableList
@@ -147,7 +148,7 @@ export function LayerManagerComponent(props: LayerManagerComponentProps): React.
                         }
                     >
                         {items.map((item: Item) =>
-                            makeSortableListItemComponent(item, props.layerActions, handleLayerAction)
+                            makeSortableListItemComponent(item, props.layerActions, handleLayerAction),
                         )}
                     </SortableList>
                 </div>

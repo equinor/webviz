@@ -1,5 +1,5 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
-import { FullSurfaceAddress } from "@modules/_shared/Surface/surfaceAddress";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { FullSurfaceAddress } from "@modules/_shared/Surface/surfaceAddress";
 
 import { surfaceAddressAtom } from "./settings/atoms/baseAtoms";
 

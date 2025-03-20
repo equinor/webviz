@@ -4,7 +4,8 @@ import { resolveClassNames } from "@lib/utils/resolveClassNames";
 
 import { v4 } from "uuid";
 
-import { BaseComponent, BaseComponentProps } from "../BaseComponent";
+import type { BaseComponentProps } from "../BaseComponent";
+import { BaseComponent } from "../BaseComponent";
 
 export type CheckboxProps = {
     id?: string;
@@ -32,7 +33,7 @@ function CheckboxComponent(props: CheckboxProps, ref: React.ForwardedRef<HTMLDiv
             }
             onChange && onChange(event, event.target.checked);
         },
-        [setChecked, onChange, props.checked]
+        [setChecked, onChange, props.checked],
     );
 
     return (
@@ -49,9 +50,9 @@ function CheckboxComponent(props: CheckboxProps, ref: React.ForwardedRef<HTMLDiv
                     "h-4",
                     "text-blue-600",
                     "border-gray-300",
-                    "rounded",
+                    "rounded-sm",
                     "focus:ring-blue-500",
-                    "cursor-pointer"
+                    "cursor-pointer",
                 )}
             />
             {props.label && (

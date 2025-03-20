@@ -238,7 +238,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(ItemDelegateTopic.EXPANDED)(() => {
                     this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
-                })
+                }),
             );
         }
 
@@ -250,7 +250,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(GroupDelegateTopic.TREE_REVISION_NUMBER)(() => {
                     this.incrementTreeRevisionNumber();
-                })
+                }),
             );
             this._unsubscribeHandlerDelegate.registerUnsubscribeFunction(
                 child.getItemDelegate().getId(),
@@ -259,7 +259,7 @@ export class GroupDelegate implements PublishSubscribe<GroupDelegateTopicPayload
                     .getPublishSubscribeDelegate()
                     .makeSubscriberFunction(GroupDelegateTopic.CHILDREN_EXPANSION_STATES)(() => {
                     this.publishTopic(GroupDelegateTopic.CHILDREN_EXPANSION_STATES);
-                })
+                }),
             );
         }
 

@@ -1,8 +1,9 @@
-import React from "react";
+import type React from "react";
 
-import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
+import type { ColorScale } from "@lib/utils/ColorScale";
+import { ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
-import { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
+import type { ColorScaleWithName } from "@modules_shared/utils/ColorScaleWithName";
 
 const STYLE_CONSTANTS = {
     lineWidth: 6,
@@ -32,7 +33,7 @@ function makeMarkers(
     sectionTop: number,
     sectionBottom: number,
     left: number,
-    barHeight: number
+    barHeight: number,
 ): React.ReactNode[] {
     const sectionHeight = Math.abs(sectionBottom - sectionTop);
 
@@ -61,7 +62,7 @@ function makeMarkers(
                 y2={globalY + 1}
                 stroke={STYLE_CONSTANTS.lineColor}
                 strokeWidth="1"
-            />
+            />,
         );
         markers.push(
             <text
@@ -72,7 +73,7 @@ function makeMarkers(
                 style={TEXT_STYLE}
             >
                 {formatLegendValue(value)}
-            </text>
+            </text>,
         );
 
         currentLocalY += markerDistance;
@@ -112,7 +113,7 @@ function makeDiscreteMarkers(colorScale: ColorScale, left: number, top: number, 
                 y2={globalY + 1}
                 stroke={STYLE_CONSTANTS.lineColor}
                 strokeWidth="1"
-            />
+            />,
         );
         markers.push(
             <text
@@ -123,7 +124,7 @@ function makeDiscreteMarkers(colorScale: ColorScale, left: number, top: number, 
                 style={TEXT_STYLE}
             >
                 {formatLegendValue(value)}
-            </text>
+            </text>,
         );
 
         currentLocalY += markerDistance;
@@ -159,7 +160,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             y2={props.top + STYLE_CONSTANTS.offset}
             stroke={STYLE_CONSTANTS.lineColor}
             strokeWidth="1"
-        />
+        />,
     );
     markers.push(
         <text
@@ -170,7 +171,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             style={TEXT_STYLE}
         >
             {formatLegendValue(props.colorScale.getMax())}
-        </text>
+        </text>,
     );
 
     if (props.colorScale.getType() === ColorScaleType.Discrete) {
@@ -179,8 +180,8 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                 props.colorScale,
                 lineMarkerStartPosition,
                 props.top + STYLE_CONSTANTS.offset,
-                barHeight
-            )
+                barHeight,
+            ),
         );
     } else {
         if (props.colorScale.getGradientType() === ColorScaleGradientType.Diverging) {
@@ -196,8 +197,8 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                     props.top + STYLE_CONSTANTS.offset,
                     props.top + STYLE_CONSTANTS.offset + barHeight * relY,
                     lineMarkerStartPosition,
-                    barHeight
-                )
+                    barHeight,
+                ),
             );
 
             markers.push(
@@ -209,7 +210,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                     y2={props.top + relY * barHeight + STYLE_CONSTANTS.offset}
                     stroke={STYLE_CONSTANTS.lineColor}
                     strokeWidth="2"
-                />
+                />,
             );
             markers.push(
                 <text
@@ -227,7 +228,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                     style={TEXT_STYLE}
                 >
                     {formatLegendValue(props.colorScale.getDivMidPoint())}
-                </text>
+                </text>,
             );
 
             markers.push(
@@ -237,8 +238,8 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                     props.top + relY * barHeight + STYLE_CONSTANTS.offset,
                     props.top + STYLE_CONSTANTS.offset + barHeight,
                     lineMarkerStartPosition,
-                    barHeight
-                )
+                    barHeight,
+                ),
             );
         } else {
             markers.push(
@@ -248,8 +249,8 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
                     props.top + STYLE_CONSTANTS.offset,
                     props.top + STYLE_CONSTANTS.offset + barHeight,
                     lineMarkerStartPosition,
-                    barHeight
-                )
+                    barHeight,
+                ),
             );
         }
     }
@@ -263,7 +264,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             y2={props.top + STYLE_CONSTANTS.offset + barHeight}
             stroke={STYLE_CONSTANTS.lineColor}
             strokeWidth="1"
-        />
+        />,
     );
     markers.push(
         <text
@@ -274,7 +275,7 @@ function ColorLegend(props: ColorLegendProps): React.ReactNode {
             style={TEXT_STYLE}
         >
             {formatLegendValue(props.colorScale.getMin())}
-        </text>
+        </text>,
     );
 
     return (
@@ -368,7 +369,7 @@ export function ColorLegendsContainer(props: ColorLegendsContainerProps): React.
                         left={left}
                         totalHeight={height}
                         barWidth={width}
-                    />
+                    />,
                 );
             }
         }

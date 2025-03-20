@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";

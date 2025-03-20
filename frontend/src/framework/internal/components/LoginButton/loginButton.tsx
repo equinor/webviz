@@ -98,7 +98,7 @@ export const LoginButton: React.FC<LoginButtonProps> = (props) => {
             <MenuButton
                 className={resolveClassNames(
                     props.className ?? "",
-                    "w-full inline-flex items-center min-w-0 px-4 py-2 font-medium rounded-md hover:bg-indigo-100"
+                    "w-full inline-flex items-center min-w-0 px-4 py-2 font-medium rounded-md hover:bg-indigo-100",
                 )}
             >
                 <span className="flex items-center gap-2" title={makeText()}>

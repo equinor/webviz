@@ -1,4 +1,4 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import {
     displayComponentTypeAtom,
@@ -9,7 +9,7 @@ import {
     showLabelsAtom,
     showRealizationPointsAtom,
 } from "./settings/atoms/baseAtoms";
-import { DisplayComponentType, SelectedSensitivity } from "./typesAndEnums";
+import type { DisplayComponentType, SelectedSensitivity } from "./typesAndEnums";
 import { selectedSensitivityAtom as ViewSelectedSensitivityAtom } from "./view/atoms/baseAtoms";
 
 type SettingsToViewInterface = {

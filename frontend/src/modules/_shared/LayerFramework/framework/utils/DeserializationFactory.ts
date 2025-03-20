@@ -23,7 +23,7 @@ export class DeserializationFactory {
     makeItem(serialized: SerializedItem): Item {
         if (serialized.type === SerializedType.LAYER_MANAGER) {
             throw new Error(
-                "Cannot deserialize a LayerManager in DeserializationFactory. A LayerManager can never be a descendant of a LayerManager."
+                "Cannot deserialize a LayerManager in DeserializationFactory. A LayerManager can never be a descendant of a LayerManager.",
             );
         }
 

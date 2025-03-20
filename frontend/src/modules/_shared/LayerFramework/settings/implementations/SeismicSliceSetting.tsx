@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { Input } from "@lib/components/Input";
 import { Slider } from "@lib/components/Slider";
@@ -102,8 +102,8 @@ export class SeismicSliceSetting implements CustomSettingImplementation<ValueTyp
             }
 
             return (
-                <div className="flex items-center space-x-1">
-                    <div className="flex-grow">
+                <div className="flex items-center gap-x-1">
+                    <div className="grow">
                         <Slider
                             min={availableValues[0]}
                             max={availableValues[1]}

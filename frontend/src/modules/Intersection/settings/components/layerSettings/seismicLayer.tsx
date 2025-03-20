@@ -9,7 +9,8 @@ import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
 import { ColorScaleConfig } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
@@ -62,7 +63,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
     const fixupEnsembleIdent = fixupSetting(
         "ensembleIdent",
         props.ensembleSet.getRegularEnsembleArray().map((el) => el.getIdent()),
-        newSettings
+        newSettings,
     );
     if (!isEqual(fixupEnsembleIdent, newSettings.ensembleIdent)) {
         setNewSettings((prev) => ({ ...prev, ensembleIdent: fixupEnsembleIdent }));
@@ -98,9 +99,9 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                                         isIsoStringInterval(el.isoDateOrInterval)))
                             );
                         })
-                        .map((el) => el.seismicAttribute)
-                )
-            )
+                        .map((el) => el.seismicAttribute),
+                ),
+            ),
         );
 
         availableSeismicDateOrIntervalStrings.push(
@@ -118,9 +119,9 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                                         isIsoStringInterval(el.isoDateOrInterval)))
                             );
                         })
-                        .map((el) => el.isoDateOrInterval)
-                )
-            ).sort()
+                        .map((el) => el.isoDateOrInterval),
+                ),
+            ).sort(),
         );
     }
 
@@ -145,7 +146,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
         function propagateSettingsChange() {
             props.layer.maybeUpdateSettings(cloneDeep(newSettings));
         },
-        [newSettings, props.layer]
+        [newSettings, props.layer],
     );
 
     React.useEffect(
@@ -155,7 +156,7 @@ export function SeismicLayerSettingsComponent(props: SeismicLayerSettingsProps):
                 props.layer.maybeRefetchData();
             }
         },
-        [seismicCubeMetaListQuery.isFetching, props.layer, newSettings]
+        [seismicCubeMetaListQuery.isFetching, props.layer, newSettings],
     );
 
     function handleEnsembleChange(ensembleIdent: RegularEnsembleIdent | null) {

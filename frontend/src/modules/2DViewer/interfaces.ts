@@ -1,7 +1,7 @@
-import { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
+import type { InterfaceInitialization } from "@framework/UniDirectionalModuleComponentsInterface";
 
 import { layerManagerAtom, preferredViewLayoutAtom } from "./settings/atoms/baseAtoms";
-import { PreferredViewLayout } from "./types";
+import type { PreferredViewLayout } from "./types";
 
 import { DataLayerManager } from "../_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 

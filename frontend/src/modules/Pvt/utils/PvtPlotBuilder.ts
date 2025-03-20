@@ -1,12 +1,13 @@
-import { PvtData_api } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { ColorSet } from "@lib/utils/ColorSet";
-import { Size2D } from "@lib/utils/geometry";
-import { Figure, makeSubplots } from "@modules/_shared/Figure";
+import type { PvtData_api } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { ColorSet } from "@lib/utils/ColorSet";
+import type { Size2D } from "@lib/utils/geometry";
+import type { Figure } from "@modules/_shared/Figure";
+import { makeSubplots } from "@modules/_shared/Figure";
 
-import { Layout, PlotData } from "plotly.js";
+import type { Layout, PlotData } from "plotly.js";
 
-import { PvtDataAccessor } from "./PvtDataAccessor";
+import type { PvtDataAccessor } from "./PvtDataAccessor";
 
 import {
     ColorBy,
@@ -29,7 +30,7 @@ export class PvtPlotBuilder {
 
     constructor(
         pvtDataAccessor: PvtDataAccessor,
-        makeEnsembleDisplayNameFunc: (ensemble: RegularEnsembleIdent) => string
+        makeEnsembleDisplayNameFunc: (ensemble: RegularEnsembleIdent) => string,
     ) {
         this._pvtDataAccessor = pvtDataAccessor;
         this._makeEnsembleDisplayNameFunc = makeEnsembleDisplayNameFunc;
@@ -106,7 +107,7 @@ export class PvtPlotBuilder {
     private getDependentVariableValue(
         dependentVariable: PressureDependentVariable,
         index: number,
-        table: PvtData_api
+        table: PvtData_api,
     ): number | null {
         if (index < 0 || index >= table.pressure.length) {
             return null;
@@ -135,7 +136,7 @@ export class PvtPlotBuilder {
         pvtNums: readonly number[],
         phase: PhaseType,
         colorBy: ColorBy,
-        colorSet: ColorSet
+        colorSet: ColorSet,
     ): void {
         const figure = this.getFigureAndAssertValidity();
 
@@ -227,7 +228,7 @@ export class PvtPlotBuilder {
                                     table.pvtnum,
                                     phase,
                                     tableCollection.ensembleIdent,
-                                    tableCollection.realization
+                                    tableCollection.realization,
                                 ),
                             };
 
@@ -259,7 +260,7 @@ export class PvtPlotBuilder {
                                 traceLegendName = table.pvtnum.toString();
                             } else {
                                 traceLegendName = `${this._makeEnsembleDisplayNameFunc(
-                                    tableCollection.ensembleIdent
+                                    tableCollection.ensembleIdent,
                                 )} - ${tableCollection.realization}`;
                             }
 
@@ -295,7 +296,7 @@ export class PvtPlotBuilder {
         pvtNum: number,
         phase: PhaseType,
         ensembleIdent: RegularEnsembleIdent,
-        realization: number
+        realization: number,
     ): string[] {
         const nameY = PRESSURE_DEPENDENT_VARIABLE_TO_DISPLAY_NAME[dependentVariable];
         const ensembleDisplayName = this._makeEnsembleDisplayNameFunc(ensembleIdent);
@@ -333,7 +334,7 @@ export class PvtPlotBuilder {
         colorBy: ColorBy,
         colorSet: ColorSet,
         pvtNumsLength: number,
-        tableCollectionsLength: number
+        tableCollectionsLength: number,
     ): readonly string[] {
         const colors: string[] = [];
         colors.push(colorSet.getFirstColor());

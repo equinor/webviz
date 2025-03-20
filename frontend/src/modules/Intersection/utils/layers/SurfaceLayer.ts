@@ -1,13 +1,16 @@
-import { SurfaceIntersectionData_api, postGetSurfaceIntersectionOptions } from "@api";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { SurfaceIntersectionData_api } from "@api";
+import { postGetSurfaceIntersectionOptions } from "@api";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { defaultColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorSet } from "@lib/utils/ColorSet";
-import { Vec2, normalizeVec2, point2Distance } from "@lib/utils/vec2";
-import { QueryClient } from "@tanstack/query-core";
+import type { Vec2 } from "@lib/utils/vec2";
+import { normalizeVec2, point2Distance } from "@lib/utils/vec2";
+import type { QueryClient } from "@tanstack/query-core";
 
 import { isEqual } from "lodash";
 
-import { BaseLayer, BoundingBox, LayerTopic } from "./BaseLayer";
+import type { BoundingBox } from "./BaseLayer";
+import { BaseLayer, LayerTopic } from "./BaseLayer";
 
 export type SurfaceLayerSettings = {
     ensembleIdent: RegularEnsembleIdent | null;
@@ -103,7 +106,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
 
     protected doSettingsChangesRequireDataRefetch(
         prevSettings: SurfaceLayerSettings,
-        newSettings: SurfaceLayerSettings
+        newSettings: SurfaceLayerSettings,
     ): boolean {
         return (
             !isEqual(prevSettings.surfaceNames, newSettings.surfaceNames) ||
@@ -131,7 +134,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: polyline[i - 2], y: polyline[i - 1] }
+                    { x: polyline[i - 2], y: polyline[i - 1] },
                 );
                 const actualDistance = this._settings.polyline.actualSectionLengths[i / 2 - 1];
                 const numPoints = Math.floor(distance / this._settings.resolution) - 1;
@@ -156,7 +159,7 @@ export class SurfaceLayer extends BaseLayer<SurfaceLayerSettings, SurfaceInterse
             if (i > 0) {
                 const distance = point2Distance(
                     { x: polyline[i], y: polyline[i + 1] },
-                    { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] }
+                    { x: xPoints[xPoints.length - 1], y: yPoints[yPoints.length - 1] },
                 );
 
                 cumulatedHorizontalPolylineLength += distance;

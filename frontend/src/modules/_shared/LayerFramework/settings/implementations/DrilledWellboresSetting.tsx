@@ -1,8 +1,9 @@
 import React from "react";
 
-import { WellboreHeader_api } from "@api";
+import type { WellboreHeader_api } from "@api";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
-import { Select, SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
+import { Select } from "@lib/components/Select";
 import { Deselect, SelectAll } from "@mui/icons-material";
 
 import {
@@ -30,7 +31,7 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
         }
 
         const matchingValues = currentValue.filter((value) =>
-            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid)
+            availableValues.some((availableValue) => availableValue.wellboreUuid === value.wellboreUuid),
         );
         if (matchingValues.length === 0) {
             return availableValues;
@@ -67,7 +68,7 @@ export class DrilledWellboresSetting implements CustomSettingImplementation<Valu
 
             const selectedValues = React.useMemo(
                 () => props.value?.map((ident) => ident.wellboreUuid) ?? [],
-                [props.value]
+                [props.value],
             );
 
             return (

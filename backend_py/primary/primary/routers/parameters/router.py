@@ -26,10 +26,8 @@ async def get_parameter_names_and_description(
     # fmt:on
 ) -> List[schemas.EnsembleParameterDescription]:
     """Retrieve parameter names and description for an ensemble"""
-    access = await ParameterAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-    parameters = (await access.get_parameters_and_sensitivities()).parameters
+    access = ParameterAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    parameters = (await access.get_parameters_and_sensitivities_async()).parameters
     if exclude_all_values_constant:
         parameters = [p for p in parameters if not p.is_constant]
     if sort_order == "alphabetically":
@@ -56,10 +54,8 @@ async def get_parameter(
 ) -> Optional[EnsembleParameter]:
     """Get a parameter in a given Sumo ensemble"""
 
-    access = await ParameterAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-    parameters = (await access.get_parameters_and_sensitivities()).parameters
+    access = ParameterAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    parameters = (await access.get_parameters_and_sensitivities_async()).parameters
     for parameter in parameters:
         if parameter.name == parameter_name:
             return parameter
@@ -72,10 +68,8 @@ async def get_parameters(
     case_uuid: str = Query(description="Sumo case uuid"),
     ensemble_name: str = Query(description="Ensemble name"),
 ) -> List[EnsembleParameter]:
-    access = await ParameterAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-    parameters = (await access.get_parameters_and_sensitivities()).parameters
+    access = ParameterAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    parameters = (await access.get_parameters_and_sensitivities_async()).parameters
     return [parameter for parameter in parameters]
 
 
@@ -87,10 +81,8 @@ async def get_is_sensitivity_run(
 ) -> bool:
     """Check if a given Sumo ensemble is a sensitivity run"""
 
-    access = await ParameterAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
-    parameters = await access.get_parameters_and_sensitivities()
+    access = ParameterAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
+    parameters = await access.get_parameters_and_sensitivities_async()
     return parameters.sensitivities is not None
 
 
@@ -102,9 +94,7 @@ async def get_sensitivities(
 ) -> List[EnsembleSensitivity]:
     """Get sensitivities in a given Sumo ensemble"""
 
-    access = await ParameterAccess.from_case_uuid_async(
-        authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name
-    )
+    access = ParameterAccess.from_iteration_name(authenticated_user.get_sumo_access_token(), case_uuid, ensemble_name)
 
-    sensitivities = (await access.get_parameters_and_sensitivities()).sensitivities
+    sensitivities = (await access.get_parameters_and_sensitivities_async()).sensitivities
     return sensitivities if sensitivities else []

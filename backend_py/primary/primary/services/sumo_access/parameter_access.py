@@ -5,12 +5,11 @@ from typing import List, Optional
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from fmu.sumo.explorer.objects import Case
+from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 from webviz_pkg.core_utils.perf_timer import PerfTimer
 
 from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, NoDataError, Service
 
-from ._helpers import create_sumo_case_async
 from .sumo_client_factory import create_sumo_client
 from .parameter_types import (
     EnsembleParameter,
@@ -24,34 +23,36 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ParameterAccess:
-    def __init__(self, case: Case, iteration_name: str):
-        self._case: Case = case
+    def __init__(self, sumo_client: SumoClient, case_uuid: str, iteration_name: str):
+        self._sumo_client = sumo_client
+        self._case_uuid: str = case_uuid
         self._iteration_name: str = iteration_name
+        self._ensemble_context = SearchContext(sumo=self._sumo_client).filter(
+            uuid=self._case_uuid, iteration=self._iteration_name
+        )
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str, iteration_name: str) -> "ParameterAccess":
+    def from_iteration_name(cls, access_token: str, case_uuid: str, iteration_name: str) -> "ParameterAccess":
         sumo_client = create_sumo_client(access_token)
-        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
-        return ParameterAccess(case=case, iteration_name=iteration_name)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid, iteration_name=iteration_name)
 
-    async def get_parameters_and_sensitivities(self) -> EnsembleParameters:
+    async def get_parameters_and_sensitivities_async(self) -> EnsembleParameters:
         """Retrieve parameters for an ensemble"""
         timer = PerfTimer()
 
-        table_collection = self._case.tables.filter(
-            iteration=self._iteration_name,
+        table_context = self._ensemble_context.filter(
             aggregation="collection",
             name="parameters",
             tagname="all",
         )
-        if await table_collection.length_async() == 0:
-            raise NoDataError(f"No parameter tables found {self._case.name, self._iteration_name}", Service.SUMO)
-        if await table_collection.length_async() > 1:
+        if await table_context.length_async() == 0:
+            raise NoDataError(f"No parameter tables found {self._case_uuid, self._iteration_name}", Service.SUMO)
+        if await table_context.length_async() > 1:
             raise MultipleDataMatchesError(
-                f"Multiple parameter tables found {self._case.name,self._iteration_name}", Service.SUMO
+                f"Multiple parameter tables found {self._case_uuid,self._iteration_name}", Service.SUMO
             )
 
-        table = await table_collection.getitem_async(0)
+        table = await table_context.getitem_async(0)
         byte_stream: BytesIO = await table.blob_async
         table = pq.read_table(byte_stream)
 
@@ -66,9 +67,9 @@ class ParameterAccess:
             sensitivities=sensitivities,
         )
 
-    async def get_parameter(self, parameter_name: str) -> EnsembleParameter:
+    async def get_parameter_async(self, parameter_name: str) -> EnsembleParameter:
         """Retrieve a single parameter for an ensemble"""
-        parameters = await self.get_parameters_and_sensitivities()
+        parameters = await self.get_parameters_and_sensitivities_async()
         return next(parameter for parameter in parameters.parameters if parameter.name == parameter_name)
 
 

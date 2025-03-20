@@ -1,7 +1,7 @@
 import React from "react";
 
 import { View as DeckGlView } from "@deck.gl/core";
-import { ViewContext } from "@framework/ModuleContext";
+import type { ViewContext } from "@framework/ModuleContext";
 import { useViewStatusWriter } from "@framework/StatusWriter";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { useElementSize } from "@lib/hooks/useElementSize";
@@ -42,8 +42,8 @@ import { makeDrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramewor
 import { makeDrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/visualization/deckgl/makeDrilledWellborePicksLayer";
 import { ColorLegendsContainer } from "@modules/_shared/components/ColorLegendsContainer";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
-import { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
+import type { BoundingBox2D, ViewportType } from "@webviz/subsurface-viewer";
+import type { ViewsType } from "@webviz/subsurface-viewer/dist/SubsurfaceViewer";
 
 import { ReadoutWrapper } from "./ReadoutWrapper";
 
@@ -150,7 +150,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                     position="left"
                 />
                 <div className="font-bold text-lg flex gap-2 justify-center items-center">
-                    <div className="flex gap-2 items-center bg-white p-2 backdrop-blur bg-opacity-50 rounded">
+                    <div className="flex gap-2 items-center bg-white/50 p-2 backdrop-blur-sm rounded-sm">
                         <div
                             className="rounded-full h-3 w-3 border border-white"
                             style={{ backgroundColor: view.color ?? undefined }}
@@ -158,7 +158,7 @@ export function LayersWrapper(props: LayersWrapperProps): React.ReactNode {
                         <div className="">{view.name}</div>
                     </div>
                 </div>
-            </DeckGlView>
+            </DeckGlView>,
         );
     }
 

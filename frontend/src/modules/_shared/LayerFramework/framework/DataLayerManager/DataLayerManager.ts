@@ -1,7 +1,6 @@
-import { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { RegularEnsemble } from "@framework/RegularEnsemble";
+import type { EnsembleRealizationFilterFunction, WorkbenchSession } from "@framework/WorkbenchSession";
 import {
-    EnsembleRealizationFilterFunction,
-    WorkbenchSession,
     WorkbenchSessionEvent,
     createEnsembleRealizationFilterFuncForWorkbenchSession,
 } from "@framework/WorkbenchSession";
@@ -12,7 +11,8 @@ import { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
+import type { PublishSubscribe } from "../../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../../utils/PublishSubscribeDelegate";
 import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
@@ -88,22 +88,22 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
             "workbenchSession",
             this._workbenchSession.subscribe(
                 WorkbenchSessionEvent.EnsembleSetChanged,
-                this.handleEnsembleSetChanged.bind(this)
-            )
+                this.handleEnsembleSetChanged.bind(this),
+            ),
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession.subscribe(
                 WorkbenchSessionEvent.RealizationFilterSetChanged,
-                this.handleRealizationFilterSetChanged.bind(this)
-            )
+                this.handleRealizationFilterSetChanged.bind(this),
+            ),
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "workbenchSession",
             this._workbenchSession
                 .getUserCreatedItems()
                 .getIntersectionPolylines()
-                .subscribe(IntersectionPolylinesEvent.CHANGE, this.handleIntersectionPolylinesChanged.bind(this))
+                .subscribe(IntersectionPolylinesEvent.CHANGE, this.handleIntersectionPolylinesChanged.bind(this)),
         );
         this._subscriptionsHandler.registerUnsubscribeFunction(
             "groupDelegate",
@@ -252,7 +252,7 @@ export class DataLayerManager implements ItemGroup, PublishSubscribe<LayerManage
 
     private handleRealizationFilterSetChanged() {
         this._globalSettings.realizationFilterFunction = createEnsembleRealizationFilterFuncForWorkbenchSession(
-            this._workbenchSession
+            this._workbenchSession,
         );
 
         this.publishTopic(LayerManagerTopic.GLOBAL_SETTINGS);

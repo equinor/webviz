@@ -1,5 +1,5 @@
-import { InterfaceEffects } from "@framework/Module";
-import { SettingsToViewInterface } from "@modules/InplaceVolumetricsPlot/interfaces";
+import type { InterfaceEffects } from "@framework/Module";
+import type { SettingsToViewInterface } from "@modules/InplaceVolumetricsPlot/interfaces";
 
 import {
     areTableDefinitionSelectionsValidAtom,

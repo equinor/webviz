@@ -1,7 +1,7 @@
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import { GroupDelegate } from "./GroupDelegate";
+import type { GroupDelegate } from "./GroupDelegate";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { DataLayerManager, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";

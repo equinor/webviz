@@ -1,4 +1,4 @@
-import { PlotData } from "plotly.js";
+import type { PlotData } from "plotly.js";
 
 function nFormatter(num: number, digits: number): string {
     const lookup = [

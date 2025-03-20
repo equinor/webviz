@@ -1,4 +1,4 @@
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
 import { PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
@@ -120,7 +120,7 @@ export class DataLayer<
                 .getPublishSubscribeDelegate()
                 .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
                 this.handleSettingsChange();
-            })
+            }),
         );
 
         this._unsubscribeHandler.registerUnsubscribeFunction(
@@ -291,7 +291,7 @@ export class DataLayer<
             }
             if (this._queryKeys.length === null && isDevMode()) {
                 console.warn(
-                    "Did you forget to use 'setQueryKeys' in your layer implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour."
+                    "Did you forget to use 'setQueryKeys' in your layer implementation of 'fetchData'? This will cause the queries to not be cancelled when settings change and might lead to undesired behaviour.",
                 );
             }
             this._queryKeys = [];
@@ -366,7 +366,7 @@ export class DataLayer<
                     {
                         silent: true,
                         revert: true,
-                    }
+                    },
                 );
                 await queryClient.invalidateQueries({ queryKey });
                 queryClient.removeQueries({ queryKey });

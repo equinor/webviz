@@ -38,7 +38,7 @@ export function isArrayOfNumbers(values: readonly number[] | readonly string[]):
 export function areUnsortedArraysEqual<T>(
     first: T[],
     second: T[],
-    sortCompareFn?: ((a: T, b: T) => number) | undefined
+    sortCompareFn?: ((a: T, b: T) => number) | undefined,
 ): boolean {
     if (first.length !== second.length) {
         return false;

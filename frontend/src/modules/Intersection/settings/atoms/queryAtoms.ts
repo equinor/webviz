@@ -7,8 +7,6 @@ import { selectedFieldIdentifierAtom } from "./derivedAtoms";
 export const drilledWellboreHeadersQueryAtom = atomWithQuery((get) => {
     const fieldIdentifier = get(selectedFieldIdentifierAtom);
 
-    getDrilledWellboreHeadersOptions;
-
     return {
         ...getDrilledWellboreHeadersOptions({
             query: {

@@ -2,12 +2,12 @@ import logging
 from typing import List, Dict
 
 import json
-from fmu.sumo.explorer.objects import Case
+
 from fmu.sumo.explorer.objects.dictionary import Dictionary
+from fmu.sumo.explorer.explorer import SearchContext, SumoClient
 
 from primary.services.service_exceptions import InvalidDataError, MultipleDataMatchesError, Service
 
-from ._helpers import create_sumo_case_async
 from .sumo_client_factory import create_sumo_client
 from .observation_types import (
     Observations,
@@ -21,31 +21,35 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ObservationAccess:
-    def __init__(self, case: Case, case_uuid: str):
-        self._case: Case = case
+    def __init__(self, sumo_client: SumoClient, case_uuid: str):
+        self._sumo_client = sumo_client
         self._case_uuid: str = case_uuid
+        self._case_context = SearchContext(sumo=self._sumo_client).filter(uuid=self._case_uuid)
 
     @classmethod
-    async def from_case_uuid_async(cls, access_token: str, case_uuid: str) -> "ObservationAccess":
+    def from_case_uuid(cls, access_token: str, case_uuid: str) -> "ObservationAccess":
         sumo_client = create_sumo_client(access_token)
-        case: Case = await create_sumo_case_async(client=sumo_client, case_uuid=case_uuid, want_keepalive_pit=False)
-        return cls(case=case, case_uuid=case_uuid)
+        return cls(sumo_client=sumo_client, case_uuid=case_uuid)
 
-    async def get_observations(self) -> Observations:
+    @property
+    def case_context(self) -> SearchContext:
+        return self._case_context
+
+    async def get_observations_async(self) -> Observations:
         """Retrieve all observations found in sumo case"""
-        observations_collection = self._case.dictionaries.filter(
+        observation_context = self.case_context.dictionaries.filter(
             stage="case",
             name="observations",
             tagname="all",
         )
-        if await observations_collection.length_async() == 0:
+        if await observation_context.length_async() == 0:
             return Observations()
-        if await observations_collection.length_async() > 1:
+        if await observation_context.length_async() > 1:
             raise MultipleDataMatchesError(
-                f"More than one observations dictionary found. {observations_collection.names}", Service.SUMO
+                f"More than one observations dictionary found for case {self._case_uuid}", Service.SUMO
             )
 
-        observations_handle: Dictionary = await observations_collection.getitem_async(0)
+        observations_handle: Dictionary = await observation_context.getitem_async(0)
         observations_byteio = await observations_handle.blob_async
         observations_dict = json.loads(observations_byteio.getvalue().decode())
 

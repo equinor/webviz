@@ -13,21 +13,21 @@ import { describe, expect, test } from "vitest";
 describe("Ensemble ident utility functions", () => {
     const REGULAR_ENSEMBLE_IDENT_1 = new RegularEnsembleIdent(
         "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
-        "regular-ensemble-name"
+        "regular-ensemble-name",
     );
     const REGULAR_ENSEMBLE_IDENT_2 = new RegularEnsembleIdent(
         "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa",
-        "regular-ensemble-name-2"
+        "regular-ensemble-name-2",
     );
 
     const DELTA_ENSEMBLE_IDENT_1 = new DeltaEnsembleIdent(
         new RegularEnsembleIdent("11111111-aaaa-4444-aaaa-aaaaaaaaaaaa", "comparison-ensemble-name"),
-        new RegularEnsembleIdent("22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "reference-ensemble-name")
+        new RegularEnsembleIdent("22222222-aaaa-4444-aaaa-aaaaaaaaaaaa", "reference-ensemble-name"),
     );
 
     const DELTA_ENSEMBLE_IDENT_2 = new DeltaEnsembleIdent(
         new RegularEnsembleIdent("33333333-aaaa-4444-aaaa-aaaaaaaaaaaa", "comparison-ensemble-name"),
-        new RegularEnsembleIdent("44444444-aaaa-4444-aaaa-aaaaaaaaaaaa", "reference-ensemble-name")
+        new RegularEnsembleIdent("44444444-aaaa-4444-aaaa-aaaaaaaaaaaa", "reference-ensemble-name"),
     );
 
     test("should return RegularEnsembleIdent when valid regular ensemble ident string is passed", () => {
@@ -44,16 +44,16 @@ describe("Ensemble ident utility functions", () => {
         const result = getEnsembleIdentFromString(deltaEnsembleIdentString);
         expect(result instanceof DeltaEnsembleIdent).toBe(true);
         expect((result as DeltaEnsembleIdent).getComparisonEnsembleIdent().getCaseUuid()).toBe(
-            "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa"
+            "11111111-aaaa-4444-aaaa-aaaaaaaaaaaa",
         );
         expect((result as DeltaEnsembleIdent).getComparisonEnsembleIdent().getEnsembleName()).toBe(
-            "comparison-ensemble-name"
+            "comparison-ensemble-name",
         );
         expect((result as DeltaEnsembleIdent).getReferenceEnsembleIdent().getCaseUuid()).toBe(
-            "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa"
+            "22222222-aaaa-4444-aaaa-aaaaaaaaaaaa",
         );
         expect((result as DeltaEnsembleIdent).getReferenceEnsembleIdent().getEnsembleName()).toBe(
-            "reference-ensemble-name"
+            "reference-ensemble-name",
         );
     });
 
@@ -113,7 +113,7 @@ describe("Ensemble ident utility functions", () => {
     test("should return true when both lists have the same RegularEnsembleIdent instances", () => {
         const result = areEnsembleIdentListsEqual(
             [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2],
-            [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2]
+            [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2],
         );
         expect(result).toBe(true);
     });
@@ -121,7 +121,7 @@ describe("Ensemble ident utility functions", () => {
     test("should return false when lists have different RegularEnsembleIdent instances", () => {
         const result = areEnsembleIdentListsEqual(
             [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2],
-            [REGULAR_ENSEMBLE_IDENT_2, REGULAR_ENSEMBLE_IDENT_1]
+            [REGULAR_ENSEMBLE_IDENT_2, REGULAR_ENSEMBLE_IDENT_1],
         );
         expect(result).toBe(false);
     });
@@ -129,7 +129,7 @@ describe("Ensemble ident utility functions", () => {
     test("should return true when both lists have the same DeltaEnsembleIdent instances", () => {
         const result = areEnsembleIdentListsEqual(
             [DELTA_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_2],
-            [DELTA_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_2]
+            [DELTA_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_2],
         );
         expect(result).toBe(true);
     });
@@ -137,7 +137,7 @@ describe("Ensemble ident utility functions", () => {
     test("should return false when lists have different DeltaEnsembleIdent instances", () => {
         const result = areEnsembleIdentListsEqual(
             [DELTA_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_2],
-            [DELTA_ENSEMBLE_IDENT_2, DELTA_ENSEMBLE_IDENT_1]
+            [DELTA_ENSEMBLE_IDENT_2, DELTA_ENSEMBLE_IDENT_1],
         );
         expect(result).toBe(false);
     });
@@ -145,7 +145,7 @@ describe("Ensemble ident utility functions", () => {
     test("should return false when lists have different types of EnsembleIdent instances", () => {
         const result = areEnsembleIdentListsEqual(
             [REGULAR_ENSEMBLE_IDENT_1, DELTA_ENSEMBLE_IDENT_1],
-            [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2]
+            [REGULAR_ENSEMBLE_IDENT_1, REGULAR_ENSEMBLE_IDENT_2],
         );
         expect(result).toBe(false);
     });

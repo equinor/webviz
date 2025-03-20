@@ -1,6 +1,6 @@
 import React from "react";
 
-import { ModuleSettingsProps } from "@framework/Module";
+import type { ModuleSettingsProps } from "@framework/Module";
 import { useEnsembleSet } from "@framework/WorkbenchSession";
 import { FieldDropdown } from "@framework/components/FieldDropdown";
 import { CollapsibleGroup } from "@lib/components/CollapsibleGroup";
@@ -41,16 +41,16 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             };
             window.localStorage.setItem(
                 `${props.settingsContext.getInstanceIdString()}-settings`,
-                JSON.stringify(serializedState)
+                JSON.stringify(serializedState),
             );
         },
-        [layerManager, fieldIdentifier, preferredViewLayout, props.settingsContext]
+        [layerManager, fieldIdentifier, preferredViewLayout, props.settingsContext],
     );
 
     const applyPersistedState = React.useCallback(
         function applyPersistedState(layerManager: DataLayerManager) {
             const serializedState = window.localStorage.getItem(
-                `${props.settingsContext.getInstanceIdString()}-settings`
+                `${props.settingsContext.getInstanceIdString()}-settings`,
             );
             if (!serializedState) {
                 return;
@@ -71,7 +71,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 layerManager.deserializeState(parsedState.layerManager);
             }
         },
-        [setFieldIdentifier, setPreferredViewLayout, props.settingsContext]
+        [setFieldIdentifier, setPreferredViewLayout, props.settingsContext],
     );
 
     React.useEffect(
@@ -85,7 +85,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 newLayerManager.beforeDestroy();
             };
         },
-        [setLayerManager, props.workbenchSession, props.workbenchSettings, queryClient, applyPersistedState]
+        [setLayerManager, props.workbenchSession, props.workbenchSettings, queryClient, applyPersistedState],
     );
 
     React.useEffect(
@@ -111,7 +111,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
                 unsubscribeExpands();
             };
         },
-        [layerManager, props.workbenchSession, props.workbenchSettings, persistState]
+        [layerManager, props.workbenchSession, props.workbenchSettings, persistState],
     );
 
     React.useEffect(
@@ -121,7 +121,7 @@ export function Settings(props: ModuleSettingsProps<any>): React.ReactNode {
             }
             layerManager.updateGlobalSetting("fieldId", fieldIdentifier);
         },
-        [fieldIdentifier, layerManager]
+        [fieldIdentifier, layerManager],
     );
 
     function handleFieldChange(fieldId: string | null) {

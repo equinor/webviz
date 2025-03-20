@@ -21,8 +21,8 @@ export class DeltaSurface implements ItemGroup {
             this._groupDelegate.getPublishSubscribeDelegate().makeSubscriberFunction(GroupDelegateTopic.CHILDREN)(
                 () => {
                     this.handleChildrenChange();
-                }
-            )
+                },
+            ),
         );
 
         this._groupDelegate.setColor("rgb(220, 210, 180)");
@@ -50,7 +50,7 @@ export class DeltaSurface implements ItemGroup {
                         .getPublishSubscribeDelegate()
                         .makeSubscriberFunction(SettingsContextDelegateTopic.SETTINGS_CHANGED)(() => {
                         this.handleSettingsChange();
-                    })
+                    }),
                 );
             }
         }

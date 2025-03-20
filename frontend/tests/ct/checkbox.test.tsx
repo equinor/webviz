@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 import { Checkbox } from "@lib/components/Checkbox";
 import { expect, test } from "@playwright/experimental-ct-react";
