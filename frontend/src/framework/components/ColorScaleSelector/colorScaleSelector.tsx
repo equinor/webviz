@@ -218,7 +218,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
             max: number,
             numSteps: number,
             divMid: number,
-            areBoundariesUserDefined: boolean,
+            areBoundariesUserDefined: boolean
         ) {
             const colorScale = new ColorScale({
                 colorPalette,
@@ -237,7 +237,7 @@ function ColorScaleSelectorDialog(props: ColorScaleSelectorProps): React.ReactNo
                 onChange(colorScaleConfig);
             }
         },
-        [onChange],
+        [onChange]
     );
 
     const handleMinMaxDivMidPointChange = React.useCallback(
@@ -380,14 +380,15 @@ function ColorScaleSetter(props: ColorScaleSetterProps): React.ReactNode {
     const handleMinMaxDivMidPointChange = React.useCallback(function handleMinMaxDivMidPointChange(
         min: number,
         max: number,
-        divMidPoint?: number,
+        divMidPoint?: number
     ) {
         setMin(min);
         setMax(max);
         if (divMidPoint !== undefined) {
             setDivMidPoint(divMidPoint);
         }
-    }, []);
+    },
+    []);
 
     return (
         <div>
@@ -431,10 +432,10 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
     const [divMidPoint, setDivMidPoint] = React.useState<number>(props.divMidPoint);
     const [prevDivMidPoint, setPrevDivMidPoint] = React.useState<number>(props.divMidPoint);
     const [areBoundariesUserDefined, setAreBoundariesUserDefined] = React.useState<boolean>(
-        props.areBoundariesUserDefined,
+        props.areBoundariesUserDefined
     );
     const [prevAreBoundariesUserDefined, setPrevAreBoundariesUserDefined] = React.useState<boolean>(
-        props.areBoundariesUserDefined,
+        props.areBoundariesUserDefined
     );
 
     const [isDragging, setIsDragging] = React.useState<boolean>(false);
@@ -512,7 +513,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
 
                 const newRelativeDivMidPoint = Math.min(
                     Math.max((dx + convertRemToPixels(0.75) - containerRect.left) / containerRect.width, 0),
-                    1,
+                    1
                 );
 
                 newDivMidPoint = min + newRelativeDivMidPoint * (max - min);
@@ -542,7 +543,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                 document.removeEventListener("pointerup", handlePointerUp);
             };
         },
-        [onChange, onChangePreview, min, max],
+        [onChange, onChangePreview, min, max]
     );
 
     function handleMinChange(value: string) {
@@ -601,7 +602,7 @@ function MinMaxDivMidPointSetter(props: MinMaxDivMidPointSetterProps): React.Rea
                             "z-50": isDragging,
                             hidden:
                                 props.gradientType === ColorScaleGradientType.Sequential || !areBoundariesUserDefined,
-                        },
+                        }
                     )}
                     style={{ left: `${(Math.abs(divMidPoint - min) / Math.abs(max - min)) * 100}%` }}
                     ref={divMidPointRef}
@@ -669,7 +670,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
     const [open, setOpen] = React.useState<boolean>(false);
     const [selectedColorPalette, setSelectedColorPalette] = React.useState<ColorPalette>(props.selectedColorPalette);
     const [prevSelectedColorPalette, setPrevSelectedColorPalette] = React.useState<ColorPalette>(
-        props.selectedColorPalette,
+        props.selectedColorPalette
     );
 
     if (prevSelectedColorPalette.getId() !== props.selectedColorPalette.getId()) {
@@ -762,7 +763,7 @@ const ColorScalePaletteSelector: React.FC<ColorScalePaletteSelectorProps> = (pro
                         >
                             {renderColorPalettes()}
                         </div>
-                    </>,
+                    </>
                 )}
         </div>
     );

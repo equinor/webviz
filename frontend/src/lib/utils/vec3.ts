@@ -1,4 +1,4 @@
-import { Mat3 } from "./mat3";
+import type { Mat3 } from "./mat3";
 
 /**
  * A 3D vector.
