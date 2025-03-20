@@ -1,10 +1,12 @@
-import { PolygonData_api, getPolygonsDataOptions, getPolygonsDirectoryOptions } from "@api";
-import {
+import type { PolygonData_api} from "@api";
+import { getPolygonsDataOptions, getPolygonsDirectoryOptions } from "@api";
+import type {
     CustomDataLayerImplementation,
     FetchDataParams,
 } from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
 

@@ -3,9 +3,11 @@ import { v4 } from "uuid";
 
 import type { GroupDelegate } from "./GroupDelegate";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { DataLayerManager, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
-import { SerializedItem } from "../interfacesAndTypes/serialization";
+import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import type { DataLayerManager} from "../framework/DataLayerManager/DataLayerManager";
+import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
+import type { SerializedItem } from "../interfacesAndTypes/serialization";
 
 export enum ItemDelegateTopic {
     NAME = "NAME",

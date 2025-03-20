@@ -1,12 +1,14 @@
 import React from "react";
 
-import { Grid3dInfo_api, getGridModelsInfoOptions } from "@api";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { Grid3dInfo_api} from "@api";
+import { getGridModelsInfoOptions } from "@api";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { WorkbenchSession} from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
-import { ColorScaleConfig } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import type { ColorScaleConfig } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
@@ -14,7 +16,7 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { Switch } from "@lib/components/Switch";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
-import { GridLayer, GridLayerSettings } from "@modules/Intersection/utils/layers/GridLayer";
+import type { GridLayer, GridLayerSettings } from "@modules/Intersection/utils/layers/GridLayer";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";
 import { useQuery } from "@tanstack/react-query";
 

@@ -2,12 +2,12 @@ import type React from "react";
 
 import { Slider } from "@lib/components/Slider";
 
-import {
+import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
-import { SettingCategory } from "../settingsDefinitions";
+import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
+import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = [number, number] | null;
 

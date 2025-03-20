@@ -3,12 +3,14 @@ import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { DataLayer } from "../framework/DataLayer/DataLayer";
 import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import { Group } from "../framework/Group/Group";
-import { SettingManager, SettingTopic } from "../framework/SettingManager/SettingManager";
-import { Item } from "../interfacesAndTypes/entitites";
-import { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
-import {
+import type { SettingManager} from "../framework/SettingManager/SettingManager";
+import { SettingTopic } from "../framework/SettingManager/SettingManager";
+import type { Item } from "../interfacesAndTypes/entitites";
+import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
+import type {
     SettingTypes,
-    Settings,
+    Settings} from "../settings/settingsDefinitions";
+import {
     settingCategoryAvailableValuesIntersectionReducerMap,
 } from "../settings/settingsDefinitions";
 

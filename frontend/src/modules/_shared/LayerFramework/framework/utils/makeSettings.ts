@@ -1,8 +1,8 @@
 
-import { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import { SettingRegistry } from "../../settings/SettingRegistry";
-import { MakeSettingTypesMap, Settings, SettingTypes } from "../../settings/settingsDefinitions";
-import { SettingManager } from "../SettingManager/SettingManager";
+import type { MakeSettingTypesMap, Settings, SettingTypes } from "../../settings/settingsDefinitions";
+import type { SettingManager } from "../SettingManager/SettingManager";
 
 
 export function makeSettings<

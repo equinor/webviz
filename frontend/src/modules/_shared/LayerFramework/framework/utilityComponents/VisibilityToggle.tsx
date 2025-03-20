@@ -3,7 +3,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Item } from "../../interfacesAndTypes/entitites";
+import type { Item } from "../../interfacesAndTypes/entitites";
 
 export type VisibilityToggleProps = {
     item: Item;

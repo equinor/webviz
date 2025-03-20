@@ -1,8 +1,8 @@
-import { ColorScaleSerialization } from "@lib/utils/ColorScale";
+import type { ColorScaleSerialization } from "@lib/utils/ColorScale";
 
-import { SettingsKeysFromTuple } from "./utils";
+import type { SettingsKeysFromTuple } from "./utils";
 
-import { Setting, Settings } from "../settings/settingsDefinitions";
+import type { Setting, Settings } from "../settings/settingsDefinitions";
 
 // The following interfaces/types are used to define the structure of the serialized state of the respective items in the data layer framework.
 

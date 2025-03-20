@@ -4,12 +4,12 @@ import type { DropdownOption } from "@lib/components/Dropdown";
 import { Dropdown } from "@lib/components/Dropdown";
 import { RadioGroup } from "@lib/components/RadioGroup";
 
-import {
+import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
-import { SettingCategory } from "../settingsDefinitions";
+import type { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
+import type { SettingCategory } from "../settingsDefinitions";
 
 export type IntersectionSettingValue = {
     type: "wellbore" | "polyline";

@@ -1,8 +1,9 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
-import { ItemGroup } from "../../interfacesAndTypes/entitites";
-import { SerializedSettingsGroup, SerializedType } from "../../interfacesAndTypes/serialization";
-import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
+import type { ItemGroup } from "../../interfacesAndTypes/entitites";
+import type { SerializedSettingsGroup} from "../../interfacesAndTypes/serialization";
+import { SerializedType } from "../../interfacesAndTypes/serialization";
+import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 
 export class SettingsGroup implements ItemGroup {
     private _itemDelegate: ItemDelegate;

@@ -1,15 +1,16 @@
 import { GroupRegistry } from "../../groups/GroupRegistry";
-import { Item } from "../../interfacesAndTypes/entitites";
-import {
+import type { Item } from "../../interfacesAndTypes/entitites";
+import type {
     SerializedGroup,
     SerializedItem,
     SerializedLayer,
     SerializedSettingsGroup,
-    SerializedSharedSetting,
+    SerializedSharedSetting} from "../../interfacesAndTypes/serialization";
+import {
     SerializedType,
 } from "../../interfacesAndTypes/serialization";
 import { LayerRegistry } from "../../layers/LayerRegistry";
-import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
+import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 

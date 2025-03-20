@@ -1,6 +1,6 @@
 import { DataLayer } from "../framework/DataLayer/DataLayer";
-import { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
-import { CustomDataLayerImplementation } from "../interfacesAndTypes/customDataLayerImplementation";
+import type { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
+import type { CustomDataLayerImplementation } from "../interfacesAndTypes/customDataLayerImplementation";
 
 export class LayerRegistry {
     private static _registeredLayers: Map<

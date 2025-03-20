@@ -1,24 +1,28 @@
 import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import { ApiErrorHelper } from "@framework/utils/ApiErrorHelper";
 import { isDevMode } from "@lib/utils/devMode";
-import { PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
-import { QueryClient, isCancelledError } from "@tanstack/react-query";
+import type { PublishSubscribe} from "@modules/_shared/utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "@modules/_shared/utils/PublishSubscribeDelegate";
+import type { QueryClient} from "@tanstack/react-query";
+import { isCancelledError } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegate, SettingsContextDelegateTopic } from "../../delegates/SettingsContextDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
-import {
+import type {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
 } from "../../interfacesAndTypes/customDataLayerImplementation";
-import { Item } from "../../interfacesAndTypes/entitites";
-import { SerializedLayer, SerializedType } from "../../interfacesAndTypes/serialization";
-import { StoredData } from "../../interfacesAndTypes/sharedTypes";
-import { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
-import { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
-import { DataLayerManager, LayerManagerTopic, log } from "../DataLayerManager/DataLayerManager";
+import type { Item } from "../../interfacesAndTypes/entitites";
+import type { SerializedLayer} from "../../interfacesAndTypes/serialization";
+import { SerializedType } from "../../interfacesAndTypes/serialization";
+import type { StoredData } from "../../interfacesAndTypes/sharedTypes";
+import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
+import type { DataLayerManager} from "../DataLayerManager/DataLayerManager";
+import { LayerManagerTopic, log } from "../DataLayerManager/DataLayerManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export enum LayerDelegateTopic {

@@ -4,10 +4,12 @@ import {
     WorkbenchSessionEvent,
     createEnsembleRealizationFilterFuncForWorkbenchSession,
 } from "@framework/WorkbenchSession";
-import { ColorPaletteType, WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { IntersectionPolyline, IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ColorPaletteType } from "@framework/WorkbenchSettings";
+import type { IntersectionPolyline} from "@framework/userCreatedItems/IntersectionPolylines";
+import { IntersectionPolylinesEvent } from "@framework/userCreatedItems/IntersectionPolylines";
 import { GlobalLog } from "@lib/utils/GlobalLog";
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
@@ -17,8 +19,9 @@ import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import "../../groups/registerAllGroups";
-import { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
-import { SerializedLayerManager, SerializedType } from "../../interfacesAndTypes/serialization";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
+import type { SerializedLayerManager} from "../../interfacesAndTypes/serialization";
+import { SerializedType } from "../../interfacesAndTypes/serialization";
 import "../../layers/registerAllLayers";
 import "../../settings/registerAllSettings";
 

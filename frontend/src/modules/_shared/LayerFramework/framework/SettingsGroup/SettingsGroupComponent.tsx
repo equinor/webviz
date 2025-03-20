@@ -6,7 +6,7 @@ import type { LayersActionGroup } from "../../LayersActions";
 import { LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
 import { EmptyContent } from "../utilityComponents/EmptyContent";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";

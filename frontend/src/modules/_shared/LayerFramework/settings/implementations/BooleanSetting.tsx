@@ -1,12 +1,13 @@
-import React, { ChangeEvent } from "react";
+import type { ChangeEvent } from "react";
+import type React from "react";
 
 import { Switch } from "@lib/components/Switch";
 
-import {
+import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { SettingCategory } from "../settingsDefinitions";
+import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = boolean;
 export class BooleanSetting implements CustomSettingImplementation<ValueType, SettingCategory.BOOLEAN> {

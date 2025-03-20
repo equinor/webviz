@@ -7,12 +7,13 @@ import { SortableListItem } from "@lib/components/SortableList";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Block, CheckCircle, Difference, Error, ExpandLess, ExpandMore } from "@mui/icons-material";
 
-import { DataLayer, LayerDelegateTopic, LayerStatus } from "./DataLayer";
+import type { DataLayer} from "./DataLayer";
+import { LayerDelegateTopic, LayerStatus } from "./DataLayer";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
 import { SettingsContextDelegateTopic, SettingsContextLoadingState } from "../../delegates/SettingsContextDelegate";
-import { SettingManager } from "../SettingManager/SettingManager";
+import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { RemoveItemButton } from "../utilityComponents/RemoveItemButton";

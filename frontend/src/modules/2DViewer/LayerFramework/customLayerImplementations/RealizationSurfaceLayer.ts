@@ -1,14 +1,17 @@
-import { SurfaceDataPng_api, SurfaceTimeType_api, getRealizationSurfacesMetadataOptions } from "@api";
-import { getSurfaceDataOptions } from "@api";
-import {
+import type { SurfaceDataPng_api} from "@api";
+import { SurfaceTimeType_api, getRealizationSurfacesMetadataOptions , getSurfaceDataOptions } from "@api";
+import type {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
     FetchDataParams,
 } from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
-import { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
-import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
+import type { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
+import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { FullSurfaceAddress} from "@modules/_shared/Surface";
+import { SurfaceAddressBuilder } from "@modules/_shared/Surface";
+import type { SurfaceDataFloat_trans} from "@modules/_shared/Surface/queryDataTransforms";
+import { transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
 import { encodeSurfAddrStr } from "@modules/_shared/Surface/surfaceAddress";
 
 import { isEqual } from "lodash";

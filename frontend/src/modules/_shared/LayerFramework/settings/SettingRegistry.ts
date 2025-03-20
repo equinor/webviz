@@ -1,7 +1,8 @@
-import { Setting, SettingCategories, SettingTypes, settingCategories } from "./settingsDefinitions";
+import type { Setting, SettingCategories, SettingTypes} from "./settingsDefinitions";
+import { settingCategories } from "./settingsDefinitions";
 
 import { SettingManager } from "../framework/SettingManager/SettingManager";
-import { CustomSettingImplementation } from "../interfacesAndTypes/customSettingImplementation";
+import type { CustomSettingImplementation } from "../interfacesAndTypes/customSettingImplementation";
 
 export class SettingRegistry {
     private static _registeredSettings: Map<

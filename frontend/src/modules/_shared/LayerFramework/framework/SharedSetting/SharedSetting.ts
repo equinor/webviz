@@ -1,11 +1,13 @@
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
-import { Item, SharedSettingsProvider } from "../../interfacesAndTypes/entitites";
-import { SerializedSharedSetting, SerializedType } from "../../interfacesAndTypes/serialization";
+import type { Item, SharedSettingsProvider } from "../../interfacesAndTypes/entitites";
+import type { SerializedSharedSetting} from "../../interfacesAndTypes/serialization";
+import { SerializedType } from "../../interfacesAndTypes/serialization";
 import { SettingRegistry } from "../../settings/SettingRegistry";
-import { Setting, SettingTypes } from "../../settings/settingsDefinitions";
-import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
-import { SettingManager } from "../SettingManager/SettingManager";
+import type { Setting, SettingTypes } from "../../settings/settingsDefinitions";
+import type { DataLayerManager} from "../DataLayerManager/DataLayerManager";
+import { LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
+import type { SettingManager } from "../SettingManager/SettingManager";
 
 export class SharedSetting<TSetting extends Setting> implements Item, SharedSettingsProvider {
     private _sharedSettingsDelegate: SharedSettingsDelegate<[TSetting]>;

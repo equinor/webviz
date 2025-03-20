@@ -1,12 +1,13 @@
 import React from "react";
 
 import { getSeismicCubeMetaListOptions } from "@api";
-import { EnsembleSet } from "@framework/EnsembleSet";
-import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
-import { WorkbenchSession, useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { EnsembleSet } from "@framework/EnsembleSet";
+import type { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
+import type { WorkbenchSession} from "@framework/WorkbenchSession";
+import { useEnsembleRealizationFilterFunc } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 import { ColorScaleSelector } from "@framework/components/ColorScaleSelector";
-import { ColorScaleConfig } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import type { ColorScaleConfig } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 import { isIsoStringInterval } from "@framework/utils/timestampUtils";
 import type { DropdownOption } from "@lib/components/Dropdown";
@@ -14,12 +15,13 @@ import { Dropdown } from "@lib/components/Dropdown";
 import { Input } from "@lib/components/Input";
 import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { RadioGroup } from "@lib/components/RadioGroup";
-import { SelectOption } from "@lib/components/Select";
+import type { SelectOption } from "@lib/components/Select";
 import { useLayerSettings } from "@modules/Intersection/utils/layers/BaseLayer";
+import type {
+    SeismicLayer,
+    SeismicLayerSettings} from "@modules/Intersection/utils/layers/SeismicLayer";
 import {
     SeismicDataType,
-    SeismicLayer,
-    SeismicLayerSettings,
     SeismicSurveyType,
 } from "@modules/Intersection/utils/layers/SeismicLayer";
 import { isoIntervalStringToDateLabel, isoStringToDateLabel } from "@modules/_shared/utils/isoDatetimeStringFormatting";

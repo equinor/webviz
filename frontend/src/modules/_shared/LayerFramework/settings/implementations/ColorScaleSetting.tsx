@@ -1,16 +1,17 @@
-import React from "react";
+import type React from "react";
 
-import { ColorScaleConfig, ColorScaleSelector } from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import type { ColorScaleConfig} from "@framework/components/ColorScaleSelector/colorScaleSelector";
+import { ColorScaleSelector } from "@framework/components/ColorScaleSelector/colorScaleSelector";
 import { defaultContinuousSequentialColorPalettes } from "@framework/utils/colorPalettes";
 import { ColorScalePreview } from "@lib/components/ColorScalePreview";
 import { ColorScale, ColorScaleGradientType, ColorScaleType } from "@lib/utils/ColorScale";
 
-import {
+import type {
     CustomSettingImplementation,
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { SettingCategory } from "../settingsDefinitions";
+import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = ColorScaleConfig | null;
 

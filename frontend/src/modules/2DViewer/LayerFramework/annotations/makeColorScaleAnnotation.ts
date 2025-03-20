@@ -1,5 +1,5 @@
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import {
+import type {
     Annotation,
     MakeAnnotationsFunctionArgs,
 } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";

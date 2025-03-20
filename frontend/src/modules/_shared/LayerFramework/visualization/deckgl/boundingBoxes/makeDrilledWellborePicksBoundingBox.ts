@@ -1,7 +1,7 @@
-import { BBox } from "@lib/utils/bbox";
-import { MakeLayerBoundingBoxFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { BBox } from "@lib/utils/bbox";
+import type { MakeLayerBoundingBoxFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 
-import { Data, DrilledWellborePicksSettings } from "../../../layers/implementations/DrilledWellborePicksLayer";
+import type { Data, DrilledWellborePicksSettings } from "../../../layers/implementations/DrilledWellborePicksLayer";
 
 export function makeDrilledWellborePicksBoundingBox({
     getData,

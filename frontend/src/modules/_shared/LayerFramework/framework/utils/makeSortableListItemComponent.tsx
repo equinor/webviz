@@ -1,5 +1,5 @@
-import { LayersActionGroup } from "../../LayersActions";
-import { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
+import type { LayersActionGroup } from "../../LayersActions";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
 import { DataLayer } from "../DataLayer/DataLayer";
 import { DataLayerComponent } from "../DataLayer/DataLayerComponent";
 import { DeltaSurface } from "../DeltaSurface/DeltaSurface";

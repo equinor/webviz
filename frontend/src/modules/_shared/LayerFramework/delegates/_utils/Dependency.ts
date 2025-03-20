@@ -2,12 +2,12 @@ import { isCancelledError } from "@tanstack/react-query";
 
 import { isEqual } from "lodash";
 
-import { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
+import type { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
 import { SettingTopic } from "../../framework/SettingManager/SettingManager";
-import { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
-import { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
-import { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
-import { SettingsContextDelegate } from "../SettingsContextDelegate";
+import type { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
+import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
+import type { SettingsContextDelegate } from "../SettingsContextDelegate";
 
 /*
  * Dependency class is used to represent a node in the dependency graph of a layer settings context.

@@ -1,8 +1,8 @@
-import { PolygonData_api } from "@api";
+import type { PolygonData_api } from "@api";
 import { GeoJsonLayer } from "@deck.gl/layers";
-import { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 
-import { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
+import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
 import type { Data, RealizationPolygonsSettings } from "../customLayerImplementations/RealizationPolygonsLayer";
 

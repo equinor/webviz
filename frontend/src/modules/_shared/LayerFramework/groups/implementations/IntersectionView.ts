@@ -1,4 +1,4 @@
-import { CustomGroupImplementationWithSettings } from "../../interfacesAndTypes/customGroupImplementation";
+import type { CustomGroupImplementationWithSettings } from "../../interfacesAndTypes/customGroupImplementation";
 import { Setting } from "../../settings/settingsDefinitions";
 
 export class IntersectionView implements CustomGroupImplementationWithSettings<[Setting.INTERSECTION]> {

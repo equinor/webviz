@@ -1,15 +1,15 @@
 import { ColorSelect } from "@lib/components/ColorSelect";
 import { SortableListGroup } from "@lib/components/SortableList";
 
-import { Group } from "./Group";
+import type { Group } from "./Group";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
 import type { LayersActionGroup } from "../../LayersActions";
 import { LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
-import { SettingManager } from "../SettingManager/SettingManager";
+import type { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
+import type { SettingManager } from "../SettingManager/SettingManager";
 import { SettingComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";

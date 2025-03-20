@@ -1,6 +1,7 @@
 import React from "react";
 
-import { ColorPaletteType, WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import { ColorPaletteType } from "@framework/WorkbenchSettings";
 import { Button } from "@lib/components/Button";
 import { ColorScalePreview } from "@lib/components/ColorScalePreview";
 import { Dialog } from "@lib/components/Dialog";

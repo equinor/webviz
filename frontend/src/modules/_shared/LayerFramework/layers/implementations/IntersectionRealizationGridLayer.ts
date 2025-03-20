@@ -5,22 +5,24 @@ import {
     postGetPolylineIntersectionOptions,
 } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import { IntersectionSettingValue } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { IntersectionSettingValue } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
+import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type {
+    PolylineIntersection_trans} from "@modules/_shared/utils/wellbore";
 import {
-    PolylineIntersection_trans,
     calcExtendedSimplifiedWellboreTrajectoryInXYPlane,
     transformPolylineIntersection,
 } from "@modules/_shared/utils/wellbore";
 
 import { isEqual } from "lodash";
 
-import {
+import type {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
     FetchDataParams,
 } from "../../interfacesAndTypes/customDataLayerImplementation";
-import { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 
 const intersectionRealizationGridSettings = [
     Setting.INTERSECTION,

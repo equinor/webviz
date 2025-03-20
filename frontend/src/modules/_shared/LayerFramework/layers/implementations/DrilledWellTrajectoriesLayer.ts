@@ -1,10 +1,12 @@
-import { WellboreTrajectory_api, getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@api";
-import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import type { WellboreTrajectory_api} from "@api";
+import { getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@api";
+import type { MakeSettingTypesMap} from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
+import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
 
-import { CustomDataLayerImplementation, FetchDataParams } from "../../interfacesAndTypes/customDataLayerImplementation";
-import { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
+import type { CustomDataLayerImplementation, FetchDataParams } from "../../interfacesAndTypes/customDataLayerImplementation";
+import type { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 
 const drilledWellTrajectoriesSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS] as const;
 type DrilledWellTrajectoriesSettings = typeof drilledWellTrajectoriesSettings;

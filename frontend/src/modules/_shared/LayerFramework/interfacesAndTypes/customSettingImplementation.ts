@@ -1,10 +1,10 @@
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
 
-import { MakeAvailableValuesTypeBasedOnCategory } from "./utils";
+import type { MakeAvailableValuesTypeBasedOnCategory } from "./utils";
 
-import { GlobalSettings } from "../framework/DataLayerManager/DataLayerManager";
-import { SettingCategory } from "../settings/settingsDefinitions";
+import type { GlobalSettings } from "../framework/DataLayerManager/DataLayerManager";
+import type { SettingCategory } from "../settings/settingsDefinitions";
 
 export type OverriddenValueRepresentationArgs<TValue> = {
     value: TValue;

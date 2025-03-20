@@ -1,8 +1,8 @@
-import { SerializedItem } from "./serialization";
+import type { SerializedItem } from "./serialization";
 
-import { GroupDelegate } from "../delegates/GroupDelegate";
-import { ItemDelegate } from "../delegates/ItemDelegate";
-import { SharedSettingsDelegate } from "../delegates/SharedSettingsDelegate";
+import type { GroupDelegate } from "../delegates/GroupDelegate";
+import type { ItemDelegate } from "../delegates/ItemDelegate";
+import type { SharedSettingsDelegate } from "../delegates/SharedSettingsDelegate";
 
 /**
  * Each entity in the data layer framework is based upon the Item interface.

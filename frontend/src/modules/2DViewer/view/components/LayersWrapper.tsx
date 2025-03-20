@@ -21,20 +21,22 @@ import { makeRealizationGridLayer } from "@modules/2DViewer/LayerFramework/visua
 import { makeRealizationPolygonsLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationPolygonsLayer";
 import { makeRealizationSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeRealizationSurfaceLayer";
 import { makeStatisticalSurfaceLayer } from "@modules/2DViewer/LayerFramework/visualization/makeStatisticalSurfaceLayer";
-import { Interfaces } from "@modules/2DViewer/interfaces";
+import type { Interfaces } from "@modules/2DViewer/interfaces";
 import { PreferredViewLayout } from "@modules/2DViewer/types";
+import type {
+    DataLayerManager} from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import {
-    DataLayerManager,
     LayerManagerTopic,
 } from "@modules/_shared/LayerFramework/framework/DataLayerManager/DataLayerManager";
 import { DrilledWellTrajectoriesLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellTrajectoriesLayer";
 import { DrilledWellborePicksLayer } from "@modules/_shared/LayerFramework/layers/implementations/DrilledWellborePicksLayer";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
-import {
+import type {
     Annotation,
     LayerWithPosition,
-    VisualizationFactory,
-    VisualizationTarget,
+    VisualizationTarget} from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import {
+    VisualizationFactory
 } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeDrilledWellTrajectoriesBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellTrajectoriesBoundingBox";
 import { makeDrilledWellborePicksBoundingBox } from "@modules/_shared/LayerFramework/visualization/deckgl/boundingBoxes/makeDrilledWellborePicksBoundingBox";

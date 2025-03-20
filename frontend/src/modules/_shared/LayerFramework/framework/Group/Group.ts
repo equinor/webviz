@@ -1,17 +1,19 @@
 import { GroupDelegate } from "../../delegates/GroupDelegate";
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
-import {
+import type {
     CustomGroupImplementation,
-    CustomGroupImplementationWithSettings,
+    CustomGroupImplementationWithSettings} from "../../interfacesAndTypes/customGroupImplementation";
+import {
     includesSettings,
 } from "../../interfacesAndTypes/customGroupImplementation";
-import { ItemGroup } from "../../interfacesAndTypes/entitites";
-import { SerializedGroup, SerializedType } from "../../interfacesAndTypes/serialization";
-import { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
-import { MakeSettingTypesMap, SettingTypes, Settings } from "../../settings/settingsDefinitions";
-import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
-import { SettingManager } from "../SettingManager/SettingManager";
+import type { ItemGroup } from "../../interfacesAndTypes/entitites";
+import type { SerializedGroup} from "../../interfacesAndTypes/serialization";
+import { SerializedType } from "../../interfacesAndTypes/serialization";
+import type { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import type { MakeSettingTypesMap, SettingTypes, Settings } from "../../settings/settingsDefinitions";
+import type { DataLayerManager } from "../DataLayerManager/DataLayerManager";
+import type { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";
 
 export type GroupParams<

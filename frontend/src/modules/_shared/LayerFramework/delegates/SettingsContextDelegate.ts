@@ -1,18 +1,22 @@
 import { UnsubscribeHandlerDelegate } from "./UnsubscribeHandlerDelegate";
 import { Dependency } from "./_utils/Dependency";
 
-import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
-import { DataLayer } from "../framework/DataLayer/DataLayer";
-import { DataLayerManager, GlobalSettings, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
+import type { PublishSubscribe} from "../../utils/PublishSubscribeDelegate";
+import { PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
+import type { DataLayer } from "../framework/DataLayer/DataLayer";
+import type { DataLayerManager, GlobalSettings} from "../framework/DataLayerManager/DataLayerManager";
+import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import { Group } from "../framework/Group/Group";
-import { SettingManager, SettingTopic } from "../framework/SettingManager/SettingManager";
+import type { SettingManager} from "../framework/SettingManager/SettingManager";
+import { SettingTopic } from "../framework/SettingManager/SettingManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
-import { CustomSettingsHandler, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
-import { SharedSettingsProvider, instanceofSharedSettingsProvider } from "../interfacesAndTypes/entitites";
-import { SerializedSettingsState } from "../interfacesAndTypes/serialization";
-import { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
-import { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
-import { MakeSettingTypesMap, SettingTypes, Settings } from "../settings/settingsDefinitions";
+import type { CustomSettingsHandler, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
+import type { SharedSettingsProvider} from "../interfacesAndTypes/entitites";
+import { instanceofSharedSettingsProvider } from "../interfacesAndTypes/entitites";
+import type { SerializedSettingsState } from "../interfacesAndTypes/serialization";
+import type { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
+import type { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
+import type { MakeSettingTypesMap, SettingTypes, Settings } from "../settings/settingsDefinitions";
 
 export enum SettingsContextLoadingState {
     LOADING = "LOADING",

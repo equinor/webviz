@@ -1,6 +1,6 @@
-import { PolygonData_api } from "@api";
-import { BBox } from "@lib/utils/bbox";
-import { MakeLayerBoundingBoxFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { PolygonData_api } from "@api";
+import type { BBox } from "@lib/utils/bbox";
+import type { MakeLayerBoundingBoxFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 
 export function makePolygonDataBoundingBox({
     getData,

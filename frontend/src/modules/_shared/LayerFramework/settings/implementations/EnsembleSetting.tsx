@@ -3,12 +3,12 @@ import type React from "react";
 import { RegularEnsembleIdent } from "@framework/RegularEnsembleIdent";
 import { EnsembleDropdown } from "@framework/components/EnsembleDropdown";
 
-import {
+import type {
     CustomSettingImplementation,
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { SettingCategory } from "../settingsDefinitions";
+import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = RegularEnsembleIdent | null;
 export class EnsembleSetting implements CustomSettingImplementation<ValueType, SettingCategory.SINGLE_OPTION> {

@@ -1,10 +1,10 @@
-import { WellboreTrajectory_api } from "@api";
+import type { WellboreTrajectory_api } from "@api";
 import { AdvancedWellsLayer } from "@modules/_shared/customDeckGlLayers/AdvancedWellsLayer";
-import { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
+import type { WellsLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { Feature, GeoJsonProperties, GeometryCollection, LineString, Point } from "geojson";
+import type { Feature, GeoJsonProperties, GeometryCollection, LineString, Point } from "geojson";
 
-import { VisualizationFunctionArgs } from "../VisualizationFactory";
+import type { VisualizationFunctionArgs } from "../VisualizationFactory";
 
 function wellTrajectoryToGeojson(
     wellTrajectory: WellboreTrajectory_api

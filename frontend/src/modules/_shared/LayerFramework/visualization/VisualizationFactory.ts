@@ -1,20 +1,20 @@
-import { Layer as DeckGlLayer } from "@deck.gl/core";
-import { Layer as EsvLayer } from "@equinor/esv-intersection";
-import { StatusMessage } from "@framework/ModuleInstanceStatusController";
+import type { Layer as DeckGlLayer } from "@deck.gl/core";
+import type { Layer as EsvLayer } from "@equinor/esv-intersection";
+import type { StatusMessage } from "@framework/ModuleInstanceStatusController";
 import * as bbox from "@lib/utils/bbox";
-import { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
+import type { ColorScaleWithId } from "@modules/_shared/components/ColorLegendsContainer/colorLegendsContainer";
 
-import { GroupDelegate } from "../delegates/GroupDelegate";
+import type { GroupDelegate } from "../delegates/GroupDelegate";
 import { DataLayer, LayerStatus } from "../framework/DataLayer/DataLayer";
-import { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
+import type { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
 import { DeltaSurface } from "../framework/DeltaSurface/DeltaSurface";
 import { Group } from "../framework/Group/Group";
-import {
+import type {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
 } from "../interfacesAndTypes/customDataLayerImplementation";
 import { instanceofItemGroup } from "../interfacesAndTypes/entitites";
-import { Settings } from "../settings/settingsDefinitions";
+import type { Settings } from "../settings/settingsDefinitions";
 
 export enum VisualizationTarget {
     DECK_GL = "deck_gl",
@@ -180,6 +180,8 @@ export class VisualizationFactory<
                     customData,
                     numCollectedLayers + collectedLayers.length
                 );
+
+                accumulatedData = newAccumulatedData;
 
                 collectedErrorMessages.push(...errorMessages);
                 collectedNumLoadingLayers += numLoadingLayers;

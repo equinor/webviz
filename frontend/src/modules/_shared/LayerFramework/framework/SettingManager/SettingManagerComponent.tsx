@@ -4,12 +4,14 @@ import { PendingWrapper } from "@lib/components/PendingWrapper";
 import { resolveClassNames } from "@lib/utils/resolveClassNames";
 import { Link, Warning } from "@mui/icons-material";
 
-import { OverriddenValueProviderType, SettingManager, SettingTopic } from "./SettingManager";
+import type { SettingManager} from "./SettingManager";
+import { OverriddenValueProviderType, SettingTopic } from "./SettingManager";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
-import { SettingComponentProps as SettingComponentPropsInterface } from "../../interfacesAndTypes/customSettingImplementation";
-import { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";
-import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
+import type { SettingComponentProps as SettingComponentPropsInterface } from "../../interfacesAndTypes/customSettingImplementation";
+import type { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";
+import type { DataLayerManager} from "../DataLayerManager/DataLayerManager";
+import { LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 
 export type SettingComponentProps<
     TSetting extends Setting,

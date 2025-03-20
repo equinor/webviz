@@ -4,15 +4,18 @@ import type { IsMoveAllowedArgs } from "@lib/components/SortableList";
 import { SortableList } from "@lib/components/SortableList";
 import { useElementSize } from "@lib/hooks/useElementSize";
 import { convertRemToPixels } from "@lib/utils/screenUnitConversions";
-import { GroupDelegate, GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import type { GroupDelegate} from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
+import { GroupDelegateTopic } from "@modules/_shared/LayerFramework/delegates/GroupDelegate";
 import { usePublishSubscribeTopicValue } from "@modules/_shared/utils/PublishSubscribeDelegate";
 import { Add } from "@mui/icons-material";
 
-import { DataLayerManager } from "./DataLayerManager";
+import type { DataLayerManager } from "./DataLayerManager";
 
-import { LayersActionGroup, LayersActions } from "../../LayersActions";
+import type { LayersActionGroup} from "../../LayersActions";
+import { LayersActions } from "../../LayersActions";
 import { View } from "../../groups/implementations/View";
-import { Item, ItemGroup, instanceofItemGroup } from "../../interfacesAndTypes/entitites";
+import type { Item, ItemGroup} from "../../interfacesAndTypes/entitites";
+import { instanceofItemGroup } from "../../interfacesAndTypes/entitites";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";

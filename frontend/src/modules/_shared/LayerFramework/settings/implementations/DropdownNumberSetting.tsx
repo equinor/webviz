@@ -1,12 +1,13 @@
-import React from "react";
+import type React from "react";
 
-import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
+import type { DropdownOption } from "@lib/components/Dropdown";
+import { Dropdown } from "@lib/components/Dropdown";
 
-import {
+import type {
     CustomSettingImplementation,
     SettingComponentProps,
 } from "../../interfacesAndTypes/customSettingImplementation";
-import { SettingCategory } from "../settingsDefinitions";
+import type { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = number | null;
 

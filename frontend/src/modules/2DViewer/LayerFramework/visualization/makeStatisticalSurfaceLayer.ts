@@ -1,11 +1,12 @@
-import { SurfaceDef_api } from "@api";
-import { Vec2, rotatePoint2Around } from "@lib/utils/vec2";
+import type { SurfaceDef_api } from "@api";
+import type { Vec2} from "@lib/utils/vec2";
+import { rotatePoint2Around } from "@lib/utils/vec2";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
-import { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { VisualizationFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
 import { makeColorMapFunctionFromColorScale } from "@modules/_shared/LayerFramework/visualization/utils/colors";
 import { ColormapLayer, Grid3DLayer } from "@webviz/subsurface-viewer/dist/layers";
 
-import { Data, StatisticalSurfaceSettings } from "../customLayerImplementations/StatisticalSurfaceLayer";
+import type { Data, StatisticalSurfaceSettings } from "../customLayerImplementations/StatisticalSurfaceLayer";
 
 function calcBoundsForRotationAroundUpperLeftCorner(surfDef: SurfaceDef_api): [number, number, number, number] {
     const width = (surfDef.npoints_x - 1) * surfDef.inc_x;

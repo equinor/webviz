@@ -1,4 +1,4 @@
-import { Setting, SettingCategories, SettingCategory, SettingTypes, Settings } from "../settings/settingsDefinitions";
+import type { Setting, SettingCategories, SettingCategory, SettingTypes, Settings } from "../settings/settingsDefinitions";
 
 // Required when making "AvailableValuesType" for all settings in an object ("TSettings")
 export type EachAvailableValuesType<TSetting> = TSetting extends Setting ? AvailableValuesType<TSetting> : never;

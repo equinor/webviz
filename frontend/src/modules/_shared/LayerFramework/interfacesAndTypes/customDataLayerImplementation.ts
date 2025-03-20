@@ -1,13 +1,13 @@
-import { WorkbenchSession } from "@framework/WorkbenchSession";
-import { WorkbenchSettings } from "@framework/WorkbenchSettings";
-import { QueryClient } from "@tanstack/query-core";
+import type { WorkbenchSession } from "@framework/WorkbenchSession";
+import type { WorkbenchSettings } from "@framework/WorkbenchSettings";
+import type { QueryClient } from "@tanstack/query-core";
 
-import { CustomSettingsHandler } from "./customSettingsHandler";
-import { StoredData } from "./sharedTypes";
-import { AvailableValuesType, SettingsKeysFromTuple } from "./utils";
+import type { CustomSettingsHandler } from "./customSettingsHandler";
+import type { StoredData } from "./sharedTypes";
+import type { AvailableValuesType, SettingsKeysFromTuple } from "./utils";
 
-import { GlobalSettings } from "../framework/DataLayerManager/DataLayerManager";
-import { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
+import type { GlobalSettings } from "../framework/DataLayerManager/DataLayerManager";
+import type { MakeSettingTypesMap, Settings } from "../settings/settingsDefinitions";
 
 /**
  * This type is used to pass parameters to the fetchData method of a CustomDataLayerImplementation.

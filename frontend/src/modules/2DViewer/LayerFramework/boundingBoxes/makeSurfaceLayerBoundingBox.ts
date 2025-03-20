@@ -1,7 +1,7 @@
-import { SurfaceDataPng_api } from "@api";
-import { BBox } from "@lib/utils/bbox";
-import { MakeLayerBoundingBoxFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
-import { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
+import type { SurfaceDataPng_api } from "@api";
+import type { BBox } from "@lib/utils/bbox";
+import type { MakeLayerBoundingBoxFunctionArgs } from "@modules/_shared/LayerFramework/visualization/VisualizationFactory";
+import type { SurfaceDataFloat_trans } from "@modules/_shared/Surface/queryDataTransforms";
 
 export function makeSurfaceLayerBoundingBox({
     getData,

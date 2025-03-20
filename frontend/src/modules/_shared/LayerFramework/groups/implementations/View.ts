@@ -1,4 +1,4 @@
-import { CustomGroupImplementation } from "../../interfacesAndTypes/customGroupImplementation";
+import type { CustomGroupImplementation } from "../../interfacesAndTypes/customGroupImplementation";
 
 export class View implements CustomGroupImplementation {
     getDefaultName(): string {

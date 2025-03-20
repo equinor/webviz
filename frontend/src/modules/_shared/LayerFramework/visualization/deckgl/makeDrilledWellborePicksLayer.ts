@@ -1,7 +1,8 @@
-import { WellborePick_api } from "@api";
-import { WellborePicksLayer, WellborePicksLayerData } from "@modules/_shared/customDeckGlLayers/WellborePicksLayer";
+import type { WellborePick_api } from "@api";
+import type { WellborePicksLayerData } from "@modules/_shared/customDeckGlLayers/WellborePicksLayer";
+import { WellborePicksLayer } from "@modules/_shared/customDeckGlLayers/WellborePicksLayer";
 
-import { VisualizationFunctionArgs } from "../VisualizationFactory";
+import type { VisualizationFunctionArgs } from "../VisualizationFactory";
 
 export function makeDrilledWellborePicksLayer({
     id,
