@@ -1,4 +1,4 @@
-import { CustomGroupImplementationWithSettings } from "../../interfaces";
+import { CustomGroupImplementationWithSettings } from "../../interfacesAndTypes/customGroupImplementation";
 import { Setting } from "../../settings/settingsDefinitions";
 
 export class RealizationView implements CustomGroupImplementationWithSettings<[Setting.REALIZATION]> {

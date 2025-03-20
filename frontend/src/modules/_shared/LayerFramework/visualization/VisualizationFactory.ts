@@ -12,9 +12,9 @@ import { Group } from "../framework/Group/Group";
 import {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
-    Settings,
-    instanceofItemGroup,
-} from "../interfaces";
+} from "../interfacesAndTypes/customDataLayerImplementation";
+import { instanceofItemGroup } from "../interfacesAndTypes/entitites";
+import { Settings } from "../settings/settingsDefinitions";
 
 export enum VisualizationTarget {
     DECK_GL = "deck_gl",

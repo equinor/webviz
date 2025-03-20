@@ -9,7 +9,7 @@ import {
     CustomSettingImplementation,
     OverriddenValueRepresentationArgs,
     SettingComponentProps,
-} from "../../interfaces";
+} from "../../interfacesAndTypes/customSettingImplementation";
 import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = ColorScaleConfig | null;

@@ -2,7 +2,10 @@ import React from "react";
 
 import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
-import { CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
+import {
+    CustomSettingImplementation,
+    SettingComponentProps,
+} from "../../interfacesAndTypes/customSettingImplementation";
 import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = string | null;

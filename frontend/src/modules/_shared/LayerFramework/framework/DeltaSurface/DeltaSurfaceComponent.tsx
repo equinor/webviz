@@ -6,7 +6,7 @@ import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDe
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Item, ItemGroup } from "../../interfaces";
+import { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
 import { DataLayer } from "../DataLayer/DataLayer";
 import { EditName } from "../utilityComponents/EditName";
 import { EmptyContent } from "../utilityComponents/EmptyContent";

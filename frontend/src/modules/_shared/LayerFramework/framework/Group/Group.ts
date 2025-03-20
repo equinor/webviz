@@ -4,14 +4,12 @@ import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
 import {
     CustomGroupImplementation,
     CustomGroupImplementationWithSettings,
-    ItemGroup,
-    SerializedGroup,
-    SerializedType,
-    Settings,
-    SettingsKeysFromTuple,
     includesSettings,
-} from "../../interfaces";
-import { MakeSettingTypesMap, SettingTypes } from "../../settings/settingsDefinitions";
+} from "../../interfacesAndTypes/customGroupImplementation";
+import { ItemGroup } from "../../interfacesAndTypes/entitites";
+import { SerializedGroup, SerializedType } from "../../interfacesAndTypes/serialization";
+import { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import { MakeSettingTypesMap, SettingTypes, Settings } from "../../settings/settingsDefinitions";
 import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { SettingManager } from "../SettingManager/SettingManager";
 import { makeSettings } from "../utils/makeSettings";

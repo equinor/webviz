@@ -1,6 +1,7 @@
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { SharedSettingsDelegate } from "../../delegates/SharedSettingsDelegate";
-import { Item, SerializedSharedSetting, SerializedType, SharedSettingsProvider } from "../../interfaces";
+import { Item, SharedSettingsProvider } from "../../interfacesAndTypes/entitites";
+import { SerializedSharedSetting, SerializedType } from "../../interfacesAndTypes/serialization";
 import { SettingRegistry } from "../../settings/SettingRegistry";
 import { Setting, SettingTypes } from "../../settings/settingsDefinitions";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";

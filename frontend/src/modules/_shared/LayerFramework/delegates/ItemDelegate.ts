@@ -5,7 +5,7 @@ import { GroupDelegate } from "./GroupDelegate";
 
 import { PublishSubscribe, PublishSubscribeDelegate } from "../../utils/PublishSubscribeDelegate";
 import { DataLayerManager, LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
-import { SerializedItem } from "../interfaces";
+import { SerializedItem } from "../interfacesAndTypes/serialization";
 
 export enum ItemDelegateTopic {
     NAME = "NAME",

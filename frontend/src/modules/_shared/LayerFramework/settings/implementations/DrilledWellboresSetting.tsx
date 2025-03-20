@@ -7,9 +7,9 @@ import { Deselect, SelectAll } from "@mui/icons-material";
 
 import {
     CustomSettingImplementation,
-    MakeAvailableValuesTypeBasedOnCategory,
     SettingComponentProps,
-} from "../../interfaces";
+} from "../../interfacesAndTypes/customSettingImplementation";
+import { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = WellboreHeader_api[] | null;

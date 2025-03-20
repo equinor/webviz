@@ -4,8 +4,9 @@ import { isEqual } from "lodash";
 
 import { GlobalSettings } from "../../framework/DataLayerManager/DataLayerManager";
 import { SettingTopic } from "../../framework/SettingManager/SettingManager";
-import { Settings, SettingsKeysFromTuple, UpdateFunc } from "../../interfaces";
-import { MakeSettingTypesMap } from "../../settings/settingsDefinitions";
+import { UpdateFunc } from "../../interfacesAndTypes/customSettingsHandler";
+import { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
 import { SettingsContextDelegate } from "../SettingsContextDelegate";
 
 /*

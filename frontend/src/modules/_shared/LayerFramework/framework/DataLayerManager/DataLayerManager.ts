@@ -17,7 +17,8 @@ import { GroupDelegate, GroupDelegateTopic } from "../../delegates/GroupDelegate
 import { ItemDelegate } from "../../delegates/ItemDelegate";
 import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDelegate";
 import "../../groups/registerAllGroups";
-import { Item, ItemGroup, SerializedLayerManager, SerializedType } from "../../interfaces";
+import { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
+import { SerializedLayerManager, SerializedType } from "../../interfacesAndTypes/serialization";
 import "../../layers/registerAllLayers";
 import "../../settings/registerAllSettings";
 

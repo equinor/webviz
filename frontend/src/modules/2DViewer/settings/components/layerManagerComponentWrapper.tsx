@@ -23,7 +23,7 @@ import { Group } from "@modules/_shared/LayerFramework/framework/Group/Group";
 import { SettingsGroup } from "@modules/_shared/LayerFramework/framework/SettingsGroup/SettingsGroup";
 import { SharedSetting } from "@modules/_shared/LayerFramework/framework/SharedSetting/SharedSetting";
 import { GroupRegistry } from "@modules/_shared/LayerFramework/groups/GroupRegistry";
-import { Item, ItemGroup, instanceofItemGroup } from "@modules/_shared/LayerFramework/interfaces";
+import { Item, ItemGroup, instanceofItemGroup } from "@modules/_shared/LayerFramework/interfacesAndTypes/entitites";
 import { LayerRegistry } from "@modules/_shared/LayerFramework/layers/LayerRegistry";
 import { LayerType } from "@modules/_shared/LayerFramework/layers/layerTypes";
 import { Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";

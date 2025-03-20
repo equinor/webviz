@@ -5,12 +5,9 @@ import { PublishSubscribe, PublishSubscribeDelegate } from "@modules/_shared/uti
 import { isEqual } from "lodash";
 import { v4 } from "uuid";
 
-import {
-    AvailableValuesType,
-    CustomSettingImplementation,
-    MakeAvailableValuesTypeBasedOnCategory,
-    SharedSettingsProvider,
-} from "../../interfaces";
+import { CustomSettingImplementation } from "../../interfacesAndTypes/customSettingImplementation";
+import { SharedSettingsProvider } from "../../interfacesAndTypes/entitites";
+import { AvailableValuesType, MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import {
     Setting,
     SettingCategories,

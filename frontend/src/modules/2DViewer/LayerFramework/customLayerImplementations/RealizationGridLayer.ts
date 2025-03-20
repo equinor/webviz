@@ -8,10 +8,9 @@ import {
 import {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
-    DefineDependenciesArgs,
     FetchDataParams,
-    LayerColoringType,
-} from "@modules/_shared/LayerFramework/interfaces";
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
+import { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
 import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
@@ -53,10 +52,6 @@ export class RealizationGridLayer implements CustomDataLayerImplementation<Reali
 
     getDefaultName() {
         return "Realization Grid";
-    }
-
-    getColoringType() {
-        return LayerColoringType.COLORSCALE;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

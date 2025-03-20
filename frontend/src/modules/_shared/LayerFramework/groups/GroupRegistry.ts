@@ -1,6 +1,6 @@
 import { DataLayerManager } from "../framework/DataLayerManager/DataLayerManager";
 import { Group } from "../framework/Group/Group";
-import { CustomGroupImplementation } from "../interfaces";
+import { CustomGroupImplementation } from "../interfacesAndTypes/customGroupImplementation";
 
 export class GroupRegistry {
     private static _registeredGroups: Map<

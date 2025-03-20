@@ -1,10 +1,9 @@
 import { PolygonData_api, getPolygonsDataOptions, getPolygonsDirectoryOptions } from "@api";
 import {
     CustomDataLayerImplementation,
-    DefineDependenciesArgs,
     FetchDataParams,
-    LayerColoringType,
-} from "@modules/_shared/LayerFramework/interfaces";
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
+import { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
 import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
@@ -24,10 +23,6 @@ export class RealizationPolygonsLayer implements CustomDataLayerImplementation<R
 
     getDefaultName(): string {
         return "Realization Polygons";
-    }
-
-    getColoringType(): LayerColoringType {
-        return LayerColoringType.NONE;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

@@ -3,10 +3,9 @@ import { getSurfaceDataOptions } from "@api";
 import {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
-    DefineDependenciesArgs,
     FetchDataParams,
-    LayerColoringType,
-} from "@modules/_shared/LayerFramework/interfaces";
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
+import { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
 import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
 import { SurfaceDataFloat_trans, transformSurfaceData } from "@modules/_shared/Surface/queryDataTransforms";
@@ -32,10 +31,6 @@ export class RealizationSurfaceLayer implements CustomDataLayerImplementation<Re
 
     getDefaultName(): string {
         return "Realization Surface";
-    }
-
-    getColoringType(): LayerColoringType {
-        return LayerColoringType.COLORSCALE;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

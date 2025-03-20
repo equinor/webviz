@@ -8,10 +8,9 @@ import {
 import {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
-    DefineDependenciesArgs,
     FetchDataParams,
-    LayerColoringType,
-} from "@modules/_shared/LayerFramework/interfaces";
+} from "@modules/_shared/LayerFramework/interfacesAndTypes/customDataLayerImplementation";
+import { DefineDependenciesArgs } from "@modules/_shared/LayerFramework/interfacesAndTypes/customSettingsHandler";
 import { SensitivityNameCasePair } from "@modules/_shared/LayerFramework/settings/implementations/SensitivitySetting";
 import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import { FullSurfaceAddress, SurfaceAddressBuilder } from "@modules/_shared/Surface";
@@ -45,10 +44,6 @@ export class StatisticalSurfaceLayer implements CustomDataLayerImplementation<St
 
     getDefaultName(): string {
         return "Statistical Surface";
-    }
-
-    getColoringType(): LayerColoringType {
-        return LayerColoringType.COLORSCALE;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

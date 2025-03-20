@@ -12,15 +12,12 @@ import { UnsubscribeHandlerDelegate } from "../../delegates/UnsubscribeHandlerDe
 import {
     CustomDataLayerImplementation,
     DataLayerInformationAccessors,
-    Item,
-    LayerColoringType,
-    SerializedLayer,
-    SerializedType,
-    Settings,
-    SettingsKeysFromTuple,
-    StoredData,
-} from "../../interfaces";
-import { MakeSettingTypesMap } from "../../settings/settingsDefinitions";
+} from "../../interfacesAndTypes/customDataLayerImplementation";
+import { Item } from "../../interfacesAndTypes/entitites";
+import { SerializedLayer, SerializedType } from "../../interfacesAndTypes/serialization";
+import { StoredData } from "../../interfacesAndTypes/sharedTypes";
+import { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
+import { MakeSettingTypesMap, Settings } from "../../settings/settingsDefinitions";
 import { DataLayerManager, LayerManagerTopic, log } from "../DataLayerManager/DataLayerManager";
 import { makeSettings } from "../utils/makeSettings";
 
@@ -184,10 +181,6 @@ export class DataLayer<
 
     getSettingsContextDelegate() {
         return this._settingsContextDelegate;
-    }
-
-    getColoringType(): LayerColoringType {
-        return this._customDataLayerImpl.getColoringType();
     }
 
     isSubordinated(): boolean {

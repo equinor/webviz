@@ -1,13 +1,13 @@
 import { GroupRegistry } from "../../groups/GroupRegistry";
+import { Item } from "../../interfacesAndTypes/entitites";
 import {
-    Item,
     SerializedGroup,
     SerializedItem,
     SerializedLayer,
     SerializedSettingsGroup,
     SerializedSharedSetting,
     SerializedType,
-} from "../../interfaces";
+} from "../../interfacesAndTypes/serialization";
 import { LayerRegistry } from "../../layers/LayerRegistry";
 import { DataLayerManager } from "../DataLayerManager/DataLayerManager";
 import { SettingsGroup } from "../SettingsGroup/SettingsGroup";

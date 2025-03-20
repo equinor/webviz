@@ -8,7 +8,7 @@ import { isEqual } from "lodash";
 import { IntersectionSettingValue } from "./implementations/IntersectionSetting";
 import { SensitivityNameCasePair } from "./implementations/SensitivitySetting";
 
-import { AvailableValuesType } from "../interfaces";
+import { AvailableValuesType } from "../interfacesAndTypes/utils";
 
 export enum SettingCategory {
     SINGLE_OPTION = "singleOption",
@@ -316,3 +316,5 @@ export type MakeSettingTypesMap<
     : {
           [K in T[number]]: AllowNull extends false ? SettingTypes[K] : SettingTypes[K] | null;
       };
+
+export type Settings = ReadonlyArray<Setting> & { __brand?: "MyType" };

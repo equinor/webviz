@@ -1,13 +1,10 @@
 import { WellboreTrajectory_api, getDrilledWellboreHeadersOptions, getWellTrajectoriesOptions } from "@api";
-import {
-    CustomDataLayerImplementation,
-    DefineDependenciesArgs,
-    FetchDataParams,
-    LayerColoringType,
-} from "@modules/_shared/LayerFramework/interfaces";
 import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
+
+import { CustomDataLayerImplementation, FetchDataParams } from "../../interfacesAndTypes/customDataLayerImplementation";
+import { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 
 const drilledWellTrajectoriesSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS] as const;
 type DrilledWellTrajectoriesSettings = typeof drilledWellTrajectoriesSettings;
@@ -29,10 +26,6 @@ export class DrilledWellTrajectoriesLayer
 
     getDefaultName() {
         return "Drilled Well Trajectories";
-    }
-
-    getColoringType(): LayerColoringType {
-        return LayerColoringType.NONE;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

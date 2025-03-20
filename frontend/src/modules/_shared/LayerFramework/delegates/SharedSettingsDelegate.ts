@@ -4,8 +4,13 @@ import { DataLayer } from "../framework/DataLayer/DataLayer";
 import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManager";
 import { Group } from "../framework/Group/Group";
 import { SettingManager, SettingTopic } from "../framework/SettingManager/SettingManager";
-import { AvailableValuesType, Item, Settings, SettingsKeysFromTuple } from "../interfaces";
-import { SettingTypes, settingCategoryAvailableValuesIntersectionReducerMap } from "../settings/settingsDefinitions";
+import { Item } from "../interfacesAndTypes/entitites";
+import { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
+import {
+    SettingTypes,
+    Settings,
+    settingCategoryAvailableValuesIntersectionReducerMap,
+} from "../settings/settingsDefinitions";
 
 export class SharedSettingsDelegate<
     TSettings extends Settings,

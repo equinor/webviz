@@ -2,7 +2,10 @@ import React, { ChangeEvent } from "react";
 
 import { Switch } from "@lib/components/Switch";
 
-import { CustomSettingImplementation, SettingComponentProps } from "../../interfaces";
+import {
+    CustomSettingImplementation,
+    SettingComponentProps,
+} from "../../interfacesAndTypes/customSettingImplementation";
 import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = boolean;

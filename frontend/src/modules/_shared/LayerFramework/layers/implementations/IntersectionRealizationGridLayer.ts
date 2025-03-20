@@ -5,13 +5,6 @@ import {
     postGetPolylineIntersectionOptions,
 } from "@api";
 import { IntersectionReferenceSystem } from "@equinor/esv-intersection";
-import {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
-    DefineDependenciesArgs,
-    FetchDataParams,
-    LayerColoringType,
-} from "@modules/_shared/LayerFramework/interfaces";
 import { IntersectionSettingValue } from "@modules/_shared/LayerFramework/settings/implementations/IntersectionSetting";
 import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 import {
@@ -21,6 +14,13 @@ import {
 } from "@modules/_shared/utils/wellbore";
 
 import { isEqual } from "lodash";
+
+import {
+    CustomDataLayerImplementation,
+    DataLayerInformationAccessors,
+    FetchDataParams,
+} from "../../interfacesAndTypes/customDataLayerImplementation";
+import { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 
 const intersectionRealizationGridSettings = [
     Setting.INTERSECTION,
@@ -59,10 +59,6 @@ export class IntersectionRealizationGridLayer
 
     getDefaultName(): string {
         return "Intersection Realization Grid";
-    }
-
-    getColoringType(): LayerColoringType {
-        return LayerColoringType.COLORSCALE;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

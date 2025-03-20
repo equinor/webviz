@@ -11,7 +11,7 @@ import { DataLayerManager } from "./DataLayerManager";
 
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { View } from "../../groups/implementations/View";
-import { Item, ItemGroup, instanceofItemGroup } from "../../interfaces";
+import { Item, ItemGroup, instanceofItemGroup } from "../../interfacesAndTypes/entitites";
 import { SharedSetting } from "../SharedSetting/SharedSetting";
 import { ExpandCollapseAllButton } from "../utilityComponents/ExpandCollapseAllButton";
 import { makeSortableListItemComponent } from "../utils/makeSortableListItemComponent";

@@ -4,16 +4,16 @@ import {
     getWellborePickIdentifiersOptions,
     getWellborePicksForPickIdentifierOptions,
 } from "@api";
-import {
-    CustomDataLayerImplementation,
-    DataLayerInformationAccessors,
-    DefineDependenciesArgs,
-    FetchDataParams,
-    LayerColoringType,
-} from "@modules/_shared/LayerFramework/interfaces";
 import { MakeSettingTypesMap, Setting } from "@modules/_shared/LayerFramework/settings/settingsDefinitions";
 
 import { isEqual } from "lodash";
+
+import {
+    CustomDataLayerImplementation,
+    DataLayerInformationAccessors,
+    FetchDataParams,
+} from "../../interfacesAndTypes/customDataLayerImplementation";
+import { DefineDependenciesArgs } from "../../interfacesAndTypes/customSettingsHandler";
 
 const drilledWellborePicksSettings = [Setting.ENSEMBLE, Setting.SMDA_WELLBORE_HEADERS, Setting.SURFACE_NAME] as const;
 export type DrilledWellborePicksSettings = typeof drilledWellborePicksSettings;
@@ -35,10 +35,6 @@ export class DrilledWellborePicksLayer implements CustomDataLayerImplementation<
 
     getDefaultName() {
         return "Drilled Well Picks";
-    }
-
-    getColoringType(): LayerColoringType {
-        return LayerColoringType.NONE;
     }
 
     doSettingsChangesRequireDataRefetch(prevSettings: SettingsWithTypes, newSettings: SettingsWithTypes): boolean {

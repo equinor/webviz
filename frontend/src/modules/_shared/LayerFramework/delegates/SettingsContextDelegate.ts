@@ -7,19 +7,12 @@ import { DataLayerManager, GlobalSettings, LayerManagerTopic } from "../framewor
 import { Group } from "../framework/Group/Group";
 import { SettingManager, SettingTopic } from "../framework/SettingManager/SettingManager";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
-import {
-    AvailableValuesType,
-    CustomSettingsHandler,
-    NullableStoredData,
-    SerializedSettingsState,
-    Settings,
-    SettingsKeysFromTuple,
-    SharedSettingsProvider,
-    StoredData,
-    UpdateFunc,
-    instanceofSharedSettingsProvider,
-} from "../interfaces";
-import { MakeSettingTypesMap, SettingTypes } from "../settings/settingsDefinitions";
+import { CustomSettingsHandler, UpdateFunc } from "../interfacesAndTypes/customSettingsHandler";
+import { SharedSettingsProvider, instanceofSharedSettingsProvider } from "../interfacesAndTypes/entitites";
+import { SerializedSettingsState } from "../interfacesAndTypes/serialization";
+import { NullableStoredData, StoredData } from "../interfacesAndTypes/sharedTypes";
+import { AvailableValuesType, SettingsKeysFromTuple } from "../interfacesAndTypes/utils";
+import { MakeSettingTypesMap, SettingTypes, Settings } from "../settings/settingsDefinitions";
 
 export enum SettingsContextLoadingState {
     LOADING = "LOADING",

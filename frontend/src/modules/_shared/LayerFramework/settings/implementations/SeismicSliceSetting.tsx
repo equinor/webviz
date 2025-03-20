@@ -5,9 +5,9 @@ import { Slider } from "@lib/components/Slider";
 
 import {
     CustomSettingImplementation,
-    MakeAvailableValuesTypeBasedOnCategory,
     SettingComponentProps,
-} from "../../interfaces";
+} from "../../interfacesAndTypes/customSettingImplementation";
+import { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import { SettingCategory } from "../settingsDefinitions";
 
 type ValueType = number | null;

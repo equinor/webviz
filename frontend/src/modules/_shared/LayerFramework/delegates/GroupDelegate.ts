@@ -7,7 +7,8 @@ import { LayerManagerTopic } from "../framework/DataLayerManager/DataLayerManage
 import { Group } from "../framework/Group/Group";
 import { SharedSetting } from "../framework/SharedSetting/SharedSetting";
 import { DeserializationFactory } from "../framework/utils/DeserializationFactory";
-import { Item, SerializedItem } from "../interfaces";
+import { Item } from "../interfacesAndTypes/entitites";
+import { SerializedItem } from "../interfacesAndTypes/serialization";
 
 export enum GroupDelegateTopic {
     CHILDREN = "CHILDREN",

@@ -1,6 +1,7 @@
-import { Settings, SettingsKeysFromTuple } from "../../interfaces";
+
+import { SettingsKeysFromTuple } from "../../interfacesAndTypes/utils";
 import { SettingRegistry } from "../../settings/SettingRegistry";
-import { MakeSettingTypesMap, SettingTypes } from "../../settings/settingsDefinitions";
+import { MakeSettingTypesMap, Settings, SettingTypes } from "../../settings/settingsDefinitions";
 import { SettingManager } from "../SettingManager/SettingManager";
 
 

@@ -2,7 +2,7 @@ import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { DenseIconButtonColorScheme } from "@lib/components/DenseIconButton/denseIconButton";
 import { Delete } from "@mui/icons-material";
 
-import { Item } from "../../interfaces";
+import { Item } from "../../interfacesAndTypes/entitites";
 import { DataLayer } from "../DataLayer/DataLayer";
 
 export type RemoveItemButtonProps = {

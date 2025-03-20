@@ -4,9 +4,9 @@ import { Dropdown } from "@lib/components/Dropdown";
 
 import {
     CustomSettingImplementation,
-    MakeAvailableValuesTypeBasedOnCategory,
     SettingComponentProps,
-} from "../../interfaces";
+} from "../../interfacesAndTypes/customSettingImplementation";
+import { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import { SettingCategory } from "../settingsDefinitions";
 
 export type SensitivityNameCasePair = {

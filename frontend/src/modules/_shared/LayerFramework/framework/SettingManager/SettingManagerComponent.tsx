@@ -7,7 +7,7 @@ import { Link, Warning } from "@mui/icons-material";
 import { OverriddenValueProviderType, SettingManager, SettingTopic } from "./SettingManager";
 
 import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDelegate";
-import { SettingComponentProps as SettingComponentPropsInterface } from "../../interfaces";
+import { SettingComponentProps as SettingComponentPropsInterface } from "../../interfacesAndTypes/customSettingImplementation";
 import { Setting, SettingCategories, SettingTypes } from "../../settings/settingsDefinitions";
 import { DataLayerManager, LayerManagerTopic } from "../DataLayerManager/DataLayerManager";
 

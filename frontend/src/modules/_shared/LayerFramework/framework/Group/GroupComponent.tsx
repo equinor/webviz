@@ -7,7 +7,7 @@ import { usePublishSubscribeTopicValue } from "../../../utils/PublishSubscribeDe
 import { LayersActionGroup, LayersActions } from "../../LayersActions";
 import { GroupDelegateTopic } from "../../delegates/GroupDelegate";
 import { ItemDelegateTopic } from "../../delegates/ItemDelegate";
-import { Item, ItemGroup } from "../../interfaces";
+import { Item, ItemGroup } from "../../interfacesAndTypes/entitites";
 import { SettingManager } from "../SettingManager/SettingManager";
 import { SettingComponent } from "../SettingManager/SettingManagerComponent";
 import { EditName } from "../utilityComponents/EditName";

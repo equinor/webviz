@@ -3,7 +3,7 @@ import React from "react";
 import { DenseIconButton } from "@lib/components/DenseIconButton";
 import { UnfoldLessDouble, UnfoldMoreDouble } from "@mui/icons-material";
 
-import { ItemGroup } from "../../interfaces";
+import { ItemGroup } from "../../interfacesAndTypes/entitites";
 
 export type ExpandCollapseAllButtonProps = {
     group: ItemGroup;

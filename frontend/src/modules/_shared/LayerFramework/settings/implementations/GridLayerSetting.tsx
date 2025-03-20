@@ -4,9 +4,9 @@ import { Dropdown, DropdownOption } from "@lib/components/Dropdown";
 
 import {
     CustomSettingImplementation,
-    MakeAvailableValuesTypeBasedOnCategory,
     SettingComponentProps,
-} from "../../interfaces";
+} from "../../interfacesAndTypes/customSettingImplementation";
+import { MakeAvailableValuesTypeBasedOnCategory } from "../../interfacesAndTypes/utils";
 import { SettingCategory } from "../settingsDefinitions";
 
 export enum Direction {
