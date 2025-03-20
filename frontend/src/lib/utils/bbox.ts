@@ -1,5 +1,3 @@
-import { BoundingBox3D_api } from "@api";
-
 import * as vec3 from "./vec3";
 
 /**
@@ -18,30 +16,6 @@ export type BBox = {
  */
 export function create(min: vec3.Vec3, max: vec3.Vec3): BBox {
     return { min, max };
-}
-
-/**
- * Creates a new bounding box from a given bounding box from the API.
- * @param boundingBox A bounding box from the API.
- * @returns A respective new bounding box.
- */
-export function fromBoundingBox3DApi(boundingBox: BoundingBox3D_api): BBox {
-    return create(
-        vec3.create(boundingBox.xmin, boundingBox.ymin, boundingBox.zmin),
-        vec3.create(boundingBox.xmax, boundingBox.ymax, boundingBox.zmax)
-    );
-}
-
-/**
- * Creates a new 2D bounding box from a given bounding box from the API.
- * @param boundingBox A bounding box from the API.
- * @returns A respective new bounding box.
- */
-export function fromBoundingBox2DApi(boundingBox: BoundingBox3D_api): BBox {
-    return create(
-        vec3.create(boundingBox.xmin, boundingBox.ymin, 0),
-        vec3.create(boundingBox.xmax, boundingBox.ymax, 0)
-    );
 }
 
 /**
